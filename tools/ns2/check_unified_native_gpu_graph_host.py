@@ -52,6 +52,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
  body=f'''cmake_minimum_required(VERSION 3.24)
 project(UnifiedGpuOwners LANGUAGES CXX)
 set(PORT_ROOT "{root}")
+set(EDEN_PORT_DIR "{root}/headless")
 set(PORT_BUILD_DIR "{base}/derived")
 set(EDEN_NS2_CORE_HELPERS "{root}/vendor/encore-active/ns2-helpers/include")
 set(EDEN_MAINTAINED_GPU_PULLER "{puller}")
@@ -117,6 +118,11 @@ if(NOT selected_shader MATCHES "ns2-runtime/ampere/" OR
    NOT legacy_emitter EQUAL -1 OR NOT legacy_direct EQUAL -1 OR
    NOT legacy_image EQUAL -1)
     message(FATAL_ERROR "SPIR-V QMD3 owner not installed exactly once")
+endif()
+# C02 source has a unique exact owner; the fixture also supplies EDEN_PORT_DIR.
+string(FIND "${selected_shader}" "/headless/c02_spirv_fragcolor_ps5.cpp" c02_selected_idx)
+if(c02_selected_idx LESS 0)
+    message(FATAL_ERROR "C02 shared fragment source owner not selected")
 endif()
 if(NOT EXISTS "${PORT_BUILD_DIR}/include/video_core/rasterizer_interface.h")
     message(FATAL_ERROR "Unified RasterizerInterface ABI not generated")

@@ -921,6 +921,44 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     print('ENCORE_G07_COMPUTE_LAYOUT_REVERSE_PARITY_PASS',
           'historical_generator=immutable', 'native_guard=fail_closed', flush=True)
 
+    # R23 #44 viewport negative-Y is currently present ONLY in the
+    # upstream-derived generator, NOT in the copied maintained Vulkan source.
+    # Do not claim active NS1 viewport fix until its exact vendor patch is
+    # reviewed and installed. We only normalize away this *staged* delta for
+    # the historical generator parity oracle; all other bytes remain guarded.
+    viewport_name = 'vulkan_rasterizer.cpp'
+    r23_new = ("        const float clip_height = conv(static_cast<f32>(regs.surface_clip.height));\n"
+               "        if (src.scale_y < 0.0f && y >= clip_height) {\n"
+               "            y = clip_height - y;\n"
+               "        } else {\n"
+               "            y += clip_height;\n"
+               "        }")
+    r23_old = "        y += conv(static_cast<f32>(regs.surface_clip.height));"
+    generated_viewport = normalized_generated[viewport_name].read_text()
+    maintained_viewport = normalized_expected.get(viewport_name, expected[viewport_name]).read_text()
+    assert generated_viewport.count(r23_new) == 1, "R23 upstream viewport source hunk drift"
+    assert maintained_viewport.count(r23_old) == 1, "R23 maintained viewport baseline drift"
+    assert hashlib.sha256(generated_viewport.encode()).hexdigest() == (
+        'f57685a77f78347e5d733ac03dc76cc09d37a520de543310b8564db5c09f4521'), (
+        'R23 staged generator changed beyond explicitly verified viewport hunk')
+    assert hashlib.sha256(maintained_viewport.encode()).hexdigest() == (
+        'ee1eb903882a99f493549af0178d0a97877bb7b5b1ee717b093477ef79c7dcb2'), (
+        'R23 historical maintained Vulkan source changed without review')
+    baseline_viewport = generated_viewport.replace(r23_new, r23_old, 1)
+    assert baseline_viewport == maintained_viewport, (
+        'R23 viewport inverse normalization cannot conceal unrelated Vulkan changes')
+    staged_viewport_patch = (root / 'docs/audits/patchsets/R23-viewport-negative-y.vendor.patch')
+    patch_text = staged_viewport_patch.read_text()
+    assert '--- a/encore-active/eden-vulkan/vulkan_rasterizer.cpp' in patch_text
+    assert '+        if (src.scale_y < 0.0f && y >= clip_height) {' in patch_text
+    viewport_normalized = temp / 'normalized-generator-r23-staged' / viewport_name
+    viewport_normalized.parent.mkdir(parents=True, exist_ok=True)
+    viewport_normalized.write_text(baseline_viewport)
+    normalized_generated[viewport_name] = viewport_normalized
+    print('R23_VIEWPORT_GENERATOR_STAGED_ONLY_NOT_SHIPPING_PASS',
+          'generated_source=proposed', 'maintained_vendor=unpatched',
+          'native_runtime_qualified=0', flush=True)
+
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

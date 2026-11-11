@@ -45,6 +45,11 @@ SOURCES = {
         "b48ad04b1637898c5e2b95e438e2e9ae9ac522a1",
         None,
     ),
+    "R23-viewport": (
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp",
+        "921fd6d9db216d3a4a745bcdccb4a454addcf623",
+        "docs/audits/patchsets/R23-viewport-negative-y.vendor.patch",
+    ),
     "C04-SDIV32": (
         "encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_data_processing.cpp",
         "3dd13ebc5c519de63672f0699a796009024e4a13",
@@ -121,10 +126,10 @@ def main() -> int:
     if dirty_after != dirty_before:
         raise AssertionError("read-only audit changed vendor files")
     if not all(row["patch_staged_and_context_valid"] for key, row in results.items()
-               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU")):
+               if key in ("C01", "C02", "C04-SDIV32", "C04-SQSHLU", "R23-viewport")):
         raise AssertionError("all staged owner hunks must have valid context")
     print(json.dumps({
-        "scope": "C01/C02/C04 source patch context, C03 Git blob freeze (not compiled)",
+        "scope": "C01/C02/C04/R23 viewport source patch contexts, C03 Git blobs (not compiled)",
         "vendor_gitlink": PIN,
         "vendor_worktree_clean": True,
         "implementation_proof": False,

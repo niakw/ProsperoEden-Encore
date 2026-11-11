@@ -50,7 +50,9 @@ Required architectural change: preserve the **full emulated NS2 guest DRAM addre
 
 - `headless/ps5_ns2_guest_backing_plan.h` modélise 12 Gio de **capacité virtuelle** en 6144 blocs de 2 Mio, avec propriétaires physiques indépendants, budget explicite et transactions `Begin → Stage → Publish` ou `Abort → ReleaseAcknowledged → FinishAbort`.
 - `tools/ns2/test_r457_ps5_guest_backing_plan.cpp` contrôle le premier et le dernier bloc, les budgets, l'absence de double propriétaire, le rollback partiel, la non-libération des résidents existants et la nécessité d'un accusé de libération.
-- [CI NS2 #43016026399](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43016026399) : **SUCCESS** au commit `e5437841`. Elle interdit expressément l'inclusion du modèle dans `src/host_memory.cpp` : aucun raccordement PS5 dangereux n'est introduit.
+- [CI NS2 #43018063822](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43018063822) : **SUCCESS** au commit `7abd688b`. Elle interdit l'inclusion du modèle dans `src/host_memory.cpp` : aucun raccordement PS5 dangereux n'est introduit.
+- `tools/ns2/test_r457_12gib_virtual_mapping_host.cpp` réserve **réellement 12 Gio d'adressage virtuel sur Linux** (`mmap(PROT_NONE | MAP_NORESERVE)`) et mappe quelques fichiers `memfd` indépendants de 2 Mio à des adresses invitées adjacentes `MAP_FIXED`. Il vérifie le franchissement de frontière des blocs, les pages vierges, l'accès à la dernière adresse, le rollback avec restauration des trous virtuels, l'intégrité des résidents anciens et la réadmission d'un bloc libéré.
+- Le test prouve un schéma valide sur **Linux**, pas les syscalls `sceKernel*` de la PS5, pas la sécurité d'un gestionnaire SIGSEGV, pas la cohérence d'alias CPU/GPU de RADV et pas le couplage avec le JIT. La capacité virtuelle n'est pas une promesse de 12 Gio de RAM physique disponible.
 - Ce modèle n'implémente **ni** `sceKernelReserveVirtualRange` + commit paresseux, **ni** mapping/zero-fill au premier accès, **ni** les alias GPU/CPU, **ni** les contraintes de `DirectMemoryStart`/fastmem. Il est **impossible de conclure que NS2 démarre** depuis cette CI.
 
 Resolution / test gates:

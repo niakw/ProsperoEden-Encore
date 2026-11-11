@@ -77,7 +77,7 @@ if daily.exists():
         assert path.is_file() and not path.is_symlink()
         data = path.read_bytes()
         assert 4000 <= len(data) <= 16 * 1024 * 1024
-        assert data.startswith(b"\\xff\\xd8\\xff") and data.endswith(b"\\xff\\xd9"), (
+        assert data.startswith(b"\xff\xd8\xff") and data.endswith(b"\xff\xd9"), (
             f"invalid daily JPEG: {filename}"
         )
         daily_files.add(filename)
@@ -123,9 +123,9 @@ if daily:
         size = source.stat().st_size
         assert 4000 <= size <= 7 * 1024 * 1024
         with source.open("rb") as image:
-            assert image.read(3) == b"\\xff\\xd8\\xff"
+            assert image.read(3) == b"\xff\xd8\xff"
             image.seek(-2, os.SEEK_END)
-            assert image.read(2) == b"\\xff\\xd9"
+            assert image.read(2) == b"\xff\xd9"
         expected_daily.add(relative)
     assert daily == expected_daily, (
         "unexpected or missing daily assets", sorted(daily ^ expected_daily))

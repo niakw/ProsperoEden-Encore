@@ -89,3 +89,8 @@ The [exact source comparison](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS22_2026-11-11.md
 ### Pass30 — shipping backport re-audit, avoid duplicate code
 
 [Pass30](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md) verifies #109 `FrontendApplet::Exit` child cleanup, #128 `ListApplicationIcon` null-control guard and #147 FW23 `GetApplicationControlData3` cmd23 + AM display composition are installed in shipping patched sources, **not missing native features**. E1 source decision totals: **0** generic unreviewed, **33** remaining source gaps, **11** already-shipped versioned backport source cases; separate 8 backend-policy, 17 header include, 0/7 native+device release lots, and R18 remain unchanged.
+
+
+### Current source-gap implementation handoff after pass30
+
+[33 exact E1 source gaps and acceptance routes](ENCORE_AB_R23_33_UNQUALIFIED_SOURCE_GAP_WORKPACKAGES_2026-11-11.md) replace the historical 36-case list, since #109, #128 and #147 are already shipping source-covered (not PS5-qualified). The 155-case owner matrix still has zero generic undecided. E3/E4 and dependency/legal/security signoff remain open.

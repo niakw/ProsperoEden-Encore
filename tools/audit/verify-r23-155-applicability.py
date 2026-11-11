@@ -724,19 +724,19 @@ def validate(root: Path, app: dict | None = None) -> dict:
                    "618ff99d2121741c190a9fd3ae8d0fd45f7eb9fe"):
         if needle not in pass29:
             raise ValueError(f"R23 pass29 source blob pin missing {needle}")
-    # Frozen implementation handoff must preserve every one of the 36
+    # Frozen implementation handoff must preserve every one of the 33
     # source-verified work packages separately from 0 generic E1 reviews.
     # Source classification is not native compiled / console equivalence.
-    gaps_doc = (root / "docs/audits/ENCORE_AB_R23_36_UNQUALIFIED_SOURCE_GAP_WORKPACKAGES_2026-11-11.md").read_text()
+    gaps_doc = (root / "docs/audits/ENCORE_AB_R23_33_UNQUALIFIED_SOURCE_GAP_WORKPACKAGES_2026-11-11.md").read_text()
     outstanding = [
         r for r in rows
         if r["classification"] == "verified-relevant-source-gap-awaiting-native-proof"
     ]
-    if len(outstanding) != 36 or gaps_doc.count("| **#") != 36:
-        raise ValueError("R23 exact 36-gap implementation handoff missing or duplicated")
+    if len(outstanding) != 33 or gaps_doc.count("| **#") != 33:
+        raise ValueError("R23 exact 33-gap implementation handoff missing or duplicated")
     for r in outstanding:
         if f"| **#{r['index']}** — `{r['sha'][:12]}` |" not in gaps_doc:
-            raise ValueError(f"R23 upstream #{r['index']} omitted from 36-gap handoff")
+            raise ValueError(f"R23 upstream #{r['index']} omitted from 33-gap handoff")
     for token in ("83", "50", "#154", "E3", "E4", "R18", "0/7",
                   "vendor/encore-active/eden-backports/"):
         if token not in gaps_doc:

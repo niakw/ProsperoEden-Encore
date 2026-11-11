@@ -1,5 +1,5 @@
-# R23 — work packages for 36 unqualified source gaps after E1 complete
-**Frozen 11 November 2026** on [audit PR #45](https://github.com/niakw/ProsperoEden-Encore/pull/45) only. This is the canonical *implementation/test handoff* for the open E1 gaps after the [zero generic source-review register](ENCORE_AB_R23_ZERO_GENERIC_SOURCE_EXIT_2026-11-11.md). It **does not** certify native ELF, guest behavior or PS5 console gameplay.
+# R23 — historic pass29 work packages for 36 unqualified source gaps (superseded)
+**Historical pass29 snapshot, superseded by the [current 33-package register](ENCORE_AB_R23_33_UNQUALIFIED_SOURCE_GAP_WORKPACKAGES_2026-11-11.md) after pass30.**\n\n**Frozen 11 November 2026** on [audit PR #45](https://github.com/niakw/ProsperoEden-Encore/pull/45) only. This is the canonical *implementation/test handoff* for the open E1 gaps after the [zero generic source-review register](ENCORE_AB_R23_ZERO_GENERIC_SOURCE_EXIT_2026-11-11.md). It **does not** certify native ELF, guest behavior or PS5 console gameplay.
 
 ## Audit invariant, source ownership and double-port avoidance
 

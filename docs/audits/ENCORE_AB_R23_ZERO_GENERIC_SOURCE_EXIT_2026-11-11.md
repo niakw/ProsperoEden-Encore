@@ -6,3 +6,6 @@ No claim of source-to-ELF completeness, linker archive reproducibility, PS5 hard
 
 
 **Pass30 correction:** [three additional selected native backport sources](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md) prove upstream #109 applet release, #128 NS ListApplicationIcon nullptr handling, and #147 FW23 read-only cmd23 / AM display layer were already installed. Zero undecided remains; **33** E1 source gaps, **11** shipping-covered source decisions, no runtime release proof.
+
+
+Current [33 source-gap work packages for actual corrective owners](ENCORE_AB_R23_33_UNQUALIFIED_SOURCE_GAP_WORKPACKAGES_2026-11-11.md) supersede the historical 36-item snapshot. Do not double-port #109/#128/#147.

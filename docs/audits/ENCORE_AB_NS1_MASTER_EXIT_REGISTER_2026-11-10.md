@@ -261,3 +261,8 @@ The [HID source policy report](ENCORE_AB_R23_HID_CONNECTION_POLICY_2026-11-11.md
 ### R23 pass30 — correct three more pristine-source false positives (11 Nov 2026)
 
 [Pass30 E1 active shipping files](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS30_2026-11-11.md) prove #109 applet exit/child cleanup, #128 ListApplicationIcon missing-control guard and #147 FW23 NS read-only cmd23 plus AM display-layer rework are **already installed** before native CMake; Android UI/ARM64 NCE is excluded. Historical per-pass original-source reports remain dated snapshots, not the latest shipping verdict. Source taxonomy now **0 generic undecided, 33 source gaps unported or unqualified, 11 shipped source-backport-covered E1**. **8** independent policy/refactor gates, **17** native changed-header include receipts, **0/7** PS5 fully qualified corrective release lots and R18 archive/CVE/SBOM remain OPEN. Do not transplant existing fixes twice.
+
+
+### R23 pass30 current 33-gap implementation handoff (11 Nov)
+
+The [live exact 33-package implementation/PS5 test handoff](ENCORE_AB_R23_33_UNQUALIFIED_SOURCE_GAP_WORKPACKAGES_2026-11-11.md) supersedes the historical 36-item pass29 register, excluding #109 #128 #147 because shipping source code already includes them. Categories now **0 undecided source cases**, **33 source gaps**, **11 already-shipped source fixes**, plus independent **8 policy/refactor gates**, **17 changed header compiler receipts**, **0/7** PS5-qualified corrective lots and R18 provenance/console gates. Preserve each numbered owner/acceptance route; do not double-port.

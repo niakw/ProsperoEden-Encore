@@ -15,6 +15,7 @@ on:
       - 'extras/graphics/r09_min_shaders/pipeline_resample_host.comp'
       - 'extras/graphics/r09_composable_vk_spatial_chain.cpp'
       - 'extras/graphics/r09_native_fsr_sgsr_gpu_witness.cpp'
+      - 'tools/graphics/r09_native_gpu_ppm_png.py'
   workflow_dispatch:
 
 permissions:
@@ -214,17 +215,16 @@ jobs:
             done
           done
           echo R09_AUTHENTIC_VENDOR_NATIVE_GLSL_EASU_RCAS_SGSR_EDGE_GPU_PASS
-          # One exact full-raster end-to-end 720p→1440p→4K run.
-          # The high-resolution software-Vulkan run is intentionally
-          # limited to the normal SGSR gradient test, not a full sweep.
-          "$out/native_gpu" \
+          # Exactly two 720p→1440p→4K gradient readbacks; store final
+          # genuine GPU RGB diagnostic frames to visualize native FSR/SGSR.
+          R09_NATIVE_GPU_DUMP_PPM="$out/sgsr_normal_4k.ppm" "$out/native_gpu" \
             "$out/vulkan_fidelityfx_fsr.vert.spv" \
             "$out/vulkan_fidelityfx_fsr_easu_fp32.frag.spv" \
             "$out/vulkan_fidelityfx_fsr_rcas_fp32.frag.spv" \
             "$out/sgsr1_shader.vert.spv" \
             "$out/sgsr1_shader_mobile.frag.spv" \
             normal gradient --full720
-          "$out/native_gpu" \
+          R09_NATIVE_GPU_DUMP_PPM="$out/sgsr_edge_4k.ppm" "$out/native_gpu" \
             "$out/vulkan_fidelityfx_fsr.vert.spv" \
             "$out/vulkan_fidelityfx_fsr_easu_fp32.frag.spv" \
             "$out/vulkan_fidelityfx_fsr_rcas_fp32.frag.spv" \
@@ -232,6 +232,14 @@ jobs:
             "$out/sgsr1_shader_mobile_edge_direction.frag.spv" \
             edge gradient --full720
           echo R09_AUTHENTIC_PINNED_FSR1_SGSR_BOTH_VARIANTS_GPU_FULL_720P_TO_4K_PASS
+          python3 tools/graphics/r09_native_gpu_ppm_png.py \
+            "$out/sgsr_normal_4k.ppm" "$out/sgsr_normal_4k.png"
+          python3 tools/graphics/r09_native_gpu_ppm_png.py \
+            "$out/sgsr_edge_4k.ppm" "$out/sgsr_edge_4k.png"
+          python3 tools/graphics/r09_native_gpu_ppm_png.py compare \
+            "$out/sgsr_normal_4k.ppm" "$out/sgsr_edge_4k.ppm"
+          rm -f "$out/sgsr_normal_4k.ppm" "$out/sgsr_edge_4k.ppm"
+          echo R09_4K_NATIVE_FSR_SGSR_GPU_PNG_EVIDENCE_PASS
           # Missing EASU→RCAS attachment-write barrier must be caught
           # by Khronos; never read the deliberately unsafe output.
           "$out/native_gpu" \
@@ -243,3 +251,12 @@ jobs:
             normal gradient --negative-missing-barrier
           echo R09_NATIVE_VENDOR_GPU_KHRONOS_SYNC_NEGATIVE_PASS
           echo R09_HOST_LAVAPIPE_NOT_PS5_NOT_TRAINED_NEURAL_NOT_NATIVE_CPP_OWNER_CALL
+      - name: Preserve exact 4K synthetic-gradient native GPU output samples
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: r09-real-vendor-shaders-fsr1-sgsr-4k-png
+          path: |
+            .build-local/r09-vendor-real-spv/sgsr_normal_4k.png
+            .build-local/r09-vendor-real-spv/sgsr_edge_4k.png
+          if-no-files-found: error
+          retention-days: 7

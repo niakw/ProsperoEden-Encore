@@ -118,3 +118,63 @@ jobs:
           echo R09_REAL_GPU_MULTI_IMAGE_1_2_3_SPATIAL_STAGES_AND_ORACLE_PASS
           echo R09_REAL_VKIMAGE_BOUND_VERSIONED_RECIPE_720P_HOST_PASS
           echo R09_ONLY_PUBLIC_HOST_SHADERS_NO_TRAINED_NEURAL_NO_PS5
+
+  native-fsr-sgsr-shader-spv:
+    name: Compile genuine vendor FSR1 EASU/RCAS + SGSR/Edge shaders
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated engine without vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+      - name: Sparse checkout exact pinned vendor GLSL and AMD FSR headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          pin=22b69d6053db41b74edac2633c012f925b84f69e
+          test "$(git rev-parse HEAD:vendor)" = "$pin"
+          git -c credential.helper= clone --quiet --filter=blob:none \
+            --no-checkout https://github.com/niakw/Prospero.Eden-Encore-vendor.git \
+            /tmp/r09-native-spatial-vendor
+          git -C /tmp/r09-native-spatial-vendor sparse-checkout set \
+            sources/eden/src/video_core/host_shaders \
+            sources/eden/externals/FidelityFX-FSR/ffx-fsr
+          git -C /tmp/r09-native-spatial-vendor fetch --quiet --depth=1 origin "$pin"
+          git -C /tmp/r09-native-spatial-vendor checkout --quiet --detach "$pin"
+          test "$(git -C /tmp/r09-native-spatial-vendor rev-parse HEAD)" = "$pin"
+          test "$(git rev-parse HEAD:vendor)" = "$pin"
+      - name: Install compiler and SPIR-V validator
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends glslang-tools spirv-tools
+      - name: Compile six ORIGINAL vendor FSR1 and SGSR shader entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=/tmp/r09-native-spatial-vendor/sources/eden
+          glsl_dir="$base/src/video_core/host_shaders"
+          fx="$base/externals/FidelityFX-FSR/ffx-fsr"
+          out=.build-local/r09-vendor-real-spv
+          mkdir -p "$out"
+          for entry in \
+            vulkan_fidelityfx_fsr.vert \
+            vulkan_fidelityfx_fsr_easu_fp32.frag \
+            vulkan_fidelityfx_fsr_rcas_fp32.frag \
+            sgsr1_shader.vert \
+            sgsr1_shader_mobile.frag \
+            sgsr1_shader_mobile_edge_direction.frag; do
+            stage=frag
+            case "$entry" in *.vert) stage=vert;; esac
+            glslangValidator -V --target-env vulkan1.1 -S "$stage" \
+              "-I$glsl_dir" "-I$fx" "$glsl_dir/$entry" \
+              -o "$out/$entry.spv"
+            spirv-val --target-env vulkan1.1 "$out/$entry.spv"
+            test "$(stat -c%s "$out/$entry.spv")" -gt 256
+            echo "R09_AUTHENTIC_VENDOR_SHADER_SPIRV_VALID entry=$entry"
+          done
+          echo R09_REAL_FSR1_EASU_RCAS_SGSR_EDGE_SPIRV_ALL_SIX_VALID

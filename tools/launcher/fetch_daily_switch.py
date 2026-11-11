@@ -202,7 +202,10 @@ def existing_catalog(out: Path, today: date) -> list[dict]:
             if not isinstance(title, str) or not (0 < len(title) <= 160):
                 continue
             released = date.fromisoformat(item["release_date"])
-            if released > today:
+            # A retained snapshot is not an exemption from the "recent games"
+            # admission window. Old titles cannot stay in rotation forever
+            # when fresh metadata is temporarily unavailable.
+            if not today - timedelta(days=MAX_LOOKBACK) <= released <= today:
                 continue
             media = out / item["filename"]
             if media.is_symlink() or not media.is_file():

@@ -134,6 +134,39 @@ class DailyWallpaperTests(TestCase):
             self.assertNotIn("New 15", [e["title"] for e in updated["entries"]])
             self.assertEqual(len(list(folder.glob("wall-*.webp"))), 16)
 
+    def test_expired_cached_games_never_outlive_recent_window(self):
+        with TemporaryDirectory() as temp:
+            folder = Path(temp)
+            payload = b"VP8 " + b"X" * 4100
+            (folder / "wall-00.webp").write_bytes(
+                b"RIFF" + (len(payload) + 4).to_bytes(4, "little")
+                + b"WEBP" + payload
+            )
+            (folder / "index.json").write_text(json.dumps({
+                "schema": 1,
+                "entries": [{
+                    "title": "Stale Cache", "platform": "ns1",
+                    "release_date": "2025-01-01",
+                    "filename": "wall-00.webp", "approved": True
+                }]
+            }))
+            fresh = [{
+                "title": "Recently Released",
+                "day": date(2026, 11, 10), "platform": "ns2",
+                "art": "https://www.nintendo.com/eu/fresh.jpg"
+            }]
+            def fake_convert(_source, target):
+                target.write_bytes(
+                    b"RIFF" + (len(payload) + 4).to_bytes(4, "little")
+                    + b"WEBP" + payload
+                )
+            with patch.object(daily, "fetch", return_value=b"fixture"), \
+                 patch.object(daily, "convert_art", side_effect=fake_convert):
+                self.assertEqual(daily.build(folder, date(2026, 11, 11), fresh), 1)
+            titles = [x["title"] for x in json.loads(
+                (folder / "index.json").read_text())["entries"]]
+            self.assertEqual(titles, ["Recently Released"])
+
     def test_rejects_unapproved_hosts(self):
         for url in ("http://api.nlib.cc/x", "https://attacker.example/x",
                     "https://api.nlib.cc.attacker.example/x"):

@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 29,
-    "runtime-semantic-review-pending": 19,
+    "verified-relevant-source-gap-awaiting-native-proof": 31,
+    "runtime-semantic-review-pending": 17,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -3111,14 +3111,16 @@
       "sha": "99bf8cf51afb7b367cb5003f11a797499c71d13c",
       "title": "[am, renderer_vulkan] Fix overlay darkening and SGSR black screen on applets (#4475)",
       "file_count": 3,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 current PS5 AM/window, maintained NPad and native versioned presentation lack upstream overlay active state conditional, constructor callback lifecycle, SGSR applet bypass.",
+      "action": "Test applet overlay open/closed z-order, SGSR black screen, NPad ARUID callback lifecycle and all AA/FG combos on native PS5, see pass26.",
       "paths": [
         "src/core/hle/service/am/window_system.cpp",
         "src/hid_core/resources/npad/npad.cpp",
         "src/video_core/renderer_vulkan/present/layer.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream diff and selected exact original/maintained source refs; no native console proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS26_2026-11-11.md"
     },
     {
       "index": 98,
@@ -4089,9 +4091,9 @@
       "sha": "e7a96c7907fb8cb888f21d348b66de2121fdd1ca",
       "title": "[hle] Firmware 23.0.0 (#4390)",
       "file_count": 13,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 FW23 upstream adds many guest-visible HLE IPC/SVC/FS/PCTL/AM service differences absent from current pinned/maintained selected source, beyond isolated NS cmd23 draft.",
+      "action": "Coordinate exact HOS FW23 guest command sizes/handles with draft #54 without merging; test SVC 37/38, fsp 2/210, PCTL 1459/1460, AM 240 and older FW title launch, see pass26.",
       "paths": [
         "src/core/file_sys/system_archive/system_version.cpp",
         "src/core/hle/api_version.h",
@@ -4106,7 +4108,9 @@
         "src/core/hle/service/pctl/parental_control_service.cpp",
         "src/core/hle/service/pctl/parental_control_service.h",
         "src/core/hle/service/pctl/pctl_types.h"
-      ]
+      ],
+      "source_evidence_level": "E1 upstream diff and selected exact original/maintained source refs; no native console proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS26_2026-11-11.md"
     },
     {
       "index": 155,

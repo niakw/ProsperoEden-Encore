@@ -386,3 +386,11 @@ assert 'sibling->second.used = frame_' in retail_textures
 assert 'covers_.find(path + ' in retail_textures
 assert 'it->second.texture == 0 && IsRetailBoxImage(path)' in retail_textures
 assert 'if (it->second.path == path)' in retail_textures
+
+
+# R457 real-console update dialog: ensure status cannot be painted underneath
+# the two 94px buttons (row 2 ends at 516+94 = 610 virtual pixels).
+r457_dialog = read('headless/prosperoeden/pe/ui/settings.cpp')
+assert 'list.rounded_rect({592.0f, 648.0f, 736.0f, 224.0f}' in r457_dialog
+assert 'Color::rgb(0x10121d, 0.96f)' in r457_dialog
+assert 'Color::rgb(0xf4f2f8)' in r457_dialog

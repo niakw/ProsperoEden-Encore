@@ -30,6 +30,8 @@ on:
       - 'headless/inject.cmake'
       - 'tools/check-crash-provenance-host.py'
       - 'headless/prosperoeden/ui/art/switch-rear-footer.png.b64'
+      - 'tools/ci/patch-psbc-noreturn-flags.py'
+      - 'tools/build-opengl-sdk.sh'
 permissions:
   contents: read
 jobs:

@@ -113,12 +113,13 @@ def main():
         # instantiate. Compiling an including TU alone can leave dependent
         # expressions unchecked and R4 code un-emitted.
         explicit=out/"r4-blit-explicit-instantiation.cpp"
-        preamble=(native/"headless"/"performance.h").resolve()
+        # The exact configured Vulkan graphics-pipeline TU itself includes
+        # performance.h, native Vulkan types, the N60 include-next bridge,
+        # and all other real dependencies. Reuse that full preamble rather
+        # than guessing a partial include list in a scratch translation unit.
+        real_tu=Path(record["file"]).resolve()
         explicit.write_text(
-            f'#include "{preamble.as_posix()}"\n'
-            '#include "common/scope_exit.h"\n'
-            '#include "video_core/renderer_vulkan/vk_texture_cache.h"\n'
-            '#include "video_core/texture_cache/texture_cache.h"\n'
+            f'#include "{real_tu.as_posix()}"\n'
             'static_assert(!Vulkan::TextureCacheParams::FRAMEBUFFER_BLITS);\n'
             'template bool VideoCommon::TextureCache<Vulkan::TextureCacheParams>::BlitImage(\n'
             '    const Tegra::Engines::Fermi2D::Surface&,\n'

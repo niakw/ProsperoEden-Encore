@@ -1,0 +1,39 @@
+name: NS1 R23 four maintained JIT sources (host-only)
+on:
+  push:
+    branches:
+      - research/ns1-r23-jit-x64-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-jit-x64-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  four-selected-jit-tus:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Enforce exact pin, real CMake owner selection and host JIT proofs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "0bdc8ec5cdda5cf9c55b51fa1e670d9b90b3505e"
+          python3 -B vendor/tests/ns1_r23_11_jit_x64_provenance.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path("headless/CMakeLists.txt").read_text()
+          assert s.count('list(REMOVE_ITEM eden_r23_jit_units')==1
+          assert 'get_target_property(eden_r23_jit_units dynarmic SOURCES)' in s
+          names=('emit_x64_floating_point.cpp','emit_x64_sm4.cpp',
+                 'emit_x64_vector.cpp','emit_x64_vector_floating_point.cpp')
+          for name in names:
+              assert name in s and (Path("vendor/encore-active/eden-core/src/dynarmic/backend/x64")/name).is_file()
+          print("NS1_R23_X64_FOUR_REAL_SOURCE_OWNER_PASS")
+          PY

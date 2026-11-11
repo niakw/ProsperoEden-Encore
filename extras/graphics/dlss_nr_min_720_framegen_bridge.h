@@ -57,7 +57,9 @@ struct FramegenBridgeCandidate {
 [[nodiscard]] constexpr int EffectiveCompositeFramegen(
     int selected_neural_mode,int requested_method) noexcept {
     if(requested_method<0||requested_method>3)return 0;
-    const bool neural=selected_neural_mode==4||selected_neural_mode==5;
+    // A4K Detail/Soft/Denoise (1-3) and DLSS-NR Original/Compact
+    // (4-5) are all independently selected Neural Rendering methods.
+    const bool neural=selected_neural_mode>=1&&selected_neural_mode<=5;
     return neural ? 0 : requested_method;
 }
 

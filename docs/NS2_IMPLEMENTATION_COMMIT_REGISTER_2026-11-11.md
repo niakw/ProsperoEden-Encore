@@ -1,5 +1,19 @@
 # NS2 — source commit checkpoint (2026-11-11)
 
+## R2 latest — union-wide intra-command alias guard QUALIFIED (11 Nov 2026)
+
+**Research code:** vendor [951d3b9d](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/951d3b9dd7c5ca897153ba0dee64ba94d6bf0eb7), draft [vendor PR #38](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/38). The real native opt-in StagingRegionCoalescer now checks *all previously admitted regions* against each new region before coalescing. It rejects WAW overlaps within the destination VkBuffer for all memory configurations, and cross-region RAW/WAR in the actual same VkDeviceMemory binding space (including offsets and shared VMA backing). A refused append preserves the original recorded regions; the runtime falls back to the unchanged ordered CopyBuffer path if the candidate list is unsafe or the 64-entry builder overflows. **This guards optimization admission, not a retrospective claim that a pre-existing invalid Vulkan copy command has been fixed.** Original explicit barriers and command ordering remain unchanged.
+
+**Spec:** vkCmdCopyBuffer VUID-pRegions-00117 prohibits a source/destination overlap anywhere in the command, and VUID-pRegions-12482 prohibits multiple writes to a destination memory location. [Vulkan specification](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyBuffer.html).
+
+**Host CI:** [vendor source regression #42941277533](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42941277533) **PASS**; [vendor quality #42941277556](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/42941277556) **PASS**. Includes independently tested negative WAW, RAW, WAR, non-adjacent and same VkDeviceMemory offset cases, as well as the earlier 64 deterministic byte-equivalence scenarios. Host tests and source-derived mock execution do **not** prove full native linking, actual GPU retirement, or performance.
+
+**Encore research-only pin:** [2c9402a3](https://github.com/niakw/ProsperoEden-Encore/commit/2c9402a36727174b103e32e51cfcb38f8b133114) → vendor 951d3b9d. [R2 CMake source admission #42941509701](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42941509701) **PASS (9/9)**; [strict vendor/Vulkan parity #42941509714](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42941509714) **PASS**. Vendor hash receipts remain exact, and OFF is still default. Production main gitlink 90c9c8a2 unchanged.
+
+**Outstanding R2:** true strong staging+destination owner leases until GPU completion; guest channel and queue identities; proven ordering/flush/barriers if cross-command aggregation is attempted; full native PS5/NS1 compile and console validation. **Cross-command batching is OFF.** The three R2/R3/R4 native/console qualification tracks remain open. No merge, no production build, no release.
+
+
+
 
 ## Latest R2 production-owner milestone — verified *in-call* contiguous-region fusion (11 November 2026)
 

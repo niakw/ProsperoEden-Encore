@@ -238,3 +238,8 @@ The pinned Eden source and [native build recipe](../../tools/build-headless-nati
 ### R23 pass 19 — native Vulkan present retry already maintained; upstream default policy #81 (11 Nov 2026)
 
 [Source E1 comparison](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS19_2026-11-11.md): pinned maintained Vulkan present manager and R08 renderer/header already contain bounded swapchain retries, discard path and atomic image count/format accessors. Upstream #81 also changes default NVDEC GPU→CPU and guest airplane mode off→on; these are separate guest/performance policy choices, **not** blindly accepted on PS5. The full 155-entry classification and fail-closed verifier record the case as reviewed with a deferred policy gate. **29 generic semantic reviews remain**, **22 confirmed source gaps**, **8 scoped policy/refactor gates**, **17 native header receipts**, **7 corrective release gates**. No new source implementation, native/console performance proof or production/vendor modification.
+
+
+### R23 pass 20 — rolled-back NCE GPU readback #57 (11 Nov 2026)
+
+[Source-only net-revert proof](ENCORE_AB_R23_SEMANTIC_SOURCE_PASS20_2026-11-11.md) traces shared `TryCacheInvalidation` and GPU-readback changes introduced upstream #57, then removed by later #47; the existing six-source before/after Git blob witness confirms no native C++ functional code to port for this historical intermediate feature. UI/setting removal is not a PS5 x64 optimization. JSON and strict validator now record **28** generic semantic reviews remaining, **22** confirmed source gaps, **8** separate policy/refactor gates, **17** header receipts and **7** corrective release gates. #6's independent later shared GPU dirty-page semantics remain open. No main/vendor/NS2, native build or console change.

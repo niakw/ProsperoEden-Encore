@@ -56,6 +56,8 @@ and temporal FSR3.1 require distinct model/graph/history proof.
   (not a user-saved flag) to attest that a post-FG spatial/AA pass
   processes BOTH real and generated streams.
 
+Additional edge cases cover 11 passes + Present, five source MSAA modes **without NR or postprocessing**, and **80** tests for per-pass Original NR intensity / FSR1 or SGSR sharpness. The research recipe schema is **v3**; v1/v2 are rejected, and -1 inherits the saved preference while 0–100% is explicit only on stages with a real strength control.
+
 This is **finite and exhaustive within that declared search domain**.
 It does not claim every arbitrary n-pass graph, true GPU rendering or
 all hardware-specific quality/format combinations are already proven.
@@ -66,7 +68,7 @@ alternative RECIPES with measured physical-PS5 GPU frame time and peak
 GPU memory, verified per-stage GPU trace, output-quality A/B, valid
 native image+fence bindings and proven presentation/fallback. No
 quality-preserving reordering is inferred automatically; recipes with
-the exact same version/source/MSAA/ordered methods/extent are
+the exact same version/source/MSAA/ordered methods/extent/**strength** are
 **deduplicated**. Wrong output size or missing GPU budget is rejected.
 The return status is **ResearchWinnerOnly** even with all measurements:
 it never sets the PS5 runtime enable flag.

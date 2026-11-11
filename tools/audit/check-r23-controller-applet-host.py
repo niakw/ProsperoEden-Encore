@@ -7,7 +7,7 @@ import hashlib, subprocess, tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 OLD = ROOT / "vendor/sources/eden/src/core/frontend/applets/controller.cpp"
-NEW = ROOT / "headless/r23_controller_applet_ps5.cpp"
+NEW = ROOT / "vendor/encore-active/eden-backports/src/core/frontend/applets/controller.cpp"
 
 def blob(p):
     b = p.read_bytes()
@@ -19,11 +19,12 @@ old, new = OLD.read_text(), NEW.read_text()
 assert "keep_connected[index]" not in old
 assert "if (keep_connected[index]) continue;" in new
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
-for marker in ('eden_r23_controller_original "frontend/applets/controller.cpp"',
-               'r23_controller_applet_ps5.cpp', 'list(FIND eden_r23_controller_sources',
-               'list(REMOVE_ITEM eden_r23_controller_sources',
-               'set_property(TARGET core PROPERTY SOURCES'):
+assert "r23_controller_applet_ps5.cpp" not in cmake, "redundant native controller override reintroduced"
+for marker in ('src/core/frontend/applets/controller.cpp', 'if (keep_connected[index]) continue;'):
     assert marker in cmake, marker
+import json
+manifest = json.loads((ROOT/"vendor/encore-active/eden-backports/manifest.json").read_text())
+assert "src/core/frontend/applets/controller.cpp" in manifest["entries"]
 marker = "void DefaultControllerApplet::ReconfigureControllers("
 assert new.count(marker) == 1
 start = new.index(marker)
@@ -150,4 +151,4 @@ with tempfile.TemporaryDirectory(prefix="r23-controller-") as temp:
         "-fsanitize=address,undefined","-fno-omit-frame-pointer",
         str(path),"-o",str(exe)], check=True)
     subprocess.run([str(exe)],check=True)
-print("R23_CONTROLLER_FULL_SOURCE_PIN_CMAKE_OWNER_PASS")
+print("R23_CONTROLLER_SHIPPING_SOURCE_PIN_CMAKE_OWNER_PASS")

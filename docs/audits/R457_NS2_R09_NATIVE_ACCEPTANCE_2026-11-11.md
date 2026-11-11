@@ -19,3 +19,22 @@ Host source validation does not establish gameplay success. This commit requests
 ## Production native build rerun after validated host fixes
 
 Host source preflight identified and fixed: dynamic hero title/caption checks in three independent scripts, three neutral workflow step labels, two whitespace defects in native NS2 workflow YAML, and the SHA-pinned shared R437/R2 source replay required by the source audit. First four source shards were green at run #43073115349; full PS5 SDK compilation is not yet qualified. Current code unchanged from 1cd6b31c155eb1b2d269e48d873caba6dbd41266; package must be generated from this new exact source SHA, never from the R457 checkpoint. No release publication without a green build and exact app+symbols provenance.
+
+## Native acceptance retry after WebP package repair
+
+The full native build #43074114537 linked all 1,588 native objects and staged
+eboot.bin, but the package inventory rejected an optional daily wallpaper
+family generated as JPEG. The reviewed correction now converts all bundled
+daily Switch 1/2 backgrounds to WebP, checks RIFF content and exact indexed
+filenames, retains existing user-imported PNG/JPEG/TGA/WebP files, and normalizes
+EXIF orientation before stripping metadata. The duplicate JPEG inventory
+validator was removed. Native preflight #43080730130 is green on source
+11304bb3; the five shorter source-preflight shards are green. Vendor research
+PRs #34/#39/#40/#42 and engine #43 are closed as source-superseded. Vendor
+Dependabot #44 was merged for docs only. No research-only 720p GPU path has
+been promoted to a qualified PS5 shader pipeline.
+
+This requests exactly one fresh canonical PS5 package from the updated source
+and its existing source-pinned vendor, with no GitHub Release publication.
+Actual NS1/NS2 game boots, color/orientation on console, and R09 real PS5
+output remain console acceptance gates.

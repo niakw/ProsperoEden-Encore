@@ -24,6 +24,7 @@ static StageEvidence Proof(unsigned idx){
     p.hud_history_safe=true;
     p.native_fg_provider_verified=true;
     p.measured_gpu_memory_and_time_budget=true;
+    p.processes_real_and_generated_verified=true;
     return p;
 }
 int main(){
@@ -131,6 +132,12 @@ int main(){
     proof.stages[3]=StageEvidence{};
     auto result=QualifyBoundRecipe(after_fg,proof);
     assert(result.reason==R::HostCandidateOnly&&result.frame_generation);
+    // Saved post-FG flag is NOT evidence that the native owner processes
+    // generated+real stream images. Fail closed without runtime proof.
+    proof.stages[2].processes_real_and_generated_verified=false;
+    assert(QualifyBoundRecipe(after_fg,proof).reason==
+           R::GeneratedFramesNotProcessed);
+    proof.stages[2].processes_real_and_generated_verified=true;
     after_fg.stages[2].processes_real_and_generated=false;
     assert(QualifyBoundRecipe(after_fg,proof).reason==
            R::GeneratedFramesNotProcessed);

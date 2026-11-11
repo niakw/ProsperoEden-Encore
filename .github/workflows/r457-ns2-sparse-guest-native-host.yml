@@ -1,0 +1,36 @@
+name: R457 native sparse 12GiB owner qualification (host, no PS5 build)
+on:
+  pull_request:
+    paths:
+      - 'src/ns2_sparse_guest.cpp'
+      - 'src/ns2_sparse_guest.h'
+      - 'src/host_memory.cpp'
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/test_r457_native_sparse_owner.cpp'
+      - '.github/workflows/r457-ns2-sparse-guest-native-host.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-syscall-owner-model:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Compile exact native owner and mock syscalls with Clang C++20 UBSan
+        run: |
+          set -euo pipefail
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -pedantic \
+            -DPS5_NATIVE=1 -fsanitize=undefined -fno-sanitize-recover=all \
+            -Isrc -Iheadless src/ns2_sparse_guest.cpp \
+            tools/ns2/test_r457_native_sparse_owner.cpp -o /tmp/r457-native-owner
+          /tmp/r457-native-owner
+      - name: Verify disabled by default and exact maintained guest PTE owner
+        run: |
+          set -euo pipefail
+          grep -F 'option(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING' headless/CMakeLists.txt
+          grep -F 'if(EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING)' headless/CMakeLists.txt
+          grep -F 'EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING' src/host_memory.cpp
+          test "$(git ls-tree HEAD vendor | cut -d ' ' -f 3)" != 90c9c8a203a27181e23349a889a8f2a7d1cd9dd2

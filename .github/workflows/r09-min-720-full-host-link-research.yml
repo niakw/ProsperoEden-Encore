@@ -1,6 +1,10 @@
 name: R09 Min 720p - ONE research Linux Vulkan native host link
 
-# Isolated ONE source-triggered research relink. A pull_request paths filter
+# Isolated source-triggered research relink (host CMake or this CI file).
+# The first correction run failed fast because Ninja stores the R24 owner
+# under an absolute path, not renderer_vulkan/. The updated classifier
+# includes the genuine owner without touching PS5 build targets.
+# A pull_request paths filter
 # sees the accumulated PR diff and repeats the entire 1358-object build on
 # every new commit, so only the corrected host CMake source path may trigger.
 # Never runs on main and never includes private model, weights or PS5 SDK.
@@ -9,6 +13,7 @@ on:
     branches: [feature/dlss-nr-min-rdna2-ps5]
     paths:
       - 'tools/graphics/r09_host_link_after.cmake'
+      - '.github/workflows/r09-min-720-full-host-link-research.yml'
 
 permissions:
   contents: read
@@ -110,7 +115,10 @@ jobs:
               and ".o:" in line
               and ("/renderer_vulkan/" in line
                    or "/vulkan_common/" in line
-                   or "nr_rdna2_" in line)
+                   or "nr_rdna2_" in line
+                   # Explicit vendor R24 source has a CMake absolute
+                   # source path, not /renderer_vulkan/ in Ninja target.
+                   or "msaa_color_shadow_pass.cpp.o" in line)
           })
           if len(targets) < 50:
               raise SystemExit("R09_VULKAN_NATIVE_OBJECT_INVENTORY_INCOMPLETE="

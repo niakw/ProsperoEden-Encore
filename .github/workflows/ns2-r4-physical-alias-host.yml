@@ -1,0 +1,26 @@
+name: NS2 R4 physical alias actual-source host contract
+on:
+  push:
+    branches: [research/ns2-r4-volume-active-native-20261111]
+    paths:
+      - vendor
+      - tools/ns2/check_r4_physical_alias_host.py
+      - .github/workflows/ns2-r4-physical-alias-host.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ns2-r4-physical-alias-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  physical-alias-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact research engine and vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Compile real source-derived physical mapping checks
+        run: python3 -B tools/ns2/check_r4_physical_alias_host.py

@@ -87,21 +87,22 @@ printf 'original host test\n' > "$host_test"
 printf 'original host config\n' > "$psbc_host"
 printf 'original ps5 config\n' > "$psbc_ps5"
 """ + cleanup.group() + r"""
-cross_backup="${cross_file}.encore-backup.$"
+cross_backup="${cross_file}.encore-backup.PIDTOKEN"
 cp -p "$cross_file" "$cross_backup"
 printf 'mutated cross\n' > "$cross_file"
 if [[ "$2" == late ]]; then
-    host_test_backup="${host_test}.encore-backup.$"
+    host_test_backup="${host_test}.encore-backup.PIDTOKEN"
     cp -p "$host_test" "$host_test_backup"
     printf 'mutated host test\n' > "$host_test"
     for cfg in "$psbc_host" "$psbc_ps5"; do
-        cp -p "$cfg" "${cfg}.encore-backup.$"
+        cp -p "$cfg" "${cfg}.encore-backup.PIDTOKEN"
         psbc_configs+=("$cfg")
         printf 'mutated compiler config\n' > "$cfg"
     done
 fi
 exit 31
 """
+        harness = harness.replace(".encore-backup.PIDTOKEN", ".encore-backup." + chr(36) * 2)
         observed = subprocess.run(["bash", "-c", harness, "rollback-host", sandbox, scenario],
                                   capture_output=True, text=True)
         assert observed.returncode == 31, (scenario, observed.stderr)

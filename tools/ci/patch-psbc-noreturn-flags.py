@@ -12,7 +12,8 @@ import sys
 def patched_bytes(raw: bytes) -> bytes:
     marker = b"\t-DHAVE_FUNC_ATTRIBUTE_PACKED=1 " + bytes((92, 10))
     addition = b"\t-DHAVE_FUNC_ATTRIBUTE_NORETURN=1 " + bytes((92, 10))
-    if raw.count(marker) != 1 or addition in raw:
+    if (raw.count(marker) != 1 or raw.count(b"-DHAVE_FUNC_ATTRIBUTE_PACKED=1") != 1
+            or b"-DHAVE_FUNC_ATTRIBUTE_NORETURN=1" in raw):
         raise ValueError("PSBC config drift: require exactly one PACKED and no NORETURN")
     return raw.replace(marker, marker + addition, 1)
 

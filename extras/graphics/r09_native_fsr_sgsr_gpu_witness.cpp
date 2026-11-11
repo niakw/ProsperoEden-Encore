@@ -62,7 +62,7 @@ std::array<std::uint32_t,9u> SgsrConstants(unsigned w,unsigned h,
             Bits(1.f),Bits(1.f),Bits(0.f),Bits(0.f),
             Bits(sharpness)};
 }
-VkRenderPass CreateRenderPass(Host& h){
+VkRenderPass CreateRenderPass(Host& h,bool include_external_out){
     VkAttachmentDescription color{};
     color.format=VK_FORMAT_R16G16B16A16_SFLOAT;
     color.samples=VK_SAMPLE_COUNT_1_BIT;
@@ -96,7 +96,12 @@ VkRenderPass CreateRenderPass(Host& h){
     ci.sType=VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     ci.attachmentCount=1u;ci.pAttachments=&color;
     ci.subpassCount=1u;ci.pSubpasses=&sub;
-    ci.dependencyCount=2u;ci.pDependencies=dependencies;
+    // The native render pass has an explicit subpass→external
+    // color-write→fragment/transfer-read dependency. It is sufficient
+    // even without the separate image barrier. Negative tests omit
+    // BOTH protections; do not mistake a protected path for a hazard.
+    ci.dependencyCount=include_external_out?2u:1u;
+    ci.pDependencies=dependencies;
     VkRenderPass pass{};
     Check(vkCreateRenderPass(h.device,&ci,nullptr,&pass),"native renderpass");
     return pass;
@@ -181,7 +186,7 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
         throw std::runtime_error("No Vulkan graphics queue in host fixture");
 
     NativeGraph graph{h};
-    graph.renderpass=CreateRenderPass(h);
+    graph.renderpass=CreateRenderPass(h,!negative_missing_barrier);
     std::array<Image,4u> images{};
     images[0]=h.NewImage(source.width,source.height,
         VK_FORMAT_R32G32B32A32_SFLOAT,
@@ -394,11 +399,13 @@ void RunNative(Host& h,const std::array<const char*,5u>& shaders,
           "wait native GPU readback fence");
     vkDestroyFence(h.device,fence,nullptr);
     if(negative_missing_barrier){
-        // Deliberately violated native EASU color-write barrier.
+        // Deliberately remove BOTH native EASU color-write barriers
+        // (explicit VkImageMemoryBarrier and renderpass subpass->external
+        // dependency). Either one alone can provide sufficient ordering.
         // Do NOT inspect, compare or present undefined GPU pixels.
         if(h.validation_errors==0u)
             throw std::runtime_error(
-                "Khronos failed to detect native EASU/RCAS missing barrier");
+                "Khronos missed both omitted EASU/RCAS synchronization paths");
         std::cout<<"R09_AUTHENTIC_NATIVE_KHRONOS_NEGATIVE_BARRIER_REJECTED "
                  <<"errors="<<h.validation_errors
                  <<" no_undefined_readback=YES\n";

@@ -1,0 +1,78 @@
+name: NS2 R234 integrated host source and differential gates
+on:
+  push:
+    branches: [research/ns2-r234-integrated-native-20261111]
+    paths:
+      - vendor
+      - headless/CMakeLists.txt
+      - headless/vulkan.cmake
+      - tools/ns2/check_r234_integrated_source_host.py
+      - tools/ns2/check_r4_physical_alias_host.py
+      - .github/workflows/ns2-r234-integration-host.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ns2-r234-integrated-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pinned-owner-and-validated-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout isolated combined owner graph and exact vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify 19 exact owner blobs and all three research CMake selectors
+        run: python3 -B tools/ns2/check_r234_integrated_source_host.py
+      - name: Qualify actual staged R2 source methods with host sanitizers
+        run: python3 -B vendor/tools/ns2/check_r2_scheduler_staging_source_host.py
+      - name: Qualify actual R4 source physical alias admission with host sanitizers
+        run: python3 -B tools/ns2/check_r4_physical_alias_host.py
+      - name: Differential R3 maintained versus historical public decoder API
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd vendor
+          shims="${RUNNER_TEMP}/r3-shims"
+          mkdir -p "${shims}/common" "${shims}/video_core/textures"
+          cat > "${shims}/common/common_types.h" <<'EOF'
+          #pragma once
+          #include <cstdint>
+          using u8 = std::uint8_t;
+          using u32 = std::uint32_t;
+          using u64 = std::uint64_t;
+          EOF
+          cat > "${shims}/common/assert.h" <<'EOF'
+          #pragma once
+          #include <cstdlib>
+          #define ASSERT_MSG(condition, ...) do { if (!(condition)) std::abort(); } while (false)
+          EOF
+          printf '#pragma once\n' > "${shims}/video_core/gpu.h"
+          printf '#pragma once\n' > "${shims}/video_core/textures/texture.h"
+          test_file=encore-active/eden-core/tests/test_ns2_gob16_decoder_public_api.cpp
+          for compiler in clang++ g++; do
+            for opt in 1 2; do
+              old_result=''
+              for kind in old maintained; do
+                if [ "${kind}" = old ]; then
+                  source_file=sources/eden/src/video_core/textures/decoders.cpp
+                else
+                  source_file=encore-active/eden-core/src/video_core/textures/decoders.cpp
+                fi
+                exe="${RUNNER_TEMP}/r234-${compiler//+/p}-O${opt}-${kind}"
+                "${compiler}" -std=c++20 -O"${opt}" -Wall -Wextra -Werror \
+                  -Wno-unused-parameter -fsanitize=address,undefined \
+                  -fno-sanitize-recover=all -fno-omit-frame-pointer \
+                  -I"${shims}" -Isources/eden/src \
+                  "${test_file}" "${source_file}" -o "${exe}"
+                result=$("${exe}")
+                if [ "${kind}" = old ]; then old_result="${result}"; else
+                  test "${old_result}" = "${result}"
+                fi
+              done
+            done
+          done
+          echo 'R234_R3_DIFFERENTIAL_PASS old=maintained compiler=clang-gcc opt=O1-O2'

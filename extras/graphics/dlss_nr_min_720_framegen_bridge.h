@@ -72,7 +72,14 @@ AssessPostNeuralFramegen(const FramegenBridgeInput& e) noexcept {
     FramegenBridgeCandidate result{};
     const bool a4k=e.neural_mode>=1&&e.neural_mode<=3;
     const bool original=e.neural_mode==4;
-    if(!a4k&&!original)return result;
+    if(!a4k&&!original){
+        // The 720p combined bridge is not yet qualified for DLSS Compact;
+        // preserve explicit "model not qualified" instead of silently
+        // treating a selected neural engine as switched OFF.
+        if(e.neural_mode==5)
+            result.reason=FramegenBridgeReason::MissingOriginal;
+        return result;
+    }
     if(e.method==FG::FrameGeneration::Off){
         result.reason=FramegenBridgeReason::Disabled;return result;
     }

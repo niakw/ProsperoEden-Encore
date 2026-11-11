@@ -111,6 +111,14 @@ int main(){
                     e.spatial_filter=spatial;
                     e.post_spatial.extent=output;
                     const auto candidate=AssessPostNeuralFramegen(e);
+                    const bool shader_downscale=output.width<2560u &&
+                        SelectSpatialBackend(spatial)!=SpatialBackend::NativeSampler;
+                    if(shader_downscale){
+                        assert(candidate.reason==R::WrongOrderOrExtent);
+                        assert(!candidate.host_shape_qualified);
+                        assert(!candidate.ps5_runtime_enabled);
+                        continue;
+                    }
                     assert(candidate.reason==R::HostCandidateOnly);
                     assert(candidate.a4k_source);
                     assert(candidate.post_spatial_source.extent.width==output.width);
@@ -122,7 +130,7 @@ int main(){
             }
         }
     }
-    assert(a4k_fg_candidates==189u);
+    assert(a4k_fg_candidates==162u);
     auto q=Fixture(FG::FrameGeneration::MihawkGen);
     q.neural_mode=0;Expect(q,R::NoNeuralSelection);
     q=Fixture(FG::FrameGeneration::MihawkGen);

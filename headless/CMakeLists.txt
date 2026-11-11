@@ -361,6 +361,34 @@ list(FILTER jit_sources EXCLUDE REGEX "(^|/)emit_x64\\.cpp$")
 set_property(TARGET dynarmic PROPERTY SOURCES "${jit_sources}")
 target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/emit_x64.cpp")
 
+# R23 #11 — four complete maintained x64 emitter units. Explicitly
+# replace original CMake source owners, never append duplicate symbols.
+if(PS5_NATIVE)
+    set(EDEN_R23_X64_EMIT_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic/backend/x64")
+    get_target_property(eden_r23_jit_units dynarmic SOURCES)
+    foreach(eden_r23_jit_name IN ITEMS
+            emit_x64_floating_point.cpp
+            emit_x64_sm4.cpp
+            emit_x64_vector.cpp
+            emit_x64_vector_floating_point.cpp)
+        if(NOT EXISTS "${EDEN_R23_X64_EMIT_ROOT}/${eden_r23_jit_name}")
+            message(FATAL_ERROR "Missing maintained R23 x64 emitter ${eden_r23_jit_name}")
+        endif()
+        list(FIND eden_r23_jit_units
+                  "backend/x64/${eden_r23_jit_name}" eden_r23_jit_old)
+        if(eden_r23_jit_old LESS 0)
+            message(FATAL_ERROR "R23 x64 emitter source owner changed: ${eden_r23_jit_name}")
+        endif()
+        list(REMOVE_ITEM eden_r23_jit_units
+             "backend/x64/${eden_r23_jit_name}")
+        list(APPEND eden_r23_jit_units
+             "${EDEN_R23_X64_EMIT_ROOT}/${eden_r23_jit_name}")
+    endforeach()
+    set_property(TARGET dynarmic PROPERTY SOURCES "${eden_r23_jit_units}")
+    message(STATUS "R23 #11: exactly four reviewed maintained x64 emitter owners")
+endif()
+
 # Dynarmic scalar translation and optimizer are tracked complete sources.
 # impl/impl.cpp is included once by its adjacent translator.
 set(EDEN_MAINTAINED_SCALAR_IMPL

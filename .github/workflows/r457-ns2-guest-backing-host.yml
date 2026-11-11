@@ -4,6 +4,7 @@ on:
     paths:
       - 'headless/ps5_ns2_guest_backing_plan.h'
       - 'tools/ns2/test_r457_ps5_guest_backing_plan.cpp'
+      - 'tools/ns2/test_r457_12gib_virtual_mapping_host.cpp'
       - '.github/workflows/r457-ns2-guest-backing-host.yml'
   workflow_dispatch:
 permissions:
@@ -27,3 +28,6 @@ jobs:
           fi
           clang++ -std=c++20 -O1 -Wall -Wextra -Werror -pedantic -Iheadless             tools/ns2/test_r457_ps5_guest_backing_plan.cpp -o /tmp/r457-ns2-backing-plan-test
           /tmp/r457-ns2-backing-plan-test
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -pedantic -Iheadless \
+            tools/ns2/test_r457_12gib_virtual_mapping_host.cpp -o /tmp/r457-ns2-linux-segmented-test
+          /tmp/r457-ns2-linux-segmented-test

@@ -46,6 +46,7 @@
 #include "encore_overrides_generated.h"
 #include "neural_video_policy.h"
 #include "neural_runtime_state.h"
+#include "neural_a4k_spatial_launch_route.h"
 #include "encore_overrides_runtime.h"
 #include "fxaa_quality_select.h"
 #include "encore_performance_policy.h"
@@ -1664,13 +1665,23 @@ int main(int argc, char** argv) {
                     Eden::Report("neural",
                         "DLSS-NR Original: authenticated weights imported into private cache before game start");
             }
-            const bool neural_selectable=dlss_model_ready&&
+            const bool legacy_neural_selectable=
                 Eden::NeuralVideo::CanSelect(
                     requested_nr,profile_renderer,selected_filter,
                     requested_aa,requested_fg);
+            // One selected A4K CNN plus a separately selected spatial
+            // filter. Research-only: the two required runtime gates are
+            // FALSE, therefore A4K retains its existing internal 7/8/9
+            // filter and NO extra FSR/SGSR/FG pipeline is enabled.
+            const auto a4k_route=
+                Eden::Graphics::DlssNrMin::ResolveA4kSpatialLaunch(
+                    requested_nr,profile_renderer,selected_filter,
+                    requested_aa,requested_fg,legacy_neural_selectable);
+            const bool neural_selectable=dlss_model_ready&&
+                (legacy_neural_selectable||a4k_route.combine_enabled);
             const int mapped_filter=neural_selectable &&
                 Eden::NeuralVideo::IsA4k(requested_nr)
-                ? Eden::NeuralVideo::InternalA4kFilter(requested_nr)
+                ? a4k_route.present_filter
                 : (selected_filter>=5&&profile_renderer==0?0:selected_filter);
             Settings::values.scaling_filter.SetValue(filters[mapped_filter]);
             // Preserve ALL selected neural modes (A4K 1/2/3 and DLSS 4/5)

@@ -1,0 +1,38 @@
+name: NS1 R23 HID reconnect selected PS5 native header (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-hid95-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-hid95-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selected-hid-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check maintained native header and controller state rebind
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "1c02e14088899323daf13a6c1c67d67796eb20bf"
+          python3 -B vendor/tests/ns1_r23_95_hid_reconnect.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(APPEND controller_sources "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")' in s
+          assert 'target_include_directories(hid_core BEFORE PUBLIC "${EDEN_R23_HID_INCLUDE}")' in s
+          r=Path('vendor/encore-active/eden-core')
+          assert (r/'src/hid_core/frontend/emulated_controller.cpp').is_file()
+          assert (r/'include/hid_core/frontend/emulated_controller.h').is_file()
+          print('NS1_R23_HID_SOURCE_OWNER_PASS header=1 tu=1')
+          PY

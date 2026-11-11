@@ -389,3 +389,23 @@ A targeted literal scan for `1920`, `1080`, `2560`, `2160`, `1980`, `33u`, `60u`
 ### 720p attention throughput arithmetic (not a performance test)
 
 For the currently verified **eight full global-attention ViT blocks**, the original scalar QK and context matrices each require approximately `heads × tokens² × head_width` FMAs. Using 32 heads and width 32 for the eight blocks yields **107,374,182,400 FMAs/frame at 2560 padded tokens (1080p)** versus **15,099,494,400 FMAs/frame at 960 padded tokens (720p)**, or **14.0625% of the original scalar attention FMAs**. Counting two floating-point operations per FMA gives **30.199 GFLOPs per 720p neural frame** for those attention products, or **1.812 TFLOPs/s at 60 neural frames/s for attention alone**. These figures exclude every other learned operator, dispatch overhead, buffer traffic, cache pressure, FSR EASU/RCAS, the Switch GPU workload and console scheduling. They are not measured RDNA2 throughput, an FPS estimate, or proof of 60Hz viability. The tiled shader reduces shared-memory load duplication, not the quadratic FMA count.
+
+## 720p native owner graph and session allocation audit
+
+Host-only **full row-owner audit** now assigns each emitted 720p native row to exactly one policy owner: **Original 152 = pre(1) + FSwin(44) + Split-Swin(65) + ViT(40) + Decoder(1) + post(1)**; **Compact 76 = pre(1) + FSwin(16) + Split-Swin(17) + ViT(40) + Decoder(1) + post(1)**. All rows are counted once, with zero omissions or duplicates. The test uses the real `ExtractNativeFSwinSegments`, `BuildNativeSplitRoutes`, and `BuildNativeVitRoute` on reconstructed 720p shapes. This proves structural owner assignment, not that every learned operator is ready or GPU-recorded.
+
+**Real unpooled allocation contracts** are checked with source-linked tests against the engine's *pinned* vendor SHA `22b69d6053db41b74edac2633c012f925b84f69e`. The FrameSession external estimator mirrors `State::Make`, split/bottleneck and pre/down/up/post creation; it refuses drifts through **11 deliberate unsafe source mutations**. A second estimator mirrors all FSwin-layer `NrRdna2FSwinGpuTensors::Initialize` requests, including the actual C32 middle-buffer skip and the Q/K/V views **aliasing** the expanded buffer; a separate source guard requires those real native contracts and tests **9 unsafe mutations**.
+
+| Nominal 720p allocations per frame-session slot | Original | Compact |
+| --- | ---: | ---: |
+| FrameSession external buffers | 263 / 622.227 MiB | 137 / 546.289 MiB |
+| Independently owned FSwin layer buffers | 256 / 1,046.25 MiB | 92 / 455.625 MiB |
+| Additional 4K NR RGBA32F output + two FSR RGBA16F surfaces | 140.625 MiB | 140.625 MiB |
+| **Subtotal per slot** | **1,809.102 MiB** | **1,142.539 MiB** |
+| **Subtotal for 3 illustrative simultaneous frame slots** | **5,690,941,440 bytes** | **3,594,117,120 bytes** |
+
+These are the **nominal requested sizes of these specified independent buffers**, not PS5 peak measured VRAM, not measured GPU residency, and **not the total complete-model memory requirement**. We intentionally EXCLUDE GPU model weights, FSwin per-layer weight staging/upload, downsample/upsample adapters, intermediate staging images, other adapter allocations, guest and swapchain images, VMA tiling/padding, emulator/game/OS allocations and texture memory. The native 3 GiB `State::Make` cap applies only to its own external buffers and cannot bound all separately allocated FSwin resources. Native shader execution, model weights and full frame quality are not proved. The output upscale remains completely unwired.
+
+Most importantly, optimizing only the ViT pool in experimental **vendor PR #34** will **not** solve the full session memory cost. On its separately tested 960-token opt-in profile, nine buffers at scratch=4 require **14.0625 MiB** instead of legacy **173.4375 MiB** for the ViT part, saving **159.375 MiB per slot** in a hypothetical compiled research configuration. This savings must NOT be represented as present in the engine's pinned vendor: neither the pin nor the production mode was changed. The **FSwin allocations** are a larger independent optimization target. Pooling FSwin buffers requires a distinct live-handle/descriptor/transfer-barrier proof because layers intentionally own separate `MemoryUsage::Upload` and `MemoryUsage::DeviceLocal` buffers and the scheduler copies output to the next layer input. Blind aliasing would be unsafe.
+
+Current evidence: no trained Original model GPU session executing at 720p, no authentic image A/B, no measured PS5 VRAM or frame time, no finished post-neural EASU/RCAS renderer handoff. Both PRs stay draft and the PS5 runtime remains hard-disabled.

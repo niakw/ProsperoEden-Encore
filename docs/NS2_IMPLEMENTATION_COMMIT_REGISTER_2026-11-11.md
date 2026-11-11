@@ -1,5 +1,11 @@
 # NS2 — source commit checkpoint (2026-11-11)
 
+## R2 coverage correction identified — scheduler is a fourth active owner (11 Nov 2026)
+
+**Audit finding (not yet an additional PASS):** Vendor R2 PR #38 also changes `encore-active/eden-vulkan/vulkan_scheduler.cpp` (`Scheduler::DispatchWork` adds the guarded `r2_dispatched_chunks` epoch). The active native `headless/vulkan.cmake` removes old `renderer_vulkan/vk_scheduler.cpp` and compiles `headless/vulkan_scheduler.cpp` copied from the pinned vendor. The prior [3/3 native source/object gate #42997254745](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42997254745) does **not** by itself qualify this fourth modified translation unit, even though it qualified the three staging/cache/rasterizer owners.
+
+**Action:** Extend the exact PS5 CMake source selector, native `-fsyntax-only`, object codegen and partial-LTO test to include `vulkan_scheduler.cpp` as **4/4**, with the authentic corresponding `vk_scheduler.h` and `vk_buffer_cache.h` source-overlay SHA checks. This is a test-coverage correction, not evidence of a Vulkan/PS5 runtime regression or a reason to touch `main`. Do not promote R2 into the production vendor until the fourth native owner passes and device/NS1 tests remain separately qualified.
+
 ## R2 actual PS5 native object codegen 3/3 PASS — 11 November 2026
 
 **Newest qualified milestone:** [research commit `9119b135`](https://github.com/niakw/ProsperoEden-Encore/commit/9119b135d44a8a1fffc7952d3cf3fb371afab610); [focused PS5 native run #42997254745](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42997254745) **SUCCESS**, source branch `research/ns2-r2-stage-backing-cmake-20261111` pinning exact vendor R2 `38a6c1b6`. This run reconfigures the **actual** cached PS5 CMake/Ninja graph with `EDEN_RESEARCH_NS2_STAGE_BACKING=ON`, proves three precise active Vulkan owners and four header copies, then runs the complete native C++ syntax checks and **real compiler `-c` invocations** without ccache for all three. The active PS5 toolchain generates **LLVM LTO bitcode**, not immediate ELF, so the primary exact-command result is the successfully emitted LLVM bitcode object; a distinct `-fno-lto` run proves machine-code generation as an ELF64 x86-64 ET_REL for each source:

@@ -31,7 +31,12 @@ std::string LocalizedReleaseStatus(const AppUpdateInfo& info)
 {
     switch (info.state) {
     case AppUpdateInfo::State::up_to_date:
-        return pe::fill(tr("Already up to date: {0}"), {info.latest_version});
+        // The installed R-revision can be newer than the latest published
+        // stable release (e.g. a locally staged R457 against an older R1).
+        // Never mislabel the older release as the installed version.
+        return pe::fill(tr("Already up to date: {0}"),
+                        {info.installed_version.empty() ? info.latest_version
+                                                        : info.installed_version});
     case AppUpdateInfo::State::available:
         return std::string(tr("New Eden Encore release")) + ": " + info.latest_version;
     case AppUpdateInfo::State::newer_uninstallable:
@@ -647,7 +652,14 @@ void Launcher::press(Key key)
     if ((key == Key::l1 || key == Key::r1) &&
         (screen_ == Screen::home || screen_ == Screen::library ||
          screen_ == Screen::settings)) {
-        top_nav_focus_ = (active_main_tab_ + (key == Key::r1 ? 1 : 3)) % 4;
+        // Only physical destination tabs belong to shoulder navigation:
+        // Home=0, Library=1, Settings=4. Recent=2 and Update=3 remain
+        // accessible in the top row by D-pad, never through R1/L1.
+        static constexpr int kShoulderDestinations[] = {0, 1, 4};
+        const int current = active_main_tab_ == 1 ? 1 :
+                            active_main_tab_ == 3 ? 2 : 0;
+        const int next = (current + (key == Key::r1 ? 1 : 2)) % 3;
+        top_nav_focus_ = kShoulderDestinations[next];
         (void)press_top_nav(Key::cross);
         return;
     }

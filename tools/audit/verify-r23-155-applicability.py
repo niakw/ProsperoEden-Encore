@@ -56,7 +56,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 29,
+        "runtime-semantic-review-pending": 28,
+        "reviewed-NCE-GPU-readback-reverted-non-native-settings": 1,
         "reviewed-PS5-Vulkan-presenter-maintained-defaults-policy-deferred": 1,
         "reviewed-NCE-settings-toggle-no-PS5-x64-port": 1,
         "reviewed-native-mmap-IOFile-experimental-policy-deferred": 1,
@@ -143,6 +144,13 @@ def validate(root: Path, app: dict | None = None) -> dict:
     for token in ("#81", "3cdd2ce141", "5194b6b183cba24f7ab966c16437884ac75d284f", "d45f0b7bbca982f133dcabcd0621e40cff4f74e5", "29"):
         if token not in present_evidence:
             raise ValueError(f"R23 #81 source proof missing {token}")
+    row57 = next((item for item in rows if item["index"] == 57), None)
+    if row57 is None or row57["classification"] != "reviewed-NCE-GPU-readback-reverted-non-native-settings":
+        raise ValueError("R23 #57 GPU rollback disposition missing")
+    doc57 = (root / "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS20_2026-11-11.md").read_text()
+    for token in ("#57", "#47", "0e11fe8b5e", "b4d576001417", "28"):
+        if token not in doc57:
+            raise ValueError(f"R23 #57 net-revert receipt missing {token}")
     for number, category in expected_new.items():
         if next(x for x in rows if x["index"] == number)["classification"] != category:
             raise ValueError(f"R23 new source-level proof #{number} lost")
@@ -639,7 +647,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 29
+    assert validate(root)["runtime_semantic_cases_pending"] == 28
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

@@ -1,8 +1,8 @@
-# Eden Encore R2 — Development Preview
+# Eden Encore R457 — Development Preview
 
 ### Complete post-R1 development changelog · 15 October – 11 November 2026
 
-> **UNPUBLISHED DRAFT PRERELEASE — ZERO RELEASE ASSETS.** This is the proposed R2 development changelog, now updated through the **R457 native PS5 CI build** of 11 November 2026. A signed, packaged candidate exists as temporary GitHub Actions artifacts, **not as assets attached to this draft**. P0–P4 source and host evidence must not be confused with physical PS5 execution; **P5 native compilation, linking, signing and ZIP checks passed CI, but installation, gameplay, performance and stability on a real PS5 remain unverified**.
+> **UNPUBLISHED DRAFT PRERELEASE — ZERO RELEASE ASSETS.** This is the proposed R457 development changelog, now updated through the **R457 native PS5 CI build** of 11 November 2026. A signed, packaged candidate exists as temporary GitHub Actions artifacts, **not as assets attached to this draft**. P0–P4 source and host evidence must not be confused with physical PS5 execution; **P5 native compilation, linking, signing and ZIP checks passed CI, but installation, gameplay, performance and stability on a real PS5 remain unverified**.
 
 **Draft R457 reference:** engine `ec8b519182532d3864c5a67dd27aa41aa9d43ff3` · pinned vendor `90c9c8a203a27181e23349a889a8f2a7d1cd9dd2` · source changes since the R1 compiled-source SHA `5629395324ff65c98b50c44f35f2142a4a92654a`.
 
@@ -19,7 +19,7 @@
 - **Graphics and image processing.** Preserved spatial FSR 1 (EASU/RCAS and sharpening), revised presentation/AA/scaling policies, optional frame-interpolation source work and a separate neural-rendering R09 development path.
 - **Reliability and tooling.** Memory ownership, HLE/IPC, video queues, shader/graphics synchronization, more useful diagnostics, hardened release provenance and bounded code/host verification.
 - **International user documentation.** Six user-facing document types available across **all 29 application catalog locales**. The launcher source now exposes **exactly all 31 official PS5 system language/region choices**, backed by 31 catalogs (including distinct English US/UK variants), with no non-PS5 additions.
-- **First R2 native PS5 candidate (CI only).** R457 linked, signed and packaged at exact engine SHA `ec8b5191`, with a verified release ZIP, FTP ZIP and SHA-256 manifest; no PS5 game test or public release is implied.
+- **First R457 native PS5 candidate (CI only).** R457 linked, signed and packaged at exact engine SHA `ec8b5191`, with a verified release ZIP, FTP ZIP and SHA-256 manifest; no PS5 game test or public release is implied.
 - **Clean GitHub presentation.** Neutral workflow/job/step titles and non-essential brand mentions in owned source comments; required technical API names, provenance and third-party license notices stay intact.
 
 ## 1. Unified engine and project architecture (P0)
@@ -233,7 +233,7 @@
 - Avoided treating green jobs from different SHA revisions as one clean acceptance record.
 - Clarified the actual release workflow: ordinary `main` pushes do not cause a full native PS5 build; an explicit manual action or approved build marker is required; release publication is a further deliberate step.
 - Updated install guides so they reference actual R1 downloadable file names instead of imaginary historical assets.
-- Added this expanded, English-only R2 draft to an isolated release-preparation branch, with **no release assets and no automatic publication**.
+- Added this expanded, English-only R457 draft to an isolated release-preparation branch, with **no release assets and no automatic publication**.
 
 ## R457 native build and packaging evidence — 11 November 2026
 
@@ -250,7 +250,7 @@
 
 ## 13. Development milestone summary for this draft
 
-| Milestone | R2 prerelease narrative | What is not included |
+| Milestone | R457 prerelease narrative | What is not included |
 | --- | --- | --- |
 | **P0** — common architecture, provenance, source CI | **Completed development scope** | PS5 hardware verification |
 | **P1** — loaders, CPU/JIT, memory, HLE and services | **Completed development scope** | Game-by-game console compatibility |
@@ -265,7 +265,7 @@ This editorial summary **does not rewrite the tracked host evidence or the actua
 
 **Last hardware-tested firmware:** **PS5 13.60 only**. There is no documented minimum firmware and no recommendation to update a console merely to match the test target.
 
-**First-generation titles:** existing first-generation behavior is the baseline. Previously observed issues included FC27 frame-pacing/HUD freezes and occasional crashes; BOTW was reported as playable in selected profiles on an older binary. None of these results qualify the new R2 candidate.
+**First-generation titles:** existing first-generation behavior is the baseline. Previously observed issues included FC27 frame-pacing/HUD freezes and occasional crashes; BOTW was reported as playable in selected profiles on an older binary. None of these results qualify the new R457 candidate.
 
 **Second-generation titles:** Mario Kart World and Donkey Kong Bananza have previously reached guest initialization stages, but no confirmed guest-rendered first frame on the physical PS5 is available. Do not interpret loader progress, Vulkan initialization or host shader compilation as game compatibility.
 
@@ -279,7 +279,7 @@ This editorial summary **does not rewrite the tracked host evidence or the actua
 
 ## 15. Install and upgrade information
 
-**No file is attached to this R2 draft release (zero assets); do not publish it.** The independently audited [R457 CI bundle](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42942150990/artifacts/13821128432) and [R457 staged FTP folder](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42942150990/artifacts/13822080376) exist as temporary Actions artifacts (expiry: **25 November 2026**), not published release assets. For the last public release, download the [15 October R1 FTP package](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), which includes:
+**No file is attached to this R457 draft release (zero assets); do not publish it.** The independently audited [R457 CI bundle](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42942150990/artifacts/13821128432) and [R457 staged FTP folder](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42942150990/artifacts/13822080376) exist as temporary Actions artifacts (expiry: **25 November 2026**), not published release assets. For the last public release, download the [15 October R1 FTP package](https://github.com/niakw/Prospero.Eden-Encore/releases/tag/encore-R1-56293953), which includes:
 
 - `Eden-Encore-56293953-FTP-PPSA99008.zip`
 - `SHA256SUMS`

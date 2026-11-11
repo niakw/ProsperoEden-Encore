@@ -1,0 +1,15 @@
+diff --git a/encore-active/eden-core/src/common/fs/path_util.cpp b/encore-active/eden-core/src/common/fs/path_util.cpp
+--- a/encore-active/eden-core/src/common/fs/path_util.cpp
++++ b/encore-active/eden-core/src/common/fs/path_util.cpp
+@@ -507,7 +507,11 @@
+ 
+     path = std::move(resolved);
+ 
++    // POSIX absolute root must remain a root, not an empty relative path.
++    if (absolute && path.size() == 1 && path[0] == type2) {
++        return path;
++    }
+     return std::string(RemoveTrailingSlash(path));
+ }
+ 
+ std::string GetParentPath(std::string_view path) {

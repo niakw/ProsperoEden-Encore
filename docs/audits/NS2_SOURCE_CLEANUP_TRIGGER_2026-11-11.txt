@@ -1,0 +1,3 @@
+NS2 production source-integration cleanup requested and authorized on 2026-11-11.
+engine main reached 53a43f02f30fbe4e9772a2e5ce692aa6182b8066 via PR #57; superseded PRs #44 #49 #50 #51 #53 closed; preserve combined #56.
+Only exact named source branches may be deleted after verifying merged ancestry and closed PR state.

@@ -41,7 +41,7 @@ with tempfile.TemporaryDirectory(prefix='eden-radv-fork-equivalence-') as tmp:
     # sources/ and are compiled only after explicit maintained replacement.
     for relative in sorted(c03_extra):
         before[relative] = SOURCE / relative
-    assert set(before) == set(after) == set(module_path for module_path in before)
+    assert set(before) == set(after)
     print('VENDORED_RADV_FORK_EQUIVALENT_OK count=14 oracle_legacy=12 c03_full_source=2')
 
     # Replay installation from the EXACT original pinned inputs, then retry

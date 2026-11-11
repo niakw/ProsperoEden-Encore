@@ -101,13 +101,13 @@
     {
       "path": "headless/prosperoeden/eden_services.cpp",
       "historical_reviewed_git_blob": "6c5d76341ef2c97b7db7fff23545ee21333037da",
-      "post_snapshot_git_blob": "a444de4e8c177a5e075d26e06125d25584b160bb",
+      "post_snapshot_git_blob": "c012f4c87e6974d8bfa37c81bb3e060eb4d6c86a",
       "original_disposition": "new_source_issue_corrected",
       "source_scope": "FolderInfo probes firmware/ns1 and firmware/ns2 aliases through the existing validated firmware format classifier without following unsafe symlink directories",
       "review_kind": "host_source_service",
       "required_source_fragment": "Eden::DetectFirmwareFormat(folder)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11: Recognize NCA, extracted and ZIP firmware format in separate NS1/NS2 folders; count actual NCAs independently; no fabricated firmware validity for merely existing empty folders. Host/source review, hardware unverified."
+      "review_note": "2026-11-11: Recognize NCA, extracted and ZIP firmware format in separate NS1/NS2 folders; count actual NCAs independently; no fabricated firmware validity for merely existing empty folders. Host/source review, hardware unverified.\n2026-11-11 reviewed follow-up: Allow user-imported PNG/JPEG/TGA plus safe WebP (existing bounded decoder); shipped daily wallpapers remain constrained by an indexed WebP-only package snapshot. Source Git blob c012f4c87e6974d8bfa37c81bb3e060eb4d6c86a. Historical F07 digest untouched."
     },
     {
       "path": "headless/prosperoeden/eden_services.h",
@@ -133,12 +133,12 @@
     {
       "path": "headless/prosperoeden/frontend.cpp",
       "historical_reviewed_git_blob": "6dcd6bf28a868b40f5e44c508a908419f6b8f80f",
-      "post_snapshot_git_blob": "f50b79fd85511c455a7bb662a856f910f57370a3",
+      "post_snapshot_git_blob": "3f06a9a9c66eee09270fbe4919e6be98620b0bf5",
       "original_disposition": "reviewed_without_new_code_edit",
       "review_kind": "host_source_ui",
       "source_scope": "PS5 launcher language boot path now loads separate US and UK regional gettext catalogs with source fallback; overlay Multiplayer navigation now uses an explicit confirmed one-shot return to the existing launcher room screen",
       "required_source_fragment": "Eden::LaunchHandoff::TakeMultiplayerRequest()",
-      "review_note": "2026-11-09: Re-reviewed exact new Git blob f50b79fd85511c455a7bb662a856f910f57370a3 (previous post-F07 07347e90e4c19893e8b2fceb4aa97591af8617e1): confirmed game teardown before opening the existing launcher multiplayer room browser; no in-game network loop, no renderer ownership change, no NS1/NS2 proof and no hardware qualification. Historical F07 receipt unchanged.",
+      "review_note": "2026-11-09: Re-reviewed exact new Git blob f50b79fd85511c455a7bb662a856f910f57370a3 (previous post-F07 07347e90e4c19893e8b2fceb4aa97591af8617e1): confirmed game teardown before opening the existing launcher multiplayer room browser; no in-game network loop, no renderer ownership change, no NS1/NS2 proof and no hardware qualification. Historical F07 receipt unchanged.\n2026-11-11 reviewed follow-up: Remove up to 600 ms audio-teardown pause on launch and bound the final OpenGL jacket transfer retry; game boot and GPU handoff remain unqualified on a real console. Source Git blob 3f06a9a9c66eee09270fbe4919e6be98620b0bf5. Historical F07 digest untouched.",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
     },
     {

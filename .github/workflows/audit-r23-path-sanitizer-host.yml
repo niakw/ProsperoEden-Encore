@@ -1,0 +1,48 @@
+name: A/B R23 actual path sanitizer source A/B host (no PS5 build)
+
+on:
+  pull_request:
+    paths:
+      - "tests/audit_r23_path_sanitizer_host.cpp"
+      - ".github/workflows/audit-r23-path-sanitizer-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ab-r23-fs-path-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exact-source-path-abi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout frozen audit head and unchanged vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify unmodified original Eden source Git blob
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "22b69d6053db41b74edac2633c012f925b84f69e"
+          test "$(git -C vendor hash-object sources/eden/src/common/fs/path_util.cpp)" = "b4c7eae343df49eaae5327c5efa04a8d13dc4e19"
+          grep -Fq 'blob b4c7eae343df49eaae5327c5efa04a8d13dc4e19' tests/audit_r23_path_sanitizer_host.cpp
+          grep -Fq 'blob 82ea8f6cb2b3d365b0e3a96457694a81bb0bec7f' tests/audit_r23_path_sanitizer_host.cpp
+
+      - name: Build and execute source-extracted pinned and upstream FS functions under sanitizers
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang++ -std=c++20 -O1 -g -Wall -Wextra -Werror \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
+            tests/audit_r23_path_sanitizer_host.cpp -o /tmp/audit-r23-path
+          /tmp/audit-r23-path
+          echo "Exact original/upstream SanitizePath functions compared on a Linux host under ASan/UBSan (8 cases)." >> "$GITHUB_STEP_SUMMARY"
+          echo "Path behavior differs on roots and leading parent components; no PS5 runtime or filesystem security signoff." >> "$GITHUB_STEP_SUMMARY"

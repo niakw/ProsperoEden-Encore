@@ -39,6 +39,8 @@ jobs:
           start = src.index("bool TextureCache<P>::BlitImage(")
           end = src.index("const auto result = GetBlitImages(dst, src, copy);", start)
           active = src[start:end]
+          assert "#if defined(PS5_NATIVE) && defined(EDEN_RESEARCH_NS2_R4_VOLUME)" in active
+          assert "if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>)" in active
           checks = (
               "CaptureGraphicsTicket(maxwell3d)",
               "IsGraphicsCurrent(maxwell3d, *ticket)",

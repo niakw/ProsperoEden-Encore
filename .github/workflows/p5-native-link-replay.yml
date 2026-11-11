@@ -76,9 +76,15 @@ jobs:
           mkdir -p .local
           printf '%s\n' "$scratch" > .local/headless-cache
           export PATH="$HOME/.local/bin:$PATH"
+          # Match the real native builder before BOTH CMake configure and LLD.
+          # Otherwise CMake writes -L/target/lib, and the link wrapper exits
+          # before invoking the linker (PS5_PAYLOAD_SDK: unbound variable).
+          export PS5_PAYLOAD_SDK="$scratch/sdk"
           export EDEN_NATIVE_C_DEPS="$scratch/cdeps"
           export PROSPEROEDEN_GIT_DEPS_ROOT=.deps/repos
           export PROSPEROEDEN_DEPS_OFFLINE=1
+          test -s "$PS5_PAYLOAD_SDK/target/lib/libkernel.so"
+          test -s "$PS5_PAYLOAD_SDK/target/lib/libc++.a"
           cmake -S "$scratch/source" -B "$native" -G Ninja \
             -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON

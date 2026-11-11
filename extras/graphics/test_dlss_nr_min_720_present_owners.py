@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Audit the *currently unconnected* 720p R09 -> FSR handoff owners.
+"""Audit default + dormant research 720p R09 -> FSR Vulkan ownership.
 
 This is a fail-closed source guard, not a demonstration of a functioning
 post-neural FSR path. It requires actual Encore presenter and pinned vendor
@@ -24,37 +24,72 @@ def check(presenter: str, owners: dict[str, str]) -> None:
     if set(owners) != set(OWNERS):
         raise Drift("Pinned presenter owner list mismatch")
     draw = method(compact(presenter), "voidLayer::ConfigureDraw(")
-    # Existing code still passes FSR BEFORE R09, which must be changed in
-    # a later isolated, preflighted integration commit, not by this test.
+    # The DEFAULT presenter still runs FSR first. The research-only
+    # path is dormant behind TWO independent FALSE qualification flags.
+    # Both paths must remain correctly ordered and resource-owned.
     ordered(draw, (
-        "source_image_view=fsr->Draw(",
         "constautoselected=Eden::NeuralRuntime::Current();",
+        "boolresearch_post_neural_fsr=false;",
+        "source_image_view=fsr->Draw(",
         "constboolnr_exclusive=",
         "neural_images[image_index]=memory_allocator.CreateImage(",
         "constboolr09_recorded=neural_sessions[image_index]->Record();",
+        "source_image=target;",
         "source_image_view=*neural_views[image_index];",
+        "constVkImageViewupscaled=fsr->Draw(",
         "SetMatrixData(",
-    ), "Existing FSR-before-R09 presenter order")
-    require(draw, "std::holds_alternative<std::monostate>(sr_filter)",
-            "Present-mode FSR exclusivity")
-    require(draw, "std::holds_alternative<std::monostate>(anti_alias)",
-            "Present-mode AA exclusivity")
-    require(draw, ".extent={1920u,1080u,1u}",
-            "Still-fixed R09 Vulkan output image")
-    require(draw, "VK_FORMAT_R32G32B32A32_SFLOAT",
-            "Neural storage image format")
+    ), "Default FSR-before-R09 and separately gated post-R09 FSR")
+    for token,why in (
+        ("if(!research_post_neural_fsr){",
+         "Default pre-neural FSR must be unchanged"),
+        ("Eden::Graphics::DlssNrMin::kPostNeuralFsrRuntimeWired",
+         "Missing first explicit runtime denial"),
+        ("Eden::Graphics::DlssNrMin::kPs5MinRuntimeQualified",
+         "Missing second explicit runtime denial"),
+        ("std::holds_alternative<std::monostate>(sr_filter)",
+         "Default FSR exclusivity"),
+        ("std::holds_alternative<FSR>(sr_filter)",
+         "Research FSR selection"),
+        ("std::holds_alternative<std::monostate>(anti_alias)",
+         "AA exclusivity"),
+        ("VkExtent2D{1280u,720u}", "Research neural output shape"),
+        ("VkExtent2D{1920u,1080u}", "Unmodified 1080p default shape"),
+        (".extent={neural_extent.width,neural_extent.height,1u}",
+         "Output VkImage matches admitted neural extent"),
+        ("target,*neural_views[image_index],neural_extent,crop_rect",
+         "FSR input must be real neural VkImage AND VkImageView"),
+        ("srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT",
+         "Neural compute write visibility"),
+        ("dstAccessMask=VK_ACCESS_SHADER_READ_BIT",
+         "FSR shader sample visibility"),
+        ("VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT",
+         "Compute-to-fragment barrier"),
+        ("source_image_view=preserved_guest_view;",
+         "Restore original guest image view after failure"),
+        ("crop_rect=preserved_guest_crop;",
+         "Restore original guest crop after failure"),
+        ("if(!upscaled)throwstd::runtime_error(",
+         "Null FSR output must fail closed"),
+        ("VK_FORMAT_R32G32B32A32_SFLOAT",
+         "Neural output/storage format"),
+    ):
+        require(draw,token,why)
     ordered(draw, (
         "scheduler.Wait(resource_ticks[image_index]);",
         "neural_sessions[image_index].reset();",
-    ), "Current per-slot frame resource retirement")
-    # The current neural-result path updates the VIEW, not the actual image
-    # passed to FSR::Draw (which is currently called earlier anyway).
+    ), "Per-slot fence before neural-image lifetime retirement")
+
+    # The GPU result is a distinct image+view, not the guest image.
     result=draw[draw.find("constboolr09_recorded="):]
     result=result[:result.find("SetMatrixData(")]
-    if re.search(r"\bsource_image\s*=", result):
-        raise Drift("Presenter unexpectedly changed post-neural image ownership")
-    require(result, "source_image_view=*neural_views[image_index];",
-            "R09 successful result publishes only the view")
+    require(result,"source_image=target;",
+            "Real neural VkImage owner must be forwarded")
+    require(result,"source_image_view=*neural_views[image_index];",
+            "Neural output VkImageView identity")
+    require(result,"constVkImageViewupscaled=fsr->Draw(",
+            "FSR after neural output must exist under research macro")
+    require(result,"source_image_view=upscaled;",
+            "FSR RCAS result must feed final presentation")
 
     fsr_images=method(compact(owners["fsr"]), "voidFSR::CreateImages(")
     require(fsr_images, "m_dynamic_images.resize(m_image_count);",
@@ -89,26 +124,47 @@ def check(presenter: str, owners: dict[str, str]) -> None:
 
 def negative_tests(presenter: str, owners: dict[str, str]) -> int:
     tests=(
-        ("premature 720p presenter", "presenter",
-         ".extent={1920u,1080u,1u}", ".extent={1280u,720u,1u}"),
-        ("lost FSR shader input view", "fsr",
-         "UpdateDescriptorSets(device, source_image_view, image_index);",
-         "UpdateDescriptorSets(device, VK_NULL_HANDLE, image_index);"),
-        ("lost slot fence", "presenter",
-         "scheduler.Wait(resource_ticks[image_index]);",
-         "scheduler.NotWait(resource_ticks[image_index]);"),
-        ("wrong neural result view", "presenter",
-         "source_image_view=*neural_views[image_index];",
-         "source_image_view=*raw_image_views[image_index];"),
-        ("missing neural fragment visibility", "neural_present",
-         "VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |",
-         "VK_PIPELINE_STAGE_TRANSFER_BIT |"),
-        ("FSR output format drift", "fsr",
-         "images.images[Easu] = CreateWrappedImage(m_memory_allocator, m_extent, VK_FORMAT_R16G16B16A16_SFLOAT);",
-         "images.images[Easu] = CreateWrappedImage(m_memory_allocator, m_extent, VK_FORMAT_R32G32B32A32_SFLOAT);"),
-        ("discard NR-FSR exclusivity", "presenter",
+        ("default FSR mode exclusivity","presenter",
          "std::holds_alternative<std::monostate>(sr_filter)",
          "std::holds_alternative<FSR>(sr_filter)"),
+        ("premature 720-only output","presenter",
+         "VkExtent2D{1920u,1080u}","VkExtent2D{1280u,720u}"),
+        ("wrong research raster","presenter",
+         "VkExtent2D{1280u,720u}","VkExtent2D{1920u,1080u}"),
+        ("lost pre-FSR defer guard","presenter",
+         "if(!research_post_neural_fsr){","if(research_post_neural_fsr){"),
+        ("lifted first qualification gate","presenter",
+         "Eden::Graphics::DlssNrMin::kPostNeuralFsrRuntimeWired",
+         "true"),
+        ("lost neural VkImage ownership","presenter",
+         "source_image=target;","source_image=guest_source;"),
+        ("wrong FSR input image","presenter",
+         "target,*neural_views[image_index],",
+         "guest_source,*neural_views[image_index],"),
+        ("lost compute to fragment barrier","presenter",
+         "VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,",
+         "VK_PIPELINE_STAGE_TRANSFER_BIT,"),
+        ("null FSR result accepted","presenter",
+         "if(!upscaled)throw std::runtime_error(",
+         "if(false)throw std::runtime_error("),
+        ("lost guest fallback","presenter",
+         "source_image_view=preserved_guest_view;",
+         "source_image_view=source_image_view;"),
+        ("lost slot fence","presenter",
+         "scheduler.Wait(resource_ticks[image_index]);",
+         "scheduler.NotWait(resource_ticks[image_index]);"),
+        ("wrong neural result view","presenter",
+         "source_image_view=*neural_views[image_index];",
+         "source_image_view=*raw_image_views[image_index];"),
+        ("lost FSR shader input","fsr",
+         "UpdateDescriptorSets(device, source_image_view, image_index);",
+         "UpdateDescriptorSets(device, VK_NULL_HANDLE, image_index);"),
+        ("lost native neural fragment visibility","neural_present",
+         "VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |",
+         "VK_PIPELINE_STAGE_TRANSFER_BIT |"),
+        ("FSR EASU output format drift","fsr",
+         "images.images[Easu] = CreateWrappedImage(m_memory_allocator, m_extent, VK_FORMAT_R16G16B16A16_SFLOAT);",
+         "images.images[Easu] = CreateWrappedImage(m_memory_allocator, m_extent, VK_FORMAT_R32G32B32A32_SFLOAT);"),
     )
     for name,owner,before,after in tests:
         original=presenter if owner=="presenter" else owners[owner]
@@ -145,8 +201,18 @@ def main() -> int:
         print(f"R09_MIN_720_PRESENT_SOURCE {key} "
               f"sha256={hashlib.sha256(data.encode()).hexdigest()[:16]}")
     print(f"R09_MIN_720_PRESENT_SOURCE_GUARD_PASS negatives={negatives}")
-    print("R09_MIN_720_CURRENT_FSR_IS_PRE_NEURAL_AND_FIXED_1080")
-    print("R09_MIN_720_POST_NEURAL_FSR_NOT_WIRED_NOT_GPU_QUALIFIED")
+    # Both flags MUST remain false. Do not let a successful source
+    # guard silently enable a console runtime or declare GPU proof.
+    present_policy=compact(Path(
+        "extras/graphics/dlss_nr_min_720_present_handoff.h").read_text())
+    runtime_policy=compact(Path(
+        "extras/graphics/dlss_nr_min_policy.h").read_text())
+    require(present_policy,"inlineconstexprboolkPostNeuralFsrRuntimeWired=false;",
+            "Post-neural FSR remains default-OFF")
+    require(runtime_policy,"inlineconstexprboolkPs5MinRuntimeQualified=false;",
+            "PS5 neural mode remains default-OFF")
+    print("R09_MIN_720_DEFAULT_FSR_FIRST_RESEARCH_FSR_AFTER_NEURAL_SOURCE_PRESENT")
+    print("R09_MIN_720_POST_NEURAL_FSR_RUNTIME_DISABLED_NOT_GPU_QUALIFIED")
     return 0
 
 if __name__=="__main__":

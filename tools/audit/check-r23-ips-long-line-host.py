@@ -56,7 +56,7 @@ int main() {
     assert(over_boundary.data.size() == 249);
     const auto escapes = EscapeStringSequences("A\\nB\\tC\\eD\\?E\\");
     // The final single backslash is literal; escaped sequences collapse.
-    const std::string expected("A\\nB\\tC\\eD\\?E\\");
+    const std::string expected({'A', '\n', 'B', '\t', 'C', '\x1b', 'D', '?', 'E', '\\'});
     assert(escapes.data.size() == expected.size());
     assert(std::memcmp(escapes.data.data(), expected.data(), expected.size()) == 0);
 

@@ -98,9 +98,9 @@ with tempfile.TemporaryDirectory(prefix="encore-r09-native-syntax-") as temporar
                      *("anime4k_denoise_stage_"+str(i) for i in range(5))):
             symbol=stem.upper()+"_COMP_SPV"
             (shader_headers/(stem+"_comp_spv.h")).write_text(
-                "#pragma once\\n#include <array>\\n#include <cstdint>\\n"
+                "#pragma once\n#include <array>\n#include <cstdint>\n"
                 f"inline constexpr std::array<std::uint32_t,4> {symbol}"
-                "{0x07230203u,0u,0u,0u};\\n",encoding="utf-8")
+                "{0x07230203u,0u,0u,0u};\n",encoding="utf-8")
     for tool,header in (
         ("test-rdna2-decoder-tile-linear-spv.py",
          "rdna2_nr_decoder_tile_linear_comp_spv.h"),

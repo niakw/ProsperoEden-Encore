@@ -37,6 +37,10 @@ on:
       - '!tools/launcher/strings.py'
       - '!tools/check-language-runtime.py'
       - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
+      # A staged R23/C0x vendor patch can invalidate strict source-owner
+      # qualification even before a vendor gitlink bump; verify the *PR head*
+      # source graph, while production main builds remain a separate workflow.
+      - 'docs/audits/patchsets/**'
       - '.github/workflows/p0-p4-host-matrix.yml'
   workflow_dispatch:
 

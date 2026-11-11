@@ -21,6 +21,7 @@
 #include "dlss_nr_min_720_plan_emit.h"
 #include "dlss_nr_min_720_present_handoff.h"
 #include "dlss_nr_min_720_spatial_bridge.h"
+#include "native_spatial_chain_policy.h"
 #include "storage_paths.h"
 #include "video_core/renderer_vulkan/nr_rdna2_frame_session.h"
 #include "common/logging.h"
@@ -194,6 +195,114 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     const bool research_post_neural_spatial=
         research_post_neural_fsr||research_post_neural_other;
 
+    // Real native two-stage research candidate: FSR1 (EASU+RCAS)
+    // 720p -> 1440p, then SGSR 1440p -> 4K. The two actual borrowed
+    // VkImage+View pairs are distinct and kept alive per frame slot.
+    // THE TWO RUNTIME FLAGS BELOW ARE FALSE: PS5 behavior is unchanged.
+    bool research_native_spatial_pair=false;
+#if defined(EDEN_R09_NATIVE_SPATIAL_CHAIN_RESEARCH) && EDEN_R09_NATIVE_SPATIAL_CHAIN_RESEARCH
+    research_native_spatial_pair=
+        Eden::Graphics::PipelineComposer::kComposablePs5RuntimeQualified &&
+        Eden::Graphics::PipelineComposer::kNativeSpatialVulkanChainQualified &&
+        selected.mode==Eden::NeuralVideo::kOff &&
+        std::holds_alternative<FSR>(sr_filter) &&
+        std::holds_alternative<std::monostate>(anti_alias) &&
+        render_extent.width==1280u&&render_extent.height==720u &&
+        texture_width==1280u&&texture_height==720u &&
+        target_output_extent.width==3840u&&
+        target_output_extent.height==2160u &&
+        source_image&&source_image_view &&
+        crop_rect.left==0.0f&&crop_rect.top==0.0f&&
+        crop_rect.right==1.0f&&crop_rect.bottom==1.0f &&
+        (!use_accelerated||
+         texture_info->sample_count==VK_SAMPLE_COUNT_1_BIT);
+    if(research_native_spatial_pair){
+        const VkImage original_image=source_image;
+        const VkImageView original_view=source_image_view;
+        const auto original_crop=crop_rect;
+        try {
+            if(!research_chain_first_fsr)
+                research_chain_first_fsr=std::make_unique<FSR>(
+                    device,memory_allocator,image_count,
+                    VkExtent2D{2560u,1440u});
+            if(!research_chain_second_sgsr)
+                research_chain_second_sgsr=std::make_unique<SGSR>(
+                    device,memory_allocator,image_count,
+                    target_output_extent,false);
+            const auto first=research_chain_first_fsr->DrawFrame(
+                device,scheduler,image_index,source_image,
+                source_image_view,render_extent,crop_rect);
+            if(!first||!first->image||!first->view||
+               first->extent.width!=2560u||first->extent.height!=1440u)
+                throw std::runtime_error(
+                    "R09 native FSR EASU/RCAS first owner invalid");
+            scheduler.RequestOutsideRenderPassOperationContext();
+            scheduler.Record([first_image=first->image](vk::CommandBuffer cmd) {
+                const VkImageMemoryBarrier barrier{
+                    .sType=VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                    .pNext=nullptr,
+                    .srcAccessMask=VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                    .dstAccessMask=VK_ACCESS_SHADER_READ_BIT,
+                    .oldLayout=VK_IMAGE_LAYOUT_GENERAL,
+                    .newLayout=VK_IMAGE_LAYOUT_GENERAL,
+                    .srcQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                    .dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                    .image=first_image,
+                    .subresourceRange={
+                        .aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
+                        .baseMipLevel=0u,.levelCount=1u,
+                        .baseArrayLayer=0u,.layerCount=1u}};
+                cmd.PipelineBarrier(
+                    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                    0u,barrier);
+            });
+            const auto second=research_chain_second_sgsr->DrawFrame(
+                device,scheduler,image_index,first->image,
+                first->view,first->extent,{0,0,1,1});
+            if(!second||!second->image||!second->view||
+               second->extent.width!=3840u||
+               second->extent.height!=2160u)
+                throw std::runtime_error(
+                    "R09 native SGSR second owner invalid");
+            using namespace Eden::Graphics::PipelineComposer;
+            const TwoPassInput evidence{
+                .first=1,.second=5,
+                .source={1280u,720u},
+                .intermediate={first->extent.width,first->extent.height},
+                .target={second->extent.width,second->extent.height},
+                .source_image=NativeHandleToken(original_image),
+                .source_view=NativeHandleToken(original_view),
+                .first_image=NativeHandleToken(first->image),
+                .first_view=NativeHandleToken(first->view),
+                .second_image=NativeHandleToken(second->image),
+                .second_view=NativeHandleToken(second->view),
+                .same_vulkan_queue=true,
+                .first_renderpass_recorded=true,
+                .color_write_to_fragment_read_barrier=true,
+                .second_renderpass_recorded=true,
+                .both_owners_live_through_gpu_tick=true
+            };
+            const auto verdict=AssessTwoPass(evidence);
+            if(!verdict.host_contract_passed||
+               verdict.reason!=TwoPassReason::CandidateOnly||
+               !verdict.ps5_runtime_allowed)
+                throw std::runtime_error(
+                    "R09 native two-stage Vulkan owner admission denied");
+            source_image=second->image;
+            source_image_view=second->view;
+            crop_rect={0,0,1,1};
+        }catch(const std::exception& error){
+            LOG_WARNING(Render_Vulkan,
+                "R09 native FSR/SGSR research chain failed: {}",
+                error.what());
+            source_image=original_image;
+            source_image_view=original_view;
+            crop_rect=original_crop;
+            research_native_spatial_pair=false;
+        }
+    }
+#endif
     VkExtent2D spatial_input_extent=render_extent;
 #if defined(EDEN_R09_A4K_DUAL_IMAGE_RESEARCH) && EDEN_R09_A4K_DUAL_IMAGE_RESEARCH
     // The independent native Anime4K CNN returns a real 2x output VkImage
@@ -289,7 +398,7 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
 #endif
 
     if (auto* fsr = std::get_if<FSR>(&sr_filter)) {
-        if(!research_post_neural_fsr){
+        if(!research_post_neural_fsr&&!research_native_spatial_pair){
             source_image_view = fsr->Draw(device, scheduler, image_index,
                 source_image, source_image_view, spatial_input_extent, crop_rect);
             crop_rect = {0, 0, 1, 1};

@@ -15,8 +15,8 @@ import subprocess
 import sys
 import tempfile
 
-VENDOR = "4c2a56676ed2cc7b8b923b10b5c0c0fe39817b2d"
-HEADER_BLOB = "6b5b9084aeb63aa05b0061d6bcfbd2b4f99312f9"
+VENDOR = "51af925b6f89f2750a1eea3406f615eb22f687af"
+HEADER_BLOB = "e1feabd488455632315f1d788b73718a6b01bbde"
 LIVE_HEADER = ("vendor/encore-active/ns2-astc/include/"
                "video_core/texture_cache/texture_cache.h")
 INACTIVE_HEADER = ("vendor/encore-active/eden-vulkan/vulkan-cache/"

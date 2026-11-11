@@ -33,6 +33,25 @@ jobs:
           set -euo pipefail
           test "$(git -C vendor rev-parse HEAD)" = "22b69d6053db41b74edac2633c012f925b84f69e"
           test "$(git -C vendor hash-object sources/eden/src/common/fs/path_util.cpp)" = "b4c7eae343df49eaae5327c5efa04a8d13dc4e19"
+          test "$(git -C vendor hash-object encore-active/eden-core/src/common/fs/path_util.cpp)" = "d473cfb2fd57e7026a1da3cd6aa933e75b208b66"
+          # The historical native compile database schedules this maintained
+          # source, not the pristine snapshot. Compare its exact function body.
+          python3 -B - <<'PY'
+          from pathlib import Path
+          old = Path("vendor/sources/eden/src/common/fs/path_util.cpp").read_text()
+          selected = Path("vendor/encore-active/eden-core/src/common/fs/path_util.cpp").read_text()
+          fixture = Path("tests/audit_r23_path_sanitizer_host.cpp").read_text()
+          start = "std::string SanitizePath("
+          end = "\\nstd::string GetParentPath("
+          def method(src):
+              i = src.index(start)
+              return src[i:src.index(end, i)].strip()
+          original = method(old)
+          maintained = method(selected)
+          compiled = fixture.split("namespace Pinned {", 1)[1].split("\\n}\nnamespace Upstream {", 1)[0].strip()
+          assert original == maintained == compiled, "native selected FS function drift"
+          print("R23_FS_SELECTED_NATIVE_MAINTAINED_METHOD_EXACT_BYTES_PASS")
+          PY
           grep -Fq 'blob b4c7eae343df49eaae5327c5efa04a8d13dc4e19' tests/audit_r23_path_sanitizer_host.cpp
           grep -Fq 'blob 82ea8f6cb2b3d365b0e3a96457694a81bb0bec7f' tests/audit_r23_path_sanitizer_host.cpp
 
@@ -44,5 +63,5 @@ jobs:
             -fsanitize=address,undefined -fno-omit-frame-pointer \
             tests/audit_r23_path_sanitizer_host.cpp -o /tmp/audit-r23-path
           /tmp/audit-r23-path
-          echo "Exact original/upstream SanitizePath functions compared on a Linux host under ASan/UBSan (8 cases)." >> "$GITHUB_STEP_SUMMARY"
+          echo "9 source-extracted pinned/maintained/upstream SanitizePath cases, compiled on host under ASan/UBSan." >> "$GITHUB_STEP_SUMMARY"
           echo "Path behavior differs on roots and leading parent components; no PS5 runtime or filesystem security signoff." >> "$GITHUB_STEP_SUMMARY"

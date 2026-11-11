@@ -85,8 +85,12 @@ def validate(root: Path, app: dict | None = None) -> dict:
     if (by_index[53]["classification"] != "reviewed-observability-only-no-NS1-behavioral-port"
             or by_index[5]["classification"] != "not-applicable-to-native-runtime-source"
             or any(by_index[i]["classification"] != "runtime-semantic-review-pending"
-                   for i in (30, 93, 123, 141))):
+                   for i in (30, 123, 141))):
         raise ValueError("semantically guarded source cases silently reclassified")
+    # #93: selected PS5 sparse physical memory commits fail-stop rather than
+    # upstream mprotect; source equivalence is not a PS5 device test.
+    if by_index[93]["classification"] != "source-equivalent-native-PS5-sparse-commit-failstop":
+        raise ValueError("R23 #93 selected native sparse allocator proof changed")
     # Additional reviewed source-level regressions and de-duplication decisions.
     for i in (142, 148):
         if by_index[i]["classification"] != "upstream-opus-ffmpeg-migration-reverted":
@@ -95,7 +99,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
         raise ValueError("R23 SSL platform source decision changed without review")
     if by_index[146]["classification"] != "verified-absent-GPU-null-initialization-candidate":
         raise ValueError("R23 GPU init candidate proof changed without review")
-    for i in (30, 93, 123, 141):
+    for i in (30, 123, 141):
         if by_index[i]["classification"] != "runtime-semantic-review-pending":
             raise ValueError(f"R23 common/native semantic case #{i} was closed without proof")
     # Exact upstream source reversion receipts were reviewed separately.

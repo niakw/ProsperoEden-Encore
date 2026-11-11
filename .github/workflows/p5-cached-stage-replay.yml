@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/p5-cached-stage-replay.yml'
+      - 'tools/package-headless-native.sh'
   workflow_dispatch:
 
 permissions:

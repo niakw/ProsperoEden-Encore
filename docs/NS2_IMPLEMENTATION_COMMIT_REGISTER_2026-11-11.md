@@ -8,6 +8,8 @@
 
 **Isolated engine research:** [`f55485f1`](https://github.com/niakw/ProsperoEden-Encore/commit/f55485f10e7724c4f9b959d1df823646ff542fe8) pins vendor `92d4200d` / real N60 blob `b48a5441`. Native R4 Clang codegen gate is strengthened to explicitly instantiate `DeleteImage` **in addition to** `BlitImage` and inspect the real generated `DeleteImage` machine-code symbol. ASTC historical parity guard strips only the exact SHA-pinned research additions (including retirement handoffs) and still demands immutable baseline blob `fc3125dc`; direct Git blob normalization independently matched that baseline exactly. New native gate [#43027142564](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43027142564) **PENDING at this entry**; no application build.
 
+**Research gating nuance:** the volume-slice fast path is OFF by default, but this separately repaired native DeleteImage retirement handoff is gated by `PS5_NATIVE` and Vulkan runtime type, **not** the R4 volume-copy option. Thus enabling this research vendor globally in any test app could change both NS1 and NS2 Vulkan destruction semantics even with R4 volume OFF. It must be reviewed/tested as an independent shared lifetime correction; this vendor pin is NEVER production-ready merely because the volume flag defaults OFF.
+
 **Still OPEN:** full PS5 application link, command submission and GPU fence correctness in both NS1/NS2 real games, negative image remap/alias/evict/rebind stress, measurable FPS and no crashes. Do not enable R4 in production or merge shared retirement change on source/codegen evidence alone. Work is isolated on draft PRs, main/vendor production refs not modified by this audit.
 
 ## R2 same-tick staging reservation identity is not authoritative — 11 November 2026

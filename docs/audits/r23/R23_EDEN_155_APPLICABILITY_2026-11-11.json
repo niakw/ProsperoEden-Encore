@@ -5,8 +5,8 @@
   "exact_commit_count": 155,
   "complete_file_lists": true,
   "classification_counts": {
-    "verified-relevant-source-gap-awaiting-native-proof": 26,
-    "runtime-semantic-review-pending": 24,
+    "verified-relevant-source-gap-awaiting-native-proof": 28,
+    "runtime-semantic-review-pending": 22,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -995,9 +995,9 @@
       "sha": "2bec66c0922673844bc761a0784e89cde7869f00",
       "title": "[dynarmic] Remove redundant configure struct (#4485)",
       "file_count": 22,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 source-verified: selected x64 A64 Dynarmic translation ignores default-false UserConfig::hook_hint_instructions by passing 2-field TranslationOptions with default-true hook; upstream conf-forwarding changes hint semantics.",
+      "action": "Validate native WFE/WFI/SEV/YIELD callbacks and scheduler/wake-up traces; preserve optimized G11 JIT, test both hook settings and NS1 boot, see pass23.",
       "paths": [
         "src/dynarmic/src/dynarmic/backend/arm64/a32_address_space.cpp",
         "src/dynarmic/src/dynarmic/backend/arm64/a64_address_space.cpp",
@@ -1021,7 +1021,9 @@
         "src/dynarmic/src/dynarmic/frontend/A64/translate/impl/system.cpp",
         "src/dynarmic/tests/A32/fuzz_thumb.cpp",
         "src/dynarmic/tests/A64/fuzz_with_unicorn.cpp"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream patch + selected current core/Dynarmic source and config default blobs, not compiled device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS23_2026-11-11.md"
     },
     {
       "index": 33,
@@ -1238,9 +1240,9 @@
       "sha": "69665063a9b13dad8fb2b90a64bd8bb0d0e90ea6",
       "title": "[cheats] add runtime cheats toggles with master code support (#4334)",
       "file_count": 24,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "verified-relevant-source-gap-awaiting-native-proof",
+      "scope": "E1 source-verified: native shared CheatEngine parser has unbounded string_view delimiter read and old fixed-code/master/toggle behavior.",
+      "action": "Isolate bounded parser fix first; test fuzz invalid strings, opcode bounds, master/toggles, VM threading and guest memory write limits; see pass23.",
       "paths": [
         "docs/user/UsingCheats.md",
         "src/android/app/src/main/java/org/yuzu/yuzu_emu/NativeLibrary.kt",
@@ -1266,7 +1268,9 @@
         "src/yuzu/main.ui",
         "src/yuzu/main_window.cpp",
         "src/yuzu/main_window.h"
-      ]
+      ],
+      "source_evidence_level": "E1 exact upstream patch + selected current core/Dynarmic source and config default blobs, not compiled device proof",
+      "source_proof_document": "docs/audits/ENCORE_AB_R23_SEMANTIC_SOURCE_PASS23_2026-11-11.md"
     },
     {
       "index": 47,

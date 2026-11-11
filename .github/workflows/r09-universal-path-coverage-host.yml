@@ -15,6 +15,7 @@ on:
       - 'extras/graphics/test_neural_pipeline_recipe.cpp'
       - 'extras/graphics/test_neural_pipeline_aa_composer.cpp'
       - 'extras/graphics/test_neural_pipeline_universal_paths.cpp'
+      - 'tools/graphics/r09_official_apt_mirrors.py'
   workflow_dispatch:
 
 permissions:
@@ -36,6 +37,12 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
           submodules: false
+      - name: Validate offline Ubuntu mirror rewrite before using the full R09 linker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -B tools/graphics/r09_official_apt_mirrors.py --self-test
+          echo R09_NATIVE_HOST_PRECONDITION_APT_REWRITE_OFFLINE_PASS
       - name: Compile and run four graph suites with undefined behavior sanitizer
         shell: bash
         run: |

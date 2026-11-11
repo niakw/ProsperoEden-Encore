@@ -18,28 +18,26 @@ on:
 permissions:
   contents: read
 
-# Supersede the 75+ minute APT/DNS-hung attempt; do not keep concurrent
-# 1,300-object links alive on the same research PR.
 concurrency:
   group: r09-min-720-one-off-host-link-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   apt-network-preflight:
-    name: Ubuntu package and PyPI DNS preflight before native compilation
+    name: Fail-fast official Ubuntu APT / PyPI DNS gate
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     steps:
-      - name: Verify direct Ubuntu mirrors and PyPI resolve in bounded time
+      - name: Check official signed archive and PyPI DNS without installing
         shell: bash
         run: |
           set -euo pipefail
           for host in archive.ubuntu.com security.ubuntu.com pypi.org github.com; do
             if ! timeout 12 getent ahostsv4 "$host" >/dev/null; then
-              echo "::error::R09_APT_DNS_UNAVAILABLE host=$host"
+              echo "::error::R09_OFFICIAL_MIRROR_DNS_UNAVAILABLE $host"
               exit 78
             fi
-            echo "R09_APT_DNS_HOST_OK host=$host"
+            echo "R09_OFFICIAL_MIRROR_DNS_OK $host"
           done
   r09-real-host-link:
     needs: apt-network-preflight
@@ -68,31 +66,11 @@ jobs:
           grep -q 'R09ReadbackPolicy::Rgba32fBytes' vendor/encore-active/eden-vulkan/nr_rdna2_frame_readback.cpp
           echo "R09_MIN_720_REAL_VENDOR_READBACK_RESEARCH_ISOLATED"
       - name: Install actual host compiler, Vulkan and upstream Eden dependencies
-        shell: bash
         run: |
           set -euo pipefail
-          # Avoid the GitHub mirror+file Azure archive DNS failure observed
-          # before CMake was reached. Ubuntu's APT signing stays enforced.
-          sudo python3 - <<'PY'
-          from pathlib import Path
-          import re
-          source = Path('/etc/apt/sources.list.d/ubuntu.sources')
-          if not source.is_file():
-              raise SystemExit('R09_APT_SOURCES_FILE_MISSING')
-          blocks = source.read_text().split('\n\n')
-          changed = 0
-          for i, block in enumerate(blocks):
-              if 'URIs: mirror+file:' not in block:
-                  continue
-              mirror = ('http://security.ubuntu.com/ubuntu'
-                        if 'noble-security' in block
-                        else 'http://archive.ubuntu.com/ubuntu')
-              blocks[i] = re.sub(r'^URIs: .*$', 'URIs: ' + mirror,
-                                 block, flags=re.M)
-              changed += 1
-          source.write_text('\n\n'.join(blocks))
-          print('R09_APT_OFFICIAL_SIGNED_UBUNTU_MIRRORS blocks=' + str(changed))
-          PY
+          python3 tools/graphics/r09_official_apt_mirrors.py --self-test
+          sudo python3 tools/graphics/r09_official_apt_mirrors.py \
+            /etc/apt/sources.list.d/ubuntu.sources
           timeout 210 sudo apt-get update -qq \
             -o Acquire::Retries=1 -o Acquire::http::Timeout=20
           timeout 360 sudo env DEBIAN_FRONTEND=noninteractive \
@@ -110,180 +88,6 @@ jobs:
           timeout 150 .build-r09-cmake-venv/bin/pip install \
             --disable-pip-version-check --retries 2 --timeout 15 cmake==3.31.10
           echo "$GITHUB_WORKSPACE/.build-r09-cmake-venv/bin" >> "$GITHUB_PATH"
-          echo R09_REAL_LINUX_NATIVE_DEPENDENCIES_READY
-      - name: Configure pinned Eden Linux runtime with R09 owner injection
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p vendor/sources/eden/.cache
-          if [[ ! -e vendor/sources/eden/.cache/cpm ]]; then
-            ln -s "$GITHUB_WORKSPACE/vendor/sources/eden-cpm" vendor/sources/eden/.cache/cpm
-          fi
-          cmake -S vendor/sources/eden -B .build-r09-linked -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++ \
-            -DCMAKE_C_COMPILER=gcc -DENABLE_QT=OFF \
-            -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
-            -DCMAKE_C_FLAGS_RELEASE="-O1 -DNDEBUG" \
-            -DENABLE_OPENGL=OFF -DYUZU_CMD=OFF \
-            -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_X11=OFF -DSDL_WAYLAND=OFF \
-            -DENABLE_WEB_SERVICE=OFF -DENABLE_WERROR=OFF \
-            -DYUZU_USE_EXTERNAL_FFMPEG=OFF -DENABLE_LSFG=OFF \
-            -DENCORE_R09_MIN_720_HOST_RESEARCH=ON \
-            -DENCORE_R09_ROOT="$GITHUB_WORKSPACE" \
-            -DCMAKE_PROJECT_INCLUDE="$GITHUB_WORKSPACE/tools/graphics/r09_host_project_hook.cmake"
-      - name: Precompile native Vulkan and R09 operator objects before full Eden link
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import subprocess
-          listing = subprocess.check_output(
-              ["ninja", "-C", ".build-r09-linked", "-t", "targets", "all"],
-              text=True)
-          # Compile the actual Linux executable translation unit FIRST.
-          # Previously its X11 Success macro collision surfaced only after
-          # compiling ~1,350 Eden dependencies. This fast gate is not syntax-only.
-          host_targets = sorted({
-              line.split(": ", 1)[0]
-              for line in listing.splitlines()
-              if line.startswith("CMakeFiles/r09-full-gpu-host.dir/")
-              and ".o:" in line
-          })
-          if len(host_targets) != 3:
-              raise SystemExit("R09_HOST_ENTRYPOINT_VMA_PLAYTIME_OBJECT_INVENTORY_INVALID="
-                               + str(len(host_targets)))
-          subprocess.run(["ninja", "-C", ".build-r09-linked",
-                          "-j", "2", *host_targets], check=True)
-          print("R09_LINUX_HOST_ENTRYPOINT_CPP_PASS", flush=True)
-          targets = sorted({
-              line.split(": ", 1)[0]
-              for line in listing.splitlines()
-              if line.startswith("src/video_core/CMakeFiles/video_core.dir/")
-              and ".o:" in line
-              and ("/renderer_vulkan/" in line
-                   or "/vulkan_common/" in line
-                   or "nr_rdna2_" in line
-                   # Explicit vendor R24 source has a CMake absolute
-                   # source path, not /renderer_vulkan/ in Ninja target.
-                   or "msaa_color_shadow_pass.cpp.o" in line)
-          })
-          if len(targets) < 50:
-              raise SystemExit("R09_VULKAN_NATIVE_OBJECT_INVENTORY_INCOMPLETE="
-                               + str(len(targets)))
-          # Old full-link run #43022421489 compiled 1356 objects but failed
-          # with unresolved MsaaColorClearShadowPass destructor. Build its
-          # authentic native owner EARLY or fail before 1300 other objects.
-          msaa = [t for t in targets if "msaa_color_shadow_pass.cpp.o" in t]
-          if len(msaa) != 1:
-              raise SystemExit("R09_MSAA_NATIVE_LINK_OWNER_MISSING_OR_DUPLICATE="
-                               + str(len(msaa)))
-          subprocess.run(["ninja", "-C", ".build-r09-linked",
-                          "-j", "2", *msaa], check=True)
-          print("R09_MSAA_REAL_NATIVE_LINK_OWNER_CPP_PASS", flush=True)
-          print("R09_LINUX_VULKAN_OBJECTS_SELECTED", len(targets), flush=True)
-          # -k 0 gathers independent, real compilation errors in ONE run,
-          # rather than retrying a 1600-object full link for each failure.
-          subprocess.run(["ninja", "-C", ".build-r09-linked",
-                          "-j", "2", "-k", "0", *targets], check=True)
-          print("R09_LINUX_VULKAN_OBJECTS_COMPILED", len(targets), flush=True)
-          PY
-      - name: Compile and fully link genuine R09 full GPU binary
-        run: cmake --build .build-r09-linked --target r09-full-gpu-host --parallel 2
-      - name: Verify linked scheduler null-query-cache guard and record public provenance
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          s=Path('vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp').read_text()
-          beginning=s.index('void Scheduler::EndPendingOperations()')
-          end=s.index('void Scheduler::EndRenderPass()', beginning)
-          body=s[beginning:end]
-          assert 'if (query_cache)' in body
-          assert 'query_cache->CounterClose(VideoCommon::QueryType::ZPassPixelCount64)' in body
-          print('R09_STANDALONE_SCHEDULER_NULL_QUERY_CACHE_SOURCE_GUARD_PASS')
-          PY
-          sha256sum .build-r09-linked/bin/r09-full-gpu-host | tee \
-            .build-r09-linked/R09_HOST_BINARY_SHA256.txt
-          printf 'engine=%s\nvendor_research=%s\nengine_gitlink=%s\nresearch_720p=ON\n' \
-            "$(git rev-parse HEAD)" "$(git -C vendor rev-parse HEAD)" "$(git rev-parse HEAD:vendor)" \
-            | tee .build-r09-linked/R09_HOST_PROVENANCE.txt
-          echo "R09_HOST_BINARY_SHA256=$(sha256sum .build-r09-linked/bin/r09-full-gpu-host | cut -d' ' -f1)"
-      - name: Binary starts and refuses public-only synthetic/absent model (no private input)
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -x .build-r09-linked/bin/r09-full-gpu-host
-          set +e
-          .build-r09-linked/bin/r09-full-gpu-host >.build-r09-linked/usage.txt 2>&1
-          rc=$?
-          set -e
-          cat .build-r09-linked/usage.txt
-          test "$rc" -eq 64
-          printf 'not-an-authentic-nrmodel' > .build-r09-linked/invalid.nrmodel
-          set +e
-          .build-r09-linked/bin/r09-full-gpu-host \
-            .build-r09-linked/invalid.nrmodel \
-            .build-r09-linked/nonexistent.rgba8 \
-            .build-r09-linked/should-not-exist.rgba32f \
-            >.build-r09-linked/rejection.txt 2>&1
-          rejected=$?
-          set -e
-          cat .build-r09-linked/rejection.txt
-          test "$rejected" -eq 70
-          grep -q R09_HOST_AUTHENTIC_599_TENSOR_SHA256_REJECTED \
-            .build-r09-linked/rejection.txt
-          test ! -e .build-r09-linked/should-not-exist.rgba32f
-          test ! -e .build-r09-linked/original.nrmodel
-          set +e
-          .build-r09-linked/bin/r09-full-gpu-host \
-            .build-r09-linked/invalid.nrmodel \
-            .build-r09-linked/nonexistent.rgba8 \
-            .build-r09-linked/research-should-not-exist.rgba32f \
-            --research-720p >.build-r09-linked/research-rejection.txt 2>&1
-          research_rejected=$?
-          set -e
-          cat .build-r09-linked/research-rejection.txt
-          test "$research_rejected" -eq 70
-          grep -q R09_HOST_AUTHENTIC_599_TENSOR_SHA256_REJECTED \
-            .build-r09-linked/research-rejection.txt
-          test ! -e .build-r09-linked/research-should-not-exist.rgba32f
-          echo "R09_MIN_720_TRUE_LINUX_LINK_AND_PRIVATE_MODEL_FAIL_CLOSED_PASS"
-      - name: Upload public-only executable (never a model)
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: r09-min-720-authentic-linux-host-vulkan-runner-public-only
-          path: |
-            .build-r09-linked/bin/r09-full-gpu-host
-            .build-r09-linked/R09_HOST_BINARY_SHA256.txt
-            .build-r09-linked/R09_HOST_PROVENANCE.txt
-          if-no-files-found: error
-          retention-days: 7
-, 'URIs: '+mirror,
-                               block, flags=re.M)
-              changed+=1
-          file.write_text('\n\n'.join(blocks))
-          print('R09_APT_SIGNED_OFFICIAL_MIRRORS_SELECTED blocks='+str(changed),flush=True)
-          PY
-          timeout 210 sudo apt-get update -qq \
-            -o Acquire::Retries=1 -o Acquire::http::Timeout=20
-          timeout 360 sudo env DEBIAN_FRONTEND=noninteractive \
-            apt-get install -y -qq --no-install-recommends \
-            -o Acquire::Retries=1 -o Acquire::http::Timeout=20 \
-            clang ninja-build pkg-config glslang-tools spirv-tools \
-            libvulkan-dev mesa-vulkan-drivers \
-            libavcodec-dev libavformat-dev libavutil-dev libavfilter-dev \
-            libswresample-dev libswscale-dev libssl-dev libopus-dev \
-            liblz4-dev libzstd-dev libusb-1.0-0-dev libasound2-dev \
-            libunwind-dev libx11-dev libxcb1-dev libxext-dev \
-            libxrandr-dev libxrender-dev libxfixes-dev libxi-dev \
-            libxkbcommon-dev libwayland-dev
-          python3 -m venv .build-r09-cmake-venv
-          timeout 150 .build-r09-cmake-venv/bin/pip install \
-            --disable-pip-version-check --retries 2 --timeout 15 cmake==3.31.10
-          echo "$GITHUB_WORKSPACE/.build-r09-cmake-venv/bin" >> "$GITHUB_PATH"
-          echo R09_REAL_LINUX_NATIVE_DEPENDENCIES_READY
       - name: Configure pinned Eden Linux runtime with R09 owner injection
         shell: bash
         run: |

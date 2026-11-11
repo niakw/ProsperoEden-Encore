@@ -76,7 +76,11 @@ assert 'c.list.image(c.textures.switch_rear_footer(), footer,\n                 
 press = method(launcher, "void Launcher::press(Key key)", "void Launcher::update(float dt)")
 assert press.index('if (modal_ != Modal::none)') < press.index('if ((key == Key::l1 || key == Key::r1)')
 assert press.index('if ((key == Key::l1 || key == Key::r1)') < press.index('switch (screen_)')
-assert '(active_main_tab_ + (key == Key::r1 ? 1 : 3)) % 4' in press
+# R457: shoulder shortcuts now address only Home, Library, Settings;
+# Recent and Update remain reachable by pointer/top-nav but not L1/R1.
+assert 'kShoulderDestinations[] = {0, 1, 4};' in press
+assert 'const int next = (current + (key == Key::r1 ? 1 : 2)) % 3;' in press
+assert 'top_nav_focus_ = kShoulderDestinations[next];' in press
 assert '(void)press_top_nav(Key::cross);' in press
 assert 'int active_main_tab_ = 0;' in launcher_h
 # OpenGL screenshot harness must navigate the selected retail game by D-pad,
@@ -87,9 +91,9 @@ library_fixture = preview.split('if (const char* library_only', 1)[1].split(
 assert 's.press({Key::right, Key::right, Key::right, Key::right, Key::right,' in library_fixture
 assert 's.press({Key::r1, Key::r1});' not in library_fixture
 assert 'active_main_tab_ = 2;' in launcher
-for initial in range(4):
-    assert (initial + 1) % 4 in range(4)
-    assert ((initial + 1) % 4 + 3) % 4 == initial
+for initial in range(3):
+    assert (initial + 1) % 3 in range(3)
+    assert ((initial + 1) % 3 + 2) % 3 == initial
 assert 'c.textures.switch_rear_footer() != 0' in back
 assert "ENCORE / GAME INFORMATION" in back
 assert "const std::string& credit = !game.publisher.empty()" in back

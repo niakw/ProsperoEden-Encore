@@ -809,7 +809,21 @@ assert not post_f07_r457_console_owners & research_owners
 assert 'ps5_cpu6_abi_probe.cpp' in (ROOT/"headless/CMakeLists.txt").read_text()
 assert 'ps5_ns2_guest_backing_plan.h' not in (ROOT/"src/host_memory.cpp").read_text()
 print("ENCORE_R457_POST_F07_OWNER_ISOLATION_PASS", "owners=2 historical_F07=518")
-owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners
+# R457 sparse guest direct-memory owner is isolated in PR #53 and
+# requires exact PS5 native syntax + physical/GPU alias proof before merge.
+# Do not claim two new research source files were in October F07.
+post_f07_r457_sparse_runtime_owners = {
+    "src/ns2_sparse_guest.cpp",
+    "src/ns2_sparse_guest.h",
+}
+assert post_f07_r457_sparse_runtime_owners <= all_owners
+assert not post_f07_r457_sparse_runtime_owners & research_owners
+sparse_header=(ROOT/"src/ns2_sparse_guest.h").read_text()
+sparse_impl=(ROOT/"src/ns2_sparse_guest.cpp").read_text()
+assert 'class Runtime {' in sparse_header and 'Plan plan;' in sparse_impl
+assert 'EDEN_RESEARCH_NS2_SPARSE_GUEST_BACKING' in (ROOT/"headless/CMakeLists.txt").read_text()
+print("ENCORE_POST_F07_R457_SPARSE_RUNTIME_ISOLATION_PASS", "owners=2 historical_F07=518")
+owners=all_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

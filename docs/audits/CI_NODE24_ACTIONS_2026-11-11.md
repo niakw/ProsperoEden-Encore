@@ -10,3 +10,9 @@ Périmètre : **quatre workflows encore épinglés à `actions/checkout` v4** su
 Le passage à v7 n'est **pas** un changement de logique métier, de dépendance de l'émulateur ou de `vendor`. Il adopte Node.js 24 et corrige l'alerte de dépréciation Node.js 20 du runner. Les exigences de sécurité propres à v7 et le comportement sur les workflows réels doivent être vérifiés en CI avant toute fusion. Le fast gate P5 spécifique est déjà traité sur la PR #47 ; il ne fait pas partie de ces quatre fichiers.
 
 **État : PR en brouillon, sans merge, release et artefact natif.**
+
+## Garde indépendant ajouté
+
+Le workflow `.github/workflows/ci-node24-checkout-host.yml` exécute uniquement `tools/check-node24-checkout-host.py` (Python standard, sans SDK ni compilateur). Il vérifie les **sept** checkout épinglés v7 sur les quatre workflows, l'absence de l'ancienne empreinte v4, le maintien des deux gardes `draft/prerelease/zero assets` de la release, le déclenchement restreint de R09 et le checkout récursif Overrides. Ce contrôle est associé à la PR, sans demande de build PS5 ni R09.
+
+Le [workflow de vérification Overrides #42952788804](https://github.com/niakw/ProsperoEden-Encore/actions/runs/42952788804) est **SUCCESS** au commit initial `ab526ec5` ; la validation CI du commit contenant le nouveau garde devra être jugée séparément.

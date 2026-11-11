@@ -27,8 +27,11 @@ def git_blob(path: Path) -> str:
 def classify(code: str) -> dict:
     a32_symbol = "EmitVAddrLookup<A32EmitContext>"
     a64_symbol = "EmitVAddrLookup<A64EmitContext>"
-    if code.count(a32_symbol) != 1 or code.count(a64_symbol) != 1:
-        raise ValueError("unexpected lookup function count")
+    # A32 also has one later call site after both template specializations.
+    # Use the first A32 definition before the sole A64 specialization.
+    if (code.count(a32_symbol) < 1 or code.count(a64_symbol) != 1
+            or code.index(a32_symbol) >= code.index(a64_symbol)):
+        raise ValueError("unexpected lookup specialization layout")
     a32, a64 = code.split(a32_symbol, 1)[1].split(a64_symbol, 1)
     scale = "tmp * (1 << ctx.conf.page_table_log2_stride)"
     fallback = "code.shl(tmp, int(ctx.conf.page_table_log2_stride));"

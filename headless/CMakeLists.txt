@@ -361,6 +361,42 @@ list(FILTER jit_sources EXCLUDE REGEX "(^|/)emit_x64\\.cpp$")
 set_property(TARGET dynarmic PROPERTY SOURCES "${jit_sources}")
 target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/emit_x64.cpp")
 
+# R23 #11 A32 crypto: six opcodes need a coherent four-fragment graph.
+# A32 translation includes .cpp fragments; asimd.h includes "./asimd.inc"
+# relative to its own file. Shadow both ASIMD neighbors and the translator
+# headers/fragments in a private native build include tree, not vendor originals.
+if(PS5_NATIVE)
+    set(EDEN_R23_A32_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/dynarmic")
+    set(EDEN_R23_A32_OVERLAY "${PORT_BUILD_DIR}/r23-a32-sha1")
+    foreach(a32_path IN ITEMS
+            "frontend/A32/decoder/asimd.inc"
+            "frontend/A32/translate/impl/a32_translate_impl.h"
+            "frontend/A32/translate/impl/asimd_three_regs.cpp"
+            "frontend/A32/translate/impl/asimd_two_regs_misc.cpp")
+        if(NOT EXISTS "${EDEN_R23_A32_SOURCE}/${a32_path}")
+            message(FATAL_ERROR "R23 #11 missing maintained A32 crypto ${a32_path}")
+        endif()
+        configure_file("${EDEN_R23_A32_SOURCE}/${a32_path}"
+             "${EDEN_R23_A32_OVERLAY}/dynarmic/${a32_path}" COPYONLY)
+    endforeach()
+    set(EDEN_R23_A32_DECODER_HEADER
+        "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src/dynarmic/frontend/A32/decoder/asimd.h")
+    if(NOT EXISTS "${EDEN_R23_A32_DECODER_HEADER}")
+        message(FATAL_ERROR "R23 #11 pinned A32 decoder header moved")
+    endif()
+    configure_file("${EDEN_R23_A32_DECODER_HEADER}"
+        "${EDEN_R23_A32_OVERLAY}/dynarmic/frontend/A32/decoder/asimd.h" COPYONLY)
+    get_target_property(eden_r23_a32_units dynarmic SOURCES)
+    list(FIND eden_r23_a32_units
+         "frontend/A32/translate/a32_translate.cpp" eden_r23_a32_owner)
+    if(eden_r23_a32_owner EQUAL -1)
+        message(FATAL_ERROR "R23 #11 native A32 amalgamating TU changed")
+    endif()
+    target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_R23_A32_OVERLAY}")
+    message(STATUS "R23 #11: selected A32 decoder, visitor and SHA1 .cpp fragment quartet")
+endif()
+
 # Dynarmic scalar translation and optimizer are tracked complete sources.
 # impl/impl.cpp is included once by its adjacent translator.
 set(EDEN_MAINTAINED_SCALAR_IMPL

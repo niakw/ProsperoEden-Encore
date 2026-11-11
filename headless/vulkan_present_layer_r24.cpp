@@ -193,16 +193,98 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     const bool research_post_neural_spatial=
         research_post_neural_fsr||research_post_neural_other;
 
+    VkExtent2D spatial_input_extent=render_extent;
+#if defined(EDEN_R09_A4K_DUAL_IMAGE_RESEARCH) && EDEN_R09_A4K_DUAL_IMAGE_RESEARCH
+    // The independent native Anime4K CNN returns a real 2x output VkImage
+    // and VkImageView only on vendor research PR #40. This branch's vendor
+    // gitlink is STILL pinned to main, so normal builds never compile this
+    // optional API call and never activate the experimental second stage.
+    const bool research_post_a4k_spatial=
+        Eden::Graphics::DlssNrMin::kA4kNeuralToSpatialRuntimeQualified &&
+        Eden::Graphics::DlssNrMin::kPostNeuralSpatialRuntimeWired &&
+        Eden::NeuralVideo::IsA4k(selected.mode) &&
+        render_extent.width==1280u&&render_extent.height==720u &&
+        texture_width==1280u&&texture_height==720u &&
+        std::holds_alternative<std::monostate>(anti_alias) &&
+        crop_rect.left==0.0f&&crop_rect.top==0.0f&&
+        crop_rect.right==1.0f&&crop_rect.bottom==1.0f &&
+        (!use_accelerated ||
+         texture_info->sample_count==VK_SAMPLE_COUNT_1_BIT) &&
+        (std::holds_alternative<FSR>(sr_filter) ||
+         std::holds_alternative<SGSR>(sr_filter) ||
+         std::holds_alternative<std::monostate>(sr_filter));
+    if(research_post_a4k_spatial){
+        const VkImage unprocessed_game_image=source_image;
+        const VkImageView unprocessed_game_view=source_image_view;
+        try{
+            if(!research_a4k_neural){
+                const auto profile=selected.mode==Eden::NeuralVideo::kA4kSoft?
+                    Anime4K3D::Profile::Soft:
+                    selected.mode==Eden::NeuralVideo::kA4kDenoise?
+                        Anime4K3D::Profile::Denoise:
+                        Anime4K3D::Profile::Details;
+                research_a4k_neural=std::make_unique<Anime4K3D>(
+                    device,memory_allocator,scheduler,image_count,
+                    VkExtent2D{2560u,1440u},profile);
+            }
+            const auto result=research_a4k_neural->DrawFrame(
+                image_index,source_image,source_image_view,
+                render_extent,crop_rect);
+            if(!result||!result->image||!result->view||
+               result->extent.width!=2560u||
+               result->extent.height!=1440u)
+                throw std::runtime_error(
+                    "A4K neural 720p->1440p output ownership rejected");
+            source_image=result->image;
+            source_image_view=result->view;
+            spatial_input_extent=result->extent;
+            crop_rect={0,0,1,1};
+            // The A4K owner records compute->fragment dependencies already;
+            // explicitly protect the actual A4K output image before any
+            // FSR/SGSR sampler or final native-display filter reads it.
+            scheduler.RequestOutsideRenderPassOperationContext();
+            scheduler.Record([a4k_image=result->image](vk::CommandBuffer cmd){
+                const VkImageMemoryBarrier barrier{
+                    .sType=VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                    .pNext=nullptr,
+                    .srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT,
+                    .dstAccessMask=VK_ACCESS_SHADER_READ_BIT,
+                    .oldLayout=VK_IMAGE_LAYOUT_GENERAL,
+                    .newLayout=VK_IMAGE_LAYOUT_GENERAL,
+                    .srcQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                    .dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED,
+                    .image=a4k_image,
+                    .subresourceRange={
+                        .aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
+                        .baseMipLevel=0u,.levelCount=1u,
+                        .baseArrayLayer=0u,.layerCount=1u}};
+                cmd.PipelineBarrier(
+                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,0u,barrier);
+            });
+        }catch(const std::exception& err){
+            LOG_WARNING(Render_Vulkan,
+                "A4K independent post-neural spatial bridge rejected: {}",
+                err.what());
+            source_image=unprocessed_game_image;
+            source_image_view=unprocessed_game_view;
+            spatial_input_extent=render_extent;
+            crop_rect=Tegra::NormalizeCrop(
+                framebuffer,texture_width,texture_height);
+        }
+    }
+#endif
+
     if (auto* fsr = std::get_if<FSR>(&sr_filter)) {
         if(!research_post_neural_fsr){
             source_image_view = fsr->Draw(device, scheduler, image_index,
-                source_image, source_image_view, render_extent, crop_rect);
+                source_image, source_image_view, spatial_input_extent, crop_rect);
             crop_rect = {0, 0, 1, 1};
         }
     } else if (auto* sgsr = std::get_if<SGSR>(&sr_filter)) {
         if(!research_post_neural_other){
             source_image_view=sgsr->Draw(device,scheduler,image_index,
-                source_image,source_image_view,render_extent,crop_rect);
+                source_image,source_image_view,spatial_input_extent,crop_rect);
             crop_rect={0,0,1,1};
         }
     } else if (auto* a4k = std::get_if<Anime4K3D>(&sr_filter)) {

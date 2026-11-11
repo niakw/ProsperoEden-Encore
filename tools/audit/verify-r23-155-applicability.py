@@ -56,7 +56,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
     # Reviewed 2026-11-11 E1 freeze: future semantic decisions must update
     # this explicit expected distribution and add case-specific provenance.
     mandatory = {
-        "runtime-semantic-review-pending": 61,
+        "runtime-semantic-review-pending": 59,
         "MSVC-portability-only-no-current-PS5-runtime-port": 1,
         "constexpr-atomic-page-methods-build-compat-only": 1,
         "staged-native-IPS-longline-awaiting-current-host-proof": 1,
@@ -68,6 +68,8 @@ def validate(root: Path, app: dict | None = None) -> dict:
         "not-applicable-PS5-x64-execution": 6,
         "reviewed-native-glslang-argv-no-space-current-build": 1,
         "reviewed-clang23-only-glsl-backend-no-current-PS5-port": 1,
+        "reviewed-native-pad-not-SDL-vibration-path": 1,
+        "reviewed-mouse-Qt-SDL-frontend-timer-not-native": 1,
         "reviewed-Qt-applet-picker-no-current-headless-port": 1,
         "reviewed-upstream-NS-async-result-pure-rename": 1,
         "reviewed-upstream-Boost-repin-deferred-native-dependency": 1,
@@ -118,6 +120,18 @@ def validate(root: Path, app: dict | None = None) -> dict:
             raise ValueError("R23 NS/OLSC pinned source Git blob receipts changed")
     if "Clang 18.1.3" not in build or "glslangValidator" not in build:
         raise ValueError("R23 #13/#101 current toolchain proof missing")
+    # Native frontend selection (not proof the files are unlinked).
+    native_note = (root / "docs/audits/ENCORE_AB_R23_NATIVE_PAD_MOUSE_FRONTEND_EXCLUSIONS_2026-11-11.md").read_text()
+    for index, classification in ((71, "reviewed-native-pad-not-SDL-vibration-path"),
+                                  (143, "reviewed-mouse-Qt-SDL-frontend-timer-not-native")):
+        entry = next(row for row in rows if row["index"] == index)
+        if entry["classification"] != classification or f"#{index}" not in native_note:
+            raise ValueError(f"R23 native frontend proof #{index} missing")
+    for sha in ("91589063b50548f3142ffdc36dbad2b090238fc5",
+                "4444f0ac3b34ab36bb651f25088dc35e03c79de3",
+                "b6fa427d84f6c8af25a35f4787923d79ab891d67"):
+        if sha not in native_note:
+            raise ValueError("R23 native pad/input source blob proof missing")
     by_index = {item["index"]: item for item in rows}
     if (by_index[53]["classification"] != "reviewed-observability-only-no-NS1-behavioral-port"
             or by_index[5]["classification"] != "not-applicable-to-native-runtime-source"
@@ -319,7 +333,7 @@ def validate(root: Path, app: dict | None = None) -> dict:
 
 def self_test(root: Path) -> None:
     current = json.loads((root / APP).read_text())
-    assert validate(root)["runtime_semantic_cases_pending"] == 61
+    assert validate(root)["runtime_semantic_cases_pending"] == 59
     bad = copy.deepcopy(current)
     bad["individual_commits"][4]["classification"] = "runtime-semantic-review-pending"
     try:

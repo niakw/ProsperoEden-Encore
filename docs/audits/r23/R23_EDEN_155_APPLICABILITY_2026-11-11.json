@@ -6,7 +6,7 @@
   "complete_file_lists": true,
   "classification_counts": {
     "verified-relevant-source-gap-awaiting-native-proof": 11,
-    "runtime-semantic-review-pending": 61,
+    "runtime-semantic-review-pending": 59,
     "not-applicable-to-PS5-native-packaging-assets": 8,
     "not-applicable-to-native-runtime-source": 27,
     "staged-host-source-fix": 5,
@@ -20,6 +20,7 @@
     "source-implemented-native-PS5-NCZBLOCK-NSZ-XCZ": 1,
     "upstream-runtime-then-reverted-equivalent": 2,
     "source-equivalent-hle-handler-revert-cosmetic-only": 2,
+    "reviewed-native-pad-not-SDL-vibration-path": 1,
     "reviewed-include-only-no-native-behavioral-port": 1,
     "ci-only-ffmpeg-artifact-not-selected-native": 1,
     "reviewed-Qt-applet-picker-no-current-headless-port": 1,
@@ -38,6 +39,7 @@
     "source-equivalent-current-openssl-native-build": 1,
     "MSVC-constexpr-only-no-current-PS5-runtime-port": 1,
     "upstream-opus-ffmpeg-migration-reverted": 2,
+    "reviewed-mouse-Qt-SDL-frontend-timer-not-native": 1,
     "source-equivalent-native-PS5-sink-volume-lifetime": 1,
     "verified-absent-GPU-null-initialization-candidate": 1
   },
@@ -2178,9 +2180,9 @@
       "sha": "fb51a1253447a2655382d3cf952c4c470a1d96c6",
       "title": "[input/sdl] nuke SDL_Vibration thread (#4299)",
       "file_count": 2,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-native-pad-not-SDL-vibration-path",
+      "scope": "Official change replaces desktop SDL vibration worker/queue with direct SDL joystick rumble. PS5 native controller path owns rumble in headless/pad.cpp via scePadSetVibration; SDL source may still compile but is not the selected pad rumble execution owner.",
+      "action": "No current native pad code import. See ENCORE_AB_R23_NATIVE_PAD_MOUSE_FRONTEND_EXCLUSIONS_2026-11-11.md; reopen for optional native SDL input or validated console regression.",
       "paths": [
         "src/input_common/drivers/sdl_driver.cpp",
         "src/input_common/drivers/sdl_driver.h"
@@ -3805,9 +3807,9 @@
       "sha": "d9159fefdd9e8850e550dd47cc59d7da999a2380",
       "title": "[input] Fix mouse drift on Qt/SDL frontends (#4352)",
       "file_count": 6,
-      "classification": "runtime-semantic-review-pending",
-      "scope": "Touches NS1/shared candidate native path(s); exact runtime owner/semantic equivalence unproven.",
-      "action": "Match selected native owner and inspect changed semantics with positive/negative tests or prove explicit exclusion.",
+      "classification": "reviewed-mouse-Qt-SDL-frontend-timer-not-native",
+      "scope": "Upstream mouse-drift fix requires Qt/SDL frontend periodic NotifyChanged timers absent from the native headless PS5 launcher; native pad path differs. Mouse source may still be compiled in input_common.",
+      "action": "No isolated mouse-class port without its timer/UI owner. See ENCORE_AB_R23_NATIVE_PAD_MOUSE_FRONTEND_EXCLUSIONS_2026-11-11.md; reopen if native mouse/SDL input is introduced.",
       "paths": [
         "src/input_common/drivers/mouse.cpp",
         "src/input_common/drivers/mouse.h",

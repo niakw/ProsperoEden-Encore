@@ -1,0 +1,37 @@
+name: NS1 R23 RDTSC high-frequency native source owner (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-rdtsc-native-20261111
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-clock-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  clock-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify exact vendor, native WallClock source and 5-frequency sanitizer
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "a1a5065edd404a8ea6ada3d96dce28346d84b56f"
+          python3 -B vendor/tests/r23_114_rdtsc_ns_conversion.py
+          python3 - <<'PY'
+          from pathlib import Path
+          cm=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_clock_tus "cpu_features.cpp")' in cm
+          assert 'target_include_directories(common BEFORE PUBLIC "${EDEN_R23_CLOCK_INCLUDE}")' in cm
+          assert Path('vendor/encore-active/eden-core/src/common/cpu_features.cpp').is_file()
+          assert Path('vendor/encore-active/eden-core/include/common/cpu_features.h').is_file()
+          print('NS1_R23_CLOCK_REAL_NATIVE_SOURCE_OWNER_PASS')
+          PY

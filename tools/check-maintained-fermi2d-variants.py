@@ -17,7 +17,10 @@ unsafe_pitch = "    const auto need_align_to_pitch =\n        src.linear == Tegr
 safe_pitch = "    const auto need_align_to_pitch =\n        bytes_per_pixel != 0 &&\n        src.linear == Tegra::Engines::Fermi2D::MemoryLayout::Pitch &&\n        static_cast<s32>(src.width) == config.src_x1 &&\n        config.src_x1 > static_cast<s32>(src.pitch / bytes_per_pixel) && config.src_x0 > 0;\n    if (need_align_to_pitch) {\n        // Widen both operands before multiplying, not merely the result.\n        // Reject a guest address that would wrap when advancing the row.\n        const u64 x_offset = static_cast<u64>(config.src_x0) *\n                             static_cast<u64>(bytes_per_pixel);\n        const u64 base_address = src.Address();\n        if (x_offset > ~u64{0} - base_address) {\n            AssertFailSoftImpl();\n            return;\n        }\n        const u64 address = base_address + x_offset;\n        src.addr_upper = static_cast<u32>(address >> 32);\n        src.addr_lower = static_cast<u32>(address);\n        src.width -= config.src_x0;\n        config.src_x1 -= config.src_x0;\n        config.src_x0 = 0;\n    }"
 assert pinned.count(unsafe_pitch) == 1
 pinned = pinned.replace(unsafe_pitch, safe_pitch)
-assert standard==prefix+pinned
+# The observed shipping source never samples this diagnostic counter.
+# Keep its native translation unit warning-free while preserving byte-for-byte
+# source parity with the pinned Eden implementation and the secure pitch edit.
+assert standard==pinned
 for old,new in edits:
     assert pinned.count(old)==1, ("pinned Fermi compatibility anchor changed",old[:64])
     pinned=pinned.replace(old,new)

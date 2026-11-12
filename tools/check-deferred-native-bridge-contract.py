@@ -804,6 +804,23 @@ endif()
                 reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
                 reviewed = reviewed.replace("#include <new>\n", "", 1)
                 maintained = reviewed
+        # C00/R457 adds exactly one reviewed, native-only readiness method
+        # to BOTH selected memory backends. Reverse just this fixed addition
+        # for the historical G13/M12 parity check; all older bytes remain
+        # accounted for by the original source oracle.
+        if owner.startswith("eden-core/src/core/memory_native_"):
+            audio_readiness = """#ifdef PS5_NATIVE
+bool Memory::ReadyForAudioRead() const noexcept {
+    // Guard the same selected page-table owner as native GetSpan.
+    // AudioOut will enqueue silence until the owning process has mapped memory.
+    return impl && impl->current_page_table != nullptr;
+}
+#endif
+
+"""
+            assert maintained.count(audio_readiness) == 1, (
+                "C00/R457 native audio memory readiness missing or duplicated", owner)
+            maintained = maintained.replace(audio_readiness, "", 1)
         assert maintained == baseline, (
             "G13 X05 M12 historical source parity drift", owner)
     print("ENCORE_FOUR_NATIVE_GUEST_MEMORY_VARIANTS_PARITY_PASS")

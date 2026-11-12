@@ -118,9 +118,9 @@ def capture(cache):
 # by a one-time vendor commit SHA. Later commits may add reviewed fixes without
 # changing unrelated CPM packages.
 BOOST_DOCS_DEPENDABOT_DELTA = {
-    "sha256": "e6af7218e95c2c9cd145e7a5eec7662b8146f77ec76b54b6b75bcd597eac8a61",
+    "sha256": "96305a3b61e753be7208e095cd2d1d12b6075c393c3e46d64897f09f3356e551",
     "files": 59798,
-    "bytes": 550709036,
+    "bytes": 550709825,
 }
 SECURITY_CPM_DELTAS={
  "boost":({

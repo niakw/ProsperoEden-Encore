@@ -15,9 +15,13 @@ needle = "    Result Unknown230(u32 in_val, Out<u16> out_val);\n"
 extra = "    Result Unknown240(u32 in_val);\n"
 comment = "// Selected PS5 NS1/NS2 SelfController ABI header; exact vendor base + command 240.\n"
 assert blob(base.read_bytes()) == "b7762da79b357e34adf096da3574c9cd130943f9"
+# The selected vendor already carries command 240 exactly once.
+# Preserve that ABI unchanged; do not add another declaration to an
+# already-integrated base header or silently discard the selected overlay.
 assert original.count(needle) == 1
-assert "Unknown240" not in original
-assert s == comment + original.replace(needle, needle + extra)
+assert original.count(extra) == 1
+assert s == comment + original
+assert s.count(extra) == 1
 implementation = cpp.read_text()
 assert implementation.count("Result ISelfController::Unknown240(u32 in_val)") == 1
 assert implementation.count("D<&ISelfController::Unknown240>") == 1

@@ -265,12 +265,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/theme.hpp",
       "historical_reviewed_git_blob": "fc7b378ab519a454068a8802c3f871aee63411d7",
-      "post_snapshot_git_blob": "2b9ea5d8fad9d27f4cf55d7d65487082517556d6",
+      "post_snapshot_git_blob": "a53ba938834689804757775e60c687ed1d19569b",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "user-selected accent token overrides and mutable resolved theme palette",
       "review_kind": "source_interface",
       "required_source_fragment": "inline Color kBase",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-12: Light theme restores WCAG 4.5:1 across white, neutral-row and selected-row surfaces for secondary text and user accent swatches. Source contract verified by tools/check-encore-ux.py; visual PS5 qualification pending."
     },
     {
       "path": "headless/prosperoeden/pe/ui/video_presets.hpp",

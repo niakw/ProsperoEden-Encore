@@ -49,7 +49,7 @@ msgstr "Zalecane jest 60 Hz. 120 Hz zmienia tylko tryb wyświetlania; aby odnie�
 
 #: pe/ui/library.cpp
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
-msgstr "60 Hz to bezpieczna wartość domyślna. Używaj częstotliwości 120 Hz tylko w przypadku kompatybilnego wyświetlacza lub zestawu o wysokiej liczbie klatek na sekundę."
+msgstr "60 Hz to bezpieczne ustawienie. 120 Hz wymaga zgodnego ekranu lub poprawki wysokiego FPS."
 
 #: pe/ui/settings.cpp
 msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
@@ -161,7 +161,7 @@ msgstr "Automatycznie Sprawdź"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automatycznie Sprawdź · Włączone"
+msgstr "Autokontrola · Wł."
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -237,7 +237,7 @@ msgstr "Mapowanie przycisków zostało zresetowane do aktywnego profilu."
 
 #: pe/ui/mapping.cpp
 msgid "Button mapping saved."
-msgstr "Mapowanie przycisków zostało zapisane."
+msgstr "Zapisano mapowanie przycisków."
 
 #: pe/ui/settings.cpp
 msgid "BUTTON PROFILE"
@@ -352,15 +352,15 @@ msgstr "Jasne"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
-msgstr "Wyczyść pamięć podręczną"
+msgstr "Wyczyść cache"
 
 #: pe/ui/launcher.cpp
 msgid "Clear cache?"
-msgstr "Wyczyścić pamięć podręczną?"
+msgstr "Wyczyścić cache?"
 
 #: eden_services.cpp
 msgid "Cleared {0} of cache."
-msgstr "Wyczyszczono {0} pamięci podręcznej."
+msgstr "Usunięto {0} z cache."
 
 #: pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "Close"
@@ -506,7 +506,7 @@ msgstr "Niestandardowe PS5"
 
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
-msgstr "Przełącznik niestandardowy"
+msgstr "Niestandardowy Switch"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
@@ -738,7 +738,7 @@ msgstr "Nie udało się uruchomić gry: {0} Szczegóły: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Przeglądaj foldery · programy"
+msgstr "Pliki gier"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -902,7 +902,7 @@ msgstr "Pamięć wewnętrzna"
 
 #: pe/ui/browse.cpp
 msgid "Internal storage saved. Reopen Encore to use it."
-msgstr "Pamięć wewnętrzna została zapisana. Otwórz ponownie Encore, aby z niego skorzystać."
+msgstr "Zapisano pamięć wewnętrzną. Uruchom Encore ponownie, aby jej użyć."
 
 #: settings_store.h
 msgid "Italian"
@@ -1190,7 +1190,7 @@ msgstr "Brak"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Sprawdź Teraz · Wyłączone"
+msgstr "Nie sprawdzono"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1391,12 +1391,12 @@ msgstr "Odśwież"
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
-msgstr "Częstotliwość odświeżania"
+msgstr "Odświeżanie"
 
 #. Label: see 'Refresh rate'.
 #: pe/ui/settings.cpp
 msgid "REFRESH RATE"
-msgstr "CZĘSTOTLIWOŚĆ ODŚWIEŻANIA"
+msgstr "ODŚWIEŻANIE"
 
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
@@ -1468,7 +1468,7 @@ msgstr "KORZENIA"
 
 #: pe/ui/settings.cpp
 msgid "Runtime health, storage and recovery tools."
-msgstr "Narzędzia do sprawdzania stanu środowiska wykonawczego, przechowywania i odzyskiwania."
+msgstr "Narzędzia diagnostyki, pamięci i odzyskiwania."
 
 #: settings_store.h
 msgid "Russian"
@@ -1660,7 +1660,7 @@ msgstr "Magazyn gotowy"
 
 #: pe/ui/browse.cpp
 msgid "Storage root saved. Reopen Encore to use it."
-msgstr "Zapisano katalog główny magazynu. Otwórz ponownie Encore, aby z niego skorzystać."
+msgstr "Zapisano katalog główny. Uruchom Encore ponownie, aby go użyć."
 
 #: pe/ui/browse.cpp
 msgid "Supply your own files"

@@ -1187,7 +1187,33 @@ assert sparse_path not in post_index
 assert sparse_path in drift_index
 sparse_drift = drift_index.pop(sparse_path)
 assert sparse_drift["expected"] == sparse_receipt["historical_f07_git_blob"]
-assert sparse_drift["actual"] == sparse_receipt["research_source_git_blob"]
+# The 2026-11-11 reviewed sparse host owner is immutable, but a
+# production safety guard now forbids a 12GiB dense fallback when the PS5
+# preprocessor path is absent. Reconstruct the earlier checked Git blob.
+assert sparse_receipt["research_source_git_blob"] == (
+    "4f109a0286a13afc93dcacd3b287b26b256d13f4")
+assert sparse_drift["actual"] == "b9349360b3f615784247133026ac7aaf8d71eb9e"
+dense_fallback_guard = """#ifdef PS5_NATIVE
+        // NS2 must never request 12 GiB of physical RAM because a
+        // compile-flag mismatch silently disabled the sparse owner.
+        // Fail clearly instead of reproducing the PS5 launch ENOMEM.
+        if (requested == (12ull << 30)) {
+            throw std::system_error(ENOMEM, std::generic_category(),
+                                    "NS2 sparse backing not active; refusing 12 GiB dense allocation");
+        }
+#endif
+"""
+current_sparse_source = (ROOT/sparse_path).read_text()
+assert current_sparse_source.count(dense_fallback_guard) == 1
+pre_guard = current_sparse_source.replace(dense_fallback_guard, "", 1)
+pre_guard_bytes = pre_guard.encode("utf-8")
+pre_guard_blob = hashlib.sha1(
+    b"blob " + str(len(pre_guard_bytes)).encode() + bytes([0]) +
+    pre_guard_bytes).hexdigest()
+assert pre_guard_blob == sparse_receipt["research_source_git_blob"], (
+    "NS2 dense-fallback guard modified other sparse source code")
+print("R457_NS2_SPARSE_DENSE_FALLBACK_GUARD_PASS",
+      "12GiB_dense=forbidden", "original_receipt=preserved")
 assert sparse_receipt["opt_in"] in (ROOT/sparse_path).read_text()
 assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
 print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",

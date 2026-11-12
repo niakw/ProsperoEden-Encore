@@ -102,11 +102,14 @@ def main()->int:
         'return m_display && m_vi ? ResultSuccess : Kernel::ResultInvalidState;',
     ):
         assert evidence in text, "Missing fail-closed VI2 payload owner: " + evidence
-    # NS2 GPU remaps reject signed-negative backing addresses explicitly
-    # before any unsigned pointer arithmetic (no wrap through u64).
+    # ioctl offset and buffer_offset are s64; the mapped address is u64.
+    # Require rejection of negative user-provided values before conversion.
     nvmap_source=(ROOT/"vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp").read_text()
-    assert 'mapping.ptr < 0 ||' in nvmap_source
-    assert 'static_cast<u64>(mapping.ptr) >' in nvmap_source
+    assert 'params.offset < 0 || params.buffer_offset < 0' in nvmap_source
+    assert 'const u64 gpu_base = static_cast<u64>(params.offset);' in nvmap_source
+    assert 'const u64 buffer_offset = static_cast<u64>(params.buffer_offset);' in nvmap_source
+    assert 'mapping.ptr > std::numeric_limits<VAddr>::max() - buffer_offset' in nvmap_source
+    assert 'mapping.ptr < 0 ||' not in nvmap_source
     assert 'width==1280&&height==720' not in text
     hdr=text.split('void QueryHdrStatus(HLERequestContext& ctx) {',1)[1].split(
         'void QueryPaperWhite(HLERequestContext& ctx) {',1)[0]
@@ -136,9 +139,9 @@ def main()->int:
         'c->producer->QueueBuffer(idx,input,&output)',
         'c.producer->DetachNextBuffer(',
         'c.release_fences[slot]=release_fence',
-        'if (fence.num_fences < 0 ||',
-        'static_cast<u32>(fence.num_fences) > fence.fences.size()) continue;',
-        'for (u32 i=0;i<static_cast<u32>(fence.num_fences);++i) {',
+        'if (fence.num_fences > fence.fences.size()) continue;',
+        'for (u32 i=0;i<fence.num_fences;++i) {',
+        'if (point.id == -1) continue;',
         'if(!image||!image->window_pool||!m_native_module)return {}',
         'GetSyncpointManager().IsSyncpointAllocated(fence)',
         'c->retained[slot]=buffer',

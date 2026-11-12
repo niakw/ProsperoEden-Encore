@@ -13,7 +13,20 @@ for filename,edits_for_file in (("reg_alloc.h",edits[:4]),("reg_alloc.cpp",edits
     for old,new,num in edits_for_file:
         assert content.count(old)==num, ("pinned regalloc source drift",filename,old[:64])
         content=content.replace(old,new)
-    assert (active/filename).read_text()==content, ("maintained regalloc variant differs",filename)
+    maintained=(active/filename).read_text()
+    if filename == "reg_alloc.cpp":
+        # Assertion-only parameters are intentionally unused in the shipping
+        # optimized build. Reverse ONLY these three reviewed annotations,
+        # then retain the original byte-for-byte generator parity check.
+        warning_only = (
+            ("[[maybe_unused]] HostLoc loc", "HostLoc loc"),
+            ("[[maybe_unused]] BlockOfCode& code", "BlockOfCode& code"),
+            ("[[maybe_unused]] bool is_xmm", "bool is_xmm"),
+        )
+        for annotated, original in warning_only:
+            assert maintained.count(annotated) == 1, ("regalloc warning annotation drift", annotated)
+            maintained = maintained.replace(annotated, original, 1)
+    assert maintained==content, ("maintained regalloc variant differs",filename)
 assert 'configure_file("${EDEN_MAINTAINED_REGALLOC}/reg_alloc.h"' in selector
 assert 'target_sources(dynarmic PRIVATE "${EDEN_MAINTAINED_REGALLOC}/reg_alloc.cpp")' in selector
 assert "write_derived(" not in selector and "string(REPLACE" not in selector

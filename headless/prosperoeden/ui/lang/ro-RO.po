@@ -161,7 +161,7 @@ msgstr "Automat Verifică"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automat Verifică · Activat"
+msgstr "Verif. auto · Activ"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -684,7 +684,7 @@ msgstr "S-a rezolvat structura folderului Encore"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Focus glow"
-msgstr "Focalizare · Strălucire"
+msgstr "Efect focalizare"
 
 #: pe/ui/browse.cpp
 msgid "FOLDERS"
@@ -738,7 +738,7 @@ msgstr "Jocul nu a putut porni: {0} Detalii: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Răsfoiește dosare · aplicații"
+msgstr "Fișiere de joc"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1190,7 +1190,7 @@ msgstr "Niciunul"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Verifică Acum · Dezactivat"
+msgstr "Neverificat"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1243,7 +1243,7 @@ msgstr "Deschide setările"
 
 #: pe/ui/home.cpp
 msgid "Open storage"
-msgstr "Deschideți spațiul de stocare"
+msgstr "Deschide stocarea"
 
 #: pe/ui/library.cpp
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
@@ -1804,7 +1804,7 @@ msgstr "Utilizați fișierele NCA cu firmware extrase. Alegeți rădăcina în S
 
 #: pe/ui/browse.cpp
 msgid "Use this root"
-msgstr "Folosește această rădăcină"
+msgstr "Folosește acest folder"
 
 #: pe/ui/settings.cpp
 msgid "VIBRATION"

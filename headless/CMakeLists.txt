@@ -228,6 +228,22 @@ if(EDEN_NS2_SPARSE_BACKING)
     target_include_directories(common PRIVATE "${PORT_ROOT}/headless")
     target_compile_definitions(common PRIVATE EDEN_NS2_SPARSE_BACKING=1)
     target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)
+    # Kernel-owned shared pages are cleared before process PTEs exist.
+    # Compile a maintained sparse-aware shared-memory implementation instead
+    # of the uncommitted upstream zero-fill (first NS2 boot SIGSEGV).
+    set(EDEN_NS2_SHARED_MEMORY_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp")
+    if(NOT EXISTS "${EDEN_NS2_SHARED_MEMORY_SOURCE}")
+        message(FATAL_ERROR "Missing NS2 sparse shared-memory owner")
+    endif()
+    get_target_property(eden_sparse_core_sources core SOURCES)
+    list(FIND eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp" eden_sparse_shared_index)
+    if(eden_sparse_shared_index EQUAL -1)
+        message(FATAL_ERROR "NS2 sparse shared-memory original owner moved")
+    endif()
+    list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")
+    list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_sparse_core_sources}")
 endif()
 # Sparse JIT trim helpers are shared with Dynarmic. The native release
 # uses the one sparse JIT allocator path; these are compile-time helpers.

@@ -71,7 +71,25 @@ def main():
                                   "-nostdinc","-stdlib","-isystem"))]
         print("R457_NS2_SPARSE_NATIVE_TOOLCHAIN",label,
               "compiler="+cleaned[0], "flags="+repr(markers[:20]),flush=True)
-        p=subprocess.run(cleaned+["-fsyntax-only"],cwd=row["directory"],
+        # The native PS5 SDK C headers must be the only C-library headers.
+        # Clang's implicit Linux search path cannot establish PS5 syntax,
+        # even with a PS5 target triple. Keep every CMake-selected include
+        # and definition, add only Clang's target builtin headers explicitly.
+        import os
+        sdk=Path(os.environ["PS5_PAYLOAD_SDK"]).resolve()
+        c_root=sdk/"target/include"
+        assert (c_root/"stdlib.h").is_file() and (c_root/"sys/cdefs.h").is_file(), (
+            "Incomplete native PS5 FreeBSD C header distribution")
+        compiler=Path(cleaned[0])
+        resource_dir=Path(subprocess.check_output(
+            [str(compiler), "-print-resource-dir"],text=True).strip())/"include"
+        assert resource_dir.is_dir(), "Native Clang compiler resource headers missing"
+        for pos,flag in enumerate(cleaned[:-1]):
+            if flag in ("-isystem","-I","-idirafter") and cleaned[pos+1] in (
+                "/usr/include","/usr/local/include","/usr/include/x86_64-linux-gnu"):
+                raise RuntimeError(label+" inherited host libc include path")
+        strict=cleaned+["-nostdinc","-isystem",str(resource_dir),"-fsyntax-only"]
+        p=subprocess.run(strict,cwd=row["directory"],
                          capture_output=True,text=True,timeout=210)
         if p.returncode:
             if "bits/libc-header-start.h" in p.stderr:

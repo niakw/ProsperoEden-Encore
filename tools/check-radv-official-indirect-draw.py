@@ -66,7 +66,7 @@ c03_barrier = (
 assert active.count(c03_prototype) == 1
 assert active.count(c03_barrier) == 1
 historical=active.replace(c03_prototype,prior_static,1).replace(c03_barrier,"",1)
-assert source_git_blob(historical) == "9dd12c19a1a277a2753432e1411a449fdf923c4", (
+assert source_git_blob(historical) == "9dd12c19a1a277a2753432e1411a449fdf923c4a", (
     "C03 RADV source cannot be exactly reversed to historic official proof")
 assert expected == historical, (
     "RADV official indirect draw, GS sink or 4 widened offsets changed")

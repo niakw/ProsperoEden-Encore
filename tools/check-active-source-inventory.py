@@ -1055,6 +1055,16 @@ assert not post_f07_r457_owners & (
 assert 'ps5_cpu6_abi_probe.cpp' in native_cmake
 assert 'ps5_ns2_guest_backing_plan.h' not in (root / "src/host_memory.cpp").read_text()
 print("ENCORE_POST_F07_R457_RESEARCH_SOURCE_PASS", "owners=2 historical_headless=193")
+# The R23 AM frontend prototype is a post-F07 native overlay, not an
+# additional item in the frozen 193-file historical headless catalogue.
+post_f07_ns1_am_headless_owners = {"headless/r23_am_frontend_applets_ps5.cpp"}
+assert all((root / p).is_file() for p in post_f07_ns1_am_headless_owners)
+assert "r23_am_frontend_applets_ps5.cpp" in native_cmake
+assert not post_f07_ns1_am_headless_owners & (
+    post_f07_feature_headless_owners | post_f07_r09_headless_owners |
+    post_f07_p5_headless_owners | post_f07_r457_owners |
+        post_f07_ns1_am_headless_owners)
+print("ENCORE_NS1_AM_POST_F07_HEADLESS_PASS", "new=1 historical=193")
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")

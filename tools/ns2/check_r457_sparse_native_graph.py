@@ -8,12 +8,13 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
-VENDOR="0f829e07963e1146ada2d39037059c13c2f0e641"
+VENDOR="ce9fbfd782ec09763e6eacb804dfd17398ffd2a0"
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
               ROOT/"vendor/encore-active/eden-core/src/core/memory_native_standard.cpp")
 NATIVE_KERNEL=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp"
+NATIVE_SLAB=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp"
 
 def args(row):
     return list(row["arguments"]) if "arguments" in row else shlex.split(row["command"])
@@ -40,6 +41,11 @@ def main():
     kernel_rows=[r for r in db if Path(r["file"]).resolve()==NATIVE_KERNEL.resolve()]
     if len(kernel_rows)!=1: raise RuntimeError(f"Expected exactly one real native kernel direct owner, got {len(kernel_rows)}")
     selected.append(("native_kernel_direct",kernel_rows[0]))
+    slab_rows=[r for r in db if Path(r["file"]).resolve()==NATIVE_SLAB.resolve()]
+    if len(slab_rows)!=1:
+        raise RuntimeError(f"Expected one real native KPort/KPageBuffer slab owner, got {len(slab_rows)}")
+    selected.append(("native_kernel_slabs",slab_rows[0]))
+
     # Qualify existing source owners first even when the new sparse TU has a
     # target-SDK header problem; never stop before recording their verdict.
     selected.sort(key=lambda pair: pair[0] == "ns2_sparse_guest.cpp")
@@ -119,7 +125,7 @@ def main():
                     print(diagnostic.stderr[-3500:],file=sys.stderr,flush=True)
             raise RuntimeError(label+" genuine SDK syntax: "+p.stderr[-8500:])
         print("R457_NS2_SPARSE_NATIVE_SYNTAX_PASS",label,flush=True)
-    print("R457_NS2_SPARSE_ACTUAL_PS5_CMAKE_AND_3_TUS_PASS no link/gameplay",flush=True)
+    print("R457_NS2_SPARSE_ACTUAL_PS5_CMAKE_AND_5_TUS_PASS no link/gameplay",flush=True)
 
 if __name__=="__main__":
     try: main()

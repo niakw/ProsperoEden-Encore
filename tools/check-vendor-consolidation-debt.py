@@ -1327,7 +1327,49 @@ rumble_site = "    output_params[LeftIndex] = left_joycon;\n    output_params[Ri
 rumble_insert = "    if (output_params[LeftIndex].Get(\"engine\", \"\").empty()) {\n        const auto rumble_port = std::to_string(Service::HID::NpadIdTypeToIndex(npad_id_type));\n        output_params[LeftIndex] = Common::ParamPackage{\"engine:virtual_gamepad,port:\" + rumble_port + \",pad:1\"};\n        output_params[RightIndex] = Common::ParamPackage{\"engine:virtual_gamepad,port:\" + rumble_port + \",pad:2\"};\n    }\n"
 assert rumble_original.count(rumble_site) == 1, "pinned rumble source site changed"
 rumble_generated = "#include <string>\n" + rumble_original.replace(rumble_site, rumble_site + rumble_insert)
-assert (active / "eden-core/src/hid_core/frontend/emulated_controller.cpp").read_text() == rumble_generated
+# NS1 R23 #95 removes the obsolete 48-state controller_connected matrix
+# and reconnects from the live selected player's state. Reconstruct exactly
+# the reviewed maintained source from the old injected rumble source.
+legacy_button_entry = """void EmulatedController::SetButton(const Common::Input::CallbackStatus& callback, std::size_t index, Common::UUID uuid) {
+    const auto player_index = Service::HID::NpadIdTypeToIndex(npad_id_type);
+    const auto& player = Settings::values.players.GetValue()[player_index];
+
+    if (index >= controller.button_values.size()) {"""
+revised_button_entry = """void EmulatedController::SetButton(const Common::Input::CallbackStatus& callback, std::size_t index, Common::UUID uuid) {
+    if (index >= controller.button_values.size()) {"""
+legacy_reconnect = """    if (!is_connected) {
+        if (npad_type == NpadStyleIndex::Handheld) {
+            if (npad_id_type == NpadIdType::Handheld) {
+                Connect();
+                controller_connected[player_index] = true;
+            }
+        } else if (npad_type != NpadStyleIndex::Handheld) {
+            if (npad_id_type == NpadIdType::Player1) {
+                Connect();
+                controller_connected[player_index] = true;
+            } else if (player.connected && !controller_connected[player_index]) {
+                Connect();
+                controller_connected[player_index] = true;
+            }
+        }"""
+revised_reconnect = """    const auto player_index = Service::HID::NpadIdTypeToIndex(npad_id_type);
+    const auto& player = Settings::values.players.GetValue()[player_index];
+    if (player.connected) {
+        Connect();"""
+assert rumble_generated.count(legacy_button_entry) == 1
+assert rumble_generated.count(legacy_reconnect) == 1
+rumble_r23 = rumble_generated.replace(legacy_button_entry, revised_button_entry, 1)
+rumble_r23 = rumble_r23.replace(legacy_reconnect, revised_reconnect, 1)
+rumble_maintained = (active / "eden-core/src/hid_core/frontend/emulated_controller.cpp").read_text()
+import hashlib
+def r23_blob_sha(text):
+    raw = text.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+assert r23_blob_sha(rumble_maintained) == "9ce2506de27fceb18567ad9be12e8da4430fe140"
+assert rumble_maintained == rumble_r23, (
+    "R23 live-player reconnect or rumble input changed beyond two reviewed edits")
+assert "controller_connected[player_index]" not in rumble_maintained
+print("ENCORE_R23_HID_CONTROLLER_RECONNECT_PARITY_PASS", "legacy_matrix=0", "rumble=1")
 assert 'list(APPEND controller_sources "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")' in c
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/emulated_controller.cpp"' not in c

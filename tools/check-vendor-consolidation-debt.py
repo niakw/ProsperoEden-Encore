@@ -703,7 +703,19 @@ print("VENDOR_MAINTAINED_FS_IFILE_PARITY_PASS: pinned native DEV source, no CMak
 # wrappers, even though we intentionally make no new runtime behavior changes.
 hle_rel = "core/hle/service/service.cpp"
 hle_pinned = (sources / "eden/src" / hle_rel).read_text()
-hle_maintained = (active / "eden-core/src" / hle_rel).read_text()
+# R23 #54 removes generic 600us IStorage pauses and moves pacing into
+# the per-instance storage handler. Keep validating the exact earlier HLE
+# performance/debug source by reversing only the two reviewed PR73 hunks.
+hle_path = active / "eden-core/src" / hle_rel
+hle_bytes = hle_path.read_bytes()
+assert hashlib.sha1(
+    b"blob " + str(len(hle_bytes)).encode() + b"\x00" + hle_bytes
+).hexdigest() == "de718afada4741c2c9834c0269cd6e2a27de4138", (
+    "R23 native service dispatch source owner drift")
+hle_maintained = hle_bytes.decode("utf-8")
+for replacement, original in reversed([["    : SessionRequestHandler(system_.Kernel(), service_name_)\n    , system{system_}\n    , service_name{service_name_}\n    , handler_invoker{handler_invoker_}\n    , max_sessions{max_sessions_}\n{}","    : SessionRequestHandler(system_.Kernel(), service_name_)\n    , system{system_}\n    , service_name{service_name_}\n    , is_i_storage{std::string_view{service_name_} == \"IStorage\"}\n    , handler_invoker{handler_invoker_}\n    , max_sessions{max_sessions_}\n{}"],["}\n\nvoid ServiceFrameworkBase::InvokeRequest(HLERequestContext& ctx) {\n    auto it = handlers.find(ctx.GetCommand());\n    FunctionInfoBase const* info = it == handlers.end() ? nullptr : &it->second;\n    if (info == nullptr || info->handler_callback == nullptr)\n        return ReportUnimplementedFunction(ctx, info);\n\n    LOG_TRACE(Service, \"{}\", MakeFunctionString(info->name, GetServiceName(), ctx.CommandBuffer()));\n    handler_invoker(this, info->handler_callback, ctx);\n\n\n}\n\nvoid ServiceFrameworkBase::InvokeRequestTipc(HLERequestContext& ctx) {","}\n\nvoid ServiceFrameworkBase::InvokeRequest(HLERequestContext& ctx) {\n    const auto command = ctx.GetCommand();\n    auto it = handlers.find(command);\n    const bool is_cmd_read = command == 0;\n    FunctionInfoBase const* info = it == handlers.end() ? nullptr : &it->second;\n    if (info == nullptr || info->handler_callback == nullptr)\n        return ReportUnimplementedFunction(ctx, info);\n\n    LOG_TRACE(Service, \"{}\", MakeFunctionString(info->name, GetServiceName(), ctx.CommandBuffer()));\n    handler_invoker(this, info->handler_callback, ctx);\n\n    if (is_i_storage && is_cmd_read) {\n        const auto* const process = ctx.GetThread().GetOwnerProcess();\n        if (process != nullptr && system.IsNVDECActiveForProcess(process->GetId())) {\n            std::this_thread::sleep_for(std::chrono::microseconds{600});\n        }\n    }\n}\n\nvoid ServiceFrameworkBase::InvokeRequestTipc(HLERequestContext& ctx) {"]]):
+    assert hle_maintained.count(replacement) == 1, "R23 HLE dispatch source hunk drift"
+    hle_maintained = hle_maintained.replace(replacement, original, 1)
 hle_expected = '#include "performance.h"\n#include "core/arm/debug.h"\n' + hle_pinned
 hle_calls = ("        InvokeRequest(ctx);", "            InvokeRequestTipc(ctx);")
 hle_metric = """            if (profile_hle)

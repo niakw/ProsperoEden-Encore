@@ -1013,10 +1013,39 @@ h01_fs_rollback = (
     "}\n\n"
 )
 assert native_fs_active.count(h01_fs_rollback) == 1
-assert native_fs_active.replace(h01_fs_rollback, "", 1) == (
+# R23 #113 prevents an additional bundled program from erasing the
+# current application's temporary saves. Reverse only its byte-exact
+# conditional block, keeping both the old firmware-root generator witness
+# and H01's per-process RomFS rollback intact.
+r23_fs_temporary_guard = """    // Switch temporary save storage starts empty for an application, but
+    // multiple bundled programs share the same storage lifetime. Preparing
+    // it in every SaveDataFactory ctor deletes a sibling program's live data.
+    // CreateFactories is initialized once for the application controller;
+    // overwrite explicitly starts a new generation and resets bis_factory.
+    if (bis_factory == nullptr) {
+        const auto save_directory =
+            vfs.OpenDirectory(Common::FS::GetEdenPathString(EdenPath::SaveDir), rw_mode);
+        if (save_directory != nullptr) {
+            save_directory->DeleteSubdirectoryRecursive("temp");
+        }
+    }
+
+"""
+assert native_fs_active.count(r23_fs_temporary_guard) == 1, (
+    "R23 bundled-program temp-save guard moved")
+import hashlib
+native_fs_raw = native_fs_active.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(native_fs_raw)).encode() + bytes([0]) + native_fs_raw
+).hexdigest() == "b0cb0c6a1b0ecf7dc8e82718e352f2f04c521b2b", (
+    "Unreviewed native FS firmware/parent-program source drift")
+native_fs_historical = native_fs_active.replace(h01_fs_rollback, "", 1).replace(
+    r23_fs_temporary_guard, "", 1)
+assert native_fs_historical == (
     '#include "assets_dir.h"\n'
     + native_fs_pinned.replace(native_fs_old, native_fs_new)
-)
+), "Native R23 FS source not reversible to firmware-root baseline"
+print("ENCORE_R23_FS_TEMP_SAVE_ISOLATION_PASS", "application_owner=1", "H01_rollback=1")
 h01_fs_header = (active / "eden-core/overrides/h01-filesystem/core/hle/service/filesystem/filesystem.h").read_text()
 assert "void UnregisterProcessIfPresent(ProcessId process_id);" in h01_fs_header
 assert c.count('list(REMOVE_ITEM core_sources hle/service/filesystem/filesystem.cpp)') == 1

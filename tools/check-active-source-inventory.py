@@ -1072,6 +1072,12 @@ assert 'ps5_ns2_guest_backing_plan.h' not in (root / "src/host_memory.cpp").read
 print("ENCORE_POST_F07_R457_RESEARCH_SOURCE_PASS", "owners=2 historical_headless=193")
 # The R23 AM frontend prototype is a post-F07 native overlay, not an
 # additional item in the frozen 193-file historical headless catalogue.
+post_f07_ns1_audio_headless_owners = {"headless/audio_in_silence.h"}
+assert all((root / p).is_file() for p in post_f07_ns1_audio_headless_owners)
+assert "SilentAudioInputStream" in (root / "headless/audio.cpp").read_text()
+assert "audio_in_silence.h" in native_cmake
+print("ENCORE_C00_POST_F07_HEADLESS_OWNER_PASS new=1 historical=193")
+
 post_f07_ns1_am_headless_owners = {"headless/r23_am_frontend_applets_ps5.cpp"}
 assert all((root / p).is_file() for p in post_f07_ns1_am_headless_owners)
 assert "r23_am_frontend_applets_ps5.cpp" in native_cmake
@@ -1085,7 +1091,7 @@ headless_actual = sorted(
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners)
+        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

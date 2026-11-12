@@ -38,3 +38,8 @@ This requests exactly one fresh canonical PS5 package from the updated source
 and its existing source-pinned vendor, with no GitHub Release publication.
 Actual NS1/NS2 game boots, color/orientation on console, and R09 real PS5
 output remain console acceptance gates.
+
+
+## Superseding 12 November requirements
+
+Earlier wording about **sixteen bundled daily WebPs** is superseded by the explicit user requirement: **eight user-selected, on-demand WebPs only**, none in install/update packages. Production code `e1a4b0a6` removes build-time art, `b79831d3` adds an async first-selection fetch and one-attempt-per-day cache receipt, and `2081099c` preserves the existing 31-locale translation source keys while keeping WebP user imports enabled. No final PS5 visual or gameplay proof is inferred from these commits. 33 NS1/global upstream work packages remain subject to integration/reconciliation; see the 12 November register on main. The draft release remains unpublished.

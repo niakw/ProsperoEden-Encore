@@ -24,8 +24,9 @@ is **never bundled with the app or downloaded on the console**.
 When Home/Library performs its existing asynchronous Nlib media enrichment,
 the same background worker also looks up the title in this index and downloads
 available `Box - Front` / `Box - Back` JPEG/PNG files through the public
-LaunchBox image CDN. The files are converted to the native cached TGA format,
-stored under the game's title ID and reused offline. Each face is independent.
+LaunchBox image CDN. The files are converted to bounded native cached WebP,
+stored under the game's title ID and reused offline. Existing user-imported
+original PNG/JPEG/TGA/WebP cases remain independently supported. Each face is independent.
 An existing manually supplied face always takes precedence. Missing images
 retry after a bounded backoff; the launcher never waits for remote artwork.
 
@@ -668,3 +669,8 @@ scans now qualify from 16×250 when their complete image is valid, both in
 the network cache and for local user scans. If a source is small, its print
 may remain soft: Encore does not invent detail or replace it with a fabricated
 game title. Original front and back priorities are unaffected.
+
+
+## 12 November 2026 — native handoff status
+
+The current PS5 owner runs two bounded async front/rear decode tasks, serializes GL uploads on the owner thread, and captures the final 3D jacket before handing the texture bytes from OpenGL to Vulkan. The previous R457 console report observed a late front-face appearance and a brief black screen before the violet Vulkan loader. **Neither visual defect is yet demonstrated fixed on PS5**; acceptance requires an actual captured console run (with and without a valid jacket GPU readback). Daily promotional backgrounds are a separate feature and are **not installed by default**; the opt-in eight-WebP policy is documented in [Appearance](ENCORE_LAUNCHER_APPEARANCE_AND_UPDATES.md).

@@ -1,7 +1,6 @@
 # Eden Encore — R25 Appearance / R21 Application Updates
 
-Scope: isolated work on a feature PR based on feat/graphics-network-achievements.
-No changes to main, vendor, GPU or NS2.
+Status: maintained PS5 launcher integrated on engine main. This is a running architecture/behavior register, not a hardware visual test receipt.
 
 ## R25 — Personalization architecture
 
@@ -11,7 +10,7 @@ and Light. Switch retains its dedicated original controls and style.
 
 The three official new logos were copied unchanged from the supplied files:
 assets/branding/encore-noneon.png, encore-white.png and encore-dark.png.
-They are packaged as TGA by the existing build pipeline, along with the
+They are packaged as lossless WebP by the native build pipeline, along with the
 original Neon branding. The original Switch logo and source artwork are kept.
 Automatic logo choices are Neon for Neon, Non-Neon for Non-Neon, White for
 Dark and Dark for Light. The user can override the choice using the same

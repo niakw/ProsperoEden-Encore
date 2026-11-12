@@ -71,3 +71,8 @@ Resolution / test gates:
 - Do not repeatedly build the native package until the new P0 host gates and actual CMake source selection pass.
 - Distinguish proven binary fault location from a merely hypothesized ownership cause.
 - Never mark a CI-green result as PS5 gameplay success.
+
+
+## 12 November update — do not mistake build for console proof
+
+Source alignment has progressed: compiled targets use the six-core KProcess header/ABI probe, and the NS2 guest arena uses sparse VA ownership rather than a contiguous 12 GiB physical allocation. A subsequent native workflow linked 1,588 objects and signed a binary, then stopped on a daily-art package manifest mismatch; eight opt-in images are now fetched only after user selection rather than baked into the package. The **reported FC27 NS1 SIGSEGV and NS2 ENOMEM have not yet been re-tested with a newly generated, installed exact-source ZIP on PS5**, so they remain hardware acceptance blockers. The brief black jacket-to-Vulkan transition and theme/jaquette inversions also remain hardware checks.

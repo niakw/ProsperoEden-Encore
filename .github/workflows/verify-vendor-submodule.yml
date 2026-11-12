@@ -6,6 +6,8 @@ on:
       - '.gitmodules'
       - 'tools/check-vendor-submodule.sh'
       - 'tools/check-vendored-vulkan-fork.py'
+      - 'tools/vendor-eden-cpm.py'
+      - 'tools/check-ns2-uuid-abi.py'
       - '.github/workflows/verify-vendor-submodule.yml'
       # Final host-exit sign-off needs fresh pinned-vendor provenance
       # at the exact engine SHA even when the vendor gitlink is unchanged.
@@ -17,6 +19,8 @@ on:
       - '.gitmodules'
       - 'tools/check-vendor-submodule.sh'
       - 'tools/check-vendored-vulkan-fork.py'
+      - 'tools/vendor-eden-cpm.py'
+      - 'tools/check-ns2-uuid-abi.py'
       - '.github/workflows/verify-vendor-submodule.yml'
   workflow_dispatch:
 permissions:

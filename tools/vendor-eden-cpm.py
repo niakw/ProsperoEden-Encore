@@ -167,12 +167,12 @@ def check():
     drifted.append({'package':name,'expected':expected,'observed':observed})
  # All three archived security overlays must remain present together. Never
  # accept partial or mixed snapshots, even across subsequent vendor commits.
- if security_verified:
-  assert security_verified==set(SECURITY_CPM_DELTAS), (
-      'Security vendor CPM delta coverage incomplete',sorted(security_verified))
  if drifted:
   raise RuntimeError('CPM pinned-source snapshot drift (do not silently repin): '+
                      json.dumps(drifted,sort_keys=True))
+ if security_verified:
+  assert security_verified==set(SECURITY_CPM_DELTAS), (
+      'Security vendor CPM delta coverage incomplete',sorted(security_verified))
  print('CPM_VENDOR_COMPLETE_OK',len(obj['entries']),'cached PS5 CPM packages; original EOL bytes restored',len(original_eol_files()),'; unused platform/test pins',len(obj['excluded_unfetched_cpm_pins']))
  return obj
 

@@ -1387,8 +1387,31 @@ npad_new_entry = "void NPad::ControllerUpdate(Kernel::KernelCore& kernel, Core::
 assert npad_shipping.count(npad_old_pair) == npad_shipping.count(npad_old_entry) == 1
 npad_expected = npad_shipping.replace(npad_old_pair, npad_new_pair).replace(
     npad_old_entry, npad_new_entry)
-assert (active / "eden-core/src/hid_core/resources/npad/npad.cpp").read_text() == npad_expected, (
-    "Maintained NPad differs from previous CMake source generator")
+# R23 #19 adds precisely one constructor reset and one successful
+# JoyHold-type orientation update after the previously proven NPad guards.
+npad_r23_constructor = """{
+    for (std::size_t i = 0; i < abstracted_pads.size(); ++i) {
+        abstracted_pads[i].SetNpadId(IndexToNpadIdType(i));"""
+npad_r23_initialized = """{
+    // A newly initialized game begins with upright single Joy-Cons.
+    hid_core.SetJoyHoldHorizontal(false);
+    for (std::size_t i = 0; i < abstracted_pads.size(); ++i) {
+        abstracted_pads[i].SetNpadId(IndexToNpadIdType(i));"""
+npad_r23_prior_hold = "    return npad_resource.SetNpadJoyHoldType(aruid, hold_type);"
+npad_r23_checked_hold = """    const Result result = npad_resource.SetNpadJoyHoldType(aruid, hold_type);
+    if (result.IsSuccess()) {
+        hid_core.SetJoyHoldHorizontal(hold_type == NpadJoyHoldType::Horizontal);
+    }
+    return result;"""
+assert npad_expected.count(npad_r23_constructor) == 1
+assert npad_expected.count(npad_r23_prior_hold) == 1
+npad_r23 = npad_expected.replace(npad_r23_constructor, npad_r23_initialized, 1)
+npad_r23 = npad_r23.replace(npad_r23_prior_hold, npad_r23_checked_hold, 1)
+npad_maintained = (active / "eden-core/src/hid_core/resources/npad/npad.cpp").read_text()
+assert r23_blob_sha(npad_maintained) == "454138c445bc140568068737646349cac98a686d"
+assert npad_maintained == npad_r23, (
+    "R23 NPad JoyHold changed beyond its two source-reviewed edits")
+print("ENCORE_R23_NPAD_ORIENTATION_SOURCE_PASS", "reset=1", "successful_hold_update=1")
 assert c.count('list(APPEND npad_sources "${EDEN_NPAD_SELECTED}")') == 1
 assert c.count('list(FILTER npad_sources EXCLUDE REGEX "(^|/)npad\\\\.cpp$")') == 1
 assert 'write_derived("${PORT_BUILD_DIR}/npad.cpp"' not in c

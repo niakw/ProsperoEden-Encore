@@ -218,6 +218,13 @@ if(EDEN_NS2_SPARSE_BACKING)
         message(FATAL_ERROR "NS2 sparse PS5 direct-memory owner requires PS5_NATIVE")
     endif()
     target_sources(common PRIVATE "${PORT_ROOT}/src/ns2_sparse_guest.cpp")
+    # Native CMake option is not automatically a C++ preprocessor define.
+    # Keep the complete guest allocation path compiled as sparse, never
+    # accidentally fall through to a 12 GiB dense direct-memory allocation.
+    set_property(SOURCE "${PORT_ROOT}/src/host_memory.cpp"
+        TARGET_DIRECTORY common APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
+    set_property(SOURCE "${PORT_ROOT}/src/ns2_sparse_guest.cpp"
+        TARGET_DIRECTORY common APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     target_include_directories(common PRIVATE "${PORT_ROOT}/headless")
     target_compile_definitions(common PRIVATE EDEN_NS2_SPARSE_BACKING=1)
     target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)
@@ -3640,4 +3647,9 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
          "${EDEN_R457_SPARSE_KERNEL_SRC}")
     set_property(TARGET core PROPERTY SOURCES
         "${eden_r457_sparse_kernel_units}")
+    # The shared core target does not inherit the launcher PS5_NATIVE
+    # macro. Without this, direct metadata writes skip sparse precommit
+    # and dereference reserved, uncommitted 12 GiB guest VA.
+    set_property(SOURCE "${EDEN_R457_SPARSE_KERNEL_SRC}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
 endif()

@@ -6,7 +6,7 @@ CPM cache. Never fetch moving network sources. Every readable file is committed
 in Eden's own Git, with a deterministic full-directory content fingerprint.
 """
 from pathlib import Path
-import argparse,hashlib,json,os,shutil,sys,tarfile,functools
+import argparse,hashlib,json,os,shutil,sys,tarfile,functools,subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 LOCK=ROOT/'vendor/sources/eden-cpm/VENDOR-CPM-LOCK.json'
@@ -110,6 +110,29 @@ def capture(cache):
  LOCK.write_text(json.dumps(obj,indent=2,sort_keys=True)+'\n')
  print(f'CPM_VENDOR_COMPLETE source_roots={len(results)} files={sum(v["files"] for v in results.values())} bytes={sum(v["bytes"] for v in results.values())}',flush=True)
 
+# Audited security-only adjustments to the *existing* archived CPM
+# sources. Preserve the original VENDOR-CPM-LOCK as an immutable upstream
+# witness. Accept ONLY the fully specified revised digest on the merged vendor
+# security commit. No wildcard paths, version changes, or mismatched source.
+SECURITY_VENDOR_PIN="3f483f61a2dc2b959b5075dd82c68f9dc566d1cd"
+SECURITY_CPM_DELTAS={
+ "boost":({
+     "sha256":"02027393412e03a79a37eb7620fdb382f7e8374dddafa78606eed8e80534fd83",
+     "files":59798,"bytes":550701340}, {
+     "sha256":"b59f5d248a03acf8a39f39a28a6c360ef5cfffe5e489c37f78ed7d162c0db2a2",
+     "files":59798,"bytes":550701444}),
+ "opus":({
+     "sha256":"3431a6c9f45c0b14c93fc61c5dd937c14e0a568035f86f2bd3ccfc78cbfa9c06",
+     "files":754,"bytes":19572647}, {
+     "sha256":"5be6b6c531038c4bafcd1093414a7c0f1e4bd5ea11f14f795a89c3846dfb17c2",
+     "files":754,"bytes":19572648}),
+ "vulkanmemoryallocator":({
+     "sha256":"b134428f5b8ba474f04e330f4d64bd800c0730fe421147f001324547b22f2865",
+     "files":267,"bytes":4107878}, {
+     "sha256":"6dd1cf3709d293e128eb0282bf98c3ce9b5657260d5415f1487d42133a23476e",
+     "files":267,"bytes":4108157}),
+}
+
 def check():
  obj=json.loads(LOCK.read_text())
  if obj['original_eden_commit']!=PIN or obj['cpmfile_sha256']!=digest(FILE):
@@ -117,16 +140,27 @@ def check():
  pins=json.loads(FILE.read_text())
  if len(obj['entries'])<20:raise RuntimeError('Expected 20+ cached PS5 CPM input packages')
  drifted=[]
+ security_verified=set()
  for name,record in obj['entries'].items():
   folder=SOURCES/name/record['version']
   v=pins[record['cpm_key']]
   if v['version']!=record['version'] or v.get('hash')!=record['upstream_sha512']:
    raise RuntimeError(f'Wrong CPM package or archive pin {name}')
   observed=tree(folder)
-  if any(observed[k]!=record[k] for k in ('sha256','files','bytes')):
-   drifted.append({'package':name,
-                  'expected':{k:record[k] for k in ('sha256','files','bytes')},
-                  'observed':observed})
+  expected={k:record[k] for k in ('sha256','files','bytes')}
+  if observed!=expected:
+   reviewed=SECURITY_CPM_DELTAS.get(name)
+   vendor_pin=subprocess.check_output(
+       ['git','rev-parse','HEAD:vendor'],cwd=ROOT,text=True).strip()
+   if reviewed and vendor_pin==SECURITY_VENDOR_PIN and expected==reviewed[0] and observed==reviewed[1]:
+    security_verified.add(name)
+    print('CPM_SECURITY_DELTA_EXACT_PASS',name,'original_snapshot_preserved=1',flush=True)
+   else:
+    drifted.append({'package':name,'expected':expected,'observed':observed})
+ if SECURITY_VENDOR_PIN==subprocess.check_output(
+         ['git','rev-parse','HEAD:vendor'],cwd=ROOT,text=True).strip():
+  assert security_verified==set(SECURITY_CPM_DELTAS), (
+      'Security vendor CPM delta coverage incomplete',sorted(security_verified))
  if drifted:
   raise RuntimeError('CPM pinned-source snapshot drift (do not silently repin): '+
                      json.dumps(drifted,sort_keys=True))

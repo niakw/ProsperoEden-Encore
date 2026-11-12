@@ -815,6 +815,35 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #80 — vendor workaround IR and VkPipelineCache need the SAME
+# HasBrokenPattern ABI. Compile the maintained shader TU exactly once and
+# stage the public IR declaration before video_core/shader_recompiler.
+if(PS5_NATIVE)
+    set(EDEN_R23_FRAG_IR
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt")
+    set(EDEN_R23_FRAG_VK
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")
+    if(NOT EXISTS "${EDEN_R23_FRAG_IR}/passes.h"
+       OR NOT EXISTS "${EDEN_R23_FRAG_IR}/vendor_workaround_pass.cpp"
+       OR NOT EXISTS "${EDEN_R23_FRAG_VK}")
+        message(FATAL_ERROR "R23 #80 missing matched IR predicate and Vulkan caller")
+    endif()
+    set(EDEN_R23_FRAG_HEADERS "${PORT_BUILD_DIR}/r23-fragpattern/include")
+    configure_file("${EDEN_R23_FRAG_IR}/passes.h"
+        "${EDEN_R23_FRAG_HEADERS}/shader_recompiler/ir_opt/passes.h" COPYONLY)
+    get_target_property(eden_r23_frag_units shader_recompiler SOURCES)
+    list(FIND eden_r23_frag_units "ir_opt/vendor_workaround_pass.cpp" eden_r23_frag_old)
+    if(eden_r23_frag_old LESS 0)
+        message(FATAL_ERROR "R23 #80 original shader workaround owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_frag_units "ir_opt/vendor_workaround_pass.cpp")
+    list(APPEND eden_r23_frag_units "${EDEN_R23_FRAG_IR}/vendor_workaround_pass.cpp")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_frag_units}")
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_FRAG_HEADERS}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_FRAG_HEADERS}")
+    message(STATUS "R23 #80: one shader IR predicate and matched native Vulkan caller")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

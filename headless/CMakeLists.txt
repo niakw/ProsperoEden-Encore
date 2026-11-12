@@ -3665,6 +3665,7 @@ if(PS5_NATIVE)
             "r23_bcat_delivery_cache_file_ps5.cpp"
             "r23_f2i_conversion_ps5.cpp"
             "r23_audren_debug_ps5.cpp"
+            "r23_audren_debug_ns1_ps5.cpp"
             "r23_channel_state_cache_ps5.h")
         if(NOT EXISTS "${EDEN_R23_MAIN_NATIVE_ROOT}/${eden_r23_fix_file}")
             message(FATAL_ERROR "R23 maintained source absent: ${eden_r23_fix_file}")
@@ -3676,8 +3677,16 @@ if(PS5_NATIVE)
             set(eden_r23_original_service "hle/service/bcat/delivery_cache_file_service.cpp")
             set(eden_r23_active_service "r23_bcat_delivery_cache_file_ps5.cpp")
         else()
-            set(eden_r23_original_service "hle/service/audio/audio.cpp")
-            set(eden_r23_active_service "r23_audren_debug_ps5.cpp")
+            # Shared NS2 audio already replaces the original Eden audio.cpp.
+            # Retain that complete selected feature graph when correcting
+            # the audren:d service class. Do not restore the obsolete TU.
+            if(EDEN_SHARED_NS2_AUDIO)
+                set(eden_r23_original_service "${EDEN_NS2_AUDIO_SOURCE}")
+                set(eden_r23_active_service "r23_audren_debug_ps5.cpp")
+            else()
+                set(eden_r23_original_service "hle/service/audio/audio.cpp")
+                set(eden_r23_active_service "r23_audren_debug_ns1_ps5.cpp")
+            endif()
         endif()
         list(FIND eden_r23_service_tus "${eden_r23_original_service}" eden_r23_old_owner)
         if(eden_r23_old_owner LESS 0)

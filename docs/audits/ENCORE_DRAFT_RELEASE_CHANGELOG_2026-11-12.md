@@ -23,3 +23,5 @@
 - Preserve this GitHub Release as **draft + prerelease** until native build, package ZIP, CMake/linker provenance, and user console regression are verified. **No automatic publication**.
 - User PS5 acceptance: NS1 launch/audio, NS2 memory allocator / first frame, launcher images/orientation, quick menu shortcuts, theme accessibility, firmware count, app revision and seamless jacket-to-Vulkan frame.
 - Published R1 is unchanged; no R457 candidate is claimed installable until a green final build and exact ZIP digest exist.
+
+<!-- One-shot draft-release metadata synchronization; this document never publishes a release. -->

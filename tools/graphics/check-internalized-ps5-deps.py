@@ -21,13 +21,16 @@ for name,(tree,sha) in pins.items():
     assert sha in provenance,name
 # Preserve exact upstream provenance for the sole security-necessary
 # MihawkGen training requirements update; never silently admit other changes.
-historical_vendor="a800f08eb13fd9b6aac84f1ec21f9ac917f57330"
 train="sources/ps5-mihawkgen/train/requirements.txt"
-changed=git(vendor,"diff","--name-only",historical_vendor,"HEAD","--","sources/ps5-mihawkgen").splitlines()
-assert changed==[train], ("Unexpected PS5 renderer source changes", changed)
-previous=git(vendor,"show",f"{historical_vendor}:{train}")
-assert previous.count("pillow==12.3.0")==1
-assert (vendor/train).read_text().strip()==previous.replace("pillow==12.3.0","pillow==13.0.0")
+current=(vendor/train).read_bytes()
+assert current.count(b"pillow==13.0.0")==1
+original=current.replace(b"pillow==13.0.0", b"pillow==12.3.0")
+old_sha=hashlib.sha1(b"blob "+str(len(original)).encode()+b"\x00"+original).hexdigest()
+assert old_sha=="0d8325d208ccfb9d1a3abf37d2688ed01787b240", (
+    "MihawkGen original requirements source blob mismatch", old_sha)
+# Combined with the exact modified Git tree pin above, the archive contains
+# the original model, license and source code plus ONE reviewed Pillow change.
+
 for stale in ("PS5_MihawkGen", "PS5_FSR3OpticalFlow", "libwebp"):
     assert not (vendor/"encore-active"/stale).exists(), stale
 net=vendor/"sources/ps5-mihawkgen/framegen/models/network.fgw"

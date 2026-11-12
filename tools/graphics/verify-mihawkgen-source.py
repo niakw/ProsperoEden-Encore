@@ -16,7 +16,18 @@ def check(condition: bool, message: str):
         raise AssertionError(message)
 
 tree_sha = subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD:sources/ps5-mihawkgen"], text=True).strip()
-check(tree_sha == "e3b42f5b89775469bec04795b93f048b74aff207", f"Vendored MihawkGen tree mismatch: {tree_sha}")
+check(tree_sha == "aad67f4bd28c040db7aa0d78cfd3d0de85cfba7a", f"Vendored MihawkGen tree mismatch: {tree_sha}")
+# Security change: the exact vendor tree differs from official MihawkGen
+# only by the reviewed Python training Pillow pin. Do not depend on old
+# commit objects being present in GitHub Actions' shallow submodule clone.
+requirements=(module / "train/requirements.txt").read_bytes()
+check(requirements.count(b"pillow==13.0.0")==1,"MihawkGen Pillow security pin missing")
+old_requirements=requirements.replace(b"pillow==13.0.0",b"pillow==12.3.0")
+original_git_blob=hashlib.sha1(
+    b"blob "+str(len(old_requirements)).encode()+b"\x00"+old_requirements
+).hexdigest()
+check(original_git_blob=="0d8325d208ccfb9d1a3abf37d2688ed01787b240",
+      "MihawkGen upstream requirements revision not recognized")
 check(expected_sha in (root/"vendor/docs/PS5_INTERNAL_DEPENDENCY_ORIGINS_2026-11-10.md").read_text(), "Missing original upstream commit")
 network = module / "framegen/models/network.fgw"
 check(network.stat().st_size == 1757240, "Unexpected MihawkGen model size")

@@ -1085,13 +1085,33 @@ assert not post_f07_ns1_am_headless_owners & (
     post_f07_feature_headless_owners | post_f07_r09_headless_owners |
     post_f07_p5_headless_owners | post_f07_r457_owners)
 print("ENCORE_NS1_AM_POST_F07_HEADLESS_PASS", "new=1 historical=193")
+# R23 final BCAT/F2I/audren/channel-state/self-controller additions are
+# post-F07 native owners, never part of the frozen 193 historical file table.
+post_f07_r23_final_headless_owners = {
+    "headless/r23_audren_debug_ns1_ps5.cpp",
+    "headless/r23_audren_debug_ps5.cpp",
+    "headless/r23_bcat_delivery_cache_file_ps5.cpp",
+    "headless/r23_channel_state_cache_ps5.h",
+    "headless/r23_f2i_conversion_ps5.cpp",
+    "headless/r23_self_controller_240_ps5.h",
+}
+assert len(post_f07_r23_final_headless_owners) == 6
+assert all((root / p).is_file() for p in post_f07_r23_final_headless_owners)
+assert not post_f07_r23_final_headless_owners & (
+    post_f07_feature_headless_owners | post_f07_r09_headless_owners |
+    post_f07_p5_headless_owners | post_f07_r457_owners |
+    post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners)
+for p in post_f07_r23_final_headless_owners:
+    assert p.removeprefix("headless/") in native_cmake, ("R23 owner selection", p)
+print("ENCORE_R23_FINAL_POST_F07_HEADLESS_PASS added=6 historic=193")
+
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners)
+        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

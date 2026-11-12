@@ -820,10 +820,22 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from generator')
     # First reverse the exact P24 hunks on raw vendor, then N56: both
     # independent receipts must remain valid without conflating their SHAs.
-    n3m_pre_mesh = reverse_p24(n56_name, n56_current)
-    assert n3m_pre_mesh.count(n56_after) == 1
-    n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
-    assert generated_n3m == n3m_pre_mesh, 'NS2 generated Vulkan source differs from P24+N56-normalized vendor'
+    if n56_name in r23_combined_owners:
+        # The native renderer has additional vendor-reviewed R23 shader and
+        # subgroup logic. Its exact merged source is separately hash-pinned
+        # above; it is intentionally not equal to an old Eden generator.
+        assert git_blob_sha(n56_current) == r23_combined_owners[n56_name]
+        assert n56_current.count(n56_after) == 1
+        assert generated_n3m.count(n56_before) == 1, (
+            'Original generated N56 source graph changed')
+        print("ENCORE_R23_NATIVE_VS_GENERATOR_SPLIT_PASS",
+              "native_r23_hash=1 old_generator_n56=1")
+    else:
+        n3m_pre_mesh = reverse_p24(n56_name, n56_current)
+        assert n3m_pre_mesh.count(n56_after) == 1
+        n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
+        assert generated_n3m == n3m_pre_mesh, (
+            'NS2 generated Vulkan source differs from P24+N56-normalized vendor')
 
     # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
     # Reverse only exact reviewed additions, then require original F07 SHA

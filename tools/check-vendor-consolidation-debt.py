@@ -1458,7 +1458,28 @@ pm_expected = pm_base
 for pos, (old, new) in enumerate(pm_pairs):
     assert pm_expected.count(old) == (1, 1, 1, 3)[pos], ("pinned patch manager drift", pos)
     pm_expected = pm_expected.replace(old, new)
-assert (active / "eden-core/src/core/file_sys/patch_manager.cpp").read_text() == pm_expected
+# R23 #113 parent-program sharing adds 20 reviewed source-delta regions
+# on top of the previous four-modification PatchManager generator.
+# Reverse exactly to the frozen baseline before checking old parity.
+pm_current = (active / "eden-core/src/core/file_sys/patch_manager.cpp").read_text()
+pm_receipt = json.loads(
+    (root / "tools/fixtures/r23-parent-patch-manager-reverse.json").read_text())
+assert pm_receipt["schema_version"] == 1 and len(pm_receipt["hunks"]) == 20
+assert r23_blob_sha(pm_current) == pm_receipt["post_r23_blob"], (
+    "Unreviewed PatchManager parent-program source", r23_blob_sha(pm_current))
+pm_recovered = pm_current
+for pm_hunk in reversed(pm_receipt["hunks"]):
+    assert pm_recovered.count(pm_hunk["after"]) == 1, (
+        "PatchManager R23 source edit context drift")
+    pm_recovered = pm_recovered.replace(pm_hunk["after"], pm_hunk["before"], 1)
+assert r23_blob_sha(pm_recovered) == pm_receipt["pre_r23_generated_blob"]
+assert pm_recovered == pm_expected, (
+    "Parent-program PatchManager differs beyond source-exact reviewed R23 delta")
+for semantic in ("GetParentApplicationId", "GetDisabledAddons",
+                 "GetModificationLoadRoot", "parent_title_id", "GetControlMetadata"):
+    assert semantic in pm_current, ("Parent-program lookup disappeared", semantic)
+print("ENCORE_R23_PARENT_PROGRAM_PATCH_MANAGER_PASS",
+      "hunks=20", "historical_four_patches=preserved")
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/patch_manager.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/file_sys/patch_manager.cpp" patch_source)' not in c

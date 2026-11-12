@@ -11,6 +11,37 @@ derived = (root / 'vendor/encore-active/eden-core/src' / 'common/cpu_features.cp
 expected = original.replace('        } else {\n            caps.tsc_frequency = X64::EstimateRDTSCFrequency();\n        }', '        }').replace(
     '    if (max_std_fn >= 0x16) {',
     "    if (caps.invariant_tsc && caps.tsc_frequency < 1'000'000'000ULL) {\n        caps.tsc_frequency = X64::EstimateRDTSCFrequency();\n    }\n\n    if (max_std_fn >= 0x16) {")
+# R23 #71: the maintained WallClock also replaces a broken 0.64
+# nanoseconds-to-RDTSC conversion. Prove that additional exact delta
+# independently; do not reject an approved native fix as unknown drift.
+ns_to_ticks_original = (
+    "u64 WallClock::NsToTicks(std::chrono::nanoseconds ns) const {\\n"
+    "    return invariant ? MultiplyHigh(ns.count(), rdtsc_ns_factor) : ns.count();\\n"
+    "}"
+).replace("\\\\n", "\\n")
+ns_to_ticks_reviewed = """u64 WallClock::NsToTicks(std::chrono::nanoseconds ns) const {
+    if (!invariant) {
+        return static_cast<u64>(ns.count());
+    }
+    // A nanosecond-to-RDTSC ratio greater than one does not fit in
+    // 0.64 fixed-point: at 2/3/4 GHz the old factor wraps to zero.
+    // The product fits in 128 bits for any signed nanosecond duration
+    // and any measured 64-bit host frequency.
+    if (ns.count() <= 0) {
+        return 0;
+    }
+    const auto product = static_cast<unsigned __int128>(ns.count()) *
+                         static_cast<unsigned __int128>(rdtsc_frequency);
+    return static_cast<u64>(product / NsRatio::den);
+}"""
+assert expected.count(ns_to_ticks_original) == 1
+expected = expected.replace(ns_to_ticks_original, ns_to_ticks_reviewed)
+ns_fixed_factor = (
+    "    , rdtsc_ns_factor{invariant_ ? "
+    "GetFixedPoint64Factor(rdtsc_frequency_, NsRatio::den) : 1}\\n"
+).replace("\\\\n", "\\n")
+assert expected.count(ns_fixed_factor) == 1
+expected = expected.replace(ns_fixed_factor, "", 1)
 # N76 extends the shared CPU clock with a metadata-selected guest rate.
 # Reconstruct the original native TSC owner by removing ONLY this exact
 # guarded include and one guarded CNTPCT block. NS1 selector parity remains

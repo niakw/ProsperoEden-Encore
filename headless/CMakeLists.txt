@@ -815,6 +815,54 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #72: preserve source selection of all shared shader subgroup owners
+# as ONE coherent profile, IR passes and SPIR-V warp emitter graph.
+if(PS5_NATIVE)
+    set(EDEN_R23_SUBGROUP_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+    set(EDEN_R23_SUBGROUP_INCLUDE
+        "${PORT_BUILD_DIR}/r23-subgroup/include")
+    foreach(eden_r23_subgroup_header IN ITEMS
+            "backend/spirv/spirv_emit_context.h"
+            "host_translate_info.h" "ir_opt/passes.h" "profile.h")
+        if(NOT EXISTS "${EDEN_R23_SUBGROUP_ROOT}/${eden_r23_subgroup_header}")
+            message(FATAL_ERROR "R23 #72 missing subgroup header: ${eden_r23_subgroup_header}")
+        endif()
+        configure_file("${EDEN_R23_SUBGROUP_ROOT}/${eden_r23_subgroup_header}"
+            "${EDEN_R23_SUBGROUP_INCLUDE}/shader_recompiler/${eden_r23_subgroup_header}"
+            COPYONLY)
+    endforeach()
+    get_target_property(eden_r23_subgroup_units shader_recompiler SOURCES)
+    foreach(eden_r23_subgroup_source IN ITEMS
+            "backend/spirv/emit_spirv.cpp"
+            "backend/spirv/emit_spirv_warp.cpp"
+            "frontend/maxwell/translate_program.cpp"
+            "ir_opt/constant_propagation_pass.cpp")
+        if(NOT EXISTS "${EDEN_R23_SUBGROUP_ROOT}/${eden_r23_subgroup_source}")
+            message(FATAL_ERROR "R23 #72 missing subgroup TU: ${eden_r23_subgroup_source}")
+        endif()
+        list(FIND eden_r23_subgroup_units "${eden_r23_subgroup_source}"
+                  eden_r23_subgroup_original)
+        if(eden_r23_subgroup_original LESS 0)
+            message(FATAL_ERROR "R23 #72 pinned subgroup owner drift: ${eden_r23_subgroup_source}")
+        endif()
+        list(REMOVE_ITEM eden_r23_subgroup_units "${eden_r23_subgroup_source}")
+        list(APPEND eden_r23_subgroup_units
+             "${EDEN_R23_SUBGROUP_ROOT}/${eden_r23_subgroup_source}")
+    endforeach()
+    if(NOT EXISTS "${EDEN_R23_SUBGROUP_ROOT}/ir_opt/geometry_compaction_pass.cpp")
+        message(FATAL_ERROR "R23 #72 missing geometry compaction implementation")
+    endif()
+    list(APPEND eden_r23_subgroup_units
+        "${EDEN_R23_SUBGROUP_ROOT}/ir_opt/geometry_compaction_pass.cpp")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_subgroup_units}")
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_SUBGROUP_INCLUDE}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_SUBGROUP_INCLUDE}")
+    # vk_pipeline_cache_cost.cpp and native vulkan_device.h are copied from
+    # the same vendor commit into PORT_BUILD_DIR by vulkan.cmake.
+    message(STATUS "R23 #72: 5 shader TUs and 4 matching headers, driver-conditional Vulkan fallback")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

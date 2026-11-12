@@ -1212,6 +1212,24 @@ for changed_path, expected_sha in ns2_production_blobs.items():
             post_index[changed_path]["post_snapshot_git_blob"] = expected_sha
         else:
             drift_index.pop(changed_path)
+# R23 #113 parent-program metadata and #126 UUID service adjustments
+# update two pre-existing historical source owners. The frozen F07 snapshot
+# remains unchanged; require exact reviewed new Git blobs independently.
+r23_existing_source_successors = {
+    "vendor/encore-active/eden-core/src/core/file_sys/registered_cache.cpp":
+        "2658884ef0332ec7dc579824d9c89925f9168891",
+    "vendor/encore-active/eden-core/src/core/hle/service/am/service/application_functions.cpp":
+        "2bd3959b2046f7e1cccf93ccbad9d1d91cd9a590",
+}
+assert set(r23_existing_source_successors).isdisjoint(post_index)
+for changed_path, new_blob in r23_existing_source_successors.items():
+    assert changed_path in drift_index, ("Missing R23 existing-owner delta",changed_path)
+    source_delta = drift_index.pop(changed_path)
+    assert source_delta["expected"] != new_blob
+    assert source_delta["actual"] == new_blob, (
+        "Unreviewed R23 existing-owner source edit", changed_path)
+print("ENCORE_R23_EXISTING_F07_SOURCE_SUCCESSORS_PASS", "owners=2",
+      "historical_F07_preserved=1")
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

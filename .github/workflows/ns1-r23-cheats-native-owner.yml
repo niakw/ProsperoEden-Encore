@@ -24,8 +24,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "3e96ac7f77552c756d98d8db8a47d88b26c71fea"
+          test "$(git -C vendor rev-parse HEAD)" = "797178c970bb961de6c9e1c9c6fcd7fd512474d8"
           python3 -B vendor/tests/ns1_r23_46_cheat_parser_fuzz.py
+          python3 -B vendor/tests/ns1_r23_46_cheat_toggle_host.py
           python3 - <<'PY'
           from pathlib import Path
           t=Path('headless/CMakeLists.txt').read_text()
@@ -34,6 +35,8 @@ jobs:
                     'list(APPEND eden_r23_cheat_sources "${EDEN_R23_CHEATS}")')
           assert all(x in t for x in required)
           assert Path('vendor/encore-active/eden-core/src/core/memory/cheat_engine.cpp').is_file()
+          assert Path('vendor/encore-active/eden-core/include/core/memory/cheat_engine.h').is_file()
+          assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_R23_CHEATS_INCLUDE}")' in t
           print('NS1_R23_CHEATS_REAL_SELECTED_SOURCE_PASS one_TU=1')
           PY
           echo 'Host AST, source and sanitizers only, not linked PS5 EBOOT or game-boot evidence' >> "$GITHUB_STEP_SUMMARY"

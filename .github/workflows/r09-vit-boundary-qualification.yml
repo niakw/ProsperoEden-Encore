@@ -195,7 +195,7 @@ jobs:
             extras/graphics/fixtures/r09_nr_original_1920x1080.txt \
             vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/nr_rdna2_*.h
       - name: Preserve public-only CPU preflight source headers
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2 / Node 24
         with:
           name: r09-cpu-preflight-public-kit
           path: .build-r09-boundary/r09_cpu_preflight_source_kit.tar.gz
@@ -390,14 +390,14 @@ jobs:
           printf '%s\n' 'Public Vulkan software driver and tests; no private binaries or model weights.'             > .build-r09-gpu/lavapipe-kit/README.txt
           tar -C .build-r09-gpu -czf .build-r09-gpu/lavapipe-public-kit.tar.gz lavapipe-kit
       - name: Preserve public-only Lavapipe host runtime
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2 / Node 24
         with:
           name: r09-lavapipe-public-host-kit
           path: .build-r09-gpu/lavapipe-public-kit.tar.gz
           retention-days: 2
       - name: Upload host image samples (not full-network inference proof)
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2 / Node 24
         with:
           name: r09-vulkan-before-after-real-gpu
           path: .build-r09-gpu/r09_*.png

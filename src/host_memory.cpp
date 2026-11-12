@@ -587,6 +587,15 @@ public:
             base = static_cast<u8*>(mapped);
         }
 #endif
+#ifdef PS5_NATIVE
+        // NS2 must never request 12 GiB of physical RAM because a
+        // compile-flag mismatch silently disabled the sparse owner.
+        // Fail clearly instead of reproducing the PS5 launch ENOMEM.
+        if (requested == (12ull << 30)) {
+            throw std::system_error(ENOMEM, std::generic_category(),
+                                    "NS2 sparse backing not active; refusing 12 GiB dense allocation");
+        }
+#endif
         if (!base) base = static_cast<u8*>(AllocateMemoryPages(requested));
         if (!base) throw std::system_error(errno, std::generic_category(), "Backing allocation");
         if (!fastmem) return;

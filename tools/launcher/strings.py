@@ -17,10 +17,11 @@ Missing text would fall back to English at runtime, but is a regression. Every
 translation is validated for placeholders and supported characters.
 
 check fails when
-  - fr-FR leaves current code text untranslated,
+  - a supported catalog leaves a current code text untranslated or obsolete,
   - a translation changes the {0} {1} placeholders,
-  - a translation uses a character the launcher's font does not have.
-It warns about partial/stale non-primary catalogs and translations much longer than English.
+  - a translation uses a character the launcher's font does not have,
+  - a UI label exceeds the current conservative length threshold or breaks heading case.
+All maintained catalogs now have zero warnings; the same diagnostics fail the CI gate if they return.
 
 The launcher's own font has Latin and Cyrillic letters. Japanese, Korean, Chinese, Greek, Thai and
 Arabic are drawn with the console's fonts (pe/gfx/system_fonts.hpp): their catalogs are checked
@@ -403,10 +404,11 @@ def check():
             print("   ", line)
         for line in warnings[:12]:
             print("    warning:", line)
-        # The maintained primary locale must stay warning-free as well as valid.
-        # Non-primary catalogs may still have wording/length warnings. The
-        # separate coverage gate now requires every active msgid to be present.
-        failed |= bool(problems) or (strict and bool(warnings))
+        # Every maintained PS5 locale must stay warning-free, not only the primary
+        # French/English catalogs. Keep the warnings visible and fail the gate:
+        # regressions in button labels and error text otherwise go unnoticed.
+        # The separate coverage gate still checks complete active msgid coverage.
+        failed |= bool(problems) or bool(warnings)
     print(f"{len(texts)} texts in the code, {len(catalogs)} catalogs" + (" FAIL" if failed else " PASS"))
     return 1 if failed else 0
 

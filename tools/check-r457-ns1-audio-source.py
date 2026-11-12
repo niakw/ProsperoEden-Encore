@@ -9,7 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor"
-PIN = "107caefe6bee1fc02266e22254b72f69346d83cd"
+PIN = "0f829e07963e1146ada2d39037059c13c2f0e641"
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected == PIN, f"Unexpected vendor submodule {selected}"
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
@@ -46,4 +46,5 @@ for b in backends:
 assert 'ReadyForAudioRead' not in (VENDOR / "sources/eden/src/core/memory.h").read_text()
 assert 'ReadyForAudioRead' not in (VENDOR / "sources/eden/src/audio_core/device/device_session.cpp").read_text()
 subprocess.run([sys.executable, "-B", str(VENDOR / "tools/ns1/check_r457_audio_unready_host.py")], check=True)
+subprocess.run([sys.executable, "-B", str(VENDOR / "tools/ns1/check_c00_r457_unified_audio.py")], check=True)
 print("R457_AUDIO_SELECTED_NATIVE_SOURCE_PASS audio_tu=1 memory_backends=2 vendor_pin=exact")

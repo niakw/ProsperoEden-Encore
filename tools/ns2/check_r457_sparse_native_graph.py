@@ -84,10 +84,23 @@ def main():
         resource_dir=Path(subprocess.check_output(
             [str(compiler), "-print-resource-dir"],text=True).strip())/"include"
         assert resource_dir.is_dir(), "Native Clang compiler resource headers missing"
-        for pos,flag in enumerate(cleaned[:-1]):
-            if flag in ("-isystem","-I","-idirafter") and cleaned[pos+1] in (
-                "/usr/include","/usr/local/include","/usr/include/x86_64-linux-gnu"):
-                raise RuntimeError(label+" inherited host libc include path")
+        # A configured target must not silently pick any Linux libc header.
+        # Show the exact contaminated search flags, not just an opaque failure.
+        host_includes=[]
+        for pos,flag in enumerate(cleaned):
+            if flag in ("-isystem","-I","-idirafter","-iquote") and pos+1<len(cleaned):
+                path=cleaned[pos+1]
+                if path.startswith(("/usr/include","/usr/local/include")):
+                    host_includes.append((flag,path))
+            elif flag.startswith(("-I/usr/include","-isystem/usr/include",
+                                  "-I/usr/local/include","-isystem/usr/local/include")):
+                host_includes.append(("inline",flag))
+        print("R457_NS2_NATIVE_INCLUDE_PROVENANCE", label,
+              "host_include_flags="+repr(host_includes),
+              "sdk_c_headers="+str(c_root),
+              "sdk_stdlib="+str((c_root/"stdlib.h").is_file()),flush=True)
+        if host_includes:
+            raise RuntimeError(label+" configured PS5 native graph contains host libc "+repr(host_includes))
         strict=cleaned+["-nostdinc","-isystem",str(resource_dir),"-fsyntax-only"]
         p=subprocess.run(strict,cwd=row["directory"],
                          capture_output=True,text=True,timeout=210)

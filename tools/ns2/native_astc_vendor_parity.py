@@ -208,6 +208,23 @@ def normalized(root: Path) -> dict[str, str]:
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
         if name == "vk_texture_cache_cost.cpp":
+            # R23 #18 adds target-independent mixed MSAA after N57/N73.
+            # Reverse exactly six reviewed hunks to recover the immutable
+            # previous NS2 Vulkan texture-cache baseline, then run the
+            # original N57/N73/P25 source checks unmodified.
+            import json
+            receipt = json.loads(
+                (root / "tools/fixtures/r23-tir-vk-texture-cache-reverse.json").read_text())
+            assert receipt["schema_version"] == 1
+            assert len(receipt["patches"]) == 6
+            assert git_blob(text.encode()) == receipt["post_r23_blob"], (
+                "TIR new full native source hash drift")
+            for h in reversed(receipt["patches"]):
+                assert text.count(h["after"]) == 1, "R23 TIR reverse context drift"
+                text = text.replace(h["after"], h["before"], 1)
+            assert git_blob(text.encode()) == receipt["pre_r23_blob"], (
+                "R23 TIR failed to recover exact original NS2 source bytes")
+        if name == "vk_texture_cache_cost.cpp":
             text = strip_post_n73_msaa_framebuffer_source(text)
             text = strip_p25_reinterpret(strip_p22_runtime_cpp(text))
         if name == "vk_texture_cache_cost.cpp":

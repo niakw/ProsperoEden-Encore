@@ -169,9 +169,28 @@ for module, changes in edits.items():
         # production owner. Reverse its fixed bytes for this historic
         # deferred-copy oracle; the N57/N73 normalizer still verifies
         # the real owner against its immutable source hashes.
+        # R23 #18 adds six exact TIR/msaa hunks above the former
+        # N73/P25 owner. Reconstruct its reviewed pre-R23 full source
+        # first; the historical research snapshot remains immutable.
+        import json
+        from ns2.native_astc_vendor_parity import git_blob
+        r23_tir_receipt = json.loads(
+            (ROOT / 'tools/fixtures/r23-tir-vk-texture-cache-reverse.json').read_text())
+        assert r23_tir_receipt['schema_version'] == 1
+        assert len(r23_tir_receipt['patches']) == 6
+        assert git_blob(current.encode()) == r23_tir_receipt['post_r23_blob'], (
+            'Unreviewed R23/TIR Vulkan owner')
+        before_r23_tir = current
+        for hunk in reversed(r23_tir_receipt['patches']):
+            assert before_r23_tir.count(hunk['after']) == 1, (
+                'R23/TIR reverse span changed')
+            before_r23_tir = before_r23_tir.replace(
+                hunk['after'], hunk['before'], 1)
+        assert git_blob(before_r23_tir.encode()) == r23_tir_receipt['pre_r23_blob'], (
+            'Historical NS2 texture owner failed exact reconstruction')
         historical_current = strip_p25_reinterpret(
             strip_p22_runtime_cpp(
-                strip_post_n73_msaa_framebuffer_source(current)))
+                strip_post_n73_msaa_framebuffer_source(before_r23_tir)))
         research_blob = hashlib.sha1(
             b'blob ' + str(len(historical_current.encode())).encode() + b'\0' +
             historical_current.encode()

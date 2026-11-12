@@ -91,6 +91,10 @@ jobs:
           python3 -B tools/check-native-texture-pin-owner-parity.py
           # Catch UUID digest-vs-output span drift before the long native compile.
           python3 -B tools/check-ns2-uuid-abi.py
+          # These exact vendor source contracts need no SDK or toolchain.
+          # Reject diagnostic-helper/variant drift before an expensive build.
+          python3 -B tools/check-gpu-native-diagnostics.py
+          python3 -B tools/check-maintained-fermi2d-variants.py
 
       - name: Install build toolchain
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}

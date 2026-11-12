@@ -775,11 +775,11 @@ r457_native_audio_owners = {
 }
 assert r457_native_audio_owners <= set(physical_all), (
     "R457 native audio assets absent", sorted(r457_native_audio_owners - set(physical_all)))
-audio_r457_owner = (ROOT / "vendor/encore-active/eden-core/src/audio_core/device/device_session.cpp").read_text()
+audio_r457_owner = (root / "vendor/encore-active/eden-core/src/audio_core/device/device_session.cpp").read_text()
 assert "ReadyForAudioRead()" in audio_r457_owner
 assert "IsValidAudioInBufferShape(buffer.size, channel_count)" in audio_r457_owner
 assert "ReadyForAudioRead() const noexcept;" in (
-    ROOT / "vendor/encore-active/eden-core/overrides/core/memory.h").read_text()
+    root / "vendor/encore-active/eden-core/overrides/core/memory.h").read_text()
 print("R457_C00_POST_F07_NATIVE_AUDIO_OWNER_PASS owners=2")
 
 physical = [p for p in physical_all

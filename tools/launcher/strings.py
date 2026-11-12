@@ -388,7 +388,12 @@ def check():
             missing = sorted({c for c in translation if ord(c) not in characters and c not in "\n"})
             if missing:
                 problems.append(f"characters the font lacks {''.join(missing)!r} in {translation!r}")
-            if text.isupper() and translation and translation != translation.upper() and not (text == "GB" and translation == "Go"):
+            # Finnish uses "Gt" (gigatavu), just as French uses "Go" (gigaoctet).
+            # These are localized unit abbreviations, not incorrectly cased UI headings.
+            localized_gb = (text == "GB" and
+                            (translation == "Go" or
+                             (path.stem == "fi-FI" and translation == "Gt")))
+            if text.isupper() and translation and translation != translation.upper() and not localized_gb:
                 warnings.append(f"label not uppercase: {text!r} -> {translation!r}")
             if translation and len(translation) > max(len(text) * 1.7, len(text) + 12):
                 warnings.append(f"long ({len(text)} -> {len(translation)}): {translation!r}")

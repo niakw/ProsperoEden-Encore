@@ -1790,7 +1790,19 @@ base_opt = (scalar_root / "ir/opt_passes.cpp").read_text()
 opt_anchor = "        case Op::LeastSignificantWord:\n            FoldLeastSignificantWord(inst);\n            break;"
 assert base_opt.count(opt_anchor) == 1
 fold_oracle = (active / "eden-core/dynarmic/scalar/scalar-fold.inc").read_text()
-assert (active / "eden-core/src/dynarmic/ir/opt_passes.cpp").read_text() == base_opt.replace(opt_anchor, opt_anchor + "\n" + fold_oracle)
+scalar_expected = base_opt.replace(opt_anchor, opt_anchor + "\n" + fold_oracle)
+scalar_r23_previous = "    if (conf.HasOptimization(OptimizationFlag::GetSetElimination)) {"
+scalar_r23_checked = (
+    "    if (conf.HasOptimization(OptimizationFlag::GetSetElimination) && "
+    "!conf.check_halt_on_memory_access) {")
+assert scalar_expected.count(scalar_r23_previous) == 1
+scalar_r23_source = scalar_expected.replace(
+    scalar_r23_previous, scalar_r23_checked, 1)
+scalar_maintained = (active / "eden-core/src/dynarmic/ir/opt_passes.cpp").read_text()
+assert r23_blob_sha(scalar_maintained) == "3e423f113f6c6236e4e12028450b85c941a03606"
+assert scalar_maintained == scalar_r23_source, (
+    "R23 Dynarmic memory-access halt guard changed beyond reviewed single predicate")
+print("ENCORE_R23_SCALAR_HALT_GUARD_PASS", "fold_previous=retained", "halt_guard=1")
 assert 'target_sources(dynarmic PRIVATE\n    "${EDEN_MAINTAINED_SCALAR_TRANSLATOR}"\n    "${EDEN_MAINTAINED_SCALAR_OPT}")' in c
 for retired in ("scalar_impl.cpp", "a64_translate.cpp", "opt_passes.cpp"):
     assert 'write_derived("${PORT_BUILD_DIR}/' + retired + '"' not in c

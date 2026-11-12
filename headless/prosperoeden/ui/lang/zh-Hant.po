@@ -1178,7 +1178,12 @@ msgstr "沒有可用截圖"
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
 msgstr "背景: PNG/JPEG/TGA → wallpapers/"
 
-#. No add-ons (updates or DLC).
+#. Neither a game update nor DLC is installed.
+#: pe/ui/library.cpp
+msgid "No DLC/updates"
+msgstr "無 DLC 或更新"
+
+#. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "無"

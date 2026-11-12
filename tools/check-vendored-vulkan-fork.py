@@ -773,7 +773,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'vk_graphics_pipeline_cost.cpp':
             'd7563d41b74d780f4512899e2fda1b2f362f5523',
         'vk_pipeline_cache_cost.cpp':
-            '417b9b953bae2dcae511e4166821881f5c443aa1',
+            '6efe1b10862135056c1df1b78007a1c9cb5a9610',
         'vulkan_device.cpp':
             '50578df547b769bd45cf4964ffa3f793c1749273',
         'vulkan_rasterizer.cpp':

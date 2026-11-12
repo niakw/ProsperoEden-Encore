@@ -782,6 +782,22 @@ assert "ReadyForAudioRead() const noexcept;" in (
     root / "vendor/encore-active/eden-core/overrides/core/memory.h").read_text()
 print("R457_C00_POST_F07_NATIVE_AUDIO_OWNER_PASS owners=2")
 
+# A missing game loader follows an already-initialized kernel on PS5.
+# All three maintained core variants must shut down before returning an error.
+# See Lichii upstream #972; do not fork immutable sources/eden.
+for loader_owner in (
+    "encore-active/eden-core/src/core/core_native.cpp",
+    "encore-active/eden-core/src/core/core_standard.cpp",
+    "encore-active/ns2-runtime/process/core/core.cpp",
+):
+    selected = (root / "vendor" / loader_owner).read_text()
+    block = selected.split("        if (!app_loader) {", 1)[1].split("\n        }", 1)[0]
+    assert block.count("ShutdownMainProcess();") == 1, loader_owner
+    assert block.index("ShutdownMainProcess();") < block.index(
+        "return SystemResultStatus::ErrorGetLoader;"), loader_owner
+print("ENCORE_NS1_NS2_MISSING_LOADER_TEARDOWN_PASS owners=3")
+
+
 # R457 NS2 KPort sparse slab precommit is a separately reviewed post-F07
 # production owner, not a retroactive member of the immutable 337 files.
 post_f07_r457_slab_owners = {"ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp"}

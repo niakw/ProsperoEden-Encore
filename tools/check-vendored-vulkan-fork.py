@@ -146,14 +146,19 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # this exact draft research head, and still pin every changed source SHA.
     # Native production NS2 uses the reviewed vendor pin and preserves
     # the generator oracle by reversing only exact, SHA-validated additions.
-    r2_production = (subprocess.check_output(
+    r2_vendor = subprocess.check_output(
         ['git', 'rev-parse', 'HEAD:vendor'], text=True).strip()
-        == 'b977c24a00d85b8279f1a78b173e5995cd82353e')
+    # The R457 AudioOut-only vendor merge did not modify any Vulkan source.
+    # Maintain the exact audited R2/R09 native blob pins for BOTH legal gitlinks.
+    r2_production = r2_vendor in {
+        'b977c24a00d85b8279f1a78b173e5995cd82353e',
+        '107caefe6bee1fc02266e22254b72f69346d83cd',
+    }
     if r2_production:
-        r2_vendor = 'b977c24a00d85b8279f1a78b173e5995cd82353e'
-        assert subprocess.check_output(['git', 'rev-parse', 'HEAD:vendor'],
-                                       text=True).strip() == r2_vendor, (
-            'R2 research vendor pin drift')
+        assert r2_vendor in {
+            'b977c24a00d85b8279f1a78b173e5995cd82353e',
+            '107caefe6bee1fc02266e22254b72f69346d83cd',
+        }, ('R2 reviewed production vendor pin drift', r2_vendor)
         r2_extra = {
             'include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h':
                 '8905d42732b2d5848aa49b5800340e031cd214c9',

@@ -759,8 +759,12 @@ if(PS5_NATIVE)
     list(REMOVE_ITEM eden_ns1_audio_units "device/device_session.cpp")
     list(APPEND eden_ns1_audio_units "${EDEN_NS1_AUDIO_SOURCE}")
     set_property(TARGET audio_core PROPERTY SOURCES "${eden_ns1_audio_units}")
+    if(NOT EXISTS "${PORT_ROOT}/headless/audio_in_silence.h")
+        message(FATAL_ERROR "C00 native AudioIn bounded PCM contract missing")
+    endif()
     target_include_directories(audio_core BEFORE PRIVATE
-        "${EDEN_NS1_AUDIO_ROOT}/overrides")
+        "${EDEN_NS1_AUDIO_ROOT}/overrides"
+        "${PORT_ROOT}/headless")
     set_property(SOURCE "${EDEN_NS1_AUDIO_SOURCE}" TARGET_DIRECTORY audio_core
         APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     message(STATUS "R457: native AudioOut and both memory profiles share readiness overlay")

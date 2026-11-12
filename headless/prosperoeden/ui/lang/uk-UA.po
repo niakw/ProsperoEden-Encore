@@ -96,7 +96,7 @@ msgstr "Емулятор Eden — цілковита заслуга його р�
 
 #: pe/ui/switch_theme.cpp
 msgid "All Software"
-msgstr "Усе програмне забезпечення"
+msgstr "Усі програми"
 
 #: pe/ui/launcher.cpp
 msgid "Already up to date: {0}"
@@ -588,7 +588,7 @@ msgstr "Редагувати"
 
 #: pe/ui/settings.cpp
 msgid "Edit custom mapping"
-msgstr "Редагувати спеціальне зіставлення"
+msgstr "Змінити розкладку"
 
 #: pe/ui/browse.cpp
 msgid "Encore uses the same keys, firmware, roms, updates and mods folders under every storage root."
@@ -738,7 +738,7 @@ msgstr "Не вдалося запустити гру: {0} Подробиці: {
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Перегляд тек · програми"
+msgstr "Файли ігор"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"

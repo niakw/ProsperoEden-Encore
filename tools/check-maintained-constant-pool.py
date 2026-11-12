@@ -30,7 +30,40 @@ after = """    // Track the slot index rather than a duplicate pointer. Retain t
     }
     return frame[code.rip + static_cast<void*>(&pool[it->second])];"""
 assert pinned.count(before) == 1
-assert maintained == pinned.replace(before, after), "Unreviewed native indexed constant pool drift"
+# The native constant pool subsequently adopted a slot-index ABI in
+# addition to its W^X writable-alias write. Replay ONLY these reviewed exact
+# changes; do not loosen byte-for-byte source parity.
+expected = pinned
+reviewed_edits = [
+    (before, after),
+    (
+        "    auto it = constant_info.find(constant);",
+        "    // Track the slot index rather than a duplicate pointer. Retain the\n"
+        "    // PS5 W^X writable alias: never write constants directly into RX pages.\n"
+        "    const auto next_slot = constant_info.size();\n"
+        "    auto it = constant_info.find(constant);",
+    ),
+    (
+        "        ASSERT(insertion_point < pool.size());\n"
+        "        ConstantT& target_constant = pool[insertion_point];",
+        "        ASSERT(next_slot < pool.size());\n"
+        "        const auto slot = static_cast<u32>(next_slot);\n"
+        "        ConstantT& target_constant = pool[slot];",
+    ),
+    (
+        "        it = constant_info.insert({constant, &target_constant}).first;\n"
+        "        ++insertion_point;",
+        "        it = constant_info.emplace(constant, slot).first;",
+    ),
+    (
+        "    return frame[code.rip + it->second];",
+        "    return frame[code.rip + static_cast<void*>(&pool[it->second])];",
+    ),
+]
+for old, new in reviewed_edits:
+    assert expected.count(old) == 1, ("ConstPool pinned source anchor drift", old[:48])
+    expected = expected.replace(old, new)
+assert maintained == expected, "Unreviewed native constant pool byte drift", "Unreviewed native indexed constant pool drift"
 header = (root / "vendor/encore-active/eden-core/include/dynarmic/backend/x64/constant_pool.h").read_text()
 assert "::Common::unordered_map<ConstantT, u32, ConstantHash> constant_info;" in header
 assert "std::span<ConstantT> pool;" in header

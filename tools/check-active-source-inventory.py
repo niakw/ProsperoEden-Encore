@@ -767,6 +767,21 @@ assert post_f07_r23_added_owners <= set(physical_all), (
 assert post_f07_r23_added_owners.isdisjoint(post_f07_c03_radv_meta_owners)
 print("NS1_R23_POST_F07_SOURCE_OWNER_PASS", "added=45", "historical_F07=337")
 
+# R457/C00: two new maintained native AudioIn/Out assets; this does not
+# rewrite the exact 337-file historical F07 shipping source inventory.
+r457_native_audio_owners = {
+    "eden-core/overrides/core/memory.h",
+    "eden-core/src/audio_core/device/device_session.cpp",
+}
+assert r457_native_audio_owners <= set(physical_all), (
+    "R457 native audio assets absent", sorted(r457_native_audio_owners - set(physical_all)))
+audio_r457_owner = (root / "vendor/encore-active/eden-core/src/audio_core/device/device_session.cpp").read_text()
+assert "ReadyForAudioRead()" in audio_r457_owner
+assert "IsValidAudioInBufferShape(buffer.size, channel_count)" in audio_r457_owner
+assert "ReadyForAudioRead() const noexcept;" in (
+    root / "vendor/encore-active/eden-core/overrides/core/memory.h").read_text()
+print("R457_C00_POST_F07_NATIVE_AUDIO_OWNER_PASS owners=2")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -781,7 +796,7 @@ physical = [p for p in physical_all
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
-             post_f07_h01_fs_owners]
+             post_f07_h01_fs_owners | r457_native_audio_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -1057,6 +1072,12 @@ assert 'ps5_ns2_guest_backing_plan.h' not in (root / "src/host_memory.cpp").read
 print("ENCORE_POST_F07_R457_RESEARCH_SOURCE_PASS", "owners=2 historical_headless=193")
 # The R23 AM frontend prototype is a post-F07 native overlay, not an
 # additional item in the frozen 193-file historical headless catalogue.
+post_f07_ns1_audio_headless_owners = {"headless/audio_in_silence.h"}
+assert all((root / p).is_file() for p in post_f07_ns1_audio_headless_owners)
+assert "SilentAudioInputStream" in (root / "headless/audio.cpp").read_text()
+assert "audio_in_silence.h" in native_cmake
+print("ENCORE_C00_POST_F07_HEADLESS_OWNER_PASS new=1 historical=193")
+
 post_f07_ns1_am_headless_owners = {"headless/r23_am_frontend_applets_ps5.cpp"}
 assert all((root / p).is_file() for p in post_f07_ns1_am_headless_owners)
 assert "r23_am_frontend_applets_ps5.cpp" in native_cmake
@@ -1070,7 +1091,7 @@ headless_actual = sorted(
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners)
+        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

@@ -916,7 +916,19 @@ assert post_f07_r23_source_owners <= all_owners, (
 print("ENCORE_NS1_R23_POST_F07_ISOLATION_PASS", "vendor_additions=45",
       "historical_F07=518")
 
-owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners
+# R457/C00 source additions are neither historical F07 files nor NS2
+# research: require exact selected host graph and isolate from frozen 518.
+post_f07_ns1_audio_owners = {
+    "headless/audio_in_silence.h",
+    "vendor/encore-active/eden-core/overrides/core/memory.h",
+    "vendor/encore-active/eden-core/src/audio_core/device/device_session.cpp",
+}
+assert post_f07_ns1_audio_owners <= all_owners
+assert "SilentAudioInputStream" in (ROOT / "headless/audio.cpp").read_text()
+assert "ReadyForAudioRead()" in (ROOT / "vendor/encore-active/eden-core/src/audio_core/device/device_session.cpp").read_text()
+print("C00_R457_POST_F07_AUDIO_OWNERS_PASS", f"owners={len(post_f07_ns1_audio_owners)}")
+
+owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1256,6 +1268,23 @@ for changed_path, new_blob in r23_existing_source_successors.items():
         "Unreviewed R23 existing-owner source edit", changed_path)
 print("ENCORE_R23_EXISTING_F07_SOURCE_SUCCESSORS_PASS", "owners=2",
       "historical_F07_preserved=1")
+# The selected C00 PS5 AudioIn capture source legitimately updates the
+# existing historical native audio.cpp; this is NOT an F07 performance review.
+# Its original F07 SHA stays immutable. Only this exact reviewed new blob is
+# admitted after verifying capture pacing, bounds and one native AudioOut TU.
+audio_changed_path = "headless/audio.cpp"
+assert audio_changed_path not in post_index
+assert audio_changed_path in drift_index
+audio_changed = drift_index.pop(audio_changed_path)
+assert audio_changed["expected"] != audio_changed["actual"]
+assert audio_changed["actual"] == "4b5082d14fc12db39d7e3b06677d6dc403af2bf7"
+audio_current = (ROOT / audio_changed_path).read_text()
+assert "class SilentAudioInputStream final : public SinkStream" in audio_current
+assert "make_unique<SilentAudioInputStream>(system, channels)" in audio_current
+assert "MakeSilentAudioInSamples(samples)" in audio_current
+assert "NullSinkStreamImpl" not in audio_current
+assert "tools/audit/check-ab-ns1-guest-release-host.py" in tracked
+print("C00_POST_F07_REAL_AUDIO_SINK_SUCCESSOR_PASS legacy_f07_preserved=1 exact_blob=1")
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

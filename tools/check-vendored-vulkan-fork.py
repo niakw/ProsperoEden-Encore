@@ -673,6 +673,33 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     def git_blob_sha(text):
         data=text.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+    # Full source-verified reverse of the six post-P24 R23 Vulkan patches:
+    # preserve immutable P24/N57 generator receipts without accepting any
+    # unreviewed vendor edit. Every reverse hunk has unique context and
+    # reconstructs the exact previous Git blob.
+    r23_reverse_receipt = json.loads(
+        (root/'tools/fixtures/r23-merged-vulkan-reverse.json').read_text())
+    assert r23_reverse_receipt['schema_version'] == 1
+    assert r23_reverse_receipt['source_vendor_baseline'] == (
+        '87ef285eae969388a7c9ad98467ff7fd6c314cba')
+    r23_reverse_by_path = {entry['path']: entry for entry in r23_reverse_receipt['files']}
+    assert set(r23_reverse_by_path) == set(r23_combined_owners) if 'r23_combined_owners' in locals() else len(r23_reverse_by_path) == 6
+    def reverse_r23(name, text, verify_hash=True):
+        receipt = r23_reverse_by_path.get(name)
+        if receipt is None:
+            return text
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['post_r23_blob'], (
+                'Unreviewed R23 merged native source', name)
+        for hunk in reversed(receipt['patches']):
+            assert text.count(hunk['after']) == 1, (
+                'R23 native reverse context moved', name)
+            text = text.replace(hunk['after'], hunk['before'], 1)
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['pre_r23_blob'], (
+                'R23 native source failed exact historic reconstruction', name)
+        return text
+
     def reverse_native_kepler_pointer_abi(name, text, verify_hash):
         # The maintained native QMD3 renderer uses RasterizerInterface's
         # KeplerCompute pointer, not a reference. Reverse only 5 member
@@ -785,15 +812,14 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             'Missing merged R23 shader/Vulkan ABI semantic', name)
     print("ENCORE_R23_COMBINED_VULKAN_BLOB_PASS",
           f"reviewed_owners={len(r23_combined_owners)}",
-          "historical_P24_reversal_not_reclaimed=1")
+          "historical_P24_reverse_receipt=1")
 
     maintained_errors = []
     for name in p24_by_path:
         assert name in expected and name in actual, (
             'missing Task/Mesh Vulkan source', name)
         try:
-            if name not in r23_combined_owners:
-                reverse_p24(name, expected[name].read_text())
+            reverse_p24(name, reverse_r23(name, expected[name].read_text()))
         except AssertionError as exc:
             maintained_errors.append({'path': name, 'error': str(exc)})
     if maintained_errors:
@@ -802,7 +828,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
               flush=True)
     assert not maintained_errors, ("P24 post-MSAA reversible source drift", maintained_errors)
     print("ENCORE_P24_POST_MSAA_REVERSIBLE_PASS",
-          "legacy_reversed_owners=2",
+          "historical_reversed_owners=8",
           f"checked_hunks={sum(len(row['reverse_hunks']) for row in post['files'])}",
           "historic_p24_sha_preserved=1")
 
@@ -820,22 +846,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from generator')
     # First reverse the exact P24 hunks on raw vendor, then N56: both
     # independent receipts must remain valid without conflating their SHAs.
-    if n56_name in r23_combined_owners:
-        # The native renderer has additional vendor-reviewed R23 shader and
-        # subgroup logic. Its exact merged source is separately hash-pinned
-        # above; it is intentionally not equal to an old Eden generator.
-        assert git_blob_sha(n56_current) == r23_combined_owners[n56_name]
-        assert n56_current.count(n56_after) == 1
-        assert generated_n3m.count(n56_before) == 1, (
-            'Original generated N56 source graph changed')
-        print("ENCORE_R23_NATIVE_VS_GENERATOR_SPLIT_PASS",
-              "native_r23_hash=1 old_generator_n56=1")
-    else:
-        n3m_pre_mesh = reverse_p24(n56_name, n56_current)
-        assert n3m_pre_mesh.count(n56_after) == 1
-        n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
-        assert generated_n3m == n3m_pre_mesh, (
-            'NS2 generated Vulkan source differs from P24+N56-normalized vendor')
+    n3m_pre_mesh = reverse_p24(n56_name, reverse_r23(n56_name, n56_current))
+    assert n3m_pre_mesh.count(n56_after) == 1
+    n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
+    assert generated_n3m == n3m_pre_mesh, (
+        'NS2 generator differs from exact R23/P24/N56 reverse-reconstructed vendor')
+    print("ENCORE_R23_NATIVE_VS_GENERATOR_REVERSE_PASS",
+          "native_R23_unchanged=1 old_generator_equivalent=1")
 
     # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
     # Reverse only exact reviewed additions, then require original F07 SHA
@@ -942,11 +959,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         # The 6 reviewed R23 native owners are qualified above by their
         # exact merged source SHA and runtime semantic invariants. The
         # 2026-10 P24 reverse-hunk recipe is not applicable to those files.
-        if name in r23_combined_owners:
-            continue
-        # Validate unchanged historic P24 owners by original reversible blobs.
-        reverse_p24(name, expected[name].read_text())
-        baseline=reverse_p24(name, normalized_expected.get(name, expected[name]).read_text(), verify_hash=False)
+        # Reconstruct original exact R23 baseline before applying P24 proof.
+        reverse_p24(name, reverse_r23(name, expected[name].read_text()))
+        baseline=reverse_p24(
+            name,
+            reverse_r23(name, normalized_expected.get(name, expected[name]).read_text(),
+                        verify_hash=False),
+            verify_hash=False)
         path=temp/'normalized-vendor-p24'/name
         path.parent.mkdir(parents=True,exist_ok=True)
         path.write_text(baseline)

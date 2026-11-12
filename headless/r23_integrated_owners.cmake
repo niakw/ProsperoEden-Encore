@@ -492,3 +492,149 @@ if(PS5_NATIVE)
     endforeach()
     message(STATUS "R23 #19: one native HIDCore ABI and retained maintained NPad owner")
 endif()
+
+# Engine research PR #81
+# NS1 R23 #64: visible HWC composition must preserve waited buffer
+# retirement. Select exactly one full maintained native HWC source owner.
+if(PS5_NATIVE)
+    set(EDEN_R23_HWC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp")
+    if(NOT EXISTS "${EDEN_R23_HWC_SOURCE}")
+        message(FATAL_ERROR "R23 #64 native HWC visibility source missing")
+    endif()
+    get_target_property(eden_r23_hwc_units core SOURCES)
+    list(FIND eden_r23_hwc_units
+         "hle/service/nvnflinger/hardware_composer.cpp" eden_r23_hwc_old)
+    if(eden_r23_hwc_old LESS 0)
+        message(FATAL_ERROR "R23 #64 expected HWC source owner was replaced")
+    endif()
+    list(REMOVE_ITEM eden_r23_hwc_units "hle/service/nvnflinger/hardware_composer.cpp")
+    list(APPEND eden_r23_hwc_units "${EDEN_R23_HWC_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_hwc_units}")
+endif()
+
+
+# Engine research PR #82
+# R23 #126: shared RFC4122 UUIDv5 16-byte signature must compile in
+# both common and the ACTUAL PS5-selected ns2-runtime/AM service source.
+# The earlier Eden-core AM unit is shadowed by EDEN_SHARED_NS2_AM; do not
+# report a changed but unselected source as a console fix.
+if(PS5_NATIVE)
+    set(EDEN_R23_UUID_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_UUID_INCLUDE "${PORT_BUILD_DIR}/r23-uuid16/include")
+    foreach(p IN ITEMS
+            "${EDEN_R23_UUID_ROOT}/src/common/uuid.cpp"
+            "${EDEN_R23_UUID_ROOT}/include/common/uuid.h"
+            "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp")
+        if(NOT EXISTS "${p}")
+            message(FATAL_ERROR "R23 #126 native UUID16 source/selected AM owner missing: ${p}")
+        endif()
+    endforeach()
+    configure_file("${EDEN_R23_UUID_ROOT}/include/common/uuid.h"
+        "${EDEN_R23_UUID_INCLUDE}/common/uuid.h" COPYONLY)
+    get_target_property(eden_r23_uuid_sources common SOURCES)
+    list(FIND eden_r23_uuid_sources "uuid.cpp" eden_r23_uuid_orig)
+    if(eden_r23_uuid_orig LESS 0)
+        message(FATAL_ERROR "R23 #126 original UUID.cpp source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_uuid_sources "uuid.cpp")
+    list(APPEND eden_r23_uuid_sources "${EDEN_R23_UUID_ROOT}/src/common/uuid.cpp")
+    set_property(TARGET common PROPERTY SOURCES "${eden_r23_uuid_sources}")
+    target_include_directories(common BEFORE PUBLIC "${EDEN_R23_UUID_INCLUDE}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_UUID_INCLUDE}")
+    message(STATUS "R23 #126 UUID 16-byte ABI and PS5-selected AM source staged")
+endif()
+
+
+# Engine research PR #84
+# R23 #35: one native shader texture-pass TU with matched host texture
+# metadata, while the maintained Vulkan source fork is materialized by
+# headless/vulkan.cmake from this same branch's vendor commit.
+if(PS5_NATIVE)
+    set(EDEN_R23_ATTRIBUTE_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+    set(EDEN_R23_ATTRIBUTE_HEADERS
+        "${PORT_BUILD_DIR}/r23-attribute-handle/include")
+    foreach(eden_r23_attr_header IN ITEMS
+            "host_translate_info.h" "shader_info.h")
+        if(NOT EXISTS "${EDEN_R23_ATTRIBUTE_SOURCE}/${eden_r23_attr_header}")
+            message(FATAL_ERROR "R23 #35 maintained shader header missing: ${eden_r23_attr_header}")
+        endif()
+        configure_file("${EDEN_R23_ATTRIBUTE_SOURCE}/${eden_r23_attr_header}"
+            "${EDEN_R23_ATTRIBUTE_HEADERS}/shader_recompiler/${eden_r23_attr_header}" COPYONLY)
+    endforeach()
+    set(EDEN_R23_ATTRIBUTE_TEXTURE_PASS
+        "${EDEN_R23_ATTRIBUTE_SOURCE}/ir_opt/texture_pass.cpp")
+    if(NOT EXISTS "${EDEN_R23_ATTRIBUTE_TEXTURE_PASS}")
+        message(FATAL_ERROR "R23 #35 maintained shader texture pass missing")
+    endif()
+    get_target_property(eden_r23_attr_units shader_recompiler SOURCES)
+    list(FIND eden_r23_attr_units "ir_opt/texture_pass.cpp" eden_r23_attr_original)
+    if(eden_r23_attr_original LESS 0)
+        message(FATAL_ERROR "R23 #35 source owner changed; refuse duplicate texture pass")
+    endif()
+    list(REMOVE_ITEM eden_r23_attr_units "ir_opt/texture_pass.cpp")
+    list(APPEND eden_r23_attr_units "${EDEN_R23_ATTRIBUTE_TEXTURE_PASS}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_attr_units}")
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_ATTRIBUTE_HEADERS}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_ATTRIBUTE_HEADERS}")
+    foreach(eden_r23_vulkan_file IN ITEMS
+            "vk_graphics_pipeline_cost.cpp" "vk_pipeline_cache_cost.cpp"
+            "vulkan_rasterizer.cpp"
+            "include/video_core/renderer_vulkan/vk_graphics_pipeline.h"
+            "include/video_core/renderer_vulkan/vk_rasterizer.h")
+        if(NOT EXISTS
+           "${PORT_ROOT}/vendor/encore-active/eden-vulkan/${eden_r23_vulkan_file}")
+            message(FATAL_ERROR "R23 #35 missing maintained Vulkan owner: ${eden_r23_vulkan_file}")
+        endif()
+    endforeach()
+    message(STATUS "R23 #35: selected one bindless attribute texture-pass TU and five Vulkan owners")
+endif()
+
+
+# Engine research PR #85
+# R23 #80 — vendor workaround IR and VkPipelineCache need the SAME
+# HasBrokenPattern ABI. Compile the maintained shader TU exactly once and
+# stage the public IR declaration before video_core/shader_recompiler.
+if(PS5_NATIVE)
+    set(EDEN_R23_FRAG_IR
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt")
+    set(EDEN_R23_FRAG_VK
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp")
+    if(NOT EXISTS "${EDEN_R23_FRAG_IR}/passes.h"
+       OR NOT EXISTS "${EDEN_R23_FRAG_IR}/vendor_workaround_pass.cpp"
+       OR NOT EXISTS "${EDEN_R23_FRAG_VK}")
+        message(FATAL_ERROR "R23 #80 missing matched IR predicate and Vulkan caller")
+    endif()
+    set(EDEN_R23_FRAG_HEADERS "${PORT_BUILD_DIR}/r23-fragpattern/include")
+    configure_file("${EDEN_R23_FRAG_IR}/passes.h"
+        "${EDEN_R23_FRAG_HEADERS}/shader_recompiler/ir_opt/passes.h" COPYONLY)
+    get_target_property(eden_r23_frag_units shader_recompiler SOURCES)
+    list(FIND eden_r23_frag_units "ir_opt/vendor_workaround_pass.cpp" eden_r23_frag_old)
+    if(eden_r23_frag_old LESS 0)
+        message(FATAL_ERROR "R23 #80 original shader workaround owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_frag_units "ir_opt/vendor_workaround_pass.cpp")
+    list(APPEND eden_r23_frag_units "${EDEN_R23_FRAG_IR}/vendor_workaround_pass.cpp")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_frag_units}")
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_FRAG_HEADERS}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_FRAG_HEADERS}")
+    message(STATUS "R23 #80: one shader IR predicate and matched native Vulkan caller")
+endif()
+
+
+# Engine PRs #70/#76 — preserve shared ConditionalPhi resolver header.
+# The sole texture_pass.cpp TU replacement is owned by PR #84 above;
+# vendor now contains both Phi and attribute-handle source transformations.
+if(PS5_NATIVE)
+    set(EDEN_R23_PHI_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h")
+    if(NOT EXISTS "${EDEN_R23_PHI_HEADER}")
+        message(FATAL_ERROR "Missing shared R23 Phi BreadthFirstSearch header")
+    endif()
+    configure_file("${EDEN_R23_PHI_HEADER}"
+        "${PORT_BUILD_DIR}/r23-phi/include/shader_recompiler/frontend/ir/breadth_first_search.h"
+        COPYONLY)
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${PORT_BUILD_DIR}/r23-phi/include")
+endif()

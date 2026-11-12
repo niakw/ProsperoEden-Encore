@@ -25,6 +25,9 @@ PATHS = (
     'src/amd/vulkan/radv_physical_device.c',
     'src/amd/vulkan/meta/radv_meta_clear.c',
     'src/amd/vulkan/meta/radv_meta_resolve.c',
+    # C03: preserve complete maintained Mesa transfer compiler inputs.
+    'src/amd/vulkan/meta/radv_meta_buffer.c',
+    'src/amd/vulkan/meta/radv_meta_copy.c',
     'src/amd/vulkan/winsys/ps5/radv_ps5_winsys.c',
     'src/amd/vulkan/winsys/ps5/radv_ps5_platform.c',
     'src/util/disk_cache_os.c',

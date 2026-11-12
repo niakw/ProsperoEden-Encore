@@ -698,8 +698,20 @@ assert ns2_production_added_owners <= set(physical_all), (
     "NS2 production source missing", sorted(ns2_production_added_owners - set(physical_all)))
 assert not ns2_production_added_owners.intersection(research_paths)
 
+# C03 adds two maintained RADV meta translation units after the frozen
+# 337-path shipping ledger. They remain real native compiler inputs and
+# must never be retroactively added to historical F07 review.
+post_f07_c03_radv_meta_owners = {
+    "ps5-mesa/src/amd/vulkan/meta/radv_meta_buffer.c",
+    "ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c",
+}
+assert post_f07_c03_radv_meta_owners <= set(physical_all)
+assert post_f07_c03_radv_meta_owners.isdisjoint(
+    ns2_production_added_owners | set(research_paths))
+print("NS1_C03_POST_F07_NATIVE_OWNER_PASS", "meta_units=2 historical_F07=337")
+
 physical = [p for p in physical_all
-            if p not in ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
@@ -1113,14 +1125,19 @@ for consumer in ("sockets/bsd.cpp", "sockets/sfdnsres.cpp", "nifm/nifm.cpp"):
     assert 'Eden::Encore::kGuestNetworkOffline' in body, ("guest network policy not used", consumer)
 print("ENCORE_NATIVE_GUEST_NETWORK_POLICY_PASS consumers=3")
 
-# Native RADV is installed from exactly twelve versioned inputs,
+# Native RADV is installed from exactly fourteen versioned inputs,
 # including an OpenCL geometry shader that the C/C++ scanner once omitted.
 installer_inputs = runpy.run_path(str(root / "tools/install-vendored-radv.py"))["PATHS"]
 mesa_inputs = {"ps5-mesa/" + path for path in installer_inputs}
-mesa_physical = {path for path in physical if path.startswith("ps5-mesa/")}
-assert len(mesa_inputs) == 12 and mesa_inputs == mesa_physical
-assert all(path in graph for path in mesa_inputs), (
-    "missing RADV source owner", sorted(path for path in mesa_inputs if path not in graph))
+mesa_physical = {path for path in physical_all if path.startswith("ps5-mesa/")}
+assert len(mesa_inputs) == 14 and mesa_inputs == mesa_physical
+# All legacy inputs retain their exact historic audit rows. The two
+# research-only C03 sources are separately pinned, byte-attested and selected;
+# do not mint fake historical Rxx audit identifiers for their new files.
+assert all(path in graph or path in post_f07_c03_radv_meta_owners for path in mesa_inputs), (
+    "missing RADV source owner",
+    sorted(path for path in mesa_inputs
+           if path not in graph and path not in post_f07_c03_radv_meta_owners))
 assert "ps5-mesa/src/amd/vulkan/cl/radv_gs_compute.cl" in mesa_inputs
 print("ENCORE_DRIVER_INPUT_COVERAGE_PASS", f"inputs={len(mesa_inputs)}", "opencl=1")
 

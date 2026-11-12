@@ -815,6 +815,50 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# R23 #35: one native shader texture-pass TU with matched host texture
+# metadata, while the maintained Vulkan source fork is materialized by
+# headless/vulkan.cmake from this same branch's vendor commit.
+if(PS5_NATIVE)
+    set(EDEN_R23_ATTRIBUTE_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+    set(EDEN_R23_ATTRIBUTE_HEADERS
+        "${PORT_BUILD_DIR}/r23-attribute-handle/include")
+    foreach(eden_r23_attr_header IN ITEMS
+            "host_translate_info.h" "shader_info.h")
+        if(NOT EXISTS "${EDEN_R23_ATTRIBUTE_SOURCE}/${eden_r23_attr_header}")
+            message(FATAL_ERROR "R23 #35 maintained shader header missing: ${eden_r23_attr_header}")
+        endif()
+        configure_file("${EDEN_R23_ATTRIBUTE_SOURCE}/${eden_r23_attr_header}"
+            "${EDEN_R23_ATTRIBUTE_HEADERS}/shader_recompiler/${eden_r23_attr_header}" COPYONLY)
+    endforeach()
+    set(EDEN_R23_ATTRIBUTE_TEXTURE_PASS
+        "${EDEN_R23_ATTRIBUTE_SOURCE}/ir_opt/texture_pass.cpp")
+    if(NOT EXISTS "${EDEN_R23_ATTRIBUTE_TEXTURE_PASS}")
+        message(FATAL_ERROR "R23 #35 maintained shader texture pass missing")
+    endif()
+    get_target_property(eden_r23_attr_units shader_recompiler SOURCES)
+    list(FIND eden_r23_attr_units "ir_opt/texture_pass.cpp" eden_r23_attr_original)
+    if(eden_r23_attr_original LESS 0)
+        message(FATAL_ERROR "R23 #35 source owner changed; refuse duplicate texture pass")
+    endif()
+    list(REMOVE_ITEM eden_r23_attr_units "ir_opt/texture_pass.cpp")
+    list(APPEND eden_r23_attr_units "${EDEN_R23_ATTRIBUTE_TEXTURE_PASS}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_attr_units}")
+    target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_ATTRIBUTE_HEADERS}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_ATTRIBUTE_HEADERS}")
+    foreach(eden_r23_vulkan_file IN ITEMS
+            "vk_graphics_pipeline_cost.cpp" "vk_pipeline_cache_cost.cpp"
+            "vulkan_rasterizer.cpp"
+            "include/video_core/renderer_vulkan/vk_graphics_pipeline.h"
+            "include/video_core/renderer_vulkan/vk_rasterizer.h")
+        if(NOT EXISTS
+           "${PORT_ROOT}/vendor/encore-active/eden-vulkan/${eden_r23_vulkan_file}")
+            message(FATAL_ERROR "R23 #35 missing maintained Vulkan owner: ${eden_r23_vulkan_file}")
+        endif()
+    endforeach()
+    message(STATUS "R23 #35: selected one bindless attribute texture-pass TU and five Vulkan owners")
+endif()
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

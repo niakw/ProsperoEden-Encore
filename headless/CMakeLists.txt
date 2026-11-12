@@ -3656,6 +3656,31 @@ if(PS5_NATIVE)
     message(STATUS "R23 #72: five coherent shader TUs (2 existing Task/Mesh + 3 unique subgroup)")
 endif()
 
+# PS5 native NS2 self-controller #240: source TU is already selected
+# from ns2-runtime, but its vendor header predates its out-of-line method.
+# Stage an exact full-header overlay with one declaration and use it first.
+# Do NOT add a second self_controller.cpp or replace the shared feature TU.
+if(PS5_NATIVE)
+    set(EDEN_R23_SELF_CONTROLLER_HEADER
+        "${PORT_ROOT}/headless/r23_self_controller_240_ps5.h")
+    set(EDEN_R23_SELF_CONTROLLER_BASE
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.h")
+    if(NOT EXISTS "${EDEN_R23_SELF_CONTROLLER_HEADER}" OR
+       NOT EXISTS "${EDEN_R23_SELF_CONTROLLER_BASE}")
+        message(FATAL_ERROR "R23 NS2 self-controller header ABI input missing")
+    endif()
+    set(EDEN_R23_SELF_CONTROLLER_INCLUDE
+        "${PORT_BUILD_DIR}/r23-self-controller/include")
+    file(MAKE_DIRECTORY
+        "${EDEN_R23_SELF_CONTROLLER_INCLUDE}/core/hle/service/am/service")
+    configure_file("${EDEN_R23_SELF_CONTROLLER_HEADER}"
+        "${EDEN_R23_SELF_CONTROLLER_INCLUDE}/core/hle/service/am/service/self_controller.h"
+        COPYONLY)
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_R23_SELF_CONTROLLER_INCLUDE}")
+    message(STATUS "NS2 SelfController #240 complete matched header, one selected implementation")
+endif()
+
 # R23 BCAT/F2I/AUDREN/#4406 — select only the exact corrected native
 # translation units; original Eden sources stay immutable. Keep one compiler
 # owner per TU and preserve the active R457 audio service registrations.

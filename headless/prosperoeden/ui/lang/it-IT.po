@@ -161,7 +161,7 @@ msgstr "Automatico Controlla"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automatico Controlla · Attivo"
+msgstr "Verifica autom. attiva"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -229,7 +229,7 @@ msgstr "MAPPATURA PULSANTI"
 
 #: pe/ui/mapping.cpp
 msgid "Button mapping reset to global settings."
-msgstr "La mappatura dei pulsanti è stata ripristinata alle impostazioni globali."
+msgstr "Mappatura tasti ripristinata alle impostazioni globali."
 
 #: pe/ui/mapping.cpp
 msgid "Button mapping reset to the active profile."
@@ -506,7 +506,7 @@ msgstr "PS5 personalizzata"
 
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
-msgstr "Interruttore personalizzato"
+msgstr "Switch personalizzato"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
@@ -588,7 +588,7 @@ msgstr "Modificare"
 
 #: pe/ui/settings.cpp
 msgid "Edit custom mapping"
-msgstr "Modifica la mappatura personalizzata"
+msgstr "Modifica mappatura"
 
 #: pe/ui/browse.cpp
 msgid "Encore uses the same keys, firmware, roms, updates and mods folders under every storage root."
@@ -738,7 +738,7 @@ msgstr "Impossibile avviare il gioco: {0} Dettagli: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Sfoglia cartelle · software"
+msgstr "File di gioco"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1001,7 +1001,7 @@ msgstr "Raccolta"
 
 #: pe/ui/library.cpp
 msgid "Loading artwork"
-msgstr "Caricamento dell'opera d'arte"
+msgstr "Carico immagini"
 
 #: pe/ui/launcher.cpp
 msgid "Loading game library..."
@@ -1190,7 +1190,7 @@ msgstr "Nessuno"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Controlla Ora · Disattivo"
+msgstr "Non verificato"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1243,7 +1243,7 @@ msgstr "Apri impostazioni"
 
 #: pe/ui/home.cpp
 msgid "Open storage"
-msgstr "Spazio di archiviazione aperto"
+msgstr "Apri memoria"
 
 #: pe/ui/library.cpp
 msgid "Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."
@@ -1391,12 +1391,12 @@ msgstr "Aggiorna"
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Refresh rate"
-msgstr "Frequenza di aggiornamento"
+msgstr "Freq. aggiornamento"
 
 #. Label: see 'Refresh rate'.
 #: pe/ui/settings.cpp
 msgid "REFRESH RATE"
-msgstr "FREQUENZA DI AGGIORNAMENTO"
+msgstr "FREQ. AGGIORNAMENTO"
 
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
@@ -1428,7 +1428,7 @@ msgstr "Reset overrides"
 
 #: pe/ui/launcher.cpp
 msgid "Reset this game's custom settings?"
-msgstr "Reimpostare le impostazioni personalizzate di questo gioco?"
+msgstr "Ripristinare le impostazioni personalizzate?"
 
 #: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
@@ -1652,7 +1652,7 @@ msgstr "ARCHIVIAZIONE"
 
 #: pe/ui/home.cpp
 msgid "Storage not configured"
-msgstr "Spazio di archiviazione non configurato"
+msgstr "Archivio non configurato"
 
 #: pe/ui/home.cpp
 msgid "Storage ready"
@@ -2034,7 +2034,7 @@ msgstr "FXAA: levigatura leggera dei bordi in una sola passata. Può ammorbidire
 
 #: R10 graphics UX
 msgid "Game default"
-msgstr "Impostazioni predefinite del gioco"
+msgstr "Predefinito di gioco"
 
 #: R10 graphics UX
 msgid "Nearest: keeps hard pixel edges, with visible stair-steps. Best for pixel art, not most 3D games."

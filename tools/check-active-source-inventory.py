@@ -1062,8 +1062,7 @@ assert all((root / p).is_file() for p in post_f07_ns1_am_headless_owners)
 assert "r23_am_frontend_applets_ps5.cpp" in native_cmake
 assert not post_f07_ns1_am_headless_owners & (
     post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-    post_f07_p5_headless_owners | post_f07_r457_owners |
-        post_f07_ns1_am_headless_owners)
+    post_f07_p5_headless_owners | post_f07_r457_owners)
 print("ENCORE_NS1_AM_POST_F07_HEADLESS_PASS", "new=1 historical=193")
 headless_actual = sorted(
     p.relative_to(root).as_posix()
@@ -1071,7 +1070,7 @@ headless_actual = sorted(
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners | post_f07_r457_owners)
+        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

@@ -25,7 +25,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Fail closed on vendor mismatch and qualify 14 Mesa owners
+      - name: Verify pinned vendor revision and 14 selected graphics source owners
         shell: bash
         run: |
           set -euo pipefail

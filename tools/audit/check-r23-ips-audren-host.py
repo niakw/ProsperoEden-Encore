@@ -123,7 +123,7 @@ struct IAudioRendererManagerForDebugger {
 struct Server {
     bool registered_correct{};
     template<class T>
-    void RegisterNamedService(std::string_view name,std::shared_ptr<T> value, unsigned priority = 30) {
+    void RegisterNamedService(std::string_view name,std::shared_ptr<T> value, [[maybe_unused]] unsigned priority = 30) {
         assert(name=="audren:d" && value);
         registered_correct=std::is_same_v<T,IAudioRendererManagerForDebugger>;
     }

@@ -142,9 +142,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # the generator oracle by reversing only exact, SHA-validated additions.
     r2_production = (subprocess.check_output(
         ['git', 'rev-parse', 'HEAD:vendor'], text=True).strip()
-        == '87ef285eae969388a7c9ad98467ff7fd6c314cba')
+        == 'bb7df051bea9f49f9a5c33c5829e8544a45008df')
     if r2_production:
-        r2_vendor = '87ef285eae969388a7c9ad98467ff7fd6c314cba'
+        r2_vendor = 'bb7df051bea9f49f9a5c33c5829e8544a45008df'
         assert subprocess.check_output(['git', 'rev-parse', 'HEAD:vendor'],
                                        text=True).strip() == r2_vendor, (
             'R2 research vendor pin drift')

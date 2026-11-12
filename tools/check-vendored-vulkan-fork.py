@@ -681,6 +681,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         receipt = r23_reverse_by_path.get(name)
         if receipt is None:
             return text
+        # Warning-only field reorder in the actual HostTranslateInfo owner.
+        # Reverse exactly this unique four-field block before comparing to
+        # the immutable pre-warning R23 receipt. Never relax its SHA.
+        if name == 'vk_pipeline_cache_cost.cpp':
+            ordered = (
+                '        .support_viewport_index_layer = device.IsExtShaderViewportIndexLayerSupported(),\\n'
+                '        .support_viewport_mask = device.IsNvViewportArray2Supported(),\\n'
+                '        .support_geometry_shader_passthrough = device.IsNvGeometryShaderPassthroughSupported(),\\n'
+                '        .support_conditional_barrier = device.SupportsConditionalBarriers(),'
+            ).replace('\\n', '\n')
+            prior = (
+                '        .support_viewport_index_layer = device.IsExtShaderViewportIndexLayerSupported(),\\n'
+                '        .support_geometry_shader_passthrough = device.IsNvGeometryShaderPassthroughSupported(),\\n'
+                '        .support_conditional_barrier = device.SupportsConditionalBarriers(),\\n'
+                '        .support_viewport_mask = device.IsNvViewportArray2Supported(),'
+            ).replace('\\n', '\n')
+            assert text.count(ordered) == 1, 'Reviewed Vulkan initializer field order drift'
+            if verify_hash:
+                assert git_blob_sha(text) == '6efe1b10862135056c1df1b78007a1c9cb5a9610', (
+                    'Unreviewed post-warning Vulkan source', name)
+            text = text.replace(ordered, prior, 1)
         if verify_hash:
             assert git_blob_sha(text) == receipt['post_r23_blob'], (
                 'Unreviewed R23 merged native source', name)

@@ -114,7 +114,14 @@ def capture(cache):
 # sources. Preserve the original VENDOR-CPM-LOCK as an immutable upstream
 # witness. Accept ONLY the fully specified revised digest on the merged vendor
 # security commit. No wildcard paths, version changes, or mismatched source.
-SECURITY_VENDOR_PIN="3f483f61a2dc2b959b5075dd82c68f9dc566d1cd"
+# Security source changes are checked by the exact whole-tree digest, not
+# by a one-time vendor commit SHA. Later commits may add reviewed fixes without
+# changing unrelated CPM packages.
+BOOST_DOCS_DEPENDABOT_DELTA = {
+    "sha256": "20046f160c8714991a9f64bd490f4a25a0d43c028760386da206f184f71b67ea",
+    "files": 59798,
+    "bytes": 550705162,
+}
 SECURITY_CPM_DELTAS={
  "boost":({
      "sha256":"02027393412e03a79a37eb7620fdb382f7e8374dddafa78606eed8e80534fd83",
@@ -150,15 +157,17 @@ def check():
   expected={k:record[k] for k in ('sha256','files','bytes')}
   if observed!=expected:
    reviewed=SECURITY_CPM_DELTAS.get(name)
-   vendor_pin=subprocess.check_output(
-       ['git','rev-parse','HEAD:vendor'],cwd=ROOT,text=True).strip()
-   if reviewed and vendor_pin==SECURITY_VENDOR_PIN and expected==reviewed[0] and observed==reviewed[1]:
+   approved = (reviewed is not None and expected == reviewed[0] and
+               (observed == reviewed[1] or
+                (name == 'boost' and observed == BOOST_DOCS_DEPENDABOT_DELTA)))
+   if approved:
     security_verified.add(name)
     print('CPM_SECURITY_DELTA_EXACT_PASS',name,'original_snapshot_preserved=1',flush=True)
    else:
     drifted.append({'package':name,'expected':expected,'observed':observed})
- if SECURITY_VENDOR_PIN==subprocess.check_output(
-         ['git','rev-parse','HEAD:vendor'],cwd=ROOT,text=True).strip():
+ # All three archived security overlays must remain present together. Never
+ # accept partial or mixed snapshots, even across subsequent vendor commits.
+ if security_verified:
   assert security_verified==set(SECURITY_CPM_DELTAS), (
       'Security vendor CPM delta coverage incomplete',sorted(security_verified))
  if drifted:

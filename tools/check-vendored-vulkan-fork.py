@@ -153,11 +153,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     r2_production = r2_vendor in {
         'b977c24a00d85b8279f1a78b173e5995cd82353e',
         '107caefe6bee1fc02266e22254b72f69346d83cd',
+        '0f829e07963e1146ada2d39037059c13c2f0e641',
     }
     if r2_production:
         assert r2_vendor in {
             'b977c24a00d85b8279f1a78b173e5995cd82353e',
             '107caefe6bee1fc02266e22254b72f69346d83cd',
+        '0f829e07963e1146ada2d39037059c13c2f0e641',
         }, ('R2 reviewed production vendor pin drift', r2_vendor)
         r2_extra = {
             'include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h':

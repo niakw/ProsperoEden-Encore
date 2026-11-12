@@ -1143,9 +1143,30 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         }
         for name, (sha, edits) in r2_replacements.items():
             raw = expected[name].read_text()
-            assert subprocess.check_output(
-                ['git', 'hash-object', str(expected[name])],
-                text=True).strip() == sha, ('R2 maintained owner changed', name)
+            if name == 'include/video_core/renderer_vulkan/vk_buffer_cache.h':
+                # R23 #49 adds a checked descriptor-buffer guard after R2.
+                # Reverse that exact full-source fix before testing R2's
+                # still-immutable historic header blob.
+                r23_new = (
+                    "        // In descriptor-buffer mode there is no VkBufferView: creating one\n"
+                    "        // before checking a missing address can attempt SurfaceFormat(255).\n"
+                    "        // Match Eden upstream 3e6a5566 while keeping legacy views intact.\n"
+                    "        if (guest_descriptor_queue.UsesDescriptorBuffer()) {\n"
+                    "            const VkDeviceAddress address = buffer.DeviceAddress();\n"
+                    "            const VkFormat vk_format = address == 0 ? VK_FORMAT_UNDEFINED : TexelBufferFormat(format);\n"
+                    "            guest_descriptor_queue.AddTexelBuffer(VK_NULL_HANDLE, address, offset, size, vk_format);\n"
+                    "        } else {\n"
+                    "            guest_descriptor_queue.AddTexelBuffer(buffer.View(offset, size, format));\n"
+                    "        }")
+                r23_old = (
+                    "        guest_descriptor_queue.AddTexelBuffer(buffer.View(offset, size, format),\n"
+                    "                                              buffer.DeviceAddress(), offset, size,\n"
+                    "                                              TexelBufferFormat(format));")
+                assert git_blob_sha(raw) == (
+                    '76228c0ed7cdb2c2cfa02a473c59365c46e9a466'), 'Unreviewed R23 texel source'
+                assert raw.count(r23_new) == 1, 'R23 texel fallback moved'
+                raw = raw.replace(r23_new, r23_old)
+            assert git_blob_sha(raw) == sha, ('R2 maintained owner changed', name)
             for first, last in edits:
                 # The delimiters are exact, nonnested source-owned blocks.
                 start = raw.index(first.replace('\\n', '\n'))

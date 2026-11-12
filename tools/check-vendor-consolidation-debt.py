@@ -2034,7 +2034,11 @@ print("ENCORE_VI_CONDUCTOR_PARITY_PASS",len(vi_pairs))
 # is a byte-exact copy of its old emitted C++ at migration; this Git blob
 # locks the accepted source, while the prefix remains from pinned Dynarmic.
 spin_source = active / "eden-core/src/dynarmic/common/spin_lock_x64.cpp"
-check_canonical_git_object(spin_source, "a64e6302d78be07870038ba990c3487c4ce6bd75", "native spin lock")
+check_canonical_git_object(spin_source, "20568a7d13151800c0b436b3864876f469bd0214", "native spin lock")
+# Warning-only change after original migration: the upstream prefix is still
+# verified byte-exact below; the current native owner consumes the retained
+# cg_mode as a no-op to avoid unused-variable warnings.
+assert spin_source.read_text().count("(void)default_cg_mode;") == 1
 spin_pinned = (root/"vendor/sources/eden/src/dynarmic/src/dynarmic/common/spin_lock_x64.cpp").read_text()
 spin_marker = "namespace {\\nstruct SpinLockImpl".replace("\\n","\n")
 assert spin_pinned.count(spin_marker)==1

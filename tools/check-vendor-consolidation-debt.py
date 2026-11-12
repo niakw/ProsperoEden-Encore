@@ -1069,7 +1069,32 @@ romfs_rewrites = (
 for old,new in romfs_rewrites:
     assert romfs_pinned.count(old) == 2, ("pinned RomFS parent drift", old)
     romfs_pinned = romfs_pinned.replace(old,new)
-assert romfs_active == romfs_pinned, "maintained RomFS builder differs from former CMake unit"
+# C01 replaces recursive shared_ptr destructor chains with bounded
+# iterative link release. Keep the previous parent-pointer generator
+# baseline, reversing exactly one reviewed destructor body and no more.
+romfs_c01_destructor = """// Cut sibling/child shared-owner chains before vectors release the nodes.
+// Parents are non-owning; every child remains owned by the builder vectors.
+// Destruction is O(nodes) without recursive shared_ptr teardown stack growth.
+RomFSBuildContext::~RomFSBuildContext() {
+    for (auto& file : files) {
+        file->sibling.reset();
+    }
+    for (auto& dir : directories) {
+        dir->child.reset();
+        dir->sibling.reset();
+        dir->file.reset();
+    }
+}"""
+assert romfs_active.count(romfs_c01_destructor) == 1, "C01 maintained RomFS teardown changed"
+romfs_raw = romfs_active.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(romfs_raw)).encode() + bytes([0]) + romfs_raw
+).hexdigest() == "1c592ef2a44052d7b0e31156bb23a62fec6f6d41", (
+    "Unreviewed C01 full RomFS owner")
+assert romfs_active.replace(
+    romfs_c01_destructor, "RomFSBuildContext::~RomFSBuildContext() = default;", 1
+) == romfs_pinned, "C01 RomFS source does not reconstruct the original parent ABI"
+print("ENCORE_C01_ROMFS_ITERATIVE_DESTRUCTOR_PASS", "source_pin=1", "old_parent_abi=1")
 assert c.count('list(REMOVE_ITEM core_sources file_sys/fsmitm_romfsbuild.cpp)') == 1
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_ROMFS_BUILDER}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_ROMFS_BUILDER}")' in c

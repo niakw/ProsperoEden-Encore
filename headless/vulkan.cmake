@@ -15,7 +15,7 @@ file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")
 # its reserved bit 22 now named) for ALL native consumers, not a CMake-generated
 # reconstruction or a local copy of the definition.
 set(EDEN_P5_FIXED_PIPELINE_HEADER
-    "${PORT_ROOT}/vendor/sources/eden/src/video_core/renderer_vulkan/fixed_pipeline_state.h")
+    "${EDEN_ACTIVE_VULKAN}/include/video_core/renderer_vulkan/fixed_pipeline_state.h")
 if(NOT EXISTS "${EDEN_P5_FIXED_PIPELINE_HEADER}")
     message(FATAL_ERROR "Missing pinned fixed pipeline state ABI header")
 endif()
@@ -1012,6 +1012,14 @@ file(GLOB_RECURSE EDEN_VULKAN_FORK_FILES CONFIGURE_DEPENDS "${EDEN_ACTIVE_VULKAN
 # reconstruct the historical generator oracle and are NOT compiled here.
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${EDEN_PORT_DIR}/vulkan_hud.vert" "${EDEN_PORT_DIR}/vulkan_hud.frag")
+# R23 #2 + #18: selected EDS3 fixed state and mixed TIR color/depth
+# must share the same Vulkan fork, native copy and public texture-cache ABI.
+if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/fixed_pipeline_state.cpp"
+   OR NOT EXISTS "${EDEN_ACTIVE_VULKAN}/include/video_core/renderer_vulkan/vk_texture_cache.h")
+    message(FATAL_ERROR "R23 EDS3/TIR matched native Vulkan owners missing")
+endif()
+list(REMOVE_ITEM video_sources renderer_vulkan/fixed_pipeline_state.cpp)
+list(APPEND video_sources "${PORT_BUILD_DIR}/fixed_pipeline_state.cpp")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp
     vulkan_common/vulkan_memory_allocator.cpp renderer_vulkan/vk_scheduler.cpp)
 # Spatial FSR1 stock percentage was reversed relative to RCAS stops:

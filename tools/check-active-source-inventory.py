@@ -698,8 +698,77 @@ assert ns2_production_added_owners <= set(physical_all), (
     "NS2 production source missing", sorted(ns2_production_added_owners - set(physical_all)))
 assert not ns2_production_added_owners.intersection(research_paths)
 
+# C03 adds two maintained RADV meta translation units after the frozen
+# 337-path shipping ledger. They remain real native compiler inputs and
+# must never be retroactively added to historical F07 review.
+post_f07_c03_radv_meta_owners = {
+    "ps5-mesa/src/amd/vulkan/meta/radv_meta_buffer.c",
+    "ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c",
+}
+assert post_f07_c03_radv_meta_owners <= set(physical_all)
+assert post_f07_c03_radv_meta_owners.isdisjoint(
+    ns2_production_added_owners | set(research_paths))
+print("NS1_C03_POST_F07_NATIVE_OWNER_PASS", "meta_units=2 historical_F07=337")
+
+# R23 adds 45 selected source owners after the frozen 337-file F07 ledger.
+# Keep exact paths, require all to exist, and exclude them from historical F07
+# rather than silently re-dating the audited source snapshot.
+post_f07_r23_added_owners = {
+    "eden-core/include/common/uuid.h",
+    "eden-core/include/core/file_sys/patch_manager.h",
+    "eden-core/include/core/file_sys/registered_cache.h",
+    "eden-core/include/core/file_sys/savedata_factory.h",
+    "eden-core/include/core/hle/service/acc/profile_manager.h",
+    "eden-core/include/core/hle/service/filesystem/fsp/fs_i_storage.h",
+    "eden-core/include/core/hle/service/ipc_helpers.h",
+    "eden-core/include/core/hle/service/service.h",
+    "eden-core/include/core/memory/cheat_engine.h",
+    "eden-core/include/dynarmic/backend/x64/constant_pool.h",
+    "eden-core/include/hid_core/frontend/emulated_controller.h",
+    "eden-core/include/hid_core/hid_core.h",
+    "eden-core/src/audio_core/opus/decoder.cpp",
+    "eden-core/src/audio_core/opus/hardware_opus.cpp",
+    "eden-core/src/audio_core/opus/hardware_opus.h",
+    "eden-core/src/common/uuid.cpp",
+    "eden-core/src/core/hle/service/am/window_system.cpp",
+    "eden-core/src/core/hle/service/audio/errors.h",
+    "eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp",
+    "eden-core/src/core/hle/service/ssl/ssl.cpp",
+    "eden-core/src/core/hle/service/ssl/ssl_backend.h",
+    "eden-core/src/core/hle/service/ssl/ssl_backend_openssl.cpp",
+    "eden-core/src/core/memory/cheat_engine.cpp",
+    "eden-core/src/dynarmic/backend/x64/emit_x64_floating_point.cpp",
+    "eden-core/src/dynarmic/backend/x64/emit_x64_sm4.cpp",
+    "eden-core/src/dynarmic/backend/x64/emit_x64_vector_floating_point.cpp",
+    "eden-core/src/dynarmic/frontend/A32/decoder/asimd.inc",
+    "eden-core/src/dynarmic/frontend/A32/translate/impl/a32_translate_impl.h",
+    "eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_three_regs.cpp",
+    "eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_two_regs_misc.cpp",
+    "eden-core/src/hid_core/hid_core.cpp",
+    "eden-core/src/video_core/host1x/codec_types.h",
+    "eden-core/src/video_core/host1x/codecs/vp9.cpp",
+    "eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_warp.cpp",
+    "eden-shader/src/shader_recompiler/host_translate_info.h",
+    "eden-shader/src/shader_recompiler/ir_opt/constant_propagation_pass.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/geometry_compaction_pass.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/passes.h",
+    "eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/vendor_workaround_pass.cpp",
+    "eden-shader/src/shader_recompiler/profile.h",
+    "eden-vulkan/fixed_pipeline_state.cpp",
+    "eden-vulkan/include/video_core/renderer_vulkan/fixed_pipeline_state.h",
+    "eden-vulkan/include/video_core/renderer_vulkan/vk_texture_cache.h",
+}
+assert len(post_f07_r23_added_owners) == 45
+assert post_f07_r23_added_owners <= set(physical_all), (
+    "Missing post-F07 R23 maintained sources",
+    sorted(post_f07_r23_added_owners - set(physical_all)))
+assert post_f07_r23_added_owners.isdisjoint(post_f07_c03_radv_meta_owners)
+print("NS1_R23_POST_F07_SOURCE_OWNER_PASS", "added=45", "historical_F07=337")
+
 physical = [p for p in physical_all
-            if p not in ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
@@ -986,13 +1055,22 @@ assert not post_f07_r457_owners & (
 assert 'ps5_cpu6_abi_probe.cpp' in native_cmake
 assert 'ps5_ns2_guest_backing_plan.h' not in (root / "src/host_memory.cpp").read_text()
 print("ENCORE_POST_F07_R457_RESEARCH_SOURCE_PASS", "owners=2 historical_headless=193")
+# The R23 AM frontend prototype is a post-F07 native overlay, not an
+# additional item in the frozen 193-file historical headless catalogue.
+post_f07_ns1_am_headless_owners = {"headless/r23_am_frontend_applets_ps5.cpp"}
+assert all((root / p).is_file() for p in post_f07_ns1_am_headless_owners)
+assert "r23_am_frontend_applets_ps5.cpp" in native_cmake
+assert not post_f07_ns1_am_headless_owners & (
+    post_f07_feature_headless_owners | post_f07_r09_headless_owners |
+    post_f07_p5_headless_owners | post_f07_r457_owners)
+print("ENCORE_NS1_AM_POST_F07_HEADLESS_PASS", "new=1 historical=193")
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners | post_f07_r457_owners)
+        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")
@@ -1113,14 +1191,19 @@ for consumer in ("sockets/bsd.cpp", "sockets/sfdnsres.cpp", "nifm/nifm.cpp"):
     assert 'Eden::Encore::kGuestNetworkOffline' in body, ("guest network policy not used", consumer)
 print("ENCORE_NATIVE_GUEST_NETWORK_POLICY_PASS consumers=3")
 
-# Native RADV is installed from exactly twelve versioned inputs,
+# Native RADV is installed from exactly fourteen versioned inputs,
 # including an OpenCL geometry shader that the C/C++ scanner once omitted.
 installer_inputs = runpy.run_path(str(root / "tools/install-vendored-radv.py"))["PATHS"]
 mesa_inputs = {"ps5-mesa/" + path for path in installer_inputs}
-mesa_physical = {path for path in physical if path.startswith("ps5-mesa/")}
-assert len(mesa_inputs) == 12 and mesa_inputs == mesa_physical
-assert all(path in graph for path in mesa_inputs), (
-    "missing RADV source owner", sorted(path for path in mesa_inputs if path not in graph))
+mesa_physical = {path for path in physical_all if path.startswith("ps5-mesa/")}
+assert len(mesa_inputs) == 14 and mesa_inputs == mesa_physical
+# All legacy inputs retain their exact historic audit rows. The two
+# research-only C03 sources are separately pinned, byte-attested and selected;
+# do not mint fake historical Rxx audit identifiers for their new files.
+assert all(path in graph or path in post_f07_c03_radv_meta_owners for path in mesa_inputs), (
+    "missing RADV source owner",
+    sorted(path for path in mesa_inputs
+           if path not in graph and path not in post_f07_c03_radv_meta_owners))
 assert "ps5-mesa/src/amd/vulkan/cl/radv_gs_compute.cl" in mesa_inputs
 print("ENCORE_DRIVER_INPUT_COVERAGE_PASS", f"inputs={len(mesa_inputs)}", "opencl=1")
 

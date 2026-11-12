@@ -45,7 +45,33 @@ narrow_index = "uint64_t index_va = state->index_buffer.va + draw->firstIndex * 
 wide_index = "uint64_t index_va = state->index_buffer.va + (uint64_t)draw->firstIndex * index_size;"
 assert expected.count(narrow_index) == 4
 expected = expected.replace(narrow_index, wide_index)
-assert expected == active, "PS5 active cmd buffer must exactly replay official fixes, GS sink and four widened offsets"
+# C03 additionally preserves a barrier-only transfer guard and exports
+# the stream-split helper to its second Mesa translation unit. Reverse ONLY
+# those two reviewed source edits, then execute the original exact upstream
+# 26.2.2 indirect-draw/GS/64-bit replay oracle unchanged.
+import hashlib
+def source_git_blob(source):
+    value=source.encode("utf-8")
+    return hashlib.sha1(
+        b"blob " + str(len(value)).encode() + bytes([0]) + value).hexdigest()
+assert source_git_blob(active) == "08d09249e437a99e475fdc67985367274e6309c4", (
+    "Unreviewed RADV C03 source mutation")
+c03_prototype = (
+    "void radv_split_cmd_stream_if_due(struct radv_cmd_buffer *cmd_buffer);\n"
+    "\nvoid\nradv_split_cmd_stream_if_due")
+prior_static = "static void\nradv_split_cmd_stream_if_due"
+c03_barrier = (
+    "   radv_split_cmd_stream_if_due(cmd_buffer); "
+    "/* Encore C03: split barrier-only streams */\n")
+assert active.count(c03_prototype) == 1
+assert active.count(c03_barrier) == 1
+historical=active.replace(c03_prototype,prior_static,1).replace(c03_barrier,"",1)
+assert source_git_blob(historical) == "9dd12c19a1a277a2753432e1411a449fdf923c4a", (
+    "C03 RADV source cannot be exactly reversed to historic official proof")
+assert expected == historical, (
+    "RADV official indirect draw, GS sink or 4 widened offsets changed")
+print("RADV_C03_BARRIER_SPLIT_REVERSE_PASS", "historical_official_indirect=exact",
+      "barrier_only_split=retained")
 generator = (ROOT/"tools/patch-radv-wsi.py").read_text()
 assert "from radv_official_indirect_draw_fix import patch" in generator
 assert generator.count('(\"uint64_t index_va = state->index_buffer.va + draw->firstIndex * index_size;\", \"uint64_t index_va = state->index_buffer.va + (uint64_t)draw->firstIndex * index_size;\")') == 1

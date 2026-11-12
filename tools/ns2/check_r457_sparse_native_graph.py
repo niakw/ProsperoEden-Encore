@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
-VENDOR="87ef285eae969388a7c9ad98467ff7fd6c314cba"
+VENDOR="b977c24a00d85b8279f1a78b173e5995cd82353e"
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
@@ -71,7 +71,38 @@ def main():
                                   "-nostdinc","-stdlib","-isystem"))]
         print("R457_NS2_SPARSE_NATIVE_TOOLCHAIN",label,
               "compiler="+cleaned[0], "flags="+repr(markers[:20]),flush=True)
-        p=subprocess.run(cleaned+["-fsyntax-only"],cwd=row["directory"],
+        # The native PS5 SDK C headers must be the only C-library headers.
+        # Clang's implicit Linux search path cannot establish PS5 syntax,
+        # even with a PS5 target triple. Keep every CMake-selected include
+        # and definition, add only Clang's target builtin headers explicitly.
+        import os
+        sdk=Path(os.environ["PS5_PAYLOAD_SDK"]).resolve()
+        c_root=sdk/"target/include"
+        assert (c_root/"stdlib.h").is_file() and (c_root/"sys/cdefs.h").is_file(), (
+            "Incomplete native PS5 FreeBSD C header distribution")
+        compiler=Path(cleaned[0])
+        resource_dir=Path(subprocess.check_output(
+            [str(compiler), "-print-resource-dir"],text=True).strip())/"include"
+        assert resource_dir.is_dir(), "Native Clang compiler resource headers missing"
+        # A configured target must not silently pick any Linux libc header.
+        # Show the exact contaminated search flags, not just an opaque failure.
+        host_includes=[]
+        for pos,flag in enumerate(cleaned):
+            if flag in ("-isystem","-I","-idirafter","-iquote") and pos+1<len(cleaned):
+                path=cleaned[pos+1]
+                if path.startswith(("/usr/include","/usr/local/include")):
+                    host_includes.append((flag,path))
+            elif flag.startswith(("-I/usr/include","-isystem/usr/include",
+                                  "-I/usr/local/include","-isystem/usr/local/include")):
+                host_includes.append(("inline",flag))
+        print("R457_NS2_NATIVE_INCLUDE_PROVENANCE", label,
+              "host_include_flags="+repr(host_includes),
+              "sdk_c_headers="+str(c_root),
+              "sdk_stdlib="+str((c_root/"stdlib.h").is_file()),flush=True)
+        if host_includes:
+            raise RuntimeError(label+" configured PS5 native graph contains host libc "+repr(host_includes))
+        strict=cleaned+["-nostdinc","-isystem",str(resource_dir),"-fsyntax-only"]
+        p=subprocess.run(strict,cwd=row["directory"],
                          capture_output=True,text=True,timeout=210)
         if p.returncode:
             if "bits/libc-header-start.h" in p.stderr:

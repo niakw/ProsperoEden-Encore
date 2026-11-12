@@ -19,11 +19,30 @@ with tempfile.TemporaryDirectory(prefix='eden-radv-fork-equivalence-') as tmp:
                     str(SOURCE), str(temp)], check=True, capture_output=True, text=True, timeout=60)
     before = {str(p.relative_to(temp)): p for p in temp.rglob('*') if p.is_file()}
     after = {str(p.relative_to(ACTIVE)): p for p in ACTIVE.rglob('*') if p.is_file()}
-    assert len(before) == len(after) == 12
-    assert before.keys() == after.keys(), f'changed file list: {before.keys() ^ after.keys()}'
+    # The legacy WSI/PS5 oracle still proves the twelve historical full
+    # compiler inputs. C03 adds two complete maintained meta source owners,
+    # and deliberately changes the maintained cmd-buffer body. The vendor's
+    # exact-preimage C03 contract checks *only* those seven approved changes.
+    c03_extra = {
+        'src/amd/vulkan/meta/radv_meta_buffer.c',
+        'src/amd/vulkan/meta/radv_meta_copy.c',
+    }
+    c03_cmd = 'src/amd/vulkan/radv_cmd_buffer.c'
+    assert len(before) == 12 and len(after) == 14
+    assert set(after) == set(before) | c03_extra
     for relative in before:
+        if relative == c03_cmd:
+            continue
         assert filecmp.cmp(before[relative], after[relative], shallow=False), relative
-    print('VENDORED_RADV_FORK_EQUIVALENT_OK count=12 patch_oracle_matches_active_sources')
+    subprocess.run([sys.executable, '-B',
+                    str(ROOT / 'vendor/tests/c03_radv_transfer_split.py')],
+                   check=True, capture_output=True, text=True, timeout=60)
+    # For fresh staged Mesa, both new files originate from untouched pinned
+    # sources/ and are compiled only after explicit maintained replacement.
+    for relative in sorted(c03_extra):
+        before[relative] = SOURCE / relative
+    assert set(before) == set(after)
+    print('VENDORED_RADV_FORK_EQUIVALENT_OK count=14 oracle_legacy=12 c03_full_source=2')
 
     # Replay installation from the EXACT original pinned inputs, then retry
     # idempotently. Unexpected prior modifications must fail closed.

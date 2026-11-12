@@ -7,10 +7,43 @@ base=root/"vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64"
 active=root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64"
 selector=(root/"headless/scalar-memory.cmake").read_text()
 edits=json.loads(r'''[[["    // TODO: DefineValue directly on Argument for index == 0\n\n    const Xbyak::Reg32 dest = ctx.reg_alloc.ScratchGpr(code).cvt32();","    if (index == 0) {\n        // Scratch ownership preserves any still-live full vector.\n        const auto result = ctx.reg_alloc.UseScratchXmm(code, args[0]);\n        ctx.reg_alloc.DefineValue(code, inst, result);\n        return;\n    }\n\n    const Xbyak::Reg32 dest = ctx.reg_alloc.ScratchGpr(code).cvt32();",1],["        // TODO: DefineValue directly on Argument for index == 0\n        const Xbyak::Reg64 dest = ctx.reg_alloc.ScratchGpr(code).cvt64();\n        auto const source = ctx.reg_alloc.UseXmm(code, args[0]);\n        code.movq(dest, source);\n        ctx.reg_alloc.DefineValue(code, inst, dest);","        // Scratch ownership preserves any still-live full vector.\n        const auto result = ctx.reg_alloc.UseScratchXmm(code, args[0]);\n        ctx.reg_alloc.DefineValue(code, inst, result);",1]],[["void EmitX64::EmitZeroExtendWordToLong(EmitContext& ctx, IR::Inst* inst) {\n    auto args = ctx.reg_alloc.GetArgumentInfo(inst);","void EmitX64::EmitZeroExtendWordToLong(EmitContext& ctx, IR::Inst* inst) {\n    auto args = ctx.reg_alloc.GetArgumentInfo(inst);\n    if (args[0].IsInXmm(ctx.reg_alloc) && code.HasHostFeature(HostFeature::SSE41)) {\n        const auto result = ctx.reg_alloc.UseScratchXmm(code, args[0]);\n        code.pmovzxdq(result, result); // U64 consumes only the zero-extended low word.\n        ctx.reg_alloc.DefineValue(code, inst, result);\n        return;\n    }",1]]]''')
+# Reviewed source fixes from unified vendor, applied AFTER the historical R23 transforms.
+# These are exact replay operations, not a wildcard acceptance or relaxed equality.
+reviewed = {
+    "emit_x64_vector.cpp": (
+        (
+            "        /*1*/ code.vpxor(tmp1, tmp1, tmp1);",
+            "        // AVX-512 VPACKUSDW consumes low 128-bit halves; restore lanes 4-7.\n"
+            "        /*3*/ code.vextracti128(tmp1, tmp0.cvt256(), 1);",
+        ),
+        (
+            "        auto const shifted = U(element) << U(T(shift_amount));",
+            "        U const shifted = U(U(element) << U(T(shift_amount)));",
+        ),
+        (
+            "        auto const shifted_test = shifted >> U(T(shift_amount));\n"
+            "        auto result = 0;",
+            "        auto const shifted_test = shifted >> U(T(shift_amount));\n"
+            "        T result = 0;",
+        ),
+    ),
+    "emit_x64_data_processing.cpp": (
+        (
+            "    code.test(divisor, divisor);\n"
+            "    code.jz(end, code.T_NEAR);",
+            "    code.test(divisor, divisor);\n"
+            "    code.cmovz(eax, divisor); // SDIV32 by zero returns zero\n"
+            "    code.jz(end, code.T_NEAR);",
+        ),
+    ),
+}
 for filename,changes in (("emit_x64_vector.cpp",edits[0]),("emit_x64_data_processing.cpp",edits[1])):
     content=(base/filename).read_text()
     for old,new,count in changes:
         assert content.count(old)==count, ("pinned scalar backend changed",filename,old[:60])
+        content=content.replace(old,new)
+    for old,new in reviewed[filename]:
+        assert content.count(old)==1, ("unreviewed scalar input",filename,old[:70])
         content=content.replace(old,new)
     assert (active/filename).read_text()==content, ("maintained scalar emitter differs",filename)
 assert 'list(APPEND jit_sources "${EDEN_MAINTAINED_SCALAR_BACKEND}/emit_x64_${unit}.cpp")' in selector

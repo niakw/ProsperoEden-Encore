@@ -4,11 +4,13 @@
 # This manifest does NOT loosen byte-for-byte comparison of generated owners.
 FSR31_NATIVE_PORT.md
 anime4k_3d.cpp
+fixed_pipeline_state.cpp
 fsr31_descriptor_pool.cpp
 fsr31_native_bridge.cpp
 fsr31_temporal_upscaler.cpp
 fsr31_temporal_upscaler.h
 include/rdna2_nr_vit_boundary_repack_policy.h
+include/video_core/renderer_vulkan/fixed_pipeline_state.h
 include/video_core/renderer_vulkan/fsr31_native_bridge.h
 include/video_core/renderer_vulkan/msaa_color_shadow_pass.h
 include/video_core/renderer_vulkan/nr_rdna2_core_feature_sequence.h
@@ -123,6 +125,7 @@ include/video_core/renderer_vulkan/striped_wait.h
 include/video_core/renderer_vulkan/vk_compute_storage_layout.h
 include/video_core/renderer_vulkan/vk_descriptor_pool.h
 include/video_core/renderer_vulkan/vk_shared_gpu_budget.h
+include/video_core/renderer_vulkan/vk_texture_cache.h
 include/video_core/vulkan_common/vulkan_device.h
 msaa_color_shadow_pass.cpp
 nr_rdna2_core_feature_sequence.cpp

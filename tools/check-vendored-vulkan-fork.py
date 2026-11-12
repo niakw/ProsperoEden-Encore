@@ -113,13 +113,19 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert mesh_device.count(mesh_feature_method) == 1
     assert mesh_device.count(sparse_delta) == 1, (
         "Native Task/Mesh device header lost the sparse residency method")
-    assert (mesh_device.replace(mesh_feature_line, '')
-                       .replace(mesh_feature_method, '')
-                       .replace(sparse_delta, '') == pinned_device), (
-        "Native Task/Mesh + sparse residency ABI owner drift")
+    # Combined R23 EDS3 + subgroup + mesh + sparse-residency ABI is now a
+    # maintained source blob, not only the two-hunk original Task/Mesh delta.
+    # Keep a hard content pin so unrelated header drift remains rejected.
+    combined_device_sha = 'acab7cf039c2be7bcc830ac684be2fff285a3e8a'
+    assert subprocess.check_output(
+        ['git', 'hash-object', str(expected[native_mesh_device_header])],
+        text=True).strip() == combined_device_sha, (
+        'Reviewed R23 combined Vulkan Device ABI blob drift')
+    assert mesh_device.count('GetMaxSubgroupSize() const') == 1
+    assert mesh_device.count('IsExtDepthClipEnableSupported() const') == 1
     # The immutable upstream generator owns the historic Vulkan ports, not
     # post-generator R09 neural shaders/owners, FSR31 and native additions.
-    # Pin the *exact* 238-path additive inventory rather than ignoring
+    # Pin the *exact* 241-path additive inventory rather than ignoring
     # unexpected extras or pretending they were generated from Eden upstream.
     additive_manifest = root / 'tools/vendor-vulkan-native-additions.txt'
     approved_native_additions = {
@@ -127,7 +133,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         for row in additive_manifest.read_text(encoding='utf-8').splitlines()
         if row.strip() and not row.lstrip().startswith('#')
     }
-    assert len(approved_native_additions) == 238, (
+    assert len(approved_native_additions) == 241, (
         'Reviewed native additive inventory count changed',
         len(approved_native_additions))
     assert not set(actual) - set(expected), (
@@ -135,16 +141,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         sorted(set(actual) - set(expected)))
     # The isolated R2 branch carries exact SHA-pinned unmerged vendor
     # research additions and source owners. Never add these to the production
-    # 238-path allowlist; the executable oracle remains byte-exact.
+    # 241-path allowlist; the executable oracle remains byte-exact.
     # GitHub Actions uses a merge ref for pull_request events; admit only
     # this exact draft research head, and still pin every changed source SHA.
     # Native production NS2 uses the reviewed vendor pin and preserves
     # the generator oracle by reversing only exact, SHA-validated additions.
     r2_production = (subprocess.check_output(
         ['git', 'rev-parse', 'HEAD:vendor'], text=True).strip()
-        == '87ef285eae969388a7c9ad98467ff7fd6c314cba')
+        == 'b977c24a00d85b8279f1a78b173e5995cd82353e')
     if r2_production:
-        r2_vendor = '87ef285eae969388a7c9ad98467ff7fd6c314cba'
+        r2_vendor = 'b977c24a00d85b8279f1a78b173e5995cd82353e'
         assert subprocess.check_output(['git', 'rev-parse', 'HEAD:vendor'],
                                        text=True).strip() == r2_vendor, (
             'R2 research vendor pin drift')
@@ -172,7 +178,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 text=True).strip() == sha, ('R2 research-only source blob drift', name)
         approved_native_additions |= set(r2_extra)
         # R09 native additions belong to this single production vendor pin.
-        # Verify each exact blob; preserve the immutable 238-path generator list.
+        # Verify each exact blob; preserve the immutable 241-path generator list.
         r09_extra = {
                   "include/rdna2_nr_fswin_scratch_pool_policy.h": "091b9734e93e33478d58a20a111d7a3be4b016e0",
                   "include/rdna2_nr_vit_min_pool_policy.h": "75354460bd4857229d86e023c0e620dd33d47787",
@@ -667,6 +673,33 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     def git_blob_sha(text):
         data=text.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+    # Full source-verified reverse of the six post-P24 R23 Vulkan patches:
+    # preserve immutable P24/N57 generator receipts without accepting any
+    # unreviewed vendor edit. Every reverse hunk has unique context and
+    # reconstructs the exact previous Git blob.
+    r23_reverse_receipt = json.loads(
+        (root/'tools/fixtures/r23-merged-vulkan-reverse.json').read_text())
+    assert r23_reverse_receipt['schema_version'] == 1
+    assert r23_reverse_receipt['source_vendor_baseline'] == (
+        '87ef285eae969388a7c9ad98467ff7fd6c314cba')
+    r23_reverse_by_path = {entry['path']: entry for entry in r23_reverse_receipt['files']}
+    assert set(r23_reverse_by_path) == set(r23_combined_owners) if 'r23_combined_owners' in locals() else len(r23_reverse_by_path) == 6
+    def reverse_r23(name, text, verify_hash=True):
+        receipt = r23_reverse_by_path.get(name)
+        if receipt is None:
+            return text
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['post_r23_blob'], (
+                'Unreviewed R23 merged native source', name)
+        for hunk in reversed(receipt['patches']):
+            assert text.count(hunk['after']) == 1, (
+                'R23 native reverse context moved', name)
+            text = text.replace(hunk['after'], hunk['before'], 1)
+        if verify_hash:
+            assert git_blob_sha(text) == receipt['pre_r23_blob'], (
+                'R23 native source failed exact historic reconstruction', name)
+        return text
+
     def reverse_native_kepler_pointer_abi(name, text, verify_hash):
         # The maintained native QMD3 renderer uses RasterizerInterface's
         # KeplerCompute pointer, not a reference. Reverse only 5 member
@@ -735,12 +768,58 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         return text
     # Verify EVERY owner and show precise refusals without weakening the
     # historical SHA or accepting a changed vendor submodule by coincidence.
+    # The merged vendor graph contains reviewed R23 full-source integrations
+    # on top of P24 and post-MSAA. Historic reverse hunks cannot describe
+    # these newer shader/EDS3/TIR changes. Qualify their *exact combined blobs*
+    # independently; keep the original reverse proof for unaffected owners.
+    r23_combined_owners = {
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h':
+            'd49090a476f6a9bf61026331f59c9fbb1d918729',
+        'include/video_core/renderer_vulkan/vk_rasterizer.h':
+            'cb35d183c8a9c2ea05f5eb8949a167ea295f8ce7',
+        'vk_graphics_pipeline_cost.cpp':
+            'd7563d41b74d780f4512899e2fda1b2f362f5523',
+        'vk_pipeline_cache_cost.cpp':
+            '417b9b953bae2dcae511e4166821881f5c443aa1',
+        'vulkan_device.cpp':
+            '50578df547b769bd45cf4964ffa3f793c1749273',
+        'vulkan_rasterizer.cpp':
+            '2530e3754435175810cbf24cb20446e177d1f19f',
+    }
+    r23_required_semantics = {
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h':
+            ('UsesAttributeHandle()', 'SetAttributeHandle('),
+        'include/video_core/renderer_vulkan/vk_rasterizer.h':
+            ('struct AttributeHandleRun', 'attribute_handle_runs'),
+        'vk_graphics_pipeline_cost.cpp':
+            ('ATTRIBUTE_HANDLE_CBUF_INDEX', 'VkPipelineRasterizationDepthClipStateCreateInfoEXT'),
+        'vk_pipeline_cache_cost.cpp':
+            ('HasBrokenPattern(programs[index])', 'single_lane_geometry_subgroups',
+             'support_attribute_texture_handle = true',
+             'dynamic_features.has_depth_clip_enable'),
+        'vulkan_device.cpp':
+            ('depthClipEnable', 'mesh_shader'),
+        'vulkan_rasterizer.cpp':
+            ('CollectAttributeHandleRuns(', 'MaxwellDepthClampClip(',
+             'CanExecuteRecordedDraw()', 'DrawMeshTasksEXT'),
+    }
+    assert set(r23_combined_owners) <= set(p24_by_path)
+    for name, receipt_sha in r23_combined_owners.items():
+        combined = expected[name].read_text()
+        assert git_blob_sha(combined) == receipt_sha, (
+            'Unreviewed merged R23 Vulkan source bytes', name)
+        assert all(token in combined for token in r23_required_semantics[name]), (
+            'Missing merged R23 shader/Vulkan ABI semantic', name)
+    print("ENCORE_R23_COMBINED_VULKAN_BLOB_PASS",
+          f"reviewed_owners={len(r23_combined_owners)}",
+          "historical_P24_reverse_receipt=1")
+
     maintained_errors = []
     for name in p24_by_path:
         assert name in expected and name in actual, (
             'missing Task/Mesh Vulkan source', name)
         try:
-            reverse_p24(name, expected[name].read_text())
+            reverse_p24(name, reverse_r23(name, expected[name].read_text()))
         except AssertionError as exc:
             maintained_errors.append({'path': name, 'error': str(exc)})
     if maintained_errors:
@@ -749,7 +828,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
               flush=True)
     assert not maintained_errors, ("P24 post-MSAA reversible source drift", maintained_errors)
     print("ENCORE_P24_POST_MSAA_REVERSIBLE_PASS",
-          "vulkan_owners=7",
+          "historical_reversed_owners=8",
           f"checked_hunks={sum(len(row['reverse_hunks']) for row in post['files'])}",
           "historic_p24_sha_preserved=1")
 
@@ -767,10 +846,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from generator')
     # First reverse the exact P24 hunks on raw vendor, then N56: both
     # independent receipts must remain valid without conflating their SHAs.
-    n3m_pre_mesh = reverse_p24(n56_name, n56_current)
+    n3m_pre_mesh = reverse_p24(n56_name, reverse_r23(n56_name, n56_current))
     assert n3m_pre_mesh.count(n56_after) == 1
     n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
-    assert generated_n3m == n3m_pre_mesh, 'NS2 generated Vulkan source differs from P24+N56-normalized vendor'
+    assert generated_n3m == n3m_pre_mesh, (
+        'NS2 generator differs from exact R23/P24/N56 reverse-reconstructed vendor')
+    print("ENCORE_R23_NATIVE_VS_GENERATOR_REVERSE_PASS",
+          "native_R23_unchanged=1 old_generator_equivalent=1")
 
     # N57's optional ASTC methods are owned by these SAME vendor Vulkan TUs.
     # Reverse only exact reviewed additions, then require original F07 SHA
@@ -874,10 +956,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         normalized_expected[blit_name] = blit_path
 
     for name in p24_by_path:
-        # Validate the original Git blobs, but preserve all *previous*
-        # normalization passes (N56/N65/N66/etc.) before stripping P24.
-        reverse_p24(name, expected[name].read_text())
-        baseline=reverse_p24(name, normalized_expected.get(name, expected[name]).read_text(), verify_hash=False)
+        # The 6 reviewed R23 native owners are qualified above by their
+        # exact merged source SHA and runtime semantic invariants. The
+        # 2026-10 P24 reverse-hunk recipe is not applicable to those files.
+        # Reconstruct original exact R23 baseline before applying P24 proof.
+        reverse_p24(name, reverse_r23(name, expected[name].read_text()))
+        baseline=reverse_p24(
+            name,
+            reverse_r23(name, normalized_expected.get(name, expected[name]).read_text(),
+                        verify_hash=False),
+            verify_hash=False)
         path=temp/'normalized-vendor-p24'/name
         path.parent.mkdir(parents=True,exist_ok=True)
         path.write_text(baseline)
@@ -1055,9 +1143,30 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         }
         for name, (sha, edits) in r2_replacements.items():
             raw = expected[name].read_text()
-            assert subprocess.check_output(
-                ['git', 'hash-object', str(expected[name])],
-                text=True).strip() == sha, ('R2 maintained owner changed', name)
+            if name == 'include/video_core/renderer_vulkan/vk_buffer_cache.h':
+                # R23 #49 adds a checked descriptor-buffer guard after R2.
+                # Reverse that exact full-source fix before testing R2's
+                # still-immutable historic header blob.
+                r23_new = (
+                    "        // In descriptor-buffer mode there is no VkBufferView: creating one\n"
+                    "        // before checking a missing address can attempt SurfaceFormat(255).\n"
+                    "        // Match Eden upstream 3e6a5566 while keeping legacy views intact.\n"
+                    "        if (guest_descriptor_queue.UsesDescriptorBuffer()) {\n"
+                    "            const VkDeviceAddress address = buffer.DeviceAddress();\n"
+                    "            const VkFormat vk_format = address == 0 ? VK_FORMAT_UNDEFINED : TexelBufferFormat(format);\n"
+                    "            guest_descriptor_queue.AddTexelBuffer(VK_NULL_HANDLE, address, offset, size, vk_format);\n"
+                    "        } else {\n"
+                    "            guest_descriptor_queue.AddTexelBuffer(buffer.View(offset, size, format));\n"
+                    "        }")
+                r23_old = (
+                    "        guest_descriptor_queue.AddTexelBuffer(buffer.View(offset, size, format),\n"
+                    "                                              buffer.DeviceAddress(), offset, size,\n"
+                    "                                              TexelBufferFormat(format));")
+                assert git_blob_sha(raw) == (
+                    '76228c0ed7cdb2c2cfa02a473c59365c46e9a466'), 'Unreviewed R23 texel source'
+                assert raw.count(r23_new) == 1, 'R23 texel fallback moved'
+                raw = raw.replace(r23_new, r23_old)
+            assert git_blob_sha(raw) == sha, ('R2 maintained owner changed', name)
             for first, last in edits:
                 # The delimiters are exact, nonnested source-owned blocks.
                 start = raw.index(first.replace('\\n', '\n'))

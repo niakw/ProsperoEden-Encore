@@ -203,8 +203,26 @@ storage_new = """    const auto fs_start = ::Eden::Performance::detailed_gpu_pro
         ::Eden::Performance::guest_fs_storage_bytes.fetch_add(static_cast<unsigned long long>(length), std::memory_order_relaxed);
     }"""
 assert storage_pinned.count(storage_old) == 1
-assert storage_maintained == '#include "performance.h"\n' + storage_pinned.replace(storage_old, storage_new), (
-    "Maintained IStorage profile TU diverges from the earlier CMake-generated source")
+# FW23 R23 adds input-bounds and per-session pacing to the previously
+# reviewed IStorage profile. Recover the exact old generated code rather
+# than claiming the newer source still equals the former snapshot.
+storage_receipt = json.loads(
+    (root / "tools/fixtures/r23-i-storage-backport-reverse.json").read_text())
+assert storage_receipt["schema_version"] == 1
+assert len(storage_receipt["hunks"]) == 2
+import hashlib
+def source_git_blob(source):
+    data = source.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+assert source_git_blob(storage_maintained) == storage_receipt["combined_blob"]
+storage_prior = storage_maintained
+for hunk in reversed(storage_receipt["hunks"]):
+    assert storage_prior.count(hunk["after"]) == 1, "IStorage R23 hunk context changed"
+    storage_prior = storage_prior.replace(hunk["after"], hunk["before"], 1)
+assert source_git_blob(storage_prior) == storage_receipt["pre_r23_blob"]
+assert storage_prior == '#include "performance.h"\n' + storage_pinned.replace(storage_old, storage_new), (
+    "Maintained IStorage historic profile TU cannot be reconstructed")
+assert "next_read_tick" in storage_maintained and "out_bytes.size()" in storage_maintained
 assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/fs_i_storage.cpp"' not in c
 assert "fs_storage_source" not in c
@@ -713,7 +731,30 @@ hle_trace = """            if (::Eden::Performance::trace_fs_callers.load(std::m
             }
 """
 hle_expected = hle_expected.replace(hle_metric, hle_metric + hle_trace)
-assert hle_maintained == hle_expected, "Maintained service dispatch diverges from former CMake-generated HLE source"
+# R23 #54 moves per-guest read pacing into IStorage; the legacy common
+# HLE 600us NVDEC sleep must not remain. Reconstruct the new source
+# from exact historical diagnostics plus these three intentional changes.
+hle_dispatch_r23 = (
+    ('    , is_i_storage{std::string_view{service_name_} == "IStorage"}\n', ''),
+    ('    const auto command = ctx.GetCommand();\n'
+     '    auto it = handlers.find(command);\n'
+     '    const bool is_cmd_read = command == 0;',
+     '    auto it = handlers.find(ctx.GetCommand());'),
+    ('    if (is_i_storage && is_cmd_read) {\n'
+     '        const auto* const process = ctx.GetThread().GetOwnerProcess();\n'
+     '        if (process != nullptr && system.IsNVDECActiveForProcess(process->GetId())) {\n'
+     '            std::this_thread::sleep_for(std::chrono::microseconds{600});\n'
+     '        }\n'
+     '    }', ''),
+)
+for earlier, later in hle_dispatch_r23:
+    assert hle_expected.count(earlier) == 1, "R23 HLE historical context moved"
+    hle_expected = hle_expected.replace(earlier, later, 1)
+assert "std::this_thread::sleep_for(std::chrono::microseconds{600})" not in hle_maintained
+assert "is_i_storage" not in hle_maintained
+assert hle_maintained == hle_expected, (
+    "R23 per-IStorage pacing changed HLE beyond three reviewed mutations")
+print("ENCORE_R23_HLE_DISPATCH_ISOLATION_PASS", "legacy_600us_sleep=0", "profile_receipts=2")
 # Synchronous IPC: request ID and timing are captured BEFORE the potentially
 # blocking call; the exact historical body is maintained, not regenerated.
 ipc_rel = "core/hle/kernel/svc/svc_ipc.cpp"
@@ -852,7 +893,41 @@ if "#ifdef EDEN_NS2_GUEST_COUNTER" in cpu_active:
     assert cpu_active.count(ns2_cpu_header) == 1, "N76 header modified or duplicated"
     assert cpu_active.count(ns2_cpu_block) == 1, "N76 timing block modified or duplicated"
     cpu_active = cpu_active.replace(ns2_cpu_header, "").replace(ns2_cpu_block, "")
-assert cpu_active == cpu_expected, "TSC source differs from previous configure-time transformation"
+# R23 #114 corrects nanoseconds-to-ticks for >1GHz invariant RDTSC:
+# the former Q0.64 coefficient could overflow. Reverse its two exact
+# reviewed source changes after the existing N76 guest-rate reversal.
+# Preserve the original generated TSC parity witness unchanged.
+cpu_r23_constructor = (
+    "    , ms_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(MsRatio::den, rdtsc_frequency_) : 0}\n"
+    "    , cntpct_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(CNTFRQ, rdtsc_frequency_) : 0}")
+cpu_r23_previous_constructor = (
+    "    , ms_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(MsRatio::den, rdtsc_frequency_) : 0}\n"
+    "    , rdtsc_ns_factor{invariant_ ? GetFixedPoint64Factor(rdtsc_frequency_, NsRatio::den) : 1}\n"
+    "    , cntpct_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(CNTFRQ, rdtsc_frequency_) : 0}")
+cpu_r23_new_ticks = """    if (!invariant) {
+        return static_cast<u64>(ns.count());
+    }
+    // A nanosecond-to-RDTSC ratio greater than one does not fit in
+    // 0.64 fixed-point: at 2/3/4 GHz the old factor wraps to zero.
+    // The product fits in 128 bits for any signed nanosecond duration
+    // and any measured 64-bit host frequency.
+    if (ns.count() <= 0) {
+        return 0;
+    }
+    const auto product = static_cast<unsigned __int128>(ns.count()) *
+                         static_cast<unsigned __int128>(rdtsc_frequency);
+    return static_cast<u64>(product / NsRatio::den);"""
+cpu_r23_prior_ticks = (
+    "    return invariant ? MultiplyHigh(ns.count(), rdtsc_ns_factor) : ns.count();")
+assert cpu_active.count(cpu_r23_constructor) == 1
+assert cpu_active.count(cpu_r23_new_ticks) == 1
+assert "static_cast<unsigned __int128>(rdtsc_frequency)" in cpu_active
+cpu_previous = cpu_active.replace(
+    cpu_r23_constructor, cpu_r23_previous_constructor, 1).replace(
+    cpu_r23_new_ticks, cpu_r23_prior_ticks, 1)
+assert cpu_previous == cpu_expected, (
+    "R23 nanosecond-to-RDTSC overflow fix changed unrelated TSC source")
+print("ENCORE_R23_RDTSC_OVERFLOW_REVERSE_PASS", "u128=1", "legacy_Q064=restored_oracle")
 assert c.count('list(APPEND common_sources "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")') == 1
 assert 'list(REMOVE_ITEM common_sources cpu_features.cpp)' in c
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")' in c
@@ -938,10 +1013,39 @@ h01_fs_rollback = (
     "}\n\n"
 )
 assert native_fs_active.count(h01_fs_rollback) == 1
-assert native_fs_active.replace(h01_fs_rollback, "", 1) == (
+# R23 #113 prevents an additional bundled program from erasing the
+# current application's temporary saves. Reverse only its byte-exact
+# conditional block, keeping both the old firmware-root generator witness
+# and H01's per-process RomFS rollback intact.
+r23_fs_temporary_guard = """    // Switch temporary save storage starts empty for an application, but
+    // multiple bundled programs share the same storage lifetime. Preparing
+    // it in every SaveDataFactory ctor deletes a sibling program's live data.
+    // CreateFactories is initialized once for the application controller;
+    // overwrite explicitly starts a new generation and resets bis_factory.
+    if (bis_factory == nullptr) {
+        const auto save_directory =
+            vfs.OpenDirectory(Common::FS::GetEdenPathString(EdenPath::SaveDir), rw_mode);
+        if (save_directory != nullptr) {
+            save_directory->DeleteSubdirectoryRecursive("temp");
+        }
+    }
+
+"""
+assert native_fs_active.count(r23_fs_temporary_guard) == 1, (
+    "R23 bundled-program temp-save guard moved")
+import hashlib
+native_fs_raw = native_fs_active.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(native_fs_raw)).encode() + bytes([0]) + native_fs_raw
+).hexdigest() == "b0cb0c6a1b0ecf7dc8e82718e352f2f04c521b2b", (
+    "Unreviewed native FS firmware/parent-program source drift")
+native_fs_historical = native_fs_active.replace(h01_fs_rollback, "", 1).replace(
+    r23_fs_temporary_guard, "", 1)
+assert native_fs_historical == (
     '#include "assets_dir.h"\n'
     + native_fs_pinned.replace(native_fs_old, native_fs_new)
-)
+), "Native R23 FS source not reversible to firmware-root baseline"
+print("ENCORE_R23_FS_TEMP_SAVE_ISOLATION_PASS", "application_owner=1", "H01_rollback=1")
 h01_fs_header = (active / "eden-core/overrides/h01-filesystem/core/hle/service/filesystem/filesystem.h").read_text()
 assert "void UnregisterProcessIfPresent(ProcessId process_id);" in h01_fs_header
 assert c.count('list(REMOVE_ITEM core_sources hle/service/filesystem/filesystem.cpp)') == 1
@@ -965,7 +1069,32 @@ romfs_rewrites = (
 for old,new in romfs_rewrites:
     assert romfs_pinned.count(old) == 2, ("pinned RomFS parent drift", old)
     romfs_pinned = romfs_pinned.replace(old,new)
-assert romfs_active == romfs_pinned, "maintained RomFS builder differs from former CMake unit"
+# C01 replaces recursive shared_ptr destructor chains with bounded
+# iterative link release. Keep the previous parent-pointer generator
+# baseline, reversing exactly one reviewed destructor body and no more.
+romfs_c01_destructor = """// Cut sibling/child shared-owner chains before vectors release the nodes.
+// Parents are non-owning; every child remains owned by the builder vectors.
+// Destruction is O(nodes) without recursive shared_ptr teardown stack growth.
+RomFSBuildContext::~RomFSBuildContext() {
+    for (auto& file : files) {
+        file->sibling.reset();
+    }
+    for (auto& dir : directories) {
+        dir->child.reset();
+        dir->sibling.reset();
+        dir->file.reset();
+    }
+}"""
+assert romfs_active.count(romfs_c01_destructor) == 1, "C01 maintained RomFS teardown changed"
+romfs_raw = romfs_active.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(romfs_raw)).encode() + bytes([0]) + romfs_raw
+).hexdigest() == "1c592ef2a44052d7b0e31156bb23a62fec6f6d41", (
+    "Unreviewed C01 full RomFS owner")
+assert romfs_active.replace(
+    romfs_c01_destructor, "RomFSBuildContext::~RomFSBuildContext() = default;", 1
+) == romfs_pinned, "C01 RomFS source does not reconstruct the original parent ABI"
+print("ENCORE_C01_ROMFS_ITERATIVE_DESTRUCTOR_PASS", "source_pin=1", "old_parent_abi=1")
 assert c.count('list(REMOVE_ITEM core_sources file_sys/fsmitm_romfsbuild.cpp)') == 1
 assert c.count('list(APPEND core_sources "${EDEN_MAINTAINED_ROMFS_BUILDER}")') == 1
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_ROMFS_BUILDER}")' in c
@@ -1198,7 +1327,49 @@ rumble_site = "    output_params[LeftIndex] = left_joycon;\n    output_params[Ri
 rumble_insert = "    if (output_params[LeftIndex].Get(\"engine\", \"\").empty()) {\n        const auto rumble_port = std::to_string(Service::HID::NpadIdTypeToIndex(npad_id_type));\n        output_params[LeftIndex] = Common::ParamPackage{\"engine:virtual_gamepad,port:\" + rumble_port + \",pad:1\"};\n        output_params[RightIndex] = Common::ParamPackage{\"engine:virtual_gamepad,port:\" + rumble_port + \",pad:2\"};\n    }\n"
 assert rumble_original.count(rumble_site) == 1, "pinned rumble source site changed"
 rumble_generated = "#include <string>\n" + rumble_original.replace(rumble_site, rumble_site + rumble_insert)
-assert (active / "eden-core/src/hid_core/frontend/emulated_controller.cpp").read_text() == rumble_generated
+# NS1 R23 #95 removes the obsolete 48-state controller_connected matrix
+# and reconnects from the live selected player's state. Reconstruct exactly
+# the reviewed maintained source from the old injected rumble source.
+legacy_button_entry = """void EmulatedController::SetButton(const Common::Input::CallbackStatus& callback, std::size_t index, Common::UUID uuid) {
+    const auto player_index = Service::HID::NpadIdTypeToIndex(npad_id_type);
+    const auto& player = Settings::values.players.GetValue()[player_index];
+
+    if (index >= controller.button_values.size()) {"""
+revised_button_entry = """void EmulatedController::SetButton(const Common::Input::CallbackStatus& callback, std::size_t index, Common::UUID uuid) {
+    if (index >= controller.button_values.size()) {"""
+legacy_reconnect = """    if (!is_connected) {
+        if (npad_type == NpadStyleIndex::Handheld) {
+            if (npad_id_type == NpadIdType::Handheld) {
+                Connect();
+                controller_connected[player_index] = true;
+            }
+        } else if (npad_type != NpadStyleIndex::Handheld) {
+            if (npad_id_type == NpadIdType::Player1) {
+                Connect();
+                controller_connected[player_index] = true;
+            } else if (player.connected && !controller_connected[player_index]) {
+                Connect();
+                controller_connected[player_index] = true;
+            }
+        }"""
+revised_reconnect = """    const auto player_index = Service::HID::NpadIdTypeToIndex(npad_id_type);
+    const auto& player = Settings::values.players.GetValue()[player_index];
+    if (player.connected) {
+        Connect();"""
+assert rumble_generated.count(legacy_button_entry) == 1
+assert rumble_generated.count(legacy_reconnect) == 1
+rumble_r23 = rumble_generated.replace(legacy_button_entry, revised_button_entry, 1)
+rumble_r23 = rumble_r23.replace(legacy_reconnect, revised_reconnect, 1)
+rumble_maintained = (active / "eden-core/src/hid_core/frontend/emulated_controller.cpp").read_text()
+import hashlib
+def r23_blob_sha(text):
+    raw = text.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+assert r23_blob_sha(rumble_maintained) == "9ce2506de27fceb18567ad9be12e8da4430fe140"
+assert rumble_maintained == rumble_r23, (
+    "R23 live-player reconnect or rumble input changed beyond two reviewed edits")
+assert "controller_connected[player_index]" not in rumble_maintained
+print("ENCORE_R23_HID_CONTROLLER_RECONNECT_PARITY_PASS", "legacy_matrix=0", "rumble=1")
 assert 'list(APPEND controller_sources "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")' in c
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_RUMBLE_CONTROLLER}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/emulated_controller.cpp"' not in c
@@ -1216,8 +1387,31 @@ npad_new_entry = "void NPad::ControllerUpdate(Kernel::KernelCore& kernel, Core::
 assert npad_shipping.count(npad_old_pair) == npad_shipping.count(npad_old_entry) == 1
 npad_expected = npad_shipping.replace(npad_old_pair, npad_new_pair).replace(
     npad_old_entry, npad_new_entry)
-assert (active / "eden-core/src/hid_core/resources/npad/npad.cpp").read_text() == npad_expected, (
-    "Maintained NPad differs from previous CMake source generator")
+# R23 #19 adds precisely one constructor reset and one successful
+# JoyHold-type orientation update after the previously proven NPad guards.
+npad_r23_constructor = """{
+    for (std::size_t i = 0; i < abstracted_pads.size(); ++i) {
+        abstracted_pads[i].SetNpadId(IndexToNpadIdType(i));"""
+npad_r23_initialized = """{
+    // A newly initialized game begins with upright single Joy-Cons.
+    hid_core.SetJoyHoldHorizontal(false);
+    for (std::size_t i = 0; i < abstracted_pads.size(); ++i) {
+        abstracted_pads[i].SetNpadId(IndexToNpadIdType(i));"""
+npad_r23_prior_hold = "    return npad_resource.SetNpadJoyHoldType(aruid, hold_type);"
+npad_r23_checked_hold = """    const Result result = npad_resource.SetNpadJoyHoldType(aruid, hold_type);
+    if (result.IsSuccess()) {
+        hid_core.SetJoyHoldHorizontal(hold_type == NpadJoyHoldType::Horizontal);
+    }
+    return result;"""
+assert npad_expected.count(npad_r23_constructor) == 1
+assert npad_expected.count(npad_r23_prior_hold) == 1
+npad_r23 = npad_expected.replace(npad_r23_constructor, npad_r23_initialized, 1)
+npad_r23 = npad_r23.replace(npad_r23_prior_hold, npad_r23_checked_hold, 1)
+npad_maintained = (active / "eden-core/src/hid_core/resources/npad/npad.cpp").read_text()
+assert r23_blob_sha(npad_maintained) == "454138c445bc140568068737646349cac98a686d"
+assert npad_maintained == npad_r23, (
+    "R23 NPad JoyHold changed beyond its two source-reviewed edits")
+print("ENCORE_R23_NPAD_ORIENTATION_SOURCE_PASS", "reset=1", "successful_hold_update=1")
 assert c.count('list(APPEND npad_sources "${EDEN_NPAD_SELECTED}")') == 1
 assert c.count('list(FILTER npad_sources EXCLUDE REGEX "(^|/)npad\\\\.cpp$")') == 1
 assert 'write_derived("${PORT_BUILD_DIR}/npad.cpp"' not in c
@@ -1264,7 +1458,28 @@ pm_expected = pm_base
 for pos, (old, new) in enumerate(pm_pairs):
     assert pm_expected.count(old) == (1, 1, 1, 3)[pos], ("pinned patch manager drift", pos)
     pm_expected = pm_expected.replace(old, new)
-assert (active / "eden-core/src/core/file_sys/patch_manager.cpp").read_text() == pm_expected
+# R23 #113 parent-program sharing adds 20 reviewed source-delta regions
+# on top of the previous four-modification PatchManager generator.
+# Reverse exactly to the frozen baseline before checking old parity.
+pm_current = (active / "eden-core/src/core/file_sys/patch_manager.cpp").read_text()
+pm_receipt = json.loads(
+    (root / "tools/fixtures/r23-parent-patch-manager-reverse.json").read_text())
+assert pm_receipt["schema_version"] == 1 and len(pm_receipt["hunks"]) == 20
+assert r23_blob_sha(pm_current) == pm_receipt["post_r23_blob"], (
+    "Unreviewed PatchManager parent-program source", r23_blob_sha(pm_current))
+pm_recovered = pm_current
+for pm_hunk in reversed(pm_receipt["hunks"]):
+    assert pm_recovered.count(pm_hunk["after"]) == 1, (
+        "PatchManager R23 source edit context drift")
+    pm_recovered = pm_recovered.replace(pm_hunk["after"], pm_hunk["before"], 1)
+assert r23_blob_sha(pm_recovered) == pm_receipt["pre_r23_generated_blob"]
+assert pm_recovered == pm_expected, (
+    "Parent-program PatchManager differs beyond source-exact reviewed R23 delta")
+for semantic in ("GetParentApplicationId", "GetDisabledAddons",
+                 "GetModificationLoadRoot", "parent_title_id", "GetControlMetadata"):
+    assert semantic in pm_current, ("Parent-program lookup disappeared", semantic)
+print("ENCORE_R23_PARENT_PROGRAM_PATCH_MANAGER_PASS",
+      "hunks=20", "historical_four_patches=preserved")
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_IPS_LAYER}" "${EDEN_MAINTAINED_PATCH_MANAGER}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/patch_manager.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/file_sys/patch_manager.cpp" patch_source)' not in c
@@ -1575,7 +1790,19 @@ base_opt = (scalar_root / "ir/opt_passes.cpp").read_text()
 opt_anchor = "        case Op::LeastSignificantWord:\n            FoldLeastSignificantWord(inst);\n            break;"
 assert base_opt.count(opt_anchor) == 1
 fold_oracle = (active / "eden-core/dynarmic/scalar/scalar-fold.inc").read_text()
-assert (active / "eden-core/src/dynarmic/ir/opt_passes.cpp").read_text() == base_opt.replace(opt_anchor, opt_anchor + "\n" + fold_oracle)
+scalar_expected = base_opt.replace(opt_anchor, opt_anchor + "\n" + fold_oracle)
+scalar_r23_previous = "    if (conf.HasOptimization(OptimizationFlag::GetSetElimination)) {"
+scalar_r23_checked = (
+    "    if (conf.HasOptimization(OptimizationFlag::GetSetElimination) && "
+    "!conf.check_halt_on_memory_access) {")
+assert scalar_expected.count(scalar_r23_previous) == 1
+scalar_r23_source = scalar_expected.replace(
+    scalar_r23_previous, scalar_r23_checked, 1)
+scalar_maintained = (active / "eden-core/src/dynarmic/ir/opt_passes.cpp").read_text()
+assert r23_blob_sha(scalar_maintained) == "3e423f113f6c6236e4e12028450b85c941a03606"
+assert scalar_maintained == scalar_r23_source, (
+    "R23 Dynarmic memory-access halt guard changed beyond reviewed single predicate")
+print("ENCORE_R23_SCALAR_HALT_GUARD_PASS", "fold_previous=retained", "halt_guard=1")
 assert 'target_sources(dynarmic PRIVATE\n    "${EDEN_MAINTAINED_SCALAR_TRANSLATOR}"\n    "${EDEN_MAINTAINED_SCALAR_OPT}")' in c
 for retired in ("scalar_impl.cpp", "a64_translate.cpp", "opt_passes.cpp"):
     assert 'write_derived("${PORT_BUILD_DIR}/' + retired + '"' not in c

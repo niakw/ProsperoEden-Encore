@@ -797,6 +797,13 @@ assert not post_f07_p5_astc_scope_bridge_owners.intersection(
     research_owners | post_f07_feature_stack_owners | post_f07_r09_overlay_owners)
 print("ENCORE_POST_F07_P5_ASTC_SCOPE_BRIDGE_PASS", "shipping_headers=1 historical_F07=518")
 
+# #84 applet frontend overlay is new NS1 review code, not a part of historical F07.
+ns1_am_draft_owners = {"headless/r23_am_frontend_applets_ps5.cpp"}
+assert ns1_am_draft_owners <= all_owners
+assert ns1_am_draft_owners.isdisjoint(research_owners | hygiene_owners)
+print("ENCORE_NS1_AM_DRAFT_F07_ISOLATION_PASS", "draft_owners=1", "historical_F07=518")
+
+
 # Distinct R457 sources created for PS5 real-console triage: a compiled
 # KProcess 6-core ABI witness and a NOT-wired NS2 residency model. They are
 # separately gated; never retroactively count them as F07 shipping proof.
@@ -842,7 +849,74 @@ post_f07_ns2_production_owners = {
 }
 assert post_f07_ns2_production_owners <= all_owners
 assert not post_f07_ns2_production_owners & research_owners
-owners=all_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners
+# C03 adds two complete maintained RADV meta units after the immutable
+# 518-owner F07 audit. They are explicitly selected by the 14-unit driver
+# installer but have NOT yet passed native RDNA2/PS5 execution tests.
+post_f07_c03_radv_owners = {
+    "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_buffer.c",
+    "vendor/encore-active/ps5-mesa/src/amd/vulkan/meta/radv_meta_copy.c",
+}
+assert post_f07_c03_radv_owners <= all_owners
+assert not post_f07_c03_radv_owners & (research_owners | post_f07_ns2_production_owners)
+print("ENCORE_POST_F07_C03_RADV_ISOLATION_PASS", "owners=2 historical_F07=518")
+
+# The 45 new native R23 vendor source/header owners are post-F07, not
+# members of the immutable 518-source audited snapshot.
+post_f07_r23_source_owners = {
+    "vendor/encore-active/eden-core/include/common/uuid.h",
+    "vendor/encore-active/eden-core/include/core/file_sys/patch_manager.h",
+    "vendor/encore-active/eden-core/include/core/file_sys/registered_cache.h",
+    "vendor/encore-active/eden-core/include/core/file_sys/savedata_factory.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/acc/profile_manager.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/filesystem/fsp/fs_i_storage.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/ipc_helpers.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/service.h",
+    "vendor/encore-active/eden-core/include/core/memory/cheat_engine.h",
+    "vendor/encore-active/eden-core/include/dynarmic/backend/x64/constant_pool.h",
+    "vendor/encore-active/eden-core/include/hid_core/frontend/emulated_controller.h",
+    "vendor/encore-active/eden-core/include/hid_core/hid_core.h",
+    "vendor/encore-active/eden-core/src/audio_core/opus/decoder.cpp",
+    "vendor/encore-active/eden-core/src/audio_core/opus/hardware_opus.cpp",
+    "vendor/encore-active/eden-core/src/audio_core/opus/hardware_opus.h",
+    "vendor/encore-active/eden-core/src/common/uuid.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/am/window_system.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/audio/errors.h",
+    "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/ssl/ssl_backend.h",
+    "vendor/encore-active/eden-core/src/core/hle/service/ssl/ssl_backend_openssl.cpp",
+    "vendor/encore-active/eden-core/src/core/memory/cheat_engine.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_floating_point.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_sm4.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_vector_floating_point.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/decoder/asimd.inc",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/translate/impl/a32_translate_impl.h",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_three_regs.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_two_regs_misc.cpp",
+    "vendor/encore-active/eden-core/src/hid_core/hid_core.cpp",
+    "vendor/encore-active/eden-core/src/video_core/host1x/codec_types.h",
+    "vendor/encore-active/eden-core/src/video_core/host1x/codecs/vp9.cpp",
+    "vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_warp.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/host_translate_info.h",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/constant_propagation_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/geometry_compaction_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/passes.h",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/vendor_workaround_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/profile.h",
+    "vendor/encore-active/eden-vulkan/fixed_pipeline_state.cpp",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/fixed_pipeline_state.h",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_texture_cache.h",
+}
+assert len(post_f07_r23_source_owners) == 45
+assert post_f07_r23_source_owners <= all_owners, (
+    "Missing reviewed R23 extra owners",
+    sorted(post_f07_r23_source_owners-all_owners))
+print("ENCORE_NS1_R23_POST_F07_ISOLATION_PASS", "vendor_additions=45",
+      "historical_F07=518")
+
+owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -916,6 +990,20 @@ shipping=json.loads((ROOT/"vendor/encore-active/eden-backports/manifest.json").r
 upstream=json.loads((ROOT/"UPSTREAM.json").read_text())
 assert shipping["pinned_eden_commit"]==upstream["eden_commit"]
 assert len(shipping["entries"])==83
+# Four FW23 maintained sources gained reviewed R23 backports. Their
+# historical F07 source receipts stay immutable; the active shipping manifest
+# contains the new verified exact SHA256 and byte lengths (vendor PR #83).
+r23_fw23_successors = {
+    "src/core/hle/service/filesystem/fsp/fsp_srv.cpp": ("14a61732f3a2a8092d2abf452e6929b8eb4e61c0cfc64d1dbe2d23e62cbd7740", 28654,
+        "17446c9eb530d62dded19cd174c876be4730a4f845e3fa891d40f45dfd606a60", 28814),
+    "src/core/hle/service/ngc/ngc.cpp": ("b9cf8214632e08bff84017434bebe544b33b9405fea59259037df7775fb9a557", 5938,
+        "afae15d9fc27afccce5f830aae5e7f040ef70d5135a719e210bdadf35af54bc8", 10435),
+    "src/core/hle/service/ns/application_manager_interface.cpp": ("ee52174d4d317d7a2f931ffd4192b1eb49321fc7e266c808e99e5739da694e97", 44323,
+        "763fc78e61b64ef26649a375225dcc395ab971c0b654f8b2e94b3bb0edcd4ff5", 48191),
+    "src/core/hle/service/ns/application_manager_interface.h": ("63db35276eed6a82a2f6bc0ad05dd75e2d481fb947c8ab839587853d45e29a33", 5373,
+        "9e58227eb0aa757c801a9b5fbd46cf6679fe97d2a615aa87e0d6993865eda400", 6279),
+}
+assert len(r23_fw23_successors)==4
 for e in entries:
     if e["disposition"]!="shipping_backport_integrated_previously":
         continue
@@ -926,9 +1014,14 @@ for e in entries:
     assert active.is_file()
     assert hashlib.sha256(active.read_bytes()).hexdigest()==record["active"]
     assert active.stat().st_size==record["bytes"]
-    assert e["shipping_active_sha256"]==record["active"]
     assert e["shipping_upstream_sha256"]==record["upstream"]
-    assert e["shipping_bytes"]==record["bytes"]
+    if e["shipping_relpath"] in r23_fw23_successors:
+        old_sha,old_size,new_sha,new_size = r23_fw23_successors[e["shipping_relpath"]]
+        assert (e["shipping_active_sha256"],e["shipping_bytes"]) == (old_sha,old_size)
+        assert (record["active"],record["bytes"]) == (new_sha,new_size)
+    else:
+        assert e["shipping_active_sha256"]==record["active"]
+        assert e["shipping_bytes"]==record["bytes"]
     assert record["active"]!=record["upstream"],("not a changed backport",e["path"])
 assert sum(e["disposition"]=="shipping_backport_integrated_previously"
            for e in entries)==78
@@ -1094,7 +1187,33 @@ assert sparse_path not in post_index
 assert sparse_path in drift_index
 sparse_drift = drift_index.pop(sparse_path)
 assert sparse_drift["expected"] == sparse_receipt["historical_f07_git_blob"]
-assert sparse_drift["actual"] == sparse_receipt["research_source_git_blob"]
+# The 2026-11-11 reviewed sparse host owner is immutable, but a
+# production safety guard now forbids a 12GiB dense fallback when the PS5
+# preprocessor path is absent. Reconstruct the earlier checked Git blob.
+assert sparse_receipt["research_source_git_blob"] == (
+    "4f109a0286a13afc93dcacd3b287b26b256d13f4")
+assert sparse_drift["actual"] == "b9349360b3f615784247133026ac7aaf8d71eb9e"
+dense_fallback_guard = """#ifdef PS5_NATIVE
+        // NS2 must never request 12 GiB of physical RAM because a
+        // compile-flag mismatch silently disabled the sparse owner.
+        // Fail clearly instead of reproducing the PS5 launch ENOMEM.
+        if (requested == (12ull << 30)) {
+            throw std::system_error(ENOMEM, std::generic_category(),
+                                    "NS2 sparse backing not active; refusing 12 GiB dense allocation");
+        }
+#endif
+"""
+current_sparse_source = (ROOT/sparse_path).read_text()
+assert current_sparse_source.count(dense_fallback_guard) == 1
+pre_guard = current_sparse_source.replace(dense_fallback_guard, "", 1)
+pre_guard_bytes = pre_guard.encode("utf-8")
+pre_guard_blob = hashlib.sha1(
+    b"blob " + str(len(pre_guard_bytes)).encode() + bytes([0]) +
+    pre_guard_bytes).hexdigest()
+assert pre_guard_blob == sparse_receipt["research_source_git_blob"], (
+    "NS2 dense-fallback guard modified other sparse source code")
+print("R457_NS2_SPARSE_DENSE_FALLBACK_GUARD_PASS",
+      "12GiB_dense=forbidden", "original_receipt=preserved")
 assert sparse_receipt["opt_in"] in (ROOT/sparse_path).read_text()
 assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
 print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
@@ -1119,6 +1238,24 @@ for changed_path, expected_sha in ns2_production_blobs.items():
             post_index[changed_path]["post_snapshot_git_blob"] = expected_sha
         else:
             drift_index.pop(changed_path)
+# R23 #113 parent-program metadata and #126 UUID service adjustments
+# update two pre-existing historical source owners. The frozen F07 snapshot
+# remains unchanged; require exact reviewed new Git blobs independently.
+r23_existing_source_successors = {
+    "vendor/encore-active/eden-core/src/core/file_sys/registered_cache.cpp":
+        "2658884ef0332ec7dc579824d9c89925f9168891",
+    "vendor/encore-active/eden-core/src/core/hle/service/am/service/application_functions.cpp":
+        "2bd3959b2046f7e1cccf93ccbad9d1d91cd9a590",
+}
+assert set(r23_existing_source_successors).isdisjoint(post_index)
+for changed_path, new_blob in r23_existing_source_successors.items():
+    assert changed_path in drift_index, ("Missing R23 existing-owner delta",changed_path)
+    source_delta = drift_index.pop(changed_path)
+    assert source_delta["expected"] != new_blob
+    assert source_delta["actual"] == new_blob, (
+        "Unreviewed R23 existing-owner source edit", changed_path)
+print("ENCORE_R23_EXISTING_F07_SOURCE_SUCCESSORS_PASS", "owners=2",
+      "historical_F07_preserved=1")
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

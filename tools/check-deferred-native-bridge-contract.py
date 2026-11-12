@@ -293,6 +293,27 @@ original_m07 = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").r
 # Vulkan overlay is exactly reversible; first match the currently SELECTED
 # vendor source blob, then revert its complete, context-anchored hunks.
 # The original historical Task/Mesh SHA checks below remain unchanged.
+# R23 #35 added a source-extracted vertex-attribute texture run path on
+# top of the old M07 renderer. Reverse its exact full-source delta first,
+# preserving the original M07/P24/MSAA witnesses verbatim.
+r23_m07 = json.loads(
+    (root / "tools/fixtures/r23-merged-vulkan-reverse.json").read_text())
+assert r23_m07["schema_version"] == 1
+r23_raster = next(item for item in r23_m07["files"]
+                  if item["path"] == "vulkan_rasterizer.cpp")
+def m07_source_blob(value):
+    raw = value.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+assert m07_source_blob(original_m07) == r23_raster["post_r23_blob"], (
+    "Unreviewed R23 renderer source in M07")
+for reverse_hunk in reversed(r23_raster["patches"]):
+    assert original_m07.count(reverse_hunk["after"]) == 1, (
+        "R23 M07 reverse hunk moved")
+    original_m07 = original_m07.replace(
+        reverse_hunk["after"], reverse_hunk["before"], 1)
+assert m07_source_blob(original_m07) == r23_raster["pre_r23_blob"], (
+    "R23 renderer failed to reconstruct M07 source")
+print("ENCORE_M07_R23_REVERSE_EXACT_PASS", "native_R23_preserved=1")
 post_msaa_receipt = json.loads(
     (root / "tools/fixtures/p24-post-msaa-reversible-deltas.json").read_text())
 assert post_msaa_receipt["schema_version"] == 1

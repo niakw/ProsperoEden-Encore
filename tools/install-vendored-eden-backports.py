@@ -174,6 +174,37 @@ def replay()->None:
         if result.returncode:
             raise RuntimeError(f'Audited Eden patch replay failed: {result.stderr[-1400:]} {result.stdout[-1400:]}')
         observed=changed(stage)
+        # FW23/HOS23 reviewed post-backport changes are separate from the
+        # frozen source-patch replay. Prove each exact extra delta can be
+        # reversed to the old generated source; never accept a new SHA only.
+        successor=json.loads(
+            (ROOT/'tools/fixtures/r23-fw23-backports-reverse.json').read_text())
+        assert successor['schema_version']==1
+        assert successor['baseline_vendor']=='87ef285eae969388a7c9ad98467ff7fd6c314cba'
+        assert successor['active_vendor']=='b977c24a00d85b8279f1a78b173e5995cd82353e'
+        reviewed=successor['reviewed_fw23_sources']
+        assert len(reviewed)==4 and len({entry['path'] for entry in reviewed})==4
+        for entry in reviewed:
+            rel=entry['path']
+            assert rel in observed and rel in spec['entries'], (
+                'Unexpected replay successor',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'Historical FW23 patch replay drift',rel)
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed integrated FW23 source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256']
+            prior=current.decode('utf-8')
+            for hunk in reversed(entry['hunks']):
+                assert prior.count(hunk['after'])==1, (
+                    'FW23/R23 exact reverse span moved',rel)
+                prior=prior.replace(hunk['after'],hunk['before'],1)
+            assert prior.encode('utf-8')==generated, (
+                'FW23 source not derivable from frozen patch replay',rel)
+            observed[rel]=spec['entries'][rel]
+        print('FW23_R23_EXACT_POST_BACKPORT_REPLAY_PASS',
+              f'successors={len(reviewed)}', 'historical_receipts=untouched')
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

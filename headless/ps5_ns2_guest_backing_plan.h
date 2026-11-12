@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <limits>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace Eden::PS5::GuestBacking {
@@ -160,7 +161,7 @@ private:
                                           std::uint64_t budget) noexcept {
         return virtual_bytes && !(virtual_bytes % kGranule) && budget &&
                !(budget % kGranule) && budget <= virtual_bytes &&
-               virtual_bytes / kGranule <= std::numeric_limits<std::size_t>::max();
+               std::in_range<std::size_t>(virtual_bytes / kGranule);
     }
     [[nodiscard]] bool matches(const Lease& lease) const noexcept {
         return outstanding_ && outstanding_->id == lease.id &&

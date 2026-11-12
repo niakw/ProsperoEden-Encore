@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "497d3097f40289e0cb53506e46bf4dae976ce98d"
+          test "$(git -C vendor rev-parse HEAD)" = "b977c24a00d85b8279f1a78b173e5995cd82353e"
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends \
             clang-18 libclang-18-dev lld-18 llvm-18 llvm-18-dev llvm-18-tools llvm-spirv-18 libllvmspirvlib-18-dev \

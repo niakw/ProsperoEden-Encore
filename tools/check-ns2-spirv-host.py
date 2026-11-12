@@ -99,8 +99,16 @@ def main():
     extra_mesh = mesh_root / "shader_recompiler/backend/spirv/emit_spirv_mesh.cpp"
     if not extra_mesh.is_file():
         raise RuntimeError("missing actual SPIR-V mesh emitter")
+    # R23 #72: maintained TranslateProgram now links GeometryCompactionPass.
+    # The original upstream CMake does not contain this new native owner.
+    # Compile the exact reviewed source selected by native PS5 CMake once.
+    geometry_owner = mesh_root / "shader_recompiler/ir_opt/geometry_compaction_pass.cpp"
+    if not geometry_owner.is_file():
+        raise RuntimeError("missing R23 native GeometryCompactionPass implementation")
+    if "ir_opt/geometry_compaction_pass.cpp" in shaders:
+        raise RuntimeError("R23 GeometryCompactionPass unexpectedly duplicated in upstream inventory")
     sources = [native_owners.get(name, SHADER / name)
-               for name in shaders] + [extra_mesh] + [
+               for name in shaders] + [extra_mesh, geometry_owner] + [
         overlay / (name + ".cpp") for name in
         ("ir_bridge", "renderer_spirv_bridge", "maxwell_environment", "maxwell_image", "lower_bridge", "probe")
     ] + [overlay / "capture.cpp",

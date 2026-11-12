@@ -788,8 +788,8 @@ post_f07_r457_slab_owners = {"ns2-runtime/sparse-residency/core/hle/kernel/init/
 assert post_f07_r457_slab_owners <= set(physical_all)
 import hashlib
 slab_source = (root / "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp").read_bytes()
-assert hashlib.sha1(b"blob " + str(len(slab_source)).encode() + bytes([0]) + slab_source).hexdigest() == "23564500828496d0dadfecc00fd1f3966f286c04"
-assert "EdenNs2CommitGuestBacking(" in slab_source.decode()
+assert hashlib.sha1(b"blob " + str(len(slab_source)).encode() + bytes([0]) + slab_source).hexdigest() == "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"
+assert slab_source.decode().count("EdenNs2CommitGuestBacking(") == 3
 
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |

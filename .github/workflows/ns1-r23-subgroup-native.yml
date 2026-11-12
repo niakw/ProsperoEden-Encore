@@ -1,0 +1,42 @@
+name: NS1 R23 shader subgroup source-owner selection (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-subgroup-geometry-native-20261112
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-subgroup-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Exact subgroup shader graph and SPIR-V rewrite ASan/UBSan
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "b092f4e12a82208687b69abb413e2f6e47ddfc52"
+          python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          for required in (
+            'get_target_property(eden_r23_subgroup_units shader_recompiler SOURCES)',
+            'list(REMOVE_ITEM eden_r23_subgroup_units "${eden_r23_subgroup_source}")',
+            'list(APPEND eden_r23_subgroup_units',
+            '"${EDEN_R23_SUBGROUP_ROOT}/ir_opt/geometry_compaction_pass.cpp")',
+            'target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_SUBGROUP_INCLUDE}")'):
+              assert required in s,required
+          v=Path('headless/vulkan.cmake').read_text()
+          assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in v
+          print('NS1_R23_72_SUBGROUP_SOURCE_GRAPH_HOST_PASS selected_shader_tu=5')
+          PY

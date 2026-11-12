@@ -14,7 +14,7 @@ s = selected.read_text()
 needle = "    Result Unknown230(u32 in_val, Out<u16> out_val);\n"
 extra = "    Result Unknown240(u32 in_val);\n"
 comment = "// Selected PS5 NS1/NS2 SelfController ABI header; exact vendor base + command 240.\n"
-assert blob(base.read_bytes()) == "efff5638a1c987a603d2eda6e17e5729572b6b47"
+assert blob(base.read_bytes()) == "b7762da79b357e34adf096da3574c9cd130943f9"
 assert original.count(needle) == 1
 assert "Unknown240" not in original
 assert s == comment + original.replace(needle, needle + extra)

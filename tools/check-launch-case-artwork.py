@@ -431,7 +431,8 @@ assert "return changed_faces;" in case_fetch
 # The first successful front/back download permits the optional spine in the
 # same background pass; no enforced five-minute wait for an empty case side.
 assert 'if (side == 2 && !both_faces_cached_at_start &&' not in case_fetch
-assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' in case_fetch
+assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in case_fetch
+assert '// Gameplay previews remain independent of real back paper.' in case_fetch
 assert "attempts >= 3" in native
 assert 'std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable' in native
 assert "const bool both_faces_cached_at_start =" not in native

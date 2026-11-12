@@ -24,7 +24,7 @@ requirements=(module / "train/requirements.txt").read_bytes()
 check(requirements.count(b"pillow==13.0.0")==1,"MihawkGen Pillow security pin missing")
 old_requirements=requirements.replace(b"pillow==13.0.0",b"pillow==12.3.0")
 original_git_blob=hashlib.sha1(
-    b"blob "+str(len(old_requirements)).encode()+b"\\x00"+old_requirements
+    b"blob "+str(len(old_requirements)).encode()+b"\x00"+old_requirements
 ).hexdigest()
 check(original_git_blob=="0d8325d208ccfb9d1a3abf37d2688ed01787b240",
       "MihawkGen upstream requirements revision not recognized")

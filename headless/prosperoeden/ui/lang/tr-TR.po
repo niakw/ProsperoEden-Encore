@@ -161,7 +161,7 @@ msgstr "Otomatik Kontrol et"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Otomatik Kontrol et · Açık"
+msgstr "Oto. kontrol açık"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -738,7 +738,7 @@ msgstr "Oyun başlatılamadı: {0} Ayrıntılar: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Klasörlere göz at · yazılımlar"
+msgstr "Oyun dosyaları"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1190,7 +1190,7 @@ msgstr "Yok"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Kontrol et Şimdi · Kapalı"
+msgstr "Kontrol edilmedi"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp

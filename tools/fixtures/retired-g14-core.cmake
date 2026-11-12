@@ -41,6 +41,11 @@ if(PS5_NATIVE)
     endforeach()
     string(PREPEND system_source "#include \"${EDEN_PORT_DIR}/diagnostics.h\"\n")
 endif()
+# Failed Load still owns a Process wrapper whose destructor touches the kernel.
+# Destroy it before kernel.Shutdown tears down its mutexes (both failure paths).
+string(REPLACE "            ShutdownMainProcess();\n            return"
+    "            process.reset();\n            ShutdownMainProcess();\n            return"
+    system_source "${system_source}")
 # The maintained Core::System also tears down the initialized kernel when
 # loader admission fails before an app_loader exists. Retain this safety fix
 # in the archived G14 comparison; do not delete it from maintained code.
@@ -51,10 +56,5 @@ if(g14_loader_exit_offset LESS 0)
 endif()
 string(REPLACE "${g14_missing_loader_exit}"
     "            // The kernel was initialized before loader admission. Leaving it\n            // alive retains lists into device memory already being destroyed,\n            // and can crash during failed-launch teardown or next title.\n            ShutdownMainProcess();\n${g14_missing_loader_exit}"
-    system_source "${system_source}")
-# Failed Load still owns a Process wrapper whose destructor touches the kernel.
-# Destroy it before kernel.Shutdown tears down its mutexes (both failure paths).
-string(REPLACE "            ShutdownMainProcess();\n            return"
-    "            process.reset();\n            ShutdownMainProcess();\n            return"
     system_source "${system_source}")
 write_derived("${PORT_BUILD_DIR}/core.cpp" "${system_source}")

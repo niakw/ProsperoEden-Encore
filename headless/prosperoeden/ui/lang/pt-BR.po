@@ -161,7 +161,7 @@ msgstr "Automático Verificar"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automático Verificar · Ativado"
+msgstr "Verif. autom. ativada"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -490,7 +490,7 @@ msgstr "{0} foi criada. Copie para ela a pasta de cada mod."
 
 #: pe/ui/browse.cpp, pe/ui/switch_theme.cpp
 msgid "Credits and setup"
-msgstr "Créditos e configuração inicial"
+msgstr "Créditos e ajustes"
 
 #: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Cross"
@@ -539,7 +539,7 @@ msgstr "Registro detalhado"
 
 #: pe/ui/settings.cpp
 msgid "Detailed logs on"
-msgstr "Registros detalhados ativados"
+msgstr "Logs detalhados: sim"
 
 #: pe/ui/launcher.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Diagnostics"
@@ -713,7 +713,7 @@ msgstr "Francês (Canadá)"
 #. The app can read every folder of the console.
 #: eden_services.cpp, pe/ui/browse.cpp
 msgid "Full filesystem"
-msgstr "Sistema de arquivos completo"
+msgstr "Todos os arquivos"
 
 #: settings_store.h
 msgid "FXAA"
@@ -738,7 +738,7 @@ msgstr "Não foi possível iniciar o jogo: {0} Detalhes: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Explorar pastas · softwares"
+msgstr "Arquivos de jogos"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -989,7 +989,7 @@ msgstr "LAYOUT"
 
 #: pe/ui/mapping.cpp, pe/ui/switch_theme.cpp
 msgid "Left stick press"
-msgstr "Pressione o controle esquerdo"
+msgstr "Pressione L3"
 
 #: pe/ui/library.cpp
 msgid "Left/right: Global, PlayStation or Switch for this game; Cross: edit individual buttons."
@@ -1105,7 +1105,7 @@ msgstr "Navegar"
 #. An upscaling filter (nearest neighbour). Keep it short.
 #: settings_store.h
 msgid "Nearest"
-msgstr "Vizinho mais próximo"
+msgstr "Mais próximo"
 
 #: pe/ui/settings.cpp
 msgid "Needs attention"
@@ -1164,7 +1164,7 @@ msgstr "Nenhuma sala pública para exibir."
 
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "No ROM files found."
-msgstr "Nenhum arquivo de ROM encontrado."
+msgstr "Nenhuma ROM encontrada."
 
 #: pe/ui/browse.cpp
 msgid "No roms folder"
@@ -1190,7 +1190,7 @@ msgstr "Nenhum"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Verificar Agora · Desativado"
+msgstr "Não verificado"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1468,7 +1468,7 @@ msgstr "RAIZ"
 
 #: pe/ui/settings.cpp
 msgid "Runtime health, storage and recovery tools."
-msgstr "Ferramentas de integridade, armazenamento e recuperação de tempo de execução."
+msgstr "Saúde do sistema, armazenamento e recuperação."
 
 #: settings_store.h
 msgid "Russian"

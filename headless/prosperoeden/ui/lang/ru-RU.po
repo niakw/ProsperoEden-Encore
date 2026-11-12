@@ -506,7 +506,7 @@ msgstr "Кастомная PS5"
 
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
-msgstr "Пользовательский переключатель"
+msgstr "Настройка Switch"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
@@ -588,7 +588,7 @@ msgstr "Редактировать"
 
 #: pe/ui/settings.cpp
 msgid "Edit custom mapping"
-msgstr "Изменить пользовательское сопоставление"
+msgstr "Изменить раскладку"
 
 #: pe/ui/browse.cpp
 msgid "Encore uses the same keys, firmware, roms, updates and mods folders under every storage root."
@@ -738,7 +738,7 @@ msgstr "Не удалось запустить игру: {0} Подробнос�
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Просмотр папок · программы"
+msgstr "Файлы игр"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1468,7 +1468,7 @@ msgstr "КОРЕНЬ"
 
 #: pe/ui/settings.cpp
 msgid "Runtime health, storage and recovery tools."
-msgstr "Инструменты работоспособности, хранения и восстановления во время выполнения."
+msgstr "Диагностика, хранилище и восстановление."
 
 #: settings_store.h
 msgid "Russian"

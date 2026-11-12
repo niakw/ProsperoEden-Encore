@@ -113,10 +113,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert mesh_device.count(mesh_feature_method) == 1
     assert mesh_device.count(sparse_delta) == 1, (
         "Native Task/Mesh device header lost the sparse residency method")
-    assert (mesh_device.replace(mesh_feature_line, '')
-                       .replace(mesh_feature_method, '')
-                       .replace(sparse_delta, '') == pinned_device), (
-        "Native Task/Mesh + sparse residency ABI owner drift")
+    # Combined R23 EDS3 + subgroup + mesh + sparse-residency ABI is now a
+    # maintained source blob, not only the two-hunk original Task/Mesh delta.
+    # Keep a hard content pin so unrelated header drift remains rejected.
+    combined_device_sha = 'acab7cf039c2be7bcc830ac684be2fff285a3e8a'
+    assert subprocess.check_output(
+        ['git', 'hash-object', str(expected[native_mesh_device_header])],
+        text=True).strip() == combined_device_sha, (
+        'Reviewed R23 combined Vulkan Device ABI blob drift')
+    assert mesh_device.count('GetMaxSubgroupSize() const') == 1
+    assert mesh_device.count('IsExtDepthClipEnableSupported() const') == 1
     # The immutable upstream generator owns the historic Vulkan ports, not
     # post-generator R09 neural shaders/owners, FSR31 and native additions.
     # Pin the *exact* 238-path additive inventory rather than ignoring

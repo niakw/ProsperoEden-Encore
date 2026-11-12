@@ -3656,6 +3656,60 @@ if(PS5_NATIVE)
     message(STATUS "R23 #72: five coherent shader TUs (2 existing Task/Mesh + 3 unique subgroup)")
 endif()
 
+# R23 BCAT/F2I/AUDREN/#4406 — select only the exact corrected native
+# translation units; original Eden sources stay immutable. Keep one compiler
+# owner per TU and preserve the active R457 audio service registrations.
+if(PS5_NATIVE)
+    set(EDEN_R23_MAIN_NATIVE_ROOT "${PORT_ROOT}/headless")
+    foreach(eden_r23_fix_file IN ITEMS
+            "r23_bcat_delivery_cache_file_ps5.cpp"
+            "r23_f2i_conversion_ps5.cpp"
+            "r23_audren_debug_ps5.cpp"
+            "r23_channel_state_cache_ps5.h")
+        if(NOT EXISTS "${EDEN_R23_MAIN_NATIVE_ROOT}/${eden_r23_fix_file}")
+            message(FATAL_ERROR "R23 maintained source absent: ${eden_r23_fix_file}")
+        endif()
+    endforeach()
+    get_target_property(eden_r23_service_tus core SOURCES)
+    foreach(eden_r23_pair IN ITEMS
+            "hle/service/bcat/delivery_cache_file_service.cpp;r23_bcat_delivery_cache_file_ps5.cpp"
+            "hle/service/audio/audio.cpp;r23_audren_debug_ps5.cpp")
+        list(GET eden_r23_pair 0 eden_r23_original_service)
+        list(GET eden_r23_pair 1 eden_r23_active_service)
+        list(FIND eden_r23_service_tus "${eden_r23_original_service}" eden_r23_old_owner)
+        if(eden_r23_old_owner LESS 0)
+            message(FATAL_ERROR "R23 original native service owner drift: ${eden_r23_original_service}")
+        endif()
+        list(REMOVE_ITEM eden_r23_service_tus "${eden_r23_original_service}")
+        list(APPEND eden_r23_service_tus
+            "${EDEN_R23_MAIN_NATIVE_ROOT}/${eden_r23_active_service}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_service_tus}")
+    get_target_property(eden_r23_f2i_tus shader_recompiler SOURCES)
+    set(eden_r23_old_f2i
+        "frontend/maxwell/translate/impl/floating_point_conversion_integer.cpp")
+    list(FIND eden_r23_f2i_tus "${eden_r23_old_f2i}" eden_r23_f2i_index)
+    if(eden_r23_f2i_index LESS 0)
+        message(FATAL_ERROR "R23 F2I native opcode source owner drift")
+    endif()
+    list(REMOVE_ITEM eden_r23_f2i_tus "${eden_r23_old_f2i}")
+    list(APPEND eden_r23_f2i_tus
+        "${EDEN_R23_MAIN_NATIVE_ROOT}/r23_f2i_conversion_ps5.cpp")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_f2i_tus}")
+
+    # The old vendor channel_state pointer had no initializer. Install the
+    # reviewed complete header once, before any SDK/upstream include tree.
+    set(EDEN_R23_CHANNEL_OVERLAY "${PORT_BUILD_DIR}/r23-channel-abi/include")
+    configure_file("${EDEN_R23_MAIN_NATIVE_ROOT}/r23_channel_state_cache_ps5.h"
+        "${EDEN_R23_CHANNEL_OVERLAY}/video_core/control/channel_state_cache.h"
+        COPYONLY)
+    target_include_directories(video_core BEFORE PRIVATE
+        "${EDEN_R23_CHANNEL_OVERLAY}")
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_R23_CHANNEL_OVERLAY}")
+    message(STATUS "R23 native BCAT, F2I, audren:d and initialized channel-state selected once")
+endif()
+
 # P5 link parity: native shader atomic CAS owners
 # The cached original source builds successfully but does not define all
 # CAS symbols referenced by the pinned Task/Mesh opcode/dispatch headers.

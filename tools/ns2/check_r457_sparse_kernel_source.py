@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 root=Path(__file__).resolve().parents[2]
-vendor="3f483f61a2dc2b959b5075dd82c68f9dc566d1cd"
+vendor="97a963de5db13ef97ec9673cde6aeb5204aac6b3"
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 assert pinned==vendor,(pinned,vendor)

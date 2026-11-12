@@ -350,7 +350,7 @@ assert "Box - Front" in indexer and "Box - Back" in indexer
 assert "gamesdb.launchbox-app.com/Metadata.zip" in indexer
 assert "if len(matching) != 1:" in indexer
 assert "SafeCaseFilename" in native
-assert 'std::array<std::vector<std::string>, 6>' in native
+assert 'std::array<std::vector<std::string>, 8>' in native
 # A physical scan remains independent; only missing backs use LaunchBox
 # game-specific scenic art and all CDN traffic stays on the worker.
 assert '"Screenshot - Gameplay"' in indexer
@@ -358,11 +358,12 @@ assert '"Fanart - Background"' in indexer
 assert '"Screenshot - Game Title"' in indexer
 assert 'EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}' in indexer
 assert 'AppendCaseScenes(game.screenshots, game.title_id);' in native
-assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' in native
+assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in native
+assert "// Gameplay previews remain independent of real back paper." in native
 assert 'const char* const names[]' in native
-assert '"scene-1", "scene-2", "scene-3"' in native
-assert "for (int side = 0; side < 6; ++side)" in native
-assert 'scene_columns{"-", "-", "-"}' in native
+assert '"scene-1", "scene-2", "scene-3", "scene-4", "scene-5"' in native
+assert "for (int side = 0; side < 8; ++side)" in native
+assert 'scene_columns{"-", "-", "-", "-", "-"}' in native
 assert "best_source = filename;" in native
 assert "std::ofstream receipt(destination + \".source\"" in native
 assert "cached_source == candidates.front()" in native

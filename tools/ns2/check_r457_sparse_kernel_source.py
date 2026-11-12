@@ -51,7 +51,7 @@ slab_rel = "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/in
 slab = read(slab_rel)
 slab_baseline = read("vendor/sources/eden/src/core/hle/kernel/init/init_slab_setup.cpp")
 slab_guarded = re.findall(guarded, slab, flags=re.MULTILINE)
-assert len(slab_guarded) == 2, "slab direct-memory diff exceeded two reviewed guards"
+assert len(slab_guarded) == 3, "slab direct-memory diff exceeded declaration and two reviewed guards"
 assert normalize(re.sub(guarded, "", slab, flags=re.MULTILINE)) == normalize(slab_baseline), (
     "unreviewed slab kernel semantics drift")
 start = slab.index("    if (size > 0) {")
@@ -61,6 +61,12 @@ assert direct_slab.count("EdenNs2CommitGuestBacking(") == 1
 assert direct_slab.index("EdenNs2CommitGuestBacking(") < direct_slab.index(
     "void* backing_kernel_memory")
 assert 'throw std::bad_alloc{};' in direct_slab
+page_slab = slab.split("void KPageBufferSlabHeap::Initialize(",1)[1]
+assert page_slab.count("EdenNs2CommitGuestBacking(") == 1
+assert page_slab.index("EdenNs2CommitGuestBacking(") < page_slab.index(
+    "KPageBuffer::InitializeSlabHeap(")
+assert 'physical - Core::DramMemoryMap::Base, slab_size' in page_slab
+
 assert slab_rel.replace("vendor/", "") in cmake
 assert 'hle/kernel/init/init_slab_setup.cpp" eden_r457_sparse_slab_original' in cmake
 assert 'TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"' in cmake

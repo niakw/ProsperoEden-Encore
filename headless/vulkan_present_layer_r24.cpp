@@ -31,6 +31,7 @@
 
 #include "common/settings.h"
 #include "video_core/framebuffer_config.h"
+#include "core/hle/service/nvnflinger/hwc_layer.h"
 #include "video_core/renderer_vulkan/present/fsr.h"
 #include "video_core/renderer_vulkan/present/sgsr.h"
 #include "video_core/renderer_vulkan/present/fxaa.h"
@@ -118,6 +119,11 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
     const u32 scaled_width = texture_info ? texture_info->scaled_width : texture_width;
     const u32 scaled_height = texture_info ? texture_info->scaled_height : texture_height;
     const bool use_accelerated = texture_info.has_value();
+    // Firmware applet layer stacks omit Recording: SGSR history belongs to
+    // the game's surface, not small transient applet/keyboard overlays.
+    const bool is_applet =
+        (framebuffer.layer_stack_mask &
+         Service::Nvnflinger::LayerStackBit(Service::Nvnflinger::LayerStackId::Recording)) == 0;
 
     RefreshResources(device, framebuffer);
     // AA must render at the dimensions of the actual sampled source.
@@ -163,8 +169,13 @@ void Layer::ConfigureDraw(const Device& device, PresentPushConstants* out_push_c
         source_image_view = fsr->Draw(device, scheduler, image_index, source_image, source_image_view, render_extent, crop_rect);
         crop_rect = {0, 0, 1, 1};
     } else if (auto* sgsr = std::get_if<SGSR>(&sr_filter)) {
-        source_image_view = sgsr->Draw(device, scheduler, image_index, source_image, source_image_view, render_extent, crop_rect);
-        crop_rect = {0, 0, 1, 1};
+        if (!is_applet) {
+            source_image_view = sgsr->Draw(device, scheduler, image_index, source_image,
+                                           source_image_view, render_extent, crop_rect);
+            crop_rect = {0, 0, 1, 1};
+        }
+        // Applets keep the original Vulkan view and crop, no black SGSR
+        // history or forced crop when the guest overlay is closed/open.
     } else if (auto* a4k = std::get_if<Anime4K3D>(&sr_filter)) {
         if (const auto output = a4k->Draw(image_index, source_image, source_image_view,
                                           render_extent, crop_rect)) {

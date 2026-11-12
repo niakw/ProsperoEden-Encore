@@ -2967,3 +2967,8 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     set_property(TARGET core PROPERTY SOURCES
         "${eden_r457_sparse_kernel_units}")
 endif()
+
+# Candidate R23 source-ownership consolidation; all vendor owners are selected once.
+if(PS5_NATIVE)
+    include("${CMAKE_CURRENT_LIST_DIR}/r23_integrated_owners.cmake")
+endif()

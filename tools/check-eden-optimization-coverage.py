@@ -1268,6 +1268,23 @@ for changed_path, new_blob in r23_existing_source_successors.items():
         "Unreviewed R23 existing-owner source edit", changed_path)
 print("ENCORE_R23_EXISTING_F07_SOURCE_SUCCESSORS_PASS", "owners=2",
       "historical_F07_preserved=1")
+# The selected C00 PS5 AudioIn capture source legitimately updates the
+# existing historical native audio.cpp; this is NOT an F07 performance review.
+# Its original F07 SHA stays immutable. Only this exact reviewed new blob is
+# admitted after verifying capture pacing, bounds and one native AudioOut TU.
+audio_changed_path = "headless/audio.cpp"
+assert audio_changed_path not in post_index
+assert audio_changed_path in drift_index
+audio_changed = drift_index.pop(audio_changed_path)
+assert audio_changed["expected"] != audio_changed["actual"]
+assert audio_changed["actual"] == "4b5082d14fc12db39d7e3b06677d6dc403af2bf7"
+audio_current = (ROOT / audio_changed_path).read_text()
+assert "class SilentAudioInputStream final : public SinkStream" in audio_current
+assert "make_unique<SilentAudioInputStream>(system, channels)" in audio_current
+assert "MakeSilentAudioInSamples(samples)" in audio_current
+assert "NullSinkStreamImpl" not in audio_current
+assert "tools/audit/check-ab-ns1-guest-release-host.py" in tracked
+print("C00_POST_F07_REAL_AUDIO_SINK_SUCCESSOR_PASS legacy_f07_preserved=1 exact_blob=1")
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

@@ -29,8 +29,10 @@ reviewed = {
     ),
     "emit_x64_data_processing.cpp": (
         (
+            "    Xbyak::Label end, ok;\n"
             "    code.test(divisor, divisor);\n"
             "    code.jz(end, code.T_NEAR);",
+            "    Xbyak::Label end, ok;\n"
             "    code.test(divisor, divisor);\n"
             "    code.cmovz(eax, divisor); // SDIV32 by zero returns zero\n"
             "    code.jz(end, code.T_NEAR);",

@@ -68,7 +68,27 @@ def install(destination: Path, verified: dict[str, tuple[bytes, bytes]], *, chec
         if current == expected:
             continue
         if current != original:
-            raise RuntimeError(f"Unexpected native source revision: {relative}")
+            # Earlier, versioned preparation stages may already have applied
+            # a subset of these exact reviewed edits (e.g. SIGN_BIT before
+            # the C++ atomic constexpr cleanup). Accept only those finite
+            # intermediate states, then install the one maintained full header.
+            acceptable = {original}
+            for before_text, after_text in FIXES[relative]:
+                before, after = before_text.encode(), after_text.encode()
+                acceptable.update(
+                    candidate.replace(before, after, 1)
+                    for candidate in tuple(acceptable)
+                    if candidate.count(before) == 1
+                )
+            if current not in acceptable:
+                import difflib
+                preview = "".join(list(difflib.unified_diff(
+                    original.decode().splitlines(keepends=True),
+                    current.decode(errors="replace").splitlines(keepends=True),
+                    fromfile="pinned", tofile="prepared", n=2))[:40])
+                raise RuntimeError(
+                    f"Unexpected native source revision: {relative}\\n{preview}"
+                )
         with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as out:
             temp = Path(out.name)
         try:

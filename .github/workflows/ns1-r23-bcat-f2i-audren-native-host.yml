@@ -8,6 +8,9 @@ on:
       - headless/r23_f2i_conversion_ps5.cpp
       - headless/r23_audren_debug_ps5.cpp
       - headless/r23_channel_state_cache_ps5.h
+      - headless/r23_self_controller_240_ps5.h
+      - headless/r23_audren_debug_ns1_ps5.cpp
+      - tools/audit/check-ns2-self-controller-240-source.py
       - tools/audit/check-r23-f2i-bcat-host.py
       - tools/audit/check-r23-channel-state-host.py
       - tools/audit/check-r23-ips-audren-host.py
@@ -35,3 +38,5 @@ jobs:
         run: python3 -B tools/audit/check-r23-channel-state-host.py
       - name: Maintained IPS and audren debugger service C++ contract
         run: python3 -B tools/audit/check-r23-ips-audren-host.py
+      - name: Actual NS2 self-controller #240 header/implementation parity
+        run: python3 -B tools/audit/check-ns2-self-controller-240-source.py

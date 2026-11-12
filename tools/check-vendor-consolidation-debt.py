@@ -898,12 +898,12 @@ if "#ifdef EDEN_NS2_GUEST_COUNTER" in cpu_active:
 # reviewed source changes after the existing N76 guest-rate reversal.
 # Preserve the original generated TSC parity witness unchanged.
 cpu_r23_constructor = (
-    "    , gputick_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(GPUTickFreq, rdtsc_frequency_) : 0}\n"
-    "    , invariant{invariant_}")
+    "    , ms_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(MsRatio::den, rdtsc_frequency_) : 0}\n"
+    "    , cntpct_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(CNTFRQ, rdtsc_frequency_) : 0}")
 cpu_r23_previous_constructor = (
-    "    , gputick_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(GPUTickFreq, rdtsc_frequency_) : 0}\n"
+    "    , ms_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(MsRatio::den, rdtsc_frequency_) : 0}\n"
     "    , rdtsc_ns_factor{invariant_ ? GetFixedPoint64Factor(rdtsc_frequency_, NsRatio::den) : 1}\n"
-    "    , invariant{invariant_}")
+    "    , cntpct_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(CNTFRQ, rdtsc_frequency_) : 0}")
 cpu_r23_new_ticks = """    if (!invariant) {
         return static_cast<u64>(ns.count());
     }

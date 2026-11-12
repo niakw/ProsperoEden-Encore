@@ -122,15 +122,15 @@ inline void apply_palette(int palette, int accent)
         kPanelEdge = Color::rgb(0x8b98a7); kPanelEdgeSoft = Color::rgb(0xc2cbd4);
         kRow = Color::rgb(0xe6eaf0); kRowEdge = Color::rgb(0xa7b4c3);
         kRowFocus = Color::rgb(0xc9e0f3);
-        kLime = Color::rgb(0x286898); kLimeDeep = Color::rgb(0x194e7a);
+        kLime = Color::rgb(0x175071); kLimeDeep = Color::rgb(0x194e7a);
         kLimePale = Color::rgb(0x15527e); kFocusCore = Color::rgb(0x135eaa);
-        kFocusBlue = Color::rgb(0x216ba6); kSun = Color::rgb(0x427e9a);
-        kBlue = Color::rgb(0x246b9a); kAccentTeal = Color::rgb(0x206b95);
+        kFocusBlue = Color::rgb(0x216ba6); kSun = Color::rgb(0x20526b);
+        kBlue = Color::rgb(0x1c5982); kAccentTeal = Color::rgb(0x12516f);
         kText = Color::rgb(0x16202c); kTitle = Color::rgb(0x101820);
         kValue = Color::rgb(0x172532); kBody = Color::rgb(0x30404f);
         kCopy = Color::rgb(0x435363); kMeta = Color::rgb(0x526372);
-        kLabel = Color::rgb(0x394b5c); kMuted = Color::rgb(0x586979);
-        kFaint = Color::rgb(0x667789); kWarning = Color::rgb(0xa52a2a);
+        kLabel = Color::rgb(0x394b5c); kMuted = Color::rgb(0x45586a);
+        kFaint = Color::rgb(0x405364); kWarning = Color::rgb(0xa52a2a);
         kRule = Color::rgb(0xc4ced8);
     }
     if (accent > 0 && accent <= 4) {
@@ -138,8 +138,13 @@ inline void apply_palette(int palette, int accent)
             0x000000u, 0x347fc4u, 0x278b70u, 0xb17724u, 0xc04f72u};
         static constexpr std::uint32_t bright[] = {
             0x000000u, 0x9ccbf7u, 0x8bd9b5u, 0xf7cc87u, 0xf5a6c4u};
-        kLime = Color::rgb(swatches[accent]);
-        kLimePale = Color::rgb(palette == 3 ? swatches[accent] : bright[accent]);
+        // Light-theme focus and metadata labels must retain >=4.5:1
+        // contrast even on the brightest selected row. Preserve the hue
+        // of each accent while darkening the text/focus ink, not the theme.
+        static constexpr std::uint32_t light_accessible[] = {
+            0x000000u, 0x165584u, 0x165c48u, 0x6f4816u, 0x7d3650u};
+        kLime = Color::rgb(palette == 3 ? light_accessible[accent] : swatches[accent]);
+        kLimePale = Color::rgb(palette == 3 ? light_accessible[accent] : bright[accent]);
         kFocusCore = kLimePale;
         kFocusBlue = kFocusCore;
         kAccentTeal = kLimePale;

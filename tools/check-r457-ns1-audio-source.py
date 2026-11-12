@@ -9,7 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor"
-PIN = "0f829e07963e1146ada2d39037059c13c2f0e641"
+PIN = "3f483f61a2dc2b959b5075dd82c68f9dc566d1cd"
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected == PIN, f"Unexpected vendor submodule {selected}"
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()

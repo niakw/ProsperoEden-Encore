@@ -12,7 +12,25 @@ cmake = (root / "headless/CMakeLists.txt").read_text()
 old = "if (type == SaveDataType::Account || type == SaveDataType::Device) {"
 new = "if (type == SaveDataType::Account || type == SaveDataType::Device ||\n        type == SaveDataType::Cache) {"
 assert pinned.count(old) == 1
-assert active == pinned.replace(old, new)
+# A/B R23 parent-program FS and temp-lifetime commits add reviewed
+# production mutations beyond the original cache title-ID fix. Verify their
+# exact current Git blob and reconstruct the previous cache-only owner.
+import hashlib
+import json
+proof = json.loads((root / "tools/fixtures/r23-savedata-factory-reverse.json").read_text())
+assert proof["schema_version"] == 1 and len(proof["hunks"]) == 6
+def git_blob_sha(text):
+    raw=text.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+assert git_blob_sha(active) == proof["active_blob"], "Unreviewed R23 savedata source"
+earlier=active
+for hunk in reversed(proof["hunks"]):
+    assert earlier.count(hunk["after"]) == 1, "Savedata R23 inverse hunk moved"
+    earlier=earlier.replace(hunk["after"],hunk["before"],1)
+assert git_blob_sha(earlier) == proof["baseline_blob"]
+assert earlier == pinned.replace(old,new), "R23 savedata edits changed original cache-title behavior"
+assert "GetParentApplicationId(requested_id)" in active
+assert "dir->DeleteSubdirectoryRecursive(\"temp\");" not in active
 assert cmake.count('list(REMOVE_ITEM eden_savedata_sources "file_sys/savedata_factory.cpp")') == 1
 assert cmake.count('list(APPEND eden_savedata_sources "') == 1
 assert "EDEN_MAINTAINED_SAVEDATA" in cmake

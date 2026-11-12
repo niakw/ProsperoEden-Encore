@@ -728,6 +728,44 @@ if(PS5_NATIVE)
     set_property(SOURCE "${PROJECT_SOURCE_DIR}/src/core/hle/service/am/button_poller.cpp"
         TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
 endif()
+# R457 NS1 AudioOut: the original Eden sources remain immutable.
+# The selected PS5 AudioOut TU must share the same memory.h readiness declaration
+# as BOTH PS5 memory implementations. No duplicate audio TU or memory owner.
+if(PS5_NATIVE)
+    set(EDEN_NS1_AUDIO_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_NS1_AUDIO_HEADER
+        "${EDEN_NS1_AUDIO_ROOT}/overrides/core/memory.h")
+    set(EDEN_NS1_AUDIO_SOURCE
+        "${EDEN_NS1_AUDIO_ROOT}/src/audio_core/device/device_session.cpp")
+    foreach(eden_ns1_audio_owned IN ITEMS
+            "${EDEN_NS1_AUDIO_HEADER}" "${EDEN_NS1_AUDIO_SOURCE}"
+            "${EDEN_NS1_AUDIO_ROOT}/src/core/memory_native_a32.cpp"
+            "${EDEN_NS1_AUDIO_ROOT}/src/core/memory_native_standard.cpp")
+        if(NOT EXISTS "${eden_ns1_audio_owned}")
+            message(FATAL_ERROR "R457 native audio memory owner missing: ${eden_ns1_audio_owned}")
+        endif()
+    endforeach()
+    # The existing selected native memory source above compiles with PS5_NATIVE
+    # and implements ReadyForAudioRead for its selected A32/standard profile.
+    target_include_directories(core BEFORE PUBLIC
+        "${EDEN_NS1_AUDIO_ROOT}/overrides")
+    get_target_property(eden_ns1_audio_units audio_core SOURCES)
+    list(FIND eden_ns1_audio_units "device/device_session.cpp"
+         eden_ns1_audio_orig)
+    if(eden_ns1_audio_orig LESS 0)
+        message(FATAL_ERROR "R457 pinned native AudioOut source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_audio_units "device/device_session.cpp")
+    list(APPEND eden_ns1_audio_units "${EDEN_NS1_AUDIO_SOURCE}")
+    set_property(TARGET audio_core PROPERTY SOURCES "${eden_ns1_audio_units}")
+    target_include_directories(audio_core BEFORE PRIVATE
+        "${EDEN_NS1_AUDIO_ROOT}/overrides")
+    set_property(SOURCE "${EDEN_NS1_AUDIO_SOURCE}" TARGET_DIRECTORY audio_core
+        APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
+    message(STATUS "R457: native AudioOut and both memory profiles share readiness overlay")
+endif()
+
 # Maintained service source: title metadata null handling plus a dev-only
 # witness of the version resolved from guest update content.
 set(EDEN_APP_FUNCTION_SOURCE "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/am/service/application_functions.cpp")

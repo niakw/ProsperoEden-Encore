@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fast no-build gate for separate PS5 English US and UK launcher catalogs."""
 from pathlib import Path
+import os
 import re
 import runpy
 
@@ -16,7 +17,9 @@ assert len(list(language_dir.glob("*.po"))) == 31, "All 31 official PS5 catalogs
 # The guide workflow deliberately checks out catalogs and the template only;
 # its sparse tree omits the source files marked_text() needs. The full launcher
 # workflow checks live-source parity when settings_store.h is present.
-if (root / "headless/settings_store.h").is_file():
+if os.environ.get("ENCORE_VERIFY_LIVE_LAUNCHER") == "1":
+    assert (root / "headless/prosperoeden/pe/ui/video_presets.hpp").is_file(), (
+        "Full-source launcher validation requires a complete checkout")
     live = set(module["marked_text"]())
     assert set(template) == live, "Launcher template is stale relative to marked UI sources"
 assert len(template) >= 566 and len(expected) >= 596, (

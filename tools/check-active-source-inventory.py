@@ -710,8 +710,66 @@ assert post_f07_c03_radv_meta_owners.isdisjoint(
     ns2_production_added_owners | set(research_paths))
 print("NS1_C03_POST_F07_NATIVE_OWNER_PASS", "meta_units=2 historical_F07=337")
 
+# R23 adds 46 maintained source owners after the frozen 337-file F07 ledger.
+# Keep exact paths, require all to exist, and exclude them from historical F07
+# rather than silently re-dating the audited source snapshot.
+post_f07_r23_added_owners = {
+    "eden-core/include/common/uuid.h",
+    "eden-core/include/core/file_sys/patch_manager.h",
+    "eden-core/include/core/file_sys/registered_cache.h",
+    "eden-core/include/core/file_sys/savedata_factory.h",
+    "eden-core/include/core/hle/service/acc/profile_manager.h",
+    "eden-core/include/core/hle/service/filesystem/fsp/fs_i_storage.h",
+    "eden-core/include/core/hle/service/ipc_helpers.h",
+    "eden-core/include/core/hle/service/service.h",
+    "eden-core/include/core/memory/cheat_engine.h",
+    "eden-core/include/dynarmic/backend/x64/constant_pool.h",
+    "eden-core/include/hid_core/frontend/emulated_controller.h",
+    "eden-core/include/hid_core/hid_core.h",
+    "eden-core/src/audio_core/opus/decoder.cpp",
+    "eden-core/src/audio_core/opus/hardware_opus.cpp",
+    "eden-core/src/audio_core/opus/hardware_opus.h",
+    "eden-core/src/common/uuid.cpp",
+    "eden-core/src/core/hle/service/am/window_system.cpp",
+    "eden-core/src/core/hle/service/audio/errors.h",
+    "eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp",
+    "eden-core/src/core/hle/service/ssl/ssl.cpp",
+    "eden-core/src/core/hle/service/ssl/ssl_backend.h",
+    "eden-core/src/core/hle/service/ssl/ssl_backend_openssl.cpp",
+    "eden-core/src/core/memory/cheat_engine.cpp",
+    "eden-core/src/dynarmic/backend/x64/emit_x64_floating_point.cpp",
+    "eden-core/src/dynarmic/backend/x64/emit_x64_sm4.cpp",
+    "eden-core/src/dynarmic/backend/x64/emit_x64_vector_floating_point.cpp",
+    "eden-core/src/dynarmic/frontend/A32/decoder/asimd.inc",
+    "eden-core/src/dynarmic/frontend/A32/translate/impl/a32_translate_impl.h",
+    "eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_three_regs.cpp",
+    "eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_two_regs_misc.cpp",
+    "eden-core/src/hid_core/hid_core.cpp",
+    "eden-core/src/video_core/host1x/codec_types.h",
+    "eden-core/src/video_core/host1x/codecs/vp9.cpp",
+    "eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h",
+    "eden-shader/src/shader_recompiler/CMakeLists.txt",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_warp.cpp",
+    "eden-shader/src/shader_recompiler/host_translate_info.h",
+    "eden-shader/src/shader_recompiler/ir_opt/constant_propagation_pass.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/geometry_compaction_pass.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/passes.h",
+    "eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp",
+    "eden-shader/src/shader_recompiler/ir_opt/vendor_workaround_pass.cpp",
+    "eden-shader/src/shader_recompiler/profile.h",
+    "eden-vulkan/fixed_pipeline_state.cpp",
+    "eden-vulkan/include/video_core/renderer_vulkan/fixed_pipeline_state.h",
+    "eden-vulkan/include/video_core/renderer_vulkan/vk_texture_cache.h",
+}
+assert len(post_f07_r23_added_owners) == 46
+assert post_f07_r23_added_owners <= set(physical_all), (
+    "Missing post-F07 R23 maintained sources",
+    sorted(post_f07_r23_added_owners - set(physical_all)))
+assert post_f07_r23_added_owners.isdisjoint(post_f07_c03_radv_meta_owners)
+print("NS1_R23_POST_F07_SOURCE_OWNER_PASS", "added=46", "historical_F07=337")
+
 physical = [p for p in physical_all
-            if p not in post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |

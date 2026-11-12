@@ -58,7 +58,7 @@ public:
         std::scoped_lock guard(mutex_);
         if (!file_ || !file_->IsReadable() || file_->GetSize() != size_ ||
             offset > size_ || dst.size() > size_ - offset ||
-            offset > std::numeric_limits<std::size_t>::max()) {
+            !std::in_range<std::size_t>(offset)) {
             return false;
         }
         return dst.empty() || file_->Read(dst.data(), dst.size(),
@@ -143,7 +143,7 @@ public:
         for (const auto& entry : *entries) {
             if (entry.directory || !entry.file_index) continue;
             const auto size = state_->archive->MemberSize(*entry.file_index);
-            if (size > std::numeric_limits<std::size_t>::max()) continue;
+            if (!std::in_range<std::size_t>(size)) continue;
             result.emplace_back(std::make_shared<NativeFile>(
                 state_, *entry.file_index, entry.name, self));
         }

@@ -139,30 +139,14 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert not set(actual) - set(expected), (
         'Generator emitted a Vulkan file absent from the active vendor',
         sorted(set(actual) - set(expected)))
-    # The isolated R2 branch carries exact SHA-pinned unmerged vendor
-    # research additions and source owners. Never add these to the production
-    # 241-path allowlist; the executable oracle remains byte-exact.
-    # GitHub Actions uses a merge ref for pull_request events; admit only
-    # this exact draft research head, and still pin every changed source SHA.
-    # Native production NS2 uses the reviewed vendor pin and preserves
-    # the generator oracle by reversing only exact, SHA-validated additions.
-    r2_vendor = subprocess.check_output(
-        ['git', 'rev-parse', 'HEAD:vendor'], text=True).strip()
-    # The R457 AudioOut-only vendor merge did not modify any Vulkan source.
-    # Maintain the exact audited R2/R09 native blob pins for BOTH legal gitlinks.
-    r2_production = r2_vendor in {
-        'b977c24a00d85b8279f1a78b173e5995cd82353e',
-        '107caefe6bee1fc02266e22254b72f69346d83cd',
-        '0f829e07963e1146ada2d39037059c13c2f0e641',
-        '3f483f61a2dc2b959b5075dd82c68f9dc566d1cd',
-    }
+    # R2 and R09 maintained native additions are admitted only when the
+    # source-owner marker exists, independent of the vendor gitlink's commit
+    # SHA. Individual file blob hashes, the core owner hash and the complete
+    # additive inventory are still checked below. This accepts reviewed
+    # follow-up vendor commits without silently accepting new Vulkan files.
+    r2_marker = 'include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h'
+    r2_production = r2_marker in expected
     if r2_production:
-        assert r2_vendor in {
-            'b977c24a00d85b8279f1a78b173e5995cd82353e',
-            '107caefe6bee1fc02266e22254b72f69346d83cd',
-        '0f829e07963e1146ada2d39037059c13c2f0e641',
-        '3f483f61a2dc2b959b5075dd82c68f9dc566d1cd',
-        }, ('R2 reviewed production vendor pin drift', r2_vendor)
         r2_extra = {
             'include/video_core/renderer_vulkan/ns2_staging_upload_bounds.h':
                 '8905d42732b2d5848aa49b5800340e031cd214c9',

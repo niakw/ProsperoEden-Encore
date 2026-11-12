@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 root=Path(__file__).resolve().parents[2]
-vendor="97a963de5db13ef97ec9673cde6aeb5204aac6b3"
+vendor="eeb565713315b1f61e0efa2cb4210b041f024a1b"
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 assert pinned==vendor,(pinned,vendor)
@@ -34,6 +34,27 @@ assert "set(EDEN_NS2_SPARSE_BACKING ON)" in cmake
 assert kernel_rel.replace("vendor/","") in cmake
 assert 'list(REMOVE_ITEM eden_r457_sparse_kernel_units' in cmake
 assert 'hle/kernel/k_memory_manager.cpp' in cmake
+
+# Slabs are direct host writes before the kernel PTE/metadata paths.
+# Preserve exactly the original source with only two sparse/native guards,
+# including one call before DeviceMemory::GetPointer or freelist initialization.
+slab_rel = "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp"
+slab = read(slab_rel)
+slab_baseline = read("vendor/sources/eden/src/core/hle/kernel/init/init_slab_setup.cpp")
+slab_guarded = re.findall(guarded, slab, flags=re.MULTILINE)
+assert len(slab_guarded) == 2, "slab direct-memory diff exceeded two reviewed guards"
+assert normalize(re.sub(guarded, "", slab, flags=re.MULTILINE)) == normalize(slab_baseline), (
+    "unreviewed slab kernel semantics drift")
+start = slab.index("    if (size > 0) {")
+end = slab.index("    return start + size;", start)
+direct_slab = slab[start:end]
+assert direct_slab.count("EdenNs2CommitGuestBacking(") == 1
+assert direct_slab.index("EdenNs2CommitGuestBacking(") < direct_slab.index(
+    "void* backing_kernel_memory")
+assert 'throw std::bad_alloc{};' in direct_slab
+assert slab_rel.replace("vendor/", "") in cmake
+assert 'hle/kernel/init/init_slab_setup.cpp" eden_r457_sparse_slab_original' in cmake
+assert 'TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"' in cmake
 
 for variant in ("memory_native_a32.cpp","memory_native_standard.cpp"):
     owner=read("vendor/encore-active/eden-core/src/core/"+variant)

@@ -89,6 +89,8 @@ jobs:
           # maintained Vulkan synchronization owner before provisioning SDK.
           python3 -B tools/check-ps5-present-header-contract.py
           python3 -B tools/check-native-texture-pin-owner-parity.py
+          # Catch UUID digest-vs-output span drift before the long native compile.
+          python3 -B tools/check-ns2-uuid-abi.py
 
       - name: Install build toolchain
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}

@@ -990,7 +990,18 @@ if(PS5_NATIVE)
     list(REMOVE_ITEM eden_r23_cheat_sources "memory/cheat_engine.cpp")
     list(APPEND eden_r23_cheat_sources "${EDEN_R23_CHEATS}")
     set_property(TARGET core PROPERTY SOURCES "${eden_r23_cheat_sources}")
-    message(STATUS "R23 #46 selected one bounded cheat parser C++ TU")
+    # The runtime cheat API adds a mutex/DTO to the actual CheatEngine class.
+    # Compile the selected TU with its matching header, never the pristine ABI.
+    set(EDEN_R23_CHEATS_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include/core/memory/cheat_engine.h")
+    if(NOT EXISTS "${EDEN_R23_CHEATS_HEADER}")
+        message(FATAL_ERROR "R23 #46 selected synchronized cheat_engine.h missing")
+    endif()
+    set(EDEN_R23_CHEATS_INCLUDE "${PORT_BUILD_DIR}/r23-cheats/include")
+    configure_file("${EDEN_R23_CHEATS_HEADER}"
+                   "${EDEN_R23_CHEATS_INCLUDE}/core/memory/cheat_engine.h" COPYONLY)
+    target_include_directories(core BEFORE PRIVATE "${EDEN_R23_CHEATS_INCLUDE}")
+    message(STATUS "R23 #46 selected bounded cheat parser, runtime toggle and matching header")
 endif()
 
 # Replace SDL audio with the optional native sink; the renderer stays null.

@@ -860,7 +860,63 @@ assert post_f07_c03_radv_owners <= all_owners
 assert not post_f07_c03_radv_owners & (research_owners | post_f07_ns2_production_owners)
 print("ENCORE_POST_F07_C03_RADV_ISOLATION_PASS", "owners=2 historical_F07=518")
 
-owners=all_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners
+# The 45 new native R23 vendor source/header owners are post-F07, not
+# members of the immutable 518-source audited snapshot.
+post_f07_r23_source_owners = {
+    "vendor/encore-active/eden-core/include/common/uuid.h",
+    "vendor/encore-active/eden-core/include/core/file_sys/patch_manager.h",
+    "vendor/encore-active/eden-core/include/core/file_sys/registered_cache.h",
+    "vendor/encore-active/eden-core/include/core/file_sys/savedata_factory.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/acc/profile_manager.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/filesystem/fsp/fs_i_storage.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/ipc_helpers.h",
+    "vendor/encore-active/eden-core/include/core/hle/service/service.h",
+    "vendor/encore-active/eden-core/include/core/memory/cheat_engine.h",
+    "vendor/encore-active/eden-core/include/dynarmic/backend/x64/constant_pool.h",
+    "vendor/encore-active/eden-core/include/hid_core/frontend/emulated_controller.h",
+    "vendor/encore-active/eden-core/include/hid_core/hid_core.h",
+    "vendor/encore-active/eden-core/src/audio_core/opus/decoder.cpp",
+    "vendor/encore-active/eden-core/src/audio_core/opus/hardware_opus.cpp",
+    "vendor/encore-active/eden-core/src/audio_core/opus/hardware_opus.h",
+    "vendor/encore-active/eden-core/src/common/uuid.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/am/window_system.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/audio/errors.h",
+    "vendor/encore-active/eden-core/src/core/hle/service/nvnflinger/hardware_composer.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp",
+    "vendor/encore-active/eden-core/src/core/hle/service/ssl/ssl_backend.h",
+    "vendor/encore-active/eden-core/src/core/hle/service/ssl/ssl_backend_openssl.cpp",
+    "vendor/encore-active/eden-core/src/core/memory/cheat_engine.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_floating_point.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_sm4.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/backend/x64/emit_x64_vector_floating_point.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/decoder/asimd.inc",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/translate/impl/a32_translate_impl.h",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_three_regs.cpp",
+    "vendor/encore-active/eden-core/src/dynarmic/frontend/A32/translate/impl/asimd_two_regs_misc.cpp",
+    "vendor/encore-active/eden-core/src/hid_core/hid_core.cpp",
+    "vendor/encore-active/eden-core/src/video_core/host1x/codec_types.h",
+    "vendor/encore-active/eden-core/src/video_core/host1x/codecs/vp9.cpp",
+    "vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_warp.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/host_translate_info.h",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/constant_propagation_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/geometry_compaction_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/passes.h",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/vendor_workaround_pass.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/profile.h",
+    "vendor/encore-active/eden-vulkan/fixed_pipeline_state.cpp",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/fixed_pipeline_state.h",
+    "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_texture_cache.h",
+}
+assert len(post_f07_r23_source_owners) == 45
+assert post_f07_r23_source_owners <= all_owners, (
+    "Missing reviewed R23 extra owners",
+    sorted(post_f07_r23_source_owners-all_owners))
+print("ENCORE_NS1_R23_POST_F07_ISOLATION_PASS", "vendor_additions=45",
+      "historical_F07=518")
+
+owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

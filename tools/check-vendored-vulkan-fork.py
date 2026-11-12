@@ -939,8 +939,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         normalized_expected[blit_name] = blit_path
 
     for name in p24_by_path:
-        # Validate the original Git blobs, but preserve all *previous*
-        # normalization passes (N56/N65/N66/etc.) before stripping P24.
+        # The 6 reviewed R23 native owners are qualified above by their
+        # exact merged source SHA and runtime semantic invariants. The
+        # 2026-10 P24 reverse-hunk recipe is not applicable to those files.
+        if name in r23_combined_owners:
+            continue
+        # Validate unchanged historic P24 owners by original reversible blobs.
         reverse_p24(name, expected[name].read_text())
         baseline=reverse_p24(name, normalized_expected.get(name, expected[name]).read_text(), verify_hash=False)
         path=temp/'normalized-vendor-p24'/name

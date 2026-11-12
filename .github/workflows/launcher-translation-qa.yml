@@ -1,0 +1,44 @@
+name: Encore launcher translations — zero warnings
+
+on:
+  pull_request:
+    paths:
+      - 'headless/prosperoeden/ui/lang/**'
+      - 'headless/prosperoeden/fr_fr_embedded.h'
+      - 'headless/prosperoeden/pe/ui/**'
+      - 'headless/settings_store.h'
+      - 'tools/launcher/strings.py'
+      - 'tools/check-launcher-translation-coverage.py'
+      - '.github/workflows/launcher-translation-qa.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'headless/prosperoeden/ui/lang/**'
+      - 'headless/prosperoeden/fr_fr_embedded.h'
+      - 'headless/prosperoeden/pe/ui/**'
+      - 'headless/settings_store.h'
+      - 'tools/launcher/strings.py'
+      - 'tools/check-launcher-translation-coverage.py'
+      - '.github/workflows/launcher-translation-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: launcher-translations-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  locale-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Verify all 31 language catalogs, fonts and placeholders
+        run: python3 -B tools/launcher/strings.py check
+      - name: Enforce active translations and no obsolete keys
+        run: python3 -B tools/check-launcher-translation-coverage.py

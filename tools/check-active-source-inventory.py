@@ -710,7 +710,7 @@ assert post_f07_c03_radv_meta_owners.isdisjoint(
     ns2_production_added_owners | set(research_paths))
 print("NS1_C03_POST_F07_NATIVE_OWNER_PASS", "meta_units=2 historical_F07=337")
 
-# R23 adds 46 maintained source owners after the frozen 337-file F07 ledger.
+# R23 adds 45 selected source owners after the frozen 337-file F07 ledger.
 # Keep exact paths, require all to exist, and exclude them from historical F07
 # rather than silently re-dating the audited source snapshot.
 post_f07_r23_added_owners = {
@@ -748,7 +748,6 @@ post_f07_r23_added_owners = {
     "eden-core/src/video_core/host1x/codec_types.h",
     "eden-core/src/video_core/host1x/codecs/vp9.cpp",
     "eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h",
-    "eden-shader/src/shader_recompiler/CMakeLists.txt",
     "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_warp.cpp",
     "eden-shader/src/shader_recompiler/host_translate_info.h",
     "eden-shader/src/shader_recompiler/ir_opt/constant_propagation_pass.cpp",
@@ -761,12 +760,12 @@ post_f07_r23_added_owners = {
     "eden-vulkan/include/video_core/renderer_vulkan/fixed_pipeline_state.h",
     "eden-vulkan/include/video_core/renderer_vulkan/vk_texture_cache.h",
 }
-assert len(post_f07_r23_added_owners) == 46
+assert len(post_f07_r23_added_owners) == 45
 assert post_f07_r23_added_owners <= set(physical_all), (
     "Missing post-F07 R23 maintained sources",
     sorted(post_f07_r23_added_owners - set(physical_all)))
 assert post_f07_r23_added_owners.isdisjoint(post_f07_c03_radv_meta_owners)
-print("NS1_R23_POST_F07_SOURCE_OWNER_PASS", "added=46", "historical_F07=337")
+print("NS1_R23_POST_F07_SOURCE_OWNER_PASS", "added=45", "historical_F07=337")
 
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |

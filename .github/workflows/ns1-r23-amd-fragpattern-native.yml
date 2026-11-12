@@ -1,0 +1,38 @@
+name: NS1 R23 AMD fragment shuffle native source owners (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-amd-fragpattern-native-20261112
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-amd-fragpattern-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-fragment-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Require exact fork, LLVM-like IR predicate and single Vulkan TU owner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "86fbb4a3383a1fde891aee374ba6044a21196c17"
+          python3 -B vendor/tests/ns1_r23_80_fragpattern.py
+          python3 - <<'PY'
+          from pathlib import Path
+          cm=Path('headless/CMakeLists.txt').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_frag_units "ir_opt/vendor_workaround_pass.cpp")' in cm
+          assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_FRAG_HEADERS}")' in cm
+          assert 'target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_FRAG_HEADERS}")' in cm
+          vk=Path('headless/vulkan.cmake').read_text()
+          assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vk
+          print('NS1_R23_80_MATCHED_PS5_SOURCE_OWNER_HOST_PASS')
+          PY

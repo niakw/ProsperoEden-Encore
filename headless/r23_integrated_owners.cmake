@@ -258,3 +258,237 @@ if(PS5_NATIVE)
     message(STATUS "R23 #1: one native qlaunch NS interface + matched 23.5 header")
 endif()
 
+
+# Engine research PR #68
+# R23 #119 HOS23: two HLE backport TUs and two new guest IPC
+# headers must have the same versioned owner; no extra service target.
+if(PS5_NATIVE)
+    set(EDEN_R23_STPL_BACKPORT
+        "${PORT_ROOT}/vendor/encore-active/eden-backports/src/core/hle/service")
+    set(EDEN_R23_STPL_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include/core/hle/service")
+    set(EDEN_R23_STPL_INCLUDE "${PORT_BUILD_DIR}/r23-stpl/include")
+    foreach(eden_r23_stpl_name IN ITEMS
+            "ngc/ngc.cpp" "filesystem/fsp/fsp_srv.cpp")
+        if(NOT EXISTS "${EDEN_R23_STPL_BACKPORT}/${eden_r23_stpl_name}")
+            message(FATAL_ERROR "R23 #119 missing maintained HOS23 service ${eden_r23_stpl_name}")
+        endif()
+    endforeach()
+    foreach(eden_r23_stpl_header IN ITEMS
+            "acc/profile_manager.h" "ipc_helpers.h")
+        if(NOT EXISTS "${EDEN_R23_STPL_HEADER}/${eden_r23_stpl_header}")
+            message(FATAL_ERROR "R23 #119 missing service header ${eden_r23_stpl_header}")
+        endif()
+        configure_file("${EDEN_R23_STPL_HEADER}/${eden_r23_stpl_header}"
+            "${EDEN_R23_STPL_INCLUDE}/core/hle/service/${eden_r23_stpl_header}" COPYONLY)
+    endforeach()
+    get_target_property(eden_r23_stpl_units core SOURCES)
+    foreach(eden_r23_stpl_source IN ITEMS
+            "ngc/ngc.cpp" "filesystem/fsp/fsp_srv.cpp")
+        list(FIND eden_r23_stpl_units
+             "hle/service/${eden_r23_stpl_source}" eden_r23_stpl_old)
+        if(eden_r23_stpl_old LESS 0)
+            message(FATAL_ERROR "R23 #119 original stpl source owner drift")
+        endif()
+        list(REMOVE_ITEM eden_r23_stpl_units
+             "hle/service/${eden_r23_stpl_source}")
+        list(APPEND eden_r23_stpl_units
+             "${EDEN_R23_STPL_BACKPORT}/${eden_r23_stpl_source}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_stpl_units}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STPL_INCLUDE}")
+    message(STATUS "R23 #119: two supported HOS23 service TUs and coherent IPC headers")
+endif()
+
+
+# Engine research PR #72
+# R23 #49: the Vulkan buffer cache's descriptor-buffer and legacy
+# paths are inline in its public header. The correct vendor header must
+# precede the pinned original for all three consumers, without another TU.
+if(PS5_NATIVE)
+    set(EDEN_R23_TEXEL_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h")
+    set(EDEN_R23_TEXEL_INCLUDE "${PORT_BUILD_DIR}/r23-texel/include")
+    if(NOT EXISTS "${EDEN_R23_TEXEL_HEADER}")
+        message(FATAL_ERROR "R23 #49 maintained Vulkan texel buffer header missing")
+    endif()
+    configure_file("${EDEN_R23_TEXEL_HEADER}"
+        "${EDEN_R23_TEXEL_INCLUDE}/video_core/renderer_vulkan/vk_buffer_cache.h" COPYONLY)
+    foreach(eden_r23_texel_target IN ITEMS video_core core)
+        target_include_directories(${eden_r23_texel_target} BEFORE PRIVATE
+            "${EDEN_R23_TEXEL_INCLUDE}")
+    endforeach()
+    message(STATUS "R23 #49: one reviewed Vulkan texel buffer header for native consumers")
+endif()
+
+
+# Engine research PR #73
+# R23 #114: WallClock nanoseconds-to-host ticks must use the matching
+# maintained header: the old Q0.64 factor overflows at >1 GHz. Compile
+# exactly one replacement common/cpu_features.cpp and stage its header.
+if(PS5_NATIVE)
+    set(EDEN_R23_CLOCK
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/cpu_features.cpp")
+    set(EDEN_R23_CLOCK_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include/common/cpu_features.h")
+    set(EDEN_R23_CLOCK_INCLUDE "${PORT_BUILD_DIR}/r23-clock/include")
+    if(NOT EXISTS "${EDEN_R23_CLOCK}" OR NOT EXISTS "${EDEN_R23_CLOCK_HEADER}")
+        message(FATAL_ERROR "R23 #114 maintained WallClock pair unavailable")
+    endif()
+    configure_file("${EDEN_R23_CLOCK_HEADER}"
+        "${EDEN_R23_CLOCK_INCLUDE}/common/cpu_features.h" COPYONLY)
+    get_target_property(eden_r23_clock_tus common SOURCES)
+    list(FIND eden_r23_clock_tus "cpu_features.cpp" eden_r23_clock_original)
+    if(eden_r23_clock_original LESS 0)
+        message(FATAL_ERROR "R23 #114 pinned common/cpu_features.cpp owner drift")
+    endif()
+    list(REMOVE_ITEM eden_r23_clock_tus "cpu_features.cpp")
+    list(APPEND eden_r23_clock_tus "${EDEN_R23_CLOCK}")
+    set_property(TARGET common PROPERTY SOURCES "${eden_r23_clock_tus}")
+    target_include_directories(common BEFORE PUBLIC "${EDEN_R23_CLOCK_INCLUDE}")
+    message(STATUS "R23 #114: source/headers match 2–4 GHz WallClock conversion")
+endif()
+
+
+# Engine research PR #74
+# R23 #33 — ConstantPool C++ and header must agree on mapped slot type.
+# Keep the code cache W^X writableAddress semantics from maintained PS5.
+if(PS5_NATIVE)
+    set(EDEN_R23_POOL_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_POOL_UNIT
+        "${EDEN_R23_POOL_ROOT}/src/dynarmic/backend/x64/constant_pool.cpp")
+    set(EDEN_R23_POOL_HEADER
+        "${EDEN_R23_POOL_ROOT}/include/dynarmic/backend/x64/constant_pool.h")
+    if(NOT EXISTS "${EDEN_R23_POOL_UNIT}" OR NOT EXISTS "${EDEN_R23_POOL_HEADER}")
+        message(FATAL_ERROR "Missing coherent R23 #33 native W^X constant pool pair")
+    endif()
+    configure_file("${EDEN_R23_POOL_HEADER}"
+        "${PORT_BUILD_DIR}/include/dynarmic/backend/x64/constant_pool.h" COPYONLY)
+    get_target_property(eden_r23_pool_units dynarmic SOURCES)
+    list(FIND eden_r23_pool_units
+         "backend/x64/constant_pool.cpp" eden_r23_pool_old)
+    if(eden_r23_pool_old LESS 0)
+        message(FATAL_ERROR "R23 #33 original native ConstantPool TU changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_pool_units "backend/x64/constant_pool.cpp")
+    list(APPEND eden_r23_pool_units "${EDEN_R23_POOL_UNIT}")
+    set_property(TARGET dynarmic PROPERTY SOURCES "${eden_r23_pool_units}")
+    target_include_directories(dynarmic BEFORE PUBLIC "${PORT_BUILD_DIR}/include")
+    message(STATUS "R23 #33: one maintained indexed W^X ConstantPool C++ and header")
+endif()
+
+
+# Engine research PR #75
+# R23 #95 - the native maintained EmulatedController C++ source above
+# removes the stale 48-state controller_connected member. Its original header
+# must be replaced in exactly the same native source build graph.
+if(PS5_NATIVE)
+    set(EDEN_R23_HID_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include/hid_core/frontend/emulated_controller.h")
+    if(NOT EXISTS "${EDEN_R23_HID_HEADER}")
+        message(FATAL_ERROR "R23 #95 missing matched HID controller header")
+    endif()
+    set(EDEN_R23_HID_ROOT "${PORT_BUILD_DIR}/r23-hid/include")
+    configure_file("${EDEN_R23_HID_HEADER}"
+        "${EDEN_R23_HID_ROOT}/hid_core/frontend/emulated_controller.h" COPYONLY)
+    target_include_directories(hid_core BEFORE PUBLIC "${EDEN_R23_HID_ROOT}")
+    message(STATUS "R23 #95: selected controller implementation/header in one HID native graph")
+endif()
+
+
+# Engine research PR #77
+
+# R23 #54: a per-instance paced IStorage + matching service dispatcher
+# replaces the old 600us generic IPC sleep; never replace the native
+# process-refcounted NVDEC registry with an upstream global bool.
+if(PS5_NATIVE)
+    set(EDEN_R23_STORAGE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_STORAGE_HEADERS "${PORT_BUILD_DIR}/r23-storage/include")
+    foreach(eden_r23_storage_header IN ITEMS
+            "core/hle/service/service.h"
+            "core/hle/service/filesystem/fsp/fs_i_storage.h")
+        if(NOT EXISTS "${EDEN_R23_STORAGE_ROOT}/include/${eden_r23_storage_header}")
+            message(FATAL_ERROR "R23 #54 missing matched native storage header")
+        endif()
+        configure_file("${EDEN_R23_STORAGE_ROOT}/include/${eden_r23_storage_header}"
+            "${EDEN_R23_STORAGE_HEADERS}/${eden_r23_storage_header}" COPYONLY)
+    endforeach()
+    get_target_property(eden_r23_storage_units core SOURCES)
+    foreach(eden_r23_storage_source IN ITEMS
+            "hle/service/service.cpp"
+            "hle/service/filesystem/fsp/fs_i_storage.cpp")
+        list(FIND eden_r23_storage_units
+            "${eden_r23_storage_source}" eden_r23_storage_old)
+        if(eden_r23_storage_old EQUAL -1)
+            message(FATAL_ERROR "R23 #54 native core source owner changed: ${eden_r23_storage_source}")
+        endif()
+        if(NOT EXISTS "${EDEN_R23_STORAGE_ROOT}/src/core/${eden_r23_storage_source}")
+            message(FATAL_ERROR "R23 #54 missing reviewed storage source: ${eden_r23_storage_source}")
+        endif()
+        list(REMOVE_ITEM eden_r23_storage_units "${eden_r23_storage_source}")
+        list(APPEND eden_r23_storage_units
+            "${EDEN_R23_STORAGE_ROOT}/src/core/${eden_r23_storage_source}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_storage_units}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STORAGE_HEADERS}")
+    message(STATUS "R23 #54: one paced storage source and one normal service dispatcher")
+endif()
+
+# Engine research PR #78
+
+# R23 #97: match applet overlay compositor to the selected native SGSR bypass.
+if(PS5_NATIVE)
+    set(EDEN_R23_APPLET_WINDOW_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/am/window_system.cpp")
+    if(NOT EXISTS "${EDEN_R23_APPLET_WINDOW_SOURCE}")
+        message(FATAL_ERROR "R23 #97 matched applet WindowSystem source missing")
+    endif()
+    get_target_property(eden_r23_applet_window_units core SOURCES)
+    list(FIND eden_r23_applet_window_units
+         "hle/service/am/window_system.cpp" eden_r23_applet_old)
+    if(eden_r23_applet_old EQUAL -1)
+        message(FATAL_ERROR "R23 #97 selected native applet window owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_applet_window_units
+         "hle/service/am/window_system.cpp")
+    list(APPEND eden_r23_applet_window_units "${EDEN_R23_APPLET_WINDOW_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_r23_applet_window_units}")
+    message(STATUS "R23 #97: one applet z-order TU and selected SGSR bypass")
+endif()
+
+# Engine research PR #79
+
+# NS1 #19 guest HID ABI: matched atomic orientation and reload mutex must be
+# compiled for ALL consumers of HIDCore, not just NPad. The currently
+# selected maintained rumble and NPad TUs are preserved intact.
+if(PS5_NATIVE)
+    set(EDEN_R23_HIDCORE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_R23_HIDCORE_CPP
+        "${EDEN_R23_HIDCORE_ROOT}/src/hid_core/hid_core.cpp")
+    set(EDEN_R23_HIDCORE_HEADER
+        "${EDEN_R23_HIDCORE_ROOT}/include/hid_core/hid_core.h")
+    if(NOT EXISTS "${EDEN_R23_HIDCORE_CPP}" OR NOT EXISTS "${EDEN_R23_HIDCORE_HEADER}")
+        message(FATAL_ERROR "R23 #19 native HIDCore ABI pair is missing")
+    endif()
+    set(EDEN_R23_HIDCORE_INCLUDE "${PORT_BUILD_DIR}/r23-hidcore/include")
+    configure_file("${EDEN_R23_HIDCORE_HEADER}"
+        "${EDEN_R23_HIDCORE_INCLUDE}/hid_core/hid_core.h" COPYONLY)
+    get_target_property(eden_r23_hidcore_units hid_core SOURCES)
+    list(FIND eden_r23_hidcore_units "hid_core.cpp" eden_r23_hidcore_old)
+    if(eden_r23_hidcore_old EQUAL -1)
+        message(FATAL_ERROR "R23 #19 native HIDCore original source owner changed")
+    endif()
+    list(REMOVE_ITEM eden_r23_hidcore_units "hid_core.cpp")
+    list(APPEND eden_r23_hidcore_units "${EDEN_R23_HIDCORE_CPP}")
+    set_property(TARGET hid_core PROPERTY SOURCES "${eden_r23_hidcore_units}")
+    foreach(eden_r23_hid_consumer IN ITEMS hid_core core video_core input_common eden-headless)
+        if(TARGET ${eden_r23_hid_consumer})
+            target_include_directories(${eden_r23_hid_consumer}
+                BEFORE PRIVATE "${EDEN_R23_HIDCORE_INCLUDE}")
+        endif()
+    endforeach()
+    message(STATUS "R23 #19: one native HIDCore ABI and retained maintained NPad owner")
+endif()

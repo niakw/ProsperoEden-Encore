@@ -83,8 +83,31 @@ jobs:
           test -s "$sdk_c_include/stdlib.h"
           test -s "$sdk_c_include/sys/cdefs.h"
           test -s "$PS5_PAYLOAD_SDK/target/include/c++/v1/cstdlib"
+          # Reconfigure with the same PS5 dependency roots/profile as the
+          # actual native builder. The minimal cached reconfigure picked up
+          # -isystem /usr/include from host package discovery (not PS5 libc).
+          export PKG_CONFIG_LIBDIR="$scratch/empty-pkgconfig"
+          export PKG_CONFIG_PATH=
+          mkdir -p "$PKG_CONFIG_LIBDIR"
           cmake -S "$scratch/source" -B "$native" -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/headless/ps5.cmake" \
+            -DPS5_NATIVE=ON -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF \
             -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DEDEN_PS5_VULKAN=ON
+            -DEDEN_PS5_VULKAN=ON -DEDEN_VULKAN_DRIVER=RADV \
+            -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=ON \
+            -DENABLE_QT=OFF -DYUZU_CMD=OFF -DYUZU_ROOM=OFF -DYUZU_ROOM_STANDALONE=OFF \
+            -DYUZU_TESTS=OFF -DBUILD_TESTING=OFF -DENABLE_OPENGL=ON -DEDEN_PS5_OPENGL=ON \
+            -DENABLE_CUBEB=OFF -DENABLE_WEB_SERVICE=OFF -DENABLE_LIBUSB=OFF \
+            -DYUZU_CRASH_DUMPS=OFF -DYUZU_USE_EXTERNAL_FFMPEG=OFF \
+            -DFFMPEG_DIR="$scratch/ffmpeg-native/install" \
+            -DOPENSSL_INCLUDE_DIR="$scratch/cdeps/include" \
+            -DOPENSSL_SSL_LIBRARY="$scratch/cdeps/lib/libssl.a" \
+            -DOPENSSL_CRYPTO_LIBRARY="$scratch/cdeps/lib/libcrypto.a" \
+            -DOpenSSL_FORCE_SYSTEM=ON -DZLIB_INCLUDE_DIR="$scratch/cdeps/include" \
+            -DZLIB_LIBRARY="$scratch/cdeps/lib/libz.a" -DENABLE_WERROR=OFF \
+            -Dzstd_FORCE_BUNDLED=ON -DBoost_FORCE_BUNDLED=ON -Dfmt_FORCE_BUNDLED=ON \
+            -DDYNARMIC_ENABLE_NO_EXECUTE_SUPPORT=ON -DDYNARMIC_IGNORE_ASSERTS=OFF \
+            -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_OPENGL=OFF -DSDL_OPENGLES=OFF \
+            -DSDL_RENDER=OFF -DSDL_GPU=OFF
           python3 -B tools/ns2/check_r457_sparse_native_graph.py "$native"

@@ -14,11 +14,9 @@ expected = original.replace('        } else {\n            caps.tsc_frequency = 
 # R23 #71: the maintained WallClock also replaces a broken 0.64
 # nanoseconds-to-RDTSC conversion. Prove that additional exact delta
 # independently; do not reject an approved native fix as unknown drift.
-ns_to_ticks_original = (
-    "u64 WallClock::NsToTicks(std::chrono::nanoseconds ns) const {\\n"
-    "    return invariant ? MultiplyHigh(ns.count(), rdtsc_ns_factor) : ns.count();\\n"
-    "}"
-).replace("\\\\n", "\\n")
+ns_to_ticks_original = """u64 WallClock::NsToTicks(std::chrono::nanoseconds ns) const {
+    return invariant ? MultiplyHigh(ns.count(), rdtsc_ns_factor) : ns.count();
+}"""
 ns_to_ticks_reviewed = """u64 WallClock::NsToTicks(std::chrono::nanoseconds ns) const {
     if (!invariant) {
         return static_cast<u64>(ns.count());
@@ -36,10 +34,8 @@ ns_to_ticks_reviewed = """u64 WallClock::NsToTicks(std::chrono::nanoseconds ns) 
 }"""
 assert expected.count(ns_to_ticks_original) == 1
 expected = expected.replace(ns_to_ticks_original, ns_to_ticks_reviewed)
-ns_fixed_factor = (
-    "    , rdtsc_ns_factor{invariant_ ? "
-    "GetFixedPoint64Factor(rdtsc_frequency_, NsRatio::den) : 1}\\n"
-).replace("\\\\n", "\\n")
+ns_fixed_factor = """    , rdtsc_ns_factor{invariant_ ? GetFixedPoint64Factor(rdtsc_frequency_, NsRatio::den) : 1}
+"""
 assert expected.count(ns_fixed_factor) == 1
 expected = expected.replace(ns_fixed_factor, "", 1)
 # N76 extends the shared CPU clock with a metadata-selected guest rate.

@@ -1,0 +1,58 @@
+name: Eden Encore one-shot cleanup of fully integrated branch refs
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/pr90-final-branch-cleanup-once.yml]
+permissions:
+  contents: write
+jobs:
+  prune-verified:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Delete only frozen, integrated branch heads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          [[ "$repo" == "niakw/ProsperoEden-Encore" ]]
+          state=$(gh api "repos/$repo/pulls/90" --jq ".state")
+          [[ "$state" == "closed" ]]
+          merged=$(gh api "repos/$repo/pulls/90" --jq ".merged")
+          [[ "$merged" == "false" ]]
+          main=$(gh api "repos/$repo/git/ref/heads/main" --jq ".object.sha")
+          # PR90 was superseded: require exact blob parity on every native
+          # source from its unique R23 work package before dropping the ref.
+          while IFS=$' ' read -r path expected; do
+            actual=$(gh api "repos/$repo/contents/$path?ref=main" --jq ".sha")
+            [[ "$actual" == "$expected" ]] || { echo "::error::Unreviewed R23 owner change: $path"; exit 1; }
+          done <<'REVIEWED_R23_BLOBS'
+          headless/r23_audren_debug_ns1_ps5.cpp d5882f8bce3954a65934c43b136ff5834ea1aab3
+          headless/r23_audren_debug_ps5.cpp 0fff4af935ad9b1b8afa34c953e70a16fb0310ad
+          headless/r23_bcat_delivery_cache_file_ps5.cpp 6584139ca9a8942850accf1b54a625f0daa1070a
+          headless/r23_channel_state_cache_ps5.h dee33e2967f37046567bec016a5b93a2b2a56877
+          headless/r23_f2i_conversion_ps5.cpp fd8856f6a22682feb4c0fcb1ea7dcc5eea4d854e
+          headless/r23_self_controller_240_ps5.h 895ff4360e1112c4a2b1ce65aafd470eef79cd0e
+          REVIEWED_R23_BLOBS
+          count=0
+          while IFS=$' ' read -r branch expected proof; do
+            actual=$(gh api "repos/$repo/git/ref/heads/$branch" --jq ".object.sha")
+            [[ "$actual" == "$expected" ]] || { echo "::error::Branch moved: $branch"; exit 1; }
+            if [[ "$proof" == "ancestor" ]]; then
+              status=$(gh api "repos/$repo/compare/$actual...$main" --jq ".status")
+              [[ "$status" == "ahead" || "$status" == "identical" ]] || { echo "::error::Not integrated: $branch ($status)"; exit 1; }
+            else
+              [[ "$branch" == "integration/ns1-r23-bcat-f2i-audren-channel-20261112" && "$proof" == "reviewed-pr90" ]]
+            fi
+            gh api --silent -X DELETE "repos/$repo/git/refs/heads/$branch"
+            echo "PR90_VERIFIED_REF_REMOVED $branch $actual"
+            ((count+=1))
+          done <<'EXACT_REFS'
+          integration/ns1-r23-bcat-f2i-audren-channel-20261112 db208d60f5925e2b3f290865732f37b87907dc5c reviewed-pr90
+          integration/r23-final-main-reconcile-20261112 6219f23a25e2f5f8c096d96f0a76f6a49470fc80 ancestor
+          integration/r457-audio-real-owner-engine-20261112 22aab2fe230c55d36840b59ba28331d53a9c5eb6 ancestor
+          EXACT_REFS
+          [[ "$count" == "3" ]]
+          echo "ALL_SUPERSEDED_ENGINE_REFS_REMOVED count=$count" | tee -a "$GITHUB_STEP_SUMMARY"

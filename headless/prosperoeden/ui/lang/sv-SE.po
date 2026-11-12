@@ -161,7 +161,7 @@ msgstr "Automatisk Kontrollera"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automatisk Kontrollera · På"
+msgstr "Autokoll · På"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -738,7 +738,7 @@ msgstr "Spelet kunde inte startas: {0} Detaljer: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Bläddra i mappar · programvara"
+msgstr "Spelfiler"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1181,7 +1181,7 @@ msgstr "Bakgrund: PNG/JPEG/TGA → wallpapers/"
 #. Neither a game update nor DLC is installed.
 #: pe/ui/library.cpp
 msgid "No DLC/updates"
-msgstr "Inga DLC eller uppdateringar"
+msgstr "Inga DLC/uppdateringar"
 
 #. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h

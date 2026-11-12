@@ -68,6 +68,21 @@ jobs:
           test -f "$scratch/source/CMakeLists.txt"
           export PS5_PAYLOAD_SDK="$scratch/sdk"
           export EDEN_NATIVE_C_DEPS="$scratch/cdeps"
+          # Some recovered historic caches contain libc++ but omit the
+          # FreeBSD C headers. Restore ONLY missing C headers from the
+          # existing exact pinned PS5 SDK fork; never use Linux libc.
+          sdk_c_include="$PS5_PAYLOAD_SDK/target/include"
+          if [[ ! -s "$sdk_c_include/stdlib.h" ]]; then
+            sdk_fork="$GITHUB_WORKSPACE/../mihawk-sdk-review"
+            test "$(git -C "$sdk_fork" rev-parse HEAD)" = "95c08f27386fc698f6bbe21dde3030140a41d10b"
+            test -s "$sdk_fork/include/freebsd/stdlib.h"
+            mkdir -p "$sdk_c_include"
+            rsync -a --ignore-existing "$sdk_fork/include/freebsd/." "$sdk_c_include/"
+            echo "R457_NATIVE_SDK_C_HEADERS_RESTORED pinned_fork=95c08f27"
+          fi
+          test -s "$sdk_c_include/stdlib.h"
+          test -s "$sdk_c_include/sys/cdefs.h"
+          test -s "$PS5_PAYLOAD_SDK/target/include/c++/v1/cstdlib"
           cmake -S "$scratch/source" -B "$native" -G Ninja \
             -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \

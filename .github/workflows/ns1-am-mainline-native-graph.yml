@@ -1,0 +1,114 @@
+name: PS5 NS1 AM/HID exact native CMake and focused C++ (no app link)
+
+on:
+  push:
+    branches:
+      - research/ns1-am-applets-mainline-20261111
+    paths:
+      - "headless/CMakeLists.txt"
+      - "headless/r23_am_frontend_applets_ps5.cpp"
+      - "tools/check-native-source-syntax.py"
+      - ".github/workflows/ns1-am-mainline-native-graph.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-selected-owners:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact branch plus production pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Restore known native CMake/dependency cache read-only
+        id: restore
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-42880572712
+      # Reuse the ninth-run native CDB/dependency archive already restored successfully
+      # by audit-ab-ns1-readonly (#43046719027); the tenth-run key did not exist.
+      - name: Fail closed if native cache is unavailable
+        if: steps.restore.outputs.cache-hit != 'true'
+        run: |
+          echo "::error::Exact native dependency/cache restore missing. No PS5 source proof obtained."
+          exit 1
+      - name: Reconfigure native graph; syntax-compile 1 #84 overlay and 2 installed backports
+        if: steps.restore.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "90c9c8a203a27181e23349a889a8f2a7d1cd9dd2"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            clang-18 libclang-18-dev lld-18 llvm-18 llvm-18-dev llvm-18-tools llvm-spirv-18 libllvmspirvlib-18-dev \
+            cmake ninja-build ccache make nasm meson rsync git glslang-tools spirv-tools bison flex autoconf \
+            python3 python3-venv python3-pip python3-mako python3-yaml pkg-config \
+            libboost-container-dev libssl-dev libzstd-dev
+          bash tools/ci/link-sibling-deps.sh
+          test -s ../mihawk-vulkan-review/.deps/native/radv-release/lib/libvulkan_radeon.ps5.a
+          python3 -B tools/isolate-radv.py
+          bash tools/build-agc-driver-stub.sh
+          python3 -m pip install --user --break-system-packages "meson==1.12.1"
+          export PATH="$HOME/.local/bin:$PATH"
+          bash tools/build-opengl-sdk.sh
+          mapfile -t graphs < <(find "$HOME/.cache" -path '*/native-local/build.ninja' -type f -print)
+          test "${#graphs[@]}" -eq 1
+          scratch="$(dirname "$(dirname "${graphs[0]}")")"
+          mkdir -p .local
+          printf '%s\n' "$scratch" > .local/headless-cache
+          export EDEN_NATIVE_C_DEPS="$scratch/cdeps"
+          export PROSPEROEDEN_GIT_DEPS_ROOT=.deps/repos
+          export PROSPEROEDEN_DEPS_OFFLINE=1
+          test -f "$scratch/source/CMakeLists.txt"
+          # The ninth-run cache predates the current versioned #131/#109
+          # shipping backports. Refresh ONLY the owned disposable build source
+          # from the pinned vendor before asking native CMake about its owners.
+          # A stale cached original must never masquerade as the production TU.
+          test -f "$scratch/owner"
+          test "$(cd -- "$(cat "$scratch/owner")" && pwd -P)" = "$GITHUB_WORKSPACE"
+          python3 -B tools/install-vendored-eden-backports.py --repair-owned-cache "$scratch/source"
+          python3 -B tools/install-vendored-eden-build-flags.py "$scratch/source"
+          python3 -B tools/install-active-core-backports.py "$scratch/source" --repair-owned-cache
+          python3 -B tools/install-active-core-backports.py "$scratch/source" --check
+          python3 -B tools/install-eden-header-hygiene.py "$scratch/source"
+          python3 -B tools/install-eden-header-hygiene.py "$scratch/source" --check
+          cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
+            -DCMAKE_PROJECT_yuzu_INCLUDE="$GITHUB_WORKSPACE/headless/inject.cmake" \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          ninja -C "$scratch/native-local" -t targets all > /dev/null
+          python3 - "$scratch/native-local/compile_commands.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          files=[str(row["file"]) for row in json.loads(Path(sys.argv[1]).read_text())]
+          # Native compiles exactly the two already-versioned shipping backports,
+          # not copies of pristine #131 / #109 source that would mask FW23.
+          for original in ("frontend/applets/controller.cpp",
+                           "hle/service/am/service/library_applet_creator.cpp"):
+              count=sum(f.endswith("/"+original) and "/headless/" not in f for f in files)
+              assert count == 1, (original,count)
+              print("PS5_NATIVE_SHIPPING_BACKPORT_SINGLE_COMPILE_OWNER",original,flush=True)
+          assert not any(f.endswith("/hle/service/am/frontend/applets.cpp") and
+                         "/headless/" not in f for f in files)
+          count=sum(f.endswith("/headless/r23_am_frontend_applets_ps5.cpp") for f in files)
+          assert count == 1, ("#84 None overlay",count)
+          for stale in ("r23_controller_applet_ps5.cpp",
+                        "r23_am_library_applet_creator_ps5.cpp"):
+              assert not any(f.endswith("/headless/"+stale) for f in files),stale
+          print("PS5_NATIVE_APPLET_CMAKE_GRAPH_PASS no_duplicate_shipping_owner=1",flush=True)
+          PY
+          python3 -B tools/check-native-source-syntax.py "$scratch/native-local" \
+            --only src/core/frontend/applets/controller.cpp \
+            --only headless/r23_am_frontend_applets_ps5.cpp \
+            --only src/core/hle/service/am/service/library_applet_creator.cpp
+          echo "PS5_NATIVE_APPLET_SHIPPING_3_TU_SYNTAX_PASS no_elf_link=1 no_package=1"

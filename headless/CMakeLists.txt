@@ -1399,6 +1399,47 @@ if(PS5_NATIVE)
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_PHI_INCLUDE}")
 endif()
 
+# R23 #131 and #109 are ALREADY shipped by versioned Eden backports.
+# Never override those real prepared sources with old headless copies:
+# the latter also concealed the FW23 dynamic library-applet version cap.
+if(PS5_NATIVE)
+    # Read only relevant prepared-source lines; no new CMake source rewrite.
+    file(STRINGS "${PROJECT_SOURCE_DIR}/src/core/frontend/applets/controller.cpp"
+         eden_controller_prepared REGEX "keep_connected")
+    string(FIND "${eden_controller_prepared}" "if (keep_connected[index]) continue"
+           eden_controller_keep)
+    if(eden_controller_keep LESS 0)
+        message(FATAL_ERROR "R23 #131 selected prepared controller lacks retention fix")
+    endif()
+    file(STRINGS "${PROJECT_SOURCE_DIR}/src/core/hle/service/am/service/library_applet_creator.cpp"
+         eden_am_creator_prepared REGEX "CreateProcess")
+    string(FIND "${eden_am_creator_prepared}"
+        "CreateProcess(system, program_id, 1, HLE::ApiVersion::HOS_VERSION_MAJOR)"
+        eden_creator_fw23)
+    if(eden_creator_fw23 LESS 0)
+        message(FATAL_ERROR "R23 #109 selected AM creator lost dynamic FW23 version bound")
+    endif()
+endif()
+
+# R23 #84 is the ONLY still-needed AM frontend candidate.
+# #109 applet Exit lifecycle is already in the installed backport; this
+# full-source candidate differs from shipping frontend only by None behavior.
+if(PS5_NATIVE)
+    get_target_property(eden_am_sources core SOURCES)
+    list(FIND eden_am_sources "hle/service/am/frontend/applets.cpp" eden_am_index)
+    if(eden_am_index LESS 0)
+        message(FATAL_ERROR "R23 #84 frontend core owner moved")
+    endif()
+    if(NOT EXISTS "${EDEN_PORT_DIR}/r23_am_frontend_applets_ps5.cpp")
+        message(FATAL_ERROR "R23 #84 frontend candidate missing")
+    endif()
+    list(REMOVE_ITEM eden_am_sources "hle/service/am/frontend/applets.cpp")
+    list(APPEND eden_am_sources "${EDEN_PORT_DIR}/r23_am_frontend_applets_ps5.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_am_sources}")
+    message(STATUS "R23 #84: only None frontend candidate; FW23 creator and controller backports preserved")
+endif()
+
+
 # The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
 # published for the renderer: frames a display has no refresh for are not presented
 # (headless/display_refresh.h).

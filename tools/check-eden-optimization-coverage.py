@@ -928,7 +928,27 @@ assert "SilentAudioInputStream" in (ROOT / "headless/audio.cpp").read_text()
 assert "ReadyForAudioRead()" in (ROOT / "vendor/encore-active/eden-core/src/audio_core/device/device_session.cpp").read_text()
 print("C00_R457_POST_F07_AUDIO_OWNERS_PASS", f"owners={len(post_f07_ns1_audio_owners)}")
 
-owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners
+# The six final R23 BCAT/F2I/audren native owners postdate the immutable
+# F07 518-source optimization audit. They are not historical F07 sources and
+# are qualified by the dedicated R23 native-host contracts.
+post_f07_r23_final_headless_owners = {
+    "headless/r23_audren_debug_ns1_ps5.cpp",
+    "headless/r23_audren_debug_ps5.cpp",
+    "headless/r23_bcat_delivery_cache_file_ps5.cpp",
+    "headless/r23_channel_state_cache_ps5.h",
+    "headless/r23_f2i_conversion_ps5.cpp",
+    "headless/r23_self_controller_240_ps5.h",
+}
+assert len(post_f07_r23_final_headless_owners) == 6
+assert post_f07_r23_final_headless_owners <= all_owners
+cmake = (ROOT / "headless/CMakeLists.txt").read_text()
+for path in post_f07_r23_final_headless_owners:
+    assert path.removeprefix("headless/") in cmake, ("Missing R23 native owner", path)
+assert (ROOT / "tools/audit/check-r23-f2i-bcat-host.py").is_file()
+assert (ROOT / "tools/audit/check-r23-ips-audren-host.py").is_file()
+print("ENCORE_R23_FINAL_POST_F07_ISOLATION_PASS added=6 historical_F07=518")
+
+owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

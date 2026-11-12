@@ -4,10 +4,12 @@ on:
     branches: [integration/ns1-subgroup-geometry-active-20261112]
     paths:
       - 'headless/CMakeLists.txt'
+      - 'tools/ns2/check_r457_fw23_ns_source.py'
       - '.github/workflows/ns1-r23-subgroup-selected-host.yml'
   pull_request:
     paths:
       - 'headless/CMakeLists.txt'
+      - 'tools/ns2/check_r457_fw23_ns_source.py'
       - '.github/workflows/ns1-r23-subgroup-selected-host.yml'
 permissions:
   contents: read
@@ -20,6 +22,8 @@ jobs:
         with:
           persist-credentials: false
           submodules: true
+      - name: Verify existing FW23 NS command 23 and null-icon guard
+        run: python3 -B tools/ns2/check_r457_fw23_ns_source.py
       - name: Review exact current vendor blob and subgroup SPIR-V host oracle
         run: |
           python3 -B vendor/tests/ns1_r23_72_subgroup_host.py

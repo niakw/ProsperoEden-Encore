@@ -738,7 +738,7 @@ msgstr "Không thể mở trò chơi: {0} Chi tiết: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Duyệt thư mục · phần mềm"
+msgstr "Tệp trò chơi"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1001,7 +1001,7 @@ msgstr "Thư viện"
 
 #: pe/ui/library.cpp
 msgid "Loading artwork"
-msgstr "Đang tải tác phẩm nghệ thuật"
+msgstr "Đang tải ảnh"
 
 #: pe/ui/launcher.cpp
 msgid "Loading game library..."
@@ -1181,7 +1181,7 @@ msgstr "Nền: PNG/JPEG/TGA → wallpapers/"
 #. Neither a game update nor DLC is installed.
 #: pe/ui/library.cpp
 msgid "No DLC/updates"
-msgstr "Không có DLC hoặc bản cập nhật"
+msgstr "Không có DLC/cập nhật"
 
 #. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
@@ -1796,7 +1796,7 @@ msgstr "CẬP NHẬT, DLC"
 
 #: eden_services.cpp, pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "USA"
-msgstr "Mỹ"
+msgstr "MỸ"
 
 #: pe/ui/browse.cpp
 msgid "Use extracted firmware NCA files. Choose the root in Settings, Storage; restart the app after changing it."

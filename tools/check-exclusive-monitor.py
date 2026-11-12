@@ -21,6 +21,12 @@ lock_start = '// PS5 x64: retain the storage ABI'
 lock_end = '\n} // namespace Dynarmic'
 assert lock_unit.count(lock_start) == lock_unit.count(lock_end) == 1
 lock = lock_unit[lock_unit.index(lock_start):lock_unit.index(lock_end)]
+# The full native translation unit declares this mode above the extracted lock.
+# Keep its unused, source-owned reference valid in the standalone harness.
+# The fallback declaration has no effect on the atomic lock instructions.
+assert 'static const auto default_cg_mode = nullptr;' in lock_unit
+assert lock.count('(void)default_cg_mode;') == 1
+lock = 'static const auto default_cg_mode = nullptr;\n' + lock
 source = r'''
 #include <cassert>
 #include <chrono>

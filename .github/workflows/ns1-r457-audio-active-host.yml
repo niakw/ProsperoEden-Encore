@@ -5,12 +5,22 @@ on:
       - integration/r457-audio-real-owner-engine-20261112
     paths:
       - 'headless/CMakeLists.txt'
+      - 'headless/audio.cpp'
+      - 'headless/audio_in_silence.h'
+      - 'tests/ab_ns1_audioin_silence_host.cpp'
+      - 'tools/audit/check-ab-ns1-audioin-timeline-host.py'
+      - 'tools/audit/check-ab-ns1-guest-release-host.py'
       - 'vendor'
       - 'tools/check-r457-ns1-audio-source.py'
       - '.github/workflows/ns1-r457-audio-active-host.yml'
   pull_request:
     paths:
       - 'headless/CMakeLists.txt'
+      - 'headless/audio.cpp'
+      - 'headless/audio_in_silence.h'
+      - 'tests/ab_ns1_audioin_silence_host.cpp'
+      - 'tools/audit/check-ab-ns1-audioin-timeline-host.py'
+      - 'tools/audit/check-ab-ns1-guest-release-host.py'
       - 'vendor'
       - 'tools/check-r457-ns1-audio-source.py'
       - '.github/workflows/ns1-r457-audio-active-host.yml'
@@ -27,3 +37,14 @@ jobs:
           submodules: true
       - name: Host selected source and A32/standard memory oracle
         run: python3 -B tools/check-r457-ns1-audio-source.py
+      - name: Compile bounded silent PCM regression under ASan/UBSan
+        run: |
+          clang++ -std=c++20 -O1 -g -Wall -Wextra -Werror \
+            -fsanitize=address,undefined -fno-omit-frame-pointer \
+            -pthread -I . tests/ab_ns1_audioin_silence_host.cpp \
+            -o /tmp/encore-c00-audioin-shape
+          /tmp/encore-c00-audioin-shape
+      - name: Source-extracted native AudioIn timing and stop regression
+        run: python3 -B tools/audit/check-ab-ns1-audioin-timeline-host.py
+      - name: Source-extracted guest PCM buffer lifetime regression
+        run: python3 -B tools/audit/check-ab-ns1-guest-release-host.py

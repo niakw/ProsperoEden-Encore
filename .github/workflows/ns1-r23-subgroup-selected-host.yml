@@ -1,0 +1,47 @@
+name: NS1 R23 subgroup geometry selected source proof
+on:
+  push:
+    branches: [integration/ns1-subgroup-geometry-active-20261112]
+    paths:
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/check_r457_fw23_ns_source.py'
+      - '.github/workflows/ns1-r23-subgroup-selected-host.yml'
+  pull_request:
+    paths:
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/check_r457_fw23_ns_source.py'
+      - '.github/workflows/ns1-r23-subgroup-selected-host.yml'
+permissions:
+  contents: read
+jobs:
+  subgroup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Verify existing FW23 NS command 23 and null-icon guard
+        run: python3 -B tools/ns2/check_r457_fw23_ns_source.py
+      - name: Review exact current vendor blob and subgroup SPIR-V host oracle
+        run: |
+          python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('headless/CMakeLists.txt').read_text()
+          block=s[s.index('# R23 #72 subgroup/geometry:'):s.index('# P5 link parity: native shader atomic CAS owners')]
+          for needle in (
+              'get_target_property(eden_r23_subgroup_units shader_recompiler SOURCES)',
+              'list(FIND eden_r23_subgroup_units "${eden_r23_taskmesh_owner}"',
+              'list(REMOVE_ITEM eden_r23_subgroup_units "${eden_r23_subgroup_relative}")',
+              'list(APPEND eden_r23_subgroup_units "${eden_r23_subgroup_full}")',
+              'list(APPEND eden_r23_subgroup_units "${eden_r23_geometry_source}")',
+              'if(PS5_NATIVE)'):
+              assert needle in block, needle
+          assert block.count('list(APPEND eden_r23_subgroup_units "${eden_r23_subgroup_full}")') == 1
+          assert block.count('backend/spirv/emit_spirv.cpp') == 1
+          assert block.count('frontend/maxwell/translate_program.cpp') == 1
+          assert 'geometry_compaction_pass.cpp' in block
+          print('R23_SUBGROUP_REAL_SELECTED_GRAPH_PASS preselected=2 new=3')
+          PY

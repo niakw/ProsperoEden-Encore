@@ -3590,6 +3590,72 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NATIVE_TASK_MESH_ROOT}")
 endif()
 
+# R23 #72 subgroup/geometry: Task/Mesh already owns emit_spirv.cpp and
+# translate_program.cpp. NEVER select those twice. Complete only the two
+# original remaining shader TUs and one additional geometry compaction unit.
+if(PS5_NATIVE)
+    set(EDEN_R23_SUBGROUP_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+    foreach(eden_r23_subgroup_header IN ITEMS
+            "backend/spirv/spirv_emit_context.h"
+            "host_translate_info.h"
+            "ir_opt/passes.h"
+            "profile.h")
+        if(NOT EXISTS "${EDEN_R23_SUBGROUP_ROOT}/${eden_r23_subgroup_header}")
+            message(FATAL_ERROR "R23 #72 matched shader header missing: ${eden_r23_subgroup_header}")
+        endif()
+    endforeach()
+    get_target_property(eden_r23_subgroup_units shader_recompiler SOURCES)
+    # Verify both preselected Task/Mesh shader TUs: no second owner allowed.
+    foreach(eden_r23_preselected IN ITEMS
+            "backend/spirv/emit_spirv.cpp"
+            "frontend/maxwell/translate_program.cpp")
+        set(eden_r23_taskmesh_owner
+            "${EDEN_R23_SUBGROUP_ROOT}/${eden_r23_preselected}")
+        list(FIND eden_r23_subgroup_units "${eden_r23_taskmesh_owner}"
+             eden_r23_taskmesh_selected)
+        if(eden_r23_taskmesh_selected LESS 0)
+            message(FATAL_ERROR "R23 subgroup missing preselected Task/Mesh owner: ${eden_r23_preselected}")
+        endif()
+        list(FIND eden_r23_subgroup_units "${eden_r23_preselected}"
+             eden_r23_old_duplicate)
+        if(NOT eden_r23_old_duplicate LESS 0)
+            message(FATAL_ERROR "R23 subgroup duplicate original Task/Mesh TU: ${eden_r23_preselected}")
+        endif()
+    endforeach()
+    foreach(eden_r23_subgroup_relative IN ITEMS
+            "backend/spirv/emit_spirv_warp.cpp"
+            "ir_opt/constant_propagation_pass.cpp")
+        set(eden_r23_subgroup_full
+            "${EDEN_R23_SUBGROUP_ROOT}/${eden_r23_subgroup_relative}")
+        if(NOT EXISTS "${eden_r23_subgroup_full}")
+            message(FATAL_ERROR "R23 #72 maintained shader source missing: ${eden_r23_subgroup_relative}")
+        endif()
+        list(FIND eden_r23_subgroup_units "${eden_r23_subgroup_relative}"
+             eden_r23_original_subgroup)
+        if(eden_r23_original_subgroup LESS 0)
+            message(FATAL_ERROR "R23 #72 pinned subgroup source owner drift: ${eden_r23_subgroup_relative}")
+        endif()
+        list(REMOVE_ITEM eden_r23_subgroup_units "${eden_r23_subgroup_relative}")
+        list(APPEND eden_r23_subgroup_units "${eden_r23_subgroup_full}")
+    endforeach()
+    set(eden_r23_geometry_source
+        "${EDEN_R23_SUBGROUP_ROOT}/ir_opt/geometry_compaction_pass.cpp")
+    if(NOT EXISTS "${eden_r23_geometry_source}")
+        message(FATAL_ERROR "R23 #72 geometry compaction implementation missing")
+    endif()
+    list(FIND eden_r23_subgroup_units "${eden_r23_geometry_source}"
+         eden_r23_existing_geometry)
+    if(NOT eden_r23_existing_geometry LESS 0)
+        message(FATAL_ERROR "R23 #72 geometry compaction TU duplicated")
+    endif()
+    list(APPEND eden_r23_subgroup_units "${eden_r23_geometry_source}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_r23_subgroup_units}")
+    target_include_directories(video_core BEFORE PRIVATE
+        "${EDEN_NATIVE_TASK_MESH_ROOT}")
+    message(STATUS "R23 #72: five coherent shader TUs (2 existing Task/Mesh + 3 unique subgroup)")
+endif()
+
 # P5 link parity: native shader atomic CAS owners
 # The cached original source builds successfully but does not define all
 # CAS symbols referenced by the pinned Task/Mesh opcode/dispatch headers.

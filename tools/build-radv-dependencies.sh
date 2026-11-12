@@ -90,7 +90,8 @@ done
 bash "$vulkan/tools/build-radv.sh" release
 python3 "$root/tools/install-vendored-radv.py" \
     "$vulkan/.deps/work/radv-src" \
-    --provenance "$vulkan/.deps/native/radv-release/PROVENANCE.txt"
+    --provenance "$vulkan/.deps/native/radv-release/PROVENANCE.txt" \
+    --repair-owned-stage
 bash "$vulkan/tools/build-radv.sh" release
 sha256sum "$vulkan/.deps/work/radv-src/src/vulkan/wsi/wsi_common_videoout.c" \
     > "$vulkan/.deps/native/radv-release/EDEN_WSI_SHA256"

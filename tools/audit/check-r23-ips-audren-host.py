@@ -17,13 +17,15 @@ IPS_ORIGINAL=V/"core/file_sys/ips_layer.cpp"
 IPS_OWNER=ROOT/"vendor/encore-active/eden-core/src/core/file_sys/ips_layer.cpp"
 AUDIO_ORIGINAL=V/"core/hle/service/audio/audio.cpp"
 AUDIO_OWNER=ROOT/"headless/r23_audren_debug_ps5.cpp"
-AUDIO_ACTIVE=ROOT/"vendor/encore-active/eden-backports/src/core/hle/service/audio/audio.cpp"
+AUDIO_NS1_OWNER=ROOT/"headless/r23_audren_debug_ns1_ps5.cpp"
+AUDIO_ACTIVE=ROOT/"vendor/encore-active/ns2-runtime/audio/core/hle/service/audio/audio.cpp"
 IPS_SHA="9d46549bf0fae3ec5fd0ab6c65bc432dcff68818"
 AUDIO_SHA="c4332833042d7bca6309fdbe532637d80d90b4e6"
 IPS_ACTIVE_SHA="f6687abf25ef2874c06c2523c530b5ba197e6d45"
+AUDIO_SHARED_SHA="706704ceabc9699fe926d3066e0d84fff71cf536"
 REPLACE_AUDIO=(
- ("RegisterNamedService(\"audren:d\", std::make_shared<IAudioInManager>(system), 30)",
-  "RegisterNamedService(\"audren:d\", std::make_shared<IAudioRendererManagerForDebugger>(system), 30)"),
+ ("RegisterNamedService(\"audren:d\", std::make_shared<IAudioInManager>(system))",
+  "RegisterNamedService(\"audren:d\", std::make_shared<IAudioRendererManagerForDebugger>(system))"),
 )
 
 def gitblob(path):
@@ -40,16 +42,26 @@ def verify():
         assert k in source, ("maintained IPS contract missing", k)
     assert gitblob(AUDIO_ORIGINAL)==AUDIO_SHA
     expected=AUDIO_ACTIVE.read_text()
-    assert 'RegisterNamedService("audren:u", std::make_shared<IAudioRendererManager>(system), 30)' in expected
+    assert gitblob(AUDIO_ACTIVE)==AUDIO_SHARED_SHA
+    assert 'RegisterNamedService("audren:u", std::make_shared<IAudioRendererManager>(system))' in expected
+    old_audio=AUDIO_ORIGINAL.read_text()
     for old,new in REPLACE_AUDIO:
         assert expected.count(old)==1 and expected.count(new)==0
+        assert old_audio.count(old)==1 and old_audio.count(new)==0
         expected=expected.replace(old,new)
+        old_audio=old_audio.replace(old,new)
     actual=AUDIO_OWNER.read_text()
+    fallback=AUDIO_NS1_OWNER.read_text()
     start=actual.find("// SPDX-FileCopyrightText")
-    assert start>=0 and actual[start:]==expected, "audren source changed"
+    other_start=fallback.find("// SPDX-FileCopyrightText")
+    assert start>=0 and actual[start:]==expected, "shared NS1/NS2 audren source drift"
+    assert other_start>=0 and fallback[other_start:]==old_audio, "NS1-only audren fallback drift"
+    assert 'RegisterNamedService("stpl:u"' in actual, "shared NS2 audio stream service lost"
     cm=(ROOT/"headless/CMakeLists.txt").read_text()
     for k in ("EDEN_MAINTAINED_IPS_LAYER", "hle/service/audio/audio.cpp",
-              "r23_audren_debug_ps5.cpp", "eden_r23_service_tus"):
+              "r23_audren_debug_ps5.cpp", "r23_audren_debug_ns1_ps5.cpp",
+              "EDEN_SHARED_NS2_AUDIO", "EDEN_NS2_AUDIO_SOURCE",
+              "eden_r23_service_tus"):
 
         assert k in cm, ("CMake selected owner missing", k)
     assert "r23_ips_layer_ps5.cpp" not in cm, "superseded IPS source reselected"

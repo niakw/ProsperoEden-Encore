@@ -139,7 +139,11 @@ assert prmt_index(0x01234567, 0x89abcdef, 0x1111) == 0x45454545
 assert "if (index < 8)" in prmt_new
 # Diagnostic counters must saturate at eight instead of performing atomic
 # read-modify-write on every repeated shader translation or Fermi blit.
-for source in (prmt, fermi_default, fermi_experimental):
+# The shipping Fermi2D owner has no bounded sample call; retaining an
+# unused local helper produced a native -Wunused-function warning. Only the
+# shader PRMT and optional software-blit experimental owner need this helper.
+assert "EdenGpuBoundedSample" not in fermi_default
+for source in (prmt, fermi_experimental):
     assert "unsigned EdenGpuBoundedSample(std::atomic<unsigned>& samples) noexcept" in source
     assert "compare_exchange_weak(current, current + 1u," in source
     assert "while (current < 8u)" in source

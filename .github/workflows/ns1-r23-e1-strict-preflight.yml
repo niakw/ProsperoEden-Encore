@@ -1,0 +1,26 @@
+name: NS1 R23 integration strict early gate
+on:
+  push:
+    branches: [integration/ns1-r23-e1-20261112]
+permissions:
+  contents: read
+jobs:
+  source-owners:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Strict owner/source oracle checks
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-vendor-consolidation-debt.py
+          python3 -B tools/check-vendored-eden-cache-rebase-host.py
+          python3 -B tools/check-ci-cache.py
+          python3 -B tools/check-post-f07-delta-register.py
+          python3 -B tools/check-performance.py --source-only
+          python3 -B tools/check-native-gpu-thread.py --source-only
+          python3 -B tools/check-ps5-present-header-contract.py
+          python3 -B tools/check-native-texture-pin-owner-parity.py

@@ -192,7 +192,20 @@ assert "fs_file_source" not in c
 
 storage_rel = "core/hle/service/filesystem/fsp/fs_i_storage.cpp"
 storage_pinned = (sources / "eden/src" / storage_rel).read_text()
-storage_maintained = (active / "eden-core/src" / storage_rel).read_text()
+# R23 #54 paced IStorage is an audited additive source delta. Reconstruct
+# the exact former perf-only native owner before the immutable generator oracle.
+# Refuse unexpected changes instead of disabling the strict byte comparison.
+import hashlib
+storage_path = active / "eden-core/src" / storage_rel
+storage_bytes = storage_path.read_bytes()
+storage_blob = hashlib.sha1(
+    b"blob " + str(len(storage_bytes)).encode() + b"\x00" + storage_bytes).hexdigest()
+assert storage_blob == "3513150b1a39297207bc16ccaadec8f1a8fdeb96", (
+    "R23 paced IStorage owner drift")
+storage_maintained = storage_bytes.decode("utf-8")
+for addition in reversed(["#include <algorithm>\n#include <chrono>\n#include <thread>\n\n","    // A guest can declare a larger read than its mapped output IPC buffer.\n    R_UNLESS(static_cast<u64>(length) <= out_bytes.size(), FileSys::ResultInvalidSize);\n\n    // Charge at most 64 KiB of each request at the 40 MiB/s console-like\n    // streaming rate, per IStorage session. Base service locking serializes\n    // commands and protects next_read_tick; avoid the old generic service\n    // microsleep, which was also applied to unrelated storage users.\n    const auto now = std::chrono::steady_clock::now();\n    if (now < next_read_tick) {\n        std::this_thread::sleep_until(next_read_tick);\n    }\n    const auto charge = (std::min)(length, MaxChargedReadSize);\n    next_read_tick = std::chrono::steady_clock::now() +\n        std::chrono::nanoseconds{charge * 1'000'000'000 / ReadBytesPerSecond};\n"]):
+    assert storage_maintained.count(addition) == 1, "R23 IStorage overlay hunk drift"
+    storage_maintained = storage_maintained.replace(addition, "", 1)
 storage_old = "    backend->Read(out_bytes.data(), length, offset);"
 storage_new = """    const auto fs_start = ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed) ? ::Eden::Performance::NowNs() : 0;
     const auto fs_read = backend->Read(out_bytes.data(), length, offset);

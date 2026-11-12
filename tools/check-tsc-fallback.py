@@ -6,8 +6,15 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 cache = Path((root / '.local/headless-cache').read_text().strip())
-original = (cache / 'source/src/common/cpu_features.cpp').read_text()
+# The staged source can already contain the maintained R23 native TSC
+# backport. Replaying it over that cache is not a valid upstream oracle.
+# Replay from the immutable pinned Eden source, then accept only a fully
+# recognized staged state, never an unknown or partially edited cache input.
+original = (root / 'vendor/sources/eden/src/common/cpu_features.cpp').read_text()
 derived = (root / 'vendor/encore-active/eden-core/src' / 'common/cpu_features.cpp').read_text()
+prepared = (cache / 'source/src/common/cpu_features.cpp').read_text()
+assert prepared in (original, derived), (
+    'Unrecognized native TSC staged source; refusing stale/partial cache overlay')
 expected = original.replace('        } else {\n            caps.tsc_frequency = X64::EstimateRDTSCFrequency();\n        }', '        }').replace(
     '    if (max_std_fn >= 0x16) {',
     "    if (caps.invariant_tsc && caps.tsc_frequency < 1'000'000'000ULL) {\n        caps.tsc_frequency = X64::EstimateRDTSCFrequency();\n    }\n\n    if (max_std_fn >= 0x16) {")

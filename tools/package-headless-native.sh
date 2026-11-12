@@ -50,17 +50,12 @@ cp "$root/assets/icon0.png" "$app/sce_sys/icon0.png"
 cp "$root/assets/icon0.dds" "$app/sce_sys/icon0.dds"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
-# Refresh up to 16 recently released Switch 1/2 artwork images in WebP
-# on each build, preserving an opt-out for offline/restricted redistribution.
-# Console selection rotates the cached snapshot daily without UI networking.
-# Publishing third-party game art still requires a rights review.
-# Never permit source-tree media to bypass this explicit build-time staging.
+# Daily Switch artwork is deliberately NOT bundled with the base install.
+# The first user selection of the opt-in Daily background initializes its
+# eight-image WebP cache under UserDir()/wallpapers/daily on a background
+# worker. No network request or downloaded game art belongs in this package.
+# Explicitly remove a pre-existing staged snapshot on rebuild/resume.
 rm -rf "$app/ui/art/daily"
-if [[ ${EDEN_BAKE_DAILY_SWITCH_ART:-1} == 1 ]]; then
-    python3 "$root/tools/launcher/fetch_daily_switch.py" \
-        --output "$app/ui/art/daily" ||
-        echo "Daily Switch artwork unavailable; keep the original Encore background" >&2
-fi
 # Read-only embedded hosts policy. Release must never lose this file.
 cp "$root/headless/network-hosts.txt" "$app/network-hosts.txt"
 rm -f "$app/ui/art/backdrop.tga" "$app/ui/art/backdrop-blur.tga"

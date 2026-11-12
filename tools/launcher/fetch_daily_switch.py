@@ -27,7 +27,7 @@ DATA_HOSTS = {"raw.githubusercontent.com"}
 ART_HOSTS = {"api.nlib.cc", "www.nintendo.com", "assets.nintendo.eu"}
 MAX_FEED = 3 * 1024 * 1024
 MAX_IMAGE = 7 * 1024 * 1024
-MAX_ITEMS = 16
+MAX_ITEMS = 8
 MAX_LOOKBACK = 180
 
 def fetch(url: str, hosts: set[str], maximum: int, timeout: int = 9) -> bytes:
@@ -118,7 +118,7 @@ def gather(today: date) -> list[dict]:
     except (OSError, ValueError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"NS1 feed unavailable: {type(exc).__name__}", file=sys.stderr)
     ns1.sort(key=lambda x: (-x["day"].toordinal(), x["title"].casefold()))
-    # Keep sixteen newest verified releases irrespective of platform: new
+    # Keep eight newest verified releases irrespective of platform: new
     # titles replace the oldest release, not a fixed NS1/NS2 quota.
     seen = set()
     result = []

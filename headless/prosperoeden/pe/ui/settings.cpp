@@ -748,7 +748,7 @@ void Launcher::press_dialog(Key key)
         case app_image:
             if (wallpaper_options_.empty()) {
                 say(wallpaper_scan_.valid() ? tr("Scanning local wallpapers...") :
-                    tr("No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."), true);
+                    tr("No wallpaper. Copy PNG, JPEG, WebP or TGA to the app wallpapers folder."), true);
                 return;
             }
             {

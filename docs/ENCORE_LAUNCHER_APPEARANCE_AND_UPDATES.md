@@ -31,58 +31,31 @@ Personal wallpapers remain in their original PNG, JPEG, TGA or WebP format
 art and downloaded cover caches use WebP. Decoding occurs
 on the existing launcher texture worker, never synchronously in draw().
 
-Daily Switch 1/2 mode rotates at most 16 verified, cached WebPs by local
-console date; there is no network access in the UI loop. The app first
-checks the user override folder:
-<Eden::UserDir()>/wallpapers/daily/index.json
-and then the packaged snapshot:
-<Eden::AppFile(ui/art/daily)>/index.json
+Daily Switch 1/2 is strictly opt-in. The base install and future app updates
+include **zero** daily game images, and no initial background request is
+performed at launcher start. Only the first explicit selection of the Daily
+background allows the asynchronous first download under:
+`<Eden::UserDir()>/wallpapers/daily/`
 
-The package-time generator tools/launcher/fetch_daily_switch.py uses recent
-Switch 2 metadata and Switch 1 candidate IDs checked independently against
-Nlib release-date/type metadata. It only accepts already released titles,
-confirmed banners from allowlisted Nintendo/Nlib hosts, bounded input and
-output, and converts media to 1280x720 lossy WebP at quality 80, normalizing
-EXIF orientation before discarding metadata. No redundant image flip is
-applied. Portrait/square
-art is placed on a blurred canvas; it is not distorted.
+The cache contains at most **8** currently released NS1/NS2 titles (newest
+verified release dates first); every downloaded/built-in image is WebP. Source
+media is decoded, normalized for portrait/landscape with no double vertical
+flip, resized to the target raster, and cached atomically. The selected
+background rotates by local calendar day. Only while the option remains
+selected may a later day trigger a bounded refresh; disabled mode must never
+download or update the catalog. Temporary failures keep any valid local
+snapshot; no network operation runs on the render thread.
 
-By default, packaging attempts to refresh a maximum of sixteen WebP
-images from recently released NS1/NS2 titles, in descending verified
-release-date order; the newest replace the oldest entries. The packager
-may disable third-party artwork with EDEN_BAKE_DAILY_SWITCH_ART=0 for
-offline reproducibility and legal redistribution review. Failure to
-retrieve art never blocks the build. The on-console Daily theme remains
-an explicit user selection, and changes offline every calendar day.
-The snapshot is refreshed on package builds (NiakPS5's architecture), while
-wallpaper selection rotates each day completely offline. The included catalog
-does NOT fetch new games daily after installation: a refreshed package or a
-separately validated updater is needed for future releases.
-Example manifest with a placeholder image supplied by the user:
+The optional host generator `tools/launcher/fetch_daily_switch.py` is for
+test/explicit off-console maintenance only, NOT for standard package builds.
+A prior package-generated catalog is not a reason to fetch before opt-in.
+All user-supplied backgrounds may remain in their original PNG/JPEG/TGA/WebP
+format: this personal-import exception does not apply to packaged or
+downloaded game artwork.
 
-~~~json
-{
-  "entries": [
-    {
-      "title": "Example audited released title",
-      "platform": "ns2",
-      "release_date": "2026-10-30",
-      "filename": "example.webp",
-      "approved": true
-    }
-  ]
-}
-~~~
-
-User-supplied images with the matching manifest override packaged art.
-Publishing externally sourced game promotional media may require permission
-from the rights holders; confirm redistribution rights before release.
-Direct PS5 gallery access still awaits native permission/API validation.
-An absent or invalid manifest falls back to the authored Encore backdrop.
-
-When the user disables the game-specific backdrop, Home preserves title
-metadata and actions while hiding the selected game's full-screen hero
-image, leaving the user's own background visible.
+Redistribution/licensing of third-party artwork still needs independent rights
+review. A missing cache falls back to the standard Encore artwork; never
+render a black screen or block game launch.
 
 ## R21 — Application updates
 

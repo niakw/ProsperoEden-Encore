@@ -731,7 +731,30 @@ hle_trace = """            if (::Eden::Performance::trace_fs_callers.load(std::m
             }
 """
 hle_expected = hle_expected.replace(hle_metric, hle_metric + hle_trace)
-assert hle_maintained == hle_expected, "Maintained service dispatch diverges from former CMake-generated HLE source"
+# R23 #54 moves per-guest read pacing into IStorage; the legacy common
+# HLE 600us NVDEC sleep must not remain. Reconstruct the new source
+# from exact historical diagnostics plus these three intentional changes.
+hle_dispatch_r23 = (
+    ('    , is_i_storage{std::string_view{service_name_} == "IStorage"}\n', ''),
+    ('    const auto command = ctx.GetCommand();\n'
+     '    auto it = handlers.find(command);\n'
+     '    const bool is_cmd_read = command == 0;',
+     '    auto it = handlers.find(ctx.GetCommand());'),
+    ('    if (is_i_storage && is_cmd_read) {\n'
+     '        const auto* const process = ctx.GetThread().GetOwnerProcess();\n'
+     '        if (process != nullptr && system.IsNVDECActiveForProcess(process->GetId())) {\n'
+     '            std::this_thread::sleep_for(std::chrono::microseconds{600});\n'
+     '        }\n'
+     '    }', ''),
+)
+for earlier, later in hle_dispatch_r23:
+    assert hle_expected.count(earlier) == 1, "R23 HLE historical context moved"
+    hle_expected = hle_expected.replace(earlier, later, 1)
+assert "std::this_thread::sleep_for(std::chrono::microseconds{600})" not in hle_maintained
+assert "is_i_storage" not in hle_maintained
+assert hle_maintained == hle_expected, (
+    "R23 per-IStorage pacing changed HLE beyond three reviewed mutations")
+print("ENCORE_R23_HLE_DISPATCH_ISOLATION_PASS", "legacy_600us_sleep=0", "profile_receipts=2")
 # Synchronous IPC: request ID and timing are captured BEFORE the potentially
 # blocking call; the exact historical body is maintained, not regenerated.
 ipc_rel = "core/hle/kernel/svc/svc_ipc.cpp"

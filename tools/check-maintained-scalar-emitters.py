@@ -13,7 +13,7 @@ reviewed = {
     "emit_x64_vector.cpp": (
         (
             "        /*1*/ code.vpxor(tmp1, tmp1, tmp1);",
-            "        // AVX-512 VPACKUSDW consumes low 128-bit halves; restore lanes 4-7.\\n"
+            "        // AVX-512 VPACKUSDW consumes low 128-bit halves; restore lanes 4-7.\n"
             "        /*3*/ code.vextracti128(tmp1, tmp0.cvt256(), 1);",
         ),
         (
@@ -21,18 +21,18 @@ reviewed = {
             "        U const shifted = U(U(element) << U(T(shift_amount)));",
         ),
         (
-            "        auto const shifted_test = shifted >> U(T(shift_amount));\\n"
+            "        auto const shifted_test = shifted >> U(T(shift_amount));\n"
             "        auto result = 0;",
-            "        auto const shifted_test = shifted >> U(T(shift_amount));\\n"
+            "        auto const shifted_test = shifted >> U(T(shift_amount));\n"
             "        T result = 0;",
         ),
     ),
     "emit_x64_data_processing.cpp": (
         (
-            "    code.test(divisor, divisor);\\n"
+            "    code.test(divisor, divisor);\n"
             "    code.jz(end, code.T_NEAR);",
-            "    code.test(divisor, divisor);\\n"
-            "    code.cmovz(eax, divisor); // SDIV32 by zero returns zero\\n"
+            "    code.test(divisor, divisor);\n"
+            "    code.cmovz(eax, divisor); // SDIV32 by zero returns zero\n"
             "    code.jz(end, code.T_NEAR);",
         ),
     ),

@@ -13,12 +13,15 @@ us = parse_po(language_dir / "en-US.po")
 uk = parse_po(language_dir / "en-GB.po")
 expected = set(template) | set(module["DYNAMIC_LIBRARY_GENRES"])
 assert len(list(language_dir.glob("*.po"))) == 31, "All 31 official PS5 catalogs are required"
-# Keep the template synchronized with the actual marked source. New UI texts
-# are allowed; silently dropping an existing catalog category is not.
-live = set(module["marked_text"]())
-assert set(template) == live, "Launcher template is stale relative to marked UI sources"
-assert len(live) >= 566 and len(expected) >= 596, "Launcher texts or runtime genres unexpectedly shrank"
-assert len(expected) - len(live) == len(module["DYNAMIC_LIBRARY_GENRES"]), (
+# The guide workflow deliberately checks out catalogs and the template only;
+# its sparse tree omits the source files marked_text() needs. The full launcher
+# workflow checks live-source parity when settings_store.h is present.
+if (root / "headless/settings_store.h").is_file():
+    live = set(module["marked_text"]())
+    assert set(template) == live, "Launcher template is stale relative to marked UI sources"
+assert len(template) >= 566 and len(expected) >= 596, (
+    "Launcher texts or runtime genres unexpectedly shrank")
+assert len(expected) - len(template) == len(module["DYNAMIC_LIBRARY_GENRES"]), (
     "Launcher template overlaps or omits dynamic runtime genres")
 assert set(us) == set(uk) == expected, "English variants have missing or stale msgids"
 assert all(us[key] and uk[key] for key in expected), "Empty English translation"

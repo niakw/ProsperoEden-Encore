@@ -253,11 +253,11 @@ msgstr "مخبأ"
 
 #: pe/ui/switch_theme.cpp
 msgid "Cache"
-msgstr "ذاكرة التخزين المؤقت"
+msgstr "ذاكرة مؤقتة"
 
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
-msgstr "ذاكرة التخزين المؤقت: {0} |  السجلات: {1}"
+msgstr "المؤقت: {0} | السجلات: {1}"
 
 #: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
@@ -352,11 +352,11 @@ msgstr "واضح"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear cache"
-msgstr "مسح ذاكرة التخزين المؤقت"
+msgstr "مسح المؤقت"
 
 #: pe/ui/launcher.cpp
 msgid "Clear cache?"
-msgstr "هل تريد مسح ذاكرة التخزين المؤقت؟"
+msgstr "مسح المؤقت؟"
 
 #: eden_services.cpp
 msgid "Cleared {0} of cache."
@@ -738,7 +738,7 @@ msgstr "تعذّر تشغيل اللعبة: {0} التفاصيل: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "تصفح المجلدات · البرامج"
+msgstr "ملفات الألعاب"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -782,7 +782,7 @@ msgstr "الألعاب"
 
 #: pe/ui/home.cpp
 msgid "Games and cache"
-msgstr "الألعاب وذاكرة التخزين المؤقت"
+msgstr "الألعاب والذاكرة المؤقتة"
 
 #: pe/ui/switch_theme.cpp
 msgid "Games found"
@@ -1181,7 +1181,7 @@ msgstr "الخلفية: PNG/JPEG/TGA → wallpapers/"
 #. Neither a game update nor DLC is installed.
 #: pe/ui/library.cpp
 msgid "No DLC/updates"
-msgstr "لا محتويات إضافية أو تحديثات"
+msgstr "لا إضافات أو تحديثات"
 
 #. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h

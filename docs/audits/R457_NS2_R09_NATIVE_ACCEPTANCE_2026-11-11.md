@@ -43,3 +43,8 @@ output remain console acceptance gates.
 ## Superseding 12 November requirements
 
 Earlier wording about **sixteen bundled daily WebPs** is superseded by the explicit user requirement: **eight user-selected, on-demand WebPs only**, none in install/update packages. Production code `e1a4b0a6` removes build-time art, `b79831d3` adds an async first-selection fetch and one-attempt-per-day cache receipt, and `2081099c` preserves the existing 31-locale translation source keys while keeping WebP user imports enabled. No final PS5 visual or gameplay proof is inferred from these commits. 33 NS1/global upstream work packages remain subject to integration/reconciliation; see the 12 November register on main. The draft release remains unpublished.
+
+
+## 12 November — native PS5 codegen and opt-in Daily runtime acceptance
+
+Native PS5 compilation from the post-documentation main SHA is required to verify the new deferred Daily artwork worker in `eden_services.cpp` against the real PS5 SDK, plus guest NS1/NS2 owners. The package must contain **no** `ui/art/daily/*` files; a first-selection-only user directory download is not a packaging operation. Host preflight source-UX and focused P5 checks passed on prior source, and the 33-case PR integration remains a distinct unqualified backlog. Exact native SHA: 17d99dd2e270f0b3da8b2872112e79159f263a07. This note triggers validation only, with release publishing explicitly disabled.

@@ -134,6 +134,20 @@ for evidence in (
 assert active_renderer.count("EDEN_LOADER_JACKET_HANDOFF_VULKAN") == 4
 assert active_renderer.index("Eden::LaunchHandoff::Peek()") < active_renderer.index("loading_jacket_buffer = std::move(buffer);")
 assert active_renderer.index("loading_jacket_buffer = std::move(buffer);") < active_renderer.index("Eden::LaunchHandoff::Clear();")
+# The compiled R08 header is a separate Encore-maintained override.
+# Checking only vendor's header misses compile-time member lookup failures.
+active_header = (root / "headless/renderer_vulkan_r08.h").read_text()
+assert 'configure_file("${EDEN_PORT_DIR}/renderer_vulkan_r08.h"' in native_selection
+for member in (
+    "vk::Buffer loading_jacket_buffer{};",
+    "u32 loading_jacket_width{};",
+    "u32 loading_jacket_height{};",
+    "bool loading_jacket_attempted{};",
+    "u32 loading_jacket_attempts{};",
+):
+    assert active_header.count(member) == 1, ("actual R08 header missing jacket member", member)
+assert active_header.index("MemoryAllocator memory_allocator;") < active_header.index(
+    "vk::Buffer loading_jacket_buffer{};") < active_header.index("StateTracker state_tracker;")
 assert "vk::Buffer loading_jacket_buffer{};" in renderer_header
 assert "u32 loading_jacket_attempts{};" in renderer_header
 assert "loading_jacket_attempts{}" in generator

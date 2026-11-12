@@ -99,6 +99,15 @@ private:
 
     Device device;
     MemoryAllocator memory_allocator;
+#ifdef PS5_NATIVE
+    // Native R08 source uses these session-owned jacket resources.
+    // Keep the staging buffer behind the allocator so it retires first.
+    vk::Buffer loading_jacket_buffer{};
+    u32 loading_jacket_width{};
+    u32 loading_jacket_height{};
+    bool loading_jacket_attempted{};
+    u32 loading_jacket_attempts{};
+#endif
     StateTracker state_tracker;
     Scheduler scheduler;
     Swapchain swapchain;

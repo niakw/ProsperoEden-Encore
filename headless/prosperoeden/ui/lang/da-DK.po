@@ -161,7 +161,7 @@ msgstr "Automatisk Kontroller"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automatisk Kontroller · Til"
+msgstr "Autotjek · Til"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -738,7 +738,7 @@ msgstr "Spillet kunne ikke startes: {0} Detaljer: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Gennemse mapper · software"
+msgstr "Spilfiler"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1181,7 +1181,7 @@ msgstr "Baggrund: PNG/JPEG/TGA → wallpapers/"
 #. Neither a game update nor DLC is installed.
 #: pe/ui/library.cpp
 msgid "No DLC/updates"
-msgstr "Ingen DLC eller opdateringer"
+msgstr "Ingen DLC/opdateringer"
 
 #. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
@@ -1428,7 +1428,7 @@ msgstr "Reset overrides"
 
 #: pe/ui/launcher.cpp
 msgid "Reset this game's custom settings?"
-msgstr "Vil du nulstille dette spils brugerdefinerede indstillinger?"
+msgstr "Nulstil spillets egne indstillinger?"
 
 #: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"

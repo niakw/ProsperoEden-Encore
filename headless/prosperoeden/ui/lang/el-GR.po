@@ -237,7 +237,7 @@ msgstr "Επαναφορά της χαρτογράφησης κουμπιών σ
 
 #: pe/ui/mapping.cpp
 msgid "Button mapping saved."
-msgstr "Η αντιστοίχιση κουμπιών αποθηκεύτηκε."
+msgstr "Αποθηκεύτηκε η διάταξη πλήκτρων."
 
 #: pe/ui/settings.cpp
 msgid "BUTTON PROFILE"
@@ -257,7 +257,7 @@ msgstr "Προσωρινή μνήμη"
 
 #: pe/ui/settings.cpp
 msgid "Cache: {0}  |  Logs: {1}"
-msgstr "Προσωρινή μνήμη: {0} |  Αρχεία καταγραφής: {1}"
+msgstr "Κρυφή μνήμη: {0} | Καταγραφές: {1}"
 
 #: pe/ui/launcher.cpp, pe/ui/switch_theme.cpp
 msgid "Cancel"
@@ -356,11 +356,11 @@ msgstr "Εκκαθάριση μνήμης cache"
 
 #: pe/ui/launcher.cpp
 msgid "Clear cache?"
-msgstr "Εκκαθάριση προσωρινής μνήμης;"
+msgstr "Διαγραφή cache;"
 
 #: eden_services.cpp
 msgid "Cleared {0} of cache."
-msgstr "Εκκαθάριση {0} από την προσωρινή μνήμη."
+msgstr "Διαγράφηκαν {0} από την cache."
 
 #: pe/ui/launcher.cpp, pe/ui/library.cpp
 msgid "Close"
@@ -456,7 +456,7 @@ msgstr "Ο φάκελος δεν δημιουργήθηκε. Ελέγξτε ότ
 
 #: pe/ui/library.cpp
 msgid "Could not load game library. Reopen Encore to retry."
-msgstr "Δεν ήταν δυνατή η φόρτωση της βιβλιοθήκης παιχνιδιών. Ανοίξτε ξανά το Encore για να προσπαθήσετε ξανά."
+msgstr "Αποτυχία φόρτωσης βιβλιοθήκης παιχνιδιών. Επανεκκινήστε το Encore."
 
 #: pe/ui/library.cpp
 msgid "Could not load game list. Please try again."
@@ -588,7 +588,7 @@ msgstr "Εκδίδω"
 
 #: pe/ui/settings.cpp
 msgid "Edit custom mapping"
-msgstr "Επεξεργασία προσαρμοσμένης χαρτογράφησης"
+msgstr "Αλλαγή χαρτογράφησης"
 
 #: pe/ui/browse.cpp
 msgid "Encore uses the same keys, firmware, roms, updates and mods folders under every storage root."
@@ -738,11 +738,11 @@ msgstr "Το παιχνίδι δεν ξεκίνησε: {0} Λεπτομέρει�
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Περιήγηση φακέλων · λογισμικό"
+msgstr "Αρχεία παιχνιδιών"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
-msgstr "Η βιβλιοθήκη παιχνιδιών δεν είναι διαθέσιμη"
+msgstr "Η βιβλιοθήκη δεν είναι διαθέσιμη"
 
 #: pe/ui/library.cpp
 msgid "Game overrides reset to global defaults."
@@ -902,7 +902,7 @@ msgstr "Εσωτερική αποθήκευση"
 
 #: pe/ui/browse.cpp
 msgid "Internal storage saved. Reopen Encore to use it."
-msgstr "Ο εσωτερικός χώρος αποθήκευσης αποθηκεύτηκε. Ανοίξτε ξανά το Encore για να το χρησιμοποιήσετε."
+msgstr "Η εσωτερική αποθήκευση σώθηκε. Επανεκκινήστε το Encore για χρήση."
 
 #: settings_store.h
 msgid "Italian"
@@ -1172,7 +1172,7 @@ msgstr "Δεν υπάρχει φάκελος roms"
 
 #: pe/ui/library.cpp
 msgid "No screenshots available"
-msgstr "Δεν υπάρχουν διαθέσιμα στιγμιότυπα οθόνης"
+msgstr "Δεν υπάρχουν στιγμιότυπα"
 
 #: pe/ui/settings.cpp
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
@@ -1428,7 +1428,7 @@ msgstr "Reset overrides"
 
 #: pe/ui/launcher.cpp
 msgid "Reset this game's custom settings?"
-msgstr "Επαναφορά των προσαρμοσμένων ρυθμίσεων αυτού του παιχνιδιού;"
+msgstr "Επαναφορά ειδικών ρυθμίσεων παιχνιδιού;"
 
 #: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
@@ -1538,7 +1538,7 @@ msgstr "Επιλέξτε παιχνίδι"
 
 #: pe/ui/library.cpp
 msgid "Select a game to begin"
-msgstr "Επιλέξτε ένα παιχνίδι για να ξεκινήσετε"
+msgstr "Επιλέξτε παιχνίδι για έναρξη"
 
 #: pe/ui/switch_theme.cpp
 msgid "Select a settings category"
@@ -1652,7 +1652,7 @@ msgstr "ΑΠΟΘΗΚΕΥΣΗ"
 
 #: pe/ui/home.cpp
 msgid "Storage not configured"
-msgstr "Ο χώρος αποθήκευσης δεν έχει ρυθμιστεί"
+msgstr "Η αποθήκευση δεν ρυθμίστηκε"
 
 #: pe/ui/home.cpp
 msgid "Storage ready"
@@ -1660,7 +1660,7 @@ msgstr "Έτοιμη η αποθήκευση"
 
 #: pe/ui/browse.cpp
 msgid "Storage root saved. Reopen Encore to use it."
-msgstr "Η ρίζα αποθήκευσης αποθηκεύτηκε. Ανοίξτε ξανά το Encore για να το χρησιμοποιήσετε."
+msgstr "Η ρίζα αποθήκευσης σώθηκε. Επανεκκινήστε το Encore."
 
 #: pe/ui/browse.cpp
 msgid "Supply your own files"
@@ -1730,7 +1730,7 @@ msgstr "Αυτό το παιχνίδι δεν έχει ακόμη αποθήκε
 
 #: pe/ui/library.cpp
 msgid "This game's settings cannot be saved (no title ID)."
-msgstr "Οι ρυθμίσεις αυτού του παιχνιδιού δεν μπορούν να αποθηκευτούν (δεν υπάρχει αναγνωριστικό τίτλου)."
+msgstr "Δεν γίνεται αποθήκευση ρυθμίσεων παιχνιδιού (λείπει ID τίτλου)."
 
 #: pe/ui/browse.cpp
 msgid "THIS ROOT"
@@ -1804,7 +1804,7 @@ msgstr "Χρησιμοποιήστε αρχεία NCA που έχουν εξαχ
 
 #: pe/ui/browse.cpp
 msgid "Use this root"
-msgstr "Χρησιμοποιήστε αυτή τη ρίζα"
+msgstr "Χρήση αυτής της ρίζας"
 
 #: pe/ui/settings.cpp
 msgid "VIBRATION"

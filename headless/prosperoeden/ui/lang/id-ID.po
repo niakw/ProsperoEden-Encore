@@ -738,7 +738,7 @@ msgstr "Game tidak dapat dijalankan: {0} Detail: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Jelajahi folder · perangkat lunak"
+msgstr "Berkas gim"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1190,7 +1190,7 @@ msgstr "Tidak ada"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Periksa Sekarang · Nonaktif"
+msgstr "Belum diperiksa"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp

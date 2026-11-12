@@ -153,15 +153,15 @@ msgstr "Austrálie"
 
 #: pe/ui/settings.cpp
 msgid "AUTO CHECK"
-msgstr "AUTOMATICKY ZKONTROLOVAT"
+msgstr "AUTO KONTROLA"
 
 #: pe/ui/switch_theme.cpp
 msgid "Auto check"
-msgstr "Automaticky Zkontrolovat"
+msgstr "Auto kontrola"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automaticky Zkontrolovat · Zapnuto"
+msgstr "Auto kontrola · Zapnuto"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -738,7 +738,7 @@ msgstr "Hru se nepodařilo spustit: {0} Podrobnosti: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Procházet složky · software"
+msgstr "Soubory her"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1172,7 +1172,7 @@ msgstr "Chybí složka roms"
 
 #: pe/ui/library.cpp
 msgid "No screenshots available"
-msgstr "Nejsou k dispozici žádné snímky obrazovky"
+msgstr "Žádné snímky obrazovky"
 
 #: pe/ui/settings.cpp
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
@@ -1190,7 +1190,7 @@ msgstr "Žádné"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Zkontrolovat Nyní · Vypnuto"
+msgstr "Neověřeno"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1660,7 +1660,7 @@ msgstr "Sklad připraven"
 
 #: pe/ui/browse.cpp
 msgid "Storage root saved. Reopen Encore to use it."
-msgstr "Kořenový adresář úložiště byl uložen. Chcete-li jej použít, znovu otevřete Encore."
+msgstr "Kořen úložiště uložen. Pro použití znovu spusťte Encore."
 
 #: pe/ui/browse.cpp
 msgid "Supply your own files"

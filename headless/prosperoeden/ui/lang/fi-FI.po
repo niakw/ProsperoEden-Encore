@@ -161,7 +161,7 @@ msgstr "Automaattinen Tarkista"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automaattinen Tarkista · Päällä"
+msgstr "Autotarkistus · Päällä"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -738,7 +738,7 @@ msgstr "Peliä ei voitu käynnistää: {0} Lisätiedot: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Selaa kansioita · ohjelmistot"
+msgstr "Pelitiedostot"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"

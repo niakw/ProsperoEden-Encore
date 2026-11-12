@@ -738,7 +738,7 @@ msgstr "เริ่มเกม​ไม่ได้: {0} รายละเอ
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "เรียกดูโฟลเดอร์ · ซอฟต์แวร์"
+msgstr "ไฟล์เกม"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -2183,7 +2183,7 @@ msgstr "การสร้างเฟรม"
 
 #: pe/ui/settings.cpp
 msgid "Neural Rendering"
-msgstr "การเรนเดอร์ด้วยโครงข่ายประสาท"
+msgstr "เรนเดอร์โครงข่ายประสาท"
 
 #: pe/ui/settings.cpp
 msgid "Intensité DLSS-NR"

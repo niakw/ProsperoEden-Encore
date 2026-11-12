@@ -153,15 +153,15 @@ msgstr "Australië"
 
 #: pe/ui/settings.cpp
 msgid "AUTO CHECK"
-msgstr "AUTOMATISCH CONTROLEREN"
+msgstr "AUTO-CHECK"
 
 #: pe/ui/switch_theme.cpp
 msgid "Auto check"
-msgstr "Automatisch Controleren"
+msgstr "Auto-check"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automatisch Controleren · Aan"
+msgstr "Auto-check · Aan"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -738,7 +738,7 @@ msgstr "De game kon niet starten: {0} Details: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Mappen doorzoeken · software"
+msgstr "Spelbestanden"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -839,7 +839,7 @@ msgstr "Handheld"
 
 #: pe/ui/settings.cpp
 msgid "Health and storage tools. Cache cleanup never removes saves, settings, keys or games."
-msgstr "Hulpmiddelen voor gezondheid en opslag. Bij het opschonen van de cache worden opgeslagen bestanden, instellingen, sleutels of games nooit verwijderd."
+msgstr "Tools voor systeemstatus en opslag. Cache wissen verwijdert nooit saves, instellingen, sleutels of games."
 
 #: settings_store.h
 msgid "High"

@@ -161,7 +161,7 @@ msgstr "Automático Verificar"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automático Verificar · Ativado"
+msgstr "Verificação autom. ativa"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -738,7 +738,7 @@ msgstr "Não foi possível iniciar o jogo: {0} Detalhes: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Explorar pastas · software"
+msgstr "Ficheiros de jogos"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1190,7 +1190,7 @@ msgstr "Nenhum"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Verificar Agora · Desativado"
+msgstr "Não verificado"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1468,7 +1468,7 @@ msgstr "RAIZ"
 
 #: pe/ui/settings.cpp
 msgid "Runtime health, storage and recovery tools."
-msgstr "Ferramentas de integridade, armazenamento e recuperação de tempo de execução."
+msgstr "Ferramentas de integridade, armazenamento e recuperação."
 
 #: settings_store.h
 msgid "Russian"

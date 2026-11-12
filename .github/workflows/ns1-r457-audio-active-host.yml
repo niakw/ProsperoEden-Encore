@@ -1,0 +1,29 @@
+name: NS1 R457 AudioOut exact native source owner (host)
+on:
+  push:
+    branches:
+      - integration/r457-audio-real-owner-engine-20261112
+    paths:
+      - 'headless/CMakeLists.txt'
+      - 'vendor'
+      - 'tools/check-r457-ns1-audio-source.py'
+      - '.github/workflows/ns1-r457-audio-active-host.yml'
+  pull_request:
+    paths:
+      - 'headless/CMakeLists.txt'
+      - 'vendor'
+      - 'tools/check-r457-ns1-audio-source.py'
+      - '.github/workflows/ns1-r457-audio-active-host.yml'
+permissions:
+  contents: read
+jobs:
+  selected-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Host selected source and A32/standard memory oracle
+        run: python3 -B tools/check-r457-ns1-audio-source.py

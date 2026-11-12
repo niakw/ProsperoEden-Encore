@@ -1178,7 +1178,12 @@ msgstr "사용 가능한 스크린샷이 없습니다."
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
 msgstr "배경: PNG/JPEG/TGA → wallpapers/"
 
-#. No add-ons (updates or DLC).
+#. Neither a game update nor DLC is installed.
+#: pe/ui/library.cpp
+msgid "No DLC/updates"
+msgstr "DLC/업데이트 없음"
+
+#. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "없음"

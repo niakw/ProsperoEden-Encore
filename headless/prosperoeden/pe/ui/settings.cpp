@@ -337,8 +337,7 @@ void Launcher::draw_settings(Canvas &c)
                  {tr(TR("SHARPNESS")), percent(prefs_.fsr_sharpness)},
                  {tr("ANTI-ALIASING"), pick(services_.anti_aliasing_labels(), prefs_.anti_aliasing)},
                  {tr(TR("TEXTURE FILTERING")), TextureAnisotropyName(prefs_.texture_anisotropy)},
-                 {tr("REFRESH RATE"), hertz(prefs_.refresh)},
-                 {tr("FPS OVERLAY"), on_off(prefs_.hud)}};
+                 {tr("REFRESH RATE"), hertz(prefs_.refresh)}};
         break;
     case kAudio:
         about = tr("Game volume, and the sounds of this menu.");
@@ -379,7 +378,8 @@ void Launcher::draw_settings(Canvas &c)
                  {tr("ROOT"), short_path(info.storage_root, 34)},
                  {tr("CACHE"), info.shader_caches},
                  {tr("LOGS"), info.logs},
-                 {tr("DATA"), short_path(info.data_path, 34)}};
+                 {tr("DATA"), short_path(info.data_path, 34)},
+                 {tr("FPS OVERLAY"), on_off(prefs_.hud)}};
         break;
     }
     case kStorage:

@@ -3851,4 +3851,26 @@ if(PS5_NATIVE AND EDEN_NS2_SPARSE_BACKING)
     # and dereference reserved, uncommitted 12 GiB guest VA.
     set_property(SOURCE "${EDEN_R457_SPARSE_KERNEL_SRC}"
         TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
+    # MKW native crash at eboot+0x55a9af: KPort slab freelist attempts
+    # to write to reserved-but-uncommitted virtual DRAM before guest PTEs.
+    # Use the reviewed NS2-only kernel-slab precommit source, not the
+    # original relative init_slab_setup.cpp and never compile two owners.
+    set(EDEN_R457_SPARSE_SLAB_SRC
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp")
+    if(NOT EXISTS "${EDEN_R457_SPARSE_SLAB_SRC}")
+        message(FATAL_ERROR "R457 NS2 sparse slab physical precommit owner missing")
+    endif()
+    list(FIND eden_r457_sparse_kernel_units
+         "hle/kernel/init/init_slab_setup.cpp" eden_r457_sparse_slab_original)
+    if(eden_r457_sparse_slab_original EQUAL -1)
+        message(FATAL_ERROR "R457 sparse slab must replace the one active init_slab_setup TU")
+    endif()
+    list(REMOVE_ITEM eden_r457_sparse_kernel_units
+         "hle/kernel/init/init_slab_setup.cpp")
+    list(APPEND eden_r457_sparse_kernel_units
+         "${EDEN_R457_SPARSE_SLAB_SRC}")
+    set_property(TARGET core PROPERTY SOURCES
+        "${eden_r457_sparse_kernel_units}")
+    set_property(SOURCE "${EDEN_R457_SPARSE_SLAB_SRC}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
 endif()

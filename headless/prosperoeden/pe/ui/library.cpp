@@ -1279,7 +1279,7 @@ std::string Launcher::addons_line(const std::string &addons, int mods, int mods_
                  brief ? fill(counted, {std::to_string(mods_on) + "/" + count}) :
                          fill(tr("{0} of {1} mods on"), {std::to_string(mods_on), count}));
     }
-    return line.empty() ? std::string{tr("None")} : line;
+    return line.empty() ? std::string{tr("No DLC/updates")} : line;
 }
 
 std::string Launcher::hertz(int refresh)

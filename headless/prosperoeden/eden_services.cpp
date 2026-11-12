@@ -744,7 +744,7 @@ bool CacheNlibJpeg(const std::string& endpoint, const std::string& path,
 // Optional real retail case images from the build-time filtered public catalog.
 // No full metadata archive, credentials, HTTP or XML parsing on the console.
 // Matching is exact and skips colliding release editions at index-generation time.
-using BoxIndex = std::unordered_map<std::string, std::array<std::vector<std::string>, 6>>;
+using BoxIndex = std::unordered_map<std::string, std::array<std::vector<std::string>, 8>>;
 
 std::string CaseKey(const std::string& title) {
     std::string key;
@@ -885,7 +885,7 @@ const BoxIndex& RetailCaseIndex() {
             const auto d = c == std::string::npos ? c : row.find('\t', c + 1);
             const std::string spine = c == std::string::npos ? "-" :
                 row.substr(c + 1, d == std::string::npos ? d : d - c - 1);
-            std::array<std::string, 3> scene_columns{"-", "-", "-"};
+            std::array<std::string, 5> scene_columns{"-", "-", "-", "-", "-"};
             std::size_t start = d;
             for (std::string& scene : scene_columns) {
                 if (start == std::string::npos) break; // v4 index remains supported
@@ -919,14 +919,15 @@ const BoxIndex& RetailCaseIndex() {
             if ((front != "-" && fronts.empty()) ||
                 (back != "-" && backs.empty()) ||
                 (spine != "-" && spines.empty())) continue;
-            std::array<std::vector<std::string>, 3> scenes{};
-            for (int i = 0; i < 3; ++i)
+            std::array<std::vector<std::string>, 5> scenes{};
+            for (int i = 0; i < 5; ++i)
                 scenes[i] = split_candidates(scene_columns[i]);
             // Invalid optional scene metadata must never invalidate valid
             // original front/back/spine entries from the same row.
-            std::array<std::vector<std::string>, 6> faces{
+            std::array<std::vector<std::string>, 8> faces{
                 std::move(fronts), std::move(backs), std::move(spines),
-                std::move(scenes[0]), std::move(scenes[1]), std::move(scenes[2])};
+                std::move(scenes[0]), std::move(scenes[1]), std::move(scenes[2]),
+                std::move(scenes[3]), std::move(scenes[4])};
             auto [it, inserted] = items.emplace(title, faces);
             if (supplemental && !inserted) {
                 for (std::size_t side = 0; side < faces.size(); ++side) {
@@ -963,7 +964,7 @@ std::string CaseFacePath(std::uint64_t title_id, const char* side) {
 std::vector<std::string> CachedCaseScenes(std::uint64_t title_id) {
     std::vector<std::string> scenes;
     if (title_id == 0) return scenes;
-    for (int i = 1; i <= 3; ++i) {
+    for (int i : {3, 4, 5, 1, 2}) {
         const std::string side = "scene-" + std::to_string(i);
         const std::string path = CaseFacePath(title_id, side.c_str());
         if (auto available = AvailableArtwork(path); !available.empty()) scenes.push_back(available);
@@ -1037,7 +1038,10 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
                 static_cast<int>(body.size()), &w, &h, &channels) ||
             w < (narrow_spine ? 16 : 128) ||
             h < (narrow_spine ? 250 : 200) || w > 4096 || h > 4096 ||
-            static_cast<std::uint64_t>(w) * h > 3840u * 2160u) {
+            static_cast<std::uint64_t>(w) * h > 3840u * 2160u ||
+            ((destination.find("/box-front-") != std::string::npos ||
+              destination.find("/box-back-") != std::string::npos) &&
+             static_cast<std::uint64_t>(h) * 4 < static_cast<std::uint64_t>(w) * 5)) {
             ++invalid_responses;
             std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-image file=%s bytes=%zu width=%d height=%d\n",
                          filename.c_str(), body.size(), w, h);
@@ -1121,7 +1125,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     unsigned migrated_faces = 0;
     unsigned side_index = 0;
     for (const char* side : {"front", "back", "spine",
-                             "scene-1", "scene-2", "scene-3"}) {
+                             "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"}) {
         if (cancel && cancel->load(std::memory_order_acquire)) return 0;
         if (MigrateGeneratedTga(CaseFacePath(title_id, side), true))
             migrated_faces |= 1u << side_index;
@@ -1145,7 +1149,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // Even compact genuine spine scans are preferable to a fabricated title.
     // NS2 games may have a real front and spine but NO uploaded back.
     // Their spine must not depend on the existence of a back scan.
-    for (int side = 0; side < 6; ++side) {
+    for (int side = 0; side < 8; ++side) {
         if (cancel && cancel->load(std::memory_order_acquire)) {
             // Aborted title switch must not lock the next attempt out for
             // five minutes after a partial or cancelled CDN transaction.
@@ -1156,12 +1160,11 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // can be followed by its spine in the SAME background enrichment;
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
-        if (side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back")))
-            continue; // authentic back never needs a constructed collage
+        // Gameplay previews remain independent of real back paper.
         const auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
         if (candidates.empty()) continue;
         const char* const names[] = {
-            "front", "back", "spine", "scene-1", "scene-2", "scene-3"};
+            "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};
         const std::string path = CaseFacePath(title_id, names[side]);
         // User-provided original scans win. Cached low-resolution CDN scans
         // may be upgraded when a better ranked alternative becomes available.
@@ -1180,7 +1183,9 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
             // Preserve narrow authentic NS2 spines even with no back scan.
             if (ValidNlibWebP(path, &width, &height) &&
                 ((side == 2 && width >= 16 && height >= 250) ||
-                 (side != 2 && width >= 128 && height >= 200))) {
+                 (side >= 3 && width >= 128 && height >= 200) ||
+                 ((side == 0 || side == 1) && width >= 128 && height >= 200 &&
+                  static_cast<std::uint64_t>(height) * 4 >= static_cast<std::uint64_t>(width) * 5))) {
                 continue;
             }
         }
@@ -2252,7 +2257,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         // Nlib/cache snapshot. Always expose its real front to the game tile.
         if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
         AppendCaseScenes(game.screenshots, game.title_id);
-        if (game.case_artwork_changed & (8u | 16u | 32u))
+        if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement
     }
     return game;
@@ -2312,6 +2317,14 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
             } else {
                 valid = stbi_info(path.c_str(), &width, &height, &channels) != 0;
             }
+            // Square CDN jacket photos are not flat retail scans. Manual
+            // imports (no generated provenance receipt) remain allowed.
+            if (valid && (std::strcmp(side, "front") == 0 ||
+                          std::strcmp(side, "back") == 0) &&
+                IsFile(path + ".source") &&
+                static_cast<std::uint64_t>(height) * 4 <
+                    static_cast<std::uint64_t>(width) * 5)
+                valid = false;
             if (!valid ||
                 width < (std::strcmp(side, "spine") == 0 ? 16 : 128) ||
                 height < (std::strcmp(side, "spine") == 0 ? 250 : 128) ||

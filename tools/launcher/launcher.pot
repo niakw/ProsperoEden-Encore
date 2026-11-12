@@ -1175,8 +1175,13 @@ msgstr ""
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
 msgstr ""
 
-#. No add-ons (updates or DLC).
-#: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
+#. Neither a game update nor DLC is installed.
+#: pe/ui/library.cpp
+msgid "No DLC/updates"
+msgstr ""
+
+#. Generic None option.
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr ""
 

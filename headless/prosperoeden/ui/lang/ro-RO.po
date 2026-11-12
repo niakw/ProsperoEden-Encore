@@ -1178,7 +1178,12 @@ msgstr "Nu sunt disponibile capturi de ecran"
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
 msgstr "Fundal: PNG/JPEG/TGA → wallpapers/"
 
-#. No add-ons (updates or DLC).
+#. Neither a game update nor DLC is installed.
+#: pe/ui/library.cpp
+msgid "No DLC/updates"
+msgstr "Fără DLC sau actualizări"
+
+#. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Niciunul"

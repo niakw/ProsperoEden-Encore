@@ -80,7 +80,7 @@ REGION_ORDER = ("fr", "eu", "us", "uk", "ca", "world", "de",
 def region_code(name):
     return REGIONS.get(name.casefold().strip(), "other")
 
-def regional_candidates(items, limit=12):
+def regional_candidates(items, limit=12, per_region=2):
     # Preserve independent front/back/spine region variants. Cap two sources
     # per region and the total so the on-device index stays small and bounded.
     grouped = {}
@@ -91,7 +91,7 @@ def regional_candidates(items, limit=12):
     choices = []
     # First cover every available region, then offer its alternate scan.
     # Otherwise two French/European images may displace a Japanese/US face.
-    for variant in range(2):
+    for variant in range(per_region):
         for region in REGION_ORDER:
             group = grouped.get(region, ())
             if len(group) > variant:
@@ -138,7 +138,7 @@ def parse(source):
             key = normalize(label)
             if key:
                 names.setdefault(key, set()).add(gid)
-    lines = ["# Eden Encore retail case index v7 (NS1+NS2, front, back, spine, fanart, game title, gameplay)\n"]
+    lines = ["# Eden Encore retail case index v8 (NS1+NS2, front, back, spine, fanart, title, three gameplay slots)\n"]
     for key, matching in sorted(names.items()):
         if len(matching) != 1:
             continue  # avoid colliding editions / ambiguous matching
@@ -153,12 +153,16 @@ def parse(source):
         # No longer discard Game Title artwork when fanart also exists.
         fanart = regional_candidates(media.get("Fanart - Background", []))
         title_screen = regional_candidates(media.get("Screenshot - Game Title", []))
-        gameplay = regional_candidates(media.get("Screenshot - Gameplay", []))
+        # Split three gameplay slots; each gets independent CDN fallback candidates.
+        gameplay = regional_candidates(media.get("Screenshot - Gameplay", []),
+                                       per_region=3)
+        selected = [] if gameplay == "-" else gameplay.split(";")
+        shots = [";".join(selected[i::3]) or "-" for i in range(3)]
         if front or back or spine or any(
-                v != "-" for v in (fanart, title_screen, gameplay)):
+                v != "-" for v in (fanart, title_screen, *shots)):
             lines.append(f"{key}\t{regional_candidates(front)}\t{regional_candidates(back)}"
                          f"\t{regional_candidates(spine)}\t{fanart}"
-                         f"\t{title_screen}\t{gameplay}\n")
+                         f"\t{title_screen}\t{shots[0]}\t{shots[1]}\t{shots[2]}\n")
     return "".join(lines)
 
 def build(archive_path):
@@ -220,11 +224,11 @@ def self_test():
     assert "eu:77777777-7777-7777-7777-777777777777.png" in result
     fields = next(row.split("\t") for row in result.splitlines()
                   if row.startswith("example journey\t"))
-    assert len(fields) == 7, fields
+    assert len(fields) == 9, fields
     assert fields[4].startswith("world:aaaaaaaa"), fields
     assert fields[5].startswith("world:bbbbbbbb"), fields
     assert fields[6].startswith("world:88888888"), fields
-    assert "99999999" in fields[6], fields
+    assert "99999999" in fields[7], fields
     assert "Box - 3D" not in result
     assert candidates([(7, "f" * 36 + ".jpg"), (1, "0" * 36 + ".png")]).count(";") == 1
     assert candidates([(1, "a" * 36 + ".jpg")]) == "a" * 36 + ".jpg"

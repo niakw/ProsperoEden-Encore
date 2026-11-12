@@ -54,6 +54,8 @@ root = Path(__file__).resolve().parents[1]
 frontend = (root / "headless/prosperoeden/frontend.cpp").read_text()
 handoff = (root / "headless/launch_handoff.hpp").read_text()
 renderer = (root / "vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
+active_renderer = (root / "headless/vulkan_renderer_r08.cpp").read_text()
+native_selection = (root / "headless/vulkan.cmake").read_text()
 oracle = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_loading.inc").read_text()
 renderer_header = (root / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/renderer_vulkan.h").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
@@ -114,6 +116,24 @@ for evidence in (
     "loading_jacket_width == frame->width",
 ):
     assert evidence in renderer, evidence
+# CMake compiles the extended R08 presenter, not vendor's Vulkan source.
+# Both must implement the exact one-screen jacket handoff contract.
+assert '"${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"' in native_selection
+assert active_renderer.count("void RendererVulkan::PresentLoading() {") == 1
+for evidence in (
+    '#include "launch_handoff.hpp"',
+    "Eden::LaunchHandoff::Peek()",
+    "Eden::LaunchHandoff::Clear();",
+    "loading_jacket_buffer = std::move(buffer);",
+    "cmdbuf.CopyBufferToImage(upload, target,",
+    "loading_jacket_width == frame->width",
+    "loading_jacket_attempts >= 3",
+    "EDEN_LOADER_JACKET_HANDOFF_VULKAN",
+):
+    assert evidence in active_renderer, ("selected R08 loader missing", evidence)
+assert active_renderer.count("EDEN_LOADER_JACKET_HANDOFF_VULKAN") == 4
+assert active_renderer.index("Eden::LaunchHandoff::Peek()") < active_renderer.index("loading_jacket_buffer = std::move(buffer);")
+assert active_renderer.index("loading_jacket_buffer = std::move(buffer);") < active_renderer.index("Eden::LaunchHandoff::Clear();")
 assert "vk::Buffer loading_jacket_buffer{};" in renderer_header
 assert "u32 loading_jacket_attempts{};" in renderer_header
 assert "loading_jacket_attempts{}" in generator

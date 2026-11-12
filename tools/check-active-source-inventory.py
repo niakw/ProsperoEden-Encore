@@ -782,6 +782,31 @@ assert "ReadyForAudioRead() const noexcept;" in (
     root / "vendor/encore-active/eden-core/overrides/core/memory.h").read_text()
 print("R457_C00_POST_F07_NATIVE_AUDIO_OWNER_PASS owners=2")
 
+# A missing game loader follows an already-initialized kernel on PS5.
+# All three maintained core variants must shut down before returning an error.
+# See Lichii upstream #972; do not fork immutable sources/eden.
+for loader_owner in (
+    "encore-active/eden-core/src/core/core_native.cpp",
+    "encore-active/eden-core/src/core/core_standard.cpp",
+    "encore-active/ns2-runtime/process/core/core.cpp",
+):
+    selected = (root / "vendor" / loader_owner).read_text()
+    block = selected.split("        if (!app_loader) {", 1)[1].split("\n        }", 1)[0]
+    assert block.count("ShutdownMainProcess();") == 1, loader_owner
+    assert block.index("ShutdownMainProcess();") < block.index(
+        "return SystemResultStatus::ErrorGetLoader;"), loader_owner
+print("ENCORE_NS1_NS2_MISSING_LOADER_TEARDOWN_PASS owners=3")
+
+
+# R457 NS2 KPort sparse slab precommit is a separately reviewed post-F07
+# production owner, not a retroactive member of the immutable 337 files.
+post_f07_r457_slab_owners = {"ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp"}
+assert post_f07_r457_slab_owners <= set(physical_all)
+import hashlib
+slab_source = (root / "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp").read_bytes()
+assert hashlib.sha1(b"blob " + str(len(slab_source)).encode() + bytes([0]) + slab_source).hexdigest() == "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"
+assert slab_source.decode().count("EdenNs2CommitGuestBacking(") == 3
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -796,7 +821,7 @@ physical = [p for p in physical_all
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
-             post_f07_h01_fs_owners | r457_native_audio_owners]
+             post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - integration/ns1-r23-e1-20261112
+      # Deliberate integration branch full-build: isolated, never publishes.
       # On main, build job is gated by the explicit [full-build] marker below.
       # Ordinary main commits do not compile or publish a native app.
   # workflow_dispatch remains available for deliberate build / stage-resume.

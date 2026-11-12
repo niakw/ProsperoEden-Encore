@@ -2865,17 +2865,390 @@ std::vector<std::string> EdenServices::wallpapers() {
 std::string EdenServices::wallpaper_path(const std::string& file) {
     return CheckedWallpaper(std::filesystem::path(Eden::UserDir()) / "wallpapers", file);
 }
-std::string EdenServices::daily_wallpaper() {
-    // Same concept as NiakPS5: an offline release-art snapshot is rotated locally
-    // by calendar day. The manifest is refreshed by the package/catalog updater,
-    // never through a request on the UI thread. Missing catalog => no artwork.
-    // User-curated images override the optional read-only package snapshot.
-    // Both paths pass the same bounded manifest and local-image checks.
-    const std::array<std::filesystem::path, 2> sources = {
-        std::filesystem::path(Eden::UserDir()) / "wallpapers" / "daily",
-        std::filesystem::path(Eden::AppFile("ui/art/daily"))
+
+namespace {
+struct DailyOnlineCandidate {
+    std::string title;
+    std::string platform;
+    std::string released;
+    std::string host;
+    std::string endpoint;
+    std::time_t timestamp = 0;
+};
+
+std::optional<std::string> DailyRequest(const std::string& host,
+                                        const std::string& path,
+                                        std::size_t max_bytes) {
+    // Every host is fixed by the caller; all remote paths stay bounded.
+    if (path.empty() || path[0] != '/' || path.size() > 2048 ||
+        path.find_first_of("\r\n\t\\") != std::string::npos) return {};
+    const auto response = Common::Net::MakeRequest(host, path);
+    if (!response || response->empty() || response->size() > max_bytes)
+        return {};
+    return *response;
+}
+
+std::optional<std::time_t> DailyReleaseTime(const std::string& day,
+                                             bool display_name) {
+    int year = 0, month = 0, date = 0;
+    if (display_name) {
+        char mon[4]{};
+        char tail[2]{};
+        if (std::sscanf(day.c_str(), "%3s %d, %d%1s",
+                        mon, &date, &year, tail) != 3) return {};
+        static constexpr std::array<const char*, 12> months = {
+            "Jan","Feb","Mar","Apr","May","Jun",
+            "Jul","Aug","Sep","Oct","Nov","Dec"};
+        for (int i = 0; i < 12; ++i)
+            if (std::strcmp(mon, months[i]) == 0) month = i + 1;
+    } else {
+        if (day.size() != 10 || day[4] != '-' || day[7] != '-' ||
+            !std::all_of(day.begin(), day.end(), [](unsigned char ch) {
+                return (ch >= '0' && ch <= '9') || ch == '-';
+            })) return {};
+        year = std::atoi(day.substr(0, 4).c_str());
+        month = std::atoi(day.substr(5, 2).c_str());
+        date = std::atoi(day.substr(8, 2).c_str());
+    }
+    if (year < 2020 || year > 2100 || month < 1 || month > 12 ||
+        date < 1 || date > 31) return {};
+    std::tm tm{};
+    tm.tm_year = year - 1900;
+    tm.tm_mon = month - 1;
+    tm.tm_mday = date;
+    tm.tm_hour = 12;
+    tm.tm_isdst = -1;
+    const std::time_t result = std::mktime(&tm);
+    if (result == static_cast<std::time_t>(-1) ||
+        tm.tm_year != year - 1900 || tm.tm_mon != month - 1 ||
+        tm.tm_mday != date) return {};
+    const auto now = std::time(nullptr);
+    if (result > now + 12 * 3600 ||
+        now - result > static_cast<std::time_t>(180 * 86400)) return {};
+    return result;
+}
+
+std::string DailyDate(std::time_t timestamp) {
+    const std::tm* date = std::localtime(&timestamp);
+    if (!date) return {};
+    char output[11]{};
+    if (!std::strftime(output, sizeof(output), "%Y-%m-%d", date)) return {};
+    return output;
+}
+
+bool DailyApprovedArt(const std::string& url,
+                      std::string& host, std::string& endpoint) {
+    static constexpr std::array<const char*, 3> origins = {
+        "https://api.nlib.cc",
+        "https://www.nintendo.com",
+        "https://assets.nintendo.eu"
     };
-    for (const auto& folder : sources) {
+    for (const char* candidate : origins) {
+        const std::string prefix{candidate};
+        if (url.size() > prefix.size() && url.compare(0, prefix.size(), prefix) == 0 &&
+            url[prefix.size()] == '/') {
+            host = prefix;
+            endpoint = url.substr(prefix.size());
+            return endpoint.size() <= 2048 &&
+                endpoint.find_first_of("\r\n\t\\") == std::string::npos;
+        }
+    }
+    return false;
+}
+
+// JPEG EXIF orientation: preserve the natural top-left orientation of the
+// source image before encoding it to WebP. Never rely on an OpenGL double flip.
+int DailyExifOrientation(const std::string& bytes) {
+    const auto* b = reinterpret_cast<const unsigned char*>(bytes.data());
+    const std::size_t size = bytes.size();
+    if (size < 16 || b[0] != 0xff || b[1] != 0xd8) return 1;
+    for (std::size_t p = 2; p + 12 < size;) {
+        if (b[p] != 0xff) break;
+        const unsigned char marker = b[p + 1];
+        if (marker == 0xda || marker == 0xd9) break;
+        if (p + 4 > size) break;
+        const std::size_t length = (static_cast<unsigned>(b[p+2]) << 8) | b[p+3];
+        if (length < 2 || length > size - p - 2) break;
+        if (marker == 0xe1 && length >= 16 &&
+            std::memcmp(b + p + 4, "Exif\0\0", 6) == 0) {
+            const std::size_t tiff = p + 10;
+            const bool little = b[tiff] == 'I' && b[tiff+1] == 'I';
+            const bool big = b[tiff] == 'M' && b[tiff+1] == 'M';
+            if (!little && !big) return 1;
+            const auto u16 = [&](std::size_t i) {
+                return little ? (static_cast<unsigned>(b[i]) |
+                                 static_cast<unsigned>(b[i+1]) << 8) :
+                                (static_cast<unsigned>(b[i]) << 8 |
+                                 static_cast<unsigned>(b[i+1]));
+            };
+            const auto u32 = [&](std::size_t i) {
+                return little ? (static_cast<std::uint32_t>(u16(i)) |
+                                 static_cast<std::uint32_t>(u16(i+2)) << 16) :
+                                (static_cast<std::uint32_t>(u16(i)) << 16 |
+                                 static_cast<std::uint32_t>(u16(i+2)));
+            };
+            const std::size_t bound = p + 2 + length;
+            if (tiff + 8 > bound || u16(tiff+2) != 42) return 1;
+            const std::size_t ifd = tiff + u32(tiff+4);
+            if (ifd + 2 > bound) return 1;
+            const unsigned count = std::min(u16(ifd), 256u);
+            for (unsigned j = 0; j < count; ++j) {
+                const std::size_t entry = ifd + 2 + 12u * j;
+                if (entry + 12 > bound) break;
+                if (u16(entry) == 0x0112 && u16(entry + 2) == 3 &&
+                    u32(entry + 4) == 1) {
+                    const unsigned orientation = u16(entry + 8);
+                    return orientation >= 1 && orientation <= 8 ?
+                        static_cast<int>(orientation) : 1;
+                }
+            }
+            return 1;
+        }
+        p += 2 + length;
+    }
+    return 1;
+}
+
+std::optional<std::string> DailyEncodeWebP(const std::string& source) {
+    if (source.size() < 32 || source.size() > (7u << 20)) return {};
+    int width = 0, height = 0, channels = 0;
+    std::scoped_lock codec_lock(ArtworkCodecMutex());
+    const auto* data = reinterpret_cast<const stbi_uc*>(source.data());
+    if (!stbi_info_from_memory(data, static_cast<int>(source.size()),
+                               &width, &height, &channels) ||
+        width < 300 || height < 200 || width > 4096 || height > 4096 ||
+        static_cast<std::uint64_t>(width) * height > 12000000u) return {};
+    stbi_uc* pixels = stbi_load_from_memory(
+        data, static_cast<int>(source.size()), &width, &height, &channels, 4);
+    if (!pixels) return {};
+    const int orientation = DailyExifOrientation(source);
+    const bool swap = orientation >= 5;
+    const int ow = swap ? height : width;
+    const int oh = swap ? width : height;
+    constexpr int out_w = 1280, out_h = 720;
+    std::vector<std::uint8_t> target(out_w * out_h * 4u);
+    const bool portrait = static_cast<double>(ow) / oh < 1.40;
+    const double scale = std::max(static_cast<double>(out_w)/ow,
+                                  static_cast<double>(out_h)/oh);
+    const double overlay_scale = std::min(1180.0 / ow, 680.0 / oh);
+    auto sample = [&](int x, int y, double s, bool darken) {
+        const int u = std::clamp(static_cast<int>(
+            (x - out_w / 2.0) / s + ow / 2.0), 0, ow - 1);
+        const int v = std::clamp(static_cast<int>(
+            (y - out_h / 2.0) / s + oh / 2.0), 0, oh - 1);
+        int sx = u, sy = v;
+        switch (orientation) {
+        case 2: sx = width - 1 - u; break;
+        case 3: sx = width - 1 - u; sy = height - 1 - v; break;
+        case 4: sy = height - 1 - v; break;
+        case 5: sx = v; sy = u; break;
+        case 6: sx = v; sy = height - 1 - u; break;
+        case 7: sx = width - 1 - v; sy = height - 1 - u; break;
+        case 8: sx = width - 1 - v; sy = u; break;
+        default: break;
+        }
+        const auto* src = pixels + (static_cast<std::size_t>(sy)*width + sx)*4u;
+        const auto at = (static_cast<std::size_t>(y)*out_w + x)*4u;
+        for (int c = 0; c < 3; ++c)
+            target[at + c] = static_cast<std::uint8_t>(
+                darken ? static_cast<unsigned>(src[c])*55u/100u : src[c]);
+        target[at + 3] = 255;
+    };
+    for (int y = 0; y < out_h; ++y) {
+        for (int x = 0; x < out_w; ++x)
+            sample(x, y, scale, portrait);
+    }
+    if (portrait) {
+        const int fw = std::min(out_w, static_cast<int>(ow * overlay_scale));
+        const int fh = std::min(out_h, static_cast<int>(oh * overlay_scale));
+        for (int y = (out_h-fh)/2; y < (out_h+fh)/2; ++y)
+            for (int x = (out_w-fw)/2; x < (out_w+fw)/2; ++x)
+                sample(x, y, overlay_scale, false);
+    }
+    stbi_image_free(pixels);
+    std::uint8_t* webp = nullptr;
+    const std::size_t length = WebPEncodeRGBA(
+        target.data(), out_w, out_h, out_w*4, 80.0f, &webp);
+    if (!length || !webp || length > (7u << 20)) {
+        WebPFree(webp);
+        return {};
+    }
+    std::string result(reinterpret_cast<const char*>(webp), length);
+    WebPFree(webp);
+    return result;
+}
+
+void RefreshDailyOnlyAfterSelection(const std::filesystem::path& folder,
+                                    const std::string& today) {
+    // This function runs exclusively on Launcher::daily_wallpaper_scan_'s
+    // std::async worker. The UI calls it only when background_style == 5.
+    // A persisted daily receipt prevents repeat download after restart.
+    if (today.empty()) return;
+    std::error_code ec;
+    std::filesystem::create_directories(folder, ec);
+    if (ec || std::filesystem::is_symlink(folder, ec) || ec) return;
+    const auto marker = folder / ".checked-day";
+    std::ifstream previous(marker);
+    std::string last;
+    std::getline(previous, last);
+    if (last == today) return;
+    const auto staged_marker = folder / ".checked-day.tmp";
+    {
+        std::ofstream receipt(staged_marker, std::ios::binary | std::ios::trunc);
+        if (!receipt || !(receipt << today << '\n')) return;
+    }
+    if (std::rename(staged_marker.string().c_str(),
+                    marker.string().c_str()) != 0) return;
+
+    std::vector<DailyOnlineCandidate> candidates;
+    auto add = [&](std::string title, std::string platform,
+                   const std::string& date, bool named_date,
+                   const std::string& image) {
+        if (title.empty() || title.size() > 160 || candidates.size() >= 3000) return;
+        auto timestamp = DailyReleaseTime(date, named_date);
+        std::string host, path;
+        if (!timestamp || !DailyApprovedArt(image, host, path)) return;
+        const std::string iso = DailyDate(*timestamp);
+        if (iso.empty()) return;
+        candidates.push_back({std::move(title), std::move(platform),
+                              iso, std::move(host), std::move(path), *timestamp});
+    };
+
+    if (auto response = DailyRequest(
+            "https://raw.githubusercontent.com",
+            "/codemaverick-hub/switch2-tracker/main/data/games.json",
+            3u << 20)) {
+        const auto feed = nlohmann::json::parse(*response, nullptr, false);
+        if (feed.is_object() && feed.contains("games") && feed["games"].is_array()) {
+            std::size_t visited = 0;
+            for (const auto& item : feed["games"]) {
+                if (++visited > 3000) break;
+                if (!item.is_object() || !item.contains("status") ||
+                    !item["status"].is_string() ||
+                    item["status"].get<std::string>() != "r")
+                    continue;
+                if (!item.contains("title") || !item["title"].is_string() ||
+                    !item.contains("date") || !item["date"].is_string() ||
+                    !item.contains("art") || !item["art"].is_string()) continue;
+                add(item["title"].get<std::string>(), "ns2",
+                    item["date"].get<std::string>(), true,
+                    item["art"].get<std::string>());
+            }
+        }
+    }
+    if (auto response = DailyRequest(
+            "https://raw.githubusercontent.com",
+            "/Langegen/switch-game-collection/main/new_release.json",
+            3u << 20)) {
+        const auto feed = nlohmann::json::parse(*response, nullptr, false);
+        if (feed.is_array()) {
+            std::size_t visited = 0, verified = 0;
+            for (const auto& item : feed) {
+                if (++visited > 50 || verified >= 16) break;
+                if (!item.is_object() || !item.contains("title_id") ||
+                    !item["title_id"].is_string()) continue;
+                std::string tid = item["title_id"].get<std::string>();
+                if (tid.size() != 16 ||
+                    !std::all_of(tid.begin(), tid.end(), [](unsigned char ch) {
+                        return std::isxdigit(ch) != 0;
+                    })) continue;
+                std::transform(tid.begin(), tid.end(), tid.begin(),
+                               [](unsigned char ch){ return static_cast<char>(std::toupper(ch)); });
+                auto detail = DailyRequest(
+                    "https://api.nlib.cc", "/nx/" + tid +
+                    "?fields=name,releaseDate,console,type,isDemo,banner", 8192);
+                if (!detail) continue;
+                const auto record = nlohmann::json::parse(*detail, nullptr, false);
+                if (!record.is_object() ||
+                    !record.contains("id") || !record["id"].is_string() ||
+                    record["id"].get<std::string>() != tid ||
+                    !record.contains("type") || !record["type"].is_string() ||
+                    record["type"].get<std::string>() != "base" ||
+                    !record.contains("console") || !record["console"].is_string() ||
+                    record["console"].get<std::string>() != "nx" ||
+                    (record.contains("isDemo") &&
+                     (!record["isDemo"].is_boolean() || record["isDemo"].get<bool>())) ||
+                    !record.contains("name") || !record["name"].is_string() ||
+                    !record.contains("releaseDate") ||
+                    !record["releaseDate"].is_string()) continue;
+                const std::size_t count = candidates.size();
+                add(record["name"].get<std::string>(), "ns1",
+                    record["releaseDate"].get<std::string>(), false,
+                    "https://api.nlib.cc/nx/" + tid + "/banner/720p");
+                if (candidates.size() > count) ++verified;
+            }
+        }
+    }
+    std::sort(candidates.begin(), candidates.end(),
+              [](const auto& a, const auto& b) {
+        return a.timestamp == b.timestamp ? a.title < b.title :
+               a.timestamp > b.timestamp;
+    });
+
+    struct Download { DailyOnlineCandidate info; std::string webp; };
+    std::vector<Download> images;
+    std::unordered_set<std::string> seen;
+    for (const auto& candidate : candidates) {
+        if (images.size() >= 8) break;
+        std::string key = candidate.title;
+        std::transform(key.begin(), key.end(), key.begin(),
+                       [](unsigned char ch){ return static_cast<char>(std::tolower(ch)); });
+        if (!seen.insert(key).second) continue;
+        const auto source = DailyRequest(candidate.host, candidate.endpoint, 7u << 20);
+        if (!source) continue;
+        auto webp = DailyEncodeWebP(*source);
+        if (!webp) continue;
+        images.push_back({candidate, std::move(*webp)});
+    }
+    if (images.empty()) return; // existing complete snapshot is retained
+    nlohmann::json manifest = {
+        {"schema", 1}, {"generated", today}, {"entries", nlohmann::json::array()}};
+    std::unordered_set<std::string> keep;
+    for (std::size_t i = 0; i < images.size(); ++i) {
+        char name[24]{};
+        std::snprintf(name, sizeof(name), "wall-%02u.webp", static_cast<unsigned>(i));
+        const auto path = folder / name;
+        const auto tmp = folder / (std::string(name) + ".tmp");
+        std::ofstream file(tmp, std::ios::binary | std::ios::trunc);
+        if (!file.write(images[i].webp.data(), images[i].webp.size())) return;
+        file.close();
+        if (!file || std::rename(tmp.string().c_str(),
+                                 path.string().c_str()) != 0) return;
+        keep.insert(name);
+        manifest["entries"].push_back({
+            {"filename", name}, {"title", images[i].info.title},
+            {"platform", images[i].info.platform},
+            {"release_date", images[i].info.released},
+            {"approved", true}
+        });
+    }
+    const auto index_tmp = folder / "index.json.tmp";
+    const auto index = folder / "index.json";
+    {
+        std::ofstream file(index_tmp, std::ios::binary | std::ios::trunc);
+        if (!file || !(file << manifest.dump(2) << '\n')) return;
+    }
+    if (std::rename(index_tmp.string().c_str(), index.string().c_str()) != 0)
+        return;
+    for (std::filesystem::directory_iterator it(folder, ec), end;
+         !ec && it != end; it.increment(ec)) {
+        const auto name = it->path().filename().string();
+        if (name.rfind("wall-", 0) == 0 && keep.count(name) == 0 &&
+            !std::filesystem::is_symlink(it->symlink_status()) &&
+            it->is_regular_file())
+            std::filesystem::remove(it->path(), ec);
+    }
+}
+} // namespace
+
+std::string EdenServices::daily_wallpaper() {
+    // This method is invoked ONLY by the asynchronous texture/appearance
+    // worker after the user explicitly chooses the Daily background. A fresh
+    // install does not contain even a single preloaded daily artwork image.
+    const auto folder = std::filesystem::path(Eden::UserDir()) / "wallpapers" / "daily";
+    const auto today = LocalDay();
+    RefreshDailyOnlyAfterSelection(folder, today);
+    for (int selected_source = 0; selected_source < 1; ++selected_source) {
         const auto index = folder / "index.json";
         std::error_code ec;
         if (std::filesystem::is_symlink(std::filesystem::symlink_status(index, ec)) ||
@@ -2912,8 +3285,8 @@ std::string EdenServices::daily_wallpaper() {
         std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) {
             return a.date > b.date || (a.date == b.date && a.path < b.path);
         });
-        // Only the newest sixteen released titles rotate each day.
-        if (candidates.size() > 16) candidates.resize(16);
+        // Strictly eight user-downloaded recent releases; never use app art.
+        if (candidates.size() > 8) candidates.resize(8);
         const std::time_t now = std::time(nullptr);
         const std::tm* local = std::localtime(&now);
         // Use a stable per-day index, not process randomness.

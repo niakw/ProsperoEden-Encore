@@ -69,20 +69,20 @@ for rel,sha,marker in pairs:
         # preserving its pinned old vendor Git blob rather than waiving drift.
         current_bytes=text.encode()
         current_git=hashlib.sha1(
-            b"blob "+str(len(current_bytes)).encode()+b"\\0"+current_bytes).hexdigest()
+            b"blob "+str(len(current_bytes)).encode()+b"\0"+current_bytes).hexdigest()
         assert current_git=="2658884ef0332ec7dc579824d9c89925f9168891", (
             "Unreviewed R23 parent scanner source", rel)
-        assert text.count("#include <limits>\\n")==1
-        text=text.replace("#include <limits>\\n","",1)
+        assert text.count("#include <limits>\n")==1
+        text=text.replace("#include <limits>\n","",1)
         start="std::optional<u64> ContentProvider::GetParentApplicationId(u64 program_id) const {"
-        end="\\nPlaceholderCache::PlaceholderCache("
+        end="\nPlaceholderCache::PlaceholderCache("
         assert text.count(start)==1 and text.count(end)==1
         i=text.index(start)
         j=text.index(end,i)
         text=text[:i]+text[j+1:]
         old_bytes=text.encode()
         old_git=hashlib.sha1(
-            b"blob "+str(len(old_bytes)).encode()+b"\\0"+old_bytes).hexdigest()
+            b"blob "+str(len(old_bytes)).encode()+b"\0"+old_bytes).hexdigest()
         assert old_git=="618ff99d2121741c190a9fd3ae8d0fd45f7eb9fe", (
             "Failed to reconstruct pre-R23 NCZ source", rel)
     assert text==expected,("unreviewed source change",rel)

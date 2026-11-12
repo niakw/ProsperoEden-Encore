@@ -893,7 +893,41 @@ if "#ifdef EDEN_NS2_GUEST_COUNTER" in cpu_active:
     assert cpu_active.count(ns2_cpu_header) == 1, "N76 header modified or duplicated"
     assert cpu_active.count(ns2_cpu_block) == 1, "N76 timing block modified or duplicated"
     cpu_active = cpu_active.replace(ns2_cpu_header, "").replace(ns2_cpu_block, "")
-assert cpu_active == cpu_expected, "TSC source differs from previous configure-time transformation"
+# R23 #114 corrects nanoseconds-to-ticks for >1GHz invariant RDTSC:
+# the former Q0.64 coefficient could overflow. Reverse its two exact
+# reviewed source changes after the existing N76 guest-rate reversal.
+# Preserve the original generated TSC parity witness unchanged.
+cpu_r23_constructor = (
+    "    , gputick_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(GPUTickFreq, rdtsc_frequency_) : 0}\n"
+    "    , invariant{invariant_}")
+cpu_r23_previous_constructor = (
+    "    , gputick_rdtsc_factor{invariant_ ? GetFixedPoint64Factor(GPUTickFreq, rdtsc_frequency_) : 0}\n"
+    "    , rdtsc_ns_factor{invariant_ ? GetFixedPoint64Factor(rdtsc_frequency_, NsRatio::den) : 1}\n"
+    "    , invariant{invariant_}")
+cpu_r23_new_ticks = """    if (!invariant) {
+        return static_cast<u64>(ns.count());
+    }
+    // A nanosecond-to-RDTSC ratio greater than one does not fit in
+    // 0.64 fixed-point: at 2/3/4 GHz the old factor wraps to zero.
+    // The product fits in 128 bits for any signed nanosecond duration
+    // and any measured 64-bit host frequency.
+    if (ns.count() <= 0) {
+        return 0;
+    }
+    const auto product = static_cast<unsigned __int128>(ns.count()) *
+                         static_cast<unsigned __int128>(rdtsc_frequency);
+    return static_cast<u64>(product / NsRatio::den);"""
+cpu_r23_prior_ticks = (
+    "    return invariant ? MultiplyHigh(ns.count(), rdtsc_ns_factor) : ns.count();")
+assert cpu_active.count(cpu_r23_constructor) == 1
+assert cpu_active.count(cpu_r23_new_ticks) == 1
+assert "static_cast<unsigned __int128>(rdtsc_frequency)" in cpu_active
+cpu_previous = cpu_active.replace(
+    cpu_r23_constructor, cpu_r23_previous_constructor, 1).replace(
+    cpu_r23_new_ticks, cpu_r23_prior_ticks, 1)
+assert cpu_previous == cpu_expected, (
+    "R23 nanosecond-to-RDTSC overflow fix changed unrelated TSC source")
+print("ENCORE_R23_RDTSC_OVERFLOW_REVERSE_PASS", "u128=1", "legacy_Q064=restored_oracle")
 assert c.count('list(APPEND common_sources "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")') == 1
 assert 'list(REMOVE_ITEM common_sources cpu_features.cpp)' in c
 assert 'if(NOT EXISTS "${EDEN_MAINTAINED_NATIVE_CPU_FEATURES}")' in c

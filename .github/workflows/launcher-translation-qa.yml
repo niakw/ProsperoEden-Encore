@@ -9,6 +9,7 @@ on:
       - 'headless/settings_store.h'
       - 'tools/launcher/strings.py'
       - 'tools/check-launcher-translation-coverage.py'
+      - 'tools/check-english-regional-variants.py'
       - '.github/workflows/launcher-translation-qa.yml'
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - 'headless/settings_store.h'
       - 'tools/launcher/strings.py'
       - 'tools/check-launcher-translation-coverage.py'
+      - 'tools/check-english-regional-variants.py'
       - '.github/workflows/launcher-translation-qa.yml'
   workflow_dispatch:
 

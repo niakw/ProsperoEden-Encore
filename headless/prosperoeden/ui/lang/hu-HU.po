@@ -161,7 +161,7 @@ msgstr "Automatikus Ellenőrzés"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automatikus Ellenőrzés · Be"
+msgstr "Autom. ellenőrzés · Be"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -456,7 +456,7 @@ msgstr "A mappát nem sikerült létrehozni. Ellenőrizd, hogy írható-e a ját
 
 #: pe/ui/library.cpp
 msgid "Could not load game library. Reopen Encore to retry."
-msgstr "Nem sikerült betölteni a játékkönyvtárat. Nyissa meg újra az Encore-t az újrapróbálkozáshoz."
+msgstr "A játékkönyvtár nem tölthető be. Indítsa újra az Encore-t."
 
 #: pe/ui/library.cpp
 msgid "Could not load game list. Please try again."
@@ -738,7 +738,7 @@ msgstr "A játék nem indult el: {0} Részletek: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Mappák böngészése · szoftverek"
+msgstr "Játékfájlok"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1440,7 +1440,7 @@ msgstr "A felbontás követi a kiválasztott cím-tudatos profilt. Csökkentse a
 
 #: pe/ui/launcher.cpp
 msgid "Restore default settings?"
-msgstr "Visszaállítja az alapértelmezett beállításokat?"
+msgstr "Visszaállítja az alapbeállításokat?"
 
 #: pe/ui/settings.cpp
 msgid "Restore defaults"

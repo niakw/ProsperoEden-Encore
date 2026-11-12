@@ -122,13 +122,13 @@
     {
       "path": "headless/prosperoeden/fr_fr_embedded.h",
       "historical_reviewed_git_blob": "7ebe8df590bf6f7e371f7982ff75e1eb4f2255f6",
-      "post_snapshot_git_blob": "9caedc5e1691f2cc9907dd6bbf396e5c70057435",
+      "post_snapshot_git_blob": "7ae44c966b4511a78ef95dc03470b25e03ca0b73",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "embedded French text synchronized with current on-disk locale; not typography or all-languages proof",
       "review_kind": "locale_source",
       "required_source_fragment": "msgid \"Neural Rendering\"",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof."
+      "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof.\n2026-11-12 PR #92: re-generated embedded fr-FR catalog exactly from updated fr-FR.po containing No DLC/updates -> Aucun DLC/MAJ; host/source contract only. Historical F07 digest unchanged."
     },
     {
       "path": "headless/prosperoeden/frontend.cpp",

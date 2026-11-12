@@ -1234,7 +1234,12 @@ msgstr "Aucune capture disponible"
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
 msgstr "Aucun fond d'écran. Copiez une image PNG, JPEG ou TGA dans le dossier wallpapers de l'application."
 
-#. No add-ons (updates or DLC).
+#. Neither a game update nor DLC is installed.
+#: pe/ui/library.cpp
+msgid "No DLC/updates"
+msgstr "Aucun DLC/MAJ"
+
+#. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Aucune"

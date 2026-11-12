@@ -418,7 +418,7 @@ assert 'Color::rgb(0xf4f2f8)' in r457_dialog
 theme_source = read('headless/prosperoeden/pe/ui/theme.hpp')
 light_block = theme_source.split('} else if (palette == 3) { // Neutral Light', 1)[1].split(
     '\n    }\n    if (accent > 0', 1)[0]
-ink = dict(re.findall(r'(k\\w+)\\s*=\\s*Color::rgb\\(0x([0-9a-fA-F]{6})\\)', light_block))
+ink = dict(re.findall(r'(k\w+)\s*=\s*Color::rgb\(0x([0-9a-fA-F]{6})\)', light_block))
 def rel_luminance(value):
     channels = [int(value[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
     linear = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4

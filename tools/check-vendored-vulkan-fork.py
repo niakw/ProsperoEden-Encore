@@ -741,12 +741,59 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         return text
     # Verify EVERY owner and show precise refusals without weakening the
     # historical SHA or accepting a changed vendor submodule by coincidence.
+    # The merged vendor graph contains reviewed R23 full-source integrations
+    # on top of P24 and post-MSAA. Historic reverse hunks cannot describe
+    # these newer shader/EDS3/TIR changes. Qualify their *exact combined blobs*
+    # independently; keep the original reverse proof for unaffected owners.
+    r23_combined_owners = {
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h':
+            'd49090a476f6a9bf61026331f59c9fbb1d918729',
+        'include/video_core/renderer_vulkan/vk_rasterizer.h':
+            'cb35d183c8a9c2ea05f5eb8949a167ea295f8ce7',
+        'vk_graphics_pipeline_cost.cpp':
+            'd7563d41b74d780f4512899e2fda1b2f362f5523',
+        'vk_pipeline_cache_cost.cpp':
+            '417b9b953bae2dcae511e4166821881f5c443aa1',
+        'vulkan_device.cpp':
+            '50578df547b769bd45cf4964ffa3f793c1749273',
+        'vulkan_rasterizer.cpp':
+            '2530e3754435175810cbf24cb20446e177d1f19f',
+    }
+    r23_required_semantics = {
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h':
+            ('UsesAttributeHandle()', 'SetAttributeHandle('),
+        'include/video_core/renderer_vulkan/vk_rasterizer.h':
+            ('struct AttributeHandleRun', 'attribute_handle_runs'),
+        'vk_graphics_pipeline_cost.cpp':
+            ('ATTRIBUTE_HANDLE_CBUF_INDEX', 'VkPipelineRasterizationDepthClipStateCreateInfoEXT'),
+        'vk_pipeline_cache_cost.cpp':
+            ('HasBrokenPattern(programs[index])', 'single_lane_geometry_subgroups',
+             'support_attribute_texture_handle = true',
+             'dynamic_features.has_depth_clip_enable'),
+        'vulkan_device.cpp':
+            ('depthClipEnable', 'mesh_shader'),
+        'vulkan_rasterizer.cpp':
+            ('CollectAttributeHandleRuns(', 'MaxwellDepthClampClip(',
+             'CanExecuteRecordedDraw()', 'DrawMeshTasksEXT'),
+    }
+    assert set(r23_combined_owners) <= set(p24_by_path)
+    for name, receipt_sha in r23_combined_owners.items():
+        combined = expected[name].read_text()
+        assert git_blob_sha(combined) == receipt_sha, (
+            'Unreviewed merged R23 Vulkan source bytes', name)
+        assert all(token in combined for token in r23_required_semantics[name]), (
+            'Missing merged R23 shader/Vulkan ABI semantic', name)
+    print("ENCORE_R23_COMBINED_VULKAN_BLOB_PASS",
+          f"reviewed_owners={len(r23_combined_owners)}",
+          "historical_P24_reversal_not_reclaimed=1")
+
     maintained_errors = []
     for name in p24_by_path:
         assert name in expected and name in actual, (
             'missing Task/Mesh Vulkan source', name)
         try:
-            reverse_p24(name, expected[name].read_text())
+            if name not in r23_combined_owners:
+                reverse_p24(name, expected[name].read_text())
         except AssertionError as exc:
             maintained_errors.append({'path': name, 'error': str(exc)})
     if maintained_errors:
@@ -755,7 +802,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
               flush=True)
     assert not maintained_errors, ("P24 post-MSAA reversible source drift", maintained_errors)
     print("ENCORE_P24_POST_MSAA_REVERSIBLE_PASS",
-          "vulkan_owners=7",
+          "legacy_reversed_owners=2",
           f"checked_hunks={sum(len(row['reverse_hunks']) for row in post['files'])}",
           "historic_p24_sha_preserved=1")
 

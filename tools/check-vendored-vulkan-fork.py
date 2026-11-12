@@ -125,7 +125,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert mesh_device.count('IsExtDepthClipEnableSupported() const') == 1
     # The immutable upstream generator owns the historic Vulkan ports, not
     # post-generator R09 neural shaders/owners, FSR31 and native additions.
-    # Pin the *exact* 238-path additive inventory rather than ignoring
+    # Pin the *exact* 241-path additive inventory rather than ignoring
     # unexpected extras or pretending they were generated from Eden upstream.
     additive_manifest = root / 'tools/vendor-vulkan-native-additions.txt'
     approved_native_additions = {
@@ -133,7 +133,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         for row in additive_manifest.read_text(encoding='utf-8').splitlines()
         if row.strip() and not row.lstrip().startswith('#')
     }
-    assert len(approved_native_additions) == 238, (
+    assert len(approved_native_additions) == 241, (
         'Reviewed native additive inventory count changed',
         len(approved_native_additions))
     assert not set(actual) - set(expected), (
@@ -141,7 +141,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         sorted(set(actual) - set(expected)))
     # The isolated R2 branch carries exact SHA-pinned unmerged vendor
     # research additions and source owners. Never add these to the production
-    # 238-path allowlist; the executable oracle remains byte-exact.
+    # 241-path allowlist; the executable oracle remains byte-exact.
     # GitHub Actions uses a merge ref for pull_request events; admit only
     # this exact draft research head, and still pin every changed source SHA.
     # Native production NS2 uses the reviewed vendor pin and preserves
@@ -178,7 +178,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 text=True).strip() == sha, ('R2 research-only source blob drift', name)
         approved_native_additions |= set(r2_extra)
         # R09 native additions belong to this single production vendor pin.
-        # Verify each exact blob; preserve the immutable 238-path generator list.
+        # Verify each exact blob; preserve the immutable 241-path generator list.
         r09_extra = {
                   "include/rdna2_nr_fswin_scratch_pool_policy.h": "091b9734e93e33478d58a20a111d7a3be4b016e0",
                   "include/rdna2_nr_vit_min_pool_policy.h": "75354460bd4857229d86e023c0e620dd33d47787",

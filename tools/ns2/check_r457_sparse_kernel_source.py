@@ -6,9 +6,10 @@ physical alias lifetime, PS5 SDK, GPU fences, or first frame.
 """
 from pathlib import Path
 import subprocess
+import sys
 
 root=Path(__file__).resolve().parents[2]
-vendor="f6e63db1c2430e44580374109a9bab3071a81245"
+vendor="cb9a4b49765d29ed04ec99b0f2b2f936b67ba009"
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 assert pinned==vendor,(pinned,vendor)
@@ -31,6 +32,14 @@ normalize=lambda source: re.sub(r"\n\s*\n","\n\n",source).strip()
 assert normalize(stripped)==normalize(baseline), "kernel semantics drift"
 assert "set(EDEN_NS2_SPARSE_BACKING OFF)" in cmake
 assert "set(EDEN_NS2_SPARSE_BACKING ON)" in cmake
+# KPort and KPageBuffer both write guest physical pages before a process
+# maps them. The linked sparse direct-memory owner must commit both first.
+assert 'EDEN_R457_SPARSE_SLAB_SRC' in cmake
+assert 'list(REMOVE_ITEM eden_r457_sparse_kernel_units' in cmake
+assert 'set_property(SOURCE "${EDEN_R457_SPARSE_SLAB_SRC}"' in cmake
+subprocess.run([sys.executable, "-B",
+    str(root / "vendor/tests/ns2_r457_kernel_slab_precommit_host.py")], check=True)
+
 assert kernel_rel.replace("vendor/","") in cmake
 assert 'list(REMOVE_ITEM eden_r457_sparse_kernel_units' in cmake
 assert 'hle/kernel/k_memory_manager.cpp' in cmake

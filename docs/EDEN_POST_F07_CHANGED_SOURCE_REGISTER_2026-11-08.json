@@ -243,13 +243,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/settings.cpp",
       "historical_reviewed_git_blob": "be3b42b9740e084ab2e494b0b88cb70ef5336e44",
-      "post_snapshot_git_blob": "97aa61e920893f64174372a27c5a709e994631b8",
+      "post_snapshot_git_blob": "55175bf49a2155e47dddb92c82fbb4d65ce17265",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "Light-theme-readable App Updates summary/notes in a separate opaque panel below the two actionable update rows",
       "review_kind": "host_source_ui",
       "required_source_fragment": "Always render release status in its own opaque, high-contrast band",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending.\n2026-11-12: Personal wallpaper import prompt advertises WebP supported alongside PNG, JPEG, TGA. Git blob 97aa61e920893f64174372a27c5a709e994631b8. Real console boot still unverified; historical F07 hash preserved."
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending.\n2026-11-12: Personal wallpaper import prompt advertises WebP supported alongside PNG, JPEG, TGA. Git blob 97aa61e920893f64174372a27c5a709e994631b8. Real console boot still unverified; historical F07 hash preserved.\n2026-11-12: Revert new untranslated fallback string; runtime still accepts personal WebP through CheckedWallpaper, documentation updated separately. Preserve 31 fully covered catalogs."
     },
     {
       "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",

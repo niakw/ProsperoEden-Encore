@@ -161,7 +161,7 @@ msgstr "Automatisch Prüfen"
 
 #: pe/ui/settings.cpp
 msgid "Auto check on"
-msgstr "Automatisch Prüfen · Aktiviert"
+msgstr "Auto-Prüfung: Ein"
 
 #. Button hint: go back one screen.
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/multiplayer.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
@@ -456,11 +456,11 @@ msgstr "Der Ordner konnte nicht erstellt werden. Prüfe, ob der Spieldateien-Ord
 
 #: pe/ui/library.cpp
 msgid "Could not load game library. Reopen Encore to retry."
-msgstr "Die Spielbibliothek konnte nicht geladen werden. Öffnen Sie Encore erneut, um es erneut zu versuchen."
+msgstr "Spielbibliothek konnte nicht geladen werden. Encore neu starten und erneut versuchen."
 
 #: pe/ui/library.cpp
 msgid "Could not load game list. Please try again."
-msgstr "Die Spieleliste konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+msgstr "Spieleliste konnte nicht geladen werden. Bitte erneut versuchen."
 
 #: pe/ui/launcher.cpp
 msgid "Could not save settings. Please try again."
@@ -468,7 +468,7 @@ msgstr "Einstellungen nicht gespeichert. Bitte versuche es erneut."
 
 #: pe/ui/browse.cpp
 msgid "Could not save the storage root. Please try again."
-msgstr "Das Speicherstammverzeichnis konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+msgstr "Speicherordner konnte nicht gespeichert werden. Bitte erneut versuchen."
 
 #: pe/ui/browse.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/mapping.cpp
 msgid "Could not save. Please try again."
@@ -506,7 +506,7 @@ msgstr "Benutzerdefinierte PS5"
 
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Custom Switch"
-msgstr "Benutzerdefinierter Schalter"
+msgstr "Switch-Anpassung"
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Customize"
@@ -588,7 +588,7 @@ msgstr "Bearbeiten"
 
 #: pe/ui/settings.cpp
 msgid "Edit custom mapping"
-msgstr "Benutzerdefinierte Zuordnung bearbeiten"
+msgstr "Eigene Belegung ändern"
 
 #: pe/ui/browse.cpp
 msgid "Encore uses the same keys, firmware, roms, updates and mods folders under every storage root."
@@ -630,7 +630,7 @@ msgstr "Kopie exportieren"
 
 #: eden_services.cpp
 msgid "Export failed. Check that the storage root can be written."
-msgstr "Der Export ist fehlgeschlagen. Überprüfen Sie, ob das Speicherstammverzeichnis beschrieben werden kann."
+msgstr "Export fehlgeschlagen. Schreibrechte des Speicherordners prüfen."
 
 #. {0} is a folder.
 #: eden_services.cpp, host/fake_services.hpp
@@ -738,7 +738,7 @@ msgstr "Spiel konnte nicht gestartet werden: {0} Details: {1}"
 
 #: pe/ui/switch_theme.cpp
 msgid "Game files"
-msgstr "Ordner durchsuchen · Software"
+msgstr "Spieldateien"
 
 #: pe/ui/library.cpp
 msgid "Game library unavailable"
@@ -1190,7 +1190,7 @@ msgstr "Keine"
 
 #: pe/ui/settings.cpp
 msgid "Not checked"
-msgstr "Prüfen Jetzt · Deaktiviert"
+msgstr "Nicht geprüft"
 
 #. Short status at the right of the Save data row.
 #: pe/ui/library.cpp, pe/ui/switch_theme.cpp
@@ -1235,7 +1235,7 @@ msgstr "Bibliothek öffnen"
 
 #: pe/ui/home.cpp
 msgid "Open quick settings"
-msgstr "Öffnen Sie die Schnelleinstellungen"
+msgstr "Schnelleinstellungen öffnen"
 
 #: pe/ui/home.cpp
 msgid "Open settings"
@@ -1428,7 +1428,7 @@ msgstr "Reset overrides"
 
 #: pe/ui/launcher.cpp
 msgid "Reset this game's custom settings?"
-msgstr "Benutzerdefinierte Einstellungen dieses Spiels zurücksetzen?"
+msgstr "Eigene Spieleinstellungen zurücksetzen?"
 
 #: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/switch_theme.cpp
 msgid "Resolution"
@@ -1804,7 +1804,7 @@ msgstr "Verwenden Sie extrahierte Firmware-NCA-Dateien. Wählen Sie das Stammver
 
 #: pe/ui/browse.cpp
 msgid "Use this root"
-msgstr "Verwenden Sie diese Wurzel"
+msgstr "Diesen Ordner nutzen"
 
 #: pe/ui/settings.cpp
 msgid "VIBRATION"

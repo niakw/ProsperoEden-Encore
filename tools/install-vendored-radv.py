@@ -78,7 +78,59 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def install(destination: Path, provenance: Path | None) -> None:
+def is_owned_disposable_stage(destination: Path) -> bool:
+    """Allow a cache-only reset exclusively in the pinned sibling RADV worktree."""
+    expected = ROOT.parent / 'mihawk-vulkan-review/.deps/work/radv-src'
+    return (
+        destination.absolute() == expected.absolute()
+        and destination.is_dir()
+        and not destination.is_symlink()
+        and not destination.parent.is_symlink()
+    )
+
+
+def quarantine_and_reset_stale_input(compiled: Path, original: Path,
+                                     relative: str, stale_sha: str) -> None:
+    """Save unknown cache bytes, then restore immutable pinned bytes atomically.
+
+    This does not approve the unknown source. The subsequent installation
+    must still replace the pinned bytes with the exact versioned active fork.
+    """
+    if compiled.is_symlink() or original.is_symlink() or not compiled.is_file():
+        raise RuntimeError(f'Unsafe RADV staging path: {relative}')
+    quarantine = ROOT / 'build/radv-tools/stale-staged-radv-sources'
+    quarantine.mkdir(parents=True, exist_ok=True)
+    backup = quarantine / (stale_sha + '.c' if compiled.suffix == '.c'
+                           else stale_sha + compiled.suffix)
+    if backup.exists():
+        if digest(backup) != stale_sha:
+            raise RuntimeError(f'Corrupt retained RADV cache snapshot: {relative}')
+    else:
+        temp_backup = backup.with_name(backup.name + f'.tmp-{os.getpid()}')
+        try:
+            shutil.copy2(compiled, temp_backup)
+            if digest(temp_backup) != stale_sha:
+                raise RuntimeError(f'RADV stale input changed during quarantine: {relative}')
+            temp_backup.replace(backup)
+        finally:
+            temp_backup.unlink(missing_ok=True)
+    temporary = compiled.with_name(compiled.name + f'.pinned-{os.getpid()}')
+    try:
+        shutil.copy2(original, temporary)
+        if digest(temporary) != digest(original):
+            raise RuntimeError(f'RADV pinned source copy mismatch: {relative}')
+        temporary.replace(compiled)
+        os.utime(compiled, None)
+    finally:
+        temporary.unlink(missing_ok=True)
+    print(f'RADV_UNKNOWN_STAGED_SOURCE_QUARANTINED relative={relative} '
+          f'stale_sha256={stale_sha} reset_to=immutable_pinned')
+
+
+def install(destination: Path, provenance: Path | None,
+            *, repair_owned_stage: bool = False) -> None:
+    if repair_owned_stage and not is_owned_disposable_stage(destination):
+        raise RuntimeError('RADV repair permitted only inside owned sibling build staging')
     installed = {}
     changed = False
     for relative in PATHS:
@@ -91,7 +143,14 @@ def install(destination: Path, provenance: Path | None) -> None:
         raw_sha = digest(original)
         fork_sha = digest(canonical)
         if not approved_compiler_input(relative, before, raw_sha, fork_sha):
-            raise RuntimeError(f'Unrecognized RADV compiler input (refusing to clobber): {relative}, sha256={before}')
+            if not repair_owned_stage:
+                raise RuntimeError(f'Unrecognized RADV compiler input (refusing to clobber): {relative}, sha256={before}')
+            # The initial pinned builder has already run. Quarantine unknown
+            # bytes from its disposable stage; never allow their compilation.
+            quarantine_and_reset_stale_input(compiled, original, relative, before)
+            before = digest(compiled)
+            if before != raw_sha:
+                raise RuntimeError(f'RADV owned source reset failed: {relative}')
         if before != fork_sha:
             # Atomic replacement allows incremental Ninja to detect only the
             # translated units whose behavior actually differs from upstream.
@@ -121,5 +180,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('destination', type=Path, help='Existing mihawk-vulkan-review/.deps/work/radv-src')
     parser.add_argument('--provenance', type=Path)
+    parser.add_argument('--repair-owned-stage', action='store_true',
+                        help='Quarantine unknown cached RADV inputs only in the pinned sibling build stage')
     args = parser.parse_args()
-    install(args.destination, args.provenance)
+    install(args.destination, args.provenance,
+            repair_owned_stage=args.repair_owned_stage)

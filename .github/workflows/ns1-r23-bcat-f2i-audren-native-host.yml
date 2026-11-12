@@ -1,0 +1,37 @@
+name: NS1 R23 BCAT F2I audren channel native host
+on:
+  push:
+    branches: [integration/ns1-r23-bcat-f2i-audren-channel-20261112]
+    paths:
+      - headless/CMakeLists.txt
+      - headless/r23_bcat_delivery_cache_file_ps5.cpp
+      - headless/r23_f2i_conversion_ps5.cpp
+      - headless/r23_audren_debug_ps5.cpp
+      - headless/r23_channel_state_cache_ps5.h
+      - tools/audit/check-r23-f2i-bcat-host.py
+      - tools/audit/check-r23-channel-state-host.py
+      - tools/audit/check-r23-ips-audren-host.py
+      - .github/workflows/ns1-r23-bcat-f2i-audren-native-host.yml
+  pull_request:
+    paths:
+      - headless/CMakeLists.txt
+      - headless/r23_*
+      - tools/audit/check-r23-*
+      - .github/workflows/ns1-r23-bcat-f2i-audren-native-host.yml
+permissions:
+  contents: read
+jobs:
+  qualified-source-graph:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Byte-exact BCAT and F2I with ASan/UBSan host vectors
+        run: python3 -B tools/audit/check-r23-f2i-bcat-host.py
+      - name: Channel state header initialization with ASan/UBSan
+        run: python3 -B tools/audit/check-r23-channel-state-host.py
+      - name: Maintained IPS and audren debugger service C++ contract
+        run: python3 -B tools/audit/check-r23-ips-audren-host.py

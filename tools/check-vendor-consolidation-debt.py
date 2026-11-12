@@ -203,8 +203,26 @@ storage_new = """    const auto fs_start = ::Eden::Performance::detailed_gpu_pro
         ::Eden::Performance::guest_fs_storage_bytes.fetch_add(static_cast<unsigned long long>(length), std::memory_order_relaxed);
     }"""
 assert storage_pinned.count(storage_old) == 1
-assert storage_maintained == '#include "performance.h"\n' + storage_pinned.replace(storage_old, storage_new), (
-    "Maintained IStorage profile TU diverges from the earlier CMake-generated source")
+# FW23 R23 adds input-bounds and per-session pacing to the previously
+# reviewed IStorage profile. Recover the exact old generated code rather
+# than claiming the newer source still equals the former snapshot.
+storage_receipt = json.loads(
+    (root / "tools/fixtures/r23-i-storage-backport-reverse.json").read_text())
+assert storage_receipt["schema_version"] == 1
+assert len(storage_receipt["hunks"]) == 2
+import hashlib
+def source_git_blob(source):
+    data = source.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+assert source_git_blob(storage_maintained) == storage_receipt["combined_blob"]
+storage_prior = storage_maintained
+for hunk in reversed(storage_receipt["hunks"]):
+    assert storage_prior.count(hunk["after"]) == 1, "IStorage R23 hunk context changed"
+    storage_prior = storage_prior.replace(hunk["after"], hunk["before"], 1)
+assert source_git_blob(storage_prior) == storage_receipt["pre_r23_blob"]
+assert storage_prior == '#include "performance.h"\n' + storage_pinned.replace(storage_old, storage_new), (
+    "Maintained IStorage historic profile TU cannot be reconstructed")
+assert "next_read_tick" in storage_maintained and "out_bytes.size()" in storage_maintained
 assert 'EDEN_MAINTAINED_PROFILE_FS_STORAGE' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/fs_i_storage.cpp"' not in c
 assert "fs_storage_source" not in c

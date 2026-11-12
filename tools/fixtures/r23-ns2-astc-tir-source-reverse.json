@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "path": "video_core/texture_cache/texture_cache.h",
+  "baseline_blob": "5ad7f02ff58260bf330265d6a9e49db3bd778ea4",
+  "combined_blob": "da6ab6dcea2a1c02fcb2e862d111dc410b025d66",
+  "hunks": [
+    {
+      "before": "    const GPUVAddr gpu_addr = regs.zeta.Address();\n    if (gpu_addr == 0) {\n        return ImageViewId{};\n    }\n    const ImageInfo info(regs.zeta, regs.zeta_size, regs.anti_alias_samples_mode);\n    return FindRenderTargetView(info, gpu_addr);\n}\n\ntemplate <class P>",
+      "after": "    const GPUVAddr gpu_addr = regs.zeta.Address();\n    if (gpu_addr == 0) {\n        return ImageViewId{};\n    }\n    // Target-independent rasterization: the depth buffer keeps the raster sample count while\n    // the color targets use anti_alias_samples_mode.\n    Tegra::Texture::MsaaMode zeta_msaa_mode = regs.anti_alias_samples_mode;\n    if (regs.anti_alias_raster != Tegra::Engines::Maxwell3D::Regs::AntiAliasRaster::Mode1x1) {\n        const auto raster_mode = static_cast<Tegra::Texture::MsaaMode>(regs.anti_alias_raster);\n        bool use_raster = regs.tir_mode == Tegra::Engines::Maxwell3D::Regs::TIRMode::RasterNTargetM;\n        if (!use_raster && regs.anti_alias_samples_mode == Tegra::Texture::MsaaMode::Msaa1x1) {\n            // Clears can be issued before tir_mode is enabled. Only a depth buffer sized for the\n            // raster samples relative to the color target is treated as multisampled, otherwise\n            // it ping-pongs between a 1x and a multisampled image every frame.\n            const auto& rt0 = regs.rt[0];\n            use_raster = rt0.Address() != 0 && rt0.format != Tegra::RenderTargetFormat::NONE &&\n                         regs.zeta_size.width == rt0.width * NumSamplesX(raster_mode) &&\n                         regs.zeta_size.height == rt0.height * NumSamplesY(raster_mode);\n        }\n        if (use_raster) {\n            zeta_msaa_mode = raster_mode;\n        }\n    }\n    const ImageInfo info(regs.zeta, regs.zeta_size, zeta_msaa_mode);\n    return FindRenderTargetView(info, gpu_addr);\n}\n\ntemplate <class P>"
+    }
+  ]
+}

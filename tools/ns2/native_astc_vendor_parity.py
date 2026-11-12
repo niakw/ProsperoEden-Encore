@@ -7,6 +7,7 @@ ASTC assemble include. No executable code generator or replacement TU is used.
 from pathlib import Path
 import subprocess
 import hashlib
+import json
 
 OWNER = Path("vendor/encore-active/eden-vulkan")
 ASTC = Path("vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan")
@@ -123,6 +124,26 @@ def strip_p25_reinterpret(text: str) -> str:
         '        cmdbuf.CopyBufferToImage(copy_buffer, dst_image, VK_IMAGE_LAYOUT_GENERAL, vk_out_copies);')
     return text
 
+def reverse_r23_checked_astc(root: Path, name: str, text: str) -> str:
+    """Restore the exact historic ASTC owner from the new TIR/retirement ABI."""
+    receipts = {
+        "vk_texture_cache.h": "r23-native-astc-vk-header-reverse.json",
+        "texture_cache.h": "r23-ns2-astc-tir-source-reverse.json",
+    }
+    assert name in receipts
+    record = json.loads((root / "tools/fixtures" / receipts[name]).read_text())
+    assert record["schema_version"] == 1
+    assert len(record["hunks"]) in (1, 3)
+    assert git_blob(text.encode()) == record["combined_blob"], (
+        "Unreviewed R23/ASTC integrated source", name)
+    for hunk in reversed(record["hunks"]):
+        assert text.count(hunk["after"]) == 1, ("ASTC reverse hunk drift", name)
+        text = text.replace(hunk["after"], hunk["before"], 1)
+    assert git_blob(text.encode()) == record["baseline_blob"], (
+        "ASTC historic source reconstruction failed", name)
+    return text
+
+
 def strip_post_n73_msaa_attachment_header(text: str) -> str:
     """Reverse only the newer exact native MSAA guest-attachment identity API.
 
@@ -178,7 +199,8 @@ def normalized(root: Path) -> dict[str, str]:
     for name, expected in AUXILIARY.items():
         path = root / ASTC / name
         if name == "vk_texture_cache.h":
-            n73 = strip_post_n73_msaa_attachment_header(path.read_text())
+            n73 = strip_post_n73_msaa_attachment_header(
+                reverse_r23_checked_astc(root, "vk_texture_cache.h", path.read_text()))
             n73 = strip_p22_native_gpu_pins(n73)
             n73 = strip_p22_runtime_header(n73)
             before = "    void Finish();\n"

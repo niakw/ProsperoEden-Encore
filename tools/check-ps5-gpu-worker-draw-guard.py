@@ -20,7 +20,21 @@ assert 'static_cast<bool>(pipeline)' in method
 assert "CanExecuteDraw()" in generator
 assert 'build_condvar.wait(lock' in pipeline_cpp
 assert 'scheduler.Record([this](vk::CommandBuffer)' in pipeline_cpp
-assert raster.count("pipeline = prepared_pipeline](vk::CommandBuffer cmdbuf)")==4
+# Three classic variants and the R23 #35 split-attribute direct draw.
+assert raster.count("pipeline = prepared_pipeline](vk::CommandBuffer cmdbuf)")==3
+assert raster.count(
+    "const auto record_draw = [this, pipeline = prepared_pipeline](DrawParams params) {")==1
+assert raster.count(
+    "scheduler.Record([params, pipeline](vk::CommandBuffer cmdbuf) {")==1
+direct_begin=raster.index(
+    "const auto record_draw = [this, pipeline = prepared_pipeline](DrawParams params) {")
+direct_end=raster.index("        if (attribute_handle_pipeline &&", direct_begin)
+direct=raster[direct_begin:direct_end]
+assert direct.count("pipeline->CanExecuteRecordedDraw()")==1
+assert direct.count("cmdbuf.Draw(")==direct.count("cmdbuf.DrawIndexed(")==1
+assert direct.index("CanExecuteRecordedDraw()") < direct.index("cmdbuf.DrawIndexed(")
+assert "record_draw(params);" in raster
+assert "record_draw(draw_params);" in raster
 assert raster.count("if (!pipeline || !pipeline->CanExecuteRecordedDraw()) {")==4
 assert "return worker_draw_bind_valid;" in recorded_method
 assert "return CanExecuteDraw();" in recorded_method
@@ -32,7 +46,11 @@ for name in ("Draw(", "DrawIndirectByteCountEXT(", "DrawIndexedIndirectCount(", 
     index=raster.index("cmdbuf."+name)
     preceding=raster[:index].rfind("scheduler.Record([")
     relevant=raster[preceding:index]
-    assert "pipeline = prepared_pipeline" in relevant, name
+    if name=="Draw(":
+        assert "scheduler.Record([params, pipeline]" in relevant
+        assert "const auto record_draw" in raster[:preceding]
+    else:
+        assert "pipeline = prepared_pipeline" in relevant, name
     assert "pipeline->CanExecuteRecordedDraw()" in relevant, name
     assert relevant.index("pipeline->CanExecuteRecordedDraw()") < relevant.index("return;"), name
 guard='''            if (!pipeline || !pipeline->CanExecuteRecordedDraw()) {

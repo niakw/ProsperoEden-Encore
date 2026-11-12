@@ -19,6 +19,8 @@ ORIGINAL = ROOT / "vendor/sources/eden/src"
 ACTIVE = ROOT / "vendor/encore-active/eden-header-hygiene/include"
 FIXES = {
     "common/page_table.h": (
+        ("static constexpr u64 SIGN_BIT = 45 + 12; // 44 bits of data + page offset",
+         "static constexpr u64 SIGN_BIT = 44 + 12 - 1; // top bit of 44-bit ATTRIBUTE_MASK"),
         ("constexpr void Store(bool marked, PageType type, u16 block, uintptr_t pointer) noexcept",
          "void Store(bool marked, PageType type, u16 block, uintptr_t pointer) noexcept"),
         ("constexpr void MarkRasterizerCached() noexcept",

@@ -1,0 +1,40 @@
+name: NS1 R23 attribute handle native selected shader/Vulkan owners (host)
+on:
+  push:
+    branches:
+      - research/ns1-r23-attribute-texhandle-native-20261112
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - ".github/workflows/ns1-r23-attribute-handle-native.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-shader-vulkan-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Require exact vendor and one selected texture pass with Vulkan family
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "108f5cb288594b4d42b2c8c0c7a9018d200e3de5"
+          python3 -B vendor/tests/ns1_r23_35_attribute_handle.py
+          python3 - <<'PY'
+          from pathlib import Path
+          cm=Path('headless/CMakeLists.txt').read_text()
+          vk=Path('headless/vulkan.cmake').read_text()
+          assert 'list(REMOVE_ITEM eden_r23_attr_units "ir_opt/texture_pass.cpp")' in cm
+          assert 'target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_R23_ATTRIBUTE_HEADERS}")' in cm
+          assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vk
+          src=Path("vendor/encore-active/eden-shader/src/shader_recompiler")
+          assert all((src/x).is_file() for x in
+             ("host_translate_info.h","shader_info.h","ir_opt/texture_pass.cpp"))
+          print("NS1_ATTRIBUTE_TEXTURE_SHADER_AND_VULKAN_SOURCE_OWNER_PASS files=8")
+          PY

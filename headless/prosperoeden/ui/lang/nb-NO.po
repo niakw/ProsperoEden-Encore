@@ -1178,7 +1178,12 @@ msgstr "Ingen tilgjengelige skjermbilder"
 msgid "No wallpaper. Copy PNG, JPEG or TGA to the app wallpapers folder."
 msgstr "Bakgrunn: PNG/JPEG/TGA → wallpapers/"
 
-#. No add-ons (updates or DLC).
+#. Neither a game update nor DLC is installed.
+#: pe/ui/library.cpp
+msgid "No DLC/updates"
+msgstr "Ingen DLC eller oppdateringer"
+
+#. Generic None option.
 #: pe/ui/library.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp, settings_store.h
 msgid "None"
 msgstr "Ingen"

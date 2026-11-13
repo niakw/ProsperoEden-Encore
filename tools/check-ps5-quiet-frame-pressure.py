@@ -50,7 +50,19 @@ assert "frame_pressure_logging_generation = report_logging_generation;" in prese
 assert "unsigned frame_pressure_logging_generation{};" in header
 assert 'generation.fetch_add(1, std::memory_order_relaxed)' in read("headless/log_pipe.h")
 assert "frame_pressure_was_detailed = Eden::NativeLogs::Detailed();" in present
-assert "if (frame_pressure_was_detailed)\n                frame_pressure_previous = CaptureFramePressure();" in present
+# The original exact one-line check became stale when per-domain cache
+# baselines were paired with the existing 24-counter snapshot. The source
+# contract must verify BOTH inside the same detailed-only branch.
+baseline = present.split("if (frame_sample_start < 0) {", 1)[1].split(
+    "#ifdef EDEN_DEV_PROFILE", 1)[0]
+assert "if (frame_pressure_was_detailed) {" in baseline
+assert "frame_pressure_previous = CaptureFramePressure();" in baseline
+assert "frame_cache_domain_previous = CaptureFrameCacheDomains();" in baseline
+assert baseline.index("if (frame_pressure_was_detailed) {") < baseline.index(
+    "frame_cache_domain_previous = CaptureFrameCacheDomains();")
+assert baseline.index("frame_cache_domain_previous = CaptureFrameCacheDomains();") < baseline.rindex("}")
+assert baseline.count("CaptureFramePressure()") == 1
+assert baseline.count("CaptureFrameCacheDomains()") == 1
 assert "frame_pressure_was_detailed = true;\n                frame_pressure_logging_generation = report_logging_generation;\n                Eden::Performance::ReportVulkan();" in present
 quiet = present.split("} else {\n                    // Do not sample 24 counters every five seconds when the", 1)[1]
 assert "frame_pressure_was_detailed = false;" in quiet

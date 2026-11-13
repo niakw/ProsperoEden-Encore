@@ -3228,12 +3228,20 @@ std::vector<std::string> EdenServices::wallpapers() {
     std::vector<std::string> names;
     const auto folder = std::filesystem::path(Eden::UserDir()) / "wallpapers";
     std::error_code ec;
+    // The older arbitrary first-64 directory enumeration silently omitted
+    // the user's own imported backgrounds. Keep a finite source count, but
+    // enumerate and sort the whole personal group ahead of system captures.
+    constexpr std::size_t kMaxPersonalWallpapers = 4096;
     for (std::filesystem::directory_iterator it(folder,
               std::filesystem::directory_options::skip_permission_denied, ec), end;
-         !ec && it != end && names.size() < 64; it.increment(ec)) {
+         !ec && it != end && names.size() < kMaxPersonalWallpapers; it.increment(ec)) {
         const std::string name = it->path().filename().string();
         if (!CheckedWallpaper(folder, name).empty()) names.push_back(name);
     }
+    const bool personal_capped = names.size() >= kMaxPersonalWallpapers;
+    if (personal_capped || ec)
+        std::fprintf(stderr, "EDEN_WALLPAPER_PERSONAL capped=%d read_error=%d count=%zu\\n",
+                     int(personal_capped), int(bool(ec)), names.size());
     // User imports are always the first, alphabetized group in this chooser.
     // Do not globally sort opaque PS5 capture keys ahead of personal files.
     std::sort(names.begin(), names.end());

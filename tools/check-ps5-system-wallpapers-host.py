@@ -26,6 +26,17 @@ assert "S_ISLNK(native.st_mode)" in scan
 assert "kMaxDirs = 1024, kMaxEntries = 32768" in scan
 assert "kMaxDepth = 8" in scan
 assert 'ext != ".jpg" && ext != ".jpeg" && ext != ".png"' in scan
+assert 'const bool is_jxr = ext == ".jxr";' in scan
+assert 'if (is_jxr) ++hdr_jxr;' in scan
+assert 'const auto max_bytes = is_jxr ? (48ll << 20) : (12ll << 20);' in scan
+assert 'SelectedJxrWebp(' not in scan  # zero decode during enumeration
+assert 'encore_jxr_to_webp(' in source
+assert 'if (!local.empty()) {' in listing and 'return SelectedJxrWebp(local);' in listing
+assert 'SelectedJxrWebp(checked)' in listing
+assert source.count('encore_jxr_to_webp(') == 1
+assert 'std::sort(names.begin(), names.end());' in listing
+assert listing.index('std::sort(names.begin(), names.end());') < listing.index('SystemCaptureWallpapers()')
+assert 'std::sort(names.begin(), names.end());' not in listing[listing.index('SystemCaptureWallpapers()'):]
 assert 'if (ext == ".jxr")' in scan and '++hdr_jxr;' in scan
 assert '++ignored_size;' in scan and '++unreadable_dirs;' in scan
 assert 'EDEN_WALLPAPER_SCAN dirs=%zu entries=%zu accepted=%zu jxr=%zu' in scan
@@ -76,4 +87,4 @@ with tempfile.TemporaryDirectory(prefix="ps5-wallpapers-") as directory:
                     str(cpp), "-o", str(exe)], check=True, timeout=30)
     subprocess.run([str(exe)], check=True, timeout=15)
 
-print("PS5_SYSTEM_WALLPAPERS_HOST_PASS read_only=1 opaque_tokens=1 app_and_system=1 no_jxr=1")
+print("PS5_SYSTEM_WALLPAPERS_HOST_PASS read_only=1 opaque_tokens=1 local_first=1 system_jxr_list_only=1 selected_only_conversion=1")

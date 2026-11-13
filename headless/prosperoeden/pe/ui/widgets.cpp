@@ -677,7 +677,9 @@ float chooser(Canvas &c, std::string_view value, float right, float baseline, fl
 {
     const float size = theme::kText24;
     const float arrow = 26.0f * focus; // room the chevrons take when focused
-    const float width = text(c, value, right - arrow, baseline, size, color, Align::right);
+    // Keep even full PS5 screenshot filenames inside the selector column.
+    const float width = text_shrink(c, value, right - arrow, baseline, size,
+                                    color, 285.0f - arrow, Align::right);
     if (focus <= 0.01f)
         return width;
     const float cy = baseline - size * 0.35f;

@@ -90,10 +90,14 @@ with tempfile.TemporaryDirectory(prefix="psbc-nir-print-") as tmpdir:
     file.write_text(c_source)
     for compiler in compilers:
         exe = work / (Path(compiler).name + "-loc")
-        subprocess.run([compiler, "-std=c11", "-O2", "-Wall", "-Wextra",
-                        "-Werror", "-Wformat-truncation=2",
-                        "-fsanitize=undefined", "-fno-sanitize-recover=all",
-                        str(file), "-o", str(exe)], check=True, timeout=30)
+        flags = [compiler, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
+                 "-fsanitize=undefined", "-fno-sanitize-recover=all"]
+        # GCC supports the extra static printf-truncation diagnostic; Clang
+        # instead checks the concrete guarded max-uint32 output at runtime.
+        if "gcc" in Path(compiler).name:
+            flags.append("-Wformat-truncation=2")
+        subprocess.run(flags + [str(file), "-o", str(exe)],
+                       check=True, timeout=30)
         subprocess.run([str(exe)], check=True, timeout=20)
 print("PSBC_NIR_LOCATION_11_BYTE_HOST_PASS callers=2 max_u32=4294967295 "
       "drift_rejected=1 original_restored=1")

@@ -36,4 +36,4 @@ jobs:
           grep -F 'set(EDEN_NS2_SPARSE_BACKING ON)' headless/CMakeLists.txt
           grep -F 'target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)' headless/CMakeLists.txt
           grep -F 'EDEN_NS2_SPARSE_BACKING' src/host_memory.cpp
-          test "$(git rev-parse HEAD:vendor)" = ce9fbfd782ec09763e6eacb804dfd17398ffd2a0
+          test "$(git rev-parse HEAD:vendor)" = c647beb79c01bfd5ed42752e6381c3b0e2d61fa0

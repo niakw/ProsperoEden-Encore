@@ -3147,17 +3147,20 @@ std::vector<std::string> EdenServices::wallpapers() {
         const std::string name = it->path().filename().string();
         if (!CheckedWallpaper(folder, name).empty()) names.push_back(name);
     }
+    // User imports are always the first, alphabetized group in this chooser.
+    // Do not globally sort opaque PS5 capture keys ahead of personal files.
+    std::sort(names.begin(), names.end());
 #if defined(PS5_NATIVE)
     // Merge the current PS5 user's Media Gallery with app-local files; no
     // user-import step and no blocking scan on the drawing/input thread.
+    const std::size_t imported = names.size();
+    // System captures are already ordered newest first by the scanner.
     const auto captures = SystemCaptureWallpapers();
     for (const auto& capture : captures)
         names.push_back(capture.selection);
     std::fprintf(stderr, "EDEN_WALLPAPER_SOURCES app=%zu ps5=%zu shown=%zu\n",
-                 names.size() - captures.size(),
-                 captures.size(), names.size());
+                 imported, captures.size(), names.size());
 #endif
-    std::sort(names.begin(), names.end());
     return names;
 }
 std::string EdenServices::wallpaper_path(const std::string& file) {

@@ -1,0 +1,49 @@
+name: PS5 R457 — Nov13 crash and library source qualification
+
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'headless/CMakeLists.txt'
+      - 'headless/prosperoeden/**'
+      - 'headless/ns2_title_catalog.h'
+      - 'tools/check-nov13-ps5-crash-ui-regressions.py'
+      - '.github/workflows/nov13-crash-and-library-regressions.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'vendor'
+      - 'headless/CMakeLists.txt'
+      - 'headless/prosperoeden/**'
+      - 'headless/ns2_title_catalog.h'
+      - 'tools/check-nov13-ps5-crash-ui-regressions.py'
+      - '.github/workflows/nov13-crash-and-library-regressions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nov13-ps5-regression-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  ps5-host-regressions:
+    name: Source-derived crash owner + live locale/case host checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout pinned native source and vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+          filter: blob:none
+      - name: Verify FC27 teardown, NS2 physical commit, library and genre behavior
+        run: python3 -B tools/check-nov13-ps5-crash-ui-regressions.py
+      - name: Compile NS2 title catalog and test Title-ID lookup
+        run: python3 -B tools/check-ns2-title-catalog-host.py
+      - name: Verify native extracted directories and truthful sizes
+        run: python3 -B tools/check-exefs-directory-host.py
+      - name: Verify case selection, front/rear art and prewarming
+        run: python3 -B tools/check-launcher-shoulder-and-cover.py

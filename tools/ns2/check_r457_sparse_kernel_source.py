@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 root=Path(__file__).resolve().parents[2]
-vendor="d0b81cb8bab067cbeaa4d5496c6be0ceb5f89579"
+vendor="1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 assert pinned==vendor,(pinned,vendor)

@@ -20,6 +20,18 @@ assert 'library_.selected < 0' in selected_worker
 assert 'games_[static_cast<std::size_t>(library_.selected)]' in selected_worker
 assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' not in selected_worker
 assert 'services_.enrich_game_media(std::move(copy), &media_cancel_)' in selected_worker
+textures_hpp=(root/'headless/prosperoeden/pe/ui/textures.hpp').read_text()
+textures_cpp=(root/'headless/prosperoeden/pe/ui/textures.cpp').read_text()
+assert 'Cover cover(const std::string &path, float size, bool urgent = false);' in textures_hpp
+assert 'bool priority_queued = false;' in textures_hpp
+assert 'if (urgent && !it->second.priority_queued && !it->second.loaded)' in textures_cpp
+assert 'queue_.erase(queued);' in textures_cpp
+assert 'queue_.push_front(key);' in textures_cpp
+assert 'it->second.priority_queued = true;' in textures_cpp
+assert 'if (urgent || it->second.priority_queued ||' in textures_cpp
+assert 'const Cover picture = c.textures.cover(' in home
+assert 'art, std::max(card_w - 8.0f, card_h - 8.0f), true);' in home
+assert 'constexpr float card_h = card_w;' in home
 assert 'start_selected_media();' in lib[lib.index('void Launcher::apply_games'):lib.index('void Launcher::name_home_games')]
 assert 'artwork_files.resize(6)' not in svc
 assert 'Only Home/recent titles' not in svc

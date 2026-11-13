@@ -371,6 +371,17 @@
       "required_source_fragment": "On PS5 the",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-13 PR #95: source re-reviewed after native MKW boot crash and user-reported console CE-108262-9. Preserves original F07 per-file source blob, separate current blob exact SHA, no actual PS5 validation."
+    },
+    {
+      "path": "headless/graphics.h",
+      "historical_reviewed_git_blob": "4a958fea2d32bf897ecc3337293cb47fb909fce7",
+      "post_snapshot_git_blob": "60fb9eec370c11b386cb0f446050584747db2ae6",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Nov13 FC27 detailed-only buffer/texture cache pressure split adds a 6-counter per-GraphicsWindow baseline; no new per-present activity, rendering logic, GPU ownership or performance outcome implied.",
+      "review_kind": "source_interface",
+      "required_source_fragment": "std::array<unsigned long long, 6> frame_cache_domain_previous{};",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "Nov13 console regression fd00c7f: historical U19 F07 reviewed blob immutable; new baseline lives with GraphicsWindow to avoid cross-title stale deltas. Exact new source Git blob 60fb9eec370c11b386cb0f446050584747db2ae6; host source check covers both detailed-only call sites; PS5 run unqualified."
     }
   ]
 }

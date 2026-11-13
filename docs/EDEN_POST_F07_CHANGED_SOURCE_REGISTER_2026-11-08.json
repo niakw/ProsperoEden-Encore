@@ -211,13 +211,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/launcher.cpp",
       "historical_reviewed_git_blob": "f42459d21a8257dfea32f8a92657b571027618a2",
-      "post_snapshot_git_blob": "91eb5d5c5bbb1c2e1b12cc58870c90f8b8c8a3ef",
+      "post_snapshot_git_blob": "f0f48bd62e22cfdf7d8887dfcdbf00303e5e19c6",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "Nov13 real PS5 console regression: scrollable contextual help, local wallpaper option state, user panel opacity, daily source caption. Source delta only; gameplay/kernel console qualification open.",
       "review_kind": "host_source_ui",
       "required_source_fragment": "kShoulderDestinations[] = {0, 1, 4}",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Actual console feedback; reviewed main-tab physical IDs 0/1/4, excluding Recent/Update, installed release status uses current build label and settings gear aligned. Source-only; PS5 rendering/input not yet qualified.\n2026-11-13 PR #95: reviewed source blob 91eb5d5c5bbb1c2e1b12cc58870c90f8b8c8a3ef; SHA of prior listed post-F07 entry f0aef353cde121872c6497e3256baea2cb16d4f4; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding."
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Actual console feedback; reviewed main-tab physical IDs 0/1/4, excluding Recent/Update, installed release status uses current build label and settings gear aligned. Source-only; PS5 rendering/input not yet qualified.\n2026-11-13 PR #95: reviewed source blob 91eb5d5c5bbb1c2e1b12cc58870c90f8b8c8a3ef; SHA of prior listed post-F07 entry f0aef353cde121872c6497e3256baea2cb16d4f4; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding.\n2026-11-13 post-merge native C++ preview failure: wrap async daily-wallpaper language snapshot and std::async assignment together in a guarded compound statement; no wallpaper behavior change intended. Reviewed blob f0f48bd62e22cfdf7d8887dfcdbf00303e5e19c6. Native PS5 and rendered screenshot still unverified."
     },
     {
       "path": "headless/prosperoeden/pe/ui/launcher.hpp",

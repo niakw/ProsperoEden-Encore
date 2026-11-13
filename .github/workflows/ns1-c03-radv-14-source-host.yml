@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "5fc4ae1bd63f94a3a987943c9e4b39b470adfc3a"
+          test "$(git -C vendor rev-parse HEAD)" = "a75ae306de19162d8aacb5f8afe06a3647d28880"
           python3 -B vendor/tests/c03_radv_transfer_split.py
           python3 -B tools/check-vendored-radv-fork.py
           python3 -B tools/radv-active-inputs.py --self-test

@@ -51,10 +51,6 @@ msgstr "60Hz를 권장합니다. 120Hz는 디스플레이 모드만 변경합니
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60Hz가 안전한 기본값입니다. 호환되는 디스플레이나 높은 FPS 패치에서만 120Hz를 사용하세요."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "8%가 권장됩니다. 스틱 드리프트를 위해 늘리십시오. 보다 민감한 조준을 위해서는 이 값을 줄이십시오."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "펌웨어 NCA를 읽을 수 없습니다. 펌웨어를 다시 설치하세요."
@@ -325,10 +321,6 @@ msgstr "선택"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "라이브러리에서 게임을 선택하세요."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "테마 · 로고 · 배경 · 빛 효과 (게임: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "플레이"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "플레이스테이션"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto는 물리적인 스위치 위치에 게임플레이를 적용하면서 십자형/원형 메뉴 의미를 유지합니다. 스위치는 고정되어 있습니다. 버튼을 편집하면 사용자 정의 프로필이 생성됩니다."
 
 #: settings_store.h
 msgid "Polish"

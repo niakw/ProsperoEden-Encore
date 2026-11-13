@@ -998,8 +998,12 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
     // Europe). Generated older cached covers are migrated by .source markers.
     // Manual .png/.jpg/.jpeg overrides are protected in EnsureRetailCase.
     // No network activity occurs on the launch/render thread.
+    // A verified Mario Kart World front has seven real Box - Front
+    // candidates, but its three highest-ranked PNGs fail native stb decode.
+    // Keep a bounded budget while permitting real JPEG alternatives in the
+    // SAME source category. Never substitute Reconstructed/merchandise art.
     for (const std::string& filename : candidates) {
-        if (attempts >= 3 ||
+        if (attempts >= 7 ||
             (cancel && cancel->load(std::memory_order_acquire))) break;
         if (!SafeCaseFilename(filename)) {
             ++invalid_responses;
@@ -1043,8 +1047,9 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
               destination.find("/box-back-") != std::string::npos) &&
              static_cast<std::uint64_t>(h) * 4 < static_cast<std::uint64_t>(w) * 5)) {
             ++invalid_responses;
-            std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-image file=%s bytes=%zu width=%d height=%d\n",
-                         filename.c_str(), body.size(), w, h);
+            std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-image file=%s bytes=%zu width=%d height=%d reason=%s\n",
+                         filename.c_str(), body.size(), w, h,
+                         stbi_failure_reason() ? stbi_failure_reason() : "invalid-dimensions");
             continue;
         }
         // A larger image from a different region is NOT a better scan of
@@ -2094,6 +2099,15 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             ExtractedBaseBytes(entry.path(), cancel) :
             std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)};
         if (cancel && cancel->load(std::memory_order_acquire)) return {};
+        if (deconstructed) {
+            // Distinguish an incomplete/unreadable extracted directory from
+            // an actual zero-byte game. Never mislabel a 32 MiB main NSO as
+            // the total multi-GiB title size.
+            std::fprintf(stderr,
+                "EDEN_EXEFS_SIZE folder=%s status=%s bytes=%llu\n",
+                entry_name.c_str(), complete_base_size ? "measured" : "unknown",
+                static_cast<unsigned long long>(complete_base_size.value_or(0)));
+        }
         if (complete_base_size) {
             const double bytes = static_cast<double>(*complete_base_size);
             if (bytes >= 1073741824.0)

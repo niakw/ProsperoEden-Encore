@@ -2588,5 +2588,105 @@ msgstr "Ambre"
 #: pe/ui/settings.cpp pe/ui/switch_theme.cpp
 msgid "Rose"
 msgstr "Rose"
+
+#: pe/ui/settings.cpp
+msgid "Choose PlayStation or Switch button positions. The selected mapping stays fixed during menus and gameplay; customizing a button creates a custom profile."
+msgstr "Choisissez la disposition des touches PlayStation ou Switch. La configuration reste fixe dans les menus et les jeux ; modifier une touche crée un profil personnalisé."
+
+#: pe/ui/settings.cpp
+msgid "The deadzone ignores small stick movements near the center. At 8%, movements below 8% do not steer the game. Increase it if your character moves by itself; lower it if aiming feels unresponsive."
+msgstr "La zone morte ignore les petits mouvements du stick autour du centre. À 8 %, un mouvement inférieur à 8 % est ignoré. Augmentez-la si le personnage bouge seul ; réduisez-la si la visée manque de réactivité."
+
+#: pe/ui/settings.cpp
+msgid "Choose the Encore or Switch launcher theme; gameplay rendering does not change."
+msgstr "Choisissez le thème Encore ou Switch du lanceur, sans modifier le rendu des jeux."
+
+#: pe/ui/settings.cpp
+msgid "Choose the logo treatment independently of the selected interface palette."
+msgstr "Choisissez le style du logo indépendamment des couleurs de l'interface."
+
+#: pe/ui/settings.cpp
+msgid "Change the color of selection highlights and focus rings."
+msgstr "Changez la couleur des sélections et des contours de mise au point."
+
+#: pe/ui/settings.cpp
+msgid "Choose a theme background, two custom colors, a local image or the daily game artwork."
+msgstr "Choisissez un fond du thème, deux couleurs personnalisées, une image locale ou le visuel du jeu du jour."
+
+#: pe/ui/settings.cpp
+msgid "Copy PNG, JPEG, WebP or TGA images to /data/prosperoeden/user/wallpapers. The PS5 Media Gallery is not automatically scanned."
+msgstr "Copiez des images PNG, JPEG, WebP ou TGA dans /data/prosperoeden/user/wallpapers. La galerie multimédia PS5 n'est pas analysée automatiquement."
+
+#: pe/ui/settings.cpp
+msgid "Pick a preset for the first background color, or adjust its channels below."
+msgstr "Choisissez une couleur prédéfinie pour le premier fond, ou ajustez ses composantes ci-dessous."
+
+#: pe/ui/settings.cpp
+msgid "Adjust the red channel of background color one."
+msgstr "Réglez la composante rouge de la première couleur."
+
+#: pe/ui/settings.cpp
+msgid "Adjust the green channel of background color one."
+msgstr "Réglez la composante verte de la première couleur."
+
+#: pe/ui/settings.cpp
+msgid "Adjust the blue channel of background color one."
+msgstr "Réglez la composante bleue de la première couleur."
+
+#: pe/ui/settings.cpp
+msgid "Pick a preset for the second gradient color, or adjust its channels below."
+msgstr "Choisissez une couleur prédéfinie pour la seconde couleur du dégradé, ou ajustez ses composantes."
+
+#: pe/ui/settings.cpp
+msgid "Adjust the red channel of background color two."
+msgstr "Réglez la composante rouge de la seconde couleur."
+
+#: pe/ui/settings.cpp
+msgid "Adjust the green channel of background color two."
+msgstr "Réglez la composante verte de la seconde couleur."
+
+#: pe/ui/settings.cpp
+msgid "Adjust the blue channel of background color two."
+msgstr "Réglez la composante bleue de la seconde couleur."
+
+#: pe/ui/settings.cpp
+msgid "Show or hide the selection glow. It does not affect games."
+msgstr "Affichez ou masquez la lueur de sélection. Cela ne modifie pas les jeux."
+
+#: pe/ui/settings.cpp
+msgid "Change the intensity of selection highlights."
+msgstr "Réglez l'intensité de la lueur de sélection."
+
+#: pe/ui/settings.cpp
+msgid "Darken only the background image. Higher values preserve menu readability."
+msgstr "Assombrissez uniquement l'image de fond pour améliorer la lisibilité des menus."
+
+#: pe/ui/settings.cpp
+msgid "Change the opacity of launcher cards, panels and boxes from 0 to 100%. High contrast keeps panels opaque for legibility."
+msgstr "Réglez l'opacité des cartes, panneaux et encadrés du lanceur de 0 à 100 %. Le contraste élevé conserve des panneaux opaques."
+
+#: pe/ui/settings.cpp
+msgid "Allow subtle launcher background motion, or keep it still."
+msgstr "Activez de légers mouvements du fond du lanceur, ou gardez-le fixe."
+
+#: pe/ui/settings.cpp
+msgid "Fill crops the wallpaper to the screen; Contain keeps the complete image."
+msgstr "Remplir recadre l'image sur l'écran ; Contenir affiche l'image entière."
+
+#: pe/ui/settings.cpp
+msgid "Show a selected game's artwork behind its library details."
+msgstr "Affichez le visuel du jeu sélectionné derrière ses informations."
+
+#: pe/ui/settings.cpp
+msgid "Restore the default Neon look without altering game settings."
+msgstr "Rétablissez le thème Néon sans modifier les paramètres des jeux."
+
+#: pe/ui/settings.cpp
+msgid "Panel opacity"
+msgstr "Opacité des panneaux"
+
+#: pe/ui/settings.cpp
+msgid "Notice"
+msgstr "Information"
 )FRPO";
 }

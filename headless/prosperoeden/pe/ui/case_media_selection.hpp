@@ -91,16 +91,18 @@ inline std::array<const std::string*, 3> BackScenes(
             if (role_at >= image.size()) continue;
             const auto role = image[role_at];
             if (role < '1' || role > '5' ||
-                image == cover || is_front(image) || !usable(image))
+                image == cover || is_front(image))
                 continue;
-            // Scenes 1-3 own dedicated panels. Extra independent LaunchBox
-            // gameplay shots (4-5) are real fallback material; the old
-            // selector silently discarded them, leaving a two-shot back.
+            // Scenes 1-3 own dedicated panels. Do not attempt to decode
+            // a second file when its canonical category is already filled.
+            // Extra independent LaunchBox gameplay shots (4-5) remain
+            // eligible to fill an otherwise missing rear slot.
             if (role <= '3') {
                 const auto category = static_cast<std::size_t>(role - '1');
                 if (!selected[category] &&
                     image.compare(marker, kSceneMarkers[category].size(),
-                                  kSceneMarkers[category]) == 0)
+                                  kSceneMarkers[category]) == 0 &&
+                    usable(image))
                     selected[category] = &image;
                 continue;
             }
@@ -110,7 +112,12 @@ inline std::array<const std::string*, 3> BackScenes(
             }
             if (!seen) {
                 for (auto& slot : fallback) {
-                    if (!slot) { slot = &image; break; }
+                    if (!slot) {
+                        // The bounded fallback list may already be full.
+                        // Only decode genuine candidates with a free slot.
+                        if (usable(image)) slot = &image;
+                        break;
+                    }
                 }
             }
             continue;

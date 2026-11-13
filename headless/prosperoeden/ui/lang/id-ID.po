@@ -51,10 +51,6 @@ msgstr "60Hz direkomendasikan. 120 Hz hanya mengubah mode tampilan; game ini mas
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz adalah default yang aman. Gunakan 120 Hz hanya dengan tampilan yang kompatibel atau patch FPS tinggi."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "8% direkomendasikan. Tingkatkan untuk stick drift; kurangi untuk bidikan yang lebih sensitif."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Salah satu NCA firmware tidak dapat dibaca. Instal ulang dump firmware."
@@ -325,10 +321,6 @@ msgstr "Pilih"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "Pilih game dari perpustakaan Anda."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "Tema · Logo · Latar · Cahaya (Game: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "Mainkan"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto mempertahankan semantik menu Cross/Circle sambil mengadaptasi gameplay ke posisi Switch fisik. Sakelar tetap terpasang; mengedit tombol apa pun akan membuat profil khusus."
 
 #: settings_store.h
 msgid "Polish"

@@ -11,6 +11,16 @@ renderer = (root / "headless/vulkan_renderer_r08.cpp").read_text()
 shader = (root / "headless/vulkan_hud.frag").read_text()
 window = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
 graphics = (root / "headless/graphics.cpp").read_text()
+vulkan_cmake = (root / "headless/vulkan.cmake").read_text()
+native_cmake = (root / "headless/CMakeLists.txt").read_text()
+# PS5_NATIVE is a CMake option and is NOT transitive to the video_core TU:
+# without this exact target definition the entire jacket path compiles out.
+assert 'target_compile_definitions(video_core PRIVATE PS5_NATIVE=1)' in vulkan_cmake
+assert '"${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"' in vulkan_cmake
+# Do not accidentally enable sparse NS2 guest semantics in every PS5 core TU.
+assert 'set(EDEN_NS2_SPARSE_BACKING OFF)' in native_cmake
+assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in native_cmake
+assert 'TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")' in native_cmake
 loading = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
     "void RendererVulkan::Report()", 1
 )[0]

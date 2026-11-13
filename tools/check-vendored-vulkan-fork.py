@@ -736,6 +736,25 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 assert git_blob_sha(text) == '6efe1b10862135056c1df1b78007a1c9cb5a9610', (
                     'Unreviewed post-warning Vulkan source', name)
             text = text.replace(ordered, prior, 1)
+        # FC27 crash-owner fix postdates the immutable R23 source receipt.
+        # Verify the exact destructor and normalize ONLY its borrowed-pointer
+        # revocation before reversing historical Vulkan source patches.
+        if name == 'vulkan_rasterizer.cpp':
+            marker = 'RasterizerVulkan::~RasterizerVulkan() {'
+            assert text.count(marker) == 1
+            a = text.index(marker)
+            z = text.index('}', a) + 1
+            body = text[a:z]
+            prior = (marker + '\n'
+                     '    scheduler.WaitWorker();\n'
+                     '    scheduler.Finish();\n'
+                     '}')
+            if body != prior:
+                assert body.count('scheduler.ClearQueryCache();') == 1
+                assert body.index('scheduler.WaitWorker();') < body.index(
+                    'scheduler.Finish();') < body.index('scheduler.ClearQueryCache();')
+                assert 'buffer cache' in body.lower() or 'query' in body.lower()
+                text = text[:a] + prior + text[z:]
         if verify_hash:
             assert git_blob_sha(text) == receipt['post_r23_blob'], (
                 'Unreviewed R23 merged native source', name)

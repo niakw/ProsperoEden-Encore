@@ -8,6 +8,7 @@ compare maintained translation units byte-for-byte in this same matrix.
 from pathlib import Path
 import subprocess
 import tempfile
+from ci.ps5_g21_gpu_shutdown_receipt import normalize_g21_shutdown_source
 
 root = Path(__file__).resolve().parents[1]
 cmake = (root / "headless/CMakeLists.txt").read_text()
@@ -124,6 +125,14 @@ for profile, filename in owners.items():
             '#include "' + str(root / "headless" / header) + '"',
             '#include "' + header + '"')
     maintained = (root/"vendor/encore-active/eden-core/src/video_core"/filename).read_text()
+    # Historical G21 parity must stay byte-for-byte: for reviewed vendor
+    # shutdown PR #112, accept only the exact pre-agreed raw Git blob, and
+    # reconstruct the old destructor in memory for comparison. Do NOT
+    # rewrite the actually compiled vendor C++ input.
+    maintained, gpu_shutdown_reviewed = normalize_g21_shutdown_source(
+        filename, maintained)
+    if gpu_shutdown_reviewed:
+        print("G21_REVIEWED_GPU_SHUTDOWN_SOURCE_RECEIPT_PASS", filename)
     if profile == "vulkan_native":
         # G21 is a frozen *historical* source oracle. The newer, reviewed
         # N76/P2.7 native Ampere GPU timestamp has one additive owner-only

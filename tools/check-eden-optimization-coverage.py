@@ -1334,14 +1334,42 @@ scene_path = "headless/prosperoeden/pe/ui/case_media_selection.hpp"
 assert scene_path in drift_index and scene_path not in post_index
 scene_drift = drift_index.pop(scene_path)
 assert scene_drift["expected"] == "f4897989b5736bf48401cf5e2201a8af9a59ef03"
-assert scene_drift["actual"] == "ef73ba928089086c1cc79a226a2c0678a8f8a109"
+assert scene_drift["actual"] == "9df9797a09979b74cb81c266570a8c8c24c96d41"
 scene_current = (ROOT / scene_path).read_text()
 scene_added = "            const auto role = image[role_at];\n            if (role < '1' || role > '5' ||\n                image == cover || is_front(image) || !usable(image))\n                continue;\n            // Scenes 1-3 own dedicated panels. Extra independent LaunchBox\n            // gameplay shots (4-5) are real fallback material; the old\n            // selector silently discarded them, leaving a two-shot back.\n            if (role <= '3') {\n                const auto category = static_cast<std::size_t>(role - '1');\n                if (!selected[category] &&\n                    image.compare(marker, kSceneMarkers[category].size(),\n                                  kSceneMarkers[category]) == 0)\n                    selected[category] = &image;\n                continue;\n            }\n            bool seen = false;\n            for (const auto* prior : fallback) {\n                if (prior && *prior == image) seen = true;\n            }\n            if (!seen) {\n                for (auto& slot : fallback) {\n                    if (!slot) { slot = &image; break; }\n                }\n            }\n            continue;\n"
 scene_prior = "            const auto role = image[role_at];\n            if (role < '1' || role > '3') continue;\n            const auto category = static_cast<std::size_t>(role - '1');\n            if (selected[category] ||\n                image.compare(marker, kSceneMarkers[category].size(),\n                              kSceneMarkers[category]) != 0 ||\n                image == cover || is_front(image) || !usable(image))\n                continue;\n            selected[category] = &image;\n            continue;\n"
-assert scene_current.count(scene_added) == 1
-assert "if (role < '1' || role > '5'" in scene_added
-assert "for (auto& slot : fallback)" in scene_added
-scene_baseline = scene_current.replace(scene_added, scene_prior, 1).encode()
+# The later bounded-decode optimisation is also reversible. It changes ONLY
+# candidate admission order, retaining scene 4/5 eligibility and all three
+# real back slots. Prove its complete selected source hunk before reversing.
+scene_probe_optimized = scene_added.replace(
+    "image == cover || is_front(image) || !usable(image))",
+    "image == cover || is_front(image))", 1).replace(
+    "            // Scenes 1-3 own dedicated panels. Extra independent LaunchBox\n"
+    "            // gameplay shots (4-5) are real fallback material; the old\n"
+    "            // selector silently discarded them, leaving a two-shot back.\n",
+    "            // Scenes 1-3 own dedicated panels. Do not attempt to decode\n"
+    "            // a second file when its canonical category is already filled.\n"
+    "            // Extra independent LaunchBox gameplay shots (4-5) remain\n"
+    "            // eligible to fill an otherwise missing rear slot.\n", 1).replace(
+    "                                  kSceneMarkers[category]) == 0)",
+    "                                  kSceneMarkers[category]) == 0 &&\n"
+    "                    usable(image))", 1).replace(
+    "                    if (!slot) { slot = &image; break; }",
+    "                    if (!slot) {\n"
+    "                        // The bounded fallback list may already be full.\n"
+    "                        // Only decode genuine candidates with a free slot.\n"
+    "                        if (usable(image)) slot = &image;\n"
+    "                        break;\n"
+    "                    }", 1)
+assert scene_probe_optimized != scene_added
+assert scene_current.count(scene_probe_optimized) == 1, (
+    "Unreviewed scene 4/5 bounded-decode candidate change")
+scene_pre_opt = scene_current.replace(scene_probe_optimized, scene_added, 1)
+scene_pre_opt_bytes = scene_pre_opt.encode()
+assert hashlib.sha1(
+    b"blob " + str(len(scene_pre_opt_bytes)).encode() + bytes([0]) +
+    scene_pre_opt_bytes).hexdigest() == "ef73ba928089086c1cc79a226a2c0678a8f8a109"
+scene_baseline = scene_pre_opt.replace(scene_added, scene_prior, 1).encode()
 assert hashlib.sha1(b"blob " + str(len(scene_baseline)).encode() + bytes([0]) + scene_baseline).hexdigest() == scene_drift["expected"]
 print("NOV13_GAMEPLAY_SCENE_4_5_REVERSIBLE_PASS historical_F07_preserved=1")
 assert set(drift_index) == set(post_index), (

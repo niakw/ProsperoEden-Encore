@@ -10,6 +10,8 @@ on:
       - 'tools/check-native-sdl-alsa-host.py'
       - 'tools/check-opus-version-host.py'
       - 'tools/check-psbc-noreturn-host.py'
+      - 'tools/check-psbc-nir-location-host.py'
+      - 'tools/ci/patch-psbc-nir-location-print.py'
       - 'tools/ci/patch-psbc-noreturn-flags.py'
       - 'tools/build-opengl-sdk.sh'
       - 'headless/inject.cmake'
@@ -27,6 +29,8 @@ on:
       - 'tools/check-native-sdl-alsa-host.py'
       - 'tools/check-opus-version-host.py'
       - 'tools/check-psbc-noreturn-host.py'
+      - 'tools/check-psbc-nir-location-host.py'
+      - 'tools/ci/patch-psbc-nir-location-print.py'
       - 'headless/inject.cmake'
       - 'tools/check-crash-provenance-host.py'
       - 'headless/prosperoeden/ui/art/switch-rear-footer.png.b64'
@@ -53,4 +57,5 @@ jobs:
           python3 -B tools/check-native-sdl-alsa-host.py
           python3 -B tools/check-opus-version-host.py
           python3 -B tools/check-psbc-noreturn-host.py
+          python3 -B tools/check-psbc-nir-location-host.py
           echo "P5_PACKAGING_WARNINGS_HOST_PASS"

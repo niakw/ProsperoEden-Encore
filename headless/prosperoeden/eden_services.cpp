@@ -1953,14 +1953,57 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             Eden::Report("history", "Could not seed recent games from last played game");
         history.push_back(home.last_file);
     }
+    // Home is not only launch history. Fill unused software tiles from the
+    // installed ROM catalog, without writing synthetic play history. Preserve
+    // real MRU ordering first; alphabetical installed entries are the stable
+    // fallback on a brand-new installation. Only shallow folder discovery is
+    // needed here (never an ExeFS full-size walk or a network request).
+    const std::unordered_set<std::string> played(history.begin(), history.end());
+    std::unordered_set<std::string> known = played;
+    std::vector<std::string> unplayed_installed;
+    std::error_code installed_error;
+    const auto installed_entries = Eden::ReadNativeDirectory(
+        Eden::AssetsPath("roms"), installed_error);
+    int installed = 0;
+    if (!installed_error) {
+        for (const auto& entry : installed_entries) {
+            if (cancelled()) return {};
+            const std::string filename = entry.path().filename().string();
+            const std::string nested = Eden::FindGameFolderInput(entry.path());
+            const std::string name = nested.empty() ? filename : filename + "/" + nested;
+            if (!Eden::ValidRomFilename(name) ||
+                !IsFile(Eden::AssetsPath("roms/" + name))) continue;
+            ++installed;
+            if (known.insert(name).second)
+                unplayed_installed.push_back(name);
+        }
+        std::sort(unplayed_installed.begin(), unplayed_installed.end());
+        history.insert(history.end(), unplayed_installed.begin(),
+                       unplayed_installed.end());
+    } else {
+        // Do not claim a vanished library when the native mount is temporarily
+        // unavailable. Existing verified play history remains usable.
+        Eden::Report("history", "Installed Home tile scan unavailable; retaining play history");
+        installed = CountInstalledGames();
+    }
+    std::unordered_set<std::string> admitted;
     for (const auto& name : history) {
         if (cancelled()) return {};
+        if (!Eden::ValidRomFilename(name) || !admitted.insert(name).second)
+            continue;
         const std::string recent_path = Eden::AssetsPath("roms/" + name);
         if (!IsFile(recent_path)) continue;
         pe::ui::Recent recent;
         recent.file = name;
         recent.title = GameTitle(name);
-        recent.cover = EnsureCover(name);
+        // A fallback tile must not extract an entire game's metadata before
+        // Home can appear. The background Library scan fills missing art.
+        if (played.contains(name))
+            recent.cover = EnsureCover(name);
+        else {
+            const std::string cached_cover = CoverPath(name);
+            if (IsFile(cached_cover)) recent.cover = cached_cover;
+        }
         if (home.setup_ready) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
@@ -1980,7 +2023,6 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         if (home.recents.size() == 7) break;
     }
     if (cancelled()) return {};
-    const int installed = CountInstalledGames();
     home.system_status = fill(installed == 1 ? tr("{0} game installed") : tr("{0} games installed"),
                               {std::to_string(installed)}) +
         "  /  " + (home.setup_ready ? tr("Firmware ready") : tr("Setup required"));

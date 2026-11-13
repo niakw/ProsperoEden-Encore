@@ -293,5 +293,22 @@ with tempfile.TemporaryDirectory(prefix="encore-present-jit-host-") as folder:
                    check=True)
     subprocess.run([str(output)], check=True, timeout=10)
 
+# Nov13 console log had 793335 undifferentiated guest cache collisions in
+# 108 windows. The release build must publish buffer/texture deltas separately
+# when Detailed Logging is on, but never add a per-frame sample or guest lock.
+header = read("headless/graphics.h")
+assert "std::array<unsigned long long, 6> frame_cache_domain_previous{};" in header
+assert "FrameCacheDomainNumbers CaptureFrameCacheDomains() noexcept" in graphics
+assert "guest_cache_domain_totals[d]" in graphics
+assert "frame_cache_domain_previous = CaptureFrameCacheDomains();" in present
+assert "const auto cache_domain_now = CaptureFrameCacheDomains();" in present
+assert "cache_domain_delta[i] = cache_domain_now[i] - frame_cache_domain_previous[i];" in present
+assert "frame_cache_domain_previous = cache_domain_now;" in present
+assert 'EDEN_FRAME_CACHE_DOMAIN frame=%u domain=%s ' in present
+assert 'd ? "texture" : "buffer"' in present
+assert "scope=window_sum\\n" in present
+assert present.count("CaptureFrameCacheDomains()") == 2  # first/5s only
+assert "std::lock_guard" not in graphics[graphics.index("FrameCacheDomainNumbers CaptureFrameCacheDomains() noexcept"):graphics.index("#ifdef EDEN_DEV_PROFILE", graphics.index("FrameCacheDomainNumbers CaptureFrameCacheDomains() noexcept"))]
+
 print("PASS: quiet GPU frame callback, HLE hot-path bypass, per-title counters")
 print("SOURCE-ONLY: no native PS5 compilation or measured FPS improvement")

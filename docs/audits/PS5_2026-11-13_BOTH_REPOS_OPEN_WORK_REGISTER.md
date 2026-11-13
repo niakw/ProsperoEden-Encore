@@ -6,7 +6,7 @@
 
 - Moteur : `niakw/ProsperoEden-Encore` `main` **avant ce registre documentaire** au commit `6208a2b0653bfe942d2b6c2b9a85055869397869`, gitlink **réel** `vendor=1ec7b429238d1175a76dc94b7c0a7f1c2eb62864` (confirmé par la CI engine checkout de [run #43517291914](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43517291914)). Ce gitlink **n'est pas identique** au `main` du vendor.
 - Vendor : `niakw/Prospero.Eden-Encore-vendor` `main` **avant mise à jour documentaire** au commit `d9f6efc76f95fdfd2893082384cb2115851739cc`. Les correctifs encore en draft ne sont **pas** intégrés dans la version native livrable.
-- Issues ouvertes : **8 moteur** / **0 vendor** ; PR ouvertes : **6 moteur** / **6 vendor** ; branches : **7 moteur** et **8 vendor**, comptant chaque `main`.
+- Issues ouvertes : **8 moteur** / **0 vendor** ; PR ouvertes : **8 moteur** / **7 vendor** ; branches : **9 moteur** et **9 vendor**, comptant chaque `main`.
 - Les contrôles source/host, CI, compilation native PS5, installation, démarrage du titre, rendu correct et gameplay stable sont **sept étapes différentes**. Un SHA vert ne couvre pas les étapes suivantes.
 
 ## Issues moteur à maintenir ouvertes
@@ -38,9 +38,14 @@
 | Vendor | [#108](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/108) | `fix/nov13-ns1-msaa-partial-upload-offset` | Offset source upload MSAA corrigé en source, CI hôte ; texture FC27 non prouvée corrigée |
 | Vendor | [#109](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/109) | `fix/nov13-ns2-am-save-uid-cmif` | UID CMIF aligné selon Eglantine #80, CI hôte ; ne change pas EnsureSaveData |
 | Vendor | [#110](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/110) | `fix/nov13-ps5-cache-source-diagnostics` | [7/7 CI vendor](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43515919987) hôtes passées sur `6d1ac12` ; source pin moteur compatible via #128 ; zéro FPS mesuré |
+| Moteur | [#129](https://github.com/niakw/ProsperoEden-Encore/pull/129) | `diag/nov13-ns2-loading-gpu-worker-progress` | Source `headless/graphics.cpp` à 10/30s uniquement, `GPU completed` quantifié 64, baseline par titre ; [P0–P4 hôte #43521117252](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43521117252), [CodeQL #43521117365](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43521117365), et 2 autres workflows **4/4 success** au SHA `88c8da8`. Premier run rouge = reçu post-F07 du fichier non adapté, corrigé sans supprimer de contrôle. Aucun premier frame MKW prouvé |
+| Vendor | [#111](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/111) | `fix/nov13-ns2-kprocess-unlinked-failed-load` | **P0** après upstream Lichii #1574, enregistrement KProcess après chargement, désenregistrement selon présence intrusive ; [ASan/UBSan #43520580012](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43520580012) et [sécurité #43520579917](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43520579917) vertes SHA `c6541bf`, test console absent |
+| Moteur | [#130](https://github.com/niakw/ProsperoEden-Encore/pull/130) | `fix/nov13-ns2-kprocess-lifetime-vendor-receipt` | Tests H01 : zéro enregistrement sur échec / un après succès, reçus historiques N52 reconstruits avec SHA strict, test en CI sur gitlink engine puis vendor #111 et NPDM/NSO public ; [première CI croisée #43521622970](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43521622970) verte, second passage H01 complet en cours |
 
 ## Références upstream et décisions de port
 
+- [Lichii #1574](https://github.com/zortos293/Lichii/pull/1574) / [Eglantine eb579d2](https://github.com/dscx/Eglantine/commit/eb579d263b35f7c38bfc6d12a10b2f3f1d0a6c33) : processus enregistré trop tôt, nœud intrusif libéré avant désenregistrement si chargement NSO/NPDM échoue ; **même défaut avéré** dans deux propriétaires PS5 sélectionnés, correctif candidat vendor #111, adaptation tests moteur #130 ; console non validée.
+- [Eglantine #812](https://github.com/Eglantine-Community/Eglantine/pull/812) : absence dossier cache MKW ; ici les deux appels CreateDir existent déjà sur le propriétaire choisi. Pas de port aveugle. [#851](https://github.com/Eglantine-Community/Eglantine/pull/851) : précompilation d'effets MKW après boot ; pas d'explication au premier frame manquant.
 - [Lichii #1036](https://github.com/zortos293/Lichii/pull/1036) : cache v2, scheduler priorisé ; **nouvelle architecture** non importable sans prouver pertes/rejets réels dans les caches PS5 `vulkan.bin` et `vulkan_pipelines.bin`.
 - [Lichii #1334](https://github.com/zortos293/Lichii/pull/1334)/[#1337](https://github.com/zortos293/Lichii/pull/1337) : SPIR-V en mémoire, eviction RAM limitée ; comparer avec les vrais propriétaires de pipeline PS5 avant adaptation.
 - [Lichii #1296](https://github.com/zortos293/Lichii/pull/1296) / [Eglantine #785](https://github.com/Djihads80/Eglantine/pull/785) : atlas de glyphes natifs sans profondeur protégés contre l'option de saut de draw. Encore PS5 utilise une politique différente : tracer `CanExecuteRecordedDraw` et `GraphicsDrawDrop::WorkerPipelineFailed`, ne pas recopier un garde inapplicable.
@@ -50,7 +55,7 @@
 
 ## Nettoyage autorisé et limites
 
-1. **Ne pas supprimer** les six branches PR moteur et les six branches PR vendor : leur travail reste distinct et non fusionné, certaines PR sont empilées.
+1. **Ne pas supprimer** les huit branches PR moteur et les sept branches PR vendor : leur travail reste distinct et non fusionné, certaines PR sont empilées.
 2. Vendor `feat/ps5-jxr-selected-only-decode` : compare à `main` : **0 commit d'avance / 1 de retard**, aucune modification unique ; candidate à suppression sous réserve vérification qu'aucun workflow/PR n'utilise cette ref. Aucune branche n'a été effacée : le connecteur GitHub actuel ne propose pas l'opération destructive.
 3. Ne fermer ni #97/#100/#123, ni les issues UI/perf avant validation console. Si la CI d'une PR enfant est verte, cela ne transforme pas toutes les PR parents en candidates fusionnables.
 4. **Prochaine qualification PS5** : builds natifs seulement sur moteur+gitlink vendor exact retenus ; provenance/artefacts/symboles/alertes ; séparer FC27 cache froid/chaud, textures/HUD et début de match, Bananza FS/AM/PC4, MKW guest/GPU/first-present, puis vérifier l'intégralité des tests utilisateur.

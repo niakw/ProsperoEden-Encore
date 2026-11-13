@@ -157,7 +157,12 @@ assert "amd_distinct >= 5 && amd_distinct <= 8" in topology
 assert "cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, -1, 8, &verified)" in topology
 assert "std::memcmp(&one, &verified, 8)" in topology
 assert "if (has_x2apic)" in topology
-assert "x2_cpu_core[cpu] = static_cast<int>(d >> (a & 31u));" in topology
+assert "x2_cpu_core[cpu] = static_cast<int>(d >> smt_shift);" in topology
+assert "const unsigned smt_shift = a & 31u;" in topology
+assert "const unsigned apic_id = (b >> 24) & 255u;" in topology
+assert "leaf1_ids_unique && leaf1_group_sizes_valid" in topology
+assert "leaf1_plausible" in topology
+
 assert "x2_classified == allowed_count" in topology
 assert "x2_distinct >= 5 && x2_distinct <= 8" in topology
 assert 'source_name = has_amd_topology ? "x2apic_fallback" : "x2apic";' in topology

@@ -1222,11 +1222,12 @@ post_f07 = json.loads(
 assert post_f07['schema_version'] == 1
 assert post_f07['historical_f07_source_snapshots_preserved'] is True
 post_entries = post_f07['files']
-assert len(post_entries) == 32
+assert len(post_entries) == 34
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
-# R457 only: keep the immutable 32-file November register unchanged. Track
+# R457 only: retain immutable October F07 blobs while tracking the separately
+# reviewed 34-file November+Nov13 post-F07 delta register. Track
 # the separately selected and unqualified 12GiB resident owner with its
 # own checked SHA/old F07 receipt. This must not hide arbitrary new deltas.
 sparse_receipt = json.loads(

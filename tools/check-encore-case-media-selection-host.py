@@ -103,6 +103,29 @@ int main() {
     assert(role_pick[0] == &role_noise[1] && !role_pick[1]);
     assert(role_pick[2] == &role_noise[3]);
     assert(decode_checks == 3);
+    // Scene categories 4 and 5 are real extra LaunchBox captures.
+    // A missing canonical scene-3 may use one without a fake duplicate.
+    const std::vector<std::string> extended_roles{
+        "/cache/box-scene-1-FIRST.tga", "/cache/box-scene-2-SECOND.tga",
+        "/cache/box-scene-4-THIRD.tga", "/cache/box-scene-5-FOURTH.tga"
+    };
+    const auto extended_pick = BackScenes(hero, icon, extended_roles);
+    assert(extended_pick[0] == &extended_roles[0]);
+    assert(extended_pick[1] == &extended_roles[1]);
+    assert(extended_pick[2] == &extended_roles[2]);
+    // Once the bounded fallback array holds three independent images,
+    // later 4/5 variants must not trigger a redundant decode probe.
+    const std::vector<std::string> overflow_roles{
+        "/cache/box-scene-4-A.tga", "/cache/box-scene-4-B.tga",
+        "/cache/box-scene-5-C.tga", "/cache/box-scene-5-D.tga"
+    };
+    unsigned overflow_checks = 0;
+    const auto overflow_pick = BackScenes(hero, icon, overflow_roles,
+        [&](const std::string&) { ++overflow_checks; return true; });
+    assert(overflow_pick[0] == &overflow_roles[0]);
+    assert(overflow_pick[1] == &overflow_roles[1]);
+    assert(overflow_pick[2] == &overflow_roles[2]);
+    assert(overflow_checks == 4); // one front + three usable back sources
     // Hot path: hundreds of Nlib screenshots plus a late official scene.
     // A full-second scan of all candidates on every draw is unnecessary:
     // retain only the first three distinct usable fallbacks, while a late

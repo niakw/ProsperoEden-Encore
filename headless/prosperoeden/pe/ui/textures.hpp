@@ -75,7 +75,7 @@ class Textures
     std::uint32_t switch2_header() const { return switch2_header_; }
 
     // The cover drawn `size` virtual pixels wide. Queues it on first use.
-    Cover cover(const std::string &path, float size);
+    Cover cover(const std::string &path, float size, bool urgent = false);
     // Schedules at most one background image decode and uploads at most one
     // completed texture per frame. Never does file I/O or JPEG/TGA decode
     // on the input/navigation/render thread.
@@ -108,6 +108,7 @@ class Textures
         bool loaded = false; // false: queued or decoding
         std::uint64_t generation = 0;
         unsigned failed_loads = 0; // bounded retry backoff when async Nlib media arrive
+        bool priority_queued = false; // promote visible Home icons only once
         std::uint64_t used = 0;
         std::string path;
         int target_pixels = 64; // desired max image dimension, quantized to power of two

@@ -1791,9 +1791,10 @@ void Launcher::draw_library(Canvas &c)
         for (const auto& chip : chips)
         {
             const float w = std::clamp(text_width(c, chip, 15.0f) + 26.0f, 82.0f, 220.0f);
+            const float chip_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
             list.bordered_rect({chip_x, 759.0f, w, 34.0f}, 17.0f,
-                               theme::kPanel.with_alpha(0.54f), 1.0f,
-                               theme::kPanelEdge.with_alpha(0.45f));
+                               theme::kPanel.with_alpha(chip_opacity), 1.0f,
+                               theme::kPanelEdge.with_alpha(0.45f * chip_opacity));
             text_shrink(c, chip, chip_x + w * 0.5f, baseline(759.0f, 34.0f, 15.0f), 15.0f,
                         theme::kLimePale, w - 18.0f, Align::center);
             chip_x += w + 9.0f;

@@ -51,10 +51,6 @@ msgstr "建议使用 60 Hz。120 Hz 仅切换显示模式；游戏仍需以超�
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz 是安全的默认设置。仅在显示设备兼容或使用高帧率补丁时启用 120 Hz。"
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "建议使用 8%。摇杆漂移时可提高；希望瞄准更灵敏时可降低。"
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "无法读取固件 NCA。请重新安装固件。"
@@ -325,10 +321,6 @@ msgstr "选择"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "请从游戏库中选择一个游戏。"
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "主题 · 标志 · 背景 · 光晕 (游戏: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "开始游戏"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation 自动模式在菜单中保持叉键/圆圈键语义，并按 Switch 按键的实体位置调整游戏操作。Switch 模式保持固定；编辑任一按键会创建自定义配置。"
 
 #: settings_store.h
 msgid "Polish"

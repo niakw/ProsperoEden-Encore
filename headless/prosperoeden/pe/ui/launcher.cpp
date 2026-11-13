@@ -423,10 +423,11 @@ void Launcher::apply_look()
     if (value.background == 5) {
         value.wallpaper_path = cached_daily_wallpaper_;
         if (!daily_wallpaper_scanned_ && !daily_wallpaper_scan_.valid()) {
-            daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
+            const int language_snapshot = prefs_.language;
+            daily_wallpaper_scan_ = std::async(std::launch::async, [this, language_snapshot] {
                 const std::string path = services_.daily_wallpaper();
                 return std::make_pair(path,
-                    services_.daily_wallpaper_caption(path, prefs_.language));
+                    services_.daily_wallpaper_caption(path, language_snapshot));
             });
         }
     }
@@ -752,10 +753,11 @@ void Launcher::update(float dt)
             // Re-check the local day and manifest off-thread only.
             daily_wallpaper_scanned_ = false;
             if (!daily_wallpaper_scan_.valid())
-                daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
+                const int language_snapshot = prefs_.language;
+                daily_wallpaper_scan_ = std::async(std::launch::async, [this, language_snapshot] {
                     const std::string path = services_.daily_wallpaper();
-                return std::make_pair(path,
-                    services_.daily_wallpaper_caption(path, prefs_.language));
+                    return std::make_pair(path,
+                        services_.daily_wallpaper_caption(path, language_snapshot));
                 });
         }
     }

@@ -51,10 +51,6 @@ msgstr "يوصى بـ 60 هرتز. 120 هرتز يغير وضع العرض فق�
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 هرتز هو الوضع الافتراضي الآمن. استخدم 120 هرتز فقط مع شاشة متوافقة أو تصحيح FPS عالي."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "يوصى بنسبة 8%. زيادتها لانجراف العصا. قم بتقليلها من أجل تصويب أكثر حساسية."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "تعذّرت قراءة أحد ملفات NCA للبرنامج الثابت. أعد تثبيت البرنامج الثابت."
@@ -325,10 +321,6 @@ msgstr "اختيار"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "اختر لعبة من مكتبتك."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "السمة · الشعار · الخلفية · توهج (اللعبة: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "تشغيل"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "بلاي ستيشن"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "يحتفظ PlayStation Auto بدلالات القائمة المتقاطعة/الدائرة أثناء تكييف اللعب مع مواضع التبديل الفعلية. يبقى المفتاح ثابتًا؛ يؤدي تحرير أي زر إلى إنشاء ملف تعريف مخصص."
 
 #: settings_store.h
 msgid "Polish"

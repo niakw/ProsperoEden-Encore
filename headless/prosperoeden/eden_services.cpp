@@ -2151,6 +2151,16 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 if (!known->publisher.empty()) game.publisher = std::string(known->publisher);
                 if (!known->release_date.empty()) game.release_date = std::string(known->release_date);
                 if (!known->genre.empty()) game.categories = std::string(known->genre);
+                // Nlib's NX endpoint has no metadata for some retail NS2
+                // titles. Retain verified local text instead of a blank back.
+                const std::string_view locale = Eden::kLanguageKeys[std::clamp(
+                    language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+                const auto overview = Eden::Ns2Catalog::Description(
+                    game.title_id, locale.starts_with("fr"));
+                if (!overview.empty()) {
+                    game.description = std::string(overview);
+                    game.intro = game.description;
+                }
                 std::fprintf(stderr, "EDEN_NS2_TITLE_RESOLVED id=%016llX name=%s source=%s\n",
                              static_cast<unsigned long long>(game.title_id), game.name.c_str(),
                              local_control.name.empty() ? "offline" : "local-nacp");
@@ -2251,6 +2261,14 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) game.name = std::string(known->name);
     if (!enrichment.intro.empty()) game.intro = std::move(enrichment.intro);
     if (!enrichment.description.empty()) game.description = std::move(enrichment.description);
+    else if (game.description.empty()) {
+        // Preserve a localized, Title-ID-qualified offline description when
+        // a refreshed Nlib result has no NS2 record.
+        const std::string_view locale = Eden::kLanguageKeys[std::clamp(
+            language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+        game.description = Eden::Ns2Catalog::Description(
+            game.title_id, locale.starts_with("fr"));
+    }
     if (!enrichment.publisher.empty()) game.publisher = std::move(enrichment.publisher);
     if (!enrichment.developer.empty()) game.developer = std::move(enrichment.developer);
     if (!enrichment.release_date.empty()) game.release_date = std::move(enrichment.release_date);

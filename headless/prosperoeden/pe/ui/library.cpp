@@ -783,28 +783,28 @@ void Launcher::finish_home_media()
 void Launcher::start_selected_media()
 {
     if (media_cancel_.load(std::memory_order_acquire) ||
-        media_scan_.valid() || games_.empty()) return;
-    // Prefer the highlighted title but then cover ALL installed titles, even
-    // those never selected. Download the complete Nlib media set per title
-    // without blocking input, drawing or ROM enumeration.
-    const int selected = std::clamp(library_.selected, 0, static_cast<int>(games_.size()) - 1);
-    for (std::size_t offset = 0; offset < games_.size(); ++offset) {
-        const auto index = (static_cast<std::size_t>(selected) + offset) % games_.size();
-        const Game& game = games_[index];
-        if (game.title_id == 0) continue;
-        const auto now = std::chrono::steady_clock::now();
-        const auto due = media_next_retry_.find(game.title_id);
-        if (due != media_next_retry_.end() && now < due->second) continue;
-        // Retry missing/corrupt cached artwork after a bounded cooldown rather
-        // than treating the first failed HTTPS request as permanent.
-        media_next_retry_[game.title_id] = now + std::chrono::minutes(5);
-        media_scan_title_id_ = game.title_id;
-        Game copy = game;
-        media_scan_ = std::async(std::launch::async, [this, copy = std::move(copy)]() mutable {
-            return services_.enrich_game_media(std::move(copy), &media_cancel_);
-        });
-        return;
-    }
+        media_scan_.valid() || games_.empty() ||
+        screen_ != Screen::library) return;
+    // The previous all-installed queue continued fetching case scans, banner,
+    // icon and three screenshots even on Home and after closing a game.
+    // Load complete details only for the CURRENT Library selection. Home has
+    // its own independent, bounded selected-Recent worker; ROM enumeration
+    // and existing local cache remain available for every unvisited title.
+    // A selection change while this worker runs is handled by
+    // finish_selected_media() and cannot publish into an unrelated TitleID.
+    if (library_.selected < 0 ||
+        library_.selected >= static_cast<int>(games_.size())) return;
+    const Game& game = games_[static_cast<std::size_t>(library_.selected)];
+    if (game.title_id == 0) return;
+    const auto now = std::chrono::steady_clock::now();
+    const auto due = media_next_retry_.find(game.title_id);
+    if (due != media_next_retry_.end() && now < due->second) return;
+    media_next_retry_[game.title_id] = now + std::chrono::minutes(5);
+    media_scan_title_id_ = game.title_id;
+    Game copy = game;
+    media_scan_ = std::async(std::launch::async, [this, copy = std::move(copy)]() mutable {
+        return services_.enrich_game_media(std::move(copy), &media_cancel_);
+    });
 }
 
 void Launcher::finish_selected_media()
@@ -953,7 +953,7 @@ void Launcher::apply_games(std::vector<Game> games)
         mode_.snap(selected_docked_ ? 0.0f : 1.0f);
     }
     name_home_games();
-    // Start the global artwork queue as soon as game enumeration completes.
+    // Enrich details only when Library is visible; Home handles its own selected game.
     start_selected_media();
 }
 

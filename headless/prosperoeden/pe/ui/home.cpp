@@ -928,9 +928,11 @@ void Launcher::draw_home(Canvas &c)
         const int shown = std::min<int>(kHomeRecentMax, static_cast<int>(home_.recents.size()));
         constexpr float available = 1770.0f;
         constexpr float gap = 16.0f;
-        constexpr float card_h = 214.0f;
-        // Real games only; keep cards at console-cover scale even with 1-3 titles.
+        // Real Switch 1/2 icon tiles use a square viewport. Cropping by
+        // source UV (cover_crop) preserves the original aspect, never stretches
+        // the NS2 icon into a short landscape rectangle.
         constexpr float card_w = (available - gap * 6.0f) / 7.0f;
+        constexpr float card_h = card_w;
         const float row_x = 76.0f;
         for (int i = 0; i < shown; ++i)
         {
@@ -978,7 +980,7 @@ void Launcher::draw_home(Canvas &c)
     // ---- utility cards: the four Home actions from the approved console-style mock-up ----
     begin_band(4, 14.0f);
     constexpr float utility_x = 60.0f;
-    constexpr float utility_y = 825.0f;
+    constexpr float utility_y = 835.0f; // reserve vertical room for square recent icons
     constexpr float utility_gap = 16.0f;
     constexpr float utility_w = (1800.0f - utility_gap * 3.0f) / 4.0f;
     constexpr float utility_h = 96.0f;

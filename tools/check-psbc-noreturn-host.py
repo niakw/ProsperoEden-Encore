@@ -16,6 +16,7 @@ spec.loader.exec_module(module)
 original = b"SHARED_FLAGS=\\\n\t-DHAVE_FUNC_ATTRIBUTE_PACKED=1 \\\n\t-DBLAKE3_NO_SSE2\n"
 patched = module.patched_bytes(original)
 assert patched.count(b"-DHAVE_FUNC_ATTRIBUTE_NORETURN=1") == 1
+assert patched.count(b"-DHAVE_FUNC_ATTRIBUTE_UNUSED=1") == 1
 for bad in (original.replace(b"-DHAVE_FUNC_ATTRIBUTE_PACKED=1", b"-DOTHER=1"),
             patched, original.replace(b"-DBLAKE3_NO_SSE2", b"-DHAVE_FUNC_ATTRIBUTE_PACKED=1")):
     try:
@@ -62,6 +63,40 @@ with tempfile.TemporaryDirectory() as tmp:
                            "-DHAVE_FUNC_ATTRIBUTE_NORETURN=1",
                            "-c", str(src), "-o", str(out)], capture_output=True, text=True)
     assert good.returncode == 0, good.stderr
+
+    # 479 NIR_PASS(_) warnings in the reference log share this source
+    # owner: Mesa util/macros.h leaves UNUSED empty unless this specific
+    # compiler capability is set. Prove that the real warning persists
+    # without the attribute and disappears with it, under -Werror.
+    unused_code = r"""
+#include <stdbool.h>
+#if defined(HAVE_FUNC_ATTRIBUTE_UNUSED)
+#define UNUSED __attribute__((unused))
+#else
+#define UNUSED
+#endif
+static void one_nir_pass(bool condition) {
+    UNUSED bool _;
+    if (condition) _ = true;
+}
+void run_nir_pass(void) { one_nir_pass(true); }
+"""
+    unused_src = Path(tmp) / "unused_pass.c"
+    unused_src.write_text(unused_code)
+    for available_cc in filter(None, (shutil.which("gcc"), shutil.which("clang"))):
+        without_flag = subprocess.run(
+            [available_cc, "-std=gnu11", "-O2", "-Wall", "-Wextra",
+             "-Werror=unused-but-set-variable", "-c", str(unused_src), "-o", str(out)],
+            capture_output=True, text=True, timeout=30)
+        assert without_flag.returncode != 0, (
+            "expected NIR unused-variable warning without attribute",
+            available_cc, without_flag.stderr)
+        with_flag = subprocess.run(
+            [available_cc, "-std=gnu11", "-O2", "-Wall", "-Wextra",
+             "-Werror=unused-but-set-variable", "-DHAVE_FUNC_ATTRIBUTE_UNUSED=1",
+             "-c", str(unused_src), "-o", str(out)],
+            capture_output=True, text=True, timeout=30)
+        assert with_flag.returncode == 0, (available_cc, with_flag.stderr)
 
 # Exercise the real cleanup function against sandbox files on both early
 # and late simulated failure. Never invokes SDK builder or modifies vendor.
@@ -115,4 +150,4 @@ exit 31
         assert not (Path(sandbox) / "stage").exists(), scenario
         assert not list(Path(sandbox).glob("*.encore-backup.*")), scenario
 
-print("PASS PSBC host/PS5 noreturn attribute, compiler proof, guarded restoration")
+print("PASS PSBC host/PS5 noreturn + unused attributes, compiler proof, guarded restoration")

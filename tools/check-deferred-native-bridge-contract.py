@@ -309,12 +309,12 @@ def m07_source_blob(value):
 # historical R23 source hash. Never rewrite the frozen R23/MSAA receipts.
 post_query_revoke = (
     "RasterizerVulkan::~RasterizerVulkan() {\n"
-    "    scheduler.WaitWorker();\n"
-    "    scheduler.Finish();\n"
     "    // QueryCache has a shorter lifetime than BufferCache. BufferCache::~\n"
     "    // triggers a final scheduler.Finish() AFTER QueryCache is destroyed.\n"
     "    // Drain outstanding queries while alive, then revoke the borrowed pointer\n"
     "    // to prevent the shutdown path from reading freed QueryCache storage.\n"
+    "    scheduler.WaitWorker();\n"
+    "    scheduler.Finish();\n"
     "    scheduler.ClearQueryCache();\n"
     "}\n"
 )

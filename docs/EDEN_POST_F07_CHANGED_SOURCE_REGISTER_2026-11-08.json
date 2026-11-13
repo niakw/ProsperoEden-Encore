@@ -70,13 +70,13 @@
     {
       "path": "headless/graphics.cpp",
       "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
-      "post_snapshot_git_blob": "5b1ee6e3e630129e5ac3083ef6e4520fde525c02",
+      "post_snapshot_git_blob": "4656be02c9bf785de8c7a6d85738018725f1c4a1",
       "original_disposition": "code_changed_in_batch",
-      "source_scope": "Nov13 FC27 5-second diagnostic-only cache pressure split: buffer/texture counters read only at detailed report boundary, not on every present; existing renderer locks, texture ownership, shader cache and graphics output unchanged.",
+      "source_scope": "Nov13 FC27 5-second diagnostic-only cache pressure split: buffer/texture counters read only at detailed report boundary, not on every present; existing renderer locks, texture ownership, shader cache and graphics output unchanged. Nov13 P0 MKW loading-only diagnostics: existing 10s and 30s warnings append the existing worker GPU completed-commands/64 counter and per-GraphicsWindow delta, with a reset bit. No CPU/GPFIFO/QMD claims and no extra per-frame sampling.",
       "review_kind": "source_contract",
       "required_source_fragment": "JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable."
+      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable.\n2026-11-13 PR #129: exact selected graphics.cpp new blob 4656be02c9bf785de8c7a6d85738018725f1c4a1; reviewed change is one guarded crash_report include, one per-title baseline, one pure snapshot helper, and the two pre-existing at-most-once 10s/30s stderr lines. No draw/present-path atomic beyond the two snapshots, no gameplay frame assertions. Dedicated ASan/UBSan host test #43519504325 passed; frozen historical F07 blob unchanged."
     },
     {
       "path": "headless/hud.h",

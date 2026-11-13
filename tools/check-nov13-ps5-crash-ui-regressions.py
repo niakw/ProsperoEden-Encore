@@ -81,7 +81,7 @@ assert "library_shot_viewer_ = library_shot_focused_" in lib
 assert "library_shot_focused_ == i" in lib
 assert "if (library_shot_viewer_ >= 0 &&" in lib
 assert "const float width = std::min(viewer.w, viewer.h * aspect)" in lib
-assert "list.image(shot.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}, kWhite)" in lib
+assert "list.image(shot.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}, Color::rgb(0xffffff))" in lib
 assert "return; // Cross never launches a game while inspecting media." in lib
 
 # 100% panel opacity must be truly opaque: the authored design tint often

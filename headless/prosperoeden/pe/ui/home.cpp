@@ -248,11 +248,17 @@ void Launcher::press_home(Key key)
             }
             else
             {
-                const int count = static_cast<int>(services_.anti_aliasing_labels().size());
-                if (count <= 0) return;
-                const int current = next.anti_aliasing >= 0 ?
-                    next.anti_aliasing : base_aa;
-                next.anti_aliasing = (current + step + count) % count;
+                // Same 8-mode selection order and Vulkan eligibility as
+                // Settings > Video and Library > Game settings. Never expose
+                // an apparently-working MSAA choice only in Quick settings.
+                const int current = next.anti_aliasing >= 0
+                    ? next.anti_aliasing : base_aa;
+                next.anti_aliasing = CycleQualityRanked(
+                    current, step, kAntiAliasingQualityOrder, false,
+                    [&](int candidate) {
+                        return AntiAliasingOptionSelectable(candidate,
+                            EffectiveGameRenderer(next, prefs_, title_id));
+                    });
                 RefreshVideoProfile(next, prefs_, title_id);
             }
         }

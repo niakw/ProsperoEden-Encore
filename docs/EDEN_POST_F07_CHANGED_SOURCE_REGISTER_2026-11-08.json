@@ -223,13 +223,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/launcher.hpp",
       "historical_reviewed_git_blob": "b2c81fda94c172cee2b7edbe69bc128a0f09a061",
-      "post_snapshot_git_blob": "da48e5463fc42a7591eb0e28ceecbd9deb0c8f79",
+      "post_snapshot_git_blob": "99be80fc05d420f50ffe47ff7b816a18103890f3",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Nov13 real PS5 console regression: scrollable contextual help, local wallpaper option state, user panel opacity, daily source caption. Source delta only; gameplay/kernel console qualification open.",
+      "source_scope": "Nov13 real PS5 console regression: scrollable contextual help, local wallpaper option state, user panel opacity, daily source caption. Source delta only; gameplay/kernel console qualification open. Screenshot media viewer state is source-only, not a PS5 GPU compatibility certification.",
       "review_kind": "source_interface",
-      "required_source_fragment": "void open_multiplayer_from_game() { enter_multiplayer(); }",
+      "required_source_fragment": "int library_shot_viewer_ = -1",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Re-reviewed exact new Git blob b54d9f477203c5976d63dc146194478616dfd36a (previous post-F07 20f4c8a4da6177b7015de3ccd497ded591870d51): confirmed game teardown before opening the existing launcher multiplayer room browser; no in-game network loop, no renderer ownership change, no NS1/NS2 proof and no hardware qualification. Historical F07 receipt unchanged.\n2026-11-13 PR #95: reviewed source blob da48e5463fc42a7591eb0e28ceecbd9deb0c8f79; SHA of prior listed post-F07 entry b54d9f477203c5976d63dc146194478616dfd36a; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding."
+      "review_note": "2026-11-09: Re-reviewed exact new Git blob b54d9f477203c5976d63dc146194478616dfd36a (previous post-F07 20f4c8a4da6177b7015de3ccd497ded591870d51): confirmed game teardown before opening the existing launcher multiplayer room browser; no in-game network loop, no renderer ownership change, no NS1/NS2 proof and no hardware qualification. Historical F07 receipt unchanged.\n2026-11-13 PR #95: reviewed source blob da48e5463fc42a7591eb0e28ceecbd9deb0c8f79; SHA of prior listed post-F07 entry b54d9f477203c5976d63dc146194478616dfd36a; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding.\n2026-11-13 screenshot gallery PR: controller focus index and viewer index for up to 3 original Nlib gameplay images, preserving back cover viewer. Real PS5 input/render validation outstanding; reviewed blob 99be80fc05d420f50ffe47ff7b816a18103890f3."
     },
     {
       "path": "headless/prosperoeden/pe/ui/services.hpp",

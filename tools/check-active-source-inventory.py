@@ -807,6 +807,20 @@ slab_source = (root / "vendor/encore-active/ns2-runtime/sparse-residency/core/hl
 assert hashlib.sha1(b"blob " + str(len(slab_source)).encode() + bytes([0]) + slab_source).hexdigest() == "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"
 assert slab_source.decode().count("EdenNs2CommitGuestBacking(") == 3
 
+# The Nov13 native fix adds two reviewed owners AFTER the immutable F07
+# catalogue. They are not retroactively counted as historical F07 sources:
+# both must exist and be selected in native CMake (single stb implementation).
+nov13_native_owners = {
+    "eden-core/src/common/stb_image_png.cpp",
+    "ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
+}
+assert nov13_native_owners <= set(physical_all), (
+    "Missing Nov13 native crash/PNG owners", sorted(nov13_native_owners - set(physical_all)))
+nov13_cmake = (root / "headless/CMakeLists.txt").read_text()
+assert 'list(REMOVE_ITEM eden_stb_common_sources "stb.cpp")' in nov13_cmake
+assert 'list(APPEND eden_stb_common_sources "${EDEN_NATIVE_STB_CODECS}")' in nov13_cmake
+assert 'list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")' in nov13_cmake
+assert 'list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")' in nov13_cmake
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -821,7 +835,7 @@ physical = [p for p in physical_all
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
-             post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners]
+             post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

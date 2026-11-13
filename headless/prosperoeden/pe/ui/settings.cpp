@@ -439,8 +439,13 @@ void Launcher::draw_settings(Canvas &c)
         const int row = int(i) / columns;
         const Rect tile{tiles_x + float(column) * (tile_w + tile_gap_x),
                         tiles_y + float(row) * (tile_h + tile_gap_y), tile_w, tile_h};
-        list.bordered_rect(tile, 18.0f, theme::kPanel.with_alpha(0.48f), 1.0f,
-                           theme::kPanelEdge.with_alpha(0.36f));
+        // The 100% opacity preference must cover the Settings overview
+        // info tiles too. These bypass glass()/plate_rest(), so their old
+        // hard-coded 48% fill made "100%" look translucent on this page.
+        const float tile_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
+        list.bordered_rect(tile, 18.0f,
+                           theme::kPanel.with_alpha(tile_opacity), 1.0f,
+                           theme::kPanelEdge.with_alpha(0.36f * tile_opacity));
         text_shrink(c, lines[i].label, tile.x + 20.0f,
                     baseline(tile.y + 14.0f, 24.0f, 15.0f), 15.0f,
                     theme::kLabel, tile.w - 40.0f, Align::left, 1.5f);

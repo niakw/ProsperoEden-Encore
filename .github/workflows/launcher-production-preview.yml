@@ -1,6 +1,12 @@
 name: Encore launcher render preview (host only)
 
 on:
+  # Compile and render the actual C++ launcher BEFORE UI PR merges. The
+  # static source gates cannot detect unresolved names inside library.cpp.
+  pull_request:
+    paths:
+      - 'headless/prosperoeden/pe/ui/**'
+      - '.github/workflows/launcher-production-preview.yml'
   # Run only for main or isolated UI branches when launcher content changes.
   # GPU/JIT pushes never trigger the expensive full render walkthrough.
   push:
@@ -55,7 +61,7 @@ jobs:
             build-essential python3-pil libegl1-mesa-dev libgl1-mesa-dev libstb-dev nlohmann-json3-dev \
             mesa-utils libgl1-mesa-dri ca-certificates git pkg-config
 
-      - name: Verify all 29 translations and original geometry
+      - name: Verify all 31 translations and original geometry
         run: |
           python3 -B tools/launcher/strings.py check
           python3 -B tools/check-launcher-translation-coverage.py

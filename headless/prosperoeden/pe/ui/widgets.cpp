@@ -328,11 +328,15 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
         c.list.bordered_rect(r, radius, Color::rgb(0x0b0c14), 2.0f, Color::rgb(0xc5c1d2));
         return;
     }
-    const float opacity = look().panel_opacity;
+    // Panel opacity is the FINAL alpha, not a multiplier of an already faint
+    // authored tint (some authored panels are only 4-9% opaque). At 100% the
+    // user explicitly requests an opaque surface; at 0% no panel fill remains.
+    const float opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
     if (c.textures.backdrop_blur() != 0 && opacity > 0.001f)
         c.list.rounded_image(c.textures.backdrop_blur(), r, c.backdrop.uv(r), radius,
                              kWhite.with_alpha(opacity));
-    c.list.bordered_rect(r, radius, tint.with_alpha(tint.a * opacity), 1.15f, edge);
+    c.list.bordered_rect(r, radius, tint.with_alpha(tint.a > 0.0f ? opacity : 0.0f),
+                         1.15f, edge.with_alpha(edge.a * opacity));
     // Inner hairline gives the glass the crisp double-edge visible in the reference UI without
     // turning every panel into a thick neon frame.
     if (r.w > 8.0f && r.h > 8.0f)
@@ -410,10 +414,12 @@ void plate_rest(Canvas &c, const Plate &style, const Rect &r)
         return;
     if (look().high_contrast)
         c.list.bordered_rect(r, style.radius, Color::rgb(0x12131d), 1.5f, Color::rgb(0xa9a5b8));
-    else
+    else {
+        const float opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
         c.list.bordered_rect(r, style.radius,
-                             style.fill.with_alpha(style.fill.a * look().panel_opacity),
-                             1.0f, style.edge);
+                             style.fill.with_alpha(style.fill.a > 0.0f ? opacity : 0.0f),
+                             1.0f, style.edge.with_alpha(style.edge.a * opacity));
+    }
 }
 
 void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount)

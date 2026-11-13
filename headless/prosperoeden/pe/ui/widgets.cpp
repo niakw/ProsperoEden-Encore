@@ -328,9 +328,11 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
         c.list.bordered_rect(r, radius, Color::rgb(0x0b0c14), 2.0f, Color::rgb(0xc5c1d2));
         return;
     }
-    if (c.textures.backdrop_blur() != 0)
-        c.list.rounded_image(c.textures.backdrop_blur(), r, c.backdrop.uv(r), radius, kWhite);
-    c.list.bordered_rect(r, radius, tint, 1.15f, edge);
+    const float opacity = look().panel_opacity;
+    if (c.textures.backdrop_blur() != 0 && opacity > 0.001f)
+        c.list.rounded_image(c.textures.backdrop_blur(), r, c.backdrop.uv(r), radius,
+                             kWhite.with_alpha(opacity));
+    c.list.bordered_rect(r, radius, tint.with_alpha(tint.a * opacity), 1.15f, edge);
     // Inner hairline gives the glass the crisp double-edge visible in the reference UI without
     // turning every panel into a thick neon frame.
     if (r.w > 8.0f && r.h > 8.0f)
@@ -340,7 +342,7 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
     // Light catches the top edge.
     const float sheen = std::min(r.h * 0.45f, 150.0f);
     c.list.gradient_rect({r.x + 1.0f, r.y + 1.0f, r.w - 2.0f, sheen}, radius,
-                         kWhite.with_alpha(0.045f), kWhite.with_alpha(0.0f));
+                         kWhite.with_alpha(0.045f * opacity), kWhite.with_alpha(0.0f));
 }
 
 Plate kRowPlate{20.0f,
@@ -409,7 +411,9 @@ void plate_rest(Canvas &c, const Plate &style, const Rect &r)
     if (look().high_contrast)
         c.list.bordered_rect(r, style.radius, Color::rgb(0x12131d), 1.5f, Color::rgb(0xa9a5b8));
     else
-        c.list.bordered_rect(r, style.radius, style.fill, 1.0f, style.edge);
+        c.list.bordered_rect(r, style.radius,
+                             style.fill.with_alpha(style.fill.a * look().panel_opacity),
+                             1.0f, style.edge);
 }
 
 void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount)

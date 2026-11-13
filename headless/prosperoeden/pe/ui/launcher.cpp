@@ -752,13 +752,14 @@ void Launcher::update(float dt)
             daily_refresh_wait_ = 0.0f;
             // Re-check the local day and manifest off-thread only.
             daily_wallpaper_scanned_ = false;
-            if (!daily_wallpaper_scan_.valid())
+            if (!daily_wallpaper_scan_.valid()) {
                 const int language_snapshot = prefs_.language;
                 daily_wallpaper_scan_ = std::async(std::launch::async, [this, language_snapshot] {
                     const std::string path = services_.daily_wallpaper();
                     return std::make_pair(path,
                         services_.daily_wallpaper_caption(path, language_snapshot));
                 });
+            }
         }
     }
     textures_.pump(dt);

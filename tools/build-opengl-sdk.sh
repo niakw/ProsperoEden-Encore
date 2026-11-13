@@ -89,8 +89,8 @@ cleanup() {
     fi
     # Preserve original checked-out OpenGL build inputs after all exit paths.
     for cfg in "${psbc_configs[@]}"; do
-        if [[ -f "${cfg}.encore-backup.$" ]]; then
-            mv -f "${cfg}.encore-backup.$" "$cfg"
+        if [[ -f "${cfg}.encore-backup.$$" ]]; then
+            mv -f "${cfg}.encore-backup.$$" "$cfg"
         fi
     done
     rm -rf -- "$stage"
@@ -98,7 +98,7 @@ cleanup() {
 trap cleanup EXIT
 
 if ! grep -q '^\[host_machine\]' "$cross_file"; then
-    cross_backup="${cross_file}.encore-backup.$"
+    cross_backup="${cross_file}.encore-backup.$$"
     cp "$cross_file" "$cross_backup"
     cat >> "$cross_file" <<'EOF_CROSS'
 
@@ -132,7 +132,7 @@ python3 "$source_dir/tools/fetch-sources.py"
 for cfg in "$source_dir/toolchain/opengnm-psbc-host.mak" \
            "$source_dir/toolchain/opengnm-psbc-ps5.mak"; do
     [[ -f "$cfg" ]] || { echo "Missing pinned PSBC compiler config: $cfg" >&2; exit 1; }
-    cp -p "$cfg" "${cfg}.encore-backup.$"
+    cp -p "$cfg" "${cfg}.encore-backup.$$"
     psbc_configs+=("$cfg")
     python3 -B "$root/tools/ci/patch-psbc-noreturn-flags.py" "$cfg"
 done
@@ -224,7 +224,7 @@ if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
     host_test_backup=""
 fi
 for cfg in "${psbc_configs[@]}"; do
-    mv -f "${cfg}.encore-backup.$" "$cfg"
+    mv -f "${cfg}.encore-backup.$$" "$cfg"
 done
 psbc_configs=()
 (cd "$stage" && sha256sum --check --strict manifest.sha256 >/dev/null)

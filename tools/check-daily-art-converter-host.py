@@ -47,23 +47,25 @@ with patch.object(shutil, "which", return_value=None):
         assert "ImageMagick" in str(e)
     else:
         raise AssertionError("missing conversion tools accepted")
-# The build refreshes 16 recent WebPs by default, but the user must
-# explicitly select the Daily theme. Packagers may still disable media
-# fetching for offline reproducibility or redistribution-rights review.
+# The package must never fetch or ship recent game art. Daily is selected
+# explicitly and loads up to eight verified recent WebPs asynchronously on
+# the user console. This source contract replaces retired prepackaging.
 root = Path(__file__).resolve().parents[1]
 pack = (root / "tools/package-headless-native.sh").read_text()
 settings = (root / "headless/settings_store.h").read_text()
 launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
 generator = (root / "tools/launcher/fetch_daily_switch.py").read_text()
 service = (root / "headless/prosperoeden/eden_services.cpp").read_text()
-assert 'EDEN_BAKE_DAILY_SWITCH_ART:-1' in pack
+assert 'EDEN_BAKE_DAILY_SWITCH_ART' not in pack
+assert 'fetch_daily_switch.py' not in pack
+assert 'Daily Switch artwork is deliberately NOT bundled' in pack
 assert 'rm -rf "$app/ui/art/daily"' in pack
 assert 'int background_style = 0;' in settings
 assert 'if (value.background == 5)' in launcher
-assert 'MAX_ITEMS = 16' in generator
-assert 'if (candidates.size() > 16) candidates.resize(16);' in service
+assert 'MAX_ITEMS = 8' in generator
+assert 'if (candidates.size() > 8) candidates.resize(8);' in service
 assert 'ext == ".tga" || ext == ".webp"' in service
-print("PASS 16 newest WebPs, user opt-in to Daily theme, personal import exception")
+print("PASS 8 newest runtime WebPs, no bundled downloads, user opt-in, personal import exception")
 
 # Real ImageMagick/WebP round-trip (not a mocked converter):
 # A BottomLeft EXIF orientation must be applied exactly once and removed

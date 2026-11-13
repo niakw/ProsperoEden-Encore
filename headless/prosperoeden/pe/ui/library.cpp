@@ -1781,8 +1781,9 @@ void Launcher::draw_library(Canvas &c)
                             baseline(shot.y + 29.0f, 25.0f, 13.0f), 13.0f,
                             theme::kMuted, shot.w - 12.0f, Align::center);
             list.bordered_rect(shot, 12.0f, theme::kPanel.with_alpha(0.0f), 1.0f,
-                               shown_screens == 0 ? theme::kLime.with_alpha(0.72f) :
-                                                    theme::kPanelEdge.with_alpha(0.46f));
+                               library_shot_focused_ == i ?
+                                   theme::kFocusCore.with_alpha(0.96f) :
+                                   theme::kPanelEdge.with_alpha(0.46f));
             ++shown_screens;
         }
         if (shown_screens == 0)
@@ -1811,34 +1812,65 @@ void Launcher::draw_library(Canvas &c)
         {Pad::triangle, TR("Game settings")}, {Pad::square, TR("Mods")},
         {Pad::options, TR("Safe launch")}, {Pad::circle, TR("Back")}};
     if (library_back_zoom_) {
-        // An actual controller-operable overlay, not a static screenshot.
         list.rounded_rect({0.0f, 0.0f, 1920.0f, 1080.0f}, 0.0f,
                           theme::kScrim.with_alpha(0.96f));
         if (game != nullptr) {
             text_shrink(c, game->name, 960.0f, baseline(54.0f, 52.0f, 35.0f),
                         35.0f, theme::kTitle, 1580.0f, Align::center);
-            // Tall portrait matching the printed paper: no wide 670px
-            // stretched-looking pane in the full-screen back-cover popup.
-            const Rect enlarged{960.0f - 807.0f * kCaseShellAspect * 0.5f,
-                                111.0f, 807.0f * kCaseShellAspect, 807.0f};
-            // Stable 700x807 viewport. Scale the original sleeve uniformly,
-            // then pan beneath a screen-fixed clip; never scale X/Y separately.
-            const Rect viewer{610.0f, 111.0f, 700.0f, 807.0f};
-            list.push_clip(viewer);
-            list.push_transform(library_back_scale_, 960.0f, 514.5f,
-                                library_back_pan_x_, library_back_pan_y_);
-            flat_retail_sleeve(c, *game, enlarged, true, 0.92f,
-                               library_back_scale_);
-            list.pop_transform();
-            list.pop_clip();
-            text_shrink(c, std::to_string(static_cast<int>(library_back_scale_ * 100.0f + 0.5f)) + "%",
-                        1340.0f, baseline(140.0f, 34.0f, 20.0f),
-                        20.0f, theme::kLimePale, 110.0f, Align::left);
+            if (library_shot_viewer_ >= 0 &&
+                static_cast<std::size_t>(library_shot_viewer_) < game->screenshots.size()) {
+                // Show the ORIGINAL screenshot ratio (not the 154x82 cropped
+                // thumbnail). Full-size decoding is lazy but remains in the
+                // existing bounded texture cache; Cross never launches here.
+                const auto& path = game->screenshots[
+                    static_cast<std::size_t>(library_shot_viewer_)];
+                constexpr Rect viewer{120.0f, 123.0f, 1680.0f, 780.0f};
+                const Cover shot = c.textures.cover(path, viewer.w);
+                if (shot.texture != 0) {
+                    const float aspect = std::max(0.01f, shot.aspect);
+                    const float width = std::min(viewer.w, viewer.h * aspect);
+                    const float height = width / aspect;
+                    const Rect fitted{viewer.x + (viewer.w - width) * 0.5f,
+                                      viewer.y + (viewer.h - height) * 0.5f,
+                                      width, height};
+                    list.push_clip(viewer);
+                    list.push_transform(library_back_scale_, 960.0f, 513.0f,
+                                        library_back_pan_x_, library_back_pan_y_);
+                    list.image(shot.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}, kWhite);
+                    list.pop_transform();
+                    list.pop_clip();
+                } else {
+                    text_shrink(c, tr("Loading artwork"), 960.0f, 515.0f, 24.0f,
+                                theme::kCopy, 900.0f, Align::center);
+                }
+            } else {
+                // Physical back jacket viewer remains pixel-for-pixel the
+                // same and continues to support L2/R2 and D-pad movement.
+                const Rect enlarged{960.0f - 807.0f * kCaseShellAspect * 0.5f,
+                                    111.0f, 807.0f * kCaseShellAspect, 807.0f};
+                const Rect viewer{610.0f, 111.0f, 700.0f, 807.0f};
+                list.push_clip(viewer);
+                list.push_transform(library_back_scale_, 960.0f, 514.5f,
+                                    library_back_pan_x_, library_back_pan_y_);
+                flat_retail_sleeve(c, *game, enlarged, true, 0.92f,
+                                   library_back_scale_);
+                list.pop_transform();
+                list.pop_clip();
+            }
+            text_shrink(c, std::to_string(
+                            static_cast<int>(library_back_scale_ * 100.0f + 0.5f)) + "%",
+                        1760.0f, baseline(140.0f, 34.0f, 20.0f),
+                        20.0f, theme::kLimePale, 110.0f, Align::right);
         }
         static constexpr Hint kZoomHints[] = {
             {Pad::circle, TR("Close")}, {Pad::l2, TR("Zoom out")},
             {Pad::r2, TR("Zoom in")}, {Pad::dpad, TR("Move cover")}};
         draw_footer(c, kZoomHints, 4);
+    } else if (library_shot_focused_ >= 0) {
+        static constexpr Hint kMediaHints[] = {{Pad::cross, TR("Open")},
+                                               {Pad::leftright, TR("Select")},
+                                               {Pad::circle, TR("Back")}};
+        draw_footer(c, kMediaHints, 3);
     } else if (library_back_focused_) {
         static constexpr Hint kBackHints[] = {{Pad::cross, TR("Enlarge cover")},
                                              {Pad::updown, TR("Browse games")},

@@ -206,6 +206,28 @@ get_target_property(common_sources common SOURCES)
 list(REMOVE_ITEM common_sources host_memory.cpp sparse_large_vector.cpp)
 set_property(TARGET common PROPERTY SOURCES "${common_sources}")
 target_sources(common PRIVATE "${PORT_ROOT}/src/host_memory.cpp" "${PORT_ROOT}/src/memory_pages.cpp")
+# One PS5 stb implementation must decode both JPEG and PNG: the original
+# Eden common/stb.h implements JPEG only, while GamesDB and avatars deliver
+# genuine PNG scans. Do not link two stb implementations.
+if(PS5_NATIVE)
+    set(EDEN_NATIVE_STB_CODECS
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/stb_image_png.cpp")
+    if(NOT EXISTS "${EDEN_NATIVE_STB_CODECS}")
+        message(FATAL_ERROR "Missing maintained PS5 JPEG+PNG decoder")
+    endif()
+    get_target_property(eden_stb_common_sources common SOURCES)
+    list(FIND eden_stb_common_sources "stb.cpp" eden_stb_pinned_owner)
+    if(eden_stb_pinned_owner EQUAL -1)
+        message(FATAL_ERROR "Pinned common stb owner changed")
+    endif()
+    list(REMOVE_ITEM eden_stb_common_sources "stb.cpp")
+    list(APPEND eden_stb_common_sources "${EDEN_NATIVE_STB_CODECS}")
+    set_property(TARGET common PROPERTY SOURCES "${eden_stb_common_sources}")
+    # Preserve only upstream stb's implementation-specific warning settings.
+    set_source_files_properties("${EDEN_NATIVE_STB_CODECS}" PROPERTIES
+        COMPILE_OPTIONS "-Wno-implicit-fallthrough;-Wno-missing-declarations;-Wno-missing-field-initializers")
+endif()
+
 # Isolated R457 NS2 12 GiB virtual / bounded 2 MiB physical resident owner.
 # Real native syscalls and guest PTE precommit; NOT included by default.
 # Do not turn this on in production until GPU coherency and PS5 boot pass.

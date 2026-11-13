@@ -832,7 +832,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'vulkan_device.cpp':
             '50578df547b769bd45cf4964ffa3f793c1749273',
         'vulkan_rasterizer.cpp':
-            '2530e3754435175810cbf24cb20446e177d1f19f',
+            '5b04321fa45d6b5e6af1d4b17bcf695348d0dd90',
     }
     r23_required_semantics = {
         'include/video_core/renderer_vulkan/vk_graphics_pipeline.h':
@@ -858,6 +858,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             'Unreviewed merged R23 Vulkan source bytes', name)
         assert all(token in combined for token in r23_required_semantics[name]), (
             'Missing merged R23 shader/Vulkan ABI semantic', name)
+    # The FC27 teardown is independently source-qualified before the
+    # historical combined Vulkan blob is accepted. QueryCache is destroyed
+    # ahead of BufferCache: the scheduler must not retain the borrowed owner.
+    destructor = expected['vulkan_rasterizer.cpp'].read_text().split(
+        'RasterizerVulkan::~RasterizerVulkan() {', 1)[1].split('}', 1)[0]
+    assert destructor.count('scheduler.ClearQueryCache();') == 1
+    assert destructor.index('scheduler.WaitWorker();') < destructor.index('scheduler.Finish();') < destructor.index('scheduler.ClearQueryCache();')
     print("ENCORE_R23_COMBINED_VULKAN_BLOB_PASS",
           f"reviewed_owners={len(r23_combined_owners)}",
           "historical_P24_reverse_receipt=1")

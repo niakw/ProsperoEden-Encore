@@ -51,10 +51,6 @@ msgstr "60 Hz wordt aanbevolen. 120 Hz verandert alleen de weergavemodus; de gam
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz is de veilige standaard. Gebruik 120 Hz alleen met een compatibel beeldscherm of een patch met hoge FPS."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "8% wordt aanbevolen. Verhoog het voor stick-drift; verlaag het voor gevoeliger richten."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Een firmware-NCA kan niet worden gelezen. Installeer de firmwaredump opnieuw."
@@ -325,10 +321,6 @@ msgstr "Kiezen"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "Kies een game uit je bibliotheek."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "Thema · Logo · Achtergrond · Gloed (Spel: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "Spelen"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto behoudt de menusemantiek van Cross/Circle en past de gameplay aan de fysieke Switch-posities aan. Schakelaar blijft vast; Als u een knop bewerkt, wordt er een aangepast profiel gemaakt."
 
 #: settings_store.h
 msgid "Polish"

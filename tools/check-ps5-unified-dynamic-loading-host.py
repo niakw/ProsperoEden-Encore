@@ -31,6 +31,10 @@ assert "Eden::LaunchHandoff::Peek()" in loading
 assert "loading_jacket_buffer = std::move(buffer);" in loading
 assert "loading_jacket_attempted = true;" in loading
 assert "scheduler.Record([target, upload, copy]" in native
+assert "to_present.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;" in native
+assert "VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |" in native
+assert "VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;" in native
+assert "to_present.newLayout = VK_IMAGE_LAYOUT_GENERAL;" in native
 assert "Eden::HudSnapshot live_loading = Eden::GetVulkanHud();" in native
 assert "live_loading.width |= 0x80000000u;" in native
 assert "live_loading.loading |= 0x80000000u;" not in loading

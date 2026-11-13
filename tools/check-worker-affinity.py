@@ -70,7 +70,9 @@ static void mock_cpuid_count(unsigned leaf,unsigned subleaf,
  (void)subleaf;
  a=b=c=d=0;
  const unsigned cpu=static_cast<unsigned>(__builtin_ctzll(current));
- if(leaf==0x8000001eu) {
+ if(leaf==1u) {
+  mock_cpuid(leaf,a,b,c,d);
+ } else if(leaf==0x8000001eu) {
   b=(amd_cores[cpu]&255u)|(1u<<8); // two SMT siblings per CoreId
   c=0; // one NUMA node
  } else if(leaf==0xbu) {

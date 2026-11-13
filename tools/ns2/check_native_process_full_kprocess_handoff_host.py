@@ -24,6 +24,9 @@ init=extract("bool Process::Initialize(Loader::AppLoader& loader, Loader::Result
              "\nvoid Process::Finalize() {")
 finalize=extract("void Process::Finalize() {","\nbool Process::Run() {")
 assert "UnregisterProcessIfPresent(pid);" in init and "UnregisterProcessIfPresent(pid);" in finalize
+register_after_load = init.index("Kernel::KProcess::Register(") > init.index("if (!load_parameters)")
+assert (register_after_load or init.index("Kernel::KProcess::Register(") <
+        init.index("loader.Load(*process, m_system)"))
 
 def sub(original:str,old:str,new:str)->str:
     assert original.count(old)==1,(old,original.count(old))
@@ -179,7 +182,7 @@ case=r"""
             catch(const std::bad_alloc&){caught_oom=true;}
             auto* obj=joined_kernel.latest;
             Require(obj && joined_kernel.creations==1 &&
-                    joined_kernel.registrations==1,
+                    joined_kernel.registrations==__EXPECTED_REGISTRATIONS__,
                     "H01 real Process owner did not create/register KProcess");
             if(fault==0) {
                 Require(succeeded && !caught_oom && process.m_process==obj &&
@@ -219,6 +222,8 @@ case=r"""
                   << " guest_pages_and_trace=retired host_kernel_fs=stubs"
                   << " PS5=not_exercised\n";
 """
+case=case.replace("__EXPECTED_REGISTRATIONS__",
+    "((fault==0 || fault==4) ? 1u : 0u)" if register_after_load else "1u")
 test=sub(test,"        // An OOM in the resource-limit allocator must return before",
          case+"\n        // An OOM in the resource-limit allocator must return before")
 

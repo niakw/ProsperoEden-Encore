@@ -952,8 +952,12 @@ void Launcher::draw_home(Canvas &c)
             // screenshot or a cropped panoramic banner on the small tile.
             const std::string& art = !recent.cover.empty() ? recent.cover :
                                      (!recent.hero.empty() ? recent.hero : recent.screenshot);
+            // These seven visible icons get priority over off-screen case
+            // media queued before a game's teardown. Preserve the
+            // aspect-correct square crop and existing cached GL texture.
+            const Cover picture = c.textures.cover(
+                art, std::max(card_w - 8.0f, card_h - 8.0f), true);
             cover_crop(c, art, {r.x + 4.0f, r.y + 4.0f, r.w - 8.0f, r.h - 8.0f}, 20.0f, 0.32f);
-            const Cover picture = c.textures.cover(art, std::max(card_w - 8.0f, card_h - 8.0f));
             if (picture.texture == 0) {
                 const bool fetching = recent.title_id != 0 &&
                     (home_media_scan_title_id_ == recent.title_id ||

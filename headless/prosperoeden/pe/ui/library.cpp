@@ -927,7 +927,9 @@ void Launcher::apply_games(std::vector<Game> games)
     // resets the viewer so it cannot show a stale game's rear artwork.
     if (!same) {
         library_back_focused_ = false;
+        library_shot_focused_ = -1;
         library_back_zoom_ = false;
+        library_shot_viewer_ = -1;
     }
     // Even if file order stayed identical, a preferences refresh may
     // have changed the selected game's effective docked mode.
@@ -1314,7 +1316,9 @@ void Launcher::enter_library()
     library_.visible = 5;
     library_.pitch = 1.0f;
     library_back_focused_ = false;
+    library_shot_focused_ = -1;
     library_back_zoom_ = false;
+    library_shot_viewer_ = -1;
     if (library_.count != static_cast<int>(games_.size()))
         library_.reset(static_cast<int>(games_.size()),
                        std::clamp(library_.selected, 0,
@@ -1391,43 +1395,67 @@ void Launcher::refresh_selected_game()
                           1.0f : 0.0f);
     detail_.value = 0.0f;
     detail_.velocity = 0.0f;
+    library_shot_focused_ = -1;
+    library_shot_viewer_ = -1;
     start_selected_media();
 }
 
 void Launcher::press_library(Key key)
 {
     if (library_back_zoom_) {
+        // The same safe viewer owns back-paper and original Nlib images.
+        // Scale/pan limits follow the actual source aspect, never stretch it.
+        const Game* viewer_game = library_.selected >= 0 &&
+            static_cast<std::size_t>(library_.selected) < games_.size() ?
+            &games_[static_cast<std::size_t>(library_.selected)] : nullptr;
+        if (!viewer_game || (library_shot_viewer_ >= 0 &&
+            static_cast<std::size_t>(library_shot_viewer_) >=
+                viewer_game->screenshots.size())) {
+            library_back_zoom_ = false;
+            library_shot_viewer_ = -1;
+            return;
+        }
+        const auto clamp_pan = [&] {
+            float image_w = 500.0f, image_h = 807.0f;
+            float viewport_w = 700.0f, viewport_h = 807.0f;
+            if (library_shot_viewer_ >= 0) {
+                viewport_w = 1680.0f; viewport_h = 780.0f;
+                const Cover picture = textures_.cover(
+                    viewer_game->screenshots[static_cast<std::size_t>(library_shot_viewer_)],
+                    viewport_w);
+                const float aspect = picture.aspect > 0.01f ? picture.aspect : 16.0f / 9.0f;
+                image_w = std::min(viewport_w, viewport_h * aspect);
+                image_h = image_w / aspect;
+            }
+            const float limit_x = std::max(
+                0.0f, (image_w * library_back_scale_ - viewport_w) * 0.5f);
+            const float limit_y = std::max(
+                0.0f, (image_h * library_back_scale_ - viewport_h) * 0.5f);
+            library_back_pan_x_ = std::clamp(library_back_pan_x_, -limit_x, limit_x);
+            library_back_pan_y_ = std::clamp(library_back_pan_y_, -limit_y, limit_y);
+        };
         if (key == Key::circle) {
             library_back_zoom_ = false;
+            library_shot_viewer_ = -1;
             cue(Cue::back);
         } else if (key == Key::l2 || key == Key::r2) {
             const float old = library_back_scale_;
             const float factor = key == Key::r2 ? 1.30f : (1.0f / 1.30f);
             library_back_scale_ = std::clamp(old * factor, 1.0f, 3.4f);
-            // Keep the same printed region under the viewer's centre.
             library_back_pan_x_ *= library_back_scale_ / old;
             library_back_pan_y_ *= library_back_scale_ / old;
-            const float limit_x = std::max(0.0f, (500.0f * library_back_scale_ - 700.0f) * 0.5f);
-            const float limit_y = std::max(0.0f, (807.0f * library_back_scale_ - 807.0f) * 0.5f);
-            library_back_pan_x_ = std::clamp(library_back_pan_x_, -limit_x, limit_x);
-            library_back_pan_y_ = std::clamp(library_back_pan_y_, -limit_y, limit_y);
-            if (old != library_back_scale_)
-                cue(Cue::focus);
+            clamp_pan();
+            if (old != library_back_scale_) cue(Cue::focus);
         } else if (key == Key::left || key == Key::right ||
                    key == Key::up || key == Key::down) {
-            // D-pad and the radio input's left-stick repeat share these keys.
-            // Move the VIEW across the image, not the game selection below.
             constexpr float step = 68.0f;
             if (key == Key::left) library_back_pan_x_ += step;
             if (key == Key::right) library_back_pan_x_ -= step;
             if (key == Key::up) library_back_pan_y_ += step;
             if (key == Key::down) library_back_pan_y_ -= step;
-            const float limit_x = std::max(0.0f, (500.0f * library_back_scale_ - 700.0f) * 0.5f);
-            const float limit_y = std::max(0.0f, (807.0f * library_back_scale_ - 807.0f) * 0.5f);
-            library_back_pan_x_ = std::clamp(library_back_pan_x_, -limit_x, limit_x);
-            library_back_pan_y_ = std::clamp(library_back_pan_y_, -limit_y, limit_y);
+            clamp_pan();
         }
-        return; // Circle alone closes; Cross cannot accidentally launch a game.
+        return; // Cross never launches a game while inspecting media.
     }
     if (key != Key::left && key != Key::right && key != Key::cross && key != Key::options)
         clear_confirmation();
@@ -1437,16 +1465,18 @@ void Launcher::press_library(Key key)
     switch (key)
     {
     case Key::circle:
-        if (library_back_focused_) {
+        if (library_back_focused_ || library_shot_focused_ >= 0) {
             library_back_focused_ = false;
+            library_shot_focused_ = -1;
             cue(Cue::back);
             return;
         }
         open(Screen::home, false);
         return;
     case Key::up:
-        if (library_back_focused_) {
+        if (library_back_focused_ || library_shot_focused_ >= 0) {
             library_back_focused_ = false;
+            library_shot_focused_ = -1;
             cue(Cue::focus);
             return;
         }
@@ -1456,6 +1486,7 @@ void Launcher::press_library(Key key)
     case Key::down:
         if (game != nullptr) {
             library_back_focused_ = true;
+            library_shot_focused_ = -1;
             cue(Cue::focus);
         }
         return;
@@ -1471,7 +1502,32 @@ void Launcher::press_library(Key key)
         return;
     case Key::left:
     case Key::right:
+        if (game != nullptr && (library_back_focused_ || library_shot_focused_ >= 0)) {
+            const int limit = std::min<int>(3, static_cast<int>(game->screenshots.size()));
+            const int direction = key == Key::right ? 1 : -1;
+            int found = -1;
+            for (int i = library_shot_focused_ + direction;
+                 i >= 0 && i < limit; i += direction) {
+                if (!textures_.cover(game->screenshots[static_cast<std::size_t>(i)],
+                                     154.0f).missing) {
+                    found = i;
+                    break;
+                }
+            }
+            if (found >= 0) {
+                library_shot_focused_ = found;
+                library_back_focused_ = false;
+                cue(Cue::focus);
+            } else if (direction < 0) {
+                // The back jacket precedes the screenshot strip in D-pad focus order.
+                library_shot_focused_ = -1;
+                library_back_focused_ = true;
+                cue(Cue::focus);
+            }
+            return;
+        }
         library_back_focused_ = false;
+        library_shot_focused_ = -1;
         if (library_.move(key == Key::right ? 1 : -1))
         {
             message_.clear();
@@ -1532,8 +1588,10 @@ void Launcher::press_library(Key key)
         launch(game->file, game->name, game->cover);
         return;
     case Key::cross:
-        if (game != nullptr && library_back_focused_) {
+        if (game != nullptr &&
+            (library_back_focused_ || library_shot_focused_ >= 0)) {
             library_back_zoom_ = true;
+            library_shot_viewer_ = library_shot_focused_;
             library_back_scale_ = 1.0f;
             library_back_pan_x_ = 0.0f;
             library_back_pan_y_ = 0.0f;

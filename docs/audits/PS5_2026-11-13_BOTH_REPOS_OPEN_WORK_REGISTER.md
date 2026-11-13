@@ -4,8 +4,8 @@
 
 ## Propriété des deux dépôts et statut natif
 
-- Moteur : `niakw/ProsperoEden-Encore` `main` au commit `6208a2b0653bfe942d2b6c2b9a85055869397869`, gitlink **réel** `vendor=1ec7b429238d1175a76dc94b7c0a7f1c2eb62864` (confirmé par la CI engine checkout de [run #43517291914](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43517291914)). Ce gitlink **n'est pas identique** au `main` du vendor.
-- Vendor : `niakw/Prospero.Eden-Encore-vendor` `main=d9f6efc76f95fdfd2893082384cb2115851739cc`. Les correctifs encore en draft ne sont **pas** intégrés dans la version native livrable.
+- Moteur : `niakw/ProsperoEden-Encore` `main` **avant ce registre documentaire** au commit `6208a2b0653bfe942d2b6c2b9a85055869397869`, gitlink **réel** `vendor=1ec7b429238d1175a76dc94b7c0a7f1c2eb62864` (confirmé par la CI engine checkout de [run #43517291914](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43517291914)). Ce gitlink **n'est pas identique** au `main` du vendor.
+- Vendor : `niakw/Prospero.Eden-Encore-vendor` `main` **avant mise à jour documentaire** au commit `d9f6efc76f95fdfd2893082384cb2115851739cc`. Les correctifs encore en draft ne sont **pas** intégrés dans la version native livrable.
 - Issues ouvertes : **8 moteur** / **0 vendor** ; PR ouvertes : **6 moteur** / **6 vendor** ; branches : **7 moteur** et **8 vendor**, comptant chaque `main`.
 - Les contrôles source/host, CI, compilation native PS5, installation, démarrage du titre, rendu correct et gameplay stable sont **sept étapes différentes**. Un SHA vert ne couvre pas les étapes suivantes.
 
@@ -33,7 +33,7 @@
 | Moteur | [#127](https://github.com/niakw/ProsperoEden-Encore/pull/127) | `fix/nov13-lazy-library-square-home-art` | PR empilée sur #126, six CI hôtes vertes au SHA `52c5645` ; installation console non validée |
 | Moteur | [#128](https://github.com/niakw/ProsperoEden-Encore/pull/128) | `fix/nov13-cache-probe-vendor-source-receipt` | Preuve [CI #43517569415](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43517569415) verte sur **vrai gitlink engine** + vendor draft #110, preuve source/générateur uniquement |
 | Vendor | [#105](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/105) | `fix/nov13-ns2-extracted-update-romfs` | ROMFS extrait, sélection explicite version, CI hôtes [#43513990735](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43513990735)/[#43513990742](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43513990742) vertes ; Bananza/MKW non validés |
-| Vendor | [#106](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/106) | `feature/nov13-ps5-jxr-selected-only` | JXR/WepP galerie sélectionnée seulement ; aucun runtime console, couplage avec moteur #126 |
+| Vendor | [#106](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/106) | `feature/nov13-ps5-jxr-selected-only` | JXR/WebP galerie sélectionnée seulement ; aucun runtime console, couplage avec moteur #126 |
 | Vendor | [#107](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/107) | `fix/nov13-ns1-nvdec-eagain-lossless` | Paquets FFmpeg EAGAIN préservés en source, CI hôte ; FC27 vidéo noire non prouvée corrigée |
 | Vendor | [#108](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/108) | `fix/nov13-ns1-msaa-partial-upload-offset` | Offset source upload MSAA corrigé en source, CI hôte ; texture FC27 non prouvée corrigée |
 | Vendor | [#109](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/109) | `fix/nov13-ns2-am-save-uid-cmif` | UID CMIF aligné selon Eglantine #80, CI hôte ; ne change pas EnsureSaveData |

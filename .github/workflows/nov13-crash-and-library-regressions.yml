@@ -11,6 +11,9 @@ on:
       - 'tools/check-ps5-native-png-codec-host.py'
       - 'tools/check-ps5-system-wallpapers-host.py'
       - 'tools/check-nov13-home-installed-fallback-host.py'
+      - 'tools/check-nlib-ui-recovery.py'
+      - 'tools/check-launcher-atomic-scan-host.py'
+      - 'tools/check-ci-neutral-labels.py'
       - '.github/workflows/nov13-crash-and-library-regressions.yml'
   push:
     branches: [main]
@@ -23,6 +26,9 @@ on:
       - 'tools/check-ps5-native-png-codec-host.py'
       - 'tools/check-ps5-system-wallpapers-host.py'
       - 'tools/check-nov13-home-installed-fallback-host.py'
+      - 'tools/check-nlib-ui-recovery.py'
+      - 'tools/check-launcher-atomic-scan-host.py'
+      - 'tools/check-ci-neutral-labels.py'
       - '.github/workflows/nov13-crash-and-library-regressions.yml'
   workflow_dispatch:
 
@@ -51,6 +57,11 @@ jobs:
         run: python3 -B tools/check-ps5-native-png-codec-host.py
       - name: Verify safe local gallery discovery and wallpaper merge
         run: python3 -B tools/check-ps5-system-wallpapers-host.py
+      - name: Verify current Home cancellation and screenshot viewer C++ harness
+        run: |
+          python3 -B tools/check-nlib-ui-recovery.py
+          python3 -B tools/check-launcher-atomic-scan-host.py
+          python3 -B tools/check-ci-neutral-labels.py
       - name: Compile real Home installed fallback and enforce MRU ordering
         run: python3 -B tools/check-nov13-home-installed-fallback-host.py
       - name: Compile NS2 title catalog and test Title-ID lookup

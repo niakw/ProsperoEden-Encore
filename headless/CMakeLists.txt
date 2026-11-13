@@ -266,6 +266,13 @@ if(EDEN_NS2_SPARSE_BACKING)
     list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")
     list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")
     set_property(TARGET core PROPERTY SOURCES "${eden_sparse_core_sources}")
+    # PS5_NATIVE is not a transitive definition on the upstream static core
+    # target. The maintained TU has two-key guards (PS5_NATIVE && sparse):
+    # without THIS per-source define, its committed clear is compiled out
+    # and the 17 MiB KSharedMemory::Initialize zero-fill faults in libc.
+    # Keep the define limited to this reviewed native TU, not every core TU.
+    set_property(SOURCE "${EDEN_NS2_SHARED_MEMORY_SOURCE}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
 endif()
 # Sparse JIT trim helpers are shared with Dynarmic. The native release
 # uses the one sparse JIT allocator path; these are compile-time helpers.

@@ -424,7 +424,9 @@ void Launcher::apply_look()
         value.wallpaper_path = cached_daily_wallpaper_;
         if (!daily_wallpaper_scanned_ && !daily_wallpaper_scan_.valid()) {
             daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
-                return services_.daily_wallpaper();
+                const std::string path = services_.daily_wallpaper();
+                return std::make_pair(path,
+                    services_.daily_wallpaper_caption(path, prefs_.language));
             });
         }
     }
@@ -730,8 +732,14 @@ void Launcher::update(float dt)
     }
     if (daily_wallpaper_scan_.valid() &&
         daily_wallpaper_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        try { cached_daily_wallpaper_ = daily_wallpaper_scan_.get(); }
-        catch (...) { cached_daily_wallpaper_.clear(); }
+        try {
+            auto result = daily_wallpaper_scan_.get();
+            cached_daily_wallpaper_ = std::move(result.first);
+            cached_daily_wallpaper_caption_ = std::move(result.second);
+        } catch (...) {
+            cached_daily_wallpaper_.clear();
+            cached_daily_wallpaper_caption_.clear();
+        }
         daily_wallpaper_scanned_ = true;
         if (prefs_.ui_theme == 0 && prefs_.background_style == 5)
             look().wallpaper_path = cached_daily_wallpaper_;
@@ -745,7 +753,9 @@ void Launcher::update(float dt)
             daily_wallpaper_scanned_ = false;
             if (!daily_wallpaper_scan_.valid())
                 daily_wallpaper_scan_ = std::async(std::launch::async, [this] {
-                    return services_.daily_wallpaper();
+                    const std::string path = services_.daily_wallpaper();
+                return std::make_pair(path,
+                    services_.daily_wallpaper_caption(path, prefs_.language));
                 });
         }
     }

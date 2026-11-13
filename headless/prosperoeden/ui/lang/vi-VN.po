@@ -51,10 +51,6 @@ msgstr "Khuyến khích sử dụng 60 Hz. 120 Hz chỉ thay đổi chế độ 
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz là mặc định an toàn. Chỉ sử dụng 120 Hz với màn hình tương thích hoặc bản vá FPS cao."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "8% được khuyến nghị. Tăng nó để trôi dạt; giảm nó để nhắm mục tiêu nhạy cảm hơn."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Không đọc được một tệp NCA của firmware. Hãy cài đặt lại bản dump firmware."
@@ -325,10 +321,6 @@ msgstr "Chọn"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "Chọn một trò chơi từ thư viện của bạn."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "Chủ đề · Logo · Nền · Ánh sáng (Trò chơi: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "Chơi"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto giữ lại ngữ nghĩa của menu Cross/Circle trong khi điều chỉnh lối chơi cho phù hợp với các vị trí Switch vật lý. Công tắc vẫn cố định; chỉnh sửa bất kỳ nút nào sẽ tạo ra một hồ sơ tùy chỉnh."
 
 #: settings_store.h
 msgid "Polish"

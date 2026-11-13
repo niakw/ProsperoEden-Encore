@@ -28,6 +28,7 @@ public:
 };
 class KAutoObjectWithList: public KAutoObject {
 public: explicit KAutoObjectWithList(KernelCore& kernel):KAutoObject(kernel){}
+ bool is_linked() const noexcept { return false; }
 };
 class KernelCore {
 public:

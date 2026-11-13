@@ -420,7 +420,7 @@ void Compose(const Kind* kind, int code, std::uint64_t address, const Registers&
     t.Put(" (eboot+offset is an address in the build's llvm-pie.elf)\n");
     t.Put("calls found on the stack, most recent first (\"?\": not checked against a call instruction):\n");
     PutCalls(r.rsp);
-    t.Put(restart ? "then: the app starts again\n" : "then: the app closes (it had just started again after a crash)\n");
+    t.Put(restart ? "then: the app starts again\n" : "then: the app closes; relaunch manually after reviewing the crash report\n");
 }
 
 bool WriteFile(const char* path, const char* data, std::size_t size) noexcept {
@@ -463,10 +463,19 @@ bool Enter() noexcept {
 // Writes the report and its note, then waits for the app to start again (or close).
 void WriteReport(const Kind* kind, int code, std::uint64_t address, const Registers& registers,
                  const char* reason) noexcept {
-    // Right after a restart, with no game started since: the crash comes with starting the app,
-    // and starting it again would only repeat it.
+    // PS5 fatal-signal autorelaunch is unsafe while the broken process may
+    // still own sparse guest DRAM, Vulkan, audio or other system resources.
+    // Nov13 MKW boot crash restarted automatically, followed by user-reported
+    // CE-108262-9 system errors. Do not assume causality: fail closed,
+    // persist the crash report, ask system service to EXIT, then require an
+    // explicit user relaunch.
+#ifdef PS5_NATIVE
+    const bool restart = false;
+#else
+    // Desktop diagnostic fixture retains the historic single-restart policy.
     const bool restart = !(restarted_process && !game_started.load(std::memory_order_relaxed) &&
                            std::time(nullptr) - started_at < 60);
+#endif
     leave.store(!restart, std::memory_order_release);
     const Stamp stamp = LocalNow();
     Compose(kind, code, address, registers, reason, stamp, restart);

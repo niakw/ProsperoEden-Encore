@@ -144,10 +144,24 @@ std::optional<std::uint64_t> ExtractedBaseBytes(const std::filesystem::path& tit
     const fs::recursive_directory_iterator end;
     std::uint64_t total = 0;
     std::size_t examined = 0;
+    // Real extracted RomFS trees may exceed 40,000 files and 16 nested
+    // directories. The previous arbitrary caps misreported both MKW and
+    // Bananza as size unknown even though their ExeFS/main was readable.
+    // Still bound a damaged/adversarial tree; this scan is cancellable and
+    // runs only on the Library background worker, never in the draw loop.
+    constexpr std::size_t kMaxExtractedFiles = 1000000;
+    constexpr int kMaxExtractedDepth = 64;
     for (; it != end; it.increment(error)) {
-        if (error || ++examined > 40000 || it.depth() > 16 ||
-            (cancel && cancel->load(std::memory_order_acquire)))
+        if (error || ++examined > kMaxExtractedFiles ||
+            it.depth() > kMaxExtractedDepth ||
+            (cancel && cancel->load(std::memory_order_acquire))) {
+            if (!(cancel && cancel->load(std::memory_order_acquire)))
+                std::fprintf(stderr,
+                    "EDEN_EXEFS_SIZE_SCAN_FAIL path=%s entries=%zu depth=%d error=%d\n",
+                    title.filename().string().c_str(), examined,
+                    it != end ? it.depth() : -1, error.value());
             return std::nullopt;
+        }
         const auto status = it->symlink_status(error);
         if (error) return std::nullopt;
         if (fs::is_symlink(status)) {
@@ -2181,8 +2195,11 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 AppendCaseScenes(game.screenshots, game.title_id);
                 game.max_players = nlib.max_players;
                 if (!nlib.name.empty()) game.name = nlib.name;
-                game.intro = nlib.intro;
-                game.description = nlib.description;
+                // Nlib's API primarily indexes NS1 releases; an empty NS2
+                // response must NOT erase the localized offline Title-ID
+                // description already admitted above.
+                if (!nlib.intro.empty()) game.intro = nlib.intro;
+                if (!nlib.description.empty()) game.description = nlib.description;
                 if (!nlib.publisher.empty()) game.publisher = nlib.publisher;
                 game.developer = nlib.developer;
                 if (!nlib.release_date.empty()) game.release_date = nlib.release_date;
@@ -2543,6 +2560,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.background_color = saved.background_color;
     result.background_color2 = saved.background_color2;
     result.background_overlay = saved.background_overlay;
+    result.panel_opacity = saved.panel_opacity;
     result.background_animate = saved.background_animate;
     result.background_fit = saved.background_fit;
     result.show_game_background = saved.show_game_background;
@@ -2590,6 +2608,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.background_color = preferences.background_color;
     value.background_color2 = preferences.background_color2;
     value.background_overlay = preferences.background_overlay;
+    value.panel_opacity = preferences.panel_opacity;
     value.background_animate = preferences.background_animate;
     value.background_fit = preferences.background_fit;
     value.show_game_background = preferences.show_game_background;
@@ -3264,6 +3283,7 @@ void RefreshDailyOnlyAfterSelection(const std::filesystem::path& folder,
             {"filename", name}, {"title", images[i].info.title},
             {"platform", images[i].info.platform},
             {"release_date", images[i].info.released},
+            {"source", images[i].info.host == "https://api.nlib.cc" ? "Nlib" : "Nintendo"},
             {"approved", true}
         });
     }
@@ -3337,6 +3357,70 @@ std::string EdenServices::daily_wallpaper() {
         // Use a stable per-day index, not process randomness.
         const int day = local ? (local->tm_year * 366 + local->tm_yday) : 0;
         return candidates[static_cast<std::size_t>(day) % candidates.size()].path;
+    }
+    return {};
+}
+
+
+std::string EdenServices::daily_wallpaper_caption(const std::string& path,
+                                                  int language_choice) {
+    // The image was already selected by the verified daily manifest worker.
+    // Never present a guessed title, date or attribution from the filename.
+    if (path.empty()) return {};
+    namespace fs = std::filesystem;
+    const fs::path folder = fs::path(Eden::UserDir()) / "wallpapers" / "daily";
+    const fs::path file{path};
+    if (file.parent_path() != folder || CheckedWallpaper(folder, file.filename().string()).empty())
+        return {};
+    const auto index = folder / "index.json";
+    std::error_code ec;
+    const auto status = fs::symlink_status(index, ec);
+    if (ec || fs::is_symlink(status) || !fs::is_regular_file(status) ||
+        fs::file_size(index, ec) > (256u << 10) || ec) return {};
+    std::ifstream input(index, std::ios::binary);
+    if (!input) return {};
+    const auto doc = nlohmann::json::parse(input, nullptr, false);
+    if (!doc.is_object() || !doc.contains("entries") || !doc["entries"].is_array())
+        return {};
+    const auto lang = Eden::kLanguageKeys[std::clamp(language_choice, 0,
+                      static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+    const std::string_view region{lang};
+    for (const auto& entry : doc["entries"]) {
+        if (!entry.is_object() ||
+            !entry.contains("filename") || !entry["filename"].is_string() ||
+            entry["filename"].get<std::string>() != file.filename().string() ||
+            !entry.contains("approved") || !entry["approved"].is_boolean() ||
+            !entry["approved"].get<bool>() ||
+            !entry.contains("title") || !entry["title"].is_string() ||
+            !entry.contains("release_date") || !entry["release_date"].is_string())
+            continue;
+        const auto title = entry["title"].get<std::string>();
+        const auto iso = entry["release_date"].get<std::string>();
+        if (title.empty() || title.size() > 160 ||
+            iso.size() != 10 || iso[4] != '-' || iso[7] != '-')
+            return {};
+        const auto digits = [](std::string_view text) {
+            return std::all_of(text.begin(), text.end(), [](unsigned char x) {
+                return x >= '0' && x <= '9';
+            });
+        };
+        if (!digits(std::string_view(iso).substr(0, 4)) ||
+            !digits(std::string_view(iso).substr(5, 2)) ||
+            !digits(std::string_view(iso).substr(8, 2))) return {};
+        const std::string date =
+            region == "en-US" ? iso.substr(5,2) + "/" + iso.substr(8,2) + "/" + iso.substr(0,4) :
+            (region.starts_with("fr") || region.starts_with("en-GB") ||
+             region.starts_with("es") || region.starts_with("it") ||
+             region.starts_with("pt") || region.starts_with("de"))
+                ? iso.substr(8,2) + "/" + iso.substr(5,2) + "/" + iso.substr(0,4) : iso;
+        // Older cache snapshots omit source: display an explicit unknown
+        // rather than falsely attributing Nintendo art to GamesDB.
+        std::string source = "Unknown";
+        if (entry.contains("source") && entry["source"].is_string()) {
+            const auto known = entry["source"].get<std::string>();
+            if (known == "Nlib" || known == "Nintendo") source = known;
+        }
+        return title + " · " + date + " · " + source;
     }
     return {};
 }

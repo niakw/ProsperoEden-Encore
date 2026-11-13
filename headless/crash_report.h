@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// When the app crashes: a report in the logs folder, then the app starts again and the launcher
-// says where the report is.
+// When the app crashes: write a report in the logs folder. On PS5 the
+// crash helper asks SystemService to CLOSE the app rather than auto-relaunch,
+// because graphics/sparse-memory owners in a faulted process may still be
+// active. The player explicitly relaunches Eden Encore to view the report.
 //
 // A fatal signal (a bad memory access, an illegal instruction, abort) reaches a handler that
 // writes logs/crash-YYYYMMDD-HHMMSS.txt: what failed and where, the registers, the app's code
-// addresses found on the stack (the calls that led there), the thread, what was running and the
-// memory left. It uses system calls and its own buffers only: the heap and the C library's
-// streams may be what broke. A thread that has waited since startup then starts the app again
-// (src/lifecycle.c). When that does not happen within a few seconds the signal takes its usual
-// course, and the system handles the crash as it did before this existed.
+// addresses found on the stack, the thread, what was running and the memory
+// left. It uses system calls and its own buffers only: the heap and C library
+// streams may be what broke. On native PS5 a helper requests a system-service
+// exit. On hosts the single-restart diagnostic fixture remains supported.
+// When the system refuses to close, the signal takes its usual course.
 //
 // The report holds addresses, never memory contents. tools/symbolize-crash.py turns them into
 // function names with the build's llvm-pie.elf.

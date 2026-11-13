@@ -53,6 +53,7 @@ public:
     std::vector<std::string> wallpapers() override;
     std::string wallpaper_path(const std::string& file) override;
     std::string daily_wallpaper() override;
+    std::string daily_wallpaper_caption(const std::string& path, int language) override;
     const std::vector<std::string>& resolution_labels() override;
     const std::vector<std::string>& resolution_keys() override;
     const std::vector<std::string>& filter_labels() override;

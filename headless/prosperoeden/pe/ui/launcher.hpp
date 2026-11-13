@@ -429,12 +429,13 @@ class Launcher
     ListView video_rows_; // the Video dialog's rows (more than it shows)
     std::vector<std::string> wallpaper_options_;
     std::future<std::vector<std::string>> wallpaper_scan_;
-    std::future<std::string> daily_wallpaper_scan_;
+    std::future<std::pair<std::string, std::string>> daily_wallpaper_scan_;
     std::future<std::string> local_wallpaper_scan_;
     std::string pending_wallpaper_name_;
     std::string cached_wallpaper_name_;
     std::string cached_wallpaper_path_;
     std::string cached_daily_wallpaper_;
+    std::string cached_daily_wallpaper_caption_;
     bool daily_wallpaper_scanned_ = false;
     GameSettings game_settings_;
     bool game_docked_ = true;

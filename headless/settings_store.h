@@ -166,6 +166,7 @@ struct Preferences {
     unsigned background_color = 0x121824u;
     unsigned background_color2 = 0x263d59u;
     int background_overlay = 20;
+    int panel_opacity = 100; // Percent; high-contrast UI is always opaque
     bool background_animate = true;
     int background_fit = 0;
     bool show_game_background = true;
@@ -461,12 +462,14 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     const int logo = Settings::Int(document, Json::json_pointer("/appearance/logo"), 0);
     const int strength = Settings::Int(document, Json::json_pointer("/appearance/glow_strength"), 100);
     const int overlay = Settings::Int(document, Json::json_pointer("/appearance/overlay"), 20);
+    const int panel_opacity = Settings::Int(document, Json::json_pointer("/appearance/panel_opacity"), 100);
     const int fit = Settings::Int(document, Json::json_pointer("/appearance/fit"), 0);
     const int color_a = Settings::Int(document, Json::json_pointer("/appearance/color_a"), 0x121824);
     const int color_b = Settings::Int(document, Json::json_pointer("/appearance/color_b"), 0x263d59);
     if (logo >= 0 && logo <= 4) result.logo_choice = logo;
     if (strength >= 0 && strength <= 100) result.glow_strength = strength;
     if (overlay >= 0 && overlay <= 80) result.background_overlay = overlay;
+    if (panel_opacity >= 0 && panel_opacity <= 100) result.panel_opacity = panel_opacity;
     if (fit >= 0 && fit <= 1) result.background_fit = fit;
     if (color_a >= 0 && color_a <= 0xffffff) result.background_color = static_cast<unsigned>(color_a);
     if (color_b >= 0 && color_b <= 0xffffff) result.background_color2 = static_cast<unsigned>(color_b);
@@ -559,6 +562,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["appearance"]["color_a"] = std::min(value.background_color, 0xffffffu);
     document["appearance"]["color_b"] = std::min(value.background_color2, 0xffffffu);
     document["appearance"]["overlay"] = std::clamp(value.background_overlay, 0, 80);
+    document["appearance"]["panel_opacity"] = std::clamp(value.panel_opacity, 0, 100);
     document["appearance"]["fit"] = std::clamp(value.background_fit, 0, 1);
     document["appearance"]["animate"] = value.background_animate;
     document["appearance"]["game_background"] = value.show_game_background;

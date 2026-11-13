@@ -75,7 +75,7 @@ enum AppearanceRow {
     app_theme, app_logo, app_accent, app_background, app_image,
     app_color_a, app_a_red, app_a_green, app_a_blue,
     app_color_b, app_b_red, app_b_green, app_b_blue,
-    app_glow, app_glow_strength, app_overlay,
+    app_glow, app_glow_strength, app_overlay, app_panel_opacity,
     app_animate, app_fit, app_game_background, app_reset, kAppearanceRows
 };
 constexpr std::array<std::uint32_t, 12> kColorSwatches = {
@@ -240,6 +240,10 @@ void Launcher::press_settings(Key key)
             break;
         case kControls:
             open_modal(Modal::controls);
+            // Four rows leave an actual multi-line guide below the list.
+            video_rows_.visible = kVideoRowsShown;
+            video_rows_.pitch = kVideoRowPitch;
+            video_rows_.reset(5, 0);
             break;
         case kAccessibility:
             open_modal(Modal::accessibility);
@@ -253,7 +257,9 @@ void Launcher::press_settings(Key key)
                 wallpaper_scan_ = std::async(std::launch::async, [this] {
                     return services_.wallpapers();
                 });
-            video_rows_.visible = 5; // preserve five-row appearance list
+            // One real three-line guide card must remain visible below the
+            // scrolling rows. A fifth full-height row overlapped that card.
+            video_rows_.visible = kVideoRowsShown;
             video_rows_.pitch = kVideoRowPitch;
             video_rows_.reset(kAppearanceRows, 0);
             option_ = 0;
@@ -499,7 +505,8 @@ float Launcher::dialog_row_top(Modal modal, int row) const
     switch (modal)
     {
     case Modal::controls:
-        return 334.0f + 96.0f * static_cast<float>(row);
+        return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) -
+               video_rows_.scroll();
     case Modal::audio:
     case Modal::accessibility:
         return 370.0f + 102.0f * static_cast<float>(row);
@@ -535,7 +542,8 @@ void Launcher::press_dialog(Key key)
     }
     if ((key == Key::up || key == Key::down ||
          key == Key::l1 || key == Key::r1) &&
-        (modal_ == Modal::video || modal_ == Modal::appearance))
+        (modal_ == Modal::video || modal_ == Modal::appearance ||
+         modal_ == Modal::controls))
     {
         if (video_rows_.move(key == Key::down || key == Key::r1 ? 1 : -1))
         {
@@ -608,7 +616,7 @@ void Launcher::press_dialog(Key key)
         {
             prefs_.anti_aliasing = CycleQualityRanked(
                 prefs_.anti_aliasing, step, kAntiAliasingQualityOrder, false,
-                [&](int value) { return value != 3 || prefs_.renderer == 1; });
+                [&](int value) { return AntiAliasingOptionSelectable(value, prefs_.renderer); });
             RefreshVideoProfile(prefs_);
         }
         else if (option_ == video_texture_filtering)
@@ -730,6 +738,11 @@ void Launcher::press_dialog(Key key)
         }
         break;
     case Modal::appearance:
+        if (option_ == app_image && prefs_.background_style != 4) {
+            // Disabled until "Local image" is the selected background.
+            cue(Cue::error);
+            return;
+        }
         switch (option_) {
         case app_theme: {
             const int next = (selected_theme(prefs_) + step + 5) % 5;
@@ -780,6 +793,9 @@ void Launcher::press_dialog(Key key)
         case app_overlay:
             prefs_.background_overlay = std::clamp(prefs_.background_overlay + step * 10, 0, 80);
             sound = Cue::slider; break;
+        case app_panel_opacity:
+            prefs_.panel_opacity = std::clamp(prefs_.panel_opacity + step * 5, 0, 100);
+            sound = Cue::slider; break;
         case app_animate:
             prefs_.background_animate = !prefs_.background_animate; break;
         case app_fit:
@@ -791,7 +807,8 @@ void Launcher::press_dialog(Key key)
             prefs_.accent_color = 0; prefs_.background_style = 0;
             prefs_.glow_enabled = true; prefs_.glow_strength = 100;
             prefs_.background_color = 0x121824u; prefs_.background_color2 = 0x263d59u;
-            prefs_.background_overlay = 20; prefs_.background_animate = true;
+            prefs_.background_overlay = 20; prefs_.panel_opacity = 100;
+            prefs_.background_animate = true;
             prefs_.background_fit = 0; prefs_.show_game_background = true;
             prefs_.wallpaper_file.clear();
             break;
@@ -910,18 +927,43 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     {
         title = tr("Controls");
         static constexpr const char *kAbout[] = {
-            TR("PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."),
+            TR("Choose PlayStation or Switch button positions. The selected mapping stays fixed during menus and gameplay; customizing a button creates a custom profile."),
             TR("Customize every guest button. The profile automatically becomes Custom PS5 or Custom Switch."),
             TR("Turns DualSense vibration on or off for games."),
             TR("100% is full DualSense rumble strength. Lower it if vibration feels too strong."),
-            TR("8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming.")};
+            TR("The deadzone ignores small stick movements near the center. At 8%, movements below 8% do not steer the game. Increase it if your character moves by itself; lower it if aiming feels unresponsive.")};
         copy = tr(kAbout[std::clamp(option_, 0, 4)]);
         break;
     }
     case Modal::appearance:
+    {
         title = tr("Appearance");
-        copy = tr("Choose a theme, logo, background and focus effects. Games stay unchanged.");
+        static constexpr const char* kAbout[kAppearanceRows] = {
+            TR("Choose the Encore or Switch launcher theme; gameplay rendering does not change."),
+            TR("Choose the logo treatment independently of the selected interface palette."),
+            TR("Change the color of selection highlights and focus rings."),
+            TR("Choose a theme background, two custom colors, a local image or the daily game artwork."),
+            TR("Copy PNG, JPEG, WebP or TGA images to /data/prosperoeden/user/wallpapers. The PS5 Media Gallery is not automatically scanned."),
+            TR("Pick a preset for the first background color, or adjust its channels below."),
+            TR("Adjust the red channel of background color one."),
+            TR("Adjust the green channel of background color one."),
+            TR("Adjust the blue channel of background color one."),
+            TR("Pick a preset for the second gradient color, or adjust its channels below."),
+            TR("Adjust the red channel of background color two."),
+            TR("Adjust the green channel of background color two."),
+            TR("Adjust the blue channel of background color two."),
+            TR("Show or hide the selection glow. It does not affect games."),
+            TR("Change the intensity of selection highlights."),
+            TR("Darken only the background image. Higher values preserve menu readability."),
+            TR("Change the opacity of launcher cards, panels and boxes from 0 to 100%. High contrast keeps panels opaque for legibility."),
+            TR("Allow subtle launcher background motion, or keep it still."),
+            TR("Fill crops the wallpaper to the screen; Contain keeps the complete image."),
+            TR("Show a selected game's artwork behind its library details."),
+            TR("Restore the default Neon look without altering game settings.")
+        };
+        copy = tr(kAbout[std::clamp(option_, 0, kAppearanceRows - 1)]);
         break;
+    }
     case Modal::application:
         title = tr("Application updates");
         copy = tr("Checks official stable GitHub Releases only. No automatic installation.");
@@ -937,18 +979,19 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     }
     text_shrink(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
                 theme::kTitle, 736.0f);
-    text_shrink(c, modal == Modal::video
+    text_shrink(c, modal == Modal::video || modal == Modal::controls ||
+                           modal == Modal::appearance
                     ? tr(TR("Choose a setting; its effect is explained below."))
                     : copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall),
                 theme::kSmall, theme::kCopy, 736.0f);
 
     const int rows = dialog_rows(modal);
     // Video's rows scroll in a window of five; the other dialogs show all of theirs.
-    const bool scrolls = modal == Modal::video || modal == Modal::appearance;
+    const bool scrolls = modal == Modal::video ||
+                         modal == Modal::appearance || modal == Modal::controls;
     const int first = scrolls ? video_rows_.first_row() : 0;
     const int last = scrolls ? video_rows_.last_row() : rows - 1;
-    const float view_height = modal == Modal::appearance
-        ? kVideoRowPitch * 4.0f + kVideoRowHeight : kVideoWindow.h;
+    const float view_height = kVideoWindow.h;
     if (scrolls)
         list.push_clip({kVideoWindow.x - 24.0f, kVideoWindow.y - 6.0f,
                         kVideoWindow.w + 48.0f, view_height + 12.0f});
@@ -1027,8 +1070,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                         !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
                      (row == video_filter &&
                       !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer)) ||
-                     (row == video_anti_aliasing && prefs_.anti_aliasing >= 3 &&
-                      prefs_.renderer != 1) ||
+                     (row == video_anti_aliasing &&
+                      !AntiAliasingOptionSelectable(prefs_.anti_aliasing, prefs_.renderer)) ||
                      (row == video_frame_generation &&
                       !FrameGenerationSelectable(prefs_.renderer)))
             {
@@ -1110,7 +1153,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             std::to_string(rgb_channel(prefs_.background_color2, 1)),
             std::to_string(rgb_channel(prefs_.background_color2, 2)),
             on_off(prefs_.glow_enabled), percent(prefs_.glow_strength),
-            percent(prefs_.background_overlay), on_off(prefs_.background_animate),
+            percent(prefs_.background_overlay), percent(prefs_.panel_opacity),
+            on_off(prefs_.background_animate),
             prefs_.background_fit ? tr("Contain") : tr("Fill"),
             on_off(prefs_.show_game_background), tr("Restore Neon")
         };
@@ -1120,12 +1164,22 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
             TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
             TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
-            TR("Background motion"), TR("Image scaling"), TR("Game background"),
+            TR("Panel opacity"), TR("Background motion"), TR("Image scaling"), TR("Game background"),
             TR("Reset appearance")
         };
         for (int row = first; row <= last; ++row) {
+            const bool inactive = row == app_image && prefs_.background_style != 4;
             list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));
-            label(row, tr(labels[row]), choice(row, values[row]));
+            if (inactive) {
+                // Show a grey, non-clickable value; never imply a pending
+                // background is already selected when it is not.
+                const float taken = text_shrink(c, values[row], 1292.0f,
+                    baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
+                    theme::kText24, theme::kMeta, 240.0f, Align::right);
+                label(row, tr(labels[row]), taken, true);
+            } else {
+                label(row, tr(labels[row]), choice(row, values[row]));
+            }
             list.pop_opacity();
         }
         break;
@@ -1222,7 +1276,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             explanation = SharpnessGuide(prefs_.filter,
                 UpscalingFilterSelectable(prefs_.filter,prefs_.renderer));
         else if (selected == video_anti_aliasing)
-            explanation = prefs_.anti_aliasing >= 3 && prefs_.renderer != 1
+            explanation = !AntiAliasingOptionSelectable(prefs_.anti_aliasing, prefs_.renderer)
                 ? FxaaUnsupportedGuide() : AntiAliasingGuide(prefs_.anti_aliasing);
         else if (selected == video_texture_filtering)
             explanation = TextureGuide();
@@ -1238,21 +1292,63 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
              (!UpscalingSupportsSharpness(prefs_.filter) ||
               !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
             (selected == video_anti_aliasing &&
-             prefs_.anti_aliasing >= 3 && prefs_.renderer != 1) ||
+             !AntiAliasingOptionSelectable(prefs_.anti_aliasing, prefs_.renderer)) ||
             (selected == video_frame_generation &&
              (!FrameGenerationSelectable(prefs_.renderer) ||
               prefs_.neural_mode!=Eden::NeuralVideo::kOff)) ||
             (selected==video_neural_strength &&
              !Eden::NeuralVideo::IsDlss(prefs_.neural_mode)),
-            prefs_.ui_theme == 1);
+            prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+    }
+
+    // Controls and Appearance use the SAME legible, wrapped guide as Video.
+    // Five non-scrolling controls rows previously covered this space and the
+    // one-line top description truncated the actual help text.
+    if (message_.empty() && (modal == Modal::controls ||
+                             modal == Modal::appearance)) {
+        static constexpr const char* kControlNames[] = {
+            TR("Button profile"), TR("Button mapping"), TR("Vibration"),
+            TR("Vibration strength"), TR("Stick deadzone")};
+        static constexpr const char* kAppearanceNames[kAppearanceRows] = {
+            TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
+            TR("Local image"), TR("Color 1 preset"), TR("Color 1 red"),
+            TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
+            TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
+            TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
+            TR("Panel opacity"), TR("Background motion"), TR("Image scaling"),
+            TR("Game background"), TR("Reset appearance")
+        };
+        const bool appearance = modal == Modal::appearance;
+        const int selected = std::clamp(option_, 0,
+            appearance ? kAppearanceRows - 1 : 4);
+        const bool inactive = appearance && selected == app_image &&
+                              prefs_.background_style != 4;
+        const std::string description = appearance &&
+                selected == app_background && prefs_.background_style == 5 &&
+                !cached_daily_wallpaper_caption_.empty()
+            ? cached_daily_wallpaper_caption_ : std::string(copy);
+        DrawVideoGuide(c,
+            tr(appearance ? kAppearanceNames[selected] : kControlNames[selected]),
+            description, inactive,
+            prefs_.ui_theme == 1 || prefs_.color_palette == 3);
     }
 
     // Under the rows: Video's four rows leave space for the full guide.
     const float foot = modal == Modal::video || modal == Modal::appearance || modal == Modal::controls ? 848.0f : 811.0f;
     if (!message_.empty())
     {
-        notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,
-               message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, message_warning_);
+        if (modal == Modal::video || modal == Modal::appearance ||
+            modal == Modal::controls) {
+            // Error/success messages share the same multi-line 112px card.
+            // A red single-line notice below the rows was cut off on PS5.
+            DrawVideoGuide(c, message_warning_ ? tr("Notice") : tr("Status"),
+                           message_, message_warning_,
+                           prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+        } else {
+            notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,
+                   message_warning_ ? theme::kWarning : theme::kLimePale,
+                   736.0f, message_warning_);
+        }
     }
     else if (modal == Modal::controls && option_ == 1)
     {

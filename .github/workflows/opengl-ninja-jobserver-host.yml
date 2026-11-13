@@ -1,0 +1,32 @@
+name: OpenGL Ninja jobserver host regression
+on:
+  pull_request:
+    paths:
+      - 'tools/build-opengl-sdk.sh'
+      - 'tools/ci/ninja-no-jobserver.sh'
+      - 'tools/check-opengl-ninja-jobserver-host.py'
+      - '.github/workflows/opengl-ninja-jobserver-host.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/build-opengl-sdk.sh'
+      - 'tools/ci/ninja-no-jobserver.sh'
+      - 'tools/check-opengl-ninja-jobserver-host.py'
+      - '.github/workflows/opengl-ninja-jobserver-host.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-ninja-budget:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Execute actual child environment / argv boundary proof
+        run: |
+          set -euo pipefail
+          bash -n tools/build-opengl-sdk.sh
+          sh -n tools/ci/ninja-no-jobserver.sh
+          python3 -B tools/check-opengl-ninja-jobserver-host.py
+          git diff --check

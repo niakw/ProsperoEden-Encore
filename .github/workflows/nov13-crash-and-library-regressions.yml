@@ -9,6 +9,7 @@ on:
       - 'headless/ns2_title_catalog.h'
       - 'tools/check-nov13-ps5-crash-ui-regressions.py'
       - 'tools/check-ps5-native-png-codec-host.py'
+      - 'tools/check-ps5-system-wallpapers-host.py'
       - '.github/workflows/nov13-crash-and-library-regressions.yml'
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - 'headless/ns2_title_catalog.h'
       - 'tools/check-nov13-ps5-crash-ui-regressions.py'
       - 'tools/check-ps5-native-png-codec-host.py'
+      - 'tools/check-ps5-system-wallpapers-host.py'
       - '.github/workflows/nov13-crash-and-library-regressions.yml'
   workflow_dispatch:
 
@@ -45,6 +47,8 @@ jobs:
         run: python3 -B tools/check-nov13-ps5-crash-ui-regressions.py
       - name: Compile the production JPEG+PNG codec and decode a real PNG
         run: python3 -B tools/check-ps5-native-png-codec-host.py
+      - name: Verify safe PS5 system screenshot discovery and wallpaper merge
+        run: python3 -B tools/check-ps5-system-wallpapers-host.py
       - name: Compile NS2 title catalog and test Title-ID lookup
         run: python3 -B tools/check-ns2-title-catalog-host.py
       - name: Verify native extracted directories and truthful sizes

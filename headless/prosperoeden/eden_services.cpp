@@ -2560,6 +2560,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.background_color = saved.background_color;
     result.background_color2 = saved.background_color2;
     result.background_overlay = saved.background_overlay;
+    result.panel_opacity = saved.panel_opacity;
     result.background_animate = saved.background_animate;
     result.background_fit = saved.background_fit;
     result.show_game_background = saved.show_game_background;
@@ -2607,6 +2608,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.background_color = preferences.background_color;
     value.background_color2 = preferences.background_color2;
     value.background_overlay = preferences.background_overlay;
+    value.panel_opacity = preferences.panel_opacity;
     value.background_animate = preferences.background_animate;
     value.background_fit = preferences.background_fit;
     value.show_game_background = preferences.show_game_background;

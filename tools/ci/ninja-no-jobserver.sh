@@ -14,7 +14,7 @@ case "$ninja" in
     /*) ;;
     *) echo 'expected an absolute path to the original ninja executable' >&2; exit 2 ;;
 esac
-jobs=${EDEN_OPENGL_NINJA_JOBS:-4}
+jobs=${EDEN_OPENGL_NINJA_JOBS-4}
 case "$jobs" in
     ''|*[!0-9]*) echo 'invalid Ninja worker count' >&2; exit 2 ;;
 esac

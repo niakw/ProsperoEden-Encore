@@ -28,8 +28,14 @@ inline VideoPresetValues VideoPresetForTitle(std::uint64_t title_id, int preset)
 inline constexpr std::array<int, 7> kUpscalingQualityOrder{
     6, 5, 1, 4, 2, 0, 3}; // Spatial scaling only; the three A4K engines live in Neural Rendering.
 // Navigation order only: no visual superiority is established before console A/B.
-inline constexpr std::array<int, 4> kAntiAliasingQualityOrder{
-    2, 3, 1, 0}; // SMAA Ultra, FXAA+, FXAA, None
+inline constexpr std::array<int, 8> kAntiAliasingQualityOrder{
+    2, 3, 1, 0, 7, 6, 5, 4
+}; // SMAA Ultra, FXAA+, FXAA, None, MSAA 16x/8x/4x/2x.
+// Every settings entry (global/triangle/quick) must use the same exact
+// persisted AA indices; console rendering support is verified separately.
+inline constexpr bool AntiAliasingOptionSelectable(int aa, int renderer) noexcept {
+    return aa < 3 || renderer == 1; // FXAA+ and MSAA need native Vulkan.
+}
 
 template <std::size_t N, typename Allowed>
 inline int CycleQualityRanked(int current, int step,

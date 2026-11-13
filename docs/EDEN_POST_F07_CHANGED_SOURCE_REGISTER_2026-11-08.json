@@ -124,13 +124,13 @@
     {
       "path": "headless/prosperoeden/fr_fr_embedded.h",
       "historical_reviewed_git_blob": "7ebe8df590bf6f7e371f7982ff75e1eb4f2255f6",
-      "post_snapshot_git_blob": "6e2809a97716ee6a7eb3ae5a0b2e894d3e177666",
+      "post_snapshot_git_blob": "57d09e776e3e4b3a37bdb5a66decfb11e9381348",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "Native launcher embedded French catalog regenerated from fr-FR.po for Nov13 explanatory help, panel opacity and Image locale correction; 31 catalog coverage verified independently; not a console font correctness claim.",
       "review_kind": "locale_source",
-      "required_source_fragment": "msgid \"Encore Neon\"",
+      "required_source_fragment": "App wallpapers: /data/prosperoeden/user/wallpapers.",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof.\n2026-11-12 PR #92: re-generated embedded fr-FR catalog exactly from updated fr-FR.po containing No DLC/updates -> Aucun DLC/MAJ; host/source contract only. Historical F07 digest unchanged.\n2026-11-13: Reviewed PR #94 diff: catalog data additions only; does not establish all 31 languages or console glyph rendering.\n2026-11-13: embedded fr-FR refreshed from corrected catalog; current blob 6e2809a97716ee6a7eb3ae5a0b2e894d3e177666, prior post-F07 84500cc4588fa2fd379c62a9d9abd8051cb68362; historical F07 unchanged."
+      "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof.\n2026-11-12 PR #92: re-generated embedded fr-FR catalog exactly from updated fr-FR.po containing No DLC/updates -> Aucun DLC/MAJ; host/source contract only. Historical F07 digest unchanged.\n2026-11-13: Reviewed PR #94 diff: catalog data additions only; does not establish all 31 languages or console glyph rendering.\n2026-11-13: embedded fr-FR refreshed from corrected catalog; current blob 6e2809a97716ee6a7eb3ae5a0b2e894d3e177666, prior post-F07 84500cc4588fa2fd379c62a9d9abd8051cb68362; historical F07 unchanged.\n2026-11-13 gallery locale guidance: embedded French catalog rebuilt byte-exact from fr-FR.po; original F07 unchanged. New SHA 57d09e776e3e4b3a37bdb5a66decfb11e9381348."
     },
     {
       "path": "headless/prosperoeden/frontend.cpp",

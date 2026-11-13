@@ -216,7 +216,17 @@ s = s.replace("assert(ps5_tiled_color_surface_size(tiled.base.format,129,129)==s
 p.write_text(s)
 PYTEST
 fi
-PATH="$opengl_host_path" make -C "$source_dir" sdk-gl46 \
+# GNU Make on the Ubuntu runner exposes a pipe-style jobserver, which Ninja
+# cannot consume. Keep Make's parallel work intact, but give the nested Ninja
+# a bounded explicit worker budget in a temporary PATH-only wrapper.
+# Do not edit the audited upstream source tree or suppress warnings globally.
+ninja_bin=$(command -v ninja)
+[[ $ninja_bin == /* ]] || { echo "Expected an absolute Ninja binary: $ninja_bin" >&2; exit 1; }
+ninja_wrapper_dir="$root/.local/opengl-ninja-wrapper"
+mkdir -p "$ninja_wrapper_dir"
+printf '#!/bin/sh\nexec sh %q %q "$@"\n' "$root/tools/ci/ninja-no-jobserver.sh" "$ninja_bin" > "$ninja_wrapper_dir/ninja"
+chmod +x "$ninja_wrapper_dir/ninja"
+PATH="$ninja_wrapper_dir:$opengl_host_path" make -C "$source_dir" sdk-gl46 \
     PS5_PAYLOAD_SDK="$sdk" \
     PS5_OPENGL_SDK_PREFIX="$stage"
 if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then

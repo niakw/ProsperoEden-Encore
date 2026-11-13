@@ -51,10 +51,6 @@ msgstr "Рекомендується 60 Гц. 120 Гц змінює лише р�
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Гц є безпечним за замовчуванням. Використовуйте 120 Гц лише з сумісним дисплеєм або патчем високої частоти кадрів."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "Рекомендується 8%. Збільште його для дрейфу палиці; зменшіть його для більш чутливого прицілювання."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Не вдалося прочитати один із файлів NCA прошивки. Установіть дамп прошивки заново."
@@ -325,10 +321,6 @@ msgstr "Вибрати"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "Виберіть гру з бібліотеки."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "Тема · Логотип · Тло · Світіння (Гра: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "Грати"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto зберігає семантику меню «Хрестик/Круг», одночасно адаптуючи ігровий процес до фізичних положень перемикача. Перемикач залишається фіксованим; редагування будь-якої кнопки створює спеціальний профіль."
 
 #: settings_store.h
 msgid "Polish"

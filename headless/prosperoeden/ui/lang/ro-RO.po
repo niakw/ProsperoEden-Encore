@@ -51,10 +51,6 @@ msgstr "Se recomandă 60 Hz. 120 Hz schimbă doar modul de afișare; jocul trebu
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz este valoarea implicită sigură. Utilizați 120 Hz numai cu un afișaj compatibil sau cu un patch FPS ridicat."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "Se recomandă 8%. Măriți-l pentru stick drift; reduceți-l pentru o țintire mai sensibilă."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Un fișier NCA din firmware nu poate fi citit. Reinstalează dump-ul de firmware."
@@ -325,10 +321,6 @@ msgstr "Alegere"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "Alege un joc din biblioteca ta."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "Temă · Logo · Fundal · Strălucire (Joc: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "Joacă"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto păstrează semantica meniului Cross/Circle în timp ce adaptează jocul la pozițiile fizice ale comutatorului. Comutatorul rămâne fix; editarea oricărui buton creează un profil personalizat."
 
 #: settings_store.h
 msgid "Polish"

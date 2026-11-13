@@ -51,10 +51,6 @@ msgstr "Συνιστώνται τα 60 Hz. Τα 120 Hz αλλάζουν μόνο
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "Τα 60 Hz είναι η ασφαλής προεπιλογή. Χρησιμοποιήστε 120 Hz μόνο με συμβατή οθόνη ή ενημερωμένη έκδοση κώδικα υψηλού FPS."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "Συνιστάται 8%. Αυξήστε το για μετατόπιση ραβδιών. μειώστε το για πιο ευαίσθητη στόχευση."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Δεν είναι δυνατή η ανάγνωση ενός NCA του firmware. Εγκαταστήστε ξανά το firmware."
@@ -325,10 +321,6 @@ msgstr "Επιλογή"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "Επιλέξτε ένα παιχνίδι από τη βιβλιοθήκη σας."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "Θέμα · Λογότυπο · Φόντο · Λάμψη (Παιχνίδι: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "Παίξε"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "Το PlayStation Auto διατηρεί τη σημασιολογία του μενού Cross/Circle ενώ προσαρμόζει το παιχνίδι στις φυσικές θέσεις του Switch. Ο διακόπτης παραμένει σταθερός. Η επεξεργασία οποιουδήποτε κουμπιού δημιουργεί ένα προσαρμοσμένο προφίλ."
 
 #: settings_store.h
 msgid "Polish"

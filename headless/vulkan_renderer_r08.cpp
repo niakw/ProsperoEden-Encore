@@ -641,9 +641,19 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 void RendererVulkan::PresentLoading() {
     Frame* frame = present_manager.GetRenderFrame();
     scheduler.RequestOutsideRenderPassOperationContext();
+    // A retained jacket is composed first, then receives the SAME animated
+    // loading scene as a transparent pass. Do not draw an opaque loader under
+    // a jacket only to overwrite it; that was both wasted work and a frozen UI.
+#ifdef PS5_NATIVE
+    const bool jacket_ready = loading_jacket_buffer &&
+        loading_jacket_width == frame->width &&
+        loading_jacket_height == frame->height;
+#else
+    constexpr bool jacket_ready = false;
+#endif
     blit_swapchain.DrawToFrame(device, rasterizer, frame, {},
                               render_window.GetFramebufferLayout(), present_manager.SwapchainImageCount(),
-                              present_manager.SwapchainImageViewFormat(), true);
+                              present_manager.SwapchainImageViewFormat(), !jacket_ready);
 #ifdef PS5_NATIVE
     // Do not consume the screenshot while the swapchain has zero extent.
     // A transient staging failure may retry at most three times; no guest
@@ -793,6 +803,14 @@ void RendererVulkan::PresentLoading() {
                                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                                    0, to_present);
         });
+        // The preceding transfer restores GENERAL. DrawHudOverlay uses a
+        // LOAD render pass on that same target, preserving the picture and
+        // animating the scene every loading frame until guest handoff.
+        Eden::HudSnapshot live_loading = Eden::GetVulkanHud();
+        if (live_loading.loading != 0u && live_loading.width != 0u) {
+            live_loading.loading |= 0x80000000u;
+            blit_swapchain.DrawHudOverlay(device, frame, live_loading);
+        }
     }
 #endif
     scheduler.Flush(*frame->render_ready);

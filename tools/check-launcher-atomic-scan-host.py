@@ -128,7 +128,9 @@ public:
     std::atomic<bool> scan_cancel_{false};
     std::string pending_settings_file_;
     bool games_loaded_ = false, library_back_focused_ = false;
+    int library_shot_focused_ = -1;
     bool library_back_zoom_ = false, docked_refresh_after_scan_ = false;
+    int library_shot_viewer_ = -1;
     bool selected_docked_ = false;
     int refreshed = 0, named = 0, media = 0, started = 0, errors = 0;
     void apply_games(std::vector<Game> games);
@@ -165,23 +167,28 @@ int main() {
         same.library_.count = 1;
         same.library_back_focused_ = true;
         same.library_back_zoom_ = true;
+        same.library_shot_focused_ = 1;
+        same.library_shot_viewer_ = 2;
         Game updated = old;
         updated.mods_enabled = true;
         same.apply_games({updated});
         assert(same.mods_switch_.snaps == 1 && same.mods_switch_.last == 1.0f);
         assert(same.library_.resets == 0 && same.refreshed == 0);
         assert(same.library_back_focused_ && same.library_back_zoom_);
+        assert(same.library_shot_focused_ == 1 && same.library_shot_viewer_ == 2);
         same.apply_games({updated});
         assert(same.mods_switch_.snaps == 1 && same.library_.resets == 0);
         updated.mods_enabled = false;
         same.apply_games({updated});
         assert(same.mods_switch_.snaps == 2 && same.mods_switch_.last == 0.0f);
         assert(same.library_back_focused_ && same.library_back_zoom_);
+        assert(same.library_shot_focused_ == 1 && same.library_shot_viewer_ == 2);
         // Replacing a ROM in place with a different TitleID cannot inherit
         // either its UI identity or an open rear-cover zoom.
         updated.title_id = 0x222;
         same.apply_games({updated});
         assert(!same.library_back_focused_ && !same.library_back_zoom_);
+        assert(same.library_shot_focused_ == -1 && same.library_shot_viewer_ == -1);
         assert(same.library_.resets == 1 && same.refreshed == 1);
     }
     // A HOME-origin enrichment must also reach every installed physical

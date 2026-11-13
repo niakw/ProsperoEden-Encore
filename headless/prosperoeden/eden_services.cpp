@@ -2748,6 +2748,14 @@ bool ValidWallpaperName(const std::string& name) {
     return ext == ".png" || ext == ".jpg" || ext == ".jpeg" ||
            ext == ".tga" || ext == ".webp" || ext == ".jxr";
 }
+bool IsJxrWallpaper(std::string_view name) {
+    if (name.size() < 4) return false;
+    name.remove_prefix(name.size() - 4);
+    return name[0] == '.' &&
+           std::tolower(static_cast<unsigned char>(name[1])) == 'j' &&
+           std::tolower(static_cast<unsigned char>(name[2])) == 'x' &&
+           std::tolower(static_cast<unsigned char>(name[3])) == 'r';
+}
 std::string CheckedWallpaper(const std::filesystem::path& folder, const std::string& name) {
     if (!ValidWallpaperName(name)) return {};
     std::error_code ec;
@@ -2755,7 +2763,7 @@ std::string CheckedWallpaper(const std::filesystem::path& folder, const std::str
     const auto info = std::filesystem::symlink_status(path, ec);
     if (ec || !std::filesystem::is_regular_file(info)) return {};
     const auto bytes = std::filesystem::file_size(path, ec);
-    const bool jpeg_xr = EndsWithNoCase(name, ".jxr");
+    const bool jpeg_xr = IsJxrWallpaper(name);
     const std::uintmax_t limit = jpeg_xr ? 48u * 1024u * 1024u
                                           : 12u * 1024u * 1024u;
     if (ec || bytes < 32 || bytes > limit) return {};
@@ -2767,7 +2775,7 @@ std::string CheckedWallpaper(const std::filesystem::path& folder, const std::str
 // cached under app-owned data and committed by atomic rename.
 std::string SelectedJxrWebp(const std::string& original) {
     namespace fs = std::filesystem;
-    if (original.empty() || !EndsWithNoCase(original, ".jxr"))
+    if (original.empty() || !IsJxrWallpaper(original))
         return original;
     struct stat source{};
     if (::lstat(original.c_str(), &source) != 0 ||
@@ -2811,7 +2819,11 @@ std::string SelectedJxrWebp(const std::string& original) {
          std::to_string(static_cast<unsigned long long>(::getpid())) + ".part");
     // Fail closed if a previous unexpected file or symlink occupies staging.
     ec.clear();
-    if (fs::exists(staging, ec) || ec) return {};
+    const auto stage_status = fs::symlink_status(staging, ec);
+    if ((ec && ec != std::errc::no_such_file_or_directory) ||
+        (!ec && stage_status.type() != fs::file_type::not_found))
+        return {};
+    ec.clear();
     if (!encore_jxr_to_webp(original.c_str(), staging.c_str())) {
         fs::remove(staging, ec);
         std::fprintf(stderr, "EDEN_JXR_SELECT decode=failed\n");

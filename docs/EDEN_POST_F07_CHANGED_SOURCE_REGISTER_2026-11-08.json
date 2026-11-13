@@ -70,12 +70,13 @@
     {
       "path": "headless/graphics.cpp",
       "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
-      "post_snapshot_git_blob": "9609fc43767af93bf245e1923519bec61cc8998a",
+      "post_snapshot_git_blob": "5b1ee6e3e630129e5ac3083ef6e4520fde525c02",
       "original_disposition": "code_changed_in_batch",
-      "source_scope": "HUD state and native opt-in frame probe use the existing JitMemory owner; retained atomic control",
+      "source_scope": "Nov13 FC27 5-second diagnostic-only cache pressure split: buffer/texture counters read only at detailed report boundary, not on every present; existing renderer locks, texture ownership, shader cache and graphics output unchanged.",
       "review_kind": "source_contract",
       "required_source_fragment": "JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable."
     },
     {
       "path": "headless/hud.h",

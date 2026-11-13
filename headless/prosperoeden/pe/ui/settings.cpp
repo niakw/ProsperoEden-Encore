@@ -943,7 +943,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Choose the logo treatment independently of the selected interface palette."),
             TR("Change the color of selection highlights and focus rings."),
             TR("Choose a theme background, two custom colors, a local image or the daily game artwork."),
-            TR("App wallpapers: /data/prosperoeden/user/wallpapers. PS5 captures (JPG/PNG) appear automatically; HDR JXR is unsupported."),
+            TR("App wallpapers: /data/prosperoeden/user/wallpapers. These appear first; PS5 captures (JPG/PNG/JXR) follow. HDR JXR converts to WebP only when chosen."),
             TR("Pick a preset for the first background color, or adjust its channels below."),
             TR("Adjust the red channel of background color one."),
             TR("Adjust the green channel of background color one."),

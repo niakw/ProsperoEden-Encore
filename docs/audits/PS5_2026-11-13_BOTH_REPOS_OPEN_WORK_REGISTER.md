@@ -6,7 +6,7 @@
 
 - Moteur : `niakw/ProsperoEden-Encore` `main` **avant ce registre documentaire** au commit `6208a2b0653bfe942d2b6c2b9a85055869397869`, gitlink **réel** `vendor=1ec7b429238d1175a76dc94b7c0a7f1c2eb62864` (confirmé par la CI engine checkout de [run #43517291914](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43517291914)). Ce gitlink **n'est pas identique** au `main` du vendor.
 - Vendor : `niakw/Prospero.Eden-Encore-vendor` `main` **avant mise à jour documentaire** au commit `d9f6efc76f95fdfd2893082384cb2115851739cc`. Les correctifs encore en draft ne sont **pas** intégrés dans la version native livrable.
-- Issues ouvertes : **9 moteur** / **0 vendor** ; PR ouvertes : **9 moteur** / **7 vendor** ; branches : **10 moteur** et **9 vendor**, comptant chaque `main`.
+- Issues ouvertes : **9 moteur** / **0 vendor** ; PR ouvertes : **10 moteur** / **7 vendor** ; branches : **11 moteur** et **9 vendor**, comptant chaque `main`.
 - Les contrôles source/host, CI, compilation native PS5, installation, démarrage du titre, rendu correct et gameplay stable sont **sept étapes différentes**. Un SHA vert ne couvre pas les étapes suivantes.
 
 ## Issues moteur à maintenir ouvertes
@@ -75,7 +75,7 @@
 
 ## Nettoyage autorisé et limites
 
-1. **Ne pas supprimer** les neuf branches PR moteur et les sept branches PR vendor : leur travail reste distinct et non fusionné, certaines PR sont empilées.
+1. **Ne pas supprimer** les dix branches PR moteur et les sept branches PR vendor : leur travail reste distinct et non fusionné, certaines PR sont empilées.
 2. Vendor `feat/ps5-jxr-selected-only-decode` : compare à `main` : **0 commit d'avance / 4 de retard**, aucune modification unique ; candidate à suppression sous réserve vérification qu'aucun workflow/PR n'utilise cette ref. Aucune branche n'a été effacée : le connecteur GitHub actuel ne propose pas l'opération destructive.
 3. Ne fermer ni #97/#100/#123, ni les issues UI/perf avant validation console. Si la CI d'une PR enfant est verte, cela ne transforme pas toutes les PR parents en candidates fusionnables.
 4. **Prochaine qualification PS5** : builds natifs seulement sur moteur+gitlink vendor exact retenus ; provenance/artefacts/symboles/alertes ; séparer FC27 cache froid/chaud, textures/HUD et début de match, Bananza FS/AM/PC4, MKW guest/GPU/first-present, puis vérifier l'intégralité des tests utilisateur.
@@ -86,4 +86,10 @@
 - [EglantinePS5 #105](https://github.com/heydemoura/EglantinePS5/pull/105) : sur PS5, des pipelines statiques sans attribut étaient rejetés au lancement, puis reconstruits en jeu, ~2,2s de stalls mesurés sur Zelda. Le **propriétaire Vulkan sélectionné** `vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp` contient déjà l'exception `EdenAttributelessStaticKey` / `static_vertex_input`. Aucun port redondant dans l'ancien fichier non sélectionné. FC27 `queued=0` attend encore #110 et mesures cache.
 - **Nouveau P0** [moteur #132](https://github.com/niakw/ProsperoEden-Encore/issues/132), [upstream PS5_Mesa #8](https://github.com/mihawk-99/PS5_Mesa/issues/8) : `vendor/sources/ps5-mesa/src/amd/common/nir/ac_nir_lower_ngg_mesh.c` (blob brut `1809ccb1538e1ccfaabbd4d55968b5b82206121c`) crée `vertex_count_var` et `primitive_count_var` sans initialisation, puis les lit dans le finale. Un shader mesh retournant avant `SetMeshOutputsEXT` peut provoquer un GPU hang ; le rapport upstream décrit une correction PS5 vérifiée au niveau pilote. La version Mesa immuable reste inchangée ; son adaptateur PS5 exige un overlay vérifié, une nouvelle empreinte d'archive, compilation et test PS5. **Aucun correctif local compilé ni lien causal prouvé avec MKW premier frame / Bananza PC4.**
 - [EglantinePS5 #10](https://github.com/heydemoura/EglantinePS5/pull/10) : MKW first-frame observé de 117,60 s à 66,32 s sur un AUTRE moteur après adaptations de mapping GPU / métadonnées ; ni preuve d'équivalence des propriétaires ni A/B FPS homogène.
-- Inventaire : **9 PR moteur**, **7 PR vendor**, **9 issues moteur**, **0 issue vendor**. Aucun merge/build PS5 matériel nouveau à cette étape.
+- Inventaire : **10 PR moteur**, **7 PR vendor**, **9 issues moteur**, **0 issue vendor**. Aucun merge/build PS5 matériel nouveau à cette étape.
+
+### Source RADV maillée — adaptation conservatrice depuis PS5_Mesa #8
+
+- [PR moteur #133](https://github.com/niakw/ProsperoEden-Encore/pull/133), isolée de la [P0 #132](https://github.com/niakw/ProsperoEden-Encore/issues/132) : préimage Mesa NGG `1809ccb1538e1ccfaabbd4d55968b5b82206121c`, deux `nir_store_var(...0)` après la création du builder. Le script du moteur exige le blob exact ; la source brute de `vendor/sources/ps5-mesa` **reste inchangée**. Les 14 propriétaires RADV actifs gardent leurs empreintes historiques et seul le `radv-src` temporaire reçoit le quinzième fichier transformé, réversible octet pour octet. L'archive native doit porter l'empreinte de **15** fichiers au lieu de 14 ; le pilote précédemment compilé ne peut être réutilisé avec l'ancien stamp.
+- [CI ciblée mesh #43527902621](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43527902621) : **SUCCESS** (source exacte, compteurs zéro, rejets de modifications inattendues, staging idempotent, stamp source), [historique C03 #43527902595](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43527902595) : **SUCCESS**, sur SHA `94a05e21e40fa3001fcc22fe16cb540f45d08371`. La qualification PS5 pilote natif + shader SPIR-V/Aco + app exit est **non effectuée** ; CodeQL/P0–P4 à vérifier sur le même SHA. Pas de fusion.
+- Les rapports de hang GPU mesh upstream ne prouvent ni la cause de Bananza `PC=4`, ni MKW sans premier framebuffer, ni les saccades FC27, qui conservent des suivis indépendants.

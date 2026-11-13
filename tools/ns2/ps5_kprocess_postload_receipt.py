@@ -27,7 +27,7 @@ LATE_ORIGINAL = ""
 
 def git_blob(source: str) -> str:
     data=source.encode("utf-8")
-    return hashlib.sha1(b"blob "+str(len(data)).encode()+b"\\0"+data).hexdigest()
+    return hashlib.sha1(b"blob "+str(len(data)).encode()+bytes([0])+data).hexdigest()
 
 def normalize_process_receipt(source: str) -> tuple[str,bool]:
     observed=git_blob(source)

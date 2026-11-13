@@ -26,8 +26,9 @@ using cpuset_t=uint64_t;
 #define CPU_LEVEL_WHICH 1
 #define CPU_WHICH_TID 1
 static uint64_t current=0x1fff, fail_mask=0;
-static unsigned max_leaf=0xb, level_type=1, apics[64], amd_cores[64];
+static unsigned max_leaf=0xb, level_type=1, apics[64], amd_cores[64], leaf1_apics[64];
 static bool fail_restore=false, amd_vendor=false, amd_ext_feature=false;
+static bool leaf1_override=false;
 static std::string os_xml, os_ule_xml;
 static int sysctlbyname(const char* name, void* oldp, size_t* oldlen,
                         const void*, size_t) {
@@ -58,6 +59,8 @@ static void mock_cpuid(unsigned leaf,unsigned& a,unsigned& b,unsigned& c,unsigne
   c=amd_vendor ? 0x444d4163u : 0x6c65746eu;
  } else if(leaf==1) {
   a=amd_vendor ? ((8u<<20)|(15u<<8)) : (6u<<8);
+  const unsigned cpu=static_cast<unsigned>(__builtin_ctzll(current));
+  b=(leaf1_override ? leaf1_apics[cpu] : apics[cpu])<<24;
  } else if(leaf==0x80000001u) {
   c=amd_ext_feature ? (1u<<22) : 0;
  }
@@ -133,6 +136,24 @@ int main(){
  worker_topology_ready=false;CheckWorkerTopology();
  assert(!worker_topology_ready && current==0x1fff);
  assert((worker_cpus==std::array<unsigned,5>{0,0,0,0,0}));
+ // PS5 13.60 upstream: x2APIC 0 on every logical CPU, yet leaf-1
+ // initial APIC ID is 15-n and exposes SMT groups after shift one.
+ for(unsigned i=0;i<13;++i) {apics[i]=0;leaf1_apics[i]=15-i;amd_cores[i]=i;}
+ leaf1_override=true;
+ worker_topology_ready=false;CheckWorkerTopology();
+ assert(worker_topology_ready && current==0x1fff);
+ assert((worker_cpus==std::array<unsigned,5>{0,2,4,6,8}));
+ assert(cpu_core[0]==cpu_core[1] && cpu_core[0]!=cpu_core[2]);
+ assert(secondary_cpus==(0x1fffULL & ~0x3ffULL));
+ // Duplicate APIC IDs are not physical topology evidence.
+ leaf1_apics[12]=leaf1_apics[11];
+ worker_topology_ready=false;CheckWorkerTopology();
+ assert(!worker_topology_ready && current==0x1fff);
+ assert((worker_cpus==std::array<unsigned,5>{0,0,0,0,0}));
+ for(unsigned i=0;i<13;++i) leaf1_apics[i]=0;
+ worker_topology_ready=false;CheckWorkerTopology();
+ assert(!worker_topology_ready && current==0x1fff);
+ leaf1_override=false;
  max_leaf=0xa;
  // PS5's 13 visible CPUs are seven OS-reported physical SMT groups.
  // CPUID is intentionally broken in BOTH AMD and x2APIC representations.

@@ -45,7 +45,22 @@ jobs:
           python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
           python3 -B tools/check-native-slab-index-host.py
           python3 -B vendor/tests/ns2_kprocess_failed_load_list_host.py
+      - name: Build public synthetic NSO/NPDM and exercise joined KProcess+OS owners
+        run: |
+          set -euo pipefail
+          if test -f /etc/apt/apt-mirrors.txt; then
+            printf '%s\n' 'https://archive.ubuntu.com/ubuntu/' 'https://mirrors.kernel.org/ubuntu/' |
+              sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+          fi
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update -qq
+          sudo apt-get install -y -o Acquire::Retries=1 -o Acquire::http::Timeout=20 --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          python3 tools/ns2/build_public_nso_fixture.py --output build-h01/public-nso/hello.nso
+          python3 tools/ns2/build_public_exefs_fixture.py --nso build-h01/public-nso/hello.nso --output-dir build-h01/public-exefs
+          python3 -B tools/ns2/test_real_kprocess_metadata.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
+          python3 -B tools/ns2/test_real_kprocess_init_guest_rollback.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
+          python3 -B tools/ns2/check_native_process_full_kprocess_handoff_host.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
+          python3 -B tools/ns2/check_h01_joined_kprocess_process_host.py build-h01/public-exefs/main.npdm build-h01/public-exefs/main
       - name: Distinguish source proof from runtime game testing
         if: always()
         run: |
-          echo "SOURCE/host-only. Does NOT repin engine main, compile PS5 executable, run real NS1/NS2, or prove Bananza/MKW launch. Native compiler, full H01 joined public NSP/NSO tests and console failure/relaunch still required." >> "$GITHUB_STEP_SUMMARY"
+          echo "SOURCE/host-only. Does NOT repin engine main, compile PS5 executable, run real NS1/NS2, or prove Bananza/MKW launch. Full native PS5 compiler and console failure/relaunch still required; synthetic public NPDM/NSO joined host tests cover source owners only." >> "$GITHUB_STEP_SUMMARY"

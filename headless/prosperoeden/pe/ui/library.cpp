@@ -1836,7 +1836,7 @@ void Launcher::draw_library(Canvas &c)
                     list.push_clip(viewer);
                     list.push_transform(library_back_scale_, 960.0f, 513.0f,
                                         library_back_pan_x_, library_back_pan_y_);
-                    list.image(shot.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}, kWhite);
+                    list.image(shot.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}, Color::rgb(0xffffff));
                     list.pop_transform();
                     list.pop_clip();
                 } else {

@@ -347,6 +347,28 @@
       "required_source_fragment": "kUpscalingFilterLabels[]",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-09: Reviewed 31 official PS5 interface locales with first 18 existing persisted indices retained, 13 appended aliases to supported English guest-language and documented regions. This changes guest fallback semantics only for newly selectable UI locales; no console proof.\n2026-11-13 PR #95: reviewed source blob 97680b12c3def8935f3fd95a174b467a9a2567d7; SHA of prior listed post-F07 entry f2fd2d734e90c2e27ae3cf5e58d837d9ec21814c; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding."
+    },
+    {
+      "path": "headless/crash_report.cpp",
+      "historical_reviewed_git_blob": "467c87d8473eccf24942d9870a9ce43b35d525ec",
+      "post_snapshot_git_blob": "81e8456c904858b6a01f3b0ffcdf2e52b9868cb4",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "PS5 fatal signal safety: do not re-execute /app0/eboot.bin from faulted process while sparse guest DRAM/Vulkan/audio ownership may be invalid. Save full crash report and request system-service EXIT; desktop regression continues old single restart. Crash handler, normal Circle exit and CE-108262-9 causality remain distinct and console unverified.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "const bool restart = false;",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-13 PR #95: source re-reviewed after native MKW boot crash and user-reported console CE-108262-9. Preserves original F07 per-file source blob, separate current blob exact SHA, no actual PS5 validation."
+    },
+    {
+      "path": "headless/crash_report.h",
+      "historical_reviewed_git_blob": "6d4a9e37e243f99424a5af9f89fc35e30bcf3337",
+      "post_snapshot_git_blob": "9f38248880068711f37ec49606fc4b3e4b2f4e2c",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Crash diagnostic interface source commentary documenting the native fail-closed fatal-signal exit and explicit relaunch to view crash reports. Report ABI and lock-free counters remain unchanged. This is not a claim of console system stability.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "On PS5 the",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-13 PR #95: source re-reviewed after native MKW boot crash and user-reported console CE-108262-9. Preserves original F07 per-file source blob, separate current blob exact SHA, no actual PS5 validation."
     }
   ]
 }

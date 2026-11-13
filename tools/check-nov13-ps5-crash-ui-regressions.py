@@ -68,6 +68,21 @@ assert "EDEN_EXEFS_SIZE" in services
 assert "Eden::Ns2Catalog::Description(" in services
 assert "if (it->second.texture == 0) {" in textures
 assert "target_pixels >= 1024" in textures
+# Library source must provide controller focus over each real screenshot.
+# The preview displays the original fitted aspect, not the cropped thumbnail,
+# and Cross must never launch while the full-screen viewer owns input.
+ui_state = read("headless/prosperoeden/pe/ui/launcher.hpp")
+assert "int library_shot_focused_ = -1" in ui_state
+assert "int library_shot_viewer_ = -1" in ui_state
+assert "if (library_back_zoom_)" in lib
+assert "const auto clamp_pan = [&]" in lib
+assert "library_shot_focused_ = found" in lib
+assert "library_shot_viewer_ = library_shot_focused_" in lib
+assert "library_shot_focused_ == i" in lib
+assert "if (library_shot_viewer_ >= 0 &&" in lib
+assert "const float width = std::min(viewer.w, viewer.h * aspect)" in lib
+assert "list.image(shot.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}, kWhite)" in lib
+assert "return; // Cross never launches a game while inspecting media." in lib
 
 # 100% panel opacity must be truly opaque: the authored design tint often
 # starts at only 4-9% alpha. Daily attribution is a runtime footer overlay.

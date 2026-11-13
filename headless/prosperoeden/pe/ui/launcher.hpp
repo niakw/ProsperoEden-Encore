@@ -408,7 +408,9 @@ class Launcher
     bool games_loaded_ = false;
     ListView library_;
     bool library_back_focused_ = false; // Down selects rear jacket
+    int library_shot_focused_ = -1; // >=0: actual Nlib screenshot index in details
     bool library_back_zoom_ = false; // Cross opens, Circle alone closes the viewer
+    int library_shot_viewer_ = -1; // -1: back jacket, >=0: original screenshot
     float library_back_scale_ = 1.0f; // L2 / R2; no artwork stretching
     float library_back_pan_x_ = 0.0f; // D-pad or left stick in viewer
     float library_back_pan_y_ = 0.0f;

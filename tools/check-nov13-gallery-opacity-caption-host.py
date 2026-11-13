@@ -24,7 +24,8 @@ assert "kMaxEntries = 32768" in capture and "kMaxDepth = 8" in capture
 assert "S_ISLNK(native.st_mode)" in capture and "ReadNativeDirectory" in capture
 assert "for (const auto& capture : captures)" in gallery
 assert "i < 64u" not in gallery
-assert "names.size() - captures.size()" in gallery
+assert "const std::size_t imported = names.size();" in gallery
+assert "imported, captures.size(), names.size()" in gallery
 assert "CheckedWallpaper(capture.photo.parent_path()" in service
 assert "text_shrink(c, value, right - arrow, baseline, size" in chooser
 assert "285.0f - arrow, Align::right" in chooser

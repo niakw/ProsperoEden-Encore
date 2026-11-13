@@ -932,9 +932,33 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         break;
     }
     case Modal::appearance:
+    {
         title = tr("Appearance");
-        copy = tr("Choose a theme, logo, background and focus effects. Games stay unchanged.");
+        static constexpr const char* kAbout[kAppearanceRows] = {
+            TR("Choose the Encore or Switch launcher theme; gameplay rendering does not change."),
+            TR("Choose the logo treatment independently of the selected interface palette."),
+            TR("Change the color of selection highlights and focus rings."),
+            TR("Choose a theme background, two custom colors, a local image or the daily game artwork."),
+            TR("Copy PNG, JPEG, WebP or TGA images to /data/prosperoeden/user/wallpapers. The PS5 Media Gallery is not automatically scanned."),
+            TR("Pick a preset for the first background color, or adjust its channels below."),
+            TR("Adjust the red channel of background color one."),
+            TR("Adjust the green channel of background color one."),
+            TR("Adjust the blue channel of background color one."),
+            TR("Pick a preset for the second gradient color, or adjust its channels below."),
+            TR("Adjust the red channel of background color two."),
+            TR("Adjust the green channel of background color two."),
+            TR("Adjust the blue channel of background color two."),
+            TR("Show or hide the selection glow. It does not affect games."),
+            TR("Change the intensity of selection highlights."),
+            TR("Darken only the background image. Higher values preserve menu readability."),
+            TR("Allow subtle launcher background motion, or keep it still."),
+            TR("Fill crops the wallpaper to the screen; Contain keeps the complete image."),
+            TR("Show a selected game's artwork behind its library details."),
+            TR("Restore the default Neon look without altering game settings.")
+        };
+        copy = tr(kAbout[std::clamp(option_, 0, kAppearanceRows - 1)]);
         break;
+    }
     case Modal::application:
         title = tr("Application updates");
         copy = tr("Checks official stable GitHub Releases only. No automatic installation.");
@@ -1268,15 +1292,53 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
               prefs_.neural_mode!=Eden::NeuralVideo::kOff)) ||
             (selected==video_neural_strength &&
              !Eden::NeuralVideo::IsDlss(prefs_.neural_mode)),
-            prefs_.ui_theme == 1);
+            prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+    }
+
+    // Controls and Appearance use the SAME legible, wrapped guide as Video.
+    // Five non-scrolling controls rows previously covered this space and the
+    // one-line top description truncated the actual help text.
+    if (message_.empty() && (modal == Modal::controls ||
+                             modal == Modal::appearance)) {
+        static constexpr const char* kControlNames[] = {
+            TR("Button profile"), TR("Button mapping"), TR("Vibration"),
+            TR("Vibration strength"), TR("Stick deadzone")};
+        static constexpr const char* kAppearanceNames[kAppearanceRows] = {
+            TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
+            TR("Local image"), TR("Color 1 preset"), TR("Color 1 red"),
+            TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
+            TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
+            TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
+            TR("Background motion"), TR("Image scaling"),
+            TR("Game background"), TR("Reset appearance")
+        };
+        const bool appearance = modal == Modal::appearance;
+        const int selected = std::clamp(option_, 0,
+            appearance ? kAppearanceRows - 1 : 4);
+        const bool inactive = appearance && selected == app_image &&
+                              prefs_.background_style != 4;
+        DrawVideoGuide(c,
+            tr(appearance ? kAppearanceNames[selected] : kControlNames[selected]),
+            copy, inactive,
+            prefs_.ui_theme == 1 || prefs_.color_palette == 3);
     }
 
     // Under the rows: Video's four rows leave space for the full guide.
     const float foot = modal == Modal::video || modal == Modal::appearance || modal == Modal::controls ? 848.0f : 811.0f;
     if (!message_.empty())
     {
-        notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,
-               message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, message_warning_);
+        if (modal == Modal::video || modal == Modal::appearance ||
+            modal == Modal::controls) {
+            // Error/success messages share the same multi-line 112px card.
+            // A red single-line notice below the rows was cut off on PS5.
+            DrawVideoGuide(c, message_warning_ ? tr("Notice") : tr("Status"),
+                           message_, message_warning_,
+                           prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+        } else {
+            notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,
+                   message_warning_ ? theme::kWarning : theme::kLimePale,
+                   736.0f, message_warning_);
+        }
     }
     else if (modal == Modal::controls && option_ == 1)
     {

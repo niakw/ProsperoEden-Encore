@@ -29,7 +29,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          # The original C03 RADV source revision remains accepted, along
+          # with the *exact* separately reviewed JXR-only vendor pin used
+          # by the stacked gallery PR. No arbitrary vendor HEAD may pass.
+          # Both pins undergo the same 14-source RADV host verification.
+          vendor_sha="$(git -C vendor rev-parse HEAD)"
+          case "$vendor_sha" in
+            1ec7b429238d1175a76dc94b7c0a7f1c2eb62864|00573a1b6b9355137452466ee31211ebfc15f802)
+              ;;
+            *)
+              echo "Unreviewed native C03 vendor revision: $vendor_sha" >&2
+              exit 1
+              ;;
+          esac
           python3 -B vendor/tests/c03_radv_transfer_split.py
           python3 -B tools/check-vendored-radv-fork.py
           python3 -B tools/radv-active-inputs.py --self-test

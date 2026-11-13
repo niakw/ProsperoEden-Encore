@@ -238,8 +238,10 @@ assert "library_back_scale_);" in library
 assert "std::max(paper.w, paper.h) * texture_scale" in library
 assert "fitted.x += paper.w - fitted.w;" in library
 assert "if (!rear) {" in library
-assert "uv.w = target / source;" in library
-assert "uv.h = source / target;" in library
+# Actual retail scans must not crop their UVs: both paper faces use
+# aspect-contained rectangles, preserving printed headers and logos.
+assert "c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}," in library
+assert "fitted.x += (paper.w - fitted.w) * 0.5f;" in library
 assert "c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}," in library
 assert "Rect fitted = paper;" in library and "if (source > target)" in library
 assert "paper_uv.x = (1.0f - paper_uv.w) * 0.5f;" in draw
@@ -276,7 +278,8 @@ assert 'if (third)' in back_fallback
 assert 'const std::string* third = shots[2];' in back_fallback
 assert 'if (first)' in back_fallback
 assert 'kReconstructedPaperRGB = 0x112235' in library
-assert 'uv.w = target / source;' in library and 'uv.h = source / target;' in library
+assert "fitted.x += (paper.w - fitted.w) * 0.5f;" in library
+assert "fitted.x += paper.w - fitted.w;" in library
 assert 'glClearColor(17.0f / 255.0f, 34.0f / 255.0f,' in textures_cpp
 assert '53.0f / 255.0f, 1.0f);' in textures_cpp
 assert 'const Cover artwork = scan.empty() ? Cover{} : c.textures.cover(scan, 760.0f);' in draw
@@ -597,7 +600,8 @@ assert "if (source > target) {" in lib_sleeve
 assert "if (source < target) {" in lib_sleeve
 assert "fitted.y += (paper.h - fitted.h) * 0.5f;" in lib_sleeve
 assert "fitted.x += paper.w - fitted.w;" in lib_sleeve
-assert "c.list.image(artwork.texture, paper, uv," in lib_sleeve
+assert "c.list.image(artwork.texture, paper, uv," not in lib_sleeve
+assert lib_sleeve.count("c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f},") == 2
 assert "const float side = shell.w * (7.0f / 454.0f);" in lib_sleeve
 # The 2D library's case geometry and reconstruction are independent of a
 # retail source's aspect ratio and use the 3D launcher's paper coordinates.
@@ -623,7 +627,8 @@ assert "flat_composed_ink(c, game, paper, rear);" in lib_sleeve
 assert 'draw_composed_case_face(ink, launch_case_game_,' in draw
 assert '{0.0f, 0.0f, 440.0f, 704.0f}, rear);' in draw
 assert 'const float top = shell.h * (13.0f / 730.0f);' in lib_sleeve
-assert "Rect uv{0.0f, 0.0f, 1.0f, 1.0f};" in lib_sleeve
+assert "Rect uv{0.0f, 0.0f, 1.0f, 1.0f};" not in lib_sleeve
+assert "fitted.x += (paper.w - fitted.w) * 0.5f;" in lib_sleeve
 assert "if (!rear) {" in lib_sleeve
 assert "c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}," in lib_sleeve
 # The row label must finish before the detail panel begins. No overprinting

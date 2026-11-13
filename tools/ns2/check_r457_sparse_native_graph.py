@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
-VENDOR="0d2c22172dc82277388f290e3ea14557d3697005"
+VENDOR="d0b81cb8bab067cbeaa4d5496c6be0ceb5f89579"
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",

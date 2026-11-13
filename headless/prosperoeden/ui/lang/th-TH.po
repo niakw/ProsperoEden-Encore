@@ -51,10 +51,6 @@ msgstr "แนะนำให้ใช้ 60 เฮิร์ตซ์ 120 Hz เ
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz เป็นค่าเริ่มต้นที่ปลอดภัย ใช้ 120 Hz กับจอแสดงผลที่รองรับหรือแพตช์ FPS สูงเท่านั้น"
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "แนะนำให้ใช้ 8% เพิ่มขึ้นสำหรับการดริฟท์ไม้; ลดลงเพื่อการเล็งที่ละเอียดอ่อนยิ่งขึ้น"
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "อ่าน​ไฟล์ NCA ​ของ​เฟิร์มแวร์​ไม่ได้ ติดตั้ง​เฟิร์มแวร์​ใหม่​อีกครั้ง"
@@ -325,10 +321,6 @@ msgstr "เลือก"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "เลือกเกม​จาก​คลังเกม​ของคุณ"
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "ธีม · โลโก้ · พื้นหลัง · แสงเรือง (เกม: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "เล่น"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "เพลย์สเตชัน"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto ยังคงความหมายของเมนู Cross/Circle ไว้ในขณะที่ปรับการเล่นเกมให้เข้ากับตำแหน่งสวิตช์ทางกายภาพ สวิตช์คงที่ การแก้ไขปุ่มใดๆ จะสร้างโปรไฟล์ที่กำหนดเอง"
 
 #: settings_store.h
 msgid "Polish"

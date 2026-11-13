@@ -36,6 +36,21 @@ The PR's changes have been merged. A fresh full native build is required to esta
 5. **Ninja jobserver:** Ninja's FIFO-only GNU Make jobserver client detects a pipe-style `--jobserver-auth=3,4` and ignores it with one warning. Address the *upstream Make/Ninja invocation protocol* (FIFO-style GNU Make 4.4+ or a bounded independent Ninja job count) and verify job parallelism. It does not explain game launch crashes.
 6. **OpenGNM/libpsbc:** Inspect the compiler-generated unused `_` variables in the pinned PS5 shader compiler at the toolchain owner. Preserve the PSBC compiler/archive identity and its host tests.
 
+## Latest completed native warning audit — 13 November 2026 (UTC)
+
+Newer native build [#43330598915](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43330598915) completed **SUCCESS** on `5bdbf59a0b735e446062350768e62c05458d3109` (12 November 23:38–23:51 UTC). Its exact native build-job log contains **506 printed warning lines** matched by compiler `: warning:`, Ninja warning, and Node deprecation-warning signatures; **zero compiler error lines** matched in that build. This is **not** a build of the pending Nov13 PR #94 or its vendor pin.
+
+| Distinct warning owner/type | Printed occurrences | Notes |
+| --- | ---: | --- |
+| OpenGNM/libpsbc `psbc_compile.c:2255` — `_` assigned but unused | 242 | One repeated code site, not 242 independent regressions |
+| Mesa/NIR `nir.h:5266` — `_` assigned but unused | 237 | One repeated header/macro site |
+| All remaining warning classes together | 27 | RADV/Mesa compiler warnings, four Eden/Dynarmic diagnostics, Ninja jobserver and Node `Buffer()` deprecation |
+| **Total** | **506** | 479/506 (94.7%) came from two distinct repeated sites |
+
+The newer job no longer prints launcher locale warnings; this is consistent with the merged translation corrections. The earlier 632-line reference and the new 506-line count concern **different engine SHAs** and are not a proof of zero warnings, runtime improvement, game boot, FPS or PS5 picture correctness.
+
 ## Next validation
 
-Run a new native build on the merged translation commit, preserve the full warning log, compare per-source warning classes with the baseline above, and require a green native source preflight. Do not claim a zero-warning native build until the third-party compiler diagnostics are addressed and the exact native SHA/build artifacts are verified.
+1. Qualify the current Nov13 crash/launcher branch by its **own** native build and preserve its exact log, symbols and FTP archive before PS5 testing.
+2. Prioritize compiler warning owners rather than hide the diagnostics: `psbc_compile.c` unused loop variable; Mesa/NIR unused macro variable; explicit RADV forward declaration; remaining native unused symbols and Task/Mesh enum switch; Ninja jobserver. Preserve fixed upstream source/code generation and licenses, add source-derived positive and negative tests.
+3. Validate FC27 HUD, shader/texture fidelity, stutter interval distribution and MKW NS2 startup **on console**. A successful build or no-warning log alone cannot close either runtime incident.

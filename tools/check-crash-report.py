@@ -275,10 +275,15 @@ def offsets(text):
 def check(binary, console):
     where = functions(binary)
     inside = lambda offset, name: where[name][0] <= offset < where[name][0] + where[name][1]
+    # Console policy: a fatal signal exits instead of launching a fresh app
+    # over stale Vulkan/sparse direct-memory owners.
+    crash_status = 43 if console else 42
+    crash_stdout = 'EXIT\n' if console else 'RESTART\n'
+    crash_note = '0\n' if console else '1\n'
 
     # A bad write on a named thread, three calls deep.
     status, out, err, reports, note = run(binary, 'thread', console)
-    assert status == 42 and out == 'RESTART\n' and len(reports) == 1, (status, out, err[-600:])
+    assert status == crash_status and out == crash_stdout and len(reports) == 1, (status, out, err[-600:])
     report = reports[0].read_text()
     assert report.startswith('ProsperoEden crash report\nversion: test-version (code size 0x'), report[:200]
     stamp = re.search(r'^time: (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d), (\d+) s after the app started$', report, re.M)
@@ -298,10 +303,10 @@ def check(binary, console):
     outer = [i for i, offset in enumerate(calls) if inside(offset, 'Outer')]
     assert middle and outer and middle[0] < outer[0], (calls, where)   # the callers, innermost first
     assert not any(inside(offset, 'Innermost') for offset in calls)    # the fault itself is "where"
-    assert report.endswith('then: the app starts again\n')
-    assert note == reports[0].name + ' 1\n', note
+    assert report.endswith('then: the app closes; relaunch manually after reviewing the crash report\n' if console else 'then: the app starts again\n')
+    assert note == reports[0].name + ' ' + crash_note, note
     assert 'EDEN_CRASH_REPORT installed=1 signals=7 ' in err and 'EDEN_CRASH what=SIGSEGV where=eboot+0x' in err
-    assert f'thread=CPUCore_1 report={reports[0]} restart=1' in err, err[-400:]
+    assert f'thread=CPUCore_1 report={reports[0]} restart={0 if console else 1}' in err, err[-400:]
     assert ('memory: largest free block 1234 MiB of 12288 MiB, heap 256 MiB and 96 MiB in 3 large blocks\n' in report) \
         == console, report
 
@@ -354,7 +359,7 @@ def check(binary, console):
     # A real crash on the audio worker must include its last lock-free phase,
     # without allocating or resolving symbols on the signal handler path.
     status, out, err, reports, note = run(binary, 'audio-probe', console)
-    assert status == 42 and len(reports) == 1, (status, err[-300:])
+    assert status == crash_status and len(reports) == 1, (status, err[-300:])
     snapshot = reports[0].read_text()
     assert 'thread: audio (0x' in snapshot
     assert 'audio worker snapshot: phase=3 ' in snapshot
@@ -363,27 +368,27 @@ def check(binary, console):
 
     # Other ways to end.
     status, out, err, reports, note = run(binary, 'abort', console)
-    assert status == 42 and len(reports) == 1 and 'what: SIGABRT (abort)' in reports[0].read_text(), (status, err[-400:])
+    assert status == crash_status and len(reports) == 1 and 'what: SIGABRT (abort)' in reports[0].read_text(), (status, err[-400:])
     assert '\nthread: main (0x' in reports[0].read_text()
     status, out, err, reports, note = run(binary, 'ill', console)
-    assert status == 42 and len(reports) == 1 and 'what: SIGILL (illegal instruction)' in reports[0].read_text()
+    assert status == crash_status and len(reports) == 1 and 'what: SIGILL (illegal instruction)' in reports[0].read_text()
     status, out, err, reports, note = run(binary, 'throw', console)
     report = reports[0].read_text() if reports else ''
-    assert status == 42 and 'what: the app stopped itself\nreason: test exception: nothing caught it\n' in report, \
+    assert status == crash_status and 'what: the app stopped itself\nreason: test exception: nothing caught it\n' in report, \
         (status, report[:400], err[-400:])
-    assert '\nthread: Thrower (0x' in report and note.endswith(' 1\n')
+    assert '\nthread: Thrower (0x' in report and note.endswith(' ' + crash_note)
 
-    # Four threads at once: one report, one restart.
+    # Four simultaneous faults: one report, no PS5 autorelaunch.
     status, out, err, reports, note = run(binary, 'many', console)
-    assert status == 42 and out == 'RESTART\n' and len(reports) == 1, (status, out, len(reports))
+    assert status == crash_status and out == crash_stdout and len(reports) == 1, (status, out, len(reports))
 
     # Right after a restart the app closes; once a game was started it starts again.
     status, out, err, reports, note = run(binary, 'again', console)
     report = reports[0].read_text()
     assert status == 43 and out == 'EXIT\n' and note == reports[0].name + ' 0\n', (status, out, note)
-    assert 'running: starting\n' in report and report.endswith('(it had just started again after a crash)\n')
+    assert 'running: starting\n' in report and report.endswith('then: the app closes; relaunch manually after reviewing the crash report\n')
     status, out, err, reports, note = run(binary, 'again-game', console)
-    assert status == 42 and note.endswith(' 1\n'), (status, note)
+    assert status == crash_status and note.endswith(' ' + crash_note), (status, note)
 
     # The system refuses: the report is there, and the signal ends the process as it always did.
     status, out, err, reports, note = run(binary, 'refused', console)

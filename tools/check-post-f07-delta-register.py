@@ -14,7 +14,7 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==34  # post-F07 reviewed entries added by merged Nov13 UI/crash PR
+assert len(entries)==35  # two native diagnostic source owners independently reviewed post-F07
 assert len({e["path"] for e in entries})==len(entries)
 drifts=[]
 for entry in entries:

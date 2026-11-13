@@ -1222,7 +1222,7 @@ post_f07 = json.loads(
 assert post_f07['schema_version'] == 1
 assert post_f07['historical_f07_source_snapshots_preserved'] is True
 post_entries = post_f07['files']
-assert len(post_entries) == 34
+assert len(post_entries) == 35  # 2026-11-13 reviewed graphics window+counter delta owners
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}

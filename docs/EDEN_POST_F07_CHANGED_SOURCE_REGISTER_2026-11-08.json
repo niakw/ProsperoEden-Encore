@@ -70,12 +70,13 @@
     {
       "path": "headless/graphics.cpp",
       "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
-      "post_snapshot_git_blob": "9609fc43767af93bf245e1923519bec61cc8998a",
+      "post_snapshot_git_blob": "5b1ee6e3e630129e5ac3083ef6e4520fde525c02",
       "original_disposition": "code_changed_in_batch",
-      "source_scope": "HUD state and native opt-in frame probe use the existing JitMemory owner; retained atomic control",
+      "source_scope": "Nov13 FC27 5-second diagnostic-only cache pressure split: buffer/texture counters read only at detailed report boundary, not on every present; existing renderer locks, texture ownership, shader cache and graphics output unchanged.",
       "review_kind": "source_contract",
       "required_source_fragment": "JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable."
     },
     {
       "path": "headless/hud.h",
@@ -370,6 +371,17 @@
       "required_source_fragment": "On PS5 the",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-13 PR #95: source re-reviewed after native MKW boot crash and user-reported console CE-108262-9. Preserves original F07 per-file source blob, separate current blob exact SHA, no actual PS5 validation."
+    },
+    {
+      "path": "headless/graphics.h",
+      "historical_reviewed_git_blob": "4a958fea2d32bf897ecc3337293cb47fb909fce7",
+      "post_snapshot_git_blob": "60fb9eec370c11b386cb0f446050584747db2ae6",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Nov13 FC27 detailed-only buffer/texture cache pressure split adds a 6-counter per-GraphicsWindow baseline; no new per-present activity, rendering logic, GPU ownership or performance outcome implied.",
+      "review_kind": "source_interface",
+      "required_source_fragment": "std::array<unsigned long long, 6> frame_cache_domain_previous{};",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "Nov13 console regression fd00c7f: historical U19 F07 reviewed blob immutable; new baseline lives with GraphicsWindow to avoid cross-title stale deltas. Exact new source Git blob 60fb9eec370c11b386cb0f446050584747db2ae6; host source check covers both detailed-only call sites; PS5 run unqualified."
     }
   ]
 }

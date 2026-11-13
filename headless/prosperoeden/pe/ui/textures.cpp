@@ -250,7 +250,8 @@ Cover Textures::cover(const std::string &path, float size)
         it = covers_.emplace(key, std::move(entry)).first;
         // Large selected jackets are navigationally critical. Prioritize
         // their fronts/rears over old library thumbnails, without I/O on UI.
-        if (IsProfileAvatarImage(path) || target_pixels >= 1024)
+        if (IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
+            target_pixels >= 1024)
             queue_.push_front(key);
         else
             queue_.push_back(key);
@@ -272,7 +273,8 @@ Cover Textures::cover(const std::string &path, float size)
         age = 0.0f;
         // Large selected jackets are navigationally critical. Prioritize
         // their fronts/rears over old library thumbnails, without I/O on UI.
-        if (IsProfileAvatarImage(path) || target_pixels >= 1024)
+        if (IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
+            target_pixels >= 1024)
             queue_.push_front(key);
         else
             queue_.push_back(key);

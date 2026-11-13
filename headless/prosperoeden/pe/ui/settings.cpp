@@ -240,6 +240,10 @@ void Launcher::press_settings(Key key)
             break;
         case kControls:
             open_modal(Modal::controls);
+            // Four rows leave an actual multi-line guide below the list.
+            video_rows_.visible = kVideoRowsShown;
+            video_rows_.pitch = kVideoRowPitch;
+            video_rows_.reset(5, 0);
             break;
         case kAccessibility:
             open_modal(Modal::accessibility);
@@ -253,7 +257,9 @@ void Launcher::press_settings(Key key)
                 wallpaper_scan_ = std::async(std::launch::async, [this] {
                     return services_.wallpapers();
                 });
-            video_rows_.visible = 5; // preserve five-row appearance list
+            // One real three-line guide card must remain visible below the
+            // scrolling rows. A fifth full-height row overlapped that card.
+            video_rows_.visible = kVideoRowsShown;
             video_rows_.pitch = kVideoRowPitch;
             video_rows_.reset(kAppearanceRows, 0);
             option_ = 0;
@@ -499,7 +505,8 @@ float Launcher::dialog_row_top(Modal modal, int row) const
     switch (modal)
     {
     case Modal::controls:
-        return 334.0f + 96.0f * static_cast<float>(row);
+        return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) -
+               video_rows_.scroll();
     case Modal::audio:
     case Modal::accessibility:
         return 370.0f + 102.0f * static_cast<float>(row);
@@ -535,7 +542,8 @@ void Launcher::press_dialog(Key key)
     }
     if ((key == Key::up || key == Key::down ||
          key == Key::l1 || key == Key::r1) &&
-        (modal_ == Modal::video || modal_ == Modal::appearance))
+        (modal_ == Modal::video || modal_ == Modal::appearance ||
+         modal_ == Modal::controls))
     {
         if (video_rows_.move(key == Key::down || key == Key::r1 ? 1 : -1))
         {
@@ -730,6 +738,11 @@ void Launcher::press_dialog(Key key)
         }
         break;
     case Modal::appearance:
+        if (option_ == app_image && prefs_.background_style != 4) {
+            // Disabled until "Local image" is the selected background.
+            cue(Cue::error);
+            return;
+        }
         switch (option_) {
         case app_theme: {
             const int next = (selected_theme(prefs_) + step + 5) % 5;
@@ -910,11 +923,11 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     {
         title = tr("Controls");
         static constexpr const char *kAbout[] = {
-            TR("PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."),
+            TR("Choose PlayStation or Switch button positions. The selected mapping stays fixed during menus and gameplay; customizing a button creates a custom profile."),
             TR("Customize every guest button. The profile automatically becomes Custom PS5 or Custom Switch."),
             TR("Turns DualSense vibration on or off for games."),
             TR("100% is full DualSense rumble strength. Lower it if vibration feels too strong."),
-            TR("8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming.")};
+            TR("The deadzone ignores small stick movements near the center. At 8%, movements below 8% do not steer the game. Increase it if your character moves by itself; lower it if aiming feels unresponsive.")};
         copy = tr(kAbout[std::clamp(option_, 0, 4)]);
         break;
     }
@@ -937,18 +950,19 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     }
     text_shrink(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
                 theme::kTitle, 736.0f);
-    text_shrink(c, modal == Modal::video
+    text_shrink(c, modal == Modal::video || modal == Modal::controls ||
+                           modal == Modal::appearance
                     ? tr(TR("Choose a setting; its effect is explained below."))
                     : copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall),
                 theme::kSmall, theme::kCopy, 736.0f);
 
     const int rows = dialog_rows(modal);
     // Video's rows scroll in a window of five; the other dialogs show all of theirs.
-    const bool scrolls = modal == Modal::video || modal == Modal::appearance;
+    const bool scrolls = modal == Modal::video ||
+                         modal == Modal::appearance || modal == Modal::controls;
     const int first = scrolls ? video_rows_.first_row() : 0;
     const int last = scrolls ? video_rows_.last_row() : rows - 1;
-    const float view_height = modal == Modal::appearance
-        ? kVideoRowPitch * 4.0f + kVideoRowHeight : kVideoWindow.h;
+    const float view_height = kVideoWindow.h;
     if (scrolls)
         list.push_clip({kVideoWindow.x - 24.0f, kVideoWindow.y - 6.0f,
                         kVideoWindow.w + 48.0f, view_height + 12.0f});
@@ -1124,8 +1138,18 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Reset appearance")
         };
         for (int row = first; row <= last; ++row) {
+            const bool inactive = row == app_image && prefs_.background_style != 4;
             list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));
-            label(row, tr(labels[row]), choice(row, values[row]));
+            if (inactive) {
+                // Show a grey, non-clickable value; never imply a pending
+                // background is already selected when it is not.
+                const float taken = text_shrink(c, values[row], 1292.0f,
+                    baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
+                    theme::kText24, theme::kMeta, 240.0f, Align::right);
+                label(row, tr(labels[row]), taken, true);
+            } else {
+                label(row, tr(labels[row]), choice(row, values[row]));
+            }
             list.pop_opacity();
         }
         break;

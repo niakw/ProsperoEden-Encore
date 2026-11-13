@@ -2715,6 +2715,110 @@ std::string CheckedWallpaper(const std::filesystem::path& folder, const std::str
     if (ec || bytes < 32 || bytes > 12u * 1024u * 1024u) return {};
     return path.string();
 }
+#if defined(PS5_NATIVE)
+// The foreground user's PS5 Media Gallery mount; independent of Encore's
+// personal wallpapers directory. This is read-only and never copies, renames
+// or alters PS5 screenshots. The capture service's NPXS40087 photos use
+// /user/av_contents/photo/NPXS40087/<title>/<folder>/<image>.
+struct SystemWallpaper {
+    std::string selection;
+    std::filesystem::path photo;
+    std::time_t modified = 0;
+};
+
+std::string CaptureWallpaperSelection(const std::filesystem::path& photo) {
+    // Opaque, stable and non-traversable selection key: persisted settings
+    // may contain only a validated basename, NEVER a PS5 system path.
+    const std::string source = photo.string();
+    std::uint64_t hash = 14695981039346656037ull;
+    for (const unsigned char byte : source) {
+        hash ^= byte;
+        hash *= 1099511628211ull;
+    }
+    char digest[17]{};
+    std::snprintf(digest, sizeof(digest), "%016llx",
+                  static_cast<unsigned long long>(hash));
+    std::string stem;
+    for (const unsigned char byte : photo.stem().string()) {
+        if (stem.size() >= 36u) break;
+        if (std::isalnum(byte) && byte < 128)
+            stem.push_back(static_cast<char>(byte));
+        else if (byte == '_' || byte == '-')
+            stem.push_back(static_cast<char>(byte));
+    }
+    if (stem.empty()) stem = "Capture";
+    auto extension = photo.extension().string();
+    std::transform(extension.begin(), extension.end(), extension.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return "PS5_" + stem + "_" + digest + extension;
+}
+
+std::vector<SystemWallpaper> SystemCaptureWallpapers() {
+    namespace fs = std::filesystem;
+    std::vector<SystemWallpaper> found;
+    // Do not probe any account or gallery until the foreground user is known.
+    // /user is the PS5 mount belonging to the console foreground context.
+    std::int32_t foreground = -1;
+    if (sceUserServiceGetForegroundUser(&foreground) != 0 || foreground < 0)
+        return found;
+    const fs::path root{"/user/av_contents/photo/NPXS40087"};
+    if (::access(root.c_str(), R_OK) != 0) return found;
+    struct Pending { fs::path folder; unsigned depth; };
+    std::vector<Pending> pending{{root, 0u}};
+    std::size_t directories = 0, examined = 0;
+    constexpr std::size_t kMaxDirs = 256, kMaxEntries = 8192;
+    constexpr unsigned kMaxDepth = 4;
+    while (!pending.empty() && directories < kMaxDirs &&
+           examined < kMaxEntries) {
+        const auto current = std::move(pending.back());
+        pending.pop_back();
+        ++directories;
+        std::error_code read_error;
+        const auto entries = Eden::ReadNativeDirectory(current.folder, read_error);
+        if (read_error) continue; // inaccessible system mount is not an app failure
+        for (const auto& entry : entries) {
+            if (++examined > kMaxEntries) break;
+            struct stat native{};
+            if (::lstat(entry.path().c_str(), &native) != 0 ||
+                S_ISLNK(native.st_mode)) continue;
+            if (S_ISDIR(native.st_mode)) {
+                if (current.depth < kMaxDepth &&
+                    pending.size() + directories < kMaxDirs)
+                    pending.push_back({entry.path(), current.depth + 1u});
+                continue;
+            }
+            if (!S_ISREG(native.st_mode) || native.st_size < 32 ||
+                native.st_size > (12ll << 20)) continue;
+            const std::string filename = entry.path().filename().string();
+            if (!ValidWallpaperName(filename)) continue;
+            auto ext = entry.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(),
+                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            // The native texture decoder supports ordinary JPG/PNG captures.
+            // PS5 HDR JXR images are deliberately excluded until a vetted
+            // decoder exists. Never mislabel or decode them as JPEG.
+            if (ext != ".jpg" && ext != ".jpeg" && ext != ".png") continue;
+            SystemWallpaper item{
+                CaptureWallpaperSelection(entry.path()), entry.path(),
+                native.st_mtime};
+            if (ValidWallpaperName(item.selection))
+                found.push_back(std::move(item));
+        }
+    }
+    std::sort(found.begin(), found.end(), [](const auto& a, const auto& b) {
+        return a.modified != b.modified ? a.modified > b.modified :
+               a.selection < b.selection;
+    });
+    // Hash collisions must never silently select a different source file.
+    std::unordered_set<std::string> seen;
+    found.erase(std::remove_if(found.begin(), found.end(),
+        [&](const SystemWallpaper& item) {
+            return !seen.insert(item.selection).second;
+        }), found.end());
+    return found;
+}
+#endif
+
 std::string LocalDay() {
     const auto now = std::time(nullptr);
     const std::tm* local = std::localtime(&now);
@@ -2974,11 +3078,36 @@ std::vector<std::string> EdenServices::wallpapers() {
         const std::string name = it->path().filename().string();
         if (!CheckedWallpaper(folder, name).empty()) names.push_back(name);
     }
+#if defined(PS5_NATIVE)
+    // Merge the current PS5 user's Media Gallery with app-local files; no
+    // user-import step and no blocking scan on the drawing/input thread.
+    const auto captures = SystemCaptureWallpapers();
+    for (std::size_t i = 0; i < captures.size() && i < 64u; ++i)
+        names.push_back(captures[i].selection);
+    std::fprintf(stderr, "EDEN_WALLPAPER_SOURCES app=%zu ps5=%zu shown=%zu\n",
+                 names.size() - std::min<std::size_t>(captures.size(), 64u),
+                 captures.size(), names.size());
+#endif
     std::sort(names.begin(), names.end());
     return names;
 }
 std::string EdenServices::wallpaper_path(const std::string& file) {
-    return CheckedWallpaper(std::filesystem::path(Eden::UserDir()) / "wallpapers", file);
+    const auto local = CheckedWallpaper(
+        std::filesystem::path(Eden::UserDir()) / "wallpapers", file);
+    if (!local.empty()) return local;
+#if defined(PS5_NATIVE)
+    // A stored opaque PS5 selection is resolved against a fresh bounded,
+    // current-user listing. A crafted settings filename can never supply an
+    // arbitrary filesystem path. The source is rechecked immediately.
+    if (file.starts_with("PS5_") && ValidWallpaperName(file)) {
+        for (const auto& capture : SystemCaptureWallpapers()) {
+            if (capture.selection == file)
+                return CheckedWallpaper(capture.photo.parent_path(),
+                                        capture.photo.filename().string());
+        }
+    }
+#endif
+    return {};
 }
 
 namespace {

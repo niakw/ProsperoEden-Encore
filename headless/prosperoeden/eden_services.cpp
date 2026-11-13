@@ -3240,7 +3240,7 @@ std::vector<std::string> EdenServices::wallpapers() {
     }
     const bool personal_capped = names.size() >= kMaxPersonalWallpapers;
     if (personal_capped || ec)
-        std::fprintf(stderr, "EDEN_WALLPAPER_PERSONAL capped=%d read_error=%d count=%zu\\n",
+        std::fprintf(stderr, "EDEN_WALLPAPER_PERSONAL capped=%d read_error=%d count=%zu\n",
                      int(personal_capped), int(bool(ec)), names.size());
     // User imports are always the first, alphabetized group in this chooser.
     // Do not globally sort opaque PS5 capture keys ahead of personal files.

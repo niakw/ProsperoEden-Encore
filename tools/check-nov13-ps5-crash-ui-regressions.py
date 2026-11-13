@@ -22,6 +22,8 @@ case = read("headless/prosperoeden/pe/ui/case_media_selection.hpp")
 services = read("headless/prosperoeden/eden_services.cpp")
 textures = read("headless/prosperoeden/pe/ui/textures.cpp")
 theme = read("headless/prosperoeden/pe/ui/theme.hpp")
+widgets = read("headless/prosperoeden/pe/ui/widgets.cpp")
+launcher = read("headless/prosperoeden/pe/ui/launcher.cpp")
 
 # FC27: QueryCache is destroyed before BufferCache. The latter's destructor
 # still submits work, so the scheduler cannot retain its stale QueryCache*.
@@ -66,6 +68,19 @@ assert "EDEN_EXEFS_SIZE" in services
 assert "Eden::Ns2Catalog::Description(" in services
 assert "if (it->second.texture == 0) {" in textures
 assert "target_pixels >= 1024" in textures
+
+# 100% panel opacity must be truly opaque: the authored design tint often
+# starts at only 4-9% alpha. Daily attribution is a runtime footer overlay.
+glass = widgets.split("void glass(Canvas &c,", 1)[1].split("Plate kRowPlate", 1)[0]
+rest = widgets.split("void plate_rest(Canvas &c,", 1)[1].split("void plate_focus(", 1)[0]
+assert "tint.with_alpha(tint.a > 0.0f ? opacity : 0.0f)" in glass
+assert "style.fill.with_alpha(style.fill.a > 0.0f ? opacity : 0.0f)" in rest
+assert "style.fill.a * look().panel_opacity" not in rest
+assert "tint.a * opacity" not in glass
+draw = launcher.split("void Launcher::draw(gfx::DrawList &list)", 1)[1]
+assert "prefs_.background_style == 5" in draw
+assert "!cached_daily_wallpaper_caption_.empty()" in draw
+assert "text_shrink(c, cached_daily_wallpaper_caption_, 108.0f" in draw
 
 # Color pair from the Neutral Light palette must exceed 7:1 contrast.
 def brightness(hex_color):

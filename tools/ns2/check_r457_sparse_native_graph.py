@@ -13,6 +13,7 @@ OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
               ROOT/"vendor/encore-active/eden-core/src/core/memory_native_standard.cpp")
+NATIVE_SHARED=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp"
 NATIVE_KERNEL=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp"
 NATIVE_SLAB=ROOT/"vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp"
 
@@ -38,6 +39,10 @@ def main():
     vendor_rows=[r for r in db if Path(r["file"]).resolve() in variants]
     if len(vendor_rows)!=1: raise RuntimeError(f"Expected one real PTE TU, got {len(vendor_rows)}")
     selected.append(("native_guest_pte",vendor_rows[0]))
+    shared_rows=[r for r in db if Path(r["file"]).resolve()==NATIVE_SHARED.resolve()]
+    if len(shared_rows)!=1: raise RuntimeError(
+        f"Expected exactly one sparse KSharedMemory TU, got {len(shared_rows)}")
+    selected.append(("native_kernel_shared_clear",shared_rows[0]))
     kernel_rows=[r for r in db if Path(r["file"]).resolve()==NATIVE_KERNEL.resolve()]
     if len(kernel_rows)!=1: raise RuntimeError(f"Expected exactly one real native kernel direct owner, got {len(kernel_rows)}")
     selected.append(("native_kernel_direct",kernel_rows[0]))
@@ -125,7 +130,7 @@ def main():
                     print(diagnostic.stderr[-3500:],file=sys.stderr,flush=True)
             raise RuntimeError(label+" genuine SDK syntax: "+p.stderr[-8500:])
         print("R457_NS2_SPARSE_NATIVE_SYNTAX_PASS",label,flush=True)
-    print("R457_NS2_SPARSE_ACTUAL_PS5_CMAKE_AND_5_TUS_PASS no link/gameplay",flush=True)
+    print("R457_NS2_SPARSE_ACTUAL_PS5_CMAKE_AND_6_TUS_PASS no link/gameplay",flush=True)
 
 if __name__=="__main__":
     try: main()

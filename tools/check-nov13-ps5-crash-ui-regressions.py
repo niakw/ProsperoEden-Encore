@@ -42,6 +42,12 @@ assert init.index("throw std::bad_alloc{};") < init.index("std::memset(")
 assert "physical - Core::DramMemoryMap::Base, block.GetSize()" in init
 assert "list(REMOVE_ITEM eden_sparse_core_sources \"hle/kernel/k_shared_memory.cpp\")" in cmake
 assert "set_property(TARGET core PROPERTY SOURCES \"${eden_sparse_core_sources}\")" in cmake
+# A regression in the tested 88538c45 ELF linked a direct libc memset even
+# though this maintained source was selected: PS5_NATIVE had not been defined
+# for this exact core translation unit. Require both the reviewed source and
+# the per-source native compile definition, then verify in compile_commands.
+assert ('set_property(SOURCE "${EDEN_NS2_SHARED_MEMORY_SOURCE}"\n'
+        '        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")') in cmake
 
 # UI: original flat scan must be shown completely; screenshots 4/5 can fill
 # missing panels rather than being silently discarded.

@@ -2121,9 +2121,27 @@ int main(int argc, char** argv) {
                 // the patch manager looks the base up here, and without it applied only the update's
                 // code, which then ran against the old data. It also gives Eden the game's control data.
                 game_contents.ClearAllEntries();
-                if (game && guest && !game_contents.AddEntriesFromContainer(
-                        system.GetFilesystem()->OpenFile(guest, FileSys::OpenMode::Read)))
-                    Eden::Report("loader", "Game contents not registered; an update's data will not apply");
+                if (game && guest) {
+                    const std::filesystem::path chosen{guest};
+                    const auto relative = chosen.lexically_relative(library_root).generic_string();
+                    const bool extracted = Eden::IsDeconstructedGameSelection(relative) &&
+                        Eden::IsSafeDeconstructedGamePath(library_root, relative);
+                    if (extracted) {
+                        // A loose ExeFS main has no NSP/XCI content table.
+                        // The deconstructed loader supplies base/update RomFS
+                        // separately; AddEntriesFromContainer failing here is
+                        // expected and does not prove that the update is absent.
+                        // Keep this neutral status distinct from packaged failures.
+                        Eden::Report("loader",
+                            "EDEN_CONTENT_PATH kind=extracted_exefs manual_nca=not_applicable"
+                            " romfs=loader_owned");
+                    } else if (!game_contents.AddEntriesFromContainer(
+                            system.GetFilesystem()->OpenFile(guest, FileSys::OpenMode::Read))) {
+                        Eden::Report("loader",
+                            "EDEN_CONTENT_PATH kind=container manual_nca=failed"
+                            " update_patch=unverified");
+                    }
+                }
                 system.RegisterContentProvider(FileSys::ContentProviderUnionSlot::FrontendManual, &game_contents);
                 {
                     Service::AM::Frontend::FrontendAppletSet applets;

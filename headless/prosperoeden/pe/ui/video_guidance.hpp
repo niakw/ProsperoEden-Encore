@@ -28,6 +28,13 @@ inline const char* AntiAliasingGuide(int aa) {
     case 0: return tr(TR("Off: no edge smoothing. Fastest, but diagonal lines may look jagged."));
     case 1: return tr(TR("FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."));
     case 3: return tr(TR("FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."));
+    // Do not describe MSAA as SMAA. The per-title forced-MSAA Vulkan
+    // compositor is not yet console-qualified; exact mode labels are
+    // already translatable via the shared settings catalog.
+    case 4: return tr(TR("MSAA 2x"));
+    case 5: return tr(TR("MSAA 4x"));
+    case 6: return tr(TR("MSAA 8x"));
+    case 7: return tr(TR("MSAA 16x"));
     default: return tr(TR("SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."));
     }
 }

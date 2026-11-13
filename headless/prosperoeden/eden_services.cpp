@@ -3283,6 +3283,7 @@ void RefreshDailyOnlyAfterSelection(const std::filesystem::path& folder,
             {"filename", name}, {"title", images[i].info.title},
             {"platform", images[i].info.platform},
             {"release_date", images[i].info.released},
+            {"source", images[i].info.host == "https://api.nlib.cc" ? "Nlib" : "Nintendo"},
             {"approved", true}
         });
     }
@@ -3356,6 +3357,70 @@ std::string EdenServices::daily_wallpaper() {
         // Use a stable per-day index, not process randomness.
         const int day = local ? (local->tm_year * 366 + local->tm_yday) : 0;
         return candidates[static_cast<std::size_t>(day) % candidates.size()].path;
+    }
+    return {};
+}
+
+
+std::string EdenServices::daily_wallpaper_caption(const std::string& path,
+                                                  int language_choice) {
+    // The image was already selected by the verified daily manifest worker.
+    // Never present a guessed title, date or attribution from the filename.
+    if (path.empty()) return {};
+    namespace fs = std::filesystem;
+    const fs::path folder = fs::path(Eden::UserDir()) / "wallpapers" / "daily";
+    const fs::path file{path};
+    if (file.parent_path() != folder || CheckedWallpaper(folder, file.filename().string()).empty())
+        return {};
+    const auto index = folder / "index.json";
+    std::error_code ec;
+    const auto status = fs::symlink_status(index, ec);
+    if (ec || fs::is_symlink(status) || !fs::is_regular_file(status) ||
+        fs::file_size(index, ec) > (256u << 10) || ec) return {};
+    std::ifstream input(index, std::ios::binary);
+    if (!input) return {};
+    const auto doc = nlohmann::json::parse(input, nullptr, false);
+    if (!doc.is_object() || !doc.contains("entries") || !doc["entries"].is_array())
+        return {};
+    const auto lang = Eden::kLanguageKeys[std::clamp(language_choice, 0,
+                      static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+    const std::string_view region{lang};
+    for (const auto& entry : doc["entries"]) {
+        if (!entry.is_object() ||
+            !entry.contains("filename") || !entry["filename"].is_string() ||
+            entry["filename"].get<std::string>() != file.filename().string() ||
+            !entry.contains("approved") || !entry["approved"].is_boolean() ||
+            !entry["approved"].get<bool>() ||
+            !entry.contains("title") || !entry["title"].is_string() ||
+            !entry.contains("release_date") || !entry["release_date"].is_string())
+            continue;
+        const auto title = entry["title"].get<std::string>();
+        const auto iso = entry["release_date"].get<std::string>();
+        if (title.empty() || title.size() > 160 ||
+            iso.size() != 10 || iso[4] != '-' || iso[7] != '-')
+            return {};
+        const auto digits = [](std::string_view text) {
+            return std::all_of(text.begin(), text.end(), [](unsigned char x) {
+                return x >= '0' && x <= '9';
+            });
+        };
+        if (!digits(std::string_view(iso).substr(0, 4)) ||
+            !digits(std::string_view(iso).substr(5, 2)) ||
+            !digits(std::string_view(iso).substr(8, 2))) return {};
+        const std::string date =
+            region == "en-US" ? iso.substr(5,2) + "/" + iso.substr(8,2) + "/" + iso.substr(0,4) :
+            (region.starts_with("fr") || region.starts_with("en-GB") ||
+             region.starts_with("es") || region.starts_with("it") ||
+             region.starts_with("pt") || region.starts_with("de"))
+                ? iso.substr(8,2) + "/" + iso.substr(5,2) + "/" + iso.substr(0,4) : iso;
+        // Older cache snapshots omit source: display an explicit unknown
+        // rather than falsely attributing Nintendo art to GamesDB.
+        std::string source = "Unknown";
+        if (entry.contains("source") && entry["source"].is_string()) {
+            const auto known = entry["source"].get<std::string>();
+            if (known == "Nlib" || known == "Nintendo") source = known;
+        }
+        return title + " · " + date + " · " + source;
     }
     return {};
 }

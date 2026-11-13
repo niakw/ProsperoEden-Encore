@@ -52,10 +52,6 @@ msgstr ""
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr ""
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr ""
@@ -324,10 +320,6 @@ msgstr ""
 
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
-msgstr ""
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
 msgstr ""
 
 #: pe/ui/browse.cpp
@@ -1274,10 +1266,6 @@ msgstr ""
 
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
-msgstr ""
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
 msgstr ""
 
 #: settings_store.h

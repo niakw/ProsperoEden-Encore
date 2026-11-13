@@ -287,6 +287,9 @@ jobs:
           python3 -B tools/check-native-gpu-dirty-subregion-host.py
           python3 -B tools/check-native-gpu-dirty-transition-host.py
           python3 -B tools/check-native-gpu-dirty-gather-host.py
+          # Compile the pinned PS5-selected vendor header with ASan/UBSan and
+          # prove all dirty 64-byte cells survive writes across 2KiB pages.
+          python3 -B vendor/tools/check-gpu-dirty-cross-page-host.py
           python3 -B tools/check-native-gpu-read-core-host.py
           python3 -B tools/check-native-gpu-read-capture-host.py
           python3 -B tools/check-native-guest-span-host.py

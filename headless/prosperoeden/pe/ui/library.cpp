@@ -76,16 +76,27 @@ std::string library_date(const std::string& iso, const std::string& region)
         region == tr("Korea") || region == tr("Taiwan")) return y + "/" + m + "/" + d;
     return d + "/" + m + "/" + y;
 }
+// Nlib emits "Strategy · Other", whereas older catalogs used
+// "Strategy, Other". Translate EACH category, never the joined string.
 std::string library_genres(const std::string& genres)
 {
-    std::istringstream stream(genres);
-    std::string part, result;
-    while (std::getline(stream, part, ',')) {
-        const auto start = part.find_first_not_of(" \\t");
-        if (start == std::string::npos) continue;
-        const auto stop = part.find_last_not_of(" \\t");
-        if (!result.empty()) result += " · ";
-        result += tr(part.substr(start, stop - start + 1));
+    std::string result;
+    std::size_t from = 0;
+    while (from < genres.size()) {
+        const auto comma = genres.find(',', from);
+        const auto dot = genres.find(" · ", from);
+        const auto end = (comma == std::string::npos ? dot :
+                          dot == std::string::npos ? comma : std::min(comma, dot));
+        const std::string_view token{genres.data() + from,
+            (end == std::string::npos ? genres.size() : end) - from};
+        const auto first = token.find_first_not_of(" \t\r\n");
+        if (first != std::string_view::npos) {
+            const auto last = token.find_last_not_of(" \t\r\n");
+            if (!result.empty()) result += " · ";
+            result += tr(std::string(token.substr(first, last - first + 1)));
+        }
+        if (end == std::string::npos) break;
+        from = end + (end == dot ? 3u : 1u);
     }
     return result;
 }
@@ -409,18 +420,18 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
         const float source = std::max(0.01f, artwork.aspect);
         const float target = paper.w / paper.h;
         if (!rear) {
-            // Original NS1 and NS2 fronts are printed edge-to-edge. UV crop
-            // preserves their proportions while removing the large blank
-            // side gutters previously produced by aspect-fit presentation.
-            Rect uv{0.0f, 0.0f, 1.0f, 1.0f};
+            // Physical retail covers are documents, not full-bleed wallpaper.
+            // Cropping their UVs cuts the top of Fire Emblem and other jackets.
+            // Preserve the entire scan, centering it over the opaque paper.
+            Rect fitted = paper;
             if (source > target) {
-                uv.w = target / source;
-                uv.x = (1.0f - uv.w) * 0.5f;
+                fitted.h = paper.w / source;
+                fitted.y += (paper.h - fitted.h) * 0.5f;
             } else if (source < target) {
-                uv.h = source / target;
-                uv.y = (1.0f - uv.h) * 0.5f;
+                fitted.w = paper.h * source;
+                fitted.x += (paper.w - fitted.w) * 0.5f;
             }
-            c.list.image(artwork.texture, paper, uv,
+            c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f},
                          Color::rgb(0xffffff, tween::cubic_out(artwork.age / 0.22f)));
         } else {
             // Preserve every word and logo on a genuine printed back.
@@ -2171,7 +2182,7 @@ void Launcher::draw_game(Canvas &c, float open)
         static_cast<std::size_t>(library_.selected) < games_.size() ?
         &games_[static_cast<std::size_t>(library_.selected)] : nullptr;
     text_fit(c, game != nullptr ? game->name : std::string{}, 592.0f,
-             baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, Color::rgb(0xc5c1d2), 736.0f);
+             baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, theme::kCopy, 736.0f);
 
     static constexpr const char *kRenderers[] = {"OpenGL", "Vulkan"};
     const auto &resolutions = services_.resolution_labels();
@@ -2521,7 +2532,7 @@ void Launcher::draw_mods(Canvas &c, float open)
                 theme::kTitle, 736.0f);
     const Game *game = games_.empty() ? nullptr : &games_[static_cast<std::size_t>(library_.selected)];
     text_fit(c, game != nullptr ? game->name : std::string{}, 592.0f,
-             baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, Color::rgb(0xc5c1d2), 736.0f);
+             baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, theme::kCopy, 736.0f);
 
     if (mods_.empty())
     {

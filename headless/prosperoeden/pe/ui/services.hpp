@@ -398,6 +398,8 @@ class Services
     virtual std::string wallpaper_path(const std::string&) { return {}; }
     // Offline/cache-backed daily release wallpaper; no requests from draw().
     virtual std::string daily_wallpaper() { return {}; }
+    // Metadata is looked up on the same worker, NEVER in render().
+    virtual std::string daily_wallpaper_caption(const std::string&, int) { return {}; }
 
     virtual const std::vector<std::string> &resolution_labels() = 0; // "1x (native)"
     virtual const std::vector<std::string> &resolution_keys() = 0;   // "1x"

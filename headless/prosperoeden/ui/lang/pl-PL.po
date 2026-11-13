@@ -2454,8 +2454,8 @@ msgid "Choose a theme background, two custom colors, a local image or the daily 
 msgstr "Choose a theme background, two custom colors, a local image or the daily game artwork."
 
 #: pe/ui/settings.cpp
-msgid "Copy PNG, JPEG, WebP or TGA images to /data/prosperoeden/user/wallpapers. The PS5 Media Gallery is not automatically scanned."
-msgstr "Copy PNG, JPEG, WebP or TGA images to /data/prosperoeden/user/wallpapers. The PS5 Media Gallery is not automatically scanned."
+msgid "App wallpapers: /data/prosperoeden/user/wallpapers. PS5 captures (JPG/PNG) appear automatically; HDR JXR is unsupported."
+msgstr "Tapety aplikacji: /data/prosperoeden/user/wallpapers. Zrzuty ekranu PS5 (JPG/PNG) pojawiają się automatycznie; HDR JXR nie jest obsługiwany."
 
 #: pe/ui/settings.cpp
 msgid "Pick a preset for the first background color, or adjust its channels below."

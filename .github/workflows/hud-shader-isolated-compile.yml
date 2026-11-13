@@ -1,5 +1,11 @@
 name: Vulkan HUD shader — isolated SPIR-V rebuild (short)
 on:
+  pull_request:
+    paths:
+      - 'headless/vulkan_hud.frag'
+      - 'headless/vulkan_renderer_r08.cpp'
+      - 'tools/check-ps5-unified-dynamic-loading-host.py'
+      - '.github/workflows/hud-shader-isolated-compile.yml'
   workflow_dispatch:
   push:
     branches: [main]
@@ -20,6 +26,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends glslang-tools spirv-tools
+      - name: Verify one dynamic native loading scene, not a frozen jacket copy
+        run: python3 -B tools/check-ps5-unified-dynamic-loading-host.py
       - name: Build shader from real source, validate bytecode, and record provenance
         shell: bash
         run: |

@@ -457,7 +457,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     if r2_production:
         r2_scheduler_pre_msaa = {
             'include/video_core/renderer_vulkan/vk_scheduler.h': (
-                '460b5d95453cb974eefff10c4af76c5b318e685f',
+                '0d07f85c09d4ef0a420ce93f36ce5beb61365be1',
                 [
                     ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
                      '    // An owner-thread observation', '#endif\\n\\n'),
@@ -477,6 +477,20 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 ['git', 'hash-object', str(expected[name])],
                 text=True).strip()
             assert observed == sha, ('R2 real scheduler source changed', name)
+            # R457 FC27: require the exact, reviewed borrowed-pointer
+            # release method on the ACTIVE header, then remove ONLY it from
+            # the historical generator's equivalence comparison. A missing
+            # destructor teardown remains a separate mandatory host gate.
+            if name == 'include/video_core/renderer_vulkan/vk_scheduler.h':
+                begin = '    // Rasterizer query cache is destroyed before the buffer cache.'
+                after = '    // Registers a callback to perform on queue submission.'
+                assert source.count(begin) == 1 and source.count(after) == 1
+                first_at = source.index(begin)
+                last_at = source.index(after, first_at)
+                released = source[first_at:last_at]
+                assert released.count('void ClearQueryCache() noexcept') == 1
+                assert released.count('query_cache = nullptr;') == 1
+                source = source[:first_at] + source[last_at:]
             for first, last in edits:
                 start = first.replace('\\n', '\n')
                 stop = last.replace('\\n', '\n')
@@ -488,6 +502,26 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             normalized.parent.mkdir(parents=True, exist_ok=True)
             normalized.write_text(source)
             normalized_expected[name] = normalized
+    # FC27 shutdown fix: prove the production rasterizer revokes its
+    # non-owning QueryCache pointer after draining, then compare the rest of
+    # the renderer against the exact pinned source-generation baseline.
+    raster_name = 'vulkan_rasterizer.cpp'
+    raster_source = expected[raster_name].read_text()
+    begin = 'RasterizerVulkan::~RasterizerVulkan() {'
+    assert raster_source.count(begin) == 1
+    old_body = '''RasterizerVulkan::~RasterizerVulkan() {
+    scheduler.WaitWorker();
+    scheduler.Finish();
+}'''
+    end = raster_source.index('}', raster_source.index(begin)) + 1
+    new_body = raster_source[raster_source.index(begin):end]
+    assert new_body.count('scheduler.ClearQueryCache();') == 1
+    assert new_body.index('scheduler.Finish();') < new_body.index('scheduler.ClearQueryCache();')
+    normalized_raster = raster_source.replace(new_body, old_body)
+    normalized_path = temp/'normalized-vendor-fc27-teardown'/raster_name
+    normalized_path.parent.mkdir(parents=True, exist_ok=True)
+    normalized_path.write_text(normalized_raster)
+    normalized_expected[raster_name] = normalized_path
     hname = 'include/video_core/vulkan_common/vulkan_wrapper.h'
     cname = 'vulkan_wrapper.cpp'
     # N66: keep the production generator deterministic. The one additive

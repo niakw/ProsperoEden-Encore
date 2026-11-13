@@ -1133,8 +1133,11 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
     // Use the real foreground console profile when a readable local cache
     // image exists; otherwise keep a neutral silhouette. No network request.
     constexpr float avatar_x = 1640.0f, avatar_y = 70.0f;
+    // Account badge's backing is a panel too. Match the global opacity
+    // slider, without altering the actual avatar image or its hit target.
+    const float avatar_panel_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
     list.rounded_rect({avatar_x - 27.0f, avatar_y - 27.0f, 54.0f, 54.0f},
-                      27.0f, theme::kPanel.with_alpha(0.90f));
+                      27.0f, theme::kPanel.with_alpha(avatar_panel_opacity));
     const Cover avatar = profile_avatar_path_.empty() ? Cover{} :
         c.textures.cover(profile_avatar_path_, 54.0f);
     if (avatar.texture != 0) {

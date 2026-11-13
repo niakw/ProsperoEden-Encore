@@ -1,0 +1,49 @@
+name: PS5 G21 GPU shutdown selected-source engine/vendor parity
+
+on:
+  pull_request:
+    paths:
+      - "tools/ci/ps5_g21_gpu_shutdown_receipt.py"
+      - "tools/check-g21-gpu-profile-matrix-host.py"
+      - "tools/check-ps5-g21-gpu-shutdown-receipt-host.py"
+      - ".github/workflows/ps5-g21-gpu-shutdown-pair-host.yml"
+  push:
+    branches:
+      - ci/nov14-g21-gpu-shutdown-source-receipt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g21-source-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - name: Exact engine and vendor gitlink
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Historical G21 five-source and six-profile CMake source oracle
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          python3 -B tools/check-ps5-g21-gpu-shutdown-receipt-host.py
+          python3 -B tools/check-g21-gpu-profile-matrix-host.py
+      - name: Checkout reviewed vendor GPU shutdown candidate, not engine main
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov14-ps5-gpu-renderer-channel-teardown
+          git -C vendor checkout --detach FETCH_HEAD
+          test "$(git -C vendor rev-parse HEAD)" = "29afdd31c69118fddf5b14d13bd750dcd7962bb8"
+      - name: Exact candidate source receipt, original G21 oracle and ASan/UBSan
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-ps5-g21-gpu-shutdown-receipt-host.py
+          python3 -B tools/check-g21-gpu-profile-matrix-host.py
+          python3 -B vendor/tests/ps5_gpu_renderer_channel_teardown_host.py
+      - name: Host-only boundary
+        if: always()
+        run: |
+          echo "Two source graphs only: original engine gitlink and exact reviewed vendor #112 SHA; no PS5 native compile, package, SIGSEGV PC symbolization, app exit or game tests." >> "$GITHUB_STEP_SUMMARY"

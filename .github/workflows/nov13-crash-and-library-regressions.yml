@@ -49,7 +49,7 @@ jobs:
         run: python3 -B tools/check-nov13-ps5-crash-ui-regressions.py
       - name: Compile the production JPEG+PNG codec and decode a real PNG
         run: python3 -B tools/check-ps5-native-png-codec-host.py
-      - name: Verify safe PS5 system screenshot discovery and wallpaper merge
+      - name: Verify safe local gallery discovery and wallpaper merge
         run: python3 -B tools/check-ps5-system-wallpapers-host.py
       - name: Compile real Home installed fallback and enforce MRU ordering
         run: python3 -B tools/check-nov13-home-installed-fallback-host.py

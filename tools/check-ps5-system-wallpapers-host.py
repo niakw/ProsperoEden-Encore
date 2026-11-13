@@ -35,7 +35,11 @@ assert "SystemCaptureWallpapers()" in listing
 assert "for (const auto& capture : captures)" in listing
 assert "names.push_back(capture.selection)" in listing
 assert "i < 64u" not in listing
-assert "names.size() - captures.size()" in listing
+assert "const std::size_t imported = names.size();" in listing
+assert "imported, captures.size(), names.size()" in listing
+assert listing.index('std::sort(names.begin(), names.end());') < listing.index(
+    "const std::size_t imported = names.size();") < listing.index(
+    "for (const auto& capture : captures)")
 assert "CheckedWallpaper(capture.photo.parent_path()," in listing
 assert 'file.starts_with("PS5_") && ValidWallpaperName(file)' in listing
 assert "std::filesystem::path(Eden::UserDir()) / \"wallpapers\"" in listing

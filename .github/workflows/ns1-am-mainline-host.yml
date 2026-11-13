@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "a75ae306de19162d8aacb5f8afe06a3647d28880"
+          test "$(git -C vendor rev-parse HEAD)" = "376e2754256d5a51827518b34f0aeae86f5fed9b"
           python3 -B tools/audit/check-r23-controller-applet-host.py
           python3 -B tools/audit/check-r23-am-applets-host.py
           echo "Host source and mock ASan/UBSan only; no PS5 native object, ELF or guest execution." >> "$GITHUB_STEP_SUMMARY"

@@ -433,7 +433,7 @@ assert "return changed_faces;" in case_fetch
 assert 'if (side == 2 && !both_faces_cached_at_start &&' not in case_fetch
 assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in case_fetch
 assert '// Gameplay previews remain independent of real back paper.' in case_fetch
-assert "attempts >= 3" in native
+# Original sleeve JPEG alternatives are tried after undecodable PNGs.\n# Keep the bounded seven-candidate retry; do not accept reconstructed covers.\nassert "if (attempts >= 7 ||" in native\nassert "if (attempts >= 3 ||" not in native
 assert 'std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable' in native
 assert "const bool both_faces_cached_at_start =" not in native
 # Preserve the already resident GPU jacket when a background metadata scan

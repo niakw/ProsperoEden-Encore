@@ -1053,7 +1053,7 @@ msgstr "Chargement des jeux..."
 
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Local image"
-msgstr "Locale Image"
+msgstr "Image locale"
 
 #: pe/ui/settings.cpp
 msgid "LOGO"

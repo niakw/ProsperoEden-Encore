@@ -1323,9 +1323,13 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             appearance ? kAppearanceRows - 1 : 4);
         const bool inactive = appearance && selected == app_image &&
                               prefs_.background_style != 4;
+        const std::string description = appearance &&
+                selected == app_background && prefs_.background_style == 5 &&
+                !cached_daily_wallpaper_caption_.empty()
+            ? cached_daily_wallpaper_caption_ : std::string(copy);
         DrawVideoGuide(c,
             tr(appearance ? kAppearanceNames[selected] : kControlNames[selected]),
-            copy, inactive,
+            description, inactive,
             prefs_.ui_theme == 1 || prefs_.color_palette == 3);
     }
 

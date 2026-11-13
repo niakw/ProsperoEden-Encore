@@ -389,10 +389,12 @@ assert 'folder_info_.firmware_ready?tr("Firmware ready")' in read('headless/pros
 # A single source replacement must invalidate all texture-size variants.
 retail_textures = read('headless/prosperoeden/pe/ui/textures.cpp')
 assert 'bool IsRetailBoxImage(std::string_view path)' in retail_textures
-assert 'IsRetailBoxImage(path) && target_pixels >= 1024' in retail_textures
+assert retail_textures.count('IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||') == 2
+assert retail_textures.count('target_pixels >= 1024)') >= 2
 assert 'sibling->second.used = frame_' in retail_textures
 assert 'covers_.find(path + ' in retail_textures
-assert 'it->second.texture == 0 && IsRetailBoxImage(path)' in retail_textures
+assert 'if (it->second.texture == 0) {' in retail_textures
+assert 'const int alternatives[] = {target_pixels / 2, target_pixels * 2,' in retail_textures
 assert 'if (it->second.path == path)' in retail_textures
 
 

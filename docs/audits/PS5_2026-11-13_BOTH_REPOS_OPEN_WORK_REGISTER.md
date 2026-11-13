@@ -1,0 +1,56 @@
+# Eden Encore — registre ouvert moteur + vendor, upstream-first
+
+**Instantané vérifié le 13 novembre 2026**, suivi croisé : [protocole](../UPSTREAM_FIRST_PS5_DIAGNOSTIC_PROTOCOL_2026-11-13.md), [roadmap #15](https://github.com/niakw/ProsperoEden-Encore/issues/15). **Ne jamais utiliser cette page comme preuve de gameplay PS5.** Réinterroger GitHub avant fusion, build, suppression ou clôture. Les archives console privées restent hors GitHub.
+
+## Propriété des deux dépôts et statut natif
+
+- Moteur : `niakw/ProsperoEden-Encore` `main` au commit `6208a2b0653bfe942d2b6c2b9a85055869397869`, gitlink **réel** `vendor=1ec7b429238d1175a76dc94b7c0a7f1c2eb62864` (confirmé par la CI engine checkout de [run #43517291914](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43517291914)). Ce gitlink **n'est pas identique** au `main` du vendor.
+- Vendor : `niakw/Prospero.Eden-Encore-vendor` `main=d9f6efc76f95fdfd2893082384cb2115851739cc`. Les correctifs encore en draft ne sont **pas** intégrés dans la version native livrable.
+- Issues ouvertes : **8 moteur** / **0 vendor** ; PR ouvertes : **6 moteur** / **6 vendor** ; branches : **7 moteur** et **8 vendor**, comptant chaque `main`.
+- Les contrôles source/host, CI, compilation native PS5, installation, démarrage du titre, rendu correct et gameplay stable sont **sept étapes différentes**. Un SHA vert ne couvre pas les étapes suivantes.
+
+## Issues moteur à maintenir ouvertes
+
+| Issue | Symptôme / statut réel | Validation manquante |
+| --- | --- | --- |
+| [#97](https://github.com/niakw/ProsperoEden-Encore/issues/97) | P0 sortie console / mémoire partagée NS2, correctif source antérieur fusionné | Reproduction/absence de CE-108262-9 sur console et fermeture/réouverture |
+| [#100](https://github.com/niakw/ProsperoEden-Encore/issues/100) | P0/P1 FC27 NS1 : préchauffage à zéro, saccades match, vidéo EA noire, HUD/glyphes et textures corrompues | Mesures froid/chaud, traces rasterizer/pipeline, intro + 2 matchs et non-régression |
+| [#123](https://github.com/niakw/ProsperoEden-Encore/issues/123) | P0 Bananza `PC=4`; MKW second segment distinct, zéro image guest | Derniers FS/AM guest + adresse invalide Bananza ; GPU guest/cpu progress et premier frame MKW |
+| [#101](https://github.com/niakw/ProsperoEden-Encore/issues/101) | P1/P2 wallpapers, aides, AA, ExeFS, genres, jaquettes, loading handoff | Vérifier chaque point sur PS5 |
+| [#124](https://github.com/niakw/ProsperoEden-Encore/issues/124) | P1 lenteur Library et retour FC27, icônes NS2 intermittentes | Temps premier écran/retour, mémoire/latence, vraies jaquettes et capture |
+| [#108](https://github.com/niakw/ProsperoEden-Encore/issues/108) | P2 warnings build natif ; base historique 510 lignes | Nouveau build PS5 propre + inspection warnings par propriétaire, pas simple compilation incrémentale |
+| [#118](https://github.com/niakw/ProsperoEden-Encore/issues/118) | P1 sept High CodeQL STB ; corrections vendor déjà fusionnées puis repin antérieur | Confirmer CodeQL sur SHA engine analysé et alertes effectivement closes, ne pas corriger en doublon |
+| [#15](https://github.com/niakw/ProsperoEden-Encore/issues/15) | Feuille de route ouverte et protocole upstream obligatoire | Sorties réellement qualifiées |
+
+## PR / branches non fusionnées
+
+| Dépôt | PR | Branche / portée | Qualification actuelle et blocage |
+| --- | --- | --- | --- |
+| Moteur | [#107](https://github.com/niakw/ProsperoEden-Encore/pull/107) | `fix/nov13-psbc-nir-location-truncation` | CI host verte, correction warning NIR candidate ; compiler/intégrité sources gelées + compilation PS5 absentes |
+| Moteur | [#122](https://github.com/niakw/ProsperoEden-Encore/pull/122) | `fix/nov13-console-ui-gallery-caption-opacity` | Anciens jobs host rouges, puis étendue par #126/#127 ; pas de PS5 UX |
+| Moteur | [#125](https://github.com/niakw/ProsperoEden-Encore/pull/125) | `fix/nov13-ns2-romfs-content-visibility` | CI host verte ; message de registration loose ExeFS corrigé en source, **ne répare pas à lui seul Bananza** |
+| Moteur | [#126](https://github.com/niakw/ProsperoEden-Encore/pull/126) | `feature/nov13-jxr-selected-wallpaper-only` | PR empilée sur #122, plusieurs CI historiques rouges ; nécessite qualification du parent |
+| Moteur | [#127](https://github.com/niakw/ProsperoEden-Encore/pull/127) | `fix/nov13-lazy-library-square-home-art` | PR empilée sur #126, six CI hôtes vertes au SHA `52c5645` ; installation console non validée |
+| Moteur | [#128](https://github.com/niakw/ProsperoEden-Encore/pull/128) | `fix/nov13-cache-probe-vendor-source-receipt` | Preuve [CI #43517569415](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43517569415) verte sur **vrai gitlink engine** + vendor draft #110, preuve source/générateur uniquement |
+| Vendor | [#105](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/105) | `fix/nov13-ns2-extracted-update-romfs` | ROMFS extrait, sélection explicite version, CI hôtes [#43513990735](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43513990735)/[#43513990742](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43513990742) vertes ; Bananza/MKW non validés |
+| Vendor | [#106](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/106) | `feature/nov13-ps5-jxr-selected-only` | JXR/WepP galerie sélectionnée seulement ; aucun runtime console, couplage avec moteur #126 |
+| Vendor | [#107](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/107) | `fix/nov13-ns1-nvdec-eagain-lossless` | Paquets FFmpeg EAGAIN préservés en source, CI hôte ; FC27 vidéo noire non prouvée corrigée |
+| Vendor | [#108](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/108) | `fix/nov13-ns1-msaa-partial-upload-offset` | Offset source upload MSAA corrigé en source, CI hôte ; texture FC27 non prouvée corrigée |
+| Vendor | [#109](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/109) | `fix/nov13-ns2-am-save-uid-cmif` | UID CMIF aligné selon Eglantine #80, CI hôte ; ne change pas EnsureSaveData |
+| Vendor | [#110](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/110) | `fix/nov13-ps5-cache-source-diagnostics` | [7/7 CI vendor](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/43515919987) hôtes passées sur `6d1ac12` ; source pin moteur compatible via #128 ; zéro FPS mesuré |
+
+## Références upstream et décisions de port
+
+- [Lichii #1036](https://github.com/zortos293/Lichii/pull/1036) : cache v2, scheduler priorisé ; **nouvelle architecture** non importable sans prouver pertes/rejets réels dans les caches PS5 `vulkan.bin` et `vulkan_pipelines.bin`.
+- [Lichii #1334](https://github.com/zortos293/Lichii/pull/1334)/[#1337](https://github.com/zortos293/Lichii/pull/1337) : SPIR-V en mémoire, eviction RAM limitée ; comparer avec les vrais propriétaires de pipeline PS5 avant adaptation.
+- [Lichii #1296](https://github.com/zortos293/Lichii/pull/1296) / [Eglantine #785](https://github.com/Djihads80/Eglantine/pull/785) : atlas de glyphes natifs sans profondeur protégés contre l'option de saut de draw. Encore PS5 utilise une politique différente : tracer `CanExecuteRecordedDraw` et `GraphicsDrawDrop::WorkerPipelineFailed`, ne pas recopier un garde inapplicable.
+- [Lichii #1413](https://github.com/zortos293/Lichii/pull/1413) : deadlock sparse GPUBack/kernel/texture sur PC. Les propriétaires `BackSparseWrite` / `AllocateGpuOnlyBacking` n'existent pas sous ces noms dans les sources PS5 vendor sélectionnées ; `IGpuWorker` HLE PS5 emploie une autre gestion mémoire, et les commandes Vulkan du loading ne prouvent pas un travail GPU guest. **Ne pas copier ses verrous ni son pool sans preuve du même cycle.**
+- [Eglantine #335](https://github.com/Eglantine-Community/Eglantine/issues/335)/[#431](https://github.com/Eglantine-Community/Eglantine/pull/431) : ExeFS/RomFS update uniquement ou auto-contenu, candidat vendor #105 ; guest PC4 demande preuves supplémentaires.
+- [Eglantine #80](https://github.com/Eglantine-Community/Eglantine/pull/80) : UID CMIF aligné, candidat vendor #109.
+
+## Nettoyage autorisé et limites
+
+1. **Ne pas supprimer** les six branches PR moteur et les six branches PR vendor : leur travail reste distinct et non fusionné, certaines PR sont empilées.
+2. Vendor `feat/ps5-jxr-selected-only-decode` : compare à `main` : **0 commit d'avance / 1 de retard**, aucune modification unique ; candidate à suppression sous réserve vérification qu'aucun workflow/PR n'utilise cette ref. Aucune branche n'a été effacée : le connecteur GitHub actuel ne propose pas l'opération destructive.
+3. Ne fermer ni #97/#100/#123, ni les issues UI/perf avant validation console. Si la CI d'une PR enfant est verte, cela ne transforme pas toutes les PR parents en candidates fusionnables.
+4. **Prochaine qualification PS5** : builds natifs seulement sur moteur+gitlink vendor exact retenus ; provenance/artefacts/symboles/alertes ; séparer FC27 cache froid/chaud, textures/HUD et début de match, Bananza FS/AM/PC4, MKW guest/GPU/first-present, puis vérifier l'intégralité des tests utilisateur.

@@ -2762,7 +2762,9 @@ std::vector<SystemWallpaper> SystemCaptureWallpapers() {
     if (sceUserServiceGetForegroundUser(&foreground) != 0 || foreground < 0)
         return found;
     const fs::path root{"/user/av_contents/photo/NPXS40087"};
-    if (::access(root.c_str(), R_OK) != 0) return found;
+    // Try the same native open/getdents path that works for PS5 mounted ROMs.
+    // access(2) checks real credentials, which can incorrectly reject a
+    // readable mount when the launcher's effective credentials differ.
     struct Pending { fs::path folder; unsigned depth; };
     std::vector<Pending> pending{{root, 0u}};
     std::size_t directories = 0, examined = 0;

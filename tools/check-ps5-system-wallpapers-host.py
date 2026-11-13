@@ -26,6 +26,10 @@ assert "S_ISLNK(native.st_mode)" in scan
 assert "kMaxDirs = 1024, kMaxEntries = 32768" in scan
 assert "kMaxDepth = 8" in scan
 assert 'ext != ".jpg" && ext != ".jpeg" && ext != ".png"' in scan
+assert 'if (ext == ".jxr")' in scan and '++hdr_jxr;' in scan
+assert '++ignored_size;' in scan and '++unreadable_dirs;' in scan
+assert 'EDEN_WALLPAPER_SCAN dirs=%zu entries=%zu accepted=%zu jxr=%zu' in scan
+assert 'size_rejected=%zu format_rejected=%zu read_errors=%zu capped=%d elapsed_ms=%lld' in scan
 assert "found.push_back(std::move(item))" in scan
 assert "SystemCaptureWallpapers()" in listing
 assert "for (const auto& capture : captures)" in listing

@@ -35,6 +35,9 @@ assert 'if (!local.empty()) {' in listing and 'return SelectedJxrWebp(local);' i
 assert 'SelectedJxrWebp(checked)' in listing
 assert source.count('encore_jxr_to_webp(') == 1
 assert 'std::sort(names.begin(), names.end());' in listing
+assert 'kMaxPersonalWallpapers = 4096' in listing
+assert 'names.size() < kMaxPersonalWallpapers' in listing
+assert 'names.size() < 64' not in listing
 assert listing.index('std::sort(names.begin(), names.end());') < listing.index('SystemCaptureWallpapers()')
 assert 'std::sort(names.begin(), names.end());' not in listing[listing.index('SystemCaptureWallpapers()'):]
 assert '++ignored_size;' in scan and '++unreadable_dirs;' in scan

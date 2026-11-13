@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "performance.h"
+#ifdef EDEN_PS5_VULKAN
+#include "crash_report.h"
+#endif
 #ifdef EDEN_DEV_PROFILE
 #include "present_interval_witness.h"
 #endif
@@ -116,6 +119,22 @@ bool vulkan_loading{};
 double vulkan_loading_start{-1};
 unsigned vulkan_loading_frames{};
 unsigned vulkan_loading_diagnostic_stage{};
+#ifdef EDEN_PS5_VULKAN
+std::uint64_t vulkan_loading_gpu_completion_baseline{};
+// The GPU owner publishes completed worker commands in batches of 64.
+// These are NOT GPFIFO/QMD counts, and a zero cannot rule out <64 commands.
+struct LoadingGpuProgress {
+    std::uint64_t total_floor64{};
+    std::uint64_t since_window_floor64{};
+    unsigned counter_reset{};
+};
+LoadingGpuProgress SampleLoadingGpuProgress() noexcept {
+    const auto current = Crash::gpu_completed_commands.load(std::memory_order_relaxed);
+    const bool reset = current < vulkan_loading_gpu_completion_baseline;
+    return {current, reset ? 0 : current - vulkan_loading_gpu_completion_baseline,
+            unsigned(reset)};
+}
+#endif
 LoadingPace vulkan_loading_pace;
 void Check(bool success, const char* operation) {
     if (!success) {
@@ -594,14 +613,22 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
         const double elapsed = now - vulkan_loading_start;
         if (vulkan_loading_diagnostic_stage == 0 && elapsed >= 10.0) {
             vulkan_loading_diagnostic_stage = 1;
+            const auto gpu = SampleLoadingGpuProgress();
             std::fprintf(stderr,
-                "EDEN_VULKAN_LOADING_WAIT stage=10s idle=%d loading_presents=%u guest_frame_handoff=0\n",
-                int(idle), vulkan_loading_frames);
+                "EDEN_VULKAN_LOADING_WAIT stage=10s idle=%d loading_presents=%u guest_frame_handoff=0"
+                " gpu_worker_completed_floor64=%llu gpu_worker_delta_floor64=%llu gpu_worker_counter_reset=%u\n",
+                int(idle), vulkan_loading_frames,
+                static_cast<unsigned long long>(gpu.total_floor64),
+                static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
         } else if (vulkan_loading_diagnostic_stage == 1 && elapsed >= 30.0) {
             vulkan_loading_diagnostic_stage = 2;
+            const auto gpu = SampleLoadingGpuProgress();
             std::fprintf(stderr,
-                "EDEN_VULKAN_LOADING_WAIT stage=30s idle=%d loading_presents=%u guest_frame_handoff=0\n",
-                int(idle), vulkan_loading_frames);
+                "EDEN_VULKAN_LOADING_WAIT stage=30s idle=%d loading_presents=%u guest_frame_handoff=0"
+                " gpu_worker_completed_floor64=%llu gpu_worker_delta_floor64=%llu gpu_worker_counter_reset=%u\n",
+                int(idle), vulkan_loading_frames,
+                static_cast<unsigned long long>(gpu.total_floor64),
+                static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
         }
         return true;
     }
@@ -616,6 +643,12 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
     vulkan_loading_start = -1;
     vulkan_loading_frames = 0;
     vulkan_loading_diagnostic_stage = 0;
+#ifdef EDEN_PS5_VULKAN
+    // A PS5 app can launch multiple titles without restarting its process.
+    // Start a fresh delta per game, without clearing the crash breadcrumb.
+    vulkan_loading_gpu_completion_baseline =
+        Crash::gpu_completed_commands.load(std::memory_order_relaxed);
+#endif
     vulkan_loading_pace = {};
     hud_enabled.store(LoadPreferences().hud, std::memory_order_relaxed);
 #ifdef EDEN_PS5_VULKAN

@@ -2810,8 +2810,9 @@ std::vector<SystemWallpaper> SystemCaptureWallpapers() {
     struct Pending { fs::path folder; unsigned depth; };
     std::vector<Pending> pending{{root, 0u}};
     std::size_t directories = 0, examined = 0;
-    constexpr std::size_t kMaxDirs = 256, kMaxEntries = 8192;
-    constexpr unsigned kMaxDepth = 4;
+    // Thousands of user screenshots are normal; keep safe finite bounds.
+    constexpr std::size_t kMaxDirs = 1024, kMaxEntries = 32768;
+    constexpr unsigned kMaxDepth = 8;
     while (!pending.empty() && directories < kMaxDirs &&
            examined < kMaxEntries) {
         const auto current = std::move(pending.back());
@@ -3126,10 +3127,10 @@ std::vector<std::string> EdenServices::wallpapers() {
     // Merge the current PS5 user's Media Gallery with app-local files; no
     // user-import step and no blocking scan on the drawing/input thread.
     const auto captures = SystemCaptureWallpapers();
-    for (std::size_t i = 0; i < captures.size() && i < 64u; ++i)
-        names.push_back(captures[i].selection);
+    for (const auto& capture : captures)
+        names.push_back(capture.selection);
     std::fprintf(stderr, "EDEN_WALLPAPER_SOURCES app=%zu ps5=%zu shown=%zu\n",
-                 names.size() - std::min<std::size_t>(captures.size(), 64u),
+                 names.size() - captures.size(),
                  captures.size(), names.size());
 #endif
     std::sort(names.begin(), names.end());
@@ -3639,12 +3640,13 @@ std::string EdenServices::daily_wallpaper_caption(const std::string& path,
                 ? iso.substr(8,2) + "/" + iso.substr(5,2) + "/" + iso.substr(0,4) : iso;
         // Older cache snapshots omit source: display an explicit unknown
         // rather than falsely attributing Nintendo art to GamesDB.
-        std::string source = "Unknown";
+        // A legacy receipt without provider does not prove Nlib/GamesDB origin.
+        std::string source;
         if (entry.contains("source") && entry["source"].is_string()) {
             const auto known = entry["source"].get<std::string>();
             if (known == "Nlib" || known == "Nintendo") source = known;
         }
-        return title + " · " + date + " · " + source;
+        return title + " · " + date + (source.empty() ? "" : " · " + source);
     }
     return {};
 }

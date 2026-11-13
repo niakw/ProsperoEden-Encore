@@ -223,3 +223,19 @@ The launcher uses a pinned official release of Google libwebp for
 cover cache and compressed embedded UI images. BSD-style license with
 patent rights grant. Source license: vendor/sources/libwebp/COPYING;
 installed license: legal/LIBWEBP_LICENSE.txt.
+
+## JPEG XR screenshots (jxrlib)
+
+Native PS5 captures saved in JPEG XR (.jxr) use the pinned Microsoft
+**jxrlib** source distributed under the **BSD 2-Clause License**.
+The full license and disclaimer are included at
+[LICENSES/JXRLIB_LICENSE.txt](LICENSES/JXRLIB_LICENSE.txt) and bundled
+with the PS5 application at `legal/LICENSES/JXRLIB_LICENSE.txt`.
+The vendored `sources/jxrlib/` snapshot is byte-for-byte sourced from
+[ProsperoGallery](https://github.com/AmineWallah/ProsperoGallery) at
+`ff728c83746d045fc3611e511ac2acb4a2b43e38`.
+An independently modified converter maintained under
+`vendor/encore-active/ps5-jxr/` contains adaptations of ProsperoGallery's
+GPL-licensed tone mapping. The conversion occurs **only after the user
+selects** a JPEG XR wallpaper, and produces a local app-owned WebP cache;
+the original PS5 capture is not modified.

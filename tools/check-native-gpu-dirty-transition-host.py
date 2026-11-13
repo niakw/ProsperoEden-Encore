@@ -75,6 +75,45 @@ gather_deltas = (
 for before, after in gather_deltas:
     assert expected.count(before) == 1
     expected = expected.replace(before, after)
+# Lichii nx2 #1586/#1591: the 32-bit dirty mask covers ONE 2-KiB page.
+# Replay the new page-bounded split without changing the original CAS fix.
+# Compare the entire selected header byte-for-byte with the reconstruction.
+collect_signature = "    void Collect(PAddr address, size_t size) {\n"
+collect_start = expected.index(collect_signature)
+collect_end = expected.index("\n    void Gather(std::function<void(PAddr, size_t)>& callback)", collect_start)
+old_collect = expected[collect_start:collect_end]
+assert old_collect.count("BuildTransform(address, size)") == 1
+assert old_collect.count("current.exchange(t, std::memory_order_acq_rel)") == 1
+split_collect = """    void Collect(PAddr address, size_t size) {
+        // One TransformAddress has 32 bits for 64-byte cells in a 2-KiB
+        // page. Crossing that boundary as a single BuildTransform can shift
+        // by >=32 (undefined behavior) and silently lose GPU dirty cells.
+        // Adapt Lichii #1586/#1591: split without changing the existing
+        // CAS/exchange and gather-lock ownership of each page update.
+        while (size != 0) {
+            const size_t in_page =
+                (std::min<size_t>)(size, page_size - (address & page_mask));
+            CollectInPage(address, in_page);
+            address += in_page;
+            size -= in_page;
+        }
+    }
+"""
+old_method_header = "    void Collect(PAddr address, size_t size) {\n"
+helper = old_collect.replace(
+    old_method_header,
+    "    // Called only for a nonempty range fully contained in one 2-KiB page.\n"
+    "    void CollectInPage(PAddr address, size_t size) {\n", 1)
+assert old_collect.startswith(old_method_header)
+assert expected.count(old_collect) == 1
+expected = expected.replace(old_collect, split_collect, 1)
+field = "    std::atomic<TransformAddress> current{};"
+assert expected.count(field) == 1
+expected = expected.replace(field, helper + "\n" + field, 1)
+assert expected.count("#include <atomic>") == 1
+expected = expected.replace("#include <atomic>", "#include <algorithm>\n#include <atomic>", 1)
+assert "CollectInPage(address, in_page);" in expected
+
 # The shipping PS5 header is a maintained owner. The unchanged pinned Eden
 # source remains the exact negative-oracle baseline for these M09 rewrites.
 # Serialize the consumer after preserving every existing Collect and batch

@@ -90,24 +90,24 @@
     {
       "path": "headless/ns2_title_catalog.h",
       "historical_reviewed_git_blob": "a3d339dda21870e7e1b730c56ada9e5a37e01957",
-      "post_snapshot_git_blob": "a4b0023e407ea5d4459358d09ad2d1d70bee3cc2",
+      "post_snapshot_git_blob": "b34b1d7570cfd32240dfa7f49138bd8e4feb049c",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Source comment renames guest-generation catalog without changing title IDs, metadata fallback or image lookup.",
+      "source_scope": "2026-11-13 NS2 canonical title genres use source tokens for language translation, plus French/English offline overviews of Mario Kart World and Donkey Kong Bananza by exact Title ID; no guest renderer changes.",
       "review_kind": "source_contract",
-      "required_source_fragment": "Offline second-generation guest title identity fallback",
+      "required_source_fragment": "inline constexpr std::string_view Description",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed."
+      "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed.\n2026-11-13: Reviewed PR #94 diff: two literal genre fields changed and one bounded pure Title-ID description switch added. Does not establish Nintendo game compatibility or PS5 behavior."
     },
     {
       "path": "headless/prosperoeden/eden_services.cpp",
       "historical_reviewed_git_blob": "6c5d76341ef2c97b7db7fff23545ee21333037da",
-      "post_snapshot_git_blob": "a1499623700fbea8bd1f75fe0d3678821e9598b6",
+      "post_snapshot_git_blob": "e419f390473a4aca28ad1043616c1928b9adca0a",
       "original_disposition": "new_source_issue_corrected",
-      "source_scope": "FolderInfo probes firmware/ns1 and firmware/ns2 aliases through the existing validated firmware format classifier without following unsafe symlink directories",
+      "source_scope": "2026-11-13 original flat box-front attempts increased from three to seven within same verified category; offline NS2 text when Nlib unavailable; measured/unknown ExeFS size witness; bounded decoder failure diagnostic.",
       "review_kind": "host_source_service",
-      "required_source_fragment": "Eden::DetectFirmwareFormat(folder)",
+      "required_source_fragment": "EDEN_EXEFS_SIZE folder=",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11: Recognize NCA, extracted and ZIP firmware format in separate NS1/NS2 folders; count actual NCAs independently; no fabricated firmware validity for merely existing empty folders. Host/source review, hardware unverified.\n2026-11-11 reviewed follow-up: Allow user-imported PNG/JPEG/TGA plus safe WebP (existing bounded decoder); shipped daily wallpapers remain constrained by an indexed WebP-only package snapshot. Source Git blob c012f4c87e6974d8bfa37c81bb3e060eb4d6c86a. Historical F07 digest untouched.\n2026-11-11: Daily snapshot is now restricted to eight newest verified release dates, with zero package-time promotional downloads by default; no application API change beyond this count. Built-in art stays WebP, user-file formats unaffected. New approved source blob 0ebb971bc81291d0a0c08b0d83c5b4a3fdb45d5f; native PS5 visual qualification outstanding.\n2026-11-11 daily-art contract: admission up to 16 indexed WebPs (package-time revalidation); imported personal PNG/JPEG/TGA/WebP unchanged, on-console day-based rotation continues with no synchronous network. No real PS5 orientation/boot claim.\n2026-11-12: Daily Switch opt-in 8-artwork asynchronous native worker, NO packaged snapshot, validated release dates and pinned host downloads, JPEG/PNG to oriented 1280x720 WebP. Git blob 4b95da7a2422480fdf2afa106f0b1f3a89a8a8bd. Real console boot still unverified; historical F07 hash preserved.\n2026-11-12 PR #92: reviewed runtime artwork lookup and WebP provenance. Reject nonportrait CDN front/back scans; retain user-authored local artwork; index five media scene buckets with independent gameplay fallback, fetch scenes even alongside authentic back. Original F07 digest unchanged. Network/CDN success, physical console rendering, and NS1/NS2 gameplay are not qualified."
+      "review_note": "2026-11-11: Recognize NCA, extracted and ZIP firmware format in separate NS1/NS2 folders; count actual NCAs independently; no fabricated firmware validity for merely existing empty folders. Host/source review, hardware unverified.\n2026-11-11 reviewed follow-up: Allow user-imported PNG/JPEG/TGA plus safe WebP (existing bounded decoder); shipped daily wallpapers remain constrained by an indexed WebP-only package snapshot. Source Git blob c012f4c87e6974d8bfa37c81bb3e060eb4d6c86a. Historical F07 digest untouched.\n2026-11-11: Daily snapshot is now restricted to eight newest verified release dates, with zero package-time promotional downloads by default; no application API change beyond this count. Built-in art stays WebP, user-file formats unaffected. New approved source blob 0ebb971bc81291d0a0c08b0d83c5b4a3fdb45d5f; native PS5 visual qualification outstanding.\n2026-11-11 daily-art contract: admission up to 16 indexed WebPs (package-time revalidation); imported personal PNG/JPEG/TGA/WebP unchanged, on-console day-based rotation continues with no synchronous network. No real PS5 orientation/boot claim.\n2026-11-12: Daily Switch opt-in 8-artwork asynchronous native worker, NO packaged snapshot, validated release dates and pinned host downloads, JPEG/PNG to oriented 1280x720 WebP. Git blob 4b95da7a2422480fdf2afa106f0b1f3a89a8a8bd. Real console boot still unverified; historical F07 hash preserved.\n2026-11-12 PR #92: reviewed runtime artwork lookup and WebP provenance. Reject nonportrait CDN front/back scans; retain user-authored local artwork; index five media scene buckets with independent gameplay fallback, fetch scenes even alongside authentic back. Original F07 digest unchanged. Network/CDN success, physical console rendering, and NS1/NS2 gameplay are not qualified.\n2026-11-13: Reviewed PR #94 diff: bounded CDN retries only, no reconstructed art; title-ID catalog description fallback; descriptive ExeFS status log, not faked size. Does not prove CDN success, console behavior or stutter improvement."
     },
     {
       "path": "headless/prosperoeden/eden_services.h",
@@ -122,13 +122,13 @@
     {
       "path": "headless/prosperoeden/fr_fr_embedded.h",
       "historical_reviewed_git_blob": "7ebe8df590bf6f7e371f7982ff75e1eb4f2255f6",
-      "post_snapshot_git_blob": "7ae44c966b4511a78ef95dc03470b25e03ca0b73",
+      "post_snapshot_git_blob": "84500cc4588fa2fd379c62a9d9abd8051cb68362",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "embedded French text synchronized with current on-disk locale; not typography or all-languages proof",
+      "source_scope": "2026-11-13 appended appearance-theme labels, color names and backgrounds to embedded French gettext catalog; synchronized with launcher literal TR use.",
       "review_kind": "locale_source",
-      "required_source_fragment": "msgid \"Neural Rendering\"",
+      "required_source_fragment": "msgid \"Encore Neon\"",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof.\n2026-11-12 PR #92: re-generated embedded fr-FR catalog exactly from updated fr-FR.po containing No DLC/updates -> Aucun DLC/MAJ; host/source contract only. Historical F07 digest unchanged."
+      "review_note": "2026-11-09: Generated French catalog adds 13 language labels, retires a superseded UI sentence and retains archived translation memory. Locale data only, not active-string completeness or runtime proof.\n2026-11-12 PR #92: re-generated embedded fr-FR catalog exactly from updated fr-FR.po containing No DLC/updates -> Aucun DLC/MAJ; host/source contract only. Historical F07 digest unchanged.\n2026-11-13: Reviewed PR #94 diff: catalog data additions only; does not establish all 31 languages or console glyph rendering."
     },
     {
       "path": "headless/prosperoeden/frontend.cpp",
@@ -243,35 +243,35 @@
     {
       "path": "headless/prosperoeden/pe/ui/settings.cpp",
       "historical_reviewed_git_blob": "be3b42b9740e084ab2e494b0b88cb70ef5336e44",
-      "post_snapshot_git_blob": "d194298075bbd3d779d3c9f48258ae651672335a",
+      "post_snapshot_git_blob": "bef57dfddf3873f971bda65b36b62be3fb9fe6c7",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Light-theme-readable App Updates summary/notes in a separate opaque panel below the two actionable update rows",
+      "source_scope": "2026-11-13 Settings appearance modal uses localized TR identifiers and runtime tr for theme, logo, accent and background labels; small copy uses theme palette rather than fixed low-contrast ink.",
       "review_kind": "host_source_ui",
-      "required_source_fragment": "Always render release status in its own opaque, high-contrast band",
+      "required_source_fragment": "TR(\"Encore Neon\")",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending.\n2026-11-12: Personal wallpaper import prompt advertises WebP supported alongside PNG, JPEG, TGA. Git blob 97aa61e920893f64174372a27c5a709e994631b8. Real console boot still unverified; historical F07 hash preserved.\n2026-11-12: Revert new untranslated fallback string; runtime still accepts personal WebP through CheckedWallpaper, documentation updated separately. Preserve 31 fully covered catalogs.\n2026-11-12 PR #92: reviewed Settings category preview grid. Nine visible Video tiles now match the 3 by 3 panel; FPS overlay status moves to the Diagnostics category preview while the editable Video dialog and controller shortcut remain. Text contrast and console visual qualification remain open."
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending.\n2026-11-12: Personal wallpaper import prompt advertises WebP supported alongside PNG, JPEG, TGA. Git blob 97aa61e920893f64174372a27c5a709e994631b8. Real console boot still unverified; historical F07 hash preserved.\n2026-11-12: Revert new untranslated fallback string; runtime still accepts personal WebP through CheckedWallpaper, documentation updated separately. Preserve 31 fully covered catalogs.\n2026-11-12 PR #92: reviewed Settings category preview grid. Nine visible Video tiles now match the 3 by 3 panel; FPS overlay status moves to the Diagnostics category preview while the editable Video dialog and controller shortcut remain. Text contrast and console visual qualification remain open.\n2026-11-13: Reviewed PR #94 diff: translated labels and palette-provided secondary copy; PS5 display contrast still requires actual render comparison."
     },
     {
       "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",
       "historical_reviewed_git_blob": "996adb5c2d93dc2ef8c223658744486ba5f446ac",
-      "post_snapshot_git_blob": "5715e34a6e3173551805685d5385c893876c5e2f",
+      "post_snapshot_git_blob": "7ba0256e24e027a71b26f9ff15daa7e53660b20a",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Switch UI storage readiness uses recognized firmware formats rather than a flat NCA counter",
+      "source_scope": "2026-11-13 Switch-theme appearance rows translate theme, logo, accent and background labels while preserving numeric values and selections.",
       "review_kind": "host_source_ui",
-      "required_source_fragment": "folder_info_.firmware_ready?tr(\"Firmware ready\")",
+      "required_source_fragment": "TR(\"Encore Non-Neon\")",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11: Use FolderInfo firmware_ready in Switch-theme setup summary to avoid false missing-firmware warnings for extracted/ZIP NS1 and NS2. Host/source review, console unverified."
+      "review_note": "2026-11-11: Use FolderInfo firmware_ready in Switch-theme setup summary to avoid false missing-firmware warnings for extracted/ZIP NS1 and NS2. Host/source review, console unverified.\n2026-11-13: Reviewed PR #94 diff: presentation strings wrapped in runtime translation; preference integer selection and mapping stay unchanged."
     },
     {
       "path": "headless/prosperoeden/pe/ui/theme.hpp",
       "historical_reviewed_git_blob": "fc7b378ab519a454068a8802c3f871aee63411d7",
-      "post_snapshot_git_blob": "a53ba938834689804757775e60c687ed1d19569b",
+      "post_snapshot_git_blob": "461c75e6b0bc092be592be240f2718437ef9479b",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "user-selected accent token overrides and mutable resolved theme palette",
+      "source_scope": "2026-11-13 light-theme small-text palette uses darker slate copy, metadata, label, muted and faint colors against pale UI surfaces; palette constants only.",
       "review_kind": "source_interface",
-      "required_source_fragment": "inline Color kBase",
+      "required_source_fragment": "kCopy = Color::rgb(0x293b4b)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-12: Light theme restores WCAG 4.5:1 across white, neutral-row and selected-row surfaces for secondary text and user accent swatches. Source contract verified by tools/check-encore-ux.py; visual PS5 qualification pending."
+      "review_note": "2026-11-12: Light theme restores WCAG 4.5:1 across white, neutral-row and selected-row surfaces for secondary text and user accent swatches. Source contract verified by tools/check-encore-ux.py; visual PS5 qualification pending.\n2026-11-13: Reviewed PR #94 diff: seven dark slate color values replacing low-contrast grey-blue values; console contrast and scaling unverified."
     },
     {
       "path": "headless/prosperoeden/pe/ui/video_presets.hpp",

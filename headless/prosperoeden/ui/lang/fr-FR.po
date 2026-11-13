@@ -2512,3 +2512,75 @@ msgstr "Ukrainien"
 #: settings_store.h
 msgid "Vietnamese"
 msgstr "Vietnamien"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Neon"
+msgstr "Encore Néon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Non-Neon"
+msgstr "Encore Sans néon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Dark"
+msgstr "Encore Sombre"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Light"
+msgstr "Encore Clair"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Neon"
+msgstr "Néon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Non-Neon"
+msgstr "Sans néon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "White"
+msgstr "Blanc"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Dark"
+msgstr "Sombre"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Theme default"
+msgstr "Thème par défaut"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore artwork"
+msgstr "Visuel Encore"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Solid color"
+msgstr "Couleur unie"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Gradient"
+msgstr "Dégradé"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Daily Switch"
+msgstr "Jeux du jour"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Original"
+msgstr "Original"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Ocean"
+msgstr "Océan"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Emerald"
+msgstr "Émeraude"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Amber"
+msgstr "Ambre"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Rose"
+msgstr "Rose"

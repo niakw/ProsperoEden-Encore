@@ -998,8 +998,12 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
     // Europe). Generated older cached covers are migrated by .source markers.
     // Manual .png/.jpg/.jpeg overrides are protected in EnsureRetailCase.
     // No network activity occurs on the launch/render thread.
+    // A verified Mario Kart World front has seven real Box - Front
+    // candidates, but its three highest-ranked PNGs fail native stb decode.
+    // Keep a bounded budget while permitting real JPEG alternatives in the
+    // SAME source category. Never substitute Reconstructed/merchandise art.
     for (const std::string& filename : candidates) {
-        if (attempts >= 3 ||
+        if (attempts >= 7 ||
             (cancel && cancel->load(std::memory_order_acquire))) break;
         if (!SafeCaseFilename(filename)) {
             ++invalid_responses;
@@ -1043,8 +1047,9 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
               destination.find("/box-back-") != std::string::npos) &&
              static_cast<std::uint64_t>(h) * 4 < static_cast<std::uint64_t>(w) * 5)) {
             ++invalid_responses;
-            std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-image file=%s bytes=%zu width=%d height=%d\n",
-                         filename.c_str(), body.size(), w, h);
+            std::fprintf(stderr, "EDEN_CASE_CDN status=invalid-image file=%s bytes=%zu width=%d height=%d reason=%s\n",
+                         filename.c_str(), body.size(), w, h,
+                         stbi_failure_reason() ? stbi_failure_reason() : "invalid-dimensions");
             continue;
         }
         // A larger image from a different region is NOT a better scan of
@@ -2094,6 +2099,15 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             ExtractedBaseBytes(entry.path(), cancel) :
             std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)};
         if (cancel && cancel->load(std::memory_order_acquire)) return {};
+        if (deconstructed) {
+            // Distinguish an incomplete/unreadable extracted directory from
+            // an actual zero-byte game. Never mislabel a 32 MiB main NSO as
+            // the total multi-GiB title size.
+            std::fprintf(stderr,
+                "EDEN_EXEFS_SIZE folder=%s status=%s bytes=%llu\n",
+                entry_name.c_str(), complete_base_size ? "measured" : "unknown",
+                static_cast<unsigned long long>(complete_base_size.value_or(0)));
+        }
         if (complete_base_size) {
             const double bytes = static_cast<double>(*complete_base_size);
             if (bytes >= 1073741824.0)
@@ -2137,6 +2151,16 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 if (!known->publisher.empty()) game.publisher = std::string(known->publisher);
                 if (!known->release_date.empty()) game.release_date = std::string(known->release_date);
                 if (!known->genre.empty()) game.categories = std::string(known->genre);
+                // Nlib's NX endpoint has no metadata for some retail NS2
+                // titles. Retain verified local text instead of a blank back.
+                const std::string_view locale = Eden::kLanguageKeys[std::clamp(
+                    language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+                const auto overview = Eden::Ns2Catalog::Description(
+                    game.title_id, locale.starts_with("fr"));
+                if (!overview.empty()) {
+                    game.description = std::string(overview);
+                    game.intro = game.description;
+                }
                 std::fprintf(stderr, "EDEN_NS2_TITLE_RESOLVED id=%016llX name=%s source=%s\n",
                              static_cast<unsigned long long>(game.title_id), game.name.c_str(),
                              local_control.name.empty() ? "offline" : "local-nacp");
@@ -2237,6 +2261,14 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) game.name = std::string(known->name);
     if (!enrichment.intro.empty()) game.intro = std::move(enrichment.intro);
     if (!enrichment.description.empty()) game.description = std::move(enrichment.description);
+    else if (game.description.empty()) {
+        // Preserve a localized, Title-ID-qualified offline description when
+        // a refreshed Nlib result has no NS2 record.
+        const std::string_view locale = Eden::kLanguageKeys[std::clamp(
+            language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+        game.description = Eden::Ns2Catalog::Description(
+            game.title_id, locale.starts_with("fr"));
+    }
     if (!enrichment.publisher.empty()) game.publisher = std::move(enrichment.publisher);
     if (!enrichment.developer.empty()) game.developer = std::move(enrichment.developer);
     if (!enrichment.release_date.empty()) game.release_date = std::move(enrichment.release_date);

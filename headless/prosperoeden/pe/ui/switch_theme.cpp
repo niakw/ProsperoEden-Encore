@@ -546,10 +546,10 @@ void Launcher::draw_switch_settings(Canvas& c) {
               Line{TR("Reduce motion"),prefs_.reduce_motion?tr("On"):tr("Off")},Line{"",""}};
         size=3;break;
     case 4:
-        rows={Line{TR("Theme"),prefs_.ui_theme?"Switch":
+        rows={Line{TR("Theme"),tr(prefs_.ui_theme?"Switch":
                          prefs_.color_palette==1?"Encore Non-Neon":
                          prefs_.color_palette==2?"Encore Dark":
-                         prefs_.color_palette==3?"Encore Light":"Encore Neon"},
+                         prefs_.color_palette==3?"Encore Light":"Encore Neon")},
               Line{TR("Logo"),std::to_string(prefs_.logo_choice)},
               Line{TR("Background"),std::to_string(prefs_.background_style)},
               Line{TR("Game background"),prefs_.show_game_background?tr("On"):tr("Off")}};
@@ -932,20 +932,20 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                 TR("Background motion"), TR("Image scaling"), TR("Game background"),
                 TR("Reset appearance")};
             const char* theme_names[] = {
-                "Encore Neon", "Switch", "Encore Non-Neon", "Encore Dark", "Encore Light"};
-            const char* logos[] = {"Automatic", "Neon", "Non-Neon", "White", "Dark"};
+                TR("Encore Neon"), TR("Switch"), TR("Encore Non-Neon"), TR("Encore Dark"), TR("Encore Light")};
+            const char* logos[] = {TR("Automatic"), TR("Neon"), TR("Non-Neon"), TR("White"), TR("Dark")};
             const char* backgrounds[] = {
-                "Theme default", "Encore artwork", "Solid color", "Gradient",
-                "Local image", "Daily Switch"};
-            const char* accents[] = {"Original", "Ocean", "Emerald", "Amber", "Rose"};
+                TR("Theme default"), TR("Encore artwork"), TR("Solid color"), TR("Gradient"),
+                TR("Local image"), TR("Daily Switch")};
+            const char* accents[] = {TR("Original"), TR("Ocean"), TR("Emerald"), TR("Amber"), TR("Rose")};
             const int theme = prefs_.ui_theme ? 1 :
                 (prefs_.color_palette == 0 ? 0 : std::clamp(prefs_.color_palette+1, 2, 4));
             label = tr(labels[i]);
             switch(i) {
-            case 0: value = theme_names[theme]; break;
-            case 1: value = logos[std::clamp(prefs_.logo_choice,0,4)]; break;
-            case 2: value = accents[std::clamp(prefs_.accent_color,0,4)]; break;
-            case 3: value = backgrounds[std::clamp(prefs_.background_style,0,5)]; break;
+            case 0: value = tr(theme_names[theme]); break;
+            case 1: value = tr(logos[std::clamp(prefs_.logo_choice,0,4)]); break;
+            case 2: value = tr(accents[std::clamp(prefs_.accent_color,0,4)]); break;
+            case 3: value = tr(backgrounds[std::clamp(prefs_.background_style,0,5)]); break;
             case 4: value = prefs_.wallpaper_file.empty()?tr("None"):prefs_.wallpaper_file; break;
             case 5: value = std::to_string(prefs_.background_color); break;
             case 6: case 7: case 8:

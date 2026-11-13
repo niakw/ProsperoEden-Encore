@@ -250,8 +250,8 @@ Cover Textures::cover(const std::string &path, float size)
         it = covers_.emplace(key, std::move(entry)).first;
         // Large selected jackets are navigationally critical. Prioritize
         // their fronts/rears over old library thumbnails, without I/O on UI.
-        if (IsProfileAvatarImage(path) ||
-            (IsRetailBoxImage(path) && target_pixels >= 1024))
+        if (IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
+            target_pixels >= 1024)
             queue_.push_front(key);
         else
             queue_.push_back(key);
@@ -273,8 +273,8 @@ Cover Textures::cover(const std::string &path, float size)
         age = 0.0f;
         // Large selected jackets are navigationally critical. Prioritize
         // their fronts/rears over old library thumbnails, without I/O on UI.
-        if (IsProfileAvatarImage(path) ||
-            (IsRetailBoxImage(path) && target_pixels >= 1024))
+        if (IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
+            target_pixels >= 1024)
             queue_.push_front(key);
         else
             queue_.push_back(key);
@@ -284,11 +284,12 @@ Cover Textures::cover(const std::string &path, float size)
     // sleeve on every retry, before the eventual successful upload.
     const bool missing = it->second.texture == 0 &&
                          (it->second.loaded || it->second.failed_loads != 0);
-    // Shelf (512px) and enlarged/3D jacket (1024px) can request the same
-    // WebP in different buckets. Reuse an already-uploaded sibling until the
-    // requested resolution arrives: no empty-face / late-sticker effect.
-    // All variants are purged together by invalidate(), so no stale artwork.
-    if (it->second.texture == 0 && IsRetailBoxImage(path)) {
+    // An existing Home/Library thumbnail can bridge the transition to a
+    // larger launch jacket or fullscreen hero, and vice versa. The previous
+    // retail-only gate left ordinary hero/icon artwork blank for ~1s despite
+    // its already-uploaded lower-resolution sibling. Path identity is exact;
+    // invalidate() still purges every bucket atomically.
+    if (it->second.texture == 0) {
         const int alternatives[] = {target_pixels / 2, target_pixels * 2,
                                     target_pixels / 4, target_pixels * 4};
         for (const int alternate_size : alternatives) {

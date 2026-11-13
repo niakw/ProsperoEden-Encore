@@ -145,14 +145,19 @@ assert 'constexpr float kCaseInkWidth = 440.0f;' in library
 assert 'flat_composed_ink(c, game, paper, rear);' in library
 assert 'if (painting) reconstructed_cover(c, *painting, r);' in library
 assert 'reconstructed_paper(c, paper);' in library
-assert 'uv.w = target / source;' in library and 'uv.h = source / target;' in library
+retail_sleeve = library.split("void flat_retail_sleeve(", 1)[1].split(
+    "std::string controller_profile_name(", 1)[0]
+assert "uv.w = target / source;" not in retail_sleeve
+assert "uv.h = source / target;" not in retail_sleeve
+assert retail_sleeve.count("c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f},") == 2
 assert 'const float opening_x = rear ? shell.x : shell.x + shell.w - side;' in library
 assert 'c.list.gradient_rect({shell.x, shell.y, shell.w, top}' in library
 assert 'c.list.gradient_rect({shell.x, shell.y + shell.h - top,' in library
 assert 'const float side = shell.w * (7.0f / 454.0f);' in library
 assert 'c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f},' in library
 assert 'fitted.x += paper.w - fitted.w;' in library
-assert 'c.list.image(artwork.texture, paper, uv,' in library
+assert "c.list.image(artwork.texture, paper, uv," not in retail_sleeve
+assert "fitted.x += (paper.w - fitted.w) * 0.5f;" in retail_sleeve
 assert 'if (artwork.texture != 0) {' in library
 assert 'flat_retail_sleeve(c, game, sleeve, false, 0.24f);' in library
 assert 'flat_retail_sleeve(c, *game, art, true, 0.60f);' in library
@@ -384,10 +389,12 @@ assert 'folder_info_.firmware_ready?tr("Firmware ready")' in read('headless/pros
 # A single source replacement must invalidate all texture-size variants.
 retail_textures = read('headless/prosperoeden/pe/ui/textures.cpp')
 assert 'bool IsRetailBoxImage(std::string_view path)' in retail_textures
-assert 'IsRetailBoxImage(path) && target_pixels >= 1024' in retail_textures
+assert retail_textures.count('IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||') == 2
+assert retail_textures.count('target_pixels >= 1024)') >= 2
 assert 'sibling->second.used = frame_' in retail_textures
 assert 'covers_.find(path + ' in retail_textures
-assert 'it->second.texture == 0 && IsRetailBoxImage(path)' in retail_textures
+assert 'if (it->second.texture == 0) {' in retail_textures
+assert 'const int alternatives[] = {target_pixels / 2, target_pixels * 2,' in retail_textures
 assert 'if (it->second.path == path)' in retail_textures
 
 

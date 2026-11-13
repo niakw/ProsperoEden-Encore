@@ -304,6 +304,30 @@ r23_raster = next(item for item in r23_m07["files"]
 def m07_source_blob(value):
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+# The selected vendor added the reviewed FC27 teardown UAF fix AFTER R23.
+# Strip ONLY its exact destructor hunk in memory before comparing the
+# historical R23 source hash. Never rewrite the frozen R23/MSAA receipts.
+post_query_revoke = (
+    "RasterizerVulkan::~RasterizerVulkan() {\n"
+    "    // QueryCache has a shorter lifetime than BufferCache. BufferCache::~\n"
+    "    // triggers a final scheduler.Finish() AFTER QueryCache is destroyed.\n"
+    "    // Drain outstanding queries while alive, then revoke the borrowed pointer\n"
+    "    // to prevent the shutdown path from reading freed QueryCache storage.\n"
+    "    scheduler.WaitWorker();\n"
+    "    scheduler.Finish();\n"
+    "    scheduler.ClearQueryCache();\n"
+    "}\n"
+)
+pre_query_revoke = (
+    "RasterizerVulkan::~RasterizerVulkan() {\n"
+    "    scheduler.WaitWorker();\n"
+    "    scheduler.Finish();\n"
+    "}\n"
+)
+assert original_m07.count(post_query_revoke) == 1, (
+    "FC27 teardown lifetime guard missing/moved; do not silently bypass")
+original_m07 = original_m07.replace(post_query_revoke, pre_query_revoke, 1)
+print("ENCORE_M07_QUERYCACHE_TEARDOWN_REVERSIBLE_PASS")
 assert m07_source_blob(original_m07) == r23_raster["post_r23_blob"], (
     "Unreviewed R23 renderer source in M07")
 for reverse_hunk in reversed(r23_raster["patches"]):

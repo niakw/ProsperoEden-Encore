@@ -90,17 +90,17 @@ int selected_theme(const Preferences& p) {
 }
 const char* theme_name(int value) {
     static constexpr const char* names[] = {
-        "Encore Neon", "Switch", "Encore Non-Neon", "Encore Dark", "Encore Light"};
-    return names[std::clamp(value, 0, 4)];
+        TR("Encore Neon"), TR("Switch"), TR("Encore Non-Neon"), TR("Encore Dark"), TR("Encore Light")};
+    return tr(names[std::clamp(value, 0, 4)]);
 }
 const char* logo_name(int value) {
-    static constexpr const char* names[] = {"Automatic", "Neon", "Non-Neon", "White", "Dark"};
-    return names[std::clamp(value, 0, 4)];
+    static constexpr const char* names[] = {TR("Automatic"), TR("Neon"), TR("Non-Neon"), TR("White"), TR("Dark")};
+    return tr(names[std::clamp(value, 0, 4)]);
 }
 const char* background_name(int value) {
     static constexpr const char* names[] = {
-        "Theme default", "Encore artwork", "Solid color", "Gradient", "Local image", "Daily Switch"};
-    return names[std::clamp(value, 0, 5)];
+        TR("Theme default"), TR("Encore artwork"), TR("Solid color"), TR("Gradient"), TR("Local image"), TR("Daily Switch")};
+    return tr(names[std::clamp(value, 0, 5)]);
 }
 std::string color_hex(std::uint32_t value) {
     char out[8]{};
@@ -940,7 +940,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     text_shrink(c, modal == Modal::video
                     ? tr(TR("Choose a setting; its effect is explained below."))
                     : copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall),
-                theme::kSmall, Color::rgb(0xc5c1d2), 736.0f);
+                theme::kSmall, theme::kCopy, 736.0f);
 
     const int rows = dialog_rows(modal);
     // Video's rows scroll in a window of five; the other dialogs show all of theirs.
@@ -1097,8 +1097,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     {
         const std::string values[kAppearanceRows] = {
             theme_name(selected_theme(prefs_)), logo_name(prefs_.logo_choice),
-            std::vector<std::string>{"Original", "Ocean", "Emerald", "Amber", "Rose"}[
-                std::clamp(prefs_.accent_color, 0, 4)],
+            tr(std::vector<std::string>{TR("Original"), TR("Ocean"), TR("Emerald"), TR("Amber"), TR("Rose")}[
+                std::clamp(prefs_.accent_color, 0, 4)]),
             background_name(prefs_.background_style),
             prefs_.wallpaper_file.empty() ? tr("None") : prefs_.wallpaper_file,
             color_hex(prefs_.background_color),

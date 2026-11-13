@@ -127,10 +127,13 @@ inline void apply_palette(int palette, int accent)
         kFocusBlue = Color::rgb(0x216ba6); kSun = Color::rgb(0x20526b);
         kBlue = Color::rgb(0x1c5982); kAccentTeal = Color::rgb(0x12516f);
         kText = Color::rgb(0x16202c); kTitle = Color::rgb(0x101820);
-        kValue = Color::rgb(0x172532); kBody = Color::rgb(0x30404f);
-        kCopy = Color::rgb(0x435363); kMeta = Color::rgb(0x526372);
-        kLabel = Color::rgb(0x394b5c); kMuted = Color::rgb(0x45586a);
-        kFaint = Color::rgb(0x405364); kWarning = Color::rgb(0xa52a2a);
+        // Small metadata is drawn against translucent white panels and the
+        // pale focused row. The earlier blue-gray inks faded badly on TV.
+        // Prefer dark slate copy rather than low-contrast muted accents.
+        kValue = Color::rgb(0x172532); kBody = Color::rgb(0x253645);
+        kCopy = Color::rgb(0x293b4b); kMeta = Color::rgb(0x2e4050);
+        kLabel = Color::rgb(0x28394a); kMuted = Color::rgb(0x324354);
+        kFaint = Color::rgb(0x334554); kWarning = Color::rgb(0xa52a2a);
         kRule = Color::rgb(0xc4ced8);
     }
     if (accent > 0 && accent <= 4) {

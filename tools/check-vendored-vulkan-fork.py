@@ -457,7 +457,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     if r2_production:
         r2_scheduler_pre_msaa = {
             'include/video_core/renderer_vulkan/vk_scheduler.h': (
-                '460b5d95453cb974eefff10c4af76c5b318e685f',
+                '0d07f85c09d4ef0a420ce93f36ce5beb61365be1',
                 [
                     ('#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\\n'
                      '    // An owner-thread observation', '#endif\\n\\n'),
@@ -477,6 +477,20 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 ['git', 'hash-object', str(expected[name])],
                 text=True).strip()
             assert observed == sha, ('R2 real scheduler source changed', name)
+            # R457 FC27: require the exact, reviewed borrowed-pointer
+            # release method on the ACTIVE header, then remove ONLY it from
+            # the historical generator's equivalence comparison. A missing
+            # destructor teardown remains a separate mandatory host gate.
+            if name == 'include/video_core/renderer_vulkan/vk_scheduler.h':
+                begin = '    // Rasterizer query cache is destroyed before the buffer cache.'
+                after = '    // Registers a callback to perform on queue submission.'
+                assert source.count(begin) == 1 and source.count(after) == 1
+                first_at = source.index(begin)
+                last_at = source.index(after, first_at)
+                released = source[first_at:last_at]
+                assert released.count('void ClearQueryCache() noexcept') == 1
+                assert released.count('query_cache = nullptr;') == 1
+                source = source[:first_at] + source[last_at:]
             for first, last in edits:
                 start = first.replace('\\n', '\n')
                 stop = last.replace('\\n', '\n')
@@ -488,6 +502,26 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             normalized.parent.mkdir(parents=True, exist_ok=True)
             normalized.write_text(source)
             normalized_expected[name] = normalized
+    # FC27 shutdown fix: prove the production rasterizer revokes its
+    # non-owning QueryCache pointer after draining, then compare the rest of
+    # the renderer against the exact pinned source-generation baseline.
+    raster_name = 'vulkan_rasterizer.cpp'
+    raster_source = expected[raster_name].read_text()
+    begin = 'RasterizerVulkan::~RasterizerVulkan() {'
+    assert raster_source.count(begin) == 1
+    old_body = '''RasterizerVulkan::~RasterizerVulkan() {
+    scheduler.WaitWorker();
+    scheduler.Finish();
+}'''
+    end = raster_source.index('}', raster_source.index(begin)) + 1
+    new_body = raster_source[raster_source.index(begin):end]
+    assert new_body.count('scheduler.ClearQueryCache();') == 1
+    assert new_body.index('scheduler.Finish();') < new_body.index('scheduler.ClearQueryCache();')
+    normalized_raster = raster_source.replace(new_body, old_body)
+    normalized_path = temp/'normalized-vendor-fc27-teardown'/raster_name
+    normalized_path.parent.mkdir(parents=True, exist_ok=True)
+    normalized_path.write_text(normalized_raster)
+    normalized_expected[raster_name] = normalized_path
     hname = 'include/video_core/vulkan_common/vulkan_wrapper.h'
     cname = 'vulkan_wrapper.cpp'
     # N66: keep the production generator deterministic. The one additive
@@ -702,6 +736,25 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 assert git_blob_sha(text) == '6efe1b10862135056c1df1b78007a1c9cb5a9610', (
                     'Unreviewed post-warning Vulkan source', name)
             text = text.replace(ordered, prior, 1)
+        # FC27 crash-owner fix postdates the immutable R23 source receipt.
+        # Verify the exact destructor and normalize ONLY its borrowed-pointer
+        # revocation before reversing historical Vulkan source patches.
+        if name == 'vulkan_rasterizer.cpp':
+            marker = 'RasterizerVulkan::~RasterizerVulkan() {'
+            assert text.count(marker) == 1
+            a = text.index(marker)
+            z = text.index('}', a) + 1
+            body = text[a:z]
+            prior = (marker + '\n'
+                     '    scheduler.WaitWorker();\n'
+                     '    scheduler.Finish();\n'
+                     '}')
+            if body != prior:
+                assert body.count('scheduler.ClearQueryCache();') == 1
+                assert body.index('scheduler.WaitWorker();') < body.index(
+                    'scheduler.Finish();') < body.index('scheduler.ClearQueryCache();')
+                assert 'buffer cache' in body.lower() or 'query' in body.lower()
+                text = text[:a] + prior + text[z:]
         if verify_hash:
             assert git_blob_sha(text) == receipt['post_r23_blob'], (
                 'Unreviewed R23 merged native source', name)
@@ -798,7 +851,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'vulkan_device.cpp':
             '50578df547b769bd45cf4964ffa3f793c1749273',
         'vulkan_rasterizer.cpp':
-            '2530e3754435175810cbf24cb20446e177d1f19f',
+            '5b04321fa45d6b5e6af1d4b17bcf695348d0dd90',
     }
     r23_required_semantics = {
         'include/video_core/renderer_vulkan/vk_graphics_pipeline.h':
@@ -824,6 +877,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             'Unreviewed merged R23 Vulkan source bytes', name)
         assert all(token in combined for token in r23_required_semantics[name]), (
             'Missing merged R23 shader/Vulkan ABI semantic', name)
+    # The FC27 teardown is independently source-qualified before the
+    # historical combined Vulkan blob is accepted. QueryCache is destroyed
+    # ahead of BufferCache: the scheduler must not retain the borrowed owner.
+    destructor = expected['vulkan_rasterizer.cpp'].read_text().split(
+        'RasterizerVulkan::~RasterizerVulkan() {', 1)[1].split('}', 1)[0]
+    assert destructor.count('scheduler.ClearQueryCache();') == 1
+    assert destructor.index('scheduler.WaitWorker();') < destructor.index('scheduler.Finish();') < destructor.index('scheduler.ClearQueryCache();')
     print("ENCORE_R23_COMBINED_VULKAN_BLOB_PASS",
           f"reviewed_owners={len(r23_combined_owners)}",
           "historical_P24_reverse_receipt=1")

@@ -808,7 +808,11 @@ void RendererVulkan::PresentLoading() {
         // animating the scene every loading frame until guest handoff.
         Eden::HudSnapshot live_loading = Eden::GetVulkanHud();
         if (live_loading.loading != 0u && live_loading.width != 0u) {
-            live_loading.loading |= 0x80000000u;
+            // Leave elapsed loading milliseconds untouched: the shipped HUD
+            // SPIR-V is byte-pinned to the vendor. Mark only the overlay
+            // presentation width, which the fragment shader does not read
+            // when loading. WindowAdaptPass clips the SAME animated scene.
+            live_loading.width |= 0x80000000u;
             blit_swapchain.DrawHudOverlay(device, frame, live_loading);
         }
     }

@@ -121,6 +121,7 @@ jobs:
           python3 -B tools/check-python-source-syntax.py
           python3 -B tools/check-encore-ncz-sources.py
           python3 -B tools/check-exefs-directory-host.py
+          python3 -B tools/check-ps5-extracted-size-native-owner-host.py
           python3 -B tools/check-ns2-extracted-inputs-host.py
           python3 -B tools/ns2/check_ns2_package_pre_kernel_npdm_host.py
           python3 -B tools/check-ns2-shipping-exefs-owner.py

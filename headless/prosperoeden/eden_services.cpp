@@ -42,6 +42,7 @@
 #include <array>
 #include <chrono>
 #include <cctype>
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -135,50 +136,100 @@ bool IsDecodableAvatarFile(const std::string& path) {
 // follow symlinks, block on network media, or guess if traversal is incomplete.
 // The entire walk runs on the cancellable Library background scan.
 std::optional<std::uint64_t> ExtractedBaseBytes(const std::filesystem::path& title,
-                                                const std::atomic<bool>* cancel) {
+                                                 const std::atomic<bool>* cancel) {
     namespace fs = std::filesystem;
-    std::error_code error;
-    if (!Eden::IsSafeExtractedDirectory(title)) return std::nullopt;
-    fs::recursive_directory_iterator it(title, fs::directory_options::skip_permission_denied, error);
-    if (error) return std::nullopt;
-    const fs::recursive_directory_iterator end;
+    const auto fail = [&](const char* reason, const fs::path& where, int code,
+                          std::size_t examined) -> std::optional<std::uint64_t> {
+        // Never expose a full user's filesystem path or log once per entry.
+        const std::string name = where.filename().string();
+        std::fprintf(stderr,
+            "EDEN_EXEFS_SIZE_SCAN_FAIL title=%.64s entry=%.64s reason=%s error=%d entries=%zu\n",
+            title.filename().string().c_str(), name.c_str(), reason, code, examined);
+        return std::nullopt;
+    };
+    if (!Eden::IsSafeExtractedDirectory(title))
+        return fail("root_not_safe", title, 0, 0);
     std::uint64_t total = 0;
     std::size_t examined = 0;
-    // Real extracted RomFS trees may exceed 40,000 files and 16 nested
-    // directories. The previous arbitrary caps misreported both MKW and
-    // Bananza as size unknown even though their ExeFS/main was readable.
-    // Still bound a damaged/adversarial tree; this scan is cancellable and
-    // runs only on the Library background worker, never in the draw loop.
+    // Real extracted RomFS trees may exceed 40,000 files and 16 levels.
+    // Never call this from the drawing thread; cancellation is checked on
+    // the Library worker between entries and directories.
     constexpr std::size_t kMaxExtractedFiles = 1000000;
     constexpr int kMaxExtractedDepth = 64;
+#if defined(PS5_NATIVE)
+    // PS5 mounted filesystems need the same 64KiB sceKernelGetdents reader
+    // already used by the top-level Library scan. The libc-backed C++
+    // recursive iterator may fail to enumerate nested game directories even
+    // though roms/<title>/main was found through the native reader.
+    struct PendingDirectory { fs::path path; int depth; };
+    std::vector<PendingDirectory> pending{{title, 0}};
+    while (!pending.empty()) {
+        if (cancel && cancel->load(std::memory_order_acquire)) return std::nullopt;
+        auto current = std::move(pending.back());
+        pending.pop_back();
+        std::error_code listing_error;
+        const auto children = Eden::ReadNativeDirectory(current.path, listing_error);
+        if (listing_error)
+            return fail("getdents", current.path, listing_error.value(), examined);
+        for (const auto& entry : children) {
+            if (cancel && cancel->load(std::memory_order_acquire)) return std::nullopt;
+            if (++examined > kMaxExtractedFiles)
+                return fail("entry_limit", entry.path(), 0, examined);
+            struct stat info {};
+            if (::lstat(entry.path().c_str(), &info) != 0)
+                return fail("lstat", entry.path(), errno, examined);
+            if (S_ISLNK(info.st_mode)) continue;
+            if (S_ISDIR(info.st_mode)) {
+                // Updates/DLC never contribute to the base-game size.
+                if (Eden::IsReservedAddOnPackageStem(entry.path().filename().string())) continue;
+                if (current.depth >= kMaxExtractedDepth)
+                    return fail("depth_limit", entry.path(), 0, examined);
+                pending.push_back({entry.path(), current.depth + 1});
+                continue;
+            }
+            if (!S_ISREG(info.st_mode)) continue;
+            if (info.st_size < 0)
+                return fail("negative_size", entry.path(), 0, examined);
+            const auto bytes = static_cast<std::uint64_t>(info.st_size);
+            if (bytes > UINT64_MAX - total)
+                return fail("overflow", entry.path(), 0, examined);
+            total += bytes;
+        }
+    }
+#else
+    std::error_code error;
+    fs::recursive_directory_iterator it(title, fs::directory_options::skip_permission_denied, error);
+    if (error) return fail("iterator_init", title, error.value(), examined);
+    const fs::recursive_directory_iterator end;
     for (; it != end; it.increment(error)) {
         if (error || ++examined > kMaxExtractedFiles ||
             it.depth() > kMaxExtractedDepth ||
             (cancel && cancel->load(std::memory_order_acquire))) {
-            if (!(cancel && cancel->load(std::memory_order_acquire)))
-                std::fprintf(stderr,
-                    "EDEN_EXEFS_SIZE_SCAN_FAIL path=%s entries=%zu depth=%d error=%d\n",
-                    title.filename().string().c_str(), examined,
-                    it != end ? it.depth() : -1, error.value());
-            return std::nullopt;
+            if (cancel && cancel->load(std::memory_order_acquire)) return std::nullopt;
+            return fail(error ? "iterator_next" : examined > kMaxExtractedFiles ?
+                        "entry_limit" : "depth_limit",
+                        it != end ? it->path() : title, error.value(), examined);
         }
         const auto status = it->symlink_status(error);
-        if (error) return std::nullopt;
+        if (error) return fail("symlink_status", it->path(), error.value(), examined);
         if (fs::is_symlink(status)) {
             it.disable_recursion_pending();
             continue;
         }
         if (fs::is_directory(status)) {
-            if (Eden::IsAddOnContainerName(it->path().filename().string()))
+            if (Eden::IsReservedAddOnPackageStem(it->path().filename().string()))
                 it.disable_recursion_pending();
             continue;
         }
         if (!fs::is_regular_file(status)) continue;
-        const auto size = it->file_size(error);
-        if (error || size > UINT64_MAX - total) return std::nullopt;
-        total += static_cast<std::uint64_t>(size);
+        const auto bytes = it->file_size(error);
+        if (error) return fail("file_size", it->path(), error.value(), examined);
+        if (bytes > UINT64_MAX - total)
+            return fail("overflow", it->path(), 0, examined);
+        total += static_cast<std::uint64_t>(bytes);
     }
-    if (error) return std::nullopt;
+    if (error) return fail("iterator_finish", title, error.value(), examined);
+#endif
     return total > 0 ? std::optional<std::uint64_t>{total} : std::nullopt;
 }
 

@@ -75,7 +75,7 @@ enum AppearanceRow {
     app_theme, app_logo, app_accent, app_background, app_image,
     app_color_a, app_a_red, app_a_green, app_a_blue,
     app_color_b, app_b_red, app_b_green, app_b_blue,
-    app_glow, app_glow_strength, app_overlay,
+    app_glow, app_glow_strength, app_overlay, app_panel_opacity,
     app_animate, app_fit, app_game_background, app_reset, kAppearanceRows
 };
 constexpr std::array<std::uint32_t, 12> kColorSwatches = {
@@ -793,6 +793,9 @@ void Launcher::press_dialog(Key key)
         case app_overlay:
             prefs_.background_overlay = std::clamp(prefs_.background_overlay + step * 10, 0, 80);
             sound = Cue::slider; break;
+        case app_panel_opacity:
+            prefs_.panel_opacity = std::clamp(prefs_.panel_opacity + step * 5, 0, 100);
+            sound = Cue::slider; break;
         case app_animate:
             prefs_.background_animate = !prefs_.background_animate; break;
         case app_fit:
@@ -804,7 +807,8 @@ void Launcher::press_dialog(Key key)
             prefs_.accent_color = 0; prefs_.background_style = 0;
             prefs_.glow_enabled = true; prefs_.glow_strength = 100;
             prefs_.background_color = 0x121824u; prefs_.background_color2 = 0x263d59u;
-            prefs_.background_overlay = 20; prefs_.background_animate = true;
+            prefs_.background_overlay = 20; prefs_.panel_opacity = 100;
+            prefs_.background_animate = true;
             prefs_.background_fit = 0; prefs_.show_game_background = true;
             prefs_.wallpaper_file.clear();
             break;
@@ -951,6 +955,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Show or hide the selection glow. It does not affect games."),
             TR("Change the intensity of selection highlights."),
             TR("Darken only the background image. Higher values preserve menu readability."),
+            TR("Change the opacity of launcher cards, panels and boxes from 0 to 100%. High contrast keeps panels opaque for legibility."),
             TR("Allow subtle launcher background motion, or keep it still."),
             TR("Fill crops the wallpaper to the screen; Contain keeps the complete image."),
             TR("Show a selected game's artwork behind its library details."),
@@ -1148,7 +1153,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             std::to_string(rgb_channel(prefs_.background_color2, 1)),
             std::to_string(rgb_channel(prefs_.background_color2, 2)),
             on_off(prefs_.glow_enabled), percent(prefs_.glow_strength),
-            percent(prefs_.background_overlay), on_off(prefs_.background_animate),
+            percent(prefs_.background_overlay), percent(prefs_.panel_opacity),
+            on_off(prefs_.background_animate),
             prefs_.background_fit ? tr("Contain") : tr("Fill"),
             on_off(prefs_.show_game_background), tr("Restore Neon")
         };
@@ -1158,7 +1164,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
             TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
             TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
-            TR("Background motion"), TR("Image scaling"), TR("Game background"),
+            TR("Panel opacity"), TR("Background motion"), TR("Image scaling"), TR("Game background"),
             TR("Reset appearance")
         };
         for (int row = first; row <= last; ++row) {
@@ -1309,7 +1315,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
             TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
             TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
-            TR("Background motion"), TR("Image scaling"),
+            TR("Panel opacity"), TR("Background motion"), TR("Image scaling"),
             TR("Game background"), TR("Reset appearance")
         };
         const bool appearance = modal == Modal::appearance;

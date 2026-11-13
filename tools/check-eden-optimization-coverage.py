@@ -1328,6 +1328,22 @@ assert "MakeSilentAudioInSamples(samples)" in audio_current
 assert "NullSinkStreamImpl" not in audio_current
 assert "tools/audit/check-ab-ns1-guest-release-host.py" in tracked
 print("C00_POST_F07_REAL_AUDIO_SINK_SUCCESSOR_PASS legacy_f07_preserved=1 exact_blob=1")
+# The Nov13 scene-4/5 choice is one exact, reversible launcher change;
+# it is NOT a retroactive change to the frozen F07 reviewed source ledger.
+scene_path = "headless/prosperoeden/pe/ui/case_media_selection.hpp"
+assert scene_path in drift_index and scene_path not in post_index
+scene_drift = drift_index.pop(scene_path)
+assert scene_drift["expected"] == "f4897989b5736bf48401cf5e2201a8af9a59ef03"
+assert scene_drift["actual"] == "ef73ba928089086c1cc79a226a2c0678a8f8a109"
+scene_current = (ROOT / scene_path).read_text()
+scene_added = "            const auto role = image[role_at];\n            if (role < '1' || role > '5' ||\n                image == cover || is_front(image) || !usable(image))\n                continue;\n            // Scenes 1-3 own dedicated panels. Extra independent LaunchBox\n            // gameplay shots (4-5) are real fallback material; the old\n            // selector silently discarded them, leaving a two-shot back.\n            if (role <= '3') {\n                const auto category = static_cast<std::size_t>(role - '1');\n                if (!selected[category] &&\n                    image.compare(marker, kSceneMarkers[category].size(),\n                                  kSceneMarkers[category]) == 0)\n                    selected[category] = &image;\n                continue;\n            }\n            bool seen = false;\n            for (const auto* prior : fallback) {\n                if (prior && *prior == image) seen = true;\n            }\n            if (!seen) {\n                for (auto& slot : fallback) {\n                    if (!slot) { slot = &image; break; }\n                }\n            }\n            continue;\n"
+scene_prior = "            const auto role = image[role_at];\n            if (role < '1' || role > '3') continue;\n            const auto category = static_cast<std::size_t>(role - '1');\n            if (selected[category] ||\n                image.compare(marker, kSceneMarkers[category].size(),\n                              kSceneMarkers[category]) != 0 ||\n                image == cover || is_front(image) || !usable(image))\n                continue;\n            selected[category] = &image;\n            continue;\n"
+assert scene_current.count(scene_added) == 1
+assert "if (role < '1' || role > '5'" in scene_added
+assert "for (auto& slot : fallback)" in scene_added
+scene_baseline = scene_current.replace(scene_added, scene_prior, 1).encode()
+assert hashlib.sha1(b"blob " + str(len(scene_baseline)).encode() + bytes([0]) + scene_baseline).hexdigest() == scene_drift["expected"]
+print("NOV13_GAMEPLAY_SCENE_4_5_REVERSIBLE_PASS historical_F07_preserved=1")
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

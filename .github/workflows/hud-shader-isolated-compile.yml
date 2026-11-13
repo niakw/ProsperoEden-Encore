@@ -4,6 +4,7 @@ on:
     paths:
       - 'headless/vulkan_hud.frag'
       - 'headless/vulkan_renderer_r08.cpp'
+      - 'headless/vulkan_window_adapt_r08.cpp'
       - 'tools/check-ps5-unified-dynamic-loading-host.py'
       - '.github/workflows/hud-shader-isolated-compile.yml'
   workflow_dispatch:

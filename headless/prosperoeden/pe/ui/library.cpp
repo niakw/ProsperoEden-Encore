@@ -2291,9 +2291,18 @@ void Launcher::press_game(Key key)
     // 120 Hz is a request: the display has the last word.
     const bool fast = saved && option_ == row_refresh &&
                       (game_settings_.refresh >= 0 ? game_settings_.refresh : prefs_.refresh) == 1;
-    say(fast ? tr("Saved. A display that cannot show 120 Hz stays at 60 Hz.") :
-        saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
-        !saved);
+    if (!saved) {
+        say(tr("Could not save. Please try again."), true);
+    } else if (fast) {
+        // 120 Hz is conditional on physical TV support: this warning is
+        // important enough to temporarily replace the selected-row guide.
+        say(tr("Saved. A display that cannot show 120 Hz stays at 60 Hz."));
+    } else {
+        // Keep the actual option-specific DrawVideoGuide visible after save.
+        // The old generic success toast masked the upscaler/AA/resolution
+        // explanation every time the player changed a setting.
+        message_.clear();
+    }
     cue(saved ? Cue::toggle : Cue::error);
 }
 

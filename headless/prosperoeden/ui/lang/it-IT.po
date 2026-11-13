@@ -2369,3 +2369,75 @@ msgstr "Ukrainian"
 #: settings_store.h
 msgid "Vietnamese"
 msgstr "Vietnamese"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Neon"
+msgstr "Encore Neon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Non-Neon"
+msgstr "Encore Non-Neon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Dark"
+msgstr "Encore Dark"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore Light"
+msgstr "Encore Light"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Neon"
+msgstr "Neon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Non-Neon"
+msgstr "Non-Neon"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "White"
+msgstr "White"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Dark"
+msgstr "Dark"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Theme default"
+msgstr "Theme default"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Encore artwork"
+msgstr "Encore artwork"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Solid color"
+msgstr "Solid color"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Gradient"
+msgstr "Gradient"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Daily Switch"
+msgstr "Daily Switch"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Original"
+msgstr "Original"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Ocean"
+msgstr "Ocean"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Emerald"
+msgstr "Emerald"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Amber"
+msgstr "Amber"
+
+#: pe/ui/settings.cpp pe/ui/switch_theme.cpp
+msgid "Rose"
+msgstr "Rose"

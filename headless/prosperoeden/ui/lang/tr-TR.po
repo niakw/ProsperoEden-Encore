@@ -51,10 +51,6 @@ msgstr "60 Hz önerilir. 120 Hz yalnızca görüntüleme modunu değiştirir; Oy
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz güvenli varsayılandır. 120 Hz'yi yalnızca uyumlu bir ekran veya yüksek FPS yamasıyla kullanın."
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "%8 tavsiye edilir. Çubuk sürüklenmesi için artırın; Daha hassas hedefleme için bunu azaltın."
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Bir firmware NCA dosyası okunamıyor. Firmware dökümünü yeniden yükleyin."
@@ -325,10 +321,6 @@ msgstr "Seç"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "Kütüphanenizden bir oyun seçin."
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "Tema · Logo · Arka plan · Parıltı (Oyun: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "Oyna"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "PlayStation'ı"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto, oynanışı fiziksel Anahtar konumlarına uyarlarken Çapraz/Çember menü semantiğini koruyor. Anahtar sabit kalır; herhangi bir düğmeyi düzenlemek özel bir profil oluşturur."
 
 #: settings_store.h
 msgid "Polish"

@@ -966,6 +966,7 @@ void Launcher::sync_home_game(const Game& game)
         home_.last_mods = game.mods;
         home_.last_mods_on = game.mods_on;
         home_.last_title = game.name;
+        if (!game.cover.empty()) home_.last_cover = game.cover;
         if (!game.hero.empty()) home_.last_hero = game.hero;
         if (!game.screenshots.empty()) home_.last_screenshot = game.screenshots.front();
         if (!game.intro.empty()) home_.last_intro = game.intro;
@@ -976,6 +977,10 @@ void Launcher::sync_home_game(const Game& game)
         if (recent.file == game.file)
         {
             recent.title = game.name;
+            if (!game.cover.empty()) recent.cover = game.cover;
+            if (game.title_id != 0) recent.title_id = game.title_id;
+            if (!game.addons.empty()) recent.addons = game.addons;
+            if (!game.language.empty()) recent.language = game.language;
             if (!game.hero.empty()) recent.hero = game.hero;
             if (!game.screenshots.empty()) recent.screenshot = game.screenshots.front();
             if (!game.intro.empty()) recent.intro = game.intro;
@@ -986,6 +991,33 @@ void Launcher::sync_home_game(const Game& game)
 
 void Launcher::name_home_games()
 {
+    // The service puts actual play history first. A newly mounted ROM may
+    // arrive after that lightweight Home snapshot; fill empty tiles from the
+    // now-complete Library catalog without pretending those titles were played.
+    // Both themes consume this same bounded rail (7 classic / 6 Switch).
+    if (home_.setup_ready && home_.recents.size() < 7) {
+        for (const Game& game : games_) {
+            if (home_.recents.size() >= 7) break;
+            if (game.file.empty() ||
+                std::any_of(home_.recents.begin(), home_.recents.end(),
+                    [&](const Recent& recent) { return recent.file == game.file; }))
+                continue;
+            Recent recent;
+            recent.file = game.file;
+            recent.title = game.name;
+            recent.title_id = game.title_id;
+            recent.cover = !game.cover.empty() ? game.cover : game.box_front;
+            recent.hero = game.hero;
+            recent.screenshot = game.screenshots.empty() ? std::string{} :
+                                game.screenshots.front();
+            recent.max_players = game.max_players;
+            recent.intro = game.intro;
+            recent.description = game.description;
+            recent.addons = game.addons;
+            recent.language = game.language;
+            home_.recents.push_back(std::move(recent));
+        }
+    }
     // One complete pass only after the native ROM-list scan changes.
     for (const Game& game : games_)
         sync_home_game(game);
@@ -1071,6 +1103,9 @@ void Launcher::finish_home_scan()
                 home_.recents[static_cast<std::size_t>(home_recent_)].file : std::string{};
         home_ = std::move(snapshot);
         home_loaded_ = true;
+        // Reconcile the completed ROM catalog with the Home snapshot even when
+        // the two independent workers finish in the opposite order.
+        if (games_loaded_) name_home_games();
         if (!previous_file.empty()) {
             const auto recent = std::find_if(home_.recents.begin(), home_.recents.end(),
                 [&](const Recent& entry) { return entry.file == previous_file; });
@@ -1079,6 +1114,10 @@ void Launcher::finish_home_scan()
         } else {
             home_recent_ = -1;
         }
+        // A fresh install has no "last played" hero. Preview its first real
+        // installed title instead; never write it to persisted MRU history.
+        if (initial && !home_.last_exists && !home_.recents.empty())
+            home_recent_ = 0;
         if (!initial && home_focus_ >= 5 && home_focus_ <= 11) {
             // The recent list may reorder while its metadata worker runs.
             // Keep focus on the same game by filename, never on a stale

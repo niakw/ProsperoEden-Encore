@@ -54,30 +54,11 @@ void main() {
     bool warning_row = quick && kind == 4u;
     bool menu_row = quick && (kind == 2u || kind == 3u || warning_row);
     if (text.loading != 0u && !menu_row) {
-        // One animated loader is shared by the first Vulkan frame and the
-        // jacket handoff. Bit 31 selects transparent compositing over the
-        // retained jacket; the remaining bits still encode elapsed millis.
-        // Normal loading, guest FPS HUD and quick-menu tags are unchanged.
-        bool jacket_handoff = !quick && (text.loading & 0x80000000u) != 0u;
-        uint elapsed_ms = text.loading & 0x7fffffffu;
-        vec2 size = max(vec2(float(text.x), float(text.y)), vec2(1.0));
-        vec2 p = vec2(gl_FragCoord.x, size.y - gl_FragCoord.y);
-        float seconds = float(max(elapsed_ms, 1u) - 1u) * 0.001;
-        vec3 scene = loading_scene(p, size, seconds);
-        if (jacket_handoff) {
-            // The original 3D jacket remains fully legible while the exact
-            // same time-driven scene stays alive as a soft animated accent.
-            // A moving lower-edge glint makes a frozen copy impossible.
-            vec2 uv = p / size;
-            float sweep = fract(seconds * 0.14);
-            float distance_to_glint = abs(uv.x - sweep);
-            float glint = 1.0 - smoothstep(0.018, 0.07, distance_to_glint);
-            float lower_band = smoothstep(0.75, 0.86, uv.y) *
-                               (1.0 - smoothstep(0.96, 0.995, uv.y));
-            color = vec4(scene, 0.10 + glint * lower_band * 0.62);
-        } else {
-            color = vec4(scene, 1.0);
-        }
+        // The loading screen: x and y carry the picture's size, loading the milliseconds since
+        // it began (plus one). Vulkan counts rows from the top.
+        vec2 size = vec2(float(text.x), float(text.y));
+        color = vec4(loading_scene(vec2(gl_FragCoord.x, size.y - gl_FragCoord.y), size,
+                                   float(text.loading - 1u) * 0.001), 1.0);
         return;
     }
     // The overlay: x and y are where its text starts, width the picture's height. The text is

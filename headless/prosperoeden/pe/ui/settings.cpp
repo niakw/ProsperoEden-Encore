@@ -616,7 +616,7 @@ void Launcher::press_dialog(Key key)
         {
             prefs_.anti_aliasing = CycleQualityRanked(
                 prefs_.anti_aliasing, step, kAntiAliasingQualityOrder, false,
-                [&](int value) { return value != 3 || prefs_.renderer == 1; });
+                [&](int value) { return AntiAliasingOptionSelectable(value, prefs_.renderer); });
             RefreshVideoProfile(prefs_);
         }
         else if (option_ == video_texture_filtering)
@@ -1070,8 +1070,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                         !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
                      (row == video_filter &&
                       !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer)) ||
-                     (row == video_anti_aliasing && prefs_.anti_aliasing >= 3 &&
-                      prefs_.renderer != 1) ||
+                     (row == video_anti_aliasing &&
+                      !AntiAliasingOptionSelectable(prefs_.anti_aliasing, prefs_.renderer)) ||
                      (row == video_frame_generation &&
                       !FrameGenerationSelectable(prefs_.renderer)))
             {
@@ -1276,7 +1276,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             explanation = SharpnessGuide(prefs_.filter,
                 UpscalingFilterSelectable(prefs_.filter,prefs_.renderer));
         else if (selected == video_anti_aliasing)
-            explanation = prefs_.anti_aliasing >= 3 && prefs_.renderer != 1
+            explanation = !AntiAliasingOptionSelectable(prefs_.anti_aliasing, prefs_.renderer)
                 ? FxaaUnsupportedGuide() : AntiAliasingGuide(prefs_.anti_aliasing);
         else if (selected == video_texture_filtering)
             explanation = TextureGuide();
@@ -1292,7 +1292,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
              (!UpscalingSupportsSharpness(prefs_.filter) ||
               !UpscalingFilterSelectable(prefs_.filter,prefs_.renderer))) ||
             (selected == video_anti_aliasing &&
-             prefs_.anti_aliasing >= 3 && prefs_.renderer != 1) ||
+             !AntiAliasingOptionSelectable(prefs_.anti_aliasing, prefs_.renderer)) ||
             (selected == video_frame_generation &&
              (!FrameGenerationSelectable(prefs_.renderer) ||
               prefs_.neural_mode!=Eden::NeuralVideo::kOff)) ||

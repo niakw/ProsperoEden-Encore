@@ -51,10 +51,6 @@ msgstr "60Hzを推奨します。 120 Hz は表示モードのみを変更しま
 msgid "60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."
 msgstr "60 Hz が安全なデフォルトです。 120 Hz は、互換性のあるディスプレイまたは高 FPS パッチでのみ使用してください。"
 
-#: pe/ui/settings.cpp
-msgid "8% is recommended. Increase it for stick drift; decrease it for more sensitive aiming."
-msgstr "8% が推奨されます。スティックドリフトの場合は値を増やします。より敏感に照準を合わせるには、値を減らします。"
-
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "ファームウェアのNCAを読み込めません。ファームウェアを入れ直してください。"
@@ -325,10 +321,6 @@ msgstr "選択"
 #: pe/ui/home.cpp
 msgid "Choose a game from your library."
 msgstr "ライブラリからゲームを選んでください。"
-
-#: pe/ui/settings.cpp
-msgid "Choose a theme, logo, background and focus effects. Games stay unchanged."
-msgstr "テーマ · ロゴ · 背景 · 発光 (ゲーム: —)"
 
 #: pe/ui/browse.cpp
 msgid "Choose one root for keys, firmware, games, updates and mods"
@@ -1278,10 +1270,6 @@ msgstr "プレイ"
 #: pe/ui/library.cpp, pe/ui/mapping.cpp, pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "PlayStation"
 msgstr "プレイステーション"
-
-#: pe/ui/settings.cpp
-msgid "PlayStation Auto keeps Cross/Circle menu semantics while adapting gameplay to physical Switch positions. Switch stays fixed; editing any button creates a custom profile."
-msgstr "PlayStation Auto は、ゲームプレイを物理的なスイッチの位置に適応させながら、クロス/サークル メニューのセマンティクスを維持します。スイッチは固定されたままです。任意のボタンを編集すると、カスタム プロファイルが作成されます。"
 
 #: settings_store.h
 msgid "Polish"

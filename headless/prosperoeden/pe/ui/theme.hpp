@@ -168,6 +168,7 @@ struct Look
     float glow_strength = 1.0f;
     std::uint32_t background_color = 0x121824u, background_color2 = 0x263d59u;
     int background_overlay = 20;
+    float panel_opacity = 1.0f; // not applied to guest graphics
     bool background_animate = true;
     int background_fit = 0;
     std::string wallpaper_path;

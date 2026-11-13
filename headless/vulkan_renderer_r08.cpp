@@ -641,9 +641,19 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 void RendererVulkan::PresentLoading() {
     Frame* frame = present_manager.GetRenderFrame();
     scheduler.RequestOutsideRenderPassOperationContext();
+    // A retained jacket is composed first, then receives the SAME animated
+    // loading scene as a transparent pass. Do not draw an opaque loader under
+    // a jacket only to overwrite it; that was both wasted work and a frozen UI.
+#ifdef PS5_NATIVE
+    const bool jacket_ready = loading_jacket_buffer &&
+        loading_jacket_width == frame->width &&
+        loading_jacket_height == frame->height;
+#else
+    constexpr bool jacket_ready = false;
+#endif
     blit_swapchain.DrawToFrame(device, rasterizer, frame, {},
                               render_window.GetFramebufferLayout(), present_manager.SwapchainImageCount(),
-                              present_manager.SwapchainImageViewFormat(), true);
+                              present_manager.SwapchainImageViewFormat(), !jacket_ready);
 #ifdef PS5_NATIVE
     // Do not consume the screenshot while the swapchain has zero extent.
     // A transient staging failure may retry at most three times; no guest
@@ -786,13 +796,30 @@ void RendererVulkan::PresentLoading() {
                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, copy);
             auto to_present = to_upload;
             to_present.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            to_present.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+            // The next command is a LOAD color-attachment overlay, not just
+            // a presentation read. Make the transfer write visible to both
+            // the overlay's color-attachment read/write and the final present.
+            to_present.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT |
+                                       VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             to_present.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             to_present.newLayout = VK_IMAGE_LAYOUT_GENERAL;
             cmdbuf.PipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
                                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                                    0, to_present);
         });
+        // The preceding transfer restores GENERAL. DrawHudOverlay uses a
+        // LOAD render pass on that same target, preserving the picture and
+        // animating the scene every loading frame until guest handoff.
+        Eden::HudSnapshot live_loading = Eden::GetVulkanHud();
+        if (live_loading.loading != 0u && live_loading.width != 0u) {
+            // Leave elapsed loading milliseconds untouched: the shipped HUD
+            // SPIR-V is byte-pinned to the vendor. Mark only the overlay
+            // presentation width, which the fragment shader does not read
+            // when loading. WindowAdaptPass clips the SAME animated scene.
+            live_loading.width |= 0x80000000u;
+            blit_swapchain.DrawHudOverlay(device, frame, live_loading);
+        }
     }
 #endif
     scheduler.Flush(*frame->render_ready);

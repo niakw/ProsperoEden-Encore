@@ -1078,13 +1078,17 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
         const Rect r{xs[i], i >= 3 ? 40.0f : 44.0f, widths[i], i >= 3 ? 60.0f : 54.0f};
         const bool active = i == active_tab;
         const float focused = i == focus_tab ? tween::clamp01(focus_amount) : 0.0f;
+        // The opacity setting covers navigation cells as well as panels.
+        const float nav_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
+        if (nav_opacity > 0.001f)
+            list.rounded_rect(r, 19.0f, theme::kPanel.with_alpha(nav_opacity));
         if (active)
         {
             list.shadow({r.x - 5.0f, r.y - 5.0f, r.w + 10.0f, r.h + 10.0f},
                         23.0f, 27.0f, theme::kLime.with_alpha(0.29f));
             list.hgradient_rect(r, 19.0f,
-                                Color::rgb(0x301446, 0.73f),
-                                Color::rgb(0x110a21, 0.48f),
+                                Color::rgb(0x301446, nav_opacity),
+                                Color::rgb(0x110a21, nav_opacity),
                                 2.0f, theme::kFocusBlue.with_alpha(0.96f));
             list.bordered_rect({r.x + 2.0f, r.y + 2.0f, r.w - 4.0f, r.h - 4.0f},
                                17.0f, kWhite.with_alpha(0.0f), 0.8f,
@@ -1646,6 +1650,14 @@ void Launcher::draw(gfx::DrawList &list)
     {
         draw_screen(c, screen_);
     }
+    // Wallpaper credits draw before modal scrims. Hide them on Home when
+    // a game's background mode is enabled, since the hero replaces Daily.
+    if (prefs_.ui_theme != 1 && prefs_.background_style == 5 &&
+        (screen_ != Screen::home || !prefs_.show_game_background) &&
+        !cached_daily_wallpaper_.empty() && !cached_daily_wallpaper_caption_.empty())
+        text_shrink(c, cached_daily_wallpaper_caption_, 108.0f,
+                    baseline(1026.0f, 35.0f, 16.0f), 16.0f,
+                    theme::kCopy, 1540.0f);
     if (modal_shown_ != Modal::none)
     {
         const float opened = tween::clamp01(modal_open_.value);
@@ -1669,16 +1681,6 @@ void Launcher::draw(gfx::DrawList &list)
     list.pop_transform();
     if (launching)
         draw_launch(c);
-
-    // A daily wallpaper's verified title, system-locale release date and
-    // original provider credit belong under the controller legends, not only
-    // in Appearance's help card. Never invent attribution for a missing receipt
-    // or display a credit when a different wallpaper is active.
-    if (prefs_.ui_theme != 1 && prefs_.background_style == 5 &&
-        !cached_daily_wallpaper_.empty() && !cached_daily_wallpaper_caption_.empty())
-        text_shrink(c, cached_daily_wallpaper_caption_, 108.0f,
-                    baseline(1026.0f, 35.0f, 16.0f), 16.0f,
-                    theme::kCopy, 1540.0f);
 
     // The launcher arrives out of the dark.
     const float arrival = 1.0f - tween::cubic_out(intro_ / (first_start_ ? 0.7f : 0.45f));

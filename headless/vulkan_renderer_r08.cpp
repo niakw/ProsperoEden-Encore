@@ -796,7 +796,12 @@ void RendererVulkan::PresentLoading() {
                                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, copy);
             auto to_present = to_upload;
             to_present.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            to_present.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+            // The next command is a LOAD color-attachment overlay, not just
+            // a presentation read. Make the transfer write visible to both
+            // the overlay's color-attachment read/write and the final present.
+            to_present.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT |
+                                       VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
             to_present.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
             to_present.newLayout = VK_IMAGE_LAYOUT_GENERAL;
             cmdbuf.PipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,

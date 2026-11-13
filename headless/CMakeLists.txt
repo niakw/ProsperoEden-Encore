@@ -2715,7 +2715,10 @@ endif()
                     "${EDEN_WEBP_ROOT}/src")
         target_compile_options(eden-ps5-jxr PRIVATE
             -include "${EDEN_JXR_ROOT}/jxr_compat.h"
-            -femulated-tls)
+            -femulated-tls -msse2)
+        # A static jpeg-xr archive needs the WebP encoder AFTER its own
+        # objects on the native linker command; preserve the transitive edge.
+        target_link_libraries(eden-ps5-jxr PUBLIC webp)
         target_link_libraries(eden-headless PRIVATE eden-ps5-jxr)
         target_include_directories(eden-headless PRIVATE "${EDEN_JXR_ADAPTER}")
         target_sources(eden-headless PRIVATE

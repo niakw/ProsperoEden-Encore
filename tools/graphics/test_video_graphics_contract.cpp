@@ -43,16 +43,25 @@ int main() {
             assert(value==expected);
         }
         value=kAntiAliasingQualityOrder[0];
-        for(int expected: {3,1,0,2}) {
+        for(int expected: {3,1,0,7,6,5,4,2}) {
             value=CycleQualityRanked(value,1,kAntiAliasingQualityOrder,false,all);
             assert(value==expected);
         }
+        // Vulkan-only modes are skipped on OpenGL; persisted IDs remain
+        // untouched, including an imported MSAA setting.
+        for(int mode: {3,4,5,6,7}) {
+            assert(!AntiAliasingOptionSelectable(mode, 0));
+            assert(AntiAliasingOptionSelectable(mode, 1));
+        }
+        for(int mode: {0,1,2}) assert(AntiAliasingOptionSelectable(mode, 0));
         auto allowed_opengl=[](int option) { return option!=5 && option!=6; };
         value=-1;
         assert(CycleQualityRanked(value,1,kUpscalingQualityOrder,true,allowed_opengl)==1);
         value=-1;
         assert(CycleQualityRanked(value,-1,kUpscalingQualityOrder,true,allowed_opengl)==3);
-        auto aa_opengl=[](int option) { return option!=3; };
+        auto aa_opengl=[](int option) {
+            return AntiAliasingOptionSelectable(option, 0);
+        };
         assert(CycleQualityRanked(2,1,kAntiAliasingQualityOrder,false,aa_opengl)==1);
     }
     // A future curated Title ID can safely load new spatial/AA keys

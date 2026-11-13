@@ -200,13 +200,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/home.cpp",
       "historical_reviewed_git_blob": "a40fd7f010aa77ec58222ec002a94fd9c3947995",
-      "post_snapshot_git_blob": "c7b6ac3e3dc239d2c601ac4e9e05e6e521dc0ef5",
+      "post_snapshot_git_blob": "8c99a820b4dd5739e4b2f9ee6c287e2ffac2108a",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "new stable update-navigation target without renumbering existing controls",
+      "source_scope": "new stable update-navigation target without renumbering existing controls Nov13 anti-aliasing modes now share one 8-ID ranked list across global, Triangle and Quick UI, with Vulkan-only modes guarded. UI option exposure is not a claim of forced native MSAA pixel correctness; PS5 proof outstanding.",
       "review_kind": "host_source_ui",
       "required_source_fragment": "kHomeNavUpdate",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. "
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. \n2026-11-13 PR#95 AA consistency source change: previous post-snapshot c7b6ac3e3dc239d2c601ac4e9e05e6e521dc0ef5, current 8c99a820b4dd5739e4b2f9ee6c287e2ffac2108a; original F07 receipt immutable, renderer's unqualified forced MSAA remains a separate acceptance gate."
     },
     {
       "path": "headless/prosperoeden/pe/ui/launcher.cpp",
@@ -244,13 +244,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/settings.cpp",
       "historical_reviewed_git_blob": "be3b42b9740e084ab2e494b0b88cb70ef5336e44",
-      "post_snapshot_git_blob": "8a3cdb76e263572d1aa0414cb36fd6119fc7937b",
+      "post_snapshot_git_blob": "f417b2e7b3018f43c6880060215046257f652aa5",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Nov13 real PS5 console regression: scrollable contextual help, local wallpaper option state, user panel opacity, daily source caption. Source delta only; gameplay/kernel console qualification open.",
+      "source_scope": "Nov13 real PS5 console regression: scrollable contextual help, local wallpaper option state, user panel opacity, daily source caption. Source delta only; gameplay/kernel console qualification open. Nov13 anti-aliasing modes now share one 8-ID ranked list across global, Triangle and Quick UI, with Vulkan-only modes guarded. UI option exposure is not a claim of forced native MSAA pixel correctness; PS5 proof outstanding.",
       "review_kind": "host_source_ui",
       "required_source_fragment": "TR(\"Encore Neon\")",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending.\n2026-11-12: Personal wallpaper import prompt advertises WebP supported alongside PNG, JPEG, TGA. Git blob 97aa61e920893f64174372a27c5a709e994631b8. Real console boot still unverified; historical F07 hash preserved.\n2026-11-12: Revert new untranslated fallback string; runtime still accepts personal WebP through CheckedWallpaper, documentation updated separately. Preserve 31 fully covered catalogs.\n2026-11-12 PR #92: reviewed Settings category preview grid. Nine visible Video tiles now match the 3 by 3 panel; FPS overlay status moves to the Diagnostics category preview while the editable Video dialog and controller shortcut remain. Text contrast and console visual qualification remain open.\n2026-11-13: Reviewed PR #94 diff: translated labels and palette-provided secondary copy; PS5 display contrast still requires actual render comparison.\n2026-11-13 PR #95: reviewed source blob 8a3cdb76e263572d1aa0414cb36fd6119fc7937b; SHA of prior listed post-F07 entry bef57dfddf3873f971bda65b36b62be3fb9fe6c7; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding."
+      "review_note": "2026-11-11 R457: revu après correctif thème clair et disposition du panneau. Delta de source vérifié et relié au SHA blob; pas de validation PS5 physique. 2026-11-11: Based on real console report, app-updates status is rendered after the two action rows in a dark high-contrast panel with a non-overlapping y-range, readable on the light theme. Source contract only, actual PS5 font/render acceptance pending.\n2026-11-12: Personal wallpaper import prompt advertises WebP supported alongside PNG, JPEG, TGA. Git blob 97aa61e920893f64174372a27c5a709e994631b8. Real console boot still unverified; historical F07 hash preserved.\n2026-11-12: Revert new untranslated fallback string; runtime still accepts personal WebP through CheckedWallpaper, documentation updated separately. Preserve 31 fully covered catalogs.\n2026-11-12 PR #92: reviewed Settings category preview grid. Nine visible Video tiles now match the 3 by 3 panel; FPS overlay status moves to the Diagnostics category preview while the editable Video dialog and controller shortcut remain. Text contrast and console visual qualification remain open.\n2026-11-13: Reviewed PR #94 diff: translated labels and palette-provided secondary copy; PS5 display contrast still requires actual render comparison.\n2026-11-13 PR #95: reviewed source blob 8a3cdb76e263572d1aa0414cb36fd6119fc7937b; SHA of prior listed post-F07 entry bef57dfddf3873f971bda65b36b62be3fb9fe6c7; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding.\n2026-11-13 PR#95 AA consistency source change: previous post-snapshot 8a3cdb76e263572d1aa0414cb36fd6119fc7937b, current f417b2e7b3018f43c6880060215046257f652aa5; original F07 receipt immutable, renderer's unqualified forced MSAA remains a separate acceptance gate."
     },
     {
       "path": "headless/prosperoeden/pe/ui/switch_theme.cpp",
@@ -277,12 +277,13 @@
     {
       "path": "headless/prosperoeden/pe/ui/video_presets.hpp",
       "historical_reviewed_git_blob": "05a735ec7b059c92aecdb32a08a7f1e9061d31c0",
-      "post_snapshot_git_blob": "ba5f730a989ecd30897f475c9644539df43cb694",
+      "post_snapshot_git_blob": "7837a9651365e6af12662ac4f0c7b3ff0f4bd0b8",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "new UI-only ranked spatial filter selection; not empirical image superiority",
+      "source_scope": "new UI-only ranked spatial filter selection; not empirical image superiority Nov13 anti-aliasing modes now share one 8-ID ranked list across global, Triangle and Quick UI, with Vulkan-only modes guarded. UI option exposure is not a claim of forced native MSAA pixel correctness; PS5 proof outstanding.",
       "review_kind": "source_contract",
       "required_source_fragment": "kUpscalingQualityOrder",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "\n2026-11-13 PR#95 AA consistency source change: previous post-snapshot ba5f730a989ecd30897f475c9644539df43cb694, current 7837a9651365e6af12662ac4f0c7b3ff0f4bd0b8; original F07 receipt immutable, renderer's unqualified forced MSAA remains a separate acceptance gate."
     },
     {
       "path": "headless/prosperoeden/pe/ui/widgets.cpp",

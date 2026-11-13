@@ -144,10 +144,24 @@ std::optional<std::uint64_t> ExtractedBaseBytes(const std::filesystem::path& tit
     const fs::recursive_directory_iterator end;
     std::uint64_t total = 0;
     std::size_t examined = 0;
+    // Real extracted RomFS trees may exceed 40,000 files and 16 nested
+    // directories. The previous arbitrary caps misreported both MKW and
+    // Bananza as size unknown even though their ExeFS/main was readable.
+    // Still bound a damaged/adversarial tree; this scan is cancellable and
+    // runs only on the Library background worker, never in the draw loop.
+    constexpr std::size_t kMaxExtractedFiles = 1000000;
+    constexpr int kMaxExtractedDepth = 64;
     for (; it != end; it.increment(error)) {
-        if (error || ++examined > 40000 || it.depth() > 16 ||
-            (cancel && cancel->load(std::memory_order_acquire)))
+        if (error || ++examined > kMaxExtractedFiles ||
+            it.depth() > kMaxExtractedDepth ||
+            (cancel && cancel->load(std::memory_order_acquire))) {
+            if (!(cancel && cancel->load(std::memory_order_acquire)))
+                std::fprintf(stderr,
+                    "EDEN_EXEFS_SIZE_SCAN_FAIL path=%s entries=%zu depth=%d error=%d\n",
+                    title.filename().string().c_str(), examined,
+                    it != end ? it.depth() : -1, error.value());
             return std::nullopt;
+        }
         const auto status = it->symlink_status(error);
         if (error) return std::nullopt;
         if (fs::is_symlink(status)) {
@@ -2181,8 +2195,11 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 AppendCaseScenes(game.screenshots, game.title_id);
                 game.max_players = nlib.max_players;
                 if (!nlib.name.empty()) game.name = nlib.name;
-                game.intro = nlib.intro;
-                game.description = nlib.description;
+                // Nlib's API primarily indexes NS1 releases; an empty NS2
+                // response must NOT erase the localized offline Title-ID
+                // description already admitted above.
+                if (!nlib.intro.empty()) game.intro = nlib.intro;
+                if (!nlib.description.empty()) game.description = nlib.description;
                 if (!nlib.publisher.empty()) game.publisher = nlib.publisher;
                 game.developer = nlib.developer;
                 if (!nlib.release_date.empty()) game.release_date = nlib.release_date;

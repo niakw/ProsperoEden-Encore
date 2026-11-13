@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           actual="$(git -C vendor rev-parse HEAD)"
-          test "$actual" = "d9f6efc76f95fdfd2893082384cb2115851739cc"
+          test "$actual" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
           python3 -B tools/check-ps5-cache-diag-receipt-host.py
       - name: Checkout exact reviewed vendor draft in isolated CI workspace
         run: |

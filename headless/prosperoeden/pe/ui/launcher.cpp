@@ -404,6 +404,7 @@ void Launcher::apply_look()
     value.background_color = prefs_.background_color;
     value.background_color2 = prefs_.background_color2;
     value.background_overlay = prefs_.background_overlay;
+    value.panel_opacity = std::clamp(prefs_.panel_opacity, 0, 100) / 100.0f;
     value.background_animate = prefs_.background_animate;
     value.background_fit = prefs_.background_fit;
     if (value.background == 4) {

@@ -24,6 +24,8 @@ def extract_owner(start,stop):
     return start+PROCESS_SOURCE.split(start,1)[1].split(stop,1)[0]
 
 real_os_initialize=extract_owner("bool Process::Initialize(", "\nvoid Process::Finalize()")
+register_after_load=(real_os_initialize.index("Kernel::KProcess::Register(") >
+                     real_os_initialize.index("if (!load_parameters)"))
 real_os_finalize=extract_owner("void Process::Finalize() {","\nbool Process::Run()")
 real_os_run=extract_owner("bool Process::Run() {","\nvoid Process::Terminate()")
 real_os_terminate=extract_owner("void Process::Terminate() {","\nvoid Process::ResetSignal()")
@@ -215,7 +217,8 @@ static void JoinedCase(const std::vector<u8>& npdm,
         appended_failure=true;
     }
     auto* p=kernel.latest;
-    Require(p && kernel.registers==1,"KProcess owner not registered");
+    Require(p && kernel.registers==__EXPECTED_REGISTERED__,
+            "KProcess register-before-success lifetime regression");
     if(mode==0 || mode==6) {
         Require(initialized && status==Loader::ResultStatus::Success &&
                 service.m_process==p && p->references==1 &&
@@ -280,6 +283,8 @@ int main(int argc,char** argv) {
     }
 }
 """
+os_tail=os_tail.replace("__EXPECTED_REGISTERED__",
+    "((mode==0 || mode==5 || mode==6) ? 1u : 0u)" if register_after_load else "1u")
 main_helpers=kernel_host.TEST.split("static void VerifyCase(",1)[0]
 assert "ParseKnownPublicFixture" in main_helpers and "PrepareGuestImage" in main_helpers
 with tempfile.TemporaryDirectory(prefix="eden-h01-joined-kernel-os-") as tmp:

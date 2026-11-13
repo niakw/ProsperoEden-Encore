@@ -139,9 +139,9 @@ def main()->int:
         'c->producer->QueueBuffer(idx,input,&output)',
         'c.producer->DetachNextBuffer(',
         'c.release_fences[slot]=release_fence',
-        'if (fence.num_fences < 0 ||',
-        'static_cast<std::size_t>(fence.num_fences) > fence.fences.size()) continue;',
-        'for (std::size_t i=0;i<static_cast<std::size_t>(fence.num_fences);++i) {',
+        'const std::size_t fence_count = fence.num_fences;',
+        'if (fence_count > fence.fences.size()) continue;',
+        'for (std::size_t i=0;i<fence_count;++i) {',
         'if (point.id == -1) continue;',
         'if(!image||!image->window_pool||!m_native_module)return {}',
         'GetSyncpointManager().IsSyncpointAllocated(fence)',
@@ -165,6 +165,15 @@ def main()->int:
         'pref[6]==1&&outw<=width&&outh<=height',
     ):
         assert evidence in text, "VI2 compositor must preserve real queue/fence owner: " + evidence
+    # New source reflects actual upstream unsigned u32 ABI. Keep the same
+    # fail-closed ordering: bound the four-element array BEFORE reading any
+    # per-slot syncpoint and retain queued GPU backing while work is pending.
+    fence_guard = text.split("const std::size_t fence_count = fence.num_fences;", 1)[1].split(
+        "c.queued[slot].reset();", 1)[0]
+    assert fence_guard.index("if (fence_count > fence.fences.size()) continue;") < (
+        fence_guard.index("const auto& point=fence.fences[i];"))
+    assert "if (!done) continue;" in fence_guard
+    assert "fence.num_fences < 0" not in fence_guard
 
     for command, method in (
         (901, "InitializeVideoCodecContext"), (1001, "InitializeVideoCodecContext"),

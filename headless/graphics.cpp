@@ -93,6 +93,20 @@ FramePressureNumbers CaptureFramePressure() noexcept {
     result[11] = jit_ns;
     return result;
 }
+// Per-domain guest cache contention already exists in Performance. Expose it
+// once per five-second *detailed* reporting boundary, not on every present.
+// A blocked buffer-cache writer must not be mistaken for a texture-cache wait.
+using FrameCacheDomainNumbers = std::array<unsigned long long, 6>;
+FrameCacheDomainNumbers CaptureFrameCacheDomains() noexcept {
+    FrameCacheDomainNumbers result{};
+    for (std::size_t d = 0; d < Eden::Performance::guest_cache_domain_totals.size(); ++d) {
+        const auto& totals = Eden::Performance::guest_cache_domain_totals[d];
+        result[3 * d] = totals.contended.load(std::memory_order_relaxed);
+        result[3 * d + 1] = totals.blocked.load(std::memory_order_relaxed);
+        result[3 * d + 2] = totals.wait_ns.load(std::memory_order_relaxed);
+    }
+    return result;
+}
 #ifdef EDEN_DEV_PROFILE
 // Diagnostic-only: the widest present gap in each reporting window, not a
 // guest frame or GPU ownership profile.
@@ -738,8 +752,10 @@ void GraphicsWindow::OnFrameDisplayed() {
             // detailed window instead of attributing earlier quiet work.
             frame_pressure_was_detailed = Eden::NativeLogs::Detailed();
             frame_pressure_logging_generation = Eden::NativeLogs::Generation();
-            if (frame_pressure_was_detailed)
+            if (frame_pressure_was_detailed) {
                 frame_pressure_previous = CaptureFramePressure();
+                frame_cache_domain_previous = CaptureFrameCacheDomains();
+            }
 #ifdef EDEN_DEV_PROFILE
             // A new game/window must not inherit the previous title's peak.
             vulkan_interval_witness.Reset();
@@ -829,7 +845,9 @@ void GraphicsWindow::OnFrameDisplayed() {
                 // guest synchronization, cache contention and JIT work without
                 // traversing development tables or locking the renderer.
                 const auto pressure_now = CaptureFramePressure();
+                const auto cache_domain_now = CaptureFrameCacheDomains();
                 FramePressureNumbers pressure_delta{};
+                FrameCacheDomainNumbers cache_domain_delta{};
                 // Logging may toggle OFF then ON entirely between two
                 // reporting boundaries. The final bool alone would label
                 // that mixed 5-s interval as measured; reject its deltas.
@@ -842,6 +860,13 @@ void GraphicsWindow::OnFrameDisplayed() {
                         break;
                     }
                     pressure_delta[i] = pressure_now[i] - frame_pressure_previous[i];
+                }
+                for (std::size_t i = 0; pressure_valid && i < cache_domain_delta.size(); ++i) {
+                    if (cache_domain_now[i] < frame_cache_domain_previous[i]) {
+                        pressure_valid = false;
+                        break;
+                    }
+                    cache_domain_delta[i] = cache_domain_now[i] - frame_cache_domain_previous[i];
                 }
                 // These GPU/HLE/cache/JIT timers are diagnostic-only on
                 // native quiet runs. Their zeroed atomics are NOT measured
@@ -861,6 +886,12 @@ void GraphicsWindow::OnFrameDisplayed() {
                         pressure_delta[6] * to_ms, pressure_delta[7] * to_ms,
                         pressure_delta[8], pressure_delta[9], pressure_delta[10] * to_ms,
                         pressure_delta[11] * to_ms);
+                    for (unsigned d = 0; d < 2; ++d)
+                        std::printf("EDEN_FRAME_CACHE_DOMAIN frame=%u domain=%s "
+                                    "contended=%llu blocked=%llu wait_ms=%.3f scope=window_sum\n",
+                            frame_total, d ? "texture" : "buffer",
+                            cache_domain_delta[3 * d], cache_domain_delta[3 * d + 1],
+                            cache_domain_delta[3 * d + 2] * to_ms);
                     // Detailed logs only. A per-core interval is a CPU-worker sum,
                     // NOT a measured stall or an elapsed time on the renderer.
                     // The same cumulative snapshot also supplies aggregate jit_ms.
@@ -890,6 +921,7 @@ void GraphicsWindow::OnFrameDisplayed() {
                 }
 #endif
                 frame_pressure_previous = pressure_now;
+                frame_cache_domain_previous = cache_domain_now;
                 frame_pressure_was_detailed = true;
                 frame_pressure_logging_generation = report_logging_generation;
                 Eden::Performance::ReportVulkan();

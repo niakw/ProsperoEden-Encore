@@ -1670,6 +1670,16 @@ void Launcher::draw(gfx::DrawList &list)
     if (launching)
         draw_launch(c);
 
+    // A daily wallpaper's verified title, system-locale release date and
+    // original provider credit belong under the controller legends, not only
+    // in Appearance's help card. Never invent attribution for a missing receipt
+    // or display a credit when a different wallpaper is active.
+    if (prefs_.ui_theme != 1 && prefs_.background_style == 5 &&
+        !cached_daily_wallpaper_.empty() && !cached_daily_wallpaper_caption_.empty())
+        text_shrink(c, cached_daily_wallpaper_caption_, 108.0f,
+                    baseline(1026.0f, 35.0f, 16.0f), 16.0f,
+                    theme::kCopy, 1540.0f);
+
     // The launcher arrives out of the dark.
     const float arrival = 1.0f - tween::cubic_out(intro_ / (first_start_ ? 0.7f : 0.45f));
     if (arrival > 0.0f)

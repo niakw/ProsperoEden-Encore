@@ -351,7 +351,12 @@ native_home = native_svc.split(
 assert "const auto cancelled = [cancel]" in native_home
 assert "if (cancelled()) return {};" in native_home
 assert "for (const auto& name : history)" in native_home
-assert 'if (cancelled()) return {};\n        const std::string recent_path' in native_home
+recent_loop = native_home.split("for (const auto& name : history)", 1)[1]
+assert "if (cancelled()) return {};" in recent_loop
+assert "if (!Eden::ValidRomFilename(name) || !admitted.insert(name).second)" in recent_loop
+assert recent_loop.index("if (cancelled()) return {};") < recent_loop.index(
+    'const std::string recent_path = Eden::AssetsPath("roms/" + name);'
+), "Home cancellation must precede ROM disk metadata and cover I/O"
 assert "services_.home();" not in nav
 assert "std::future<Home> home_scan_;" in hdr
 assert "home_reload_pending_" in hdr

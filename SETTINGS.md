@@ -98,7 +98,7 @@ Useful starting points:
 
 ### Anti-aliasing
 
-In the regular UI: **None, FXAA, SMAA Ultra, FXAA+** (the last mode is Vulkan-only). MSAA 2x/4x/8x/16x values exist in the settings schema, but the native forced-sample path is not qualified as a selectable GPU option; a stored setting is not proof of working MSAA.
+The same **Anti-aliasing** row in Quick settings, Settings > Video and Library > Game settings now exposes the eight already-persisted values: **None, FXAA, SMAA Ultra, FXAA+, MSAA 2x, 4x, 8x and 16x**. The last five are Vulkan-only. There is **no separate MSAA multiplier** option. This restores menu/schema parity; it does **not** qualify native forced-sample Vulkan passes. A stored MSAA index is not proof of an actual multi-sampled game frame or a graphics fix. The renderer's forced-MSAA pipeline remains subject to the explicit R24 native hardware gate.
 
 - **None — fastest manual choice.**
 - **FXAA — Recommended preset.** Light smoothing with a small clarity trade-off.

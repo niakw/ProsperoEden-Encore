@@ -80,12 +80,17 @@ cross_backup=""
 host_test="$source_dir/tests/ps5/test_compute_bindings.py"
 host_test_backup=""
 psbc_configs=()
+nir_print_source=""
+nir_print_backup=""
 cleanup() {
     if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
         mv -f "$host_test_backup" "$host_test"
     fi
     if [[ -n ${cross_backup:-} && -f $cross_backup ]]; then
         mv -f "$cross_backup" "$cross_file"
+    fi
+    if [[ -n ${nir_print_backup:-} && -f $nir_print_backup ]]; then
+        mv -f "$nir_print_backup" "$nir_print_source"
     fi
     # Preserve original checked-out OpenGL build inputs after all exit paths.
     for cfg in "${psbc_configs[@]}"; do
@@ -124,6 +129,17 @@ fi
 # Upstream's own fetcher pins and hashes Mesa/compiler dependencies. Building the SDK here keeps
 # Encore on a reviewed source commit instead of silently consuming an untagged moving HEAD.
 python3 "$source_dir/tools/fetch-sources.py"
+
+# Fix the pinned PSBC Mesa 26.2 NIR printer's real decimal truncation.
+# A 32-bit location needs 11 bytes (10 digits + NUL), not four. Patch only
+# the isolated PSBC checkout; restore its original bytes on all exit paths.
+nir_print_source="$source_dir/third_party/opengnm-psbc/src/compiler/nir/nir_print.c"
+[[ -f $nir_print_source && ! -L $nir_print_source ]] || {
+    echo "Missing pinned PSBC NIR location source" >&2; exit 1;
+}
+nir_print_backup="${nir_print_source}.encore-backup.$$"
+cp -p "$nir_print_source" "$nir_print_backup"
+python3 -B "$root/tools/ci/patch-psbc-nir-location-print.py" "$nir_print_source"
 
 # The pinned PSBC toolchain configs omit GCC/Clang's supported NORETURN
 # attribute while vtn_fail() actually longjmps. Temporarily annotate both
@@ -222,6 +238,10 @@ PATH="$opengl_host_path" make -C "$source_dir" sdk-gl46 \
 if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
     mv -f "$host_test_backup" "$host_test"
     host_test_backup=""
+fi
+if [[ -n ${nir_print_backup:-} && -f $nir_print_backup ]]; then
+    mv -f "$nir_print_backup" "$nir_print_source"
+    nir_print_backup=""
 fi
 for cfg in "${psbc_configs[@]}"; do
     mv -f "${cfg}.encore-backup.$$" "$cfg"

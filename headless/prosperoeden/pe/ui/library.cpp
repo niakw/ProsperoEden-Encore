@@ -2119,8 +2119,8 @@ void Launcher::press_game(Key key)
             next.anti_aliasing = CycleQualityRanked(
                 next.anti_aliasing, step, kAntiAliasingQualityOrder, true,
                 [&](int value) {
-                    return value != 3 ||
-                        EffectiveGameRenderer(next,prefs_,game.title_id) == 1;
+                    return AntiAliasingOptionSelectable(
+                        value, EffectiveGameRenderer(next,prefs_,game.title_id));
                 });
             RefreshVideoProfile(next, prefs_, game.title_id);
         }
@@ -2314,9 +2314,10 @@ void Launcher::draw_game(Canvas &c, float open)
                  EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id),
                  EffectiveGameRenderer(game_settings_,prefs_,title_id))) ||
             (row == row_anti_aliasing &&
-             (game_settings_.anti_aliasing >= 0
-                ? game_settings_.anti_aliasing : base_aa) >= 3 &&
-             EffectiveGameRenderer(game_settings_, prefs_, title_id) != 1) ||
+             !AntiAliasingOptionSelectable(
+                game_settings_.anti_aliasing >= 0
+                    ? game_settings_.anti_aliasing : base_aa,
+                EffectiveGameRenderer(game_settings_, prefs_, title_id))) ||
             (row == row_fsr_sharpness &&
              (!UpscalingSupportsSharpness(
                   EffectiveGameUpscalingFilter(game_settings_,prefs_,title_id)) ||

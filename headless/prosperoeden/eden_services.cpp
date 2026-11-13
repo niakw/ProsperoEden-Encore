@@ -4,6 +4,7 @@
 #include <webp/encode.h>
 #ifdef PS5_NATIVE
 #include "ps5_profile_avatar_staging.hpp"
+#include "jxr_decoder.h"
 #endif
 
 #include "assets_dir.h"
@@ -2745,7 +2746,7 @@ bool ValidWallpaperName(const std::string& name) {
     // Personal imports retain PNG/JPEG/TGA; packaged art uses WebP.
     // The same bounded PS5 decoder accepts an imported WebP too.
     return ext == ".png" || ext == ".jpg" || ext == ".jpeg" ||
-           ext == ".tga" || ext == ".webp";
+           ext == ".tga" || ext == ".webp" || ext == ".jxr";
 }
 std::string CheckedWallpaper(const std::filesystem::path& folder, const std::string& name) {
     if (!ValidWallpaperName(name)) return {};
@@ -2754,10 +2755,85 @@ std::string CheckedWallpaper(const std::filesystem::path& folder, const std::str
     const auto info = std::filesystem::symlink_status(path, ec);
     if (ec || !std::filesystem::is_regular_file(info)) return {};
     const auto bytes = std::filesystem::file_size(path, ec);
-    if (ec || bytes < 32 || bytes > 12u * 1024u * 1024u) return {};
+    const bool jpeg_xr = EndsWithNoCase(name, ".jxr");
+    const std::uintmax_t limit = jpeg_xr ? 48u * 1024u * 1024u
+                                          : 12u * 1024u * 1024u;
+    if (ec || bytes < 32 || bytes > limit) return {};
     return path.string();
 }
 #if defined(PS5_NATIVE)
+// Only a chosen JXR is decoded, never the Media Gallery enumeration.
+// Original HDR files stay read-only, WebP conversion is one-at-a-time,
+// cached under app-owned data and committed by atomic rename.
+std::string SelectedJxrWebp(const std::string& original) {
+    namespace fs = std::filesystem;
+    if (original.empty() || !EndsWithNoCase(original, ".jxr"))
+        return original;
+    struct stat source{};
+    if (::lstat(original.c_str(), &source) != 0 ||
+        !S_ISREG(source.st_mode) || source.st_size < 32 ||
+        source.st_size > (48ll << 20))
+        return {};
+    const fs::path cache = fs::path(Eden::UserDir()) /
+                           "wallpapers" / ".jxr-cache";
+    std::error_code ec;
+    const auto before = fs::symlink_status(cache, ec);
+    if (!ec && fs::is_symlink(before)) return {};
+    ec.clear();
+    fs::create_directories(cache, ec);
+    if (ec || !fs::is_directory(cache, ec) || ec) return {};
+
+    // Stable, non-traversable cache key includes file identity/version,
+    // but does not disclose an account name or the source's full path.
+    const std::string identity = original + ":" +
+        std::to_string(static_cast<long long>(source.st_size)) + ":" +
+        std::to_string(static_cast<long long>(source.st_mtime)) + ":" +
+        std::to_string(static_cast<unsigned long long>(source.st_ino));
+    std::uint64_t digest = 14695981039346656037ull;
+    for (unsigned char c : identity) {
+        digest ^= c;
+        digest *= 1099511628211ull;
+    }
+    char hex[17]{};
+    std::snprintf(hex, sizeof(hex), "%016llx",
+                  static_cast<unsigned long long>(digest));
+    const std::string basename = std::string("selected-") + hex + ".webp";
+    const auto target = cache / basename;
+
+    static std::mutex codec_mutex;
+    std::scoped_lock lock(codec_mutex);
+    if (!CheckedWallpaper(cache, basename).empty())
+        return target.string();
+
+    // A partial conversion never becomes a selectable/renderable image.
+    const auto staging = cache /
+        (std::string("pending-") + hex + "-" +
+         std::to_string(static_cast<unsigned long long>(::getpid())) + ".part");
+    // Fail closed if a previous unexpected file or symlink occupies staging.
+    ec.clear();
+    if (fs::exists(staging, ec) || ec) return {};
+    if (!encore_jxr_to_webp(original.c_str(), staging.c_str())) {
+        fs::remove(staging, ec);
+        std::fprintf(stderr, "EDEN_JXR_SELECT decode=failed\n");
+        return {};
+    }
+    ec.clear();
+    const auto bytes = fs::file_size(staging, ec);
+    if (ec || bytes < 32 || bytes > 12u * 1024u * 1024u) {
+        fs::remove(staging, ec);
+        return {};
+    }
+    ec.clear();
+    fs::rename(staging, target, ec);
+    if (ec) {
+        fs::remove(staging, ec);
+        return {};
+    }
+    std::fprintf(stderr, "EDEN_JXR_SELECT decode=cached bytes=%llu\n",
+                 static_cast<unsigned long long>(bytes));
+    return CheckedWallpaper(cache, basename);
+}
+
 // The foreground user's PS5 Media Gallery mount; independent of Encore's
 // personal wallpapers directory. This is read-only and never copies, renames
 // or alters PS5 screenshots. The capture service's NPXS40087 photos use
@@ -2842,19 +2918,18 @@ std::vector<SystemWallpaper> SystemCaptureWallpapers() {
             auto ext = entry.path().extension().string();
             std::transform(ext.begin(), ext.end(), ext.begin(),
                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-            // PS5 HDR screenshots are JXR, not ordinary JPEG. Count them
-            // before basename validation, but never pass them to JPG decoder.
-            if (ext == ".jxr") {
-                ++hdr_jxr;
-                continue;
-            }
-            if (native.st_size < 32 || native.st_size > (12ll << 20)) {
+            // Scan only directory metadata. JXR is listed alongside the
+            // JPG/PNG files, but never decoded or converted by this scan.
+            const bool is_jxr = ext == ".jxr";
+            if (is_jxr) ++hdr_jxr;
+            const auto max_bytes = is_jxr ? (48ll << 20) : (12ll << 20);
+            if (native.st_size < 32 || native.st_size > max_bytes) {
                 ++ignored_size;
                 continue;
             }
             const std::string filename = entry.path().filename().string();
             if (!ValidWallpaperName(filename) ||
-                (ext != ".jpg" && ext != ".jpeg" && ext != ".png")) {
+                (!is_jxr && ext != ".jpg" && ext != ".jpeg" && ext != ".png")) {
                 ++ignored_format;
                 continue;
             }
@@ -3166,16 +3241,24 @@ std::vector<std::string> EdenServices::wallpapers() {
 std::string EdenServices::wallpaper_path(const std::string& file) {
     const auto local = CheckedWallpaper(
         std::filesystem::path(Eden::UserDir()) / "wallpapers", file);
-    if (!local.empty()) return local;
+    if (!local.empty()) {
 #if defined(PS5_NATIVE)
-    // A stored opaque PS5 selection is resolved against a fresh bounded,
-    // current-user listing. A crafted settings filename can never supply an
-    // arbitrary filesystem path. The source is rechecked immediately.
+        return SelectedJxrWebp(local);
+#else
+        return local;
+#endif
+    }
+#if defined(PS5_NATIVE)
+    // A persisted selection is only a validated opaque filename. Resolve it
+    // again against the foreground user's read-only, bounded Media Gallery.
+    // Decode *only that chosen JXR*, not every item while listing or browsing.
     if (file.starts_with("PS5_") && ValidWallpaperName(file)) {
         for (const auto& capture : SystemCaptureWallpapers()) {
-            if (capture.selection == file)
-                return CheckedWallpaper(capture.photo.parent_path(),
-                                        capture.photo.filename().string());
+            if (capture.selection == file) {
+                const auto checked = CheckedWallpaper(capture.photo.parent_path(),
+                                                     capture.photo.filename().string());
+                return checked.empty() ? std::string{} : SelectedJxrWebp(checked);
+            }
         }
     }
 #endif

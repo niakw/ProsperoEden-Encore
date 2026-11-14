@@ -874,12 +874,20 @@ if post_f07_jxr_present:
         assert actual_blob == expected_blob, ("JXR selected source changed; review new blob", name, actual_blob)
 # Lichii #957 exact source backport, post-F07; never alter frozen 337 count.
 post_f07_gpu_table_owners = {"eden-core/src/common/multi_level_page_table.cpp"}
-assert post_f07_gpu_table_owners <= set(physical_all)
-page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
-assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == "c55a55498fe300458800b646bfc295db11283b4a"
-assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
-assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
-print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS owners=1")
+post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
+# The tracker workflow also explicitly tests historical vendor 1ec7b42.
+# Only that known historical checkout (not a missing production TU) may omit it.
+import subprocess
+gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_gpu_table_present
+else:
+    assert post_f07_gpu_table_present == post_f07_gpu_table_owners
+    page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
+    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == "c55a55498fe300458800b646bfc295db11283b4a"
+    assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
+    assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
+print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -895,7 +903,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_owners]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

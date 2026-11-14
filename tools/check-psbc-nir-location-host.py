@@ -53,10 +53,10 @@ sdk_make = 'make -C "$source_dir" sdk-gl46'
 assert build.count(sdk_make) == 1
 assert build.index('patch-psbc-nir-build-hooks.py" "$script"') < build.index(sdk_make)
 assert build.index(sdk_make) < build.index('python3 "$source_dir/tools/fetch-sources.py" --verify-psbc')
-assert build.count('${script}.encore-backup.$"') == 4
+assert build.count('${script}.encore-backup.$$"') == 4
 assert '${script}.encore-backup.$"' not in build
-assert 'cp -p "$script" "${script}.encore-backup.$"' in build
-assert build.count('mv -f "${script}.encore-backup.$" "$script"') == 2
+assert 'cp -p "$script" "${script}.encore-backup.$$"' in build
+assert build.count('mv -f "${script}.encore-backup.$$" "$script"') == 2
 assert 'python3 -B "$root/tools/ci/patch-psbc-nir-location-print.py" "$nir_print_source"' not in build
 subprocess.run(["bash", "-n", str(ROOT / "tools/build-opengl-sdk.sh")], check=True)
 

@@ -2528,3 +2528,31 @@ msgstr "Panel opacity"
 #: pe/ui/settings.cpp
 msgid "Notice"
 msgstr "Notice"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share advanced logs"
+msgstr "Gelişmiş günlükleri paylaş"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share standard logs"
+msgstr "Standart günlükleri paylaş"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Log sharing service is not available. Nothing is sent."
+msgstr "Günlük paylaşımı kullanılamıyor. Hiçbir veri gönderilmiyor."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."
+msgstr "Ayrıntılı günlükler FPS'yi düşürebilir veya takılmaya neden olabilir. Normal oyun sırasında kapatılması önerilir."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."
+msgstr "İsteğe bağlı performans raporları. Paylaşım kayıttan bağımsızdır. Ham dosya veya kişisel tanımlayıcı içermez."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."
+msgstr "İsteğe bağlı çökme ve hata raporları. Ayrıntılı günlükleri açmaz. Ham dosya veya kişisel tanımlayıcı içermez."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
+msgstr "Yalnızca shader önbelleğini temizler. Kayıtlar, ayarlar, anahtarlar ve oyunlar korunur."

@@ -2529,3 +2529,31 @@ msgstr "Panel opacity"
 #: pe/ui/settings.cpp
 msgid "Notice"
 msgstr "Notice"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share advanced logs"
+msgstr "Condividi log avanzati"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share standard logs"
+msgstr "Condividi log standard"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Log sharing service is not available. Nothing is sent."
+msgstr "Condivisione dei log non disponibile. Non viene inviato nulla."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."
+msgstr "I log dettagliati possono ridurre gli FPS o causare scatti. Disattivali per giocare normalmente."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."
+msgstr "Report di prestazioni facoltativi. Condivisione e registrazione sono separate. Nessun file grezzo o identificativo personale."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."
+msgstr "Report facoltativi di arresti anomali ed errori. Non attiva i log dettagliati. Nessun file grezzo o identificativo personale."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
+msgstr "Cancella solo le cache degli shader. Salvataggi, impostazioni, chiavi e giochi restano."

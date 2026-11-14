@@ -2528,3 +2528,31 @@ msgstr "Panel opacity"
 #: pe/ui/settings.cpp
 msgid "Notice"
 msgstr "Notice"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share advanced logs"
+msgstr "Dela avancerade loggar"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share standard logs"
+msgstr "Dela standardloggar"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Log sharing service is not available. Nothing is sent."
+msgstr "Loggdelning är inte tillgänglig. Inget skickas."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."
+msgstr "Detaljerad loggning kan sänka FPS eller orsaka hack. Stäng av vid normalt spelande."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."
+msgstr "Valfria prestandarapporter. Delning är skild från loggning. Inga råfiler eller personliga identifierare."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."
+msgstr "Valfria krasch- och felrapporter. Aktiverar inte detaljerade loggar. Inga råfiler eller personliga identifierare."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
+msgstr "Rensar bara shadercachen. Sparfiler, inställningar, nycklar och spel behålls."

@@ -2528,3 +2528,31 @@ msgstr "Panel opacity"
 #: pe/ui/settings.cpp
 msgid "Notice"
 msgstr "Notice"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share advanced logs"
+msgstr "Jaa tarkat lokit"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share standard logs"
+msgstr "Jaa perustason lokit"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Log sharing service is not available. Nothing is sent."
+msgstr "Lokien jakopalvelu ei ole käytettävissä. Mitään ei lähetetä."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."
+msgstr "Tarkka lokitus voi laskea FPS-arvoa tai aiheuttaa nykimistä. Poista se käytöstä normaalissa pelaamisessa."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."
+msgstr "Valinnaiset suorituskykyraportit. Jakaminen on erillään lokituksesta. Ei raakatiedostoja tai henkilötunnisteita."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."
+msgstr "Valinnaiset kaatumis- ja virheraportit. Ei ota tarkkaa lokitusta käyttöön. Ei raakatiedostoja tai henkilötunnisteita."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
+msgstr "Tyhjentää vain shader-välimuistit. Tallennukset, asetukset, avaimet ja pelit säilyvät."

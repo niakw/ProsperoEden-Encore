@@ -2528,3 +2528,31 @@ msgstr "Panel opacity"
 #: pe/ui/settings.cpp
 msgid "Notice"
 msgstr "Notice"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share advanced logs"
+msgstr "แชร์บันทึกขั้นสูง"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share standard logs"
+msgstr "แชร์บันทึกมาตรฐาน"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Log sharing service is not available. Nothing is sent."
+msgstr "บริการแชร์บันทึกไม่พร้อมใช้งาน ไม่มีการส่งข้อมูล"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."
+msgstr "บันทึกแบบละเอียดอาจลด FPS หรือทำให้กระตุก แนะนำให้ปิดขณะเล่นตามปกติ"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."
+msgstr "รายงานประสิทธิภาพแบบเลือกได้ การแชร์แยกจากการบันทึก ไม่ส่งไฟล์ดิบหรือตัวระบุส่วนบุคคล"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."
+msgstr "รายงานการขัดข้องและข้อผิดพลาดแบบเลือกได้ ไม่เปิดบันทึกละเอียด ไม่ส่งไฟล์ดิบหรือตัวระบุส่วนบุคคล"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
+msgstr "ล้างเฉพาะแคชเชดเดอร์ ข้อมูลบันทึกเกม การตั้งค่า คีย์ และเกมยังคงอยู่"

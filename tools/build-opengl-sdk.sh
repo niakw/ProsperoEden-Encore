@@ -92,6 +92,7 @@ nir_print_source=""
 nir_print_backup=""
 radv_stub_source=""
 radv_stub_backup=""
+psbc_extra_sources=()
 cleanup() {
     if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
         mv -f "$host_test_backup" "$host_test"
@@ -105,6 +106,11 @@ cleanup() {
     if [[ -n ${radv_stub_backup:-} && -f $radv_stub_backup ]]; then
         mv -f "$radv_stub_backup" "$radv_stub_source"
     fi
+    for extra in "${psbc_extra_sources[@]}"; do
+        if [[ -f "${extra}.encore-backup.$$" ]]; then
+            mv -f "${extra}.encore-backup.$$" "$extra"
+        fi
+    done
     for script in "${psbc_scripts[@]}"; do
         if [[ -f "${script}.encore-backup.$$" ]]; then
             mv -f "${script}.encore-backup.$$" "$script"
@@ -165,6 +171,13 @@ radv_stub_source="$source_dir/third_party/opengnm-psbc/src/amd/vulkan/radv_insta
 }
 radv_stub_backup="${radv_stub_source}.encore-backup.$$"
 cp -p "$radv_stub_source" "$radv_stub_backup"
+for relative in amd/compiler/instruction_selection/aco_select_nir_intrinsics.cpp \
+                amd/common/nir/ac_nir_meta_cs_clear_copy_buffer.c; do
+    extra="$source_dir/third_party/opengnm-psbc/src/$relative"
+    [[ -f $extra && ! -L $extra ]] || { echo "Missing pinned PSBC compiler owner: $relative" >&2; exit 1; }
+    cp -p "$extra" "${extra}.encore-backup.$$"
+    psbc_extra_sources+=("$extra")
+done
 # Do not patch before sdk-gl46: the host and PS5 compiler scripts each
 # call the unmodified upstream --verify-psbc. Wrap their exact make calls
 # AFTER these checks, restoring the printer before fingerprint/tests.
@@ -293,6 +306,10 @@ if [[ -n ${radv_stub_backup:-} && -f $radv_stub_backup ]]; then
     mv -f "$radv_stub_backup" "$radv_stub_source"
     radv_stub_backup=""
 fi
+for extra in "${psbc_extra_sources[@]}"; do
+    mv -f "${extra}.encore-backup.$$" "$extra"
+done
+psbc_extra_sources=()
 for script in "${psbc_scripts[@]}"; do
     mv -f "${script}.encore-backup.$$" "$script"
 done

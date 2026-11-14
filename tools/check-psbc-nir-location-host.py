@@ -100,6 +100,22 @@ with tempfile.TemporaryDirectory(prefix="psbc-verify-window-") as td:
     shutil.copyfile(vendor / "opengl-opengnm-psbc/src/amd/vulkan/radv_instance.h", header)
     initial = printer.read_bytes()
     header_initial = header.read_bytes()
+    extras = []
+    for rel, fn in ((module.ACO_PATH, module.patched_aco),
+                    (module.NIR_MASK_PATH, module.patched_nir_mask)):
+        stage = work / "src" / rel
+        stage.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(vendor / "opengl-opengnm-psbc/src" / rel, stage)
+        prior = stage.read_bytes()
+        updated = fn(prior)
+        assert prior != updated
+        try:
+            fn(prior + b"\n/* drift */\n")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Unreviewed compiler owner admitted")
+        extras.append((stage, prior, updated))
     assert module.gitblob(header_initial) == module.PINNED_RADV_STUB
     header_fixed = module.patched_radv_stub(header_initial)
     assert header_fixed.replace(module.RADV_FORWARD, b"", 1) == header_initial
@@ -138,11 +154,15 @@ int main(void) {
                'import pathlib,sys; p=pathlib.Path(sys.argv[1]); '
                'assert p.read_bytes().count(b"char buf[11];")==2; '
                'assert (p.parent.parent.parent/"amd/vulkan/radv_instance.h").read_bytes().count(b"struct radv_physical_device;")==1; '
+               'assert (p.parent.parent.parent/"amd/compiler/instruction_selection/aco_select_nir_intrinsics.cpp").read_bytes().count(b"static_cast<unsigned>(ffs(const_offset))")==2; '
+               'assert b"nir_channels(&b, value, nir_component_mask(num_dwords))" in (p.parent.parent.parent/"amd/common/nir/ac_nir_meta_cs_clear_copy_buffer.c").read_bytes(); '
                'sys.exit(int(sys.argv[2]))',
                str(printer), str(rc)]
         assert module.compile_window(printer, cmd) == rc
         assert printer.read_bytes() == initial, "printer leaked after compile"
         assert header.read_bytes() == header_initial, "stub leaked after compile"
+        for stage, prior, updated in extras:
+            assert stage.read_bytes() == prior, "compiler owner leaked after compile"
     header.write_bytes(header_initial + b"\n/* drift */\n")
     try:
         module.compile_window(printer, [sys.executable, "-c", "raise AssertionError()"])
@@ -152,6 +172,16 @@ int main(void) {
         raise AssertionError("Unreviewed RADV stub admitted")
     assert printer.read_bytes() == initial
     header.write_bytes(header_initial)
+    for stage, prior, updated in extras:
+        stage.write_bytes(prior + b"\n/* drift */\n")
+        try:
+            module.compile_window(printer, [sys.executable, "-c", "raise AssertionError()"])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Drifted compiler owner passed compile window")
+        assert printer.read_bytes() == initial and header.read_bytes() == header_initial
+        stage.write_bytes(prior)
     printer.write_bytes(initial + b"\\n/* drift */\\n")
     try:
         module.compile_window(printer, [sys.executable, "-c", "raise AssertionError()"])
@@ -211,3 +241,66 @@ with tempfile.TemporaryDirectory(prefix="psbc-nir-print-") as tmpdir:
 print("PSBC_NIR_LOCATION_11_BYTE_HOST_PASS callers=2 max_u32=4294967295 "
       "drift_rejected=1 original_restored=1")
 print("PSBC_RADV_STUB_FILE_SCOPE_HOST_PASS original_rejected=1 gcc_clang=1 restored=1")
+
+# Exercise the exact replacement expressions without linking the complete Mesa compiler.
+# POSIX ffs is 0..32; preserve all 32-bit one-hot positions and 0.
+aco_harness = r"""
+#include <cassert>
+#include <cstdint>
+#include <strings.h>
+bool old_semantics(uint32_t const_offset, unsigned req_lsb_zero) {
+    return !const_offset || (static_cast<unsigned>(ffs(const_offset)) > req_lsb_zero);
+}
+bool fixed(uint32_t const_offset, unsigned req_lsb_zero) {
+    return !const_offset || REPLACED;
+}
+int main() {
+    uint32_t offset=0;
+    for(unsigned n=0;n<3;++n) assert(fixed(offset,n));
+    for(unsigned bit=0;bit<32;++bit) {
+        offset=uint32_t{1}<<bit;
+        for(unsigned n=0;n<3;++n) assert(fixed(offset,n)==old_semantics(offset,n) && fixed(offset,n)==(bit>=n));
+    }
+}
+""".replace("REPLACED", module.ACO_AFTER.decode())
+mask_harness = r"""
+#include <assert.h>
+#include <stdint.h>
+typedef uint16_t nir_component_mask_t;
+static inline nir_component_mask_t nir_component_mask(unsigned num_components) {
+    assert(num_components>=1 && num_components<=3);
+    return (1u << num_components)-1;
+}
+typedef struct {} nir_def;
+static unsigned seen;
+static nir_def *nir_channels(int *b,nir_def *value,nir_component_mask_t mask) {
+    (void)b; seen=mask; return value;
+}
+int main(void) {
+    int b=0; nir_def storage={}; nir_def *value=&storage;
+    for(unsigned dwords_per_thread=1;dwords_per_thread<=4;++dwords_per_thread)
+        for(unsigned bytes=1;bytes<dwords_per_thread*4;++bytes) {
+            unsigned num_dwords=bytes/4;
+            if (num_dwords) {
+                assert(REPLACED==value);
+                assert(seen==((1u<<num_dwords)-1));
+            }
+        }
+}
+""".replace("REPLACED", module.MASK_AFTER.decode())
+with tempfile.TemporaryDirectory(prefix="psbc-warning-domain-") as td:
+    work=Path(td)
+    for compiler,src,ext,std in ((shutil.which("g++"),aco_harness,"cpp","c++17"),
+                                  (shutil.which("clang++"),aco_harness,"cpp","c++17"),
+                                  (shutil.which("clang"),mask_harness,"c","gnu11"),
+                                  (shutil.which("gcc"),mask_harness,"c","gnu11")):
+        if not compiler:
+            continue
+        path=work/("check."+ext)
+        path.write_text(src)
+        exe=work/"check"
+        subprocess.run([compiler,"-std="+std,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=undefined","-fno-sanitize-recover=all",
+                        str(path),"-o",str(exe)],check=True,timeout=30)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("PSBC_ACO_NIR_WARNING_DOMAINS_PASS all_ffs_bits=32 partial_store=1..3 source_restored=1")

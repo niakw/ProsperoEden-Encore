@@ -81,3 +81,7 @@
 ## G — VFS container parser follow-up
 
 Vendor #118 / 370b4d6: five host workflows passed, original malformed PFS constructor reproduced ASan error, bounded huge VFS read, valid PFS/HFS, partial cleanup and 65,536-entry cases passed. XCI source guards preserve NCZ owner; full XCI and native parser runtime unverified. Vendor #117 successor `447e08718c9b6625508da6ce63796ed1f4285d2f` passed 16/16. This stacked engine candidate selects the three maintained core TUs and independently checks their exact receipts; A07/A08 still open, no evidence of malformed user dumps. Remaining NCA/RomFS portions of Lichii #947 need owner-by-owner comparison.
+
+## H — combined loader and compiler qualification
+
+Engine #139 `1c993c1b34c3cb588e32f78e3a5cb38a6615aee5`: 23/23 host workflows successful. Engine #138 `1b439c7fc9b9c47f175ffe1cc63d3a6969e0babf`: 3/3 host workflows successful (three PSBC warning sites). Prior #136 `f8aa502c8556595fedef90d1285aeaa7cd465fac`: 31/32 successful; one sparse native syntax workflow cancelled in checkout, not a test result. Combine the exact non-overlapping four warning files atop the qualified loader graph. Native build/console results remain absent; no A01–A09/B01–B15/C01–C08 hardware status advanced. Vendor #119 is separate and needs explicit source selection, see vendor #117 successor.

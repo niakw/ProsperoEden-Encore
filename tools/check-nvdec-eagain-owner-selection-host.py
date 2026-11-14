@@ -68,6 +68,10 @@ assert "vendor/sources/eden" not in active_cmake
 assert '"${EDEN_NVDEC_OWNER_ROOT}/overrides"' not in part, (
     "Broad FFmpeg header include root could shadow unrelated core headers")
 assert part.count('configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"')==1
+# configure_file owns the configure-time dependency for the copied header.
+# A second explicit registration made Ninja reject the native build graph.
+assert "CMAKE_CONFIGURE_DEPENDS" not in active_cmake, (
+    "NVDEC configure_file input must not also be listed in configure dependencies")
 print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
       "original_Eden_pristine=1",
       f"reviewed_vendor_candidate={int(CAND_SOURCE.is_file())}",

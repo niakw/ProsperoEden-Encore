@@ -1418,12 +1418,12 @@ assert sparse_receipt["opt_in"] in (ROOT/sparse_path).read_text()
 assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
 print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
       "new_owner_consoles_qualified=0")
-# Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.
+# Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.\n# R458 advances the already-reviewed launcher owner from a frozen retained frame\n# to one bounded GL presenter; the historical F07/R457 receipts stay immutable.
 ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU
     # readback; the launcher presents loading_scene.glsl and retains VideoOut
     # until the selected renderer takes ownership. Console continuity pending.
-    "headless/prosperoeden/frontend.cpp": "da6571994b9c287cd5fc535a1150469487e0b72c",
+    "headless/prosperoeden/frontend.cpp": "d75d38d28204e14452e04fc9709c0f25d27dd797",
     "vendor/encore-active/eden-core/src/core/memory_native_a32.cpp": "318cb932c496c09853c2d9ba333d726cf7f820cd",
     "vendor/encore-active/eden-core/src/core/memory_native_standard.cpp": "91463583eec9cfcbd180a56662cda072553787e0",
     "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "469eddd0ea9e0a3498446bf08ab473caac3b76f9",

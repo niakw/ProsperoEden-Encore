@@ -1057,9 +1057,12 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
             label=tr("Select");
             break;
         }
-        text_shrink(c,label,row.x+22,baseline(y,101,26),26,kInk,590);
+        const bool row_inactive =
+            (modal==Modal::appearance && i==4 && prefs_.background_style!=4) ||
+            (modal==Modal::diagnostics && (i==1 || i==2) && !services_.log_sharing_available());
+        text_shrink(c,label,row.x+22,baseline(y,101,26),26,row_inactive?kSubtle:kInk,590);
         text_shrink(c,value,row.x+row.w-25,baseline(y,101,24),24,
-                    i==option_?kInk:kSubtle,294,Align::right);
+                    !row_inactive && i==option_?kInk:kSubtle,294,Align::right);
     }
     if (modal==Modal::video && option_>=0 && option_<=12) {
         const char* guides=nullptr;

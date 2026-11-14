@@ -1572,8 +1572,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "设置验证失败。请确认固件和密钥文件可以读取且有效。"
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "游戏过程中显示实时 FPS。正常使用时关闭更简洁；随时按触摸板 + R1 可切换。"
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "游戏中显示 FPS。在 Vulkan 下通过触摸板菜单切换。"
 
 
 #: pe/ui/switch_theme.cpp

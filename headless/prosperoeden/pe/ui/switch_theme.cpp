@@ -1072,7 +1072,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         } else if (option_==11) {
             guides=tr(TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."));
         } else if (option_==12) {
-            guides=tr(TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."));
+            guides=tr(TR("Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."));
         }
         static constexpr const char* labels[] = {
             TR("Renderer"),TR("Video preset"),TR("TV output"),TR("Game resolution"),

@@ -1572,8 +1572,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "Määrityksen tarkistus epäonnistui. Varmista, että laiteohjelmisto ja avaintiedostot ovat luettavissa ja kelvollisia."
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "Näyttää live-FPS:n pelaamisen aikana. Off on puhtaampi normaalikäyttöön; Kosketuslevy + R1 vaihtaa sen milloin tahansa."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "Näyttää FPS-luvun pelatessa. Vulkanissa vaihda sitä kosketuslevyn valikosta."
 
 
 #: pe/ui/switch_theme.cpp

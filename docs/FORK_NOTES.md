@@ -102,7 +102,7 @@ This addresses newer software reaching the NSO loader and failing with
 - Analog L2/R2 guest trigger support retained.
 - Touchpad shortcuts retained:
   - Touchpad + L1: return to launcher.
-  - Touchpad + R1: toggle FPS HUD where supported.
+  - Short touchpad click: Vulkan quick menu, including FPS visibility. Touchpad + R1 is retired.
 - Launcher ownership follows the foreground PS5 user with initial-user fallback.
 - Encore can replace its own button glyphs, but game-owned prompt textures remain title assets and are not universally replaced by input mapping.
 

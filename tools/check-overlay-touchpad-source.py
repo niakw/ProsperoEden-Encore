@@ -77,3 +77,16 @@ assert "SetHudEnabled(prefs.hud);" in menu
 assert "NativeLogs::SetDetailed(prefs.detailed_logging);" in menu
 assert "void SetHudEnabled(bool enabled)" in graphics
 print("ENCORE_TOUCHPAD_OVERLAY_SOURCE_PASS input=touchpad gfx=next-launch diagnostics=live render=two-paths")
+
+# The retired chord must never remain in either visible FPS guide.
+guide = "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+retired = "Touchpad + R1 toggles it at any time."
+for name in ("settings.cpp", "switch_theme.cpp"):
+    source = (root / "headless/prosperoeden/pe/ui" / name).read_text()
+    assert guide in source and retired not in source
+catalogs = sorted((root / "headless/prosperoeden/ui/lang").glob("*.po"))
+assert len(catalogs) == 31
+for catalog in catalogs:
+    text = catalog.read_text()
+    assert f'msgid "{guide}"' in text and retired not in text, catalog
+print("FPS_TOUCHPAD_GUIDE_CATALOG_PARITY_PASS themes=2 locales=31")

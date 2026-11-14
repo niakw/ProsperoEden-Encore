@@ -119,7 +119,7 @@ The same **Anti-aliasing** row in Quick settings, Settings > Video and Library >
 
 **Short-click the DualSense touchpad**, not the PS button, to open the purple
 translucent in-game quick menu. Use L1/R1 to switch between Game, Graphics,
-Controller Mapping and Diagnostics. FPS visibility and bounded detailed logs
+Controller Mapping, Diagnostics and Multiplayer. FPS visibility and bounded detailed logs
 can be toggled there instead of using the retired touchpad + R1 FPS shortcut.
 Per-game graphics and controller mapping changes are saved for the next launch.
 The existing touchpad long hold remains guest Minus when the overlay is closed;

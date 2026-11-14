@@ -1572,8 +1572,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "Kurulum doğrulaması başarısız oldu. Firmware ve anahtar dosyalarının okunabilir ve geçerli olduğunu kontrol edin."
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "Oynarken canlı FPS'yi gösterir. Kapalı normal kullanım için daha temizdir; Dokunmatik yüzey + R1 bunu istediğiniz zaman değiştirir."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "Oyun sırasında FPS gösterir. Vulkan'da dokunmatik yüzey menüsünden değiştirin."
 
 
 #: pe/ui/switch_theme.cpp

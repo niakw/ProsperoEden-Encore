@@ -1568,8 +1568,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "Error al validar la configuración. Comprueba que los archivos de firmware y de claves son legibles y válidos."
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "Muestra los FPS durante el juego. Desactivarlo evita distracciones; Touchpad + R1 permite alternarlo."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "Muestra los FPS al jugar. En Vulkan, puedes alternarlos desde el menú del panel táctil."
 
 #: pe/ui/switch_theme.cpp
 msgid "Software options: Triangle"

@@ -1572,8 +1572,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "Validarea configurării a eșuat. Verifică dacă fișierele de firmware și de chei pot fi citite și sunt valide."
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "Afișează FPS live în timpul jocului. Off este mai curat pentru utilizare normală; Touchpad + R1 îl comută în orice moment."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "Afișează FPS în joc. În Vulkan, comută afișarea din meniul touchpadului."
 
 
 #: pe/ui/switch_theme.cpp

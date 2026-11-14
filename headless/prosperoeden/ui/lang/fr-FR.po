@@ -1668,8 +1668,8 @@ msgid "Shooter"
 msgstr "Tir"
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "Affiche les FPS en direct pendant le jeu. Désactivé est plus propre au quotidien ; Touchpad + R1 permet de le basculer à tout moment."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "Affiche les FPS en jeu. Sous Vulkan, utilise le menu du pavé tactile pour les activer ou les masquer."
 
 #: Nlib metadata
 msgid "Simulation"

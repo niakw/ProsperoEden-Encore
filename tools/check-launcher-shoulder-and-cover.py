@@ -110,6 +110,12 @@ for token in ("constexpr float kCaseShellAspect = 454.0f / 730.0f;",
               "constexpr float rear_w = rear_h * kCaseShellAspect;"):
     assert token in library, token
 assert "flat_composed_ink(c, game, paper, rear);" in render
+# A valid retail scan which is merely decoding must not recursively enqueue
+# hero/cover/screenshots as fallback media. Confirmed missing/empty scans may.
+assert "const bool retail_pending = !scan.empty() && artwork.texture == 0 && !artwork.missing;" in render
+assert "} else if (!retail_pending) {" in render
+pending = render.split("} else if (!retail_pending) {", 1)[1].split("}", 1)[1]
+assert "flat_composed_ink(c, game, paper, rear);" not in pending.split("// ONE physical shell",1)[0]
 assert "selected ? 1.025f : 1.0f" not in library
 assert "if (artwork.texture != 0) {" in render
 assert "if (artwork.texture != 0)" in render

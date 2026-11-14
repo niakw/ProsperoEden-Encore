@@ -736,7 +736,9 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
         import_source_==SaveSource::ryujinx?tr("Ryujinx save found"):
             import_source_==SaveSource::folder?tr("Save folder found"):tr("Nothing to import")
     };
-    d.push_clip(kAdvancedClip);
+    // Four 96px rows: reserve a non-overlapping band for the persistent help.
+    constexpr Rect kGameClip{530.0f,302.0f,861.0f,402.0f};
+    d.push_clip(kGameClip);
     for(int i=game_rows_.first_row();i<=game_rows_.last_row();++i) {
         if(i<0||i>=16)continue;
         const float y=318+float(i)*96-game_rows_.scroll();
@@ -744,13 +746,30 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
                      game_rows_.row_alpha(i,92));
     }
     d.pop_clip();
-    if (confirmation_==Confirmation::none && message_.empty() &&
-        option_>=5 && option_<=11) {
+    if (confirmation_==Confirmation::none &&
+        (message_.empty() || !message_warning_) && option_>=0 && option_<14) {
+        static constexpr std::array<const char*,14> kGameAbout = {{
+            TR("Docked can improve graphics but may cost performance; Handheld is lighter for demanding games."),
+            TR("Vulkan is recommended on PS5. Use OpenGL only as a fallback for a title with Vulkan issues."),
+            TR("Minimum, Recommended, High and Ultra apply the title-aware Encore profile. Manual changes become Custom for this game."),
+            TR("Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."),
+            TR("Resolution follows the selected title-aware profile. Lower it for performance or memory; raise it only when the title has headroom."),
+            TR("Bilinear is the lightest default. AMD FSR is useful when rendering below the TV output size."),
+            TR("Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."),
+            TR("Anti-aliasing smooths jagged edges. None is fastest; FXAA is light; SMAA prioritizes image quality."),
+            TR("Texture filtering keeps distant ground and surfaces clearer at an angle; higher anisotropy uses more GPU bandwidth."),
+            TR("Frame generation is OFF by default. It smooths presentation but not game speed. Its simultaneous use with NR is unverified on PS5."),
+            TR("Choix direct : Défaut, Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original et DLSS-NR Compact."),
+            TR("L'intensité DLSS-NR (0 à 100 %) ne concerne que les deux DLSS-NR. Les valeurs par jeu sont conservées même après désactivation."),
+            TR("60 Hz is the safe default. Use 120 Hz only with a compatible display or high-FPS patch."),
+            TR("Open the per-game DualSense mapping. Global uses Settings > Controls; Custom overrides it only for this game."),
+        }};
+        static_assert(kGameAbout.size() == 14);
         const int filter=EffectiveGameUpscalingFilter(game_settings_,prefs_,id);
         const int aa=game_settings_.anti_aliasing>=0?
             game_settings_.anti_aliasing:baseAa;
         const int renderer=EffectiveGameRenderer(game_settings_,prefs_,id);
-        const char* guide=nullptr;
+        const char* guide=tr(kGameAbout[static_cast<std::size_t>(option_)]);
         bool inactive=false;
         if (option_==5) {
             inactive=!UpscalingFilterSelectable(filter,renderer);
@@ -777,7 +796,7 @@ void Launcher::draw_switch_game(Canvas& c,float opened) {
             guide=NeuralStrengthGuide(mode);
         }
         if (guide)
-            switch_video_help(c,tr(names[option_]),guide,inactive,730.0f);
+            switch_video_help(c,tr(names[option_]),guide,inactive,708.0f);
     }
     if(confirmation_==Confirmation::none)
         advanced_status(c,message_,message_warning_,option_==15?TR("Import"):

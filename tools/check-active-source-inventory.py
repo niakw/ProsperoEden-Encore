@@ -949,6 +949,50 @@ else:
     assert hashlib.sha1(b"blob " + str(len(raw_romfs)).encode() + bytes([0]) + raw_romfs).hexdigest() == "51eb401e5f2e3a0deefc5fc0e4cc30b0f4b8e4a3"
     assert '"file_sys/romfs.cpp"' in nov13_cmake
 print("ENCORE_POST_F07_ROMFS_OWNER_PASS", f"owners={len(post_f07_romfs_present)}")
+# FC27 compiler owners are post-F07 maintained overrides, not additions to
+# the immutable 337-path historical catalogue. Keep exact blobs and engine
+# selection receipts so a new path cannot be hidden by merely changing count.
+fc27_ssa_receipts = {
+    "eden-shader/include/shader_recompiler/frontend/ir/basic_block.h":
+        "0a23d1ce0f43524e6195bd8219349ef632cfb719",
+    "eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp":
+        "26c42a9900256e5573735394753c1d5264611664",
+}
+fc27_ssa_present = set(fc27_ssa_receipts) & set(physical_all)
+fc27_compiler_pins = {
+    "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
+    "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",
+}
+if gpu_table_vendor_pin in fc27_compiler_pins:
+    assert fc27_ssa_present == set(fc27_ssa_receipts)
+    for relative, blob in fc27_ssa_receipts.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+    assert 'set(EDEN_FC27_SSA_HEADER' in nov13_cmake
+    assert 'set(EDEN_FC27_SSA_SOURCE' in nov13_cmake
+    assert 'list(REMOVE_ITEM eden_fc27_ssa_sources "ir_opt/ssa_rewrite_pass.cpp")' in nov13_cmake
+else:
+    assert not fc27_ssa_present, ("Unexpected FC27 SSA owners", sorted(fc27_ssa_present))
+print("ENCORE_FC27_SSA_OWNER_PASS", f"owners={len(fc27_ssa_present)}")
+
+# The failed-search-pruning graph adds one further maintained source only at
+# vendor 76c5efe. The BFS header path predates it and is already catalogued.
+fc27_ssbo_receipts = {
+    "eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp":
+        "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
+}
+fc27_ssbo_present = set(fc27_ssbo_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3":
+    assert fc27_ssbo_present == set(fc27_ssbo_receipts)
+    for relative, blob in fc27_ssbo_receipts.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+    assert 'set(EDEN_FC27_SSBO_SOURCE' in nov13_cmake
+    assert 'list(REMOVE_ITEM eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp")' in nov13_cmake
+else:
+    assert not fc27_ssbo_present, ("Unexpected FC27 SSBO owner", sorted(fc27_ssbo_present))
+print("ENCORE_FC27_SSBO_OWNER_PASS", f"owners={len(fc27_ssbo_present)}")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -964,7 +1008,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

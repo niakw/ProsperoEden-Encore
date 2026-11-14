@@ -62,7 +62,7 @@ for marker in ("screen_ != Screen::library", "media_scan_.valid()",
                "games_[static_cast<std::size_t>(library_.selected)]",
                "media_next_retry_.find(game.title_id)",
                "media_scan_title_id_ = game.title_id",
-               "services_.enrich_game_media(std::move(copy), &media_cancel_)"):
+               "services_.enrich_game_media(std::move(copy), &selected_media_cancel_)"):
     assert marker in start, marker
 assert "enriched.title_id != media_scan_title_id_" in finish
 assert "for (Game& game : games_)" in finish

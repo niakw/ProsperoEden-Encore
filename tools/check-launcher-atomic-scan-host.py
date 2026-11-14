@@ -84,6 +84,7 @@ struct Game {
     Game(std::string file_, bool docked_) : file(std::move(file_)), docked(docked_) {}
 };
 enum class Cue { error };
+enum class Screen { home, library, settings };
 namespace sys {
 template<class... Args> void log(const char*, Args...) {}
 }
@@ -106,6 +107,9 @@ public:
     Textures textures_;
     std::future<Game> media_scan_;
     std::future<Game> home_media_scan_;
+    Screen screen_ = Screen::library;
+    std::atomic<bool> selected_media_cancel_{false}, media_cancel_{false};
+    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
     std::uint64_t media_scan_title_id_ = 0, home_media_scan_title_id_ = 0;
     Home home_;
     int home_syncs = 0, home_media_started = 0;
@@ -298,6 +302,37 @@ int main() {
         copies.finish_selected_media();
         assert(copies.games_[2].box_front.empty());
         assert(copies.home_syncs == 2);
+    }
+    // The actual pending-future completion owner cancels a stale request
+    // without waiting, preserves another title's metadata and permits retry.
+    {
+        Launcher l;
+        Game a{"a",true}; a.title_id=1; a.cover="current.webp";
+        Game b{"b",true}; b.title_id=2;
+        l.games_={a,b}; l.library_.selected=0;
+        std::promise<Game> p;
+        l.media_scan_=p.get_future(); l.media_scan_title_id_=1;
+        l.finish_selected_media();
+        assert(!l.selected_media_cancel_ && l.media_scan_.valid());
+        l.library_.selected=1;
+        l.finish_selected_media();
+        assert(l.selected_media_cancel_ && l.media_scan_.valid() && l.media==0);
+        Game stale=a; stale.cover="stale.webp"; stale.artwork_changed=true;
+        p.set_value(stale);
+        l.finish_selected_media();
+        assert(!l.media_scan_.valid() && l.media==1);
+        assert(l.games_[0].cover=="current.webp" && l.games_[1].cover.empty());
+        assert(l.home_syncs==0 && l.textures_.invalidated>0);
+        assert(l.media_next_retry_.at(1)<
+               std::chrono::steady_clock::now()+std::chrono::seconds(3));
+        // Leaving the library while the same title remains selected also
+        // cancels, without changing the global Home/launch cancellation.
+        l.selected_media_cancel_=false; l.library_.selected=0;
+        std::promise<Game> q; l.media_scan_=q.get_future();
+        l.media_scan_title_id_=1; l.screen_=Screen::home;
+        l.finish_selected_media();
+        assert(l.selected_media_cancel_ && !l.media_cancel_ && l.media_scan_.valid());
+        q.set_value(a); l.finish_selected_media(); assert(!l.media_scan_.valid());
     }
     // Fresh discovery is pending: the UI cannot declare "No ROM" until
     // a complete worker result has been committed on the owner thread.

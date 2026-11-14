@@ -1368,8 +1368,16 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Clear shader caches only. Saves, settings, keys and games are not removed.")};
         const int selected = std::clamp(option_, 0, 3);
         const bool inactive = (selected == 1 || selected == 2) && !services_.log_sharing_available();
-        DrawVideoGuide(c, tr(names[selected]),
-                       inactive ? tr(TR("Log sharing service is not available. Nothing is sent.")) : tr(hints[selected]),
+        const DiagnosticsInfo& info = home_diagnostics_;
+        std::string guide = inactive
+            ? tr(TR("Log sharing service is not available. Nothing is sent."))
+            : tr(hints[selected]);
+        if (selected == 3) {
+            guide += "\n" + fill(tr("Cache: {0}  |  Logs: {1}"),
+                                  {info.shader_caches, info.logs});
+            guide += "\n" + fill(tr("Data: {0}"), {short_path(info.data_path, 32)});
+        }
+        DrawVideoGuide(c, tr(names[selected]), guide,
                        inactive, prefs_.ui_theme == 1 || prefs_.color_palette == 3);
     }
 

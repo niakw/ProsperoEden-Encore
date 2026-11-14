@@ -260,7 +260,9 @@ std::array<bool, 3> Launcher::switch_states(Modal modal) const
     case Modal::accessibility:
         return {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion};
     case Modal::diagnostics:
-        return {prefs_.detailed_logging, prefs_.share_advanced_logs, prefs_.share_standard_logs};
+        return {prefs_.detailed_logging,
+                services_.log_sharing_available() && prefs_.share_advanced_logs,
+                services_.log_sharing_available() && prefs_.share_standard_logs};
     default:
         return {prefs_.detailed_logging, false, false};
     }

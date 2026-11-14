@@ -134,8 +134,6 @@ struct Preferences {
     int volume = 100;
     bool mute = false;
     bool detailed_logging = false;
-    bool share_standard_logs = false;
-    bool share_advanced_logs = false;
     GraphicsBackend backend = GraphicsBackend::Vulkan;
     int resolution = EncoreOverrides::kGeneralProfiles[1].resolution;  // Recommended from encore-overrides
     int upscaling_filter = EncoreOverrides::kGeneralProfiles[1].filter;
@@ -177,6 +175,9 @@ struct Preferences {
     // Auto-check metadata on first launcher start (never auto-install).
     // Existing saved opt-out values remain unchanged.
     bool check_updates_on_start = true;
+    // Append only: preserve the established aggregate initialization order.
+    bool share_standard_logs = false;
+    bool share_advanced_logs = false;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -397,7 +398,9 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.detailed_logging = Settings::Bool(document, Json::json_pointer("/diagnostics/detailed_logging"),
                                              result.detailed_logging);
     // Old settings or a future notice version never imply consent.
-    if (Settings::Int(document, Json::json_pointer("/diagnostics/sharing_consent_version"), 0) == 1) {
+    const Json::json_pointer sharing_version("/diagnostics/sharing_consent_version");
+    if (document.contains(sharing_version) && document.at(sharing_version).is_number_integer() &&
+        document.at(sharing_version) == 1) {
         result.share_standard_logs = Settings::Bool(document, Json::json_pointer("/diagnostics/share_standard_logs"), false);
         result.share_advanced_logs = Settings::Bool(document, Json::json_pointer("/diagnostics/share_advanced_logs"), false);
     }

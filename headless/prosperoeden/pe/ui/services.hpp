@@ -174,8 +174,6 @@ struct Preferences
     int volume = 100; // game volume, 0-100
     bool mute = false;
     bool detailed_logging = false;
-    bool share_standard_logs = false;
-    bool share_advanced_logs = false;
     int renderer = 1; // 0 OpenGL, 1 Vulkan
     int resolution = 4; // Recommended: 1.25x
     int filter = Eden::EncoreOverrides::kGeneralProfiles[1].filter; // FSR 1
@@ -216,6 +214,9 @@ struct Preferences
     bool show_game_background = true; // preserve current hero background default
     std::string wallpaper_file; // validated basename, never arbitrary path
     bool check_updates_on_start = true; // metadata-only; persisted opt-out honored
+    // Append only: preserve the established aggregate initialization order.
+    bool share_standard_logs = false;
+    bool share_advanced_logs = false;
 };
 
 // One game's overrides; -1 uses Settings > Video.

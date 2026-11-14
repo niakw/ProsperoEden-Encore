@@ -2707,8 +2707,9 @@ pe::ui::Preferences EdenServices::preferences() {
     result.volume = saved.volume;
     result.mute = saved.mute;
     result.detailed_logging = saved.detailed_logging;
-    result.share_standard_logs = saved.share_standard_logs;
-    result.share_advanced_logs = saved.share_advanced_logs;
+    const bool sharing_available = log_sharing_available();
+    result.share_standard_logs = sharing_available && saved.share_standard_logs;
+    result.share_advanced_logs = sharing_available && saved.share_advanced_logs;
     result.renderer = saved.backend == Eden::GraphicsBackend::OpenGL ? 0 : 1;
     result.resolution = saved.resolution;
     result.filter = saved.upscaling_filter;

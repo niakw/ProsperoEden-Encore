@@ -962,6 +962,7 @@ fc27_ssa_present = set(fc27_ssa_receipts) & set(physical_all)
 fc27_compiler_pins = {
     "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
     "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",
+    "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e",
 }
 if gpu_table_vendor_pin in fc27_compiler_pins:
     assert fc27_ssa_present == set(fc27_ssa_receipts)
@@ -982,7 +983,7 @@ fc27_ssbo_receipts = {
         "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
 }
 fc27_ssbo_present = set(fc27_ssbo_receipts) & set(physical_all)
-if gpu_table_vendor_pin == "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3":
+if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e"}:
     assert fc27_ssbo_present == set(fc27_ssbo_receipts)
     for relative, blob in fc27_ssbo_receipts.items():
         raw = (active / relative).read_bytes()

@@ -98,6 +98,14 @@ assert "if (modal==Modal::video && option_>=0 && option_<=12)" in switch_dialog
 assert "switch_video_help(c,tr(labels[option_]),guides,inactive,744.0f)" in switch_dialog
 assert "text_block(c,message_,493.0f,213.0f" in switch_dialog
 assert "total-visible" in switch_dialog
+# The selected guide is reserved for controls/appearance as well as video.
+assert "const int visible=4;" in switch_dialog
+assert "modal==Modal::video || modal==Modal::appearance || modal==Modal::controls" in switch_dialog
+assert "switch_video_help(c,tr(name),tr(help),inactive,744.0f)" in switch_dialog
+assert "row_inactive?kSubtle:kInk" in switch_dialog
+assert 278+3*112+101 < 744+124 < 888
+assert "modal == Modal::audio || modal == Modal::accessibility" in dialog
+assert "DrawVideoGuide(c, tr(kNames[selected]), tr(kAbout[selected]), false," in dialog
 assert 'TR("Panel opacity"), TR("Background motion")' in switch_dialog
 assert 'case 16: value = std::to_string(prefs_.panel_opacity)+"%";' in switch_dialog
 assert 'case 19: value = prefs_.show_game_background?' in switch_dialog

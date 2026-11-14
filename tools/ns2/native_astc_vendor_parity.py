@@ -195,6 +195,30 @@ def strip_post_n73_msaa_framebuffer_source(text: str) -> str:
     return text
 
 
+def strip_same_image_blit_layout(text: str) -> str:
+    """Reverse only the exact reviewed post-MSAA same-image blit delta.
+
+    Historic callers keep their original full-file SHA oracles. Runtime
+    sources retain the correction; only this in-memory witness is rewound.
+    """
+    if git_blob(text.encode()) != "27a3c820667b0bf0774b9ab3c88e5a9e00032c4f":
+        return text
+    start = "void TextureCacheRuntime::BlitImage("
+    end = "\nvoid TextureCacheRuntime::ConvertImage("
+    assert text.count(start) == text.count(end) == 1
+    lo = text.index(start)
+    hi = text.index(end, lo)
+    block = text[lo:hi]
+    for new, old in [["    // Lichii #1466: same-image mip blits must keep the shared image in GENERAL.\n    const VkImageLayout dst_layout =\n        src_image == dst_image ? VK_IMAGE_LAYOUT_GENERAL : VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;\n    scheduler.RequestOutsideRenderPassOperationContext();","    scheduler.RequestOutsideRenderPassOperationContext();"],["                      aspect_mask, is_resolve, dst_layout](vk::CommandBuffer cmdbuf) {","                      aspect_mask, is_resolve](vk::CommandBuffer cmdbuf) {"],[".newLayout = dst_layout,",".newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,"],[".oldLayout = dst_layout,",".oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,"],["                                dst_layout,\n                                MakeImageResolve","                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,\n                                MakeImageResolve"],["src_image, VK_IMAGE_LAYOUT_GENERAL, dst_image, dst_layout,","src_image, VK_IMAGE_LAYOUT_GENERAL, dst_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,"]]:
+        block = once(block, new, old)
+    recovered = text[:lo] + block + text[hi:]
+    assert git_blob(recovered.encode()) == "2b344e2c9adce18a7037194cc4d5f81a5c6df144", (
+        "Same-image blit source normalization did not recover exact prior owner")
+    print("ENCORE_SAME_IMAGE_BLIT_REVERSE_PASS historical_TIR_and_MSAA_receipts_preserved=1",
+          flush=True)
+    return recovered
+
+
 def normalized(root: Path) -> dict[str, str]:
     for name, expected in AUXILIARY.items():
         path = root / ASTC / name
@@ -244,6 +268,7 @@ def normalized(root: Path) -> dict[str, str]:
             # translation unit. Rewind ONLY that reviewed, raw-blob-pinned
             # addition in memory before applying the original six-hunk oracle.
             # Never normalize arbitrary newer vendor sources.
+            text = strip_same_image_blit_layout(text)
             tir_source_sha = git_blob(text.encode())
             if tir_source_sha == "2b344e2c9adce18a7037194cc4d5f81a5c6df144":
                 old_msaa = "image_copy.src_offset = {0, 0, 0}"

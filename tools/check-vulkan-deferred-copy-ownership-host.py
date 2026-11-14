@@ -160,7 +160,7 @@ for module, changes in edits.items():
         # checking this immutable historical F07 texture-source fingerprint.
         from ns2.native_astc_vendor_parity import (
             strip_p22_runtime_cpp, strip_p25_reinterpret,
-            strip_post_n73_msaa_framebuffer_source,
+            strip_post_n73_msaa_framebuffer_source, strip_same_image_blit_layout,
         )
         # Preserve P2.5 depth/stencil and disjoint copy-buffer protections
         # in both generator and production. Undo only the individually
@@ -182,8 +182,8 @@ for module, changes in edits.items():
         # source-offset change after the original six-hunk R23 receipt.
         # Reconstruct the old byte-identical owner in memory, never bypass
         # the historical oracle for any other source drift.
-        before_r23_tir = current
-        if git_blob(current.encode()) == "2b344e2c9adce18a7037194cc4d5f81a5c6df144":
+        before_r23_tir = strip_same_image_blit_layout(current)
+        if git_blob(before_r23_tir.encode()) == "2b344e2c9adce18a7037194cc4d5f81a5c6df144":
             msaa_new = (
                 "// CopyBufferToImage places each region at image_offset in the\n"
                 "            // single-sample scratch image. The MSAA copy fragment shader\n"
@@ -197,7 +197,7 @@ for module, changes in edits.items():
             assert git_blob(before_r23_tir.encode()) == r23_tir_receipt['post_r23_blob']
             print("VULKAN_DEFERRED_MSAA_SOURCE_RECEIPT_PASS restored=historical_R23")
         else:
-            assert git_blob(current.encode()) == r23_tir_receipt['post_r23_blob'], (
+            assert git_blob(before_r23_tir.encode()) == r23_tir_receipt['post_r23_blob'], (
                 'Unreviewed R23/TIR Vulkan owner')
         for hunk in reversed(r23_tir_receipt['patches']):
             assert before_r23_tir.count(hunk['after']) == 1, (

@@ -8,7 +8,10 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[2]
-VENDOR="1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+REVIEWED_VENDORS={
+    "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864",
+    "fe9edd661d6f0824c7339865d50aa9cf99cab150",
+}
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
@@ -23,7 +26,25 @@ def args(row):
 def main():
     native=Path(sys.argv[1]).resolve()
     sha=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
-    if sha!=VENDOR: raise RuntimeError("Wrong vendor physical owner: "+sha)
+    actual=subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],
+                                   text=True).strip()
+    if sha!=actual or sha not in REVIEWED_VENDORS:
+        raise RuntimeError("Wrong vendor physical owner: "+sha)
+    # These selected sparse page table, KSharedMemory, kernel/slab and
+    # publisher sources are byte-identical in both reviewed vendor graphs.
+    import hashlib
+    def gitblob(path):
+        raw=path.read_bytes()
+        return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+    for owner,expected in (
+        (NATIVE_GUEST[0],"1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
+        (NATIVE_GUEST[1],"c8f197810af244c3f2d66413352533734d031620"),
+        (NATIVE_SHARED,"9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
+        (NATIVE_KERNEL,"88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
+        (NATIVE_SLAB,"130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
+    ):
+        if gitblob(owner)!=expected:
+            raise RuntimeError("Unreviewed native sparse owner "+str(owner))
     cache=(native/"CMakeCache.txt").read_text()
     if "set(EDEN_NS2_SPARSE_BACKING ON)" not in (ROOT/"headless/CMakeLists.txt").read_text():
         raise RuntimeError("Production sparse PS5 backing not selected")

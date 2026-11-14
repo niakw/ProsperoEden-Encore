@@ -178,9 +178,27 @@ for module, changes in edits.items():
             (ROOT / 'tools/fixtures/r23-tir-vk-texture-cache-reverse.json').read_text())
         assert r23_tir_receipt['schema_version'] == 1
         assert len(r23_tir_receipt['patches']) == 6
-        assert git_blob(current.encode()) == r23_tir_receipt['post_r23_blob'], (
-            'Unreviewed R23/TIR Vulkan owner')
+        # Vendor #108 adds exactly one reviewed MSAA partial-upload
+        # source-offset change after the original six-hunk R23 receipt.
+        # Reconstruct the old byte-identical owner in memory, never bypass
+        # the historical oracle for any other source drift.
         before_r23_tir = current
+        if git_blob(current.encode()) == "2b344e2c9adce18a7037194cc4d5f81a5c6df144":
+            msaa_new = (
+                "// CopyBufferToImage places each region at image_offset in the\\n"
+                "            // single-sample scratch image. The MSAA copy fragment shader\\n"
+                "            // adds src_offset AFTER its sample-space scaling, so (0,0)\\n"
+                "            // incorrectly samples the first region for every partial copy.\\n"
+                "            image_copy.src_offset = copy.image_offset"
+            )
+            msaa_old = "image_copy.src_offset = {0, 0, 0}"
+            assert before_r23_tir.count(msaa_new) == 1
+            before_r23_tir = before_r23_tir.replace(msaa_new, msaa_old, 1)
+            assert git_blob(before_r23_tir.encode()) == r23_tir_receipt['post_r23_blob']
+            print("VULKAN_DEFERRED_MSAA_SOURCE_RECEIPT_PASS restored=historical_R23")
+        else:
+            assert git_blob(current.encode()) == r23_tir_receipt['post_r23_blob'], (
+                'Unreviewed R23/TIR Vulkan owner')
         for hunk in reversed(r23_tir_receipt['patches']):
             assert before_r23_tir.count(hunk['after']) == 1, (
                 'R23/TIR reverse span changed')

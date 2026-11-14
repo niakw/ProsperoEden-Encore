@@ -102,3 +102,30 @@ assert 'TR("Panel opacity"), TR("Background motion")' in switch_dialog
 assert 'case 16: value = std::to_string(prefs_.panel_opacity)+"%";' in switch_dialog
 assert 'case 19: value = prefs_.show_game_background?' in switch_dialog
 print("R457_SETTINGS_GUIDE_SOURCE_PASS")
+
+# R457: per-title row descriptions must not depend on an empty success toast.
+library=(root/"headless/prosperoeden/pe/ui/library.cpp").read_text()
+game=library.split("void Launcher::draw_game(",1)[1].split("// ---------------------------------------------------------------- a game's mods",1)[0]
+assert "const bool compact_game_success = !message_.empty() && !message_warning_ &&" in game
+assert "option_ >= row_mode && option_ < row_controls;" in game
+assert "if (!message_.empty() && !compact_game_success)" in game
+assert "compact_game_success ? 405.0f : 736.0f" in game
+assert "if (compact_game_success)" in game
+assert "DrawVideoGuide(c, tr(kLabels[option_]), explanation," in game
+per_game=src.split("void Launcher::draw_switch_game(",1)[1].split("void Launcher::draw_switch_mods(",1)[0]
+assert "(message_.empty() || !message_warning_) && option_>=0 && option_<14" in per_game
+assert "constexpr Rect kGameClip{530.0f,302.0f,861.0f,402.0f};" in per_game
+assert "d.push_clip(kGameClip);" in per_game
+assert "switch_video_help(c,tr(names[option_]),guide,inactive,708.0f)" in per_game
+assert "advanced_status(c,message_,message_warning_" in per_game
+import re
+def guide_keys(source):
+    body=source.split("kGameAbout = {{",1)[1].split("}};",1)[0]
+    return re.findall(r'TR\("([^"]+)"\)',body)
+assert len(guide_keys(game))==14
+assert guide_keys(game)==guide_keys(per_game)
+# Four rows fit the reserved clip; the guide sits after it and before
+# the footer text baseline. The actual preview separately renders both skins.
+assert 318 + 3*96 + 92 <= 302 + 402 <= 708
+assert 708 + 124 <= 831 + (39-18)/2
+print("R457_PER_GAME_GUIDANCE_SOURCE_PASS rows=14 routine_feedback=independent clip=separate")

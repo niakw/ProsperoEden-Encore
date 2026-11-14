@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Engine/vendor source-selection proof for FC27 block-local SSA storage."""
+from pathlib import Path
+import hashlib
+import subprocess
+
+ROOT=Path(__file__).resolve().parents[1]
+V=ROOT/"vendor"
+CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
+
+def blob(path: Path) -> str:
+    raw=path.read_bytes()
+    return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+
+selected=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
+gitlink=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
+assert selected==gitlink=="b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",(selected,gitlink)
+
+active_header=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/basic_block.h"
+active_ssa=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp"
+pinned_header=V/"sources/eden/src/shader_recompiler/frontend/ir/basic_block.h"
+pinned_ssa=V/"sources/eden/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp"
+assert blob(active_header)=="0a23d1ce0f43524e6195bd8219349ef632cfb719"
+assert blob(active_ssa)=="26c42a9900256e5573735394753c1d5264611664"
+assert blob(pinned_header)=="d3a66caac9b0955dd72526b23cf7caab8b12976f"
+assert blob(pinned_ssa)=="b5cd2339924f0cbd725249140ff67cfb8f79a360"
+
+needles=[
+    'set(EDEN_FC27_SSA_ROOT',
+    'configure_file("${EDEN_FC27_SSA_HEADER}"',
+    'list(FIND eden_fc27_ssa_sources "ir_opt/ssa_rewrite_pass.cpp" eden_fc27_ssa_index)',
+    'list(REMOVE_ITEM eden_fc27_ssa_sources "ir_opt/ssa_rewrite_pass.cpp")',
+    'list(APPEND eden_fc27_ssa_sources "${EDEN_FC27_SSA_SOURCE}")',
+    'target_include_directories(shader_recompiler BEFORE PUBLIC "${EDEN_FC27_SSA_INCLUDE}")',
+]
+for needle in needles:
+    assert CMAKE.count(needle)==1,needle
+
+# Source/header must be selected as one pair: the maintained SSA source calls
+# the block-local accessors that do not exist in the immutable predecessor.
+assert "block->SsaPredValue(variable)" in active_ssa.read_text()
+assert "block->SetSsaPredValue(variable, value)" in active_ssa.read_text()
+assert "SsaPredValue" in active_header.read_text()
+assert "SsaPredValue" not in pinned_header.read_text()
+
+subprocess.run(["python3","-B",str(V/"tests/fc27_ssa_definition_storage_host.py")],
+               check=True,timeout=180)
+print("FC27_SSA_ENGINE_VENDOR_PAIR_PASS gitlink=exact source_header_pair=1 pinned_immutable=1 ps5_gameplay=unverified")

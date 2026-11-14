@@ -5,6 +5,7 @@ on:
       - "vendor"
       - "headless/CMakeLists.txt"
       - "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      - "tools/check-spirv-scalar-cache-sirit-contract.py"
       - ".github/workflows/spirv-scalar-engine-host.yml"
   workflow_dispatch:
 permissions:
@@ -24,5 +25,7 @@ jobs:
           test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h)" = "844a118358c874b0666aebda116c1d6a0c9a8ceb"
           python3 -B vendor/tests/ps5_spirv_scalar_constant_cache_host.py
           python3 -B vendor/tests/ps5_spirv_scalar_real_sirit_host.py
+          python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
+          python3 -B tools/check-spirv-scalar-cache-sirit-contract.py
       - name: Verify shared shader source graph and real C++ syntax
         run: python3 -B tools/ns2/check_shared_ns2_spirv_compiler_host.py

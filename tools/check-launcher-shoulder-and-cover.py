@@ -114,8 +114,10 @@ assert "flat_composed_ink(c, game, paper, rear);" in render
 # hero/cover/screenshots as fallback media. Confirmed missing/empty scans may.
 assert "const bool retail_pending = !scan.empty() && artwork.texture == 0 && !artwork.missing;" in render
 assert "} else if (!retail_pending) {" in render
-pending = render.split("} else if (!retail_pending) {", 1)[1].split("}", 1)[1]
-assert "flat_composed_ink(c, game, paper, rear);" not in pending.split("// ONE physical shell",1)[0]
+assert render.count("flat_composed_ink(c, game, paper, rear);") == 1
+assert render.index("} else if (!retail_pending) {") < render.index(
+    "flat_composed_ink(c, game, paper, rear);") < render.index(
+    "} else {", render.index("flat_composed_ink(c, game, paper, rear);"))
 assert "selected ? 1.025f : 1.0f" not in library
 assert "if (artwork.texture != 0) {" in render
 assert "if (artwork.texture != 0)" in render

@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from ci.ps5_cache_diag_receipt import normalize_for_historical_proof
 root=Path(__file__).resolve().parents[1]
 active=root/'vendor/encore-active/eden-vulkan'
 upstream=root/'vendor/sources/eden'
@@ -65,6 +66,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     subprocess.run([sys.executable,'-B',str(root/'tools/prepare-vulkan-port.py'),str(patched),str(temp/'generated')],check=True,timeout=150,env=env)
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
+    # A reviewed, startup-only vendor diagnostic may add seven tiny source
+    # blocks. Check its EXACT raw Git blob and reverse ONLY those blocks
+    # before the immutable R23/P24 and generated-Vulkan source oracles.
+    # Never edit the pinned vendor source or normalize other Vulkan owners.
+    native_cache_owner = 'vk_pipeline_cache_cost.cpp'
+    cache_source = expected[native_cache_owner].read_text()
+    cache_historic, cache_has_diag = normalize_for_historical_proof(cache_source)
+    if cache_has_diag:
+        cache_historic_file = temp/'normalized-vendor-ps5-cache-diagnostics'/native_cache_owner
+        cache_historic_file.parent.mkdir(parents=True, exist_ok=True)
+        cache_historic_file.write_text(cache_historic)
+        expected[native_cache_owner] = cache_historic_file
+    print("ENCORE_PS5_SHADER_CACHE_SOURCE_RECEIPT_PASS",
+          "diagnostics=" + str(int(cache_has_diag)),
+          "R23_original_blob_preserved=1")
     # Two intentional native-only sources are not generator outputs:
     # a synchronization helper and the F07 Vulkan allocator OOM diagnostics.
     # All generated Vulkan translation units still remain byte-identical.

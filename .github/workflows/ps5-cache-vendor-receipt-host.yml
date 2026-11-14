@@ -1,0 +1,49 @@
+name: PS5 shader cache vendor source receipt — both pinned source graphs
+
+on:
+  pull_request:
+    paths:
+      - "tools/ci/ps5_cache_diag_receipt.py"
+      - "tools/check-vendored-vulkan-fork.py"
+      - "tools/check-ps5-cache-diag-receipt-host.py"
+      - ".github/workflows/ps5-cache-vendor-receipt-host.yml"
+  push:
+    branches:
+      - fix/nov13-cache-probe-vendor-source-receipt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ps5-cache-source-integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Exact pinned engine and vendor source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify baseline main vendor still passes original SHA
+        run: |
+          set -euo pipefail
+          actual="$(git -C vendor rev-parse HEAD)"
+          test "$actual" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          python3 -B tools/check-ps5-cache-diag-receipt-host.py
+      - name: Checkout exact reviewed vendor draft in isolated CI workspace
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov13-ps5-cache-source-diagnostics
+          git -C vendor checkout --detach FETCH_HEAD
+          actual="$(git -C vendor rev-parse HEAD)"
+          test "$actual" = "6d1ac1219ec07fb425a92bc033dc16641471906f"
+          python3 -B tools/check-ps5-cache-diag-receipt-host.py
+      - name: Verify native Vulkan generator and frozen reverse receipts
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-vendored-vulkan-fork.py
+      - name: Verification limits
+        if: always()
+        run: |
+          echo "Host-only source/provenance validation: NO native PS5 binary, FFmpeg runtime, shader-cache hit, FC27 game test or release." >> "$GITHUB_STEP_SUMMARY"

@@ -141,6 +141,7 @@ Launcher::~Launcher()
     home_cancel_.store(true, std::memory_order_release);
     scan_cancel_.store(true, std::memory_order_release);
     media_cancel_.store(true, std::memory_order_release);
+    selected_media_cancel_.store(true, std::memory_order_release);
     diagnostics_cancel_.store(true, std::memory_order_release);
     if (scan_.valid())
         scan_.wait();
@@ -480,6 +481,7 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     home_cancel_.store(true, std::memory_order_release);
     scan_cancel_.store(true, std::memory_order_release);
     media_cancel_.store(true, std::memory_order_release);
+    selected_media_cancel_.store(true, std::memory_order_release);
     diagnostics_cancel_.store(true, std::memory_order_release);
     selected_game_ = services_.game_path(file);
     launch_title_ = title;

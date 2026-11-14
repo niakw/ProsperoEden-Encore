@@ -246,33 +246,19 @@ void WindowAdaptPass::DrawHudOverlay(const Device& device, Scheduler& scheduler,
         BeginRenderPass(cmdbuf, rp, fb, size);
         if (hud.width &&
             (hud.loading || (size.width >= units(hud.width + 16) && size.height >= units(64)))) {
-            // This native EGL->Vulkan handoff reuses the byte-pinned
-            // Vulkan loading shader. Mark only the presentation width bit:
-            // the shader itself ignores width while loading.
-            const bool jacket_band = hud.loading != 0u &&
-                                     (hud.width & 0x80000000u) != 0u;
-            // The existing time-driven spinner is ~11.8% from the bottom.
-            // Limit the jacket overlay to its lower fifth without moving
-            // shader coordinates or changing normal fullscreen loading.
-            const std::uint32_t band_height = std::max(1u, size.height / 5u);
+            // Loading owns the whole picture in both backends. The prior
+            // jacket path clipped this same shader to a lower band, producing
+            // the visible purple strip reported on PS5.
             const VkRect2D scissor = hud.loading
-                ? (jacket_band
-                    ? VkRect2D{{0, static_cast<int32_t>(size.height - band_height)},
-                                {size.width, band_height}}
-                    : VkRect2D{{0, 0}, size})
+                ? VkRect2D{{0, 0}, size}
                 : VkRect2D{{static_cast<int32_t>(units(16)),
                              static_cast<int32_t>(units(16))},
                             {units(hud.width), units(48)}};
-            // A clipped viewport would shift the shader's gl_FragCoord and
-            // break the ring geometry; scissor only, keep a full viewport.
-            const VkViewport viewport = jacket_band
-                ? VkViewport{0.0f, 0.0f,
-                             static_cast<float>(size.width),
-                             static_cast<float>(size.height), 0, 1}
-                : VkViewport{static_cast<float>(scissor.offset.x),
-                             static_cast<float>(scissor.offset.y),
-                             static_cast<float>(scissor.extent.width),
-                             static_cast<float>(scissor.extent.height), 0, 1};
+            const VkViewport viewport{
+                static_cast<float>(scissor.offset.x),
+                static_cast<float>(scissor.offset.y),
+                static_cast<float>(scissor.extent.width),
+                static_cast<float>(scissor.extent.height), 0, 1};
             cmdbuf.SetViewport(0, viewport);
             cmdbuf.SetScissor(0, scissor);
             cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);

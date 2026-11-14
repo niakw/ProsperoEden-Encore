@@ -2239,11 +2239,18 @@ int main(int argc, char** argv) {
                 }
 #ifdef PS5_NATIVE
                 if (game) {
-                    const auto filename = std::filesystem::path(guest).filename().string();
-                    const bool saved_last = Eden::SaveLastGame(filename);
-                    const bool saved_recent = Eden::SaveRecentGame(filename);
-                    if (!saved_last || !saved_recent)
-                        Eden::Report("history", "Could not save recent game");
+                    const auto selection = Eden::LibraryHistorySelection(
+                        std::filesystem::path(guest), library_root);
+                    // A developer launch outside the configured ROM catalog
+                    // is not a valid entry in this library's history.
+                    if (!selection.empty()) {
+                        const bool saved_last = Eden::SaveLastGame(selection);
+                        const bool saved_recent = Eden::SaveRecentGame(selection);
+                        if (!saved_last || !saved_recent)
+                            Eden::Report("history", "Could not save recent game");
+                    } else {
+                        Eden::Report("history", "Selection is outside the library or unsupported; history unchanged");
+                    }
                 }
 #endif
                 passed(game ? "game_loaded" : "nro_loaded");

@@ -54,6 +54,28 @@ int main() {
     for (int i = 0; i < 5; ++i) assert(Eden::SaveRecentGame("Game" + std::to_string(i) + ".nsp", file));
     assert((Eden::LoadRecentGames(file) == std::vector<std::string>{"Game4.nsp", "Game3.nsp", "Game2.nsp", "Game1.nsp"}));
 
+    // Extracted games have identical executable basenames; preserve catalog identity.
+    const std::filesystem::path root{"/mnt/test/roms"};
+    const std::string history_file = std::string(directory) + "/history.json";
+    const auto a_selection = Eden::LibraryHistorySelection(root / "First/base/exefs/main", root);
+    const auto b_selection = Eden::LibraryHistorySelection(root / "Second/exefs/main", root);
+    assert(a_selection == "First/base/exefs/main");
+    assert(b_selection == "Second/exefs/main");
+    assert(Eden::LibraryHistorySelection(root / "Legacy/main", root) == "Legacy/main");
+    assert(Eden::LibraryHistorySelection(root / "Nested/base.nsp", root) == "Nested/base.nsp");
+    assert(Eden::LibraryHistorySelection(root / "Flat.nsp", root) == "Flat.nsp");
+    assert(Eden::LibraryHistorySelection(root / "main", root).empty());
+    assert(Eden::LibraryHistorySelection(root / "../Other/game.nsp", root).empty());
+    assert(Eden::LibraryHistorySelection("/mnt/test/roms-other/game.nsp", root).empty());
+    assert(Eden::LibraryHistorySelection("Relative/game.nsp", root).empty());
+    assert(Eden::LibraryHistorySelection(root / "First/update/exefs/main", root).empty());
+    assert(Eden::SaveLastGame(a_selection, history_file));
+    assert(Eden::SaveRecentGame(a_selection, history_file));
+    assert(Eden::SaveLastGame(b_selection, history_file));
+    assert(Eden::SaveRecentGame(b_selection, history_file));
+    assert(Eden::LoadLastGame(history_file) == b_selection);
+    assert((Eden::LoadRecentGames(history_file) == std::vector<std::string>{b_selection, a_selection}));
+
     // Console mode per title.
     constexpr uint64_t racer = 0x0100000000010000, quest = 0x0100000000030000;
     assert(Eden::LoadGameDocked(racer, file) && Eden::LoadGameDocked(quest, file));

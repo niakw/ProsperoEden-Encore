@@ -47,6 +47,9 @@ for marker in (
     'list(APPEND eden_nvdec_video_sources "${EDEN_NVDEC_MAINTAINED_SOURCE}")',
     'set_property(TARGET video_core PROPERTY SOURCES "${eden_nvdec_video_sources}")',
     'target_include_directories(video_core BEFORE PUBLIC',
+    'set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")',
+    'configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"',
+    '"${EDEN_NVDEC_HEADER_DIR}/video_core/host1x/ffmpeg.h" COPYONLY)',
     'message(FATAL_ERROR "NVDEC maintained FFmpeg source/header pair incomplete")',
 ):
     assert marker in CMAKE,marker
@@ -58,6 +61,9 @@ assert part.count("\n    elseif(EXISTS ")==1
 assert part.count('list(APPEND eden_nvdec_video_sources')==1
 assert part.count('target_include_directories(video_core BEFORE PUBLIC')==1
 assert "vendor/sources/eden" not in part
+assert '"${EDEN_NVDEC_OWNER_ROOT}/overrides"' not in part, (
+    "Broad FFmpeg header include root could shadow unrelated core headers")
+assert part.count('configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"')==1
 print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
       "original_Eden_pristine=1",
       f"reviewed_vendor_candidate={int(CAND_SOURCE.is_file())}",

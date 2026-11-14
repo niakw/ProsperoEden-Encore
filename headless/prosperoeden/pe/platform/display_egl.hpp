@@ -28,9 +28,10 @@ class Display
     void close();
 
     // A Vulkan launch may take tens of seconds in System::Load before it can
-    // create its own VideoOut surface. Destroy this launcher's GL objects but
-    // keep the initialized EGL display (and therefore its last scanout) alive
-    // until the Vulkan WSI is actually ready to take ownership.
+    // create its own VideoOut surface. Detach/destroy only the GL context;
+    // retain the EGL display AND window surface because this PS5 runtime
+    // closes VideoOut from eglDestroySurface itself. The next renderer releases
+    // both at its explicit takeover boundary.
     bool defer_scanout_close();
     static bool close_deferred_scanout();
     static bool has_deferred_scanout();

@@ -3,6 +3,7 @@
 // calls, atomics and the buffers below.
 #include "crash_report.h"
 #ifdef PS5_NATIVE
+#include "gpu_failure.h"
 #include "performance.h"
 #endif
 
@@ -360,7 +361,9 @@ void Compose(const Kind* kind, int code, std::uint64_t address, const Registers&
 #ifdef PS5_NATIVE
     // No periodic log file in quiet mode. Preserve coarse progress inside
     // the crash report itself, even if the last GPU command never returned.
-    t.Put("gpu completed commands (64-step sample): ");
+    t.Put("gpu submitted lists (sample 1/2/3 then 64-step): ");
+    t.Dec(::Eden::GpuSubmissionSample());
+    t.Put("\ngpu completed commands (64-step sample): ");
     t.Dec(gpu_completed_commands.load(std::memory_order_relaxed));
     t.Put("\nwatchdog suspected stalls: ");
     t.Dec(gpu_stall_suspicions.load(std::memory_order_relaxed));

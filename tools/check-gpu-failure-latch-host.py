@@ -21,6 +21,8 @@ assert "if (!gpu_failure_latched) gpu_failure_latched = error;" in header
 assert "return gpu_failure_latched;" in header
 assert "return std::exchange(gpu_failure, {});" in header
 assert "void ResetGpuFailureForTitle()" in header
+assert "PublishGpuSubmissionSample(std::uint64_t count)" in header
+assert "GpuSubmissionSample()" in header
 assert "ResetGpuFailureForTitle()" in producer and "ResetGpuFailureForTitle()" in puller
 assert "ResetGpuFailureForTitle()" in sync
 reset=launcher.index("Eden::ResetGpuFailureForTitle();")
@@ -41,6 +43,25 @@ source=r"""
 int main() {
     Eden::ResetGpuFailureForTitle();
     assert(!Eden::PeekGpuFailure() && !Eden::TakeGpuFailure());
+    assert(Eden::GpuSubmissionSample() == 0);
+    Eden::PublishGpuSubmissionSample(1);
+    assert(Eden::GpuSubmissionSample() == 1);
+    Eden::PublishGpuSubmissionSample(2);
+    assert(Eden::GpuSubmissionSample() == 2);
+    Eden::PublishGpuSubmissionSample(3);
+    assert(Eden::GpuSubmissionSample() == 3);
+    Eden::PublishGpuSubmissionSample(4);
+    assert(Eden::GpuSubmissionSample() == 3);
+    Eden::PublishGpuSubmissionSample(63);
+    assert(Eden::GpuSubmissionSample() == 3);
+    Eden::PublishGpuSubmissionSample(64);
+    assert(Eden::GpuSubmissionSample() == 64);
+    Eden::PublishGpuSubmissionSample(65);
+    assert(Eden::GpuSubmissionSample() == 64);
+    Eden::PublishGpuSubmissionSample(128);
+    assert(Eden::GpuSubmissionSample() == 128);
+    Eden::ResetGpuFailureForTitle();
+    assert(Eden::GpuSubmissionSample() == 0);
     Eden::RecordGpuFailure({});
     assert(!Eden::PeekGpuFailure() && !Eden::TakeGpuFailure());
     Eden::RecordGpuFailure(std::make_exception_ptr(std::runtime_error("first")));
@@ -96,4 +117,4 @@ with tempfile.TemporaryDirectory(prefix="encore-gpu-fatal-latch-") as tmp:
                    check=True,timeout=70,capture_output=True,text=True)
     result=subprocess.run([str(executable)],capture_output=True,text=True,timeout=30)
     assert result.returncode==0,(result.stdout[-800:],result.stderr[-1500:])
-print("GPU_FATAL_LATCH_HOST_PASS ui_once=1 waiters=8 sticky_first=1 title_reset=1 asan_ubsan=1")
+print("GPU_FATAL_LATCH_HOST_PASS ui_once=1 waiters=8 sticky_first=1 title_reset=1 submit_sample=1/2/3/64/128 asan_ubsan=1")

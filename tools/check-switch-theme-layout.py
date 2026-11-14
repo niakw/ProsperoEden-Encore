@@ -84,3 +84,21 @@ assert "11-switch-mod-enabled" in preview
 
 assert "text_block(c,message.empty()?tr(fallback):message" in src
 assert "418.0f,2,kShrink" in src
+
+# R457: contextual help survives ordinary save feedback in both themes.
+settings=(root/"headless/prosperoeden/pe/ui/settings.cpp").read_text()
+dialog=settings.split("void Launcher::draw_dialog(",1)[1]
+assert "const bool compact_success = contextual_guide &&" in dialog
+assert "(message_.empty() || compact_success)" in dialog
+assert "if (modal == Modal::video && show_contextual_guide)" in dialog
+assert "if (show_contextual_guide && (modal == Modal::controls ||" in dialog
+assert "if (!message_.empty() && !compact_success)" in dialog
+switch_dialog=src.split("void Launcher::draw_switch_dialog(",1)[1].split("void Launcher::press_switch_settings(",1)[0]
+assert "if (modal==Modal::video && option_>=0 && option_<=12)" in switch_dialog
+assert "switch_video_help(c,tr(labels[option_]),guides,inactive,744.0f)" in switch_dialog
+assert "text_block(c,message_,493.0f,213.0f" in switch_dialog
+assert "total-visible" in switch_dialog
+assert 'TR("Panel opacity"), TR("Background motion")' in switch_dialog
+assert 'case 16: value = std::to_string(prefs_.panel_opacity)+"%";' in switch_dialog
+assert 'case 19: value = prefs_.show_game_background?' in switch_dialog
+print("R457_SETTINGS_GUIDE_SOURCE_PASS")

@@ -984,11 +984,22 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     }
     text_shrink(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
                 theme::kTitle, 736.0f);
-    text_shrink(c, modal == Modal::video || modal == Modal::controls ||
-                           modal == Modal::appearance
-                    ? tr(TR("Choose a setting; its effect is explained below."))
-                    : copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall),
-                theme::kSmall, theme::kCopy, 736.0f);
+    const bool contextual_guide = modal == Modal::video ||
+                                  modal == Modal::controls ||
+                                  modal == Modal::appearance;
+    // Routine save feedback uses the header, not the selected option's guide.
+    // Actionable warnings retain their full multi-line card.
+    const bool compact_success = contextual_guide &&
+                                 !message_.empty() && !message_warning_;
+    const bool show_contextual_guide = contextual_guide &&
+                                       (message_.empty() || compact_success);
+    text_shrink(c, compact_success ? std::string_view(message_) :
+                     std::string_view(contextual_guide
+                         ? tr(TR("Choose a setting; its effect is explained below."))
+                         : copy),
+                 592.0f, baseline(291.0f, 32.0f, theme::kSmall),
+                 theme::kSmall, compact_success ? theme::kLimePale : theme::kCopy,
+                 736.0f);
 
     const int rows = dialog_rows(modal);
     // Video's rows scroll in a window of five; the other dialogs show all of theirs.
@@ -1264,7 +1275,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
 
     // The former one-line legend above the options was clipped on PS5.
     // Reserve a high-contrast, multi-line guide card under four visible rows.
-    if (modal == Modal::video && message_.empty()) {
+    if (modal == Modal::video && show_contextual_guide) {
         static constexpr const char* kGuideLabels[kVideoRows] = {
             TR("Renderer"), TR("Video preset"), TR("TV output"),
             TR("Game resolution"), TR("Upscaling"), TR("Sharpness"),
@@ -1309,8 +1320,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     // Controls and Appearance use the SAME legible, wrapped guide as Video.
     // Five non-scrolling controls rows previously covered this space and the
     // one-line top description truncated the actual help text.
-    if (message_.empty() && (modal == Modal::controls ||
-                             modal == Modal::appearance)) {
+    if (show_contextual_guide && (modal == Modal::controls ||
+                                  modal == Modal::appearance)) {
         static constexpr const char* kControlNames[] = {
             TR("Button profile"), TR("Button mapping"), TR("Vibration"),
             TR("Vibration strength"), TR("Stick deadzone")};
@@ -1340,11 +1351,10 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
 
     // Under the rows: Video's four rows leave space for the full guide.
     const float foot = modal == Modal::video || modal == Modal::appearance || modal == Modal::controls ? 848.0f : 811.0f;
-    if (!message_.empty())
+    if (!message_.empty() && !compact_success)
     {
-        if (modal == Modal::video || modal == Modal::appearance ||
-            modal == Modal::controls) {
-            // Error/success messages share the same multi-line 112px card.
+        if (contextual_guide) {
+            // Actionable warnings retain the multi-line 112px card.
             // A red single-line notice below the rows was cut off on PS5.
             DrawVideoGuide(c, message_warning_ ? tr("Notice") : tr("Status"),
                            message_, message_warning_,

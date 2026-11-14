@@ -909,10 +909,17 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
     }
     text_shrink(c,heading,493.0f,baseline(150.0f,72.0f,36.0f),
                 36.0f,kInk,910.0f);
+    // Status is independent of the selected option's persistent guide.
+    if (!message_.empty())
+        text_block(c,message_,493.0f,213.0f,16.0f,19.0f,
+                   message_warning_?gfx::Color::rgb(0xb52733):kSubtle,
+                   910.0f,2,0.85f);
     list.rounded_rect({493,245,932,2},0,kGrey);
     const int total=dialog_rows(modal);
-    const int first=(modal==Modal::video || modal==Modal::appearance)?std::clamp(option_-2,0,std::max(0,total-5)):0;
-    const int last=std::min(total,first+(modal==Modal::video?4:5));
+    const int visible=modal==Modal::video?4:5;
+    const int first=(modal==Modal::video || modal==Modal::appearance)
+        ?std::clamp(option_-2,0,std::max(0,total-visible)):0;
+    const int last=std::min(total,first+visible);
     for(int i=first;i<last;++i) {
         const float y=278.0f+float(i-first)*112.0f;
         const Rect row{495.0f,y,930.0f,101.0f};
@@ -930,7 +937,7 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                 TR("Color 1 green"), TR("Color 1 blue"), TR("Color 2 preset"),
                 TR("Color 2 red"), TR("Color 2 green"), TR("Color 2 blue"),
                 TR("Focus glow"), TR("Glow intensity"), TR("Image darkness"),
-                TR("Background motion"), TR("Image scaling"), TR("Game background"),
+                TR("Panel opacity"), TR("Background motion"), TR("Image scaling"), TR("Game background"),
                 TR("Reset appearance")};
             const char* theme_names[] = {
                 TR("Encore Neon"), TR("Switch"), TR("Encore Non-Neon"), TR("Encore Dark"), TR("Encore Light")};
@@ -959,9 +966,10 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
             case 13: value = prefs_.glow_enabled?tr("On"):tr("Off"); break;
             case 14: value = std::to_string(prefs_.glow_strength)+"%"; break;
             case 15: value = std::to_string(prefs_.background_overlay)+"%"; break;
-            case 16: value = prefs_.background_animate?tr("On"):tr("Off"); break;
-            case 17: value = prefs_.background_fit?tr("Contain"):tr("Fill"); break;
-            case 18: value = prefs_.show_game_background?tr("On"):tr("Off"); break;
+            case 16: value = std::to_string(prefs_.panel_opacity)+"%"; break;
+            case 17: value = prefs_.background_animate?tr("On"):tr("Off"); break;
+            case 18: value = prefs_.background_fit?tr("Contain"):tr("Fill"); break;
+            case 19: value = prefs_.show_game_background?tr("On"):tr("Off"); break;
             default: value = tr("Restore Neon"); break;
             }
             break;
@@ -1027,11 +1035,18 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         text_shrink(c,value,row.x+row.w-25,baseline(y,101,24),24,
                     i==option_?kInk:kSubtle,294,Align::right);
     }
-    if (modal==Modal::video && message_.empty() &&
-        option_>=4 && option_<=10) {
+    if (modal==Modal::video && option_>=0 && option_<=12) {
         const char* guides=nullptr;
         bool inactive=false;
-        if (option_==4) {
+        if (option_==0) {
+            guides=tr(TR("Vulkan is recommended on PS5. Use OpenGL only as a fallback for a game with Vulkan issues."));
+        } else if (option_==1) {
+            guides=tr(TR("Minimum reduces GPU load and may use lower GPU accuracy for speed. Recommended balances quality and stability. High and Ultra raise image quality when the game has headroom."));
+        } else if (option_==2) {
+            guides=tr(TR("Final app output size. Choose 1080p for lower memory use, 1440p for balance, or 2160p for maximum output detail."));
+        } else if (option_==3) {
+            guides=tr(TR("Game render scale follows the selected profile. Lower it for performance or memory; raise it only when a game has headroom."));
+        } else if (option_==4) {
             inactive=!UpscalingFilterSelectable(prefs_.filter,prefs_.renderer);
             guides=inactive?UpscalingUnsupportedGuide():UpscalingGuide(prefs_.filter);
         } else if (option_==5) {
@@ -1054,14 +1069,20 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         } else if (option_==10) {
             inactive=!Eden::NeuralVideo::IsDlss(prefs_.neural_mode);
             guides=NeuralStrengthGuide(prefs_.neural_mode);
+        } else if (option_==11) {
+            guides=tr(TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."));
+        } else if (option_==12) {
+            guides=tr(TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."));
         }
         static constexpr const char* labels[] = {
+            TR("Renderer"),TR("Video preset"),TR("TV output"),TR("Game resolution"),
             TR("Upscaling"),TR("Sharpness"),TR("Anti-aliasing"),
             TR("Texture filtering"),TR("Frame Generation"),
-            TR("Neural Rendering"),TR("Intensité DLSS-NR")
+            TR("Neural Rendering"),TR("Intensité DLSS-NR"),
+            TR("Refresh rate"),TR("FPS overlay")
         };
         if (guides)
-            switch_video_help(c,tr(labels[option_-4]),guides,inactive,744.0f);
+            switch_video_help(c,tr(labels[option_]),guides,inactive,744.0f);
     }
     list.rounded_rect({493,888,932,2},0,kGrey);
     text_shrink(c,tr("Change"),1252.0f,baseline(901,51,19),

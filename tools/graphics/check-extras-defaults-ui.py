@@ -47,7 +47,12 @@ global_block = switch.split("case Modal::video: {", 1)[1].split(
 labels = re.search(r"static constexpr const char\* labels\[\]\s*=\s*\{(.*?)\};", global_block, re.S)
 assert labels is not None, "Switch global video row labels absent"
 assert len(re.findall(r'TR\("', labels.group(1))) == 13, "Switch global labels count drift"
-assert "option_>=4 && option_<=10" in switch
+# All global video rows now retain their contextual guide, including extras.
+assert "modal==Modal::video && option_>=0 && option_<=12" in switch
+guide_block = switch.split("modal==Modal::video && option_>=0 && option_<=12", 1)[1].split("if (guides)", 1)[0]
+for row in range(13):
+    assert f"option_=={row})" in guide_block, f"Switch global guide missing row {row}"
+
 assert "option_>=5 && option_<=11" in switch
 
 assert 'int frame_generation = 0;' in store

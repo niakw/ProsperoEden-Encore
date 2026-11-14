@@ -825,6 +825,22 @@ if usage_tracker_present:
         root / "headless/CMakeLists.txt").read_text()
     print("ENCORE_POST_F07_USAGE_TRACKER_OWNER_PASS reviewed=1")
 
+# Nov14 selected NVDEC FFmpeg source and ABI header are a reviewed
+# optional pair postdating F07. Do not inflate the frozen 337-source ledger.
+# Preserve the original pristine Eden codec tree and fail on half-candidates.
+post_f07_nvdec_owners = {
+    "eden-core/src/video_core/host1x/ffmpeg.cpp",
+    "eden-core/overrides/video_core/host1x/ffmpeg.h",
+}
+post_f07_nvdec_present = post_f07_nvdec_owners & set(physical_all)
+if post_f07_nvdec_present:
+    assert post_f07_nvdec_present == post_f07_nvdec_owners, (
+        "Half-selected NVDEC source/ABI header", sorted(post_f07_nvdec_present))
+    assert (root / "tools/check-nvdec-eagain-owner-selection-host.py").is_file()
+    assert "EDEN_NVDEC_MAINTAINED_SOURCE" in (
+        root / "headless/CMakeLists.txt").read_text()
+    print("ENCORE_POST_F07_NVDEC_OWNER_PAIR_PASS owners=2")
+
 nov13_native_owners = {
     "eden-core/src/common/stb_image_png.cpp",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -851,7 +867,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present]
+             usage_tracker_present | post_f07_nvdec_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

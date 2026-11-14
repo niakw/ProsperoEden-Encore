@@ -111,7 +111,19 @@ def main():
                    check=True,stdout=subprocess.DEVNULL,timeout=30)
     for label,row in selected:
         command=args(row)
-        if not any(x=="-DPS5_NATIVE" or x.startswith("-DPS5_NATIVE=") for x in command):
+        native_definition = any(x=="-DPS5_NATIVE" or x.startswith("-DPS5_NATIVE=") for x in command)
+        if label in storage_labels:
+            # CMake deliberately scopes PS5_NATIVE to the platform-specific
+            # sparse owners. The six common storage TUs have no such guard.
+            # Assert the genuine cross target instead of injecting a definition
+            # that production core does not use.
+            if native_definition:
+                raise RuntimeError(label+" unexpected PS5_NATIVE on common storage TU")
+            if not any(x=="--target=x86_64-sie-ps5" or
+                       (x in ("-target","--target") and i+1<len(command) and
+                        command[i+1]=="x86_64-sie-ps5") for i,x in enumerate(command)):
+                raise RuntimeError(label+" missing real PS5 compiler target")
+        elif not native_definition:
             raise RuntimeError(label+" missing PS5_NATIVE")
         if not any(x.startswith("-DEDEN_NS2_SPARSE_BACKING") for x in command):
             raise RuntimeError(label+" missing production sparse backing")

@@ -45,11 +45,10 @@ def patched_radv_stub(raw: bytes) -> bytes:
     return raw.replace(RADV_STUB_ANCHOR, RADV_FORWARD + RADV_STUB_ANCHOR, 1)
 
 
-# PSBC source owners match upstream PS4-OpenGNM/opengnm-psbc main.
-# Do not patch the separate full Mesa/RADV driver snapshot.
+# PSBC source owners start from upstream PS4-OpenGNM/opengnm-psbc. The PS5 OpenGL\n# staging path has one audited post-verification ACO transformation (a73de0a...);\n# accept only that exact preimage or the pristine upstream blob. Do not patch the\n# separate full Mesa/RADV driver snapshot.
 ACO_PATH = "amd/compiler/instruction_selection/aco_select_nir_intrinsics.cpp"
 NIR_MASK_PATH = "amd/common/nir/ac_nir_meta_cs_clear_copy_buffer.c"
-PINNED_ACO = "9479ba5f980f1e254801afd6a068282b7b571df8"
+PINNED_ACO = {"9479ba5f980f1e254801afd6a068282b7b571df8", "a73de0a574bea1cc6f421525047604bebe0be2e6"}
 PINNED_NIR_MASK = "9702ce7e1d3fa5dc35118c6eff7a10fdf55f1cde"
 ACO_BEFORE = b"ffs(const_offset) > req_lsb_zero"
 ACO_AFTER = b"static_cast<unsigned>(ffs(const_offset)) > req_lsb_zero"
@@ -61,7 +60,7 @@ def patched_aco(raw: bytes) -> bytes:
     digest = gitblob(raw)
     before_count = raw.count(ACO_BEFORE)
     after_count = raw.count(ACO_AFTER)
-    if digest != PINNED_ACO or before_count != 2:
+    if digest not in PINNED_ACO or before_count != 2:
         raise ValueError(
             "Unexpected pinned PSBC ACO offset alignment source "
             f"blob={digest} before={before_count} after={after_count}"

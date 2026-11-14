@@ -6,6 +6,10 @@ on:
       - 'src/ns2_sparse_guest.h'
       - 'src/host_memory.cpp'
       - 'headless/CMakeLists.txt'
+      - 'tools/build-opengl-sdk.sh'
+      - 'tools/ci/patch-psbc-nir-location-print.py'
+      - 'tools/ci/patch-psbc-nir-build-hooks.py'
+      - 'tools/check-psbc-nir-location-host.py'
       - 'tools/ns2/test_r457_native_sparse_owner.cpp'
       - 'tools/ns2/check_r457_sparse_kernel_source.py'
       - vendor

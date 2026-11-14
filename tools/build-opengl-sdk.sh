@@ -172,7 +172,10 @@ radv_stub_source="$source_dir/third_party/opengnm-psbc/src/amd/vulkan/radv_insta
 radv_stub_backup="${radv_stub_source}.encore-backup.$$"
 cp -p "$radv_stub_source" "$radv_stub_backup"
 for relative in amd/compiler/instruction_selection/aco_select_nir_intrinsics.cpp \
-                amd/common/nir/ac_nir_meta_cs_clear_copy_buffer.c; do
+                amd/common/nir/ac_nir_meta_cs_clear_copy_buffer.c \
+                compiler/nir/nir_unlower_io_to_vars.c \
+                amd/compiler/aco_spill_preserved.cpp \
+                amd/vulkan/nir/radv_nir_lower_descriptors.c; do
     extra="$source_dir/third_party/opengnm-psbc/src/$relative"
     [[ -f $extra && ! -L $extra ]] || { echo "Missing pinned PSBC compiler owner: $relative" >&2; exit 1; }
     cp -p "$extra" "${extra}.encore-backup.$$"

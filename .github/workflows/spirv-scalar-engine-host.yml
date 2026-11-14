@@ -29,6 +29,8 @@ jobs:
           python3 -B vendor/tests/ns1_r23_58_conditional_phi.py
           test "$(git hash-object vendor/encore-active/eden-core/src/video_core/shader_environment.cpp)" = "8b4e883aaad5507652e13be211581e4965b7fe89"
           python3 -B vendor/tests/ps5_null_texture_environment_host.py
+          test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate_program.cpp)" = "2cd894ab009c16a22d953d1cba9359c28ae22149"
+          python3 -B vendor/tests/ps5_geometry_passthrough_mask_host.py
           python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
           python3 -B tools/check-spirv-scalar-cache-sirit-contract.py
       - name: Verify shared shader source graph and real C++ syntax

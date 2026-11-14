@@ -90,3 +90,55 @@ for catalog in catalogs:
     text = catalog.read_text()
     assert f'msgid "{guide}"' in text and retired not in text, catalog
 print("FPS_TOUCHPAD_GUIDE_CATALOG_PARITY_PASS themes=2 locales=31")
+
+
+# Exercise the actual published model rather than a parallel simulation.
+# The 112-byte shader push-constant ABI and legacy row are still unchanged.
+import subprocess
+import tempfile
+assert "result.text[index].Assign(value);" in menu
+assert "dst.glyphs = HudText(value.substr(0, 24));" in menu
+with tempfile.TemporaryDirectory() as directory:
+    source = Path(directory) / "overlay_text.cpp"
+    binary = Path(directory) / "overlay_text"
+    source.write_text(r'''
+#include "in_game_overlay.h"
+#include <cassert>
+#include <string>
+#include <type_traits>
+using namespace Eden::QuickOverlay;
+int main() {
+    static_assert(sizeof(Eden::HudSnapshot) == 112);
+    static_assert(std::is_trivially_copyable_v<Frame>);
+    Frame visible{};
+    visible.visible = true;
+    visible.count = 2;
+    visible.text[0].Assign("Full-length label beyond twenty-four characters");
+    visible.rows[0].glyphs = Eden::HudText("Full-length label beyond");
+    const std::string prefix(MenuText::kCapacity - 1, 'x');
+    const std::string accented = prefix + "\xc3\xa9";
+    visible.text[1].Assign(accented);
+    Publish(visible);
+    auto got = Snapshot();
+    assert(got.visible && got.count == 2);
+    assert(got.text[0].View() == "Full-length label beyond twenty-four characters");
+    assert(!got.text[0].truncated);
+    assert(got.rows[0].glyphs == visible.rows[0].glyphs);
+    assert(got.text[1].View() == prefix && got.text[1].truncated);
+    MenuText text{};
+    text.Assign(std::string(MenuText::kCapacity - 3, 'x') + "\xe2\x82\xac");
+    assert(text.View().size() == MenuText::kCapacity && !text.truncated);
+    text.Assign("short");
+    assert(text.View() == "short" && !text.truncated);
+    text.Assign("");
+    assert(text.View().empty() && !text.truncated);
+    Reset();
+    got = Snapshot();
+    assert(!got.visible && got.count == 0 && got.text[0].View().empty());
+}
+''', encoding="utf-8")
+    subprocess.run(["c++", "-std=c++20", "-Wall", "-Wextra", "-Werror", "-pedantic",
+                    "-pthread", "-I", str(root / "headless"), str(source),
+                    "-o", str(binary)], check=True)
+    subprocess.run([str(binary)], check=True)
+print("OVERLAY_MENU_TEXT_MODEL_HOST_PASS utf8_boundary=1 immutable=1 legacy_abi=112 renderer_unchanged=1")

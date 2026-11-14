@@ -253,7 +253,9 @@ private:
                                prefs.high_contrast,prefs.ui_theme==1);
         const auto line = [&](std::string_view value, std::uint32_t mode) {
             if (result.count >= kMaxRows) return;
-            auto& dst = result.rows[result.count++];
+            const auto index = result.count++;
+            result.text[index].Assign(value);
+            auto& dst = result.rows[index];
             dst.glyphs = HudText(value.substr(0, 24));
             dst.width = 680;
             dst.loading = StyledMode(mode,result.style);

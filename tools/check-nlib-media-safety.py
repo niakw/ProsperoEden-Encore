@@ -35,10 +35,15 @@ assert "for (std::size_t offset = 0; offset < games_.size(); ++offset)" not in w
 for needle in ("screen_ != Screen::library", "media_scan_.valid()",
                "library_.selected < 0", "library_.selected >= static_cast<int>(games_.size())",
                "games_[static_cast<std::size_t>(library_.selected)]",
-               "services_.enrich_game_media(std::move(copy), &media_cancel_)"):
+               "services_.enrich_game_media(std::move(copy), &selected_media_cancel_)"):
     assert needle in worker, needle
 assert "enriched.title_id != media_scan_title_id_" in finish
 assert "game.title_id != enriched.title_id" in finish
 assert "game.screenshots = enriched.screenshots" in finish
 assert "start_selected_media();" in finish
 print("Nlib selected full-media concurrency + bounded JPEG decode memory: PASS")
+
+assert worker.index("selected_media_cancel_.store(false,") < worker.index("media_scan_ = std::async")
+assert "if (!still_selected)" in finish and "selected_media_cancel_.store(true," in finish
+assert "if (!cancelled) for (Game& game : games_)" in finish
+assert "std::chrono::seconds(2)" in finish

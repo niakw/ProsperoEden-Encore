@@ -804,16 +804,30 @@ void Launcher::start_selected_media()
     if (due != media_next_retry_.end() && now < due->second) return;
     media_next_retry_[game.title_id] = now + std::chrono::minutes(5);
     media_scan_title_id_ = game.title_id;
+    // The previous future has been consumed; no worker can still read this token.
+    selected_media_cancel_.store(false, std::memory_order_release);
     Game copy = game;
     media_scan_ = std::async(std::launch::async, [this, copy = std::move(copy)]() mutable {
-        return services_.enrich_game_media(std::move(copy), &media_cancel_);
+        return services_.enrich_game_media(std::move(copy), &selected_media_cancel_);
     });
 }
 
 void Launcher::finish_selected_media()
 {
-    if (!media_scan_.valid() || media_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+    if (!media_scan_.valid()) return;
+    if (media_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        // A previous focus must not drain the remaining case and screenshot
+        // queue while the user views another title or leaves the Library.
+        // Do not wait for an in-flight HTTPS request on the UI thread.
+        const bool still_selected = screen_ == Screen::library &&
+            library_.selected >= 0 &&
+            library_.selected < static_cast<int>(games_.size()) &&
+            games_[static_cast<std::size_t>(library_.selected)].title_id == media_scan_title_id_;
+        if (!still_selected)
+            selected_media_cancel_.store(true, std::memory_order_release);
         return;
+    }
+    const bool cancelled = selected_media_cancel_.load(std::memory_order_acquire);
     try {
         Game enriched = media_scan_.get();
         if (!enriched.title_id || enriched.title_id != media_scan_title_id_)
@@ -830,7 +844,10 @@ void Launcher::finish_selected_media()
             textures_.invalidate(enriched.box_front);
         if (enriched.case_artwork_changed & 2u)
             textures_.invalidate(enriched.box_back);
-        for (Game& game : games_) {
+        // An obsolete worker may have atomically replaced an image: the
+        // invalidations above remain necessary, but its old Game snapshot
+        // must not overwrite newer data from Home or a refreshed scan.
+        if (!cancelled) for (Game& game : games_) {
             if (!enriched.title_id || game.title_id != enriched.title_id) continue;
             if (!enriched.cover.empty()) game.cover = enriched.cover;
             if (!enriched.box_front.empty()) game.box_front = enriched.box_front;
@@ -855,6 +872,9 @@ void Launcher::finish_selected_media()
     {
         sys::log("Nlib selected media: %s", error.what());
     }
+    if (cancelled && !media_cancel_.load(std::memory_order_acquire))
+        media_next_retry_[media_scan_title_id_] = std::chrono::steady_clock::now() +
+                                                std::chrono::seconds(2);
     media_scan_title_id_ = 0;
     // If the player moved while that request was running, enrich the title highlighted now.
     start_selected_media();

@@ -19,7 +19,7 @@ assert 'screen_ != Screen::library' in selected_worker
 assert 'library_.selected < 0' in selected_worker
 assert 'games_[static_cast<std::size_t>(library_.selected)]' in selected_worker
 assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' not in selected_worker
-assert 'services_.enrich_game_media(std::move(copy), &media_cancel_)' in selected_worker
+assert 'services_.enrich_game_media(std::move(copy), &selected_media_cancel_)' in selected_worker
 textures_hpp=(root/'headless/prosperoeden/pe/ui/textures.hpp').read_text()
 textures_cpp=(root/'headless/prosperoeden/pe/ui/textures.cpp').read_text()
 assert 'Cover cover(const std::string &path, float size, bool urgent = false);' in textures_hpp
@@ -38,7 +38,7 @@ assert 'Only Home/recent titles' not in svc
 # Both Nlib workers must propagate the session cancellation token. An old
 # single-argument check rejected the correct cancellation-aware code.
 assert 'services_.enrich_game_media(std::move(request), &media_cancel_)' in lib
-assert 'services_.enrich_game_media(std::move(copy), &media_cancel_)' in lib
+assert 'services_.enrich_game_media(std::move(copy), &selected_media_cancel_)' in lib
 assert 'if (media_cancel_.load(std::memory_order_acquire)' in lib
 assert 'home_.last_hero = enriched.hero' in lib
 assert 'home_.last_max_players = enriched.max_players' in lib

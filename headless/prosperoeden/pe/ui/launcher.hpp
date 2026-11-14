@@ -392,6 +392,7 @@ class Launcher
     std::atomic<bool> home_cancel_{false}; // exit stops unfinished native Home metadata work
     std::atomic<bool> scan_cancel_{false}; // game launch/teardown cancels remaining mod enumeration
     std::atomic<bool> media_cancel_{false}; // stop launching new Nlib requests on game start
+    std::atomic<bool> selected_media_cancel_{false}; // only the current Library media worker
     std::atomic<bool> diagnostics_cancel_{false}; // stop disk inventory between entries on game start
     std::future<std::vector<Game>> scan_; // the list being read
     bool docked_refresh_after_scan_ = false; // global settings saved during an in-flight scan

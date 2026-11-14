@@ -2166,6 +2166,17 @@ reader_maintained = active / "eden-core/src/video_core/shader_cache_reader.inc"
 # owner. Reverse only the three exact authenticated-graphics additions and
 # still require byte-for-byte parity with the generated historical source.
 shader_mesh = shader_maintained.read_text()
+# Null-TIC correction from Lichii #1443. Preserve the frozen historical
+# SHA and exact P2.4 check; reverse only the five reviewed textual deltas.
+if "NULL_TEXTURE_2D_KEY" in shader_mesh:
+    check_canonical_git_object(shader_maintained, "8b4e883aaad5507652e13be211581e4965b7fe89", "null TIC shader environment")
+    null_tic_reverse = [["// Lichii #1443: distinguish an empty TIC from a genuine 1D descriptor.\n// Reserve an impossible guest CBUF index in the existing environment record;\n// the record layout is unchanged and older readers ignore the extra key.\nconstexpr u64 NULL_TEXTURE_2D_KEY = 0xffffffff00000001ULL;\nconstexpr u32 NULL_TEXTURE_2D_VALUE = 1;\n\nstatic void NormalizeEmptyTexture(Tegra::Texture::TICEntry& entry) {\n    if (entry.raw != decltype(entry.raw){}) {\n        return;\n    }\n    entry.format.Assign(Tegra::Texture::TextureFormat::A8B8G8R8);\n    entry.r_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.g_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.b_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.a_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.texture_type.Assign(Tegra::Texture::TextureType::Texture2D);\n    entry.normalized_coords.Assign(1);\n}\n\nstatic void WriteNullTextureMarker(std::ostream& file) {\n    file.write(reinterpret_cast<const char*>(&NULL_TEXTURE_2D_KEY), sizeof(NULL_TEXTURE_2D_KEY))\n        .write(reinterpret_cast<const char*>(&NULL_TEXTURE_2D_VALUE), sizeof(NULL_TEXTURE_2D_VALUE));\n}\n\nstatic void RestoreNullTextureMarker(auto& cbufs, auto& types, auto& formats) {\n    const auto marker = cbufs.find(NULL_TEXTURE_2D_KEY);\n    const bool current = marker != cbufs.end() && marker->second == NULL_TEXTURE_2D_VALUE;\n    if (marker != cbufs.end()) {\n        cbufs.erase(marker);\n    }\n    if (!current) {\n        // Older records cannot distinguish genuine 1D textures from empty TICs.\n        // Omit ambiguous values so the existing missing-value path can rebuild.\n        for (auto it = types.begin(); it != types.end();) {\n            if (it->second == Shader::TextureType::Color1D) {\n                formats.erase(it->first);\n                it = types.erase(it);\n            } else {\n                ++it;\n            }\n        }\n    }\n}\n\n",""],["const u64 num_cbuf_values{static_cast<u64>(cbuf_values.size()) + 1};","const u64 num_cbuf_values{static_cast<u64>(cbuf_values.size())};"],["    WriteNullTextureMarker(file);\n",""],["    NormalizeEmptyTexture(entry);\n",""],["    RestoreNullTextureMarker(cbuf_values, texture_types, texture_pixel_formats);\n",""]]
+    for new, old in null_tic_reverse:
+        assert shader_mesh.count(new) == 1, "Unexpected null TIC delta"
+        shader_mesh = shader_mesh.replace(new, old, 1)
+    null_tic_preimage = shader_mesh.encode()
+    assert hashlib.sha1(b"blob " + str(len(null_tic_preimage)).encode() + bytes([0]) + null_tic_preimage).hexdigest() == "787cbe84d2a4d587d944f980195932e83979a479"
+    print("ENCORE_NULL_TIC_SOURCE_PARITY_PASS historical_source_preserved=1")
 mesh_include = '''#ifdef PS5_NATIVE
 #include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"
 #endif

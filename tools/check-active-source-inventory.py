@@ -906,6 +906,23 @@ else:
     assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in nov13_cmake
     assert 'list(APPEND core_sources "${eden_vfs_maintained}")' in nov13_cmake
 print("ENCORE_POST_F07_VFS_BOUNDS_OWNER_PASS", f"owners={len(post_f07_vfs_present)}")
+# NCA #119: two additional exact post-F07 source owners.
+post_f07_nca_receipts = {
+    "eden-core/src/core/file_sys/fssystem/fssystem_integrity_verification_storage.cpp": "5afc754433f6276ffd80bc0af418d31cf5cf496c",
+    "eden-core/src/core/file_sys/fssystem/fssystem_nca_file_system_driver.cpp": "f6ceeb8d18b88b850c19b86cc3823e40ce5b9afa"
+}
+post_f07_nca_present = set(post_f07_nca_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_nca_present
+else:
+    assert post_f07_nca_present == set(post_f07_nca_receipts)
+    for relative, blob in post_f07_nca_receipts.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+    assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in nov13_cmake
+    assert all('"' + relative.removeprefix("eden-core/src/core/") + '"' in nov13_cmake
+               for relative in post_f07_nca_receipts)
+print("ENCORE_POST_F07_NCA_OWNER_PASS", f"owners={len(post_f07_nca_present)}")
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -921,7 +938,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

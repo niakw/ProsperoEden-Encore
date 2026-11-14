@@ -124,10 +124,14 @@ assert 'a solid' not in hero_draw.lower() or 'NOT a solid' in hero_draw
 assert 'bool Launcher::press_top_nav(Key key)' in launcher
 assert 'top_nav_focus_ = 3' in settings and 'top_nav_focus_ = 1' in library
 
-# Cards: gameplay media first and no ugly language subtitle under recent titles.
-assert 'recent.screenshot' in home
-assert 'const std::string& art = !recent.cover.empty() ? recent.cover' in home
-recent_block=home[home.index('// ---- recently played: seven-ish large artwork tiles'):home.index('// ---- compact system strip')]
+# Cards use the canonical square icon first, never a gameplay screenshot.
+# The independent Hero contract above still requires banner/screenshot fallback.
+recent_block=home[home.index('// ---- recently played: seven-ish large artwork tiles'):home.index('// ---- utility cards:', home.index('// ---- recently played: seven-ish large artwork tiles'))]
+assert 'const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;' in recent_block
+assert 'constexpr float card_h = card_w;' in recent_block
+assert 'cover(c, art, icon, 20.0f, 0.0f)' in recent_block
+assert 'cover_crop(c, art, icon' not in recent_block
+assert 'recent.screenshot' not in recent_block and 'recent.hero' not in recent_block
 assert 'recent.language' not in recent_block
 assert 'const int shown = std::min<int>(kHomeRecentMax' in recent_block
 assert 'constexpr float available = 1770.0f' in recent_block

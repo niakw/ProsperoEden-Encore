@@ -32,7 +32,17 @@ assert "kHomeRecentMax = 7" in home
 # Added home spring controls have a 24-slot owner; keep the actual layout fixed.
 assert "std::array<tween::Spring, 24> home_springs_" in controller
 assert "if (home.recents.size() == 7) break" in service
-assert "const std::string& art = !recent.cover.empty() ? recent.cover" in home
+# R457 preserves the actual canonical square rail icon across focus
+# and game return. Do not prefer arbitrary fallback art over it.
+assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
+rail = home.split("const std::string& art = recent.tile_icon.empty()", 1)[1].split("// ---- utility cards:", 1)[0]
+assert "art, std::max(card_w - 8.0f, card_h - 8.0f), true);" in rail
+assert "cover(c, art, icon, 20.0f, 0.0f)" in rail and "cover_crop(c, art, icon" not in rail
+assert "home_icon_scan_title_id_ == recent.title_id" in rail
+widgets = (ui / "widgets.cpp").read_text()
+contain = widgets.split("void cover(Canvas", 1)[1].split("void cover_crop(Canvas", 1)[0]
+assert "fitted.h = r.w / source;" in contain and "fitted.w = r.h * source;" in contain
+assert "rounded_image(image.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f}" in contain
 assert "constexpr float available = 1770.0f" in home
 assert "constexpr float gap = 16.0f" in home
 assert "constexpr float card_h = card_w" in home

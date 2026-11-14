@@ -23,6 +23,7 @@ REVIEWED_VENDORS={
     "13ee2fff7be6c0bac225b377a4367b1d0b3073a0",
     "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767",
     "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028",
+    "72faa8edd26f6fcb16b08f321211fb94427c4ebb",
 }
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
@@ -88,7 +89,7 @@ def main():
     # they are each the sole real CMake native compilation owner, then compile
     # the full TUs with the exact SDK command (not replacement mock headers).
     storage_labels = set()
-    if sha in {"7bd7a85e6c1886035c75395c86b05b231375bbf5", "7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028"}:
+    if sha in {"7bd7a85e6c1886035c75395c86b05b231375bbf5", "7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         storage_receipts = {
             "file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
             "file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
@@ -112,7 +113,7 @@ def main():
 
     shader_labels = set()
     bfs_header = None
-    if sha in {"7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028"}:
+    if sha in {"7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         relative = Path("shader_recompiler/frontend/ir/breadth_first_search.h")
         bfs_header = native/"headless/r23-shader-phi/include"/relative
         vendor_header = ROOT/"vendor/encore-active/eden-shader/include"/relative
@@ -129,7 +130,7 @@ def main():
         selected.append((label, rows[0]))
         print("R457_NATIVE_BFS_STAGE_GRAPH_PASS exact_header=1 texture_owner=1",flush=True)
 
-    if sha in {"0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028"}:
+    if sha in {"0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         env = ROOT/"vendor/encore-active/eden-core/src/video_core/shader_environment.cpp"
         if gitblob(env) != "8b4e883aaad5507652e13be211581e4965b7fe89":
             raise RuntimeError("Unreviewed null-TIC shader environment owner")
@@ -141,7 +142,7 @@ def main():
         print("R457_NATIVE_NULL_TIC_GRAPH_PASS exact_owner=1",flush=True)
 
     host1x_labels = set()
-    if sha in {"78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028"}:
+    if sha in {"78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         sync = ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
         if gitblob(sync) != "4e87a03a8d411f0f07a6806bf6aaebbe9ad16b48":
             raise RuntimeError("Unreviewed Host1x counter notification owner")
@@ -155,7 +156,7 @@ def main():
         selected.append(("host1x_counter_notify", rows[0]))
         print("R457_NATIVE_HOST1X_NOTIFY_GRAPH_PASS exact_owner=1 unchanged_header=1",flush=True)
 
-    if sha in {"13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028"}:
+    if sha in {"13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         geometry = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate_program.cpp"
         if gitblob(geometry) != "2cd894ab009c16a22d953d1cba9359c28ae22149":
             raise RuntimeError("Unreviewed emulated geometry mask source")
@@ -166,7 +167,7 @@ def main():
         selected.append(("shader_geometry_passthrough_mask", rows[0]))
         print("R457_NATIVE_GEOMETRY_MASK_GRAPH_PASS exact_owner=1",flush=True)
 
-    if sha in {"c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028"}:
+    if sha in {"c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767", "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         original = ROOT/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
         if gitblob(original) != "27a3c820667b0bf0774b9ab3c88e5a9e00032c4f":
             raise RuntimeError("Unreviewed Vulkan blit layout source")
@@ -180,7 +181,7 @@ def main():
         selected.append(("vulkan_same_image_blit",rows[0]))
         print("R457_NATIVE_BLIT_LAYOUT_GRAPH_PASS exact_staged_owner=1",flush=True)
 
-    if sha == "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028":
+    if sha in {"4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028", "72faa8edd26f6fcb16b08f321211fb94427c4ebb"}:
         phi = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv.cpp"
         if gitblob(phi) != "b490f372d67f4aabf69aa2b29973835f662382db":
             raise RuntimeError("Unreviewed typed Phi emitter")
@@ -190,6 +191,18 @@ def main():
         shader_labels.add("shader_typed_phi")
         selected.append(("shader_typed_phi", rows[0]))
         print("R457_NATIVE_TYPED_PHI_GRAPH_PASS exact_owner=1",flush=True)
+
+    am_labels = set()
+    if sha == "72faa8edd26f6fcb16b08f321211fb94427c4ebb":
+        am = ROOT/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp"
+        if gitblob(am) != "b8787c322258fcccd7c5d53a74097a5619e2211c":
+            raise RuntimeError("Unreviewed shared native AM language reply owner")
+        rows = [r for r in db if Path(r["file"]).parts[-2:] == ("service","application_functions.cpp")]
+        if len(rows) != 1 or Path(rows[0]["file"]).resolve() != am.resolve():
+            raise RuntimeError("Wrong or duplicate native AM language reply TU")
+        am_labels.add("am_guest_language_reply")
+        selected.append(("am_guest_language_reply", rows[0]))
+        print("R457_NATIVE_GUEST_LANGUAGE_REPLY_GRAPH_PASS exact_owner=1",flush=True)
 
     # Qualify existing source owners first even when the new sparse TU has a
     # target-SDK header problem; never stop before recording their verdict.
@@ -210,7 +223,7 @@ def main():
                        (x in ("-target","--target") and i+1<len(command) and
                         command[i+1]=="x86_64-sie-ps5") for i,x in enumerate(command)):
                 raise RuntimeError(label+" missing real PS5 compiler target")
-        elif label in shader_labels or label in host1x_labels:
+        elif label in shader_labels or label in host1x_labels or label in am_labels:
             if not any(x=="--target=x86_64-sie-ps5" or
                        (x in ("-target","--target") and i+1<len(command) and
                         command[i+1]=="x86_64-sie-ps5") for i,x in enumerate(command)):
@@ -301,6 +314,8 @@ def main():
         print("R457_NS2_SPARSE_NATIVE_SYNTAX_PASS",label,flush=True)
         if label in storage_labels:
             print("R457_NATIVE_STORAGE_SYNTAX_PASS",label,flush=True)
+        if label in am_labels:
+            print("R457_NATIVE_GUEST_LANGUAGE_REPLY_SYNTAX_PASS",label,flush=True)
     print("R457_NS2_SPARSE_ACTUAL_PS5_CMAKE_AND_6_TUS_PASS no link/gameplay",flush=True)
     if storage_labels:
         print("R457_NATIVE_STORAGE_ACTUAL_PS5_CMAKE_AND_6_TUS_PASS no link/gameplay",flush=True)

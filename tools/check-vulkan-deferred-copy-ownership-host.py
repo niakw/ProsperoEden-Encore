@@ -185,10 +185,10 @@ for module, changes in edits.items():
         before_r23_tir = current
         if git_blob(current.encode()) == "2b344e2c9adce18a7037194cc4d5f81a5c6df144":
             msaa_new = (
-                "// CopyBufferToImage places each region at image_offset in the\\n"
-                "            // single-sample scratch image. The MSAA copy fragment shader\\n"
-                "            // adds src_offset AFTER its sample-space scaling, so (0,0)\\n"
-                "            // incorrectly samples the first region for every partial copy.\\n"
+                "// CopyBufferToImage places each region at image_offset in the\n"
+                "            // single-sample scratch image. The MSAA copy fragment shader\n"
+                "            // adds src_offset AFTER its sample-space scaling, so (0,0)\n"
+                "            // incorrectly samples the first region for every partial copy.\n"
                 "            image_copy.src_offset = copy.image_offset"
             )
             msaa_old = "image_copy.src_offset = {0, 0, 0}"

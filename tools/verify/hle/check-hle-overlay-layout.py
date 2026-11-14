@@ -155,15 +155,15 @@ old_slab_blob = "3fa5e0aae7cb1107a3fc05add821af286539bf54"
 new_slab_blob = "d072240982af1fca0d571f424ddf1067e25863d3"
 raw_slab_blob = git_blob_bytes(slab_active.encode())
 if raw_slab_blob == new_slab_blob:
-    old_unlink = "if (is_initialized) {\\n            kernel.ObjectListContainer().Unregister(this);"
+    old_unlink = "if (is_initialized) {\n            kernel.ObjectListContainer().Unregister(this);"
     new_unlink = (
-        "// Process load can fail before initialization. Remove only objects\\n"
-        "        // that were really inserted, even when IsInitialized() is false.\\n"
-        "        // Conversely, do not unregister an initialized object that was never\\n"
-        "        // linked after a failed load. Lichii #1574 / Eglantine eb579d2.\\n"
-        "        if (this->is_linked()) {\\n"
-        "            kernel.ObjectListContainer().Unregister(this);\\n"
-        "        }\\n"
+        "// Process load can fail before initialization. Remove only objects\n"
+        "        // that were really inserted, even when IsInitialized() is false.\n"
+        "        // Conversely, do not unregister an initialized object that was never\n"
+        "        // linked after a failed load. Lichii #1574 / Eglantine eb579d2.\n"
+        "        if (this->is_linked()) {\n"
+        "            kernel.ObjectListContainer().Unregister(this);\n"
+        "        }\n"
         "        if (is_initialized) {"
     )
     assert slab_active.count(new_unlink) == 1, "Reviewed linked-list UAF hunk moved"

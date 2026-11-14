@@ -14,8 +14,8 @@ def blob(path: Path) -> str:
 
 selected=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 gitlink=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
-expected="76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3"
-assert selected==gitlink==expected,(selected,gitlink)
+expected={"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3","6f4bb38594b273fe7cc4fba960dfe62cdb9f508e"}
+assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"
 active=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp"

@@ -258,12 +258,17 @@ private:
             dst.width = 680;
             dst.loading = StyledMode(mode,result.style);
         };
-        line("EDEN ENCORE  MENU", kRow);
-        static constexpr const char* headings[] = {
-            "JEU   GRAPH  PAD  DIAG", "GRAPHISMES  L1 R1",
-            "MANETTE   L1 R1", "DIAGNOSTIC  L1 R1", "SALONS MULTI   L1 R1"};
-        line(headings[tab], kRow);
-        line("CLIC PAD POUR FERMER", kRow);
+        line("EDEN ENCORE / PAD FERMER", kRow);
+        // All five pages remain visible, including before the first L1/R1.
+        // The highlighted second line identifies the active page and its
+        // position; keep each label within the current 24-glyph HUD ABI.
+        static constexpr std::string_view headings[] = {
+            "L1 / JEU 1/5 / R1", "L1 / GRAPH 2/5 / R1",
+            "L1 / PAD 3/5 / R1", "L1 / DIAG 4/5 / R1",
+            "L1 / MULTI 5/5 / R1"};
+        static_assert(std::size(headings) == 5);
+        line(headings[tab], kSelectedRow);
+        line("JEU GRAPH PAD DIAG MULTI", kRow);
         const int start = std::clamp(selected - 3, 0, std::max(0, Count() - kVisibleRows));
         for (int index = 0; index < kVisibleRows; ++index) {
             const int item = start + index;

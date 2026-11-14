@@ -50,6 +50,22 @@ assert "menuAccent(uint palette,uint accent)" in shader
 assert "menuPanel(uint palette)" in shader
 assert "prefs = LoadPreferences();" in menu
 
+# Every tab displays its accessible page index and both shoulder controls,
+# with the fifth Multiplayer tab visible even on initial opening.
+import re
+headings = menu.split("static constexpr std::string_view headings[] = {", 1)[1].split("};", 1)[0]
+labels = re.findall(r'"([^"]+)"', headings)
+assert len(labels) == 5
+for idx, (label, category) in enumerate(zip(labels, ("JEU", "GRAPH", "PAD", "DIAG", "MULTI")), 1):
+    assert label == f"L1 / {category} {idx}/5 / R1"
+    assert len(label) <= 24
+assert 'line(headings[tab], kSelectedRow);' in menu
+assert 'line("JEU GRAPH PAD DIAG MULTI", kRow);' in menu
+assert len("JEU GRAPH PAD DIAG MULTI") <= 24
+assert len("EDEN ENCORE / PAD FERMER") <= 24
+assert 'line("EDEN ENCORE / PAD FERMER", kRow);' in menu
+
+
 # Settings are saved for this title; only FPS and detailed logs update live.
 assert "SaveGameSettings(title_id, game)" in menu
 assert "SavePreferences(prefs)" in menu

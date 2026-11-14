@@ -228,3 +228,105 @@ with tempfile.TemporaryDirectory(prefix="encore-launcher-release-") as td:
                  check=True,capture_output=True,text=True)
   subprocess.run([str(binary)],check=True,capture_output=True,text=True)
 print("ENCORE_RELEASE_LAUNCHER_HOTPATHS_PASS source_cover=1 O0=1 O2=1 sorted_worker=1")
+
+
+# Execute the exact R457 completion loop with two real std::future objects.
+# No GL/disk/network: create() counts owner-thread upload attempts.
+loop_start = "    for (std::size_t slot = 0; slot < decode_.size(); ++slot) {"
+assert pump.count(loop_start) == 1
+completion_loop = loop_start + pump.split(loop_start,1)[1].split("    if (budget > 0)",1)[0]
+completion_cpp = r"""
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <chrono>
+#include <cstdint>
+#include <future>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+struct Image {
+    int width=16,height=16;
+    bool blank=false;
+    bool empty() const { return blank; }
+};
+struct DecodedCover {
+    std::string key;
+    std::uint64_t generation=1;
+    Image image{};
+    bool ok=true;
+};
+struct Entry {
+    std::string path;
+    std::uint64_t generation=1;
+    bool loaded=false;
+    double loaded_at_seconds=0;
+    unsigned failed_loads=0;
+    float aspect=1;
+    std::uint32_t texture=0;
+};
+namespace sys { template<class... Args> void log(const char*, Args...) {} }
+bool IsProfileAvatarImage(const std::string&) { return false; }
+struct Owner {
+    std::array<std::future<DecodedCover>,2> decode_{};
+    std::unordered_map<std::string,Entry> covers_;
+    std::uint64_t frame_=0;
+    double uptime_seconds_=0;
+    unsigned uploads=0;
+    bool fail_upload=false;
+    std::uint32_t create(const Image&) { ++uploads; return fail_upload?0:uploads; }
+    void ready(std::size_t slot,DecodedCover result) {
+        std::promise<DecodedCover> p;
+        decode_[slot]=p.get_future();
+        p.set_value(std::move(result));
+    }
+    void pump_completion() {
+        ++frame_;
+        uptime_seconds_+=1;
+""" + completion_loop + r"""
+    }
+};
+int main() {
+    Owner o;
+    o.covers_.emplace("a",Entry{"a"});
+    o.covers_.emplace("b",Entry{"b"});
+    o.ready(0,DecodedCover{"a"});
+    o.ready(1,DecodedCover{"b"});
+    o.pump_completion();
+    assert(o.uploads==1 && !o.decode_[1].valid() && o.decode_[0].valid());
+    assert(o.covers_.at("b").loaded && !o.covers_.at("a").loaded);
+    o.ready(1,DecodedCover{"b"});
+    o.pump_completion();
+    assert(o.uploads==2 && !o.decode_[0].valid() && o.decode_[1].valid());
+    assert(o.covers_.at("a").texture!=0);
+    o.pump_completion();
+    assert(o.uploads==3 && !o.decode_[1].valid());
+    o.ready(0,DecodedCover{"a",99});
+    o.pump_completion();
+    assert(o.uploads==3 && !o.decode_[0].valid());
+    o.ready(0,DecodedCover{"a",1,Image{},false});
+    o.pump_completion();
+    assert(o.uploads==3 && o.covers_.at("a").failed_loads==1);
+    o.fail_upload=true;
+    o.ready(0,DecodedCover{"a"});
+    o.pump_completion();
+    assert(o.uploads==4 && o.covers_.at("a").texture==0 && o.covers_.at("a").failed_loads==1);
+    std::promise<DecodedCover> waiting;
+    o.decode_[1]=waiting.get_future();
+    o.ready(0,DecodedCover{"b"});
+    o.pump_completion();
+    assert(o.uploads==5 && o.decode_[1].valid());
+    waiting.set_value(DecodedCover{"b"});
+    o.pump_completion();
+    assert(o.uploads==6 && !o.decode_[1].valid());
+}
+"""
+with tempfile.TemporaryDirectory(prefix="encore-ui-upload-limit-") as td:
+    p=Path(td)/"test.cpp"
+    p.write_text(completion_cpp)
+    for opt in ("-O0","-O2"):
+        binary=Path(td)/("test"+opt[2:])
+        subprocess.run(["c++","-std=c++20","-Wall","-Wextra","-Werror",opt,
+                        str(p),"-o",str(binary)],check=True,timeout=60)
+        subprocess.run([str(binary)],check=True,timeout=10)
+print("R457_UI_UPLOAD_LIMIT_HOST_PASS max_uploads_per_update=1 rotation=1 stale=1 pending=1 failure=1")

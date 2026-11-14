@@ -368,9 +368,12 @@ void Textures::pump(float dt, int budget)
     // the UI thread caused visible menu repeat/scroll stalls (>100 ms).
     // Only the GL texture upload stays on the owner thread. Handle *at most
     // one* completed upload this frame and prefetch the next image afterwards.
-    // Two bounded CPU decoders let the visible front/rear finish concurrently.
-    // Uploads remain serialized on the GL owner thread, at most two per frame.
-    for (auto& decode : decode_) {
+    // Two bounded CPU decoders still work concurrently. Consume at most one
+    // ready result per UI update: two GL uploads previously could stack in
+    // one frame (R457 reported a 67–68 ms texture_upload phase).
+    // Rotate first choice so neither worker starves when both are ready.
+    for (std::size_t slot = 0; slot < decode_.size(); ++slot) {
+    auto& decode = decode_[(frame_ + slot) % decode_.size()];
     if (decode.valid() &&
         decode.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
     {
@@ -418,7 +421,9 @@ void Textures::pump(float dt, int budget)
         } catch (...) {
             sys::log("cover decode failed: unknown error");
         }
-        // A consumed future is invalid. The next queued image can start now.
+        // Leave the other ready result in its future until the next frame.
+        // A consumed future is invalid; refill the free decoder below.
+        break;
     }
     }
 

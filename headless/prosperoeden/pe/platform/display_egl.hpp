@@ -28,11 +28,11 @@ class Display
     void close();
 
     // A Vulkan launch may take tens of seconds in System::Load before it can
-    // create its own VideoOut surface. Detach/destroy only the GL context;
-    // retain the EGL display AND window surface because this PS5 runtime
-    // closes VideoOut from eglDestroySurface itself. The next renderer releases
-    // both at its explicit takeover boundary.
-    bool defer_scanout_close();
+    // create its own VideoOut surface. Transfer the existing GL context,
+    // display and surface to one bounded loading presenter so the shared scene
+    // keeps moving instead of freezing. The next renderer stops/joins that
+    // presenter and releases all three at its explicit takeover boundary.
+    bool defer_scanout_close(bool reduce_motion);
     static bool close_deferred_scanout();
     static bool has_deferred_scanout();
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Source/host contract for one PS5 GL -> Vulkan loading state.
+"""Source/host contract for one continuous PS5 GL -> Vulkan loading state.
 
 This does not prove physical scanout continuity. It proves the selected source
-keeps the last OpenGL loading frame through core load, relinquishes VideoOut
-at the Vulkan surface boundary, and uses the same loading_scene.glsl on both
-renderers without the retired jacket screenshot/bottom-band path.
+keeps the same loading_scene.glsl animated on the retained GL owner during
+core load, stops/joins that owner at the Vulkan boundary, and never revives
+the retired jacket screenshot/bottom-band path.
 """
 from pathlib import Path
 
@@ -43,32 +43,50 @@ assert "close(runtime_video_handle)" in shutdown
 assert "runtime_video_registered = 0;" in shutdown
 
 assert '#include "loading_scene_glsl.h"' in frontend
-assert "bool PresentUnifiedLoading(pe::ps5::Display& display)" in frontend
+assert '#include "loading_scene_glsl.h"' in display
+assert "bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion)" in frontend
 unified = frontend.split("bool PresentUnifiedLoading(", 1)[1].split("\n}", 1)[0]
 assert "kLoadingSceneGlsl" in unified
 assert "loading_scene(gl_FragCoord.xy,size,seconds)" in unified
 assert "display.swap()" in unified
-assert "1001.0f : 1.0f" in unified
+assert "reduce_motion ? 1001.0f : 1.0f" in unified
 assert "LaunchHandoff::Publish(" not in frontend
 assert "handoff_captured" not in frontend
 assert "handoff_attempts" not in frontend
-assert frontend.index("PresentUnifiedLoading(display)") < frontend.index(
-    "display.defer_scanout_close()"
+assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(
+    "display.defer_scanout_close(reduce_motion)"
 )
 assert "Display::close_deferred_scanout()" in frontend
 
-assert "bool Display::defer_scanout_close()" in display
-defer = display.split("bool Display::defer_scanout_close()", 1)[1].split(
+assert "bool Display::defer_scanout_close(bool reduce_motion)" in display
+assert "bool defer_scanout_close(bool reduce_motion);" in display_h
+defer = display.split("bool Display::defer_scanout_close(bool reduce_motion)", 1)[1].split(
     "bool Display::close_deferred_scanout()", 1
 )[0]
-assert "eglDestroyContext" in defer
-assert not any(line.lstrip().startswith("eglDestroySurface(") for line in defer.splitlines())
+assert "std::jthread{deferred_loading_loop" in defer
+assert "eglDestroyContext(" not in defer
+assert "eglDestroySurface(" not in defer
 assert "eglTerminate(" not in defer
+
+presenter = display.split("void deferred_loading_loop(", 1)[1].split("\n}", 1)[0]
+assert "kLoadingSceneGlsl" in display
+assert "while (!stop.stop_requested())" in presenter
+assert "base_seconds + elapsed" in presenter
+assert "eglSwapBuffers(display, surface)" in presenter
+
 close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].split(
     "bool Display::has_deferred_scanout()", 1
 )[0]
-assert "eglDestroySurface(display, surface)" in close_deferred
-assert close_deferred.index("eglDestroySurface(display, surface)") < close_deferred.index("eglTerminate(display)")
+assert close_deferred.index("presenter.request_stop();") < close_deferred.index("presenter.join();")
+assert close_deferred.index("presenter.join();") < close_deferred.index(
+    "eglDestroyContext(display, context)"
+)
+assert close_deferred.index("eglDestroyContext(display, context)") < close_deferred.index(
+    "eglDestroySurface(display, surface)"
+)
+assert close_deferred.index("eglDestroySurface(display, surface)") < close_deferred.index(
+    "eglTerminate(display)"
+)
 for api in ("defer_scanout_close", "close_deferred_scanout", "has_deferred_scanout"):
     assert api in display_h
 
@@ -121,5 +139,5 @@ assert "cmdbuf.SetScissor(0, scissor);" in overlay
 assert '#include "loading_scene.glsl"' in shader
 assert "color = vec4(loading_scene(" in shader
 
-print("ENCORE_GL_VK_SINGLE_LOADING_SOURCE_PASS deferred_scanout=1 shared_shader=1 jacket_upload=0 bottom_band=0 console_pending=1")
+print("ENCORE_GL_VK_CONTINUOUS_LOADING_SOURCE_PASS presenter=1 shared_shader=1 jacket_upload=0 bottom_band=0 console_pending=1")
 print("ENCORE_VULKAN_LOADING_DIAGNOSTIC_PASS first_guest_frame_not_claimed=1 max_reports=2")

@@ -78,3 +78,15 @@ assert 'static const std::vector<std::string> labels = Labels' not in services, 
 assert 'return language_labels_;' in services and 'return resolution_labels_;' in services, 'translated labels are not per-service caches'
 
 print('Language runtime contract PASS (PS5 French -> fr-FR, release override safe, live reload, 31 catalogs, 31 official PS5 selector choices)')
+
+# The locale displayed by the launcher is not the encoded Horizon language.
+assert 'locale == kLanguageKeys[i] || locale == kLanguageCatalogTags[i]' in settings
+assert 'return SavedLanguageIndex(saved) >= 0;' in settings
+assert 'document["system"]["language"] = kLanguageKeys[value.language];' in settings
+main = (root / 'headless/main.cpp').read_text()
+assert 'const int requested_language = Eden::kLanguageSettings[choice];' in main
+assert 'EDEN_GUEST_LANGUAGE title=' in main
+assert 'launcher_locale=%s saved_key=%s requested_code=%s configured_code=%s' in main
+assert 'service_reply_observed=0' in main
+assert guest_languages[2:4] == [2, 13] and regions[2:4] == [2, 1]
+print('Locale/guest distinction PASS (fr-FR -> fr, fr-CA -> fr-CA)')

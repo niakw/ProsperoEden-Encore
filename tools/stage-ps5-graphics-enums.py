@@ -291,6 +291,25 @@ def self_test() -> None:
         assert apply(stage) == "already-applied"
         for relative, original, expected in inputs:
             assert (stage / relative).read_bytes() == expected
+        # Compile the actual staged terminal helper with its existing stub
+        # body. This is a signature/behavior witness, not a full JIT build.
+        import subprocess
+        terminal = (stage / "src/dynarmic/src/dynarmic/ir/basic_block.cpp").read_text()
+        signature = "static std::string TerminalToString(const Term::Terminal&) noexcept {"
+        method = signature + terminal.split(signature, 1)[1].split("\n}", 1)[0] + "\n}\n"
+        fixture = cache / "terminal-warning.cpp"
+        fixture.write_text("#include <string>\nnamespace Term { struct Terminal {}; }\n" +
+                           method + "int main() { return TerminalToString(Term::Terminal{}).empty() ? 0 : 1; }\n")
+        compilers = [c for c in (shutil.which("clang++"), shutil.which("g++")) if c]
+        if not compilers:
+            raise RuntimeError("No C++ compiler for Dynarmic terminal warning host witness")
+        for index, compiler in enumerate(compilers):
+            binary = cache / ("terminal-warning-" + str(index))
+            subprocess.run([compiler, "-std=c++20", "-Wall", "-Wextra",
+                            "-Werror=unused-parameter", str(fixture), "-o", str(binary)],
+                           check=True, timeout=40)
+            subprocess.run([str(binary)], check=True, timeout=10)
+    print("DYNARMIC_TERMINAL_WARNING_HOST_PASS actual_stub=1 unused_parameter=0 semantic_change=0")
     print("R457_WARNING_OWNER_STAGE_PASS owners=3 exact_vendor_blob=1 idempotent=1 failclosed=1")
     print("PS5_GRAPHICS_ENUM_OVERLAY_PASS pinned=1 backport=1 abi=1 failclosed=1")
 

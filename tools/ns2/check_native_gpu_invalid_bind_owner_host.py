@@ -46,7 +46,10 @@ static unsigned rejected{};
 #define UNIMPLEMENTED_MSG(...) (++rejected)
 struct Engine {};
 namespace Tegra {
-struct NativeAmpereMacroState {};
+struct NativeAmpereMacroState {
+    struct DataRam {};
+    explicit NativeAmpereMacroState(DataRam*) {}
+};
 enum class EngineID : u32 {
     NV01_TIMER=0x0004, FERMI_TWOD_A=0x902d, MAXWELL_B=0xb197,
     KEPLER_COMPUTE_B=0xb1c0, KEPLER_INLINE_TO_MEMORY_B=0xa140,
@@ -110,6 +113,7 @@ class Puller {
 public:
     struct MethodCall { u32 method{},argument{},subchannel{},method_count{}; };
     std::array<EngineID,8> bound_engines{};
+    Tegra::NativeAmpereMacroState::DataRam native_mme_dram{};
     std::unique_ptr<Tegra::NativeAmpereMacroState> native_3d{};
     u32 native_macro_method{};
     bool native_3d_failed{};

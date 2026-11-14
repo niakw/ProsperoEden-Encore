@@ -11,6 +11,8 @@
 
 #include <EGL/eglext.h>
 #include <GL/glcorearb.h>
+#include <mutex>
+#include <utility>
 #include <ps5_opengl_display.h>
 #if __has_include(<ps5_opengl_display_modes.h>)
 #include <ps5_opengl_display_modes.h> // runtime display modes (one SDK for every TV)
@@ -53,6 +55,13 @@ const char *gl_string(GLenum name)
     const auto *value = reinterpret_cast<const char *>(glGetString(name));
     return value != nullptr ? value : "(null)";
 }
+
+// Exactly one fullscreen VideoOut owner is handed from the launcher to a
+// game at a time. Keeping EGL initialized leaves its last registered buffer
+// scanning out; the Vulkan renderer explicitly terminates it immediately
+// before creating its own surface.
+std::mutex deferred_display_mutex;
+EGLDisplay deferred_display = EGL_NO_DISPLAY;
 
 } // namespace
 
@@ -195,6 +204,84 @@ bool Display::swap()
         return false;
     }
     return true;
+}
+
+bool Display::defer_scanout_close()
+{
+    if (display_ == EGL_NO_DISPLAY)
+        return false;
+
+    bool ok = true;
+    if (context_ != EGL_NO_CONTEXT)
+    {
+        ok = eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) && ok;
+        ok = eglDestroyContext(display_, context_) && ok;
+    }
+    if (surface_ != EGL_NO_SURFACE)
+        ok = eglDestroySurface(display_, surface_) && ok;
+    if (!ok)
+    {
+        fail("defer scanout close");
+        close();
+        return false;
+    }
+
+    {
+        std::lock_guard lock{deferred_display_mutex};
+        // A previous failed/aborted launch must be released before replacing
+        // its owner. RunApp normally drains this at its next entry.
+        if (deferred_display != EGL_NO_DISPLAY && deferred_display != display_)
+        {
+            if (!eglTerminate(deferred_display))
+            {
+                const EGLint error = eglGetError();
+                sys::log("egl deferred replacement terminate failed: %s (0x%04x)",
+                         egl_error_name(error), static_cast<unsigned>(error));
+            }
+        }
+        deferred_display = display_;
+    }
+    display_ = EGL_NO_DISPLAY;
+    surface_ = EGL_NO_SURFACE;
+    context_ = EGL_NO_CONTEXT;
+    width_ = 0;
+    height_ = 0;
+    sys::log("egl launcher scanout deferred for renderer handoff");
+    return true;
+}
+
+bool Display::close_deferred_scanout()
+{
+    EGLDisplay display = EGL_NO_DISPLAY;
+    {
+        std::lock_guard lock{deferred_display_mutex};
+        display = std::exchange(deferred_display, EGL_NO_DISPLAY);
+    }
+    if (display == EGL_NO_DISPLAY)
+        return true;
+    if (eglTerminate(display))
+    {
+        sys::log("egl deferred launcher scanout released");
+        return true;
+    }
+
+    const EGLint error = eglGetError();
+    sys::log("egl deferred launcher terminate failed: %s (0x%04x)",
+             egl_error_name(error), static_cast<unsigned>(error));
+    // Keep ownership retryable. A failed close means the OpenGL runtime may
+    // still own VideoOut and its direct-memory scanout.
+    {
+        std::lock_guard lock{deferred_display_mutex};
+        if (deferred_display == EGL_NO_DISPLAY)
+            deferred_display = display;
+    }
+    return false;
+}
+
+bool Display::has_deferred_scanout()
+{
+    std::lock_guard lock{deferred_display_mutex};
+    return deferred_display != EGL_NO_DISPLAY;
 }
 
 void Display::close()

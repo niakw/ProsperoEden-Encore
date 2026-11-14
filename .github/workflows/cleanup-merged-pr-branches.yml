@@ -83,6 +83,10 @@ jobs:
               'integration/nov14-sirit-proof-reconcile-rc7': '2bcd64f18cbd6f582139e884e76bf50919dff842',
               'integration/nov14-spirv-scalar-cache-rc5': '560201fbdb04a3a1e5dfc466353e7cf1a7483981',
               'integration/nov14-spirv-scalar-rc5': 'a155697360a329cf269aa04bb4e0fd4031d4c6f1',
+              # #124 source reconciliation: the old R457 home-icon branch is
+              # superseded by newer main owners and currently points at the
+              # fully integrated R458 ancestor. Keep the ancestry gate below.
+              'fix/r457-home-canonical-icon-rail': 'c50d6abf32e6ce98d930bf42cf404815a0384855',
           }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:

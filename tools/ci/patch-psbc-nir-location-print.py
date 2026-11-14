@@ -52,6 +52,8 @@ PINNED_ACO = {"9479ba5f980f1e254801afd6a068282b7b571df8", "a73de0a574bea1cc6f421
 PINNED_NIR_MASK = "9702ce7e1d3fa5dc35118c6eff7a10fdf55f1cde"
 ACO_BEFORE = b"ffs(const_offset) > req_lsb_zero"
 ACO_AFTER = b"static_cast<unsigned>(ffs(const_offset)) > req_lsb_zero"
+ACO_ASSERT_BEFORE = b"bool non_linear_vgpr = false;"
+ACO_ASSERT_AFTER = b"ASSERTED bool non_linear_vgpr = false;"
 MASK_BEFORE = b"nir_channels(&b, value, BITFIELD_MASK(num_dwords))"
 MASK_AFTER = b"nir_channels(&b, value, nir_component_mask(num_dwords))"
 
@@ -65,7 +67,9 @@ def patched_aco(raw: bytes) -> bytes:
             "Unexpected pinned PSBC ACO offset alignment source "
             f"blob={digest} before={before_count} after={after_count}"
         )
-    return raw.replace(ACO_BEFORE, ACO_AFTER)
+    if raw.count(ACO_ASSERT_BEFORE) != 1 or ACO_ASSERT_AFTER in raw:
+        raise ValueError("PSBC ACO assert-only warning owner drift")
+    return raw.replace(ACO_BEFORE, ACO_AFTER).replace(ACO_ASSERT_BEFORE, ACO_ASSERT_AFTER, 1)
 
 
 def patched_nir_mask(raw: bytes) -> bytes:
@@ -85,6 +89,36 @@ def patched_nir_mask(raw: bytes) -> bytes:
     return raw.replace(MASK_BEFORE, MASK_AFTER, 1)
 
 
+
+ASSERT_WARNING_OWNERS = {
+    "compiler/nir/nir_unlower_io_to_vars.c": (
+        "50361427c7723e544378800f583394bd3024ac40",
+        b"            unsigned component, decl_size;",
+        b"            ASSERTED unsigned component;\n            unsigned decl_size;",
+    ),
+    "amd/compiler/aco_spill_preserved.cpp": (
+        "80fa7a6ea2cd32785f8b6982666d5d734e3ed3e3",
+        b"      bool found_reg = false;",
+        b"      ASSERTED bool found_reg = false;",
+    ),
+    "amd/vulkan/nir/radv_nir_lower_descriptors.c": (
+        "241288084c342b659be03e187de13fb0f3d29b0f",
+        b"   bool indirect = false;",
+        b"   ASSERTED bool indirect = false;",
+    ),
+}
+
+
+def patched_assert_warning(path: str, raw: bytes) -> bytes:
+    pin, before, after = ASSERT_WARNING_OWNERS[path]
+    digest = gitblob(raw)
+    if digest != pin or raw.count(before) != 1 or after in raw:
+        raise ValueError(
+            f"Unexpected PSBC assert-only warning source path={path} "
+            f"blob={digest} before={raw.count(before)} after={raw.count(after)}"
+        )
+    return raw.replace(before, after, 1)
+
 def compile_window(file: Path, command: list[str]) -> int:
     if not file.is_file() or file.is_symlink() or not command:
         raise ValueError("Unsafe PSBC compile-window input")
@@ -102,16 +136,20 @@ def compile_window(file: Path, command: list[str]) -> int:
     src = file.parent.parent.parent
     aco = src / ACO_PATH
     mask = src / NIR_MASK_PATH
-    for owner in (aco, mask):
+    assert_owners = {relative: src / relative for relative in ASSERT_WARNING_OWNERS}
+    for owner in (aco, mask, *assert_owners.values()):
         if not owner.is_file() or owner.is_symlink():
             raise ValueError("Unsafe or missing PSBC compiler owner")
     aco_original = aco.read_bytes()
     mask_original = mask.read_bytes()
+    assert_originals = {relative: owner.read_bytes() for relative, owner in assert_owners.items()}
     changes = (
         (file, original, fixed),
         (header, header_original, header_fixed),
         (aco, aco_original, patched_aco(aco_original)),
         (mask, mask_original, patched_nir_mask(mask_original)),
+        *((assert_owners[relative], raw, patched_assert_warning(relative, raw))
+          for relative, raw in assert_originals.items()),
     )
     try:
         for owner, _, replacement in changes:
@@ -119,6 +157,7 @@ def compile_window(file: Path, command: list[str]) -> int:
         print("PSBC_NIR_LOCATION_BUFFER_11_SAFE compile_window=1", flush=True)
         print("PSBC_RADV_STUB_FILE_SCOPE_PASS compile_window=1", flush=True)
         print("PSBC_ACO_OFFSET_NIR_COMPONENT_MASK_PASS compile_window=1", flush=True)
+        print("PSBC_ASSERT_ONLY_WARNING_OWNERS_PASS count=4 compile_window=1", flush=True)
         return subprocess.run(command, check=False).returncode
     finally:
         # Restore each verified owner even if a different restore fails.

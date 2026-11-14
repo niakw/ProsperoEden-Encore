@@ -20,7 +20,7 @@ def owner(start: str, following: str) -> str:
     assert following in tail, ("owner boundary changed", following)
     return start + tail.split(following, 1)[0]
 
-finish = owner("void Launcher::finish_scan(bool wait)", "\nvoid Launcher::start_home_media()")
+finish = owner("void Launcher::finish_scan(bool wait)", "\nvoid Launcher::start_home_icons()")
 apply = owner("void Launcher::apply_games(std::vector<Game> games)", "\nvoid Launcher::sync_home_game(")
 media_finish = owner("void Launcher::finish_selected_media()", "\nvoid Launcher::apply_games(")
 home_finish = owner("void Launcher::finish_home_media()", "\nvoid Launcher::start_selected_media(")

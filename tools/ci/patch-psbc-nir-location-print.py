@@ -52,8 +52,6 @@ PINNED_ACO = {"9479ba5f980f1e254801afd6a068282b7b571df8", "a73de0a574bea1cc6f421
 PINNED_NIR_MASK = "9702ce7e1d3fa5dc35118c6eff7a10fdf55f1cde"
 ACO_BEFORE = b"ffs(const_offset) > req_lsb_zero"
 ACO_AFTER = b"static_cast<unsigned>(ffs(const_offset)) > req_lsb_zero"
-ACO_ASSERT_BEFORE = b"bool non_linear_vgpr = false;"
-ACO_ASSERT_AFTER = b"ASSERTED bool non_linear_vgpr = false;"
 MASK_BEFORE = b"nir_channels(&b, value, BITFIELD_MASK(num_dwords))"
 MASK_AFTER = b"nir_channels(&b, value, nir_component_mask(num_dwords))"
 
@@ -67,9 +65,7 @@ def patched_aco(raw: bytes) -> bytes:
             "Unexpected pinned PSBC ACO offset alignment source "
             f"blob={digest} before={before_count} after={after_count}"
         )
-    if raw.count(ACO_ASSERT_BEFORE) != 1 or ACO_ASSERT_AFTER in raw:
-        raise ValueError("PSBC ACO assert-only warning owner drift")
-    return raw.replace(ACO_BEFORE, ACO_AFTER).replace(ACO_ASSERT_BEFORE, ACO_ASSERT_AFTER, 1)
+    return raw.replace(ACO_BEFORE, ACO_AFTER)
 
 
 def patched_nir_mask(raw: bytes) -> bytes:
@@ -91,6 +87,11 @@ def patched_nir_mask(raw: bytes) -> bytes:
 
 
 ASSERT_WARNING_OWNERS = {
+    "amd/compiler/aco_lower_to_hw_instr.cpp": (
+        "337e296ad310279b6aa8e8d96e355d9e049a2acd",
+        b"               bool non_linear_vgpr = false;",
+        b"               ASSERTED bool non_linear_vgpr = false;",
+    ),
     "compiler/nir/nir_unlower_io_to_vars.c": (
         "50361427c7723e544378800f583394bd3024ac40",
         b"            unsigned component, decl_size;",

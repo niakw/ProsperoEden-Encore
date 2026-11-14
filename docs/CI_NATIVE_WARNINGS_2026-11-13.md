@@ -86,3 +86,6 @@ Original run 43426275772 job 131888348458 reports two GCC `-Wsign-compare` at ac
 
 ### 2026-11-14 — assert-only Mesa/PSBC warnings
 Native syntax run 43571792002 still emitted four release-only unused warnings after the ACO signedness/NIR mask fixes: `nir_unlower_io_to_vars.c: component`, `aco_lower_to_hw_instr.cpp: non_linear_vgpr`, `aco_spill_preserved.cpp: found_reg`, and `radv_nir_lower_descriptors.c: indirect`. Exact pinned source review shows each value is consumed only by `assert()`. Mesa's own `util/macros.h` documents `ASSERTED` specifically for this case and maps it to `UNUSED` only under `NDEBUG`. Current Mesa 26.2/26.3 still carries the ACO pattern, so no semantic upstream replacement was imported. The compile-window patch annotates only those four declarations, restores all source bytes afterwards, and the real native syntax workflow now triggers when these patchers change. Full shader/runtime behavior remains to be qualified.
+
+
+Correction de propriété: `non_linear_vgpr` appartient à `amd/compiler/aco_lower_to_hw_instr.cpp` blob `337e296ad310279b6aa8e8d96e355d9e049a2acd`, pas à `aco_select_nir_intrinsics.cpp`. Le patch de signedness reste limité au second; l'annotation `ASSERTED` devient un quatrième owner séparé et byte-restored.

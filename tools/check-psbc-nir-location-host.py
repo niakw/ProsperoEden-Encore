@@ -47,6 +47,7 @@ assert build.count('mv -f "$radv_stub_backup" "$radv_stub_source"') == 2
 assert build.index('cp -p "$radv_stub_source"') < build.index('patch-psbc-nir-build-hooks.py" "$script"')
 assert 'ENCORE_PSBC_NIR_LOCATION_FIX' in build
 assert 'export ENCORE_PSBC_NIR_PATCHER=' in build
+assert 'amd/compiler/aco_lower_to_hw_instr.cpp' in build
 assert 'compiler/nir/nir_unlower_io_to_vars.c' in build
 assert 'amd/compiler/aco_spill_preserved.cpp' in build
 assert 'amd/vulkan/nir/radv_nir_lower_descriptors.c' in build

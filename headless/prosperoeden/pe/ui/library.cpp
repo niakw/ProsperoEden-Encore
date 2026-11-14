@@ -662,7 +662,10 @@ void Launcher::finish_scan(bool wait)
 
 void Launcher::start_home_media()
 {
-    if (media_cancel_.load(std::memory_order_acquire) || home_media_scan_.valid()) return;
+    // A completed Home request can publish cached data after navigation,
+    // but must never start another invisible network/media job off Home.
+    if (screen_ != Screen::home ||
+        media_cancel_.load(std::memory_order_acquire) || home_media_scan_.valid()) return;
 
     const Recent* recent =
         home_recent_ >= 0 && home_recent_ < static_cast<int>(home_.recents.size()) ?

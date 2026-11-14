@@ -59,3 +59,96 @@ for needle in ('quick settings overlay', 'recently played: seven-ish large artwo
 assert 'recent.max_players' not in home
 assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in home
 print('Selected-only Nlib artwork and preserved Home worker + TV-first layout PASS')
+
+# Test the exact current worker, including both historic request branches.
+# Async execution uses a deterministic in-memory service, not network or PS5.
+import shutil
+import subprocess
+import tempfile
+worker = lib.split("void Launcher::start_home_media()", 1)[1].split(
+    "void Launcher::finish_home_media()", 1)[0]
+assert "screen_ != Screen::home" in worker
+assert worker.index("screen_ != Screen::home") < worker.index("home_media_next_retry_[title_id]")
+cpp = r"""
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <cstdint>
+#include <future>
+#include <string>
+#include <utility>
+#include <unordered_map>
+#include <vector>
+enum class Screen { home, library, settings };
+struct Game {
+    std::uint64_t title_id=0;
+    std::string file,name,cover,hero,intro;
+    std::vector<std::string> screenshots;
+    int max_players=0;
+};
+struct Recent {
+    std::uint64_t title_id=0;
+    std::string file,title,cover,hero,screenshot,intro;
+    int max_players=0;
+};
+struct Home {
+    std::uint64_t last_title_id=0;
+    std::string last_file,last_title,last_cover,last_hero,last_screenshot,last_intro;
+    int last_max_players=0;
+    std::vector<Recent> recents;
+};
+struct Services {
+    std::atomic<unsigned> calls{0};
+    Game enrich_game_media(Game game,const std::atomic<bool>* cancel) {
+        assert(cancel!=nullptr && !cancel->load()); ++calls; return game;
+    }
+};
+struct Launcher {
+    Screen screen_=Screen::library;
+    Home home_;
+    int home_recent_=-1;
+    std::atomic<bool> media_cancel_{false};
+    Services services_;
+    std::future<Game> home_media_scan_;
+    std::uint64_t home_media_scan_title_id_=0;
+    std::unordered_map<std::uint64_t,std::chrono::steady_clock::time_point> home_media_next_retry_;
+    void start_home_media();
+};
+""" + "void Launcher::start_home_media()" + worker + r"""
+int main() {
+    Launcher l;
+    l.home_.last_title_id=101; l.home_.last_file="last"; l.home_.last_max_players=2;
+    for(auto screen:{Screen::library,Screen::settings}) {
+        l.screen_=screen; l.start_home_media(); assert(!l.home_media_scan_.valid());
+        assert(l.home_media_next_retry_.empty() && l.services_.calls==0);
+    }
+    l.screen_=Screen::home; l.media_cancel_=true; l.start_home_media();
+    assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.empty());
+    l.media_cancel_=false; l.start_home_media();
+    assert(l.home_media_scan_.valid() && l.home_media_scan_title_id_==101);
+    l.start_home_media();
+    auto last=l.home_media_scan_.get();
+    assert(last.title_id==101 && last.file=="last" && last.max_players==2 && l.services_.calls==1);
+    l.start_home_media(); assert(!l.home_media_scan_.valid()); // cooldown
+    Recent recent; recent.title_id=202; recent.file="new"; recent.screenshot="shot";
+    l.home_.recents.push_back(recent); l.home_recent_=0;
+    l.screen_=Screen::library; l.start_home_media(); // late Home completion/restart
+    assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.count(202)==0);
+    l.screen_=Screen::home; l.start_home_media();
+    auto selected=l.home_media_scan_.get();
+    assert(selected.title_id==202 && selected.file=="new" && selected.screenshots.size()==1);
+    assert(l.services_.calls==2);
+    l.home_.recents[0].title_id=0; l.start_home_media(); assert(!l.home_media_scan_.valid());
+}
+"""
+compiler = shutil.which("clang++") or shutil.which("c++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="home-media-visible-") as tmp:
+    src=Path(tmp)/"test.cpp"
+    src.write_text(cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(tmp)/"test"
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-pthread",
+                        str(src),"-o",str(exe)],check=True,timeout=60)
+        subprocess.run([str(exe)],check=True,timeout=10)
+print("HOME_MEDIA_VISIBLE_WORKER_PASS hidden=2 cancellation=1 cooldown=1 return=1 actual_owner=1")

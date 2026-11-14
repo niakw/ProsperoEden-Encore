@@ -1,0 +1,43 @@
+name: PS5 Zen2 leaf-1 APIC topology fallback (host only)
+
+on:
+  pull_request:
+    paths:
+      - "headless/performance.cpp"
+      - "tools/check-worker-affinity.py"
+      - "tools/check-worker-topology.py"
+      - "tools/check-experimental-performance.py"
+      - ".github/workflows/ps5-leaf1-apic-topology-host.yml"
+  push:
+    branches:
+      - fix/nov14-ps5-leaf1-apic-topology-fallback
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  topology-conservative-fallback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout selected engine and pinned native vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Pin exact reviewed PS5 CPU affinity owner
+        run: |
+          set -euo pipefail
+          test "$(git hash-object headless/performance.cpp)" = "18ecba614f2c0077bbcc7044d68aa3eb714cb4b4"
+      - name: Compile selected CPU topology and check affinity rollback under sanitizers
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-worker-affinity.py
+          python3 -B tools/check-worker-topology.py
+          python3 -B tools/check-vulkan-shader-workers.py
+          python3 -B tools/check-experimental-performance.py
+      - name: Qualification boundary
+        if: always()
+        run: |
+          echo "Host-only CPUID and FreeBSD affinity mock tests. On-device PS5 13.60 CPUID identities, Vulkan guest CPU/GPU placement, FC27 pacing and NS2 regressions remain unverified. No native build or release." >> "$GITHUB_STEP_SUMMARY"

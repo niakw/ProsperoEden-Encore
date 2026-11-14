@@ -57,12 +57,12 @@ assert "guest_frame_handoff=0" in loading
 
 ctor = graphics.split("GraphicsWindow::GraphicsWindow(bool use_vulkan)", 1)[1].split(
     "GraphicsWindow::~GraphicsWindow()", 1)[0]
-assert ctor.count("vulkan_loading_gpu_completion_baseline =") == 1
+assert ctor.count("Eden::vulkan_loading_gpu_completion_baseline =") == 1
 assert ctor.index("vulkan_loading_diagnostic_stage = 0;") < ctor.index(
-    "vulkan_loading_gpu_completion_baseline =")
-assert ctor.index("vulkan_loading_gpu_completion_baseline =") < ctor.index(
+    "Eden::vulkan_loading_gpu_completion_baseline =")
+assert ctor.index("Eden::vulkan_loading_gpu_completion_baseline =") < ctor.index(
     "vulkan_loading_pace = {};")
-assert "Crash::gpu_completed_commands.store(" not in ctor, (
+assert "Eden::Crash::gpu_completed_commands.store(" not in ctor, (
     "A title transition must not clear the signal/crash breadcrumb.")
 
 cpp = r"""
@@ -70,47 +70,49 @@ cpp = r"""
 #include <atomic>
 #include <cstdint>
 #include <cassert>
+namespace Eden {
 namespace Crash {
 inline std::atomic<std::uint64_t> gpu_completed_commands{0};
 }
 std::uint64_t vulkan_loading_gpu_completion_baseline{};
 """ + helper + r"""
+} // namespace Eden
 int main() {
     Eden::ResetGpuFailureForTitle();
-    Crash::gpu_completed_commands.store(128);
-    vulkan_loading_gpu_completion_baseline = 128;
-    auto a = SampleLoadingGpuProgress();
+    Eden::Crash::gpu_completed_commands.store(128);
+    Eden::vulkan_loading_gpu_completion_baseline = 128;
+    auto a = Eden::SampleLoadingGpuProgress();
     assert(a.submitted_sample == 0);
     assert(a.total_floor64 == 128 && a.since_window_floor64 == 0 && !a.counter_reset);
     Eden::PublishGpuSubmissionSample(1);
-    a = SampleLoadingGpuProgress();
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.submitted_sample == 1);
     Eden::PublishGpuSubmissionSample(4);
-    a = SampleLoadingGpuProgress();
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.submitted_sample == 1);
     Eden::PublishGpuSubmissionSample(64);
-    Crash::gpu_completed_commands.store(192);
-    a = SampleLoadingGpuProgress();
+    Eden::Crash::gpu_completed_commands.store(192);
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.submitted_sample == 64);
     assert(a.total_floor64 == 192 && a.since_window_floor64 == 64 && !a.counter_reset);
-    Crash::gpu_completed_commands.store(320);
-    a = SampleLoadingGpuProgress();
+    Eden::Crash::gpu_completed_commands.store(320);
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.since_window_floor64 == 192 && !a.counter_reset);
     // A second game in this app gets a new baseline and submission sample.
     Eden::ResetGpuFailureForTitle();
-    vulkan_loading_gpu_completion_baseline = 320;
-    a = SampleLoadingGpuProgress();
+    Eden::vulkan_loading_gpu_completion_baseline = 320;
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.submitted_sample == 0 && a.since_window_floor64 == 0 && !a.counter_reset);
     Eden::PublishGpuSubmissionSample(2);
-    Crash::gpu_completed_commands.store(384);
-    a = SampleLoadingGpuProgress();
+    Eden::Crash::gpu_completed_commands.store(384);
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.submitted_sample == 2 && a.since_window_floor64 == 64 && !a.counter_reset);
     // A future completion counter reset must not wrap into a huge unsigned delta.
-    Crash::gpu_completed_commands.store(16);
-    a = SampleLoadingGpuProgress();
+    Eden::Crash::gpu_completed_commands.store(16);
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.total_floor64 == 16 && a.since_window_floor64 == 0 && a.counter_reset);
-    vulkan_loading_gpu_completion_baseline = 16;
-    a = SampleLoadingGpuProgress();
+    Eden::vulkan_loading_gpu_completion_baseline = 16;
+    a = Eden::SampleLoadingGpuProgress();
     assert(a.since_window_floor64 == 0 && !a.counter_reset);
 }
 """

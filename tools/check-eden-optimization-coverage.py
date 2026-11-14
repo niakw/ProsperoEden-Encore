@@ -1105,6 +1105,43 @@ else:
     assert post_f07_romfs_present == {post_f07_romfs_receipt}
     assert subprocess.check_output(["git","hash-object",post_f07_romfs_receipt],cwd=ROOT,text=True).strip() == "51eb401e5f2e3a0deefc5fc0e4cc30b0f4b8e4a3"
     assert '"file_sys/romfs.cpp"' in release_cmake
+# FC27 compiler owners selected after the frozen F07 snapshot. Keep them
+# explicit and SHA-pinned rather than increasing the 518 historical count.
+post_f07_fc27_ssa_receipts = {
+    "vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/basic_block.h":
+        "0a23d1ce0f43524e6195bd8219349ef632cfb719",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp":
+        "26c42a9900256e5573735394753c1d5264611664",
+}
+post_f07_fc27_ssa_present = set(post_f07_fc27_ssa_receipts) & all_owners
+fc27_compiler_pins = {
+    "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
+    "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",
+}
+if gpu_table_vendor_pin in fc27_compiler_pins:
+    assert post_f07_fc27_ssa_present == set(post_f07_fc27_ssa_receipts)
+    for path, blob in post_f07_fc27_ssa_receipts.items():
+        assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
+    assert 'set(EDEN_FC27_SSA_HEADER' in release_cmake
+    assert 'set(EDEN_FC27_SSA_SOURCE' in release_cmake
+else:
+    assert not post_f07_fc27_ssa_present
+print("ENCORE_FC27_SSA_F07_ISOLATION_PASS", f"owners={len(post_f07_fc27_ssa_present)}")
+
+post_f07_fc27_ssbo_receipts = {
+    "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp":
+        "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
+}
+post_f07_fc27_ssbo_present = set(post_f07_fc27_ssbo_receipts) & all_owners
+if gpu_table_vendor_pin == "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3":
+    assert post_f07_fc27_ssbo_present == set(post_f07_fc27_ssbo_receipts)
+    for path, blob in post_f07_fc27_ssbo_receipts.items():
+        assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
+    assert 'set(EDEN_FC27_SSBO_SOURCE' in release_cmake
+else:
+    assert not post_f07_fc27_ssbo_present
+print("ENCORE_FC27_SSBO_F07_ISOLATION_PASS", f"owners={len(post_f07_fc27_ssbo_present)}")
+
 # Isolated post-F07 diagnostic queue prototype; never change historical counts.
 post_f07_diagnostics_receipts = {
     "headless/diagnostics_sharing_policy.h": "2515badbeb070d0f22b02e0ec8dde8a30afdeef4",
@@ -1115,7 +1152,7 @@ for path, blob in post_f07_diagnostics_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=ROOT, text=True).strip() == blob, path
 print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=2 native_transport=unwired")
 assert post_f07_diagnostics_owners <= all_owners
-owners=all_owners-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
+owners=all_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

@@ -292,12 +292,14 @@ on:
       - 'tools/check-eden-backport-patch-integrity-host.py'
       - 'headless/backports/**'
       - 'vendor/encore-active/eden-backports/manifest.json'
+      - 'tools/stage-ps5-graphics-enums.py'
       - '.github/workflows/encore-core-fast-gate.yml'
   pull_request:
     paths:
       - 'vendor'
       - '.gitmodules'
       - '.github/workflows/encore-core-fast-gate.yml'
+      - 'tools/stage-ps5-graphics-enums.py'
   workflow_dispatch:
 
 # Least privilege for the host-only gate (CodeQL workflow permissions #57).

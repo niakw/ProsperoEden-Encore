@@ -101,8 +101,8 @@ cleanup() {
         mv -f "$nir_print_backup" "$nir_print_source"
     fi
     for script in "${psbc_scripts[@]}"; do
-        if [[ -f "${script}.encore-backup.$" ]]; then
-            mv -f "${script}.encore-backup.$" "$script"
+        if [[ -f "${script}.encore-backup.$$" ]]; then
+            mv -f "${script}.encore-backup.$$" "$script"
         fi
     done
     # Preserve original checked-out OpenGL build inputs after all exit paths.
@@ -159,7 +159,7 @@ export ENCORE_PSBC_NIR_PATCHER="$root/tools/ci/patch-psbc-nir-location-print.py"
 for script in "$source_dir/toolchain/build-opengnm-psbc.sh" \
               "$source_dir/toolchain/build-opengnm-psbc-ps5.sh"; do
     [[ -f $script && ! -L $script ]] || { echo "Missing pinned PSBC build script" >&2; exit 1; }
-    cp -p "$script" "${script}.encore-backup.$"
+    cp -p "$script" "${script}.encore-backup.$$"
     psbc_scripts+=("$script")
     python3 -B "$root/tools/ci/patch-psbc-nir-build-hooks.py" "$script"
 done
@@ -267,7 +267,7 @@ if [[ -n ${nir_print_backup:-} && -f $nir_print_backup ]]; then
     nir_print_backup=""
 fi
 for script in "${psbc_scripts[@]}"; do
-    mv -f "${script}.encore-backup.$" "$script"
+    mv -f "${script}.encore-backup.$$" "$script"
 done
 psbc_scripts=()
 python3 "$source_dir/tools/fetch-sources.py" --verify-psbc

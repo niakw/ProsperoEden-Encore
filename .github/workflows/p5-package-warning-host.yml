@@ -12,6 +12,8 @@ on:
       - 'tools/check-psbc-noreturn-host.py'
       - 'tools/check-psbc-nir-location-host.py'
       - 'tools/ci/patch-psbc-nir-location-print.py'
+      - 'tools/ci/patch-psbc-nir-build-hooks.py'
+      - 'vendor'
       - 'tools/ci/patch-psbc-noreturn-flags.py'
       - 'tools/build-opengl-sdk.sh'
       - 'headless/inject.cmake'
@@ -31,6 +33,8 @@ on:
       - 'tools/check-psbc-noreturn-host.py'
       - 'tools/check-psbc-nir-location-host.py'
       - 'tools/ci/patch-psbc-nir-location-print.py'
+      - 'tools/ci/patch-psbc-nir-build-hooks.py'
+      - 'vendor'
       - 'headless/inject.cmake'
       - 'tools/check-crash-provenance-host.py'
       - 'headless/prosperoeden/ui/art/switch-rear-footer.png.b64'
@@ -47,6 +51,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (Node.js 24)
         with:
           persist-credentials: false
+          submodules: true
       - name: Run focused host tests only (no native application compilation)
         shell: bash
         run: |

@@ -117,7 +117,8 @@ struct ResponseBuilder {
 };
 }
 namespace Service::AM {
-// Production owns the PS5 timing trace; this extracted host fixture exercises IPC/ledger semantics only.
+// The real selected owner has a PS5-only timing trace. These fixtures test IPC/ledger
+// behavior, so provide its no-op host shape while separately asserting the production trace above.
 struct BlockingBoundaryTrace { BlockingBoundaryTrace(const char*, u32, u64, u64) {} };
 namespace GW=GpuWorkerProtocol;
 inline void TraceNs2WorkerResult(unsigned,u32){}

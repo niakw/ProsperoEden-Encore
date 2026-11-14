@@ -1950,17 +1950,32 @@ int main(int argc, char** argv) {
             // know it (an older one given pt-BR) falls back to Japanese. So the game gets its own
             // closest language, the one the launcher shows for it (eden_game_language).
             const int choice = Eden::LoadPreferences().language;
-            int language = Eden::kLanguageSettings[choice];
+            const int requested_language = Eden::kLanguageSettings[choice];
+            int language = requested_language;
 #ifdef PS5_NATIVE
             if (game && guest)
                 language = eden_game_language(guest, Eden::AssetsPath("keys").c_str(), eden_game_title_id(guest), language);
 #endif
             Settings::values.language_index.SetValue(static_cast<Settings::Language>(language));
             Settings::values.region_index.SetValue(static_cast<Settings::Region>(Eden::kLanguageRegions[choice]));
-            const std::string code(reinterpret_cast<const char*>(
-                &Service::Set::available_language_codes[static_cast<std::size_t>(language)]), 8);
-            Eden::Report("launch", ("Language: " + std::string(code.c_str()) + " (chosen " +
+            // PS5 catalog tags and Nintendo's 8-byte LanguageCode are not
+            // interchangeable (fr-FR maps to fr, for example). The final
+            // AM service reply is selected separately using guest metadata.
+            const auto code_for = [](int index) {
+                const auto value = Service::Set::available_language_codes[static_cast<std::size_t>(index)];
+                const std::string bytes(reinterpret_cast<const char*>(&value), sizeof(value));
+                return std::string(bytes.c_str());
+            };
+            const auto requested_code = code_for(requested_language);
+            const auto configured_code = code_for(language);
+            Eden::Report("launch", ("Language: " + configured_code + " (chosen " +
                                     Eden::kLanguageKeys[choice] + ")").c_str());
+            std::fprintf(stderr,
+                "EDEN_GUEST_LANGUAGE title=%016llX launcher_locale=%s saved_key=%s requested_code=%s configured_code=%s configured_index=%d region_index=%d metadata_fallback=%d service_reply_observed=0\n",
+                static_cast<unsigned long long>(launch_title_id),
+                Eden::kLanguageCatalogTags[choice], Eden::kLanguageKeys[choice],
+                requested_code.c_str(), configured_code.c_str(), language,
+                Eden::kLanguageRegions[choice], language != requested_language);
         }
         std::unique_ptr<Eden::Pad> pad;
         bool return_to_menu = false;

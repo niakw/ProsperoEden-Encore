@@ -117,6 +117,38 @@ if(PS5_NATIVE)
         message(STATUS "PS5 Vulkan: pinned baseline UsageTracker header selected")
     endif()
 endif()
+# NS1 NVDEC/FFmpeg EAGAIN: when the reviewed vendor supplies BOTH
+# maintained owners, replace the pinned ffmpeg.cpp translation unit and
+# select its matching public API header for all video_core dependents.
+# Never edit vendor/sources/eden, nor allow half-selected old/new ABI.
+if(PS5_NATIVE)
+    set(EDEN_NVDEC_OWNER_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_NVDEC_MAINTAINED_SOURCE
+        "${EDEN_NVDEC_OWNER_ROOT}/src/video_core/host1x/ffmpeg.cpp")
+    set(EDEN_NVDEC_MAINTAINED_HEADER
+        "${EDEN_NVDEC_OWNER_ROOT}/overrides/video_core/host1x/ffmpeg.h")
+    if(EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" AND
+       EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")
+        get_target_property(eden_nvdec_video_sources video_core SOURCES)
+        list(FIND eden_nvdec_video_sources "host1x/ffmpeg.cpp" eden_nvdec_old_source)
+        if(eden_nvdec_old_source EQUAL -1)
+            message(FATAL_ERROR "Original NVDEC translation unit moved; requalify ABI")
+        endif()
+        list(REMOVE_ITEM eden_nvdec_video_sources "host1x/ffmpeg.cpp")
+        list(APPEND eden_nvdec_video_sources "${EDEN_NVDEC_MAINTAINED_SOURCE}")
+        set_property(TARGET video_core PROPERTY SOURCES "${eden_nvdec_video_sources}")
+        target_include_directories(video_core BEFORE PUBLIC
+            "${EDEN_NVDEC_OWNER_ROOT}/overrides")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+            "${EDEN_NVDEC_MAINTAINED_SOURCE}" "${EDEN_NVDEC_MAINTAINED_HEADER}")
+        message(STATUS "NVDEC: maintained FFmpeg packet-EAGAIN owners selected")
+    elseif(EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" OR
+           EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")
+        message(FATAL_ERROR "NVDEC maintained FFmpeg source/header pair incomplete")
+    else()
+        message(STATUS "NVDEC: historical pinned FFmpeg owners selected")
+    endif()
+endif()
 # The texture-cache small-vector Boost version dependency is a complete
 # tracked header under vendor/encore-active, not a configure-time replacement.
 # Its only modification to the original is #include <boost/version.hpp>.

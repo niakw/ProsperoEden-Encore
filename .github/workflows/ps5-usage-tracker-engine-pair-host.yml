@@ -36,7 +36,7 @@ jobs:
           git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov14-ps5-buffer-usage-tracker-granularity
           git -C vendor checkout --detach FETCH_HEAD
           test "$(git -C vendor rev-parse HEAD)" = "ce1386b16dbcc041c3a1d169a09d11615e14be51"
-      - name: Verify PS5 selected CMake include and real header under sanitizers
+      - name: Verify selected native CMake include and maintained header under sanitizers
         run: |
           set -euo pipefail
           python3 -B tools/check-ps5-usage-tracker-selection-host.py

@@ -1631,6 +1631,27 @@ if(PS5_NATIVE)
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_R23_PHI_INCLUDE}")
 endif()
 
+# FC27 P1 / Lichii #1320 / Eglantine #825: pair the pruned BFS header with
+# its reviewed GlobalMemoryToStorageBuffer TU. The header above is already
+# staged from the current vendor; replace the pinned TU exactly once here.
+if(PS5_NATIVE)
+    set(EDEN_FC27_SSBO_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp")
+    if(NOT EXISTS "${EDEN_FC27_SSBO_SOURCE}")
+        message(FATAL_ERROR "FC27 SSBO pruning source missing")
+    endif()
+    get_target_property(eden_fc27_ssbo_sources shader_recompiler SOURCES)
+    list(FIND eden_fc27_ssbo_sources
+        "ir_opt/global_memory_to_storage_buffer_pass.cpp" eden_fc27_ssbo_index)
+    if(eden_fc27_ssbo_index LESS 0)
+        message(FATAL_ERROR "Pinned GlobalMemoryToStorageBuffer owner changed")
+    endif()
+    list(REMOVE_ITEM eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp")
+    list(APPEND eden_fc27_ssbo_sources "${EDEN_FC27_SSBO_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_fc27_ssbo_sources}")
+    message(STATUS "FC27 SSBO: selected reviewed failed-search pruning pair")
+endif()
+
 # R23 #131 and #109 are ALREADY shipped by versioned Eden backports.
 # Never override those real prepared sources with old headless copies:
 # the latter also concealed the FW23 dynamic library-applet version cap.

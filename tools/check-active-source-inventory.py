@@ -973,6 +973,24 @@ if post_f07_fc27_ssa_present:
 print("ENCORE_POST_F07_FC27_SSA_STAGED_PASS",
       f"owners={len(post_f07_fc27_ssa_present)}", "engine_selected=0")
 
+# Vendor #138 adds one new physical shader TU and advances the already-owned
+# breadth-first-search header. The engine branch selects both as a pair.
+post_f07_fc27_ssbo_receipts = {
+    "eden-shader/src/shader_recompiler/ir_opt/global_memory_to_storage_buffer_pass.cpp":
+        "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
+}
+post_f07_fc27_ssbo_present = set(post_f07_fc27_ssbo_receipts) & set(physical_all)
+assert post_f07_fc27_ssbo_present == set(post_f07_fc27_ssbo_receipts)
+for relative, expected_blob in post_f07_fc27_ssbo_receipts.items():
+    raw = (active / relative).read_bytes()
+    actual_blob = hashlib.sha1(
+        b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual_blob == expected_blob, ("FC27 SSBO owner drift", relative, actual_blob)
+assert "EDEN_FC27_SSBO_SOURCE" in nov13_cmake
+assert 'list(REMOVE_ITEM eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp")' in nov13_cmake
+print("ENCORE_POST_F07_FC27_SSBO_SELECTED_PASS",
+      f"owners={len(post_f07_fc27_ssbo_present)}", "engine_selected=1")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -988,7 +1006,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | post_f07_fc27_ssa_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | post_f07_fc27_ssa_present | post_f07_fc27_ssbo_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

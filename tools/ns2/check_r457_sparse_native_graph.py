@@ -29,7 +29,7 @@ REVIEWED_VENDORS={
     "0264f2ae94ef5889e8585171b5bfcb11fd3659ff",
     "bc78a7610425e95d6645685cbd023a67b729ec24",
     "7b7c4d2a37f9b0b248d3f3d6d9cce40596ed0c99",
-    "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
+    "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",
 }
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
@@ -123,7 +123,7 @@ def main():
         relative = Path("shader_recompiler/frontend/ir/breadth_first_search.h")
         bfs_header = native/"headless/r23-shader-phi/include"/relative
         vendor_header = ROOT/"vendor/encore-active/eden-shader/include"/relative
-        if gitblob(bfs_header) != "194476705f21bd1c27f532fdd5cc04d99a3cd620" or gitblob(vendor_header) != "194476705f21bd1c27f532fdd5cc04d99a3cd620":
+        if gitblob(bfs_header) != "fa5e7572ef99bba3db17154c63f60dddba7a87c6" or gitblob(vendor_header) != "fa5e7572ef99bba3db17154c63f60dddba7a87c6":
             raise RuntimeError("Wrong native adaptive BFS staged header")
         texture = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp"
         if gitblob(texture) != "85c523e435ee8803ef3d2087567aa1a4b5d09369":

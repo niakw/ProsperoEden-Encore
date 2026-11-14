@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 VENDOR=ROOT/"vendor"
-PIN="a946785d1ad02752ae47f9b32032e99bdbb53e02"
+PIN="0c102e9bc82f065029c893cab3fcf090e2766787"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(VENDOR),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==PIN,(selected,checked)

@@ -1,0 +1,39 @@
+name: NS1 NVDEC paired immutable-source and maintained owner receipt (host)
+on:
+  pull_request:
+    paths:
+      - "headless/CMakeLists.txt"
+      - "tools/check-nvdec-eagain-owner-selection-host.py"
+      - ".github/workflows/ns1-nvdec-eagain-owner-pair-host.yml"
+      - "vendor"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  nvdec-owner-pair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact engine and vendor graph
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify original Eden source and native CMake selection
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "$(git ls-tree HEAD -- vendor | awk '{print $3}')"
+          python3 -B tools/check-nvdec-eagain-owner-selection-host.py
+      - name: Check strictly reviewed isolated maintained vendor candidate
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov13-ns1-nvdec-eagain-lossless
+          git -C vendor checkout --detach FETCH_HEAD
+          test "$(git -C vendor rev-parse HEAD)" = "4c7cf0f561c5f73d2bccd88cf4dd9706d3ec5195"
+          python3 -B tools/check-nvdec-eagain-owner-selection-host.py
+          python3 -B vendor/tests/ns1-nvdec-eagain-source.py
+          python3 -B vendor/tests/ns1_nvdec_eagain_lossless_host.py
+      - name: Host-only boundary
+        if: always()
+        run: |
+          echo "Native PS5 compiler, real FFmpeg codec input/output and FC27 intro video are not validated by these host checks." >> "$GITHUB_STEP_SUMMARY"

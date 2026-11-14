@@ -18,6 +18,7 @@ KNOWN_VENDOR_GRAPH = {
     "47568425c71d534b72cc966d1500412c9ae4fc16": "integrated+jxr-cache-page-table",
     "447e08718c9b6625508da6ce63796ed1f4285d2f": "integrated+jxr-cache-page-table-vfs",
     "97fdc316fcf5b42e08c26845887f298feac2a424": "integrated+jxr-cache-page-table-vfs-nca",
+    "99ca67babe955398e157c6b28b22a79cbb88967e": "integrated+jxr-cache-page-table-vfs-nca-scalar",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

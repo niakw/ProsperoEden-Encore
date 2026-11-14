@@ -1,0 +1,28 @@
+name: Shared PS5 scalar cache selected shader ABI (host)
+on:
+  pull_request:
+    paths:
+      - "vendor"
+      - "headless/CMakeLists.txt"
+      - "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      - ".github/workflows/spirv-scalar-engine-host.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shader-abi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check exact selected shared header and vendor test
+        run: |
+          test "$(git -C vendor rev-parse HEAD)" = "$(git rev-parse HEAD:vendor)"
+          test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h)" = "844a118358c874b0666aebda116c1d6a0c9a8ceb"
+          python3 -B vendor/tests/ps5_spirv_scalar_constant_cache_host.py
+          python3 -B vendor/tests/ps5_spirv_scalar_real_sirit_host.py
+      - name: Verify shared shader source graph and real C++ syntax
+        run: python3 -B tools/ns2/check_shared_ns2_spirv_compiler_host.py

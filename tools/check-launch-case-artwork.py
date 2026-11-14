@@ -422,13 +422,14 @@ assert 'const std::string old_receipt = legacy + ".source";' in native
 case_fetch = native.split("unsigned EnsureRetailCase(", 1)[1].split(
     "NlibEnrichment CachedNlibEnrichment(", 1
 )[0]
-assert "std::unique_lock guard(locks[title_id % locks.size()], std::defer_lock);" in case_fetch
-assert "while (!guard.try_lock()) {" in case_fetch
-assert "std::this_thread::sleep_for(std::chrono::milliseconds(50));" in case_fetch
+assert "std::unique_lock guard(locks[ArtworkLockBucket(title_id, locks.size())], std::defer_lock);" in case_fetch
+assert "if (!LockArtworkUnlessCancelled(guard, cancel)) return 0;" in case_fetch
+assert "std::this_thread::sleep_for(std::chrono::milliseconds(50));" in native
 assert "if (all_ready || (cancel && cancel->load(std::memory_order_acquire))) {" in case_fetch
 assert "retries.erase(title_id);" in case_fetch
 assert "all_ready = false;\n            break;" in case_fetch
-assert "if (cancel && cancel->load(std::memory_order_acquire)) return 0;" in case_fetch
+assert "if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;" in case_fetch
+assert "std::chrono::steady_clock::now() < it->second)\n            return migrated_faces;" in case_fetch
 assert "if (cancel && cancel->load(std::memory_order_acquire)) {" in case_fetch
 assert "return changed_faces;" in case_fetch
 # The first successful front/back download permits the optional spine in the
@@ -884,3 +885,74 @@ int main(int argc,char** argv) {
                         "-Werror", str(cpp), "-o", str(exe)], check=True)
         subprocess.run([str(exe), str(tmp)], check=True)
 print("R457_REAL_RETAIL_CANDIDATE_LOOP_PASS decode_retry=1 write_stop=1 budget=7 cancel=1 provenance=1")
+
+# Both actual mutex owners must use the same folded identity; the Home
+# nonblocking path uses NlibTitleMutex as well as the full Library worker.
+assert "title_locks[ArtworkLockBucket(title_id, title_locks.size())]" in native
+assert "if (!LockArtworkUnlessCancelled(title_lock, cancel)) return {};" in native
+assert "std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};" in native
+helper = "constexpr std::size_t ArtworkLockBucket(" + native.split(
+    "constexpr std::size_t ArtworkLockBucket(", 1)[1].split("unsigned EnsureRetailCase(", 1)[0]
+catalog_header = root / "headless/ns2_title_catalog.h"
+with tempfile.TemporaryDirectory(prefix="encore-art-locks-") as dirname:
+    tmp = Path(dirname)
+    cpp, exe = tmp / "locks.cpp", tmp / "locks"
+    cpp.write_text(r"""
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <future>
+#include <mutex>
+#include <set>
+#include <thread>
+#include "ns2_title_catalog.h"
+using namespace std::chrono_literals;
+""" + helper + r"""
+int main() {
+    std::set<std::size_t> before16, before64, after16, after64;
+    for (const auto& entry : Eden::Ns2Catalog::kTitles) {
+        before16.insert(entry.id % 16);
+        before64.insert(entry.id % 64);
+        after16.insert(ArtworkLockBucket(entry.id,16));
+        after64.insert(ArtworkLockBucket(entry.id,64));
+    }
+    assert(before16.size()==1 && before64.size()==1);
+    assert(after16.size()==10 && after64.size()==16);
+    constexpr std::uint64_t a=0x040074A01BF12000ULL, b=0x0400C3F00006E000ULL;
+    static_assert(ArtworkLockBucket(a,16)!=ArtworkLockBucket(b,16));
+    static_assert(ArtworkLockBucket(a,64)!=ArtworkLockBucket(b,64));
+    std::mutex mutex;
+    std::atomic<bool> cancel{false};
+    std::unique_lock holder(mutex);
+    std::promise<void> entered;
+    auto started=entered.get_future();
+    auto worker=std::async(std::launch::async,[&]{
+        std::unique_lock waiting(mutex,std::defer_lock);
+        entered.set_value();
+        const bool ok=LockArtworkUnlessCancelled(waiting,&cancel);
+        assert(waiting.owns_lock()==ok);
+        return ok;
+    });
+    started.get();
+    cancel=true;
+    // Cancellation must finish while the other thread STILL owns the lock.
+    assert(worker.wait_for(2s)==std::future_status::ready);
+    assert(!worker.get());
+    holder.unlock();
+    std::unique_lock available(mutex,std::defer_lock);
+    assert(!LockArtworkUnlessCancelled(available,&cancel));
+    assert(!available.owns_lock());
+    cancel=false;
+    assert(LockArtworkUnlessCancelled(available,&cancel) && available.owns_lock());
+    available.unlock();
+    assert(LockArtworkUnlessCancelled(available,nullptr));
+}
+""", encoding="utf-8")
+    for opt in ("-O0", "-O2"):
+        subprocess.run([compiler, "-std=c++20", opt, "-Wall", "-Wextra",
+                        "-Werror", "-pthread", "-I", str(catalog_header.parent),
+                        str(cpp), "-o", str(exe)], check=True, timeout=60)
+        subprocess.run([str(exe)], check=True, timeout=10)
+print("R457_ARTWORK_LOCK_BUCKET_HOST_PASS catalog=18 old=1/1 new=10/16 cancel_held_lock=1")

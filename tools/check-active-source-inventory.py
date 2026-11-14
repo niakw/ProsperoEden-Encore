@@ -923,6 +923,16 @@ else:
     assert all('"' + relative.removeprefix("eden-core/src/core/") + '"' in nov13_cmake
                for relative in post_f07_nca_receipts)
 print("ENCORE_POST_F07_NCA_OWNER_PASS", f"owners={len(post_f07_nca_present)}")
+post_f07_romfs_receipt = "eden-core/src/core/file_sys/romfs.cpp"
+post_f07_romfs_present = {post_f07_romfs_receipt} & set(physical_all)
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_romfs_present
+else:
+    assert post_f07_romfs_present == {post_f07_romfs_receipt}
+    raw_romfs = (active / post_f07_romfs_receipt).read_bytes()
+    assert hashlib.sha1(b"blob " + str(len(raw_romfs)).encode() + bytes([0]) + raw_romfs).hexdigest() == "51eb401e5f2e3a0deefc5fc0e4cc30b0f4b8e4a3"
+    assert '"file_sys/romfs.cpp"' in nov13_cmake
+print("ENCORE_POST_F07_ROMFS_OWNER_PASS", f"owners={len(post_f07_romfs_present)}")
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -938,7 +948,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

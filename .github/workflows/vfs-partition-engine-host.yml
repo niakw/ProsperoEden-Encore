@@ -23,4 +23,5 @@ jobs:
           python3 -B tools/check-vfs-partition-engine-host.py
           python3 -B vendor/tests/ps5_vfs_partition_bounds_host.py
           python3 -B vendor/tests/ps5_nca_storage_contract_host.py
+          python3 -B vendor/tests/ps5_romfs_tree_contract_host.py
           python3 -B tools/check-encore-ncz-sources.py

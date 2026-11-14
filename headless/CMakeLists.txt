@@ -714,13 +714,14 @@ if(EDEN_A32_FASTMEM)
     list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
     list(APPEND core_sources "${EDEN_MAINTAINED_CODE_LOADER}")
 endif()
-# Lichii #947: preserve pinned archive, select one maintained VFS/PFS/NCA TU each.
+# Lichii #947: preserve pinned archive, select one maintained VFS/PFS/NCA/RomFS TU each.
 foreach(eden_vfs_relative IN ITEMS
         "file_sys/vfs/vfs.cpp"
         "file_sys/vfs/vfs_vector.cpp"
         "file_sys/partition_filesystem.cpp"
         "file_sys/fssystem/fssystem_integrity_verification_storage.cpp"
-        "file_sys/fssystem/fssystem_nca_file_system_driver.cpp")
+        "file_sys/fssystem/fssystem_nca_file_system_driver.cpp"
+        "file_sys/romfs.cpp")
     set(eden_vfs_maintained
         "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_vfs_relative}")
     if(NOT EXISTS "${eden_vfs_maintained}")

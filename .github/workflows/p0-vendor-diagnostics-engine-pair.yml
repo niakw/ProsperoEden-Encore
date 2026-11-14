@@ -1,0 +1,41 @@
+name: P0 consolidated vendor diagnostics engine pair
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - '.github/workflows/p0-vendor-diagnostics-engine-pair.yml'
+      - '.github/workflows/ns1-am-mainline-host.yml'
+      - '.github/workflows/ns1-c03-radv-14-source-host.yml'
+      - '.github/workflows/ns1-nvdec-eagain-owner-pair-host.yml'
+      - '.github/workflows/ps5-usage-tracker-engine-pair-host.yml'
+      - '.github/workflows/r457-ns2-sparse-guest-native-host.yml'
+      - 'tools/check-fc-opus-host-buffer-source.py'
+      - 'tools/check-r457-ns1-audio-source.py'
+      - 'tools/ns2/check_r457_sparse_kernel_source.py'
+      - 'tools/ns2/check_r457_sparse_native_graph.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selected-vendor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify exact selected graph and focused host contracts
+        run: |
+          set -euo pipefail
+          expected=b9f6052a65ef01e23ca4a46ba1654ed3a58cf181
+          selected="$(git rev-parse HEAD:vendor)"
+          checked="$(git -C vendor rev-parse HEAD)"
+          test "$selected" = "$expected"
+          test "$checked" = "$expected"
+          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = efd77028f0710ea9e50cbbe77b04eebf3f306610
+          python3 -B vendor/tests/native_msaa_attribute_handle_rebind_host.py
+          python3 -B vendor/tests/r457_native_emit_invalid_warning_host.py
+          python3 -B vendor/tests/p0_guest_fault_context_source.py
+          python3 -B vendor/tests/p0_mkw_blocking_boundaries_source.py
+          echo ENCORE_VENDOR_P0_CONSOLIDATED_ENGINE_PAIR_PASS

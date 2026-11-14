@@ -949,6 +949,30 @@ else:
     assert hashlib.sha1(b"blob " + str(len(raw_romfs)).encode() + bytes([0]) + raw_romfs).hexdigest() == "51eb401e5f2e3a0deefc5fc0e4cc30b0f4b8e4a3"
     assert '"file_sys/romfs.cpp"' in nov13_cmake
 print("ENCORE_POST_F07_ROMFS_OWNER_PASS", f"owners={len(post_f07_romfs_present)}")
+
+# FC27 P1 block-local SSA storage is a separately reviewed post-F07 pair.
+# Vendor b9f6052 stages it, while engine #179 intentionally does NOT select
+# these files in CMake yet. Keep the frozen 337-owner ledger intact and pin
+# both staged files so an unrelated vendor addition cannot hide in the count.
+post_f07_fc27_ssa_receipts = {
+    "eden-shader/include/shader_recompiler/frontend/ir/basic_block.h":
+        "0a23d1ce0f43524e6195bd8219349ef632cfb719",
+    "eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp":
+        "26c42a9900256e5573735394753c1d5264611664",
+}
+post_f07_fc27_ssa_present = set(post_f07_fc27_ssa_receipts) & set(physical_all)
+if post_f07_fc27_ssa_present:
+    assert post_f07_fc27_ssa_present == set(post_f07_fc27_ssa_receipts), (
+        "Incomplete FC27 SSA staged owner pair", sorted(post_f07_fc27_ssa_present))
+    for relative, expected_blob in post_f07_fc27_ssa_receipts.items():
+        raw = (active / relative).read_bytes()
+        actual_blob = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual_blob == expected_blob, (
+            "FC27 SSA staged source changed; review required", relative, actual_blob)
+print("ENCORE_POST_F07_FC27_SSA_STAGED_PASS",
+      f"owners={len(post_f07_fc27_ssa_present)}", "engine_selected=0")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -964,7 +988,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | post_f07_fc27_ssa_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

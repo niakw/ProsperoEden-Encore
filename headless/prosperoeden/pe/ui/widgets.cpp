@@ -553,6 +553,38 @@ void cover_crop(Canvas &c, const std::string &path, const Rect &r, float radius,
     c.list.bordered_rect(r, radius, kWhite.with_alpha(0.0f), 1.0f, kWhite.with_alpha(0.12f));
 }
 
+void cover_icon(Canvas &c, const std::string &path, const Rect &r, float radius, float shadow)
+{
+    const Cover image = c.textures.cover(path, std::max(r.w, r.h), true);
+    if (!image.texture) {
+        cover_crop(c, path, r, radius, shadow);
+        return;
+    }
+    const float aspect = std::max(0.01f, image.aspect);
+    const float target = std::max(0.01f, r.w / std::max(1.0f, r.h));
+    if (std::abs(aspect - target) < 0.01f) {
+        cover_crop(c, path, r, radius, shadow);
+        return;
+    }
+    if (shadow > 0.0f)
+        c.list.shadow({r.x + 3.0f, r.y + 10.0f * shadow, r.w - 6.0f, r.h - 4.0f}, radius,
+                      24.0f * shadow, kBlack.with_alpha(0.5f));
+    c.list.gradient_rect(r, radius, Color::rgb(0x191a28), Color::rgb(0x10111b));
+    Rect fitted = r;
+    if (aspect > target) {
+        fitted.h = r.w / aspect;
+        fitted.y += (r.h - fitted.h) * 0.5f;
+    } else {
+        fitted.w = r.h * aspect;
+        fitted.x += (r.w - fitted.w) * 0.5f;
+    }
+    const float fade = tween::cubic_out(image.age / 0.22f);
+    c.list.rounded_image(image.texture, fitted, Rect{0.0f, 0.0f, 1.0f, 1.0f},
+                         std::min(radius, std::min(fitted.w, fitted.h) * 0.5f),
+                         kWhite.with_alpha(fade));
+    c.list.bordered_rect(r, radius, kWhite.with_alpha(0.0f), 1.0f, kWhite.with_alpha(0.12f));
+}
+
 // Draw the same native settings cog at every size: eight visible teeth,
 // a distinct annular body and an empty central spindle. Avoid a generic ring.
 void settings_gear(Canvas &c, float cx, float cy, float radius, Color ink)

@@ -116,6 +116,7 @@ struct Recent
     std::uint64_t title_id = 0;
     std::string addons;
     std::string language;
+    std::string tile_icon{}; // canonical cached icon, separate from cover/banner art
 };
 
 // The home screen's content.
@@ -320,6 +321,8 @@ class Services
         if (cancel && cancel->load(std::memory_order_acquire)) return game;
         return enrich_game_media(std::move(game));
     }
+    // Lightweight visible Home icon only; no retail case, banner or screenshots.
+    virtual std::string enrich_home_icon(std::uint64_t, const std::atomic<bool>*) { return {}; }
     // Resolve locally cached, user-supplied retail-case artwork by title ID.
     // Never requests an API or blocks gameplay startup on a network call.
     virtual BoxArt box_art(std::uint64_t) { return {}; }

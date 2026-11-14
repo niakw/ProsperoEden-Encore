@@ -137,6 +137,8 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount);
 void cover(Canvas &c, const std::string &path, const Rect &r, float radius, float shadow = 0.0f);
 // CSS-like object-fit: cover. Keeps the source aspect ratio and centre-crops overflow.
 void cover_crop(Canvas &c, const std::string &path, const Rect &r, float radius, float shadow = 0.0f);
+// Square Home tile: preserve all of a non-square fallback instead of clipping logos.
+void cover_icon(Canvas &c, const std::string &path, const Rect &r, float radius, float shadow = 0.0f);
 
 // Vector symbols shared across header, Home utility cards and local-player badges.
 // These are recognizable without platform-specific icon textures.

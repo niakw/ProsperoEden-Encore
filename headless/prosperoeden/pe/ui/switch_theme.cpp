@@ -61,7 +61,7 @@ void switch_game_tile(Canvas& c,const std::string& path,const std::string& title
     // show a deliberate original vector illustration until genuine art arrives.
     const Cover image=path.empty()?Cover{}:c.textures.cover(path,std::max(r.w,r.h));
     if(image.texture!=0) {
-        cover_crop(c,path,r,0.0f,0.0f);
+        cover_icon(c,path,r,0.0f,0.0f);
         return;
     }
     static const std::array<gfx::Color,6> tops{
@@ -312,7 +312,7 @@ void Launcher::draw_switch_home(Canvas& c) {
         const auto& item=home_.recents[static_cast<std::size_t>(i)];
         const Rect box{kSwitchHomeTileX+float(i)*kSwitchHomeTilePitch-offset,
                        kSwitchHomeTileY,kSwitchHomeTileSize,kSwitchHomeTileSize};
-        switch_game_tile(c,item.cover,item.title,box,i);
+        switch_game_tile(c,item.tile_icon.empty()?item.cover:item.tile_icon,item.title,box,i);
         outline(list,box,focus==i,0.0f);
     }
     const Rect all{kSwitchHomeTileX+float(count)*kSwitchHomeTilePitch-offset,

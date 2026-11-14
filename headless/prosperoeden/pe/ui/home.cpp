@@ -948,16 +948,15 @@ void Launcher::draw_home(Canvas &c)
                             29.0f, 39.0f, theme::kLime.with_alpha(0.27f * f));
             }
             plate_rest(c, kTilePlate, r);
-            // Reference uses recognisable game-key art, not a random gameplay
-            // screenshot or a cropped panoramic banner on the small tile.
-            const std::string& art = !recent.cover.empty() ? recent.cover :
-                                     (!recent.hero.empty() ? recent.hero : recent.screenshot);
+            // Use a canonical UI icon rather than a panoramic hero/screenshot.
+            // If only a ROM/retail cover exists, keep its whole composition.
+            const std::string& art = !recent.tile_icon.empty() ? recent.tile_icon : recent.cover;
             // These seven visible icons get priority over off-screen case
             // media queued before a game's teardown. Preserve the
             // aspect-correct square crop and existing cached GL texture.
             const Cover picture = c.textures.cover(
                 art, std::max(card_w - 8.0f, card_h - 8.0f), true);
-            cover_crop(c, art, {r.x + 4.0f, r.y + 4.0f, r.w - 8.0f, r.h - 8.0f}, 20.0f, 0.32f);
+            cover_icon(c, art, {r.x + 4.0f, r.y + 4.0f, r.w - 8.0f, r.h - 8.0f}, 20.0f, 0.32f);
             if (picture.texture == 0) {
                 const bool fetching = recent.title_id != 0 &&
                     (home_media_scan_title_id_ == recent.title_id ||

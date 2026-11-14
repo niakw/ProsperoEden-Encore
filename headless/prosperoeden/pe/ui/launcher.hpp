@@ -189,6 +189,8 @@ class Launcher
     void finish_scan(bool wait);
     void start_home_media();
     void finish_home_media();
+    void start_home_icons();
+    void finish_home_icons();
     void start_selected_media();
     void finish_selected_media();
     void apply_games(std::vector<Game> games);
@@ -398,6 +400,9 @@ class Launcher
     std::vector<std::string> home_missing_refresh_; // refresh once per confirmed missing-Home set
     // Home enrichment is independent of the full library scan: the hero should get its
     // banner/player metadata as soon as the network/cache can provide it.
+    std::future<std::string> home_icon_scan_;
+    std::uint64_t home_icon_scan_title_id_ = 0;
+    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_icon_next_retry_;
     std::future<Game> home_media_scan_;
     std::uint64_t home_media_scan_title_id_ = 0;
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_media_next_retry_;

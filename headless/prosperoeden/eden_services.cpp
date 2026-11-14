@@ -1300,6 +1300,11 @@ NlibEnrichment CachedNlibEnrichment(std::uint64_t title_id, int language_choice)
     return result;
 }
 
+std::array<std::mutex, 16>& NlibTitleLocks() {
+    static std::array<std::mutex, 16> locks;
+    return locks;
+}
+
 // Nlib enriches the launcher only; no game ever depends on the network. The ROM icon stays the
 // offline fallback. Cards prefer Nlib's square icon, Home prefers its 16:9 banner, and Library
 // details use all available gameplay screenshots (up to the current API cap). Every
@@ -1314,7 +1319,7 @@ NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
     // Home and Library can request the same title at the same time. Cache writes use
     // the same .new staging path, so serialize per hash bucket while leaving other
     // titles free to enrich in parallel.
-    static std::array<std::mutex, 16> title_locks;
+    auto& title_locks = NlibTitleLocks();
     std::scoped_lock title_lock{title_locks[title_id % title_locks.size()]};
     if (cancelled()) return {};
 
@@ -2009,7 +2014,10 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
                 const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
-                if (!nlib.icon.empty()) recent.cover = nlib.icon;
+                if (!nlib.icon.empty()) {
+                    recent.cover = nlib.icon;
+                    recent.tile_icon = nlib.icon;
+                }
                 recent.hero = nlib.hero;
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
                 recent.max_players = nlib.max_players;
@@ -2329,6 +2337,26 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
     std::sort(games.begin(), games.end(),
               [](const pe::ui::Game& a, const pe::ui::Game& b) { return a.name < b.name; });
     return games;
+}
+
+std::string EdenServices::enrich_home_icon(std::uint64_t title_id,
+                                                const std::atomic<bool>* cancel) {
+    const auto cancelled = [cancel] {
+        return cancel && cancel->load(std::memory_order_acquire);
+    };
+    if (title_id == 0 || cancelled()) return {};
+    // Share the exact same title lock with the full media worker. No concurrent
+    // writes to the same atomic .new path and no case/screen/metadata requests.
+    auto& locks = NlibTitleLocks();
+    std::scoped_lock lock{locks[title_id % locks.size()]};
+    if (cancelled()) return {};
+    const auto path = NlibIconPath(title_id);
+    if (auto cached = CachedNlibIcon(title_id); !cached.empty()) return cached;
+    char id[17]{};
+    std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
+    if (!CacheNlibJpeg(std::string{"/nx/"} + id + "/icon/512", path, 1024, cancel))
+        return {};
+    return CachedNlibIcon(title_id);
 }
 
 pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game) {

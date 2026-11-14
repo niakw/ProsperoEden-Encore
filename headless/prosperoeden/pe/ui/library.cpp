@@ -660,6 +660,46 @@ void Launcher::finish_scan(bool wait)
     }
 }
 
+void Launcher::start_home_icons()
+{
+    if (screen_ != Screen::home || !home_.setup_ready ||
+        media_cancel_.load(std::memory_order_acquire) || home_icon_scan_.valid()) return;
+    const auto now = std::chrono::steady_clock::now();
+    // One bounded icon request at a time, for the visible rail only. Selection
+    // and the independent full-media worker never determine this queue.
+    for (const Recent& recent : home_.recents) {
+        if (!recent.title_id || !recent.tile_icon.empty()) continue;
+        const auto title_id = recent.title_id;
+        const auto due = home_icon_next_retry_.find(title_id);
+        if (due != home_icon_next_retry_.end() && now < due->second) continue;
+        home_icon_next_retry_[title_id] = now + std::chrono::minutes(5);
+        home_icon_scan_title_id_ = title_id;
+        home_icon_scan_ = std::async(std::launch::async, [this, title_id] {
+            return services_.enrich_home_icon(title_id, &media_cancel_);
+        });
+        return;
+    }
+}
+
+void Launcher::finish_home_icons()
+{
+    if (!home_icon_scan_.valid() ||
+        home_icon_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
+    try {
+        auto icon = home_icon_scan_.get();
+        if (!icon.empty() && !media_cancel_.load(std::memory_order_acquire))
+            for (Recent& recent : home_.recents)
+                if (recent.title_id == home_icon_scan_title_id_)
+                    recent.tile_icon = icon;
+    } catch (const std::exception& error) {
+        sys::log("Home icon: %s", error.what());
+    } catch (...) {
+        sys::log("Home icon: unknown error");
+    }
+    home_icon_scan_title_id_ = 0;
+    start_home_icons();
+}
+
 void Launcher::start_home_media()
 {
     // A completed Home request can publish cached data after navigation,
@@ -1149,6 +1189,7 @@ void Launcher::finish_home_scan()
         } else if (home_focus_ == 4 && !home_.last_exists) {
             home_focus_ = home_.setup_ready ? 1 : 2;
         }
+        start_home_icons();
         refresh_home_hero();
         if (!games_loaded_ && !scan_.valid())
             start_scan();

@@ -152,3 +152,47 @@ with tempfile.TemporaryDirectory(prefix="home-media-visible-") as tmp:
                         str(src),"-o",str(exe)],check=True,timeout=60)
         subprocess.run([str(exe)],check=True,timeout=10)
 print("HOME_MEDIA_VISIBLE_WORKER_PASS hidden=2 cancellation=1 cooldown=1 return=1 actual_owner=1")
+
+
+# R457: independent bounded Home icon rail; full-media worker above stays unchanged.
+icons=lib.split('void Launcher::start_home_icons()',1)[1].split('void Launcher::finish_home_icons()',1)[0]
+assert 'for (const Recent& recent : home_.recents)' in icons
+assert 'home_recent_' not in icons and 'enrich_game_media' not in icons
+assert 'std::chrono::minutes(5)' in icons
+assert 'services_.enrich_home_icon(title_id, &media_cancel_)' in icons
+finish_icons=lib.split('void Launcher::finish_home_icons()',1)[1].split('void Launcher::start_home_media()',1)[0]
+assert 'recent.title_id == home_icon_scan_title_id_' in finish_icons
+assert 'recent.tile_icon = icon;' in finish_icons
+owner=svc.split('std::string EdenServices::enrich_home_icon(',1)[1].split('pe::ui::Game EdenServices::enrich_game_media(',1)[0]
+assert 'NlibTitleLocks()' in owner and 'CachedNlibIcon(title_id)' in owner
+assert '/icon/512' in owner and 'EnsureRetailCase' not in owner and 'EnsureNlibEnrichment' not in owner
+assert 'home_icon_scan_.wait();' in launch
+assert 'recent.tile_icon.empty() ? recent.tile_icon' not in home
+assert 'const std::string& art = !recent.tile_icon.empty() ? recent.tile_icon : recent.cover;' in home
+assert 'cover_icon(c, art,' in home
+# Compile the exact new queue function using the existing deterministic mock.
+icon_cpp = cpp.split('void Launcher::start_home_media()',1)[0].replace('std::string file,title,cover,hero,screenshot,intro;', 'std::string file,title,cover,hero,screenshot,intro,tile_icon;').replace('std::uint64_t last_title_id=0;', 'bool setup_ready=true; std::uint64_t last_title_id=0;').replace('    std::atomic<unsigned> calls{0};','    std::atomic<unsigned> calls{0};\n    std::string enrich_home_icon(std::uint64_t id,const std::atomic<bool>* cancel) { assert(!cancel->load()); ++calls; return std::to_string(id); }').replace('    void start_home_media();','    std::future<std::string> home_icon_scan_;\n    std::uint64_t home_icon_scan_title_id_=0;\n    std::unordered_map<std::uint64_t,std::chrono::steady_clock::time_point> home_icon_next_retry_;\n    void start_home_icons();')
+# The original fragment ends just before the extracted method; reconstruct the mock class.
+assert 'void start_home_icons();' in icon_cpp
+icon_cpp += 'void Launcher::start_home_icons()' + icons + r'''
+int main() {
+    Launcher l;
+    for (unsigned id=1; id<=7; ++id) { Recent r; r.title_id=id; l.home_.recents.push_back(r); }
+    l.home_.recents[0].tile_icon="cached";
+    l.start_home_icons(); assert(!l.home_icon_scan_.valid());
+    l.screen_=Screen::home; l.media_cancel_=true; l.start_home_icons(); assert(!l.home_icon_scan_.valid());
+    l.media_cancel_=false;
+    for (unsigned id=2;id<=7;++id) {
+        l.start_home_icons(); assert(l.home_icon_scan_title_id_==id);
+        l.start_home_icons(); assert(l.home_icon_scan_.get()==std::to_string(id));
+    }
+    l.start_home_icons(); assert(!l.home_icon_scan_.valid()); assert(l.services_.calls==6);
+}
+'''
+with tempfile.TemporaryDirectory(prefix='home-icons-visible-') as tmp:
+    src=Path(tmp)/'test.cpp'; src.write_text(icon_cpp)
+    for opt in ('-O0','-O2'):
+        exe=Path(tmp)/'test'
+        subprocess.run([compiler,'-std=c++20',opt,'-Wall','-Wextra','-Werror','-pthread',str(src),'-o',str(exe)],check=True,timeout=60)
+        subprocess.run([str(exe)],check=True,timeout=10)
+print('HOME_ICON_RAIL_PASS independent=1 visible=7 cached_skip=1 cancellation=1 cooldown=1')

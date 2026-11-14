@@ -7,11 +7,15 @@
 
 #include "pe/platform/display_egl.hpp"
 
+#include "loading_scene_glsl.h"
 #include "pe/core/log.hpp"
 
 #include <EGL/eglext.h>
 #include <GL/glcorearb.h>
+#include <chrono>
 #include <mutex>
+#include <string>
+#include <thread>
 #include <utility>
 #include <ps5_opengl_display.h>
 #if __has_include(<ps5_opengl_display_modes.h>)
@@ -57,12 +61,146 @@ const char *gl_string(GLenum name)
 }
 
 // Exactly one fullscreen VideoOut owner is handed from the launcher to a
-// game at a time. Keeping EGL initialized leaves its last registered buffer
-// scanning out; the Vulkan renderer explicitly terminates it immediately
-// before creating its own surface.
+// game at a time. During System::Load the existing launcher context is owned
+// by this one presenter thread. Vulkan/OpenGL must stop and join it before
+// destroying the context/surface and taking VideoOut.
 std::mutex deferred_display_mutex;
 EGLDisplay deferred_display = EGL_NO_DISPLAY;
 EGLSurface deferred_surface = EGL_NO_SURFACE;
+EGLContext deferred_context = EGL_NO_CONTEXT;
+std::jthread deferred_loading_thread;
+
+GLuint compile_loading_shader(GLenum type, const char* source)
+{
+    const GLuint shader = glCreateShader(type);
+    if (!shader)
+        return 0;
+    glShaderSource(shader, 1, &source, nullptr);
+    glCompileShader(shader);
+    GLint ok = 0;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+    if (!ok)
+    {
+        char log[512]{};
+        glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
+        sys::log("egl deferred loading shader failed: %s", log);
+        glDeleteShader(shader);
+        return 0;
+    }
+    return shader;
+}
+
+GLuint create_loading_program()
+{
+    const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
+        "uniform vec2 size; uniform float seconds; out vec4 color;\n"
+        "void main(){ color=vec4(loading_scene(gl_FragCoord.xy,size,seconds),1.0); }\n";
+    const char* vertex =
+        "#version 330 core\n"
+        "void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
+        "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}";
+
+    const GLuint vs = compile_loading_shader(GL_VERTEX_SHADER, vertex);
+    if (!vs)
+        return 0;
+    const GLuint fs = compile_loading_shader(GL_FRAGMENT_SHADER, fragment.c_str());
+    if (!fs)
+    {
+        glDeleteShader(vs);
+        return 0;
+    }
+
+    const GLuint program = glCreateProgram();
+    if (program)
+    {
+        glAttachShader(program, vs);
+        glAttachShader(program, fs);
+        glLinkProgram(program);
+    }
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+    if (!program)
+        return 0;
+
+    GLint ok = 0;
+    glGetProgramiv(program, GL_LINK_STATUS, &ok);
+    if (!ok)
+    {
+        char log[512]{};
+        glGetProgramInfoLog(program, sizeof(log), nullptr, log);
+        sys::log("egl deferred loading program failed: %s", log);
+        glDeleteProgram(program);
+        return 0;
+    }
+    return program;
+}
+
+void deferred_loading_loop(std::stop_token stop, EGLDisplay display, EGLSurface surface,
+                           EGLContext context, int width, int height, bool reduce_motion)
+{
+    if (!eglMakeCurrent(display, surface, surface, context))
+    {
+        const EGLint error = eglGetError();
+        sys::log("egl deferred loading make-current failed: %s (0x%04x)",
+                 egl_error_name(error), static_cast<unsigned>(error));
+        return;
+    }
+
+    // Vsync bounds this worker to the display cadence; there is no busy loop
+    // while System::Load runs on the launch thread.
+    if (!eglSwapInterval(display, 1))
+    {
+        const EGLint error = eglGetError();
+        sys::log("egl deferred loading swap interval failed: %s (0x%04x)",
+                 egl_error_name(error), static_cast<unsigned>(error));
+    }
+
+    const GLuint program = create_loading_program();
+    GLuint vao = 0;
+    if (program)
+        glGenVertexArrays(1, &vao);
+    if (!program || !vao)
+    {
+        if (vao) glDeleteVertexArrays(1, &vao);
+        if (program) glDeleteProgram(program);
+        eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        return;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_BLEND);
+    glUseProgram(program);
+    glBindVertexArray(vao);
+    glViewport(0, 0, width, height);
+    const GLint size_uniform = glGetUniformLocation(program, "size");
+    const GLint seconds_uniform = glGetUniformLocation(program, "seconds");
+    glUniform2f(size_uniform, static_cast<float>(width), static_cast<float>(height));
+
+    const auto started = std::chrono::steady_clock::now();
+    const float base_seconds = reduce_motion ? 1001.0f : 1.0f;
+    unsigned frames = 0;
+    while (!stop.stop_requested())
+    {
+        const float elapsed = std::chrono::duration<float>(
+            std::chrono::steady_clock::now() - started).count();
+        glUniform1f(seconds_uniform, base_seconds + elapsed);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glFlush();
+        if (glGetError() != GL_NO_ERROR || !eglSwapBuffers(display, surface))
+        {
+            const EGLint error = eglGetError();
+            sys::log("egl deferred loading present stopped: %s (0x%04x)",
+                     egl_error_name(error), static_cast<unsigned>(error));
+            break;
+        }
+        ++frames;
+    }
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(program);
+    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    sys::log("egl deferred loading presenter stopped after %u frames", frames);
+}
 
 } // namespace
 
@@ -207,49 +345,57 @@ bool Display::swap()
     return true;
 }
 
-bool Display::defer_scanout_close()
+bool Display::defer_scanout_close(bool reduce_motion)
 {
-    if (display_ == EGL_NO_DISPLAY || surface_ == EGL_NO_SURFACE)
+    if (display_ == EGL_NO_DISPLAY || surface_ == EGL_NO_SURFACE ||
+        context_ == EGL_NO_CONTEXT)
         return false;
     {
         std::lock_guard lock{deferred_display_mutex};
-        if (deferred_display != EGL_NO_DISPLAY)
+        if (deferred_display != EGL_NO_DISPLAY || deferred_loading_thread.joinable())
         {
             sys::log("egl scanout defer refused: previous owner still pending");
             return false;
         }
     }
 
-    // Detach and destroy only the GL context. On this PS5 EGL runtime,
-    // eglDestroySurface itself calls ps5_agc_gate2_shutdown_present(), which
-    // drains and closes VideoOut. The window surface therefore MUST remain
-    // alive with the display until the next renderer reaches its takeover
-    // boundary.
-    if (context_ != EGL_NO_CONTEXT)
+    // Transfer the context rather than destroying it. eglDestroySurface on
+    // this runtime closes VideoOut, so both surface and display must remain
+    // alive until the renderer's explicit takeover boundary.
+    if (!eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT))
     {
-        if (!eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT))
-        {
-            fail("defer scanout release current");
-            return false;
-        }
-        if (!eglDestroyContext(display_, context_))
-        {
-            fail("defer scanout context");
-            return false;
-        }
+        fail("defer scanout release current");
+        return false;
+    }
+
+    std::jthread presenter;
+    try
+    {
+        presenter = std::jthread{deferred_loading_loop, display_, surface_, context_,
+                                 width_, height_, reduce_motion};
+    }
+    catch (...)
+    {
+        // No ownership was published. Restore the launch-thread context so
+        // normal Display destruction can safely unwind.
+        if (!eglMakeCurrent(display_, surface_, surface_, context_))
+            fail("defer scanout restore current");
+        return false;
     }
 
     {
         std::lock_guard lock{deferred_display_mutex};
         deferred_display = display_;
         deferred_surface = surface_;
+        deferred_context = context_;
+        deferred_loading_thread = std::move(presenter);
     }
     display_ = EGL_NO_DISPLAY;
     surface_ = EGL_NO_SURFACE;
     context_ = EGL_NO_CONTEXT;
     width_ = 0;
     height_ = 0;
-    sys::log("egl launcher display+surface deferred for renderer handoff");
+    sys::log("egl launcher context+surface deferred with continuous loading presenter");
     return true;
 }
 
@@ -257,13 +403,41 @@ bool Display::close_deferred_scanout()
 {
     EGLDisplay display = EGL_NO_DISPLAY;
     EGLSurface surface = EGL_NO_SURFACE;
+    EGLContext context = EGL_NO_CONTEXT;
+    std::jthread presenter;
     {
         std::lock_guard lock{deferred_display_mutex};
         display = std::exchange(deferred_display, EGL_NO_DISPLAY);
         surface = std::exchange(deferred_surface, EGL_NO_SURFACE);
+        context = std::exchange(deferred_context, EGL_NO_CONTEXT);
+        presenter = std::move(deferred_loading_thread);
     }
     if (display == EGL_NO_DISPLAY)
         return true;
+
+    // The presenter is the only thread allowed to own the retained GL
+    // context. Stop and join it before destroying any EGL object or allowing
+    // a Vulkan/OpenGL game to acquire VideoOut.
+    if (presenter.joinable())
+    {
+        presenter.request_stop();
+        presenter.join();
+    }
+
+    if (context != EGL_NO_CONTEXT && !eglDestroyContext(display, context))
+    {
+        const EGLint error = eglGetError();
+        sys::log("egl deferred launcher context release failed: %s (0x%04x)",
+                 egl_error_name(error), static_cast<unsigned>(error));
+        std::lock_guard lock{deferred_display_mutex};
+        if (deferred_display == EGL_NO_DISPLAY)
+        {
+            deferred_display = display;
+            deferred_surface = surface;
+            deferred_context = context;
+        }
+        return false;
+    }
 
     // Destroying the retained window surface is the intentional VideoOut
     // handoff point on the pinned PS5 EGL implementation.
@@ -277,6 +451,7 @@ bool Display::close_deferred_scanout()
         {
             deferred_display = display;
             deferred_surface = surface;
+            deferred_context = EGL_NO_CONTEXT;
         }
         return false;
     }
@@ -290,14 +465,13 @@ bool Display::close_deferred_scanout()
     const EGLint error = eglGetError();
     sys::log("egl deferred launcher terminate failed: %s (0x%04x)",
              egl_error_name(error), static_cast<unsigned>(error));
-    // Surface teardown already transferred VideoOut ownership. Retain only
-    // the initialized display for a later cleanup retry.
     {
         std::lock_guard lock{deferred_display_mutex};
         if (deferred_display == EGL_NO_DISPLAY)
         {
             deferred_display = display;
             deferred_surface = EGL_NO_SURFACE;
+            deferred_context = EGL_NO_CONTEXT;
         }
     }
     return false;

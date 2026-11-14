@@ -369,7 +369,7 @@ assert "for (int side = 0; side < 8; ++side)" in native
 assert 'scene_columns{"-", "-", "-", "-", "-"}' in native
 assert "if (receipt) receipt << filename" in native
 assert "std::ofstream receipt(destination + \".source\"" in native
-assert "cached_source == candidates.front()" in native
+assert "LimitRetailCasePromotion(candidates, cached_source, path, side)" in native
 assert "best_pixels" not in native.split("bool FetchCaseFace(", 1)[1].split(
     "unsigned EnsureRetailCase(", 1)[0]
 assert "EUROPE_FRONT_PINS" in indexer
@@ -422,13 +422,14 @@ assert 'const std::string old_receipt = legacy + ".source";' in native
 case_fetch = native.split("unsigned EnsureRetailCase(", 1)[1].split(
     "NlibEnrichment CachedNlibEnrichment(", 1
 )[0]
-assert "std::unique_lock guard(locks[title_id % locks.size()], std::defer_lock);" in case_fetch
-assert "while (!guard.try_lock()) {" in case_fetch
-assert "std::this_thread::sleep_for(std::chrono::milliseconds(50));" in case_fetch
+assert "std::unique_lock guard(locks[ArtworkLockBucket(title_id, locks.size())], std::defer_lock);" in case_fetch
+assert "if (!LockArtworkUnlessCancelled(guard, cancel)) return 0;" in case_fetch
+assert "std::this_thread::sleep_for(std::chrono::milliseconds(50));" in native
 assert "if (all_ready || (cancel && cancel->load(std::memory_order_acquire))) {" in case_fetch
 assert "retries.erase(title_id);" in case_fetch
 assert "all_ready = false;\n            break;" in case_fetch
-assert "if (cancel && cancel->load(std::memory_order_acquire)) return 0;" in case_fetch
+assert "if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;" in case_fetch
+assert "std::chrono::steady_clock::now() < it->second)\n            return migrated_faces;" in case_fetch
 assert "if (cancel && cancel->load(std::memory_order_acquire)) {" in case_fetch
 assert "return changed_faces;" in case_fetch
 # The first successful front/back download permits the optional spine in the
@@ -463,9 +464,13 @@ assert case_worker.index("EnsureRetailCase(game.title_id, scanned_name") < case_
 # A generated retail TGA must not be fetched again merely because stb_image's
 # format probe does not recognize the native loader's uncompressed BGRA TGA.
 case_cache = native.split("unsigned EnsureRetailCase(", 1)[1].split("NlibEnrichment CachedNlibEnrichment(", 1)[0]
-assert 'if (cached_source == candidates.front())' in case_cache
-assert 'ValidNlibWebP(path, &width, &height)' in case_cache
-assert 'side == 2 && width >= 16 && height >= 250' in case_cache
+assert 'if (LimitRetailCasePromotion(candidates, cached_source, path, side)) continue;' in case_cache
+promotion = "bool LimitRetailCasePromotion(" + native.split(
+    "bool LimitRetailCasePromotion(", 1)[1].split("unsigned EnsureRetailCase(", 1)[0]
+assert 'ValidNlibWebP(path, &width, &height)' in promotion
+assert 'side == 2 && width >= 16 && height >= 250' in promotion
+assert 'candidates.erase(cached, candidates.end());' in promotion
+assert 'status=retained-fallback' in case_cache
 assert 'unsigned changed_faces = migrated_faces;' in case_cache
 assert 'stbi_info(path.c_str(), &width, &height, &channels)' not in case_cache
 assert 'std::fread(header, 1, sizeof(header), input)' not in case_cache
@@ -884,3 +889,123 @@ int main(int argc,char** argv) {
                         "-Werror", str(cpp), "-o", str(exe)], check=True)
         subprocess.run([str(exe), str(tmp)], check=True)
 print("R457_REAL_RETAIL_CANDIDATE_LOOP_PASS decode_retry=1 write_stop=1 budget=7 cancel=1 provenance=1")
+
+# Both actual mutex owners must use the same folded identity; the Home
+# nonblocking path uses NlibTitleMutex as well as the full Library worker.
+assert "title_locks[ArtworkLockBucket(title_id, title_locks.size())]" in native
+assert "if (!LockArtworkUnlessCancelled(title_lock, cancel)) return {};" in native
+assert "std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};" in native
+helper = "constexpr std::size_t ArtworkLockBucket(" + native.split(
+    "constexpr std::size_t ArtworkLockBucket(", 1)[1].split("// A valid cached authentic face", 1)[0]
+catalog_header = root / "headless/ns2_title_catalog.h"
+with tempfile.TemporaryDirectory(prefix="encore-art-locks-") as dirname:
+    tmp = Path(dirname)
+    cpp, exe = tmp / "locks.cpp", tmp / "locks"
+    cpp.write_text(r"""
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <future>
+#include <mutex>
+#include <set>
+#include <thread>
+#include "ns2_title_catalog.h"
+using namespace std::chrono_literals;
+""" + helper + r"""
+int main() {
+    std::set<std::size_t> before16, before64, after16, after64;
+    for (const auto& entry : Eden::Ns2Catalog::kTitles) {
+        before16.insert(entry.id % 16);
+        before64.insert(entry.id % 64);
+        after16.insert(ArtworkLockBucket(entry.id,16));
+        after64.insert(ArtworkLockBucket(entry.id,64));
+    }
+    assert(before16.size()==1 && before64.size()==1);
+    assert(after16.size()==10 && after64.size()==16);
+    constexpr std::uint64_t a=0x040074A01BF12000ULL, b=0x0400C3F00006E000ULL;
+    static_assert(ArtworkLockBucket(a,16)!=ArtworkLockBucket(b,16));
+    static_assert(ArtworkLockBucket(a,64)!=ArtworkLockBucket(b,64));
+    std::mutex mutex;
+    std::atomic<bool> cancel{false};
+    std::unique_lock holder(mutex);
+    std::promise<void> entered;
+    auto started=entered.get_future();
+    auto worker=std::async(std::launch::async,[&]{
+        std::unique_lock waiting(mutex,std::defer_lock);
+        entered.set_value();
+        const bool ok=LockArtworkUnlessCancelled(waiting,&cancel);
+        assert(waiting.owns_lock()==ok);
+        return ok;
+    });
+    started.get();
+    cancel=true;
+    // Cancellation must finish while the other thread STILL owns the lock.
+    assert(worker.wait_for(2s)==std::future_status::ready);
+    assert(!worker.get());
+    holder.unlock();
+    std::unique_lock available(mutex,std::defer_lock);
+    assert(!LockArtworkUnlessCancelled(available,&cancel));
+    assert(!available.owns_lock());
+    cancel=false;
+    assert(LockArtworkUnlessCancelled(available,&cancel) && available.owns_lock());
+    available.unlock();
+    assert(LockArtworkUnlessCancelled(available,nullptr));
+}
+""", encoding="utf-8")
+    for opt in ("-O0", "-O2"):
+        subprocess.run([compiler, "-std=c++20", opt, "-Wall", "-Wextra",
+                        "-Werror", "-pthread", "-I", str(catalog_header.parent),
+                        str(cpp), "-o", str(exe)], check=True, timeout=60)
+        subprocess.run([str(exe)], check=True, timeout=10)
+print("R457_ARTWORK_LOCK_BUCKET_HOST_PASS catalog=18 old=1/1 new=10/16 cancel_held_lock=1")
+
+# Execute the real ranked-cache admission/promotion helper against controlled
+# header geometry. Existing candidate-loop and codec fixtures remain active.
+with tempfile.TemporaryDirectory(prefix="encore-case-promotion-") as dirname:
+    tmp = Path(dirname)
+    cpp, exe = tmp / "promotion.cpp", tmp / "promotion"
+    cpp.write_text(r"""
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <string>
+#include <vector>
+bool ValidNlibWebP(const std::string& path,int* w,int* h) {
+    if(path=="missing") return false;
+    if(path=="spine"){*w=24;*h=600;}
+    else if(path=="landscape"){*w=800;*h=400;}
+    else if(path=="tiny"){*w=32;*h=32;}
+    else {*w=400;*h=600;}
+    return true;
+}
+""" + promotion + r"""
+int main() {
+    const std::vector<std::string> all{"first","second","third"};
+    auto ranked=all;
+    assert(LimitRetailCasePromotion(ranked,"first","portrait",0));
+    assert(ranked==all);
+    ranked=all;
+    assert(!LimitRetailCasePromotion(ranked,"second","portrait",0));
+    assert((ranked==std::vector<std::string>{"first"}));
+    ranked=all;
+    assert(!LimitRetailCasePromotion(ranked,"third","portrait",1));
+    assert((ranked==std::vector<std::string>{"first","second"}));
+    for(const auto* file:{"missing","landscape","tiny","spine"}) {
+        ranked=all; assert(!LimitRetailCasePromotion(ranked,"second",file,0));
+        assert(ranked==all);
+    }
+    ranked=all; assert(!LimitRetailCasePromotion(ranked,"unknown","portrait",0));
+    assert(ranked==all);
+    ranked=all; assert(!LimitRetailCasePromotion(ranked,"second","spine",2));
+    assert((ranked==std::vector<std::string>{"first"}));
+    ranked=all; assert(LimitRetailCasePromotion(ranked,"first","landscape",3));
+    ranked.clear(); assert(!LimitRetailCasePromotion(ranked,"first","portrait",0));
+}
+""", encoding="utf-8")
+    for opt in ("-O0", "-O2"):
+        subprocess.run([compiler, "-std=c++20", opt, "-Wall", "-Wextra",
+                        "-Werror", str(cpp), "-o", str(exe)], check=True, timeout=60)
+        subprocess.run([str(exe)], check=True, timeout=10)
+print("R457_RETAIL_PROMOTION_HOST_PASS top=1 prefix=1 unknown=1 invalid=1 spine=1 scene=1")

@@ -1164,6 +1164,53 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
 // All physical box scans, NS1 and NS2, come exclusively from the verified
 // region-ranked LaunchBox index. No retail-product-photo fallback is allowed.
 // Missing scans use the same opaque procedural case renderer as NS1.
+// Nintendo application TitleIDs have zero alignment bits: raw modulo
+// 16/64 puts the entire NS2 launch catalog in bucket zero. Fold higher
+// identity bits while keeping a stable stripe for each exact TitleID.
+constexpr std::size_t ArtworkLockBucket(std::uint64_t title_id, std::size_t count) {
+    return static_cast<std::size_t>(
+        (title_id ^ (title_id >> 12) ^ (title_id >> 28) ^ (title_id >> 44)) % count);
+}
+
+bool LockArtworkUnlessCancelled(std::unique_lock<std::mutex>& lock,
+                               const std::atomic<bool>* cancel) {
+    const auto cancelled = [cancel] {
+        return cancel && cancel->load(std::memory_order_acquire);
+    };
+    while (!cancelled()) {
+        if (lock.try_lock()) {
+            if (!cancelled()) return true;
+            lock.unlock();
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    return false;
+}
+
+// A valid cached authentic face need not be fetched or transcoded again
+// merely because a better-ranked regional candidate was unavailable.
+// Only retry the strictly better prefix; an unknown/invalid receipt or
+// invalid image must still use the full ranked list and normal limits.
+bool LimitRetailCasePromotion(std::vector<std::string>& candidates,
+                              const std::string& cached_source,
+                              const std::string& path, int side) {
+    const auto cached = std::find(candidates.begin(), candidates.end(), cached_source);
+    if (cached == candidates.end()) return false;
+    int width = 0;
+    int height = 0;
+    // Preserve narrow authentic NS2 spines even with no back scan.
+    if (!ValidNlibWebP(path, &width, &height) ||
+        !((side == 2 && width >= 16 && height >= 250) ||
+          (side >= 3 && width >= 128 && height >= 200) ||
+          ((side == 0 || side == 1) && width >= 128 && height >= 200 &&
+           static_cast<std::uint64_t>(height) * 4 >= static_cast<std::uint64_t>(width) * 5)))
+        return false;
+    if (cached == candidates.begin()) return true;
+    candidates.erase(cached, candidates.end());
+    return false;
+}
+
 unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
                       const std::string& alternate_name, int language_choice,
                       const std::atomic<bool>* cancel) {
@@ -1195,19 +1242,15 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // finished cache, but never hold launcher teardown hostage to this wait.
     // No socket request or mutex sleep runs on the UI/render thread.
     static std::array<std::mutex, 64> locks;
-    std::unique_lock guard(locks[title_id % locks.size()], std::defer_lock);
-    while (!guard.try_lock()) {
-        if (cancel && cancel->load(std::memory_order_acquire)) return 0;
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-    if (cancel && cancel->load(std::memory_order_acquire)) return 0;
+    std::unique_lock guard(locks[ArtworkLockBucket(title_id, locks.size())], std::defer_lock);
+    if (!LockArtworkUnlessCancelled(guard, cancel)) return 0;
     // The physical scans supplied by users have no Encore .source receipt.
     // Migrate and reclaim ONLY our previously downloaded retail cases.
     unsigned migrated_faces = 0;
     unsigned side_index = 0;
     for (const char* side : {"front", "back", "spine",
                              "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"}) {
-        if (cancel && cancel->load(std::memory_order_acquire)) return 0;
+        if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;
         if (MigrateGeneratedTga(CaseFacePath(title_id, side), true))
             migrated_faces |= 1u << side_index;
         ++side_index;
@@ -1218,7 +1261,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         std::lock_guard retry(retry_mutex);
         const auto it = retries.find(title_id);
         if (it != retries.end() && std::chrono::steady_clock::now() < it->second)
-            return 0;
+            return migrated_faces;
         // Failed image hosts, cancellation or an incomplete side must not
         // disable all retries for four hours on a newly installed game.
         retries[title_id] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
@@ -1242,7 +1285,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
         // Gameplay previews remain independent of real back paper.
-        const auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
+        auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
         if (candidates.empty()) continue;
         const char* const names[] = {
             "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};
@@ -1258,24 +1301,19 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         std::ifstream receipt(path + ".source");
         std::string cached_source;
         if (receipt) std::getline(receipt, cached_source);
-        if (cached_source == candidates.front()) {
-            int width = 0;
-            int height = 0;
-            // Preserve narrow authentic NS2 spines even with no back scan.
-            if (ValidNlibWebP(path, &width, &height) &&
-                ((side == 2 && width >= 16 && height >= 250) ||
-                 (side >= 3 && width >= 128 && height >= 200) ||
-                 ((side == 0 || side == 1) && width >= 128 && height >= 200 &&
-                  static_cast<std::uint64_t>(height) * 4 >= static_cast<std::uint64_t>(width) * 5))) {
-                continue;
-            }
-        }
+        const auto candidate_count = candidates.size();
+        if (LimitRetailCasePromotion(candidates, cached_source, path, side)) continue;
+        const bool retained_fallback = candidates.size() < candidate_count;
         // If network retrieval fails, existing cached artwork remains usable;
         // migration can be retried without blocking rendering.
         if (!FetchCaseFace(candidates, path, side == 2, cancel)) {
             all_ready = false;
-            std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable\n",
-                         static_cast<unsigned long long>(title_id), side);
+            if (retained_fallback)
+                std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=retained-fallback\n",
+                             static_cast<unsigned long long>(title_id), side);
+            else
+                std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable\n",
+                             static_cast<unsigned long long>(title_id), side);
         } else {
             changed_faces |= (1u << side); // Only successful atomic replacements.
             // A fallback candidate remains usable, but only retry its higher
@@ -1316,7 +1354,7 @@ NlibEnrichment CachedNlibEnrichment(std::uint64_t title_id, int language_choice)
 // title is queued for complete artwork at startup, not only on Library selection.
 std::mutex& NlibTitleMutex(std::uint64_t title_id) {
     static std::array<std::mutex, 16> title_locks;
-    return title_locks[title_id % title_locks.size()];
+    return title_locks[ArtworkLockBucket(title_id, title_locks.size())];
 }
 NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
                                        const std::atomic<bool>* cancel = nullptr) {
@@ -1328,21 +1366,26 @@ NlibEnrichment EnsureNlibEnrichment(std::uint64_t title_id, int language_choice,
     // Home and Library can request the same title at the same time. Cache writes use
     // the same .new staging path, so serialize per hash bucket while leaving other
     // titles free to enrich in parallel.
-    std::scoped_lock title_lock{NlibTitleMutex(title_id)};
-    if (cancelled()) return {};
+    std::unique_lock title_lock{NlibTitleMutex(title_id), std::defer_lock};
+    if (!LockArtworkUnlessCancelled(title_lock, cancel)) return {};
 
     // Every Nlib legacy TGA was generated by Encore, unlike arbitrary
     // user-provided case artwork. Convert once locally; do not redownload
     // existing banners/icons/screens or leave old multi-megabyte files.
     bool migrated = MigrateGeneratedTga(NlibHeroPath(title_id), false);
-    migrated |= MigrateGeneratedTga(NlibIconPath(title_id), false);
+    if (!cancelled())
+        migrated |= MigrateGeneratedTga(NlibIconPath(title_id), false);
     for (int index = 1; index <= 3; ++index) {
-        if (cancelled()) return {};
+        if (cancelled()) break;
         migrated |= MigrateGeneratedTga(NlibScreenshotPath(title_id, index), false);
     }
 
+    // Even a cancelled migration may already have replaced an asset.
+    // Return its cached paths and invalidation flag, not an empty result.
+    if (cancelled() && !migrated) return {};
     NlibEnrichment result = CachedNlibEnrichment(title_id, language_choice);
     result.artwork_changed |= migrated;
+    if (cancelled()) return result;
     const std::string language = NlibLanguageCode(language_choice);
     nlohmann::json metadata;
     const bool cached_metadata = LoadNlibMetadata(title_id, language, &metadata);
@@ -2393,14 +2436,20 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         game.case_artwork_changed = EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file),
                          language_choice, cancel);
     }
-    if (!(cancel && cancel->load(std::memory_order_acquire))) {
+    // A completed local migration or atomic replacement needs cache
+    // invalidation even if selection changed before media enrichment ended.
+    if (game.case_artwork_changed || !(cancel && cancel->load(std::memory_order_acquire))) {
         const auto cached_case = box_art(game.title_id);
         game.box_front = cached_case.front;
         game.box_back = cached_case.back;
+        if (game.case_artwork_changed & 0xF8u) {
+            AppendCaseScenes(game.screenshots, game.title_id);
+            game.artwork_changed = true;
+        }
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
-    game.artwork_changed = enrichment.artwork_changed;
+    game.artwork_changed |= enrichment.artwork_changed;
     if (!enrichment.icon.empty()) game.cover = std::move(enrichment.icon);
     else if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
     if (!enrichment.hero.empty()) game.hero = std::move(enrichment.hero);

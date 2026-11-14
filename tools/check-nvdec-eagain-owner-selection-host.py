@@ -53,7 +53,8 @@ for marker in (
 part=CMAKE.split("# NS1 NVDEC/FFmpeg EAGAIN:",1)[1].split(
     "# The texture-cache small-vector",1)[0]
 assert part.count("if(PS5_NATIVE)")==1
-assert part.count("if(EXISTS ")==1
+assert part.count("\n    if(EXISTS ")==1
+assert part.count("\n    elseif(EXISTS ")==1
 assert part.count('list(APPEND eden_nvdec_video_sources')==1
 assert part.count('target_include_directories(video_core BEFORE PUBLIC')==1
 assert "vendor/sources/eden" not in part

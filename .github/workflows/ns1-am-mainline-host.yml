@@ -31,7 +31,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          selected="$(git -C vendor rev-parse HEAD)"
+          test "$selected" = "$(git ls-tree HEAD -- vendor | awk '{print $3}')"
+          case "$selected" in
+            1ec7b429238d1175a76dc94b7c0a7f1c2eb62864|fe9edd661d6f0824c7339865d50aa9cf99cab150) ;;
+            *) echo "Unreviewed controller applet vendor $selected" >&2; exit 1 ;;
+          esac
           python3 -B tools/audit/check-r23-controller-applet-host.py
           python3 -B tools/audit/check-r23-am-applets-host.py
           echo "Host source and mock ASan/UBSan only; no PS5 native object, ELF or guest execution." >> "$GITHUB_STEP_SUMMARY"

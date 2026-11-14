@@ -998,13 +998,19 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     const bool contextual_guide = modal == Modal::video ||
                                   modal == Modal::controls ||
                                   modal == Modal::appearance ||
-                                  modal == Modal::diagnostics;
+                                  modal == Modal::diagnostics ||
+                                  modal == Modal::audio || modal == Modal::accessibility;
     // Routine save feedback uses the header, not the selected option's guide.
     // Actionable warnings retain their full multi-line card.
     const bool compact_success = contextual_guide &&
                                  !message_.empty() && !message_warning_;
     const bool show_contextual_guide = contextual_guide &&
                                        (message_.empty() || compact_success);
+    if (modal == Modal::application) {
+        // Its release summary/notes retain their independent status band.
+        text_block(c, copy, 592.0f, baseline(291.0f, 29.0f, theme::kSmall),
+                   theme::kSmall, 29.0f, theme::kCopy, 736.0f, 2, kShrink);
+    } else
     text_shrink(c, compact_success ? std::string_view(message_) :
                      std::string_view(contextual_guide
                          ? tr(TR("Choose a setting; its effect is explained below."))
@@ -1137,6 +1143,13 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         toggle(c, 1292.0f, row_centre(1), knob);
         level_row(2, tr("Menu sounds"), prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : tr("Off"),
                   prefs_.menu_volume);
+        if (show_contextual_guide) {
+            static constexpr const char* names[] = {TR("Game volume"), TR("Mute"), TR("Menu sounds")};
+            const int selected = std::clamp(option_, 0, 2);
+            DrawVideoGuide(c, tr(names[selected]),
+                selected == 2 ? tr(TR("Game volume, and the sounds of this menu.")) : copy,
+                false, prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+        }
         break;
     }
     case Modal::controls:
@@ -1249,10 +1262,11 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             toggle(c, 1292.0f, row_centre(row),
                    tween::clamp01(switches_[static_cast<std::size_t>(row)].value));
         }
-        // What the highlighted switch does.
-        text_block(c, tr(kAbout[std::clamp(option_, 0, 2)]), 592.0f,
-                   baseline(700.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kMeta, 736.0f,
-                   2, kShrink);
+        if (show_contextual_guide) {
+            const int selected = std::clamp(option_, 0, 2);
+            DrawVideoGuide(c, tr(kNames[selected]), tr(kAbout[selected]), false,
+                          prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+        }
         break;
     }
     case Modal::diagnostics:
@@ -1382,7 +1396,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     }
 
     // Under the rows: Video's four rows leave space for the full guide.
-    const float foot = modal == Modal::video || modal == Modal::appearance || modal == Modal::controls || modal == Modal::diagnostics ? 848.0f : 811.0f;
+    const float foot = contextual_guide ? 848.0f : 811.0f;
     if (!message_.empty() && !compact_success)
     {
         if (contextual_guide) {

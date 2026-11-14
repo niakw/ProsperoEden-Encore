@@ -71,6 +71,7 @@ assert 'const std::string index_file = logs_folder + "/crash-index.txt";' in cra
 assert 'Eden::Crash::Install(Eden::LogsDir()' in main
 crash_header = read("headless/crash_report.h")
 crash_source = read("headless/crash_report.cpp")
+failure_header = read("headless/gpu_failure.h")
 gpu_worker_generator = read("headless/CMakeLists.txt")
 # The production GPU worker is no longer constructed inside CMake:
 # the shipping quiet source alone is selected by CMake and compiled from Encore.
@@ -87,10 +88,13 @@ watchdog = read("headless/stall_watchdog.h")
 assert 'inline std::atomic<std::uint64_t> gpu_completed_commands{0};' in crash_header
 assert 'inline std::atomic<unsigned> gpu_stall_suspicions{0};' in crash_header
 assert 'gpu_completed_commands.load(std::memory_order_relaxed)' in crash_source
+assert 'GpuSubmissionSample()' in crash_source
+assert 'PublishGpuSubmissionSample(std::uint64_t count)' in failure_header
 assert 'gpu_stall_suspicions.load(std::memory_order_relaxed)' in crash_source
 for profile, gpu_worker_source in gpu_worker_sources.items():
     assert '(++completed_gpu_commands & 63u) == 0u' in gpu_worker_source, profile
     assert 'gpu_completed_commands.fetch_add(64, std::memory_order_relaxed);' in gpu_worker_source, profile
+    assert 'PublishGpuSubmissionSample(count);' in gpu_worker_source, profile
 assert 'Crash::gpu_completed_commands.load(std::memory_order_relaxed)' in watchdog
 assert 'Crash::gpu_stall_suspicions.fetch_add(1, std::memory_order_relaxed)' in watchdog
 assert 'if (!Performance::detailed_gpu_profile.load(std::memory_order_relaxed)) return;' in watchdog

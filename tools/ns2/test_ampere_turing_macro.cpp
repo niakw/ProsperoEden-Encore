@@ -225,6 +225,59 @@ int main(){
     assert(result.success && committed.size()==1 &&
            (committed[0]==std::pair<W,W>(0x230,0)));
     committed.clear();
+
+    // MKW / Lichii d0c0cb8: one GPU channel exposes one MME data RAM to
+    // both native 3D and Compute. Their code/position RAM remains separate,
+    // and a second channel must never see the first channel's word 0x27.
+    Tegra::NativeAmpereMacroState::DataRam shared_channel_ram{};
+    Tegra::NativeAmpereMacroState::DataRam other_channel_ram{};
+    Tegra::NativeAmpereMacroState channel_3d{&shared_channel_ram};
+    Tegra::NativeAmpereMacroState channel_compute{&shared_channel_ram};
+    Tegra::NativeAmpereMacroState other_compute{&other_channel_ram};
+    const auto load_single = [&](Tegra::NativeAmpereMacroState& target,
+                                 const std::array<W,3>& first) {
+        std::vector<W> local;
+        Append(local, first);
+        Append(local, Insn(0,0,false,false,false));
+        assert(target.SetCodePointer(0));
+        for (W word : local) assert(target.PushCode(word));
+        assert(target.SetPositionPointer(0) && target.BindPosition(0));
+    };
+    load_single(channel_3d, DataRamInsn(31,0x27,0x3579,true,false));
+    result=channel_3d.ExecuteStaged(
+        0xe00,std::span<const W>{},read,allow_all,
+        [](W,W){},valid);
+    assert(result.success);
+
+    load_single(channel_compute, DataRamInsn(30,0x27,0x230,true,true));
+    committed.clear();
+    result=channel_compute.ExecuteStaged(
+        0xe00,std::span<const W>{},read,allow_all,commit,valid);
+    assert(result.success && committed.size()==1 &&
+           (committed[0]==std::pair<W,W>(0x230,0x3579)));
+
+    load_single(other_compute, DataRamInsn(30,0x27,0x230,true,true));
+    committed.clear();
+    result=other_compute.ExecuteStaged(
+        0xe00,std::span<const W>{},read,allow_all,commit,valid);
+    assert(result.success && committed.size()==1 &&
+           (committed[0]==std::pair<W,W>(0x230,0)));
+
+    // A rejected 3D macro transaction restores the shared channel RAM, so
+    // Compute still reads the last committed QMD ring base.
+    Tegra::NativeAmpereMacroState rejected_3d{&shared_channel_ram};
+    load_single(rejected_3d, DataRamInsn(31,0x27,0x468a,true,false));
+    result=rejected_3d.ExecuteStaged(
+        0xe00,std::span<const W>{},read,allow_all,
+        [](W,W){},[](){return false;});
+    assert(!result.success);
+    committed.clear();
+    result=channel_compute.ExecuteStaged(
+        0xe00,std::span<const W>{},read,allow_all,commit,valid);
+    assert(result.success && committed.size()==1 &&
+           (committed[0]==std::pair<W,W>(0x230,0x3579)));
+    committed.clear();
+
     std::vector<W> oversized(Tegra::NativeAmpereMacroState::MaxFifo+1,3);
     auto too_many=state.Execute(0xe00,std::span<const W>{oversized},read,emit);
     assert(!too_many.success &&

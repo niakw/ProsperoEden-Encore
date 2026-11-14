@@ -28,6 +28,7 @@ KNOWN_VENDOR_GRAPH = {
     "4c252a3f4ccbbdc0ef945727da8c0e4b31a7d028": "integrated+jxr-cache-page-table-vfs-nca-spirv-romfs-bfs-null-tic-host1x-geometry-mask-blit-typed-phi",
     "72faa8edd26f6fcb16b08f321211fb94427c4ebb": "integrated+jxr-cache-page-table-vfs-nca-spirv-romfs-bfs-null-tic-host1x-geometry-mask-blit-typed-phi+am-language-reply",
     "a946785d1ad02752ae47f9b32032e99bdbb53e02": "integrated+jxr-cache-page-table-vfs-nca-spirv-romfs-bfs-null-tic-host1x-geometry-mask-blit-typed-phi+am-language-reply+fc-opus-buffer",
+    "db33f8ad0c325c84bd80047d992fafa5c2908151": "same reviewed audio owners + gpu-submit diagnostics + channel-shared-mme-dram",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

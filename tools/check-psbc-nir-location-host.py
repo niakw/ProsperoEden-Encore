@@ -41,6 +41,10 @@ assert 'nir_print_source="$source_dir/third_party/opengnm-psbc/src/compiler/nir/
 assert 'nir_print_backup="${nir_print_source}.encore-backup.$$"' in build
 assert 'cp -p "$nir_print_source" "$nir_print_backup"' in build
 assert build.count('mv -f "$nir_print_backup" "$nir_print_source"') == 2
+assert 'radv_stub_backup="${radv_stub_source}.encore-backup.$$"' in build
+assert 'cp -p "$radv_stub_source" "$radv_stub_backup"' in build
+assert build.count('mv -f "$radv_stub_backup" "$radv_stub_source"') == 2
+assert build.index('cp -p "$radv_stub_source"') < build.index('patch-psbc-nir-build-hooks.py" "$script"')
 assert 'ENCORE_PSBC_NIR_LOCATION_FIX' in build
 assert 'export ENCORE_PSBC_NIR_PATCHER=' in build
 assert 'python3 -B "$root/tools/ci/patch-psbc-nir-build-hooks.py" "$script"' in build
@@ -88,16 +92,66 @@ with tempfile.TemporaryDirectory(prefix="psbc-verify-window-") as td:
             pass
         else:
             raise AssertionError("Repeated hook injection accepted")
-    printer = work / "nir_print.c"
+    printer = work / "src/compiler/nir/nir_print.c"
+    header = work / "src/amd/vulkan/radv_instance.h"
+    printer.parent.mkdir(parents=True)
+    header.parent.mkdir(parents=True)
     shutil.copyfile(vendor / "opengl-opengnm-psbc/src/compiler/nir/nir_print.c", printer)
+    shutil.copyfile(vendor / "opengl-opengnm-psbc/src/amd/vulkan/radv_instance.h", header)
     initial = printer.read_bytes()
+    header_initial = header.read_bytes()
+    assert module.gitblob(header_initial) == module.PINNED_RADV_STUB
+    header_fixed = module.patched_radv_stub(header_initial)
+    assert header_fixed.replace(module.RADV_FORWARD, b"", 1) == header_initial
+    assert header_fixed.count(module.RADV_FORWARD) == 1
+    # Compile the real header, not a hand-written approximation. The opaque
+    # type in a C parameter list must agree with a later file-scope definition.
+    stub_harness = work / "stub.c"
+    stub_harness.write_text("""
+#include "radv_instance.h"
+#include <assert.h>
+struct radv_physical_device { int unused; };
+int main(void) {
+    struct radv_physical_device device = {0};
+    const struct radv_instance *(*fn)(const struct radv_physical_device *) =
+        radv_physical_device_instance;
+    assert(fn(&device) == fn(0));
+    assert(fn(&device)->debug_flags == 0);
+    return 0;
+}
+""")
+    for cc in (shutil.which("gcc"), shutil.which("clang")):
+        if not cc:
+            continue
+        exe = work / "stub"
+        flags = [cc, "-std=c11", "-Wall", "-Wextra", "-Werror",
+                 "-I" + str(header.parent), str(stub_harness), "-o", str(exe)]
+        header.write_bytes(header_initial)
+        rejected = subprocess.run(flags, capture_output=True, text=True, timeout=30)
+        assert rejected.returncode != 0 and "radv_physical_device" in rejected.stderr
+        header.write_bytes(header_fixed)
+        subprocess.run(flags, check=True, timeout=30)
+        subprocess.run([str(exe)], check=True, timeout=20)
+    header.write_bytes(header_initial)
     for rc in (0, 7):
         cmd = [sys.executable, "-c",
                'import pathlib,sys; p=pathlib.Path(sys.argv[1]); '
-               'assert p.read_bytes().count(b"char buf[11];")==2; sys.exit(int(sys.argv[2]))',
+               'assert p.read_bytes().count(b"char buf[11];")==2; '
+               'assert (p.parent.parent.parent/"amd/vulkan/radv_instance.h").read_bytes().count(b"struct radv_physical_device;")==1; '
+               'sys.exit(int(sys.argv[2]))',
                str(printer), str(rc)]
         assert module.compile_window(printer, cmd) == rc
         assert printer.read_bytes() == initial, "printer leaked after compile"
+        assert header.read_bytes() == header_initial, "stub leaked after compile"
+    header.write_bytes(header_initial + b"\n/* drift */\n")
+    try:
+        module.compile_window(printer, [sys.executable, "-c", "raise AssertionError()"])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Unreviewed RADV stub admitted")
+    assert printer.read_bytes() == initial
+    header.write_bytes(header_initial)
     printer.write_bytes(initial + b"\\n/* drift */\\n")
     try:
         module.compile_window(printer, [sys.executable, "-c", "raise AssertionError()"])
@@ -156,3 +210,4 @@ with tempfile.TemporaryDirectory(prefix="psbc-nir-print-") as tmpdir:
         subprocess.run([str(exe)], check=True, timeout=20)
 print("PSBC_NIR_LOCATION_11_BYTE_HOST_PASS callers=2 max_u32=4294967295 "
       "drift_rejected=1 original_restored=1")
+print("PSBC_RADV_STUB_FILE_SCOPE_HOST_PASS original_rejected=1 gcc_clang=1 restored=1")

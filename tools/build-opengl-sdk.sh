@@ -90,6 +90,8 @@ psbc_configs=()
 psbc_scripts=()
 nir_print_source=""
 nir_print_backup=""
+radv_stub_source=""
+radv_stub_backup=""
 cleanup() {
     if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
         mv -f "$host_test_backup" "$host_test"
@@ -99,6 +101,9 @@ cleanup() {
     fi
     if [[ -n ${nir_print_backup:-} && -f $nir_print_backup ]]; then
         mv -f "$nir_print_backup" "$nir_print_source"
+    fi
+    if [[ -n ${radv_stub_backup:-} && -f $radv_stub_backup ]]; then
+        mv -f "$radv_stub_backup" "$radv_stub_source"
     fi
     for script in "${psbc_scripts[@]}"; do
         if [[ -f "${script}.encore-backup.$$" ]]; then
@@ -152,6 +157,14 @@ nir_print_source="$source_dir/third_party/opengnm-psbc/src/compiler/nir/nir_prin
 }
 nir_print_backup="${nir_print_source}.encore-backup.$$"
 cp -p "$nir_print_source" "$nir_print_backup"
+# The PSBC compatibility stub (not the Vulkan driver) also needs a
+# file-scope opaque declaration. Protect the original bytes in the outer trap.
+radv_stub_source="$source_dir/third_party/opengnm-psbc/src/amd/vulkan/radv_instance.h"
+[[ -f $radv_stub_source && ! -L $radv_stub_source ]] || {
+    echo "Missing pinned PSBC RADV compatibility stub" >&2; exit 1;
+}
+radv_stub_backup="${radv_stub_source}.encore-backup.$$"
+cp -p "$radv_stub_source" "$radv_stub_backup"
 # Do not patch before sdk-gl46: the host and PS5 compiler scripts each
 # call the unmodified upstream --verify-psbc. Wrap their exact make calls
 # AFTER these checks, restoring the printer before fingerprint/tests.
@@ -275,6 +288,10 @@ fi
 if [[ -n ${nir_print_backup:-} && -f $nir_print_backup ]]; then
     mv -f "$nir_print_backup" "$nir_print_source"
     nir_print_backup=""
+fi
+if [[ -n ${radv_stub_backup:-} && -f $radv_stub_backup ]]; then
+    mv -f "$radv_stub_backup" "$radv_stub_source"
+    radv_stub_backup=""
 fi
 for script in "${psbc_scripts[@]}"; do
     mv -f "${script}.encore-backup.$$" "$script"

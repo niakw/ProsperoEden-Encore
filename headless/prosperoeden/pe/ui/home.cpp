@@ -949,7 +949,7 @@ void Launcher::draw_home(Canvas &c)
             plate_rest(c, kTilePlate, r);
             // Reference uses recognisable game-key art, not a random gameplay
             // screenshot or a cropped panoramic banner on the small tile.
-            const std::string& art = recent.cover;
+            const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;
             // These seven visible icons get priority over off-screen case
             // media queued before a game's teardown. Preserve the
             // aspect-correct square crop and existing cached GL texture.

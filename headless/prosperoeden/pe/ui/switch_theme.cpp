@@ -313,7 +313,7 @@ void Launcher::draw_switch_home(Canvas& c) {
         const auto& item=home_.recents[static_cast<std::size_t>(i)];
         const Rect box{kSwitchHomeTileX+float(i)*kSwitchHomeTilePitch-offset,
                        kSwitchHomeTileY,kSwitchHomeTileSize,kSwitchHomeTileSize};
-        switch_game_tile(c,item.cover,item.title,box,i);
+        switch_game_tile(c,item.tile_icon.empty()?item.cover:item.tile_icon,item.title,box,i);
         outline(list,box,focus==i,0.0f);
     }
     const Rect all{kSwitchHomeTileX+float(count)*kSwitchHomeTilePitch-offset,

@@ -69,7 +69,11 @@ native_icon = svc.split("pe::ui::Game EdenServices::enrich_home_icon(", 1)[1].sp
 assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
 assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon
 assert "EnsureRetailCase" not in native_icon and "EnsureNlibEnrichment" not in native_icon
-assert "const std::string& art = recent.cover;" in home
+assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
+assert "!recent.tile_icon.empty()" in icons
+assert "home_media_scan_title_id_" not in icons
+assert 'recent.cover.find("/box-front-")' not in icons
+assert "recent.tile_icon = previous.tile_icon;" in lib
 assert "cover(c, art, icon, 20.0f, 0.0f)" in home
 assert "home_icon_scan_.wait();" in launch and "finish_home_icons();" in launch
 print('Selected-only complete Nlib media, bounded visible icon worker and aspect-safe Home tiles PASS')
@@ -181,7 +185,7 @@ icon_cpp = r"""
 #include <utility>
 enum class Screen { home, library, settings };
 struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; };
-struct Recent { std::uint64_t title_id=0; std::string file,title,cover; };
+struct Recent { std::uint64_t title_id=0; std::string file,title,cover; std::string tile_icon{}; };
 struct Home { bool setup_ready=true; std::uint64_t last_title_id=0; std::string last_file,last_cover; std::vector<Recent> recents; };
 struct Services {
     unsigned calls=0;
@@ -209,23 +213,32 @@ struct Launcher {
 """ + icon_methods + r"""
 int main() {
     Launcher l;
-    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon"}};
+    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon"},{3,"different-file","C","fallback"},{5,"cached","E","fallback","canonical-5"}};
     l.home_.last_title_id=2; l.home_.last_file="two";
     l.games_={{2,"two","B","",false},{3,"three","C","",false},{3,"different-file","C","unchanged",false}};
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());
     l.screen_=Screen::home; l.media_cancel_=true;
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());
     l.media_cancel_=false; l.start_home_icons();
-    assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==2);
+    assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==1);
+    l.home_icon_scan_.wait(); l.finish_home_icons();
+    assert(l.home_.recents[0].tile_icon=="nlib-icon-1");
+    l.start_home_icons(); assert(l.home_icon_scan_title_id_==2);
     l.start_home_icons(); l.home_icon_scan_.wait(); l.finish_home_icons();
     assert(l.home_.last_cover=="nlib-icon-2" && l.home_.recents[1].cover=="nlib-icon-2");
-    assert(l.games_[0].cover=="nlib-icon-2" && l.services_.calls==1);
+    assert(l.home_.recents[1].tile_icon=="nlib-icon-2");
+    assert(l.games_[0].cover=="nlib-icon-2" && l.services_.calls==2);
     l.start_home_icons(); assert(l.home_icon_scan_title_id_==3);
     l.home_icon_scan_.wait(); l.finish_home_icons();
     assert(l.games_[1].cover=="nlib-icon-3" && l.games_[2].cover=="unchanged");
-    assert(l.home_.recents[2].cover=="nlib-icon-3" && l.textures_.invalidations==2);
-    l.start_home_icons(); assert(!l.home_icon_scan_.valid() && l.services_.calls==2);
-    l.home_.recents[1].cover.clear(); l.start_home_icons();
+    assert(l.home_.recents[2].cover=="nlib-icon-3" && l.textures_.invalidations==3);
+    assert(l.home_.recents[4].tile_icon=="nlib-icon-3" && l.home_.recents[4].cover=="fallback");
+    l.start_home_icons(); assert(l.home_icon_scan_title_id_==4);
+    l.home_icon_scan_.wait(); l.media_cancel_=true; l.finish_home_icons();
+    assert(l.home_.recents[3].tile_icon.empty() && l.home_.recents[3].cover=="local-icon");
+    l.media_cancel_=false;
+    l.start_home_icons(); assert(!l.home_icon_scan_.valid() && l.services_.calls==4);
+    l.home_.recents[1].tile_icon.clear(); l.home_.recents[1].cover.clear(); l.start_home_icons();
     assert(!l.home_icon_scan_.valid()); // retry not every frame
 }
 """

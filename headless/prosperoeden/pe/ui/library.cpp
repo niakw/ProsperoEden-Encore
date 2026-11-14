@@ -1104,6 +1104,16 @@ void Launcher::finish_home_scan()
         const std::string previous_file =
             home_recent_ >= 0 && home_recent_ < static_cast<int>(home_.recents.size()) ?
                 home_.recents[static_cast<std::size_t>(home_recent_)].file : std::string{};
+        // A snapshot started before the icon request completed must not
+        // erase a canonical icon or replace it with fallback art.
+        for (Recent& recent : snapshot.recents) {
+            if (!recent.title_id || !recent.tile_icon.empty()) continue;
+            for (const Recent& previous : home_.recents) {
+                if (previous.title_id != recent.title_id || previous.tile_icon.empty()) continue;
+                recent.tile_icon = previous.tile_icon;
+                break;
+            }
+        }
         home_ = std::move(snapshot);
         home_loaded_ = true;
         // Reconcile the completed ROM catalog with the Home snapshot even when
@@ -2754,9 +2764,9 @@ void Launcher::start_home_icons()
     // One bounded icon request at a time, regardless of controller focus.
     // No full-media calls for unselected titles, even in a large library.
     for (const Recent& recent : home_.recents) {
-        if (!recent.title_id || recent.title_id == home_media_scan_title_id_) continue;
-        if (!recent.cover.empty() && recent.cover.find("/box-front-") == std::string::npos)
-            continue;
+        // A nonempty fallback can be a portrait scan, not a canonical icon.
+        // The service uses a try-lock if selected full media owns the title.
+        if (!recent.title_id || !recent.tile_icon.empty()) continue;
         const auto due = home_icon_next_retry_.find(recent.title_id);
         if (due != home_icon_next_retry_.end() && now < due->second) continue;
         Game request;
@@ -2778,13 +2788,16 @@ void Launcher::finish_home_icons()
         home_icon_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
     try {
         Game result = home_icon_scan_.get();
-        if (result.title_id && result.title_id == home_icon_scan_title_id_ && !result.cover.empty()) {
+        if (!media_cancel_.load(std::memory_order_acquire) &&
+            result.title_id && result.title_id == home_icon_scan_title_id_ && !result.cover.empty()) {
             if (result.artwork_changed) textures_.invalidate(result.cover);
             if (result.title_id == home_.last_title_id && result.file == home_.last_file)
                 home_.last_cover = result.cover;
-            for (Recent& recent : home_.recents)
-                if (recent.title_id == result.title_id && recent.file == result.file)
-                    recent.cover = result.cover;
+            for (Recent& recent : home_.recents) {
+                if (recent.title_id != result.title_id) continue;
+                recent.tile_icon = result.cover;
+                if (recent.file == result.file) recent.cover = result.cover;
+            }
             for (Game& game : games_)
                 if (game.title_id == result.title_id && game.file == result.file)
                     game.cover = result.cover;

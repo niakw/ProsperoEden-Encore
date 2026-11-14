@@ -2012,7 +2012,10 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
                 const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
-                if (!nlib.icon.empty()) recent.cover = nlib.icon;
+                if (!nlib.icon.empty()) {
+                    recent.cover = nlib.icon;
+                    recent.tile_icon = nlib.icon;
+                }
                 recent.hero = nlib.hero;
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
                 recent.max_players = nlib.max_players;

@@ -116,6 +116,7 @@ struct Recent
     std::uint64_t title_id = 0;
     std::string addons;
     std::string language;
+    std::string tile_icon{}; // canonical Nlib icon, distinct from ROM/retail cover fallback
 };
 
 // The home screen's content.

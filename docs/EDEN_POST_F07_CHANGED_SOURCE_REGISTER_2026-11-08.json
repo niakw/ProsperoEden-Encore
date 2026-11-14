@@ -146,13 +146,13 @@
     {
       "path": "headless/prosperoeden/host/fake_services.cpp",
       "historical_reviewed_git_blob": "4720968bd02accaacf904ea298279ef9d4a740f6",
-      "post_snapshot_git_blob": "1cdfab87e2cf8283f1ee90d60a6cc36a344186f0",
+      "post_snapshot_git_blob": "8d71b520ec21cb32724cbfeb2869250e81742ecf",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "host preview settings expanded to actual neural and AA options",
       "review_kind": "host_preview_mock",
       "required_source_fragment": "A4K — Détails améliorés",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Host preview expands 18 locale labels/region mappings to the 31 PS5 interface choices while preserving existing 18-region indices. Host preview only, not console/guest language execution."
+      "review_note": "2026-11-09: Host preview expands 18 locale labels/region mappings to the 31 PS5 interface choices while preserving existing 18-region indices. Host preview only, not console/guest language execution.\n2026-11-14: #164 exact host-preview diff reviewed; value-initialize Recent and assign the same eight fields, preserving default values for untouched fields. Six missing-field-initializers warnings observed in preview job 132482367515; no native code touched. Historic F07 digest retained; new host preview run required."
     },
     {
       "path": "headless/prosperoeden/host/preview_main.cpp",

@@ -24,6 +24,12 @@ on:
       - 'headless/prosperoeden/pe/ui/launcher.cpp'
       - 'headless/prosperoeden/eden_services.cpp'
       - 'headless/prosperoeden/pe/ui/library.cpp'
+  pull_request:
+    paths:
+      - 'tools/check-native-gpu-thread.py'
+      - 'tools/ci/ps5_g21_gpu_shutdown_receipt.py'
+      - '.github/workflows/p5-native-preflight-host.yml'
+      - 'vendor'
   workflow_dispatch:
 
 permissions:
@@ -54,8 +60,10 @@ jobs:
         run: python3 -B tools/ns2/check_cpu6_scheduler_tick_host.py
       - name: Verify native performance checker uses shipping JIT, not retired experiment options
         run: python3 -B tools/check-performance.py --source-only
-      - name: Check maintained native GPU channel/loading arbitration before native build
+      - name: Check maintained native GPU channel/loading and G21 shutdown ownership
         run: python3 -B tools/check-native-gpu-thread.py --source-only
+      - name: Exercise five actual selected GPU destructor bodies with host sanitizers
+        run: python3 -B vendor/tests/ps5_gpu_renderer_channel_teardown_host.py
       - name: Verify production JIT owner, no experimental build selector, and package policy
         run: python3 -B tools/check-jit-stability.py
       - name: Execute maintained ROM-storage and Nlib media tests with host C++ compiler

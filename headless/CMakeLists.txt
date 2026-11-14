@@ -137,8 +137,15 @@ if(PS5_NATIVE)
         list(REMOVE_ITEM eden_nvdec_video_sources "host1x/ffmpeg.cpp")
         list(APPEND eden_nvdec_video_sources "${EDEN_NVDEC_MAINTAINED_SOURCE}")
         set_property(TARGET video_core PROPERTY SOURCES "${eden_nvdec_video_sources}")
+        # Do not put the broad Encore overrides root into PUBLIC include
+        # paths: that could shadow unrelated core/memory.h and ABI owners.
+        # Copy just this reviewed public header to a narrow build include.
+        set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")
+        file(MAKE_DIRECTORY "${EDEN_NVDEC_HEADER_DIR}/video_core/host1x")
+        configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"
+            "${EDEN_NVDEC_HEADER_DIR}/video_core/host1x/ffmpeg.h" COPYONLY)
         target_include_directories(video_core BEFORE PUBLIC
-            "${EDEN_NVDEC_OWNER_ROOT}/overrides")
+            "${EDEN_NVDEC_HEADER_DIR}")
         set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
             "${EDEN_NVDEC_MAINTAINED_SOURCE}" "${EDEN_NVDEC_MAINTAINED_HEADER}")
         message(STATUS "NVDEC: maintained FFmpeg packet-EAGAIN owners selected")

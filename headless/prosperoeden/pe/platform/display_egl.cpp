@@ -210,6 +210,17 @@ bool Display::defer_scanout_close()
 {
     if (display_ == EGL_NO_DISPLAY)
         return false;
+    {
+        std::lock_guard lock{deferred_display_mutex};
+        // RunApp clears stale ownership before opening a new launcher. Never
+        // terminate or replace a still-owned scanout from this function:
+        // doing so would recreate the very black handoff this bridge avoids.
+        if (deferred_display != EGL_NO_DISPLAY)
+        {
+            sys::log("egl scanout defer refused: previous owner still pending");
+            return false;
+        }
+    }
 
     bool ok = true;
     if (context_ != EGL_NO_CONTEXT)
@@ -228,17 +239,6 @@ bool Display::defer_scanout_close()
 
     {
         std::lock_guard lock{deferred_display_mutex};
-        // A previous failed/aborted launch must be released before replacing
-        // its owner. RunApp normally drains this at its next entry.
-        if (deferred_display != EGL_NO_DISPLAY && deferred_display != display_)
-        {
-            if (!eglTerminate(deferred_display))
-            {
-                const EGLint error = eglGetError();
-                sys::log("egl deferred replacement terminate failed: %s (0x%04x)",
-                         egl_error_name(error), static_cast<unsigned>(error));
-            }
-        }
         deferred_display = display_;
     }
     display_ = EGL_NO_DISPLAY;

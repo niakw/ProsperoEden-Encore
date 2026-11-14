@@ -397,13 +397,13 @@
     {
       "path": "headless/prosperoeden/pe/platform/display_egl.cpp",
       "historical_reviewed_git_blob": "a31fb6db879928c4fe7d96318046cae7eb68b2b8",
-      "post_snapshot_git_blob": "ca433e9a54933100bcd9643fdfa694138333cc9b",
+      "post_snapshot_git_blob": "d926d5c14ccf63617b12b60047c6167ea1f19dcd",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "PS5 launcher EGL lifecycle now supports a fail-closed deferred scanout owner so the last loading frame survives until the selected renderer takes VideoOut",
       "review_kind": "source_contract",
       "required_source_fragment": "bool Display::defer_scanout_close()",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-14 R457 unified loading: reviewed against pinned ps5-opengl eglTerminate/shutdown behavior. The defer path destroys context/surface but contains no eglTerminate and refuses an unexpected prior owner. Explicit close_deferred_scanout owns termination. PS5 physical continuity pending."
+      "review_note": "2026-11-14 R457 unified loading: reviewed against pinned ps5-opengl eglTerminate/shutdown behavior. The defer path destroys context/surface but contains no eglTerminate and refuses an unexpected prior owner. Explicit close_deferred_scanout owns termination. PS5 physical continuity pending.\n2026-11-14 correction after reviewing pinned ps5-opengl eglDestroySurface: window-surface destruction itself calls ps5_agc_gate2_shutdown_present and closes VideoOut. Candidate now retains EGLDisplay + EGLSurface through System::Load, destroys only the detached GL context, and destroys the surface only at renderer takeover. This narrows but does not yet prove a zero-black physical handoff."
     },
     {
       "path": "headless/prosperoeden/pe/platform/display_egl.hpp",

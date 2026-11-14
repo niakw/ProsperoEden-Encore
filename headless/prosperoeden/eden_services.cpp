@@ -481,7 +481,8 @@ std::mutex& ArtworkCodecMutex() {
 }
 
 bool WriteJpegWebP(const std::string& encoded, const std::string& output,
-                   bool tall_case = false) {
+                   bool tall_case = false, bool* decode_failed = nullptr) {
+    if (decode_failed) *decode_failed = false;
     // JPEG/PNG source -> WebP directly, one lossy encode at quality 80.
     // Runs only on the bounded network worker; never during GL navigation.
     if (encoded.empty() || encoded.size() > (16u << 20)) return false;
@@ -499,7 +500,12 @@ bool WriteJpegWebP(const std::string& encoded, const std::string& output,
     stbi_uc* rgba = stbi_load_from_memory(
         reinterpret_cast<const stbi_uc*>(encoded.data()), static_cast<int>(encoded.size()),
         &width, &height, &channels, 4);
-    if (!rgba) return false;
+    if (!rgba) {
+        // A valid header does not guarantee a decodable payload. Report
+        // rejection separately from local encoder/filesystem failure.
+        if (decode_failed) *decode_failed = true;
+        return false;
+    }
     const float scale = tall_case ?
         std::min({1.0f, 1500.0f / width, 2100.0f / height}) : 1.0f;
     const int w = std::max(1, static_cast<int>(width * scale));
@@ -1053,8 +1059,6 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
                    const std::atomic<bool>* cancel) {
     if (candidates.empty() ||
         (cancel && cancel->load(std::memory_order_acquire))) return false;
-    std::string best;
-    std::string best_source;
     std::size_t attempts = 0;
     std::size_t transport_failures = 0;
     std::size_t invalid_responses = 0;
@@ -1118,36 +1122,42 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
                          stbi_failure_reason() ? stbi_failure_reason() : "invalid-dimensions");
             continue;
         }
-        // A larger image from a different region is NOT a better scan of
-        // this edition. Once the first region-ranked usable candidate
-        // decodes, do not replace it with an unrelated region.
-        best = body;
-        best_source = filename;
-        break;
-    }
-    if (best.empty() || (cancel && cancel->load(std::memory_order_acquire))) {
-        std::fprintf(stderr,
-                     "EDEN_CASE_FETCH status=unavailable side=%s attempts=%zu network=%zu invalid=%zu\n",
-                     narrow_spine ? "spine" : "face",
-                     attempts, transport_failures, invalid_responses);
+        // Header inspection is only a prefilter. Reject an undecodable
+        // payload and keep the original region-ranked candidate order.
+        // Never redownload other candidates on a local encode/write failure.
+        if (cancel && cancel->load(std::memory_order_acquire)) break;
+        (void)mkdir(Eden::CoversDir().c_str(), 0777);
+        const std::string staged = destination + ".new";
+        bool decode_failed = false;
+        const bool encoded = WriteJpegWebP(body, staged, true, &decode_failed);
+        if (cancel && cancel->load(std::memory_order_acquire)) {
+            (void)std::remove(staged.c_str());
+            break;
+        }
+        if (decode_failed) {
+            (void)std::remove(staged.c_str());
+            ++invalid_responses;
+            std::fprintf(stderr, "EDEN_CASE_CDN status=decode-failed file=%s attempt=%zu\n",
+                         filename.c_str(), attempts);
+            continue;
+        }
+        if (encoded && std::rename(staged.c_str(), destination.c_str()) == 0) {
+            // Write provenance only after the first fully decoded authentic
+            // scan is published. Keep the previous good file on failure.
+            std::ofstream receipt(destination + ".source", std::ios::trunc);
+            if (receipt) receipt << filename << '\n';
+            std::fprintf(stderr, "EDEN_CASE_FETCH status=stored side=%s source=%s attempts=%zu bytes=%zu\n",
+                         narrow_spine ? "spine" : "face", filename.c_str(), attempts, body.size());
+            return true;
+        }
+        (void)std::remove(staged.c_str());
+        std::fprintf(stderr, "EDEN_CASE_FETCH status=write-failed side=%s attempts=%zu\n",
+                     narrow_spine ? "spine" : "face", attempts);
         return false;
     }
-    (void)mkdir(Eden::CoversDir().c_str(), 0777);
-    const std::string staged = destination + ".new";
-    if (WriteJpegWebP(best, staged, true) &&
-        std::rename(staged.c_str(), destination.c_str()) == 0) {
-        // Provenance for a generated WebP. A newer index can replace stale
-        // US artwork even when the cached US image has higher resolution.
-        // The WebP remains usable if this tiny receipt write fails.
-        std::ofstream receipt(destination + ".source", std::ios::trunc);
-        if (receipt) receipt << best_source << '\n';
-        std::fprintf(stderr, "EDEN_CASE_FETCH status=stored side=%s source=%s attempts=%zu bytes=%zu\n",
-                     narrow_spine ? "spine" : "face", best_source.c_str(), attempts, best.size());
-        return true;
-    }
-    (void)std::remove(staged.c_str());
-    std::fprintf(stderr, "EDEN_CASE_FETCH status=write-failed side=%s attempts=%zu\n",
-                 narrow_spine ? "spine" : "face", attempts);
+    std::fprintf(stderr,
+                 "EDEN_CASE_FETCH status=unavailable side=%s attempts=%zu network=%zu invalid=%zu\n",
+                 narrow_spine ? "spine" : "face", attempts, transport_failures, invalid_responses);
     return false;
 }
 

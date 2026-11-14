@@ -6,6 +6,9 @@ on:
   pull_request:
     paths:
       - 'headless/prosperoeden/pe/ui/**'
+      - 'headless/prosperoeden/eden_services.cpp'
+      - 'headless/prosperoeden/eden_services.h'
+      - 'tools/check-launch-case-artwork.py'
       - '.github/workflows/launcher-production-preview.yml'
   # Run only for main or isolated UI branches when launcher content changes.
   # GPU/JIT pushes never trigger the expensive full render walkthrough.

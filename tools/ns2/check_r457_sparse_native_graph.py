@@ -21,7 +21,7 @@ REVIEWED_VENDORS={
     "0267753219c4b6a6f3fa086a356b698cd5295f78",
     "78a903a7479f0f58f3cbd3c2fcfd329012a11e10",
     "13ee2fff7be6c0bac225b377a4367b1d0b3073a0",
-    "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3",
+    "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767",
 }
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
@@ -87,7 +87,7 @@ def main():
     # they are each the sole real CMake native compilation owner, then compile
     # the full TUs with the exact SDK command (not replacement mock headers).
     storage_labels = set()
-    if sha in {"7bd7a85e6c1886035c75395c86b05b231375bbf5", "7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3"}:
+    if sha in {"7bd7a85e6c1886035c75395c86b05b231375bbf5", "7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767"}:
         storage_receipts = {
             "file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
             "file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
@@ -111,7 +111,7 @@ def main():
 
     shader_labels = set()
     bfs_header = None
-    if sha in {"7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3"}:
+    if sha in {"7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6", "0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767"}:
         relative = Path("shader_recompiler/frontend/ir/breadth_first_search.h")
         bfs_header = native/"headless/r23-shader-phi/include"/relative
         vendor_header = ROOT/"vendor/encore-active/eden-shader/include"/relative
@@ -128,7 +128,7 @@ def main():
         selected.append((label, rows[0]))
         print("R457_NATIVE_BFS_STAGE_GRAPH_PASS exact_header=1 texture_owner=1",flush=True)
 
-    if sha in {"0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3"}:
+    if sha in {"0267753219c4b6a6f3fa086a356b698cd5295f78", "78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767"}:
         env = ROOT/"vendor/encore-active/eden-core/src/video_core/shader_environment.cpp"
         if gitblob(env) != "8b4e883aaad5507652e13be211581e4965b7fe89":
             raise RuntimeError("Unreviewed null-TIC shader environment owner")
@@ -140,7 +140,7 @@ def main():
         print("R457_NATIVE_NULL_TIC_GRAPH_PASS exact_owner=1",flush=True)
 
     host1x_labels = set()
-    if sha in {"78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3"}:
+    if sha in {"78a903a7479f0f58f3cbd3c2fcfd329012a11e10", "13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767"}:
         sync = ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
         if gitblob(sync) != "4e87a03a8d411f0f07a6806bf6aaebbe9ad16b48":
             raise RuntimeError("Unreviewed Host1x counter notification owner")
@@ -154,7 +154,7 @@ def main():
         selected.append(("host1x_counter_notify", rows[0]))
         print("R457_NATIVE_HOST1X_NOTIFY_GRAPH_PASS exact_owner=1 unchanged_header=1",flush=True)
 
-    if sha in {"13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3"}:
+    if sha in {"13ee2fff7be6c0bac225b377a4367b1d0b3073a0", "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767"}:
         geometry = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate_program.cpp"
         if gitblob(geometry) != "2cd894ab009c16a22d953d1cba9359c28ae22149":
             raise RuntimeError("Unreviewed emulated geometry mask source")
@@ -165,7 +165,7 @@ def main():
         selected.append(("shader_geometry_passthrough_mask", rows[0]))
         print("R457_NATIVE_GEOMETRY_MASK_GRAPH_PASS exact_owner=1",flush=True)
 
-    if sha == "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3":
+    if sha == "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767":
         original = ROOT/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
         if gitblob(original) != "27a3c820667b0bf0774b9ab3c88e5a9e00032c4f":
             raise RuntimeError("Unreviewed Vulkan blit layout source")

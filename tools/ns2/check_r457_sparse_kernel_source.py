@@ -25,7 +25,7 @@ reviewed_vendors={
     "0267753219c4b6a6f3fa086a356b698cd5295f78",
     "78a903a7479f0f58f3cbd3c2fcfd329012a11e10",
     "13ee2fff7be6c0bac225b377a4367b1d0b3073a0",
-    "d0b0416fb9eb29a237f17dee4c132e4d2afb2ba3",
+    "c8e6f2f8dd2b0554e1c7d5bf6e31ef66a9885767",
 }
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()

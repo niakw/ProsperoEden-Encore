@@ -34,6 +34,7 @@ jobs:
           test "$(git hash-object vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp)" = "27a3c820667b0bf0774b9ab3c88e5a9e00032c4f"
           python3 -B vendor/tests/ps5_same_image_blit_layout_host.py
           python3 -B vendor/tests/ns1_r23_18_tir_host.py
+          test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv.cpp)" = "b490f372d67f4aabf69aa2b29973835f662382db"
           python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
           python3 -B tools/check-spirv-scalar-cache-sirit-contract.py
       - name: Verify shared shader source graph and real C++ syntax

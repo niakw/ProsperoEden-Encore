@@ -424,12 +424,16 @@ ui::Home FakeServices::home()
                                  "Caf\xC3\xA9 Nocturne", "Moss & Lantern", "Tiny Harbor", "Cloudline"})
         {
             const ui::Game &game = find(name);
-            home.recents.push_back({game.file, game.name, game.cover});
-            home.recents.back().hero = game.hero;
-            home.recents.back().title_id = game.title_id;
-            home.recents.back().max_players = game.max_players;
-            home.recents.back().intro = game.intro;
-            home.recents.back().description = game.description;
+            home.recents.emplace_back();
+            auto& recent = home.recents.back();
+            recent.file = game.file;
+            recent.title = game.name;
+            recent.cover = game.cover;
+            recent.hero = game.hero;
+            recent.title_id = game.title_id;
+            recent.max_players = game.max_players;
+            recent.intro = game.intro;
+            recent.description = game.description;
         }
     }
     // The README preview must display the *packaged Eden wallpaper*

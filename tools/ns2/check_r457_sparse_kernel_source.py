@@ -5,15 +5,35 @@ Host-only structural audit. It does not execute guest code or confirm
 physical alias lifetime, PS5 SDK, GPU fences, or first frame.
 """
 from pathlib import Path
+import hashlib
 import subprocess
 import sys
 
 root=Path(__file__).resolve().parents[2]
-vendor="1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+# Only the exact historical and reviewed integrated vendor commits are
+# admitted. The sparse PTE/slab/GPU publisher owners are byte-identical.
+reviewed_vendors={
+    "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864",
+    "67ae2d75a452cd86b0e36ef33b2cb987092a415d",
+}
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
-assert pinned==vendor,(pinned,vendor)
+selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
+                                 text=True).strip()
+assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
 def read(path): return (root/path).read_text()
+def gitblob(path):
+    raw=(root/path).read_bytes()
+    return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+for path,expected in (
+    ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp",
+     "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
+    ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp",
+     "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
+    ("vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc",
+     "daf493ce6e863397ec44bfae467c4f7533570477"),
+):
+    assert gitblob(path)==expected,("Unexpected sparse kernel source owner",path)
 
 cmake=read("headless/CMakeLists.txt")
 kernel_rel="vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp"

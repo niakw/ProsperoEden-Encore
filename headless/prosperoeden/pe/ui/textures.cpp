@@ -447,7 +447,7 @@ void Textures::pump(float dt, int budget)
                         decoded.key = std::move(key);
                         decoded.generation = generation;
                         try {
-                            decoded.ok = services_.load_image(path, &decoded.image);
+                            decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);
                             if (decoded.ok) {
                                 // Keep the largest dimension near the actual
                                 // rendering footprint. This scaling is CPU-side

@@ -174,6 +174,8 @@ struct Preferences
     int volume = 100; // game volume, 0-100
     bool mute = false;
     bool detailed_logging = false;
+    bool share_standard_logs = false;
+    bool share_advanced_logs = false;
     int renderer = 1; // 0 OpenGL, 1 Vulkan
     int resolution = 4; // Recommended: 1.25x
     int filter = Eden::EncoreOverrides::kGeneralProfiles[1].filter; // FSR 1
@@ -412,6 +414,8 @@ class Services
     virtual const std::vector<std::string> &language_labels() = 0;
     virtual std::string language_region(int language) = 0;
     virtual std::string setup_details() = 0;
+    // Fail closed until the verified HTTPS collector and consent notice are installed.
+    virtual bool log_sharing_available() const { return false; }
     virtual DiagnosticsInfo diagnostics() { return {}; }
     // Optional cooperative cancellation for lengthy native cache/log walks.
     // Host/preview implementations retain their original behavior.

@@ -557,7 +557,9 @@ void Launcher::draw_switch_settings(Canvas& c) {
         size=4;break;
     case 5:
         rows={Line{TR("Detailed logging"),prefs_.detailed_logging?tr("On"):tr("Off")},
-              Line{TR("Cache"),tr("Manage")},Line{"",""},Line{"",""}};size=2;break;
+              Line{TR("Share advanced logs"),services_.log_sharing_available()?(prefs_.share_advanced_logs?tr("On"):tr("Off")):tr("Off")},
+              Line{TR("Share standard logs"),services_.log_sharing_available()?(prefs_.share_standard_logs?tr("On"):tr("Off")):tr("Off")},
+              Line{TR("Cache"),tr("Manage")}};size=4;break;
     case 6:
         rows={Line{TR("Game files"),tr("Open folders")},Line{"",""},Line{"",""},Line{"",""}};size=1;break;
     case 7:
@@ -1043,8 +1045,11 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                      std::to_string(prefs_.stick_deadzone)+"%";
             break;
         case Modal::diagnostics:
-            label=i==0?tr("Detailed logging"):tr("Clear cache");
-            value=i==0?(prefs_.detailed_logging?tr("On"):tr("Off")):tr("Clear");
+            label=i==0?tr("Detailed logging"):i==1?tr(TR("Share advanced logs")):
+                i==2?tr(TR("Share standard logs")):tr("Clear cache");
+            value=i==0?(prefs_.detailed_logging?tr("On"):tr("Off")):
+                i==1?(services_.log_sharing_available()&&prefs_.share_advanced_logs?tr("On"):tr("Off")):
+                i==2?(services_.log_sharing_available()&&prefs_.share_standard_logs?tr("On"):tr("Off")):tr("Clear");
             break;
         default:
             label=tr("Select");
@@ -1102,6 +1107,20 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         };
         if (guides)
             switch_video_help(c,tr(labels[option_]),guides,inactive,744.0f);
+    }
+    if (modal==Modal::diagnostics && option_>=0 && option_<=3) {
+        static constexpr const char* names[] = {
+            TR("Detailed logging"), TR("Share advanced logs"),
+            TR("Share standard logs"), TR("Clear cache")};
+        static constexpr const char* hints[] = {
+            TR("Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."),
+            TR("Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."),
+            TR("Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."),
+            TR("Clear shader caches only. Saves, settings, keys and games are not removed.")};
+        const bool inactive=(option_==1||option_==2)&&!services_.log_sharing_available();
+        switch_video_help(c,tr(names[option_]),
+            inactive?tr(TR("Log sharing service is not available. Nothing is sent.")):tr(hints[option_]),
+            inactive,744.0f);
     }
     list.rounded_rect({493,888,932,2},0,kGrey);
     text_shrink(c,tr("Change"),1252.0f,baseline(901,51,19),

@@ -2707,6 +2707,8 @@ pe::ui::Preferences EdenServices::preferences() {
     result.volume = saved.volume;
     result.mute = saved.mute;
     result.detailed_logging = saved.detailed_logging;
+    result.share_standard_logs = saved.share_standard_logs;
+    result.share_advanced_logs = saved.share_advanced_logs;
     result.renderer = saved.backend == Eden::GraphicsBackend::OpenGL ? 0 : 1;
     result.resolution = saved.resolution;
     result.filter = saved.upscaling_filter;
@@ -2755,6 +2757,9 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.volume = preferences.volume;
     value.mute = preferences.mute;
     value.detailed_logging = preferences.detailed_logging;
+    // No native collector yet. A stale or hand-edited preference cannot turn sharing on.
+    value.share_standard_logs = log_sharing_available() && preferences.share_standard_logs;
+    value.share_advanced_logs = log_sharing_available() && preferences.share_advanced_logs;
     value.backend = preferences.renderer == 0 ? Eden::GraphicsBackend::OpenGL : Eden::GraphicsBackend::Vulkan;
     value.resolution = preferences.resolution;
     value.upscaling_filter = preferences.filter;

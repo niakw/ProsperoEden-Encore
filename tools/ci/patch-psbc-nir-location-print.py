@@ -58,14 +58,26 @@ MASK_AFTER = b"nir_channels(&b, value, nir_component_mask(num_dwords))"
 
 
 def patched_aco(raw: bytes) -> bytes:
-    if gitblob(raw) != PINNED_ACO or raw.count(ACO_BEFORE) != 2:
-        raise ValueError("Unexpected pinned PSBC ACO offset alignment source")
+    digest = gitblob(raw)
+    before_count = raw.count(ACO_BEFORE)
+    after_count = raw.count(ACO_AFTER)
+    if digest != PINNED_ACO or before_count != 2:
+        raise ValueError(
+            "Unexpected pinned PSBC ACO offset alignment source "
+            f"blob={digest} before={before_count} after={after_count}"
+        )
     return raw.replace(ACO_BEFORE, ACO_AFTER)
 
 
 def patched_nir_mask(raw: bytes) -> bytes:
-    if gitblob(raw) != PINNED_NIR_MASK or raw.count(MASK_BEFORE) != 1:
-        raise ValueError("Unexpected pinned PSBC NIR partial-store source")
+    digest = gitblob(raw)
+    before_count = raw.count(MASK_BEFORE)
+    after_count = raw.count(MASK_AFTER)
+    if digest != PINNED_NIR_MASK or before_count != 1:
+        raise ValueError(
+            "Unexpected pinned PSBC NIR partial-store source "
+            f"blob={digest} before={before_count} after={after_count}"
+        )
     # The key generator computes remainder modulo 4*dwords_per_thread,
     # with 1..4 dwords/thread. The nonzero num_dwords here is 1..3.
     if (b"key->dwords_per_thread <= 4" not in raw or

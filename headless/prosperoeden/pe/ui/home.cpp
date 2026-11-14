@@ -928,9 +928,11 @@ void Launcher::draw_home(Canvas &c)
         const int shown = std::min<int>(kHomeRecentMax, static_cast<int>(home_.recents.size()));
         constexpr float available = 1770.0f;
         constexpr float gap = 16.0f;
-        constexpr float card_h = 214.0f;
-        // Real games only; keep cards at console-cover scale even with 1-3 titles.
+        // Real Switch 1/2 icon tiles use a square viewport. Cropping by
+        // source UV (cover_crop) preserves the original aspect, never stretches
+        // the NS2 icon into a short landscape rectangle.
         constexpr float card_w = (available - gap * 6.0f) / 7.0f;
+        constexpr float card_h = card_w;
         const float row_x = 76.0f;
         for (int i = 0; i < shown; ++i)
         {
@@ -950,8 +952,12 @@ void Launcher::draw_home(Canvas &c)
             // screenshot or a cropped panoramic banner on the small tile.
             const std::string& art = !recent.cover.empty() ? recent.cover :
                                      (!recent.hero.empty() ? recent.hero : recent.screenshot);
+            // These seven visible icons get priority over off-screen case
+            // media queued before a game's teardown. Preserve the
+            // aspect-correct square crop and existing cached GL texture.
+            const Cover picture = c.textures.cover(
+                art, std::max(card_w - 8.0f, card_h - 8.0f), true);
             cover_crop(c, art, {r.x + 4.0f, r.y + 4.0f, r.w - 8.0f, r.h - 8.0f}, 20.0f, 0.32f);
-            const Cover picture = c.textures.cover(art, std::max(card_w - 8.0f, card_h - 8.0f));
             if (picture.texture == 0) {
                 const bool fetching = recent.title_id != 0 &&
                     (home_media_scan_title_id_ == recent.title_id ||
@@ -978,7 +984,7 @@ void Launcher::draw_home(Canvas &c)
     // ---- utility cards: the four Home actions from the approved console-style mock-up ----
     begin_band(4, 14.0f);
     constexpr float utility_x = 60.0f;
-    constexpr float utility_y = 825.0f;
+    constexpr float utility_y = 835.0f; // reserve vertical room for square recent icons
     constexpr float utility_gap = 16.0f;
     constexpr float utility_w = (1800.0f - utility_gap * 3.0f) / 4.0f;
     constexpr float utility_h = 96.0f;

@@ -9,6 +9,13 @@ source_dir="$root/../ps5-opengl-review"
 expected=ad2807d41cef2681882a9ee0d20808779f74b7cd
 prefix="$root/.local/ps5-opengl-sdk-ad2807d"
 marker="$prefix/ENCORE_SOURCE_COMMIT"
+nir_fix_marker="$prefix/ENCORE_PSBC_NIR_LOCATION_FIX"
+nir_fix_identity=$(
+    for script in "$root/tools/ci/patch-psbc-nir-location-print.py" \
+                  "$root/tools/ci/patch-psbc-nir-build-hooks.py"; do
+        sha256sum "$script" | awk '{print $1}'
+    done | sha256sum | awk '{print $1}'
+)
 [[ -d $source_dir/.git ]] || { echo "Missing pinned PS5 OpenGL source: run make deps" >&2; exit 1; }
 # PS5 OpenGL records its own boilerplate/PayloadSDK pair. Do not combine its source snapshot with
 # Encore's older application-template pin: build the graphics SDK against the exact upstream pair.
@@ -57,7 +64,7 @@ fi
 
 valid=0
 if [[ -f $marker && -f $prefix/manifest.sha256 && -s $prefix/lib/libps5_opengl_core33.a ]] &&
-   [[ $(cat "$marker") == "$expected" ]]; then
+   [[ $(cat "$marker") == "$expected" && -f $nir_fix_marker && $(cat "$nir_fix_marker") == "$nir_fix_identity" ]]; then
     if (cd "$prefix" && sha256sum --check --strict manifest.sha256 >/dev/null 2>&1); then
         valid=1
     fi
@@ -80,6 +87,12 @@ cross_backup=""
 host_test="$source_dir/tests/ps5/test_compute_bindings.py"
 host_test_backup=""
 psbc_configs=()
+psbc_scripts=()
+nir_print_source=""
+nir_print_backup=""
+radv_stub_source=""
+radv_stub_backup=""
+psbc_extra_sources=()
 cleanup() {
     if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
         mv -f "$host_test_backup" "$host_test"
@@ -87,6 +100,22 @@ cleanup() {
     if [[ -n ${cross_backup:-} && -f $cross_backup ]]; then
         mv -f "$cross_backup" "$cross_file"
     fi
+    if [[ -n ${nir_print_backup:-} && -f $nir_print_backup ]]; then
+        mv -f "$nir_print_backup" "$nir_print_source"
+    fi
+    if [[ -n ${radv_stub_backup:-} && -f $radv_stub_backup ]]; then
+        mv -f "$radv_stub_backup" "$radv_stub_source"
+    fi
+    for extra in "${psbc_extra_sources[@]}"; do
+        if [[ -f "${extra}.encore-backup.$$" ]]; then
+            mv -f "${extra}.encore-backup.$$" "$extra"
+        fi
+    done
+    for script in "${psbc_scripts[@]}"; do
+        if [[ -f "${script}.encore-backup.$$" ]]; then
+            mv -f "${script}.encore-backup.$$" "$script"
+        fi
+    done
     # Preserve original checked-out OpenGL build inputs after all exit paths.
     for cfg in "${psbc_configs[@]}"; do
         if [[ -f "${cfg}.encore-backup.$$" ]]; then
@@ -124,6 +153,46 @@ fi
 # Upstream's own fetcher pins and hashes Mesa/compiler dependencies. Building the SDK here keeps
 # Encore on a reviewed source commit instead of silently consuming an untagged moving HEAD.
 python3 "$source_dir/tools/fetch-sources.py"
+
+# Fix the pinned PSBC Mesa 26.2 NIR printer's real decimal truncation.
+# A 32-bit location needs 11 bytes (10 digits + NUL), not four. Patch only
+# the isolated PSBC checkout; restore its original bytes on all exit paths.
+nir_print_source="$source_dir/third_party/opengnm-psbc/src/compiler/nir/nir_print.c"
+[[ -f $nir_print_source && ! -L $nir_print_source ]] || {
+    echo "Missing pinned PSBC NIR location source" >&2; exit 1;
+}
+nir_print_backup="${nir_print_source}.encore-backup.$$"
+cp -p "$nir_print_source" "$nir_print_backup"
+# The PSBC compatibility stub (not the Vulkan driver) also needs a
+# file-scope opaque declaration. Protect the original bytes in the outer trap.
+radv_stub_source="$source_dir/third_party/opengnm-psbc/src/amd/vulkan/radv_instance.h"
+[[ -f $radv_stub_source && ! -L $radv_stub_source ]] || {
+    echo "Missing pinned PSBC RADV compatibility stub" >&2; exit 1;
+}
+radv_stub_backup="${radv_stub_source}.encore-backup.$$"
+cp -p "$radv_stub_source" "$radv_stub_backup"
+for relative in amd/compiler/instruction_selection/aco_select_nir_intrinsics.cpp \
+                amd/common/nir/ac_nir_meta_cs_clear_copy_buffer.c \
+                amd/compiler/aco_lower_to_hw_instr.cpp \
+                compiler/nir/nir_unlower_io_to_vars.c \
+                amd/compiler/aco_spill_preserved.cpp \
+                amd/vulkan/nir/radv_nir_lower_descriptors.c; do
+    extra="$source_dir/third_party/opengnm-psbc/src/$relative"
+    [[ -f $extra && ! -L $extra ]] || { echo "Missing pinned PSBC compiler owner: $relative" >&2; exit 1; }
+    cp -p "$extra" "${extra}.encore-backup.$$"
+    psbc_extra_sources+=("$extra")
+done
+# Do not patch before sdk-gl46: the host and PS5 compiler scripts each
+# call the unmodified upstream --verify-psbc. Wrap their exact make calls
+# AFTER these checks, restoring the printer before fingerprint/tests.
+export ENCORE_PSBC_NIR_PATCHER="$root/tools/ci/patch-psbc-nir-location-print.py"
+for script in "$source_dir/toolchain/build-opengnm-psbc.sh" \
+              "$source_dir/toolchain/build-opengnm-psbc-ps5.sh"; do
+    [[ -f $script && ! -L $script ]] || { echo "Missing pinned PSBC build script" >&2; exit 1; }
+    cp -p "$script" "${script}.encore-backup.$$"
+    psbc_scripts+=("$script")
+    python3 -B "$root/tools/ci/patch-psbc-nir-build-hooks.py" "$script"
+done
 
 # The pinned PSBC toolchain configs omit GCC/Clang's supported NORETURN
 # attribute while vtn_fail() actually longjmps. Temporarily annotate both
@@ -233,12 +302,30 @@ if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
     mv -f "$host_test_backup" "$host_test"
     host_test_backup=""
 fi
+if [[ -n ${nir_print_backup:-} && -f $nir_print_backup ]]; then
+    mv -f "$nir_print_backup" "$nir_print_source"
+    nir_print_backup=""
+fi
+if [[ -n ${radv_stub_backup:-} && -f $radv_stub_backup ]]; then
+    mv -f "$radv_stub_backup" "$radv_stub_source"
+    radv_stub_backup=""
+fi
+for extra in "${psbc_extra_sources[@]}"; do
+    mv -f "${extra}.encore-backup.$$" "$extra"
+done
+psbc_extra_sources=()
+for script in "${psbc_scripts[@]}"; do
+    mv -f "${script}.encore-backup.$$" "$script"
+done
+psbc_scripts=()
+python3 "$source_dir/tools/fetch-sources.py" --verify-psbc
 for cfg in "${psbc_configs[@]}"; do
     mv -f "${cfg}.encore-backup.$$" "$cfg"
 done
 psbc_configs=()
 (cd "$stage" && sha256sum --check --strict manifest.sha256 >/dev/null)
 printf '%s\n' "$expected" > "$stage/ENCORE_SOURCE_COMMIT"
+printf '%s\n' "$nir_fix_identity" > "$stage/ENCORE_PSBC_NIR_LOCATION_FIX"
 printf '%s\n' 'Includes upstream 1.0.1 plus 217da45 constant-buffer/alignment and 67c873f scanout flush.' \
     > "$stage/ENCORE_AUDIT_FIXES"
 rm -rf "$prefix"

@@ -11,6 +11,10 @@ import argparse
 import json
 import os
 import shutil
+from ci.ps5_radv_ngg_mesh_zero import (
+    RELATIVE as NGG_MESH, patched_bytes as patched_ngg_mesh,
+    verify_reviewed_output as verify_ngg_mesh,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 ORIGINAL = ROOT / 'vendor/sources/ps5-mesa'
@@ -167,6 +171,35 @@ def install(destination: Path, provenance: Path | None,
                 temporary.unlink(missing_ok=True)
             changed = True
         installed[relative] = fork_sha
+
+    # A valid SPIR-V mesh shader can exit before SetMeshOutputsEXT. The
+    # exact pinned Mesa lowerer reads undefined vertex/primitive counts on
+    # that path (mihawk-99/PS5_Mesa #8, device-lost on console).
+    # Keep vendor/sources untouched; write ONLY the owned RADV staging
+    # compiler unit, following the same two-pass rebuild as the 14 maintained
+    # overrides. The 15th source must be included in the archive receipt.
+    mesh_original = ORIGINAL / NGG_MESH
+    mesh_staged = destination / NGG_MESH
+    if (not mesh_original.is_file() or mesh_original.is_symlink() or
+        not mesh_staged.is_file() or mesh_staged.is_symlink()):
+        raise RuntimeError('Pinned PS5 mesh lowering owner missing/symlinked')
+    expected_mesh = patched_ngg_mesh(mesh_original.read_bytes())
+    prior_mesh = mesh_staged.read_bytes()
+    if prior_mesh not in (mesh_original.read_bytes(), expected_mesh):
+        # The previous build may have installed some other patch, which
+        # cannot be certified by this exact source hash contract.
+        raise RuntimeError('Unreviewed PS5 Mesa mesh compiler source staged')
+    if prior_mesh != expected_mesh:
+        tmp_mesh = mesh_staged.with_name(mesh_staged.name + f'.reviewed-{os.getpid()}')
+        try:
+            tmp_mesh.write_bytes(expected_mesh)
+            tmp_mesh.replace(mesh_staged)
+            os.utime(mesh_staged, None)
+        finally:
+            tmp_mesh.unlink(missing_ok=True)
+        changed = True
+    verify_ngg_mesh(mesh_staged.read_bytes())
+    installed[NGG_MESH] = hashlib.sha256(expected_mesh).hexdigest()
     if changed and provenance is not None and provenance.exists():
         provenance.replace(provenance.with_suffix('.base.txt'))
     # Always check the final bytes, independently of the chosen source path.

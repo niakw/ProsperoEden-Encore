@@ -1,0 +1,41 @@
+name: Shared PS5 scalar cache selected shader ABI (host)
+on:
+  pull_request:
+    paths:
+      - "vendor"
+      - "headless/CMakeLists.txt"
+      - "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      - "tools/check-spirv-scalar-cache-sirit-contract.py"
+      - ".github/workflows/spirv-scalar-engine-host.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shader-abi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Check exact selected shared header and vendor test
+        run: |
+          test "$(git -C vendor rev-parse HEAD)" = "$(git rev-parse HEAD:vendor)"
+          test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h)" = "844a118358c874b0666aebda116c1d6a0c9a8ceb"
+          python3 -B vendor/tests/ps5_spirv_scalar_constant_cache_host.py
+          python3 -B vendor/tests/ps5_spirv_scalar_real_sirit_host.py
+          test "$(git hash-object vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h)" = "194476705f21bd1c27f532fdd5cc04d99a3cd620"
+          python3 -B vendor/tests/ns1_r23_58_conditional_phi.py
+          test "$(git hash-object vendor/encore-active/eden-core/src/video_core/shader_environment.cpp)" = "8b4e883aaad5507652e13be211581e4965b7fe89"
+          python3 -B vendor/tests/ps5_null_texture_environment_host.py
+          test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate_program.cpp)" = "2cd894ab009c16a22d953d1cba9359c28ae22149"
+          python3 -B vendor/tests/ps5_geometry_passthrough_mask_host.py
+          test "$(git hash-object vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp)" = "27a3c820667b0bf0774b9ab3c88e5a9e00032c4f"
+          python3 -B vendor/tests/ps5_same_image_blit_layout_host.py
+          python3 -B vendor/tests/ns1_r23_18_tir_host.py
+          test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv.cpp)" = "b490f372d67f4aabf69aa2b29973835f662382db"
+          python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
+          python3 -B tools/check-spirv-scalar-cache-sirit-contract.py
+      - name: Verify shared shader source graph and real C++ syntax
+        run: python3 -B tools/ns2/check_shared_ns2_spirv_compiler_host.py

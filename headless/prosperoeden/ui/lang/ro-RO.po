@@ -2454,8 +2454,8 @@ msgid "Choose a theme background, two custom colors, a local image or the daily 
 msgstr "Choose a theme background, two custom colors, a local image or the daily game artwork."
 
 #: pe/ui/settings.cpp
-msgid "App wallpapers: /data/prosperoeden/user/wallpapers. PS5 captures (JPG/PNG) appear automatically; HDR JXR is unsupported."
-msgstr "Fundaluri aplicație: /data/prosperoeden/user/wallpapers. Capturile PS5 (JPG/PNG) apar automat; HDR JXR nu este acceptat."
+msgid "App wallpapers: /data/prosperoeden/user/wallpapers. These appear first; PS5 captures (JPG/PNG/JXR) follow. HDR JXR converts to WebP only when chosen."
+msgstr "Fundaluri aplicație: /data/prosperoeden/user/wallpapers. Apar primele, urmate de capturile PS5 (JPG/PNG/JXR). HDR JXR se convertește în WebP numai la selectare."
 
 #: pe/ui/settings.cpp
 msgid "Pick a preset for the first background color, or adjust its channels below."

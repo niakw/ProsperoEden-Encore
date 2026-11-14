@@ -32,7 +32,10 @@ for value in (
 ):
     assert value in CMAKE,value
 begin=CMAKE.index('# Eglantine #462: PS5 Vulkan BufferCache::CanReorderUpload')
-end=CMAKE.index('# The texture-cache small-vector',begin)
+# The NVDEC source selector was added AFTER this independent Vulkan
+# header selector. Do not inadvertently count its extra native if()/endif().
+end=min(CMAKE.index('# The texture-cache small-vector',begin),
+        CMAKE.index('# NS1 NVDEC/FFmpeg EAGAIN:',begin))
 block=CMAKE[begin:end]
 assert block.count('if(PS5_NATIVE)')==1
 assert block.count('if(EXISTS "${EDEN_PS5_USAGE_TRACKER_HEADER}")')==1

@@ -1,0 +1,39 @@
+name: PS5 RADV NGG mesh early-return zero outputs (host)
+
+on:
+  push:
+    branches:
+      - fix/nov14-radv-ngg-mesh-zero-output-staged
+  pull_request:
+    paths:
+      - "tools/ci/ps5_radv_ngg_mesh_zero.py"
+      - "tools/install-vendored-radv.py"
+      - "tools/radv-active-inputs.py"
+      - "tools/check-vendored-radv-fork.py"
+      - "tools/check-ps5-radv-ngg-mesh-zero-host.py"
+      - ".github/workflows/ps5-radv-ngg-mesh-zero-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pinned-mesa-mesh-zero:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - name: Exact engine and immutable vendor driver checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Reject unapproved driver owner and test two-output defaults under sanitizers
+        run: python3 -B tools/check-ps5-radv-ngg-mesh-zero-host.py
+      - name: Replay entire maintained RADV stage with the 15th mesh owner
+        run: python3 -B tools/check-vendored-radv-fork.py
+      - name: Reject stale driver archives using all 15 exact staged source inputs
+        run: python3 -B tools/radv-active-inputs.py --self-test
+      - name: Verification limits
+        if: always()
+        run: |
+          echo "Host-only source and staged driver archive receipts. This job does not compile the PS5 RADV static archive or run an early-return mesh shader on console. PS5 GPU hangs must be validated with safe console recovery." >> "$GITHUB_STEP_SUMMARY"

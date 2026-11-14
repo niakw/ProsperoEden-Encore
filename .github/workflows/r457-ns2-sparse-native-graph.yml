@@ -7,12 +7,18 @@ on:
       - 'src/ns2_sparse_guest.cpp'
       - 'src/host_memory.cpp'
       - 'headless/CMakeLists.txt'
+      - 'tools/build-opengl-sdk.sh'
+      - 'tools/ci/patch-psbc-nir-location-print.py'
+      - 'tools/ci/patch-psbc-nir-build-hooks.py'
+      - 'tools/check-psbc-nir-location-host.py'
       - vendor
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: r457-sparse-real-cmake-native
+  # Supersede only an older revision of this PR/ref. Independent reviewed
+  # candidate branches must not cancel each other at cache or syntax steps.
+  group: r457-sparse-real-cmake-native-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   native-three-source-syntax:
@@ -44,7 +50,7 @@ jobs:
             prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-
             prospero-eden-encore-040-Linux-
             prosperoeden-040-zbic-Linux-
-      - name: Configure genuine native source and compile three maintained TUs for syntax only
+      - name: Configure genuine native source and syntax-check selected sparse and storage TUs
         shell: bash
         run: |
           set -euo pipefail

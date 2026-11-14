@@ -117,6 +117,47 @@ if(PS5_NATIVE)
         message(STATUS "PS5 Vulkan: pinned baseline UsageTracker header selected")
     endif()
 endif()
+# NS1 NVDEC/FFmpeg EAGAIN: when the reviewed vendor supplies BOTH
+# maintained owners, replace the pinned ffmpeg.cpp translation unit and
+# select its matching public API header for all video_core dependents.
+# Never edit vendor/sources/eden, nor allow half-selected old/new ABI.
+if(PS5_NATIVE)
+    set(EDEN_NVDEC_OWNER_ROOT "${PORT_ROOT}/vendor/encore-active/eden-core")
+    set(EDEN_NVDEC_MAINTAINED_SOURCE
+        "${EDEN_NVDEC_OWNER_ROOT}/src/video_core/host1x/ffmpeg.cpp")
+    set(EDEN_NVDEC_MAINTAINED_HEADER
+        "${EDEN_NVDEC_OWNER_ROOT}/overrides/video_core/host1x/ffmpeg.h")
+    if(EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" AND
+       EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")
+        get_target_property(eden_nvdec_video_sources video_core SOURCES)
+        list(FIND eden_nvdec_video_sources "host1x/ffmpeg.cpp" eden_nvdec_old_source)
+        if(eden_nvdec_old_source EQUAL -1)
+            message(FATAL_ERROR "Original NVDEC translation unit moved; requalify ABI")
+        endif()
+        list(REMOVE_ITEM eden_nvdec_video_sources "host1x/ffmpeg.cpp")
+        list(APPEND eden_nvdec_video_sources "${EDEN_NVDEC_MAINTAINED_SOURCE}")
+        set_property(TARGET video_core PROPERTY SOURCES "${eden_nvdec_video_sources}")
+        # Do not put the broad Encore overrides root into PUBLIC include
+        # paths: that could shadow unrelated core/memory.h and ABI owners.
+        # Copy just this reviewed public header to a narrow build include.
+        set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")
+        file(MAKE_DIRECTORY "${EDEN_NVDEC_HEADER_DIR}/video_core/host1x")
+        configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"
+            "${EDEN_NVDEC_HEADER_DIR}/video_core/host1x/ffmpeg.h" COPYONLY)
+        target_include_directories(video_core BEFORE PUBLIC
+            "${EDEN_NVDEC_HEADER_DIR}")
+        # configure_file already registers its input with CMake. Adding
+        # that header again to CMAKE_CONFIGURE_DEPENDS produces duplicate
+        # regeneration outputs with Ninja on the native source graph.
+        # The tracked C++ translation unit is a normal compile dependency.
+        message(STATUS "NVDEC: maintained FFmpeg packet-EAGAIN owners selected")
+    elseif(EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" OR
+           EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")
+        message(FATAL_ERROR "NVDEC maintained FFmpeg source/header pair incomplete")
+    else()
+        message(STATUS "NVDEC: historical pinned FFmpeg owners selected")
+    endif()
+endif()
 # The texture-cache small-vector Boost version dependency is a complete
 # tracked header under vendor/encore-active, not a configure-time replacement.
 # Its only modification to the original is #include <boost/version.hpp>.
@@ -141,6 +182,20 @@ endif()
 list(REMOVE_ITEM eden_common_sources "logging.cpp")
 list(APPEND eden_common_sources "${EDEN_MAINTAINED_LOGGING}")
 set_property(TARGET common PROPERTY SOURCES "${eden_common_sources}")
+# Lichii #957: one maintained common TU, exact last-byte page-table bound.
+# All builds share this fix; do not compile both explicit instantiations.
+set(EDEN_MAINTAINED_GPU_PAGE_TABLE "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")
+    message(FATAL_ERROR "Missing maintained GPU multi-level page table")
+endif()
+get_target_property(eden_page_table_sources common SOURCES)
+list(FIND eden_page_table_sources "multi_level_page_table.cpp" eden_pinned_page_table_idx)
+if(eden_pinned_page_table_idx EQUAL -1)
+    message(FATAL_ERROR "Pinned GPU page table moved; requalify source selection")
+endif()
+list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")
+list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")
+set_property(TARGET common PROPERTY SOURCES "${eden_page_table_sources}")
 # Maintained HLE source selection lives with its code, not in this launcher.
 option(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS
     "Use the paired upstream guest scheduler lock fixes" ON)
@@ -659,6 +714,26 @@ if(EDEN_A32_FASTMEM)
     list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
     list(APPEND core_sources "${EDEN_MAINTAINED_CODE_LOADER}")
 endif()
+# Lichii #947: preserve pinned archive, select one maintained VFS/PFS/NCA/RomFS TU each.
+foreach(eden_vfs_relative IN ITEMS
+        "file_sys/vfs/vfs.cpp"
+        "file_sys/vfs/vfs_vector.cpp"
+        "file_sys/partition_filesystem.cpp"
+        "file_sys/fssystem/fssystem_integrity_verification_storage.cpp"
+        "file_sys/fssystem/fssystem_nca_file_system_driver.cpp"
+        "file_sys/romfs.cpp")
+    set(eden_vfs_maintained
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_vfs_relative}")
+    if(NOT EXISTS "${eden_vfs_maintained}")
+        message(FATAL_ERROR "Missing maintained VFS bounds owner: ${eden_vfs_relative}")
+    endif()
+    list(FIND core_sources "${eden_vfs_relative}" eden_vfs_pinned_index)
+    if(eden_vfs_pinned_index LESS 0)
+        message(FATAL_ERROR "Pinned VFS owner moved: ${eden_vfs_relative}")
+    endif()
+    list(REMOVE_ITEM core_sources "${eden_vfs_relative}")
+    list(APPEND core_sources "${eden_vfs_maintained}")
+endforeach()
 # NSZ/XCZ: select reviewed full C++ source owners instead of generating C++
 # with CMake string replacements. Preserve pinned Eden source unchanged.
 foreach(eden_ncz_relative IN ITEMS
@@ -2704,6 +2779,43 @@ endif()
         endforeach()
         target_link_libraries(eden-headless PRIVATE webp)
         target_include_directories(eden-headless PRIVATE "${EDEN_WEBP_ROOT}/src")
+        # HDR JXR screenshots use the BSD JPEG XR codec isolated from the
+        # maintained, GPL source adapter. NOTHING scans/decodes all images:
+        # only EdenServices::wallpaper_path on the selected worker can call it.
+        set(EDEN_JXR_ROOT "${PORT_ROOT}/vendor/sources/jxrlib")
+        set(EDEN_JXR_ADAPTER "${PORT_ROOT}/vendor/encore-active/ps5-jxr")
+        if(NOT EXISTS "${EDEN_JXR_ROOT}/LICENSE" OR
+           NOT EXISTS "${EDEN_JXR_ADAPTER}/jxr_decoder.c" OR
+           NOT EXISTS "${EDEN_JXR_ADAPTER}/jxr_decoder.h")
+            message(FATAL_ERROR "Reviewed PS5 JPEG XR decoder/adapter missing in pinned vendor")
+        endif()
+        file(GLOB eden_jxr_library_sources
+            "${EDEN_JXR_ROOT}/image/sys/*.c"
+            "${EDEN_JXR_ROOT}/image/decode/*.c"
+            "${EDEN_JXR_ROOT}/image/encode/*.c"
+            "${EDEN_JXR_ROOT}/jxrgluelib/*.c")
+        if(eden_jxr_library_sources STREQUAL "")
+            message(FATAL_ERROR "JPEG XR vendor codec source selection is empty")
+        endif()
+        add_library(eden-ps5-jxr STATIC ${eden_jxr_library_sources}
+            "${EDEN_JXR_ADAPTER}/jxr_decoder.c")
+        target_compile_definitions(eden-ps5-jxr PRIVATE
+            __ANSI__ DISABLE_PERF_MEASUREMENT)
+        target_include_directories(eden-ps5-jxr
+            PUBLIC "${EDEN_JXR_ADAPTER}"
+            PRIVATE "${EDEN_JXR_ROOT}"
+                    "${EDEN_JXR_ROOT}/common/include"
+                    "${EDEN_JXR_ROOT}/image/sys"
+                    "${EDEN_JXR_ROOT}/jxrgluelib"
+                    "${EDEN_WEBP_ROOT}/src")
+        target_compile_options(eden-ps5-jxr PRIVATE
+            -include "${EDEN_JXR_ROOT}/jxr_compat.h"
+            -femulated-tls -msse2)
+        # A static jpeg-xr archive needs the WebP encoder AFTER its own
+        # objects on the native linker command; preserve the transitive edge.
+        target_link_libraries(eden-ps5-jxr PUBLIC webp)
+        target_link_libraries(eden-headless PRIVATE eden-ps5-jxr)
+        target_include_directories(eden-headless PRIVATE "${EDEN_JXR_ADAPTER}")
         target_sources(eden-headless PRIVATE
             "${launcher_dir}/runtime_shims.cpp"
             "${launcher_dir}/radio_input.c")

@@ -987,6 +987,32 @@ if post_f07_usage_tracker_owners:
 print("ENCORE_POST_F07_USAGE_TRACKER_F07_ISOLATION_PASS",
       f"candidate={len(post_f07_usage_tracker_owners)}")
 
+# Selected NVDEC source/header pair postdates the frozen F07 performance
+# snapshot. Derive its exact reviewed owner paths from the source inventory
+# AST, accepting only the complete source/header pair.
+nvdec_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body if isinstance(node, ast.Assign) and any(
+        isinstance(target, ast.Name) and target.id == "post_f07_nvdec_owners"
+        for target in node.targets)
+]
+assert len(nvdec_nodes) == 1
+nvdec_paths = ast.literal_eval(nvdec_nodes[0])
+assert nvdec_paths == {
+    "eden-core/src/video_core/host1x/ffmpeg.cpp",
+    "eden-core/overrides/video_core/host1x/ffmpeg.h",
+}
+post_f07_nvdec_owners = {
+    "vendor/encore-active/" + p for p in nvdec_paths
+} & all_owners
+assert len(post_f07_nvdec_owners) in (0,2), "NVDEC source/header ABI split"
+if post_f07_nvdec_owners:
+    assert "EDEN_NVDEC_MAINTAINED_SOURCE" in release_cmake
+    assert (ROOT / "tools/check-nvdec-eagain-owner-selection-host.py").is_file()
+print("ENCORE_POST_F07_NVDEC_F07_ISOLATION_PASS",
+      f"owners={len(post_f07_nvdec_owners)}")
+
 nov13_native_owners = {
     "vendor/encore-active/eden-core/src/common/stb_image_png.cpp",
     "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -996,7 +1022,78 @@ assert 'list(REMOVE_ITEM eden_stb_common_sources "stb.cpp")' in cmake
 assert 'list(APPEND eden_stb_common_sources "${EDEN_NATIVE_STB_CODECS}")' in cmake
 assert 'list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")' in cmake
 assert 'list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")' in cmake
-owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners
+# The selected-only JXR adapter is a separate post-F07 pair. No blanket
+# exception: exact paths, CMake selection and reviewed blobs are mandatory.
+jxr_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body if isinstance(node, ast.Assign) and any(
+        isinstance(target, ast.Name) and target.id == "post_f07_jxr_adapter_owners"
+        for target in node.targets)
+]
+assert len(jxr_nodes) == 1
+jxr_paths = ast.literal_eval(jxr_nodes[0])
+assert jxr_paths == {"ps5-jxr/jxr_decoder.c", "ps5-jxr/jxr_decoder.h"}
+post_f07_jxr_adapter_owners = {"vendor/encore-active/" + p for p in jxr_paths} & all_owners
+assert len(post_f07_jxr_adapter_owners) in (0, 2), "JXR adapter pair incomplete"
+if post_f07_jxr_adapter_owners:
+    assert 'add_library(eden-ps5-jxr STATIC ${eden_jxr_library_sources}' in cmake
+    assert '"${EDEN_JXR_ADAPTER}/jxr_decoder.c")' in cmake
+    assert 'target_link_libraries(eden-headless PRIVATE eden-ps5-jxr)' in cmake
+    for path, blob in {
+        "vendor/encore-active/ps5-jxr/jxr_decoder.c": "e83e13a3a6e66b7e63fb9510215c1dff2d42dd14",
+        "vendor/encore-active/ps5-jxr/jxr_decoder.h": "d8bb62a86fa1226375ae09e70f39c58511a667f9",
+    }.items():
+        content = (ROOT / path).read_bytes()
+        digest = hashlib.sha1(b"blob " + str(len(content)).encode() + bytes([0]) + content).hexdigest()
+        assert digest == blob, ("JXR adapter reviewed source drift", path, digest)
+    print("ENCORE_POST_F07_JXR_SELECTED_OWNER_PASS adapters=2 historical_unchanged=1")
+post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
+post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
+gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_gpu_table_present
+else:
+    assert post_f07_gpu_table_present == post_f07_gpu_table_owners
+    assert subprocess.check_output(["git","hash-object",next(iter(post_f07_gpu_table_owners))],cwd=ROOT,text=True).strip() == "c55a55498fe300458800b646bfc295db11283b4a"
+    assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in release_cmake
+    assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in release_cmake
+post_f07_vfs_receipts = {
+    "vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
+    "vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
+    "vendor/encore-active/eden-core/src/core/file_sys/partition_filesystem.cpp": "350af05f831fe89a05158350f8c8aded988980dd"
+}
+post_f07_vfs_present = set(post_f07_vfs_receipts) & all_owners
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_vfs_present
+else:
+    assert post_f07_vfs_present == set(post_f07_vfs_receipts)
+    for path, blob in post_f07_vfs_receipts.items():
+        assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
+    assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in release_cmake
+    assert 'list(APPEND core_sources "${eden_vfs_maintained}")' in release_cmake
+post_f07_nca_receipts = {
+    "vendor/encore-active/eden-core/src/core/file_sys/fssystem/fssystem_integrity_verification_storage.cpp": "5afc754433f6276ffd80bc0af418d31cf5cf496c",
+    "vendor/encore-active/eden-core/src/core/file_sys/fssystem/fssystem_nca_file_system_driver.cpp": "f6ceeb8d18b88b850c19b86cc3823e40ce5b9afa"
+}
+post_f07_nca_present = set(post_f07_nca_receipts) & all_owners
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_nca_present
+else:
+    assert post_f07_nca_present == set(post_f07_nca_receipts)
+    for path, blob in post_f07_nca_receipts.items():
+        assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
+        assert '"' + path.removeprefix("vendor/encore-active/eden-core/src/core/") + '"' in release_cmake
+    assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in release_cmake
+post_f07_romfs_receipt = "vendor/encore-active/eden-core/src/core/file_sys/romfs.cpp"
+post_f07_romfs_present = {post_f07_romfs_receipt} & all_owners
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_romfs_present
+else:
+    assert post_f07_romfs_present == {post_f07_romfs_receipt}
+    assert subprocess.check_output(["git","hash-object",post_f07_romfs_receipt],cwd=ROOT,text=True).strip() == "51eb401e5f2e3a0deefc5fc0e4cc30b0f4b8e4a3"
+    assert '"file_sys/romfs.cpp"' in release_cmake
+owners=all_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1337,6 +1434,16 @@ for changed_path, new_blob in r23_existing_source_successors.items():
         "Unreviewed R23 existing-owner source edit", changed_path)
 print("ENCORE_R23_EXISTING_F07_SOURCE_SUCCESSORS_PASS", "owners=2",
       "historical_F07_preserved=1")
+# The XCI NCZ source receives two exact malformed-input guards reviewed in
+# vendor #118. Keep the old format receipt; the historical checkout has no delta.
+xci_path = "vendor/encore-active/eden-core/src/core/file_sys/card_image.cpp"
+assert xci_path not in post_index
+if post_f07_vfs_present:
+    xci_delta = drift_index.pop(xci_path)
+    assert xci_delta["expected"] == "f843e7f9c977b509368e71eb6356066c1a5e0c50"
+    assert xci_delta["actual"] == "c3dbb891b10ae2f576566d5a8a5f1a871f94c3d0"
+else:
+    assert xci_path not in drift_index
 # The selected C00 PS5 AudioIn capture source legitimately updates the
 # existing historical native audio.cpp; this is NOT an F07 performance review.
 # Its original F07 SHA stays immutable. Only this exact reviewed new blob is

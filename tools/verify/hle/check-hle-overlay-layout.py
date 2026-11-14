@@ -4,6 +4,7 @@
 Only reads versioned files; never modifies source or builds production objects.
 """
 from pathlib import Path
+import hashlib
 
 root = Path(__file__).resolve().parents[3]
 cmake = (root / "headless/CMakeLists.txt").read_text()
@@ -143,7 +144,36 @@ assert slab_pinned.count(index_other) == 2
 expected_slab = (slab_pinned.replace(slab_before, slab_after)
                  .replace(index_before, index_after)
                  .replace(index_other, index_after))
-assert slab_active == expected_slab, "Unexpected maintained slab helper drift"
+# Vendor #111 (upstream Lichii #1574 / Eglantine eb579d2) fixes a
+# separate KProcess use-after-free: IsInitialized() must not be confused
+# with whether an object actually entered the global linked list.
+# Admit ONLY the exact reviewed slab raw Git blob, then rewind that one
+# additional hunk to retain the full historical source equivalence oracle.
+def git_blob_bytes(raw: bytes) -> str:
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+old_slab_blob = "3fa5e0aae7cb1107a3fc05add821af286539bf54"
+new_slab_blob = "d072240982af1fca0d571f424ddf1067e25863d3"
+raw_slab_blob = git_blob_bytes(slab_active.encode())
+if raw_slab_blob == new_slab_blob:
+    old_unlink = "if (is_initialized) {\n            kernel.ObjectListContainer().Unregister(this);"
+    new_unlink = (
+        "// Process load can fail before initialization. Remove only objects\n"
+        "        // that were really inserted, even when IsInitialized() is false.\n"
+        "        // Conversely, do not unregister an initialized object that was never\n"
+        "        // linked after a failed load. Lichii #1574 / Eglantine eb579d2.\n"
+        "        if (this->is_linked()) {\n"
+        "            kernel.ObjectListContainer().Unregister(this);\n"
+        "        }\n"
+        "        if (is_initialized) {"
+    )
+    assert slab_active.count(new_unlink) == 1, "Reviewed linked-list UAF hunk moved"
+    previous_slab = slab_active.replace(new_unlink, old_unlink, 1)
+    assert git_blob_bytes(previous_slab.encode()) == old_slab_blob
+    assert previous_slab == expected_slab, "Post-KProcess HLE slab reconstruction drift"
+    print("HLE_KPROCESS_LINKED_SLAB_REVIEWED_SOURCE_PASS historic_oracle=unchanged")
+else:
+    assert raw_slab_blob == old_slab_blob, "Unreviewed maintained slab helper drift"
+    assert slab_active == expected_slab, "Unexpected maintained slab helper drift"
 assert slab_active.count(index_after) == 3
 worker_pinned = (root / "vendor/sources/eden/src/core/hle/kernel/k_worker_task_manager.h").read_text()
 worker_active = (thread_root / "k_worker_task_manager.h").read_text()

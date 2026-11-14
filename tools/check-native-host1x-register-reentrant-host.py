@@ -45,7 +45,18 @@ deregister_guest_new="void SyncpointManager::DeregisterGuestAction(u32 syncpoint
 deregister_host_old="void SyncpointManager::DeregisterHostAction(u32 syncpoint_id, const ActionHandle& handle) {\n    DeregisterAction(host_action_storage[syncpoint_id], handle);\n}"
 deregister_host_new="void SyncpointManager::DeregisterHostAction(u32 syncpoint_id, const ActionHandle& handle) {\n    std::scoped_lock dispatch_lock{HostDispatchLocks()[syncpoint_id]};\n    DeregisterAction(host_action_storage[syncpoint_id], handle);\n}"
 dispatch_helpers="namespace {\n// Each domain/id serializes cancellation against callback completion.\n// Recursive: a running callback may cancel another pending action on its id.\n// The shared action-list guard is never held while a callback executes.\nstd::array<std::recursive_mutex, 192>& GuestDispatchLocks() {\n    static std::array<std::recursive_mutex, 192> locks{};\n    return locks;\n}\n\nstd::array<std::recursive_mutex, 192>& HostDispatchLocks() {\n    static std::array<std::recursive_mutex, 192> locks{};\n    return locks;\n}\n} // namespace\n"
-assert PIN.replace("namespace Host1x {\n\n","namespace Host1x {\n\n"+dispatch_helpers+"\n").replace(old,new).replace(increment_old,increment_new).replace(guest_old,guest_new).replace(host_old,host_new).replace(deregister_guest_old,deregister_guest_new).replace(deregister_host_old,deregister_host_new)==ACT
+# Replay the historical owner exactly before testing actual current methods.
+ACT_HISTORICAL=ACT
+notify_new="    // A syncpoint waiter observes the published counter, not callback completion.\n    // Wake it before dispatch: a display callback may block independently.\n    wait_cv.notify_all();\n"
+notify_old="    // Preserve the original contract: guest/host waiters are notified\n    // only after all due callbacks have completed, never before dispatch.\n    wait_cv.notify_all();\n"
+if notify_new in ACT:
+    import hashlib
+    end="        ready.action();\n    }\n"
+    assert ACT.count(notify_new)==1 and ACT.count(end)==1
+    ACT_HISTORICAL=ACT.replace(notify_new,"",1).replace(end,end+notify_old,1)
+    previous=ACT_HISTORICAL.encode()
+    assert hashlib.sha1(b"blob "+str(len(previous)).encode()+bytes([0])+previous).hexdigest()=="aed892831a31b2ca6691bf4f697bcc035ddaffa3"
+assert PIN.replace("namespace Host1x {\n\n","namespace Host1x {\n\n"+dispatch_helpers+"\n").replace(old,new).replace(increment_old,increment_new).replace(guest_old,guest_new).replace(host_old,host_new).replace(deregister_guest_old,deregister_guest_new).replace(deregister_host_old,deregister_host_new)==ACT_HISTORICAL
 
 helpers=dispatch_helpers.replace("std::array<std::recursive_mutex, 192>& HostDispatchLocks()", "[[maybe_unused]] std::array<std::recursive_mutex, 192>& HostDispatchLocks()")
 

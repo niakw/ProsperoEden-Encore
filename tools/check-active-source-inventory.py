@@ -825,6 +825,22 @@ if usage_tracker_present:
         root / "headless/CMakeLists.txt").read_text()
     print("ENCORE_POST_F07_USAGE_TRACKER_OWNER_PASS reviewed=1")
 
+# Nov14 selected NVDEC FFmpeg source and ABI header are a reviewed
+# optional pair postdating F07. Do not inflate the frozen 337-source ledger.
+# Preserve the original pristine Eden codec tree and fail on half-candidates.
+post_f07_nvdec_owners = {
+    "eden-core/src/video_core/host1x/ffmpeg.cpp",
+    "eden-core/overrides/video_core/host1x/ffmpeg.h",
+}
+post_f07_nvdec_present = post_f07_nvdec_owners & set(physical_all)
+if post_f07_nvdec_present:
+    assert post_f07_nvdec_present == post_f07_nvdec_owners, (
+        "Half-selected NVDEC source/ABI header", sorted(post_f07_nvdec_present))
+    assert (root / "tools/check-nvdec-eagain-owner-selection-host.py").is_file()
+    assert "EDEN_NVDEC_MAINTAINED_SOURCE" in (
+        root / "headless/CMakeLists.txt").read_text()
+    print("ENCORE_POST_F07_NVDEC_OWNER_PAIR_PASS owners=2")
+
 nov13_native_owners = {
     "eden-core/src/common/stb_image_png.cpp",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -836,6 +852,87 @@ assert 'list(REMOVE_ITEM eden_stb_common_sources "stb.cpp")' in nov13_cmake
 assert 'list(APPEND eden_stb_common_sources "${EDEN_NATIVE_STB_CODECS}")' in nov13_cmake
 assert 'list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")' in nov13_cmake
 assert 'list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")' in nov13_cmake
+# The optional JXR source pair is reviewed post-F07 and must not alter the
+# immutable source-owner count. Check actual source identities if present;
+# historical vendor probes can still run without the later adapter.
+post_f07_jxr_adapter_owners = {
+    "ps5-jxr/jxr_decoder.c",
+    "ps5-jxr/jxr_decoder.h",
+}
+post_f07_jxr_present = post_f07_jxr_adapter_owners & set(physical_all)
+if post_f07_jxr_present:
+    assert post_f07_jxr_present == post_f07_jxr_adapter_owners, "Incomplete JXR adapter"
+    assert 'add_library(eden-ps5-jxr STATIC ${eden_jxr_library_sources}' in nov13_cmake
+    assert '"${EDEN_JXR_ADAPTER}/jxr_decoder.c")' in nov13_cmake
+    assert 'target_link_libraries(eden-headless PRIVATE eden-ps5-jxr)' in nov13_cmake
+    for name, expected_blob in {
+        "jxr_decoder.c": "e83e13a3a6e66b7e63fb9510215c1dff2d42dd14",
+        "jxr_decoder.h": "d8bb62a86fa1226375ae09e70f39c58511a667f9",
+    }.items():
+        data = (root / "vendor/encore-active/ps5-jxr" / name).read_bytes()
+        actual_blob = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert actual_blob == expected_blob, ("JXR selected source changed; review new blob", name, actual_blob)
+# Lichii #957 exact source backport, post-F07; never alter frozen 337 count.
+post_f07_gpu_table_owners = {"eden-core/src/common/multi_level_page_table.cpp"}
+post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
+# The tracker workflow also explicitly tests historical vendor 1ec7b42.
+# Only that known historical checkout (not a missing production TU) may omit it.
+import subprocess
+gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_gpu_table_present
+else:
+    assert post_f07_gpu_table_present == post_f07_gpu_table_owners
+    page_table_bytes = (active / "eden-core/src/common/multi_level_page_table.cpp").read_bytes()
+    assert hashlib.sha1(b"blob " + str(len(page_table_bytes)).encode() + bytes([0]) + page_table_bytes).hexdigest() == "c55a55498fe300458800b646bfc295db11283b4a"
+    assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
+    assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
+print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")
+# VFS/PFS #118 adds three real post-F07 owners; old explicit historical
+# checkout must not have them. Fail on half-selected or changed blobs.
+post_f07_vfs_receipts = {
+    "eden-core/src/core/file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
+    "eden-core/src/core/file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
+    "eden-core/src/core/file_sys/partition_filesystem.cpp": "350af05f831fe89a05158350f8c8aded988980dd"
+}
+post_f07_vfs_present = set(post_f07_vfs_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_vfs_present
+else:
+    assert post_f07_vfs_present == set(post_f07_vfs_receipts)
+    for relative, blob in post_f07_vfs_receipts.items():
+        data = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest() == blob
+    assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in nov13_cmake
+    assert 'list(APPEND core_sources "${eden_vfs_maintained}")' in nov13_cmake
+print("ENCORE_POST_F07_VFS_BOUNDS_OWNER_PASS", f"owners={len(post_f07_vfs_present)}")
+# NCA #119: two additional exact post-F07 source owners.
+post_f07_nca_receipts = {
+    "eden-core/src/core/file_sys/fssystem/fssystem_integrity_verification_storage.cpp": "5afc754433f6276ffd80bc0af418d31cf5cf496c",
+    "eden-core/src/core/file_sys/fssystem/fssystem_nca_file_system_driver.cpp": "f6ceeb8d18b88b850c19b86cc3823e40ce5b9afa"
+}
+post_f07_nca_present = set(post_f07_nca_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_nca_present
+else:
+    assert post_f07_nca_present == set(post_f07_nca_receipts)
+    for relative, blob in post_f07_nca_receipts.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+    assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in nov13_cmake
+    assert all('"' + relative.removeprefix("eden-core/src/core/") + '"' in nov13_cmake
+               for relative in post_f07_nca_receipts)
+print("ENCORE_POST_F07_NCA_OWNER_PASS", f"owners={len(post_f07_nca_present)}")
+post_f07_romfs_receipt = "eden-core/src/core/file_sys/romfs.cpp"
+post_f07_romfs_present = {post_f07_romfs_receipt} & set(physical_all)
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_romfs_present
+else:
+    assert post_f07_romfs_present == {post_f07_romfs_receipt}
+    raw_romfs = (active / post_f07_romfs_receipt).read_bytes()
+    assert hashlib.sha1(b"blob " + str(len(raw_romfs)).encode() + bytes([0]) + raw_romfs).hexdigest() == "51eb401e5f2e3a0deefc5fc0e4cc30b0f4b8e4a3"
+    assert '"file_sys/romfs.cpp"' in nov13_cmake
+print("ENCORE_POST_F07_ROMFS_OWNER_PASS", f"owners={len(post_f07_romfs_present)}")
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -851,7 +948,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

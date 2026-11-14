@@ -18,6 +18,29 @@ start="AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRo
 end="\n#ifdef EDEN_NS2_GUEST_COUNTER\n    // This is the real KProcess loader"
 assert code.count(start)==code.count(end)==1
 actual=start+code.split(start,1)[1].split(end,1)[0]
+# This fixture exercises ONLY the real early null/NPDM/NSO admissions.
+# Vendor #105 added a full extracted-update VFS overlay in the middle.
+# That complete layer is qualified separately in its own exact-source
+# suite; do not fake VFS methods or silently claim to execute it here.
+import hashlib
+raw=OWNER.read_bytes()
+owner_blob=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+assert owner_blob == "e8c227b4420ebc38055e3e4c331f39fb6f755595", (
+    "Unreviewed selected NS2 loader source; requalify executable fixture",owner_blob)
+overlay_start=actual.index("    // Loose ExeFS content can have most of its RomFS")
+overlay_end=actual.index("    // Read meta to determine title ID",overlay_start)
+overlay=actual[overlay_start:overlay_end]
+for required in ("if (standalone && file)", "launched_from_update",
+                 "base_exefs=restored", "self_contained_update",
+                 "source=selected_version", "CreateRomFS",
+                 "selected_update_only", "ambiguous_version"):
+    assert required in overlay,("Selected update overlay drift",required)
+actual=actual[:overlay_start]+actual[overlay_end:]
+# Identity logging below the admission check requires unrelated real VFS
+# bytes/GetSize and renderer state. Exclude ONLY that later diagnostic,
+# while retaining the actual missing-main guard and prior NPDM decisions.
+identity=actual.index("    if (metadata.IsSwitch2()) {\n        // Upstream Eglantine #350")
+actual=actual[:identity]
 assert "if (!dir)" in actual and actual.count("if (!dir)")>=2
 assert "return {ResultStatus::ErrorNullFile, {}};" in actual
 assert "return {ResultStatus::ErrorMissingNPDM, {}};" in actual

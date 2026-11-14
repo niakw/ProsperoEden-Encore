@@ -1,0 +1,27 @@
+name: VFS parser engine-selected source (host only)
+on:
+  pull_request:
+    paths:
+      - "headless/CMakeLists.txt"
+      - "vendor"
+      - ".github/workflows/vfs-partition-engine-host.yml"
+      - "tools/check-vfs-partition-engine-host.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+      - run: |
+          test "$(git -C vendor rev-parse HEAD)" = "$(git rev-parse HEAD:vendor)"
+          python3 -B tools/check-vfs-partition-engine-host.py
+          python3 -B vendor/tests/ps5_vfs_partition_bounds_host.py
+          python3 -B vendor/tests/ps5_nca_storage_contract_host.py
+          python3 -B vendor/tests/ps5_romfs_tree_contract_host.py
+          python3 -B tools/check-encore-ncz-sources.py

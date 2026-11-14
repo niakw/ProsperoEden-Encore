@@ -309,9 +309,14 @@ void CheckWorkerTopology() {
                 "source=%s legacy_errno=%d ule_errno=%d\n",
                 unsigned(os_topology_valid), topology_length, os_topology_errno,
                 os_topology_source, oid_errno[0], oid_errno[1]);
-    std::array<int, 64> amd_cpu_core{}, x2_cpu_core{};
+    std::array<int, 64> amd_cpu_core{}, x2_cpu_core{}, leaf1_cpu_core{};
     amd_cpu_core.fill(-1);
     x2_cpu_core.fill(-1);
+    leaf1_cpu_core.fill(-1);
+    // The initial 8-bit APIC ID must identify a distinct logical CPU.
+    // A stale/virtualized fixed leaf-1 ID is not physical-topology evidence.
+    std::array<bool, 256> leaf1_seen{};
+    bool leaf1_ids_unique = true;
     bool changed = false;
     for (unsigned cpu = 0; cpu < 64; ++cpu) {
         if (!CPU_ISSET(cpu, &original)) continue;
@@ -337,8 +342,25 @@ void CheckWorkerTopology() {
         }
         if (has_x2apic) {
             __cpuid_count(0xb, 0, a, b, c, d);
-            if (b && ((c >> 8) & 255u) == 1u && (a & 31u) < 16u)
-                x2_cpu_core[cpu] = static_cast<int>(d >> (a & 31u));
+            const unsigned smt_shift = a & 31u;
+            const bool smt_level_valid =
+                b && ((c >> 8) & 255u) == 1u && smt_shift < 16u;
+            if (smt_level_valid)
+                x2_cpu_core[cpu] = static_cast<int>(d >> smt_shift);
+            // Upstream PS5 13.60: leaf 0xB can report x2APIC ID 0 on
+            // every logical CPU, while leaf 1 EBX[31:24] reports a
+            // meaningful initial APIC ID. Borrow ONLY the verified SMT
+            // shift from 0xB and authenticate AMD Zen topology first.
+            // Never assume OS CPU numbers or APIC IDs are sequential.
+            // heydemoura/EglantinePS5 PR #19; fail closed if ambiguous.
+            if (smt_level_valid && smt_shift > 0u && smt_shift < 8u &&
+                amd_vendor && has_amd_topology) {
+                __cpuid_count(1, 0, a, b, c, d);
+                const unsigned apic_id = (b >> 24) & 255u;
+                if (leaf1_seen[apic_id]) leaf1_ids_unique = false;
+                leaf1_seen[apic_id] = true;
+                leaf1_cpu_core[cpu] = static_cast<int>(apic_id >> smt_shift);
+            }
         }
     }
     if (changed) {
@@ -366,10 +388,26 @@ void CheckWorkerTopology() {
     };
     const auto [amd_classified, amd_distinct] = summarize(amd_cpu_core);
     const auto [x2_classified, x2_distinct] = summarize(x2_cpu_core);
+    const auto [leaf1_classified, leaf1_distinct] = summarize(leaf1_cpu_core);
     const bool amd_plausible = has_amd_topology && amd_classified == allowed_count &&
                                amd_distinct >= 5 && amd_distinct <= 8;
     const bool x2_plausible = has_x2apic && x2_classified == allowed_count &&
                               x2_distinct >= 5 && x2_distinct <= 8;
+    // With SMT shift 1, each physical core can cover at most two allowed
+    // logical siblings. Enforce that independently from distinct-core count:
+    // a mocked CPUID can report seven groups yet collapse >2 CPUs into one.
+    std::array<unsigned, 256> leaf1_group_sizes{};
+    bool leaf1_group_sizes_valid = true;
+    for (unsigned cpu = 0; cpu < 64; ++cpu) {
+        if (!CPU_ISSET(cpu, &original) || leaf1_cpu_core[cpu] < 0) continue;
+        const unsigned core = static_cast<unsigned>(leaf1_cpu_core[cpu]);
+        if (core >= leaf1_group_sizes.size() || ++leaf1_group_sizes[core] > 2u)
+            leaf1_group_sizes_valid = false;
+    }
+    const bool leaf1_plausible = amd_vendor && has_amd_topology && has_x2apic &&
+                                 leaf1_ids_unique && leaf1_group_sizes_valid &&
+                                 leaf1_classified == allowed_count &&
+                                 leaf1_distinct >= 5 && leaf1_distinct <= 8;
     const std::array<int, 64>* physical_source = nullptr;
     const char* source_name = "none";
     if (os_topology_valid) {
@@ -381,9 +419,17 @@ void CheckWorkerTopology() {
     } else if (x2_plausible) {
         physical_source = &x2_cpu_core;
         source_name = has_amd_topology ? "x2apic_fallback" : "x2apic";
+    } else if (leaf1_plausible) {
+        // Physical core grouping came from AMD identity, an architectural
+        // SMT shift and distinct leaf-1 APIC IDs, not guessed CPU indices.
+        physical_source = &leaf1_cpu_core;
+        source_name = "amd_leaf1_apic_fallback";
     }
-    std::printf("EDEN_PS5_CPU_TOPOLOGY_SOURCES amd=%u/%u x2apic=%u/%u selected=%s\n",
-                amd_classified, amd_distinct, x2_classified, x2_distinct, source_name);
+    std::printf("EDEN_PS5_CPU_TOPOLOGY_SOURCES amd=%u/%u x2apic=%u/%u"
+                " leaf1=%u/%u leaf1_unique=%u groups_valid=%u selected=%s\n",
+                amd_classified, amd_distinct, x2_classified, x2_distinct,
+                leaf1_classified, leaf1_distinct, unsigned(leaf1_ids_unique),
+                unsigned(leaf1_group_sizes_valid), source_name);
     if (!physical_source) {
         const unsigned observed = has_amd_topology ? amd_distinct : x2_distinct;
         const unsigned classified = has_amd_topology ? amd_classified : x2_classified;

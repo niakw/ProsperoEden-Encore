@@ -56,6 +56,15 @@ with tempfile.TemporaryDirectory(prefix='eden-radv-fork-equivalence-') as tmp:
         file = source_stage / relative
         file.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(SOURCE / relative, file)
+    # The Mesh NGG source is an independently reviewed 15th native compiler
+    # input; it is not a new fork of the pristine vendored Mesa archive.
+    mesh_source = SOURCE / module.NGG_MESH
+    mesh_input = source_stage / module.NGG_MESH
+    mesh_input.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(mesh_source, mesh_input)
+    from ci.ps5_radv_ngg_mesh_zero import patched_bytes as mesh_patch
+    expected_mesh = mesh_patch(mesh_source.read_bytes())
+    assert mesh_input.read_bytes() != expected_mesh
     provenance = temp / 'PROVENANCE.txt'
     provenance.write_text('upstream native build receipt')
     # Simulate restored Ninja object files newer than this source. A content
@@ -71,7 +80,9 @@ with tempfile.TemporaryDirectory(prefix='eden-radv-fork-equivalence-') as tmp:
     module.install(source_stage, provenance)
     assert wsi_input.stat().st_mtime_ns > canonical_mtime_ns, 'Native source changed but Ninja input timestamp stayed stale'
     assert not provenance.exists() and provenance.with_suffix('.base.txt').exists()
+    assert mesh_input.read_bytes() == expected_mesh
     module.install(source_stage, provenance)
+    assert mesh_input.read_bytes() == expected_mesh
     for relative in before:
         assert filecmp.cmp(source_stage / relative, ACTIVE / relative, shallow=False)
     # A restored actions/cache can contain multiple R343 active RADV units
@@ -105,6 +116,7 @@ with tempfile.TemporaryDirectory(prefix='eden-radv-fork-equivalence-') as tmp:
         shutil.copy2(fixture, source_stage / relative)
     module.install(source_stage, None)
     module.install(source_stage, None)
+    assert mesh_input.read_bytes() == expected_mesh
     for relative in before:
         assert filecmp.cmp(source_stage / relative, ACTIVE / relative, shallow=False), relative
 

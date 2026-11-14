@@ -14,7 +14,7 @@ root=Path(__file__).resolve().parents[2]
 # admitted. The sparse PTE/slab/GPU publisher owners are byte-identical.
 reviewed_vendors={
     "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864",
-    "67ae2d75a452cd86b0e36ef33b2cb987092a415d",
+    "fe9edd661d6f0824c7339865d50aa9cf99cab150",
 }
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()

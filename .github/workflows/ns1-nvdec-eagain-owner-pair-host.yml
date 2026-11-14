@@ -24,15 +24,20 @@ jobs:
           set -euo pipefail
           test "$(git -C vendor rev-parse HEAD)" = "$(git ls-tree HEAD -- vendor | awk '{print $3}')"
           python3 -B tools/check-nvdec-eagain-owner-selection-host.py
-      - name: Check strictly reviewed isolated maintained vendor candidate
+      - name: Check pinned maintained vendor FFmpeg owner and real packet fixture
         run: |
           set -euo pipefail
-          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov13-ns1-nvdec-eagain-lossless
-          git -C vendor checkout --detach FETCH_HEAD
-          test "$(git -C vendor rev-parse HEAD)" = "4c7cf0f561c5f73d2bccd88cf4dd9706d3ec5195"
+          test "$(git -C vendor rev-parse HEAD)" = "fe9edd661d6f0824c7339865d50aa9cf99cab150"
           python3 -B tools/check-nvdec-eagain-owner-selection-host.py
           python3 -B vendor/tests/ns1-nvdec-eagain-source.py
           python3 -B vendor/tests/ns1_nvdec_eagain_lossless_host.py
+      - name: Reconfirm untouched historical vendor fallback
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin 1ec7b429238d1175a76dc94b7c0a7f1c2eb62864
+          git -C vendor checkout --detach FETCH_HEAD
+          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          python3 -B tools/check-nvdec-eagain-owner-selection-host.py
       - name: Host-only boundary
         if: always()
         run: |

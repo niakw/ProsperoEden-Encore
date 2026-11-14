@@ -13,7 +13,7 @@ VENDOR = ROOT / "vendor"
 # Both exact cross-repo graphs are reviewed. No arbitrary vendor SHA allowed.
 KNOWN_VENDOR_GRAPH = {
     "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864": "original",
-    "67ae2d75a452cd86b0e36ef33b2cb987092a415d": "integrated",
+    "fe9edd661d6f0824c7339865d50aa9cf99cab150": "integrated",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

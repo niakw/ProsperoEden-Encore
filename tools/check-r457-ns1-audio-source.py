@@ -31,6 +31,7 @@ KNOWN_VENDOR_GRAPH = {
     "db33f8ad0c325c84bd80047d992fafa5c2908151": "same reviewed audio owners + gpu-submit diagnostics + channel-shared-mme-dram",
     "0264f2ae94ef5889e8585171b5bfcb11fd3659ff": "same reviewed audio owners + gpu-submit diagnostics + channel-shared-mme-dram + constant-pool cleanup + NVDEC/VIC witness",
     "bc78a7610425e95d6645685cbd023a67b729ec24": "previous integrated graph + native EmitInvalid parameter cleanup + reviewed branch maintenance metadata",
+    "7b7c4d2a37f9b0b248d3f3d6d9cce40596ed0c99": "previous reviewed graph + native MSAA split texture handle fallback",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

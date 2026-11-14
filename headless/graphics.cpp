@@ -2,6 +2,7 @@
 #include "performance.h"
 #ifdef EDEN_PS5_VULKAN
 #include "crash_report.h"
+#include "gpu_failure.h"
 #endif
 #ifdef EDEN_DEV_PROFILE
 #include "present_interval_witness.h"
@@ -124,14 +125,16 @@ std::uint64_t vulkan_loading_gpu_completion_baseline{};
 // The GPU owner publishes completed worker commands in batches of 64.
 // These are NOT GPFIFO/QMD counts, and a zero cannot rule out <64 commands.
 struct LoadingGpuProgress {
+    std::uint64_t submitted_sample{};
     std::uint64_t total_floor64{};
     std::uint64_t since_window_floor64{};
     unsigned counter_reset{};
 };
 LoadingGpuProgress SampleLoadingGpuProgress() noexcept {
+    const auto submitted = GpuSubmissionSample();
     const auto current = Crash::gpu_completed_commands.load(std::memory_order_relaxed);
     const bool reset = current < vulkan_loading_gpu_completion_baseline;
-    return {current, reset ? 0 : current - vulkan_loading_gpu_completion_baseline,
+    return {submitted, current, reset ? 0 : current - vulkan_loading_gpu_completion_baseline,
             unsigned(reset)};
 }
 #endif
@@ -616,8 +619,10 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
             const auto gpu = SampleLoadingGpuProgress();
             std::fprintf(stderr,
                 "EDEN_VULKAN_LOADING_WAIT stage=10s idle=%d loading_presents=%u guest_frame_handoff=0"
-                " gpu_worker_completed_floor64=%llu gpu_worker_delta_floor64=%llu gpu_worker_counter_reset=%u\n",
+                " gpu_submit_sample=%llu gpu_worker_completed_floor64=%llu"
+                " gpu_worker_delta_floor64=%llu gpu_worker_counter_reset=%u\n",
                 int(idle), vulkan_loading_frames,
+                static_cast<unsigned long long>(gpu.submitted_sample),
                 static_cast<unsigned long long>(gpu.total_floor64),
                 static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
         } else if (vulkan_loading_diagnostic_stage == 1 && elapsed >= 30.0) {
@@ -625,8 +630,10 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
             const auto gpu = SampleLoadingGpuProgress();
             std::fprintf(stderr,
                 "EDEN_VULKAN_LOADING_WAIT stage=30s idle=%d loading_presents=%u guest_frame_handoff=0"
-                " gpu_worker_completed_floor64=%llu gpu_worker_delta_floor64=%llu gpu_worker_counter_reset=%u\n",
+                " gpu_submit_sample=%llu gpu_worker_completed_floor64=%llu"
+                " gpu_worker_delta_floor64=%llu gpu_worker_counter_reset=%u\n",
                 int(idle), vulkan_loading_frames,
+                static_cast<unsigned long long>(gpu.submitted_sample),
                 static_cast<unsigned long long>(gpu.total_floor64),
                 static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
         }

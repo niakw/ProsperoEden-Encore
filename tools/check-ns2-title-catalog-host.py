@@ -39,7 +39,11 @@ assert 'icon_' in services and 'std::memcmp(signature,' in services
 assert 'IsSafeExtractedDirectory(ancestor)' in services
 # The shared CDN artwork encoder was migrated to bounded WebP output.
 # Verify the current encode + atomic publish path, not the obsolete TGA name.
-assert 'WriteJpegWebP(best, staged, true)' in services
+fetch = services.split("bool FetchCaseFace(", 1)[1].split("unsigned EnsureRetailCase(", 1)[0]
+assert 'WriteJpegWebP(body, staged, true, &decode_failed)' in fetch
+assert 'if (decode_failed)' in fetch
+assert fetch.index('WriteJpegWebP(body, staged, true, &decode_failed)') < fetch.index('std::rename(staged.c_str(), destination.c_str())')
+assert 'if (encoded && std::rename(staged.c_str(), destination.c_str()) == 0)' in fetch
 assert 'WebPGetInfo(compressed, length, &checked_w, &checked_h)' in services
 assert 'std::rename(staged.c_str(), destination.c_str())' in services
 assert 'std::rename(staged.c_str(), destination.c_str())' in services

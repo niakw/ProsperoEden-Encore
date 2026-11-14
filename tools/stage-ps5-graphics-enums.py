@@ -149,6 +149,25 @@ def reviewed_warning_targets() -> list[tuple[Path, bytes, bytes]]:
         if original.count(before.encode()) != 1 or original == expected:
             raise RuntimeError("Ambiguous vendor warning delta: " + str(relative))
         result.append((relative, original, expected))
+    # Eden #4218 flattened recursive terminators and retained a diagnostic
+    # stub that always returns the empty string. Its reference parameter
+    # is intentionally unnamed in the native build copy; never alter
+    # compilation flags, the frozen source, or guest terminal semantics.
+    relative = Path("src/dynarmic/src/dynarmic/ir/basic_block.cpp")
+    original = (ROOT / "vendor/sources/eden" / relative).read_bytes()
+    blob = hashlib.sha1(b"blob " + str(len(original)).encode() + b"\0" + original).hexdigest()
+    if blob != "4a7b2bf261562316d9060cf2464c9216807e3cf0":
+        raise RuntimeError("Unreviewed Dynarmic terminal diagnostic owner")
+    before = b"static std::string TerminalToString(const Term::Terminal& terminal_variant) noexcept {"
+    after = b"static std::string TerminalToString(const Term::Terminal&) noexcept {"
+    if original.count(before) != 1 or after in original:
+        raise RuntimeError("Unexpected Dynarmic terminal diagnostic signature")
+    body = original.split(before, 1)[1].split(b"\n}", 1)[0]
+    executable = [line.strip() for line in body.splitlines()
+                  if line.strip() and not line.lstrip().startswith(b"//")]
+    if executable != [b'return "";']:
+        raise RuntimeError("Dynarmic terminal diagnostic is no longer an empty stub")
+    result.append((relative, original, original.replace(before, after, 1)))
     return result
 
 
@@ -272,7 +291,7 @@ def self_test() -> None:
         assert apply(stage) == "already-applied"
         for relative, original, expected in inputs:
             assert (stage / relative).read_bytes() == expected
-    print("R457_WARNING_OWNER_STAGE_PASS owners=2 exact_vendor_blob=1 idempotent=1 failclosed=1")
+    print("R457_WARNING_OWNER_STAGE_PASS owners=3 exact_vendor_blob=1 idempotent=1 failclosed=1")
     print("PS5_GRAPHICS_ENUM_OVERLAY_PASS pinned=1 backport=1 abi=1 failclosed=1")
 
 if __name__ == "__main__":

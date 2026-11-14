@@ -29,6 +29,7 @@
 #include "display_refresh.h"
 #include "graphics.h"
 #include "launch_handoff.hpp"
+#include "prosperoeden/pe/platform/display_egl.hpp"
 #include "jit_memory_policy.h"
 #include "common/scope_exit.h"
 #include "core/core.h"
@@ -411,7 +412,7 @@ public:
     void PresentLoading() {
         const double now = Now();
         if (loading_start < 0) loading_start = now;
-        if (!DrawLoading(now - loading_start + LoadingCalm())) {
+        if (!DrawLoading(now - loading_start + 1.0 + LoadingCalm())) {
             // The scene's shader did not build on this driver: plain text instead.
             const unsigned dots = static_cast<unsigned>(now * 4) % 4;
             char text[16] = "ENCORE";
@@ -437,12 +438,12 @@ private:
         Check(eglMakeCurrent(display, surface, surface, hud_context), "loading current");
         SCOPE_EXIT { Cleanup(eglMakeCurrent(display, surface, surface, context), "loading restore"); };
         if (!loading_program) {
-            // The rotating case is the sole branded loading animation.
-            // Keep the original GPU warm-up/pacing but never replace the
-            // fading case with the obsolete purple GL fallback scene.
-            const std::string fragment =
-                "#version 330 core\nout vec4 color;\n"
-                "void main(){ color = vec4(0.024, 0.035, 0.039, 1.0); }\n";
+            // One source owns both sides of the GL -> Vulkan handoff.
+            // Start at t>=1s so neither backend deliberately fades from black.
+            const std::string fragment = std::string{"#version 330 core\n"} +
+                kLoadingSceneGlsl +
+                "uniform vec2 size; uniform float seconds; out vec4 color;\n"
+                "void main(){ color=vec4(loading_scene(gl_FragCoord.xy,size,seconds),1.0); }\n";
             const char* sources[]{
                 "#version 330 core\nvoid main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
                 "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}",
@@ -601,7 +602,7 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
         const bool first = vulkan_loading_start < 0;
         if (first) vulkan_loading_start = now;
         if (vulkan_loading_pace.Due(now, idle)) {
-            vulkan_hud = MakeLoadingSnapshot(now - vulkan_loading_start + LoadingCalm());
+            vulkan_hud = MakeLoadingSnapshot(now - vulkan_loading_start + 1.0 + LoadingCalm());
             PresentVulkanLoading(renderer);
             ++vulkan_loading_frames;
             if (first) sceSystemServiceHideSplashScreen();
@@ -636,9 +637,14 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
     return current_window_context && current_window_context->LoadingTick(idle);
 }
 GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
-    // The jacket image is an in-memory Vulkan-only continuation, not
-    // something OpenGL should retain for the entire guest session.
-    if (!vulkan) LaunchHandoff::Clear();
+    // OpenGL games must take VideoOut before changing its display mode.
+    // Vulkan keeps the launcher's last scanout until its WSI surface is
+    // actually constructed later in RendererVulkan.
+    if (!vulkan) {
+        if (!pe::ps5::Display::close_deferred_scanout())
+            throw std::runtime_error("Could not release launcher scanout for OpenGL game");
+        LaunchHandoff::Clear();
+    }
     vulkan_loading = vulkan;
     vulkan_loading_start = -1;
     vulkan_loading_frames = 0;
@@ -656,7 +662,7 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
         vulkan_hud_clock = {};
         vulkan_hud_clock_active = false;
         vulkan_hud_memo.Reset();
-        vulkan_hud = MakeLoadingSnapshot(0);
+        vulkan_hud = MakeLoadingSnapshot(1.0 + LoadingCalm());
         vulkan_hud_stats_time = vulkan_hud_speed = 0;
         window_info.type = Core::Frontend::WindowSystemType::PS5;
         window_info.render_surface = this;

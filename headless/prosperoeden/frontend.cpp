@@ -4,6 +4,7 @@
 // starts: the game's own window takes over the screen.
 #include "frontend.h"
 #include "launch_handoff.hpp"
+#include "loading_scene_glsl.h"
 
 #include "assets_dir.h"
 #include "audio_out_init.h"
@@ -74,6 +75,69 @@ long long Milliseconds(Clock::duration value) {
 float MenuGain(int volume) {
     const float level = static_cast<float>(std::clamp(volume, 0, 100)) / 100.0f;
     return level * level;
+}
+
+// Draw the exact same source-generated loading scene used by Vulkan.
+// This replaces the selected-game jacket before the launcher relinquishes
+// scanout, so System::Load never needs a black interstitial or a screenshot
+// mailbox. Failure leaves the already-presented launcher frame untouched.
+bool PresentUnifiedLoading(pe::ps5::Display& display) {
+    const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
+        "uniform vec2 size; uniform float seconds; out vec4 color;\n"
+        "void main(){ color=vec4(loading_scene(gl_FragCoord.xy,size,seconds),1.0); }\n";
+    const char* vertex =
+        "#version 330 core\n"
+        "void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
+        "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}";
+    GLuint program = glCreateProgram();
+    GLuint vao = 0;
+    bool linked = program != 0;
+    for (unsigned i = 0; linked && i < 2; ++i) {
+        const GLuint shader = glCreateShader(i ? GL_FRAGMENT_SHADER : GL_VERTEX_SHADER);
+        const char* source = i ? fragment.c_str() : vertex;
+        glShaderSource(shader, 1, &source, nullptr);
+        glCompileShader(shader);
+        GLint ok = 0;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+        if (!ok) {
+            char log[512]{};
+            glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
+            Eden::Report("loading screen", log);
+            linked = false;
+        }
+        glAttachShader(program, shader);
+        glDeleteShader(shader);
+    }
+    if (linked) {
+        glLinkProgram(program);
+        GLint ok = 0;
+        glGetProgramiv(program, GL_LINK_STATUS, &ok);
+        linked = ok != 0;
+    }
+    if (!linked) {
+        if (program) glDeleteProgram(program);
+        return false;
+    }
+
+    glGenVertexArrays(1, &vao);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDisable(GL_BLEND);
+    glUseProgram(program);
+    glBindVertexArray(vao);
+    glViewport(0, 0, display.width(), display.height());
+    glUniform2f(glGetUniformLocation(program, "size"),
+                static_cast<float>(display.width()), static_cast<float>(display.height()));
+    // One second is beyond the shader's intentional fade-in. Vulkan starts
+    // from the same timeline value and continues from there.
+    const float seconds = Eden::LoadPreferences().reduce_motion ? 1001.0f : 1.0f;
+    glUniform1f(glGetUniformLocation(program, "seconds"), seconds);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glFlush();
+    const GLenum error = glGetError();
+    const bool swapped = error == GL_NO_ERROR && display.swap();
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(program);
+    return swapped;
 }
 
 // The launcher speaks the console's language when the app has a catalog for it
@@ -188,6 +252,12 @@ int SaveCapture(const std::string& path, int width, int height) {
 #endif
 
 std::string RunApp(const std::string& launch_error, bool first_start, bool* restart_requested) {
+    // A failed/aborted previous game may return before a renderer took the
+    // deferred launcher scanout. Release it before opening a new launcher.
+    if (!pe::ps5::Display::close_deferred_scanout()) {
+        Eden::Report("menu video failure", "Previous renderer did not release the launcher display");
+        return {};
+    }
     // A fresh/legacy config with no explicit game language follows the PS5 once. Once saved,
     // Settings > Language remains authoritative and is never overwritten by later system changes.
     if (first_start && !Eden::HasSavedLanguage()) {
@@ -298,15 +368,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         long long ui_max_update_us = 0, ui_max_draw_us = 0, ui_max_present_us = 0;
 #endif
         Eden::LaunchHandoff::Clear();
-        bool handoff_captured = false;
-        unsigned handoff_attempts = 0;
-        // A failed GL readback may be retried for at most three final-case
-        // frames while the EGL surface is still alive. Never start Vulkan
-        // with an accidentally blank mailbox after one transient GL error.
-        while (running && !launcher.restart_requested() &&
-               (!launcher.done() ||
-                (!launcher.selected_game().empty() && !handoff_captured &&
-                 handoff_attempts < 3u))) {
+        while (running && !launcher.restart_requested() && !launcher.done()) {
             const auto frame_start = Clock::now();
             // Start-to-start frame time; a long frame does not make the animations jump.
             const float dt = first_frame ? 1.0f / 60.0f :
@@ -397,101 +459,6 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             batch.draw(list, viewport, display.width(), display.height());
-            // Preserve the ACTUAL jacket/hero/title composition before EGL
-            // is destroyed and Vulkan takes over. Capture the final complete
-            // case frame once, without any black-fade interstitial. Vulkan
-            // reuses this exact scene until the first guest frame.
-            if (!handoff_captured && launcher.done() &&
-                !launcher.selected_game().empty()) {
-                    ++handoff_attempts;
-                    // The final launcher frame remains fully visible, with
-                    // the 3D case settled and NO black outro. Capture this
-                    // exact presentation instead of an earlier spin angle.
-                    const int width = display.width();
-                    const int height = display.height();
-                    if (width > 0 && height > 0 && width <= 4096 && height <= 2160) {
-                        try {
-                            Eden::LaunchHandoff::Frame snapshot;
-                            snapshot.width = static_cast<std::uint32_t>(width);
-                            snapshot.height = static_cast<std::uint32_t>(height);
-                            const std::size_t row_bytes =
-                                static_cast<std::size_t>(width) * 4;
-                            snapshot.rgba.resize(row_bytes * static_cast<std::size_t>(height));
-                            // Restore the menu renderer's pixel-pack state: a bound
-                            // PBO treats the pointer as an offset, and a custom row
-                            // length/skip can write beyond the RGBA host buffer.
-                            GLint old_pack_alignment = 4;
-                            GLint old_pack_row_length = 0;
-                            GLint old_pack_skip_rows = 0;
-                            GLint old_pack_skip_pixels = 0;
-                            GLint old_pack_buffer = 0;
-                            glGetIntegerv(GL_PACK_ALIGNMENT, &old_pack_alignment);
-                            glGetIntegerv(GL_PACK_ROW_LENGTH, &old_pack_row_length);
-                            glGetIntegerv(GL_PACK_SKIP_ROWS, &old_pack_skip_rows);
-                            glGetIntegerv(GL_PACK_SKIP_PIXELS, &old_pack_skip_pixels);
-                            glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &old_pack_buffer);
-                            // GL errors accumulate. Don't interpret a stale
-                            // render error as a failed screenshot readback;
-                            // report it separately rather than silently masking.
-                            GLenum prior_gl_error = GL_NO_ERROR;
-                            unsigned prior_gl_errors = 0;
-                            for (unsigned n = 0; n < 8; ++n) {
-                                const GLenum stale = glGetError();
-                                if (stale == GL_NO_ERROR) break;
-                                prior_gl_error = stale;
-                                ++prior_gl_errors;
-                            }
-                            if (prior_gl_errors)
-                                std::fprintf(stderr,
-                                    "EDEN_LAUNCH_GL_PRIOR_ERROR count=%u last=%x\n",
-                                    prior_gl_errors,
-                                    static_cast<unsigned>(prior_gl_error));
-                            glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-                            glPixelStorei(GL_PACK_ALIGNMENT, 1);
-                            glPixelStorei(GL_PACK_ROW_LENGTH, 0);
-                            glPixelStorei(GL_PACK_SKIP_ROWS, 0);
-                            glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
-                            glReadPixels(0, 0, width, height, GL_RGBA,
-                                         GL_UNSIGNED_BYTE, snapshot.rgba.data());
-                            const GLenum error = glGetError();
-                            glPixelStorei(GL_PACK_ALIGNMENT, old_pack_alignment);
-                            glPixelStorei(GL_PACK_ROW_LENGTH, old_pack_row_length);
-                            glPixelStorei(GL_PACK_SKIP_ROWS, old_pack_skip_rows);
-                            glPixelStorei(GL_PACK_SKIP_PIXELS, old_pack_skip_pixels);
-                            glBindBuffer(GL_PIXEL_PACK_BUFFER,
-                                         static_cast<GLuint>(old_pack_buffer));
-                            if (error == GL_NO_ERROR) {
-                                // GL readback starts at the lower left; Vulkan
-                                // buffer copies expect image rows from the top.
-                                std::vector<std::uint8_t> row(row_bytes);
-                                for (int y = 0; y < height / 2; ++y) {
-                                    auto* top = snapshot.rgba.data() +
-                                        static_cast<std::size_t>(y) * row_bytes;
-                                    auto* bottom = snapshot.rgba.data() +
-                                        static_cast<std::size_t>(height - y - 1) * row_bytes;
-                                    std::memcpy(row.data(), top, row_bytes);
-                                    std::memcpy(top, bottom, row_bytes);
-                                    std::memcpy(bottom, row.data(), row_bytes);
-                                }
-                                Eden::LaunchHandoff::Publish(std::move(snapshot));
-                                handoff_captured = true;
-                                std::fprintf(stderr,
-                                    "EDEN_LOADER_JACKET_HANDOFF_CAPTURE size=%dx%d ready=1\n",
-                                    width, height);
-                            } else {
-                                std::fprintf(stderr,
-                                    "EDEN_LOADER_JACKET_HANDOFF_CAPTURE ready=0 gl_error=%x\n",
-                                    static_cast<unsigned>(error));
-                            }
-                        } catch (const std::bad_alloc&) {
-                            // A second 4K RGBA allocation after real OOM
-                            // would only worsen memory pressure during boot.
-                            handoff_attempts = 3;
-                            std::fprintf(stderr,
-                                "EDEN_LOADER_JACKET_HANDOFF_CAPTURE ready=0 memory=insufficient\n");
-                        }
-                    }
-            }
             const auto drawn = Clock::now();
             bool captured = false;
 #ifdef EDEN_DEV_ROM_ID
@@ -564,8 +531,21 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         batch.delete_texture(font_texture);
         batch.release();
     }
-    display.close();
-    std::fprintf(stderr, "EDEN_LAUNCHER closed game=%d\n", !selected_game.empty());
+    if (!selected_game.empty()) {
+        // Present one canonical loading frame while GL still owns VideoOut,
+        // then keep that last scanout alive through System::Load. Vulkan (or
+        // the OpenGL game window) releases the deferred owner at takeover.
+        if (!PresentUnifiedLoading(display))
+            Eden::Report("loading screen", "Unified GL loading frame could not be presented; retaining last launcher frame");
+        if (!display.defer_scanout_close()) {
+            Eden::Report("menu video failure", "Launcher display handoff failed");
+            selected_game.clear();
+        }
+    } else {
+        display.close();
+    }
+    std::fprintf(stderr, "EDEN_LAUNCHER closed game=%d deferred=%d\n",
+                 !selected_game.empty(), pe::ps5::Display::has_deferred_scanout());
     return selected_game;
 }
 

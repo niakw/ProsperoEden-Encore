@@ -1,76 +1,87 @@
 #!/usr/bin/env python3
-"""Review the single animated native EGL->Vulkan jacket handoff source contract.
+"""Focused contract for the unified native loading compositor.
 
-The real GLSL is compiled and validated separately by the isolated HUD SPIR-V
-CI. This source gate does NOT claim a seamless physical console swapchain.
+The shader is validated separately. This source gate rejects the old static
+jacket + lower-band loader and requires one full-frame scene on GL and Vulkan.
+No physical PS5 presentation continuity is claimed.
 """
 from pathlib import Path
+import hashlib
 
 root = Path(__file__).resolve().parents[1]
 renderer = (root / "headless/vulkan_renderer_r08.cpp").read_text()
+header = (root / "headless/renderer_vulkan_r08.h").read_text()
 shader = (root / "headless/vulkan_hud.frag").read_text()
 window = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
 graphics = (root / "headless/graphics.cpp").read_text()
+frontend = (root / "headless/prosperoeden/frontend.cpp").read_text()
+display = (root / "headless/prosperoeden/pe/platform/display_egl.cpp").read_text()
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text()
 native_cmake = (root / "headless/CMakeLists.txt").read_text()
-# PS5_NATIVE is a CMake option and is NOT transitive to the video_core TU:
-# without this exact target definition the entire jacket path compiles out.
+
 assert 'target_compile_definitions(video_core PRIVATE PS5_NATIVE=1)' in vulkan_cmake
-assert '"${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"' in vulkan_cmake
-# Do not accidentally enable sparse NS2 guest semantics in every PS5 core TU.
+assert "vulkan_renderer_r08.cpp" in vulkan_cmake
 assert 'set(EDEN_NS2_SPARSE_BACKING OFF)' in native_cmake
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in native_cmake
-assert 'TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")' in native_cmake
+
+assert "kLoadingSceneGlsl" in frontend
+assert "kLoadingSceneGlsl" in graphics
+assert '#include "loading_scene.glsl"' in shader
+assert "loading_scene(gl_FragCoord.xy,size,seconds)" in frontend
+assert "loading_scene(gl_FragCoord.xy,size,seconds)" in graphics
+assert "color = vec4(loading_scene(" in shader
+
+assert "1001.0f : 1.0f" in frontend
+assert "now - loading_start + 1.0 + LoadingCalm()" in graphics
+assert "MakeLoadingSnapshot(1.0 + LoadingCalm())" in graphics
+
 loading = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
     "void RendererVulkan::Report()", 1
 )[0]
-native = loading.split("#ifdef PS5_NATIVE", 2)[2].split("#endif", 1)[0]
-assert "const bool jacket_ready = loading_jacket_buffer &&" in loading
-assert "present_manager.SwapchainImageViewFormat(), !jacket_ready);" in loading
-assert "Eden::LaunchHandoff::Peek()" in loading
-assert "loading_jacket_buffer = std::move(buffer);" in loading
-assert "loading_jacket_attempted = true;" in loading
-assert "scheduler.Record([target, upload, copy]" in native
-assert "to_present.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;" in native
-assert "VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |" in native
-assert "VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;" in native
-assert "to_present.newLayout = VK_IMAGE_LAYOUT_GENERAL;" in native
-assert "Eden::HudSnapshot live_loading = Eden::GetVulkanHud();" in native
-assert "live_loading.width |= 0x80000000u;" in native
-assert "live_loading.loading |= 0x80000000u;" not in loading
-assert "blit_swapchain.DrawHudOverlay(device, frame, live_loading);" in native
-assert native.index("scheduler.Record([target, upload, copy]") < native.index(
-    "blit_swapchain.DrawHudOverlay(device, frame, live_loading);"
-)
-assert loading.index("blit_swapchain.DrawHudOverlay(device, frame, live_loading);") < (
-    loading.index("scheduler.Flush(*frame->render_ready);")
-)
-assert "if (live_loading.loading != 0u && live_loading.width != 0u)" in native
-assert "const auto hud = draw_hud ? Eden::GetVulkanHud()" in window
-assert "CreateWrappedCoverageBlendingPipeline" in window
+assert "present_manager.SwapchainImageViewFormat(), true);" in loading
+assert "Eden::GetVulkanHud()" in loading
+assert "blit_swapchain.DrawHudOverlay(device, frame, live_loading);" in loading
+assert loading.index("DrawHudOverlay") < loading.index("scheduler.Flush")
+for retired in (
+    "loading_jacket", "LaunchHandoff", "CopyBufferToImage",
+    "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL", "0x80000000u",
+):
+    assert retired not in loading
+assert "loading_jacket_" not in header
+
 overlay = window.split("void WindowAdaptPass::DrawHudOverlay", 1)[1].split(
     "VkDescriptorSetLayout WindowAdaptPass::GetDescriptorSetLayout", 1
 )[0]
-assert "BeginRenderPass(cmdbuf, rp, fb, size);" in overlay
+assert "hud.loading\n                ? VkRect2D{{0, 0}, size}" in overlay
+assert "const VkViewport viewport{" in overlay
+for retired in ("jacket_band", "band_height", "0x80000000u"):
+    assert retired not in overlay
 assert "cmdbuf.ClearAttachments" not in overlay
-assert "const bool jacket_band = hud.loading != 0u &&" in overlay
-assert "(hud.width & 0x80000000u) != 0u;" in overlay
-assert "const std::uint32_t band_height = std::max(1u, size.height / 5u);" in overlay
-assert "VkRect2D{{0, static_cast<int32_t>(size.height - band_height)}," in overlay
-assert "const VkViewport viewport = jacket_band" in overlay
-assert "const VkRect2D scissor = hud.loading" in overlay
-assert "cmdbuf.SetScissor(0, scissor);" in overlay
-assert "cmdbuf.Draw(4, 1, 0, 0);" in overlay
-assert "void RendererVulkan::PresentLoading()" in renderer
-assert "vulkan_hud = MakeLoadingSnapshot" in graphics
-# The production SPIR-V is pinned to this ORIGINAL source. The single-loader
-# animation must not require a source-only shader variant that differs from
-# the vendor's embedded, already validated binary.
-import hashlib
+
+assert frontend.index("PresentUnifiedLoading(display)") < frontend.index(
+    "display.defer_scanout_close()"
+)
+assert "else {\n        display.close();\n    }" in frontend
+defer = display.split("bool Display::defer_scanout_close()", 1)[1].split(
+    "bool Display::close_deferred_scanout()", 1
+)[0]
+assert "eglDestroyContext" in defer
+assert not any(line.lstrip().startswith("eglDestroySurface(") for line in defer.splitlines())
+assert "eglTerminate(" not in defer
+close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].split(
+    "bool Display::has_deferred_scanout()", 1
+)[0]
+assert "eglDestroySurface(display, surface)" in close_deferred
+assert close_deferred.index("eglDestroySurface(display, surface)") < close_deferred.index(
+    "eglTerminate(display)"
+)
+handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
+    "} // Anonymous namespace", 1
+)[0]
+assert handover.index("close_deferred_scanout()") < handover.index("CreateSurface(")
+
 assert hashlib.sha256(shader.encode()).hexdigest() == (
     "3f5287326b7554164449f5f849f46aae3d2f69ff3a0b4c5c822055bd1877c6d6"
 )
-assert "float(text.loading - 1u) * 0.001" in shader
-assert "color = vec4(loading_scene(" in shader
-assert "bool quick = (text.loading & 0xfff00000u) == 0xff100000u;" in shader
-print("PS5_SINGLE_ANIMATED_VULKAN_JACKET_SOURCE_PASS native_only=1 shader_pinned=1 console_pending=1")
+
+print("PS5_SINGLE_GL_VULKAN_LOADING_SOURCE_PASS shared_scene=1 fullscreen=1 deferred_videoout=1 console_pending=1")

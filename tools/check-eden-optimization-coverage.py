@@ -1344,7 +1344,7 @@ post_f07 = json.loads(
 assert post_f07['schema_version'] == 1
 assert post_f07['historical_f07_source_snapshots_preserved'] is True
 post_entries = post_f07['files']
-assert len(post_entries) == 36  # includes the reviewed extracted-history host witness
+assert len(post_entries) == 38  # + reviewed EGL deferred-scanout lifecycle owners
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
@@ -1398,8 +1398,10 @@ print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
       "new_owner_consoles_qualified=0")
 # Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.
 ns2_production_blobs = {
-    # Reviewed final jacket EGL -> Vulkan handoff: bounded capture and no audio wait.
-    "headless/prosperoeden/frontend.cpp": "3f06a9a9c66eee09270fbe4919e6be98620b0bf5",
+    # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU
+    # readback; the launcher presents loading_scene.glsl and retains VideoOut
+    # until the selected renderer takes ownership. Console continuity pending.
+    "headless/prosperoeden/frontend.cpp": "da6571994b9c287cd5fc535a1150469487e0b72c",
     "vendor/encore-active/eden-core/src/core/memory_native_a32.cpp": "318cb932c496c09853c2d9ba333d726cf7f820cd",
     "vendor/encore-active/eden-core/src/core/memory_native_standard.cpp": "91463583eec9cfcbd180a56662cda072553787e0",
     "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "469eddd0ea9e0a3498446bf08ab473caac3b76f9",

@@ -841,6 +841,22 @@ if post_f07_nvdec_present:
         root / "headless/CMakeLists.txt").read_text()
     print("ENCORE_POST_F07_NVDEC_OWNER_PAIR_PASS owners=2")
 
+# R457 VIC diagnostics have one optional, explicitly reviewed new owner;
+# the two FFmpeg ABI owners above retain their existing identity and count.
+post_f07_vic_receipt = "eden-core/src/video_core/host1x/vic.cpp"
+post_f07_vic_present = {post_f07_vic_receipt} & set(physical_all)
+if post_f07_vic_present:
+    assert post_f07_nvdec_present == post_f07_nvdec_owners
+    raw_vic = (active / post_f07_vic_receipt).read_bytes()
+    assert hashlib.sha1(b"blob " + str(len(raw_vic)).encode() + bytes([0]) + raw_vic).hexdigest() == "7e84c9eea181f72f8fc7d3364725d0486d50330b"
+    raw_ffmpeg = (active / "eden-core/src/video_core/host1x/ffmpeg.cpp").read_bytes()
+    assert hashlib.sha1(b"blob " + str(len(raw_ffmpeg)).encode() + bytes([0]) + raw_ffmpeg).hexdigest() == "9a3cf0b0a2cf92e467a619352b9345c2b7823d8b"
+    vic_cmake = (root / "headless/CMakeLists.txt").read_text()
+    assert 'list(REMOVE_ITEM eden_vic_video_sources "host1x/vic.cpp")' in vic_cmake
+    assert 'list(APPEND eden_vic_video_sources "${EDEN_VIC_MAINTAINED_SOURCE}")' in vic_cmake
+    assert (root / "tools/check-nvdec-eagain-owner-selection-host.py").is_file()
+print("ENCORE_POST_F07_VIC_WITNESS_OWNER_PASS", f"owners={len(post_f07_vic_present)}")
+
 nov13_native_owners = {
     "eden-core/src/common/stb_image_png.cpp",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -948,7 +964,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

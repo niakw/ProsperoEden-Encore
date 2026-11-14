@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pin maintained JIT constant-pool source parity and native selection."""
 from pathlib import Path
+import hashlib
 root = Path(__file__).resolve().parents[1]
 pinned = (root/"vendor/sources/eden/src/dynarmic/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
 maintained = (root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/constant_pool.cpp").read_text()
@@ -30,7 +31,27 @@ after = """    // Track the slot index rather than a duplicate pointer. Retain t
     }
     return frame[code.rip + static_cast<void*>(&pool[it->second])];"""
 assert pinned.count(before) == 1
-assert maintained == pinned.replace(before, after), 'Unreviewed native constant pool byte drift'
+# Vendor #130 removes a dead cursor from BOTH the indexed header and CPP.
+# Accept only the byte-exact reviewed old or new header/body pair.
+def git_blob(path):
+    raw = path.read_bytes()
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+
+header = root/"vendor/encore-active/eden-core/include/dynarmic/backend/x64/constant_pool.h"
+source = root/"vendor/encore-active/eden-core/src/dynarmic/backend/x64/constant_pool.cpp"
+expected = pinned.replace(before, after)
+header_blob = git_blob(header)
+if header_blob == "52842358e1e97821fb306c1dd384673caef58861":
+    assert git_blob(source) == "3e255b2ffe3dfc4fbf09cacf8188a707b1f4e406"
+    assert "std::size_t insertion_point;" in header.read_text()
+elif header_blob == "ef107058c1cb03e1f2d80f924d3602148a9bed0f":
+    assert git_blob(source) == "2b27cb31c49e6cbfafbd8c5adcd058ba270e47ac"
+    assert expected.count("    : insertion_point(0)\n") == 1
+    expected = expected.replace("    : insertion_point(0)\n", "")
+    assert "insertion_point" not in header.read_text()
+else:
+    raise AssertionError("Unreviewed native constant pool header")
+assert maintained == expected, 'Unreviewed native constant pool byte drift'
 assert selector.count('set(EDEN_MAINTAINED_CONSTANT_POOL') == 1
 assert 'target_sources(dynarmic PRIVATE "${EDEN_MAINTAINED_CONSTANT_POOL}")' in selector
 assert 'list(FILTER alias_sources EXCLUDE REGEX' in selector

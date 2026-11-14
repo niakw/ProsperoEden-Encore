@@ -1013,6 +1013,18 @@ if post_f07_nvdec_owners:
 print("ENCORE_POST_F07_NVDEC_F07_ISOLATION_PASS",
       f"owners={len(post_f07_nvdec_owners)}")
 
+# VIC is an optional post-F07 diagnostic owner, not a 519th optimized source.
+# Require its exact reviewed blob and the corresponding FFmpeg ABI pair.
+post_f07_vic_receipt = "vendor/encore-active/eden-core/src/video_core/host1x/vic.cpp"
+post_f07_vic_present = {post_f07_vic_receipt} & all_owners
+if post_f07_vic_present:
+    assert len(post_f07_nvdec_owners) == 2
+    assert subprocess.check_output(["git","hash-object",post_f07_vic_receipt],cwd=ROOT,text=True).strip() == "7e84c9eea181f72f8fc7d3364725d0486d50330b"
+    assert subprocess.check_output(["git","hash-object","vendor/encore-active/eden-core/src/video_core/host1x/ffmpeg.cpp"],cwd=ROOT,text=True).strip() == "9a3cf0b0a2cf92e467a619352b9345c2b7823d8b"
+    assert 'list(REMOVE_ITEM eden_vic_video_sources "host1x/vic.cpp")' in release_cmake
+    assert 'list(APPEND eden_vic_video_sources "${EDEN_VIC_MAINTAINED_SOURCE}")' in release_cmake
+print("ENCORE_POST_F07_VIC_F07_ISOLATION_PASS", f"owners={len(post_f07_vic_present)}")
+
 nov13_native_owners = {
     "vendor/encore-active/eden-core/src/common/stb_image_png.cpp",
     "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -1103,7 +1115,7 @@ for path, blob in post_f07_diagnostics_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=ROOT, text=True).strip() == blob, path
 print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=2 native_transport=unwired")
 assert post_f07_diagnostics_owners <= all_owners
-owners=all_owners-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_jxr_adapter_owners
+owners=all_owners-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

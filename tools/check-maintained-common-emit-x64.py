@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pin common x64 Patch()/Unpatch() implementation and native perf-map removal."""
 from pathlib import Path
+import hashlib
 import shutil
 import subprocess
 import tempfile
@@ -26,6 +27,19 @@ guarded_invalidation = "void EmitX64::InvalidateBasicBlocks(const ::Common::unor
 expected_native = host.replace(perf, "")
 assert expected_native.count(empty_invalidation) == 1
 expected_native = expected_native.replace(empty_invalidation, guarded_invalidation)
+# Vendor #131 only removes the unused parameter name from the native
+# definition. The type, fatal assertion, host source and selection stay.
+before_invalid = "void EmitX64::EmitInvalid(EmitContext&, IR::Inst* inst) {\n    UNREACHABLE();\n}"
+after_invalid = "void EmitX64::EmitInvalid(EmitContext&, IR::Inst*) {\n    UNREACHABLE();\n}"
+assert expected_native.count(before_invalid) == 1
+raw_native = (active / "emit_x64_native.cpp").read_bytes()
+native_blob = hashlib.sha1(b"blob " + str(len(raw_native)).encode() + bytes([0]) + raw_native).hexdigest()
+if native_blob == "46dfa1e0da81d15d5e6a0e5b6020dbf51c84b4ef":
+    expected_native = expected_native.replace(before_invalid, after_invalid, 1)
+    subprocess.run(["python3", "-B", str(root / "vendor/tests/r457_native_emit_invalid_warning_host.py")],
+                   check=True, timeout=120)
+else:
+    assert native_blob == "205aa034f0ec2330aec5a81a628ce3ae326856ab", "Unreviewed native emitter blob"
 assert native == expected_native, "native emitter exact source drift"
 assert native.count(guarded_invalidation) == 1
 assert "LocationDescriptorToFriendlyName(descriptor)" not in native

@@ -29,6 +29,7 @@ REVIEWED_VENDORS={
     "0264f2ae94ef5889e8585171b5bfcb11fd3659ff",
     "bc78a7610425e95d6645685cbd023a67b729ec24",
     "7b7c4d2a37f9b0b248d3f3d6d9cce40596ed0c99",
+    "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
 }
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")

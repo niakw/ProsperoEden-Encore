@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - 'headless/prosperoeden/pe/ui/**'
+      - 'headless/prosperoeden/host/**'
       - 'headless/prosperoeden/eden_services.cpp'
       - 'headless/prosperoeden/eden_services.h'
       - 'tools/check-launch-case-artwork.py'

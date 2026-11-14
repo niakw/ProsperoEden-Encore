@@ -1,0 +1,29 @@
+name: FC-family Opus host-buffer engine-selected qualification
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'tools/check-fc-opus-host-buffer-source.py'
+      - '.github/workflows/fc-opus-host-buffer-engine.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'vendor'
+      - 'tools/check-fc-opus-host-buffer-source.py'
+      - '.github/workflows/fc-opus-host-buffer-engine.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fc-opus-host-buffer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify exact engine-selected Opus owners
+        run: python3 -B tools/check-fc-opus-host-buffer-source.py
+      - name: Re-run vendor ASan/UBSan Opus quota and buffer witness
+        run: python3 -B vendor/tests/ns1_r23_opus_24_host.py

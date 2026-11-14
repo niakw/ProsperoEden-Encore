@@ -2333,8 +2333,17 @@ void Launcher::draw_game(Canvas &c, float open)
     const Game *game = library_.selected >= 0 &&
         static_cast<std::size_t>(library_.selected) < games_.size() ?
         &games_[static_cast<std::size_t>(library_.selected)] : nullptr;
+    // Keep successful graphics-setting feedback in the subtitle band,
+    // independent of the selected option's explanatory card and controls.
+    const bool compact_game_success = !message_.empty() && !message_warning_ &&
+                                      option_ >= row_mode && option_ < row_controls;
     text_fit(c, game != nullptr ? game->name : std::string{}, 592.0f,
-             baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, theme::kCopy, 736.0f);
+             baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, theme::kCopy,
+             compact_game_success ? 405.0f : 736.0f);
+    if (compact_game_success)
+        text_shrink(c, message_, 1328.0f,
+                    baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall,
+                    theme::kLimePale, 313.0f, Align::right);
 
     static constexpr const char *kRenderers[] = {"OpenGL", "Vulkan"};
     const auto &resolutions = services_.resolution_labels();
@@ -2499,9 +2508,9 @@ void Launcher::draw_game(Canvas &c, float open)
     list.pop_clip();
     scrollbar(c, game_rows_, 1340.0f, kDialogWindow.y, kDialogWindow.h);
 
-    if (!message_.empty())
+    if (!message_.empty() && !compact_game_success)
     {
-        // Up to two lines: what Save data answers is longer than a "Saved".
+        // Preserve actionable warnings and save-transfer feedback.
         notice_block(c, message_, 592.0f, kDialogHints - 6.0f, theme::kSmall, 26.0f,
                      message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, 2,
                      message_warning_);

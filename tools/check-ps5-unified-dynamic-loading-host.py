@@ -65,7 +65,16 @@ assert "else {\n        display.close();\n    }" in frontend
 defer = display.split("bool Display::defer_scanout_close()", 1)[1].split(
     "bool Display::close_deferred_scanout()", 1
 )[0]
+assert "eglDestroyContext" in defer
+assert not any(line.lstrip().startswith("eglDestroySurface(") for line in defer.splitlines())
 assert "eglTerminate(" not in defer
+close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].split(
+    "bool Display::has_deferred_scanout()", 1
+)[0]
+assert "eglDestroySurface(display, surface)" in close_deferred
+assert close_deferred.index("eglDestroySurface(display, surface)") < close_deferred.index(
+    "eglTerminate(display)"
+)
 handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
     "} // Anonymous namespace", 1
 )[0]

@@ -810,6 +810,21 @@ assert slab_source.decode().count("EdenNs2CommitGuestBacking(") == 3
 # The Nov13 native fix adds two reviewed owners AFTER the immutable F07
 # catalogue. They are not retroactively counted as historical F07 sources:
 # both must exist and be selected in native CMake (single stb implementation).
+# Nov14 PS5 Vulkan usage-tracker overlay is added AFTER the immutable
+# 337-owner F07 catalog, and only when the exact vendor candidate is staged.
+# The pinned original engine gitlink lacks this header by design. Never
+# inflate the frozen 337 count, and never exclude any other new source.
+post_f07_usage_tracker_owners = {
+    "eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h",
+}
+usage_tracker_present = post_f07_usage_tracker_owners & set(physical_all)
+if usage_tracker_present:
+    assert usage_tracker_present == post_f07_usage_tracker_owners
+    assert (root / "tools/check-ps5-usage-tracker-selection-host.py").is_file()
+    assert "EDEN_PS5_USAGE_TRACKER_ROOT" in (
+        root / "headless/CMakeLists.txt").read_text()
+    print("ENCORE_POST_F07_USAGE_TRACKER_OWNER_PASS reviewed=1")
+
 nov13_native_owners = {
     "eden-core/src/common/stb_image_png.cpp",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -835,7 +850,8 @@ physical = [p for p in physical_all
             post_f07_ampere_semaphore_owners | post_f07_native_opcode_owners |
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
-             post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners]
+             post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
+             usage_tracker_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

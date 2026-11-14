@@ -1,0 +1,49 @@
+name: PS5 Vulkan usage-tracker engine and vendor selected source (host)
+
+on:
+  pull_request:
+    paths:
+      - "headless/CMakeLists.txt"
+      - "tools/check-ps5-usage-tracker-selection-host.py"
+      - ".github/workflows/ps5-usage-tracker-engine-pair-host.yml"
+  push:
+    branches:
+      - ci/nov14-buffer-usage-64-vendor-integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-paired-buffer-usage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - name: Checkout exact engine and current vendor gitlink
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Confirm pinned pre-correction source graph
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          python3 -B tools/check-ps5-usage-tracker-selection-host.py
+          python3 -B tools/check-active-source-inventory.py
+      - name: Checkout reviewed vendor UsageTracker candidate in isolation
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov14-ps5-buffer-usage-tracker-granularity
+          git -C vendor checkout --detach FETCH_HEAD
+          test "$(git -C vendor rev-parse HEAD)" = "ce1386b16dbcc041c3a1d169a09d11615e14be51"
+      - name: Verify selected native CMake include and maintained header under sanitizers
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-ps5-usage-tracker-selection-host.py
+          python3 -B vendor/tests/ps5_buffer_usage_granularity_host.py
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-eden-optimization-coverage.py
+      - name: Distinguish native and host testing
+        if: always()
+        run: |
+          echo "Host-source qualification only. Actual PS5 CMake/native compiler, ABI/link, FC27 textures/HUD and shader/texture GPU barriers still require PS5 validation. The engine production vendor gitlink was NOT moved." >> "$GITHUB_STEP_SUMMARY"

@@ -16,13 +16,18 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 graphics = (ROOT / "headless/graphics.cpp").read_text()
 crash = (ROOT / "headless/crash_report.h").read_text()
+failure = (ROOT / "headless/gpu_failure.h").read_text()
 watchdog = (ROOT / "headless/stall_watchdog.h").read_text()
 gpu_owner = (ROOT / "tools/check-native-gpu-thread.py").read_text()
 
-assert "#ifdef EDEN_PS5_VULKAN\n#include \"crash_report.h\"\n#endif" in graphics
+assert '#include "crash_report.h"' in graphics
+assert '#include "gpu_failure.h"' in graphics
 assert "inline std::atomic<std::uint64_t> gpu_completed_commands{0};" in crash
 assert "::Eden::Crash::gpu_completed_commands.fetch_add(64" in gpu_owner
+assert "::Eden::PublishGpuSubmissionSample(count);" in gpu_owner
+assert "PublishGpuSubmissionSample(std::uint64_t count)" in failure
 assert "Crash::gpu_completed_commands.load(std::memory_order_relaxed)" in watchdog
+assert graphics.count("gpu_submit_sample=") == 2
 assert graphics.count("gpu_worker_completed_floor64=") == 2
 assert graphics.count("gpu_worker_delta_floor64=") == 2
 assert graphics.count("gpu_worker_counter_reset=") == 2
@@ -30,6 +35,7 @@ assert graphics.count("gpu_worker_counter_reset=") == 2
 start = graphics.index("struct LoadingGpuProgress {")
 end = graphics.index("\n#endif\nLoadingPace vulkan_loading_pace;", start)
 helper = graphics[start:end]
+assert helper.count("GpuSubmissionSample()") == 1
 assert helper.count("Crash::gpu_completed_commands.load(std::memory_order_relaxed)") == 1
 assert "current < vulkan_loading_gpu_completion_baseline" in helper
 assert "reset ? 0 : current - vulkan_loading_gpu_completion_baseline" in helper
@@ -60,6 +66,7 @@ assert "Crash::gpu_completed_commands.store(" not in ctor, (
     "A title transition must not clear the signal/crash breadcrumb.")
 
 cpp = r"""
+#include "gpu_failure.h"
 #include <atomic>
 #include <cstdint>
 #include <cassert>
@@ -69,24 +76,36 @@ inline std::atomic<std::uint64_t> gpu_completed_commands{0};
 std::uint64_t vulkan_loading_gpu_completion_baseline{};
 """ + helper + r"""
 int main() {
+    Eden::ResetGpuFailureForTitle();
     Crash::gpu_completed_commands.store(128);
     vulkan_loading_gpu_completion_baseline = 128;
     auto a = SampleLoadingGpuProgress();
+    assert(a.submitted_sample == 0);
     assert(a.total_floor64 == 128 && a.since_window_floor64 == 0 && !a.counter_reset);
+    Eden::PublishGpuSubmissionSample(1);
+    a = SampleLoadingGpuProgress();
+    assert(a.submitted_sample == 1);
+    Eden::PublishGpuSubmissionSample(4);
+    a = SampleLoadingGpuProgress();
+    assert(a.submitted_sample == 1);
+    Eden::PublishGpuSubmissionSample(64);
     Crash::gpu_completed_commands.store(192);
     a = SampleLoadingGpuProgress();
+    assert(a.submitted_sample == 64);
     assert(a.total_floor64 == 192 && a.since_window_floor64 == 64 && !a.counter_reset);
     Crash::gpu_completed_commands.store(320);
     a = SampleLoadingGpuProgress();
     assert(a.since_window_floor64 == 192 && !a.counter_reset);
-    // A second game in this app gets a new baseline, not stale GPU work.
+    // A second game in this app gets a new baseline and submission sample.
+    Eden::ResetGpuFailureForTitle();
     vulkan_loading_gpu_completion_baseline = 320;
     a = SampleLoadingGpuProgress();
-    assert(a.since_window_floor64 == 0 && !a.counter_reset);
+    assert(a.submitted_sample == 0 && a.since_window_floor64 == 0 && !a.counter_reset);
+    Eden::PublishGpuSubmissionSample(2);
     Crash::gpu_completed_commands.store(384);
     a = SampleLoadingGpuProgress();
-    assert(a.since_window_floor64 == 64 && !a.counter_reset);
-    // A future counter reset must not wrap into a huge unsigned delta.
+    assert(a.submitted_sample == 2 && a.since_window_floor64 == 64 && !a.counter_reset);
+    // A future completion counter reset must not wrap into a huge unsigned delta.
     Crash::gpu_completed_commands.store(16);
     a = SampleLoadingGpuProgress();
     assert(a.total_floor64 == 16 && a.since_window_floor64 == 0 && a.counter_reset);
@@ -103,8 +122,8 @@ with tempfile.TemporaryDirectory(prefix="ns2-loading-gpu-progress-") as td:
     src.write_text(cpp)
     subprocess.run([compiler, "-std=c++20", "-O1", "-Wall", "-Wextra",
                     "-Werror", "-fsanitize=address,undefined",
-                    "-fno-omit-frame-pointer", str(src), "-o", str(exe)],
+                    "-fno-omit-frame-pointer", "-pthread", "-I", str(ROOT / "headless"), str(src), "-o", str(exe)],
                    check=True, timeout=35)
     subprocess.run([str(exe)], check=True, timeout=20)
-print("NS2_LOADING_GPU_PROGRESS_HOST_PASS samples=7 "
+print("NS2_LOADING_GPU_PROGRESS_HOST_PASS samples=10 submit_sample=1 "
       "window_reset=1 wraps_rejected=1 first_guest_frame=unverified")

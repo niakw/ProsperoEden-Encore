@@ -17,6 +17,7 @@ REVIEWED_VENDORS={
     "97fdc316fcf5b42e08c26845887f298feac2a424",
     "99ca67babe955398e157c6b28b22a79cbb88967e",
     "7bd7a85e6c1886035c75395c86b05b231375bbf5",
+    "7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6",
 }
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
@@ -82,7 +83,7 @@ def main():
     # they are each the sole real CMake native compilation owner, then compile
     # the full TUs with the exact SDK command (not replacement mock headers).
     storage_labels = set()
-    if sha == "7bd7a85e6c1886035c75395c86b05b231375bbf5":
+    if sha in {"7bd7a85e6c1886035c75395c86b05b231375bbf5", "7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6"}:
         storage_receipts = {
             "file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
             "file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
@@ -104,6 +105,25 @@ def main():
             selected.append((label, rows[0]))
         print("R457_NATIVE_STORAGE_6_OWNER_GRAPH_PASS exact_receipts=6",flush=True)
 
+    shader_labels = set()
+    bfs_header = None
+    if sha == "7b42e7f4ba6887fe6d7b539a1d2c50e6782603f6":
+        relative = Path("shader_recompiler/frontend/ir/breadth_first_search.h")
+        bfs_header = native/"headless/r23-shader-phi/include"/relative
+        vendor_header = ROOT/"vendor/encore-active/eden-shader/include"/relative
+        if gitblob(bfs_header) != "194476705f21bd1c27f532fdd5cc04d99a3cd620" or gitblob(vendor_header) != "194476705f21bd1c27f532fdd5cc04d99a3cd620":
+            raise RuntimeError("Wrong native adaptive BFS staged header")
+        texture = ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp"
+        if gitblob(texture) != "85c523e435ee8803ef3d2087567aa1a4b5d09369":
+            raise RuntimeError("Unexpected conditional Phi texture pass owner")
+        rows = [r for r in db if Path(r["file"]).parts[-3:] == ("shader_recompiler","ir_opt","texture_pass.cpp")]
+        if len(rows) != 1 or Path(rows[0]["file"]).resolve() != texture.resolve():
+            raise RuntimeError("Wrong or duplicate selected texture pass")
+        label = "shader_texture_phi_bfs"
+        shader_labels.add(label)
+        selected.append((label, rows[0]))
+        print("R457_NATIVE_BFS_STAGE_GRAPH_PASS exact_header=1 texture_owner=1",flush=True)
+
     # Qualify existing source owners first even when the new sparse TU has a
     # target-SDK header problem; never stop before recording their verdict.
     selected.sort(key=lambda pair: pair[0] == "ns2_sparse_guest.cpp")
@@ -123,9 +143,14 @@ def main():
                        (x in ("-target","--target") and i+1<len(command) and
                         command[i+1]=="x86_64-sie-ps5") for i,x in enumerate(command)):
                 raise RuntimeError(label+" missing real PS5 compiler target")
+        elif label in shader_labels:
+            if not any(x=="--target=x86_64-sie-ps5" or
+                       (x in ("-target","--target") and i+1<len(command) and
+                        command[i+1]=="x86_64-sie-ps5") for i,x in enumerate(command)):
+                raise RuntimeError(label+" missing real PS5 compiler target")
         elif not native_definition:
             raise RuntimeError(label+" missing PS5_NATIVE")
-        if not any(x.startswith("-DEDEN_NS2_SPARSE_BACKING") for x in command):
+        if label not in shader_labels and not any(x.startswith("-DEDEN_NS2_SPARSE_BACKING") for x in command):
             raise RuntimeError(label+" missing production sparse backing")
         print("R457_NS2_SPARSE_NATIVE_GRAPH_PASS",label,row["file"],flush=True)
         cleaned=[]
@@ -178,6 +203,8 @@ def main():
         if host_includes:
             raise RuntimeError(label+" configured PS5 native graph contains host libc "+repr(host_includes))
         strict=cleaned+["-nostdinc","-isystem",str(resource_dir),"-fsyntax-only"]
+        if label in shader_labels:
+            strict.append("-H") # record which real header Clang actually includes
         p=subprocess.run(strict,cwd=row["directory"],
                          capture_output=True,text=True,timeout=210)
         if p.returncode:
@@ -194,6 +221,11 @@ def main():
                 if diagnostic.returncode:
                     print(diagnostic.stderr[-3500:],file=sys.stderr,flush=True)
             raise RuntimeError(label+" genuine SDK syntax: "+p.stderr[-8500:])
+        if label in shader_labels:
+            if not any(str(bfs_header) in line and line.lstrip().startswith(".")
+                       for line in p.stderr.splitlines()):
+                raise RuntimeError("Actual compiler did not include the staged adaptive BFS header")
+            print("R457_NATIVE_BFS_ACTUAL_HEADER_PASS",bfs_header,flush=True)
         # Do not discard diagnostics from successful syntax compiles.
         warnings = [line for line in p.stderr.splitlines() if "warning:" in line]
         for line in warnings:

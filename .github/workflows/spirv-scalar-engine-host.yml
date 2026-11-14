@@ -25,6 +25,8 @@ jobs:
           test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h)" = "844a118358c874b0666aebda116c1d6a0c9a8ceb"
           python3 -B vendor/tests/ps5_spirv_scalar_constant_cache_host.py
           python3 -B vendor/tests/ps5_spirv_scalar_real_sirit_host.py
+          test "$(git hash-object vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h)" = "194476705f21bd1c27f532fdd5cc04d99a3cd620"
+          python3 -B vendor/tests/ns1_r23_58_conditional_phi.py
           python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
           python3 -B tools/check-spirv-scalar-cache-sirit-contract.py
       - name: Verify shared shader source graph and real C++ syntax

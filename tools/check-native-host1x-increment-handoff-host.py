@@ -23,7 +23,15 @@ assert COMMAND in FAST and COMMAND in FULL
 assert 'list(APPEND video_sources "' in CM and "EDEN_MAINTAINED_HOST1X_SYNCPOINT" in CM
 assert 'list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)' in CM
 assert ACT.count("ready_actions.splice(")==1 and ACT.count("ready.action();")==1
-assert ACT.index("ready.action();") < ACT.index("wait_cv.notify_all();", ACT.index("ready.action();"))
+# Historical source notified after callbacks, despite the immediate ready predicate.
+# For the newly reviewed owner keep claim and dispatch/cancellation tests intact,
+# and require counter notification before the first potentially blocking action.
+notification_moved = "A syncpoint waiter observes the published counter" in ACT
+if notification_moved:
+    assert ACT.count("wait_cv.notify_all();")==1
+    assert ACT.index("ready_actions.splice(") < ACT.index("wait_cv.notify_all();") < ACT.index("ready.action();")
+else:
+    assert ACT.index("ready.action();") < ACT.index("wait_cv.notify_all();", ACT.index("ready.action();"))
 assert "ready_actions" not in PIN
 hs=ACT.index("namespace {\n// Each domain")
 he=ACT.index("\nSyncpointManager::ActionHandle",hs)
@@ -227,3 +235,7 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-handoff-") as tmp:
             assert run.returncode==0,(name,run.stdout,run.stderr[-3000:])
             print(run.stdout.strip(),name)
 print("N04_HOST1X_INCREMENT_GUEST_PROGRESS_UNVERIFIED only_host_scheduling")
+if notification_moved:
+    import sys
+    subprocess.run([sys.executable,"-B",str(ROOT/"vendor/tests/ps5_host1x_wait_notification_host.py")],
+                   check=True,timeout=180)

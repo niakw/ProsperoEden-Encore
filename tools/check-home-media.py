@@ -166,3 +166,75 @@ with tempfile.TemporaryDirectory(prefix="home-media-visible-") as tmp:
                         str(src),"-o",str(exe)],check=True,timeout=60)
         subprocess.run([str(exe)],check=True,timeout=10)
 print("HOME_MEDIA_VISIBLE_WORKER_PASS hidden=2 cancellation=1 cooldown=1 return=1 actual_owner=1")
+
+# Execute both real icon-worker methods without HTTP, disk or a GPU.
+icon_methods = lib[lib.index("void Launcher::start_home_icons()"):lib.index("void Launcher::start_home_media()")]
+icon_cpp = r"""
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <cstdint>
+#include <future>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include <utility>
+enum class Screen { home, library, settings };
+struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; };
+struct Recent { std::uint64_t title_id=0; std::string file,title,cover; };
+struct Home { bool setup_ready=true; std::uint64_t last_title_id=0; std::string last_file,last_cover; std::vector<Recent> recents; };
+struct Services {
+    unsigned calls=0;
+    Game enrich_home_icon(Game g,const std::atomic<bool>* cancel) {
+        assert(cancel && !cancel->load()); ++calls;
+        g.cover="nlib-icon-"+std::to_string(g.title_id); g.artwork_changed=true;
+        return g;
+    }
+};
+struct Textures { unsigned invalidations=0; void invalidate(const std::string&) { ++invalidations; } };
+namespace sys { template<class... T> void log(T...) {} }
+struct Launcher {
+    Screen screen_=Screen::library;
+    Home home_;
+    std::atomic<bool> media_cancel_{false};
+    Services services_;
+    Textures textures_;
+    std::future<Game> home_icon_scan_;
+    std::uint64_t home_icon_scan_title_id_=0, home_media_scan_title_id_=1;
+    std::unordered_map<std::uint64_t,std::chrono::steady_clock::time_point> home_icon_next_retry_;
+    std::vector<Game> games_;
+    void start_home_icons();
+    void finish_home_icons();
+};
+""" + icon_methods + r"""
+int main() {
+    Launcher l;
+    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon"}};
+    l.home_.last_title_id=2; l.home_.last_file="two";
+    l.games_={{2,"two","B","",false},{3,"three","C","",false},{3,"different-file","C","unchanged",false}};
+    l.start_home_icons(); assert(!l.home_icon_scan_.valid());
+    l.screen_=Screen::home; l.media_cancel_=true;
+    l.start_home_icons(); assert(!l.home_icon_scan_.valid());
+    l.media_cancel_=false; l.start_home_icons();
+    assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==2);
+    l.start_home_icons(); l.home_icon_scan_.wait(); l.finish_home_icons();
+    assert(l.home_.last_cover=="nlib-icon-2" && l.home_.recents[1].cover=="nlib-icon-2");
+    assert(l.games_[0].cover=="nlib-icon-2" && l.services_.calls==1);
+    l.start_home_icons(); assert(l.home_icon_scan_title_id_==3);
+    l.home_icon_scan_.wait(); l.finish_home_icons();
+    assert(l.games_[1].cover=="nlib-icon-3" && l.games_[2].cover=="unchanged");
+    assert(l.home_.recents[2].cover=="nlib-icon-3" && l.textures_.invalidations==2);
+    l.start_home_icons(); assert(!l.home_icon_scan_.valid() && l.services_.calls==2);
+    l.home_.recents[1].cover.clear(); l.start_home_icons();
+    assert(!l.home_icon_scan_.valid()); // retry not every frame
+}
+"""
+with tempfile.TemporaryDirectory(prefix="home-icon-visible-") as tmp:
+    source=Path(tmp)/"test.cpp"
+    source.write_text(icon_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(tmp)/"test"
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-pthread",
+                        str(source),"-o",str(exe)],check=True,timeout=60)
+        subprocess.run([str(exe)],check=True,timeout=10)
+print("HOME_VISIBLE_ICONS_HOST_PASS independent=1 selected_only_full_media=1 exact_identity=1 cancellation=1 cooldown=1 actual_owner=1")

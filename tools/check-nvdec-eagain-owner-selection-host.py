@@ -60,7 +60,11 @@ assert part.count("\n    if(EXISTS ")==1
 assert part.count("\n    elseif(EXISTS ")==1
 assert part.count('list(APPEND eden_nvdec_video_sources')==1
 assert part.count('target_include_directories(video_core BEFORE PUBLIC')==1
-assert "vendor/sources/eden" not in part
+active_cmake = "\n".join(
+    line for line in part.splitlines()
+    if not line.lstrip().startswith("#")
+)
+assert "vendor/sources/eden" not in active_cmake
 assert '"${EDEN_NVDEC_OWNER_ROOT}/overrides"' not in part, (
     "Broad FFmpeg header include root could shadow unrelated core headers")
 assert part.count('configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"')==1

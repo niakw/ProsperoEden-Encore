@@ -24,26 +24,25 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Confirm pinned pre-correction source graph
+      - name: Verify exact integrated vendor tracker and host sanitizers
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
-          python3 -B tools/check-ps5-usage-tracker-selection-host.py
-          python3 -B tools/check-active-source-inventory.py
-      - name: Checkout reviewed vendor UsageTracker candidate in isolation
-        run: |
-          set -euo pipefail
-          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov14-ps5-buffer-usage-tracker-granularity
-          git -C vendor checkout --detach FETCH_HEAD
-          test "$(git -C vendor rev-parse HEAD)" = "ce1386b16dbcc041c3a1d169a09d11615e14be51"
-      - name: Verify selected native CMake include and maintained header under sanitizers
-        run: |
-          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "fe9edd661d6f0824c7339865d50aa9cf99cab150"
+          test "$(git -C vendor rev-parse HEAD)" = "$(git ls-tree HEAD -- vendor | awk '{print $3}')"
           python3 -B tools/check-ps5-usage-tracker-selection-host.py
           python3 -B vendor/tests/ps5_buffer_usage_granularity_host.py
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-eden-optimization-coverage.py
+      - name: Verify historical pinned tracker and frozen F07 oracles
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin 1ec7b429238d1175a76dc94b7c0a7f1c2eb62864
+          git -C vendor checkout --detach FETCH_HEAD
+          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          python3 -B tools/check-ps5-usage-tracker-selection-host.py
           python3 -B tools/check-active-source-inventory.py
           python3 -B tools/check-eden-optimization-coverage.py
       - name: Distinguish native and host testing
         if: always()
         run: |
-          echo "Host-source qualification only. Actual PS5 CMake/native compiler, ABI/link, FC27 textures/HUD and shader/texture GPU barriers still require PS5 validation. The engine production vendor gitlink was NOT moved." >> "$GITHUB_STEP_SUMMARY"
+          echo "Host-source qualification only. Actual PS5 CMake/native compiler, ABI/link, FC27 textures/HUD and shader/texture GPU barriers still require PS5 validation. No engine main gitlink, app binary, or console runtime has changed in this host gate." >> "$GITHUB_STEP_SUMMARY"

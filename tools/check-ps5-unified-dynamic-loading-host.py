@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Focused contract for the unified native loading compositor.
+"""Focused contract for the continuous native loading compositor.
 
 The shader is validated separately. This source gate rejects the old static
-jacket + lower-band loader and requires one full-frame scene on GL and Vulkan.
-No physical PS5 presentation continuity is claimed.
+jacket/band and the R457 frozen-frame handoff: one retained GL context must
+keep the shared scene moving through System::Load, then stop/join before
+Vulkan takes VideoOut. No physical PS5 continuity is claimed.
 """
 from pathlib import Path
 import hashlib
@@ -15,6 +16,7 @@ shader = (root / "headless/vulkan_hud.frag").read_text()
 window = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
 graphics = (root / "headless/graphics.cpp").read_text()
 frontend = (root / "headless/prosperoeden/frontend.cpp").read_text()
+display_h = (root / "headless/prosperoeden/pe/platform/display_egl.hpp").read_text()
 display = (root / "headless/prosperoeden/pe/platform/display_egl.cpp").read_text()
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text()
 native_cmake = (root / "headless/CMakeLists.txt").read_text()
@@ -24,16 +26,66 @@ assert "vulkan_renderer_r08.cpp" in vulkan_cmake
 assert 'set(EDEN_NS2_SPARSE_BACKING OFF)' in native_cmake
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in native_cmake
 
+# All three presentation phases use the same source-generated scene.
 assert "kLoadingSceneGlsl" in frontend
 assert "kLoadingSceneGlsl" in graphics
+assert "kLoadingSceneGlsl" in display
 assert '#include "loading_scene.glsl"' in shader
-assert "loading_scene(gl_FragCoord.xy,size,seconds)" in frontend
-assert "loading_scene(gl_FragCoord.xy,size,seconds)" in graphics
+for source in (frontend, graphics, display):
+    assert "loading_scene(gl_FragCoord.xy,size,seconds)" in source
 assert "color = vec4(loading_scene(" in shader
 
-assert "1001.0f : 1.0f" in frontend
-assert "now - loading_start + 1.0 + LoadingCalm()" in graphics
-assert "MakeLoadingSnapshot(1.0 + LoadingCalm())" in graphics
+assert "bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion)" in frontend
+assert "const float seconds = reduce_motion ? 1001.0f : 1.0f;" in frontend
+assert "PresentUnifiedLoading(display, reduce_motion)" in frontend
+assert "display.defer_scanout_close(reduce_motion)" in frontend
+assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(
+    "display.defer_scanout_close(reduce_motion)"
+)
+assert "bool defer_scanout_close(bool reduce_motion);" in display_h
+
+# R458: System::Load is no longer a frozen last GL frame.
+assert "std::jthread deferred_loading_thread;" in display
+assert "EGLContext deferred_context = EGL_NO_CONTEXT;" in display
+loop = display.split("void deferred_loading_loop(", 1)[1].split("\n}", 1)[0]
+assert "eglMakeCurrent(display, surface, surface, context)" in loop
+assert "create_loading_program()" in loop
+assert "const float base_seconds = reduce_motion ? 1001.0f : 1.0f;" in loop
+assert "base_seconds + elapsed" in loop
+assert "while (!stop.stop_requested())" in loop
+assert "eglSwapBuffers(display, surface)" in loop
+assert "glViewport(0, 0, width, height)" in loop
+
+defer = display.split("bool Display::defer_scanout_close(bool reduce_motion)", 1)[1].split(
+    "bool Display::close_deferred_scanout()", 1
+)[0]
+assert "eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT)" in defer
+assert "std::jthread{deferred_loading_loop" in defer
+assert "deferred_context = context_;" in defer
+assert "eglDestroyContext" not in defer
+assert "eglDestroySurface" not in defer
+assert "eglTerminate(" not in defer
+
+close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].split(
+    "bool Display::has_deferred_scanout()", 1
+)[0]
+for required in (
+    "presenter.request_stop();",
+    "presenter.join();",
+    "eglDestroyContext(display, context)",
+    "eglDestroySurface(display, surface)",
+    "eglTerminate(display)",
+):
+    assert required in close_deferred
+assert close_deferred.index("presenter.join();") < close_deferred.index(
+    "eglDestroyContext(display, context)"
+)
+assert close_deferred.index("eglDestroyContext(display, context)") < close_deferred.index(
+    "eglDestroySurface(display, surface)"
+)
+assert close_deferred.index("eglDestroySurface(display, surface)") < close_deferred.index(
+    "eglTerminate(display)"
+)
 
 loading = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
     "void RendererVulkan::Report()", 1
@@ -58,30 +110,15 @@ for retired in ("jacket_band", "band_height", "0x80000000u"):
     assert retired not in overlay
 assert "cmdbuf.ClearAttachments" not in overlay
 
-assert frontend.index("PresentUnifiedLoading(display)") < frontend.index(
-    "display.defer_scanout_close()"
-)
-assert "else {\n        display.close();\n    }" in frontend
-defer = display.split("bool Display::defer_scanout_close()", 1)[1].split(
-    "bool Display::close_deferred_scanout()", 1
-)[0]
-assert "eglDestroyContext" in defer
-assert not any(line.lstrip().startswith("eglDestroySurface(") for line in defer.splitlines())
-assert "eglTerminate(" not in defer
-close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].split(
-    "bool Display::has_deferred_scanout()", 1
-)[0]
-assert "eglDestroySurface(display, surface)" in close_deferred
-assert close_deferred.index("eglDestroySurface(display, surface)") < close_deferred.index(
-    "eglTerminate(display)"
-)
 handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
     "} // Anonymous namespace", 1
 )[0]
 assert handover.index("close_deferred_scanout()") < handover.index("CreateSurface(")
 
+assert "now - loading_start + 1.0 + LoadingCalm()" in graphics
+assert "MakeLoadingSnapshot(1.0 + LoadingCalm())" in graphics
 assert hashlib.sha256(shader.encode()).hexdigest() == (
     "3f5287326b7554164449f5f849f46aae3d2f69ff3a0b4c5c822055bd1877c6d6"
 )
 
-print("PS5_SINGLE_GL_VULKAN_LOADING_SOURCE_PASS shared_scene=1 fullscreen=1 deferred_videoout=1 console_pending=1")
+print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_scene=1 animated_system_load=1 single_videoout_owner=1 console_pending=1")

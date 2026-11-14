@@ -19,3 +19,17 @@ assert 'list(APPEND core_sources "__DOLLAR__{EDEN_APP_FUNCTION_SOURCE}")'.replac
 assert 'EDEN_GUEST_TITLE_VERSION_DIAG' not in cmake
 assert 'write_derived("__DOLLAR__{PORT_BUILD_DIR}/application_functions.cpp"'.replace("__DOLLAR__","$") not in cmake
 print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded runtime-quiet=1")
+
+# Shipping PS5 uses the shared NS2 AM owner for BOTH generations. The
+# historical host/legacy owner above remains byte-identical.
+import hashlib
+selected = root/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp"
+raw = selected.read_bytes()
+assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "b8787c322258fcccd7c5d53a74097a5619e2211c"
+source = raw.decode()
+assert source.index("R_TRY(app_man->ConvertApplicationLanguageToLanguageCode(out_language_code, desired_language));") < source.index("const GuestLanguageReply reply{")
+assert "EDEN_GUEST_LANGUAGE_REPLY title=" in source
+assert "emitted >= 32" in source
+assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
+assert 'list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")' in cmake
+print("SHARED_NATIVE_AM_LANGUAGE_REPLY_SOURCE_PASS exact_blob=1 real_return=1 bounded=32 native_execution=0")

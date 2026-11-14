@@ -367,7 +367,7 @@ assert 'const char* const names[]' in native
 assert '"scene-1", "scene-2", "scene-3", "scene-4", "scene-5"' in native
 assert "for (int side = 0; side < 8; ++side)" in native
 assert 'scene_columns{"-", "-", "-", "-", "-"}' in native
-assert "best_source = filename;" in native
+assert "if (receipt) receipt << filename" in native
 assert "std::ofstream receipt(destination + \".source\"" in native
 assert "cached_source == candidates.front()" in native
 assert "best_pixels" not in native.split("bool FetchCaseFace(", 1)[1].split(
@@ -792,3 +792,95 @@ int main(int argc, char** argv) {
 print("PASS native-format BGRA retail TGA decoder, orientation and truncation (host only)")
 
 print("PASS regional fronts/backs, case geometry and zoom/pan source contracts")
+
+# Execute the actual candidate loop. The network and codec boundaries are
+# controlled here; the existing codec suite separately tests real WebP.
+# A valid image header must not turn a failed full decode into a dead end.
+fetch = "bool FetchCaseFace(" + native.split("bool FetchCaseFace(", 1)[1].split(
+    "\n\n// All physical box scans", 1)[0]
+writer = native.split("bool WriteJpegWebP(", 1)[1].split("std::string NlibPlayersPath", 1)[0]
+assert "if (decode_failed) *decode_failed = false;" in writer
+assert "if (!rgba) {" in writer and "*decode_failed = true;" in writer
+with tempfile.TemporaryDirectory(prefix="encore-case-fallback-") as workspace:
+    tmp = Path(workspace)
+    cpp = tmp / "case.cpp"
+    exe = tmp / "case"
+    cpp.write_text(r"""
+#include <atomic>
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <optional>
+#include <string>
+#include <sys/stat.h>
+#include <vector>
+using std::string;
+static string root_dir;
+static std::vector<string> fetched;
+static std::atomic<bool> cancelled{false};
+static int encodes=0;
+static bool fail_write=false, cancel_encode=false;
+namespace Eden { string CoversDir(){ return root_dir; } }
+bool SafeCaseFilename(const string& f){ return !f.empty(); }
+namespace Common::Net {
+std::optional<string> MakeRequest(const char*, const string& path) {
+    fetched.push_back(path);
+    if(path.find("offline")!=string::npos) return {};
+    string bytes(1200, 'x');
+    bytes[0]=static_cast<char>(0xff); bytes[1]=static_cast<char>(0xd8);
+    bytes[2]=path.find("bad")!=string::npos ? 'b' : 'g';
+    return bytes;
+}
+}
+int stbi_info_from_memory(const unsigned char*, int, int* w,int* h,int* c){
+    *w=400;*h=640;*c=3;return 1;
+}
+const char* stbi_failure_reason(){ return "fixture"; }
+bool WriteJpegWebP(const string& body,const string& out,bool,bool* decode_failed) {
+    ++encodes;
+    *decode_failed=body[2]=='b';
+    if(*decode_failed) return false;
+    if(fail_write) return false;
+    std::ofstream file(out); file<<"decoded"; file.close();
+    if(cancel_encode) cancelled.store(true);
+    return true;
+}
+""" + fetch + r"""
+static string read(const string& p) {
+    std::ifstream file(p);
+    return string(std::istreambuf_iterator<char>(file),{});
+}
+int main(int argc,char** argv) {
+    assert(argc==2); root_dir=argv[1];
+    const string dst=root_dir+"/box-front-title.webp";
+    const string receipt=dst+".source";
+    std::ofstream(dst)<<"old"; std::ofstream(receipt)<<"old-source";
+    assert(FetchCaseFace({"bad.png","good.jpg","unused.jpg"},dst,false,&cancelled));
+    assert((fetched==std::vector<string>{"/bad.png","/good.jpg"}));
+    assert(encodes==2 && read(dst)=="decoded" && read(receipt)=="good.jpg\n");
+    fetched.clear(); encodes=0; fail_write=true;
+    assert(!FetchCaseFace({"good.jpg","unused.jpg"},dst,false,&cancelled));
+    assert(fetched.size()==1 && encodes==1 && read(receipt)=="good.jpg\n");
+    fail_write=false; fetched.clear(); encodes=0;
+    assert(!FetchCaseFace({"bad1.png","bad2.png","bad3.png","bad4.png",
+        "bad5.png","bad6.png","bad7.png","good.jpg"},dst,false,&cancelled));
+    assert(fetched.size()==7 && encodes==7 && read(dst)=="decoded");
+    fetched.clear(); encodes=0; cancel_encode=true;
+    assert(!FetchCaseFace({"good.jpg","unused.jpg"},dst,false,&cancelled));
+    assert(fetched.size()==1 && encodes==1 && read(receipt)=="good.jpg\n");
+    assert(!std::ifstream(dst+".new").good());
+    fetched.clear(); encodes=0;
+    assert(!FetchCaseFace({"good.jpg"},dst,false,&cancelled));
+    assert(fetched.empty() && encodes==0);
+    cancelled=false; cancel_encode=false;
+    assert(FetchCaseFace({"offline.jpg","good2.jpg"},dst,false,&cancelled));
+    assert(fetched.size()==2 && encodes==1 && read(receipt)=="good2.jpg\n");
+}
+""", encoding="utf-8")
+    for opt in ("-O0", "-O2"):
+        subprocess.run([compiler, "-std=c++20", opt, "-Wall", "-Wextra",
+                        "-Werror", str(cpp), "-o", str(exe)], check=True)
+        subprocess.run([str(exe), str(tmp)], check=True)
+print("R457_REAL_RETAIL_CANDIDATE_LOOP_PASS decode_retry=1 write_stop=1 budget=7 cancel=1 provenance=1")

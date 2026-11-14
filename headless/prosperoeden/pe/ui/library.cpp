@@ -413,10 +413,10 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
     reconstructed_paper(c, paper);
     const Cover artwork = scan.empty() ? Cover{} : c.textures.cover(
         scan, std::max(paper.w, paper.h) * texture_scale);
+    const bool retail_pending = !scan.empty() && artwork.texture == 0 && !artwork.missing;
     if (artwork.texture != 0) {
-        // A real scan wins only after it is actually decoded. While pending,
-        // the paper underneath remains opaque, with no fake dark panel.
-        // Both printed faces are shown in full: never crop titles or logos.
+        // A real scan wins only after it is actually decoded. Both printed
+        // faces are shown in full: never crop titles or logos.
         const float source = std::max(0.01f, artwork.aspect);
         const float target = paper.w / paper.h;
         if (!rear) {
@@ -446,11 +446,21 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
             c.list.image(artwork.texture, fitted, {0.0f, 0.0f, 1.0f, 1.0f},
                          Color::rgb(0xffffff, tween::cubic_out(artwork.age / 0.22f)));
         }
-    } else {
+    } else if (!retail_pending) {
         // Empty OR confirmed-unreadable retail media: preserve the shared
         // 440x704 composition rather than leaving a permanently blank sleeve.
         // It automatically yields to the real scan if its retry later works.
         flat_composed_ink(c, game, paper, rear);
+    } else {
+        // The official retail scan is already queued. Do NOT enqueue hero,
+        // cover and screenshot fallbacks for the same visible case while that
+        // decode is in flight: five shelf cases could otherwise double their
+        // startup decode work. The opaque paper remains stable for this short
+        // interval and the title identifies the case without another bitmap.
+        text_shrink(c, game.name, paper.x + paper.w * 0.5f,
+                    baseline(paper.y, paper.h, std::clamp(paper.w * 0.075f, 12.0f, 30.0f)),
+                    std::clamp(paper.w * 0.075f, 12.0f, 30.0f),
+                    theme::kTitle, paper.w * 0.88f, Align::center);
     }
 
     // ONE physical shell: narrow top/bottom molded caps and ONE clear

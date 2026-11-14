@@ -45,8 +45,8 @@ assert "DecodedCover result = decode.get();" in pump
 assert "if (budget > 0)" in pump and "if (decode.valid()) continue;" in pump
 assert "inspected < kMaxCoverQueueLookupsPerFrame" in pump
 assert "std::async(std::launch::async," in pump
-assert "decoded.ok = services_.load_image(path, &decoded.image);" in pump
-assert pump.index("std::async(std::launch::async,") < pump.index("decoded.ok = services_.load_image(path, &decoded.image);")
+assert "decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);" in pump
+assert pump.index("std::async(std::launch::async,") < pump.index("decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);")
 assert "entry.texture = create(result.image);" in pump
 completion = pump.split("for (std::size_t slot = 0; slot < decode_.size(); ++slot)", 1)[1].split("if (budget > 0)", 1)[0]
 assert "auto& decode = decode_[(frame_ + slot) % decode_.size()];" in completion

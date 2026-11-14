@@ -382,6 +382,17 @@
       "required_source_fragment": "std::array<unsigned long long, 6> frame_cache_domain_previous{};",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "Nov13 console regression fd00c7f: historical U19 F07 reviewed blob immutable; new baseline lives with GraphicsWindow to avoid cross-title stale deltas. Exact new source Git blob 60fb9eec370c11b386cb0f446050584747db2ae6; host source check covers both detailed-only call sites; PS5 run unqualified."
+    },
+    {
+      "path": "headless/preferences_check.cpp",
+      "historical_reviewed_git_blob": "3e48c14325e018e6ca9d0e6235dbcf5308ea7b9a",
+      "post_snapshot_git_blob": "7e9d87a080240ecea879a38f9a828e8972e970a6",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Host-only JSON history regression for two distinct extracted titles, nested and flat packages, and invalid selections.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "Eden::LoadRecentGames(history_file)",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-14 R457 PR #154: exact host test delta only, separate history fixture, reviewed original and new blobs; no historical receipt rewrite or native runtime claim."
     }
   ]
 }

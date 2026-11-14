@@ -160,7 +160,7 @@ assert "hero_caption_warning ? home_.last_caption :" in home
 texture_h = src("headless/prosperoeden/pe/ui/textures.hpp")
 texture_cpp = src("headless/prosperoeden/pe/ui/textures.cpp")
 assert "std::array<std::future<DecodedCover>, 2> decode_{};" in texture_h
-assert "decoded.ok = services_.load_image(path, &decoded.image);" in texture_cpp
+assert "decoded.ok = services_.load_display_image(path, &decoded.image, target_pixels);" in texture_cpp
 assert "decode = std::async(std::launch::async" in texture_cpp
 assert "it->second.generation == result.generation" in texture_cpp
 assert "entry.texture = create(result.image);" in texture_cpp

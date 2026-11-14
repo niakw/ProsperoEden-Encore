@@ -96,3 +96,77 @@ jobs:
             -Wl,--start-group $(find /tmp/encore-webp -name '*.a' -type f | sort) \
             -Wl,--end-group -pthread -lm -o /tmp/encore-webp-host-codec
           /tmp/encore-webp-host-codec /tmp/encore-webp-fixture.tga
+          # Compile the actual native decoder block against the pinned codec.
+          python3 - <<'PY_SCALED'
+          from pathlib import Path
+          native = Path("headless/prosperoeden/eden_services.cpp").read_text()
+          begin = "        int width = 0, height = 0;\n        if (!WebPGetInfo("
+          assert native.count(begin) == 1
+          start = native.index(begin)
+          stop = native.index("\n    }\n", start)
+          block = native[start:stop]
+          assert "WebPDecode(bytes.data(), bytes.size(), &config)" in block
+          fixture = r"""
+          #include <algorithm>
+          #include <cassert>
+          #include <cstdint>
+          #include <cstdio>
+          #include <utility>
+          #include <vector>
+          #include <webp/decode.h>
+          #include <webp/encode.h>
+          namespace pe::gfx {
+          struct Image { int width=0,height=0; std::vector<std::uint8_t> rgba; };
+          }
+          bool decode(const std::vector<std::uint8_t>& bytes,
+                      pe::gfx::Image* image,int target_pixels) {
+          """ + block + r"""
+          }
+          int main() {
+              for (const auto& size : {std::pair{1167,1878},std::pair{1878,1167},
+                                      std::pair{17,11},std::pair{1,2048}}) {
+                  const int w=size.first,h=size.second;
+                  std::vector<std::uint8_t> rgba(static_cast<std::size_t>(w)*h*4);
+                  for (std::size_t i=0;i<rgba.size();i+=4) {
+                      rgba[i]=40; rgba[i+1]=95; rgba[i+2]=207; rgba[i+3]=128;
+                  }
+                  std::uint8_t* compressed=nullptr;
+                  const auto n=WebPEncodeLosslessRGBA(rgba.data(),w,h,w*4,&compressed);
+                  assert(n && compressed);
+                  const std::vector<std::uint8_t> bytes(compressed,compressed+n);
+                  WebPFree(compressed);
+                  pe::gfx::Image image;
+                  assert(decode(bytes,&image,0) && image.width==w && image.height==h);
+                  assert(image.rgba==rgba);
+                  for (const int target : {64,256,512,2048}) {
+                      assert(decode(bytes,&image,target));
+                      const int largest=std::max(w,h);
+                      if (largest>target*3/2) {
+                          assert(std::max(image.width,image.height)==target);
+                          assert(image.width==std::max(1,(w*target+largest/2)/largest));
+                          assert(image.height==std::max(1,(h*target+largest/2)/largest));
+                      } else {
+                          assert(image.width==w && image.height==h);
+                      }
+                      assert(image.rgba.size()==static_cast<std::size_t>(image.width)*image.height*4);
+                      // Constant alpha must survive the actual decoder scaler.
+                      for (std::size_t i=3;i<image.rgba.size();i+=4)
+                          assert(image.rgba[i]==128);
+                      const auto saved=image.rgba;
+                      const auto old_w=image.width,old_h=image.height;
+                      const std::vector<std::uint8_t> truncated(bytes.begin(),bytes.begin()+bytes.size()/2);
+                      assert(!decode(truncated,&image,target));
+                      assert(image.rgba==saved && image.width==old_w && image.height==old_h);
+                  }
+              }
+              std::puts("R457_WEBP_SCALED_NATIVE_BLOCK_HOST_PASS portrait=1 landscape=1 small=1 thin=1 alpha=1 truncated=1");
+          }
+          """
+          Path("/tmp/encore-webp-scaled.cpp").write_text(fixture)
+          PY_SCALED
+          c++ -std=c++20 -O2 -Wall -Wextra -Werror \
+            -Ivendor/sources/libwebp/src \
+            /tmp/encore-webp-scaled.cpp \
+            -Wl,--start-group $(find /tmp/encore-webp -name '*.a' -type f | sort) \
+            -Wl,--end-group -pthread -lm -o /tmp/encore-webp-scaled
+          /tmp/encore-webp-scaled

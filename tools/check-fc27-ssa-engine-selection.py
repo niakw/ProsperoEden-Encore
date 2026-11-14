@@ -14,7 +14,7 @@ def blob(path: Path) -> str:
 
 selected=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 gitlink=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
-assert selected==gitlink=="b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",(selected,gitlink)
+assert selected==gitlink=="76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",(selected,gitlink)
 
 active_header=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/basic_block.h"
 active_ssa=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp"

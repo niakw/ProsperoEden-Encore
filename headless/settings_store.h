@@ -203,9 +203,16 @@ inline int PerformanceProfileIndex(std::string_view value, int fallback = -1) {
     return fallback;
 }
 
-inline int LanguageIndexForLocale(std::string_view locale) {
+// Accept exact persisted legacy codes and official PS5 locale tags.
+// Keep writes in the existing canonical format for older builds.
+inline int SavedLanguageIndex(std::string_view locale) {
     for (int i = 0; i < int(std::size(kLanguageKeys)); ++i)
-        if (locale == kLanguageKeys[i]) return i;
+        if (locale == kLanguageKeys[i] || locale == kLanguageCatalogTags[i]) return i;
+    return -1;
+}
+
+inline int LanguageIndexForLocale(std::string_view locale) {
+    if (const int exact = SavedLanguageIndex(locale); exact >= 0) return exact;
     const std::size_t dash = locale.find('-');
     if (dash != std::string_view::npos) {
         const std::string_view base = locale.substr(0, dash);
@@ -459,8 +466,9 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     const int stick_deadzone = Settings::Int(document, Json::json_pointer("/controls/stick_deadzone"),
                                               result.stick_deadzone);
     if (stick_deadzone >= 0 && stick_deadzone <= 20) result.stick_deadzone = stick_deadzone;
-    result.language = KeyIndex(Settings::String(document, Json::json_pointer("/system/language")),
-                               kLanguageKeys, int(std::size(kLanguageKeys)), result.language);
+    if (const int language = SavedLanguageIndex(
+            Settings::String(document, Json::json_pointer("/system/language"))); language >= 0)
+        result.language = language;
     result.large_text = Settings::Bool(document, Json::json_pointer("/accessibility/large_text"), false);
     result.high_contrast = Settings::Bool(document, Json::json_pointer("/accessibility/high_contrast"), false);
     result.reduce_motion = Settings::Bool(document, Json::json_pointer("/accessibility/reduce_motion"), false);
@@ -503,7 +511,7 @@ inline bool HasSavedLanguage(const std::string& file = SettingsFile()) {
     using Settings::Json;
     const std::string saved =
         Settings::String(Settings::Load(file), Json::json_pointer("/system/language"));
-    return KeyIndex(saved, kLanguageKeys, int(std::size(kLanguageKeys)), -1) >= 0;
+    return SavedLanguageIndex(saved) >= 0;
 }
 
 inline bool SavePreferences(const Preferences& value, const std::string& file = SettingsFile()) {

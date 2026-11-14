@@ -42,15 +42,23 @@ assert expected_native.count(empty_invalidation) == 1
 expected_native = expected_native.replace(empty_invalidation, guarded_invalidation)
 # Vendor #135 applies the same ABI-neutral unused-name cleanup to both
 # maintained host/native definitions. The pinned upstream source remains immutable.
-assert expected_native.count(before_invalid) == 1
 raw_native = (active / "emit_x64_native.cpp").read_bytes()
 native_blob = hashlib.sha1(b"blob " + str(len(raw_native)).encode() + bytes([0]) + raw_native).hexdigest()
 if native_blob == "46dfa1e0da81d15d5e6a0e5b6020dbf51c84b4ef":
-    expected_native = expected_native.replace(before_invalid, after_invalid, 1)
+    # expected_native is derived from the selected host. Older host graphs
+    # still name the parameter, while vendor #135 already has the cleaned form.
+    if expected_native.count(before_invalid) == 1:
+        expected_native = expected_native.replace(before_invalid, after_invalid, 1)
+    else:
+        assert expected_native.count(after_invalid) == 1
     subprocess.run(["python3", "-B", str(root / "vendor/tests/r457_native_emit_invalid_warning_host.py")],
                    check=True, timeout=120)
 else:
     assert native_blob == "205aa034f0ec2330aec5a81a628ce3ae326856ab", "Unreviewed native emitter blob"
+    if expected_native.count(after_invalid) == 1:
+        expected_native = expected_native.replace(after_invalid, before_invalid, 1)
+    else:
+        assert expected_native.count(before_invalid) == 1
 assert native == expected_native, "native emitter exact source drift"
 assert native.count(guarded_invalidation) == 1
 assert "LocationDescriptorToFriendlyName(descriptor)" not in native

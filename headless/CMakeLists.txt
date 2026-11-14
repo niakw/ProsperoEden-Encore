@@ -146,8 +146,10 @@ if(PS5_NATIVE)
             "${EDEN_NVDEC_HEADER_DIR}/video_core/host1x/ffmpeg.h" COPYONLY)
         target_include_directories(video_core BEFORE PUBLIC
             "${EDEN_NVDEC_HEADER_DIR}")
-        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-            "${EDEN_NVDEC_MAINTAINED_SOURCE}" "${EDEN_NVDEC_MAINTAINED_HEADER}")
+        # configure_file already registers its input with CMake. Adding
+        # that header again to CMAKE_CONFIGURE_DEPENDS produces duplicate
+        # regeneration outputs with Ninja on the native source graph.
+        # The tracked C++ translation unit is a normal compile dependency.
         message(STATUS "NVDEC: maintained FFmpeg packet-EAGAIN owners selected")
     elseif(EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" OR
            EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")

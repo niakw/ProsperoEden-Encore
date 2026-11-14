@@ -4093,6 +4093,11 @@ bool EdenServices::make_mods_folder(std::uint64_t title_id) {
 }
 
 bool EdenServices::load_image(const std::string& path, pe::gfx::Image* image) {
+    return load_display_image(path, image, 0);
+}
+
+bool EdenServices::load_display_image(const std::string& path, pe::gfx::Image* image,
+                                      int target_pixels) {
     // Covers have full paths; the launcher's own art is named from its ui folder.
     const std::string resolved =
         !path.empty() && path[0] == '/' ? path : Eden::AppFile("ui/" + path);
@@ -4115,12 +4120,39 @@ bool EdenServices::load_image(const std::string& path, pe::gfx::Image* image) {
         if (!WebPGetInfo(bytes.data(), bytes.size(), &width, &height) ||
             width <= 0 || height <= 0 || width > 4096 || height > 4096 ||
             static_cast<std::uint64_t>(width) * height > 3840u * 2160u) return false;
-        std::uint8_t* rgba = WebPDecodeRGBA(bytes.data(), bytes.size(), &width, &height);
-        if (!rgba) return false;
-        image->width = width;
-        image->height = height;
-        image->rgba.assign(rgba, rgba + static_cast<std::size_t>(width) * height * 4u);
-        WebPFree(rgba);
+        // Keep full resolution for app art and viewers without a target.
+        // Small cover requests never materialize the full RGBA source first.
+        WebPDecoderConfig config{};
+        if (!WebPInitDecoderConfig(&config)) return false;
+        if (target_pixels > 0) {
+            const int target = std::clamp(target_pixels, 64, 2048);
+            const int largest = std::max(width, height);
+            if (largest > target * 3 / 2) {
+                config.options.use_scaling = 1;
+                width = std::max(1, (width * target + largest / 2) / largest);
+                height = std::max(1, (height * target + largest / 2) / largest);
+                config.options.scaled_width = width;
+                config.options.scaled_height = height;
+            }
+        }
+        // Decode directly into the final vector. Allocation failure happens
+        // before libwebp owns any decoding resources; unsuccessful decoding
+        // never publishes partially filled artwork or replaces an old image.
+        pe::gfx::Image decoded;
+        decoded.width = width;
+        decoded.height = height;
+        decoded.rgba.resize(static_cast<std::size_t>(width) * height * 4u);
+        config.output.colorspace = MODE_RGBA;
+        config.output.is_external_memory = 1;
+        config.output.u.RGBA.rgba = decoded.rgba.data();
+        config.output.u.RGBA.stride = width * 4;
+        config.output.u.RGBA.size = decoded.rgba.size();
+        const auto status = WebPDecode(bytes.data(), bytes.size(), &config);
+        const bool ok = status == VP8_STATUS_OK &&
+                        config.output.width == width && config.output.height == height;
+        WebPFreeDecBuffer(&config.output);
+        if (!ok) return false;
+        *image = std::move(decoded);
         return true;
     }
 

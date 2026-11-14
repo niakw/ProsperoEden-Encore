@@ -16,7 +16,8 @@ assert 'exiting app without automatic restart' in stop
 
 # Fatal signals already fail closed on PS5; keep that invariant aligned with
 # the teardown watchdog instead of creating a second restart path.
-ps5=crash.split("#ifdef PS5_NATIVE",1)[1].split("#else",1)[0]
+write_report=crash.split("void WriteReport(",1)[1].split("void Handle(",1)[0]
+ps5=write_report.split("#ifdef PS5_NATIVE",1)[1].split("#else",1)[0]
 assert "const bool restart = false;" in ps5
 assert 'if (!leave.load(std::memory_order_acquire)) eden_restart_app();' in crash
 assert 'eden_exit_app();' in crash

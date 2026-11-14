@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 VENDOR=ROOT/"vendor"
-PINS={"a946785d1ad02752ae47f9b32032e99bdbb53e02","db33f8ad0c325c84bd80047d992fafa5c2908151","0264f2ae94ef5889e8585171b5bfcb11fd3659ff"}
+PINS={"a946785d1ad02752ae47f9b32032e99bdbb53e02","db33f8ad0c325c84bd80047d992fafa5c2908151","0264f2ae94ef5889e8585171b5bfcb11fd3659ff","bc78a7610425e95d6645685cbd023a67b729ec24"}
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(VENDOR),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in PINS,(selected,checked)

@@ -53,7 +53,12 @@ guide_block = switch.split("modal==Modal::video && option_>=0 && option_<=12", 1
 for row in range(13):
     assert f"option_=={row})" in guide_block, f"Switch global guide missing row {row}"
 
-assert "option_>=5 && option_<=11" in switch
+# All editable per-game rows, not only graphics extras, now have help.
+assert "(message_.empty() || !message_warning_) && option_>=0 && option_<14" in game_block
+game_guide = game_block.split("kGameAbout = {{", 1)[1].split("}};", 1)[0]
+assert len(re.findall(r'TR\("', game_guide)) == 14
+for row in range(5,12):
+    assert f"option_=={row})" in game_block, f"Switch per-game specialized guide missing row {row}"
 
 assert 'int frame_generation = 0;' in store
 assert "int neural_mode = NeuralVideo::kOff;" in store

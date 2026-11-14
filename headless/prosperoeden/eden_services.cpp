@@ -1188,6 +1188,29 @@ bool LockArtworkUnlessCancelled(std::unique_lock<std::mutex>& lock,
     return false;
 }
 
+// A valid cached authentic face need not be fetched or transcoded again
+// merely because a better-ranked regional candidate was unavailable.
+// Only retry the strictly better prefix; an unknown/invalid receipt or
+// invalid image must still use the full ranked list and normal limits.
+bool LimitRetailCasePromotion(std::vector<std::string>& candidates,
+                              const std::string& cached_source,
+                              const std::string& path, int side) {
+    const auto cached = std::find(candidates.begin(), candidates.end(), cached_source);
+    if (cached == candidates.end()) return false;
+    int width = 0;
+    int height = 0;
+    // Preserve narrow authentic NS2 spines even with no back scan.
+    if (!ValidNlibWebP(path, &width, &height) ||
+        !((side == 2 && width >= 16 && height >= 250) ||
+          (side >= 3 && width >= 128 && height >= 200) ||
+          ((side == 0 || side == 1) && width >= 128 && height >= 200 &&
+           static_cast<std::uint64_t>(height) * 4 >= static_cast<std::uint64_t>(width) * 5)))
+        return false;
+    if (cached == candidates.begin()) return true;
+    candidates.erase(cached, candidates.end());
+    return false;
+}
+
 unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
                       const std::string& alternate_name, int language_choice,
                       const std::atomic<bool>* cancel) {
@@ -1262,7 +1285,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
         // Gameplay previews remain independent of real back paper.
-        const auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
+        auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
         if (candidates.empty()) continue;
         const char* const names[] = {
             "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};
@@ -1278,24 +1301,19 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         std::ifstream receipt(path + ".source");
         std::string cached_source;
         if (receipt) std::getline(receipt, cached_source);
-        if (cached_source == candidates.front()) {
-            int width = 0;
-            int height = 0;
-            // Preserve narrow authentic NS2 spines even with no back scan.
-            if (ValidNlibWebP(path, &width, &height) &&
-                ((side == 2 && width >= 16 && height >= 250) ||
-                 (side >= 3 && width >= 128 && height >= 200) ||
-                 ((side == 0 || side == 1) && width >= 128 && height >= 200 &&
-                  static_cast<std::uint64_t>(height) * 4 >= static_cast<std::uint64_t>(width) * 5))) {
-                continue;
-            }
-        }
+        const auto candidate_count = candidates.size();
+        if (LimitRetailCasePromotion(candidates, cached_source, path, side)) continue;
+        const bool retained_fallback = candidates.size() < candidate_count;
         // If network retrieval fails, existing cached artwork remains usable;
         // migration can be retried without blocking rendering.
         if (!FetchCaseFace(candidates, path, side == 2, cancel)) {
             all_ready = false;
-            std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable\n",
-                         static_cast<unsigned long long>(title_id), side);
+            if (retained_fallback)
+                std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=retained-fallback\n",
+                             static_cast<unsigned long long>(title_id), side);
+            else
+                std::fprintf(stderr, "EDEN_CASE_FACE title=%016llX side=%d status=unavailable\n",
+                             static_cast<unsigned long long>(title_id), side);
         } else {
             changed_faces |= (1u << side); // Only successful atomic replacements.
             // A fallback candidate remains usable, but only retry its higher

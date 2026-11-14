@@ -495,7 +495,7 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::controls:
         return 5;
     case Modal::diagnostics:
-        return 2;
+        return 4;
     case Modal::game:
         // Complete per-game video overrides, button mapping and mods; save data in builds that
         // move saves.
@@ -520,7 +520,7 @@ float Launcher::dialog_row_top(Modal modal, int row) const
     case Modal::application:
         return 404.0f + 112.0f * static_cast<float>(row);
     case Modal::diagnostics:
-        return 570.0f + 102.0f * static_cast<float>(row);
+        return 320.0f + 100.0f * static_cast<float>(row);
     case Modal::video: // five of its rows show; the list scrolls to the others
         return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - video_rows_.scroll();
     case Modal::game:
@@ -533,7 +533,7 @@ float Launcher::dialog_row_top(Modal modal, int row) const
 void Launcher::press_dialog(Key key)
 {
     const bool clearing_shader_cache =
-        modal_ == Modal::diagnostics && option_ == 1 && key == Key::cross;
+        modal_ == Modal::diagnostics && option_ == 3 && key == Key::cross;
     if (!clearing_shader_cache)
         clear_confirmation();
     const int rows = dialog_rows(modal_);
@@ -843,6 +843,17 @@ void Launcher::press_dialog(Key key)
         {
             prefs_.detailed_logging = !prefs_.detailed_logging;
         }
+        else if (option_ == 1 || option_ == 2)
+        {
+            // Consent requires an explicit Cross press, never a left/right scroll.
+            if (!activate) return;
+            bool& share = option_ == 1 ? prefs_.share_advanced_logs : prefs_.share_standard_logs;
+            if (!share && !services_.log_sharing_available()) {
+                say(tr(TR("Log sharing service is not available. Nothing is sent.")), true);
+                return;
+            }
+            share = !share;
+        }
         else
         {
             if (!activate) return;
@@ -986,13 +997,20 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 theme::kTitle, 736.0f);
     const bool contextual_guide = modal == Modal::video ||
                                   modal == Modal::controls ||
-                                  modal == Modal::appearance;
+                                  modal == Modal::appearance ||
+                                  modal == Modal::diagnostics ||
+                                  modal == Modal::audio || modal == Modal::accessibility;
     // Routine save feedback uses the header, not the selected option's guide.
     // Actionable warnings retain their full multi-line card.
     const bool compact_success = contextual_guide &&
                                  !message_.empty() && !message_warning_;
     const bool show_contextual_guide = contextual_guide &&
                                        (message_.empty() || compact_success);
+    if (modal == Modal::application) {
+        // Its release summary/notes retain their independent status band.
+        text_block(c, copy, 592.0f, baseline(291.0f, 29.0f, theme::kSmall),
+                   theme::kSmall, 29.0f, theme::kCopy, 736.0f, 2, kShrink);
+    } else
     text_shrink(c, compact_success ? std::string_view(message_) :
                      std::string_view(contextual_guide
                          ? tr(TR("Choose a setting; its effect is explained below."))
@@ -1125,6 +1143,13 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         toggle(c, 1292.0f, row_centre(1), knob);
         level_row(2, tr("Menu sounds"), prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : tr("Off"),
                   prefs_.menu_volume);
+        if (show_contextual_guide) {
+            static constexpr const char* names[] = {TR("Game volume"), TR("Mute"), TR("Menu sounds")};
+            const int selected = std::clamp(option_, 0, 2);
+            DrawVideoGuide(c, tr(names[selected]),
+                selected == 2 ? tr(TR("Game volume, and the sounds of this menu.")) : copy,
+                false, prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+        }
         break;
     }
     case Modal::controls:
@@ -1237,26 +1262,23 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             toggle(c, 1292.0f, row_centre(row),
                    tween::clamp01(switches_[static_cast<std::size_t>(row)].value));
         }
-        // What the highlighted switch does.
-        text_block(c, tr(kAbout[std::clamp(option_, 0, 2)]), 592.0f,
-                   baseline(700.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kMeta, 736.0f,
-                   2, kShrink);
+        if (show_contextual_guide) {
+            const int selected = std::clamp(option_, 0, 2);
+            DrawVideoGuide(c, tr(kNames[selected]), tr(kAbout[selected]), false,
+                          prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+        }
         break;
     }
     case Modal::diagnostics:
     {
-        const DiagnosticsInfo& info = home_diagnostics_;
-        const std::string details =
-            services_.setup_details() + "\n" +
-            tr("FILESYSTEM") + ": " + info.filesystem + "  |  " +
-            tr("ROOT") + ": " + info.storage_root + "\n" +
-            fill(tr("Cache: {0}  |  Logs: {1}"), {info.shader_caches, info.logs}) + "\n" +
-            fill(tr("Data: {0}"), {info.data_path});
-        text_block(c, details, 592.0f, baseline(350.0f, 30.0f, theme::kSmall),
-                   theme::kSmall, 30.0f, theme::kBody, 736.0f, 6, kShrink);
+        const bool sharing = services_.log_sharing_available();
         label(0, tr("Detailed logging"), kToggle);
         toggle(c, 1292.0f, row_centre(0), knob);
-        label(1, tr("Clear cache"), choice(1, tr("Clear")));
+        label(1, tr(TR("Share advanced logs")), kToggle, !sharing);
+        toggle(c, 1292.0f, row_centre(1), sharing ? tween::clamp01(switches_[1].value) : 0.0f);
+        label(2, tr(TR("Share standard logs")), kToggle, !sharing);
+        toggle(c, 1292.0f, row_centre(2), sharing ? tween::clamp01(switches_[2].value) : 0.0f);
+        label(3, tr("Clear cache"), choice(3, tr("Clear")));
         break;
     }
     default:
@@ -1349,8 +1371,32 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             prefs_.ui_theme == 1 || prefs_.color_palette == 3);
     }
 
+    if (modal == Modal::diagnostics && show_contextual_guide) {
+        static constexpr const char* names[] = {
+            TR("Detailed logging"), TR("Share advanced logs"),
+            TR("Share standard logs"), TR("Clear cache")};
+        static constexpr const char* hints[] = {
+            TR("Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."),
+            TR("Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."),
+            TR("Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."),
+            TR("Clear shader caches only. Saves, settings, keys and games are not removed.")};
+        const int selected = std::clamp(option_, 0, 3);
+        const bool inactive = (selected == 1 || selected == 2) && !services_.log_sharing_available();
+        const DiagnosticsInfo& info = home_diagnostics_;
+        std::string guide = inactive
+            ? tr(TR("Log sharing service is not available. Nothing is sent."))
+            : tr(hints[selected]);
+        if (selected == 3) {
+            guide += "\n" + fill(tr("Cache: {0}  |  Logs: {1}"),
+                                  {info.shader_caches, info.logs});
+            guide += "\n" + fill(tr("Data: {0}"), {short_path(info.data_path, 32)});
+        }
+        DrawVideoGuide(c, tr(names[selected]), guide,
+                       inactive, prefs_.ui_theme == 1 || prefs_.color_palette == 3);
+    }
+
     // Under the rows: Video's four rows leave space for the full guide.
-    const float foot = modal == Modal::video || modal == Modal::appearance || modal == Modal::controls ? 848.0f : 811.0f;
+    const float foot = contextual_guide ? 848.0f : 811.0f;
     if (!message_.empty() && !compact_success)
     {
         if (contextual_guide) {

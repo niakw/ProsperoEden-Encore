@@ -2528,3 +2528,31 @@ msgstr "Panel opacity"
 #: pe/ui/settings.cpp
 msgid "Notice"
 msgstr "Notice"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share advanced logs"
+msgstr "Chia sẻ nhật ký nâng cao"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Share standard logs"
+msgstr "Chia sẻ nhật ký tiêu chuẩn"
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Log sharing service is not available. Nothing is sent."
+msgstr "Dịch vụ chia sẻ nhật ký không khả dụng. Không gửi dữ liệu."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."
+msgstr "Nhật ký chi tiết có thể giảm FPS hoặc gây giật. Nên tắt khi chơi bình thường."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."
+msgstr "Báo cáo hiệu năng tùy chọn. Chia sẻ độc lập với ghi nhật ký. Không gửi tệp thô hay mã định danh cá nhân."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."
+msgstr "Báo cáo lỗi và sự cố tùy chọn. Không bật nhật ký chi tiết. Không gửi tệp thô hay mã định danh cá nhân."
+
+#: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
+msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
+msgstr "Chỉ xóa bộ nhớ đệm shader. Giữ nguyên dữ liệu lưu, cài đặt, khóa và trò chơi."

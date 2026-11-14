@@ -1273,13 +1273,24 @@ for p in post_f07_r23_final_headless_owners:
     assert p.removeprefix("headless/") in native_cmake, ("R23 owner selection", p)
 print("ENCORE_R23_FINAL_POST_F07_HEADLESS_PASS added=6 historic=193")
 
+# Isolated post-F07 diagnostic queue prototype; never change historical counts.
+post_f07_diagnostics_receipts = {
+    "headless/diagnostics_sharing_policy.h": "2515badbeb070d0f22b02e0ec8dde8a30afdeef4",
+    "headless/diagnostics_report_queue.h": "28e59bc710b1c27a5fbe75c9b5e8a0e6fbb15aae",
+}
+post_f07_diagnostics_owners = set(post_f07_diagnostics_receipts)
+for path, blob in post_f07_diagnostics_receipts.items():
+    assert subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip() == blob, path
+print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=2 native_transport=unwired")
+
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
     if p.is_file() and p.suffix in headless_exts
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
-        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners)
+        post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners |
+        post_f07_diagnostics_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

@@ -214,6 +214,9 @@ struct Preferences
     bool show_game_background = true; // preserve current hero background default
     std::string wallpaper_file; // validated basename, never arbitrary path
     bool check_updates_on_start = true; // metadata-only; persisted opt-out honored
+    // Append only: preserve the established aggregate initialization order.
+    bool share_standard_logs = false;
+    bool share_advanced_logs = false;
 };
 
 // One game's overrides; -1 uses Settings > Video.
@@ -412,6 +415,8 @@ class Services
     virtual const std::vector<std::string> &language_labels() = 0;
     virtual std::string language_region(int language) = 0;
     virtual std::string setup_details() = 0;
+    // Fail closed until the verified HTTPS collector and consent notice are installed.
+    virtual bool log_sharing_available() const { return false; }
     virtual DiagnosticsInfo diagnostics() { return {}; }
     // Optional cooperative cancellation for lengthy native cache/log walks.
     // Host/preview implementations retain their original behavior.

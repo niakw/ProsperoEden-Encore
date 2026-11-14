@@ -557,7 +557,9 @@ void Launcher::draw_switch_settings(Canvas& c) {
         size=4;break;
     case 5:
         rows={Line{TR("Detailed logging"),prefs_.detailed_logging?tr("On"):tr("Off")},
-              Line{TR("Cache"),tr("Manage")},Line{"",""},Line{"",""}};size=2;break;
+              Line{TR("Share advanced logs"),services_.log_sharing_available()?(prefs_.share_advanced_logs?tr("On"):tr("Off")):tr("Off")},
+              Line{TR("Share standard logs"),services_.log_sharing_available()?(prefs_.share_standard_logs?tr("On"):tr("Off")):tr("Off")},
+              Line{TR("Cache"),tr("Manage")}};size=4;break;
     case 6:
         rows={Line{TR("Game files"),tr("Open folders")},Line{"",""},Line{"",""},Line{"",""}};size=1;break;
     case 7:
@@ -935,8 +937,10 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                    910.0f,2,0.85f);
     list.rounded_rect({493,245,932,2},0,kGrey);
     const int total=dialog_rows(modal);
-    const int visible=modal==Modal::video?4:5;
-    const int first=(modal==Modal::video || modal==Modal::appearance)
+    // Four rows end at y=715; the wrapped help starts at y=744.
+    const bool scroll_help=modal==Modal::video || modal==Modal::appearance || modal==Modal::controls;
+    const int visible=4;
+    const int first=scroll_help
         ?std::clamp(option_-2,0,std::max(0,total-visible)):0;
     const int last=std::min(total,first+visible);
     for(int i=first;i<last;++i) {
@@ -1043,16 +1047,22 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
                      std::to_string(prefs_.stick_deadzone)+"%";
             break;
         case Modal::diagnostics:
-            label=i==0?tr("Detailed logging"):tr("Clear cache");
-            value=i==0?(prefs_.detailed_logging?tr("On"):tr("Off")):tr("Clear");
+            label=i==0?tr("Detailed logging"):i==1?tr(TR("Share advanced logs")):
+                i==2?tr(TR("Share standard logs")):tr("Clear cache");
+            value=i==0?(prefs_.detailed_logging?tr("On"):tr("Off")):
+                i==1?(services_.log_sharing_available()&&prefs_.share_advanced_logs?tr("On"):tr("Off")):
+                i==2?(services_.log_sharing_available()&&prefs_.share_standard_logs?tr("On"):tr("Off")):tr("Clear");
             break;
         default:
             label=tr("Select");
             break;
         }
-        text_shrink(c,label,row.x+22,baseline(y,101,26),26,kInk,590);
+        const bool row_inactive =
+            (modal==Modal::appearance && i==4 && prefs_.background_style!=4) ||
+            (modal==Modal::diagnostics && (i==1 || i==2) && !services_.log_sharing_available());
+        text_shrink(c,label,row.x+22,baseline(y,101,26),26,row_inactive?kSubtle:kInk,590);
         text_shrink(c,value,row.x+row.w-25,baseline(y,101,24),24,
-                    i==option_?kInk:kSubtle,294,Align::right);
+                    !row_inactive && i==option_?kInk:kSubtle,294,Align::right);
     }
     if (modal==Modal::video && option_>=0 && option_<=12) {
         const char* guides=nullptr;
@@ -1102,6 +1112,85 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
         };
         if (guides)
             switch_video_help(c,tr(labels[option_]),guides,inactive,744.0f);
+    }
+    if (modal==Modal::controls || modal==Modal::appearance ||
+        modal==Modal::audio || modal==Modal::accessibility || modal==Modal::application) {
+        static constexpr const char* control_names[] = {
+            TR("Button profile"),TR("Button mapping"),TR("Vibration"),TR("Vibration strength"),TR("Stick deadzone")};
+        static constexpr const char* control_about[] = {
+            TR("Choose PlayStation or Switch button positions. The selected mapping stays fixed during menus and gameplay; customizing a button creates a custom profile."),
+            TR("Customize every guest button. The profile automatically becomes Custom PS5 or Custom Switch."),
+            TR("Turns DualSense vibration on or off for games."),
+            TR("100% is full DualSense rumble strength. Lower it if vibration feels too strong."),
+            TR("The deadzone ignores small stick movements near the center. At 8%, movements below 8% do not steer the game. Increase it if your character moves by itself; lower it if aiming feels unresponsive.")};
+        static constexpr const char* appearance_names[] = {
+            TR("Theme"), TR("Official logo"), TR("Accent"), TR("Background"),
+            TR("Local image"), TR("Color 1 preset"), TR("Color 1 red"), TR("Color 1 green"),
+            TR("Color 1 blue"), TR("Color 2 preset"), TR("Color 2 red"), TR("Color 2 green"),
+            TR("Color 2 blue"),TR("Focus glow"),TR("Glow intensity"),TR("Image darkness"),
+            TR("Panel opacity"),TR("Background motion"),TR("Image scaling"),TR("Game background"),TR("Reset appearance")};
+        static constexpr const char* appearance_about[] = {
+            TR("Choose the Encore or Switch launcher theme; gameplay rendering does not change."),
+            TR("Choose the logo treatment independently of the selected interface palette."),
+            TR("Change the color of selection highlights and focus rings."),
+            TR("Choose a theme background, two custom colors, a local image or the daily game artwork."),
+            TR("App wallpapers: /data/prosperoeden/user/wallpapers. These appear first; PS5 captures (JPG/PNG/JXR) follow. HDR JXR converts to WebP only when chosen."),
+            TR("Pick a preset for the first background color, or adjust its channels below."),
+            TR("Adjust the red channel of background color one."),
+            TR("Adjust the green channel of background color one."),
+            TR("Adjust the blue channel of background color one."),
+            TR("Pick a preset for the second gradient color, or adjust its channels below."),
+            TR("Adjust the red channel of background color two."),
+            TR("Adjust the green channel of background color two."),
+            TR("Adjust the blue channel of background color two."),
+            TR("Show or hide the selection glow. It does not affect games."),
+            TR("Change the intensity of selection highlights."),
+            TR("Darken only the background image. Higher values preserve menu readability."),
+            TR("Change the opacity of launcher cards, panels and boxes from 0 to 100%. High contrast keeps panels opaque for legibility."),
+            TR("Allow subtle launcher background motion, or keep it still."),
+            TR("Fill crops the wallpaper to the screen; Contain keeps the complete image."),
+            TR("Show a selected game's artwork behind its library details."),
+            TR("Restore the default Neon look without altering game settings.")
+        };
+        static constexpr const char* access_names[] = {TR("Larger text"),TR("High contrast"),TR("Reduce motion")};
+        static constexpr const char* access_about[] = {
+            TR("Draws the menu's small text larger."),
+            TR("Solid panels, brighter text and an outlined highlight."),
+            TR("Stops the background drifting and the screens sliding, here and on the loading "
+               "screen.")};
+        static_assert(std::size(control_names)==std::size(control_about));
+        static_assert(std::size(appearance_names)==std::size(appearance_about));
+        static_assert(std::size(access_names)==std::size(access_about));
+        static constexpr const char* audio_names[] = {TR("Game volume"),TR("Mute"),TR("Menu sounds")};
+        static constexpr const char* update_names[] = {TR("Check now"),TR("Check on launcher start")};
+        const int selected=std::clamp(option_,0,total-1);
+        const char* name=nullptr;
+        const char* help=nullptr;
+        const bool inactive=modal==Modal::appearance && selected==4 && prefs_.background_style!=4;
+        switch(modal) {
+        case Modal::controls: name=control_names[selected]; help=control_about[selected]; break;
+        case Modal::appearance: name=appearance_names[selected]; help=appearance_about[selected]; break;
+        case Modal::accessibility: name=access_names[selected]; help=access_about[selected]; break;
+        case Modal::audio: name=audio_names[selected]; help=selected==2?TR("Game volume, and the sounds of this menu."):TR("Game audio; PS5 system-menu music is unchanged."); break;
+        case Modal::application: name=update_names[selected]; help=TR("Checks official stable GitHub Releases only. No automatic installation."); break;
+        default: break;
+        }
+        if (name && help)
+            switch_video_help(c,tr(name),tr(help),inactive,744.0f);
+    }
+    if (modal==Modal::diagnostics && option_>=0 && option_<=3) {
+        static constexpr const char* names[] = {
+            TR("Detailed logging"), TR("Share advanced logs"),
+            TR("Share standard logs"), TR("Clear cache")};
+        static constexpr const char* hints[] = {
+            TR("Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."),
+            TR("Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."),
+            TR("Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."),
+            TR("Clear shader caches only. Saves, settings, keys and games are not removed.")};
+        const bool inactive=(option_==1||option_==2)&&!services_.log_sharing_available();
+        switch_video_help(c,tr(names[option_]),
+            inactive?tr(TR("Log sharing service is not available. Nothing is sent.")):tr(hints[option_]),
+            inactive,744.0f);
     }
     list.rounded_rect({493,888,932,2},0,kGrey);
     text_shrink(c,tr("Change"),1252.0f,baseline(901,51,19),

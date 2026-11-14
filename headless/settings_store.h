@@ -10,7 +10,7 @@
 //     "controls": { "vibration": true, "vibration_strength": 100, "stick_deadzone": 8, "mapping": { "a": "cross" } },
 //     "system": { "language": "en-US" },
 //     "accessibility": { "large_text": false, "high_contrast": false, "reduce_motion": false },
-//     "diagnostics": { "detailed_logging": false },
+//     "diagnostics": { "detailed_logging": false, "share_standard_logs": false, "share_advanced_logs": false, "sharing_consent_version": 1 },
 //     "game_files": "/mnt/ext1/eden", // legacy JSON key: one Encore storage root
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
@@ -175,6 +175,9 @@ struct Preferences {
     // Auto-check metadata on first launcher start (never auto-install).
     // Existing saved opt-out values remain unchanged.
     bool check_updates_on_start = true;
+    // Append only: preserve the established aggregate initialization order.
+    bool share_standard_logs = false;
+    bool share_advanced_logs = false;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -394,6 +397,13 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     if (menu_volume >= 0 && menu_volume <= 100) result.menu_volume = menu_volume;
     result.detailed_logging = Settings::Bool(document, Json::json_pointer("/diagnostics/detailed_logging"),
                                              result.detailed_logging);
+    // Old settings or a future notice version never imply consent.
+    const Json::json_pointer sharing_version("/diagnostics/sharing_consent_version");
+    if (document.contains(sharing_version) && document.at(sharing_version).is_number_integer() &&
+        document.at(sharing_version) == 1) {
+        result.share_standard_logs = Settings::Bool(document, Json::json_pointer("/diagnostics/share_standard_logs"), false);
+        result.share_advanced_logs = Settings::Bool(document, Json::json_pointer("/diagnostics/share_advanced_logs"), false);
+    }
     result.resolution = KeyIndex(Settings::String(document, Json::json_pointer("/video/resolution")),
                                  kResolutionKeys, int(std::size(kResolutionKeys)), result.resolution);
     result.upscaling_filter = KeyIndex(Settings::String(document, Json::json_pointer("/video/upscaling_filter")),
@@ -571,6 +581,9 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["controls"]["stick_deadzone"] = value.stick_deadzone;
     document["system"]["language"] = kLanguageKeys[value.language];
     document["diagnostics"]["detailed_logging"] = value.detailed_logging;
+    document["diagnostics"]["share_standard_logs"] = value.share_standard_logs;
+    document["diagnostics"]["share_advanced_logs"] = value.share_advanced_logs;
+    document["diagnostics"]["sharing_consent_version"] = 1;
     document["accessibility"]["large_text"] = value.large_text;
     document["accessibility"]["high_contrast"] = value.high_contrast;
     document["accessibility"]["reduce_motion"] = value.reduce_motion;

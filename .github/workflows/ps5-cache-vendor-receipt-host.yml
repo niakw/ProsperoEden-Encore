@@ -1,4 +1,4 @@
-name: PS5 shader cache vendor source receipt — both pinned source graphs
+name: PS5 shader cache vendor source receipts (current and historical)
 
 on:
   pull_request:
@@ -25,16 +25,23 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Verify baseline main vendor still passes original SHA
+      - name: Verify current selected vendor and native generator
         run: |
           set -euo pipefail
-          actual="$(git -C vendor rev-parse HEAD)"
-          test "$actual" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          test "$(git -C vendor rev-parse HEAD)" = "$(git rev-parse HEAD:vendor)"
           python3 -B tools/check-ps5-cache-diag-receipt-host.py
-      - name: Checkout exact reviewed vendor draft in isolated CI workspace
+          python3 -B tools/check-vendored-vulkan-fork.py
+      - name: Verify exact historical baseline still passes original SHA
         run: |
           set -euo pipefail
-          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov13-ps5-cache-source-diagnostics
+          git -C vendor fetch --no-tags --depth=1 origin 1ec7b429238d1175a76dc94b7c0a7f1c2eb62864
+          git -C vendor checkout --detach FETCH_HEAD
+          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          python3 -B tools/check-ps5-cache-diag-receipt-host.py
+      - name: Checkout exact reviewed diagnostic vendor in isolated CI workspace
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin 6d1ac1219ec07fb425a92bc033dc16641471906f
           git -C vendor checkout --detach FETCH_HEAD
           actual="$(git -C vendor rev-parse HEAD)"
           test "$actual" = "6d1ac1219ec07fb425a92bc033dc16641471906f"

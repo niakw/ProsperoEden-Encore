@@ -15,7 +15,7 @@ OWNER = "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
 ORIGINAL_BLOB = "6efe1b10862135056c1df1b78007a1c9cb5a9610"
 REVIEWED_DIAGNOSTIC_BLOB = "c79131ffafce0e2b33213051ae7a028c3c4ff33d"
 REVIEWED_DRIVER_HEADER_BLOB = "c7e3ca901ea7ab82ec679c23cf43a1c556ac7e41"
-# Exact four reviewed #115 diff hunks, inverted ONLY for source comparison.
+# Exact five reviewed #115 diff hunks, inverted ONLY for source comparison.
 # Both raw source hashes must match; actual build uses the new vendor file.
 DRIVER_HEADER_REVERSES = [
     [

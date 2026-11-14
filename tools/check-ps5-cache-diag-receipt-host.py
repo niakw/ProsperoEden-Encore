@@ -14,6 +14,7 @@ root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(root / "tools"))
 from ci.ps5_cache_diag_receipt import (
     OPEN, CLOSE, OWNER, ORIGINAL_BLOB, REVIEWED_DIAGNOSTIC_BLOB,
+    REVIEWED_DRIVER_HEADER_BLOB, DRIVER_HEADER_REVERSES,
     git_blob, normalize_for_historical_proof,
 )
 
@@ -23,7 +24,7 @@ original, was_diagnostic = normalize_for_historical_proof(source)
 assert git_blob(original) == ORIGINAL_BLOB
 
 if was_diagnostic:
-    assert git_blob(source) == REVIEWED_DIAGNOSTIC_BLOB
+    assert git_blob(source) in {REVIEWED_DIAGNOSTIC_BLOB, REVIEWED_DRIVER_HEADER_BLOB}
     assert source.count(OPEN) == source.count(CLOSE) == 7
     assert source != original
 else:
@@ -41,6 +42,13 @@ rejects(source + "\n// unrelated native source drift\n")
 rejects(source.replace("PipelineCache", "PipelineCacheX", 1))
 rejects(source + "\n// ENCORE_PS5_CACHE_DIAG_BEGIN\n")
 rejects(source + "\n// ENCORE_PS5_CACHE_DIAG_END\n")
+if git_blob(source) == REVIEWED_DRIVER_HEADER_BLOB:
+    assert len(DRIVER_HEADER_REVERSES) == 5
+    for successor, predecessor in DRIVER_HEADER_REVERSES:
+        assert source.count(successor) == 1
+        rejects(source.replace(successor, predecessor, 1))
+    assert "NativeDriverCacheHeaderMatches" in source
+    assert "kNativeDriverCacheStagingLimit" in source
 
 # Review the engine preflight integration itself: vendor must be normalized
 # only after the raw owner has passed the pin, before comparison to the

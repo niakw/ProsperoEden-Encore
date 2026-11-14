@@ -426,6 +426,17 @@
       "required_source_fragment": "bool defer_scanout_close(bool reduce_motion);",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-14 R457 unified loading: API is process-local lifecycle control only; no guest, GPU or renderer ABI change and no hardware qualification claim.\n2026-11-14: interface comment corrected after exact ps5-opengl review: the retained lifetime is display + window surface, while only the GL context is destroyed before core load.\\n2026-11-14 R458 interface successor: defer now receives reduce-motion state because the retained GL presenter owns the animated loading interval. Process-local lifecycle API only; hardware qualification pending."
+    },
+    {
+      "path": "headless/stop_limit.cpp",
+      "historical_reviewed_git_blob": "c9679be936ac40821e045704c7c688b00ad66cec",
+      "post_snapshot_git_blob": "a8124257c1a3a068973d6b1e98970f717ac40559",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "PS5 teardown watchdog fail-closed policy: a stop timeout exits the application instead of automatically restarting it, preventing restart loops after a potentially unsafe native teardown while preserving the timeout breadcrumb file.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "game stop exceeded 10s; exiting app without automatic restart",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-15 P0 exit safety follow-up to #97. Exact successor of the prior automatic-restart watchdog; host policy proof only. No native PS5 build or hardware shutdown/relaunch qualification."
     }
   ]
 }

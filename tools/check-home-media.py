@@ -58,7 +58,21 @@ for needle in ('quick settings overlay', 'recently played: seven-ish large artwo
     assert needle in home, needle
 assert 'recent.max_players' not in home
 assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in home
-print('Selected-only Nlib artwork and preserved Home worker + TV-first layout PASS')
+# The visible rail has its independent icon-only worker, not a second full media sweep.
+icons = lib.split("void Launcher::start_home_icons()", 1)[1].split("void Launcher::finish_home_icons()", 1)[0]
+assert "screen_ != Screen::home" in icons and "media_cancel_.load" in icons
+assert "for (const Recent& recent : home_.recents)" in icons
+assert "home_icon_scan_.valid()" in icons and "home_icon_next_retry_" in icons
+assert "services_.enrich_home_icon(std::move(request), &media_cancel_)" in icons
+assert "enrich_game_media" not in icons
+native_icon = svc.split("pe::ui::Game EdenServices::enrich_home_icon(", 1)[1].split("pe::ui::Game EdenServices::enrich_game_media(", 1)[0]
+assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
+assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon
+assert "EnsureRetailCase" not in native_icon and "EnsureNlibEnrichment" not in native_icon
+assert "const std::string& art = recent.cover;" in home
+assert "cover(c, art, icon, 20.0f, 0.0f)" in home
+assert "home_icon_scan_.wait();" in launch and "finish_home_icons();" in launch
+print('Selected-only complete Nlib media, bounded visible icon worker and aspect-safe Home tiles PASS')
 
 # Test the exact current worker, including both historic request branches.
 # Async execution uses a deterministic in-memory service, not network or PS5.

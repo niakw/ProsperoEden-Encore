@@ -314,6 +314,8 @@ class Services
     // Enrich one already-scanned game lazily (Nlib on native builds). The default is a no-op so
     // host/preview services stay deterministic and offline.
     virtual Game enrich_game_media(Game game) { return game; }
+    // Visible Home icons only; no retail scan, banner or screenshot request.
+    virtual Game enrich_home_icon(Game game, const std::atomic<bool>*) { return game; }
     // Cancel Nlib work that has not started by the time a title launches;
     // in-flight HTTPS requests still complete naturally before teardown.
     virtual Game enrich_game_media(Game game, const std::atomic<bool>* cancel) {

@@ -148,6 +148,8 @@ Launcher::~Launcher()
         home_scan_.wait();
     if (presence_scan_.valid())
         presence_scan_.wait();
+    if (home_icon_scan_.valid())
+        home_icon_scan_.wait();
     if (home_media_scan_.valid())
         home_media_scan_.wait();
     if (media_scan_.valid())
@@ -870,6 +872,8 @@ void Launcher::update(float dt)
         if (screen_ == Screen::home && modal_ == Modal::none && selected_game_.empty())
             (void)open_game_settings_at_file(file);
     }
+    finish_home_icons();
+    start_home_icons();
     finish_home_media();
     finish_selected_media();
     slow_stage("media_merge", media_started);

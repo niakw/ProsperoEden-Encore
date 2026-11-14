@@ -61,7 +61,8 @@ void switch_game_tile(Canvas& c,const std::string& path,const std::string& title
     // show a deliberate original vector illustration until genuine art arrives.
     const Cover image=path.empty()?Cover{}:c.textures.cover(path,std::max(r.w,r.h));
     if(image.texture!=0) {
-        cover_crop(c,path,r,0.0f,0.0f);
+        c.list.rounded_rect(r,0.0f,kGrey);
+        cover(c,path,r,0.0f,0.0f);
         return;
     }
     static const std::array<gfx::Color,6> tops{

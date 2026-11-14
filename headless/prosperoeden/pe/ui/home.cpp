@@ -928,9 +928,8 @@ void Launcher::draw_home(Canvas &c)
         const int shown = std::min<int>(kHomeRecentMax, static_cast<int>(home_.recents.size()));
         constexpr float available = 1770.0f;
         constexpr float gap = 16.0f;
-        // Real Switch 1/2 icon tiles use a square viewport. Cropping by
-        // source UV (cover_crop) preserves the original aspect, never stretches
-        // the NS2 icon into a short landscape rectangle.
+        // Square viewport; display the real icon without cropping or stretching.
+        // Non-square fallback artwork is contained against a neutral tile.
         constexpr float card_w = (available - gap * 6.0f) / 7.0f;
         constexpr float card_h = card_w;
         const float row_x = 76.0f;
@@ -950,17 +949,19 @@ void Launcher::draw_home(Canvas &c)
             plate_rest(c, kTilePlate, r);
             // Reference uses recognisable game-key art, not a random gameplay
             // screenshot or a cropped panoramic banner on the small tile.
-            const std::string& art = !recent.cover.empty() ? recent.cover :
-                                     (!recent.hero.empty() ? recent.hero : recent.screenshot);
+            const std::string& art = recent.cover;
             // These seven visible icons get priority over off-screen case
             // media queued before a game's teardown. Preserve the
             // aspect-correct square crop and existing cached GL texture.
             const Cover picture = c.textures.cover(
                 art, std::max(card_w - 8.0f, card_h - 8.0f), true);
-            cover_crop(c, art, {r.x + 4.0f, r.y + 4.0f, r.w - 8.0f, r.h - 8.0f}, 20.0f, 0.32f);
+            const Rect icon{r.x + 4.0f, r.y + 4.0f, r.w - 8.0f, r.h - 8.0f};
+            list.rounded_rect(icon, 20.0f, theme::kPanel);
+            cover(c, art, icon, 20.0f, 0.0f);
             if (picture.texture == 0) {
                 const bool fetching = recent.title_id != 0 &&
-                    (home_media_scan_title_id_ == recent.title_id ||
+                    (home_icon_scan_title_id_ == recent.title_id ||
+                     home_media_scan_title_id_ == recent.title_id ||
                      media_scan_title_id_ == recent.title_id);
                 text_shrink(c, tr(fetching || !picture.missing ?
                                       "Loading artwork" : "Artwork unavailable"),

@@ -85,6 +85,43 @@ def patched_nir_mask(raw: bytes) -> bytes:
     return raw.replace(MASK_BEFORE, MASK_AFTER, 1)
 
 
+
+# Two exact additional Git blobs are from the audited PS5 upstream patch
+# (opengl-source/toolchain/opengnm-psbc-ps5.patch), not unreviewed local drift.
+ASSERT_WARNING_OWNERS = {
+    "amd/compiler/aco_lower_to_hw_instr.cpp": (
+        {"337e296ad310279b6aa8e8d96e355d9e049a2acd", "3a6346cba427c411ae4cd839989a0b885770de06"},
+        b"               bool non_linear_vgpr = false;",
+        b"               ASSERTED bool non_linear_vgpr = false;",
+    ),
+    "compiler/nir/nir_unlower_io_to_vars.c": (
+        {"50361427c7723e544378800f583394bd3024ac40"},
+        b"            unsigned component, decl_size;",
+        b"            ASSERTED unsigned component;\n            unsigned decl_size;",
+    ),
+    "amd/compiler/aco_spill_preserved.cpp": (
+        {"80fa7a6ea2cd32785f8b6982666d5d734e3ed3e3"},
+        b"      bool found_reg = false;",
+        b"      ASSERTED bool found_reg = false;",
+    ),
+    "amd/vulkan/nir/radv_nir_lower_descriptors.c": (
+        {"241288084c342b659be03e187de13fb0f3d29b0f", "71ac6f6f01fc5e14102487812fb714e0abb93f99"},
+        b"   bool indirect = false;",
+        b"   ASSERTED bool indirect = false;",
+    ),
+}
+
+
+def patched_assert_warning(path: str, raw: bytes) -> bytes:
+    pins, before, after = ASSERT_WARNING_OWNERS[path]
+    digest = gitblob(raw)
+    if digest not in pins or raw.count(before) != 1 or after in raw:
+        raise ValueError(
+            f"Unexpected PSBC assert-only warning source path={path} "
+            f"blob={digest} before={raw.count(before)} after={raw.count(after)}"
+        )
+    return raw.replace(before, after, 1)
+
 def compile_window(file: Path, command: list[str]) -> int:
     if not file.is_file() or file.is_symlink() or not command:
         raise ValueError("Unsafe PSBC compile-window input")
@@ -102,16 +139,20 @@ def compile_window(file: Path, command: list[str]) -> int:
     src = file.parent.parent.parent
     aco = src / ACO_PATH
     mask = src / NIR_MASK_PATH
-    for owner in (aco, mask):
+    assert_owners = {relative: src / relative for relative in ASSERT_WARNING_OWNERS}
+    for owner in (aco, mask, *assert_owners.values()):
         if not owner.is_file() or owner.is_symlink():
             raise ValueError("Unsafe or missing PSBC compiler owner")
     aco_original = aco.read_bytes()
     mask_original = mask.read_bytes()
+    assert_originals = {relative: owner.read_bytes() for relative, owner in assert_owners.items()}
     changes = (
         (file, original, fixed),
         (header, header_original, header_fixed),
         (aco, aco_original, patched_aco(aco_original)),
         (mask, mask_original, patched_nir_mask(mask_original)),
+        *((assert_owners[relative], raw, patched_assert_warning(relative, raw))
+          for relative, raw in assert_originals.items()),
     )
     try:
         for owner, _, replacement in changes:
@@ -119,6 +160,7 @@ def compile_window(file: Path, command: list[str]) -> int:
         print("PSBC_NIR_LOCATION_BUFFER_11_SAFE compile_window=1", flush=True)
         print("PSBC_RADV_STUB_FILE_SCOPE_PASS compile_window=1", flush=True)
         print("PSBC_ACO_OFFSET_NIR_COMPONENT_MASK_PASS compile_window=1", flush=True)
+        print("PSBC_ASSERT_ONLY_WARNING_OWNERS_PASS count=4 compile_window=1", flush=True)
         return subprocess.run(command, check=False).returncode
     finally:
         # Restore each verified owner even if a different restore fails.

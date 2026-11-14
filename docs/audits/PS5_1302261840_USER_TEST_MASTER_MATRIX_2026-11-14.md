@@ -109,3 +109,10 @@ Engine #142 `560201fbdb04a3a1e5dfc466353e7cf1a7483981` passed 20/20. Retain its 
 #145 combined actual Sirit workflow run 43576082079: five synthetic modules byte-identical, exact Sirit stream declaration contract, subgroup and selected shared C++ syntax all successful. #144 source-derived VFS/NCA/RomFS tests are not full parser native ABI proof. Extend the genuine PS5 CMake database verifier to require one exact selected owner for each of six reviewed storage TUs and compile each full source with the existing strict native SDK include/target flags; record compiler warnings rather than discard them. Old historical pin paths unchanged. Independent comparison of all 16 non-main engine branches at time of audit: none is fully contained in main; vendor feature feat/ps5-jxr-selected-only-decode is already contained in main, but no branch-delete action is available here. Preserve refs.
 
 Repeated sparse native cancellations are explained by a single fixed concurrency key with cancel-in-progress true across different PRs; scope to github.ref following GitHub Actions workflow syntax, so only obsolete revisions of the same PR/ref supersede one another. Native syntax does not link/build the application or establish game runtime. No main merge.
+
+
+### N. Consolidated warning gate
+
+- PR #141, head `db99c0711104e1527f361e6b2287ac0a04de2822`: four successful workflows, including real native syntax retry [43575655138](https://github.com/niakw/ProsperoEden-Encore/actions/runs/43575655138). Exact pristine and official PS5-patched ACO preimages retained.
+- Combined with PR #146 (`f3218b6aa45aa9a00b99a06b06daf81d32574cb8`), preserving the per-ref concurrency group and all four PSBC trigger paths. Vendor remains `7bd7a85e6c1886035c75395c86b05b231375bbf5` (20/20 host workflows).
+- PR #145 real Sirit and P0-P4 qualification: 2/2 successful. Independent native storage proof and aggregate checks must complete on their own heads. No native application build or PS5 runtime success claimed.

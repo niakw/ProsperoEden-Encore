@@ -97,6 +97,26 @@ if(PS5_NATIVE)
         "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache_base.h" COPYONLY)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/buffer-pages" "${EDEN_PORT_DIR}")
 endif()
+# Eglantine #462: PS5 Vulkan BufferCache::CanReorderUpload must see
+# every 64-byte bucket touched by a guest upload, even for sub-64-byte spans.
+# Keep pinned vendor/sources/eden untouched; select the reviewed header only
+# when the paired vendor commit supplies it. The original pinned gitlink
+# intentionally has no such file and must continue to build identically.
+if(PS5_NATIVE)
+    set(EDEN_PS5_USAGE_TRACKER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/usage-tracker")
+    set(EDEN_PS5_USAGE_TRACKER_HEADER
+        "${EDEN_PS5_USAGE_TRACKER_ROOT}/video_core/buffer_cache/usage_tracker.h")
+    if(EXISTS "${EDEN_PS5_USAGE_TRACKER_HEADER}")
+        target_include_directories(video_core BEFORE PRIVATE
+            "${EDEN_PS5_USAGE_TRACKER_ROOT}")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+            "${EDEN_PS5_USAGE_TRACKER_HEADER}")
+        message(STATUS "PS5 Vulkan: reviewed 64-byte UsageTracker header selected")
+    else()
+        message(STATUS "PS5 Vulkan: pinned baseline UsageTracker header selected")
+    endif()
+endif()
 # The texture-cache small-vector Boost version dependency is a complete
 # tracked header under vendor/encore-active, not a configure-time replacement.
 # Its only modification to the original is #include <boost/version.hpp>.

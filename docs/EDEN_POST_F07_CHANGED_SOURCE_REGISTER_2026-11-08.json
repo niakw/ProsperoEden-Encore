@@ -342,13 +342,13 @@
     {
       "path": "headless/settings_store.h",
       "historical_reviewed_git_blob": "e8760e571f5a13d1e73d36ba57476c7a3f593899",
-      "post_snapshot_git_blob": "f530fd5f8090ad02dab7edb70002fc756ad501ef",
+      "post_snapshot_git_blob": "66cace26f7d55c82629ed441a4ec7d2086499444",
       "original_disposition": "reviewed_without_new_code_edit",
       "source_scope": "Nov13 real PS5 console regression: scrollable contextual help, local wallpaper option state, user panel opacity, daily source caption. Source delta only; gameplay/kernel console qualification open.",
       "review_kind": "source_contract",
       "required_source_fragment": "kUpscalingFilterLabels[]",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-09: Reviewed 31 official PS5 interface locales with first 18 existing persisted indices retained, 13 appended aliases to supported English guest-language and documented regions. This changes guest fallback semantics only for newly selectable UI locales; no console proof.\n2026-11-13 PR #95: reviewed source blob 97680b12c3def8935f3fd95a174b467a9a2567d7; SHA of prior listed post-F07 entry f2fd2d734e90c2e27ae3cf5e58d837d9ec21814c; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding.\n2026-11-14 R457 console recurrence: Color::with_alpha multiplies input alpha; reviewed new surface-specific alpha endpoints and authored midpoint, only launcher UI. Exact reviewed blob f530fd5f8090ad02dab7edb70002fc756ad501ef; historical F07 receipt unchanged. Host and console qualification pending."
+      "review_note": "2026-11-09: Reviewed 31 official PS5 interface locales with first 18 existing persisted indices retained, 13 appended aliases to supported English guest-language and documented regions. This changes guest fallback semantics only for newly selectable UI locales; no console proof.\n2026-11-13 PR #95: reviewed source blob 97680b12c3def8935f3fd95a174b467a9a2567d7; SHA of prior listed post-F07 entry f2fd2d734e90c2e27ae3cf5e58d837d9ec21814c; new user-visible settings and extracted library/caption behavior. Historical F07 reviewed blob unchanged. Native PS5 UI/game tests outstanding.\n2026-11-14 R457 console recurrence: Color::with_alpha multiplies input alpha; reviewed new surface-specific alpha endpoints and authored midpoint, only launcher UI. Exact reviewed blob f530fd5f8090ad02dab7edb70002fc756ad501ef; historical F07 receipt unchanged. Host and console qualification pending.\n2026-11-14 R457: preserve validated catalog-relative history identity for extracted and nested titles; exact reviewed blob 66cace26f7d55c82629ed441a4ec7d2086499444. Historical receipt unchanged; host and PS5 gameplay qualification pending."
     },
     {
       "path": "headless/crash_report.cpp",
@@ -382,6 +382,17 @@
       "required_source_fragment": "std::array<unsigned long long, 6> frame_cache_domain_previous{};",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "Nov13 console regression fd00c7f: historical U19 F07 reviewed blob immutable; new baseline lives with GraphicsWindow to avoid cross-title stale deltas. Exact new source Git blob 60fb9eec370c11b386cb0f446050584747db2ae6; host source check covers both detailed-only call sites; PS5 run unqualified."
+    },
+    {
+      "path": "headless/preferences_check.cpp",
+      "historical_reviewed_git_blob": "3e48c14325e018e6ca9d0e6235dbcf5308ea7b9a",
+      "post_snapshot_git_blob": "7e9d87a080240ecea879a38f9a828e8972e970a6",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "Host-only JSON history regression for two distinct extracted titles, nested and flat packages, and invalid selections.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "Eden::LoadRecentGames(history_file)",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-14 R457 PR #154: exact host test delta only, separate history fixture, reviewed original and new blobs; no historical receipt rewrite or native runtime claim."
     }
   ]
 }

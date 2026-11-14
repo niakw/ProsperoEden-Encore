@@ -28,6 +28,7 @@
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -231,6 +232,20 @@ inline bool ValidRomFilename(std::string_view name) {
     for (unsigned char c : name)
         if (c < 32 || c == 127 || (c == '/' && !exefs && !nested_package) || c == '\\') return false;
     return Eden::IsGameFile(name) || exefs || nested_package;
+}
+
+// History stores the same relative selection as the library catalog, not
+// the last path component (all extracted titles otherwise become "main").
+// This is a storage identity helper, not authorization to launch a file.
+inline std::string LibraryHistorySelection(const std::filesystem::path& selected,
+                                           const std::filesystem::path& roms_root) {
+    if (!selected.is_absolute() || !roms_root.is_absolute()) return {};
+    const auto relative = selected.lexically_relative(roms_root);
+    if (relative.empty() || relative.is_absolute()) return {};
+    for (const auto& component : relative)
+        if (component == "." || component == ".." || component.empty()) return {};
+    const auto selection = relative.generic_string();
+    return ValidRomFilename(selection) ? selection : std::string{};
 }
 
 inline std::string SettingsFile() { return ConfigFile("prosperoeden.json"); }

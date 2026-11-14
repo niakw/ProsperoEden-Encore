@@ -487,6 +487,13 @@ class Services
 
     // ---- images ----
     virtual bool load_image(const std::string &path, gfx::Image *image) = 0;
+    // Runtime cover workers know the display bucket; non-WebP and host
+    // preview implementations may continue to decode at source size.
+    virtual bool load_display_image(const std::string &path, gfx::Image *image,
+                                    int target_pixels) {
+        (void)target_pixels;
+        return load_image(path, image);
+    }
 };
 
 } // namespace pe::ui

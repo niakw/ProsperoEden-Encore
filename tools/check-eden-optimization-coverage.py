@@ -962,6 +962,31 @@ assert "EdenNs2CommitGuestBacking(" in slab_bytes.decode()
 assert "ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp" in cmake
 # Nov13 production owners postdate F07; require actual native single-owner
 # source selectors before excluding them from the frozen 518-path audit.
+# Review the post-F07 Vulkan usage-tracker owner by exact literal AST set.
+# Its absence is valid only under the old frozen vendor gitlink; its presence
+# must be explicitly classified so the historic 518 owners remain immutable.
+usage_owner_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body if isinstance(node, ast.Assign) and any(
+        isinstance(target, ast.Name) and target.id == "post_f07_usage_tracker_owners"
+        for target in node.targets)
+]
+assert len(usage_owner_nodes) == 1
+usage_owner_paths = ast.literal_eval(usage_owner_nodes[0])
+assert usage_owner_paths == {
+    "eden-core/overrides/usage-tracker/video_core/buffer_cache/usage_tracker.h"
+}
+post_f07_usage_tracker_owners = {
+    "vendor/encore-active/" + p for p in usage_owner_paths
+} & all_owners
+if post_f07_usage_tracker_owners:
+    assert len(post_f07_usage_tracker_owners) == 1
+    assert "EDEN_PS5_USAGE_TRACKER_ROOT" in release_cmake
+    assert (ROOT / "tools/check-ps5-usage-tracker-selection-host.py").is_file()
+print("ENCORE_POST_F07_USAGE_TRACKER_F07_ISOLATION_PASS",
+      f"candidate={len(post_f07_usage_tracker_owners)}")
+
 nov13_native_owners = {
     "vendor/encore-active/eden-core/src/common/stb_image_png.cpp",
     "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -971,7 +996,7 @@ assert 'list(REMOVE_ITEM eden_stb_common_sources "stb.cpp")' in cmake
 assert 'list(APPEND eden_stb_common_sources "${EDEN_NATIVE_STB_CODECS}")' in cmake
 assert 'list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")' in cmake
 assert 'list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")' in cmake
-owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners
+owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

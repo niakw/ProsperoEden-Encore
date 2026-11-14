@@ -59,7 +59,7 @@ ctor = graphics.split("GraphicsWindow::GraphicsWindow(bool use_vulkan)", 1)[1].s
     "GraphicsWindow::~GraphicsWindow()", 1)[0]
 assert ctor.count("vulkan_loading_gpu_completion_baseline =") == 1
 assert ctor.index("vulkan_loading_diagnostic_stage = 0;") < ctor.index(
-    "Eden::vulkan_loading_gpu_completion_baseline =")
+    "vulkan_loading_gpu_completion_baseline =")
 assert ctor.index("vulkan_loading_gpu_completion_baseline =") < ctor.index(
     "vulkan_loading_pace = {};")
 assert "Crash::gpu_completed_commands.store(" not in ctor, (

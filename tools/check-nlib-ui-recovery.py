@@ -407,7 +407,7 @@ assert "std::atomic<bool> media_cancel_{false};" in hdr
 assert "media_cancel_.store(true, std::memory_order_release);" in nav
 assert "media_cancel_.load(std::memory_order_acquire)" in lib
 assert "services_.enrich_game_media(std::move(request), &media_cancel_)" in lib
-assert "services_.enrich_game_media(std::move(copy), &media_cancel_)" in lib
+assert "services_.enrich_game_media(std::move(copy), &selected_media_cancel_)" in lib
 assert "virtual Game enrich_game_media(Game game, const std::atomic<bool>* cancel)" in hero_types
 assert "enrich_game_media(pe::ui::Game game, const std::atomic<bool>* cancel) override;" in native_hdr
 assert "EnsureNlibEnrichment(game.title_id, language_choice, cancel)" in native_svc
@@ -507,3 +507,8 @@ assert "if (known_missing)" in lib
 assert "bool drop_missing_games(const std::vector<std::string>* known_missing = nullptr);" in hdr
 
 print("Nlib and four PS5 capture regressions: SOURCE CONTRACT PASS")
+
+# A fresh selection owns its token; shutdown cancels both scopes.
+assert "std::atomic<bool> selected_media_cancel_{false};" in hdr
+assert nav.count("selected_media_cancel_.store(true, std::memory_order_release);") == 2
+assert "selected_media_cancel_.store(false, std::memory_order_release);" in lib

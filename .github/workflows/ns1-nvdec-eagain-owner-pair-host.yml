@@ -27,7 +27,12 @@ jobs:
       - name: Check pinned maintained vendor FFmpeg owner and real packet fixture
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "fe9edd661d6f0824c7339865d50aa9cf99cab150"
+          selected="$(git -C vendor rev-parse HEAD)"
+          test "$selected" = "$(git ls-tree HEAD -- vendor | awk '{print $3}')"
+          case "$selected" in
+            fe9edd661d6f0824c7339865d50aa9cf99cab150|c339fd06f02e42e67d5416ae82194ba619b7ee68) ;;
+            *) echo "Unreviewed integrated vendor graph $selected" >&2; exit 1 ;;
+          esac
           python3 -B tools/check-nvdec-eagain-owner-selection-host.py
           python3 -B vendor/tests/ns1-nvdec-eagain-source.py
           python3 -B vendor/tests/ns1_nvdec_eagain_lossless_host.py

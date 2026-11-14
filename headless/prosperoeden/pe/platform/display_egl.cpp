@@ -62,6 +62,7 @@ const char *gl_string(GLenum name)
 // before creating its own surface.
 std::mutex deferred_display_mutex;
 EGLDisplay deferred_display = EGL_NO_DISPLAY;
+EGLSurface deferred_surface = EGL_NO_SURFACE;
 
 } // namespace
 
@@ -208,13 +209,10 @@ bool Display::swap()
 
 bool Display::defer_scanout_close()
 {
-    if (display_ == EGL_NO_DISPLAY)
+    if (display_ == EGL_NO_DISPLAY || surface_ == EGL_NO_SURFACE)
         return false;
     {
         std::lock_guard lock{deferred_display_mutex};
-        // RunApp clears stale ownership before opening a new launcher. Never
-        // terminate or replace a still-owned scanout from this function:
-        // doing so would recreate the very black handoff this bridge avoids.
         if (deferred_display != EGL_NO_DISPLAY)
         {
             sys::log("egl scanout defer refused: previous owner still pending");
@@ -222,43 +220,67 @@ bool Display::defer_scanout_close()
         }
     }
 
-    bool ok = true;
+    // Detach and destroy only the GL context. On this PS5 EGL runtime,
+    // eglDestroySurface itself calls ps5_agc_gate2_shutdown_present(), which
+    // drains and closes VideoOut. The window surface therefore MUST remain
+    // alive with the display until the next renderer reaches its takeover
+    // boundary.
     if (context_ != EGL_NO_CONTEXT)
     {
-        ok = eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT) && ok;
-        ok = eglDestroyContext(display_, context_) && ok;
-    }
-    if (surface_ != EGL_NO_SURFACE)
-        ok = eglDestroySurface(display_, surface_) && ok;
-    if (!ok)
-    {
-        fail("defer scanout close");
-        close();
-        return false;
+        if (!eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT))
+        {
+            fail("defer scanout release current");
+            return false;
+        }
+        if (!eglDestroyContext(display_, context_))
+        {
+            fail("defer scanout context");
+            return false;
+        }
     }
 
     {
         std::lock_guard lock{deferred_display_mutex};
         deferred_display = display_;
+        deferred_surface = surface_;
     }
     display_ = EGL_NO_DISPLAY;
     surface_ = EGL_NO_SURFACE;
     context_ = EGL_NO_CONTEXT;
     width_ = 0;
     height_ = 0;
-    sys::log("egl launcher scanout deferred for renderer handoff");
+    sys::log("egl launcher display+surface deferred for renderer handoff");
     return true;
 }
 
 bool Display::close_deferred_scanout()
 {
     EGLDisplay display = EGL_NO_DISPLAY;
+    EGLSurface surface = EGL_NO_SURFACE;
     {
         std::lock_guard lock{deferred_display_mutex};
         display = std::exchange(deferred_display, EGL_NO_DISPLAY);
+        surface = std::exchange(deferred_surface, EGL_NO_SURFACE);
     }
     if (display == EGL_NO_DISPLAY)
         return true;
+
+    // Destroying the retained window surface is the intentional VideoOut
+    // handoff point on the pinned PS5 EGL implementation.
+    if (surface != EGL_NO_SURFACE && !eglDestroySurface(display, surface))
+    {
+        const EGLint error = eglGetError();
+        sys::log("egl deferred launcher surface release failed: %s (0x%04x)",
+                 egl_error_name(error), static_cast<unsigned>(error));
+        std::lock_guard lock{deferred_display_mutex};
+        if (deferred_display == EGL_NO_DISPLAY)
+        {
+            deferred_display = display;
+            deferred_surface = surface;
+        }
+        return false;
+    }
+
     if (eglTerminate(display))
     {
         sys::log("egl deferred launcher scanout released");
@@ -268,12 +290,15 @@ bool Display::close_deferred_scanout()
     const EGLint error = eglGetError();
     sys::log("egl deferred launcher terminate failed: %s (0x%04x)",
              egl_error_name(error), static_cast<unsigned>(error));
-    // Keep ownership retryable. A failed close means the OpenGL runtime may
-    // still own VideoOut and its direct-memory scanout.
+    // Surface teardown already transferred VideoOut ownership. Retain only
+    // the initialized display for a later cleanup retry.
     {
         std::lock_guard lock{deferred_display_mutex};
         if (deferred_display == EGL_NO_DISPLAY)
+        {
             deferred_display = display;
+            deferred_surface = EGL_NO_SURFACE;
+        }
     }
     return false;
 }

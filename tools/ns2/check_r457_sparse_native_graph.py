@@ -77,6 +77,32 @@ def main():
     if len(slab_rows)!=1:
         raise RuntimeError(f"Expected one real native KPort/KPageBuffer slab owner, got {len(slab_rows)}")
     selected.append(("native_kernel_slabs",slab_rows[0]))
+    # R457 storage follow-up: the new six maintained readers were previously
+    # tested through source-derived mocks and a script-mode selector. Prove
+    # they are each the sole real CMake native compilation owner, then compile
+    # the full TUs with the exact SDK command (not replacement mock headers).
+    storage_labels = set()
+    if sha == "7bd7a85e6c1886035c75395c86b05b231375bbf5":
+        storage_receipts = {
+            "file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
+            "file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
+            "file_sys/partition_filesystem.cpp": "350af05f831fe89a05158350f8c8aded988980dd",
+            "file_sys/fssystem/fssystem_nca_file_system_driver.cpp": "f6ceeb8d18b88b850c19b86cc3823e40ce5b9afa",
+            "file_sys/fssystem/fssystem_integrity_verification_storage.cpp": "5afc754433f6276ffd80bc0af418d31cf5cf496c",
+            "file_sys/romfs.cpp": "51eb401e5f2e3a0deefc5fc0e4cc30b0f4b8e4a3",
+        }
+        for relative, expected in storage_receipts.items():
+            path = ROOT/"vendor/encore-active/eden-core/src/core"/relative
+            if gitblob(path) != expected:
+                raise RuntimeError("Unreviewed real storage owner "+relative)
+            suffix = Path("src/core")/relative
+            rows = [r for r in db if Path(r["file"]).parts[-len(suffix.parts):] == suffix.parts]
+            if len(rows) != 1 or Path(rows[0]["file"]).resolve() != path.resolve():
+                raise RuntimeError("Missing, duplicate or wrong native storage TU "+relative)
+            label = "storage_"+Path(relative).stem
+            storage_labels.add(label)
+            selected.append((label, rows[0]))
+        print("R457_NATIVE_STORAGE_6_OWNER_GRAPH_PASS exact_receipts=6",flush=True)
 
     # Qualify existing source owners first even when the new sparse TU has a
     # target-SDK header problem; never stop before recording their verdict.
@@ -156,8 +182,17 @@ def main():
                 if diagnostic.returncode:
                     print(diagnostic.stderr[-3500:],file=sys.stderr,flush=True)
             raise RuntimeError(label+" genuine SDK syntax: "+p.stderr[-8500:])
+        # Do not discard diagnostics from successful syntax compiles.
+        warnings = [line for line in p.stderr.splitlines() if "warning:" in line]
+        for line in warnings:
+            print("R457_NATIVE_SYNTAX_WARNING", label, line, flush=True)
+        print("R457_NATIVE_SYNTAX_WARNING_COUNT", label, len(warnings),flush=True)
         print("R457_NS2_SPARSE_NATIVE_SYNTAX_PASS",label,flush=True)
+        if label in storage_labels:
+            print("R457_NATIVE_STORAGE_SYNTAX_PASS",label,flush=True)
     print("R457_NS2_SPARSE_ACTUAL_PS5_CMAKE_AND_6_TUS_PASS no link/gameplay",flush=True)
+    if storage_labels:
+        print("R457_NATIVE_STORAGE_ACTUAL_PS5_CMAKE_AND_6_TUS_PASS no link/gameplay",flush=True)
 
 if __name__=="__main__":
     try: main()

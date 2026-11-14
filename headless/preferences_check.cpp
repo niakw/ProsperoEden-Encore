@@ -41,6 +41,26 @@ int main() {
     const std::string unknown_language = std::string(directory) + "/unknown-language.json";
     std::ofstream(unknown_language) << R"({"system": {"language": "xx"}})";
     assert(Eden::LoadPreferences(unknown_language).language == 0);
+    assert(!Eden::HasSavedLanguage(unknown_language));
+    // Every official PS5 locale and historical key resolves to the same
+    // unchanged Nintendo enum, and canonical save remains backward compatible.
+    const std::string alias_file = std::string(directory) + "/locale-alias.json";
+    for (int i = 0; i < int(std::size(Eden::kLanguageKeys)); ++i) {
+        for (const char* key : {Eden::kLanguageKeys[i], Eden::kLanguageCatalogTags[i]}) {
+            std::ofstream(alias_file) << "{\"system\":{\"language\":\"" << key << "\"}}";
+            assert(Eden::HasSavedLanguage(alias_file));
+            assert(Eden::LoadPreferences(alias_file).language == i);
+            assert(Eden::LanguageIndexForLocale(key) == i);
+            assert(Eden::SavePreferences(Eden::LoadPreferences(alias_file), alias_file));
+            assert(Eden::LoadPreferences(alias_file).language == i);
+        }
+    }
+    assert(Eden::SavedLanguageIndex("fr-FR") == 2);
+    assert(Eden::SavedLanguageIndex("fr-CA") == 3);
+    assert(Eden::kLanguageSettings[2] == 2 && Eden::kLanguageSettings[3] == 13);
+    assert(Eden::SavedLanguageIndex("fr-XX") == -1);
+    assert(Eden::SavedLanguageIndex("") == -1);
+
 
     // Last and recent games.
     assert(Eden::SaveLastGame("Sample Quest [id].nsp", file));

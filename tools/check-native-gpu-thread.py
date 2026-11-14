@@ -5,7 +5,34 @@ import subprocess
 import sys
 import tempfile
 
+from ci.ps5_g21_gpu_shutdown_receipt import (
+    REVIEWED, OLD_OPENGL, normalize_g21_shutdown_source,
+)
+
 root = Path(__file__).resolve().parents[1]
+
+def verify_g21_teardown():
+    """Require current reviewed GPU lifetime fix; replay historic receipt only in memory."""
+    owner_dir = root / 'vendor/encore-active/eden-core/src/video_core'
+    normalized = {}
+    for name in REVIEWED:
+        source = (owner_dir / name).read_text()
+        historical, corrected = normalize_g21_shutdown_source(name, source)
+        assert corrected, ('Missing reviewed G21 renderer-before-channels fix', name)
+        # Full byte/hash and ordering verification lives in the reviewed receipt.
+        # Explicitly retain the GL MakeCurrent/Finish contract on every GL owner.
+        if name != 'gpu_vulkan.cpp':
+            destructor = source.split('    ~Impl() {', 1)[1].split(
+                '    std::shared_ptr<Control::ChannelState> CreateChannel(', 1)[0]
+            assert destructor.index('NotifyShutdown();') < destructor.index('gpu_thread.Stop();') < (
+                destructor.index('renderer->Context().MakeCurrent();')) < destructor.index('glFinish();') < (
+                destructor.index('renderer.reset();'))
+            assert OLD_OPENGL in historical
+        normalized[name] = historical
+    print('GPU_G21_CURRENT_SHUTDOWN_SOURCE_PASS owners=5 historic_parity=1 renderer_before_channels=1')
+    return normalized
+
+reviewed_g21 = verify_g21_teardown()
 native_pending_wait = """            if (scheduler.HasPendingNativeChannels()) {
                 // CPU writes may satisfy a semaphore even without a new GPU
                 // submission; retry without blocking the command queue.
@@ -116,7 +143,10 @@ assert 'GPU::~GPU() { impl->NotifyShutdown(); }' in gpu
 shutdown = gpu.split('    void NotifyShutdown() {', 1)[1].split('    /// Obtain', 1)[0]
 assert 'sync_cv.notify_all();\n        }\n        gpu_thread.Stop();' in shutdown
 assert shutdown.index('gpu_thread.Stop();') < shutdown.index('sync_requests.clear();') < shutdown.index('sync_requests_stopped = true;')
-assert '~Impl() { gpu_thread.Stop(); if (renderer && Settings::IsOpenGL()) { renderer->Context().MakeCurrent(); glFinish(); } }' in gpu
+# The historic one-line destructor is checked only after exact G21 receipt replay.
+# Keep the real source for all current shutdown/worker ordering checks above.
+selected_gpu_name = 'gpu_gl_native_dev.cpp' if development else 'gpu_gl_native.cpp'
+assert OLD_OPENGL in reviewed_g21[selected_gpu_name]
 core = (cache / 'native-local/headless/core.cpp').read_text()
 shutdown_core = core.split('    void ShutdownMainProcess() {', 1)[1].split('    bool IsShuttingDown()', 1)[0]
 assert shutdown_core.index('gpu_core->NotifyShutdown()') < shutdown_core.index('services.reset()') < shutdown_core.index('gpu_core.reset()')

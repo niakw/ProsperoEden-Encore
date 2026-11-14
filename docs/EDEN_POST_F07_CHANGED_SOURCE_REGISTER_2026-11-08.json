@@ -393,6 +393,28 @@
       "required_source_fragment": "Eden::LoadRecentGames(history_file)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-14 R457 PR #154: exact host test delta only, separate history fixture, reviewed original and new blobs; no historical receipt rewrite or native runtime claim.\n2026-11-14: exact legacy and official PS5 catalog locale aliases accepted by preferences reader and saved-language detection; canonical writes, 31 choice IDs and guest enum/region mapping remain unchanged. All 31 alias pairs covered by host preferences fixture. Native hardware not yet qualified."
+    },
+    {
+      "path": "headless/prosperoeden/pe/platform/display_egl.cpp",
+      "historical_reviewed_git_blob": "a31fb6db879928c4fe7d96318046cae7eb68b2b8",
+      "post_snapshot_git_blob": "ca433e9a54933100bcd9643fdfa694138333cc9b",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "PS5 launcher EGL lifecycle now supports a fail-closed deferred scanout owner so the last loading frame survives until the selected renderer takes VideoOut",
+      "review_kind": "source_contract",
+      "required_source_fragment": "bool Display::defer_scanout_close()",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-14 R457 unified loading: reviewed against pinned ps5-opengl eglTerminate/shutdown behavior. The defer path destroys context/surface but contains no eglTerminate and refuses an unexpected prior owner. Explicit close_deferred_scanout owns termination. PS5 physical continuity pending."
+    },
+    {
+      "path": "headless/prosperoeden/pe/platform/display_egl.hpp",
+      "historical_reviewed_git_blob": "7438f8f6fa10b7f0aa8ea170be2dfbb522d912eb",
+      "post_snapshot_git_blob": "c7a3607af373e546e98d9a2b85551465288cfb52",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "PS5 launcher display interface exposes explicit defer, takeover close and ownership query operations for one OpenGL to game renderer scanout handoff",
+      "review_kind": "source_interface",
+      "required_source_fragment": "static bool close_deferred_scanout();",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-14 R457 unified loading: API is process-local lifecycle control only; no guest, GPU or renderer ABI change and no hardware qualification claim."
     }
   ]
 }

@@ -823,7 +823,7 @@ void Launcher::draw_home(Canvas &c)
     {
         const auto& chip = chips[i];
         const float w = chip_widths[i];
-        list.rounded_rect({chip_x, 405.0f, w, 38.0f}, 19.0f, theme::kPanel.with_alpha(0.78f));
+        list.rounded_rect({chip_x, 405.0f, w, 38.0f}, 19.0f, panel_fill(theme::kPanel.with_alpha(0.78f)));
         text_shrink(c, chip, chip_x + w * 0.5f, baseline(405.0f, 38.0f, 18.0f), 18.0f,
                     theme::kLimePale, w - 18.0f, Align::center, 0.0f, 0.72f);
         chip_x += w + kChipGap;
@@ -833,7 +833,7 @@ void Launcher::draw_home(Canvas &c)
         // Same row as Play/details, BEFORE the profile/renderer/output chips;
         // never float this datum alone over the right-hand game illustration.
         const Rect players_chip{552.0f, 406.0f, 210.0f, 36.0f};
-        list.bordered_rect(players_chip, 17.0f, theme::kPanel.with_alpha(0.82f), 1.0f,
+        list.bordered_rect(players_chip, 17.0f, panel_fill(theme::kPanel.with_alpha(0.82f)), 1.0f,
                            theme::kPanelEdge.with_alpha(0.58f));
         dualsense_icon(c, {players_chip.x + 8.0f, players_chip.y + 3.0f, 45.0f, 30.0f},
                        theme::kTitle, 1.0f);
@@ -890,7 +890,7 @@ void Launcher::draw_home(Canvas &c)
                 plate_focus(c, kRowPlate, row_box, f);
             const bool editing = home_quick_edit_ == i;
             if (editing)
-                list.bordered_rect(row_box, 16.0f, theme::kPanel.with_alpha(0.16f), 2.0f,
+                list.bordered_rect(row_box, 16.0f, panel_fill(theme::kPanel.with_alpha(0.16f)), 2.0f,
                                    theme::kLime.with_alpha(0.94f));
             home_icon(c, quick_rows[i].icon, quick_sheet.x + 34.0f, y + 10.0f,
                       gfx::mix(theme::kMeta, theme::kTitle, f));

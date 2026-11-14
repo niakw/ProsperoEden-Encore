@@ -207,7 +207,7 @@ struct Preferences
     std::uint32_t background_color = 0x121824u;
     std::uint32_t background_color2 = 0x263d59u;
     int background_overlay = 20; // 0..80, applies to images
-    int panel_opacity = 100; // 0..100, visual boxes only
+    int panel_opacity = 50; // 0..100, visual boxes only
     bool background_animate = true;
     int background_fit = 0; // 0 cover, 1 contain
     bool show_game_background = true; // preserve current hero background default

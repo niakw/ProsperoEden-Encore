@@ -166,7 +166,7 @@ struct Preferences {
     unsigned background_color = 0x121824u;
     unsigned background_color2 = 0x263d59u;
     int background_overlay = 20;
-    int panel_opacity = 100; // Percent; high-contrast UI is always opaque
+    int panel_opacity = 50; // Percent; high-contrast UI is always opaque
     bool background_animate = true;
     int background_fit = 0;
     bool show_game_background = true;
@@ -462,7 +462,7 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     const int logo = Settings::Int(document, Json::json_pointer("/appearance/logo"), 0);
     const int strength = Settings::Int(document, Json::json_pointer("/appearance/glow_strength"), 100);
     const int overlay = Settings::Int(document, Json::json_pointer("/appearance/overlay"), 20);
-    const int panel_opacity = Settings::Int(document, Json::json_pointer("/appearance/panel_opacity"), 100);
+    const int panel_opacity = Settings::Int(document, Json::json_pointer("/appearance/panel_opacity"), 50);
     const int fit = Settings::Int(document, Json::json_pointer("/appearance/fit"), 0);
     const int color_a = Settings::Int(document, Json::json_pointer("/appearance/color_a"), 0x121824);
     const int color_b = Settings::Int(document, Json::json_pointer("/appearance/color_b"), 0x263d59);

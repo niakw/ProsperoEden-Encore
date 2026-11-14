@@ -442,9 +442,9 @@ void Launcher::draw_settings(Canvas &c)
         // The 100% opacity preference must cover the Settings overview
         // info tiles too. These bypass glass()/plate_rest(), so their old
         // hard-coded 48% fill made "100%" look translucent on this page.
-        const float tile_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
+        const float tile_opacity = panel_decoration_alpha();
         list.bordered_rect(tile, 18.0f,
-                           theme::kPanel.with_alpha(tile_opacity), 1.0f,
+                           panel_fill(theme::kPanel.with_alpha(0.48f)), 1.0f,
                            theme::kPanelEdge.with_alpha(0.36f * tile_opacity));
         text_shrink(c, lines[i].label, tile.x + 20.0f,
                     baseline(tile.y + 14.0f, 24.0f, 15.0f), 15.0f,
@@ -812,7 +812,7 @@ void Launcher::press_dialog(Key key)
             prefs_.accent_color = 0; prefs_.background_style = 0;
             prefs_.glow_enabled = true; prefs_.glow_strength = 100;
             prefs_.background_color = 0x121824u; prefs_.background_color2 = 0x263d59u;
-            prefs_.background_overlay = 20; prefs_.panel_opacity = 100;
+            prefs_.background_overlay = 20; prefs_.panel_opacity = 50;
             prefs_.background_animate = true;
             prefs_.background_fit = 0; prefs_.show_game_background = true;
             prefs_.wallpaper_file.clear();

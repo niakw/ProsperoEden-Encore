@@ -165,7 +165,7 @@ void Launcher::draw_multiplayer(Canvas &c)
             const float y = top + (height + gap) * float(i - offset);
             const bool focus = i == room_selected_;
             const Rect r{x, y, 1704.0f, height};
-            c.list.rounded_rect(r, 16.0f, focus ? selected : panel);
+            c.list.rounded_rect(r, 16.0f, panel_fill(focus ? selected : panel));
             if (focus)
                 c.list.bordered_rect(r, 16.0f, Color::rgb(0x000000, 0.0f),
                                      2.3f, border);

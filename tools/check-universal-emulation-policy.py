@@ -50,6 +50,26 @@ assert "frame_late_38 += present_interval >= 0.038;" in graphics
 assert 'const int wanted_screens = std::clamp(screen_count, 0, 3);' in services
 assert "home_media_priority" not in services
 assert "artwork_files.resize(6)" not in services
-assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' in lib
+# All titles remain eligible for the full media set, but fetching is
+# demand-driven, not an unbounded background all-installed sweep.
+start = lib.split("void Launcher::start_selected_media()", 1)[1].split(
+    "void Launcher::finish_selected_media()", 1)[0]
+finish = lib.split("void Launcher::finish_selected_media()", 1)[1].split(
+    "void Launcher::apply_games(", 1)[0]
+assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' not in start
+for marker in ("screen_ != Screen::library", "media_scan_.valid()",
+               "library_.selected < 0", "library_.selected >= static_cast<int>(games_.size())",
+               "games_[static_cast<std::size_t>(library_.selected)]",
+               "media_next_retry_.find(game.title_id)",
+               "media_scan_title_id_ = game.title_id",
+               "services_.enrich_game_media(std::move(copy), &media_cancel_)"):
+    assert marker in start, marker
+assert "enriched.title_id != media_scan_title_id_" in finish
+assert "for (Game& game : games_)" in finish
+assert "game.title_id != enriched.title_id" in finish
+assert "game.screenshots = enriched.screenshots" in finish
+assert "start_selected_media();" in finish
+# No title-specific whitelist or hard-coded title identity in admission.
+assert not any(marker in start for marker in ("0x0400", "0x0100", "FC27", "Bananza", "Mario Kart"))
 
 print("Universal HLE, guest networking, GPU/JIT and Nlib all-title policies: PASS")

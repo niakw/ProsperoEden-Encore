@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Bind a reused native graphics archive to *all* maintained compiler inputs.
 
-The Mesa commit SHA alone is insufficient: Encore replaces 14 native Mesa
-source units after staging, while the old binary cache checked only the WSI
+The Mesa commit SHA alone is insufficient: Encore replaces 14 maintained Mesa
+units and stages one exact pinned NGG mesh-safety transformation, while older caches checked only WSI
 file. Fingerprint every maintained translation unit, then stamp only after
 a successful RADV rebuild with those exact staged bytes.
 """
@@ -15,18 +15,27 @@ from pathlib import Path
 import runpy
 import shutil
 import tempfile
+from ci.ps5_radv_ngg_mesh_zero import RELATIVE as NGG_MESH, patched_bytes as patched_mesh
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVE = ROOT / "vendor/encore-active/ps5-mesa"
 INSTALLER = ROOT / "tools/install-vendored-radv.py"
-PATHS = tuple(runpy.run_path(str(INSTALLER))["PATHS"])
-assert len(PATHS) == len(set(PATHS)) == 14
+MAINTAINED = tuple(runpy.run_path(str(INSTALLER))["PATHS"])
+assert len(MAINTAINED) == len(set(MAINTAINED)) == 14
+assert NGG_MESH not in MAINTAINED
+PATHS = MAINTAINED + (NGG_MESH,)
+assert len(PATHS) == len(set(PATHS)) == 15
 
 
 def fingerprint(base: Path) -> str:
     h = hashlib.sha256()
     for relative in PATHS:
-        data = (base / relative).read_bytes()
+        if relative == NGG_MESH and base == ACTIVE:
+            # The 15th selected compiler unit is a deterministic patch of
+            # the frozen PS5 Mesa source, not a new raw vendor source.
+            data = patched_mesh((ROOT / "vendor/sources/ps5-mesa" / NGG_MESH).read_bytes())
+        else:
+            data = (base / relative).read_bytes()
         h.update(relative.encode("utf-8"))
         h.update(b"\0")
         h.update(len(data).to_bytes(8, "big"))
@@ -69,7 +78,11 @@ def self_test():
         for relative in PATHS:
             target = stage / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(ACTIVE / relative, target)
+            if relative == NGG_MESH:
+                target.write_bytes(patched_mesh(
+                    (ROOT / "vendor/sources/ps5-mesa" / NGG_MESH).read_bytes()))
+            else:
+                shutil.copyfile(ACTIVE / relative, target)
         assert fingerprint(stage) == fingerprint(ACTIVE)
         assert not matches(marker)
         try:
@@ -107,7 +120,7 @@ def self_test():
     assert 'radv-active-inputs.py --check' in script
     assert 'radv-active-inputs.py" --stamp' in build  # absolute script path is quoted
     assert 'EDEN_ACTIVE_INPUTS_SHA256' in script and 'EDEN_ACTIVE_INPUTS_SHA256' in build
-    print(f"DRIVER_SOURCE_CACHE_KEY_PASS maintained_compiler_units={len(PATHS)} stale_archive_rejected")
+    print(f"DRIVER_SOURCE_CACHE_KEY_PASS reviewed_compiler_units={len(PATHS)} stale_archive_rejected")
 
 
 def main():

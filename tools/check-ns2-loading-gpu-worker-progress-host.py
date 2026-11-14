@@ -57,12 +57,12 @@ assert "guest_frame_handoff=0" in loading
 
 ctor = graphics.split("GraphicsWindow::GraphicsWindow(bool use_vulkan)", 1)[1].split(
     "GraphicsWindow::~GraphicsWindow()", 1)[0]
-assert ctor.count("Eden::vulkan_loading_gpu_completion_baseline =") == 1
+assert ctor.count("vulkan_loading_gpu_completion_baseline =") == 1
 assert ctor.index("vulkan_loading_diagnostic_stage = 0;") < ctor.index(
     "Eden::vulkan_loading_gpu_completion_baseline =")
-assert ctor.index("Eden::vulkan_loading_gpu_completion_baseline =") < ctor.index(
+assert ctor.index("vulkan_loading_gpu_completion_baseline =") < ctor.index(
     "vulkan_loading_pace = {};")
-assert "Eden::Crash::gpu_completed_commands.store(" not in ctor, (
+assert "Crash::gpu_completed_commands.store(" not in ctor, (
     "A title transition must not clear the signal/crash breadcrumb.")
 
 cpp = r"""

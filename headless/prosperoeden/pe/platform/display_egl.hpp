@@ -26,6 +26,16 @@ class Display
     bool open(int width = 1920, int height = 1080);
     bool swap();
     void close();
+
+    // A Vulkan launch may take tens of seconds in System::Load before it can
+    // create its own VideoOut surface. Detach/destroy only the GL context;
+    // retain the EGL display AND window surface because this PS5 runtime
+    // closes VideoOut from eglDestroySurface itself. The next renderer releases
+    // both at its explicit takeover boundary.
+    bool defer_scanout_close();
+    static bool close_deferred_scanout();
+    static bool has_deferred_scanout();
+
     // True when the SDK can change the display size at runtime.
     static bool supports_display_modes();
 

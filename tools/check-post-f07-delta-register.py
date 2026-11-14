@@ -14,7 +14,7 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==36  # includes the reviewed extracted-history host witness
+assert len(entries)==38  # + reviewed GL/Vulkan deferred-scanout lifecycle owners
 assert len({e["path"] for e in entries})==len(entries)
 drifts=[]
 for entry in entries:

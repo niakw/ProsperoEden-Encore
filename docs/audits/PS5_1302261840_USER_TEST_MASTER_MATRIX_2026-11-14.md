@@ -72,3 +72,8 @@
 | Vérification package natif, warnings, vulnérabilités | À renseigner | Non exécuté | C01–C06 |
 
 **Ne pas fermer les P0 ni prétendre une compatibilité NS1/NS2 complète avant cette feuille.**
+
+## F — consolidated candidate update (14 November)
+
+- Vendor #117 commit `47568425c71d534b72cc966d1500412c9ae4fc16`: 13/13 host workflows passed. #114 real 16x16 SDR JXR roundtrip with pixel verification + malformed input ASan/UBSan/LSan; HDR PS5 untested. #115 native driver cache preflight mock driver passed; 512 MiB transient staging candidate, no evidence yet of A06 performance improvement. #116 exact Lichii #957 backport, original source reproduces ASan heap-buffer-overflow, fixed u32/u64 boundary tests pass. New common TU selected in this integration branch with pinned original removed. Independent P0 memory defect, not a demonstrated cause of A01/A07/A08.
+- Engine prior `0f42b48`: 30/31 workflows passed. Source-audit failed on the outdated eager Nlib loop assertion; updated selected-only gate keeps existing per-image decode limits and identity checks. New graph requires renewed host qualification and native PS5 build; no console pass assigned to any of A01–A09/B01–B15/C01–C08. Main remains unchanged.

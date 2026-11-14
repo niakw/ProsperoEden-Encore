@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Nlib assets: complete eager title enrichment with bounded decode memory.
+"""Nlib assets: complete demand-driven title enrichment with bounded decode memory.
 
-Static source gate complements real host-render checks. Title fetching stays
-asynchronous to avoid freezing the launcher, but ALL screenshots are scheduled
-with the banner/icon, for every installed game.
+Selected title fetching stays asynchronous and includes all available screens.
+Do not reintroduce an eager sweep of titles outside the current selection.
 """
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
@@ -28,5 +27,18 @@ assert "/banner/1080p" in section and "/icon/512" in section and "/screen/" in s
 assert "for (auto& pending : downloads)" in section
 assert "CachedNlibEnrichment(title_id, language_choice)" in section
 assert "home_priority" not in section
-assert "for (std::size_t offset = 0; offset < games_.size(); ++offset)" in library
-print("Nlib all-game full-media concurrency + bounded JPEG decode memory: PASS")
+worker = library.split("void Launcher::start_selected_media()", 1)[1].split(
+    "void Launcher::finish_selected_media()", 1)[0]
+finish = library.split("void Launcher::finish_selected_media()", 1)[1].split(
+    "void Launcher::apply_games(", 1)[0]
+assert "for (std::size_t offset = 0; offset < games_.size(); ++offset)" not in worker
+for needle in ("screen_ != Screen::library", "media_scan_.valid()",
+               "library_.selected < 0", "library_.selected >= static_cast<int>(games_.size())",
+               "games_[static_cast<std::size_t>(library_.selected)]",
+               "services_.enrich_game_media(std::move(copy), &media_cancel_)"):
+    assert needle in worker, needle
+assert "enriched.title_id != media_scan_title_id_" in finish
+assert "game.title_id != enriched.title_id" in finish
+assert "game.screenshots = enriched.screenshots" in finish
+assert "start_selected_media();" in finish
+print("Nlib selected full-media concurrency + bounded JPEG decode memory: PASS")

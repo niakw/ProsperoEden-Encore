@@ -182,6 +182,20 @@ endif()
 list(REMOVE_ITEM eden_common_sources "logging.cpp")
 list(APPEND eden_common_sources "${EDEN_MAINTAINED_LOGGING}")
 set_property(TARGET common PROPERTY SOURCES "${eden_common_sources}")
+# Lichii #957: one maintained common TU, exact last-byte page-table bound.
+# All builds share this fix; do not compile both explicit instantiations.
+set(EDEN_MAINTAINED_GPU_PAGE_TABLE "${PORT_ROOT}/vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")
+    message(FATAL_ERROR "Missing maintained GPU multi-level page table")
+endif()
+get_target_property(eden_page_table_sources common SOURCES)
+list(FIND eden_page_table_sources "multi_level_page_table.cpp" eden_pinned_page_table_idx)
+if(eden_pinned_page_table_idx EQUAL -1)
+    message(FATAL_ERROR "Pinned GPU page table moved; requalify source selection")
+endif()
+list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")
+list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")
+set_property(TARGET common PROPERTY SOURCES "${eden_page_table_sources}")
 # Maintained HLE source selection lives with its code, not in this launcher.
 option(EDEN_BLOCKING_GUEST_CONTEXT_LOCKS
     "Use the paired upstream guest scheduler lock fixes" ON)

@@ -2745,6 +2745,43 @@ endif()
         endforeach()
         target_link_libraries(eden-headless PRIVATE webp)
         target_include_directories(eden-headless PRIVATE "${EDEN_WEBP_ROOT}/src")
+        # HDR JXR screenshots use the BSD JPEG XR codec isolated from the
+        # maintained, GPL source adapter. NOTHING scans/decodes all images:
+        # only EdenServices::wallpaper_path on the selected worker can call it.
+        set(EDEN_JXR_ROOT "${PORT_ROOT}/vendor/sources/jxrlib")
+        set(EDEN_JXR_ADAPTER "${PORT_ROOT}/vendor/encore-active/ps5-jxr")
+        if(NOT EXISTS "${EDEN_JXR_ROOT}/LICENSE" OR
+           NOT EXISTS "${EDEN_JXR_ADAPTER}/jxr_decoder.c" OR
+           NOT EXISTS "${EDEN_JXR_ADAPTER}/jxr_decoder.h")
+            message(FATAL_ERROR "Reviewed PS5 JPEG XR decoder/adapter missing in pinned vendor")
+        endif()
+        file(GLOB eden_jxr_library_sources
+            "${EDEN_JXR_ROOT}/image/sys/*.c"
+            "${EDEN_JXR_ROOT}/image/decode/*.c"
+            "${EDEN_JXR_ROOT}/image/encode/*.c"
+            "${EDEN_JXR_ROOT}/jxrgluelib/*.c")
+        if(eden_jxr_library_sources STREQUAL "")
+            message(FATAL_ERROR "JPEG XR vendor codec source selection is empty")
+        endif()
+        add_library(eden-ps5-jxr STATIC ${eden_jxr_library_sources}
+            "${EDEN_JXR_ADAPTER}/jxr_decoder.c")
+        target_compile_definitions(eden-ps5-jxr PRIVATE
+            __ANSI__ DISABLE_PERF_MEASUREMENT)
+        target_include_directories(eden-ps5-jxr
+            PUBLIC "${EDEN_JXR_ADAPTER}"
+            PRIVATE "${EDEN_JXR_ROOT}"
+                    "${EDEN_JXR_ROOT}/common/include"
+                    "${EDEN_JXR_ROOT}/image/sys"
+                    "${EDEN_JXR_ROOT}/jxrgluelib"
+                    "${EDEN_WEBP_ROOT}/src")
+        target_compile_options(eden-ps5-jxr PRIVATE
+            -include "${EDEN_JXR_ROOT}/jxr_compat.h"
+            -femulated-tls -msse2)
+        # A static jpeg-xr archive needs the WebP encoder AFTER its own
+        # objects on the native linker command; preserve the transitive edge.
+        target_link_libraries(eden-ps5-jxr PUBLIC webp)
+        target_link_libraries(eden-headless PRIVATE eden-ps5-jxr)
+        target_include_directories(eden-headless PRIVATE "${EDEN_JXR_ADAPTER}")
         target_sources(eden-headless PRIVATE
             "${launcher_dir}/runtime_shims.cpp"
             "${launcher_dir}/radio_input.c")

@@ -227,7 +227,7 @@ void Textures::release()
     queue_.clear();
 }
 
-Cover Textures::cover(const std::string &path, float size)
+Cover Textures::cover(const std::string &path, float size, bool urgent)
 {
     if (path.empty())
         return {0, 0.0f, true, 1.0f};
@@ -247,14 +247,26 @@ Cover Textures::cover(const std::string &path, float size)
         entry.path = path;
         entry.target_pixels = target_pixels;
         entry.generation = ++next_generation_;
+        entry.priority_queued = urgent;
         it = covers_.emplace(key, std::move(entry)).first;
         // Large selected jackets are navigationally critical. Prioritize
         // their fronts/rears over old library thumbnails, without I/O on UI.
-        if (IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
+        if (urgent || IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
             target_pixels >= 1024)
             queue_.push_front(key);
         else
             queue_.push_back(key);
+    }
+    // A Home icon can have been queued earlier at low priority by a Library
+    // render. Promote its EXISTING request once, with no duplicate decoder
+    // while it is already in flight, and no per-frame queue traversal.
+    if (urgent && !it->second.priority_queued && !it->second.loaded) {
+        const auto queued = std::find(queue_.begin(), queue_.end(), key);
+        if (queued != queue_.end()) {
+            queue_.erase(queued);
+            queue_.push_front(key);
+        }
+        it->second.priority_queued = true;
     }
     it->second.used = frame_;
     // Calculate age only for visible/queried covers, not every cached entry.
@@ -273,7 +285,8 @@ Cover Textures::cover(const std::string &path, float size)
         age = 0.0f;
         // Large selected jackets are navigationally critical. Prioritize
         // their fronts/rears over old library thumbnails, without I/O on UI.
-        if (IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
+        if (urgent || it->second.priority_queued ||
+            IsProfileAvatarImage(path) || IsRetailBoxImage(path) ||
             target_pixels >= 1024)
             queue_.push_front(key);
         else

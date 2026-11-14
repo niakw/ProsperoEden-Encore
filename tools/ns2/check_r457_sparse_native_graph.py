@@ -11,6 +11,7 @@ ROOT=Path(__file__).resolve().parents[2]
 REVIEWED_VENDORS={
     "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864",
     "fe9edd661d6f0824c7339865d50aa9cf99cab150",
+    "c339fd06f02e42e67d5416ae82194ba619b7ee68",
 }
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")

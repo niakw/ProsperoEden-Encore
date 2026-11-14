@@ -29,13 +29,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Both exact vendor graphs are recognized; the integrated SHA
-          # retains the 14 reviewed RADV owners. Reject unknown gitlinks.
+          # Three exact vendor graphs are recognized; the integrated and JXR SHAs
+          # retain the 14 original reviewed RADV owners; the staged mesh unit is checked separately. Reject unknown gitlinks.
           selected="$(git -C vendor rev-parse HEAD)"
           expected="$(git ls-tree HEAD -- vendor | awk '{print $3}')"
           test "$selected" = "$expected"
           case "$selected" in
-            1ec7b429238d1175a76dc94b7c0a7f1c2eb62864|fe9edd661d6f0824c7339865d50aa9cf99cab150) ;;
+            1ec7b429238d1175a76dc94b7c0a7f1c2eb62864|fe9edd661d6f0824c7339865d50aa9cf99cab150|c339fd06f02e42e67d5416ae82194ba619b7ee68) ;;
             *) echo "Unreviewed vendor C03 source graph $selected" >&2; exit 1 ;;
           esac
           python3 -B vendor/tests/c03_radv_transfer_split.py

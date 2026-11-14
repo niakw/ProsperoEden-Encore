@@ -10,6 +10,8 @@ read = lambda name: (ROOT / name).read_text(encoding="utf-8")
 service = read("headless/prosperoeden/eden_services.cpp")
 widgets = read("headless/prosperoeden/pe/ui/widgets.cpp")
 launcher = read("headless/prosperoeden/pe/ui/launcher.cpp")
+settings = read("headless/prosperoeden/pe/ui/settings.cpp")
+library = read("headless/prosperoeden/pe/ui/library.cpp")
 
 capture = service.split("std::vector<SystemWallpaper> SystemCaptureWallpapers()", 1)[1].split("#endif", 1)[0]
 gallery = service.split("std::vector<std::string> EdenServices::wallpapers()", 1)[1].split("std::string EdenServices::wallpaper_path(", 1)[0]
@@ -26,18 +28,24 @@ assert "for (const auto& capture : captures)" in gallery
 assert "i < 64u" not in gallery
 assert "const std::size_t imported = names.size();" in gallery
 assert "imported, captures.size(), names.size()" in gallery
-assert gallery.index('std::sort(names.begin(), names.end());') < gallery.index(
-    "const std::size_t imported = names.size();") < gallery.index(
-    "for (const auto& capture : captures)")
 assert "CheckedWallpaper(capture.photo.parent_path()" in service
 assert "text_shrink(c, value, right - arrow, baseline, size" in chooser
 assert "285.0f - arrow, Align::right" in chooser
 assert "nav_opacity = std::clamp(look().panel_opacity" in nav
 assert "theme::kPanel.with_alpha(nav_opacity)" in nav
 assert "Color::rgb(0x301446, nav_opacity)" in nav
+assert 'const float tile_opacity = std::clamp(look().panel_opacity' in settings
+assert 'theme::kPanel.with_alpha(tile_opacity)' in settings
+assert 'const float chip_opacity = std::clamp(look().panel_opacity' in library
+assert 'theme::kPanel.with_alpha(chip_opacity)' in library
+assert 'const float avatar_panel_opacity = std::clamp(look().panel_opacity' in launcher
+assert 'theme::kPanel.with_alpha(avatar_panel_opacity)' in launcher
 assert "Unknown" not in caption
 assert "(source.empty() ? \"\" : \" · \" + source)" in caption
 assert "cached_daily_wallpaper_caption_" in pre_modal
 assert "(screen_ != Screen::home || !prefs_.show_game_background)" in pre_modal
 assert "text_shrink(c, cached_daily_wallpaper_caption_" not in post_modal
+assert gallery.index('std::sort(names.begin(), names.end());') < gallery.index(
+    "const std::size_t imported = names.size();") < gallery.index(
+    "for (const auto& capture : captures)")
 print("PS5_GALLERY_OPACITY_CREDIT_HOST_PASS no_gallery_64_cap=1 caption_behind_modal=1 chooser_bounded=1")

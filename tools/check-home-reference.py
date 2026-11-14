@@ -35,14 +35,14 @@ assert "if (home.recents.size() == 7) break" in service
 assert "const std::string& art = !recent.cover.empty() ? recent.cover" in home
 assert "constexpr float available = 1770.0f" in home
 assert "constexpr float gap = 16.0f" in home
-assert "constexpr float card_h = 214.0f" in home
+assert "constexpr float card_h = card_w" in home
 assert "card_w = (available - gap * 6.0f) / 7.0f" in home
 rail_left, rail_width, gap, count = 76, 1770, 16, 7
 card_width = (rail_width - gap*(count-1))/count
 assert rail_left + (card_width + gap)*(count-1) + card_width <= 1860
-rail_top, rail_bottom = 551, 551 + 214
+rail_top, rail_bottom = 551, 551 + card_width
 title_baseline_top = rail_bottom + 6
-utility_top, utility_bottom = 825, 825 + 96
+utility_top, utility_bottom = 835, 835 + 96
 assert title_baseline_top + 32 < utility_top  # no overlap
 assert utility_bottom < 940  # footer begins below utilities
 assert "utility_card(3, kHomeFullSettings" in home

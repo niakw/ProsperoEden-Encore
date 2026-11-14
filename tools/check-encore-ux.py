@@ -231,7 +231,9 @@ assert 'kNlibCacheSchema = 3' in services
 assert 'current_metadata_cache' in services
 assert 'artwork_files.resize(6)' not in services
 assert 'const int wanted_screens = std::clamp(screen_count, 0, 3);' in services
-assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' in library
+assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' not in library
+assert 'screen_ != Screen::library' in library
+assert 'games_[static_cast<std::size_t>(library_.selected)]' in library
 assert 'game->screenshots' in library
 
 # Controller contract after investigation of oscillating glyph/face-button
@@ -274,7 +276,7 @@ assert 'tr("Max. players: {0}")' in home and 'std::to_string(hero_max_players)' 
 assert '552.0f, 406.0f, 210.0f, 36.0f' in home
 assert 'float chip_x = hero_max_players > 0 ? 774.0f : 570.0f;' in home
 assert 'gfx::mix(theme::kAccentTeal, theme::kTitle, f)' in home
-assert 'constexpr float card_h = 214.0f' in home
+assert 'constexpr float card_h = card_w' in home
 assert '551.0f, card_w, card_h' in home
 assert 'constexpr float utility_w = (1800.0f - utility_gap * 3.0f) / 4.0f' in home
 assert 'std::array<tween::Spring, 24> home_springs_' in launcher_h

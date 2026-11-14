@@ -401,7 +401,7 @@ class Launcher
     std::future<Game> home_media_scan_;
     std::uint64_t home_media_scan_title_id_ = 0;
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_media_next_retry_;
-    std::future<Game> media_scan_; // Nlib enrichment of every installed title
+    std::future<Game> media_scan_; // selected Library title only; never a full-library HTTP queue
     std::uint64_t media_scan_title_id_ = 0;
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
     float media_retry_timer_ = 0.0f; // only periodically poll for failed/late Nlib artwork

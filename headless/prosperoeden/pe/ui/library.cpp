@@ -783,28 +783,28 @@ void Launcher::finish_home_media()
 void Launcher::start_selected_media()
 {
     if (media_cancel_.load(std::memory_order_acquire) ||
-        media_scan_.valid() || games_.empty()) return;
-    // Prefer the highlighted title but then cover ALL installed titles, even
-    // those never selected. Download the complete Nlib media set per title
-    // without blocking input, drawing or ROM enumeration.
-    const int selected = std::clamp(library_.selected, 0, static_cast<int>(games_.size()) - 1);
-    for (std::size_t offset = 0; offset < games_.size(); ++offset) {
-        const auto index = (static_cast<std::size_t>(selected) + offset) % games_.size();
-        const Game& game = games_[index];
-        if (game.title_id == 0) continue;
-        const auto now = std::chrono::steady_clock::now();
-        const auto due = media_next_retry_.find(game.title_id);
-        if (due != media_next_retry_.end() && now < due->second) continue;
-        // Retry missing/corrupt cached artwork after a bounded cooldown rather
-        // than treating the first failed HTTPS request as permanent.
-        media_next_retry_[game.title_id] = now + std::chrono::minutes(5);
-        media_scan_title_id_ = game.title_id;
-        Game copy = game;
-        media_scan_ = std::async(std::launch::async, [this, copy = std::move(copy)]() mutable {
-            return services_.enrich_game_media(std::move(copy), &media_cancel_);
-        });
-        return;
-    }
+        media_scan_.valid() || games_.empty() ||
+        screen_ != Screen::library) return;
+    // The previous all-installed queue continued fetching case scans, banner,
+    // icon and three screenshots even on Home and after closing a game.
+    // Load complete details only for the CURRENT Library selection. Home has
+    // its own independent, bounded selected-Recent worker; ROM enumeration
+    // and existing local cache remain available for every unvisited title.
+    // A selection change while this worker runs is handled by
+    // finish_selected_media() and cannot publish into an unrelated TitleID.
+    if (library_.selected < 0 ||
+        library_.selected >= static_cast<int>(games_.size())) return;
+    const Game& game = games_[static_cast<std::size_t>(library_.selected)];
+    if (game.title_id == 0) return;
+    const auto now = std::chrono::steady_clock::now();
+    const auto due = media_next_retry_.find(game.title_id);
+    if (due != media_next_retry_.end() && now < due->second) return;
+    media_next_retry_[game.title_id] = now + std::chrono::minutes(5);
+    media_scan_title_id_ = game.title_id;
+    Game copy = game;
+    media_scan_ = std::async(std::launch::async, [this, copy = std::move(copy)]() mutable {
+        return services_.enrich_game_media(std::move(copy), &media_cancel_);
+    });
 }
 
 void Launcher::finish_selected_media()
@@ -953,7 +953,7 @@ void Launcher::apply_games(std::vector<Game> games)
         mode_.snap(selected_docked_ ? 0.0f : 1.0f);
     }
     name_home_games();
-    // Start the global artwork queue as soon as game enumeration completes.
+    // Enrich details only when Library is visible; Home handles its own selected game.
     start_selected_media();
 }
 
@@ -1791,9 +1791,10 @@ void Launcher::draw_library(Canvas &c)
         for (const auto& chip : chips)
         {
             const float w = std::clamp(text_width(c, chip, 15.0f) + 26.0f, 82.0f, 220.0f);
+            const float chip_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
             list.bordered_rect({chip_x, 759.0f, w, 34.0f}, 17.0f,
-                               theme::kPanel.with_alpha(0.54f), 1.0f,
-                               theme::kPanelEdge.with_alpha(0.45f));
+                               theme::kPanel.with_alpha(chip_opacity), 1.0f,
+                               theme::kPanelEdge.with_alpha(0.45f * chip_opacity));
             text_shrink(c, chip, chip_x + w * 0.5f, baseline(759.0f, 34.0f, 15.0f), 15.0f,
                         theme::kLimePale, w - 18.0f, Align::center);
             chip_x += w + 9.0f;
@@ -2291,9 +2292,18 @@ void Launcher::press_game(Key key)
     // 120 Hz is a request: the display has the last word.
     const bool fast = saved && option_ == row_refresh &&
                       (game_settings_.refresh >= 0 ? game_settings_.refresh : prefs_.refresh) == 1;
-    say(fast ? tr("Saved. A display that cannot show 120 Hz stays at 60 Hz.") :
-        saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
-        !saved);
+    if (!saved) {
+        say(tr("Could not save. Please try again."), true);
+    } else if (fast) {
+        // 120 Hz is conditional on physical TV support: this warning is
+        // important enough to temporarily replace the selected-row guide.
+        say(tr("Saved. A display that cannot show 120 Hz stays at 60 Hz."));
+    } else {
+        // Keep the actual option-specific DrawVideoGuide visible after save.
+        // The old generic success toast masked the upscaler/AA/resolution
+        // explanation every time the player changed a setting.
+        message_.clear();
+    }
     cue(saved ? Cue::toggle : Cue::error);
 }
 

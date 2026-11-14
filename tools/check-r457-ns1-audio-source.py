@@ -14,6 +14,7 @@ VENDOR = ROOT / "vendor"
 KNOWN_VENDOR_GRAPH = {
     "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864": "original",
     "fe9edd661d6f0824c7339865d50aa9cf99cab150": "integrated",
+    "c339fd06f02e42e67d5416ae82194ba619b7ee68": "integrated+jxr",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

@@ -852,6 +852,26 @@ assert 'list(REMOVE_ITEM eden_stb_common_sources "stb.cpp")' in nov13_cmake
 assert 'list(APPEND eden_stb_common_sources "${EDEN_NATIVE_STB_CODECS}")' in nov13_cmake
 assert 'list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")' in nov13_cmake
 assert 'list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")' in nov13_cmake
+# The optional JXR source pair is reviewed post-F07 and must not alter the
+# immutable source-owner count. Check actual source identities if present;
+# historical vendor probes can still run without the later adapter.
+post_f07_jxr_adapter_owners = {
+    "ps5-jxr/jxr_decoder.c",
+    "ps5-jxr/jxr_decoder.h",
+}
+post_f07_jxr_present = post_f07_jxr_adapter_owners & set(physical_all)
+if post_f07_jxr_present:
+    assert post_f07_jxr_present == post_f07_jxr_adapter_owners, "Incomplete JXR adapter"
+    assert 'add_library(eden-ps5-jxr STATIC ${eden_jxr_library_sources}' in nov13_cmake
+    assert '"${EDEN_JXR_ADAPTER}/jxr_decoder.c")' in nov13_cmake
+    assert 'target_link_libraries(eden-headless PRIVATE eden-ps5-jxr)' in nov13_cmake
+    for name, expected_blob in {
+        "jxr_decoder.c": "e83e13a3a6e66b7e63fb9510215c1dff2d42dd14",
+        "jxr_decoder.h": "d8bb62a86fa1226375ae09e70f39c58511a667f9",
+    }.items():
+        data = (root / "vendor/encore-active/ps5-jxr" / name).read_bytes()
+        actual_blob = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert actual_blob == expected_blob, ("JXR selected source changed; review new blob", name, actual_blob)
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -867,7 +887,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

@@ -9,11 +9,29 @@ svc=(root/'headless/prosperoeden/eden_services.cpp').read_text()
 for needle in ('start_home_media()', 'finish_home_media()', 'home_media_scan_', 'home_media_next_retry_'):
     assert needle in hpp, needle
 assert 'start_home_media();\n}' in home
-# All Nlib images are fetched for every installed title; no Home-first subset.
+# Full media work is selected-only, never a background Nlib sweep of
+# every installed title. The selected title still gets all 3 screens.
 assert 'home_media_priority' not in svc + lib + hpp
 assert 'const int wanted_screens = std::clamp(screen_count, 0, 3);' in svc
-assert 'const int selected = std::clamp(library_.selected' in lib
-assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' in lib
+selected_worker = lib.split('void Launcher::start_selected_media()', 1)[1].split(
+    'void Launcher::finish_selected_media()', 1)[0]
+assert 'screen_ != Screen::library' in selected_worker
+assert 'library_.selected < 0' in selected_worker
+assert 'games_[static_cast<std::size_t>(library_.selected)]' in selected_worker
+assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' not in selected_worker
+assert 'services_.enrich_game_media(std::move(copy), &media_cancel_)' in selected_worker
+textures_hpp=(root/'headless/prosperoeden/pe/ui/textures.hpp').read_text()
+textures_cpp=(root/'headless/prosperoeden/pe/ui/textures.cpp').read_text()
+assert 'Cover cover(const std::string &path, float size, bool urgent = false);' in textures_hpp
+assert 'bool priority_queued = false;' in textures_hpp
+assert 'if (urgent && !it->second.priority_queued && !it->second.loaded)' in textures_cpp
+assert 'queue_.erase(queued);' in textures_cpp
+assert 'queue_.push_front(key);' in textures_cpp
+assert 'it->second.priority_queued = true;' in textures_cpp
+assert 'if (urgent || it->second.priority_queued ||' in textures_cpp
+assert 'const Cover picture = c.textures.cover(' in home
+assert 'art, std::max(card_w - 8.0f, card_h - 8.0f), true);' in home
+assert 'constexpr float card_h = card_w;' in home
 assert 'start_selected_media();' in lib[lib.index('void Launcher::apply_games'):lib.index('void Launcher::name_home_games')]
 assert 'artwork_files.resize(6)' not in svc
 assert 'Only Home/recent titles' not in svc
@@ -40,4 +58,4 @@ for needle in ('quick settings overlay', 'recently played: seven-ish large artwo
     assert needle in home, needle
 assert 'recent.max_players' not in home
 assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in home
-print('All-games complete Nlib artwork + TV-first layout PASS')
+print('Selected-only Nlib artwork and preserved Home worker + TV-first layout PASS')

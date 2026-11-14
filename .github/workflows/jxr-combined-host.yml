@@ -1,0 +1,38 @@
+name: Selected JXR codec combined host link
+
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'headless/CMakeLists.txt'
+      - 'headless/prosperoeden/eden_services.cpp'
+      - 'tools/check-jxr-combined-host.py'
+      - '.github/workflows/jxr-combined-host.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selected-jxr-host-link:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact engine and vendor source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Install host codec build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends clang libwebp-dev
+      - name: Verify selected codec provenance and compile and link real sources
+        run: |
+          set -euo pipefail
+          python3 -B vendor/tests/ps5_jxr_selected_codec_source.py
+          python3 -B tools/check-jxr-combined-host.py
+      - name: Qualification boundary
+        if: always()
+        run: |
+          echo "Host compiler/link and rejected-input smoke test only; native cross-compiler ABI, valid HDR pixels and console gallery permissions remain unverified." >> "$GITHUB_STEP_SUMMARY"

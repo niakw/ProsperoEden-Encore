@@ -68,15 +68,26 @@
       "review_note": "2026-11-09: exact post-F07 source delta is one comment-only wording change. Current Git blob reviewed against immutable historical blob; no runtime, performance, or console proof is claimed."
     },
     {
+      "path": "headless/gpu_failure.h",
+      "historical_reviewed_git_blob": "dc75e61672f968ae458848def562c5f1ef4a3f04",
+      "post_snapshot_git_blob": "8fc2bb5da01df0ce5d1392beea4225fc79715999",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "R457 diagnostic-only sampled GPU submission breadcrumb: release worker publishes only counts 1/2/3 and multiples of 64; existing per-title fatal-state reset also resets this relaxed atomic. No mutex, scheduler, memory mapping, guest execution or render behavior change.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "PublishGpuSubmissionSample(std::uint64_t count)",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-14 PR #170 candidate. Historical U20 reviewed blob remains dc75e61672f968ae458848def562c5f1ef4a3f04. New exact blob 8fc2bb5da01df0ce5d1392beea4225fc79715999; ASan/UBSan host witness exercises 0,1,2,3,4,63,64,65,128 and per-title reset. No PS5 runtime proof."
+    },
+    {
       "path": "headless/graphics.cpp",
       "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
-      "post_snapshot_git_blob": "4656be02c9bf785de8c7a6d85738018725f1c4a1",
+      "post_snapshot_git_blob": "d2b88be50b1f67b1f8a10c10db4a7253fb95346f",
       "original_disposition": "code_changed_in_batch",
-      "source_scope": "Nov13 FC27 5-second diagnostic-only cache pressure split: buffer/texture counters read only at detailed report boundary, not on every present; existing renderer locks, texture ownership, shader cache and graphics output unchanged. Nov13 P0 MKW loading-only diagnostics: existing 10s and 30s warnings append the existing worker GPU completed-commands/64 counter and per-GraphicsWindow delta, with a reset bit. No CPU/GPFIFO/QMD claims and no extra per-frame sampling.",
+      "source_scope": "Nov13 FC27 5-second diagnostic-only cache pressure split: buffer/texture counters read only at detailed report boundary, not on every present; existing renderer locks, texture ownership, shader cache and graphics output unchanged. Nov13 P0 MKW loading-only diagnostics: existing 10s and 30s warnings append the existing worker GPU completed-commands/64 counter and per-GraphicsWindow delta, with a reset bit. No CPU/GPFIFO/QMD claims and no extra per-frame sampling. R457 follow-up adds a sampled native GPU submission count (1/2/3 then 64-step) to the same two loading milestones, without a per-dispatch atomic on the normal path.",
       "review_kind": "source_contract",
       "required_source_fragment": "JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable.\n2026-11-13 PR #129: exact selected graphics.cpp new blob 4656be02c9bf785de8c7a6d85738018725f1c4a1; reviewed change is one guarded crash_report include, one per-title baseline, one pure snapshot helper, and the two pre-existing at-most-once 10s/30s stderr lines. No draw/present-path atomic beyond the two snapshots, no gameplay frame assertions. Dedicated ASan/UBSan host test #43519504325 passed; frozen historical F07 blob unchanged."
+      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable.\n2026-11-13 PR #129: exact selected graphics.cpp new blob 4656be02c9bf785de8c7a6d85738018725f1c4a1; reviewed change is one guarded crash_report include, one per-title baseline, one pure snapshot helper, and the two pre-existing at-most-once 10s/30s stderr lines. No draw/present-path atomic beyond the two snapshots, no gameplay frame assertions. Dedicated ASan/UBSan host test #43519504325 passed; frozen historical F07 blob unchanged.\n2026-11-14 PR #170 candidate: exact graphics.cpp blob d2b88be50b1f67b1f8a10c10db4a7253fb95346f; the two existing 10s/30s lines read one additional relaxed sampled-submission atomic. No presentation, scheduler or guest ordering change; PS5 result unverified."
     },
     {
       "path": "headless/hud.h",
@@ -353,13 +364,13 @@
     {
       "path": "headless/crash_report.cpp",
       "historical_reviewed_git_blob": "467c87d8473eccf24942d9870a9ce43b35d525ec",
-      "post_snapshot_git_blob": "81e8456c904858b6a01f3b0ffcdf2e52b9868cb4",
+      "post_snapshot_git_blob": "a996327c9eb64905c2a339fd669dd941b763c512",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "PS5 fatal signal safety: do not re-execute /app0/eboot.bin from faulted process while sparse guest DRAM/Vulkan/audio ownership may be invalid. Save full crash report and request system-service EXIT; desktop regression continues old single restart. Crash handler, normal Circle exit and CE-108262-9 causality remain distinct and console unverified.",
+      "source_scope": "PS5 fatal signal safety: do not re-execute /app0/eboot.bin from faulted process while sparse guest DRAM/Vulkan/audio ownership may be invalid. Save full crash report and request system-service EXIT; desktop regression continues old single restart. Crash handler, normal Circle exit and CE-108262-9 causality remain distinct and console unverified. R457 follow-up records the same sampled GPU submission breadcrumb in fatal reports to separate never-submitted work from uncompleted work.",
       "review_kind": "source_contract",
       "required_source_fragment": "const bool restart = false;",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "2026-11-13 PR #95: source re-reviewed after native MKW boot crash and user-reported console CE-108262-9. Preserves original F07 per-file source blob, separate current blob exact SHA, no actual PS5 validation."
+      "review_note": "2026-11-13 PR #95: source re-reviewed after native MKW boot crash and user-reported console CE-108262-9. Preserves original F07 per-file source blob, separate current blob exact SHA, no actual PS5 validation.\n2026-11-14 PR #170 candidate: exact crash_report.cpp blob a996327c9eb64905c2a339fd669dd941b763c512; one extra lock-free integer read/line in fatal-report-only code, no normal gameplay logging."
     },
     {
       "path": "headless/crash_report.h",

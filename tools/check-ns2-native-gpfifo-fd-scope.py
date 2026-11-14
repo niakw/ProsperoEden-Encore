@@ -30,8 +30,9 @@ required_puller = (
     "native_3d->ExecuteStaged(",
     "native_macro_method=method",
     "engine.draw_manager.DrawDeferred(engine)",
-    "if (!native_3d) native_3d = std::make_unique<Tegra::NativeAmpereMacroState>()",
+    "native_3d = std::make_unique<Tegra::NativeAmpereMacroState>(&native_mme_dram)",
     "if (native_3d_failed || native_macro_method)",
+    "native_compute = std::make_unique<Tegra::NativeAmpereMacroState>(&native_mme_dram)",
 )
 
 required_cpp = (

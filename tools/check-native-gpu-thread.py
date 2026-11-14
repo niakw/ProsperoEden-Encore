@@ -57,7 +57,9 @@ if sys.argv[1:] == ['--source-only']:
     native = (root / 'vendor/encore-active/eden-gpu/gpu_thread_quiet.cpp').read_text()
     assert native.count(native_pending_wait) == 1, (
         'Maintained release GPU worker lost native-channel wake/idle arbitration')
-    print('GPU_NATIVE_CHANNEL_LOADING_WAIT_SOURCE_PASS')
+    assert native.count('::Eden::PublishGpuSubmissionSample(count);') == 1, (
+        'Maintained release GPU worker lost sampled submission breadcrumb')
+    print('GPU_NATIVE_CHANNEL_LOADING_WAIT_SOURCE_PASS submit_sample=1')
     raise SystemExit(0)
 
 cache = Path((root / '.local/headless-cache').read_text().strip())
@@ -79,6 +81,7 @@ for call, timer, indent in (
 
 trace_when = 'count <= 3 || ::Eden::Performance::BootTrace()' if development else 'count <= 3'
 dispatch_trace = ('                const auto count = ++dispatches;\n'
+                  '                ::Eden::PublishGpuSubmissionSample(count);\n'
                   f'                if ({trace_when}) LOG_INFO(Render_OpenGL, "EDEN_GPU_DISPATCH_BEGIN count={{}}", count);\n'
                   + dispatch_call + '\n'
                   f'                if ({trace_when}) LOG_INFO(Render_OpenGL, "EDEN_GPU_DISPATCH_END count={{}}", count);')

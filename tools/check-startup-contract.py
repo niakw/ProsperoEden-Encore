@@ -26,22 +26,24 @@ assert 'sandbox-elevator.elf' in packager
 assert 'PPSA99121' not in lifecycle, "stale lifecycle title ID"
 assert 'PPSA99008' in lifecycle
 
-# The 3D jacket is the only authored startup animation. Vulkan now
-# displays the actual last launcher frame (hero, jacket and title) across
-# the EGL/renderer handoff. The dark clear remains a fallback only if
-# an image cannot be captured; the obsolete violet scene stays disabled.
+# One authored loading state spans launcher, core load and Vulkan warm-up.
+# The selected R08 overrides, not the historical vendor presenter, own the
+# production transition. Physical PS5 continuity remains a hardware gate.
 graphics = (root / "headless/graphics.cpp").read_text()
-vulkan_backend = (root / "vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
-native_presenter = (root / "vendor/encore-active/eden-vulkan/vulkan_window_adapt_pass.cpp").read_text()
-assert 'const bool quiet_loading_handoff = hud.loading != 0;' in native_presenter
-assert 'if (hud.width && !quiet_loading_handoff && !hud_pipeline)' in native_presenter
-assert 'if (hud.width && !quiet_loading_handoff &&' in native_presenter
-assert 'const f32 bg_red = quiet_loading_handoff ? 0.024f :' in native_presenter
-assert 'const f32 bg_green = quiet_loading_handoff ? 0.035f :' in native_presenter
-assert 'const f32 bg_blue = quiet_loading_handoff ? 0.039f :' in native_presenter
-assert 'const VkRect2D scissor{' in native_presenter
-assert 'const VkRect2D scissor = hud.loading' not in native_presenter
-assert 'PresentVulkanLoading(renderer);' in graphics
+frontend = (root / "headless/prosperoeden/frontend.cpp").read_text()
+display = (root / "headless/prosperoeden/pe/platform/display_egl.cpp").read_text()
+active_renderer = (root / "headless/vulkan_renderer_r08.cpp").read_text()
+active_presenter = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
+assert "PresentVulkanLoading(renderer);" in graphics
+assert "kLoadingSceneGlsl" in graphics
+assert "kLoadingSceneGlsl" in frontend
+assert "PresentUnifiedLoading(display)" in frontend
+assert "display.defer_scanout_close()" in frontend
+assert "close_deferred_scanout()" in active_renderer
+assert "surface(CreateHandoffSurface(instance, render_window.GetWindowInfo()))" in active_renderer
+assert "loading_jacket" not in active_renderer
+assert "jacket_band" not in active_presenter
+assert "hud.loading\n                ? VkRect2D{{0, 0}, size}" in active_presenter
 # A black picture with a live stderr is not proof of a dead game process.
 # Emit only bounded milestone signals: Core load, GPU start, guest run and
 # two time thresholds while Vulkan still has no first guest frame.
@@ -51,8 +53,8 @@ assert 'EDEN_VULKAN_LOADING_WAIT stage=10s' in graphics
 assert 'EDEN_VULKAN_LOADING_WAIT stage=30s' in graphics
 assert 'vulkan_loading_diagnostic_stage = 0;' in graphics
 assert 'guest_frame_handoff=0' in graphics
-assert 'PresentLoading();' in vulkan_backend
-assert '"void main(){ color = vec4(0.024, 0.035, 0.039, 1.0); }\\n";' in graphics
+assert 'MakeLoadingSnapshot(1.0 + LoadingCalm())' in graphics
+assert 'eglTerminate(display)' in display
 
 for stage in (
     "elevation: request begin",

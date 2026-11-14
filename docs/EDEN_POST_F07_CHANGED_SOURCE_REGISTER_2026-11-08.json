@@ -70,13 +70,13 @@
     {
       "path": "headless/graphics.cpp",
       "historical_reviewed_git_blob": "15088566dcc6dd32c89ab964d06fe9760c182864",
-      "post_snapshot_git_blob": "4656be02c9bf785de8c7a6d85738018725f1c4a1",
+      "post_snapshot_git_blob": "ca76e605e6c64fda66c5c7d7e8adda91224cc3cb",
       "original_disposition": "code_changed_in_batch",
       "source_scope": "Nov13 FC27 5-second diagnostic-only cache pressure split: buffer/texture counters read only at detailed report boundary, not on every present; existing renderer locks, texture ownership, shader cache and graphics output unchanged. Nov13 P0 MKW loading-only diagnostics: existing 10s and 30s warnings append the existing worker GPU completed-commands/64 counter and per-GraphicsWindow delta, with a reset bit. No CPU/GPFIFO/QMD claims and no extra per-frame sampling.",
       "review_kind": "source_contract",
       "required_source_fragment": "JitMemory::vulkan_frame_probe.load(std::memory_order_relaxed)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable.\n2026-11-13 PR #129: exact selected graphics.cpp new blob 4656be02c9bf785de8c7a6d85738018725f1c4a1; reviewed change is one guarded crash_report include, one per-title baseline, one pure snapshot helper, and the two pre-existing at-most-once 10s/30s stderr lines. No draw/present-path atomic beyond the two snapshots, no gameplay frame assertions. Dedicated ASan/UBSan host test #43519504325 passed; frozen historical F07 blob unchanged."
+      "review_note": "\n2026-11-13: Device logs fd00c7f recorded 793335 aggregate guest-cache lock contentions, 18569.295 ms of thread-summed waiting, and 517 >50ms presentation intervals over 108 five-second FC27 windows. The required per-domain counters already exist in performance.h but are normally logged only with EDEN_DEV_PROFILE. Shipping detailed logging now reads 2x3 relaxed atomics once per 5s, same baseline/generation/reset guard, emits independently labeled window deltas. This is diagnostic source classification only; PS5 device/HUD/texture fix not claimed. Reviewed exact graphics.cpp blob 5b1ee6e3e630129e5ac3083ef6e4520fde525c02. Historical F07 blob immutable.\n2026-11-13 PR #129: exact selected graphics.cpp new blob 4656be02c9bf785de8c7a6d85738018725f1c4a1; reviewed change is one guarded crash_report include, one per-title baseline, one pure snapshot helper, and the two pre-existing at-most-once 10s/30s stderr lines. No draw/present-path atomic beyond the two snapshots, no gameplay frame assertions. Dedicated ASan/UBSan host test #43519504325 passed; frozen historical F07 blob unchanged.\n2026-11-14 R457 unified loading follow-up: exact source restores the shared loading_scene.glsl on the OpenGL loader, starts both loading timelines past the authored black fade, and releases deferred launcher scanout before an OpenGL game window takes VideoOut. Vulkan physical continuity remains console-unverified; historical F07 digest unchanged."
     },
     {
       "path": "headless/hud.h",
@@ -135,12 +135,12 @@
     {
       "path": "headless/prosperoeden/frontend.cpp",
       "historical_reviewed_git_blob": "6dcd6bf28a868b40f5e44c508a908419f6b8f80f",
-      "post_snapshot_git_blob": "3f06a9a9c66eee09270fbe4919e6be98620b0bf5",
+      "post_snapshot_git_blob": "da6571994b9c287cd5fc535a1150469487e0b72c",
       "original_disposition": "reviewed_without_new_code_edit",
       "review_kind": "host_source_ui",
       "source_scope": "PS5 launcher language boot path now loads separate US and UK regional gettext catalogs with source fallback; overlay Multiplayer navigation now uses an explicit confirmed one-shot return to the existing launcher room screen",
       "required_source_fragment": "Eden::LaunchHandoff::TakeMultiplayerRequest()",
-      "review_note": "2026-11-09: Re-reviewed exact new Git blob f50b79fd85511c455a7bb662a856f910f57370a3 (previous post-F07 07347e90e4c19893e8b2fceb4aa97591af8617e1): confirmed game teardown before opening the existing launcher multiplayer room browser; no in-game network loop, no renderer ownership change, no NS1/NS2 proof and no hardware qualification. Historical F07 receipt unchanged.\n2026-11-11 reviewed follow-up: Remove up to 600 ms audio-teardown pause on launch and bound the final OpenGL jacket transfer retry; game boot and GPU handoff remain unqualified on a real console. Source Git blob 3f06a9a9c66eee09270fbe4919e6be98620b0bf5. Historical F07 digest untouched.",
+      "review_note": "2026-11-09: Re-reviewed exact new Git blob f50b79fd85511c455a7bb662a856f910f57370a3 (previous post-F07 07347e90e4c19893e8b2fceb4aa97591af8617e1): confirmed game teardown before opening the existing launcher multiplayer room browser; no in-game network loop, no renderer ownership change, no NS1/NS2 proof and no hardware qualification. Historical F07 receipt unchanged.\n2026-11-11 reviewed follow-up: Remove up to 600 ms audio-teardown pause on launch and bound the final OpenGL jacket transfer retry; game boot and GPU handoff remain unqualified on a real console. Source Git blob 3f06a9a9c66eee09270fbe4919e6be98620b0bf5. Historical F07 digest untouched.\n2026-11-14 R457 unified loading follow-up: exact source drops production glReadPixels/LaunchHandoff jacket transfer, presents the shared loading_scene.glsl before launch, then defers EGL termination so the last scanout survives through System::Load until backend takeover. No PS5 continuity claim; historical F07 digest unchanged.",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
     },
     {
@@ -393,6 +393,28 @@
       "required_source_fragment": "Eden::LoadRecentGames(history_file)",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-14 R457 PR #154: exact host test delta only, separate history fixture, reviewed original and new blobs; no historical receipt rewrite or native runtime claim.\n2026-11-14: exact legacy and official PS5 catalog locale aliases accepted by preferences reader and saved-language detection; canonical writes, 31 choice IDs and guest enum/region mapping remain unchanged. All 31 alias pairs covered by host preferences fixture. Native hardware not yet qualified."
+    },
+    {
+      "path": "headless/prosperoeden/pe/platform/display_egl.cpp",
+      "historical_reviewed_git_blob": "a31fb6db879928c4fe7d96318046cae7eb68b2b8",
+      "post_snapshot_git_blob": "d926d5c14ccf63617b12b60047c6167ea1f19dcd",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "PS5 launcher EGL lifecycle now supports a fail-closed deferred scanout owner so the last loading frame survives until the selected renderer takes VideoOut",
+      "review_kind": "source_contract",
+      "required_source_fragment": "bool Display::defer_scanout_close()",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-14 R457 unified loading: reviewed against pinned ps5-opengl eglTerminate/shutdown behavior. The defer path destroys context/surface but contains no eglTerminate and refuses an unexpected prior owner. Explicit close_deferred_scanout owns termination. PS5 physical continuity pending.\n2026-11-14 correction after reviewing pinned ps5-opengl eglDestroySurface: window-surface destruction itself calls ps5_agc_gate2_shutdown_present and closes VideoOut. Candidate now retains EGLDisplay + EGLSurface through System::Load, destroys only the detached GL context, and destroys the surface only at renderer takeover. This narrows but does not yet prove a zero-black physical handoff."
+    },
+    {
+      "path": "headless/prosperoeden/pe/platform/display_egl.hpp",
+      "historical_reviewed_git_blob": "7438f8f6fa10b7f0aa8ea170be2dfbb522d912eb",
+      "post_snapshot_git_blob": "1e90e3b40a1aff757b3cfbfe038839c98af791a4",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "PS5 launcher display interface exposes explicit defer, takeover close and ownership query operations for one OpenGL to game renderer scanout handoff",
+      "review_kind": "source_interface",
+      "required_source_fragment": "static bool close_deferred_scanout();",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-14 R457 unified loading: API is process-local lifecycle control only; no guest, GPU or renderer ABI change and no hardware qualification claim.\n2026-11-14: interface comment corrected after exact ps5-opengl review: the retained lifetime is display + window surface, while only the GL context is destroyed before core load."
     }
   ]
 }

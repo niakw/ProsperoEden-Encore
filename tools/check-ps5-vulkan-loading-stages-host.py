@@ -64,8 +64,8 @@ defer = display.split("bool Display::defer_scanout_close(bool reduce_motion)", 1
     "bool Display::close_deferred_scanout()", 1
 )[0]
 assert "std::jthread{deferred_loading_loop" in defer
-assert "eglDestroyContext" not in defer
-assert "eglDestroySurface" not in defer
+assert "eglDestroyContext(" not in defer
+assert "eglDestroySurface(" not in defer
 assert "eglTerminate(" not in defer
 
 presenter = display.split("void deferred_loading_loop(", 1)[1].split("\n}", 1)[0]

@@ -1,0 +1,30 @@
+name: NS2 first-frame GPU-worker loading progress (host only)
+
+on:
+  push:
+    branches:
+      - diag/nov13-ns2-loading-gpu-worker-progress
+  pull_request:
+    paths:
+      - "headless/graphics.cpp"
+      - "tools/check-ns2-loading-gpu-worker-progress-host.py"
+      - ".github/workflows/ns2-loading-gpu-worker-progress-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ns2-first-frame-trace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compile and execute selected loading-progress helper under sanitizers
+        run: python3 -B tools/check-ns2-loading-gpu-worker-progress-host.py
+      - name: Scope of proof
+        run: |
+          echo "Host-only source test. GPU completed-command count is quantized by 64 and is not a QMD/GPFIFO or guest-frame-handoff proof. No PS5 native build or MKW/Bonanza game run." >> "$GITHUB_STEP_SUMMARY"

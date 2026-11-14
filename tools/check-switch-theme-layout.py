@@ -22,7 +22,7 @@ for line in (
     "void Launcher::draw_switch_dialog",
 ):
     assert line in src, f"reference console geometry missing: {line}"
-assert "switch_game_tile(c,item.cover,item.title,box,i)" in src
+assert "switch_game_tile(c,item.tile_icon.empty()?item.cover:item.tile_icon,item.title,box,i)" in src
 assert "const Cover avatar=profile_avatar_path_.empty()?Cover{}:" in src
 assert "case 5: { // Power glyph" in src
 assert "std::clamp(current+delta,kHomeShortcutFirst," in src

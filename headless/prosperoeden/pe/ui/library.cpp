@@ -1104,6 +1104,16 @@ void Launcher::finish_home_scan()
         const std::string previous_file =
             home_recent_ >= 0 && home_recent_ < static_cast<int>(home_.recents.size()) ?
                 home_.recents[static_cast<std::size_t>(home_recent_)].file : std::string{};
+        // A snapshot started before the icon request completed must not
+        // erase a canonical icon or replace it with fallback art.
+        for (Recent& recent : snapshot.recents) {
+            if (!recent.title_id || !recent.tile_icon.empty()) continue;
+            for (const Recent& previous : home_.recents) {
+                if (previous.title_id != recent.title_id || previous.tile_icon.empty()) continue;
+                recent.tile_icon = previous.tile_icon;
+                break;
+            }
+        }
         home_ = std::move(snapshot);
         home_loaded_ = true;
         // Reconcile the completed ROM catalog with the Home snapshot even when
@@ -1794,9 +1804,9 @@ void Launcher::draw_library(Canvas &c)
         for (const auto& chip : chips)
         {
             const float w = std::clamp(text_width(c, chip, 15.0f) + 26.0f, 82.0f, 220.0f);
-            const float chip_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
+            const float chip_opacity = panel_decoration_alpha();
             list.bordered_rect({chip_x, 759.0f, w, 34.0f}, 17.0f,
-                               theme::kPanel.with_alpha(chip_opacity), 1.0f,
+                               panel_fill(theme::kPanel.with_alpha(0.54f)), 1.0f,
                                theme::kPanelEdge.with_alpha(0.45f * chip_opacity));
             text_shrink(c, chip, chip_x + w * 0.5f, baseline(759.0f, 34.0f, 15.0f), 15.0f,
                         theme::kLimePale, w - 18.0f, Align::center);
@@ -2744,6 +2754,58 @@ void Launcher::draw_mods(Canvas &c, float open)
     }
     list.pop_transform();
     list.pop_opacity();
+}
+
+void Launcher::start_home_icons()
+{
+    if (screen_ != Screen::home || !home_.setup_ready ||
+        media_cancel_.load(std::memory_order_acquire) || home_icon_scan_.valid()) return;
+    const auto now = std::chrono::steady_clock::now();
+    // One bounded icon request at a time, regardless of controller focus.
+    // No full-media calls for unselected titles, even in a large library.
+    for (const Recent& recent : home_.recents) {
+        // A nonempty fallback can be a portrait scan, not a canonical icon.
+        // The service uses a try-lock if selected full media owns the title.
+        if (!recent.title_id || !recent.tile_icon.empty()) continue;
+        const auto due = home_icon_next_retry_.find(recent.title_id);
+        if (due != home_icon_next_retry_.end() && now < due->second) continue;
+        Game request;
+        request.title_id = recent.title_id;
+        request.file = recent.file;
+        request.name = recent.title;
+        home_icon_next_retry_[recent.title_id] = now + std::chrono::minutes(2);
+        home_icon_scan_title_id_ = recent.title_id;
+        home_icon_scan_ = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
+            return services_.enrich_home_icon(std::move(request), &media_cancel_);
+        });
+        return;
+    }
+}
+
+void Launcher::finish_home_icons()
+{
+    if (!home_icon_scan_.valid() ||
+        home_icon_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
+    try {
+        Game result = home_icon_scan_.get();
+        if (!media_cancel_.load(std::memory_order_acquire) &&
+            result.title_id && result.title_id == home_icon_scan_title_id_ && !result.cover.empty()) {
+            if (result.artwork_changed) textures_.invalidate(result.cover);
+            if (result.title_id == home_.last_title_id && result.file == home_.last_file)
+                home_.last_cover = result.cover;
+            for (Recent& recent : home_.recents) {
+                if (recent.title_id != result.title_id) continue;
+                recent.tile_icon = result.cover;
+                if (recent.file == result.file) recent.cover = result.cover;
+            }
+            for (Game& game : games_)
+                if (game.title_id == result.title_id && game.file == result.file)
+                    game.cover = result.cover;
+        }
+    } catch (const std::exception& error) {
+        sys::log("Nlib Home icon: %s", error.what());
+    }
+    home_icon_scan_title_id_ = 0;
 }
 
 } // namespace pe::ui

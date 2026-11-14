@@ -148,6 +148,8 @@ Launcher::~Launcher()
         home_scan_.wait();
     if (presence_scan_.valid())
         presence_scan_.wait();
+    if (home_icon_scan_.valid())
+        home_icon_scan_.wait();
     if (home_media_scan_.valid())
         home_media_scan_.wait();
     if (media_scan_.valid())
@@ -870,6 +872,8 @@ void Launcher::update(float dt)
         if (screen_ == Screen::home && modal_ == Modal::none && selected_game_.empty())
             (void)open_game_settings_at_file(file);
     }
+    finish_home_icons();
+    start_home_icons();
     finish_home_media();
     finish_selected_media();
     slow_stage("media_merge", media_started);
@@ -1079,16 +1083,16 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
         const bool active = i == active_tab;
         const float focused = i == focus_tab ? tween::clamp01(focus_amount) : 0.0f;
         // The opacity setting covers navigation cells as well as panels.
-        const float nav_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
-        if (nav_opacity > 0.001f)
-            list.rounded_rect(r, 19.0f, theme::kPanel.with_alpha(nav_opacity));
+        const Color nav_fill = panel_fill(theme::kPanel.with_alpha(0.28f));
+        if (nav_fill.a > 0.001f)
+            list.rounded_rect(r, 19.0f, nav_fill);
         if (active)
         {
             list.shadow({r.x - 5.0f, r.y - 5.0f, r.w + 10.0f, r.h + 10.0f},
                         23.0f, 27.0f, theme::kLime.with_alpha(0.29f));
             list.hgradient_rect(r, 19.0f,
-                                Color::rgb(0x301446, nav_opacity),
-                                Color::rgb(0x110a21, nav_opacity),
+                                panel_fill(Color::rgb(0x301446, 0.82f)),
+                                panel_fill(Color::rgb(0x110a21, 0.82f)),
                                 2.0f, theme::kFocusBlue.with_alpha(0.96f));
             list.bordered_rect({r.x + 2.0f, r.y + 2.0f, r.w - 4.0f, r.h - 4.0f},
                                17.0f, kWhite.with_alpha(0.0f), 0.8f,
@@ -1135,9 +1139,8 @@ void Launcher::draw_top_nav(Canvas &c, int active_tab, int focus_tab, float focu
     constexpr float avatar_x = 1640.0f, avatar_y = 70.0f;
     // Account badge's backing is a panel too. Match the global opacity
     // slider, without altering the actual avatar image or its hit target.
-    const float avatar_panel_opacity = std::clamp(look().panel_opacity, 0.0f, 1.0f);
     list.rounded_rect({avatar_x - 27.0f, avatar_y - 27.0f, 54.0f, 54.0f},
-                      27.0f, theme::kPanel.with_alpha(avatar_panel_opacity));
+                      27.0f, panel_fill(theme::kPanel.with_alpha(0.90f)));
     const Cover avatar = profile_avatar_path_.empty() ? Cover{} :
         c.textures.cover(profile_avatar_path_, 54.0f);
     if (avatar.texture != 0) {

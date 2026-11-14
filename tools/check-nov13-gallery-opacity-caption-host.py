@@ -31,15 +31,11 @@ assert "imported, captures.size(), names.size()" in gallery
 assert "CheckedWallpaper(capture.photo.parent_path()" in service
 assert "text_shrink(c, value, right - arrow, baseline, size" in chooser
 assert "285.0f - arrow, Align::right" in chooser
-assert "nav_opacity = std::clamp(look().panel_opacity" in nav
-assert "theme::kPanel.with_alpha(nav_opacity)" in nav
-assert "Color::rgb(0x301446, nav_opacity)" in nav
-assert 'const float tile_opacity = std::clamp(look().panel_opacity' in settings
-assert 'theme::kPanel.with_alpha(tile_opacity)' in settings
-assert 'const float chip_opacity = std::clamp(look().panel_opacity' in library
-assert 'theme::kPanel.with_alpha(chip_opacity)' in library
-assert 'const float avatar_panel_opacity = std::clamp(look().panel_opacity' in launcher
-assert 'theme::kPanel.with_alpha(avatar_panel_opacity)' in launcher
+assert "const Color nav_fill = panel_fill(" in nav
+assert "panel_fill(Color::rgb(0x301446, 0.82f))" in nav
+assert "panel_fill(theme::kPanel.with_alpha(0.48f))" in settings
+assert "panel_fill(theme::kPanel.with_alpha(0.54f))" in library
+assert "panel_fill(theme::kPanel.with_alpha(0.90f))" in launcher
 assert "Unknown" not in caption
 assert "(source.empty() ? \"\" : \" · \" + source)" in caption
 assert "cached_daily_wallpaper_caption_" in pre_modal

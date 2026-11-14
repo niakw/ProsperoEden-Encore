@@ -168,7 +168,7 @@ struct Look
     float glow_strength = 1.0f;
     std::uint32_t background_color = 0x121824u, background_color2 = 0x263d59u;
     int background_overlay = 20;
-    float panel_opacity = 1.0f; // not applied to guest graphics
+    float panel_opacity = 0.5f; // not applied to guest graphics
     bool background_animate = true;
     int background_fit = 0;
     std::string wallpaper_path;
@@ -177,6 +177,26 @@ inline Look &look()
 {
     static Look value;
     return value;
+}
+// with_alpha multiplies; panel opacity must assign the actual surface alpha.
+// Midpoint preserves authored tints, 0 removes fills, 100 is solid.
+// An outline-only shape stays outline-only; accessibility remains opaque.
+inline Color panel_fill(Color authored, Color opaque)
+{
+    if (authored.a <= 0.0f) return authored;
+    const float p = std::clamp(look().panel_opacity, 0.0f, 1.0f);
+    if (look().high_contrast) { opaque.a = 1.0f; return opaque; }
+    const float t = std::max(0.0f, 2.0f * p - 1.0f);
+    Color result = gfx::mix(authored, opaque, t);
+    result.a = p <= 0.5f ? authored.a * (2.0f * p)
+                        : authored.a + (1.0f - authored.a) * t;
+    return result;
+}
+inline Color panel_fill(Color authored) { return panel_fill(authored, authored); }
+inline float panel_decoration_alpha()
+{
+    return look().high_contrast ? 1.0f :
+        std::clamp(2.0f * look().panel_opacity, 0.0f, 1.0f);
 }
 // 1 normally, 0 with reduced motion: every slide, zoom and drift is multiplied by it.
 inline float motion()

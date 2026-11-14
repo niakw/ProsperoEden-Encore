@@ -61,7 +61,8 @@ void switch_game_tile(Canvas& c,const std::string& path,const std::string& title
     // show a deliberate original vector illustration until genuine art arrives.
     const Cover image=path.empty()?Cover{}:c.textures.cover(path,std::max(r.w,r.h));
     if(image.texture!=0) {
-        cover_crop(c,path,r,0.0f,0.0f);
+        c.list.rounded_rect(r,0.0f,kGrey);
+        cover(c,path,r,0.0f,0.0f);
         return;
     }
     static const std::array<gfx::Color,6> tops{
@@ -152,8 +153,8 @@ void advanced_panel(Canvas& c,const char* title,const std::string& subtitle) {
     auto& d=c.list;
     const Rect panel{467,124,986,831};
     d.shadow({453,111,1014,862},8,35,kBlack.with_alpha(.15f));
-    d.rounded_rect(panel,5,kWhite);
-    d.bordered_rect(panel,5,kWhite,1,kGrey);
+    d.rounded_rect(panel,5,panel_fill(kWhite));
+    d.bordered_rect(panel,5,kPaper.with_alpha(0.0f),1,kGrey);
     text_shrink(c,title,534,baseline(162,64,35),35,kInk,843);
     text_shrink(c,subtitle,535,baseline(224,52,22),22,kSubtle,838);
     d.rounded_rect({536,292,846,2},0,kGrey);
@@ -165,7 +166,7 @@ void advanced_row(Canvas& c,float top,bool focus,const std::string& key,
     d.push_opacity(opacity);
     const Rect r{541,top,832,92};
     if(focus) {
-        d.rounded_rect(r,4,gfx::Color::rgb(0xe7faff));
+        d.rounded_rect(r,4,panel_fill(gfx::Color::rgb(0xe7faff)));
         d.bordered_rect(r,4,kWhite.with_alpha(0),3,kFocus);
     } else d.rounded_rect({r.x+4,r.y+91,r.w-8,1},0,kGrey);
     text_shrink(c,key,r.x+24,baseline(top,92,23),23,kInk,423);
@@ -202,7 +203,7 @@ void switch_video_help(Canvas& c, const char* title, const char* explanation,
                              gfx::Color::rgb(0xe8f5ff);
     const auto ink=gfx::Color::rgb(0x1c3548);
     const auto accent=inactive?gfx::Color::rgb(0x975600):kFocus;
-    c.list.rounded_rect(panel,7.0f,fill);
+    c.list.rounded_rect(panel,7.0f,panel_fill(fill));
     c.list.rounded_rect({panel.x,panel.y+7.0f,5.0f,panel.h-14.0f},
                         2.5f,accent);
     text_shrink(c,title,panel.x+17.0f,panel.y+27.0f,18.0f,accent,
@@ -312,7 +313,7 @@ void Launcher::draw_switch_home(Canvas& c) {
         const auto& item=home_.recents[static_cast<std::size_t>(i)];
         const Rect box{kSwitchHomeTileX+float(i)*kSwitchHomeTilePitch-offset,
                        kSwitchHomeTileY,kSwitchHomeTileSize,kSwitchHomeTileSize};
-        switch_game_tile(c,item.cover,item.title,box,i);
+        switch_game_tile(c,item.tile_icon.empty()?item.cover:item.tile_icon,item.title,box,i);
         outline(list,box,focus==i,0.0f);
     }
     const Rect all{kSwitchHomeTileX+float(count)*kSwitchHomeTilePitch-offset,
@@ -583,7 +584,7 @@ void Launcher::draw_switch_files(Canvas& c) {
     auto& list=c.list;
     list.rounded_rect({88,160,1744,2},0,kGrey);
     text_shrink(c,browse_dir_,110,baseline(188,48,22),22,kSubtle,1660);
-    list.rounded_rect({106,251,1120,675},3,kWhite);
+    list.rounded_rect({106,251,1120,675},3,panel_fill(kWhite));
     list.bordered_rect({106,251,1120,675},3,kPaper.with_alpha(0),1.0f,kGrey);
     const int count=static_cast<int>(browse_entries_.size());
     for(int row=files_.first_row();row<=files_.last_row()&&row<count;++row) {
@@ -602,7 +603,7 @@ void Launcher::draw_switch_files(Canvas& c) {
         text_shrink(c,name,cell.x+73,
                     baseline(cell.y,80,25),25,selected?kWhite:kInk,960.0f);
     }
-    list.rounded_rect({1270,252,530,540},3,kWhite);
+    list.rounded_rect({1270,252,530,540},3,panel_fill(kWhite));
     list.bordered_rect({1270,252,530,540},3,kPaper.with_alpha(0),1,kGrey);
     text_shrink(c,tr("Storage"),1300,baseline(282,56,29),29,kInk,450);
     list.rounded_rect({1300,352,462,1},0,kGrey);
@@ -863,7 +864,7 @@ void Launcher::draw_switch_confirmation(Canvas& c) {
     const Rect panel{512.0f,355.0f,896.0f,345.0f};
     list.shadow({panel.x-9,panel.y-8,panel.w+18,panel.h+20},
                 9,32,kBlack.with_alpha(0.18f));
-    list.rounded_rect(panel,5,kWhite);
+    list.rounded_rect(panel,5,panel_fill(kWhite));
     const char* title=tr("Confirm");
     if (confirmation_==Confirmation::app_update)
         title=tr("Application updates");
@@ -893,8 +894,8 @@ void Launcher::draw_switch_dialog(Canvas& c, Modal modal, float opened) {
     auto& list=c.list;
     list.push_opacity(opened);
     const Rect panel{430.0f,113.0f,1060.0f,854.0f};
-    list.rounded_rect(panel,3.0f,kWhite);
-    list.bordered_rect(panel,3.0f,kWhite,1.5f,kGrey);
+    list.rounded_rect(panel,3.0f,panel_fill(kWhite));
+    list.bordered_rect(panel,3.0f,kPaper.with_alpha(0.0f),1.5f,kGrey);
     const char *heading=tr("System Settings");
     switch(modal) {
     case Modal::video:heading=tr("Video");break;

@@ -116,6 +116,7 @@ struct Recent
     std::uint64_t title_id = 0;
     std::string addons;
     std::string language;
+    std::string tile_icon{}; // canonical Nlib icon, distinct from ROM/retail cover fallback
 };
 
 // The home screen's content.
@@ -207,7 +208,7 @@ struct Preferences
     std::uint32_t background_color = 0x121824u;
     std::uint32_t background_color2 = 0x263d59u;
     int background_overlay = 20; // 0..80, applies to images
-    int panel_opacity = 100; // 0..100, visual boxes only
+    int panel_opacity = 50; // 0..100, visual boxes only
     bool background_animate = true;
     int background_fit = 0; // 0 cover, 1 contain
     bool show_game_background = true; // preserve current hero background default
@@ -314,6 +315,8 @@ class Services
     // Enrich one already-scanned game lazily (Nlib on native builds). The default is a no-op so
     // host/preview services stay deterministic and offline.
     virtual Game enrich_game_media(Game game) { return game; }
+    // Visible Home icons only; no retail scan, banner or screenshot request.
+    virtual Game enrich_home_icon(Game game, const std::atomic<bool>*) { return game; }
     // Cancel Nlib work that has not started by the time a title launches;
     // in-flight HTTPS requests still complete naturally before teardown.
     virtual Game enrich_game_media(Game game, const std::atomic<bool>* cancel) {

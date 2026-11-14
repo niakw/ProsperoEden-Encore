@@ -88,8 +88,8 @@ assert "return; // Cross never launches a game while inspecting media." in lib
 # starts at only 4-9% alpha. Daily attribution is a runtime footer overlay.
 glass = widgets.split("void glass(Canvas &c,", 1)[1].split("Plate kRowPlate", 1)[0]
 rest = widgets.split("void plate_rest(Canvas &c,", 1)[1].split("void plate_focus(", 1)[0]
-assert "tint.with_alpha(tint.a > 0.0f ? opacity : 0.0f)" in glass
-assert "style.fill.with_alpha(style.fill.a > 0.0f ? opacity : 0.0f)" in rest
+assert "panel_fill(tint)" in glass
+assert "panel_fill(style.fill, opaque)" in rest
 assert "style.fill.a * look().panel_opacity" not in rest
 assert "tint.a * opacity" not in glass
 draw = launcher.split("void Launcher::draw(gfx::DrawList &list)", 1)[1]
@@ -146,3 +146,44 @@ with tempfile.TemporaryDirectory(prefix="encore-nov13-") as tmp:
     subprocess.run([str(binary)], check=True, timeout=10)
 
 print("ENCORE_NOV13_CRASH_UI_SOURCE_AND_GENRE_HOST_PASS physical_commit=1 query_lifetime=1 cover=1 genres=1 contrast=1")
+
+# Compile the REAL Color and theme implementation, not a duplicate formula.
+with tempfile.TemporaryDirectory(prefix="encore-panel-alpha-") as tmp:
+    source = Path(tmp) / "panel.cpp"
+    binary = Path(tmp) / "panel"
+    source.write_text(r'''
+#include "pe/ui/theme.hpp"
+#include <cassert>
+#include <cmath>
+using namespace pe::ui;
+int main() {
+    auto near = [](float a, float b) { return std::abs(a-b) < 0.00001f; };
+    assert(near(look().panel_opacity, 0.5f));
+    for (float alpha : {0.045f, 0.085f, 0.48f, 0.82f, 0.97f, 1.0f}) {
+        Color authored = Color::rgb(0xf4f2f8, alpha);
+        Color opaque = Color::rgb(0x0b0a12);
+        assert(near(authored.with_alpha(1.0f).a, alpha));
+        look().panel_opacity = 0.0f;
+        assert(near(panel_fill(authored, opaque).a, 0.0f));
+        look().panel_opacity = 0.5f;
+        auto mid = panel_fill(authored, opaque);
+        assert(near(mid.a, alpha) && near(mid.r, authored.r));
+        look().panel_opacity = 0.75f;
+        assert(near(panel_fill(authored, opaque).a, (alpha+1.0f)/2.0f));
+        look().panel_opacity = 1.0f;
+        auto full = panel_fill(authored, opaque);
+        assert(near(full.a, 1.0f) && near(full.r, opaque.r));
+        look().panel_opacity = 0.0f;
+        look().high_contrast = true;
+        assert(near(panel_fill(authored, opaque).a, 1.0f));
+        look().high_contrast = false;
+    }
+    look().panel_opacity = 1.0f;
+    assert(near(panel_fill(Color::rgb(0xffffff, 0.0f)).a, 0.0f));
+}
+''', encoding="utf-8")
+    subprocess.run([compiler, "-std=c++20", "-Wall", "-Wextra", "-Werror",
+                    "-I", str(root / "headless/prosperoeden"), str(source),
+                    "-o", str(binary)], check=True, timeout=30)
+    subprocess.run([str(binary)], check=True, timeout=10)
+print("ENCORE_PANEL_REAL_ALPHA_HOST_PASS midpoint=authored full=opaque zero=transparent contrast=opaque")

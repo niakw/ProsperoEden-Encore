@@ -30,7 +30,10 @@ struct KAutoObject {
     virtual void Finalize(KernelCore&) = 0;
     static void Create(KAutoObject*) {}
 };
-struct KAutoObjectWithList : KAutoObject { using KAutoObject::KAutoObject; };
+struct KAutoObjectWithList : KAutoObject {
+    using KAutoObject::KAutoObject;
+    bool is_linked() const noexcept { return false; }
+};
 template<class T> struct Heap { void Free(T* p) { delete p; } };
 struct Container {
     void Initialize() {}

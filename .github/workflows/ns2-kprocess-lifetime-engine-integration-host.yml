@@ -1,0 +1,74 @@
+name: NS2 failed-load KProcess lifetime engine/vendor integration (host only)
+
+on:
+  push:
+    branches: [fix/nov13-ns2-kprocess-lifetime-vendor-receipt]
+  pull_request:
+    paths:
+      - "tools/ns2/ps5_kprocess_postload_receipt.py"
+      - "tools/ns2/check_process_run_owner.py"
+      - "tools/ns2/check_native_process_handoff_transaction_host.py"
+      - "tools/ns2/check_native_process_full_kprocess_handoff_host.py"
+      - "tools/ns2/check_h01_joined_kprocess_process_host.py"
+      - "headless/check_slab_lifetime.py"
+      - "tools/check-native-slab-index-host.py"
+      - ".github/workflows/ns2-kprocess-lifetime-engine-integration-host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reviewed-process-owner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact engine and existing pinned vendor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Verify unchanged main production KProcess and historical N52 receipts
+        run: |
+          set -euo pipefail
+          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          python3 -B tools/ns2/check_process_run_owner.py
+          python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
+          python3 -B tools/check-native-slab-index-host.py
+      - name: Isolate reviewed vendor PR111 SHA, never move engine gitlink
+        run: |
+          set -euo pipefail
+          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov13-ns2-kprocess-unlinked-failed-load
+          git -C vendor checkout --detach FETCH_HEAD
+          test "$(git -C vendor rev-parse HEAD)" = "c6541bf15d1841a996c60b8086f5149b51828df0"
+          python3 -B tools/ns2/check_process_run_owner.py
+          python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
+          python3 -B tools/check-native-slab-index-host.py
+          python3 -B vendor/tests/ns2_kprocess_failed_load_list_host.py
+      - name: Verify selected CMake/HLE ownership and immutable native source catalog
+        run: |
+          set -euo pipefail
+          python3 -B tools/check-ns2-source-selection.py
+          python3 -B tools/check-active-source-inventory.py
+          python3 -B tools/check-eden-optimization-coverage.py
+          python3 -B tools/check-vendor-consolidation-debt.py
+          python3 -B tools/check-post-f07-delta-register.py
+      - name: Build public synthetic NSO/NPDM and exercise joined KProcess+OS owners
+        run: |
+          set -euo pipefail
+          if test -f /etc/apt/apt-mirrors.txt; then
+            printf '%s\n' 'https://archive.ubuntu.com/ubuntu/' 'https://mirrors.kernel.org/ubuntu/' |
+              sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+          fi
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update -qq
+          sudo apt-get install -y -o Acquire::Retries=1 -o Acquire::http::Timeout=20 --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+          python3 tools/ns2/build_public_nso_fixture.py --output build-h01/public-nso/hello.nso
+          python3 tools/ns2/build_public_exefs_fixture.py --nso build-h01/public-nso/hello.nso --output-dir build-h01/public-exefs
+          python3 -B tools/ns2/test_real_kprocess_metadata.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
+          python3 -B tools/ns2/test_real_kprocess_init_guest_rollback.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
+          python3 -B tools/ns2/check_native_process_full_kprocess_handoff_host.py --npdm build-h01/public-exefs/main.npdm --nso build-h01/public-exefs/main
+          python3 -B tools/ns2/check_h01_joined_kprocess_process_host.py build-h01/public-exefs/main.npdm build-h01/public-exefs/main
+      - name: Distinguish source proof from runtime game testing
+        if: always()
+        run: |
+          echo "SOURCE/host-only. Does NOT repin engine main, compile PS5 executable, run real NS1/NS2, or prove Bananza/MKW launch. Full native PS5 compiler and console failure/relaunch still required; synthetic public NPDM/NSO joined host tests cover source owners only." >> "$GITHUB_STEP_SUMMARY"

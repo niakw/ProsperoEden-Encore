@@ -2,6 +2,7 @@
 """N52: byte-strict generic vendor Process::Run and NS2 compile-guard owner."""
 from pathlib import Path
 import hashlib
+from ps5_kprocess_postload_receipt import normalize_process_receipt
 
 ROOT=Path(__file__).resolve().parents[2]
 SRC=ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp"
@@ -16,7 +17,7 @@ def once(src,old,new):
     assert src.count(old)==1, "N52 maintained source drift "+old[:65]
     return src.replace(old,new)
 
-current=SRC.read_text()
+current, postload_registered=normalize_process_receipt(SRC.read_text())
 # Native H01 adds an explicit filesystem-controller include. Remove only
 # this known overlay before checking the unchanged historical NS1 hashes.
 current=once(current,
@@ -155,4 +156,4 @@ assert 'if(EDEN_SHARED_NS2_EXEFS)' in CMAKE and 'EDEN_NS2_EXEFS_EXPERIMENTAL' no
 assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")' in CMAKE
 assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")' in CMAKE
 assert 'headless/ns2/overrides/core/hle/service/os/process.cpp' not in CMAKE
-print("N52_REAL_VENDOR_OS_PROCESS_OWNER_EXACT_BASELINE_PASS H01_guarded_transaction=1 H01_trace_rollback=1 H01_independent_romfs_teardown=1 historical_ns1_hash_unchanged=1")
+print("N52_REAL_VENDOR_OS_PROCESS_OWNER_EXACT_BASELINE_PASS H01_guarded_transaction=1 H01_trace_rollback=1 H01_independent_romfs_teardown=1 historical_ns1_hash_unchanged=1 postload_registration="+str(int(postload_registered)))

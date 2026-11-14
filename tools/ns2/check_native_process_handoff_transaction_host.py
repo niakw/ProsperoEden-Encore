@@ -20,6 +20,12 @@ end = "\nvoid Process::Finalize() {"
 assert source.count(begin) == source.count(end) == 1
 method = begin + source.split(begin, 1)[1].split(end, 1)[0]
 assert method.index("if (!process)") < method.index("KProcess::Register(")
+register_after_load = method.index("KProcess::Register(") > method.index("if (!load_parameters)")
+if register_after_load:
+    assert method.index("KProcess::Register(") < method.index("AppendNewProcess(")
+else:
+    assert method.index("KProcess::Register(") < method.index("loader.Load(*process, m_system)")
+failed_register_count = 0 if register_after_load else 1
 assert method.index("if (!load_parameters)") < method.index("AppendNewProcess(")
 assert "out_load_result = Loader::ResultStatus::ErrorNotInitialized;" in method
 assert "out_load_result = Loader::ResultStatus::ErrorUnableToParseKernelMetadata;" in method
@@ -180,7 +186,7 @@ int main() {
         auto result = Loader::ResultStatus::Success;
         assert(!process.Initialize(loader, result));
         assert(result == Loader::ResultStatus::ErrorLoadingNSO);
-        assert(k.registers == 1 && k.closes == 1 && k.appends == 0);
+        assert(k.registers == __FAILED_REGISTER_COUNT__ && k.closes == 1 && k.appends == 0);
         assert(k.opens == 0 && !process.m_process);
         assert(Eden::NS2::SvcTrace::active_pid==0 && Eden::NS2::SvcTrace::unregistered==1);
         dispose(k);
@@ -193,7 +199,7 @@ int main() {
         auto result = Loader::ResultStatus::Success;
         assert(!process.Initialize(loader, result));
         assert(result == Loader::ResultStatus::ErrorUnableToParseKernelMetadata);
-        assert(k.registers == 1 && k.closes == 1 && k.appends == 0);
+        assert(k.registers == __FAILED_REGISTER_COUNT__ && k.closes == 1 && k.appends == 0);
         assert(k.opens == 0 && !process.m_process);
         assert(Eden::NS2::SvcTrace::active_pid==0 && Eden::NS2::SvcTrace::unregistered==1);
         dispose(k);
@@ -212,7 +218,7 @@ int main() {
                !system.filesystem.registered_pid &&
                system.filesystem.unregister_calls==1 &&
                Eden::NS2::SvcTrace::active_pid==0);
-        assert(k.registers==1 && k.closes==1 && k.appends==0 && k.opens==0);
+        assert(k.registers==__FAILED_REGISTER_COUNT__ && k.closes==1 && k.appends==0 && k.opens==0);
         dispose(k);
     }
     {
@@ -228,7 +234,7 @@ int main() {
                !system.filesystem.registered_pid &&
                system.filesystem.unregister_calls==1 &&
                Eden::NS2::SvcTrace::active_pid==0);
-        assert(k.registers==1 && k.closes==1 && k.appends==0 && k.opens==0);
+        assert(k.registers==__FAILED_REGISTER_COUNT__ && k.closes==1 && k.appends==0 && k.opens==0);
         dispose(k);
     }
     {
@@ -300,7 +306,7 @@ compilers = list(dict.fromkeys(
 assert compilers, "C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="eden-h01-process-owner-") as temp:
     source_file = Path(temp) / "process_owner.cpp"
-    source_file.write_text(harness)
+    source_file.write_text(harness.replace("__FAILED_REGISTER_COUNT__", str(failed_register_count)))
     for compiler in compilers:
         for opt in ("-O0", "-O2"):
             exe = Path(temp) / (Path(compiler).name + opt)

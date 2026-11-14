@@ -1,0 +1,32 @@
+name: SPIR-V scalar constant cache selected engine graph (host)
+on:
+  pull_request:
+    paths:
+      - vendor
+      - "headless/CMakeLists.txt"
+      - "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
+      - ".github/workflows/spirv-scalar-cache-engine-host.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selected-shader-abi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Prove exact vendor pin and scalar cache owner
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:vendor)" = "5f53497bf6067dd68b6529b56aa7c9cf6eb5f598"
+          test "$(git -C vendor rev-parse HEAD)" = "5f53497bf6067dd68b6529b56aa7c9cf6eb5f598"
+          test "$(git hash-object vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h)" = "844a118358c874b0666aebda116c1d6a0c9a8ceb"
+          python3 -B vendor/tests/ps5_spirv_scalar_constant_cache_host.py
+          python3 -B vendor/tests/ns1_r23_72_subgroup_host.py
+      - name: Compile selected shared NS1/NS2 SPIR-V ABI owners
+        run: |
+          set -euo pipefail
+          python3 -B tools/ns2/check_shared_ns2_spirv_compiler_host.py

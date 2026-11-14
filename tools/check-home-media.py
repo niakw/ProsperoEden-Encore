@@ -168,7 +168,7 @@ with tempfile.TemporaryDirectory(prefix="home-media-visible-") as tmp:
 print("HOME_MEDIA_VISIBLE_WORKER_PASS hidden=2 cancellation=1 cooldown=1 return=1 actual_owner=1")
 
 # Execute both real icon-worker methods without HTTP, disk or a GPU.
-icon_methods = lib[lib.index("void Launcher::start_home_icons()"):lib.index("void Launcher::start_home_media()")]
+icon_methods = lib[lib.index("void Launcher::start_home_icons()"):lib.rindex("} // namespace pe::ui")]
 icon_cpp = r"""
 #include <atomic>
 #include <cassert>

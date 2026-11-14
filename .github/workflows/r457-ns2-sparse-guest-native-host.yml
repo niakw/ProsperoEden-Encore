@@ -36,4 +36,9 @@ jobs:
           grep -F 'set(EDEN_NS2_SPARSE_BACKING ON)' headless/CMakeLists.txt
           grep -F 'target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)' headless/CMakeLists.txt
           grep -F 'EDEN_NS2_SPARSE_BACKING' src/host_memory.cpp
-          test "$(git rev-parse HEAD:vendor)" = 1ec7b429238d1175a76dc94b7c0a7f1c2eb62864
+          selected="$(git rev-parse HEAD:vendor)"
+          test "$selected" = "$(git -C vendor rev-parse HEAD)"
+          case "$selected" in
+            1ec7b429238d1175a76dc94b7c0a7f1c2eb62864|fe9edd661d6f0824c7339865d50aa9cf99cab150) ;;
+            *) echo "Unreviewed sparse guest vendor pin $selected" >&2; exit 1 ;;
+          esac

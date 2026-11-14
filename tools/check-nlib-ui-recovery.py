@@ -105,7 +105,10 @@ assert "refresh_existing_artwork" in svc
 # A screenshot-backed hero must never suppress the missing/expired true
 # banner fetch; the actual native condition is keyed by its WebP owner.
 assert 'if (has_banner && (!ValidNlibWebP(NlibHeroPath(title_id)) || refresh_existing_artwork))' in svc
-assert "game.artwork_changed = enrichment.artwork_changed" in svc
+assert "game.artwork_changed |= enrichment.artwork_changed" in svc
+assert "if (cancelled() && !migrated) return {};" in svc
+assert "if (cancelled()) return result;" in svc
+assert "if (game.case_artwork_changed || !(cancel && cancel->load(std::memory_order_acquire)))" in svc
 assert "textures_.invalidate(enriched.hero)" in lib
 assert "void Textures::invalidate(" in src("headless/prosperoeden/pe/ui/textures.cpp")
 assert "EDEN_NLIB_ASSETS title_id=" in svc

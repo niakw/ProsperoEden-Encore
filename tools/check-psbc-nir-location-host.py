@@ -38,18 +38,65 @@ for bad in (
 
 build = (ROOT / "tools/build-opengl-sdk.sh").read_text()
 assert 'nir_print_source="$source_dir/third_party/opengnm-psbc/src/compiler/nir/nir_print.c"' in build
-assert 'python3 -B "$root/tools/ci/patch-psbc-nir-location-print.py" "$nir_print_source"' in build
 assert 'nir_print_backup="${nir_print_source}.encore-backup.$$"' in build
 assert 'cp -p "$nir_print_source" "$nir_print_backup"' in build
 assert build.count('mv -f "$nir_print_backup" "$nir_print_source"') == 2
-assert build.index('trap cleanup EXIT') < build.index('python3 -B "$root/tools/ci/patch-psbc-nir-location-print.py"')
+assert 'ENCORE_PSBC_NIR_LOCATION_FIX' in build
+assert 'export ENCORE_PSBC_NIR_PATCHER=' in build
+assert 'python3 -B "$root/tools/ci/patch-psbc-nir-build-hooks.py" "$script"' in build
+assert build.index('trap cleanup EXIT') < build.index('patch-psbc-nir-build-hooks.py" "$script"')
 assert build.index('python3 "$source_dir/tools/fetch-sources.py"') < build.index(
-    'python3 -B "$root/tools/ci/patch-psbc-nir-location-print.py"')
-assert build.index('python3 -B "$root/tools/ci/patch-psbc-nir-location-print.py"') < build.index(
+    'patch-psbc-nir-build-hooks.py" "$script"')
+assert build.index('patch-psbc-nir-build-hooks.py" "$script"') < build.index(
     'PATH="$opengl_host_path" make -C "$source_dir" sdk-gl46')
-script = subprocess.run(["bash", "-n", str(ROOT / "tools/build-opengl-sdk.sh")],
-                        text=True, capture_output=True)
-assert script.returncode == 0, script.stderr
+assert 'python3 -B "$root/tools/ci/patch-psbc-nir-location-print.py" "$nir_print_source"' not in build
+subprocess.run(["bash", "-n", str(ROOT / "tools/build-opengl-sdk.sh")], check=True)
+
+# Exercise exact vendored script preimages and actual NIR source compile
+# window. Neither a failing compiler command nor an ordinary exit may
+# leave the tracked printer modified for the next upstream verifier.
+import sys
+hook_file = ROOT / "tools/ci/patch-psbc-nir-build-hooks.py"
+hook_spec = importlib.util.spec_from_file_location("nir_hooks", hook_file)
+assert hook_spec and hook_spec.loader
+hook = importlib.util.module_from_spec(hook_spec)
+hook_spec.loader.exec_module(hook)
+vendor = ROOT / "vendor/sources"
+with tempfile.TemporaryDirectory(prefix="psbc-verify-window-") as td:
+    work = Path(td)
+    for filename in hook.HOOKS:
+        original = vendor / "opengl-source/toolchain" / filename
+        stage = work / filename
+        shutil.copyfile(original, stage)
+        assert hook.gitblob(stage.read_bytes()) == hook.HOOKS[filename][0]
+        hook.patched_script(stage)
+        modified = stage.read_text()
+        assert modified.count('--compile') == 1
+        assert modified.index('--verify-psbc') < modified.index('--compile')
+        subprocess.run(["bash", "-n", str(stage)], check=True)
+        try:
+            hook.patched_script(stage)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Repeated hook injection accepted")
+    printer = work / "nir_print.c"
+    shutil.copyfile(vendor / "opengl-opengnm-psbc/src/compiler/nir/nir_print.c", printer)
+    initial = printer.read_bytes()
+    for rc in (0, 7):
+        cmd = [sys.executable, "-c",
+               'import pathlib,sys; p=pathlib.Path(sys.argv[1]); '
+               'assert p.read_bytes().count(b"char buf[11];")==2; sys.exit(int(sys.argv[2]))',
+               str(printer), str(rc)]
+        assert module.compile_window(printer, cmd) == rc
+        assert printer.read_bytes() == initial, "printer leaked after compile"
+    printer.write_bytes(initial + b"\\n/* drift */\\n")
+    try:
+        module.compile_window(printer, [sys.executable, "-c", "raise AssertionError()"])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Unreviewed printer admitted")
 
 # Shader reflection/debug location indices are unsigned 32-bit: decimal max
 # is ten characters. Verify the actual count including NUL, both callers,

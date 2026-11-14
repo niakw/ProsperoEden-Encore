@@ -20,7 +20,7 @@ assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"
 
 def git_blob(path: Path) -> str:
     body = path.read_bytes()
-    return hashlib.sha1(b"blob " + str(len(body)).encode() + b"\\0" + body).hexdigest()
+    return hashlib.sha1(b"blob " + str(len(body)).encode() + b"\0" + body).hexdigest()
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 checks = (
     'get_target_property(eden_ns1_audio_units audio_core SOURCES)',

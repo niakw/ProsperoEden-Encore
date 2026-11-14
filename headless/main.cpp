@@ -647,7 +647,7 @@ int main(int argc, char** argv) {
             Eden::Report("network", "Native host network initialization failed; online metadata is unavailable");
         const std::string stop_note = Eden::LogFile("stop-limit.txt");
         if (std::remove(stop_note.c_str()) == 0)
-            Eden::Report("exit", "The previous game did not stop within ten seconds; Eden restarted safely");
+            Eden::Report("exit", "The previous game did not stop within ten seconds; Eden closed without automatic restart to protect console state");
         Eden::StopLimit::Start(stop_note);
         for (const char* candidate : {"/app0", Eden::kMountedAppDir, Eden::kInstallDir,
                                       "/mnt/sandbox/PPSA99008_000/app0"})

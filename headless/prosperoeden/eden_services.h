@@ -88,6 +88,8 @@ public:
     bool make_mods_folder(std::uint64_t title_id) override;
 
     bool load_image(const std::string& path, pe::gfx::Image* image) override;
+    bool load_display_image(const std::string& path, pe::gfx::Image* image,
+                            int target_pixels) override;
 
 private:
     std::string launch_error_;

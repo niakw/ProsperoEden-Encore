@@ -26,7 +26,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Pin exact reviewed PS5 CPU affinity owner
+      - name: Pin exact reviewed native CPU affinity owner
         run: |
           set -euo pipefail
           test "$(git hash-object headless/performance.cpp)" = "18ecba614f2c0077bbcc7044d68aa3eb714cb4b4"

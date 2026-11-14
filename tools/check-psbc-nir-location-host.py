@@ -47,6 +47,9 @@ assert build.count('mv -f "$radv_stub_backup" "$radv_stub_source"') == 2
 assert build.index('cp -p "$radv_stub_source"') < build.index('patch-psbc-nir-build-hooks.py" "$script"')
 assert 'ENCORE_PSBC_NIR_LOCATION_FIX' in build
 assert 'export ENCORE_PSBC_NIR_PATCHER=' in build
+assert 'compiler/nir/nir_unlower_io_to_vars.c' in build
+assert 'amd/compiler/aco_spill_preserved.cpp' in build
+assert 'amd/vulkan/nir/radv_nir_lower_descriptors.c' in build
 assert 'python3 -B "$root/tools/ci/patch-psbc-nir-build-hooks.py" "$script"' in build
 assert build.index('trap cleanup EXIT') < build.index('patch-psbc-nir-build-hooks.py" "$script"')
 assert build.index('python3 "$source_dir/tools/fetch-sources.py"') < build.index(
@@ -101,8 +104,13 @@ with tempfile.TemporaryDirectory(prefix="psbc-verify-window-") as td:
     initial = printer.read_bytes()
     header_initial = header.read_bytes()
     extras = []
-    for rel, fn in ((module.ACO_PATH, module.patched_aco),
-                    (module.NIR_MASK_PATH, module.patched_nir_mask)):
+    owner_patchers = [(module.ACO_PATH, module.patched_aco),
+                      (module.NIR_MASK_PATH, module.patched_nir_mask)]
+    owner_patchers.extend(
+        (rel, lambda raw, rel=rel: module.patched_assert_warning(rel, raw))
+        for rel in module.ASSERT_WARNING_OWNERS
+    )
+    for rel, fn in owner_patchers:
         stage = work / "src" / rel
         stage.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(vendor / "opengl-opengnm-psbc/src" / rel, stage)
@@ -304,3 +312,5 @@ with tempfile.TemporaryDirectory(prefix="psbc-warning-domain-") as td:
                         str(path),"-o",str(exe)],check=True,timeout=30)
         subprocess.run([str(exe)],check=True,timeout=20)
 print("PSBC_ACO_NIR_WARNING_DOMAINS_PASS all_ffs_bits=32 partial_store=1..3 source_restored=1")
+
+print("PSBC_ASSERT_ONLY_WARNING_OWNERS_HOST_PASS count=4 exact_preimages=1 restoration=1")

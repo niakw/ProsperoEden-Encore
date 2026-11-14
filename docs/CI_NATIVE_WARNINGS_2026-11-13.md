@@ -89,3 +89,7 @@ Native syntax run 43571792002 still emitted four release-only unused warnings af
 
 
 Correction de propriété: `non_linear_vgpr` appartient à `amd/compiler/aco_lower_to_hw_instr.cpp` blob `337e296ad310279b6aa8e8d96e355d9e049a2acd`, pas à `aco_select_nir_intrinsics.cpp`. Le patch de signedness reste limité au second; l'annotation `ASSERTED` devient un quatrième owner séparé et byte-restored.
+
+### Assert-only warning owners: actual platform-patched input
+
+Native sparse syntax run 43573583387 failed before CMake generation because the verified PS5 platform patch transforms `aco_lower_to_hw_instr.cpp` and `radv_nir_lower_descriptors.c`. Replayed every hunk of exact vendor platform patch a05bb92 (declared SHA-256 35967c8f...) against the two original blobs; resulting full Git hashes `3a6346cba427c411ae4cd839989a0b885770de06` and `71ac6f6f01fc5e14102487812fb714e0abb93f99` match patch index prefixes (first also matches actual CI log). Allow only these exact preimages alongside pristine versions; two other owners are unchanged. Host fixture now applies the actual audited patch to three selected source copies, checks full hashes and tests restored bytes for normal/failing compiler exits. No warning suppression or source drift acceptance. Native syntax retry required.

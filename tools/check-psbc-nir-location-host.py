@@ -172,6 +172,35 @@ int main(void) {
         assert header.read_bytes() == header_initial, "stub leaked after compile"
         for stage, prior, updated in extras:
             assert stage.read_bytes() == prior, "compiler owner leaked after compile"
+    # Recreate the precise post-verification source state from the vendor's
+    # official platform patch. Do not accept arbitrary alternate digests.
+    import hashlib
+    patch = vendor / "opengl-source/toolchain/opengnm-psbc-ps5.patch"
+    assert hashlib.sha256(patch.read_bytes()).hexdigest() == "35967c8fef5aff9fa30928314093706597d5beaa1b7e378f37fb37367c03d0b9"
+    changed = {
+        module.ACO_PATH: "a73de0a574bea1cc6f421525047604bebe0be2e6",
+        "amd/compiler/aco_lower_to_hw_instr.cpp": "3a6346cba427c411ae4cd839989a0b885770de06",
+        "amd/vulkan/nir/radv_nir_lower_descriptors.c": "71ac6f6f01fc5e14102487812fb714e0abb93f99",
+    }
+    subprocess.run(["git", "init", "-q"], cwd=work, check=True, timeout=30)
+    subprocess.run(["git", "apply", *["--include=src/"+rel for rel in changed],
+                    str(patch)], cwd=work, check=True, timeout=30)
+    staged = {stage: stage.read_bytes() for stage, _, _ in extras}
+    for relative, digest in changed.items():
+        assert module.gitblob((work/"src"/relative).read_bytes()) == digest
+    for rc in (0, 7):
+        cmd = [sys.executable, "-c",
+               'import pathlib,sys; root=pathlib.Path(sys.argv[1]); '
+               'assert b"ASSERTED bool non_linear_vgpr" in (root/"amd/compiler/aco_lower_to_hw_instr.cpp").read_bytes(); '
+               'assert b"ASSERTED bool indirect" in (root/"amd/vulkan/nir/radv_nir_lower_descriptors.c").read_bytes(); '
+               'sys.exit(int(sys.argv[2]))',
+               str(work/"src"), str(rc)]
+        assert module.compile_window(printer, cmd) == rc
+        assert all(stage.read_bytes() == prior for stage, prior in staged.items())
+        assert printer.read_bytes() == initial and header.read_bytes() == header_initial
+    for stage, prior, _ in extras:
+        stage.write_bytes(prior)
+    print("PSBC_ASSERT_WARNING_STAGED_TREE_PASS exact_upstream_patch=1 postimages=3 restored=1")
     header.write_bytes(header_initial + b"\n/* drift */\n")
     try:
         module.compile_window(printer, [sys.executable, "-c", "raise AssertionError()"])

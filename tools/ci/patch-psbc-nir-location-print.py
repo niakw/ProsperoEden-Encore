@@ -86,24 +86,26 @@ def patched_nir_mask(raw: bytes) -> bytes:
 
 
 
+# Two exact additional Git blobs are from the audited PS5 upstream patch
+# (opengl-source/toolchain/opengnm-psbc-ps5.patch), not unreviewed local drift.
 ASSERT_WARNING_OWNERS = {
     "amd/compiler/aco_lower_to_hw_instr.cpp": (
-        "337e296ad310279b6aa8e8d96e355d9e049a2acd",
+        {"337e296ad310279b6aa8e8d96e355d9e049a2acd", "3a6346cba427c411ae4cd839989a0b885770de06"},
         b"               bool non_linear_vgpr = false;",
         b"               ASSERTED bool non_linear_vgpr = false;",
     ),
     "compiler/nir/nir_unlower_io_to_vars.c": (
-        "50361427c7723e544378800f583394bd3024ac40",
+        {"50361427c7723e544378800f583394bd3024ac40"},
         b"            unsigned component, decl_size;",
         b"            ASSERTED unsigned component;\n            unsigned decl_size;",
     ),
     "amd/compiler/aco_spill_preserved.cpp": (
-        "80fa7a6ea2cd32785f8b6982666d5d734e3ed3e3",
+        {"80fa7a6ea2cd32785f8b6982666d5d734e3ed3e3"},
         b"      bool found_reg = false;",
         b"      ASSERTED bool found_reg = false;",
     ),
     "amd/vulkan/nir/radv_nir_lower_descriptors.c": (
-        "241288084c342b659be03e187de13fb0f3d29b0f",
+        {"241288084c342b659be03e187de13fb0f3d29b0f", "71ac6f6f01fc5e14102487812fb714e0abb93f99"},
         b"   bool indirect = false;",
         b"   ASSERTED bool indirect = false;",
     ),
@@ -111,9 +113,9 @@ ASSERT_WARNING_OWNERS = {
 
 
 def patched_assert_warning(path: str, raw: bytes) -> bytes:
-    pin, before, after = ASSERT_WARNING_OWNERS[path]
+    pins, before, after = ASSERT_WARNING_OWNERS[path]
     digest = gitblob(raw)
-    if digest != pin or raw.count(before) != 1 or after in raw:
+    if digest not in pins or raw.count(before) != 1 or after in raw:
         raise ValueError(
             f"Unexpected PSBC assert-only warning source path={path} "
             f"blob={digest} before={raw.count(before)} after={raw.count(after)}"

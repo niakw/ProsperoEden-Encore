@@ -1572,8 +1572,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "Az előkészítés ellenőrzése sikertelen. Ellenőrizd, hogy a firmware- és a kulcsfájlok olvashatók és érvényesek-e."
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "Élő FPS-t mutat játék közben. Az Off tisztább normál használatra; Az érintőpad + R1 bármikor átkapcsolja."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "Játék közben mutatja az FPS-t. Vulkan alatt az érintőpad menüjében kapcsolható."
 
 
 #: pe/ui/switch_theme.cpp

@@ -1572,8 +1572,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "설정 검증에 실패했습니다. 펌웨어와 키 파일을 읽을 수 있고 올바른지 확인하세요."
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "재생하는 동안 실시간 FPS를 표시합니다. Off는 정상적인 사용을 위해 더 깨끗합니다. 터치패드 + R1은 언제든지 전환할 수 있습니다."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "게임 중 FPS를 표시합니다. Vulkan에서는 터치패드 메뉴에서 전환할 수 있습니다."
 
 
 #: pe/ui/switch_theme.cpp

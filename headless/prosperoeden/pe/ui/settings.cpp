@@ -920,7 +920,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Neural Rendering : Désactivé, A4K Détails améliorés, A4K Image adoucie, A4K Image nettoyée, DLSS-NR Original ou DLSS-NR Compact. Un seul moteur à la fois."),
             TR("Intensité DLSS-NR : 0 à 100 %. Inactif avec les trois A4K et quand le NR est désactivé ; valeur conservée."),
             TR("60 Hz is recommended. 120 Hz changes display mode only; the game still needs to render above 60 FPS to benefit."),
-            TR("Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time.")};
+            TR("Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it.")};
         copy = tr(kAbout[std::clamp(option_, 0, kVideoRows - 1)]);
         break;
     }

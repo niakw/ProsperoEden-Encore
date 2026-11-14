@@ -1572,8 +1572,8 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "Xác thực thiết lập thất bại. Hãy kiểm tra xem các tệp firmware và khóa có đọc được và hợp lệ không."
 
 #: pe/ui/settings.cpp
-msgid "Shows live FPS while playing. Off is cleaner for normal use; Touchpad + R1 toggles it at any time."
-msgstr "Hiển thị FPS trực tiếp trong khi chơi. Tắt sẽ sạch hơn khi sử dụng bình thường; Touchpad + R1 chuyển đổi nó bất cứ lúc nào."
+msgid "Shows live FPS while playing. In Vulkan, open the touchpad menu to toggle it."
+msgstr "Hiển thị FPS khi chơi. Trong Vulkan, bật hoặc tắt qua menu bàn cảm ứng."
 
 
 #: pe/ui/switch_theme.cpp

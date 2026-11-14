@@ -81,7 +81,7 @@ float MenuGain(int volume) {
 // This replaces the selected-game jacket before the launcher relinquishes
 // scanout, so System::Load never needs a black interstitial or a screenshot
 // mailbox. Failure leaves the already-presented launcher frame untouched.
-bool PresentUnifiedLoading(pe::ps5::Display& display) {
+bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion) {
     const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
         "uniform vec2 size; uniform float seconds; out vec4 color;\n"
         "void main(){ color=vec4(loading_scene(gl_FragCoord.xy,size,seconds),1.0); }\n";
@@ -129,7 +129,7 @@ bool PresentUnifiedLoading(pe::ps5::Display& display) {
                 static_cast<float>(display.width()), static_cast<float>(display.height()));
     // One second is beyond the shader's intentional fade-in. Vulkan starts
     // from the same timeline value and continues from there.
-    const float seconds = Eden::LoadPreferences().reduce_motion ? 1001.0f : 1.0f;
+    const float seconds = reduce_motion ? 1001.0f : 1.0f;
     glUniform1f(glGetUniformLocation(program, "seconds"), seconds);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glFlush();
@@ -532,12 +532,14 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         batch.release();
     }
     if (!selected_game.empty()) {
-        // Present one canonical loading frame while GL still owns VideoOut,
-        // then keep that last scanout alive through System::Load. Vulkan (or
-        // the OpenGL game window) releases the deferred owner at takeover.
-        if (!PresentUnifiedLoading(display))
+        // Present the canonical scene immediately, then transfer this exact GL
+        // context to the bounded loading presenter. It keeps the same shader
+        // moving throughout System::Load until Vulkan/OpenGL joins it at the
+        // explicit VideoOut takeover boundary.
+        const bool reduce_motion = Eden::LoadPreferences().reduce_motion;
+        if (!PresentUnifiedLoading(display, reduce_motion))
             Eden::Report("loading screen", "Unified GL loading frame could not be presented; retaining last launcher frame");
-        if (!display.defer_scanout_close()) {
+        if (!display.defer_scanout_close(reduce_motion)) {
             Eden::Report("menu video failure", "Launcher display handoff failed");
             selected_game.clear();
         }

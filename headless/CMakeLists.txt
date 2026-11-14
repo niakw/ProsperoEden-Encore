@@ -158,6 +158,36 @@ if(PS5_NATIVE)
         message(STATUS "NVDEC: historical pinned FFmpeg owners selected")
     endif()
 endif()
+# NS1 VIC bounded surface witness: use the maintained translation unit only
+# when its matching FFmpeg pair is available. The historical vendor graph
+# remains valid; do not compile two independent VIC implementations.
+if(PS5_NATIVE)
+    set(EDEN_VIC_MAINTAINED_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/vic.cpp")
+    if(EXISTS "${EDEN_VIC_MAINTAINED_SOURCE}")
+        if(NOT EXISTS "${EDEN_NVDEC_MAINTAINED_SOURCE}" OR
+           NOT EXISTS "${EDEN_NVDEC_MAINTAINED_HEADER}")
+            message(FATAL_ERROR "VIC maintained witness requires the FFmpeg source/header pair")
+        endif()
+        get_target_property(eden_vic_video_sources video_core SOURCES)
+        set(eden_vic_original_count 0)
+        foreach(eden_vic_source IN LISTS eden_vic_video_sources)
+            if(eden_vic_source STREQUAL "host1x/vic.cpp")
+                math(EXPR eden_vic_original_count "${eden_vic_original_count} + 1")
+            endif()
+            if(eden_vic_source STREQUAL "${EDEN_VIC_MAINTAINED_SOURCE}")
+                message(FATAL_ERROR "VIC maintained translation unit already selected")
+            endif()
+        endforeach()
+        if(NOT eden_vic_original_count EQUAL 1)
+            message(FATAL_ERROR "Expected exactly one original VIC translation unit; requalify source graph")
+        endif()
+        list(REMOVE_ITEM eden_vic_video_sources "host1x/vic.cpp")
+        list(APPEND eden_vic_video_sources "${EDEN_VIC_MAINTAINED_SOURCE}")
+        set_property(TARGET video_core PROPERTY SOURCES "${eden_vic_video_sources}")
+        message(STATUS "NVDEC: maintained VIC surface witness selected")
+    endif()
+endif()
 # The texture-cache small-vector Boost version dependency is a complete
 # tracked header under vendor/encore-active, not a configure-time replacement.
 # Its only modification to the original is #include <boost/version.hpp>.

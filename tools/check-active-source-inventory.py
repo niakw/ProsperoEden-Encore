@@ -888,6 +888,24 @@ else:
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in nov13_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in nov13_cmake
 print("ENCORE_POST_F07_GPU_PAGE_TABLE_OWNER_PASS", f"owners={len(post_f07_gpu_table_present)}")
+# VFS/PFS #118 adds three real post-F07 owners; old explicit historical
+# checkout must not have them. Fail on half-selected or changed blobs.
+post_f07_vfs_receipts = {
+    "eden-core/src/core/file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
+    "eden-core/src/core/file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
+    "eden-core/src/core/file_sys/partition_filesystem.cpp": "350af05f831fe89a05158350f8c8aded988980dd"
+}
+post_f07_vfs_present = set(post_f07_vfs_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_vfs_present
+else:
+    assert post_f07_vfs_present == set(post_f07_vfs_receipts)
+    for relative, blob in post_f07_vfs_receipts.items():
+        data = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest() == blob
+    assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in nov13_cmake
+    assert 'list(APPEND core_sources "${eden_vfs_maintained}")' in nov13_cmake
+print("ENCORE_POST_F07_VFS_BOUNDS_OWNER_PASS", f"owners={len(post_f07_vfs_present)}")
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -903,7 +921,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

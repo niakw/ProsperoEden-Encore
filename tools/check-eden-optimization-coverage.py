@@ -1058,7 +1058,21 @@ else:
     assert subprocess.check_output(["git","hash-object",next(iter(post_f07_gpu_table_owners))],cwd=ROOT,text=True).strip() == "c55a55498fe300458800b646bfc295db11283b4a"
     assert 'list(REMOVE_ITEM eden_page_table_sources "multi_level_page_table.cpp")' in release_cmake
     assert 'list(APPEND eden_page_table_sources "${EDEN_MAINTAINED_GPU_PAGE_TABLE}")' in release_cmake
-owners=all_owners-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_jxr_adapter_owners
+post_f07_vfs_receipts = {
+    "vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs.cpp": "70926039977f56c87558270d7655f8de26d1e446",
+    "vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs_vector.cpp": "5f9c99b7ed5227c403ceca1d2e04d6c8dafc26cb",
+    "vendor/encore-active/eden-core/src/core/file_sys/partition_filesystem.cpp": "350af05f831fe89a05158350f8c8aded988980dd"
+}
+post_f07_vfs_present = set(post_f07_vfs_receipts) & all_owners
+if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
+    assert not post_f07_vfs_present
+else:
+    assert post_f07_vfs_present == set(post_f07_vfs_receipts)
+    for path, blob in post_f07_vfs_receipts.items():
+        assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
+    assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in release_cmake
+    assert 'list(APPEND core_sources "${eden_vfs_maintained}")' in release_cmake
+owners=all_owners-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1399,6 +1413,16 @@ for changed_path, new_blob in r23_existing_source_successors.items():
         "Unreviewed R23 existing-owner source edit", changed_path)
 print("ENCORE_R23_EXISTING_F07_SOURCE_SUCCESSORS_PASS", "owners=2",
       "historical_F07_preserved=1")
+# The XCI NCZ source receives two exact malformed-input guards reviewed in
+# vendor #118. Keep the old format receipt; the historical checkout has no delta.
+xci_path = "vendor/encore-active/eden-core/src/core/file_sys/card_image.cpp"
+assert xci_path not in post_index
+if post_f07_vfs_present:
+    xci_delta = drift_index.pop(xci_path)
+    assert xci_delta["expected"] == "f843e7f9c977b509368e71eb6356066c1a5e0c50"
+    assert xci_delta["actual"] == "c3dbb891b10ae2f576566d5a8a5f1a871f94c3d0"
+else:
+    assert xci_path not in drift_index
 # The selected C00 PS5 AudioIn capture source legitimately updates the
 # existing historical native audio.cpp; this is NOT an F07 performance review.
 # Its original F07 SHA stays immutable. Only this exact reviewed new blob is

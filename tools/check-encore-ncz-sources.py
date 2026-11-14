@@ -85,6 +85,19 @@ for rel,sha,marker in pairs:
             b"blob "+str(len(old_bytes)).encode()+b"\0"+old_bytes).hexdigest()
         assert old_git=="618ff99d2121741c190a9fd3ae8d0fd45f7eb9fe", (
             "Failed to reconstruct pre-R23 NCZ source", rel)
+    if rel == "file_sys/card_image.cpp":
+        # Undo only two reviewed XCI guards for legacy NCZ comparison.
+        current_bytes = text.encode()
+        current_git = hashlib.sha1(b"blob "+str(len(current_bytes)).encode()+b"\0"+current_bytes).hexdigest()
+        if current_git == "c3dbb891b10ae2f576566d5a8a5f1a871f94c3d0":
+            xci_reverses = [["        return;\n    }\n\n    if (header.hfs_offset > file->GetSize()) {\n        status = Loader::ResultStatus::ErrorBadXCIHeader;\n        return;\n    }\n\n    PartitionFilesystem main_hfs(std::make_shared<OffsetVfsFile>(\n        file, file->GetSize() - header.hfs_offset, header.hfs_offset));\n\n","        return;\n    }\n\n    PartitionFilesystem main_hfs(std::make_shared<OffsetVfsFile>(\n        file, file->GetSize() - header.hfs_offset, header.hfs_offset));\n\n"],["        partitions_raw[static_cast<std::size_t>(partition)] = std::move(raw);\n    }\n\n    auto secure_raw = main_hfs.GetFile(partition_names[static_cast<std::size_t>(XCIPartition::Secure)]);\n    if (secure_raw == nullptr) {\n        status = Loader::ResultStatus::ErrorXCIMissingPartition;\n        return;\n    }\n    secure_partition = std::make_shared<NSP>(std::move(secure_raw), program_id, program_index);\n\n    ncas = secure_partition->GetNCAsCollapsed();\n    program =\n","        partitions_raw[static_cast<std::size_t>(partition)] = std::move(raw);\n    }\n\n    secure_partition = std::make_shared<NSP>(\n        main_hfs.GetFile(partition_names[static_cast<std::size_t>(XCIPartition::Secure)]),\n        program_id, program_index);\n\n    ncas = secure_partition->GetNCAsCollapsed();\n    program =\n"]]
+            for successor, predecessor in xci_reverses:
+                assert text.count(successor) == 1
+                text = text.replace(successor, predecessor, 1)
+            prior = text.encode()
+            assert hashlib.sha1(b"blob "+str(len(prior)).encode()+b"\0"+prior).hexdigest() == "f843e7f9c977b509368e71eb6356066c1a5e0c50"
+        else:
+            assert current_git == "f843e7f9c977b509368e71eb6356066c1a5e0c50"
     assert text==expected,("unreviewed source change",rel)
     assert marker in text,rel
     print("NCZ_SOURCE_OWNER_PASS",rel)

@@ -714,6 +714,23 @@ if(EDEN_A32_FASTMEM)
     list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
     list(APPEND core_sources "${EDEN_MAINTAINED_CODE_LOADER}")
 endif()
+# Lichii #947: preserve pinned archive, select exactly one maintained VFS/PFS TU each.
+foreach(eden_vfs_relative IN ITEMS
+        "file_sys/vfs/vfs.cpp"
+        "file_sys/vfs/vfs_vector.cpp"
+        "file_sys/partition_filesystem.cpp")
+    set(eden_vfs_maintained
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_vfs_relative}")
+    if(NOT EXISTS "${eden_vfs_maintained}")
+        message(FATAL_ERROR "Missing maintained VFS bounds owner: ${eden_vfs_relative}")
+    endif()
+    list(FIND core_sources "${eden_vfs_relative}" eden_vfs_pinned_index)
+    if(eden_vfs_pinned_index LESS 0)
+        message(FATAL_ERROR "Pinned VFS owner moved: ${eden_vfs_relative}")
+    endif()
+    list(REMOVE_ITEM core_sources "${eden_vfs_relative}")
+    list(APPEND core_sources "${eden_vfs_maintained}")
+endforeach()
 # NSZ/XCZ: select reviewed full C++ source owners instead of generating C++
 # with CMake string replacements. Preserve pinned Eden source unchanged.
 foreach(eden_ncz_relative IN ITEMS

@@ -987,6 +987,32 @@ if post_f07_usage_tracker_owners:
 print("ENCORE_POST_F07_USAGE_TRACKER_F07_ISOLATION_PASS",
       f"candidate={len(post_f07_usage_tracker_owners)}")
 
+# Selected NVDEC source/header pair postdates the frozen F07 performance
+# snapshot. Derive its exact reviewed owner paths from the source inventory
+# AST, accepting only the complete source/header pair.
+nvdec_nodes = [
+    node.value for node in ast.parse(
+        (ROOT / "tools/check-active-source-inventory.py").read_text()
+    ).body if isinstance(node, ast.Assign) and any(
+        isinstance(target, ast.Name) and target.id == "post_f07_nvdec_owners"
+        for target in node.targets)
+]
+assert len(nvdec_nodes) == 1
+nvdec_paths = ast.literal_eval(nvdec_nodes[0])
+assert nvdec_paths == {
+    "eden-core/src/video_core/host1x/ffmpeg.cpp",
+    "eden-core/overrides/video_core/host1x/ffmpeg.h",
+}
+post_f07_nvdec_owners = {
+    "vendor/encore-active/" + p for p in nvdec_paths
+} & all_owners
+assert len(post_f07_nvdec_owners) in (0,2), "NVDEC source/header ABI split"
+if post_f07_nvdec_owners:
+    assert "EDEN_NVDEC_MAINTAINED_SOURCE" in release_cmake
+    assert (ROOT / "tools/check-nvdec-eagain-owner-selection-host.py").is_file()
+print("ENCORE_POST_F07_NVDEC_F07_ISOLATION_PASS",
+      f"owners={len(post_f07_nvdec_owners)}")
+
 nov13_native_owners = {
     "vendor/encore-active/eden-core/src/common/stb_image_png.cpp",
     "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_shared_memory.cpp",
@@ -996,7 +1022,7 @@ assert 'list(REMOVE_ITEM eden_stb_common_sources "stb.cpp")' in cmake
 assert 'list(APPEND eden_stb_common_sources "${EDEN_NATIVE_STB_CODECS}")' in cmake
 assert 'list(REMOVE_ITEM eden_sparse_core_sources "hle/kernel/k_shared_memory.cpp")' in cmake
 assert 'list(APPEND eden_sparse_core_sources "${EDEN_NS2_SHARED_MEMORY_SOURCE}")' in cmake
-owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners
+owners=all_owners-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

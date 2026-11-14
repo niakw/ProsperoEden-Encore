@@ -23,12 +23,23 @@ assert "sceUserServiceGetForegroundUser(&foreground)" in scan
 assert "Eden::ReadNativeDirectory(current.folder, read_error)" in scan
 assert "::lstat(entry.path().c_str(), &native)" in scan
 assert "S_ISLNK(native.st_mode)" in scan
-assert "kMaxDirs = 256, kMaxEntries = 8192" in scan
-assert "kMaxDepth = 4" in scan
+assert "kMaxDirs = 1024, kMaxEntries = 32768" in scan
+assert "kMaxDepth = 8" in scan
 assert 'ext != ".jpg" && ext != ".jpeg" && ext != ".png"' in scan
+assert 'if (ext == ".jxr")' in scan and '++hdr_jxr;' in scan
+assert '++ignored_size;' in scan and '++unreadable_dirs;' in scan
+assert 'EDEN_WALLPAPER_SCAN dirs=%zu entries=%zu accepted=%zu jxr=%zu' in scan
+assert 'size_rejected=%zu format_rejected=%zu read_errors=%zu capped=%d elapsed_ms=%lld' in scan
 assert "found.push_back(std::move(item))" in scan
 assert "SystemCaptureWallpapers()" in listing
-assert "names.push_back(captures[i].selection)" in listing
+assert "for (const auto& capture : captures)" in listing
+assert "names.push_back(capture.selection)" in listing
+assert "i < 64u" not in listing
+assert "const std::size_t imported = names.size();" in listing
+assert "imported, captures.size(), names.size()" in listing
+assert listing.index('std::sort(names.begin(), names.end());') < listing.index(
+    "const std::size_t imported = names.size();") < listing.index(
+    "for (const auto& capture : captures)")
 assert "CheckedWallpaper(capture.photo.parent_path()," in listing
 assert 'file.starts_with("PS5_") && ValidWallpaperName(file)' in listing
 assert "std::filesystem::path(Eden::UserDir()) / \"wallpapers\"" in listing

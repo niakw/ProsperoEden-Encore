@@ -2810,8 +2810,12 @@ std::vector<SystemWallpaper> SystemCaptureWallpapers() {
     struct Pending { fs::path folder; unsigned depth; };
     std::vector<Pending> pending{{root, 0u}};
     std::size_t directories = 0, examined = 0;
-    constexpr std::size_t kMaxDirs = 256, kMaxEntries = 8192;
-    constexpr unsigned kMaxDepth = 4;
+    // Only aggregate diagnostics: never log private screenshot names or paths.
+    std::size_t unreadable_dirs = 0, hdr_jxr = 0, ignored_size = 0, ignored_format = 0;
+    const auto scan_started = std::chrono::steady_clock::now();
+    // Thousands of user screenshots are normal; keep safe finite bounds.
+    constexpr std::size_t kMaxDirs = 1024, kMaxEntries = 32768;
+    constexpr unsigned kMaxDepth = 8;
     while (!pending.empty() && directories < kMaxDirs &&
            examined < kMaxEntries) {
         const auto current = std::move(pending.back());
@@ -2819,7 +2823,10 @@ std::vector<SystemWallpaper> SystemCaptureWallpapers() {
         ++directories;
         std::error_code read_error;
         const auto entries = Eden::ReadNativeDirectory(current.folder, read_error);
-        if (read_error) continue; // inaccessible system mount is not an app failure
+        if (read_error) {
+            ++unreadable_dirs; // inaccessible mount is not an app failure
+            continue;
+        }
         for (const auto& entry : entries) {
             if (++examined > kMaxEntries) break;
             struct stat native{};
@@ -2831,17 +2838,26 @@ std::vector<SystemWallpaper> SystemCaptureWallpapers() {
                     pending.push_back({entry.path(), current.depth + 1u});
                 continue;
             }
-            if (!S_ISREG(native.st_mode) || native.st_size < 32 ||
-                native.st_size > (12ll << 20)) continue;
-            const std::string filename = entry.path().filename().string();
-            if (!ValidWallpaperName(filename)) continue;
+            if (!S_ISREG(native.st_mode)) continue;
             auto ext = entry.path().extension().string();
             std::transform(ext.begin(), ext.end(), ext.begin(),
                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-            // The native texture decoder supports ordinary JPG/PNG captures.
-            // PS5 HDR JXR images are deliberately excluded until a vetted
-            // decoder exists. Never mislabel or decode them as JPEG.
-            if (ext != ".jpg" && ext != ".jpeg" && ext != ".png") continue;
+            // PS5 HDR screenshots are JXR, not ordinary JPEG. Count them
+            // before basename validation, but never pass them to JPG decoder.
+            if (ext == ".jxr") {
+                ++hdr_jxr;
+                continue;
+            }
+            if (native.st_size < 32 || native.st_size > (12ll << 20)) {
+                ++ignored_size;
+                continue;
+            }
+            const std::string filename = entry.path().filename().string();
+            if (!ValidWallpaperName(filename) ||
+                (ext != ".jpg" && ext != ".jpeg" && ext != ".png")) {
+                ++ignored_format;
+                continue;
+            }
             SystemWallpaper item{
                 CaptureWallpaperSelection(entry.path()), entry.path(),
                 native.st_mtime};
@@ -2859,6 +2875,15 @@ std::vector<SystemWallpaper> SystemCaptureWallpapers() {
         [&](const SystemWallpaper& item) {
             return !seen.insert(item.selection).second;
         }), found.end());
+    const auto scan_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - scan_started).count();
+    std::fprintf(stderr,
+        "EDEN_WALLPAPER_SCAN dirs=%zu entries=%zu accepted=%zu jxr=%zu "
+        "size_rejected=%zu format_rejected=%zu read_errors=%zu capped=%d elapsed_ms=%lld\n",
+        directories, examined, found.size(), hdr_jxr, ignored_size,
+        ignored_format, unreadable_dirs,
+        int(!pending.empty() || examined >= kMaxEntries),
+        static_cast<long long>(scan_ms));
     return found;
 }
 #endif
@@ -3122,17 +3147,20 @@ std::vector<std::string> EdenServices::wallpapers() {
         const std::string name = it->path().filename().string();
         if (!CheckedWallpaper(folder, name).empty()) names.push_back(name);
     }
+    // User imports are always the first, alphabetized group in this chooser.
+    // Do not globally sort opaque PS5 capture keys ahead of personal files.
+    std::sort(names.begin(), names.end());
 #if defined(PS5_NATIVE)
     // Merge the current PS5 user's Media Gallery with app-local files; no
     // user-import step and no blocking scan on the drawing/input thread.
+    const std::size_t imported = names.size();
+    // System captures are already ordered newest first by the scanner.
     const auto captures = SystemCaptureWallpapers();
-    for (std::size_t i = 0; i < captures.size() && i < 64u; ++i)
-        names.push_back(captures[i].selection);
+    for (const auto& capture : captures)
+        names.push_back(capture.selection);
     std::fprintf(stderr, "EDEN_WALLPAPER_SOURCES app=%zu ps5=%zu shown=%zu\n",
-                 names.size() - std::min<std::size_t>(captures.size(), 64u),
-                 captures.size(), names.size());
+                 imported, captures.size(), names.size());
 #endif
-    std::sort(names.begin(), names.end());
     return names;
 }
 std::string EdenServices::wallpaper_path(const std::string& file) {
@@ -3639,12 +3667,13 @@ std::string EdenServices::daily_wallpaper_caption(const std::string& path,
                 ? iso.substr(8,2) + "/" + iso.substr(5,2) + "/" + iso.substr(0,4) : iso;
         // Older cache snapshots omit source: display an explicit unknown
         // rather than falsely attributing Nintendo art to GamesDB.
-        std::string source = "Unknown";
+        // A legacy receipt without provider does not prove Nlib/GamesDB origin.
+        std::string source;
         if (entry.contains("source") && entry["source"].is_string()) {
             const auto known = entry["source"].get<std::string>();
             if (known == "Nlib" || known == "Nintendo") source = known;
         }
-        return title + " · " + date + " · " + source;
+        return title + " · " + date + (source.empty() ? "" : " · " + source);
     }
     return {};
 }

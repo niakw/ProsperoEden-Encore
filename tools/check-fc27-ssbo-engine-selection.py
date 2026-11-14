@@ -30,12 +30,12 @@ for needle in (
     'set(EDEN_R23_PHI_HEADER',
     'vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h',
     'set(EDEN_FC27_SSBO_SOURCE',
-    'global_memory_to_storage_buffer_pass.cpp',
     'list(FIND eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp"',
     'list(REMOVE_ITEM eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp")',
     'list(APPEND eden_fc27_ssbo_sources "${EDEN_FC27_SSBO_SOURCE}")',
 ):
     assert CMAKE.count(needle)==1,needle
+assert CMAKE.count("global_memory_to_storage_buffer_pass.cpp")==3
 
 source=active.read_text()
 header=bfs.read_text()

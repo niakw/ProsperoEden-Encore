@@ -8,7 +8,7 @@ src=(root/"headless/prosperoeden/pe/ui/textures.cpp").read_text()
 lib=(root/"headless/prosperoeden/pe/ui/library.cpp").read_text()
 native=(root/"headless/prosperoeden/eden_services.cpp").read_text()
 cmake=(root/"headless/CMakeLists.txt").read_text()
-begin="Cover Textures::cover(const std::string &path, float size)"
+begin="Cover Textures::cover(const std::string &path, float size, bool urgent)"
 end="\nvoid Textures::invalidate("
 assert src.count(begin)==1 and end in src.split(begin,1)[1]
 cover=begin+src.split(begin,1)[1].split(end,1)[0]
@@ -103,13 +103,13 @@ struct Cover {std::uint32_t texture=0;float age=0;bool missing=false;float aspec
 class Textures {
  public:
  struct Entry {std::uint32_t texture=0;double loaded_at_seconds=0;
-  bool loaded=false;std::uint64_t generation=0;unsigned failed_loads=0;
+  bool loaded=false;bool priority_queued=false;std::uint64_t generation=0;unsigned failed_loads=0;
   std::uint64_t used=0;std::string path;int target_pixels=64;float aspect=1;};
  std::unordered_map<std::string,Entry> covers_;
  std::deque<std::string> queue_;
  std::uint64_t frame_=0,next_generation_=0;
  double uptime_seconds_=0;float output_scale_=1;
- Cover cover(const std::string&,float);
+ Cover cover(const std::string&,float,bool urgent=false);
  void tick(float dt){++frame_; uptime_seconds_+=static_cast<double>(dt);}
 };
 """ + avatar + "\n" + retail + "\n" + cover + r"""
@@ -165,6 +165,24 @@ int main(){
  assert(t.queue_.front()==profile+"#64" && !avatar_entry.loaded);
  t.cover("/data/NiakPS5/assets/niak-profile.png",54);
  assert(t.queue_.front()=="/data/NiakPS5/assets/niak-profile.png#64");
+ // Promote a previously queued regular image once, without duplication.
+ t.cover("regular-icon",128);
+ assert(t.queue_.back()=="regular-icon#128");
+ const auto queued=t.queue_.size();
+ t.cover("regular-icon",128,true);
+ assert(t.queue_.front()=="regular-icon#128" && t.queue_.size()==queued);
+ assert(t.covers_.at("regular-icon#128").priority_queued);
+ t.queue_.push_front("different-pending-image");
+ t.cover("regular-icon",128,true);
+ assert(t.queue_.front()=="different-pending-image");
+ assert(std::count(t.queue_.begin(),t.queue_.end(),"regular-icon#128")==1);
+ // A completed smaller bucket can bridge a larger launch-jacket request.
+ auto& small=t.covers_.at("regular-icon#128");
+ small.loaded=true;small.texture=123;small.aspect=0.75f;small.loaded_at_seconds=t.uptime_seconds_;
+ auto bridge=t.cover("regular-icon",256,true);
+ assert(bridge.texture==123 && !bridge.missing && bridge.aspect==.75f);
+ assert(t.covers_.at("regular-icon#128").used==t.frame_);
+ assert(t.cover("different-icon",256,true).texture==0);
  auto& e=t.covers_.at("box-0#512");
  t.tick(60);
  assert(t.cover("box-0",300).age==0);

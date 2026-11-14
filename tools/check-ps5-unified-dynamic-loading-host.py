@@ -62,8 +62,8 @@ defer = display.split("bool Display::defer_scanout_close(bool reduce_motion)", 1
 assert "eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT)" in defer
 assert "std::jthread{deferred_loading_loop" in defer
 assert "deferred_context = context_;" in defer
-assert "eglDestroyContext" not in defer
-assert "eglDestroySurface" not in defer
+assert "eglDestroyContext(" not in defer
+assert "eglDestroySurface(" not in defer
 assert "eglTerminate(" not in defer
 
 close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].split(

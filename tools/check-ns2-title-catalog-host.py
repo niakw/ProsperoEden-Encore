@@ -36,7 +36,11 @@ assert 'if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box
 assert 'base/exefs/icon.jpg' in services and 'exefs/icon.png' in services
 assert 'IsSafeExtractedDirectory(parent)' in services
 assert 'icon_' in services and 'std::memcmp(signature,' in services
-assert 'IsSafeExtractedDirectory(ancestor)' in services
+assert 'for (const auto& segment : relative.parent_path())' in services
+assert 'parent /= segment;' in services
+assert 'IsSafeExtractedDirectory(parent)' in services
+assert 'fs::symlink_status(candidate, error)' in services
+assert 'fs::is_symlink(status)' in services
 # The shared CDN artwork encoder was migrated to bounded WebP output.
 # Verify the current encode + atomic publish path, not the obsolete TGA name.
 fetch = services.split("bool FetchCaseFace(", 1)[1].split("unsigned EnsureRetailCase(", 1)[0]

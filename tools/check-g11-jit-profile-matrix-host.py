@@ -71,6 +71,60 @@ def reverse_exact_n76_clock(source: str, *, required: bool) -> str:
     return source.replace(N76_HEADER, "", 1).replace(
         block.group(0), block.group("legacy") + "\n", 1)
 
+# P0 Bananza pre-PC4 instrumentation was reviewed independently in vendor
+# 891561d/c5efc2b and mirrored into the selected CPU6 A64 owner. It is not
+# part of the historical G11 generator, so reconstruct that exact preimage
+# before byte-parity comparison instead of weakening the production owner.
+LOW_WRITE_HELPER = """namespace {
+std::atomic<u64> low_guest_write_sequence{0};
+
+inline void ReportLowGuestWrite(u64 address, std::size_t bytes, u64 value,
+                                u64 pc, u64 thread_id, std::size_t core) {
+    if (address >= 0x1000) {
+        return;
+    }
+    const u64 sequence =
+        low_guest_write_sequence.fetch_add(1, std::memory_order_relaxed) + 1;
+    // Preserve the first causal window, then sample only powers of two if a
+    // broken title loops on the same low address. This is diagnostic-only.
+    if (sequence > 64 && (sequence & (sequence - 1)) != 0) {
+        return;
+    }
+    LOG_ERROR(Core_ARM,
+              "EDEN_GUEST_LOW_WRITE seq={} pc={:#016x} address={:#x} bytes={} value={:#016x} core={} tid={}",
+              sequence, pc, address, bytes, value, core, thread_id);
+}
+} // namespace
+
+"""
+LOW_WRITE_HOOK = re.compile(
+    r'^    if \(vaddr < 0x1000\) ReportLowGuestWrite\([^\n]+\n'
+    r'        Kernel::GetCurrentThread\(m_parent\.m_system\.Kernel\(\)\)'
+    r'\.GetThreadId\(\), m_parent\.m_core_index\);\n',
+    re.M,
+)
+
+def reverse_exact_low_write(source: str, *, required: bool, dev: bool) -> str:
+    if not required:
+        assert "EDEN_GUEST_LOW_WRITE" not in source
+        assert "low_guest_write_sequence" not in source
+        return source
+    assert source.count("#include <atomic>\n") == 1, "low-write atomic include drift"
+    assert source.count(LOW_WRITE_HELPER) == 1, "low-write helper drift"
+    hooks = list(LOW_WRITE_HOOK.finditer(source))
+    assert len(hooks) == 10, ("low-write hook count drift", len(hooks))
+    source = source.replace("#include <atomic>\n", "", 1)
+    source = source.replace(LOW_WRITE_HELPER, "", 1)
+    source = LOW_WRITE_HOOK.sub("", source)
+    # DEV G11 already needed KThread for Watch::Report before this diagnostic;
+    # normal G11 gained it only in 891561d and must lose it in the preimage.
+    if not dev:
+        assert source.count('#include "core/hle/kernel/k_thread.h"\n') == 1
+        source = source.replace('#include "core/hle/kernel/k_thread.h"\n', "", 1)
+    assert "EDEN_GUEST_LOW_WRITE" not in source
+    assert "low_guest_write_sequence" not in source
+    return source
+
 outputs = {}
 with tempfile.TemporaryDirectory(prefix="encore-g11-matrix-") as tempdir:
     temp = Path(tempdir)
@@ -180,12 +234,16 @@ file(WRITE "${PORT_BUILD_DIR}/selected.txt" "${g11_sources}")
                     if bits == 64:
                         # The native-only N76 guest clock remains positively
                         # required above the legacy byte-for-byte parity gate.
-                        # No unrelated G11 instruction, include or JIT fast path
-                        # is excluded from the comparison.
+                        # The separately reviewed low-write witness is also
+                        # required only in native A64 and exactly reversed for
+                        # historical G11 parity.
                         expected = reverse_exact_n76_clock(expected, required=True)
                         candidate = reverse_exact_n76_clock(candidate, required=native)
+                        candidate = reverse_exact_low_write(
+                            candidate, required=native, dev=dev)
                     else:
                         assert "EDEN_NS2_GUEST_COUNTER" not in expected + candidate
+                        assert "EDEN_GUEST_LOW_WRITE" not in expected + candidate
                     # The unified native fallback is bounds-checked for CPU6;
                     # historical generation used a four-entry array. Normalize
                     # only this separately UBSan-tested change for parity.

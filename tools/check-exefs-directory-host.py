@@ -146,7 +146,6 @@ source = r"""
 #include <string>
 #include <string_view>
 #include <unistd.h>
-#include <stb_image.h>
 #include "game_files.h"
 namespace Eden {
 VALIDATOR

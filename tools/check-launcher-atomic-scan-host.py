@@ -115,7 +115,8 @@ public:
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
     std::uint64_t media_scan_title_id_ = 0, home_media_scan_title_id_ = 0;
     std::uint64_t selected_size_scan_title_id_ = 0;
-    std::string selected_size_scan_file_, selected_game_;
+    std::uint64_t selected_size_failed_title_id_ = 0;
+    std::string selected_size_scan_file_, selected_size_failed_file_, selected_game_;
     Home home_;
     struct Services {
         std::string exact_game_size(const std::string& file, const std::atomic<bool>* cancel) {

@@ -2556,3 +2556,7 @@ msgstr "Valinnaiset kaatumis- ja virheraportit. Ei ota tarkkaa lokitusta käytt�
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Tyhjentää vain shader-välimuistit. Tallennukset, asetukset, avaimet ja pelit säilyvät."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "Pakotettu MSAA tasoittaa monikulmioiden reunoja lisänäytteillä. Korkeammat tasot käyttävät enemmän GPU-muistia ja kaistanleveyttä; laske sitä ensin, jos suorituskyky tai muisti muuttuu epävakaaksi. PS5-validointi tarvitaan edelleen pelikohtaisesti."

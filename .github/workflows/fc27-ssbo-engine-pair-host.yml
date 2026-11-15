@@ -1,0 +1,21 @@
+name: FC27 SSBO failed-search pruning engine/vendor pair (host)
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'headless/CMakeLists.txt'
+      - 'tools/check-fc27-ssbo-engine-selection.py'
+      - '.github/workflows/fc27-ssbo-engine-pair-host.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-pair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - run: python3 -B tools/check-fc27-ssbo-engine-selection.py

@@ -14,8 +14,11 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==39  # GL/Vulkan deferred-scanout owners and sampled GPU submission breadcrumb
+assert len(entries)==40  # reviewed post-F07 successors, including fail-closed stop watchdog
 assert len({e["path"] for e in entries})==len(entries)
+stop_entry=next(e for e in entries if e["path"]=="headless/stop_limit.cpp")
+assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"
+assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting app without automatic restart"
 drifts=[]
 for entry in entries:
     path=ROOT/entry["path"]

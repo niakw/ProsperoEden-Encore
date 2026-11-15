@@ -15,6 +15,7 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 vendor=ROOT/"vendor"
 owner=(vendor/"encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
+assert "struct BlockingBoundaryTrace" in owner and "EDEN_NS2_BLOCKING_BOUNDARY" in owner
 begin="void IGpuWorker::DestroySparseRegion("
 end="void IGpuWorker::ExecuteSparseMapRequests("
 assert owner.count(begin)==owner.count(end)==1
@@ -88,6 +89,9 @@ struct ResponseBuilder {
 };
 }
 namespace Service::AM {
+// The real selected owner has a PS5-only timing trace. These fixtures test IPC/ledger
+// behavior, so provide its no-op host shape while separately asserting the production trace above.
+struct BlockingBoundaryTrace { BlockingBoundaryTrace(const char*, u32, u64, u64) {} };
 namespace GW=GpuWorkerProtocol;
 inline void TraceNs2WorkerResult(unsigned,u32){}
 struct GpuSystem {

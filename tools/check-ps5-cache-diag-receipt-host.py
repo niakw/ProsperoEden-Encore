@@ -14,7 +14,8 @@ root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(root / "tools"))
 from ci.ps5_cache_diag_receipt import (
     OPEN, CLOSE, OWNER, ORIGINAL_BLOB, REVIEWED_DIAGNOSTIC_BLOB,
-    REVIEWED_DRIVER_HEADER_BLOB, DRIVER_HEADER_REVERSES,
+    REVIEWED_DRIVER_HEADER_BLOB, REVIEWED_CACHE_VERSION_20_BLOB,
+    REVIEWED_CACHE_VERSION_21_BLOB, DRIVER_HEADER_REVERSES,
     git_blob, normalize_for_historical_proof,
 )
 
@@ -23,8 +24,15 @@ source = owner_file.read_text()
 original, was_diagnostic = normalize_for_historical_proof(source)
 assert git_blob(original) == ORIGINAL_BLOB
 
+raw_blob = git_blob(source)
+reviewed_sources = {
+    REVIEWED_DIAGNOSTIC_BLOB,
+    REVIEWED_DRIVER_HEADER_BLOB,
+    REVIEWED_CACHE_VERSION_20_BLOB,
+    REVIEWED_CACHE_VERSION_21_BLOB,
+}
 if was_diagnostic:
-    assert git_blob(source) in {REVIEWED_DIAGNOSTIC_BLOB, REVIEWED_DRIVER_HEADER_BLOB}
+    assert raw_blob in reviewed_sources
     assert source.count(OPEN) == source.count(CLOSE) == 7
     assert source != original
 else:
@@ -42,13 +50,29 @@ rejects(source + "\n// unrelated native source drift\n")
 rejects(source.replace("PipelineCache", "PipelineCacheX", 1))
 rejects(source + "\n// ENCORE_PS5_CACHE_DIAG_BEGIN\n")
 rejects(source + "\n// ENCORE_PS5_CACHE_DIAG_END\n")
-if git_blob(source) == REVIEWED_DRIVER_HEADER_BLOB:
+if raw_blob in {
+        REVIEWED_DRIVER_HEADER_BLOB,
+        REVIEWED_CACHE_VERSION_20_BLOB,
+        REVIEWED_CACHE_VERSION_21_BLOB,
+}:
+    driver_source = source
+    if raw_blob == REVIEWED_CACHE_VERSION_21_BLOB:
+        assert driver_source.count("constexpr u32 CACHE_VERSION = 21;") == 1
+        driver_source = driver_source.replace(
+            "constexpr u32 CACHE_VERSION = 21;",
+            "constexpr u32 CACHE_VERSION = 19;", 1)
+    elif raw_blob == REVIEWED_CACHE_VERSION_20_BLOB:
+        assert driver_source.count("constexpr u32 CACHE_VERSION = 20;") == 1
+        driver_source = driver_source.replace(
+            "constexpr u32 CACHE_VERSION = 20;",
+            "constexpr u32 CACHE_VERSION = 19;", 1)
+    assert git_blob(driver_source) == REVIEWED_DRIVER_HEADER_BLOB
     assert len(DRIVER_HEADER_REVERSES) == 5
     for successor, predecessor in DRIVER_HEADER_REVERSES:
-        assert source.count(successor) == 1
-        rejects(source.replace(successor, predecessor, 1))
-    assert "NativeDriverCacheHeaderMatches" in source
-    assert "kNativeDriverCacheStagingLimit" in source
+        assert driver_source.count(successor) == 1
+        rejects(driver_source.replace(successor, predecessor, 1))
+    assert "NativeDriverCacheHeaderMatches" in driver_source
+    assert "kNativeDriverCacheStagingLimit" in driver_source
 
 # Review the engine preflight integration itself: vendor must be normalized
 # only after the raw owner has passed the pin, before comparison to the

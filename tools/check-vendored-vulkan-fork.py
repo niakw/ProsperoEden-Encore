@@ -102,6 +102,64 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         print("ENCORE_R457_MSAA_HANDLE_EXACT_RECEIPT_PASS")
     else:
         assert raster_sha == '5b04321fa45d6b5e6af1d4b17bcf695348d0dd90', raster_sha
+    # FC27 dynamic-texture/static-sampler repair changes one descriptor
+    # offset in the selected graphics pipeline owner. Vendor's focused test
+    # proves the exact source successor and its cache-version pair. Reverse
+    # only that reviewed line in the audit copy before the frozen R23/P24
+    # comparisons; the compiled vendor source remains unchanged.
+    graphics_owner = 'vk_graphics_pipeline_cost.cpp'
+    graphics_source = expected[graphics_owner].read_text()
+    graphics_sha = raster_blob(graphics_source)
+    if graphics_sha == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba':
+        fixed_sampler = 'const u32 second_offset{desc.secondary_cbuf_offset};'
+        indexed_sampler = 'const u32 second_offset{desc.secondary_cbuf_offset + index_offset};'
+        assert graphics_source.count(fixed_sampler) == 1 and indexed_sampler not in graphics_source
+        historical_graphics = graphics_source.replace(fixed_sampler, indexed_sampler, 1)
+        assert raster_blob(historical_graphics) == 'd7563d41b74d780f4512899e2fda1b2f362f5523'
+        audit_graphics = temp/'normalized-vendor-fc27-static-sampler'/graphics_owner
+        audit_graphics.parent.mkdir(parents=True, exist_ok=True)
+        audit_graphics.write_text(historical_graphics)
+        expected[graphics_owner] = audit_graphics
+        print("ENCORE_FC27_STATIC_SAMPLER_EXACT_RECEIPT_PASS")
+    else:
+        assert graphics_sha == 'd7563d41b74d780f4512899e2fda1b2f362f5523', graphics_sha
+    # The compute owner carries the same fixed-secondary-sampler rule, but it
+    # is outside the R23/P24 owner set. Require the exact shipping successor,
+    # then normalize its sole reviewed line in the audit copy.
+    compute_owner = 'vk_compute_pipeline_cost.cpp'
+    compute_source = expected[compute_owner].read_text()
+    compute_sha = raster_blob(compute_source)
+    if compute_sha == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2':
+        fixed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset};'
+        indexed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset + index_offset};'
+        assert compute_source.count(fixed_compute) == 1 and indexed_compute not in compute_source
+        historical_compute = compute_source.replace(fixed_compute, indexed_compute, 1)
+        assert raster_blob(historical_compute) == '53a545c32a034cfdd3421f381f354a28b306c259'
+        audit_compute = temp/'normalized-vendor-fc27-static-sampler'/compute_owner
+        audit_compute.parent.mkdir(parents=True, exist_ok=True)
+        audit_compute.write_text(historical_compute)
+        expected[compute_owner] = audit_compute
+        print("ENCORE_FC27_STATIC_SAMPLER_COMPUTE_EXACT_RECEIPT_PASS")
+    else:
+        assert compute_sha == '53a545c32a034cfdd3421f381f354a28b306c259', compute_sha
+    # Shader IR successors #142/#145 deliberately advance the persistent
+    # Vulkan cache ABI 19 -> 20 -> 21. Historical R23/P24 receipts predate
+    # both changes, so normalize only this exact constant in the audit copy.
+    cache_owner = 'vk_pipeline_cache_cost.cpp'
+    cache_source = expected[cache_owner].read_text()
+    cache_sha = raster_blob(cache_source)
+    if cache_sha == 'be5d48abd44996502b0829a6e0501d130a151455':
+        assert cache_source.count('constexpr u32 CACHE_VERSION = 21;') == 1
+        historical_cache = cache_source.replace('constexpr u32 CACHE_VERSION = 21;',
+                                                'constexpr u32 CACHE_VERSION = 19;', 1)
+        assert raster_blob(historical_cache) == '6efe1b10862135056c1df1b78007a1c9cb5a9610'
+        audit_cache = temp/'normalized-vendor-fc27-static-sampler'/cache_owner
+        audit_cache.parent.mkdir(parents=True, exist_ok=True)
+        audit_cache.write_text(historical_cache)
+        expected[cache_owner] = audit_cache
+        print("ENCORE_FC27_CACHE_VERSION_EXACT_RECEIPT_PASS version=21 historical=19")
+    else:
+        assert cache_sha == '6efe1b10862135056c1df1b78007a1c9cb5a9610', cache_sha
     # Two intentional native-only sources are not generator outputs:
     # a synchronization helper and the F07 Vulkan allocator OOM diagnostics.
     # All generated Vulkan translation units still remain byte-identical.
@@ -1075,7 +1133,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         baseline=reverse_p24(
             name,
             reverse_r23(name, normalized_expected.get(name, expected[name]).read_text(),
-                        verify_hash=False),
+                verify_hash=False),
             verify_hash=False)
         path=temp/'normalized-vendor-p24'/name
         path.parent.mkdir(parents=True,exist_ok=True)
@@ -1203,6 +1261,18 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     g07_previous = "        if (!pipeline) return false;"
     g07_current = "        // A successful native QMD3 dispatch must have both the Vulkan\n        // pipeline layout and every required descriptor-set layout. The\n        // recorded lambda would otherwise silently skip descriptor binding\n        // while the renderer could still mark guest SSBOs as GPU-written.\n        // Empty shaders are allowed to omit a descriptor-set layout.\n        if (!pipeline || !pipeline_layout ||\n            (num_descriptor_entries && !descriptor_set_layout))\n            return false;"
     active_compute = expected[compute_name].read_text()
+    # Same reviewed FC27 fixed-sampler repair as the graphics owner above.
+    # Normalize its exact current blob to the prior G07-qualified owner first.
+    compute_sha = raster_blob(active_compute)
+    if compute_sha == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2':
+        fixed_sampler = 'const u32 secondary_offset{desc.secondary_cbuf_offset};'
+        indexed_sampler = 'const u32 secondary_offset{desc.secondary_cbuf_offset + index_offset};'
+        assert active_compute.count(fixed_sampler) == 1 and indexed_sampler not in active_compute
+        active_compute = active_compute.replace(fixed_sampler, indexed_sampler, 1)
+        assert raster_blob(active_compute) == '53a545c32a034cfdd3421f381f354a28b306c259'
+        print("ENCORE_FC27_COMPUTE_STATIC_SAMPLER_EXACT_RECEIPT_PASS")
+    else:
+        assert compute_sha == '53a545c32a034cfdd3421f381f354a28b306c259', compute_sha
     assert active_compute.count(g07_current) == 1, (
         'G07 native compute pipeline-layout fail-closed hunk drift')
     historical_compute = active_compute.replace(g07_current, g07_previous, 1)

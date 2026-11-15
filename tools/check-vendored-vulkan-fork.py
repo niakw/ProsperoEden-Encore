@@ -970,7 +970,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert name in expected and name in actual, (
             'missing Task/Mesh Vulkan source', name)
         try:
-            reverse_p24(name, reverse_r23(name, reverse_fc27_post_r23(name, expected[name].read_text())))
+            reverse_p24(name, reverse_r23(name, expected[name].read_text()))
         except AssertionError as exc:
             maintained_errors.append({'path': name, 'error': str(exc)})
     if maintained_errors:
@@ -997,7 +997,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from generator')
     # First reverse the exact P24 hunks on raw vendor, then N56: both
     # independent receipts must remain valid without conflating their SHAs.
-    n3m_pre_mesh = reverse_p24(n56_name, reverse_r23(n56_name, reverse_fc27_post_r23(n56_name, n56_current)))
+    n3m_pre_mesh = reverse_p24(n56_name, reverse_r23(n56_name, n56_current))
     assert n3m_pre_mesh.count(n56_after) == 1
     n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
     assert generated_n3m == n3m_pre_mesh, (
@@ -1111,11 +1111,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         # exact merged source SHA and runtime semantic invariants. The
         # 2026-10 P24 reverse-hunk recipe is not applicable to those files.
         # Reconstruct original exact R23 baseline before applying P24 proof.
-        reverse_p24(name, reverse_r23(name, reverse_fc27_post_r23(name, expected[name].read_text())))
+        reverse_p24(name, reverse_r23(name, expected[name].read_text()))
         baseline=reverse_p24(
             name,
-            reverse_r23(name, reverse_fc27_post_r23(
-                name, normalized_expected.get(name, expected[name]).read_text(), verify_hash=False),
+            reverse_r23(name, normalized_expected.get(name, expected[name]).read_text(),
                 verify_hash=False),
             verify_hash=False)
         path=temp/'normalized-vendor-p24'/name

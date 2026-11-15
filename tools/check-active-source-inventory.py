@@ -554,16 +554,20 @@ assert (root / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
 print("ENCORE_POST_F07_AMPERE_SEMAPHORE_OWNER_PASS",
       f"owners={len(post_f07_ampere_semaphore_owners)}")
 
-# P2.7: these four isolated native GPFIFO ownership files were added
-# after the frozen F07 source audit. The legacy NS1 DMA and scheduler
-# source remains immutable. Verify the production source selector rather
-# than quietly counting new NS2 files as historical F07 work.
+# P2.7: the three suspend/resume owners exist across the reviewed native
+# GPFIFO vendor lineage. The NVK/M2MF channel-state override was added only
+# by vendor 697159fd; historical pair gates intentionally checkout older
+# vendors and must not pretend that later owner existed there.
 post_f07_native_gpfifo_owners = {
     "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h",
     "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp",
     "ns2-runtime/gpu_dispatch/video_core/control/scheduler.h",
-    "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp",
 }
+native_m2mf_channel_state = "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
+native_gpfifo_vendor_pin = subprocess.check_output(
+    ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+if native_gpfifo_vendor_pin == "697159fd0c183f8a164d0493929ae3b4bcb391d1":
+    post_f07_native_gpfifo_owners.add(native_m2mf_channel_state)
 assert post_f07_native_gpfifo_owners <= set(physical_all), (
     "Missing native GPFIFO suspend/resume owner",
     sorted(post_f07_native_gpfifo_owners - set(physical_all)))
@@ -572,18 +576,23 @@ native_gpfifo_cmake = (root / "headless/CMakeLists.txt").read_text()
 assert "EDEN_NS2_GPFIFO_SCHEDULER" in native_gpfifo_cmake
 assert 'list(REMOVE_ITEM eden_ns2_sched_sources "control/scheduler.cpp")' in native_gpfifo_cmake
 assert 'list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_SCHEDULER}")' in native_gpfifo_cmake
-assert 'list(REMOVE_ITEM eden_ns2_sched_sources "control/channel_state.cpp")' in native_gpfifo_cmake
-assert 'list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_CHANNEL_STATE}")' in native_gpfifo_cmake
-native_channel_state = (active / "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp").read_text()
-assert "constexpr u32 NvkM2mfSubchannel = 2;" in native_channel_state
-assert "payload.kepler_memory, NvkM2mfSubchannel" in native_channel_state
-assert "Engines::EngineTypes::KeplerMemory" in native_channel_state
 native_dma_header = (active / "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h").read_text()
 assert "command_resume_offset" in native_dma_header
 assert "#ifdef PS5_NATIVE" not in native_dma_header
 assert "ResumePendingNative" in (
     active / "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp").read_text()
-print("ENCORE_POST_F07_NATIVE_GPFIFO_OWNER_PASS", "owners=4 m2mf_default=1")
+if native_m2mf_channel_state in post_f07_native_gpfifo_owners:
+    assert 'list(REMOVE_ITEM eden_ns2_sched_sources "control/channel_state.cpp")' in native_gpfifo_cmake
+    assert 'list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_CHANNEL_STATE}")' in native_gpfifo_cmake
+    native_channel_state = (active / native_m2mf_channel_state).read_text()
+    assert "constexpr u32 NvkM2mfSubchannel = 2;" in native_channel_state
+    assert "payload.kepler_memory, NvkM2mfSubchannel" in native_channel_state
+    assert "Engines::EngineTypes::KeplerMemory" in native_channel_state
+else:
+    assert native_m2mf_channel_state not in set(physical_all)
+print("ENCORE_POST_F07_NATIVE_GPFIFO_OWNER_PASS",
+      f"owners={len(post_f07_native_gpfifo_owners)}",
+      f"m2mf_default={int(native_m2mf_channel_state in post_f07_native_gpfifo_owners)}")
 
 # The four merged feature PRs added sources after the frozen F07 snapshot.
 # They remain visible in a separate exact file ledger, not retroactively

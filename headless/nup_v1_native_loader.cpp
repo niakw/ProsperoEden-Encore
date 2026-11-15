@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdio>
 #include <optional>
 #include <span>
 #include <utility>
@@ -225,6 +226,35 @@ NupAppLoader::LoadResult NupAppLoader::Load(Kernel::KProcess& process,
     u64 program_id{};
     const auto status = ValidateProgramIdentity(program_id);
     if (status != Loader::ResultStatus::Success) return {status, {}};
+
+    // Record the exact package identity selected for guest execution. This is
+    // diagnostic only: selection already happened in ContentSet and the NPDM
+    // remains authoritative. It lets console reports distinguish an emulator
+    // fault from an old/mismatched dump without logging paths or user data.
+    const Package* base_package = nullptr;
+    const Package* update_package = nullptr;
+    for (const auto& package : mount_->Packages()) {
+        if (package.kind == 0 && package.title_id == program_id) {
+            base_package = &package;
+        } else if (package.kind == 1 &&
+                   FileSys::GetBaseTitleID(package.title_id) ==
+                       FileSys::GetBaseTitleID(program_id) &&
+                   (!update_package || package.version > update_package->version)) {
+            update_package = &package;
+        }
+    }
+    const Package* effective_package = update_package ? update_package : base_package;
+    if (effective_package) {
+        std::fprintf(stderr,
+            "EDEN_NUP_CONTENT_ID npdm=%016llX package=%016llX kind=%u version=%u"
+            " packages=%zu addons=%zu standalone=%u\n",
+            static_cast<unsigned long long>(program_id),
+            static_cast<unsigned long long>(effective_package->title_id),
+            static_cast<unsigned>(effective_package->kind),
+            static_cast<unsigned>(effective_package->version),
+            mount_->Packages().size(), content_->AddOns().size(),
+            static_cast<unsigned>(effective_package->standalone_update));
+    }
     auto result = extracted_loader_->Load(process, system);
     if (result.first == Loader::ResultStatus::Success) {
         PublishActiveAddOns(this, std::make_shared<AddOnIndex>(

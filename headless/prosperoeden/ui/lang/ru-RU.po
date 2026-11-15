@@ -2556,3 +2556,7 @@ msgstr "Необязательные отчёты о сбоях и ошибка�
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Очищает только кэш шейдеров. Сохранения, настройки, ключи и игры остаются."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA многократно сэмплирует края геометрии. Более высокие значения улучшают качество краёв, но увеличивают расход пропускной способности GPU и памяти; режимы 8x и 16x очень требовательны на PS5."

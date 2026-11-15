@@ -241,6 +241,18 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     }
 
     RenderScreenshot(framebuffers);
+#ifdef PS5_NATIVE
+    // Retire only after the final loading copy's exact scheduler tick is
+    // complete. No WaitIdle / Finish in normal gameplay; otherwise retain
+    // the allocation through the existing drained renderer destruction.
+    if (!framebuffers.empty() && loading_artwork_buffer && loading_artwork_tick &&
+        loading_artwork_tick != std::numeric_limits<u64>::max() &&
+        scheduler.IsFree(loading_artwork_tick)) {
+        loading_artwork_buffer = {};
+        loading_artwork_unavailable = true;
+        loading_artwork_tick = 0;
+    }
+#endif
     // An observed source/composite callback is not an emulated guest FPS
     // measurement. Loading/splash work is accounted separately below.
     ::Eden::FrameMetrics::OnSourceComposite();
@@ -260,8 +272,9 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     const bool mihawk_selected = native_fg_method == 1 && !framebuffers.empty();
     const bool postprocess_hud_required =
         (native_fg_method >= 1 && native_fg_method <= 3) && !framebuffers.empty();
-    const Eden::HudSnapshot postprocess_hud =
+    Eden::HudSnapshot postprocess_hud =
         postprocess_hud_required ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
+    if (postprocess_hud.loading) postprocess_hud = {};
     scheduler.RequestOutsideRenderPassOperationContext();
     blit_swapchain.DrawToFrame(device, rasterizer, frame, framebuffers,
                                render_window.GetFramebufferLayout(), present_manager.SwapchainImageCount(),
@@ -681,9 +694,13 @@ void RendererVulkan::PresentLoading() {
                                            frame->height * 4;
                 const VkBufferCreateInfo info{
                     .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+                    .pNext = nullptr,
+                    .flags = 0,
                     .size = bytes,
                     .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                     .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                    .queueFamilyIndexCount = 0,
+                    .pQueueFamilyIndices = nullptr,
                 };
                 auto buffer = memory_allocator.CreateBuffer(info, MemoryUsage::Upload);
                 auto mapped = buffer.Mapped();
@@ -780,7 +797,17 @@ void RendererVulkan::PresentLoading() {
         blit_swapchain.DrawHudOverlay(device, frame, live_loading);
     }
 #endif
+#ifdef PS5_NATIVE
+    const u64 tick = scheduler.Flush(*frame->render_ready);
+    if (has_artwork) {
+        if (tick && tick > loading_artwork_tick)
+            loading_artwork_tick = tick;
+        else
+            loading_artwork_tick = std::numeric_limits<u64>::max();
+    }
+#else
     scheduler.Flush(*frame->render_ready);
+#endif
     present_manager.Present(frame);
     ::Eden::FrameMetrics::OnLoadingQueued();
 }

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <utility>
 
-extern "C" int eden_restart_app(void);
+extern "C" int eden_exit_app(void);
 extern "C" int sceKernelDebugOutText(int, const char*);
 
 namespace Eden::StopLimit {
@@ -29,8 +29,8 @@ State& state() {
     return *instance;
 }
 
-void restart_now() noexcept {
-    sceKernelDebugOutText(0, "[Eden 0.40 Improved] game stop exceeded 10s; restarting launcher\n");
+void exit_now() noexcept {
+    sceKernelDebugOutText(0, "[Eden 0.40 Improved] game stop exceeded 10s; exiting app without automatic restart\n");
     const std::string& note = state().note;
     if (!note.empty()) {
         const int fd = open(note.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
@@ -39,7 +39,7 @@ void restart_now() noexcept {
             close(fd);
         }
     }
-    (void)eden_restart_app();
+    (void)eden_exit_app();
 }
 
 void watch() {
@@ -54,7 +54,7 @@ void watch() {
             continue;
         s.armed = false;
         lock.unlock();
-        restart_now();
+        exit_now();
         lock.lock();
     }
 }

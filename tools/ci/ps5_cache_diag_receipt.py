@@ -15,6 +15,8 @@ OWNER = "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
 ORIGINAL_BLOB = "6efe1b10862135056c1df1b78007a1c9cb5a9610"
 REVIEWED_DIAGNOSTIC_BLOB = "c79131ffafce0e2b33213051ae7a028c3c4ff33d"
 REVIEWED_DRIVER_HEADER_BLOB = "c7e3ca901ea7ab82ec679c23cf43a1c556ac7e41"
+REVIEWED_CACHE_VERSION_20_BLOB = "36aae4b17ef8e9681f62fabdd4cf37f09d0beefb"
+REVIEWED_CACHE_VERSION_21_BLOB = "be5d48abd44996502b0829a6e0501d130a151455"
 # Exact five reviewed #115 diff hunks, inverted ONLY for source comparison.
 # Both raw source hashes must match; actual build uses the new vendor file.
 DRIVER_HEADER_REVERSES = [
@@ -61,6 +63,23 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    # FC27 shader-IR changes deliberately invalidate the persistent cache.
+    # Vendor's own frozen-R23 receipt proves these exact successors differ
+    # from the reviewed driver-header owner only by CACHE_VERSION 19 -> 20/21.
+    # Normalize only that one reviewed line in memory before the existing
+    # driver-header and diagnostic reversals; production source is untouched.
+    if current == REVIEWED_CACHE_VERSION_21_BLOB:
+        assert source.count("constexpr u32 CACHE_VERSION = 21;") == 1
+        source = source.replace("constexpr u32 CACHE_VERSION = 21;",
+                                "constexpr u32 CACHE_VERSION = 19;", 1)
+        current = git_blob(source)
+        assert current == REVIEWED_DRIVER_HEADER_BLOB, "Cache v21 predecessor drift"
+    elif current == REVIEWED_CACHE_VERSION_20_BLOB:
+        assert source.count("constexpr u32 CACHE_VERSION = 20;") == 1
+        source = source.replace("constexpr u32 CACHE_VERSION = 20;",
+                                "constexpr u32 CACHE_VERSION = 19;", 1)
+        current = git_blob(source)
+        assert current == REVIEWED_DRIVER_HEADER_BLOB, "Cache v20 predecessor drift"
     if current == REVIEWED_DRIVER_HEADER_BLOB:
         for successor, predecessor in DRIVER_HEADER_REVERSES:
             assert source.count(successor) == 1, "Driver cache header hunk drift"

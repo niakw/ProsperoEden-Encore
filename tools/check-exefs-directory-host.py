@@ -89,7 +89,9 @@ assert 'status=measured bytes=%llu' in library
 # during the shallow Home scan instead of waiting for focus/network enrichment.
 assert 'for (const char* base : {"control", "base/control"})' in library
 assert 'std::string("icon_") + language + ".dat"' in library
-assert 'locale == "fr-CA"' in library and 'locale == "en-GB"' in library
+assert 'case 1: preferred = "BritishEnglish"' in library
+assert 'case 2: preferred = "French"' in library
+assert 'case 3: preferred = "CanadianFrench"' in library
 assert 'ExtractedLocalCover(entry.path(), language_choice)' in library
 assert 'recent.tile_icon = local_icon;' in library
 assert 'Eden::IsDeconstructedGameSelection(name)' in library

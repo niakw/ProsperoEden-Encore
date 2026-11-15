@@ -111,6 +111,9 @@ assert 'case 16: value = std::to_string(prefs_.panel_opacity)+"%";' in switch_di
 assert 'case 19: value = prefs_.show_game_background?' in switch_dialog
 print("R457_SETTINGS_GUIDE_SOURCE_PASS")
 
+library=(root/"headless/prosperoeden/pe/ui/library.cpp").read_text()
+game=library.split("void Launcher::draw_game(",1)[1].split("// ---------------------------------------------------------------- a game's mods",1)[0]
+
 # The user's tested 20ec9a build returned bare "MSAA 2x/4x/8x/16x"
 # as help text. Current guidance must stay explanatory in all three settings
 # surfaces (classic global, Switch global and per-game).
@@ -129,8 +132,6 @@ print("R457_SETTINGS_MSAA_GUIDANCE_PASS descriptive=1 three_surfaces=1")
 
 
 # R457: per-title row descriptions must not depend on an empty success toast.
-library=(root/"headless/prosperoeden/pe/ui/library.cpp").read_text()
-game=library.split("void Launcher::draw_game(",1)[1].split("// ---------------------------------------------------------------- a game's mods",1)[0]
 assert "const bool compact_game_success = !message_.empty() && !message_warning_ &&" in game
 assert "option_ >= row_mode && option_ < row_controls;" in game
 assert "if (!message_.empty() && !compact_game_success)" in game

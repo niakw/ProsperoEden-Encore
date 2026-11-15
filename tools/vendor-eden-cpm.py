@@ -169,10 +169,9 @@ def check():
    reviewed=SECURITY_CPM_DELTAS.get(name)
    approved = (reviewed is not None and expected == reviewed[0] and
                (observed == reviewed[1] or
-                (name == 'boost' and observed in {
-                    BOOST_DOCS_DEPENDABOT_DELTA,
-                    BOOST_DOCS_DETERMINISTIC_OVERRIDE_DELTA,
-                })))
+                (name == 'boost' and
+                 (observed == BOOST_DOCS_DEPENDABOT_DELTA or
+                  observed == BOOST_DOCS_DETERMINISTIC_OVERRIDE_DELTA))))
    if approved:
     security_verified.add(name)
     print('CPM_SECURITY_DELTA_EXACT_PASS',name,'original_snapshot_preserved=1',flush=True)

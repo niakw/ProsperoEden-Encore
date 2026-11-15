@@ -40,18 +40,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # depending on a nondeterministic host glslangValidator version in CI.
     expected_shaders={
         'vert':'b7efb0f17a2cfb2ac044d0d678dfd7f970323deef86c10d25dde8ed723ef0290',
-        'frag':'3f5287326b7554164449f5f849f46aae3d2f69ff3a0b4c5c822055bd1877c6d6',
+        'frag':'cec9e8b4323c573b5cb7ca17fe4f6831163df43be94602c781f8d0f82cf3d9df',
     }
     for stage, digest in expected_shaders.items():
         source=root/'headless'/f'vulkan_hud.{stage}'
         assert hashlib.sha256(source.read_bytes()).hexdigest()==digest,source
         assert (active/f'vulkan_hud.{stage}.spv').is_file()
-    # The reviewed 2026-11-08 palette/contrast shader source must match
-    # its real glslang-compiled, spirv-val-checked Vulkan 1.1 artifact.
-    # A source-only pin is insufficient: the old 2026-10-30 SPIR-V was stale.
+    # The vendored oracle SPIR-V stays immutable for historical Vulkan-fork
+    # reproduction. The native Encore renderer no longer consumes this fragment
+    # after the Montserrat quick-menu change: headless/vulkan.cmake generates
+    # eden_vulkan_hud_shaders.h from the maintained GLSL and validates it with
+    # spirv-val. Keep the old oracle binary pinned instead of pretending it
+    # corresponds to the new maintained fragment source.
     assert hashlib.sha256((active/'vulkan_hud.frag.spv').read_bytes()).hexdigest()==(
         '029a4bb7c594cc3beadefc731a67768e9f80987ae10a2cb20a5a197a8ebea10b'
-    ), 'Vulkan HUD SPIR-V has drifted from the validated palette shader'
+    ), 'Historical Vulkan HUD oracle SPIR-V drifted'
     env=os.environ.copy()
     env['EDEN_VULKAN_ORACLE_SPV_DIR']=str(active)
     oracle_script=(root/'tools/prepare-vulkan-port.py').read_text()

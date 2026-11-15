@@ -929,25 +929,29 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
              'CanExecuteRecordedDraw()', 'DrawMeshTasksEXT'),
     }
     assert set(r23_combined_owners) <= set(p24_by_path)
-    def reverse_fc27_post_r23(name, text):
+    def reverse_fc27_post_r23(name, text, verify_hash=True):
         # Vendor #145 changes only the secondary sampler address after the
         # frozen R23 receipt; vendor #142 and #145 advance cache 19 -> 20 -> 21.
         # Reconstruct those reviewed predecessors exactly instead of restamping.
         if name == 'vk_graphics_pipeline_cost.cpp':
-            assert git_blob_sha(text) == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba', (
-                'FC27 fixed-sampler graphics owner drift', name)
+            if verify_hash:
+                assert git_blob_sha(text) == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba', (
+                    'FC27 fixed-sampler graphics owner drift', name)
             fixed = 'const u32 second_offset{desc.secondary_cbuf_offset};'
             indexed = 'const u32 second_offset{desc.secondary_cbuf_offset + index_offset};'
             assert text.count(fixed) == 1 and indexed not in text
             text = text.replace(fixed, indexed, 1)
-            assert git_blob_sha(text) == 'd7563d41b74d780f4512899e2fda1b2f362f5523'
+            if verify_hash:
+                assert git_blob_sha(text) == 'd7563d41b74d780f4512899e2fda1b2f362f5523'
         elif name == 'vk_pipeline_cache_cost.cpp':
-            assert git_blob_sha(text) == 'be5d48abd44996502b0829a6e0501d130a151455', (
-                'FC27 cache-version owner drift', name)
+            if verify_hash:
+                assert git_blob_sha(text) == 'be5d48abd44996502b0829a6e0501d130a151455', (
+                    'FC27 cache-version owner drift', name)
             assert text.count('constexpr u32 CACHE_VERSION = 21;') == 1
             text = text.replace('constexpr u32 CACHE_VERSION = 21;',
                                 'constexpr u32 CACHE_VERSION = 19;', 1)
-            assert git_blob_sha(text) == '6efe1b10862135056c1df1b78007a1c9cb5a9610'
+            if verify_hash:
+                assert git_blob_sha(text) == '6efe1b10862135056c1df1b78007a1c9cb5a9610'
         return text
 
     # Compute owns the same separate-sampler address rule but is outside the
@@ -1010,7 +1014,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Native Compute cache admission gate missing from generator')
     # First reverse the exact P24 hunks on raw vendor, then N56: both
     # independent receipts must remain valid without conflating their SHAs.
-    n3m_pre_mesh = reverse_p24(n56_name, reverse_r23(n56_name, n56_current))
+    n3m_pre_mesh = reverse_p24(n56_name, reverse_r23(n56_name, reverse_fc27_post_r23(n56_name, n56_current)))
     assert n3m_pre_mesh.count(n56_after) == 1
     n3m_pre_mesh = n3m_pre_mesh.replace(n56_after, n56_before)
     assert generated_n3m == n3m_pre_mesh, (
@@ -1124,11 +1128,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         # exact merged source SHA and runtime semantic invariants. The
         # 2026-10 P24 reverse-hunk recipe is not applicable to those files.
         # Reconstruct original exact R23 baseline before applying P24 proof.
-        reverse_p24(name, reverse_r23(name, expected[name].read_text()))
+        reverse_p24(name, reverse_r23(name, reverse_fc27_post_r23(name, expected[name].read_text())))
         baseline=reverse_p24(
             name,
-            reverse_r23(name, normalized_expected.get(name, expected[name]).read_text(),
-                        verify_hash=False),
+            reverse_r23(name, reverse_fc27_post_r23(
+                name, normalized_expected.get(name, expected[name]).read_text(), verify_hash=False),
+                verify_hash=False),
             verify_hash=False)
         path=temp/'normalized-vendor-p24'/name
         path.parent.mkdir(parents=True,exist_ok=True)

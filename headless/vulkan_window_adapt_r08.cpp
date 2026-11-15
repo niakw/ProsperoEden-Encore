@@ -131,7 +131,10 @@ void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, S
         layer_it++;
     }
 
-    const auto hud = draw_hud ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
+    auto hud = draw_hud ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
+    // PresentLoading is the only owner of the loading overlay. Never paint
+    // the neutral fallback over the first real composited guest image.
+    if (hud.loading && !configs.empty()) hud = {};
     const auto quick = draw_hud ? Eden::QuickOverlay::Snapshot() : Eden::QuickOverlay::Frame{};
     if ((hud.width || quick.visible) && !hud_pipeline) {
         const VkPushConstantRange range{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(hud)};

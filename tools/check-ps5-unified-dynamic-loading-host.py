@@ -18,6 +18,7 @@ graphics = (root / "headless/graphics.cpp").read_text()
 frontend = (root / "headless/prosperoeden/frontend.cpp").read_text()
 display_h = (root / "headless/prosperoeden/pe/platform/display_egl.hpp").read_text()
 display = (root / "headless/prosperoeden/pe/platform/display_egl.cpp").read_text()
+handoff = (root / "headless/launch_handoff.hpp").read_text()
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text()
 native_cmake = (root / "headless/CMakeLists.txt").read_text()
 
@@ -36,7 +37,8 @@ for source in (frontend, graphics, display):
 assert "color = vec4(loading_scene(" in shader
 
 assert "bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion)" in frontend
-assert "const float seconds = reduce_motion ? 1001.0f : 1.0f;" in frontend
+assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in frontend
+assert "Eden::LaunchHandoff::BeginLoading();" in frontend
 assert "PresentUnifiedLoading(display, reduce_motion)" in frontend
 assert "display.defer_scanout_close(reduce_motion)" in frontend
 assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(
@@ -50,8 +52,7 @@ assert "EGLContext deferred_context = EGL_NO_CONTEXT;" in display
 loop = display.split("void deferred_loading_loop(", 1)[1].split("\n}", 1)[0]
 assert "eglMakeCurrent(display, surface, surface, context)" in loop
 assert "create_loading_program()" in loop
-assert "const float base_seconds = reduce_motion ? 1001.0f : 1.0f;" in loop
-assert "base_seconds + elapsed" in loop
+assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in loop
 assert "while (!stop.stop_requested())" in loop
 assert "eglSwapBuffers(display, surface)" in loop
 assert "glViewport(0, 0, width, height)" in loop
@@ -115,10 +116,13 @@ handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
 )[0]
 assert handover.index("close_deferred_scanout()") < handover.index("CreateSurface(")
 
-assert "now - loading_start + 1.0 + LoadingCalm()" in graphics
-assert "MakeLoadingSnapshot(1.0 + LoadingCalm())" in graphics
+assert "LaunchHandoff::LoadingSeconds(LoadingCalm())" in graphics
+assert "inline void BeginLoading() noexcept" in handoff
+assert "inline void EndLoading() noexcept" in handoff
+assert "inline double LoadingSeconds(double calm_offset = 0.0) noexcept" in handoff
+assert "loading_started_ns" in handoff
 assert hashlib.sha256(shader.encode()).hexdigest() == (
     "3f5287326b7554164449f5f849f46aae3d2f69ff3a0b4c5c822055bd1877c6d6"
 )
 
-print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_scene=1 animated_system_load=1 single_videoout_owner=1 console_pending=1")
+print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_scene=1 shared_epoch=1 animated_system_load=1 single_videoout_owner=1 console_pending=1")

@@ -79,6 +79,16 @@ assert len("JEU GRAPH PAD DIAG MULTI") <= 24
 assert len("EDEN ENCORE / PAD FERMER") <= 24
 assert 'line("EDEN ENCORE / PAD FERMER", kRow);' in menu
 
+# Home must expose every other category as a selectable row, even if the
+# user never presses a shoulder button. Circle returns to that home row.
+for row, label in enumerate(("GRAPHISMES >", "COMMANDES >", "DIAGNOSTICS >", "MULTIJOUEUR >"), 4):
+    assert f'case {row}: return "{label}";' in menu
+assert "tab == 0 ? kHomeRows" in menu
+assert "HomeCategoryTab(selected)" in menu
+assert "selected = kHomeActionRows + previous - 1;" in menu
+assert "X OUVRIR / O FERMER" in menu and "X CHANGER / O RETOUR" in menu
+assert "kHomeRows <= kVisibleRows" in menu
+
 
 # Settings are saved for this title; only FPS and detailed logs update live.
 assert "SaveGameSettings(title_id, game)" in menu
@@ -123,6 +133,14 @@ with tempfile.TemporaryDirectory() as directory:
 using namespace Eden::QuickOverlay;
 int main() {
     static_assert(sizeof(Eden::HudSnapshot) == 112);
+    static_assert(kHomeRows == 8 && kOverlayTabs == 5);
+    static_assert(HomeCategoryTab(-1) == 0 && HomeCategoryTab(8) == 0);
+    for (int row = 0; row < kHomeActionRows; ++row)
+        assert(HomeCategoryTab(row) == 0);
+    for (int tab = 1; tab < kOverlayTabs; ++tab) {
+        const int row = kHomeActionRows + tab - 1;
+        assert(HomeCategoryTab(row) == tab);
+    }
     static_assert(std::is_trivially_copyable_v<Frame>);
     Frame visible{};
     visible.visible = true;
@@ -156,3 +174,79 @@ int main() {
                     "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True)
 print("OVERLAY_MENU_TEXT_MODEL_HOST_PASS utf8_boundary=1 immutable=1 legacy_abi=112 montserrat_codepoints=1")
+
+
+# Compile the actual Menu::Handle body and Count() into a controlled host
+# harness. Persistence/render calls are spies: the test exercises navigation
+# logic without writing real user configuration or starting a GPU.
+handle = menu.split("    Outcome Handle(std::uint32_t actions) {", 1)[1].split("\nprivate:", 1)[0]
+count = menu.split("    int Count() const {", 1)[1].split("\n    }", 1)[0]
+with tempfile.TemporaryDirectory() as directory:
+    source = Path(directory) / "overlay_navigation.cpp"
+    binary = Path(directory) / "overlay_navigation"
+    source.write_text(r'''
+#include "in_game_overlay.h"
+#include <cassert>
+#include <string>
+namespace Eden::QuickOverlay {
+struct MenuProbe {
+    enum class Outcome { none, close, library, multiplayer };
+    bool visible = true;
+    bool multiplayer_confirm = false;
+    int tab = 0;
+    int selected = 0;
+    int writes = 0;
+    std::string notice;
+    static constexpr int kGraphicsRows = 12;
+    static constexpr int kMappingRows = 12;
+    void Show(bool next) { visible = next; }
+    void Rebuild() {}
+    void ToggleFps() { ++writes; }
+    void ToggleLogs() { ++writes; }
+    void EditGraphics(int) { ++writes; }
+    void EditMapping(int) { ++writes; }
+    int Count() const {''' + count + r'''
+    }
+    Outcome Handle(std::uint32_t actions) {''' + handle + r'''
+};
+} // namespace Eden::QuickOverlay
+int main() {
+    using namespace Eden::QuickOverlay;
+    using O = MenuProbe::Outcome;
+    for (int target = 1; target < kOverlayTabs; ++target) {
+        MenuProbe probe;
+        const int row = kHomeActionRows + target - 1;
+        for (int i = 0; i < row; ++i)
+            assert(probe.Handle(down) == O::none);
+        assert(probe.selected == row);
+        assert(probe.Handle(Eden::QuickOverlay::select) == O::none);
+        assert(probe.tab == target && probe.selected == 0 && probe.writes == 0);
+        assert(probe.Handle(back) == O::none);
+        assert(probe.visible && probe.tab == 0 && probe.selected == row && probe.writes == 0);
+        assert(probe.Handle(back) == O::close && !probe.visible);
+    }
+    MenuProbe shoulder;
+    assert(shoulder.Handle(next_tab) == O::none && shoulder.tab == 1);
+    assert(shoulder.Handle(previous_tab) == O::none && shoulder.tab == 0);
+    assert(shoulder.Handle(previous_tab) == O::none && shoulder.tab == 4);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::none && shoulder.multiplayer_confirm);
+    assert(shoulder.Handle(back) == O::none && !shoulder.multiplayer_confirm);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::none && shoulder.tab == 4);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::none && shoulder.multiplayer_confirm);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::multiplayer && !shoulder.visible);
+    MenuProbe old_actions;
+    assert(old_actions.Handle(down) == O::none);
+    assert(old_actions.Handle(Eden::QuickOverlay::select) == O::none && old_actions.writes == 1);
+    assert(old_actions.Handle(down) == O::none);
+    assert(old_actions.Handle(Eden::QuickOverlay::select) == O::none && old_actions.writes == 2);
+    assert(old_actions.Handle(down) == O::none);
+    assert(old_actions.Handle(Eden::QuickOverlay::select) == O::library && !old_actions.visible);
+    MenuProbe resume;
+    assert(resume.Handle(Eden::QuickOverlay::select) == O::close && !resume.visible);
+}
+''', encoding="utf-8")
+    subprocess.run(["c++", "-std=c++20", "-O2", "-Wall", "-Wextra", "-Werror",
+                    "-pedantic", "-pthread", "-I", str(root / "headless"),
+                    str(source), "-o", str(binary)], check=True)
+    subprocess.run([str(binary)], check=True)
+print("OVERLAY_DIRECT_CATEGORY_NAVIGATION_HOST_PASS all_pages=4 home_return=1 shoulder=1 legacy_actions=1 multiplayer_confirm=1")

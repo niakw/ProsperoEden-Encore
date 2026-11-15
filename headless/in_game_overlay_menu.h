@@ -39,16 +39,24 @@ public:
     Outcome Handle(std::uint32_t actions) {
         if (!visible || actions == 0) return Outcome::none;
         if (actions & back) {
+            if (tab != 0) {
+                const int previous = tab;
+                tab = 0;
+                selected = kHomeActionRows + previous - 1;
+                multiplayer_confirm = false;
+                Rebuild();
+                return Outcome::none;
+            }
             Show(false);
             return Outcome::close;
         }
         if (actions & previous_tab) {
-            tab = (tab + 4) % 5;
+            tab = (tab + kOverlayTabs - 1) % kOverlayTabs;
             multiplayer_confirm = false;
             selected = 0;
         }
         if (actions & next_tab) {
-            tab = (tab + 1) % 5;
+            tab = (tab + 1) % kOverlayTabs;
             multiplayer_confirm = false;
             selected = 0;
         }
@@ -61,6 +69,11 @@ public:
             if (actions & select) {
                 if (selected == 0) { Show(false); return Outcome::close; }
                 if (selected == 3) { Show(false); return Outcome::library; }
+                if (const int category = HomeCategoryTab(selected); category != 0) {
+                    tab = category;
+                    selected = 0;
+                    multiplayer_confirm = false;
+                }
             }
         } else if (tab == 1 && (direction || (actions & select))) {
             EditGraphics(direction ? direction : 1);
@@ -95,9 +108,10 @@ private:
     static constexpr int kGraphicsRows = 12;
     static constexpr int kMappingRows = kGameButtons;
     static constexpr int kVisibleRows = 8;
+    static_assert(kHomeRows <= kVisibleRows);
 
     int Count() const {
-        return tab == 0 ? 4 : tab == 1 ? kGraphicsRows : tab == 2 ? kMappingRows : tab == 3 ? 4 : 2;
+        return tab == 0 ? kHomeRows : tab == 1 ? kGraphicsRows : tab == 2 ? kMappingRows : tab == 3 ? 4 : 2;
     }
     static std::string Name(const char* const* keys, int count, int index) {
         return index >= 0 && index < count ? keys[index] : "AUTO";
@@ -141,6 +155,10 @@ private:
             case 1: return prefs.hud ? "AFFICHAGE FPS OUI" : "AFFICHAGE FPS NON";
             case 2: return prefs.detailed_logging ? "LOGS DETAILLES OUI" : "LOGS DETAILLES NON";
             case 3: return "RETOUR BIBLIOTHEQUE";
+            case 4: return "GRAPHISMES >";
+            case 5: return "COMMANDES >";
+            case 6: return "DIAGNOSTICS >";
+            case 7: return "MULTIJOUEUR >";
             }
         } else if (tab == 1) return GraphicsRow(row);
         else if (tab == 2) return MappingRow(row);
@@ -268,7 +286,7 @@ private:
             "L1 / JEU 1/5 / R1", "L1 / GRAPH 2/5 / R1",
             "L1 / PAD 3/5 / R1", "L1 / DIAG 4/5 / R1",
             "L1 / MULTI 5/5 / R1"};
-        static_assert(std::size(headings) == 5);
+        static_assert(std::size(headings) == kOverlayTabs);
         line(headings[tab], kSelectedRow);
         line("JEU GRAPH PAD DIAG MULTI", kRow);
         const int start = std::clamp(selected - 3, 0, std::max(0, Count() - kVisibleRows));
@@ -277,7 +295,8 @@ private:
             line(item < Count() ? Row(item) : "",
                  item == selected ? kSelectedRow : kRow);
         }
-        line("HAUT BAS  GAUCHE DROITE", kRow);
+        line(tab == 0 ? "X OUVRIR / O FERMER" :
+             tab == 4 ? "X OK / O RETOUR" : "X CHANGER / O RETOUR", kRow);
         line(tab == 4 && !multiplayer_confirm ? "SALON = FERMER LE JEU" : notice, kRow);
         // A persistent, visually distinct banner when a per-title change
         // needs a fresh game launch (never a full PS5/system restart).

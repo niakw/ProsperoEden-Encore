@@ -420,6 +420,8 @@ class Launcher
     std::future<std::string> selected_size_scan_; // exact extracted-folder size; never gates media
     std::uint64_t selected_size_scan_title_id_ = 0;
     std::string selected_size_scan_file_;
+    std::uint64_t selected_size_failed_title_id_ = 0; // suppress immediate retry until selection changes
+    std::string selected_size_failed_file_;
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
     float media_retry_timer_ = 0.0f; // only periodically poll for failed/late Nlib artwork
     bool games_loaded_ = false;

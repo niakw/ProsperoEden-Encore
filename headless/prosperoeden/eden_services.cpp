@@ -2298,11 +2298,11 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             continue;
         }
         char size[32]{};
-        // Upstream Eglantine/Lichii deliberately do NOT recursively total a loose
-        // ExeFS folder during discovery: that can walk tens of GiB before the
-        // first library snapshot is published. Keep discovery O(number of
-        // titles); the currently selected title may measure its folder later
-        // on the cancellable details worker.
+        // Eglantine 8e777214b0 removed recursive loose-dump sizing from discovery
+        // so the game list can appear without walking multi-GiB RomFS payloads;
+        // b2cf4cd821 later restores size only after the list is already shown.
+        // Keep Encore discovery O(number of titles); measure the selected title
+        // later on the cancellable details worker.
         const auto complete_base_size = deconstructed ?
             std::optional<std::uint64_t>{} :
             std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)};

@@ -22,6 +22,6 @@ jobs:
           set -eu
           selected="$(git rev-parse HEAD:vendor)"
           test "$selected" = "$(git -C vendor rev-parse HEAD)"
-          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = "1c40cc3b968c76fc505f5cea63218b93e89b4529"
+          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = "aa3ff8baf97f075d1adf44a9d19335c89403c8e1"
           python3 -B vendor/tests/native_msaa_attribute_handle_rebind_host.py
           echo "ENCORE_R457_MSAA_ENGINE_VENDOR_PAIR_PASS"

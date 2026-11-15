@@ -29,12 +29,12 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=0fc157b7ccef428e675ff945bc48eceb08fff607
+          expected=42459a7893c51a178ecd0c2f74f3951cc20fa12d
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
           test "$checked" = "$expected"
-          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = 1c40cc3b968c76fc505f5cea63218b93e89b4529
+          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = aa3ff8baf97f075d1adf44a9d19335c89403c8e1
           python3 -B vendor/tests/native_msaa_attribute_handle_rebind_host.py
           python3 -B vendor/tests/r457_native_emit_invalid_warning_host.py
           python3 -B vendor/tests/p0_guest_fault_context_source.py

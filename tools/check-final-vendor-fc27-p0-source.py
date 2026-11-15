@@ -23,6 +23,8 @@ for needle in (
     '"ir_opt/constant_propagation_pass.cpp"',
     'set(EDEN_FC27_SSA_SOURCE',
     'set(EDEN_FC27_SSBO_SOURCE',
+    'set(EDEN_G11_PROFILE normal)',
+    'arm_dynarmic_${bits}_${EDEN_G11_PLATFORM}_${EDEN_G11_PROFILE}.cpp',
     'target_include_directories(video_core BEFORE PRIVATE "${EDEN_SMALL_VECTOR_ROOT}")',
 ):
     assert needle in cmake,needle

@@ -79,6 +79,16 @@ assert len("JEU GRAPH PAD DIAG MULTI") <= 24
 assert len("EDEN ENCORE / PAD FERMER") <= 24
 assert 'line("EDEN ENCORE / PAD FERMER", kRow);' in menu
 
+# Home must expose every other category as a selectable row, even if the
+# user never presses a shoulder button. Circle returns to that home row.
+for row, label in enumerate(("GRAPHISMES >", "COMMANDES >", "DIAGNOSTICS >", "MULTIJOUEUR >"), 4):
+    assert f'case {row}: return "{label}";' in menu
+assert "tab == 0 ? kHomeRows" in menu
+assert "HomeCategoryTab(selected)" in menu
+assert "selected = kHomeActionRows + previous - 1;" in menu
+assert "X OUVRIR / O FERMER" in menu and "X CHANGER / O RETOUR" in menu
+assert "kHomeRows <= kVisibleRows" in menu
+
 
 # Settings are saved for this title; only FPS and detailed logs update live.
 assert "SaveGameSettings(title_id, game)" in menu
@@ -123,6 +133,14 @@ with tempfile.TemporaryDirectory() as directory:
 using namespace Eden::QuickOverlay;
 int main() {
     static_assert(sizeof(Eden::HudSnapshot) == 112);
+    static_assert(kHomeRows == 8 && kOverlayTabs == 5);
+    static_assert(HomeCategoryTab(-1) == 0 && HomeCategoryTab(8) == 0);
+    for (int row = 0; row < kHomeActionRows; ++row)
+        assert(HomeCategoryTab(row) == 0);
+    for (int tab = 1; tab < kOverlayTabs; ++tab) {
+        const int row = kHomeActionRows + tab - 1;
+        assert(HomeCategoryTab(row) == tab);
+    }
     static_assert(std::is_trivially_copyable_v<Frame>);
     Frame visible{};
     visible.visible = true;

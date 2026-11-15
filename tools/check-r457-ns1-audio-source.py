@@ -38,6 +38,7 @@ KNOWN_VENDOR_GRAPH = {
     "4572e581d011c444fd59428d5c042098f05dcfca": "same final reviewed graph + CPU6 A64 Bananza low-write diagnostic parity",
     "f7ee793f1ee1bb1c2b1a35f68073844163658262": "same reviewed graph + bounded FC27 NVDEC/VIC detailed-log witnesses",
     "3f019c64c2907ac3e84baa9b6200de8898f30636": "same reviewed graph + bounded detailed-only NS2 real-SVC witness",
+    "f0324324768bdc090a003079bbf121df862bc7f7": "same reviewed graph + bounded detailed-only NS2 GPFIFO pre-submit witness",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

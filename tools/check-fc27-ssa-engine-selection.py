@@ -14,7 +14,7 @@ def blob(path: Path) -> str:
 
 selected=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 gitlink=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
-assert selected==gitlink and selected in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3","6f4bb38594b273fe7cc4fba960dfe62cdb9f508e","4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636"},(selected,gitlink)
+assert selected==gitlink and selected in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3","6f4bb38594b273fe7cc4fba960dfe62cdb9f508e","4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636","f0324324768bdc090a003079bbf121df862bc7f7"},(selected,gitlink)
 
 active_header=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/basic_block.h"
 active_ssa=V/"encore-active/eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp"

@@ -1107,6 +1107,21 @@ else:
     assert not pair_present
 print("ENCORE_NOV15_VENDOR_PAIR_OWNER_RECEIPT_PASS", f"new_owners={len(pair_present)}", "hardware=unverified")
 
+drawtexture_receipts = {
+    "eden-vulkan/blit_image.cpp": "bbde031a184b93745fa0449aef74f351355fb70d",
+    "eden-vulkan/include/video_core/renderer_vulkan/blit_image.h":
+        "81eda086f50e04d3e1537aebff404a6097a07069",
+}
+drawtexture_present = set(drawtexture_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "42459a7893c51a178ecd0c2f74f3951cc20fa12d":
+    assert drawtexture_present == set(drawtexture_receipts)
+    for path, blob in drawtexture_receipts.items():
+        assert subprocess.check_output(
+            ["git", "hash-object", str(active / path)], text=True).strip() == blob, path
+else:
+    assert not drawtexture_present
+print("ENCORE_EDEN4559_POST_F07_OWNER_PASS", f"owners={len(drawtexture_present)}")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -1122,7 +1137,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

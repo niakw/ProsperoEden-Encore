@@ -97,11 +97,17 @@ inline void ReportLowGuestWrite(u64 address, std::size_t bytes, u64 value,
 } // namespace
 
 """
-LOW_WRITE_HOOK = re.compile(
-    r'^    if \(vaddr < 0x1000\) ReportLowGuestWrite\([^\n]+\n'
-    r'        Kernel::GetCurrentThread\(m_parent\.m_system\.Kernel\(\)\)'
-    r'\.GetThreadId\(\), m_parent\.m_core_index\);\n',
-    re.M,
+LOW_WRITE_HOOKS = (
+    ("    if (vaddr < 0x1000) ReportLowGuestWrite(vaddr, 1, u64(value), m_parent.m_jit->GetPC(),\n"
+     "        Kernel::GetCurrentThread(m_parent.m_system.Kernel()).GetThreadId(), m_parent.m_core_index);\n", 2),
+    ("    if (vaddr < 0x1000) ReportLowGuestWrite(vaddr, 2, u64(value), m_parent.m_jit->GetPC(),\n"
+     "        Kernel::GetCurrentThread(m_parent.m_system.Kernel()).GetThreadId(), m_parent.m_core_index);\n", 2),
+    ("    if (vaddr < 0x1000) ReportLowGuestWrite(vaddr, 4, u64(value), m_parent.m_jit->GetPC(),\n"
+     "        Kernel::GetCurrentThread(m_parent.m_system.Kernel()).GetThreadId(), m_parent.m_core_index);\n", 2),
+    ("    if (vaddr < 0x1000) ReportLowGuestWrite(vaddr, 8, value, m_parent.m_jit->GetPC(),\n"
+     "        Kernel::GetCurrentThread(m_parent.m_system.Kernel()).GetThreadId(), m_parent.m_core_index);\n", 2),
+    ("    if (vaddr < 0x1000) ReportLowGuestWrite(vaddr, 16, u64(value[0]), m_parent.m_jit->GetPC(),\n"
+     "        Kernel::GetCurrentThread(m_parent.m_system.Kernel()).GetThreadId(), m_parent.m_core_index);\n", 2),
 )
 
 def reverse_exact_low_write(source: str, *, required: bool, dev: bool) -> str:
@@ -111,11 +117,13 @@ def reverse_exact_low_write(source: str, *, required: bool, dev: bool) -> str:
         return source
     assert source.count("#include <atomic>\n") == 1, "low-write atomic include drift"
     assert source.count(LOW_WRITE_HELPER) == 1, "low-write helper drift"
-    hooks = list(LOW_WRITE_HOOK.finditer(source))
-    assert len(hooks) == 10, ("low-write hook count drift", len(hooks))
+    for hook, expected_count in LOW_WRITE_HOOKS:
+        assert source.count(hook) == expected_count, (
+            "low-write exact hook drift", hook.splitlines()[0], source.count(hook))
     source = source.replace("#include <atomic>\n", "", 1)
     source = source.replace(LOW_WRITE_HELPER, "", 1)
-    source = LOW_WRITE_HOOK.sub("", source)
+    for hook, expected_count in LOW_WRITE_HOOKS:
+        source = source.replace(hook, "", expected_count)
     # DEV G11 already needed KThread for Watch::Report before this diagnostic;
     # normal G11 gained it only in 891561d and must lose it in the preimage.
     if not dev:

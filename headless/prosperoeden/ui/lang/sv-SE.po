@@ -2556,3 +2556,7 @@ msgstr "Valfria krasch- och felrapporter. Aktiverar inte detaljerade loggar. Ing
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Rensar bara shadercachen. Sparfiler, inställningar, nycklar och spel behålls."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA samplar geometrikanter flera gånger. Högre värden förbättrar kantkvaliteten men ökar användningen av GPU-bandbredd och minne; 8x och 16x är krävande på PS5."

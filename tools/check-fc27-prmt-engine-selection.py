@@ -33,8 +33,12 @@ def section(name: str) -> str:
 
 rc=section("PRMT_rc")
 cr=section("PRMT_cr")
-assert "ThrowNotImplemented(Opcode::PRMT_rc)" not in rc
-assert "ThrowNotImplemented(Opcode::PRMT_cr)" not in cr
+assert rc.count("ThrowNotImplemented(Opcode::PRMT_rc)") == 1
+assert cr.count("ThrowNotImplemented(Opcode::PRMT_cr)") == 1
+assert rc.index("if (mode != 0)") < rc.index("ThrowNotImplemented(Opcode::PRMT_rc)")
+assert cr.index("if (mode != 0)") < cr.index("ThrowNotImplemented(Opcode::PRMT_cr)")
+assert rc.index("ThrowNotImplemented(Opcode::PRMT_rc)") < rc.index("const IR::U32 a{GetReg8(insn)};")
+assert cr.index("ThrowNotImplemented(Opcode::PRMT_cr)") < cr.index("const IR::U32 a{GetReg8(insn)};")
 assert "const IR::U32 b{GetCbuf(insn)};" in rc
 assert "const IR::U32 selector{GetReg39(insn)};" in rc
 assert "const IR::U32 b{GetReg39(insn)};" in cr

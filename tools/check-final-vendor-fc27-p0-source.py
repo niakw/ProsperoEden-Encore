@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="f0324324768bdc090a003079bbf121df862bc7f7"
+EXPECTED="0ae51658a5d93e368408cad2484b99083ed7309f"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -36,6 +36,7 @@ tests=(
     "fc27_storage_offset_current_host.py",
     "p0_bananza_low_write_current_source.py",
     "ps5_spirv_scalar_constant_cache_host.py",
+    "fc27_maxwell_prmt_operand_forms_source.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)

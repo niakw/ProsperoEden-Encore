@@ -12,7 +12,7 @@ permissions:
   contents: write
   pull-requests: read
 concurrency:
-  group: verified-merged-branch-cleanup-${{ github.repository }}
+  group: verified-merged-branch-cleanup-${{ github.repository }}-${{ github.event_name }}
   cancel-in-progress: false
 jobs:
   cleanup:

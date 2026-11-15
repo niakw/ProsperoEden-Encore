@@ -872,6 +872,7 @@ void Launcher::finish_selected_media()
             if (!enriched.developer.empty()) game.developer = enriched.developer;
             if (!enriched.release_date.empty()) game.release_date = enriched.release_date;
             if (!enriched.categories.empty()) game.categories = enriched.categories;
+            if (!enriched.size.empty() && enriched.size != "—") game.size = enriched.size;
             // A single Nlib lookup belongs to a TitleID and must update
             // EVERY installed copy; moving into the first one silently
             // starved later entries with that same identity.

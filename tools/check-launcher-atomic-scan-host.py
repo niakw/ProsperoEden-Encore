@@ -78,7 +78,7 @@ struct Game {
     unsigned case_artwork_changed = 0;
     std::string cover, box_front, box_back, hero;
     std::vector<std::string> screenshots;
-    std::string intro, description, publisher, developer, release_date, categories;
+    std::string intro, description, publisher, developer, release_date, categories, size = "—";
     int max_players = 0;
     Game() = default;
     Game(std::string file_, bool docked_) : file(std::move(file_)), docked(docked_) {}

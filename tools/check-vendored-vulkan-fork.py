@@ -929,28 +929,40 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
              'CanExecuteRecordedDraw()', 'DrawMeshTasksEXT'),
     }
     assert set(r23_combined_owners) <= set(p24_by_path)
-    for name, receipt_sha in r23_combined_owners.items():
-        combined = expected[name].read_text()
-        # Vendor #145 changes only the secondary sampler address in the
-        # graphics owner after this frozen R23 combined receipt. Require the
-        # exact shipping blob, then reverse that one audited hunk in-memory.
+    def reverse_fc27_post_r23(name, text):
+        # Vendor #145 changes only the secondary sampler address after the
+        # frozen R23 receipt; vendor #142 and #145 advance cache 19 -> 20 -> 21.
+        # Reconstruct those reviewed predecessors exactly instead of restamping.
         if name == 'vk_graphics_pipeline_cost.cpp':
-            assert git_blob_sha(combined) == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba', (
+            assert git_blob_sha(text) == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba', (
                 'FC27 fixed-sampler graphics owner drift', name)
             fixed = 'const u32 second_offset{desc.secondary_cbuf_offset};'
             indexed = 'const u32 second_offset{desc.secondary_cbuf_offset + index_offset};'
-            assert combined.count(fixed) == 1 and indexed not in combined
-            combined = combined.replace(fixed, indexed, 1)
-        # Vendor #142 and #145 deliberately invalidate the Vulkan pipeline
-        # cache as shader handle semantics change (19 -> 20 -> 21). No other
-        # source delta belongs to this historical receipt.
-        if name == 'vk_pipeline_cache_cost.cpp':
-            assert git_blob_sha(combined) == 'be5d48abd44996502b0829a6e0501d130a151455', (
+            assert text.count(fixed) == 1 and indexed not in text
+            text = text.replace(fixed, indexed, 1)
+            assert git_blob_sha(text) == 'd7563d41b74d780f4512899e2fda1b2f362f5523'
+        elif name == 'vk_pipeline_cache_cost.cpp':
+            assert git_blob_sha(text) == 'be5d48abd44996502b0829a6e0501d130a151455', (
                 'FC27 cache-version owner drift', name)
-            assert combined.count('constexpr u32 CACHE_VERSION = 21;') == 1
-            combined = combined.replace(
-                'constexpr u32 CACHE_VERSION = 21;',
-                'constexpr u32 CACHE_VERSION = 19;', 1)
+            assert text.count('constexpr u32 CACHE_VERSION = 21;') == 1
+            text = text.replace('constexpr u32 CACHE_VERSION = 21;',
+                                'constexpr u32 CACHE_VERSION = 19;', 1)
+            assert git_blob_sha(text) == '6efe1b10862135056c1df1b78007a1c9cb5a9610'
+        return text
+
+    # Compute owns the same separate-sampler address rule but is outside the
+    # eight P24 owners. Pin and reverse its sole reviewed hunk independently.
+    fc27_compute = expected['vk_compute_pipeline_cost.cpp'].read_text()
+    assert git_blob_sha(fc27_compute) == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2'
+    fixed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset};'
+    indexed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset + index_offset};'
+    assert fc27_compute.count(fixed_compute) == 1 and indexed_compute not in fc27_compute
+    assert git_blob_sha(fc27_compute.replace(fixed_compute, indexed_compute, 1)) == \
+        '53a545c32a034cfdd3421f381f354a28b306c259'
+    print('ENCORE_FC27_FIXED_SAMPLER_VULKAN_REVERSE_PASS graphics=1 compute=1 cache=21_to_19')
+
+    for name, receipt_sha in r23_combined_owners.items():
+        combined = reverse_fc27_post_r23(name, expected[name].read_text())
         assert git_blob_sha(combined) == receipt_sha, (
             'Unreviewed merged R23 Vulkan source bytes', name)
         assert all(token in combined for token in r23_required_semantics[name]), (
@@ -971,7 +983,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert name in expected and name in actual, (
             'missing Task/Mesh Vulkan source', name)
         try:
-            reverse_p24(name, reverse_r23(name, expected[name].read_text()))
+            reverse_p24(name, reverse_r23(name, reverse_fc27_post_r23(name, expected[name].read_text())))
         except AssertionError as exc:
             maintained_errors.append({'path': name, 'error': str(exc)})
     if maintained_errors:

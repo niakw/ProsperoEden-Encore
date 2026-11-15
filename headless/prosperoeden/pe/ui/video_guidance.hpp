@@ -30,10 +30,11 @@ inline const char* AntiAliasingGuide(int aa) {
     case 3: return tr(TR("FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."));
     // Do not describe MSAA as SMAA. Forced MSAA is Vulkan-only here and
     // has a real bandwidth/memory cost that rises with the sample count.
-    case 4: return tr(TR("MSAA 2x: two coverage samples per pixel. Geometry edges stay sharper than with post-process AA, with a moderate GPU and memory cost."));
-    case 5: return tr(TR("MSAA 4x: four coverage samples per pixel. Cleaner geometry edges than 2x, with a noticeably higher GPU and memory cost."));
-    case 6: return tr(TR("MSAA 8x: eight coverage samples per pixel. High edge quality, but a heavy GPU and memory cost; use it only when the game has headroom."));
-    case 7: return tr(TR("MSAA 16x: sixteen coverage samples per pixel. Very expensive on GPU bandwidth and memory; intended only for light games or testing."));
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        return tr(TR("MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."));
     default: return tr(TR("SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."));
     }
 }

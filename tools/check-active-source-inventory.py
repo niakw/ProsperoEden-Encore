@@ -994,6 +994,24 @@ else:
     assert not fc27_ssbo_present, ("Unexpected FC27 SSBO owner", sorted(fc27_ssbo_present))
 print("ENCORE_FC27_SSBO_OWNER_PASS", f"owners={len(fc27_ssbo_present)}")
 
+# Eglantine #374 / vendor #147 adds one maintained descriptor-table header
+# after the frozen F07 inventory. It is selected by EDEN_SMALL_VECTOR_ROOT's
+# eden-core/src include overlay and must be classified explicitly.
+fc27_descriptor_receipts = {
+    "eden-core/src/video_core/texture_cache/descriptor_table.h":
+        "be14d3396ff3871ceed46cb8499e9cfb546719de",
+}
+fc27_descriptor_present = set(fc27_descriptor_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e":
+    assert fc27_descriptor_present == set(fc27_descriptor_receipts)
+    for relative, blob in fc27_descriptor_receipts.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+    assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_SMALL_VECTOR_ROOT}")' in nov13_cmake
+else:
+    assert not fc27_descriptor_present, ("Unexpected FC27 descriptor owner", sorted(fc27_descriptor_present))
+print("ENCORE_FC27_DESCRIPTOR_OWNER_PASS", f"owners={len(fc27_descriptor_present)}")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -1009,7 +1027,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

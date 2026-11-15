@@ -2262,8 +2262,13 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             continue;
         }
         char size[32]{};
+        // Upstream Eglantine/Lichii deliberately do NOT recursively total a loose
+        // ExeFS folder during discovery: that can walk tens of GiB before the
+        // first library snapshot is published. Keep discovery O(number of
+        // titles); the currently selected title may measure its folder later
+        // on the cancellable details worker.
         const auto complete_base_size = deconstructed ?
-            ExtractedBaseBytes(entry.path(), cancel) :
+            std::optional<std::uint64_t>{} :
             std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)};
         if (cancel && cancel->load(std::memory_order_acquire)) return {};
         if (deconstructed) {
@@ -2272,7 +2277,7 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             // the total multi-GiB title size.
             std::fprintf(stderr,
                 "EDEN_EXEFS_SIZE folder=%s status=%s bytes=%llu\n",
-                entry_name.c_str(), complete_base_size ? "measured" : "unknown",
+                entry_name.c_str(), complete_base_size ? "measured" : "deferred",
                 static_cast<unsigned long long>(complete_base_size.value_or(0)));
         }
         if (complete_base_size) {
@@ -2489,6 +2494,34 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         AppendCaseScenes(game.screenshots, game.title_id);
         if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement
+    }
+    // Match the upstream loose-dump game-list policy: the expensive recursive
+    // directory total is details-only. This worker is cancellable when focus
+    // changes, so a multi-GiB extracted NS2 tree cannot delay first library
+    // paint or a return from gameplay.
+    if (game.format == "EXEFS" && game.size == "—" &&
+        !(cancel && cancel->load(std::memory_order_acquire))) {
+        const std::size_t slash = game.file.find('/');
+        if (slash != std::string::npos && slash > 0) {
+            const std::filesystem::path title_root =
+                Eden::AssetsPath("roms/" + game.file.substr(0, slash));
+            if (const auto bytes = ExtractedBaseBytes(title_root, cancel);
+                bytes && !(cancel && cancel->load(std::memory_order_acquire))) {
+                char formatted[32]{};
+                const double value = static_cast<double>(*bytes);
+                if (value >= 1073741824.0)
+                    std::snprintf(formatted, sizeof(formatted), "%.1f GB",
+                                  value / 1073741824.0);
+                else
+                    std::snprintf(formatted, sizeof(formatted), "%.1f MB",
+                                  value / 1048576.0);
+                game.size = formatted;
+                std::fprintf(stderr,
+                    "EDEN_EXEFS_SIZE_LAZY title=%016llX status=measured bytes=%llu\n",
+                    static_cast<unsigned long long>(game.title_id),
+                    static_cast<unsigned long long>(*bytes));
+            }
+        }
     }
     return game;
 }

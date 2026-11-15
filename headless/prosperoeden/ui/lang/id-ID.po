@@ -2556,3 +2556,7 @@ msgstr "Laporan crash dan kesalahan opsional. Tidak mengaktifkan log terperinci.
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Hanya menghapus cache shader. Simpanan, pengaturan, kunci, dan game tetap ada."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA mengambil beberapa sampel pada tepi geometri. Nilai yang lebih tinggi meningkatkan kualitas tepi, tetapi menambah penggunaan bandwidth GPU dan memori; 8x dan 16x berat untuk PS5."

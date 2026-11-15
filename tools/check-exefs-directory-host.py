@@ -520,8 +520,7 @@ with tempfile.TemporaryDirectory(prefix="encore-exefs-host-") as temp:
             built = subprocess.run(
                 [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
                  "-fsanitize=undefined", "-fno-sanitize-recover=all",
-                 "-I", str(root / "headless"), "-I", str(stb_headers),
-                 str(stb_owner), str(cpp), "-o", str(exe)],
+                 "-I", str(root / "headless"), str(cpp), "-o", str(exe)],
                 capture_output=True, text=True, timeout=60
             )
             assert built.returncode == 0, (compiler, opt, built.stderr[-4000:])
@@ -560,6 +559,7 @@ fixture = r"""
 #include <string_view>
 #include <utility>
 #include <unistd.h>
+#include <stb_image.h>
 #include "game_files.h"
 
 __ENCORE_SIZING_OWNER__
@@ -677,7 +677,8 @@ with tempfile.TemporaryDirectory(prefix="encore-extracted-library-") as temp:
             built = subprocess.run(
                 [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
                  "-fsanitize=undefined", "-fno-sanitize-recover=all",
-                 "-I", str(root / "headless"), str(cpp), "-o", str(exe)],
+                 "-I", str(root / "headless"), "-I", str(stb_headers),
+                 str(stb_owner), str(cpp), "-o", str(exe)],
                 capture_output=True, text=True, timeout=60)
             assert built.returncode == 0, (compiler, opt, built.stderr[-5000:])
             check = subprocess.run([str(exe)], capture_output=True, text=True, timeout=20)

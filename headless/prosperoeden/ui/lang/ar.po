@@ -2556,3 +2556,7 @@ msgstr "تقارير اختيارية عن الأعطال والأخطاء. لا
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "مسح ذاكرة التخزين المؤقت للمظللات فقط. تبقى ملفات الحفظ والإعدادات والمفاتيح والألعاب."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "يأخذ MSAA عينات متعددة من حواف الأشكال الهندسية. تحسّن القيم الأعلى جودة الحواف لكنها تزيد استهلاك نطاق GPU والذاكرة؛ وضعي 8x و16x مكلفان على PS5."

@@ -1482,7 +1482,7 @@ drift_index = {item['path']: item for item in reviewed_blob_drifts}
 nov15_square_icon_successors = {
     "headless/prosperoeden/eden_services.cpp": (
         "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
-        "22f2111366f9bdbc60685da0ab4ee8ea303596f9",
+        "4e2afa5d81375727f2fb6a98853c212b10f2de3c",
     ),
     "headless/prosperoeden/pe/ui/switch_theme.cpp": (
         "819f2c96a35a34035da68b487abda3fd08ed1cda",

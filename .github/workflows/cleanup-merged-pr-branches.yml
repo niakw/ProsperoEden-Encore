@@ -88,6 +88,22 @@ jobs:
               # fully integrated R458 ancestor. Keep the ancestry gate below.
               'fix/r457-home-canonical-icon-rail': 'c50d6abf32e6ce98d930bf42cf404815a0384855',
           }
+          # Exact closed/unmerged heads superseded by merged #187. Their unique
+          # commits were reviewed as obsolete rebase/fixture/vendor-pin receipts;
+          # the final integration contains the maintained runtime/source owners.
+          # This is deliberately an exact branch+SHA allowlist, never a pattern.
+          approved_superseded = {
+              'integrate/vendor-p0-diagnostics-nov14':
+                  ('f5a6ddccec29a139311b993564617a2f7590ccab', 179),
+              'integration/p0-vendor-ssa-fresh':
+                  ('a2fad7ea3d99b9963ef7d347468a6e9dd2234fca', 183),
+              'perf/fc27-ssa-engine-selection':
+                  ('950dbf91125dbf419db9d1bccbf26b3465097326', 181),
+              'perf/fc27-ssbo-engine-selection':
+                  ('5374adcbf3a7a65c75729536bb794dee58fbbda9', 184),
+              'perf/fc27-ssbo-pruning-fresh':
+                  ('bce11d5f28a26e2a89c4461a49ce04993b7f392a', 185),
+          }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:
               raise RuntimeError('Missing main branch in cleanup inventory')
@@ -105,6 +121,10 @@ jobs:
                   compare = api(f'/compare/{sha}...{main_sha}')
                   if compare.get('status') in ('ahead', 'identical') and compare.get('behind_by') == 0:
                       pr_number = 'retired-ancestor'
+              if not pr_number and name in approved_superseded:
+                  approved_sha, superseded_pr = approved_superseded[name]
+                  if approved_sha == sha:
+                      pr_number = f'superseded-{superseded_pr}'
               if not pr_number:
                   skipped.append(name)
                   continue

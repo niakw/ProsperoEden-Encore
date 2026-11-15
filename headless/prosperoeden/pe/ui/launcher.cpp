@@ -96,8 +96,10 @@ Launcher::ProfileAvatarProbe Launcher::probe_profile_avatar(Services &services)
     return probe;
 }
 
-Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start)
-    : services_(services), textures_(textures), fonts_(fonts), first_start_(first_start)
+Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start,
+                   bool native_artwork_loading)
+    : services_(services), textures_(textures), fonts_(fonts), first_start_(first_start),
+      native_artwork_loading_(native_artwork_loading)
 {
     version_ = services_.version();
     prefs_ = services_.preferences();
@@ -559,8 +561,10 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
         (void)textures_.cover(*front, 704.0f);
     if (!launch_case_game_.cover.empty())
         (void)textures_.cover(launch_case_game_.cover, 760.0f);
-    for (const auto& shot : launch_case_game_.screenshots)
-        if (!shot.empty()) (void)textures_.cover(shot, 760.0f);
+    if (!native_artwork_loading_) {
+        for (const auto& shot : launch_case_game_.screenshots)
+            if (!shot.empty()) (void)textures_.cover(shot, 760.0f);
+    }
     if (!launch_hero_.empty())
         (void)textures_.cover(launch_hero_, 1920.0f);
 
@@ -574,8 +578,13 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     launch_case_placeholder_mask_ = 0;
     launch_case_ready_mask_ = 0;
     if (!launch_box_front_.empty()) (void)textures_.cover(launch_box_front_, 760.0f);
-    if (!launch_box_back_.empty()) (void)textures_.cover(launch_box_back_, 760.0f);
+    if (!native_artwork_loading_ && !launch_box_back_.empty())
+        (void)textures_.cover(launch_box_back_, 760.0f);
     if (!launch_box_spine_.empty()) (void)textures_.cover(launch_box_spine_, 760.0f);
+    // Native launch leaves as soon as usable front art is composed. A real
+    // deadline bounds pending local decodes; there is no mandatory dwell.
+    native_launch_art_ready_ = false;
+    native_launch_deadline_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(750);
     launch_.start(theme::kLaunchSeconds);
     press_ = 1.0f;
     cue(Cue::launch);
@@ -952,7 +961,10 @@ void Launcher::update(float dt)
     if (!selected_game_.empty())
     {
         launch_.update(dt);
-        if (!launch_.running)
+        if (native_artwork_loading_) {
+            if (native_launch_art_ready_ || std::chrono::steady_clock::now() >= native_launch_deadline_)
+                done_ = true;
+        } else if (!launch_.running)
             done_ = true;
     }
 }
@@ -1270,14 +1282,16 @@ void Launcher::draw_launch(Canvas &c)
     const float seconds = theme::kLaunchSeconds * t;
     // No fade to black: the Vulkan loading surface reuses this EXACT final
     // launcher picture until the guest actually presents its first frame.
-    const float appear = tween::cubic_out(seconds / 0.25f);
+    const float appear = native_artwork_loading_ ? 1.0f : tween::cubic_out(seconds / 0.25f);
     const float leave = 1.0f; // Hold the jacket/hero, never a second empty loader.
 
     // Use exactly the full-bleed Hero asset already shown for this title on
     // Home (Nlib banner, then screenshot). No menu cards, duplicate text or
     // navigation beneath this overlay. The Eden wallpaper stays as fallback.
+    bool hero_ready = launch_hero_.empty();
     if (!launch_hero_.empty()) {
         const Cover background = c.textures.cover(launch_hero_, 1920.0f);
+        hero_ready = background.texture != 0 || background.missing;
         if (background.texture != 0) {
             constexpr float target = 1920.0f / 1080.0f;
             const float source = std::max(0.01f, background.aspect);
@@ -1290,7 +1304,7 @@ void Launcher::draw_launch(Canvas &c)
                 uv.y = (1.0f - uv.h) * 0.5f;
             }
             c.list.image(background.texture, kScreen, uv,
-                         kWhite.with_alpha(tween::cubic_out(background.age / 0.26f)));
+                         kWhite.with_alpha(native_artwork_loading_ ? 1.0f : tween::cubic_out(background.age / 0.26f)));
         }
     }
     // Preserve the colors of the game's scene while providing a legible right
@@ -1341,7 +1355,7 @@ void Launcher::draw_launch(Canvas &c)
     constexpr float kBackYaw = 3.14159265358979323846f + 0.18f;
     constexpr float kFullTurn = 6.28318530717958647692f;
     float angle = kFrontYaw;
-    if (motion() > 0.0f) {
+    if (!native_artwork_loading_ && motion() > 0.0f) {
         if (seconds < turn_start) {
             angle = kFrontYaw;
         } else if (seconds < back_start) {
@@ -1428,7 +1442,7 @@ void Launcher::draw_launch(Canvas &c)
             // If the file is missing or the decode is unreasonably slow,
             // restore the opaque procedural fallback after bounded wait.
             if (decoded.texture != 0 ||
-                (!decoded.missing && seconds < 4.0f))
+                (!decoded.missing && seconds < 4.0f && !(native_artwork_loading_ && done_)))
                 return;
         }
         if ((page != 0 && !provisional) ||
@@ -1439,7 +1453,8 @@ void Launcher::draw_launch(Canvas &c)
         // Refreshes reuse its GL ID: only two case pages are ever allocated.
         const bool inputs_ready = composed_case_face_ready(
             c.textures, launch_case_game_, rear, false);
-        if (!case_media::PageInputReady(page != 0, inputs_ready, seconds))
+        if (!case_media::PageInputReady(page != 0, inputs_ready,
+                native_artwork_loading_ && done_ ? 4.0f : seconds))
             return;
         const bool refreshing = page != 0;
         attempted = true;
@@ -1477,7 +1492,7 @@ void Launcher::draw_launch(Canvas &c)
                      rear ? "back" : "front");
     };
     prepare_case_page(false);
-    prepare_case_page(true);
+    if (!native_artwork_loading_) prepare_case_page(true);
     const std::uint32_t composed_page =
         back ? launch_composed_back_ : launch_composed_front_;
     // A queued retail decode is NOT a drawable face. Keep the composed,
@@ -1485,6 +1500,9 @@ void Launcher::draw_launch(Canvas &c)
     const bool use_composed = artwork.texture == 0 && composed_page != 0;
     const std::uint32_t visible_texture =
         use_composed ? composed_page : artwork.texture;
+    if (native_artwork_loading_)
+        native_launch_art_ready_ = hero_ready && visible_texture != 0 &&
+            (!use_composed || !launch_composed_front_provisional_);
     // One event per visible paper face and state, NEVER a per-frame log.
     // Stored/decoded/uploaded assets can still fail to reach the render list;
     // this is the last observable stage before the case-face GPU draw call.
@@ -1614,9 +1632,12 @@ void Launcher::draw_launch(Canvas &c)
                         theme::kLimePale.with_alpha(0.66f));
     text(c, tr("STARTING"), brand_x, 659.0f, theme::kText24,
          theme::kText, Align::center);
-    for (int i = 0; i < 3; ++i) {
-        const float pulse = 0.32f + 0.68f *
-            (0.5f + 0.5f * std::sin(c.time * 5.5f - i * 1.15f));
+    // The captured native base has no baked pulse; both game backends
+    // animate the same three dots over it. Preview keeps the existing path.
+    for (int i = 0; i < 3 && !(native_artwork_loading_ && done_); ++i) {
+        const float phase = native_artwork_loading_ ? 1.0f + seconds : c.time;
+        const float pulse = prefs_.reduce_motion ? 0.8f : 0.32f + 0.68f *
+            (0.5f + 0.5f * std::sin(phase * 5.5f - i * 1.15f));
         c.list.circle(brand_x - 26.0f + 26.0f * i, 716.0f, 4.0f,
                       theme::kBlue.with_alpha(pulse));
     }

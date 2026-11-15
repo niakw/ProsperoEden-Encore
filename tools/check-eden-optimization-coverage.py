@@ -1501,7 +1501,7 @@ ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU
     # readback; the launcher presents loading_scene.glsl and retains VideoOut
     # until the selected renderer takes ownership. Console continuity pending.
-    "headless/prosperoeden/frontend.cpp": "bf77a1d5e824328bd4caa7ee0cb6a1a8be067e2b",
+    "headless/prosperoeden/frontend.cpp": "f3236438ce15747593904a8c026320bba0a91c1b",
     "vendor/encore-active/eden-core/src/core/memory_native_a32.cpp": "318cb932c496c09853c2d9ba333d726cf7f820cd",
     "vendor/encore-active/eden-core/src/core/memory_native_standard.cpp": "91463583eec9cfcbd180a56662cda072553787e0",
     "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "469eddd0ea9e0a3498446bf08ab473caac3b76f9",

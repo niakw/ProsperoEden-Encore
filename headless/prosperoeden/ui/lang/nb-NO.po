@@ -2556,3 +2556,7 @@ msgstr "Valgfrie krasj- og feilrapporter. Aktiverer ikke detaljerte logger. Inge
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Tømmer bare shaderbufferen. Lagringer, innstillinger, nøkler og spill beholdes."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "Tvunget MSAA jevner ut polygonkanter med ekstra prøver. Høyere nivåer bruker mer GPU-minne og båndbredde; senk det først hvis ytelse eller minne blir ustabilt. PS5-validering gjelder fortsatt per spill."

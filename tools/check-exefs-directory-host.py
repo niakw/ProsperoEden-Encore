@@ -146,6 +146,7 @@ source = r"""
 #include <string>
 #include <string_view>
 #include <unistd.h>
+#include <stb_image.h>
 #include "game_files.h"
 namespace Eden {
 VALIDATOR
@@ -519,7 +520,8 @@ with tempfile.TemporaryDirectory(prefix="encore-exefs-host-") as temp:
             built = subprocess.run(
                 [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
                  "-fsanitize=undefined", "-fno-sanitize-recover=all",
-                 "-I", str(root / "headless"), str(cpp), "-o", str(exe)],
+                 "-I", str(root / "headless"), "-I", str(stb_headers),
+                 str(stb_owner), str(cpp), "-o", str(exe)],
                 capture_output=True, text=True, timeout=60
             )
             assert built.returncode == 0, (compiler, opt, built.stderr[-4000:])
@@ -646,8 +648,10 @@ int main() {
         std::string(160, 'Q');
     assert(ExtractedLocalCover(game, 2).empty());
     fs::remove(game / "base" / "exefs" / "icon_AmericanEnglish.dat");
+    // A filename alone is not enough: invalid/portrait legacy cover media
+    // must not fill the square application-icon slot.
     std::ofstream(game / "cover.png") << std::string(160, 'p');
-    assert(ExtractedLocalCover(game, 2) == (game / "cover.png").string());
+    assert(ExtractedLocalCover(game, 2).empty());
     fs::remove(game / "cover.png");
     const auto outside = root / "outside.jpg";
     std::ofstream(outside) << std::string(4096, 'x');
@@ -660,6 +664,10 @@ int main() {
 }
 """.replace("__ENCORE_SIZING_OWNER__", sizing).replace(
     "__ENCORE_NACP_OWNER__", nacp).replace("__ENCORE_COVERS_OWNER__", covers)
+stb_owner = root / "vendor/encore-active/eden-core/src/common/stb_image_png.cpp"
+stb_headers = root / "vendor/sources/eden/externals/stb"
+assert stb_owner.is_file() and (stb_headers / "stb_image.h").is_file()
+
 with tempfile.TemporaryDirectory(prefix="encore-extracted-library-") as temp:
     cpp = Path(temp) / "test.cpp"
     cpp.write_text(fixture)

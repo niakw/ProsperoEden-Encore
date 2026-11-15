@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - 'headless/vulkan_hud.frag'
+      - 'headless/vulkan_hud.vert'
+      - 'headless/vulkan.cmake'
+      - 'headless/prosperoeden/ui/fonts/montserrat-medium.pefont'
+      - 'tools/launcher/bake_vulkan_menu_font.py'
+      - 'tools/graphics/build-vulkan-hud-shaders.py'
       - 'headless/vulkan_renderer_r08.cpp'
       - 'headless/vulkan_window_adapt_r08.cpp'
       - 'tools/check-ps5-unified-dynamic-loading-host.py'
@@ -35,9 +40,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          glslangValidator -V --target-env vulkan1.1 -S frag -Iheadless -o vulkan_hud.frag.spv headless/vulkan_hud.frag
-          spirv-val --target-env vulkan1.1 vulkan_hud.frag.spv
-          sha256sum headless/vulkan_hud.frag vulkan_hud.frag.spv
+          mkdir -p /tmp/eden-hud-generated
+          python3 -B tools/launcher/bake_vulkan_menu_font.py \
+            --output /tmp/eden-hud-generated/vulkan_menu_font.glsl
+          python3 -B tools/graphics/build-vulkan-hud-shaders.py \
+            --glslang "$(command -v glslangValidator)" \
+            --spirv-val "$(command -v spirv-val)" \
+            --source-dir headless \
+            --include-dir /tmp/eden-hud-generated \
+            --output /tmp/eden-hud-generated/eden_vulkan_hud_shaders.h \
+            --spv-dir .
+          sha256sum headless/vulkan_hud.frag \
+            /tmp/eden-hud-generated/vulkan_menu_font.glsl \
+            /tmp/eden-hud-generated/eden_vulkan_hud_shaders.h \
+            vulkan_hud.frag.spv
           echo HUD_SPV_BASE64_BEGIN
           base64 -w0 vulkan_hud.frag.spv
           echo

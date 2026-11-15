@@ -121,8 +121,9 @@ assert "inline void BeginLoading() noexcept" in handoff
 assert "inline void EndLoading() noexcept" in handoff
 assert "inline double LoadingSeconds(double calm_offset = 0.0) noexcept" in handoff
 assert "loading_started_ns" in handoff
-assert hashlib.sha256(shader.encode()).hexdigest() == (
-    "3f5287326b7554164449f5f849f46aae3d2f69ff3a0b4c5c822055bd1877c6d6"
-)
+shader_sha256 = hashlib.sha256(shader.encode()).hexdigest()
+assert shader_sha256 == (
+    "cec9e8b4323c573b5cb7ca17fe4f6831163df43be94602c781f8d0f82cf3d9df"
+), ("vulkan_hud.frag sha256", shader_sha256)
 
 print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_scene=1 shared_epoch=1 animated_system_load=1 single_videoout_owner=1 console_pending=1")

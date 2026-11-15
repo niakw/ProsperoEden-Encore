@@ -144,6 +144,7 @@ Launcher::~Launcher()
     scan_cancel_.store(true, std::memory_order_release);
     media_cancel_.store(true, std::memory_order_release);
     selected_media_cancel_.store(true, std::memory_order_release);
+    selected_size_cancel_.store(true, std::memory_order_release);
     diagnostics_cancel_.store(true, std::memory_order_release);
     if (scan_.valid())
         scan_.wait();
@@ -157,6 +158,8 @@ Launcher::~Launcher()
         home_media_scan_.wait();
     if (media_scan_.valid())
         media_scan_.wait();
+    if (selected_size_scan_.valid())
+        selected_size_scan_.wait();
     if (diagnostics_scan_.valid())
         diagnostics_scan_.wait();
     if (profile_avatar_scan_.valid())
@@ -488,6 +491,7 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     scan_cancel_.store(true, std::memory_order_release);
     media_cancel_.store(true, std::memory_order_release);
     selected_media_cancel_.store(true, std::memory_order_release);
+    selected_size_cancel_.store(true, std::memory_order_release);
     diagnostics_cancel_.store(true, std::memory_order_release);
     selected_game_ = services_.game_path(file);
     launch_title_ = title;
@@ -891,6 +895,7 @@ void Launcher::update(float dt)
     start_home_icons();
     finish_home_media();
     finish_selected_media();
+    finish_selected_size();
     slow_stage("media_merge", media_started);
     media_retry_timer_ += dt;
     if (media_retry_timer_ >= 8.0f) {

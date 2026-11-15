@@ -2504,6 +2504,28 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game) {
     return enrich_game_media(std::move(game), nullptr);
 }
 
+std::string EdenServices::exact_game_size(const std::string& file,
+                                               const std::atomic<bool>* cancel) {
+    if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
+        return {};
+    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
+    if (!Eden::IsSafeExtractedDirectory(extracted))
+        return {};
+    const auto bytes = ExtractedBaseBytes(extracted, cancel);
+    if (!bytes || (cancel && cancel->load(std::memory_order_acquire)))
+        return {};
+    char exact_size[32]{};
+    const double count = static_cast<double>(*bytes);
+    if (count >= 1073741824.0)
+        std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
+    else
+        std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
+    std::fprintf(stderr,
+        "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\n",
+        file.c_str(), static_cast<unsigned long long>(*bytes));
+    return exact_size;
+}
+
 pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
                                              const std::atomic<bool>* cancel) {
     if (game.title_id == 0 ||
@@ -2520,27 +2542,6 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     game.addons = AddOnSummary(game.title_id);
     game.addons_short = AddOnSummary(game.title_id, true);
 
-    // Exact extracted-title size is useful in Library details, but it is not
-    // required to display or navigate the Library. Only Game objects coming
-    // from the Library scan carry the explicit unknown marker; Home media
-    // requests leave size empty and therefore never trigger this walk.
-    if (game.size == "—" && !(cancel && cancel->load(std::memory_order_acquire))) {
-        const std::filesystem::path extracted = Eden::AssetsPath("roms/" + game.file);
-        if (Eden::IsSafeExtractedDirectory(extracted)) {
-            if (const auto bytes = ExtractedBaseBytes(extracted, cancel)) {
-                char exact_size[32]{};
-                const double count = static_cast<double>(*bytes);
-                if (count >= 1073741824.0)
-                    std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
-                else
-                    std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
-                game.size = exact_size;
-                std::fprintf(stderr,
-                    "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\n",
-                    game.file.c_str(), static_cast<unsigned long long>(*bytes));
-            }
-        }
-    }
     // Prioritize the requested ORIGINAL retail scans before any optional
     // metadata/banner/icon requests. Nlib may perform multiple slow calls;
     // previously a complete retail front could remain invisible for minutes.

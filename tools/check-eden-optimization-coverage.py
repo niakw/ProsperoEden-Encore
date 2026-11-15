@@ -1504,10 +1504,109 @@ nov15_square_icon_successors = {
 for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.items():
     assert changed_path in post_index and changed_path in drift_index
     assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
-    assert drift_index[changed_path]["actual"] == successor_blob, changed_path
+    if changed_path == "headless/prosperoeden/eden_services.cpp" and \
+            drift_index[changed_path]["actual"] == "54a37cf740f25c68aa0d5f93adf300144c5280d1":
+        # #208 is based on merged #207, but CI uses a shallow checkout and
+        # need not contain #207's commit object. Reverse ONLY #208's two exact
+        # eden_services.cpp hunks in memory and require the reconstructed Git
+        # blob to be #207's reviewed successor. This preserves the immutable
+        # chain without depending on repository history depth.
+        current_service = (ROOT / changed_path).read_text()
+        size_worker_method = """std::string EdenServices::exact_game_size(const std::string& file,
+                                               const std::atomic<bool>* cancel) {
+    if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
+        return {};
+    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
+    if (!Eden::IsSafeExtractedDirectory(extracted))
+        return {};
+    const auto bytes = ExtractedBaseBytes(extracted, cancel);
+    if (!bytes || (cancel && cancel->load(std::memory_order_acquire)))
+        return {};
+    char exact_size[32]{};
+    const double count = static_cast<double>(*bytes);
+    if (count >= 1073741824.0)
+        std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
+    else
+        std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
+    std::fprintf(stderr,
+        "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\\n",
+        file.c_str(), static_cast<unsigned long long>(*bytes));
+    return exact_size;
+}
+
+"""
+        prior_size_block = """    // Exact extracted-title size is useful in Library details, but it is not
+    // required to display or navigate the Library. Only Game objects coming
+    // from the Library scan carry the explicit unknown marker; Home media
+    // requests leave size empty and therefore never trigger this walk.
+    if (game.size == "—" && !(cancel && cancel->load(std::memory_order_acquire))) {
+        const std::filesystem::path extracted = Eden::AssetsPath("roms/" + game.file);
+        if (Eden::IsSafeExtractedDirectory(extracted)) {
+            if (const auto bytes = ExtractedBaseBytes(extracted, cancel)) {
+                char exact_size[32]{};
+                const double count = static_cast<double>(*bytes);
+                if (count >= 1073741824.0)
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
+                else
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
+                game.size = exact_size;
+                std::fprintf(stderr,
+                    "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\\n",
+                    game.file.c_str(), static_cast<unsigned long long>(*bytes));
+            }
+        }
+    }
+"""
+        retail_marker = "    // Prioritize the requested ORIGINAL retail scans before any optional\n"
+        assert current_service.count(size_worker_method) == 1, changed_path
+        assert current_service.count(retail_marker) == 1, changed_path
+        reconstructed = current_service.replace(size_worker_method, "", 1)
+        reconstructed = reconstructed.replace(retail_marker, prior_size_block + retail_marker, 1)
+        raw = reconstructed.encode("utf-8")
+        historical_square = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert historical_square == successor_blob, changed_path
+    else:
+        assert drift_index[changed_path]["actual"] == successor_blob, changed_path
     post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
 print("NOV15_SQUARE_ICON_SOURCE_SUCCESSOR_PASS", "owners=2",
       "console_validation=pending")
+
+# Nov15 Library size-worker follow-up. #207's eden_services.cpp successor
+# was individually reconstructed above; the other four owners were unchanged
+# by #207/#206 and still match their exact post-F07 receipts. Admit only the
+# five exact #208 successors, leaving library.cpp and host tests outside the
+# historical source snapshot exactly as before.
+nov15_library_size_worker_successors = {
+    "headless/prosperoeden/eden_services.cpp": (
+        "4e2afa5d81375727f2fb6a98853c212b10f2de3c",
+        "54a37cf740f25c68aa0d5f93adf300144c5280d1",
+    ),
+    "headless/prosperoeden/eden_services.h": (
+        "604a9d15118390b7f9b7e1265d38a91ff97c4a23",
+        "f3d2ca33cc2e42eeafef26207784bd43b6da918b",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.cpp": (
+        "1e488a05689b29baf8c4318d98be52506816cfaa",
+        "255b110f1e1d021ed92511e64c2f8f67ee62a66d",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.hpp": (
+        "f0e8db4791e79d3e173387d2288886bba52ac015",
+        "fb3a0037cfb86328f398a3059c5dd95faa9d950b",
+    ),
+    "headless/prosperoeden/pe/ui/services.hpp": (
+        "868cecd138d9b57486d1e9ce3b7b775848bcc0a3",
+        "300fa56ad3d8932e25a898c53ed8052f4d69841f",
+    ),
+}
+for changed_path, (prior_blob, successor_blob) in nov15_library_size_worker_successors.items():
+    assert changed_path in post_index and changed_path in drift_index, changed_path
+    assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
+    assert drift_index[changed_path]["actual"] == successor_blob, changed_path
+    post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
+print("NOV15_LIBRARY_SIZE_WORKER_SOURCE_SUCCESSOR_PASS", "owners=5",
+      "media_ungated=1", "console_validation=pending")
+
 # R457 only: retain immutable October F07 blobs while tracking the separately
 # reviewed 34-file November+Nov13 post-F07 delta register. Track
 # the separately selected and unqualified 12GiB resident owner with its

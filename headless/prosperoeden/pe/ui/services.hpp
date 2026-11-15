@@ -326,6 +326,9 @@ class Services
         if (cancel && cancel->load(std::memory_order_acquire)) return game;
         return enrich_game_media(std::move(game));
     }
+    // Expensive recursive size measurement for extracted titles. This is a
+    // separate cancellable worker so case/screens/media never wait on a 9-23 GB RomFS walk.
+    virtual std::string exact_game_size(const std::string&, const std::atomic<bool>*) { return {}; }
     // Resolve locally cached, user-supplied retail-case artwork by title ID.
     // Never requests an API or blocks gameplay startup on a network call.
     virtual BoxArt box_art(std::uint64_t) { return {}; }

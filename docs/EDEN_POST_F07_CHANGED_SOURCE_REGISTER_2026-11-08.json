@@ -92,12 +92,13 @@
     {
       "path": "headless/hud.h",
       "historical_reviewed_git_blob": "29100690d62e2c3981ad6cca3e94e616acd80396",
-      "post_snapshot_git_blob": "a506f5dca7efc289f47a172a353bff4f04d9f4e4",
+      "post_snapshot_git_blob": "0ef8bf75efabf61628b44b91011eb461abcbde81",
       "original_disposition": "code_changed_in_batch",
       "source_scope": "compact capitalized HUD title glyph map",
       "review_kind": "source_contract",
       "required_source_fragment": "case 'B': return 0x6bae",
-      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof"
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-15 overlay typography follow-up: adds HudCodepoints for quick-menu text while preserving the legacy compact HudText glyph ABI used by the FPS HUD. Exact reviewed hud.h blob 0ef8bf75efabf61628b44b91011eb461abcbde81; native runtime uses generated/validated HUD SPIR-V and PS5 readability remains unqualified. Historical F07 blob unchanged."
     },
     {
       "path": "headless/ns2_title_catalog.h",

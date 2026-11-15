@@ -113,6 +113,8 @@ assert 'home_diagnostics_.free_bytes' not in home  # no invented PS5 total capac
 assert 'home_diagnostics_.storage_root' in home
 
 assert 'const std::string hero_artwork = !hero_banner.empty() ? hero_banner : hero_screenshot;' in home
+assert 'hero_recent->hero' in home
+assert 'recent.hero = nlib.hero;' in services
 # Hero content is game media only: banner -> screenshot -> opaque neutral fallback.
 hero_draw = home[home.index('// ---- full-bleed cinematic game hero'):home.index('// Effective values:')]
 assert 'const Cover hero_picture = c.textures.cover(hero_artwork, 1920.0f)' in hero_draw

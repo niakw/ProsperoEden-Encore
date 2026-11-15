@@ -848,9 +848,9 @@ post_f07_vic_present = {post_f07_vic_receipt} & set(physical_all)
 if post_f07_vic_present:
     assert post_f07_nvdec_present == post_f07_nvdec_owners
     raw_vic = (active / post_f07_vic_receipt).read_bytes()
-    assert hashlib.sha1(b"blob " + str(len(raw_vic)).encode() + bytes([0]) + raw_vic).hexdigest() == "7e84c9eea181f72f8fc7d3364725d0486d50330b"
+    assert hashlib.sha1(b"blob " + str(len(raw_vic)).encode() + bytes([0]) + raw_vic).hexdigest() == "279255ee6527d6fc13b77147f73168917e427ea8"
     raw_ffmpeg = (active / "eden-core/src/video_core/host1x/ffmpeg.cpp").read_bytes()
-    assert hashlib.sha1(b"blob " + str(len(raw_ffmpeg)).encode() + bytes([0]) + raw_ffmpeg).hexdigest() == "9a3cf0b0a2cf92e467a619352b9345c2b7823d8b"
+    assert hashlib.sha1(b"blob " + str(len(raw_ffmpeg)).encode() + bytes([0]) + raw_ffmpeg).hexdigest() == "1f3834ef66b97033fc662d7c7c9ee3456cb62bca"
     vic_cmake = (root / "headless/CMakeLists.txt").read_text()
     assert 'list(REMOVE_ITEM eden_vic_video_sources "host1x/vic.cpp")' in vic_cmake
     assert 'list(APPEND eden_vic_video_sources "${EDEN_VIC_MAINTAINED_SOURCE}")' in vic_cmake

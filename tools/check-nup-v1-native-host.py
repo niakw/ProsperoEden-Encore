@@ -91,14 +91,25 @@ def main():
         oversized_icon.write_bytes(content_module.oversized_icon_fixture())
         large_raw = temp / "large-raw.nup"
         large_raw.write_bytes(content_module.large_raw_fixture())
-        subprocess.run([str(binary), str(addon), str(standalone),
-                        str(executable), str(foreign_update), str(foreign_npdm),
-                        str(sibling_npdm), str(malformed_meta), str(duplicate_locale),
-                        str(addon_only), str(oversized_npdm), str(nacp_aoc),
-                        str(nacp_extracted), str(corrupt_nacp),
-                        str(short_nacp), str(valid_compressed),
-                        str(overlong_compressed), str(partial_compressed),
-                        str(oversized_icon), str(large_raw)], check=True)
+        completed = subprocess.run(
+            [str(binary), str(addon), str(standalone),
+             str(executable), str(foreign_update), str(foreign_npdm),
+             str(sibling_npdm), str(malformed_meta), str(duplicate_locale),
+             str(addon_only), str(oversized_npdm), str(nacp_aoc),
+             str(nacp_extracted), str(corrupt_nacp),
+             str(short_nacp), str(valid_compressed),
+             str(overlong_compressed), str(partial_compressed),
+             str(oversized_icon), str(large_raw)],
+            check=True, capture_output=True, text=True)
+        print(completed.stdout, end="")
+        print(completed.stderr, end="", file=sys.stderr)
+        expected_identity = (
+            "EDEN_NUP_CONTENT_ID npdm=0100123400000000 "
+            "package=0100123400000800 kind=1 version=3 "
+            "packages=7 addons=2 standalone=0"
+        )
+        assert expected_identity in completed.stderr, completed.stderr
+        print("NUP_CONTENT_IDENTITY_DIAGNOSTIC_PASS")
 
 if __name__ == "__main__":
     main()

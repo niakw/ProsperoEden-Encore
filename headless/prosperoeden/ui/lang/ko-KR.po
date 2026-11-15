@@ -2556,3 +2556,7 @@ msgstr "선택적 충돌 및 오류 보고서. 상세 로그를 켜지 않습니
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "셰이더 캐시만 지웁니다. 저장 데이터, 설정, 키, 게임은 유지됩니다."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA는 지오메트리 가장자리를 여러 번 샘플링합니다. 값이 높을수록 가장자리 품질이 좋아지지만 GPU 대역폭과 메모리 사용량이 늘어납니다. PS5에서는 8x와 16x의 부하가 큽니다."

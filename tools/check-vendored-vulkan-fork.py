@@ -1261,6 +1261,18 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     g07_previous = "        if (!pipeline) return false;"
     g07_current = "        // A successful native QMD3 dispatch must have both the Vulkan\n        // pipeline layout and every required descriptor-set layout. The\n        // recorded lambda would otherwise silently skip descriptor binding\n        // while the renderer could still mark guest SSBOs as GPU-written.\n        // Empty shaders are allowed to omit a descriptor-set layout.\n        if (!pipeline || !pipeline_layout ||\n            (num_descriptor_entries && !descriptor_set_layout))\n            return false;"
     active_compute = expected[compute_name].read_text()
+    # Same reviewed FC27 fixed-sampler repair as the graphics owner above.
+    # Normalize its exact current blob to the prior G07-qualified owner first.
+    compute_sha = raster_blob(active_compute)
+    if compute_sha == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2':
+        fixed_sampler = 'const u32 secondary_offset{desc.secondary_cbuf_offset};'
+        indexed_sampler = 'const u32 secondary_offset{desc.secondary_cbuf_offset + index_offset};'
+        assert active_compute.count(fixed_sampler) == 1 and indexed_sampler not in active_compute
+        active_compute = active_compute.replace(fixed_sampler, indexed_sampler, 1)
+        assert raster_blob(active_compute) == '53a545c32a034cfdd3421f381f354a28b306c259'
+        print("ENCORE_FC27_COMPUTE_STATIC_SAMPLER_EXACT_RECEIPT_PASS")
+    else:
+        assert compute_sha == '53a545c32a034cfdd3421f381f354a28b306c259', compute_sha
     assert active_compute.count(g07_current) == 1, (
         'G07 native compute pipeline-layout fail-closed hunk drift')
     historical_compute = active_compute.replace(g07_current, g07_previous, 1)

@@ -33,8 +33,14 @@ for candidate in actual:
 
 assert 'EDEN_NS2_TITLE_RESOLVED' in services
 assert 'game.cover.empty() && !game.box_front.empty()' not in services
-assert 'Square tile art is intentionally independent from portrait case scans.' in services
-assert 'Missing square icon remains empty until Control/ExeFS or Nlib supplies one.' in services
+# Behavior, not comments: the initial list must not promote physical case
+# media into the square application-icon field.
+games_owner = services.split(
+    "std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel)", 1
+)[1].split("\npe::ui::Game EdenServices::enrich_home_icon(", 1)[0]
+assert 'game.cover = game.box_front' not in games_owner
+assert 'const pe::ui::BoxArt cached_case = box_art(game.title_id);' not in games_owner
+assert 'const std::string cached_icon = CachedNlibIcon(game.title_id);' in games_owner
 assert 'base/exefs/icon.jpg' in services and 'exefs/icon.png' in services
 assert 'IsSafeExtractedDirectory(parent)' in services
 assert 'icon_' in services and 'std::memcmp(signature,' in services

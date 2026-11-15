@@ -340,6 +340,17 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 ['git', 'hash-object', str(expected[name])], text=True
             ).strip() == blob, ('R09 maintained native additional owner drift', name)
         approved_native_additions |= set(r09_extra)
+        if pair_vendor_pin == '42459a7893c51a178ecd0c2f74f3951cc20fa12d':
+            drawtexture_extra = {
+                'blit_image.cpp': 'bbde031a184b93745fa0449aef74f351355fb70d',
+                'include/video_core/renderer_vulkan/blit_image.h':
+                    '81eda086f50e04d3e1537aebff404a6097a07069',
+            }
+            for name, blob in drawtexture_extra.items():
+                assert subprocess.check_output(
+                    ['git', 'hash-object', str(expected[name])], text=True
+                ).strip() == blob, ('Eden #4559 maintained DrawTexture owner drift', name)
+            approved_native_additions |= set(drawtexture_extra)
         core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
         assert subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip() == (

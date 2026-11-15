@@ -40,6 +40,10 @@ KNOWN_VENDOR_GRAPH = {
     "3f019c64c2907ac3e84baa9b6200de8898f30636": "same reviewed graph + bounded detailed-only NS2 real-SVC witness",
     "f0324324768bdc090a003079bbf121df862bc7f7": "same reviewed graph + bounded detailed-only NS2 GPFIFO pre-submit witness",
     "0ae51658a5d93e368408cad2484b99083ed7309f": "same reviewed graph + Maxwell PRMT rc/cr default-form candidate",
+    "b1bb49abea63b6664e0945df8431e10aac128c2f": "same reviewed audio owners + FC27 memory coherence and NS2 shader/queue candidates",
+    "89d70eb505594447b3ca98658311002e74dac8ad": "same production owners + test-only #161 warning-clean host model",
+    "b68126c9cd95eef6c6656ff6d7834c62c092aa46": "same production owners + test-only #162 generated-C++ newline correction",
+    "0fc157b7ccef428e675ff945bc48eceb08fff607": "same production lineage + upstream-confirmed Maxwell CB_BIND bounds guard #163",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

@@ -92,6 +92,45 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         data = text.encode('utf-8')
         return hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
     raster_sha = raster_blob(raster_source)
+    pair_vendor_pin = subprocess.check_output(
+        ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
+    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607'}:
+        # Vendor #156: only reverse the two exact reviewed cache-coherence
+        # additions on an audit copy, as vendor's native_msaa_handle_receipt
+        # does. Shipping source and historical oracle remain untouched.
+        assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
+        constructor = """    buffer_cache.SetPendingCpuWrites(
+        [this](const std::function<void(DAddr, size_t)>& callback) {
+            gpu.ForEachPendingCpuWrite(callback);
+        });
+"""
+        batch = """void RasterizerVulkan::OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) {
+    // Remove the complete CPU-write batch from GPU-owned ranges before any
+    // individual invalidation can download stale bytes over a later write.
+    {
+        std::scoped_lock lock{buffer_cache.mutex};
+        buffer_cache.ClaimCpuWrites(ranges);
+    }
+    for (const auto& [addr, size] : ranges) OnCacheInvalidation(addr, size);
+}
+
+"""
+        assert raster_source.count(constructor) == raster_source.count(batch) == 1
+        raster_source = raster_source.replace(constructor, '', 1).replace(batch, '', 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == 'efd77028f0710ea9e50cbbe77b04eebf3f306610'
+        header_name = 'include/video_core/renderer_vulkan/vk_rasterizer.h'
+        header_source = expected[header_name].read_text()
+        assert raster_blob(header_source) == '7c754c82c12c4f4c934abd3d7f2cdb25222e8d2a'
+        declaration = '    void OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) override;\n'
+        assert header_source.count(declaration) == 1
+        header_source = header_source.replace(declaration, '', 1)
+        assert raster_blob(header_source) == 'cb35d183c8a9c2ea05f5eb8949a167ea295f8ce7'
+        header_audit = temp / 'normalized-vendor-cpu-write-race' / header_name
+        header_audit.parent.mkdir(parents=True, exist_ok=True)
+        header_audit.write_text(header_source)
+        expected[header_name] = header_audit
+        print('ENCORE_FC27_CPU_WRITE_RACE_EXACT_REVERSE_PARITY_PASS', 'owners=2')
     if raster_sha == 'efd77028f0710ea9e50cbbe77b04eebf3f306610':
         before = "    // Mesh draw workgroups are not indexed vertices. Only standard vertex\n    // draw calls may be split into handle-homogeneous runs.\n    attribute_handle_pipeline = nullptr;\n    attribute_handle_runs.clear();\n    if (split_attribute_handles && !mesh_draw && pipeline->UsesAttributeHandle()) {\n        CollectAttributeHandleRuns(is_indexed);\n        if (!attribute_handle_runs.empty()) {\n            attribute_handle_pipeline = pipeline;\n            pipeline->SetAttributeHandle(attribute_handle_runs.front().handle);\n        }\n    }\n    bool pipeline_ok = pipeline->Configure(is_indexed);\n    if (!pipeline_ok && pipeline->UsesForcedMsaaShadow()) {\n        // The shader may read/store its destination or the texture cache\n        // may have ended the shadow pass while binding descriptors.\n        // Resolve and RETRY this draw via the unchanged guest 1x pipeline.\n        if (native_msaa_shadow) (void)native_msaa_shadow->EndPrepared();\n        native_msaa_clear.reset();\n        native_samples = VK_SAMPLE_COUNT_1_BIT;\n        pipeline = pipeline_cache.CurrentGraphicsPipeline();\n        if (pipeline) {\n            prepared_pipeline = pipeline;\n            probe_pipeline = pipeline;\n            pipeline->SetEngine(maxwell3d, gpu_memory);\n            pipeline_ok = pipeline->Configure(is_indexed);\n        }\n    }\n"
         after = "    // Mesh draw workgroups are not indexed vertices. Only standard vertex\n    // draw calls may be split into handle-homogeneous runs.\n    const auto prepare_attribute_handles = [&] {\n        attribute_handle_pipeline = nullptr;\n        attribute_handle_runs.clear();\n        if (split_attribute_handles && !pipeline->IsMeshPipeline() && pipeline->UsesAttributeHandle()) {\n            CollectAttributeHandleRuns(is_indexed);\n            if (!attribute_handle_runs.empty()) {\n                attribute_handle_pipeline = pipeline;\n                pipeline->SetAttributeHandle(attribute_handle_runs.front().handle);\n            }\n        }\n    };\n    prepare_attribute_handles();\n    bool pipeline_ok = pipeline->Configure(is_indexed);\n    if (!pipeline_ok && pipeline->UsesForcedMsaaShadow()) {\n        // The shader may read/store its destination or the texture cache\n        // may have ended the shadow pass while binding descriptors.\n        // Resolve and RETRY this draw via the unchanged guest 1x pipeline.\n        if (native_msaa_shadow) (void)native_msaa_shadow->EndPrepared();\n        native_msaa_clear.reset();\n        native_samples = VK_SAMPLE_COUNT_1_BIT;\n        pipeline = pipeline_cache.CurrentGraphicsPipeline();\n        if (pipeline) {\n            prepared_pipeline = pipeline;\n            probe_pipeline = pipeline;\n            pipeline->SetEngine(maxwell3d, gpu_memory);\n            // The 1x pipeline owns its own descriptor/attribute state. The\n            // rejected shadow is not a valid owner for later split draws.\n            prepare_attribute_handles();\n            pipeline_ok = pipeline->Configure(is_indexed);\n        }\n    }\n"
@@ -284,7 +323,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
         assert subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip() == (
-            '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
+            'c4ed79a1fe6aec09da8040b7af3901f6184f910b'
+            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607'}
+            else '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
             'R2 real deleted-buffer source owner changed')
     unexpected_additions = set(expected) - set(actual)
     assert unexpected_additions == approved_native_additions, (

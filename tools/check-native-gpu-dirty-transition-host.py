@@ -148,6 +148,54 @@ pinned_gather = """    void Gather(std::function<void(PAddr, size_t)>& callback)
 assert expected.count(pinned_gather) == 1, "Pinned Gather source drift"
 assert expected.count(field_after) == 1, "Pinned Gather mutex missing"
 expected = expected.replace(pinned_gather, gather_after)
+
+# Vendor #156 exposes collected CPU writes non-destructively so GPU downloads
+# cannot overwrite newer guest bytes. Reconstruct the two exact additions on
+# top of the already-reviewed M09 header, then require full-file equality.
+pending_snapshot = """    /// Enumerate collected writes without consuming them. Downloads can use
+    /// this snapshot to avoid writing an older GPU copy over newer guest CPU bytes.
+    void ForEachPending(const std::function<void(PAddr, size_t)>& callback) {
+        std::vector<TransformAddress> pending;
+        {
+            // Same order as Gather: gather guard, then producer-vector guard.
+            std::scoped_lock gather_lock(gather_guard);
+            std::scoped_lock lk(guard);
+            pending = back_buffer;
+            pending.insert(pending.end(), front_buffer.begin(), front_buffer.end());
+            const TransformAddress t = current.load(std::memory_order_acquire);
+            if (IsValid(t.address)) pending.push_back(t);
+        }
+        for (const auto& transform : pending) ForEachRun(transform, callback);
+    }
+
+"""
+gather_anchor = "    void Gather(std::function<void(PAddr, size_t)>& callback) {\n"
+assert expected.count(gather_anchor) == 1
+expected = expected.replace(gather_anchor, pending_snapshot + gather_anchor, 1)
+for_each_run = """    template <typename Func>
+    static void ForEachRun(const TransformAddress& transform, Func&& callback) {
+        size_t offset = 0;
+        u64 mask = transform.mask;
+        while (mask != 0) {
+            const size_t empty_bits = std::countr_zero(mask);
+            offset += empty_bits << align_bits;
+            mask >>= empty_bits;
+            const size_t continuous_bits = std::countr_one(mask);
+            callback((static_cast<PAddr>(transform.address) << page_bits) + offset,
+                     continuous_bits << align_bits);
+            mask = continuous_bits < align_size ? (mask >> continuous_bits) : 0;
+            offset += continuous_bits << align_bits;
+        }
+    }
+
+"""
+page_anchor = "    constexpr static size_t page_bits = DEVICE_PAGEBITS - 1;\n"
+assert expected.count(page_anchor) == 1
+expected = expected.replace(page_anchor, for_each_run + page_anchor, 1)
+actual_blob = subprocess.check_output(
+    ["git", "hash-object", str(root / "vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h")],
+    text=True).strip()
+assert actual_blob == "d489855e83f53ba703c18ce67d620f8db7b932fc"
 assert maintained == expected
 assert 'set(EDEN_NATIVE_DIRTY_HEADER_ROOT' in cmake
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in cmake

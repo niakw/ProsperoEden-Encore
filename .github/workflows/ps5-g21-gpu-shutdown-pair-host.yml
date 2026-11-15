@@ -28,13 +28,16 @@ jobs:
       - name: Historical G21 five-source and six-profile CMake source oracle
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          selected="$(git -C vendor rev-parse HEAD)"
+          test "$selected" = "$(git rev-parse HEAD:vendor)"
+          # The receipt normalizes every reviewed successor in memory back to
+          # the immutable historical G21 owners before comparison.
           python3 -B tools/check-ps5-g21-gpu-shutdown-receipt-host.py
           python3 -B tools/check-g21-gpu-profile-matrix-host.py
       - name: Checkout reviewed vendor GPU shutdown candidate, not engine main
         run: |
           set -euo pipefail
-          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov14-ps5-gpu-renderer-channel-teardown
+          git -C vendor fetch --no-tags --depth=1 origin refs/pull/112/head
           git -C vendor checkout --detach FETCH_HEAD
           test "$(git -C vendor rev-parse HEAD)" = "29afdd31c69118fddf5b14d13bd750dcd7962bb8"
       - name: Exact candidate source receipt, original G21 oracle and ASan/UBSan

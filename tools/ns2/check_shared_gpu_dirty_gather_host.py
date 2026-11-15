@@ -16,8 +16,17 @@ OWNER = Path(os.environ.get(
     "EDEN_GPU_DIRTY_HEADER_SOURCE",
     str(ROOT / "vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h")))
 body = OWNER.read_text()
-assert body.count("std::scoped_lock gather_lock(gather_guard);") == 1
 assert body.count("std::mutex gather_guard;") == 1
+assert body.count("std::scoped_lock gather_lock(gather_guard);") == 2
+gather = body.split("void Gather(std::function<void(PAddr, size_t)>& callback) {", 1)[1].split(
+    "private:", 1)[0]
+pending = body.split(
+    "void ForEachPending(const std::function<void(PAddr, size_t)>& callback) {", 1
+)[1].split("void Gather(std::function<void(PAddr, size_t)>& callback) {", 1)[0]
+assert gather.count("std::scoped_lock gather_lock(gather_guard);") == 1
+assert pending.count("std::scoped_lock gather_lock(gather_guard);") == 1
+assert pending.index("std::scoped_lock gather_lock(gather_guard);") < pending.index(
+    "std::scoped_lock lk(guard);")
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NATIVE_DIRTY_HEADER_ROOT}")' in (
     ROOT/"headless/CMakeLists.txt").read_text()
 # The pinned Eden source now carries the same concurrency fix. Verify both
@@ -30,9 +39,11 @@ assert pinned.index("std::scoped_lock gather_lock{gather_guard};") < pinned.inde
     "front_buffer.swap(back_buffer)")
 assert pinned.index("front_buffer.swap(back_buffer)") < pinned.index(
     "front_buffer.clear();")
-assert body.index("std::scoped_lock gather_lock(gather_guard);") < body.index(
+assert gather.index("std::scoped_lock gather_lock(gather_guard);") < gather.index(
     "front_buffer.swap(back_buffer)")
-assert body.index("front_buffer.clear();") < body.index("private:")
+assert gather.index("front_buffer.swap(back_buffer)") < gather.index("front_buffer.clear();")
+assert "pending = back_buffer;" in pending
+assert "pending.insert(pending.end(), front_buffer.begin(), front_buffer.end());" in pending
 
 fixture = r"""
 #include <atomic>

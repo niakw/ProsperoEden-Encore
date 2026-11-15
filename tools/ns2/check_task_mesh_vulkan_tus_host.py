@@ -95,6 +95,9 @@ assert cache_owner.count("NativeMeshGraphicsStageMaskSupported(") == 2
 assert "virtual bool DispatchNativeCompute(" in (
     ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
 ).read_text()
+assert "virtual void OnCacheInvalidations(" in (
+    ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
+).read_text()
 assert (
     ROOT / "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h"
 ).is_file()
@@ -112,6 +115,9 @@ includes = [
     # The reviewed QMD3 command ABI is owned by the shared GPU dispatcher,
     # separate from the Ampere shader frontend. Match CMake's native roots.
     ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch",
+    # Match the actual PS5_NATIVE video_core include order: the maintained
+    # GPU/cache ABI overrides must win over the pinned Eden headers.
+    ROOT / "vendor/encore-active/eden-core/overrides",
     # CMake stages the reviewed PS5-native RasterizerInterface into
     # PORT_BUILD_DIR/include; source-derived host syntax must select the same
     # virtual ABI before the pinned (pre-NS2) interface, never strip override.
@@ -148,6 +154,19 @@ env = os.environ.copy()
 with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     sysdir = Path(scratch) / "sys"
     sysdir.mkdir()
+    # CMake stages the unified native RasterizerInterface into its generated
+    # include root before compiling video_core. Mirror that exact ownership
+    # instead of relying on incidental nested include order.
+    native_abi_root = Path(scratch) / "native-abi"
+    native_abi_dir = native_abi_root / "video_core"
+    native_abi_dir.mkdir(parents=True)
+    native_abi_source = ROOT / "vendor/encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h"
+    shutil.copyfile(native_abi_source, native_abi_dir / "rasterizer_interface.h")
+    staged_abi = (native_abi_dir / "rasterizer_interface.h").read_text()
+    assert "virtual bool DispatchNativeCompute(" in staged_abi
+    assert "virtual void OnCacheInvalidations(" in staged_abi
+    command.insert(command.index("-I" + str(includes[0])),
+                   "-I" + str(native_abi_root))
     # FreeBSD/Prospero cpuset API is absent from Linux/macOS CI. The shim
     # supplies only declarations needed by syntax-only parsing; no affinity
     # behavior, PS5 headers, object or ELF is synthesized.

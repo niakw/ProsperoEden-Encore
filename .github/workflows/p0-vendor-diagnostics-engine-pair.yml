@@ -29,12 +29,12 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=697159fd0c183f8a164d0493929ae3b4bcb391d1
+          expected=0fc157b7ccef428e675ff945bc48eceb08fff607
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
           test "$checked" = "$expected"
-          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = efd77028f0710ea9e50cbbe77b04eebf3f306610
+          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = 1c40cc3b968c76fc505f5cea63218b93e89b4529
           python3 -B vendor/tests/native_msaa_attribute_handle_rebind_host.py
           python3 -B vendor/tests/r457_native_emit_invalid_warning_host.py
           python3 -B vendor/tests/p0_guest_fault_context_source.py
@@ -44,4 +44,7 @@ jobs:
           python3 -B vendor/tests/ps5_ir_bfs_adaptive_host.py
           python3 -B tools/check-fc27-prmt-engine-selection.py
           python3 -B vendor/tests/fc27_maxwell_prmt_operand_forms_source.py
+          python3 -B vendor/tests/fc27_cpu_write_download_race_host.py
+          python3 -B vendor/tests/ns2_qmd_rejected_dispatch_release_host.py
+          python3 -B vendor/tests/ns2_ldsm_m88_modes_host.py
           echo ENCORE_VENDOR_P0_CONSOLIDATED_ENGINE_PAIR_PASS

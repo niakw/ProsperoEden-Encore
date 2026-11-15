@@ -32,6 +32,30 @@ OLD_OPENGL = (
 START = "    ~Impl() {"
 NEXT_OWNER = "    std::shared_ptr<Control::ChannelState> CreateChannel("
 
+POST_FC27_CPU_WRITE = {
+    "gpu_vulkan.cpp": "a1b9f68ba5de5c0e5ae09bac5fc5652a986c9c8f",
+    "gpu_gl_native.cpp": "9e8bc036d0ed9d1d71024aa241f3e835d61be3e1",
+    "gpu_gl_native_dev.cpp": "8dddf44da8d6306fa52f801a88127e29b3d1c7a8",
+}
+CPU_WRITE_OLD = """        std::function<void(PAddr, size_t)> callback_writes([this](PAddr address, size_t size) {
+            renderer->ReadRasterizer()->OnCacheInvalidation(address, size);
+        });
+        system.GatherGPUDirtyMemory(callback_writes);"""
+CPU_WRITE_NEW = """        std::vector<std::pair<DAddr, u64>> writes;
+        std::function<void(PAddr, size_t)> callback_writes(
+            [&writes](PAddr address, size_t size) { writes.emplace_back(address, size); });
+        system.GatherGPUDirtyMemory(callback_writes);
+        if (!writes.empty()) renderer->ReadRasterizer()->OnCacheInvalidations(writes);
+    }
+
+    void ForEachPendingCpuWrite(const std::function<void(DAddr, size_t)>& callback) {
+        for (auto& manager : system.GetGPUDirtyMemoryManager()) manager.ForEachPending(callback);"""
+CPU_WRITE_FORWARDER = """void GPU::ForEachPendingCpuWrite(const std::function<void(DAddr, size_t)>& callback) {
+    impl->ForEachPendingCpuWrite(callback);
+}
+
+"""
+
 def git_blob(source: str) -> str:
     raw = source.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -41,6 +65,13 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
     if filename not in OLD:
         raise AssertionError(("Unrecognized G21 source owner", filename))
     current = git_blob(source)
+    if filename in POST_FC27_CPU_WRITE and current == POST_FC27_CPU_WRITE[filename]:
+        assert source.count(CPU_WRITE_NEW) == source.count(CPU_WRITE_FORWARDER) == 1
+        source = source.replace(CPU_WRITE_NEW, CPU_WRITE_OLD, 1)
+        source = source.replace(CPU_WRITE_FORWARDER, "", 1)
+        current = git_blob(source)
+        assert current == REVIEWED[filename], (
+            "FC27 CPU-write normalization changed unrelated G21 bytes", filename, current)
     if current == OLD[filename]:
         return source, False
     assert current == REVIEWED[filename], (

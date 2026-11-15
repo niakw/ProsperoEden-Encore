@@ -7,8 +7,60 @@ Only the verifier reverses them; no runtime code is changed or bypassed.
 """
 from pathlib import Path
 import subprocess
+import hashlib
 
 _PRODUCTION_BUFFER_BLOB = "469eddd0ea9e0a3498446bf08ab473caac3b76f9"
+_FC27_BUFFER_BLOB = "c4ed79a1fe6aec09da8040b7af3901f6184f910b"
+fc27_cpu_write_reversal = [
+    ("""template <class P>
+void BufferCache<P>::ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges) {
+    for (const auto& [device_addr, size] : ranges) {
+        if (IsRegionGpuModified(device_addr, size)) {
+            ClearDownload(device_addr, size);
+            gpu_modified_ranges.Subtract(device_addr, size);
+        }
+    }
+}
+
+template <class P>
+Common::RangeSet<DAddr> BufferCache<P>::PendingCpuWriteRanges() {
+    Common::RangeSet<DAddr> ranges;
+    if (pending_cpu_writes) {
+        pending_cpu_writes([&ranges](DAddr address, size_t size) {
+            ranges.Add(address, size);
+        });
+    }
+    return ranges;
+}
+
+template <class P>
+void BufferCache<P>::WriteDownloadedMemory(const Common::RangeSet<DAddr>& cpu_written,
+                                           DAddr device_addr, const u8* data, u64 size) {
+    Common::RangeSet<DAddr> writable;
+    writable.Add(device_addr, size);
+    cpu_written.ForEachInRange(device_addr, size, [&writable](DAddr start, DAddr end) {
+        writable.Subtract(start, end - start);
+    });
+    writable.ForEach([&](DAddr start, DAddr end) {
+        device_memory.WriteBlockUnsafe(start, data + (start - device_addr), end - start);
+    });
+}
+
+template <class P>""", "template <class P>"),
+    ("""    // The fencing thread may land an older GPU snapshot while the guest CPU
+    // has already produced newer bytes. Preserve every pending CPU range.
+    const Common::RangeSet<DAddr> cpu_written = PendingCpuWriteRanges();
+""", ""),
+    ("""            WriteDownloadedMemory(cpu_written, start,
+                                  &read_mapped_memory[start - device_addr], end - start);""",
+     """            device_memory.WriteBlockUnsafe(start, &read_mapped_memory[start - device_addr],
+                                           end - start);"""),
+    ("    const Common::RangeSet<DAddr> cpu_written = PendingCpuWriteRanges();\n", ""),
+    ("            WriteDownloadedMemory(cpu_written, copy_device_addr, copy_mapped_memory, copy.size);",
+     "            device_memory.WriteBlockUnsafe(copy_device_addr, copy_mapped_memory, copy.size);"),
+    ("            WriteDownloadedMemory(cpu_written, copy_device_addr, immediate_buffer.data(), copy.size);",
+     "            device_memory.WriteBlockUnsafe(copy_device_addr, immediate_buffer.data(), copy.size);"),
+]
 r437_r2_reversal = [
     ("#pragma once\n\n#include <algorithm>\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\n#include <exception>\n#endif\n#include <memory>\n#include <numeric>\n", "#pragma once\n\n#include <algorithm>\n#include <memory>\n#include <numeric>\n"),
     ("}\n\ntemplate <class P>\nBufferCache<P>::~BufferCache() {\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\n    if constexpr (!P::IS_OPENGL) {\n        // The deleted-buffer retirement queue only owns explicitly deleted\n        // buffers. Resident slot buffers (and the older frame-age ring) are\n        // still members destroyed immediately after this destructor body.\n        // Drain the real GPU before those Vulkan allocations are released.\n        // A failed GPU submit/device loss must never continue destructing\n        // potentially in-flight VkBuffers: fail closed at process shutdown.\n        try {\n            runtime.Finish();\n        } catch (...) {\n            std::terminate();\n        }\n    }\n#endif\n}\n\ntemplate <class P>\nvoid BufferCache<P>::RunGarbageCollector() {", "}\n\ntemplate <class P>\nBufferCache<P>::~BufferCache() = default;\n\ntemplate <class P>\nvoid BufferCache<P>::RunGarbageCollector() {"),
@@ -20,8 +72,16 @@ r437_r2_reversal = [
 def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
-    assert actual == _PRODUCTION_BUFFER_BLOB, "Production R2 buffer-cache owner drift"
     source = path.read_text()
+    if actual == _FC27_BUFFER_BLOB:
+        for inserted, baseline in fc27_cpu_write_reversal:
+            assert source.count(inserted) == 1, "FC27 CPU-write hunk drift"
+            source = source.replace(inserted, baseline, 1)
+        raw = source.encode("utf-8")
+        restored = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert restored == _PRODUCTION_BUFFER_BLOB, "FC27 BufferCache reversal changed unrelated bytes"
+    else:
+        assert actual == _PRODUCTION_BUFFER_BLOB, "Production R2 buffer-cache owner drift"
     assert len(r437_r2_reversal) == 5
     for inserted, baseline in reversed(r437_r2_reversal):
         assert source.count(inserted) == 1, "Production R2 hunk drift"

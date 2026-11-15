@@ -127,6 +127,14 @@ private:
     u64 fsr3_last_capture_tick = 0;
     u64 fsr3_last_capture_id = 0;
 
+#ifdef PS5_NATIVE
+    // Immutable, title-scoped upload storage. Scheduler drains in destructor
+    // before this buffer is destroyed; never retire it while a copy is queued.
+    vk::Buffer loading_artwork_buffer{};
+    u32 loading_artwork_width{}, loading_artwork_height{}, loading_artwork_attempts{};
+    VkFormat loading_artwork_format{VK_FORMAT_UNDEFINED};
+    bool loading_artwork_unavailable{};
+#endif
     Frame applet_frame;
 };
 

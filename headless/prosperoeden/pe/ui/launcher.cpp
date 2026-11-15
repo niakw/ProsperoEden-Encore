@@ -96,8 +96,10 @@ Launcher::ProfileAvatarProbe Launcher::probe_profile_avatar(Services &services)
     return probe;
 }
 
-Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start)
-    : services_(services), textures_(textures), fonts_(fonts), first_start_(first_start)
+Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start,
+                   bool native_unified_loading)
+    : services_(services), textures_(textures), fonts_(fonts), first_start_(first_start),
+      native_unified_loading_(native_unified_loading)
 {
     version_ = services_.version();
     prefs_ = services_.preferences();
@@ -488,6 +490,15 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     selected_media_cancel_.store(true, std::memory_order_release);
     diagnostics_cancel_.store(true, std::memory_order_release);
     selected_game_ = services_.game_path(file);
+    // Native RunApp owns the one shared GL/Vulkan loading scene. Do not
+    // hold the emulator behind a separate timed jacket animation or queue
+    // full-size art for a screen that will never be presented. The host
+    // preview retains the cinematic path for design inspection only.
+    if (native_unified_loading_ && !selected_game_.empty()) {
+        done_ = true;
+        cue(Cue::launch);
+        return;
+    }
     launch_title_ = title;
     launch_cover_ = cover;
     textures_.clear_case_pages();

@@ -127,7 +127,7 @@ assert 'case 7: return tr(TR("MSAA 16x"))' not in aa
 assert "MSAA samples geometry edges multiple times." in aa
 assert "AntiAliasingGuide(prefs_.anti_aliasing)" in dialog
 assert "AntiAliasingGuide(aa)" in game
-assert "AntiAliasingGuide(aa)" in switch_dialog
+assert "AntiAliasingGuide(prefs_.anti_aliasing)" in switch_dialog
 print("R457_SETTINGS_MSAA_GUIDANCE_PASS descriptive=1 three_surfaces=1")
 
 
@@ -139,6 +139,7 @@ assert "compact_game_success ? 405.0f : 736.0f" in game
 assert "if (compact_game_success)" in game
 assert "DrawVideoGuide(c, tr(kLabels[option_]), explanation," in game
 per_game=src.split("void Launcher::draw_switch_game(",1)[1].split("void Launcher::draw_switch_mods(",1)[0]
+assert "AntiAliasingGuide(aa)" in per_game
 assert "(message_.empty() || !message_warning_) && option_>=0 && option_<14" in per_game
 assert "constexpr Rect kGameClip{530.0f,302.0f,861.0f,402.0f};" in per_game
 assert "d.push_clip(kGameClip);" in per_game

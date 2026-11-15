@@ -367,7 +367,7 @@ std::string ExtractedLocalCover(const std::filesystem::path& title) {
         "Dutch", "Portuguese", "Russian", "Korean", "SimplifiedChinese",
         "TraditionalChinese"
     };
-    for (const char* base : {"exefs", "base/exefs", ".", "base"}) {
+    for (const char* base : {"control", "base/control", "exefs", "base/exefs", ".", "base"}) {
         const fs::path dir = title / base;
         // Check all ancestors, including base/; symlink_status(final) is not
         // sufficient because it follows symlinked intermediate directories.
@@ -2262,18 +2262,19 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             continue;
         }
         char size[32]{};
+        // Do not recursively walk a multi-gigabyte extracted title while the
+        // initial Library snapshot is being assembled. That used to traverse
+        // tens of thousands of RomFS files per NS2 title before the list could
+        // become ready. The selected-title media worker computes the exact
+        // size later, off the navigation-critical scan.
         const auto complete_base_size = deconstructed ?
-            ExtractedBaseBytes(entry.path(), cancel) :
+            std::optional<std::uint64_t>{} :
             std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)};
         if (cancel && cancel->load(std::memory_order_acquire)) return {};
         if (deconstructed) {
-            // Distinguish an incomplete/unreadable extracted directory from
-            // an actual zero-byte game. Never mislabel a 32 MiB main NSO as
-            // the total multi-GiB title size.
             std::fprintf(stderr,
-                "EDEN_EXEFS_SIZE folder=%s status=%s bytes=%llu\n",
-                entry_name.c_str(), complete_base_size ? "measured" : "unknown",
-                static_cast<unsigned long long>(complete_base_size.value_or(0)));
+                "EDEN_EXEFS_SIZE folder=%s status=deferred bytes=0\n",
+                entry_name.c_str());
         }
         if (complete_base_size) {
             const double bytes = static_cast<double>(*complete_base_size);
@@ -2422,6 +2423,28 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         (cancel && cancel->load(std::memory_order_acquire))) return game;
     const int language_choice = Eden::LoadPreferences().language;
     const std::string scanned_name = game.name;
+
+    // Exact extracted-title size is useful in Library details, but it is not
+    // required to display or navigate the Library. Only Game objects coming
+    // from the Library scan carry the explicit unknown marker; Home media
+    // requests leave size empty and therefore never trigger this walk.
+    if (game.size == "—" && !(cancel && cancel->load(std::memory_order_acquire))) {
+        const std::filesystem::path extracted = Eden::AssetsPath("roms/" + game.file);
+        if (Eden::IsSafeExtractedDirectory(extracted)) {
+            if (const auto bytes = ExtractedBaseBytes(extracted, cancel)) {
+                char exact_size[32]{};
+                const double count = static_cast<double>(*bytes);
+                if (count >= 1073741824.0)
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
+                else
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
+                game.size = exact_size;
+                std::fprintf(stderr,
+                    "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\n",
+                    game.file.c_str(), static_cast<unsigned long long>(*bytes));
+            }
+        }
+    }
     // Prioritize the requested ORIGINAL retail scans before any optional
     // metadata/banner/icon requests. Nlib may perform multiple slow calls;
     // previously a complete retail front could remain invisible for minutes.

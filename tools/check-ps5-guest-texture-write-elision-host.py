@@ -15,7 +15,12 @@ cache = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/textur
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 begin = raster.index("bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {")
-end = raster.index("\nvoid RasterizerVulkan::OnCacheInvalidation(", begin)
+end = min(
+    raster.index(marker, begin)
+    for marker in ("\nvoid RasterizerVulkan::OnCacheInvalidations(",
+                   "\nvoid RasterizerVulkan::OnCacheInvalidation(")
+    if marker in raster[begin:]
+)
 body = raster[begin:end]
 assert body.count("::Eden::ImagePages::NeverHeld(addr, size)") == 1
 assert body.count("::Eden::BufferPages::NeverRegistered(addr, size)") == 1

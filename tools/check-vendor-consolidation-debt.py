@@ -2353,7 +2353,23 @@ maxwell_old_end = "    }\n    }\n}\n\nvoid Maxwell3D::ProcessCounterReset() {"
 maxwell_new_end = "    }\n    }\n    ::Eden::Performance::CountCondition(\n        regs.render_enable_override == Regs::RenderEnable::Override::AlwaysRender ? 1u :\n        regs.render_enable_override == Regs::RenderEnable::Override::NeverRender ? 2u :\n        3u + static_cast<unsigned>(regs.render_enable.mode) * 2u + (execute_on ? 1u : 0u));\n}\n\nvoid Maxwell3D::ProcessCounterReset() {"
 assert maxwell_pinned.count(maxwell_old_accel) == maxwell_pinned.count(maxwell_old_end) == 1
 maxwell_expected = '#include "performance.h"\n' + maxwell_pinned.replace(maxwell_old_accel, maxwell_new_accel).replace(maxwell_old_end, maxwell_new_end)
-assert (active / "eden-core/src/video_core/engines/maxwell_3d.cpp").read_text() == maxwell_expected
+maxwell_selected = (active / "eden-core/src/video_core/engines/maxwell_3d.cpp").read_text()
+cbbind_guard = """    // Lichii e6e03043 / current Eglantine: CB_BIND encodes a 5-bit slot,
+    // while Maxwell3D keeps only 18 constant-buffer entries per stage.
+    // Reject guest slots 18..31 before indexing the fixed-size state array.
+    if (bind_data.shader_slot >= Regs::MaxConstBuffers) {
+        return;
+    }
+"""
+if maxwell_selected != maxwell_expected:
+    # Vendor #163 is an upstream-confirmed safety successor. Reverse exactly
+    # its one guard in-memory before comparing the immutable generated owner.
+    assert maxwell_selected.count(cbbind_guard) == 1
+    assert subprocess.check_output(
+        ["git", "hash-object", str(active / "eden-core/src/video_core/engines/maxwell_3d.cpp")],
+        text=True).strip() == "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677"
+    maxwell_selected = maxwell_selected.replace(cbbind_guard, "", 1)
+assert maxwell_selected == maxwell_expected
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_DEV_MAXWELL}")' not in c
 assert 'write_derived("${PORT_BUILD_DIR}/maxwell_3d.cpp"' not in c
 print("VENDOR_MAINTAINED_MAXWELL_DEV_PARITY_PASS: two render-condition instruments")

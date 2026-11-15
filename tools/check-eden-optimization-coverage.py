@@ -688,7 +688,7 @@ post_f07_native_gpfifo_owners = {
 native_m2mf_owner = "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if native_gpfifo_vendor_pin == "697159fd0c183f8a164d0493929ae3b4bcb391d1":
+if native_gpfifo_vendor_pin in {"697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     post_f07_native_gpfifo_owners.add(native_m2mf_owner)
 assert post_f07_native_gpfifo_owners <= all_owners
 assert not post_f07_native_gpfifo_owners & research_owners
@@ -1136,7 +1136,7 @@ fc27_compiler_pins = {
     "4572e581d011c444fd59428d5c042098f05dcfca",
     "f7ee793f1ee1bb1c2b1a35f68073844163658262",
     "3f019c64c2907ac3e84baa9b6200de8898f30636",
-    "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1",
+    "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607",
 }
 if gpu_table_vendor_pin in fc27_compiler_pins:
     assert post_f07_fc27_ssa_present == set(post_f07_fc27_ssa_receipts)
@@ -1153,7 +1153,7 @@ post_f07_fc27_ssbo_receipts = {
         "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
 }
 post_f07_fc27_ssbo_present = set(post_f07_fc27_ssbo_receipts) & all_owners
-if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
+if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     assert post_f07_fc27_ssbo_present == set(post_f07_fc27_ssbo_receipts)
     for path, blob in post_f07_fc27_ssbo_receipts.items():
         assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
@@ -1168,7 +1168,7 @@ post_f07_fc27_descriptor_receipts = {
         "be14d3396ff3871ceed46cb8499e9cfb546719de",
 }
 post_f07_fc27_descriptor_present = set(post_f07_fc27_descriptor_receipts) & all_owners
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     assert post_f07_fc27_descriptor_present == set(post_f07_fc27_descriptor_receipts)
     for path, blob in post_f07_fc27_descriptor_receipts.items():
         assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
@@ -1185,7 +1185,7 @@ post_f07_fc27_scalar_unselected_receipts = {
         "68e14b3a0c4ae990933652baa51183a51eee4f81",
 }
 post_f07_fc27_scalar_unselected_present = set(post_f07_fc27_scalar_unselected_receipts) & all_owners
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     assert post_f07_fc27_scalar_unselected_present == set(post_f07_fc27_scalar_unselected_receipts)
     for path, blob in post_f07_fc27_scalar_unselected_receipts.items():
         assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
@@ -1219,7 +1219,21 @@ assert post_f07_loading_artwork_owners <= all_owners
 for path, blob in post_f07_loading_artwork_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=ROOT, text=True).strip() == blob, path
 print("ENCORE_LOADING_ARTWORK_F07_ISOLATION_PASS owners=2 historical_F07=518")
-owners=all_owners-post_f07_loading_artwork_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
+# New ABI headers are separately audited; historic 518 owners stay immutable.
+pair_receipt = json.loads((ROOT / "docs/audits/NOV15_FC27_NS2_VENDOR_PAIR_SOURCE_RECEIPT.json").read_text())
+assert pair_receipt["schema_version"] == 1 and pair_receipt["hardware_qualified"] is False
+pair_new_owners = {"vendor/encore-active/" + p for p in pair_receipt["new_owners"]}
+assert len(pair_new_owners) == 2 and len(pair_receipt["files"]) == 14
+pair_present = pair_new_owners & all_owners
+if gpu_table_vendor_pin == pair_receipt["selected_vendor"]:
+    assert pair_present == pair_new_owners
+    for path, blob in pair_receipt["files"].items():
+        assert subprocess.check_output(["git", "hash-object", "vendor/encore-active/" + path], cwd=ROOT, text=True).strip() == blob, path
+else:
+    assert not pair_present
+print("ENCORE_NOV15_VENDOR_PAIR_F07_ISOLATION_PASS", f"new_owners={len(pair_present)}")
+
+owners=all_owners-pair_present-post_f07_loading_artwork_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1475,10 +1489,8 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
-# Nov15 launcher tile-identity follow-up: keep the immutable historical and
-# prior post-F07 receipts, but admit only these two exact source successors.
-# library.cpp has no historical blob receipt in STATE and is covered by its
-# dedicated host/source tests instead.
+# Nov15 launcher tile-identity follow-up merged as #207: preserve the
+# prior post-F07 receipts and admit only these two exact successors.
 nov15_square_icon_successors = {
     "headless/prosperoeden/eden_services.cpp": (
         "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
@@ -1496,7 +1508,6 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
     post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
 print("NOV15_SQUARE_ICON_SOURCE_SUCCESSOR_PASS", "owners=2",
       "console_validation=pending")
-
 # R457 only: retain immutable October F07 blobs while tracking the separately
 # reviewed 34-file November+Nov13 post-F07 delta register. Track
 # the separately selected and unqualified 12GiB resident owner with its
@@ -1553,7 +1564,9 @@ ns2_production_blobs = {
     "headless/prosperoeden/frontend.cpp": "25884807fdf7759834cb232548184ffefca715d4",
     "vendor/encore-active/eden-core/src/core/memory_native_a32.cpp": "318cb932c496c09853c2d9ba333d726cf7f820cd",
     "vendor/encore-active/eden-core/src/core/memory_native_standard.cpp": "91463583eec9cfcbd180a56662cda072553787e0",
-    "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "469eddd0ea9e0a3498446bf08ab473caac3b76f9",
+    "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": (
+        "c4ed79a1fe6aec09da8040b7af3901f6184f910b" if gpu_table_vendor_pin == pair_receipt["selected_vendor"]
+        else "469eddd0ea9e0a3498446bf08ab473caac3b76f9"),
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_buffer_cache.h": "08b0ad3a99c1509eb23bd6317fdbd9c4b3251b52",
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h": "460b5d95453cb974eefff10c4af76c5b318e685f",
     "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp": "1877d43aa8facfabf193dac16b8beea3ff7e188e",

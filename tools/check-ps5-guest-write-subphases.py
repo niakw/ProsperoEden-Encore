@@ -93,6 +93,7 @@ struct FakeBuffer {
     unsigned writes{};
     bool IsRegionRegistered(DAddr page, u64 bytes) { return page != 0 && bytes == 4096; }
     bool OnCPUWrite(DAddr address,u64) { ++writes; return hazard || (gpu_modified_page && gpu_modified_page == address); }
+    void ClaimCpuWrites(std::span<const std::pair<DAddr,u64>>) {}
 };
 struct FakeTexture {
     std::mutex mutex;
@@ -108,6 +109,8 @@ struct RasterizerVulkan {
     FakeTexture texture_cache{};
     FakePipeline pipeline_cache{};
     bool OnCPUWrite(DAddr,u64);
+    void OnCacheInvalidation(DAddr,u64) {}
+    void OnCacheInvalidations(std::span<const std::pair<DAddr,u64>>);
 };
 __ON_CPU_WRITE__
 int main() {

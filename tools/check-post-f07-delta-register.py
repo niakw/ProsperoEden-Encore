@@ -19,7 +19,20 @@ assert len({e["path"] for e in entries})==len(entries)
 stop_entry=next(e for e in entries if e["path"]=="headless/stop_limit.cpp")
 assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"
 assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting app without automatic restart"
+# Nov15 launcher successors merged by engine #207. Preserve each prior
+# register blob and admit only its exact reviewed successor; no wildcard drift.
+successors={
+    "headless/prosperoeden/eden_services.cpp": (
+        "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
+        "4e2afa5d81375727f2fb6a98853c212b10f2de3c",
+    ),
+    "headless/prosperoeden/pe/ui/switch_theme.cpp": (
+        "819f2c96a35a34035da68b487abda3fd08ed1cda",
+        "8b59abca5e756f6be6e5da70aec9c477c7e0e1ab",
+    ),
+}
 drifts=[]
+successor_hits=set()
 for entry in entries:
     path=ROOT/entry["path"]
     assert path.is_file(),("Missing reviewed source",entry["path"])
@@ -28,7 +41,13 @@ for entry in entries:
     actual=subprocess.check_output(
         ["git","hash-object",str(path)],cwd=ROOT,text=True
     ).strip()
-    if actual!=expected:
+    if entry["path"] in successors:
+        prior, successor=successors[entry["path"]]
+        assert expected==prior,(entry["path"],expected,prior)
+        assert actual==successor,("Unreviewed Nov15 launcher successor",entry["path"],actual)
+        successor_hits.add(entry["path"])
+    elif actual!=expected:
         drifts.append((entry["path"],expected,actual))
+assert successor_hits==set(successors)
 assert not drifts,("Unreviewed post-F07 source change",drifts)
 print(f"POST_F07_SHA_PREFLIGHT_PASS files={len(entries)} historical_snapshot=immutable")

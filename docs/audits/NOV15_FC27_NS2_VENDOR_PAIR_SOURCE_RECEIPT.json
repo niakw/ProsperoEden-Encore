@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "prior_vendor": "697159fd0c183f8a164d0493929ae3b4bcb391d1",
+  "selected_vendor": "0fc157b7ccef428e675ff945bc48eceb08fff607",
+  "vendor_prs": [
+    155,
+    156,
+    157,
+    158,
+    159,
+    160,
+    161,
+    162,
+    163
+  ],
+  "hardware_qualified": false,
+  "host_evidence": {
+    "fc27": "https://github.com/niakw/NiakGH-MacBridge/blob/5693db67744ebbccc6df8fa841d104d9949d2000/results/current.json",
+    "ldsm": "https://github.com/niakw/NiakGH-MacBridge/blob/1bcfaf01883b50b33b69b2be8f4e5bcc52b04568/results/current.json",
+    "qmd": "https://github.com/niakw/NiakGH-MacBridge/blob/b12b9448e93d6e98b7827f4b0d5366199bb79314/results/current.json",
+    "cbbind": "https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/163"
+  },
+  "files": {
+    "eden-core/overrides/core/gpu_dirty_memory_manager.h": "d489855e83f53ba703c18ce67d620f8db7b932fc",
+    "eden-core/overrides/video_core/gpu.h": "d3ad5e60e19b30ddbd43cbfc29af98f7f24c8174",
+    "eden-core/overrides/video_core/rasterizer_interface.h": "294452f99eae33d623a85c5e4db18a850c2a84ba",
+    "eden-core/src/video_core/buffer_cache/buffer_cache.h": "c4ed79a1fe6aec09da8040b7af3901f6184f910b",
+    "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "42f7b4287d9457b26113d10819bbe4ddaf065aaa",
+    "eden-core/src/video_core/gpu_gl_native.cpp": "9e8bc036d0ed9d1d71024aa241f3e835d61be3e1",
+    "eden-core/src/video_core/gpu_gl_native_dev.cpp": "8dddf44da8d6306fa52f801a88127e29b3d1c7a8",
+    "eden-core/src/video_core/gpu_vulkan.cpp": "a1b9f68ba5de5c0e5ae09bac5fc5652a986c9c8f",
+    "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "7c754c82c12c4f4c934abd3d7f2cdb25222e8d2a",
+    "eden-vulkan/vulkan_rasterizer.cpp": "1c40cc3b968c76fc505f5cea63218b93e89b4529",
+    "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "659039e88fb8b600194ad4f080ab40d29c494941",
+    "ns2-runtime/gpu_dispatch/video_core/native_qmd.h": "a1e99602dbee8c4fc49108382b61ee8cd53af847",
+    "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "33b1b5475e68c8459f9666b1ae1a6e446221cb63",
+    "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677"
+  },
+  "new_owners": [
+    "eden-core/overrides/video_core/gpu.h",
+    "eden-core/overrides/video_core/rasterizer_interface.h"
+  ],
+  "qmd_candidate_158_rejected": true,
+  "notes": "Final selected vendor after #159/#160/#161/#162/#163. #158 compatibility behavior remains withdrawn by #160; strict QMD preflight refusal/retry remains. #162 is test-only. #163 adds the upstream-confirmed Maxwell CB_BIND 18-entry bounds guard; all 14 selected production-source blobs are exact. PS5 hardware remains unqualified."
+}

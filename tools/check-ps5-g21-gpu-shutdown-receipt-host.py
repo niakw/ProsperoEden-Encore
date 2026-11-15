@@ -12,7 +12,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 from ci.ps5_g21_gpu_shutdown_receipt import (
-    OLD, REVIEWED, git_blob, normalize_g21_shutdown_source,
+    OLD, REVIEWED, POST_FC27_CPU_WRITE, git_blob, normalize_g21_shutdown_source,
 )
 
 assert len(OLD) == len(REVIEWED) == 5
@@ -22,7 +22,17 @@ for filename in sorted(OLD):
     source = (base / filename).read_text()
     historic, reviewed = normalize_g21_shutdown_source(filename, source)
     assert git_blob(historic) == OLD[filename]
-    assert git_blob(source) == (REVIEWED[filename] if reviewed else OLD[filename])
+    live_blob = git_blob(source)
+    if reviewed:
+        # Both exact reviewed graphs are intentional: vendor #112 itself and
+        # its FC27 CPU-write successor. normalize_g21_shutdown_source() must
+        # still reconstruct the same immutable OLD owner byte-for-byte.
+        expected_live = {REVIEWED[filename]}
+        if filename in POST_FC27_CPU_WRITE:
+            expected_live.add(POST_FC27_CPU_WRITE[filename])
+        assert live_blob in expected_live, (filename, live_blob, sorted(expected_live))
+    else:
+        assert live_blob == OLD[filename], (filename, live_blob, OLD[filename])
     candidates.append(reviewed)
     for mutation in (
         source + "\n// unknown vendor source\n",

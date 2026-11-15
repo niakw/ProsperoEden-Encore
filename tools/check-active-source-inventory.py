@@ -9,6 +9,7 @@ import json
 import re
 import runpy
 import subprocess
+import hashlib
 
 root = Path(__file__).resolve().parents[1]
 active = root / "vendor/encore-active"
@@ -426,6 +427,38 @@ assert post_f07_r437_buffer_base_owners <= set(physical_all)
 assert not post_f07_r437_buffer_base_owners.intersection(research_paths)
 r437_path = next(iter(post_f07_r437_buffer_base_owners))
 r437_body = (active / r437_path).read_text()
+# Vendor #156 adds a reviewed successor to the R437 native header. Verify
+# its raw blob and reverse only the three exact added declaration blocks
+# before applying the original R437 byte-for-byte proof.
+r437_vendor_pin = subprocess.check_output(
+    ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+if r437_vendor_pin in {"b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607",
+                         "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
+    def r437_blob(source):
+        raw = source.encode("utf-8")
+        return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert r437_blob(r437_body) == "42f7b4287d9457b26113d10819bbe4ddaf065aaa"
+    additions = (
+        """    using PendingCpuWrites = std::function<void(const std::function<void(DAddr, size_t)>&)>;
+    void SetPendingCpuWrites(PendingCpuWrites source) { pending_cpu_writes = std::move(source); }
+
+    /// Remove all about-to-be-applied CPU writes from GPU-owned ranges before
+    /// any one write can trigger a download of older bytes over another.
+    void ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges);
+
+""",
+        """    [[nodiscard]] Common::RangeSet<DAddr> PendingCpuWriteRanges();
+    void WriteDownloadedMemory(const Common::RangeSet<DAddr>& cpu_written,
+                               DAddr device_addr, const u8* data, u64 size);
+
+""",
+        "    PendingCpuWrites pending_cpu_writes;\n",
+    )
+    for addition in additions:
+        assert r437_body.count(addition) == 1
+        r437_body = r437_body.replace(addition, "", 1)
+    assert r437_blob(r437_body) == "b4b7480e6a3d52ef7ec8c597f8e81c9e2f9fe1d9"
+    print("ENCORE_FC27_BUFFER_BASE_EXACT_REVERSE_PARITY_PASS")
 pinned_base = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 old_mark = "    void MarkWrittenBuffer(BufferId buffer_id, DAddr device_addr, u32 size);"
 new_mark = """    // R437: preserve the legacy three-argument call while exposing explicit
@@ -567,7 +600,7 @@ post_f07_native_gpfifo_owners = {
 native_m2mf_channel_state = "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if native_gpfifo_vendor_pin == "697159fd0c183f8a164d0493929ae3b4bcb391d1":
+if native_gpfifo_vendor_pin in {"697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     post_f07_native_gpfifo_owners.add(native_m2mf_channel_state)
 assert post_f07_native_gpfifo_owners <= set(physical_all), (
     "Missing native GPFIFO suspend/resume owner",
@@ -819,7 +852,6 @@ print("ENCORE_NS1_NS2_MISSING_LOADER_TEARDOWN_PASS owners=3")
 # production owner, not a retroactive member of the immutable 337 files.
 post_f07_r457_slab_owners = {"ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp"}
 assert post_f07_r457_slab_owners <= set(physical_all)
-import hashlib
 slab_source = (root / "vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp").read_bytes()
 assert hashlib.sha1(b"blob " + str(len(slab_source)).encode() + bytes([0]) + slab_source).hexdigest() == "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"
 assert slab_source.decode().count("EdenNs2CommitGuestBacking(") == 3
@@ -982,7 +1014,7 @@ fc27_compiler_pins = {
     "4572e581d011c444fd59428d5c042098f05dcfca",
     "f7ee793f1ee1bb1c2b1a35f68073844163658262",
     "3f019c64c2907ac3e84baa9b6200de8898f30636",
-    "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1",
+    "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607",
 }
 if gpu_table_vendor_pin in fc27_compiler_pins:
     assert fc27_ssa_present == set(fc27_ssa_receipts)
@@ -1003,7 +1035,7 @@ fc27_ssbo_receipts = {
         "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
 }
 fc27_ssbo_present = set(fc27_ssbo_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
+if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     assert fc27_ssbo_present == set(fc27_ssbo_receipts)
     for relative, blob in fc27_ssbo_receipts.items():
         raw = (active / relative).read_bytes()
@@ -1022,7 +1054,7 @@ fc27_descriptor_receipts = {
         "be14d3396ff3871ceed46cb8499e9cfb546719de",
 }
 fc27_descriptor_present = set(fc27_descriptor_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     assert fc27_descriptor_present == set(fc27_descriptor_receipts)
     for relative, blob in fc27_descriptor_receipts.items():
         raw = (active / relative).read_bytes()
@@ -1040,7 +1072,7 @@ fc27_scalar_unselected_receipts = {
         "68e14b3a0c4ae990933652baa51183a51eee4f81",
 }
 fc27_scalar_unselected_present = set(fc27_scalar_unselected_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "0fc157b7ccef428e675ff945bc48eceb08fff607"}:
     assert fc27_scalar_unselected_present == set(fc27_scalar_unselected_receipts)
     for relative, blob in fc27_scalar_unselected_receipts.items():
         raw = (active / relative).read_bytes()
@@ -1053,6 +1085,21 @@ else:
     assert not fc27_scalar_unselected_present
 print("ENCORE_FC27_SCALAR_DUPLICATE_UNSELECTED_PASS",
       f"owners={len(fc27_scalar_unselected_present)}", "selected_src_header=1")
+
+# Exact post-F07 receipt for the combined vendor candidates. Earlier vendor
+# checkouts remain historically strict; do not count new ABI owners as F07.
+pair_receipt = json.loads((root / "docs/audits/NOV15_FC27_NS2_VENDOR_PAIR_SOURCE_RECEIPT.json").read_text())
+assert pair_receipt["schema_version"] == 1 and pair_receipt["hardware_qualified"] is False
+pair_new_owners = set(pair_receipt["new_owners"])
+assert len(pair_new_owners) == 2 and len(pair_receipt["files"]) == 14
+pair_present = pair_new_owners & set(physical_all)
+if gpu_table_vendor_pin == pair_receipt["selected_vendor"]:
+    assert pair_present == pair_new_owners
+    for path, blob in pair_receipt["files"].items():
+        assert subprocess.check_output(["git", "hash-object", str(active / path)], text=True).strip() == blob, path
+else:
+    assert not pair_present
+print("ENCORE_NOV15_VENDOR_PAIR_OWNER_RECEIPT_PASS", f"new_owners={len(pair_present)}", "hardware=unverified")
 
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
@@ -1069,7 +1116,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

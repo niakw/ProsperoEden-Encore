@@ -139,15 +139,15 @@ assert 708 + 124 <= 831 + (39-18)/2
 print("R457_PER_GAME_GUIDANCE_SOURCE_PASS rows=14 routine_feedback=independent clip=separate")
 
 # Nov 15 console regression: forced-MSAA help must explain the mode instead of
-# merely repeating the chooser value ("MSAA 2x", etc.).
+# merely repeating the chooser value ("MSAA 2x", etc.). One localized contract
+# is deliberate: the selected sample count remains visible in the row value.
 guidance=(root/"headless/prosperoeden/pe/ui/video_guidance.hpp").read_text()
-for mode, phrase in (
-    ("MSAA 2x:", "samples each pixel twice"),
-    ("MSAA 4x:", "samples each pixel four times"),
-    ("MSAA 8x:", "high-quality multi-sampling"),
-    ("MSAA 16x:", "maximum forced multi-sampling"),
-):
-    assert mode in guidance and phrase in guidance, (mode, phrase)
+msaa_help = ("Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU "
+             "memory and bandwidth; lower it first if performance or memory becomes unstable. "
+             "PS5 validation remains per game.")
+assert guidance.count(msaa_help) == 1
+for mode in range(4, 8):
+    assert f"case {mode}:" in guidance, mode
 for label in ("MSAA 2x", "MSAA 4x", "MSAA 8x", "MSAA 16x"):
     assert f'return tr(TR("{label}"));' not in guidance, label
-print("NOV15_MSAA_CONTEXTUAL_GUIDANCE_PASS modes=4 label_only=0")
+print("NOV15_MSAA_CONTEXTUAL_GUIDANCE_PASS modes=4 localized_contracts=1 label_only=0")

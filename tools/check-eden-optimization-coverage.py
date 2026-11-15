@@ -1572,20 +1572,41 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
 print("NOV15_SQUARE_ICON_SOURCE_SUCCESSOR_PASS", "owners=2",
       "console_validation=pending")
 
-# Nov15 Library size-worker follow-up: #207's square-icon service owner is
-# already individually reviewed above. #208 changes only that same source
-# again, moving the recursive extracted-folder size walk out of media
-# enrichment. Keep both exact successors chained; never rewrite the older
-# receipt or admit any other drift.
-nov15_library_size_worker_path = "headless/prosperoeden/eden_services.cpp"
-assert post_index[nov15_library_size_worker_path]["post_snapshot_git_blob"] == \
-    "4e2afa5d81375727f2fb6a98853c212b10f2de3c"
-assert drift_index[nov15_library_size_worker_path]["actual"] == \
-    "54a37cf740f25c68aa0d5f93adf300144c5280d1"
-post_index[nov15_library_size_worker_path]["post_snapshot_git_blob"] = \
-    "54a37cf740f25c68aa0d5f93adf300144c5280d1"
-print("NOV15_LIBRARY_SIZE_WORKER_SOURCE_SUCCESSOR_PASS", "owners=1",
+# Nov15 Library size-worker follow-up. #207's eden_services.cpp successor
+# was individually reconstructed above; the other four owners were unchanged
+# by #207/#206 and still match their exact post-F07 receipts. Admit only the
+# five exact #208 successors, leaving library.cpp and host tests outside the
+# historical source snapshot exactly as before.
+nov15_library_size_worker_successors = {
+    "headless/prosperoeden/eden_services.cpp": (
+        "4e2afa5d81375727f2fb6a98853c212b10f2de3c",
+        "54a37cf740f25c68aa0d5f93adf300144c5280d1",
+    ),
+    "headless/prosperoeden/eden_services.h": (
+        "604a9d15118390b7f9b7e1265d38a91ff97c4a23",
+        "f3d2ca33cc2e42eeafef26207784bd43b6da918b",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.cpp": (
+        "1e488a05689b29baf8c4318d98be52506816cfaa",
+        "255b110f1e1d021ed92511e64c2f8f67ee62a66d",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.hpp": (
+        "f0e8db4791e79d3e173387d2288886bba52ac015",
+        "d9ac6fdc35c5b6fb8fa00d8c4dec56ae50be48b5",
+    ),
+    "headless/prosperoeden/pe/ui/services.hpp": (
+        "868cecd138d9b57486d1e9ce3b7b775848bcc0a3",
+        "300fa56ad3d8932e25a898c53ed8052f4d69841f",
+    ),
+}
+for changed_path, (prior_blob, successor_blob) in nov15_library_size_worker_successors.items():
+    assert changed_path in post_index and changed_path in drift_index, changed_path
+    assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
+    assert drift_index[changed_path]["actual"] == successor_blob, changed_path
+    post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
+print("NOV15_LIBRARY_SIZE_WORKER_SOURCE_SUCCESSOR_PASS", "owners=5",
       "media_ungated=1", "console_validation=pending")
+
 # R457 only: retain immutable October F07 blobs while tracking the separately
 # reviewed 34-file November+Nov13 post-F07 delta register. Track
 # the separately selected and unqualified 12GiB resident owner with its

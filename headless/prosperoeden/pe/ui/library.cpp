@@ -1040,7 +1040,7 @@ void Launcher::name_home_games()
             recent.file = game.file;
             recent.title = game.name;
             recent.title_id = game.title_id;
-            recent.cover = !game.cover.empty() ? game.cover : game.box_front;
+            recent.cover = game.cover; // square icon only; case fronts stay in box_front
             recent.hero = game.hero;
             recent.screenshot = game.screenshots.empty() ? std::string{} :
                                 game.screenshots.front();

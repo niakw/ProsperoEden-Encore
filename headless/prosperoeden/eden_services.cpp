@@ -2433,7 +2433,7 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 const pe::ui::BoxArt cached_case = box_art(game.title_id);
                 game.box_front = cached_case.front;
                 game.box_back = cached_case.back;
-                if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
+                // Square tile art is intentionally independent from portrait case scans.
             }
             const GameLanguage language = LanguageFor(path, game.title_id, language_choice);
             game.addons = AddOnSummary(game.title_id);
@@ -2544,7 +2544,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     game.artwork_changed |= enrichment.artwork_changed;
     if (!enrichment.icon.empty()) game.cover = std::move(enrichment.icon);
-    else if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
+    // Missing square icon remains empty until Control/ExeFS or Nlib supplies one.
     if (!enrichment.hero.empty()) game.hero = std::move(enrichment.hero);
     if (!enrichment.screenshots.empty()) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
@@ -2578,7 +2578,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         if (!box.back.empty()) game.box_back = box.back;
         // A late local/NX2 retail-cover fetch may complete after the first
         // Nlib/cache snapshot. Always expose its real front to the game tile.
-        if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
+        // Never promote a portrait retail front into the square tile slot.
         AppendCaseScenes(game.screenshots, game.title_id);
         if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement

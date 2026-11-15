@@ -457,7 +457,7 @@ void Launcher::draw_switch_library(Canvas& c) {
         const auto& g=games_[static_cast<std::size_t>(pos)];
         const int local=pos-start,col=local%kLibraryColumns,row=local/kLibraryColumns;
         const Rect r{x0+float(col)*(tile+gap),y0+float(row)*(tile+gap)-scroll,tile,tile};
-        switch_game_tile(c,!g.cover.empty()?g.cover:g.box_front,g.name,r,pos);
+        switch_game_tile(c,g.cover,g.name,r,pos);
         outline(list,r,pos==selected,0.0f);
     }
     list.pop_clip();

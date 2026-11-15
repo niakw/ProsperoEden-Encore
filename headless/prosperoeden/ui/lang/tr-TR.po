@@ -2556,3 +2556,7 @@ msgstr "İsteğe bağlı çökme ve hata raporları. Ayrıntılı günlükleri a
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Yalnızca shader önbelleğini temizler. Kayıtlar, ayarlar, anahtarlar ve oyunlar korunur."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "Zorunlu MSAA, ek örneklerle poligon kenarlarını yumuşatır. Daha yüksek düzeyler daha fazla GPU belleği ve bant genişliği kullanır; performans veya bellek kararsızlaşırsa önce bunu düşürün. PS5 doğrulaması her oyun için gereklidir."

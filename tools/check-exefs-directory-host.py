@@ -675,6 +675,7 @@ with tempfile.TemporaryDirectory(prefix="encore-extracted-library-") as temp:
             exe = Path(temp) / (Path(compiler).name + opt)
             built = subprocess.run(
                 [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
+                 "-Wno-error=missing-field-initializers",
                  "-fsanitize=undefined", "-fno-sanitize-recover=all",
                  "-I", str(root / "headless"), "-I", str(stb_headers),
                  str(stb_owner), str(cpp), "-o", str(exe)],

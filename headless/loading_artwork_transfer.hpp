@@ -4,6 +4,7 @@
 // The input is a launcher RGBA frame, not a guest framebuffer.
 #include "launch_handoff.hpp"
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <span>
 
@@ -31,15 +32,20 @@ inline bool Repack(const LaunchHandoff::Frame& source,
     const auto size = std::size_t(width) * height * 4u;
     if (destination.size() < size) return false;
     const Rect fit = Fit(source.width, source.height, width, height);
+    // Resolve horizontal coordinates once (bounded 16 KiB stack), not
+    // millions of integer divisions during the first 4K Vulkan frame.
+    std::array<std::uint32_t, 4096> source_x{};
+    for (std::uint32_t x = 0; x < width; ++x) {
+        const auto local_x = std::clamp(x, fit.x, fit.x + fit.width - 1) - fit.x;
+        source_x[x] = std::uint32_t(std::uint64_t(local_x) * source.width / fit.width);
+    }
+    const bool bgra = order == PixelOrder::BGRA;
     for (std::uint32_t y = 0; y < height; ++y) {
         const auto local_y = std::clamp(y, fit.y, fit.y + fit.height - 1) - fit.y;
         const auto sy = std::uint32_t(std::uint64_t(local_y) * source.height / fit.height);
         for (std::uint32_t x = 0; x < width; ++x) {
-            const auto local_x = std::clamp(x, fit.x, fit.x + fit.width - 1) - fit.x;
-            const auto sx = std::uint32_t(std::uint64_t(local_x) * source.width / fit.width);
-            const auto src = (std::size_t(sy) * source.width + sx) * 4u;
+            const auto src = (std::size_t(sy) * source.width + source_x[x]) * 4u;
             const auto dst = (std::size_t(y) * width + x) * 4u;
-            const bool bgra = order == PixelOrder::BGRA;
             destination[dst] = source.rgba[src + (bgra ? 2 : 0)];
             destination[dst + 1] = source.rgba[src + 1];
             destination[dst + 2] = source.rgba[src + (bgra ? 0 : 2)];

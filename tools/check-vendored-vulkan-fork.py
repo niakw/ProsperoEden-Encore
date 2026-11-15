@@ -94,7 +94,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     pair_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
-    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607'}:
+    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', 'c2f6ff8060ee623db2cd0efc758b4e6fd5a19c57', '0fc157b7ccef428e675ff945bc48eceb08fff607', 'c2f6ff8060ee623db2cd0efc758b4e6fd5a19c57'}:
         # Vendor #156: only reverse the two exact reviewed cache-coherence
         # additions on an audit copy, as vendor's native_msaa_handle_receipt
         # does. Shipping source and historical oracle remain untouched.
@@ -324,7 +324,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip() == (
             'c4ed79a1fe6aec09da8040b7af3901f6184f910b'
-            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607'}
+            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', 'c2f6ff8060ee623db2cd0efc758b4e6fd5a19c57', '0fc157b7ccef428e675ff945bc48eceb08fff607', 'c2f6ff8060ee623db2cd0efc758b4e6fd5a19c57'}
             else '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
             'R2 real deleted-buffer source owner changed')
     unexpected_additions = set(expected) - set(actual)

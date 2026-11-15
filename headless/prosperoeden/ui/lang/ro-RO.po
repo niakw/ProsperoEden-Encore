@@ -2556,3 +2556,7 @@ msgstr "Rapoarte opționale de blocări și erori. Nu activează jurnalele detal
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Șterge doar cache-ul shaderelor. Salvările, setările, cheile și jocurile sunt păstrate."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "MSAA forțat netezește marginile poligoanelor cu eșantioane suplimentare. Nivelurile mai mari folosesc mai multă memorie și lățime de bandă GPU; redu-l mai întâi dacă performanța sau memoria devin instabile. Validarea pe PS5 rămâne necesară pentru fiecare joc."

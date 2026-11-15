@@ -339,27 +339,30 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
         "Portuguese", "Russian", "Korean", "TraditionalChinese", "SimplifiedChinese",
         "BrazilianPortuguese", "Polish", "Thai"
     };
-    const std::string_view locale = Eden::kLanguageKeys[std::clamp(
-        language_choice, 0, static_cast<int>(std::size(Eden::kLanguageKeys)) - 1)];
+    // Keep this helper independently testable: language_choice is the stable
+    // launcher preference index from settings_store.h. Unsupported PS5 UI
+    // locales intentionally retain the emulator's American-English fallback.
     const char* preferred = "AmericanEnglish";
-    if (locale == "fr-CA") preferred = "CanadianFrench";
-    else if (locale.starts_with("fr")) preferred = "French";
-    else if (locale == "en-GB") preferred = "BritishEnglish";
-    else if (locale.starts_with("en")) preferred = "AmericanEnglish";
-    else if (locale.starts_with("ja")) preferred = "Japanese";
-    else if (locale.starts_with("de")) preferred = "German";
-    else if (locale == "es-419") preferred = "LatinAmericanSpanish";
-    else if (locale.starts_with("es")) preferred = "Spanish";
-    else if (locale.starts_with("it")) preferred = "Italian";
-    else if (locale.starts_with("nl")) preferred = "Dutch";
-    else if (locale == "pt-BR") preferred = "BrazilianPortuguese";
-    else if (locale.starts_with("pt")) preferred = "Portuguese";
-    else if (locale.starts_with("ru")) preferred = "Russian";
-    else if (locale.starts_with("ko")) preferred = "Korean";
-    else if (locale == "zh-Hant") preferred = "TraditionalChinese";
-    else if (locale.starts_with("zh")) preferred = "SimplifiedChinese";
-    else if (locale.starts_with("pl")) preferred = "Polish";
-    else if (locale.starts_with("th")) preferred = "Thai";
+    switch (language_choice) {
+    case 1: preferred = "BritishEnglish"; break;
+    case 2: preferred = "French"; break;
+    case 3: preferred = "CanadianFrench"; break;
+    case 4: preferred = "German"; break;
+    case 5: preferred = "Italian"; break;
+    case 6: preferred = "Spanish"; break;
+    case 7: preferred = "LatinAmericanSpanish"; break;
+    case 8: preferred = "Portuguese"; break;
+    case 9: preferred = "BrazilianPortuguese"; break;
+    case 10: preferred = "Dutch"; break;
+    case 11: preferred = "Russian"; break;
+    case 12: preferred = "Polish"; break;
+    case 13: preferred = "Japanese"; break;
+    case 14: preferred = "Korean"; break;
+    case 15: preferred = "SimplifiedChinese"; break;
+    case 16: preferred = "TraditionalChinese"; break;
+    case 17: preferred = "Thai"; break;
+    default: break;
+    }
 
     const auto icon = [&](const char* base, const char* language) -> std::string {
         const fs::path dir = title / base;

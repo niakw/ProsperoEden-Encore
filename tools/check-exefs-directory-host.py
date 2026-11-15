@@ -99,6 +99,16 @@ assert 'case 2: preferred = "French"' in library
 assert 'case 3: preferred = "CanadianFrench"' in library
 assert 'ExtractedLocalCover(entry.path(), language_choice)' in library
 assert 'recent.tile_icon = local_icon;' in library
+# Loose legacy dumps must prefer true icon.* sidecars. A portrait cover.*
+# cannot be promoted into the square Home/All Software tile.
+icon_pos = library.index('for (const char* relative : {"icon.tga", "icon.png", "icon.jpg"')
+cover_pos = library.index('"cover.tga", "cover.png", "cover.jpg", "cover.jpeg"', icon_pos)
+assert icon_pos < cover_pos
+legacy = library[icon_pos:library.index('// Older extractions sometimes leave icon_<language>.dat', icon_pos)]
+assert 'std::string_view(relative).find("cover.")' in legacy
+assert 'stbi_info(candidate.c_str(), &width, &height, &channels)' in legacy
+assert 'static_cast<std::uint64_t>(width) * 4u' in legacy
+assert 'static_cast<std::uint64_t>(height) * 4u' in legacy
 assert 'Eden::IsDeconstructedGameSelection(name)' in library
 assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in library
 

@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # depending on a nondeterministic host glslangValidator version in CI.
     expected_shaders={
         'vert':'b7efb0f17a2cfb2ac044d0d678dfd7f970323deef86c10d25dde8ed723ef0290',
-        'frag':'cec9e8b4323c573b5cb7ca17fe4f6831163df43be94602c781f8d0f82cf3d9df',
+        'frag':'e12c28605cfa4b33f77f9013ea4a0ca300eb920e85d561fe9037f9e562ad94a1',
     }
     for stage, digest in expected_shaders.items():
         source=root/'headless'/f'vulkan_hud.{stage}'

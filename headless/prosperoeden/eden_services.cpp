@@ -1979,6 +1979,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         home.launch_failed = true;
     }
 
+    const int selected_language = Eden::LoadPreferences().language;
     home.last_file = Eden::LoadLastGame();
     // If the last game was removed, fall back to the most recent one that still exists.
     if (!home.last_file.empty() && !IsFile(Eden::AssetsPath("roms/" + home.last_file))) {
@@ -1998,7 +1999,18 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         std::string cover = CoverPath(home.last_file);
         bool has_cover = Eden::FileExists(cover);
         if (home.last_exists && home.setup_ready && !has_cover) {
-            cover = EnsureCover(home.last_file, &title);
+            // Extracted titles already own a small local Control icon. Use it
+            // before generic metadata extraction so Home does not probe
+            // <title>/exefs/main as if it were a packaged game's cover.
+            if (Eden::IsDeconstructedGameSelection(home.last_file)) {
+                const std::size_t slash = home.last_file.find('/');
+                if (slash != std::string::npos && slash > 0) {
+                    cover = ExtractedLocalCover(
+                        Eden::AssetsPath("roms/" + home.last_file.substr(0, slash)),
+                        selected_language);
+                }
+            }
+            if (cover.empty()) cover = EnsureCover(home.last_file, &title);
             has_cover = !cover.empty();
         }
         home.last_title = title;
@@ -2011,7 +2023,6 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
     // chosen one, the caption says so. The same metadata is reused by Recent cards so selecting
     // one can become the Home hero without opening the full library first.
     if (cancelled()) return {};
-    const int selected_language = Eden::LoadPreferences().language;
     if (home.setup_ready)
         eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
                          Eden::AssetsPath("roms").c_str());

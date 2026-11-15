@@ -65,6 +65,10 @@ assert "for (const Recent& recent : home_.recents)" in icons
 assert "home_icon_scan_.valid()" in icons and "home_icon_next_retry_" in icons
 assert "services_.enrich_home_icon(std::move(request), &media_cancel_)" in icons
 assert "enrich_game_media" not in icons
+native_home = svc.split("pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel)", 1)[1].split("std::string EdenServices::clock()", 1)[0]
+assert "ExtractedLocalCover(" in native_home
+assert 'if (cover.empty()) cover = EnsureCover(home.last_file, &title);' in native_home
+assert native_home.index("ExtractedLocalCover(") < native_home.index("EnsureCover(home.last_file, &title)")
 native_icon = svc.split("pe::ui::Game EdenServices::enrich_home_icon(", 1)[1].split("pe::ui::Game EdenServices::enrich_game_media(", 1)[0]
 assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
 assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon

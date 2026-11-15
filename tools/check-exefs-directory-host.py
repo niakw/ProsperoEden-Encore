@@ -85,6 +85,11 @@ assert 'status=deferred bytes=0' in library
 assert 'if (game.size == "—"' in library
 assert 'ExtractedBaseBytes(extracted, cancel)' in library
 assert 'status=measured bytes=%llu' in library
+launcher_library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
+finish_selected = launcher_library.split("void Launcher::finish_selected_media()", 1)[1].split(
+    "void Launcher::apply_games(", 1)[0]
+assert 'enriched.size != "—"' in finish_selected
+assert 'game.size = enriched.size;' in finish_selected
 # Standard Switch Control icons are preferred, localized, and surfaced
 # during the shallow Home scan instead of waiting for focus/network enrichment.
 assert 'for (const char* base : {"control", "base/control"})' in library

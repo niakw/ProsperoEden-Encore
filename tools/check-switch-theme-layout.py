@@ -137,3 +137,17 @@ assert guide_keys(game)==guide_keys(per_game)
 assert 318 + 3*96 + 92 <= 302 + 402 <= 708
 assert 708 + 124 <= 831 + (39-18)/2
 print("R457_PER_GAME_GUIDANCE_SOURCE_PASS rows=14 routine_feedback=independent clip=separate")
+
+# Nov 15 console regression: forced-MSAA help must explain the mode instead of
+# merely repeating the chooser value ("MSAA 2x", etc.).
+guidance=(root/"headless/prosperoeden/pe/ui/video_guidance.hpp").read_text()
+for mode, phrase in (
+    ("MSAA 2x:", "samples each pixel twice"),
+    ("MSAA 4x:", "samples each pixel four times"),
+    ("MSAA 8x:", "high-quality multi-sampling"),
+    ("MSAA 16x:", "maximum forced multi-sampling"),
+):
+    assert mode in guidance and phrase in guidance, (mode, phrase)
+for label in ("MSAA 2x", "MSAA 4x", "MSAA 8x", "MSAA 16x"):
+    assert f'return tr(TR("{label}"));' not in guidance, label
+print("NOV15_MSAA_CONTEXTUAL_GUIDANCE_PASS modes=4 label_only=0")

@@ -3451,10 +3451,13 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/gpu_dispatch")
     set(EDEN_NS2_GPFIFO_SCHEDULER
         "${EDEN_NS2_GPFIFO_ROOT}/video_core/control/scheduler.cpp")
+    set(EDEN_NS2_GPFIFO_CHANNEL_STATE
+        "${EDEN_NS2_GPFIFO_ROOT}/video_core/control/channel_state.cpp")
     foreach(EDEN_NS2_GPFIFO_OWNER IN ITEMS
         "${EDEN_NS2_GPFIFO_ROOT}/video_core/dma_pusher.h"
         "${EDEN_NS2_GPFIFO_ROOT}/video_core/control/scheduler.h"
-        "${EDEN_NS2_GPFIFO_SCHEDULER}")
+        "${EDEN_NS2_GPFIFO_SCHEDULER}"
+        "${EDEN_NS2_GPFIFO_CHANNEL_STATE}")
         if(NOT EXISTS "${EDEN_NS2_GPFIFO_OWNER}")
             message(FATAL_ERROR "Missing maintained native GPFIFO suspend/resume owner")
         endif()
@@ -3466,6 +3469,12 @@ if(EDEN_SHARED_NS2_NVDRV_CAPS)
     endif()
     list(REMOVE_ITEM eden_ns2_sched_sources "control/scheduler.cpp")
     list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_SCHEDULER}")
+    list(FIND eden_ns2_sched_sources "control/channel_state.cpp" eden_ns2_channel_state_idx)
+    if(eden_ns2_channel_state_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned GPFIFO channel_state owner moved; requalify NVK default bindings")
+    endif()
+    list(REMOVE_ITEM eden_ns2_sched_sources "control/channel_state.cpp")
+    list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_CHANNEL_STATE}")
     set_property(TARGET video_core PROPERTY SOURCES "${eden_ns2_sched_sources}")
     # PS5_NATIVE is not a transitive preprocessor definition. Ensure the
     # selected DMA TU actually compiles its native resume/GPFIFO cursor

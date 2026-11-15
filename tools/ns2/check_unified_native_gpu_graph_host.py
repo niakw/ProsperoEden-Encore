@@ -42,6 +42,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
         'hle/service/am/service/self_controller.cpp',
         'control/scheduler.cpp',
+        'control/channel_state.cpp',
         'backend/spirv/spirv_emit_context.cpp',
         'backend/spirv/emit_spirv_context_get_set.cpp',
         'backend/spirv/emit_spirv_image.cpp']
@@ -65,7 +66,7 @@ add_library(core STATIC dummy.cpp
     hle/service/nvdrv/devices/nvhost_as_gpu.cpp
     hle/service/nvdrv/devices/nvhost_gpu.cpp
     hle/service/am/service/self_controller.cpp)
-add_library(video_core STATIC "{puller}" dummy.cpp control/scheduler.cpp)
+add_library(video_core STATIC "{puller}" dummy.cpp control/scheduler.cpp control/channel_state.cpp)
 add_library(shader_recompiler STATIC dummy.cpp
     backend/spirv/spirv_emit_context.cpp
     backend/spirv/emit_spirv_context_get_set.cpp
@@ -89,6 +90,16 @@ string(REGEX MATCHALL "ns2-runtime/gpu_dispatch/video_core/control/scheduler\\.c
 list(LENGTH native_scheduler_owners native_scheduler_count)
 if(NOT native_scheduler_count EQUAL 1)
     message(FATAL_ERROR "Expected exactly one native GPFIFO scheduler owner")
+endif()
+list(FIND selected_video "control/channel_state.cpp" legacy_channel_state)
+if(NOT legacy_channel_state EQUAL -1)
+    message(FATAL_ERROR "Pinned channel_state compiled beside native NVK/M2MF owner")
+endif()
+string(REGEX MATCHALL "ns2-runtime/gpu_dispatch/video_core/control/channel_state\\.cpp"
+    native_channel_state_owners "${selected_video}")
+list(LENGTH native_channel_state_owners native_channel_state_count)
+if(NOT native_channel_state_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one native NVK/M2MF channel_state owner")
 endif()
 foreach(needle IN ITEMS
     "ns2-runtime/nvdrv_gpu/" "ns2-runtime/nvdrv_as/"

@@ -40,6 +40,7 @@ KNOWN_VENDOR_GRAPH = {
     "3f019c64c2907ac3e84baa9b6200de8898f30636": "same reviewed graph + bounded detailed-only NS2 real-SVC witness",
     "f0324324768bdc090a003079bbf121df862bc7f7": "same reviewed graph + bounded detailed-only NS2 GPFIFO pre-submit witness",
     "0ae51658a5d93e368408cad2484b99083ed7309f": "same reviewed graph + Maxwell PRMT rc/cr default-form candidate",
+    "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

@@ -80,6 +80,7 @@ print('P2_7_NATIVE_QMD3_SINGLE_SHADER_CAPTURE_PASS native_abi=1 dispatch=1 redun
 native_gpfifo_owners = [
     r/'vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp',
     r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp',
+    r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp',
 ]
 for owner in native_gpfifo_owners:
     assert owner.is_file(), owner
@@ -90,5 +91,5 @@ for owner in native_gpfifo_owners:
               file=sys.stderr,flush=True)
         raise AssertionError(('Native GPFIFO source ABI invalid',str(owner)))
     print('P2_7_NATIVE_GPFIFO_SOURCE_TU_PASS',owner,flush=True)
-print('P2_7_NATIVE_GPFIFO_DISPATCH_SYNTAX_PASS units=3 host_only=1')
+print('P2_7_NATIVE_GPFIFO_DISPATCH_SYNTAX_PASS units=4 host_only=1 m2mf_default=1')
 print('P0_2_NATIVE_GPU_BOOT_SOURCES_SYNTAX_PASS 6/6 host_only=1 PS5_build=OFF',flush=True)

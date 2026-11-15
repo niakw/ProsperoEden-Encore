@@ -8,6 +8,7 @@
 #include "pe/platform/display_egl.hpp"
 
 #include "loading_scene_glsl.h"
+#include "launch_handoff.hpp"
 #include "pe/core/log.hpp"
 
 #include <EGL/eglext.h>
@@ -176,14 +177,12 @@ void deferred_loading_loop(std::stop_token stop, EGLDisplay display, EGLSurface 
     const GLint seconds_uniform = glGetUniformLocation(program, "seconds");
     glUniform2f(size_uniform, static_cast<float>(width), static_cast<float>(height));
 
-    const auto started = std::chrono::steady_clock::now();
-    const float base_seconds = reduce_motion ? 1001.0f : 1.0f;
     unsigned frames = 0;
     while (!stop.stop_requested())
     {
-        const float elapsed = std::chrono::duration<float>(
-            std::chrono::steady_clock::now() - started).count();
-        glUniform1f(seconds_uniform, base_seconds + elapsed);
+        const float seconds = static_cast<float>(
+            Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
+        glUniform1f(seconds_uniform, seconds);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glFlush();
         if (glGetError() != GL_NO_ERROR || !eglSwapBuffers(display, surface))

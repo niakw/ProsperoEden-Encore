@@ -127,9 +127,10 @@ bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion) {
     glViewport(0, 0, display.width(), display.height());
     glUniform2f(glGetUniformLocation(program, "size"),
                 static_cast<float>(display.width()), static_cast<float>(display.height()));
-    // One second is beyond the shader's intentional fade-in. Vulkan starts
-    // from the same timeline value and continues from there.
-    const float seconds = reduce_motion ? 1001.0f : 1.0f;
+    // One shared monotonic epoch spans this first GL frame, the retained GL
+    // presenter and Vulkan. Never restart the visible animation at takeover.
+    const float seconds = static_cast<float>(
+        Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
     glUniform1f(glGetUniformLocation(program, "seconds"), seconds);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glFlush();
@@ -258,6 +259,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         Eden::Report("menu video failure", "Previous renderer did not release the launcher display");
         return {};
     }
+    Eden::LaunchHandoff::EndLoading();
     // A fresh/legacy config with no explicit game language follows the PS5 once. Once saved,
     // Settings > Language remains authoritative and is never overwritten by later system changes.
     if (first_start && !Eden::HasSavedLanguage()) {
@@ -537,6 +539,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         // moving throughout System::Load until Vulkan/OpenGL joins it at the
         // explicit VideoOut takeover boundary.
         const bool reduce_motion = Eden::LoadPreferences().reduce_motion;
+        Eden::LaunchHandoff::BeginLoading();
         if (!PresentUnifiedLoading(display, reduce_motion))
             Eden::Report("loading screen", "Unified GL loading frame could not be presented; retaining last launcher frame");
         if (!display.defer_scanout_close(reduce_motion)) {

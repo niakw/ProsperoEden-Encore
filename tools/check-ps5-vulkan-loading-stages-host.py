@@ -49,7 +49,8 @@ unified = frontend.split("bool PresentUnifiedLoading(", 1)[1].split("\n}", 1)[0]
 assert "kLoadingSceneGlsl" in unified
 assert "loading_scene(gl_FragCoord.xy,size,seconds)" in unified
 assert "display.swap()" in unified
-assert "reduce_motion ? 1001.0f : 1.0f" in unified
+assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in unified
+assert "Eden::LaunchHandoff::BeginLoading();" in frontend
 assert "LaunchHandoff::Publish(" not in frontend
 assert "handoff_captured" not in frontend
 assert "handoff_attempts" not in frontend
@@ -71,7 +72,7 @@ assert "eglTerminate(" not in defer
 presenter = display.split("void deferred_loading_loop(", 1)[1].split("\n}", 1)[0]
 assert "kLoadingSceneGlsl" in display
 assert "while (!stop.stop_requested())" in presenter
-assert "base_seconds + elapsed" in presenter
+assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in presenter
 assert "eglSwapBuffers(display, surface)" in presenter
 
 close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].split(
@@ -100,9 +101,8 @@ draw_loading = graphics.split("bool DrawLoading(double seconds)", 1)[1].split(
 )[0]
 assert "kLoadingSceneGlsl" in draw_loading
 assert "loading_scene(gl_FragCoord.xy,size,seconds)" in draw_loading
-assert "now - loading_start + 1.0 + LoadingCalm()" in graphics
-assert "MakeLoadingSnapshot(now - vulkan_loading_start + 1.0 + LoadingCalm())" in graphics
-assert "MakeLoadingSnapshot(1.0 + LoadingCalm())" in graphics
+assert "LaunchHandoff::LoadingSeconds(LoadingCalm())" in graphics
+assert "LaunchHandoff::EndLoading();" in graphics
 
 assert "vk::SurfaceKHR CreateHandoffSurface(" in renderer
 handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
@@ -139,5 +139,5 @@ assert "cmdbuf.SetScissor(0, scissor);" in overlay
 assert '#include "loading_scene.glsl"' in shader
 assert "color = vec4(loading_scene(" in shader
 
-print("ENCORE_GL_VK_CONTINUOUS_LOADING_SOURCE_PASS presenter=1 shared_shader=1 jacket_upload=0 bottom_band=0 console_pending=1")
+print("ENCORE_GL_VK_CONTINUOUS_LOADING_SOURCE_PASS presenter=1 shared_shader=1 shared_epoch=1 jacket_upload=0 bottom_band=0 console_pending=1")
 print("ENCORE_VULKAN_LOADING_DIAGNOSTIC_PASS first_guest_frame_not_claimed=1 max_reports=2")

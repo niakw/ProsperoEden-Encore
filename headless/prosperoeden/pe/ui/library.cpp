@@ -891,6 +891,68 @@ void Launcher::finish_selected_media()
     start_selected_media();
 }
 
+void Launcher::start_selected_size()
+{
+    if (selected_size_scan_.valid() ||
+        selected_size_cancel_.load(std::memory_order_acquire) ||
+        media_cancel_.load(std::memory_order_acquire) ||
+        !selected_game_.empty() || screen_ != Screen::library ||
+        library_.selected < 0 ||
+        library_.selected >= static_cast<int>(games_.size()))
+        return;
+    const Game& game = games_[static_cast<std::size_t>(library_.selected)];
+    if (!game.title_id || game.file.empty() || game.size != "—")
+        return;
+    selected_size_cancel_.store(false, std::memory_order_release);
+    selected_size_scan_title_id_ = game.title_id;
+    selected_size_scan_file_ = game.file;
+    const std::string file = game.file;
+    selected_size_scan_ = std::async(std::launch::async, [this, file] {
+        return services_.exact_game_size(file, &selected_size_cancel_);
+    });
+}
+
+void Launcher::finish_selected_size()
+{
+    if (!selected_size_scan_.valid())
+        return;
+    if (selected_size_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        const bool still_selected =
+            screen_ == Screen::library &&
+            library_.selected >= 0 &&
+            library_.selected < static_cast<int>(games_.size()) &&
+            games_[static_cast<std::size_t>(library_.selected)].title_id ==
+                selected_size_scan_title_id_ &&
+            games_[static_cast<std::size_t>(library_.selected)].file ==
+                selected_size_scan_file_;
+        if (!still_selected)
+            selected_size_cancel_.store(true, std::memory_order_release);
+        return;
+    }
+
+    const bool cancelled = selected_size_cancel_.load(std::memory_order_acquire);
+    try {
+        const std::string measured = selected_size_scan_.get();
+        if (!cancelled && !measured.empty()) {
+            for (Game& game : games_) {
+                if (game.title_id == selected_size_scan_title_id_ &&
+                    game.file == selected_size_scan_file_) {
+                    game.size = measured;
+                    break;
+                }
+            }
+        }
+    } catch (const std::exception& error) {
+        sys::log("selected game size: %s", error.what());
+    }
+    selected_size_scan_title_id_ = 0;
+    selected_size_scan_file_.clear();
+    // The previous walk is now fully joined; a selection change may start a
+    // different title without sharing the old cancellation token.
+    selected_size_cancel_.store(false, std::memory_order_release);
+    start_selected_size();
+}
+
 void Launcher::apply_games(std::vector<Game> games)
 {
     // The same games in the same order (the usual case) keep the list where it is; otherwise
@@ -989,6 +1051,7 @@ void Launcher::apply_games(std::vector<Game> games)
     name_home_games();
     // Enrich details only when Library is visible; Home handles its own selected game.
     start_selected_media();
+    start_selected_size();
 }
 
 void Launcher::sync_home_game(const Game& game)
@@ -1481,6 +1544,7 @@ void Launcher::refresh_selected_game()
     library_shot_focused_ = -1;
     library_shot_viewer_ = -1;
     start_selected_media();
+    start_selected_size();
 }
 
 void Launcher::press_library(Key key)

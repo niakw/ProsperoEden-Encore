@@ -195,6 +195,8 @@ class Launcher
     void finish_home_media();
     void start_selected_media();
     void finish_selected_media();
+    void start_selected_size();
+    void finish_selected_size();
     void apply_games(std::vector<Game> games);
     void name_home_games();
     void sync_home_game(const Game& game); // one Nlib update must not walk every installed title
@@ -398,6 +400,7 @@ class Launcher
     std::atomic<bool> scan_cancel_{false}; // game launch/teardown cancels remaining mod enumeration
     std::atomic<bool> media_cancel_{false}; // stop launching new Nlib requests on game start
     std::atomic<bool> selected_media_cancel_{false}; // only the current Library media worker
+    std::atomic<bool> selected_size_cancel_{false}; // recursive extracted-size walk is independent of media
     std::atomic<bool> diagnostics_cancel_{false}; // stop disk inventory between entries on game start
     std::future<std::vector<Game>> scan_; // the list being read
     bool docked_refresh_after_scan_ = false; // global settings saved during an in-flight scan
@@ -414,6 +417,9 @@ class Launcher
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_media_next_retry_;
     std::future<Game> media_scan_; // selected Library title only; never a full-library HTTP queue
     std::uint64_t media_scan_title_id_ = 0;
+    std::future<std::string> selected_size_scan_; // exact extracted-folder size; never gates media
+    std::uint64_t selected_size_scan_title_id_ = 0;
+    std::string selected_size_scan_file_;
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
     float media_retry_timer_ = 0.0f; // only periodically poll for failed/late Nlib artwork
     bool games_loaded_ = false;

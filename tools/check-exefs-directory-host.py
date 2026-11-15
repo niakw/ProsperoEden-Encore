@@ -79,17 +79,31 @@ assert 'metadata->Load(npdm) == Loader::ResultStatus::Success' in bridge
 assert 'IsSafeDeconstructedGamePath(root, relative)' in bridge
 assert 'extracted.GetTitleID()' in bridge
 # Library readiness must not recurse through every extracted RomFS file.
-# Exact size is deferred to the selected-title media worker.
+# Exact size is isolated from both initial enumeration and selected media:
+# a separate cancellable worker may measure only the currently selected title.
 assert 'ExtractedBaseBytes(entry.path(), cancel)' not in library
 assert 'status=deferred bytes=0' in library
-assert 'if (game.size == "—"' in library
-assert 'ExtractedBaseBytes(extracted, cancel)' in library
-assert 'status=measured bytes=%llu' in library
+enrich_owner_for_size = library.split(
+    "pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n"
+    "                                             const std::atomic<bool>* cancel)", 1
+)[1].split("\npe::ui::BoxArt EdenServices::box_art(", 1)[0]
+assert 'ExtractedBaseBytes(' not in enrich_owner_for_size
+size_owner = library.split(
+    "std::string EdenServices::exact_game_size(const std::string& file,", 1
+)[1].split("\npe::ui::Game EdenServices::enrich_game_media(", 1)[0]
+assert 'ExtractedBaseBytes(extracted, cancel)' in size_owner
+assert 'status=measured bytes=%llu' in size_owner
 launcher_library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
-finish_selected = launcher_library.split("void Launcher::finish_selected_media()", 1)[1].split(
+assert "void Launcher::start_selected_size()" in launcher_library
+assert "void Launcher::finish_selected_size()" in launcher_library
+size_worker = launcher_library.split("void Launcher::start_selected_size()", 1)[1].split(
+    "void Launcher::finish_selected_size()", 1)[0]
+assert 'game.size != "—"' in size_worker
+assert 'services_.exact_game_size(file, &selected_size_cancel_)' in size_worker
+size_merge = launcher_library.split("void Launcher::finish_selected_size()", 1)[1].split(
     "void Launcher::apply_games(", 1)[0]
-assert 'enriched.size != "—"' in finish_selected
-assert 'game.size = enriched.size;' in finish_selected
+assert 'game.size = measured;' in size_merge
+assert 'selected_size_cancel_.store(true' in size_merge
 # Standard Switch Control icons are preferred, localized, and surfaced
 # during the shallow Home scan instead of waiting for focus/network enrichment.
 assert 'for (const char* base : {"control", "base/control"})' in library

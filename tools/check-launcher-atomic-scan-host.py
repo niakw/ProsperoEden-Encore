@@ -22,7 +22,9 @@ def owner(start: str, following: str) -> str:
 
 finish = owner("void Launcher::finish_scan(bool wait)", "\nvoid Launcher::start_home_media()")
 apply = owner("void Launcher::apply_games(std::vector<Game> games)", "\nvoid Launcher::sync_home_game(")
-media_finish = owner("void Launcher::finish_selected_media()", "\nvoid Launcher::apply_games(")
+media_finish = owner("void Launcher::finish_selected_media()", "\nvoid Launcher::start_selected_size()")
+size_start = owner("void Launcher::start_selected_size()", "\nvoid Launcher::finish_selected_size()")
+size_finish = owner("void Launcher::finish_selected_size()", "\nvoid Launcher::apply_games(")
 home_finish = owner("void Launcher::finish_home_media()", "\nvoid Launcher::start_selected_media(")
 enter = owner("void Launcher::enter_library()", "\nbool Launcher::open_game_settings_at_file(")
 draw = owner("void Launcher::draw_library(Canvas &c)", "\nvoid Launcher::",) if False else source
@@ -107,11 +109,20 @@ public:
     Textures textures_;
     std::future<Game> media_scan_;
     std::future<Game> home_media_scan_;
+    std::future<std::string> selected_size_scan_;
     Screen screen_ = Screen::library;
-    std::atomic<bool> selected_media_cancel_{false}, media_cancel_{false};
+    std::atomic<bool> selected_media_cancel_{false}, selected_size_cancel_{false}, media_cancel_{false};
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
     std::uint64_t media_scan_title_id_ = 0, home_media_scan_title_id_ = 0;
+    std::uint64_t selected_size_scan_title_id_ = 0;
+    std::string selected_size_scan_file_, selected_game_;
     Home home_;
+    struct Services {
+        std::string exact_game_size(const std::string& file, const std::atomic<bool>* cancel) {
+            if (cancel && cancel->load(std::memory_order_acquire)) return {};
+            return file.empty() ? std::string{} : std::string{"9.2 GB"};
+        }
+    } services_;
     int home_syncs = 0, home_media_started = 0;
     struct Library {
         int selected = -1, count = 0, resets = 0;
@@ -140,6 +151,8 @@ public:
     void apply_games(std::vector<Game> games);
     void finish_scan(bool wait);
     void finish_selected_media();
+    void start_selected_size();
+    void finish_selected_size();
     void finish_home_media();
     void sync_home_game(const Game&) { ++home_syncs; }
     void start_home_media() { ++home_media_started; }
@@ -155,7 +168,7 @@ public:
     void say(const std::string&, bool) { ++errors; }
     void cue(Cue) {}
 };
-""" + finish + "\n" + apply + "\n" + media_finish + "\n" + home_finish + r"""
+""" + finish + "\n" + apply + "\n" + media_finish + "\n" + size_start + "\n" + size_finish + "\n" + home_finish + r"""
 int main() {
     // An unchanged ROM list may still carry a changed Mods preference.
     // This must update the selected switch once, without resetting cards,

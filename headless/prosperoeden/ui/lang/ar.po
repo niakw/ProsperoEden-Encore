@@ -2556,3 +2556,7 @@ msgstr "تقارير اختيارية عن الأعطال والأخطاء. لا
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "مسح ذاكرة التخزين المؤقت للمظللات فقط. تبقى ملفات الحفظ والإعدادات والمفاتيح والألعاب."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "يعمل MSAA القسري على تنعيم حواف المضلعات باستخدام عينات إضافية. تستخدم المستويات الأعلى ذاكرة GPU وعرض نطاق أكبر؛ اخفضه أولاً إذا أصبح الأداء أو الذاكرة غير مستقرين. يظل التحقق على PS5 مطلوبًا لكل لعبة."

@@ -2556,3 +2556,7 @@ msgstr "Valinnaiset kaatumis- ja virheraportit. Ei ota tarkkaa lokitusta käytt�
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Tyhjentää vain shader-välimuistit. Tallennukset, asetukset, avaimet ja pelit säilyvät."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA näytteistää geometrian reunoja useita kertoja. Suuremmat arvot parantavat reunojen laatua, mutta lisäävät GPU:n kaistanleveyden ja muistin käyttöä; 8x ja 16x ovat raskaita PS5:llä."

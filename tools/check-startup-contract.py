@@ -35,8 +35,12 @@ display = (root / "headless/prosperoeden/pe/platform/display_egl.cpp").read_text
 active_renderer = (root / "headless/vulkan_renderer_r08.cpp").read_text()
 active_presenter = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
 assert "PresentVulkanLoading(renderer);" in graphics
-assert "kLoadingSceneGlsl" in graphics
-assert "kLoadingSceneGlsl" in frontend
+artwork_gl = (root / "headless/loading_artwork_gl.hpp").read_text()
+assert '#include "loading_artwork_gl.hpp"' in graphics
+assert '#include "loading_artwork_gl.hpp"' in frontend
+assert "loading_artwork_indicator(gl_FragCoord.xy,size,seconds)" in artwork_gl
+assert "Eden::LoadingArtwork::Capture(" in frontend
+assert "loading_scene(gl_FragCoord.xy,size,seconds)" not in artwork_gl
 assert "bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion)" in frontend
 assert "PresentUnifiedLoading(display, reduce_motion)" in frontend
 assert "display.defer_scanout_close(reduce_motion)" in frontend

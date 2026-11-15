@@ -4,7 +4,7 @@
 // starts: the game's own window takes over the screen.
 #include "frontend.h"
 #include "launch_handoff.hpp"
-#include "loading_scene_glsl.h"
+#include "loading_artwork_gl.hpp"
 
 #include "assets_dir.h"
 #include "audio_out_init.h"
@@ -77,67 +77,13 @@ float MenuGain(int volume) {
     return level * level;
 }
 
-// Draw the exact same source-generated loading scene used by Vulkan.
-// This replaces the selected-game jacket before the launcher relinquishes
-// scanout, so System::Load never needs a black interstitial or a screenshot
-// mailbox. Failure leaves the already-presented launcher frame untouched.
+// Replay the selected game's composed artwork and animate only its dots.
 bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion) {
-    const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
-        "uniform vec2 size; uniform float seconds; out vec4 color;\n"
-        "void main(){ color=vec4(loading_scene(gl_FragCoord.xy,size,seconds),1.0); }\n";
-    const char* vertex =
-        "#version 330 core\n"
-        "void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
-        "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}";
-    GLuint program = glCreateProgram();
-    GLuint vao = 0;
-    bool linked = program != 0;
-    for (unsigned i = 0; linked && i < 2; ++i) {
-        const GLuint shader = glCreateShader(i ? GL_FRAGMENT_SHADER : GL_VERTEX_SHADER);
-        const char* source = i ? fragment.c_str() : vertex;
-        glShaderSource(shader, 1, &source, nullptr);
-        glCompileShader(shader);
-        GLint ok = 0;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
-        if (!ok) {
-            char log[512]{};
-            glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
-            Eden::Report("loading screen", log);
-            linked = false;
-        }
-        glAttachShader(program, shader);
-        glDeleteShader(shader);
-    }
-    if (linked) {
-        glLinkProgram(program);
-        GLint ok = 0;
-        glGetProgramiv(program, GL_LINK_STATUS, &ok);
-        linked = ok != 0;
-    }
-    if (!linked) {
-        if (program) glDeleteProgram(program);
-        return false;
-    }
-
-    glGenVertexArrays(1, &vao);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDisable(GL_BLEND);
-    glUseProgram(program);
-    glBindVertexArray(vao);
-    glViewport(0, 0, display.width(), display.height());
-    glUniform2f(glGetUniformLocation(program, "size"),
-                static_cast<float>(display.width()), static_cast<float>(display.height()));
-    // One shared monotonic epoch spans this first GL frame, the retained GL
-    // presenter and Vulkan. Never restart the visible animation at takeover.
-    const float seconds = static_cast<float>(
+    Eden::LoadingArtwork::GlPresenter presenter;
+    const bool drawn = presenter.Draw(display.width(), display.height(),
         Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
-    glUniform1f(glGetUniformLocation(program, "seconds"), seconds);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glFlush();
-    const GLenum error = glGetError();
-    const bool swapped = error == GL_NO_ERROR && display.swap();
-    glDeleteVertexArrays(1, &vao);
-    glDeleteProgram(program);
+    const bool swapped = drawn && display.swap();
+    presenter.Release();
     return swapped;
 }
 
@@ -292,6 +238,9 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
     sceSystemServiceHideSplashScreen();
 
     std::string selected_game;
+    bool loading_started = false;
+    bool loading_presented = false;
+    bool reduce_motion = false;
     {
         pe::gfx::GlBatch batch;
         pe::gfx::Font font;
@@ -341,7 +290,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
 
         const bool input_ready = radio_input_init();
         if (!input_ready) Eden::Report("menu failure", "The controller could not be opened");
-        pe::ui::Launcher launcher(services, textures, fonts, first_start);
+        pe::ui::Launcher launcher(services, textures, fonts, first_start, true);
         if (Eden::LaunchHandoff::TakeMultiplayerRequest())
             launcher.open_multiplayer_from_game();
         int menu_volume = launcher.menu_volume();
@@ -423,6 +372,11 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                     Eden::Report("slow input", ("key " + std::to_string(static_cast<int>(input.key)) + ": " +
                                                 std::to_string(ms) + " ms").c_str());
             }
+            if (!loading_started && !launcher.selected_game().empty()) {
+                reduce_motion = launcher.reduce_motion();
+                Eden::LaunchHandoff::BeginLoading();
+                loading_started = true;
+            }
             launcher.update(dt);
             if (launcher.output() != output) {
                 // Output resolution changed in Settings > Video: the display opens again at the new
@@ -460,7 +414,23 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             batch.sync_font_texture(font_texture, font);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            batch.draw(list, viewport, display.width(), display.height());
+            if (launcher.done() && !launcher.selected_game().empty()) {
+                // Render the real artwork without baked dots into an explicit
+                // 1080p target; do not recapture a transient scanout buffer.
+                const bool ready = Eden::LoadingArtwork::Capture([&](int w, int h) {
+                    batch.draw(list, pe::gfx::fit_viewport(w, h), w, h);
+                });
+                Eden::LoadingArtwork::GlPresenter presenter;
+                const bool shown = ready && presenter.Draw(display.width(), display.height(),
+                    Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
+                presenter.Release();
+                loading_presented = shown;
+                if (!shown) batch.draw(list, viewport, display.width(), display.height());
+                std::fprintf(stderr, "EDEN_LOADING_ARTWORK_CAPTURE ready=%d presented=%d\n",
+                             int(ready), int(shown));
+            } else {
+                batch.draw(list, viewport, display.width(), display.height());
+            }
             const auto drawn = Clock::now();
             bool captured = false;
 #ifdef EDEN_DEV_ROM_ID
@@ -538,9 +508,11 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         // context to the bounded loading presenter. It keeps the same shader
         // moving throughout System::Load until Vulkan/OpenGL joins it at the
         // explicit VideoOut takeover boundary.
-        const bool reduce_motion = Eden::LoadPreferences().reduce_motion;
-        Eden::LaunchHandoff::BeginLoading();
-        if (!PresentUnifiedLoading(display, reduce_motion))
+        if (!loading_started) {
+            reduce_motion = Eden::LoadPreferences().reduce_motion;
+            Eden::LaunchHandoff::BeginLoading();
+        }
+        if (!loading_presented && !PresentUnifiedLoading(display, reduce_motion))
             Eden::Report("loading screen", "Unified GL loading frame could not be presented; retaining last launcher frame");
         if (!display.defer_scanout_close(reduce_motion)) {
             Eden::Report("menu video failure", "Launcher display handoff failed");

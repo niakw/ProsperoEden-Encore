@@ -103,7 +103,8 @@ assert draw.index("if (use_composed)") < draw.index("} else if (!scan.empty() &&
 # the same FBO instead of allocating new textures every 60Hz tick.
 assert "if ((page != 0 && !provisional) ||" in draw
 assert "(page == 0 && attempted) || failures >= 3u" in draw
-assert "if (!case_media::PageInputReady(page != 0, inputs_ready, seconds))" in draw
+assert "if (!case_media::PageInputReady(page != 0, inputs_ready," in draw
+assert "native_artwork_loading_ && done_ ? 4.0f : seconds))" in draw
 assert "provisional = !inputs_ready;" in draw
 assert "print, c.fonts.font, c.fonts.texture, paper_w, paper_h, page);" in draw
 assert "bool launch_composed_front_provisional_ = false;" in header
@@ -166,7 +167,7 @@ assert 'if (shots[0] && !ready(*shots[0], paper_w)) return false;' in library_sr
 assert 'if (shots[1] && !ready(*shots[1], std::max(left_w - gap, top_h)))' in library_src
 assert 'if (shots[2] && !ready(*shots[2], paper_w))' in library_src
 assert 'prepare_case_page(false);' in draw
-assert 'prepare_case_page(true);' in draw
+assert 'if (!native_artwork_loading_) prepare_case_page(true);' in draw
 assert 'Color::rgb(0x08111d, 0.45f)' in library_src
 assert 'c.list.gradient_rect({r.x, r.y, r.w, dynamic_h}, 0.0f,' in library_src
 assert 'c.list.hgradient_rect(' not in library_src.split("void flat_back_fallback(", 1)[1].split("// Static sleeve used", 1)[0]
@@ -177,7 +178,7 @@ assert 'Color::rgb(0x030507, 0.98f)' not in library_src
 # A cached original face is authoritative even while its texture is pending.
 # Independent reconstruction occurs ONLY for the specific missing face.
 assert "if (decoded.texture != 0 ||" in draw
-assert "(!decoded.missing && seconds < 4.0f)" in draw
+assert "(!decoded.missing && seconds < 4.0f && !(native_artwork_loading_ && done_))" in draw
 assert "const bool use_composed = artwork.texture == 0 && composed_page != 0;" in draw
 assert "if (scan.empty() || artwork.texture == 0)" not in draw
 assert "if (rear)\n                flat_back_fallback(c, game, paper);" not in library_src

@@ -24,7 +24,7 @@
 #include <cstring>
 #include <time.h>
 #include "hud.h"
-#include "loading_scene_glsl.h"
+#include "loading_artwork_gl.hpp"
 #include "preferences.h"
 #include "diagnostics.h"
 #include "display_refresh.h"
@@ -297,8 +297,7 @@ public:
             Cleanup(eglMakeCurrent(display, surface, surface, hud_context), "HUD cleanup current");
             glDeleteProgram(hud_program);
             glDeleteVertexArrays(1, &hud_vao);
-            glDeleteProgram(loading_program);
-            glDeleteVertexArrays(1, &loading_vao);
+            loading_artwork.Release();
             DoneCurrent();
             Cleanup(eglDestroyContext(display, hud_context), "HUD context");
         }
@@ -331,6 +330,8 @@ public:
         }
         if (loading) {
             loading = false;
+            LaunchHandoff::Clear();
+            LaunchHandoff::EndLoading();
             std::printf("EDEN_LOADING_DONE frames=%u seconds=%.2f scene=%d\n", loading_frames,
                         loading_start < 0 ? 0.0 : now - loading_start, !loading_failed);
             if (system) (void)system->GetAndResetPerfStats();
@@ -415,7 +416,7 @@ public:
     void PresentLoading() {
         const double now = Now();
         if (loading_start < 0) loading_start = now;
-        if (!DrawLoading(now - loading_start + 1.0 + LoadingCalm())) {
+        if (!DrawLoading(LaunchHandoff::LoadingSeconds(LoadingCalm()))) {
             // The scene's shader did not build on this driver: plain text instead.
             const unsigned dots = static_cast<unsigned>(now * 4) % 4;
             char text[16] = "ENCORE";
@@ -435,66 +436,17 @@ private:
     static double Now() {
         return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
-    // The loading screen (loading_scene.glsl): false when its shader cannot be used.
+    // Use the same title artwork in the independent game HUD context.
     bool DrawLoading(double seconds) {
         if (!window_owner || loading_failed) return false;
         Check(eglMakeCurrent(display, surface, surface, hud_context), "loading current");
         SCOPE_EXIT { Cleanup(eglMakeCurrent(display, surface, surface, context), "loading restore"); };
-        if (!loading_program) {
-            // One source owns both sides of the GL -> Vulkan handoff.
-            // Start at t>=1s so neither backend deliberately fades from black.
-            const std::string fragment = std::string{"#version 330 core\n"} +
-                kLoadingSceneGlsl +
-                "uniform vec2 size; uniform float seconds; out vec4 color;\n"
-                "void main(){ color=vec4(loading_scene(gl_FragCoord.xy,size,seconds),1.0); }\n";
-            const char* sources[]{
-                "#version 330 core\nvoid main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
-                "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}",
-                fragment.c_str()};
-            const GLuint program = glCreateProgram();
-            bool built = true;
-            for (unsigned i = 0; i < 2; ++i) {
-                GLuint shader = glCreateShader(i ? GL_FRAGMENT_SHADER : GL_VERTEX_SHADER);
-                glShaderSource(shader, 1, &sources[i], nullptr);
-                glCompileShader(shader);
-                GLint ok{};
-                glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
-                if (!ok) {
-                    char log[512]{};
-                    glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
-                    Report("loading screen", log);
-                }
-                glAttachShader(program, shader);
-                glDeleteShader(shader);
-                built = built && ok;
-            }
-            GLint linked{};
-            if (built) {
-                glLinkProgram(program);
-                glGetProgramiv(program, GL_LINK_STATUS, &linked);
-            }
-            if (!linked) {
-                Report("loading screen", "The loading scene's shader did not build; showing text instead");
-                glDeleteProgram(program);
-                loading_failed = true;
-                return false;
-            }
-            loading_program = program;
-            glGenVertexArrays(1, &loading_vao);
-        }
         EGLint width{}, height{};
         Check(eglQuerySurface(display, surface, EGL_WIDTH, &width) &&
               eglQuerySurface(display, surface, EGL_HEIGHT, &height), "loading dimensions");
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_BLEND);
-        glUseProgram(loading_program);
-        glBindVertexArray(loading_vao);
-        glViewport(0, 0, width, height);
-        glUniform2f(glGetUniformLocation(loading_program, "size"), float(width), float(height));
-        glUniform1f(glGetUniformLocation(loading_program, "seconds"), float(seconds));
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glFlush();
-        return true;
+        const bool drawn = loading_artwork.Draw(width, height, seconds);
+        if (!drawn) loading_failed = true;
+        return drawn;
     }
     void DrawHud(const char* text, bool startup) {
         if (!window_owner) return;
@@ -560,7 +512,7 @@ private:
     bool loading{true}, loading_failed{};
     double loading_start{-1};
     LoadingPace loading_pace;
-    GLuint loading_program{}, loading_vao{};
+    LoadingArtwork::GlPresenter loading_artwork;
     unsigned startup_guest_frames{};
     StartupGate startup_gate;
     HudClock clock;
@@ -651,8 +603,7 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
     if (!vulkan) {
         if (!pe::ps5::Display::close_deferred_scanout())
             throw std::runtime_error("Could not release launcher scanout for OpenGL game");
-        LaunchHandoff::Clear();
-        LaunchHandoff::EndLoading();
+        // Keep the launch artwork alive for the independent game HUD context.
     }
     vulkan_loading = vulkan;
     vulkan_loading_start = -1;

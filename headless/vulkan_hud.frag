@@ -58,8 +58,13 @@ void main() {
         // The loading screen: x and y carry the picture's size, loading the milliseconds since
         // it began (plus one). Vulkan counts rows from the top.
         vec2 size = vec2(float(text.x), float(text.y));
-        color = vec4(loading_scene(vec2(gl_FragCoord.x, size.y - gl_FragCoord.y), size,
-                                   float(text.loading - 1u) * 0.001), 1.0);
+        vec4 dots = loading_artwork_indicator(
+            vec2(gl_FragCoord.x, size.y - gl_FragCoord.y), size,
+            float(text.loading - 1u) * 0.001);
+        // glyphs[0] is reserved for artwork availability only in loading mode.
+        // No purple fallback or opaque overwrite of a valid jacket.
+        color = text.glyphs[0] == 1u ? dots :
+            vec4(mix(vec3(0.055, 0.075, 0.105), dots.rgb, dots.a), 1.0);
         return;
     }
     // The overlay: x and y are where its text starts, width the picture's height. The text is

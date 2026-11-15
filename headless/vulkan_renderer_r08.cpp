@@ -33,6 +33,7 @@
 #include "frame_metrics.h"
 #include "fsr3_optical_session.h"
 #include "hud.h"
+#include "loading_artwork_transfer.hpp"
 #include "mihawk_native_session.h"
 #include "mihawk_session_resize.h"
 #include "storage_paths.h"
@@ -240,6 +241,18 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     }
 
     RenderScreenshot(framebuffers);
+#ifdef PS5_NATIVE
+    // Retire only after the final loading copy's exact scheduler tick is
+    // complete. No WaitIdle / Finish in normal gameplay; otherwise retain
+    // the allocation through the existing drained renderer destruction.
+    if (!framebuffers.empty() && loading_artwork_buffer && loading_artwork_tick &&
+        loading_artwork_tick != std::numeric_limits<u64>::max() &&
+        scheduler.IsFree(loading_artwork_tick)) {
+        loading_artwork_buffer = {};
+        loading_artwork_unavailable = true;
+        loading_artwork_tick = 0;
+    }
+#endif
     // An observed source/composite callback is not an emulated guest FPS
     // measurement. Loading/splash work is accounted separately below.
     ::Eden::FrameMetrics::OnSourceComposite();
@@ -259,8 +272,9 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     const bool mihawk_selected = native_fg_method == 1 && !framebuffers.empty();
     const bool postprocess_hud_required =
         (native_fg_method >= 1 && native_fg_method <= 3) && !framebuffers.empty();
-    const Eden::HudSnapshot postprocess_hud =
+    Eden::HudSnapshot postprocess_hud =
         postprocess_hud_required ? Eden::GetVulkanHud() : Eden::HudSnapshot{};
+    if (postprocess_hud.loading) postprocess_hud = {};
     scheduler.RequestOutsideRenderPassOperationContext();
     blit_swapchain.DrawToFrame(device, rasterizer, frame, framebuffers,
                                render_window.GetFramebufferLayout(), present_manager.SwapchainImageCount(),
@@ -657,20 +671,143 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 void RendererVulkan::PresentLoading() {
     Frame* frame = present_manager.GetRenderFrame();
     scheduler.RequestOutsideRenderPassOperationContext();
-    // The OpenGL launcher already showed this same loading_scene.glsl frame.
-    // Vulkan starts with its normal output image and draws that shared scene
-    // fullscreen; there is no jacket screenshot, bottom-band overlay or
-    // second branded loader.
+    // Prepare the output image without the opaque legacy loading HUD.
     blit_swapchain.DrawToFrame(device, rasterizer, frame, {},
                               render_window.GetFramebufferLayout(),
                               present_manager.SwapchainImageCount(),
-                              present_manager.SwapchainImageViewFormat(), true);
+                              present_manager.SwapchainImageViewFormat(), false);
 #ifdef PS5_NATIVE
-    const Eden::HudSnapshot live_loading = Eden::GetVulkanHud();
-    if (live_loading.loading != 0u && live_loading.width != 0u)
+    const VkFormat format = present_manager.SwapchainImageViewFormat();
+    if (!loading_artwork_buffer && !loading_artwork_unavailable &&
+        frame->width && frame->height && frame->width <= 4096 && frame->height <= 2160) {
+        const auto artwork = Eden::LaunchHandoff::Peek();
+        const bool bgra = format == VK_FORMAT_B8G8R8A8_UNORM ||
+                          format == VK_FORMAT_B8G8R8A8_SRGB;
+        const bool rgba = format == VK_FORMAT_R8G8B8A8_UNORM ||
+                          format == VK_FORMAT_R8G8B8A8_SRGB ||
+                          format == VK_FORMAT_A8B8G8R8_UNORM_PACK32 ||
+                          format == VK_FORMAT_A8B8G8R8_SRGB_PACK32;
+        if (artwork && Eden::LaunchHandoff::Valid(*artwork) && (bgra || rgba)) {
+            ++loading_artwork_attempts;
+            try {
+                const VkDeviceSize bytes = static_cast<VkDeviceSize>(frame->width) *
+                                           frame->height * 4;
+                const VkBufferCreateInfo info{
+                    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+                    .pNext = nullptr,
+                    .flags = 0,
+                    .size = bytes,
+                    .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+                    .queueFamilyIndexCount = 0,
+                    .pQueueFamilyIndices = nullptr,
+                };
+                auto buffer = memory_allocator.CreateBuffer(info, MemoryUsage::Upload);
+                auto mapped = buffer.Mapped();
+                if (Eden::LoadingArtwork::Repack(*artwork, frame->width, frame->height,
+                    bgra ? Eden::LoadingArtwork::PixelOrder::BGRA :
+                           Eden::LoadingArtwork::PixelOrder::RGBA, mapped)) {
+                    buffer.Flush();
+                    loading_artwork_buffer = std::move(buffer);
+                    loading_artwork_width = frame->width;
+                    loading_artwork_height = frame->height;
+                    loading_artwork_format = format;
+                    Eden::LaunchHandoff::Clear();
+                    LOG_INFO(Render_Vulkan, "EDEN_LOADING_ARTWORK_VK ready=1 size={}x{}",
+                             loading_artwork_width, loading_artwork_height);
+                }
+            } catch (const std::exception& e) {
+                LOG_WARNING(Render_Vulkan, "EDEN_LOADING_ARTWORK_VK ready=0 reason={}", e.what());
+            }
+            if (!loading_artwork_buffer && loading_artwork_attempts >= 3) {
+                loading_artwork_unavailable = true;
+                Eden::LaunchHandoff::Clear();
+                LOG_WARNING(Render_Vulkan, "EDEN_LOADING_ARTWORK_VK retries_exhausted=1");
+            }
+        } else if (!artwork || !(bgra || rgba) || !Eden::LaunchHandoff::Valid(*artwork)) {
+            loading_artwork_unavailable = true;
+            Eden::LaunchHandoff::Clear();
+            LOG_WARNING(Render_Vulkan, "EDEN_LOADING_ARTWORK_VK unavailable format={}",
+                        static_cast<u32>(format));
+        }
+    }
+    const bool has_artwork = loading_artwork_buffer &&
+        loading_artwork_width == frame->width && loading_artwork_height == frame->height &&
+        loading_artwork_format == format;
+    if (has_artwork) {
+        const VkImage target = *frame->image;
+        const VkBuffer upload = *loading_artwork_buffer;
+        const VkBufferImageCopy copy{
+            .bufferOffset = 0,
+            .bufferRowLength = 0,
+            .bufferImageHeight = 0,
+            .imageSubresource = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            },
+            .imageOffset = {0, 0, 0},
+            .imageExtent = {frame->width, frame->height, 1},
+        };
+        scheduler.RequestOutsideRenderPassOperationContext();
+        scheduler.Record([target, upload, copy](vk::CommandBuffer cmdbuf) {
+            const VkImageMemoryBarrier to_upload{
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+                .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = target,
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                },
+            };
+            cmdbuf.PipelineBarrier(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                   VK_PIPELINE_STAGE_TRANSFER_BIT, 0, to_upload);
+            cmdbuf.CopyBufferToImage(upload, target,
+                                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, copy);
+            auto to_present = to_upload;
+            to_present.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            // The next command is a LOAD color-attachment overlay, not just
+            // a presentation read. Make the transfer write visible to both
+            // the overlay's color-attachment read/write and the final present.
+            to_present.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT |
+                                       VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            to_present.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            to_present.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+            cmdbuf.PipelineBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                   VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                                   0, to_present);
+        });
+    }
+    // The transparent indicator is drawn over the original artwork. No
+    // opaque fullscreen shader or purple strip is allowed on that image.
+    auto live_loading = Eden::GetVulkanHud();
+    if (live_loading.loading != 0u && live_loading.width != 0u) {
+        live_loading.glyphs[0] = has_artwork ? 1u : 0u;
         blit_swapchain.DrawHudOverlay(device, frame, live_loading);
+    }
 #endif
+#ifdef PS5_NATIVE
+    const u64 tick = scheduler.Flush(*frame->render_ready);
+    if (has_artwork) {
+        if (tick && tick > loading_artwork_tick)
+            loading_artwork_tick = tick;
+        else
+            loading_artwork_tick = std::numeric_limits<u64>::max();
+    }
+#else
     scheduler.Flush(*frame->render_ready);
+#endif
     present_manager.Present(frame);
     ::Eden::FrameMetrics::OnLoadingQueued();
 }

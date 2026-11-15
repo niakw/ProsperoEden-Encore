@@ -250,3 +250,21 @@ vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
     color += (hash21(pixel + fract(seconds) * 61.0) - 0.5) / 255.0 * 1.4;
     return clamp(color, 0.0, 1.0);
 }
+
+// The original Encore jacket/title column owns the background, title and
+// branding. Only these three small blue dots animate over that artwork.
+// Coordinates are virtual 1920x1080, origin at bottom left in BOTH renderers.
+vec4 loading_artwork_indicator(vec2 pixel, vec2 size, float seconds)
+{
+    vec2 p = pixel / max(size, vec2(1.0)) * vec2(1920.0, 1080.0);
+    float alpha = 0.0;
+    bool calm = seconds >= 1000.0;
+    for (int i = 0; i < 3; ++i) {
+        vec2 center = vec2(1356.0 + 26.0 * float(i), 364.0);
+        float coverage = 1.0 - smoothstep(3.3, 4.7, length(p - center));
+        float pulse = calm ? 0.8 :
+            0.32 + 0.68 * (0.5 + 0.5 * sin(seconds * 5.5 - float(i) * 1.15));
+        alpha = max(alpha, coverage * pulse);
+    }
+    return vec4(0.30, 0.65, 1.0, alpha);
+}

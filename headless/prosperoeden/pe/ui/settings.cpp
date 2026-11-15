@@ -1376,7 +1376,7 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             TR("Detailed logging"), TR("Share advanced logs"),
             TR("Share standard logs"), TR("Clear cache")};
         static constexpr const char* hints[] = {
-            TR("Detailed logging writes extra bounded diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play. Deep guest/JIT/GPU tracing is available only in diagnostic builds."),
+            TR("Detailed logging writes extra diagnostics and may reduce FPS or cause stutter. Off is recommended for normal play."),
             TR("Optional advanced performance reports. Sharing is separate from logging. No raw files or personal identifiers."),
             TR("Optional crash and error reports. Does not enable detailed logging. No raw files or personal identifiers."),
             TR("Clear shader caches only. Saves, settings, keys and games are not removed.")};

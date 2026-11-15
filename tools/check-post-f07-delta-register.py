@@ -19,12 +19,29 @@ assert len({e["path"] for e in entries})==len(entries)
 stop_entry=next(e for e in entries if e["path"]=="headless/stop_limit.cpp")
 assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"
 assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting app without automatic restart"
-# Nov15 launcher successors merged by engine #207. Preserve each prior
-# register blob and admit only its exact reviewed successor; no wildcard drift.
+# Nov15 launcher successors merged by engine #207/#209. Preserve each prior
+# register blob and admit only the exact currently selected reviewed successor;
+# no wildcard drift.
 successors={
     "headless/prosperoeden/eden_services.cpp": (
         "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
-        "4e2afa5d81375727f2fb6a98853c212b10f2de3c",
+        "54a37cf740f25c68aa0d5f93adf300144c5280d1",
+    ),
+    "headless/prosperoeden/eden_services.h": (
+        "604a9d15118390b7f9b7e1265d38a91ff97c4a23",
+        "f3d2ca33cc2e42eeafef26207784bd43b6da918b",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.cpp": (
+        "1e488a05689b29baf8c4318d98be52506816cfaa",
+        "255b110f1e1d021ed92511e64c2f8f67ee62a66d",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.hpp": (
+        "f0e8db4791e79d3e173387d2288886bba52ac015",
+        "fb3a0037cfb86328f398a3059c5dd95faa9d950b",
+    ),
+    "headless/prosperoeden/pe/ui/services.hpp": (
+        "868cecd138d9b57486d1e9ce3b7b775848bcc0a3",
+        "300fa56ad3d8932e25a898c53ed8052f4d69841f",
     ),
     "headless/prosperoeden/pe/ui/switch_theme.cpp": (
         "819f2c96a35a34035da68b487abda3fd08ed1cda",

@@ -2556,3 +2556,7 @@ msgstr "可选崩溃和错误报告。不会启用详细日志。不发送原始
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "仅清除着色器缓存。存档、设置、密钥和游戏均保留。"
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA 会对几何边缘进行多次采样。更高的数值可提升边缘质量，但会增加 GPU 带宽和内存占用；8x 和 16x 在 PS5 上开销很高。"

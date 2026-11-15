@@ -2556,3 +2556,7 @@ msgstr "Volitelné zprávy o pádech a chybách. Nezapíná podrobné protokoly.
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Vymaže jen mezipaměť shaderů. Uložené hry, nastavení, klíče a hry zůstanou."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA vzorkuje hrany geometrie vícekrát. Vyšší hodnoty zlepšují kvalitu hran, ale zvyšují nároky na propustnost GPU a paměť; 8x a 16x jsou na PS5 náročné."

@@ -2556,3 +2556,7 @@ msgstr "Opcionális összeomlási és hibajelentések. Nem kapcsolja be a részl
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Csak a shader gyorsítótárakat törli. A mentések, beállítások, kulcsok és játékok megmaradnak."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "Az MSAA többször mintavételezi a geometriai éleket. A magasabb értékek javítják az élek minőségét, de növelik a GPU-sávszélesség és a memória használatát; a 8x és 16x PS5-ön nagy terhelést jelent."

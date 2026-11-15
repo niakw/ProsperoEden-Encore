@@ -28,13 +28,13 @@ inline const char* AntiAliasingGuide(int aa) {
     case 0: return tr(TR("Off: no edge smoothing. Fastest, but diagonal lines may look jagged."));
     case 1: return tr(TR("FXAA: lightweight edge smoothing in one pass. It can slightly soften text and fine details."));
     case 3: return tr(TR("FXAA+: extended edge search. Can smooth more jagged edges but may soften textures. Compare with SMAA Ultra."));
-    // Do not describe MSAA as SMAA. The per-title forced-MSAA Vulkan
-    // compositor is not yet console-qualified; exact mode labels are
-    // already translatable via the shared settings catalog.
-    case 4: return tr(TR("MSAA 2x"));
-    case 5: return tr(TR("MSAA 4x"));
-    case 6: return tr(TR("MSAA 8x"));
-    case 7: return tr(TR("MSAA 16x"));
+    // Do not describe MSAA as SMAA. Forced MSAA is Vulkan-only here and
+    // has a real bandwidth/memory cost that rises with the sample count.
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+        return tr(TR("MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."));
     default: return tr(TR("SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."));
     }
 }

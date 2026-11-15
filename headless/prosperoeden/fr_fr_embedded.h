@@ -1,8 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-#pragma once
-#include <string_view>
-namespace pe::ui::embedded {
-inline constexpr std::string_view kFrFr = R"FRPO(# ProsperoEden launcher - fr-FR
+// SPDX-License-Identifier: GPL-3.0-or-later\n#pragma once\n#include <string_view>\nnamespace pe::ui::embedded {\ninline constexpr std::string_view kFrFr = R"FRPO(# ProsperoEden launcher - fr-FR
 # English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
 # keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
 # AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
@@ -2704,5 +2700,8 @@ msgstr "Rapports de crash et d’erreurs facultatifs. N’active pas les logs av
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Vide uniquement les caches de shaders. Les sauvegardes, paramètres, clés et jeux sont conservés."
-)FRPO";
-}
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "Le MSAA échantillonne plusieurs fois les contours géométriques. Des valeurs plus élevées améliorent la qualité des contours, mais augmentent l’utilisation de la bande passante GPU et de la mémoire ; 8x et 16x sont coûteux sur PS5."
+)FRPO";\n}\n

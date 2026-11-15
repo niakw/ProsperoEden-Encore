@@ -2557,3 +2557,7 @@ msgstr "Report facoltativi di arresti anomali ed errori. Non attiva i log dettag
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Cancella solo le cache degli shader. Salvataggi, impostazioni, chiavi e giochi restano."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA campiona più volte i bordi della geometria. Valori più alti migliorano la qualità dei bordi, ma aumentano l’uso della banda GPU e della memoria; 8x e 16x sono molto pesanti su PS5."

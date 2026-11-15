@@ -2557,3 +2557,7 @@ msgstr "Optionale Absturz- und Fehlerberichte. Aktiviert keine detaillierten Log
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Löscht nur Shader-Caches. Spielstände, Einstellungen, Schlüssel und Spiele bleiben erhalten."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA tastet Geometriekanten mehrfach ab. Höhere Werte verbessern die Kantenqualität, erhöhen aber GPU-Bandbreite und Speicherbedarf; 8x und 16x sind auf PS5 sehr aufwendig."

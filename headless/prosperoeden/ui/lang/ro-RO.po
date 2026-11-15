@@ -2556,3 +2556,7 @@ msgstr "Rapoarte opționale de blocări și erori. Nu activează jurnalele detal
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Șterge doar cache-ul shaderelor. Salvările, setările, cheile și jocurile sunt păstrate."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA eșantionează de mai multe ori marginile geometriei. Valorile mai mari îmbunătățesc calitatea marginilor, dar cresc utilizarea lățimii de bandă GPU și a memoriei; 8x și 16x sunt costisitoare pe PS5."

@@ -78,8 +78,23 @@ assert 'ReadExtractedProgramMetadata(rom_path, vfs, &extracted)' in bridge
 assert 'metadata->Load(npdm) == Loader::ResultStatus::Success' in bridge
 assert 'IsSafeDeconstructedGamePath(root, relative)' in bridge
 assert 'extracted.GetTitleID()' in bridge
-assert 'ExtractedBaseBytes(entry.path(), cancel)' in library
-assert 'ExtractedLocalCover(entry.path())' in library
+# Library readiness must not recurse through every extracted RomFS file.
+# Exact size is deferred to the selected-title media worker.
+assert 'ExtractedBaseBytes(entry.path(), cancel)' not in library
+assert 'status=deferred bytes=0' in library
+assert 'if (game.size == "—"' in library
+assert 'ExtractedBaseBytes(extracted, cancel)' in library
+assert 'status=measured bytes=%llu' in library
+# Standard Switch Control icons are preferred, localized, and surfaced
+# during the shallow Home scan instead of waiting for focus/network enrichment.
+assert 'for (const char* base : {"control", "base/control"})' in library
+assert 'std::string("icon_") + language + ".dat"' in library
+assert 'case 1: preferred = "BritishEnglish"' in library
+assert 'case 2: preferred = "French"' in library
+assert 'case 3: preferred = "CanadianFrench"' in library
+assert 'ExtractedLocalCover(entry.path(), language_choice)' in library
+assert 'recent.tile_icon = local_icon;' in library
+assert 'Eden::IsDeconstructedGameSelection(name)' in library
 assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in library
 
 source = r"""
@@ -554,7 +569,26 @@ int main() {
     fs::create_symlink(outside_nacp, game / "base" / "control.nacp");
     assert(ExtractedLocalNacp(game, 2).name.empty());
     fs::remove(game / "base" / "control.nacp");
-    assert(ExtractedLocalCover(game).empty());
+    assert(ExtractedLocalCover(game, 2).empty());
+    // Canonical Control content wins and follows the selected locale.
+    fs::create_directories(game / "control");
+    {
+        std::ofstream icon(game / "control" / "icon_French.dat", std::ios::binary);
+        icon.put(static_cast<char>(0xff));
+        icon.put(static_cast<char>(0xd8));
+        icon << std::string(160, 'F');
+    }
+    {
+        std::ofstream icon(game / "control" / "icon_AmericanEnglish.dat", std::ios::binary);
+        icon.put(static_cast<char>(0xff));
+        icon.put(static_cast<char>(0xd8));
+        icon << std::string(160, 'E');
+    }
+    assert(ExtractedLocalCover(game, 2) ==
+           (game / "control" / "icon_French.dat").string());
+    assert(ExtractedLocalCover(game, 0) ==
+           (game / "control" / "icon_AmericanEnglish.dat").string());
+    fs::remove_all(game / "control");
     // The selected ExeFS artwork may be an image stored as a .dat sidecar,
     // e.g. icon_AmericanEnglish.dat in native Switch dumps.
     {
@@ -564,21 +598,21 @@ int main() {
         icon.put(static_cast<char>(0xd8));
         icon << std::string(160, 'J');
     }
-    assert(ExtractedLocalCover(game) ==
+    assert(ExtractedLocalCover(game, 2) ==
            (game / "base" / "exefs" / "icon_AmericanEnglish.dat").string());
     fs::remove(game / "base" / "exefs" / "icon_AmericanEnglish.dat");
     // Unrelated binary data must not be accepted solely because of its name.
     std::ofstream(game / "base" / "exefs" / "icon_AmericanEnglish.dat") <<
         std::string(160, 'Q');
-    assert(ExtractedLocalCover(game).empty());
+    assert(ExtractedLocalCover(game, 2).empty());
     fs::remove(game / "base" / "exefs" / "icon_AmericanEnglish.dat");
     std::ofstream(game / "cover.png") << std::string(160, 'p');
-    assert(ExtractedLocalCover(game) == (game / "cover.png").string());
+    assert(ExtractedLocalCover(game, 2) == (game / "cover.png").string());
     fs::remove(game / "cover.png");
     const auto outside = root / "outside.jpg";
     std::ofstream(outside) << std::string(4096, 'x');
     fs::create_symlink(outside, game / "cover.jpg");
-    assert(ExtractedLocalCover(game).empty());
+    assert(ExtractedLocalCover(game, 2).empty());
     std::atomic<bool> cancel{true};
     assert(!ExtractedBaseBytes(game, &cancel));
     fs::remove_all(root);

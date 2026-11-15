@@ -135,7 +135,7 @@ bool IsDecodableAvatarFile(const std::string& path) {
 // Its executable 'main' is just one 20-40 MiB NSO; counting that alone makes
 // a multi-gigabyte game appear as a 32 MB title. Do NOT add updates or DLC,
 // follow symlinks, block on network media, or guess if traversal is incomplete.
-// The entire walk runs on the cancellable Library background scan.
+// The walk runs only for the selected title on the cancellable media worker; the initial Library scan never traverses the full extracted tree.
 std::optional<std::uint64_t> ExtractedBaseBytes(const std::filesystem::path& title,
                                                  const std::atomic<bool>* cancel) {
     namespace fs = std::filesystem;
@@ -327,12 +327,81 @@ ExtractedSidecarMetadata ExtractedLocalNacp(const std::filesystem::path& title,
     return {};
 }
 
-std::string ExtractedLocalCover(const std::filesystem::path& title) {
+std::string ExtractedLocalCover(const std::filesystem::path& title, int language_choice) {
     namespace fs = std::filesystem;
     if (!Eden::IsSafeExtractedDirectory(title)) return {};
-    // Borrow the upstream loose-ExeFS sidecar discovery contract (Eglantine
-    // 4d2cf41837): the game icon may live next to main or in base/exefs.
-    // No synthetic thumbnails or fabricated rear art are needed.
+
+    // Switch Control content owns the canonical square application icon.
+    // Prefer the user's current language, then any valid localized icon.
+    constexpr const char* languages[] = {
+        "AmericanEnglish", "BritishEnglish", "Japanese", "French", "German",
+        "LatinAmericanSpanish", "Spanish", "Italian", "Dutch", "CanadianFrench",
+        "Portuguese", "Russian", "Korean", "TraditionalChinese", "SimplifiedChinese",
+        "BrazilianPortuguese", "Polish", "Thai"
+    };
+    // Keep this helper independently testable: language_choice is the stable
+    // launcher preference index from settings_store.h. Unsupported PS5 UI
+    // locales intentionally retain the emulator's American-English fallback.
+    const char* preferred = "AmericanEnglish";
+    switch (language_choice) {
+    case 1: preferred = "BritishEnglish"; break;
+    case 2: preferred = "French"; break;
+    case 3: preferred = "CanadianFrench"; break;
+    case 4: preferred = "German"; break;
+    case 5: preferred = "Italian"; break;
+    case 6: preferred = "Spanish"; break;
+    case 7: preferred = "LatinAmericanSpanish"; break;
+    case 8: preferred = "Portuguese"; break;
+    case 9: preferred = "BrazilianPortuguese"; break;
+    case 10: preferred = "Dutch"; break;
+    case 11: preferred = "Russian"; break;
+    case 12: preferred = "Polish"; break;
+    case 13: preferred = "Japanese"; break;
+    case 14: preferred = "Korean"; break;
+    case 15: preferred = "SimplifiedChinese"; break;
+    case 16: preferred = "TraditionalChinese"; break;
+    case 17: preferred = "Thai"; break;
+    default: break;
+    }
+
+    const auto icon = [&](const char* base, const char* language) -> std::string {
+        const fs::path dir = title / base;
+        fs::path ancestor = title;
+        for (const auto& segment : fs::path(base)) {
+            ancestor /= segment;
+            if (!Eden::IsSafeExtractedDirectory(ancestor)) return {};
+        }
+        const fs::path candidate = dir / (std::string("icon_") + language + ".dat");
+        std::error_code error;
+        const auto status = fs::symlink_status(candidate, error);
+        if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) return {};
+        const auto size = fs::file_size(candidate, error);
+        if (error || size < 128 || size > (16u << 20)) return {};
+        std::ifstream input(candidate, std::ios::binary);
+        char signature[8]{};
+        input.read(signature, sizeof(signature));
+        if (input.gcount() != static_cast<std::streamsize>(sizeof(signature))) return {};
+        const bool jpeg = static_cast<unsigned char>(signature[0]) == 0xff &&
+                          static_cast<unsigned char>(signature[1]) == 0xd8;
+        const bool png = std::memcmp(signature, "\x89PNG\r\n\x1a\n", 8) == 0;
+        return jpeg || png ? candidate.string() : std::string{};
+    };
+    const auto localized_icon = [&](const char* base) -> std::string {
+        if (auto path = icon(base, preferred); !path.empty()) return path;
+        for (const char* language : languages) {
+            if (std::strcmp(language, preferred) == 0) continue;
+            if (auto path = icon(base, language); !path.empty()) return path;
+        }
+        return {};
+    };
+
+    // Canonical Control icons win over loose portrait covers: Home/library
+    // tiles are square and must not stretch a retail jacket into that slot.
+    for (const char* base : {"control", "base/control"}) {
+        if (auto path = localized_icon(base); !path.empty()) return path;
+    }
+
+    // Legacy loose-ExeFS sidecar discovery remains a fallback for old dumps.
     for (const char* relative : {"cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
                                  "icon.tga", "icon.png", "icon.jpg",
                                  "exefs/cover.png", "exefs/cover.jpg",
@@ -341,8 +410,6 @@ std::string ExtractedLocalCover(const std::filesystem::path& title) {
                                  "base/icon.png", "base/icon.jpg",
                                  "base/exefs/cover.png", "base/exefs/cover.jpg",
                                  "base/exefs/icon.png", "base/exefs/icon.jpg"}) {
-        // symlink_status(candidate) does not detect symlinked ancestors.
-        // Check each ancestor before reading a user-supplied sidecar.
         fs::path parent = title;
         bool safe = true;
         for (const auto& segment : fs::path(relative).parent_path()) {
@@ -357,45 +424,10 @@ std::string ExtractedLocalCover(const std::filesystem::path& title) {
         const auto size = fs::file_size(candidate, error);
         if (!error && size >= 128 && size <= (16u << 20)) return candidate.string();
     }
-    // Eglantine's loose ExeFS sidecars are often JPEG images named
-    // icon_<language>.dat rather than *.jpg. The launcher decodes image
-    // CONTENT with stb_image, independently of the extension. Scan only
-    // known filenames at bounded depth; never follow symlinked parents.
-    constexpr const char* languages[] = {
-        "French", "CanadianFrench", "AmericanEnglish", "BritishEnglish",
-        "Japanese", "German", "Spanish", "LatinAmericanSpanish", "Italian",
-        "Dutch", "Portuguese", "Russian", "Korean", "SimplifiedChinese",
-        "TraditionalChinese"
-    };
+
+    // Older extractions sometimes leave icon_<language>.dat beside ExeFS.
     for (const char* base : {"exefs", "base/exefs", ".", "base"}) {
-        const fs::path dir = title / base;
-        // Check all ancestors, including base/; symlink_status(final) is not
-        // sufficient because it follows symlinked intermediate directories.
-        fs::path ancestor = title;
-        bool safe = true;
-        for (const auto& segment : fs::path(base)) {
-            ancestor /= segment;
-            if (!Eden::IsSafeExtractedDirectory(ancestor)) { safe = false; break; }
-        }
-        if (!safe) continue;
-        for (const char* language : languages) {
-            const fs::path candidate = dir / (std::string("icon_") + language + ".dat");
-            std::error_code error;
-            const auto status = fs::symlink_status(candidate, error);
-            if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) continue;
-            const auto size = fs::file_size(candidate, error);
-            if (error || size < 128 || size > (16u << 20)) continue;
-            // Only JPEG/PNG sidecars. Other binary .dat resources must NOT be
-            // handed to the cover decoder as images.
-            std::ifstream input(candidate, std::ios::binary);
-            char signature[8]{};
-            input.read(signature, sizeof(signature));
-            if (input.gcount() != static_cast<std::streamsize>(sizeof(signature))) continue;
-            const bool jpeg = static_cast<unsigned char>(signature[0]) == 0xff &&
-                              static_cast<unsigned char>(signature[1]) == 0xd8;
-            const bool png = std::memcmp(signature, "\x89PNG\r\n\x1a\n", 8) == 0;
-            if (jpeg || png) return candidate.string();
-        }
+        if (auto path = localized_icon(base); !path.empty()) return path;
     }
     return {};
 }
@@ -2061,6 +2093,21 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             const std::string cached_cover = CoverPath(name);
             if (IsFile(cached_cover)) recent.cover = cached_cover;
         }
+        // An extracted NS2 title already carries its square Control icon.
+        // Surface it during the shallow Home scan instead of waiting for
+        // focus, Nlib/network enrichment or the full Library media worker.
+        if (recent.cover.empty() && Eden::IsDeconstructedGameSelection(name)) {
+            const auto slash = name.find('/');
+            if (slash != std::string::npos) {
+                const std::string root_name = name.substr(0, slash);
+                const std::string local_icon = ExtractedLocalCover(
+                    Eden::AssetsPath("roms/" + root_name), selected_language);
+                if (!local_icon.empty()) {
+                    recent.cover = local_icon;
+                    recent.tile_icon = local_icon;
+                }
+            }
+        }
         if (home.setup_ready) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
@@ -2262,18 +2309,19 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             continue;
         }
         char size[32]{};
+        // Do not recursively walk a multi-gigabyte extracted title while the
+        // initial Library snapshot is being assembled. That used to traverse
+        // tens of thousands of RomFS files per NS2 title before the list could
+        // become ready. The selected-title media worker computes the exact
+        // size later, off the navigation-critical scan.
         const auto complete_base_size = deconstructed ?
-            ExtractedBaseBytes(entry.path(), cancel) :
+            std::optional<std::uint64_t>{} :
             std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)};
         if (cancel && cancel->load(std::memory_order_acquire)) return {};
         if (deconstructed) {
-            // Distinguish an incomplete/unreadable extracted directory from
-            // an actual zero-byte game. Never mislabel a 32 MiB main NSO as
-            // the total multi-GiB title size.
             std::fprintf(stderr,
-                "EDEN_EXEFS_SIZE folder=%s status=%s bytes=%llu\n",
-                entry_name.c_str(), complete_base_size ? "measured" : "unknown",
-                static_cast<unsigned long long>(complete_base_size.value_or(0)));
+                "EDEN_EXEFS_SIZE folder=%s status=deferred bytes=0\n",
+                entry_name.c_str());
         }
         if (complete_base_size) {
             const double bytes = static_cast<double>(*complete_base_size);
@@ -2305,7 +2353,7 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
             else {
                 (void)std::remove(staged.c_str());
                 if (IsFile(cover)) game.cover = cover; // previous successful extraction
-                else if (deconstructed) game.cover = ExtractedLocalCover(entry.path());
+                else if (deconstructed) game.cover = ExtractedLocalCover(entry.path(), language_choice);
             }
             if (cancel && cancel->load(std::memory_order_acquire))
                 return {}; // extraction finished; skip ID/Nlib/add-on metadata
@@ -2422,6 +2470,28 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         (cancel && cancel->load(std::memory_order_acquire))) return game;
     const int language_choice = Eden::LoadPreferences().language;
     const std::string scanned_name = game.name;
+
+    // Exact extracted-title size is useful in Library details, but it is not
+    // required to display or navigate the Library. Only Game objects coming
+    // from the Library scan carry the explicit unknown marker; Home media
+    // requests leave size empty and therefore never trigger this walk.
+    if (game.size == "—" && !(cancel && cancel->load(std::memory_order_acquire))) {
+        const std::filesystem::path extracted = Eden::AssetsPath("roms/" + game.file);
+        if (Eden::IsSafeExtractedDirectory(extracted)) {
+            if (const auto bytes = ExtractedBaseBytes(extracted, cancel)) {
+                char exact_size[32]{};
+                const double count = static_cast<double>(*bytes);
+                if (count >= 1073741824.0)
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
+                else
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
+                game.size = exact_size;
+                std::fprintf(stderr,
+                    "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\n",
+                    game.file.c_str(), static_cast<unsigned long long>(*bytes));
+            }
+        }
+    }
     // Prioritize the requested ORIGINAL retail scans before any optional
     // metadata/banner/icon requests. Nlib may perform multiple slow calls;
     // previously a complete retail front could remain invisible for minutes.

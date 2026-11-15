@@ -500,9 +500,9 @@ def extract_owner(begin, end):
 sizing = extract_owner("std::optional<std::uint64_t> ExtractedBaseBytes(",
                        "\n// Local user-supplied covers")
 covers = extract_owner("std::string SafeExtractedImageSidecar(",
-                       "\nstd::uint64_t ResolveTitleId(")
+                       "\nstd::string ExtractedSelectionIcon(")
 nacp = extract_owner("struct ExtractedSidecarMetadata {",
-                     "\nstd::string ExtractedLocalCover(")
+                     "\nstd::string SafeExtractedImageSidecar(")
 fixture = r"""
 #include <array>
 #include <atomic>

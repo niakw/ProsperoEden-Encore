@@ -14,20 +14,8 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-paths={e["path"] for e in entries}
-# #186 landed on main after this integration branch was cut. The branch itself
-# has the exact prior 39-owner register; GitHub's PR merge graph adds the
-# reviewed fail-closed stop watchdog as owner 40. Accept only these two exact
-# graphs, never an arbitrary count drift.
-stop_watchdog="headless/stop_limit.cpp"
-if stop_watchdog in paths:
-    assert len(entries)==40
-    stop_entry=next(e for e in entries if e["path"]==stop_watchdog)
-    assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"
-    assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting app without automatic restart"
-else:
-    assert len(entries)==39
-assert len(paths)==len(entries)
+assert len(entries)==39  # GL/Vulkan deferred-scanout owners and sampled GPU submission breadcrumb
+assert len({e["path"] for e in entries})==len(entries)
 drifts=[]
 for entry in entries:
     path=ROOT/entry["path"]

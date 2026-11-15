@@ -102,6 +102,31 @@ assert 'recent.tile_icon = local_icon;' in library
 assert 'Eden::IsDeconstructedGameSelection(name)' in library
 assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in library
 
+# Loose ExeFS entries have no embedded Control metadata. The initial Library
+# scan must consume the already-local Control/NACP sidecars without probing
+# exefs/main through the generic packaged metadata extractor.
+games_owner = library.split(
+    "std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel)", 1
+)[1].split("\npe::ui::Game EdenServices::enrich_home_icon(", 1)[0]
+cover_owner = games_owner.split(
+    "const std::string cover = CoverPath(file);", 1
+)[1].split(
+    "if (cancel && cancel->load(std::memory_order_acquire))", 1
+)[0]
+assert 'if (deconstructed) {' in cover_owner
+deconstructed_cover = cover_owner.split('if (deconstructed) {', 1)[1].split(
+    '} else {', 1
+)[0]
+packaged_cover = cover_owner.split('} else {', 1)[1]
+assert 'ExtractedLocalCover(entry.path(), language_choice)' in deconstructed_cover
+assert 'eden_extract_game_metadata' not in deconstructed_cover
+assert 'staged' not in deconstructed_cover
+assert 'eden_extract_game_metadata(' in packaged_cover
+assert 'const std::string staged = cover + ".new";' in packaged_cover
+assert 'std::rename(staged.c_str(), cover.c_str())' in packaged_cover
+assert 'Full Nlib media enrichment' in games_owner
+assert 'enrichment of every installed title' not in games_owner
+
 source = r"""
 #include <cassert>
 #include <cstdio>

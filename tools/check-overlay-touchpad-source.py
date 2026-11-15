@@ -16,6 +16,10 @@ menu = read("headless/in_game_overlay_menu.h")
 vulkan = read("headless/vulkan_window_adapt_r08.cpp")
 shader = read("headless/vulkan_hud.frag")
 graphics = read("headless/graphics.cpp")
+hud = read("headless/hud.h")
+vulkan_cmake = read("headless/vulkan.cmake")
+hud_builder = read("tools/graphics/build-vulkan-hud-shaders.py")
+font_baker = read("tools/launcher/bake_vulkan_menu_font.py")
 
 # Click the physical touchpad, never the reserved console system button; legacy shortcuts
 # and OpenGL guest Minus remain unchanged.
@@ -49,6 +53,16 @@ assert "StyledMode(" in vulkan
 assert "menuAccent(uint palette,uint accent)" in shader
 assert "menuPanel(uint palette)" in shader
 assert "prefs = LoadPreferences();" in menu
+assert '#include "vulkan_menu_font.glsl"' in shader
+assert "menuFontAlpha(" in shader
+assert '#include "eden_vulkan_hud_shaders.h"' in vulkan
+assert "eden-vulkan-hud-shaders" in vulkan_cmake
+assert "bake_vulkan_menu_font.py" in vulkan_cmake
+assert "build-vulkan-hud-shaders.py" in vulkan_cmake
+assert "EDEN_HUD_SHADER_HEADER" in vulkan_cmake
+assert "--output" in font_baker
+assert "--spirv-val" in hud_builder and "0x07230203" in hud_builder
+assert "HudCodepoints(std::string_view text)" in hud
 
 # Every tab displays its accessible page index and both shoulder controls,
 # with the fifth Multiplayer tab visible even on initial opening.
@@ -97,7 +111,7 @@ print("FPS_TOUCHPAD_GUIDE_CATALOG_PARITY_PASS themes=2 locales=31")
 import subprocess
 import tempfile
 assert "result.text[index].Assign(value);" in menu
-assert "dst.glyphs = HudText(value.substr(0, 24));" in menu
+assert "dst.glyphs = HudCodepoints(value.substr(0, 24));" in menu
 with tempfile.TemporaryDirectory() as directory:
     source = Path(directory) / "overlay_text.cpp"
     binary = Path(directory) / "overlay_text"
@@ -114,7 +128,7 @@ int main() {
     visible.visible = true;
     visible.count = 2;
     visible.text[0].Assign("Full-length label beyond twenty-four characters");
-    visible.rows[0].glyphs = Eden::HudText("Full-length label beyond");
+    visible.rows[0].glyphs = Eden::HudCodepoints("Full-length label beyond");
     const std::string prefix(MenuText::kCapacity - 1, 'x');
     const std::string accented = prefix + "\xc3\xa9";
     visible.text[1].Assign(accented);
@@ -141,4 +155,4 @@ int main() {
                     "-pthread", "-I", str(root / "headless"), str(source),
                     "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True)
-print("OVERLAY_MENU_TEXT_MODEL_HOST_PASS utf8_boundary=1 immutable=1 legacy_abi=112 renderer_unchanged=1")
+print("OVERLAY_MENU_TEXT_MODEL_HOST_PASS utf8_boundary=1 immutable=1 legacy_abi=112 montserrat_codepoints=1")

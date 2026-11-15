@@ -5,6 +5,7 @@ layout(push_constant) uniform Text { uint glyphs[24]; uint width; uint x; uint y
 layout(location = 0) out vec4 color;
 #include "loading_wordmark.glsl"
 #include "loading_scene.glsl"
+#include "vulkan_menu_font.glsl"
 // Matches pe::ui::theme::apply_palette: 4 palettes × 5 accents.
 vec3 color24(uint rgb) {
     return vec3(float((rgb>>16u)&255u),float((rgb>>8u)&255u),
@@ -74,8 +75,20 @@ void main() {
         text.glyphs[12], text.glyphs[13], text.glyphs[14], text.glyphs[15],
         text.glyphs[16], text.glyphs[17], text.glyphs[18], text.glyphs[19],
         text.glyphs[20], text.glyphs[21], text.glyphs[22], text.glyphs[23]);
+    // The quick menu uses the launcher's Montserrat Medium raster, generated
+    // from the same .pefont. The ordinary FPS HUD retains the compact legacy
+    // 3x5 path below, so this change cannot perturb its established ABI.
+    float menu_alpha = 0.0;
+    if (menu_row && p.x >= 0 && p.y >= 0) {
+        float menu_scale = max(float(text.width) / 1080.0, 0.001);
+        ivec2 menu_px = ivec2(vec2(p) / menu_scale);
+        int i = menu_px.x / MENU_FONT_W;
+        int x = menu_px.x % MENU_FONT_W;
+        if (i >= 0 && i < 24)
+            menu_alpha = menuFontAlpha(glyphs[i], x, menu_px.y);
+    }
     bool ink = false;
-    if (p.x >= 0 && p.y >= 0) {
+    if (!menu_row && p.x >= 0 && p.y >= 0) {
         ivec2 cell = ivec2(vec2(p) / cell_size);
         int i = cell.x / 4;
         int x = cell.x % 4;
@@ -88,10 +101,12 @@ void main() {
                            selected?(light?0.24:0.36):(light?0.04:0.08));
         float alpha = selected?(contrast?0.98:0.84):
                                (contrast?0.87:0.48);
-        vec3 menu_ink = light ? color24(0x16202cu) : color24(0xf4f2f8u);
-        color = warning_row
-            ? (ink ? vec4(1.0,0.83,0.41,1.0) : vec4(0.30,0.17,0.05,0.84))
-            : (ink ? vec4(menu_ink,1.0) : vec4(row_rgb,alpha));
+        vec4 base = warning_row ? vec4(0.30,0.17,0.05,0.84)
+                                : vec4(row_rgb,alpha);
+        vec4 ink_color = warning_row ? vec4(1.0,0.83,0.41,1.0)
+                                     : vec4(light ? color24(0x16202cu)
+                                                  : color24(0xf4f2f8u),1.0);
+        color = mix(base, ink_color, menu_alpha);
         return;
     }
     color = ink ? vec4(0.9, 0.95, 1.0, 1.0) : vec4(0.025, 0.04, 0.075, 0.5);

@@ -256,7 +256,7 @@ private:
             const auto index = result.count++;
             result.text[index].Assign(value);
             auto& dst = result.rows[index];
-            dst.glyphs = HudText(value.substr(0, 24));
+            dst.glyphs = HudCodepoints(value.substr(0, 24));
             dst.width = 680;
             dst.loading = StyledMode(mode,result.style);
         };

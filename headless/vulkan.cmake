@@ -53,6 +53,45 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 find_program(EDEN_R07_FSR31_GLSLANG NAMES glslangValidator REQUIRED)
 find_program(EDEN_R07_FSR31_SPIRV_VAL NAMES spirv-val REQUIRED)
 find_program(EDEN_R07_FSR31_SPIRV_DIS NAMES spirv-dis REQUIRED)
+
+# The quick overlay shares the launcher's Montserrat .pefont. Build its small
+# ASCII coverage atlas outside the source tree, compile the exact maintained
+# HUD GLSL and make the native renderer consume that generated header. This
+# prevents source-only shader changes from silently leaving the old vendored
+# EDEN_HUD_*_SPV arrays in the PS5 package.
+set(EDEN_HUD_GENERATED_DIR "${PORT_BUILD_DIR}/hud-generated")
+set(EDEN_HUD_MENU_GLSL "${EDEN_HUD_GENERATED_DIR}/vulkan_menu_font.glsl")
+set(EDEN_HUD_SHADER_HEADER "${EDEN_HUD_GENERATED_DIR}/eden_vulkan_hud_shaders.h")
+add_custom_command(
+    OUTPUT "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_GLSL}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${EDEN_HUD_GENERATED_DIR}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/launcher/bake_vulkan_menu_font.py"
+        --output "${EDEN_HUD_MENU_GLSL}"
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PORT_ROOT}/tools/graphics/build-vulkan-hud-shaders.py"
+        --glslang "${EDEN_R07_FSR31_GLSLANG}"
+        --spirv-val "${EDEN_R07_FSR31_SPIRV_VAL}"
+        --source-dir "${EDEN_PORT_DIR}"
+        --include-dir "${EDEN_HUD_GENERATED_DIR}"
+        --output "${EDEN_HUD_SHADER_HEADER}"
+    DEPENDS
+        "${PORT_ROOT}/tools/launcher/bake_vulkan_menu_font.py"
+        "${PORT_ROOT}/tools/graphics/build-vulkan-hud-shaders.py"
+        "${EDEN_PORT_DIR}/prosperoeden/ui/fonts/montserrat-medium.pefont"
+        "${EDEN_PORT_DIR}/vulkan_hud.vert"
+        "${EDEN_PORT_DIR}/vulkan_hud.frag"
+        "${EDEN_PORT_DIR}/loading_wordmark.glsl"
+        "${EDEN_PORT_DIR}/loading_scene.glsl"
+    COMMENT "Build native Vulkan HUD + Montserrat quick-menu SPIR-V"
+    VERBATIM)
+add_custom_target(eden-vulkan-hud-shaders DEPENDS "${EDEN_HUD_SHADER_HEADER}")
+add_dependencies(video_core eden-vulkan-hud-shaders)
+target_include_directories(video_core BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
+set_property(SOURCE "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_HUD_SHADER_HEADER}")
+
 set(EDEN_FSR31_SHADER_DIR "${PORT_BUILD_DIR}/include/video_core/host_shaders")
 set(EDEN_FSR31_NAMES
     prepare_inputs luma_pyramid luma_pyramid_nowave

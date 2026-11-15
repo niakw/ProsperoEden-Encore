@@ -11,7 +11,7 @@
 #include "core/frontend/framebuffer_layout.h"
 #include "hud.h"
 #include "in_game_overlay.h"
-#include "vulkan_hud_shaders.h"
+#include "eden_vulkan_hud_shaders.h"
 #include "video_core/framebuffer_config.h"
 #include "video_core/host_shaders/vulkan_present_vert_spv.h"
 #include "video_core/renderer_vulkan/present/layer.h"

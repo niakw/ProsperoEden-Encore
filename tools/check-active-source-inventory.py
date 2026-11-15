@@ -1093,7 +1093,7 @@ assert pair_receipt["schema_version"] == 1 and pair_receipt["hardware_qualified"
 pair_new_owners = set(pair_receipt["new_owners"])
 assert len(pair_new_owners) == 2 and len(pair_receipt["files"]) == 14
 pair_present = pair_new_owners & set(physical_all)
-if gpu_table_vendor_pin == pair_receipt["selected_vendor"]:
+if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178ecd0c2f74f3951cc20fa12d"}:
     assert pair_present == pair_new_owners
     for path, blob in pair_receipt["files"].items():
         assert subprocess.check_output(["git", "hash-object", str(active / path)], text=True).strip() == blob, path

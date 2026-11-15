@@ -27,6 +27,22 @@ successors={
         "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
         "54a37cf740f25c68aa0d5f93adf300144c5280d1",
     ),
+    "headless/prosperoeden/eden_services.h": (
+        "604a9d15118390b7f9b7e1265d38a91ff97c4a23",
+        "f3d2ca33cc2e42eeafef26207784bd43b6da918b",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.cpp": (
+        "1e488a05689b29baf8c4318d98be52506816cfaa",
+        "255b110f1e1d021ed92511e64c2f8f67ee62a66d",
+    ),
+    "headless/prosperoeden/pe/ui/launcher.hpp": (
+        "f0e8db4791e79d3e173387d2288886bba52ac015",
+        "fb3a0037cfb86328f398a3059c5dd95faa9d950b",
+    ),
+    "headless/prosperoeden/pe/ui/services.hpp": (
+        "868cecd138d9b57486d1e9ce3b7b775848bcc0a3",
+        "300fa56ad3d8932e25a898c53ed8052f4d69841f",
+    ),
     "headless/prosperoeden/pe/ui/switch_theme.cpp": (
         "819f2c96a35a34035da68b487abda3fd08ed1cda",
         "8b59abca5e756f6be6e5da70aec9c477c7e0e1ab",

@@ -344,7 +344,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip() == (
             'c4ed79a1fe6aec09da8040b7af3901f6184f910b'
-            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d'
+            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d'}
             else '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
             'R2 real deleted-buffer source owner changed')
     unexpected_additions = set(expected) - set(actual)

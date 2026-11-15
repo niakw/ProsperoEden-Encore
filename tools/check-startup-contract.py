@@ -64,7 +64,8 @@ assert 'EDEN_VULKAN_LOADING_WAIT stage=10s' in graphics
 assert 'EDEN_VULKAN_LOADING_WAIT stage=30s' in graphics
 assert 'vulkan_loading_diagnostic_stage = 0;' in graphics
 assert 'guest_frame_handoff=0' in graphics
-assert 'MakeLoadingSnapshot(1.0 + LoadingCalm())' in graphics
+assert 'LaunchHandoff::LoadingSeconds(LoadingCalm())' in graphics
+assert 'Eden::LaunchHandoff::BeginLoading();' in frontend
 assert 'eglTerminate(display)' in display
 
 for stage in (

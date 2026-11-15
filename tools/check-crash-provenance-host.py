@@ -86,6 +86,9 @@ assert "--app build/release/PPSA99008" in workflow
 assert "--app-title PPSA99008" in workflow
 assert "build/headless-native/crash-provenance.json" in workflow
 assert "build/symbols/crash-provenance.json" in workflow
+assert "install -m 0644 build/headless-native/link.map build/symbols/link.map" in workflow
+assert '("link_map", symbols / "link.map")' in workflow
+assert "P5_SYMBOL_BUNDLE_MANIFEST_MATCH_PASS" in workflow
 assert "EDEN_TEST_ALL_ON" not in workflow
 # This previously shipped an incomplete crash package: the receipt referenced
 # link.map but the uploaded symbols artifact had only ELF and JSON.

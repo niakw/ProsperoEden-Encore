@@ -1012,6 +1012,28 @@ else:
     assert not fc27_descriptor_present, ("Unexpected FC27 descriptor owner", sorted(fc27_descriptor_present))
 print("ENCORE_FC27_DESCRIPTOR_OWNER_PASS", f"owners={len(fc27_descriptor_present)}")
 
+# Vendor scalar-cache qualification also carries a standalone include-tree
+# copy. Encore selects the richer src/ Task/Mesh-compatible header instead;
+# classify this exact duplicate as unselected rather than rewriting F07 counts.
+fc27_scalar_unselected_receipts = {
+    "eden-shader/include/shader_recompiler/backend/spirv/spirv_emit_context.h":
+        "68e14b3a0c4ae990933652baa51183a51eee4f81",
+}
+fc27_scalar_unselected_present = set(fc27_scalar_unselected_receipts) & set(physical_all)
+if gpu_table_vendor_pin == "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e":
+    assert fc27_scalar_unselected_present == set(fc27_scalar_unselected_receipts)
+    for relative, blob in fc27_scalar_unselected_receipts.items():
+        raw = (active / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+    assert "eden-shader/include/shader_recompiler/backend/spirv/spirv_emit_context.h" not in nov13_cmake
+    scalar_gate = (root / ".github/workflows/spirv-scalar-engine-host.yml").read_text()
+    assert "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h" in scalar_gate
+    assert "844a118358c874b0666aebda116c1d6a0c9a8ceb" in scalar_gate
+else:
+    assert not fc27_scalar_unselected_present
+print("ENCORE_FC27_SCALAR_DUPLICATE_UNSELECTED_PASS",
+      f"owners={len(fc27_scalar_unselected_present)}", "selected_src_header=1")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -1027,7 +1049,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

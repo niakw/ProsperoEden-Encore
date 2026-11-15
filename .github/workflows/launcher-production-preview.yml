@@ -69,7 +69,7 @@ jobs:
             build-essential python3-pil libegl1-mesa-dev libgl1-mesa-dev libstb-dev nlohmann-json3-dev \
             mesa-utils libgl1-mesa-dri ca-certificates git pkg-config
 
-      - name: Render actual artwork handoff in independent Mesa contexts
+      - name: Render actual artwork handoff in independent software GL contexts
         run: python3 -B tools/check-loading-artwork-egl-host.py
 
       - name: Verify all 31 translations and original geometry

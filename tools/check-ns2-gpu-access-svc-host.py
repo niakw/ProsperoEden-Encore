@@ -53,6 +53,9 @@ assert 'LockForMapDeviceAddressSpace(' in worker
 assert 'set(EDEN_NS2_GPU_ACCESS_SOURCE' in recipe
 assert 'list(REMOVE_ITEM eden_ns2_gpu_access_sources "hle/kernel/svc.cpp")' in recipe
 assert 'list(APPEND eden_ns2_gpu_access_sources "${EDEN_NS2_GPU_ACCESS_SOURCE}")' in recipe
+svc_compile_block = recipe.split('set_property(SOURCE "${EDEN_NS2_GPU_ACCESS_SOURCE}"', 1)[1].split(')', 1)[0]
+assert 'TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS' in svc_compile_block
+assert '"PS5_NATIVE=1" "EDEN_NS2_SVC_TRACE=1"' in svc_compile_block
 assert 'EDEN_NS2_EXEFS_EXPERIMENTAL' not in recipe
 assert '#ifdef EDEN_NS2_SVC_TRACE' in src
 assert 'SvcTrace::Next(process.GetProcessId())' in src
@@ -60,10 +63,6 @@ assert 'GpuAccessible = static_cast<u8>(Svc::MemoryAttribute::GpuAccessible)' in
 assert 'SetMask = Uncached | PermissionLocked | GpuAccessible' in block_enum
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")' in recipe
 assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_GPU_ACCESS_ROOT}")' in recipe
-assert 'target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)' in recipe
-assert 'eden_native_detailed_logging() noexcept __attribute__((weak))' in pid
-assert 'if (!eden_native_detailed_logging || !eden_native_detailed_logging())' in pid
-assert 'constexpr std::uint32_t MaxSamples = 32;' in pid
 assert 'if (imm == 0x80' in src
 assert 'case Eden::NS2::GpuAccess::Status::InvalidAddress:' in src
 assert 'case Eden::NS2::GpuAccess::Status::InvalidSize:' in src
@@ -72,6 +71,9 @@ assert 'result = ResultInvalidCurrentMemory;' in src
 assert 'SetArg64(args, 0, result.raw);' in src
 assert 'else if (process.Is64Bit())' in src and 'Call64(system, imm, args);' in src
 assert 'active_pid.load(std::memory_order_acquire) == pid' in pid
+assert '#ifdef PS5_NATIVE' in pid
+assert 'eden_native_detailed_logging() noexcept __attribute__((weak))' in pid
+assert 'if (!eden_native_detailed_logging || !eden_native_detailed_logging())' in pid
 assert 'inline void ResetForTitle() noexcept' in pid
 assert 'active_pid.store(0, std::memory_order_release)' in pid
 core = (vendor / "ns2-runtime/process/core/core.cpp").read_text()

@@ -20,7 +20,11 @@ start = "    const bool native = UsesNativeAbi(fd);"
 end = "    // P2.7: every native GPFIFO entry must refer to a fully mapped GMMU"
 assert entry.count(start) == entry.count(end) == 1
 admission = entry[entry.index(start):entry.index(end)]
-assert "if (native && !native_plan) return NvResult::BadParameter;" in admission
+assert "if (native && !native_plan)" in admission
+native_plan_guard = admission.split("if (native && !native_plan)", 1)[1].split(
+    "// A native GPU device may expose multiple FDs.", 1)[0]
+assert "return NvResult::BadParameter;" in native_plan_guard
+assert "EDEN_NS2_GPFIFO_REJECT" in native_plan_guard
 assert "if (!opened || opened->process != native_owner)" in admission
 assert "NativeGpuChannelRegistry::Instance().Bind(" not in admission
 assert "system.GPU().InitChannel(" not in admission

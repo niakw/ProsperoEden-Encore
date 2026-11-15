@@ -3057,15 +3057,18 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     list(REMOVE_ITEM eden_ns2_gpu_access_sources "hle/kernel/svc.cpp")
     list(APPEND eden_ns2_gpu_access_sources "${EDEN_NS2_GPU_ACCESS_SOURCE}")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_gpu_access_sources}")
+    # core is a distinct static target: the launcher's PS5_NATIVE definition
+    # does not propagate here. Scope both macros to the one reviewed SVC TU so
+    # the shipping witness is compiled, while ns2_svc_trace.h still consults
+    # the user's Detailed Logging preference before admitting any sample.
+    set_property(SOURCE "${EDEN_NS2_GPU_ACCESS_SOURCE}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS
+        "PS5_NATIVE=1" "EDEN_NS2_SVC_TRACE=1")
     # All consumers of the kernel's u8 memory attributes must agree on the
     # same 0x20 enum value; otherwise QueryMemory may hide the stored bit.
     # The two maintained headers keep the complete pinned NS1 structures.
     target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_GPU_ACCESS_ROOT}")
-    # Shipping PS5 keeps this witness compiled but the vendor helper admits
-    # samples only when the user explicitly enables Detailed Logging. The
-    # trace is capped at 32 calls for the exact registered NS2 process.
-    target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)
 endif()
 
 # P1.3: Switch 2 uses SVC arbitration type 3 (WaitIfEqual64), including

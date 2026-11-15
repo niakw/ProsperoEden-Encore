@@ -401,15 +401,18 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
         if (auto path = localized_icon(base); !path.empty()) return path;
     }
 
-    // Legacy loose-ExeFS sidecar discovery remains a fallback for old dumps.
-    for (const char* relative : {"cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
-                                 "icon.tga", "icon.png", "icon.jpg",
-                                 "exefs/cover.png", "exefs/cover.jpg",
+    // Legacy loose-ExeFS sidecars remain a fallback for old dumps. A file
+    // explicitly named icon.* owns the square UI slot. A legacy cover.* is
+    // admitted only when its decoded dimensions are square-ish; portrait
+    // retail scans belong to box_front/box_back and must never fill Home.
+    for (const char* relative : {"icon.tga", "icon.png", "icon.jpg",
                                  "exefs/icon.png", "exefs/icon.jpg",
-                                 "base/cover.tga", "base/cover.png", "base/cover.jpg",
                                  "base/icon.png", "base/icon.jpg",
-                                 "base/exefs/cover.png", "base/exefs/cover.jpg",
-                                 "base/exefs/icon.png", "base/exefs/icon.jpg"}) {
+                                 "base/exefs/icon.png", "base/exefs/icon.jpg",
+                                 "cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
+                                 "exefs/cover.png", "exefs/cover.jpg",
+                                 "base/cover.tga", "base/cover.png", "base/cover.jpg",
+                                 "base/exefs/cover.png", "base/exefs/cover.jpg"}) {
         fs::path parent = title;
         bool safe = true;
         for (const auto& segment : fs::path(relative).parent_path()) {
@@ -422,7 +425,18 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
         const auto status = fs::symlink_status(candidate, error);
         if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) continue;
         const auto size = fs::file_size(candidate, error);
-        if (!error && size >= 128 && size <= (16u << 20)) return candidate.string();
+        if (error || size < 128 || size > (16u << 20)) continue;
+        if (std::string_view(relative).find("cover.") != std::string_view::npos) {
+            int width = 0, height = 0, channels = 0;
+            if (!stbi_info(candidate.c_str(), &width, &height, &channels) ||
+                width < 64 || height < 64 || width > 4096 || height > 4096 ||
+                static_cast<std::uint64_t>(width) * 4u <
+                    static_cast<std::uint64_t>(height) * 3u ||
+                static_cast<std::uint64_t>(height) * 4u <
+                    static_cast<std::uint64_t>(width) * 3u)
+                continue;
+        }
+        return candidate.string();
     }
 
     // Older extractions sometimes leave icon_<language>.dat beside ExeFS.

@@ -45,4 +45,4 @@ assert "const IR::U32 b{GetReg39(insn)};" in cr
 assert "const IR::U32 selector{GetCbuf(insn)};" in cr
 assert "if (mode != 0)" in rc and "if (mode != 0)" in cr
 subprocess.run(["python3","-B",str(TEST)],cwd=ROOT,check=True,timeout=120)
-print("FC27_PRMT_ENGINE_SELECTION_PASS pin=0ae51658 forms=rc,cr selectors=65536 ps5=unverified")
+print(f"FC27_PRMT_ENGINE_SELECTION_PASS pin={EXPECTED[:8]} forms=rc,cr selectors=65536 ps5=unverified")

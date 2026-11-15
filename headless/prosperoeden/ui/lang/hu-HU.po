@@ -2556,3 +2556,7 @@ msgstr "Opcionális összeomlási és hibajelentések. Nem kapcsolja be a részl
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Csak a shader gyorsítótárakat törli. A mentések, beállítások, kulcsok és játékok megmaradnak."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "A kényszerített MSAA extra mintákkal simítja a poligonéleket. A magasabb szintek több GPU-memóriát és sávszélességet használnak; csökkentsd először, ha a teljesítmény vagy a memória instabillá válik. A PS5-ellenőrzés továbbra is játékonként szükséges."

@@ -1504,7 +1504,18 @@ nov15_square_icon_successors = {
 for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.items():
     assert changed_path in post_index and changed_path in drift_index
     assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
-    assert drift_index[changed_path]["actual"] == successor_blob, changed_path
+    if changed_path == "headless/prosperoeden/eden_services.cpp" and \
+            drift_index[changed_path]["actual"] == "54a37cf740f25c68aa0d5f93adf300144c5280d1":
+        # #208 is based on merged #207. Prove #207's intermediate owner from
+        # the exact merged commit rather than requiring the working tree to
+        # move backwards before admitting its reviewed successor.
+        historical_square = subprocess.check_output(
+            ["git", "rev-parse",
+             "f50cd16bde889d67c1a876817ad49bfa6f167d12:" + changed_path],
+            cwd=ROOT, text=True).strip()
+        assert historical_square == successor_blob, changed_path
+    else:
+        assert drift_index[changed_path]["actual"] == successor_blob, changed_path
     post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
 print("NOV15_SQUARE_ICON_SOURCE_SUCCESSOR_PASS", "owners=2",
       "console_validation=pending")

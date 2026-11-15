@@ -54,6 +54,9 @@ on:
     paths:
       - 'vendor'
       - '.gitmodules'
+      # The G11 parity checker is an executable source-ownership gate. A PR
+      # changing it must run the same preflight that main will run after merge.
+      - 'tools/check-g11-jit-profile-matrix-host.py'
       - '.github/workflows/encore-core-preflight.yml'
   workflow_dispatch:
 

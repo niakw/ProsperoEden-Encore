@@ -663,9 +663,10 @@ assert not post_f07_ampere_semaphore_owners & research_owners
 assert (ROOT / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
 print("ENCORE_POST_F07_AMPERE_SEMAPHORE_ISOLATION_PASS", "owners=1")
 
-# Shared NS1/NS2 compiled targets use a native GPFIFO header, scheduler
-# header/source and maintained NVK/M2MF channel-state source added after F07. Resolve only the exact
-# literal inventory set; never adjust the immutable 518-owner count.
+# Shared NS1/NS2 compiled targets use the three native GPFIFO
+# suspend/resume owners across the reviewed lineage. Vendor 697159fd adds
+# one maintained NVK/M2MF channel-state owner; historical pair gates
+# intentionally checkout earlier vendors where that file must be absent.
 gp_fifo_nodes = [
     node.value for node in ast.parse(
         (ROOT / "tools/check-active-source-inventory.py").read_text()
@@ -680,21 +681,30 @@ assert gp_fifo_paths == {
     "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h",
     "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp",
     "ns2-runtime/gpu_dispatch/video_core/control/scheduler.h",
-    "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp",
 }
 post_f07_native_gpfifo_owners = {
     "vendor/encore-active/" + p for p in gp_fifo_paths
 }
+native_m2mf_owner = "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
+native_gpfifo_vendor_pin = subprocess.check_output(
+    ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+if native_gpfifo_vendor_pin == "697159fd0c183f8a164d0493929ae3b4bcb391d1":
+    post_f07_native_gpfifo_owners.add(native_m2mf_owner)
 assert post_f07_native_gpfifo_owners <= all_owners
 assert not post_f07_native_gpfifo_owners & research_owners
 assert post_f07_native_gpfifo_owners.isdisjoint(post_f07_ampere_semaphore_owners)
 assert "EDEN_NS2_GPFIFO_SCHEDULER" in release_cmake
 assert "EDEN_NS2_GPFIFO_CHANNEL_STATE" in release_cmake
-channel_state = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp").read_text()
-assert "constexpr u32 NvkM2mfSubchannel = 2;" in channel_state
-assert "payload.kepler_memory, NvkM2mfSubchannel" in channel_state
+if native_m2mf_owner in post_f07_native_gpfifo_owners:
+    channel_state = (ROOT / native_m2mf_owner).read_text()
+    assert "constexpr u32 NvkM2mfSubchannel = 2;" in channel_state
+    assert "payload.kepler_memory, NvkM2mfSubchannel" in channel_state
+else:
+    assert native_m2mf_owner not in all_owners
 assert (ROOT / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
-print("ENCORE_POST_F07_NATIVE_GPFIFO_ISOLATION_PASS", "owners=4 m2mf_default=1")
+print("ENCORE_POST_F07_NATIVE_GPFIFO_ISOLATION_PASS",
+      f"owners={len(post_f07_native_gpfifo_owners)}",
+      f"m2mf_default={int(native_m2mf_owner in post_f07_native_gpfifo_owners)}")
 
 # PR #20/#23/#21/#24 introduced new launcher and Vulkan/AMD source
 # owners after the exact 518-owner F07 audit. The separately versioned

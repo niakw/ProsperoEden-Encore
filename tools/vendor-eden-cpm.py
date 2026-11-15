@@ -122,6 +122,16 @@ BOOST_DOCS_DEPENDABOT_DELTA = {
     "files": 59798,
     "bytes": 550709825,
 }
+# Vendor 8b4ab46 / 4f9481a / 45dc0f0 tighten the archived docs-only
+# isomorphic-git override to exact 1.44.13 and synchronize URL's lockfile.
+# Comparison from the previously audited 24b8556 tree to final vendor
+# 4572e58 changes only those three package metadata files; compiled/runtime
+# Boost sources are untouched. Preserve both exact reviewed snapshots.
+BOOST_DOCS_DETERMINISTIC_OVERRIDE_DELTA = {
+    "sha256": "ec9292f7566e9ac21a135fc89fe7e84bde991d65610d0e87df977314a72ae67f",
+    "files": 59798,
+    "bytes": 550709823,
+}
 SECURITY_CPM_DELTAS={
  "boost":({
      "sha256":"02027393412e03a79a37eb7620fdb382f7e8374dddafa78606eed8e80534fd83",
@@ -159,7 +169,10 @@ def check():
    reviewed=SECURITY_CPM_DELTAS.get(name)
    approved = (reviewed is not None and expected == reviewed[0] and
                (observed == reviewed[1] or
-                (name == 'boost' and observed == BOOST_DOCS_DEPENDABOT_DELTA)))
+                (name == 'boost' and observed in {
+                    BOOST_DOCS_DEPENDABOT_DELTA,
+                    BOOST_DOCS_DETERMINISTIC_OVERRIDE_DELTA,
+                })))
    if approved:
     security_verified.add(name)
     print('CPM_SECURITY_DELTA_EXACT_PASS',name,'original_snapshot_preserved=1',flush=True)

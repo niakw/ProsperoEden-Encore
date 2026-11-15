@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Focused contract for the continuous native loading compositor.
 
-The shader is validated separately. This source gate rejects the old static
-jacket/band and the R457 frozen-frame handoff: one retained GL context must
-keep the shared scene moving through System::Load, then stop/join before
-Vulkan takes VideoOut. No physical PS5 continuity is claimed.
+The actual Encore jacket is composed once, then the same title artwork and
+three animated dots must survive GL -> retained EGL -> Vulkan/OpenGL.
+Reject the old purple full-screen/band paths, and require the existing
+stop/join ownership boundary. No physical PS5 continuity is claimed.
 """
 from pathlib import Path
-import hashlib
+import subprocess
+import sys
 
 root = Path(__file__).resolve().parents[1]
 renderer = (root / "headless/vulkan_renderer_r08.cpp").read_text()
@@ -21,29 +22,56 @@ display = (root / "headless/prosperoeden/pe/platform/display_egl.cpp").read_text
 handoff = (root / "headless/launch_handoff.hpp").read_text()
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text()
 native_cmake = (root / "headless/CMakeLists.txt").read_text()
+gl_art = (root / "headless/loading_artwork_gl.hpp").read_text()
+scene = (root / "headless/loading_scene.glsl").read_text()
+launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
+launcher_h = (root / "headless/prosperoeden/pe/ui/launcher.hpp").read_text()
+transfer = (root / "headless/loading_artwork_transfer.hpp").read_text()
 
 assert 'target_compile_definitions(video_core PRIVATE PS5_NATIVE=1)' in vulkan_cmake
 assert "vulkan_renderer_r08.cpp" in vulkan_cmake
 assert 'set(EDEN_NS2_SPARSE_BACKING OFF)' in native_cmake
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in native_cmake
 
-# All three presentation phases use the same source-generated scene.
-assert "kLoadingSceneGlsl" in frontend
-assert "kLoadingSceneGlsl" in graphics
-assert "kLoadingSceneGlsl" in display
-assert '#include "loading_scene.glsl"' in shader
+# All presentation phases share actual composed artwork and one indicator.
 for source in (frontend, graphics, display):
-    assert "loading_scene(gl_FragCoord.xy,size,seconds)" in source
-assert "color = vec4(loading_scene(" in shader
+    assert '#include "loading_artwork_gl.hpp"' in source
+    assert "loading_scene(gl_FragCoord.xy,size,seconds)" not in source
+assert "kLoadingSceneGlsl" in gl_art
+assert "loading_artwork_indicator(gl_FragCoord.xy,size,seconds)" in gl_art
+assert "loading_scene(gl_FragCoord.xy,size,seconds)" not in gl_art
+assert "vec4 loading_artwork_indicator" in scene
+assert '#include "loading_scene.glsl"' in shader
+assert "loading_artwork_indicator(" in shader
+assert "color = vec4(loading_scene(" not in shader
+assert "text.glyphs[0] == 1u ? dots" in shader
 
-assert "bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion)" in frontend
+# The native launcher paints the original front/title, without the separate
+# timed rear-hold cinematic; the preview retains that code for design QA.
+assert "bool native_artwork_loading = false" in launcher_h
+assert "pe::ui::Launcher launcher(services, textures, fonts, first_start, true)" in frontend
+assert "native_launch_art_ready_ || std::chrono::steady_clock::now() >= native_launch_deadline_" in launcher
+assert "std::chrono::milliseconds(750)" in launcher
+assert "if (!native_artwork_loading_) prepare_case_page(true);" in launcher
+assert "!(native_artwork_loading_ && done_)" in launcher
+assert "const float appear = native_artwork_loading_ ? 1.0f" in launcher
+
+# Composition is read only from the explicitly owned offscreen target.
+assert "Eden::LoadingArtwork::Capture(" in frontend
+assert "constexpr int width = 1920, height = 1080;" in gl_art
+assert gl_art.index("glFramebufferTexture2D") < gl_art.index("glReadPixels")
+assert "glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)" in gl_art
+assert "glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)" in gl_art
+assert "glPixelStorei(GL_PACK_ROW_LENGTH, 0)" in gl_art
+assert "std::swap_ranges" in gl_art
+assert "LaunchHandoff::Publish(std::move(frame))" in gl_art
+assert "LaunchHandoff::Peek()" in gl_art
+assert "LaunchHandoff::Valid(*artwork)" in gl_art
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in frontend
 assert "Eden::LaunchHandoff::BeginLoading();" in frontend
-assert "PresentUnifiedLoading(display, reduce_motion)" in frontend
 assert "display.defer_scanout_close(reduce_motion)" in frontend
-assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(
-    "display.defer_scanout_close(reduce_motion)"
-)
+assert frontend.index("Eden::LoadingArtwork::Capture(") < frontend.index("textures.release();", frontend.index("Eden::LoadingArtwork::Capture("))
+assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index("display.defer_scanout_close(reduce_motion)")
 assert "bool defer_scanout_close(bool reduce_motion);" in display_h
 
 # R458: System::Load is no longer a frozen last GL frame.
@@ -51,11 +79,13 @@ assert "std::jthread deferred_loading_thread;" in display
 assert "EGLContext deferred_context = EGL_NO_CONTEXT;" in display
 loop = display.split("void deferred_loading_loop(", 1)[1].split("\n}", 1)[0]
 assert "eglMakeCurrent(display, surface, surface, context)" in loop
-assert "create_loading_program()" in loop
+assert "Eden::LoadingArtwork::GlPresenter presenter;" in loop
+assert "presenter.Draw(width, height, seconds)" in loop
+assert "presenter.Release();" in loop
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in loop
 assert "while (!stop.stop_requested())" in loop
 assert "eglSwapBuffers(display, surface)" in loop
-assert "glViewport(0, 0, width, height)" in loop
+assert "glViewport(0, 0, width, height)" in gl_art
 
 defer = display.split("bool Display::defer_scanout_close(bool reduce_motion)", 1)[1].split(
     "bool Display::close_deferred_scanout()", 1
@@ -91,16 +121,24 @@ assert close_deferred.index("eglDestroySurface(display, surface)") < close_defer
 loading = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
     "void RendererVulkan::Report()", 1
 )[0]
-assert "present_manager.SwapchainImageViewFormat(), true);" in loading
+assert "present_manager.SwapchainImageViewFormat(), false);" in loading
 assert "Eden::GetVulkanHud()" in loading
-assert "blit_swapchain.DrawHudOverlay(device, frame, live_loading);" in loading
-assert loading.index("DrawHudOverlay") < loading.index("scheduler.Flush")
-for retired in (
-    "loading_jacket", "LaunchHandoff", "CopyBufferToImage",
-    "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL", "0x80000000u",
-):
+assert "Eden::LoadingArtwork::Repack" in loading
+assert "loading_artwork_attempts >= 3" in loading
+assert "loading_artwork_format == format" in loading
+assert "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL" in loading
+assert "VK_ACCESS_TRANSFER_WRITE_BIT" in loading
+assert "VK_ACCESS_COLOR_ATTACHMENT_READ_BIT" in loading
+assert "to_present.newLayout = VK_IMAGE_LAYOUT_GENERAL;" in loading
+assert loading.index("CopyBufferToImage") < loading.index("DrawHudOverlay") < loading.index("scheduler.Flush")
+assert "live_loading.glyphs[0] = has_artwork ? 1u : 0u" in loading
+assert "vk::Buffer loading_artwork_buffer" in header
+assert "scheduler.IsFree(loading_artwork_tick)" in renderer
+assert "loading_artwork_tick = std::numeric_limits<u64>::max()" in loading
+assert "if (postprocess_hud.loading) postprocess_hud = {};" in renderer
+assert "if (hud.loading && !configs.empty()) hud = {};" in window
+for retired in ("loading_jacket", "0x80000000u", "band_height", "loading_scene("):
     assert retired not in loading
-assert "loading_jacket_" not in header
 
 overlay = window.split("void WindowAdaptPass::DrawHudOverlay", 1)[1].split(
     "VkDescriptorSetLayout WindowAdaptPass::GetDescriptorSetLayout", 1
@@ -121,9 +159,8 @@ assert "inline void BeginLoading() noexcept" in handoff
 assert "inline void EndLoading() noexcept" in handoff
 assert "inline double LoadingSeconds(double calm_offset = 0.0) noexcept" in handoff
 assert "loading_started_ns" in handoff
-shader_sha256 = hashlib.sha256(shader.encode()).hexdigest()
-assert shader_sha256 == (
-    "cec9e8b4323c573b5cb7ca17fe4f6831163df43be94602c781f8d0f82cf3d9df"
-), ("vulkan_hud.frag sha256", shader_sha256)
+# Updated exact shader source receipt; preserve historical source reviews.
+assert subprocess.check_output(["git", "hash-object", "headless/vulkan_hud.frag"], cwd=root, text=True).strip() == "35ffd047c1090f471e2baa6ecd982e6fc92ac1c2"
+subprocess.run([sys.executable, "-B", str(root / "tools/check-loading-artwork-transfer-host.py")], check=True)
 
-print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_scene=1 shared_epoch=1 animated_system_load=1 single_videoout_owner=1 console_pending=1")
+print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_artwork=1 shared_epoch=1 animated_system_load=1 single_videoout_owner=1 purple_loader=0 console_pending=1")

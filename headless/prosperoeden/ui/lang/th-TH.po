@@ -2556,3 +2556,7 @@ msgstr "รายงานการขัดข้องและข้อผิ
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "ล้างเฉพาะแคชเชดเดอร์ ข้อมูลบันทึกเกม การตั้งค่า คีย์ และเกมยังคงอยู่"
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "MSAA แบบบังคับช่วยทำให้ขอบโพลีกอนเรียบขึ้นด้วยการสุ่มตัวอย่างเพิ่มเติม ระดับที่สูงขึ้นใช้หน่วยความจำและแบนด์วิดท์ GPU มากขึ้น หากประสิทธิภาพหรือหน่วยความจำไม่เสถียร ให้ลดค่านี้ก่อน ยังคงต้องตรวจสอบบน PS5 แยกตามแต่ละเกม"

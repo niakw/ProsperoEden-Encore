@@ -60,6 +60,10 @@ assert 'GpuAccessible = static_cast<u8>(Svc::MemoryAttribute::GpuAccessible)' in
 assert 'SetMask = Uncached | PermissionLocked | GpuAccessible' in block_enum
 assert 'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")' in recipe
 assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_GPU_ACCESS_ROOT}")' in recipe
+assert 'target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)' in recipe
+assert 'eden_native_detailed_logging() noexcept __attribute__((weak))' in pid
+assert 'if (!eden_native_detailed_logging || !eden_native_detailed_logging())' in pid
+assert 'constexpr std::uint32_t MaxSamples = 32;' in pid
 assert 'if (imm == 0x80' in src
 assert 'case Eden::NS2::GpuAccess::Status::InvalidAddress:' in src
 assert 'case Eden::NS2::GpuAccess::Status::InvalidSize:' in src

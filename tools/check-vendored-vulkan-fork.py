@@ -123,6 +123,25 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         print("ENCORE_FC27_STATIC_SAMPLER_EXACT_RECEIPT_PASS")
     else:
         assert graphics_sha == 'd7563d41b74d780f4512899e2fda1b2f362f5523', graphics_sha
+    # The compute owner carries the same fixed-secondary-sampler rule, but it
+    # is outside the R23/P24 owner set. Require the exact shipping successor,
+    # then normalize its sole reviewed line in the audit copy.
+    compute_owner = 'vk_compute_pipeline_cost.cpp'
+    compute_source = expected[compute_owner].read_text()
+    compute_sha = raster_blob(compute_source)
+    if compute_sha == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2':
+        fixed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset};'
+        indexed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset + index_offset};'
+        assert compute_source.count(fixed_compute) == 1 and indexed_compute not in compute_source
+        historical_compute = compute_source.replace(fixed_compute, indexed_compute, 1)
+        assert raster_blob(historical_compute) == '53a545c32a034cfdd3421f381f354a28b306c259'
+        audit_compute = temp/'normalized-vendor-fc27-static-sampler'/compute_owner
+        audit_compute.parent.mkdir(parents=True, exist_ok=True)
+        audit_compute.write_text(historical_compute)
+        expected[compute_owner] = audit_compute
+        print("ENCORE_FC27_STATIC_SAMPLER_COMPUTE_EXACT_RECEIPT_PASS")
+    else:
+        assert compute_sha == '53a545c32a034cfdd3421f381f354a28b306c259', compute_sha
     # Two intentional native-only sources are not generator outputs:
     # a synchronization helper and the F07 Vulkan allocator OOM diagnostics.
     # All generated Vulkan translation units still remain byte-identical.
@@ -929,44 +948,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
              'CanExecuteRecordedDraw()', 'DrawMeshTasksEXT'),
     }
     assert set(r23_combined_owners) <= set(p24_by_path)
-    def reverse_fc27_post_r23(name, text, verify_hash=True):
-        # Vendor #145 changes only the secondary sampler address after the
-        # frozen R23 receipt; vendor #142 and #145 advance cache 19 -> 20 -> 21.
-        # Reconstruct those reviewed predecessors exactly instead of restamping.
-        if name == 'vk_graphics_pipeline_cost.cpp':
-            if verify_hash:
-                assert git_blob_sha(text) == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba', (
-                    'FC27 fixed-sampler graphics owner drift', name)
-            fixed = 'const u32 second_offset{desc.secondary_cbuf_offset};'
-            indexed = 'const u32 second_offset{desc.secondary_cbuf_offset + index_offset};'
-            assert text.count(fixed) == 1 and indexed not in text
-            text = text.replace(fixed, indexed, 1)
-            if verify_hash:
-                assert git_blob_sha(text) == 'd7563d41b74d780f4512899e2fda1b2f362f5523'
-        elif name == 'vk_pipeline_cache_cost.cpp':
-            if verify_hash:
-                assert git_blob_sha(text) == 'be5d48abd44996502b0829a6e0501d130a151455', (
-                    'FC27 cache-version owner drift', name)
-            assert text.count('constexpr u32 CACHE_VERSION = 21;') == 1
-            text = text.replace('constexpr u32 CACHE_VERSION = 21;',
-                                'constexpr u32 CACHE_VERSION = 19;', 1)
-            if verify_hash:
-                assert git_blob_sha(text) == '6efe1b10862135056c1df1b78007a1c9cb5a9610'
-        return text
-
-    # Compute owns the same separate-sampler address rule but is outside the
-    # eight P24 owners. Pin and reverse its sole reviewed hunk independently.
-    fc27_compute = expected['vk_compute_pipeline_cost.cpp'].read_text()
-    assert git_blob_sha(fc27_compute) == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2'
-    fixed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset};'
-    indexed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset + index_offset};'
-    assert fc27_compute.count(fixed_compute) == 1 and indexed_compute not in fc27_compute
-    assert git_blob_sha(fc27_compute.replace(fixed_compute, indexed_compute, 1)) == \
-        '53a545c32a034cfdd3421f381f354a28b306c259'
-    print('ENCORE_FC27_FIXED_SAMPLER_VULKAN_REVERSE_PASS graphics=1 compute=1 cache=21_to_19')
-
     for name, receipt_sha in r23_combined_owners.items():
-        combined = reverse_fc27_post_r23(name, expected[name].read_text())
+        combined = expected[name].read_text()
         assert git_blob_sha(combined) == receipt_sha, (
             'Unreviewed merged R23 Vulkan source bytes', name)
         assert all(token in combined for token in r23_required_semantics[name]), (

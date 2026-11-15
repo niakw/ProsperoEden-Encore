@@ -102,6 +102,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         print("ENCORE_R457_MSAA_HANDLE_EXACT_RECEIPT_PASS")
     else:
         assert raster_sha == '5b04321fa45d6b5e6af1d4b17bcf695348d0dd90', raster_sha
+    # FC27 dynamic-texture/static-sampler repair changes one descriptor
+    # offset in the selected graphics pipeline owner. Vendor's focused test
+    # proves the exact source successor and its cache-version pair. Reverse
+    # only that reviewed line in the audit copy before the frozen R23/P24
+    # comparisons; the compiled vendor source remains unchanged.
+    graphics_owner = 'vk_graphics_pipeline_cost.cpp'
+    graphics_source = expected[graphics_owner].read_text()
+    graphics_sha = raster_blob(graphics_source)
+    if graphics_sha == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba':
+        fixed_sampler = 'const u32 second_offset{desc.secondary_cbuf_offset};'
+        indexed_sampler = 'const u32 second_offset{desc.secondary_cbuf_offset + index_offset};'
+        assert graphics_source.count(fixed_sampler) == 1 and indexed_sampler not in graphics_source
+        historical_graphics = graphics_source.replace(fixed_sampler, indexed_sampler, 1)
+        assert raster_blob(historical_graphics) == 'd7563d41b74d780f4512899e2fda1b2f362f5523'
+        audit_graphics = temp/'normalized-vendor-fc27-static-sampler'/graphics_owner
+        audit_graphics.parent.mkdir(parents=True, exist_ok=True)
+        audit_graphics.write_text(historical_graphics)
+        expected[graphics_owner] = audit_graphics
+        print("ENCORE_FC27_STATIC_SAMPLER_EXACT_RECEIPT_PASS")
+    else:
+        assert graphics_sha == 'd7563d41b74d780f4512899e2fda1b2f362f5523', graphics_sha
     # Two intentional native-only sources are not generator outputs:
     # a synchronization helper and the F07 Vulkan allocator OOM diagnostics.
     # All generated Vulkan translation units still remain byte-identical.

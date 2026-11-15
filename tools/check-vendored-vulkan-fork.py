@@ -142,6 +142,24 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         print("ENCORE_FC27_STATIC_SAMPLER_COMPUTE_EXACT_RECEIPT_PASS")
     else:
         assert compute_sha == '53a545c32a034cfdd3421f381f354a28b306c259', compute_sha
+    # Shader IR successors #142/#145 deliberately advance the persistent
+    # Vulkan cache ABI 19 -> 20 -> 21. Historical R23/P24 receipts predate
+    # both changes, so normalize only this exact constant in the audit copy.
+    cache_owner = 'vk_pipeline_cache_cost.cpp'
+    cache_source = expected[cache_owner].read_text()
+    cache_sha = raster_blob(cache_source)
+    if cache_sha == 'be5d48abd44996502b0829a6e0501d130a151455':
+        assert cache_source.count('constexpr u32 CACHE_VERSION = 21;') == 1
+        historical_cache = cache_source.replace('constexpr u32 CACHE_VERSION = 21;',
+                                                'constexpr u32 CACHE_VERSION = 19;', 1)
+        assert raster_blob(historical_cache) == '6efe1b10862135056c1df1b78007a1c9cb5a9610'
+        audit_cache = temp/'normalized-vendor-fc27-static-sampler'/cache_owner
+        audit_cache.parent.mkdir(parents=True, exist_ok=True)
+        audit_cache.write_text(historical_cache)
+        expected[cache_owner] = audit_cache
+        print("ENCORE_FC27_CACHE_VERSION_EXACT_RECEIPT_PASS version=21 historical=19")
+    else:
+        assert cache_sha == '6efe1b10862135056c1df1b78007a1c9cb5a9610', cache_sha
     # Two intentional native-only sources are not generator outputs:
     # a synchronization helper and the F07 Vulkan allocator OOM diagnostics.
     # All generated Vulkan translation units still remain byte-identical.

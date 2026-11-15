@@ -327,40 +327,41 @@ ExtractedSidecarMetadata ExtractedLocalNacp(const std::filesystem::path& title,
     return {};
 }
 
-std::string ExtractedLocalCover(const std::filesystem::path& title) {
+std::string SafeExtractedImageSidecar(const std::filesystem::path& title,
+                                      const std::filesystem::path& relative,
+                                      bool require_image_magic) {
     namespace fs = std::filesystem;
     if (!Eden::IsSafeExtractedDirectory(title)) return {};
-    // Borrow the upstream loose-ExeFS sidecar discovery contract (Eglantine
-    // 4d2cf41837): the game icon may live next to main or in base/exefs.
-    // No synthetic thumbnails or fabricated rear art are needed.
-    for (const char* relative : {"cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
-                                 "icon.tga", "icon.png", "icon.jpg",
-                                 "exefs/cover.png", "exefs/cover.jpg",
-                                 "exefs/icon.png", "exefs/icon.jpg",
-                                 "base/cover.tga", "base/cover.png", "base/cover.jpg",
-                                 "base/icon.png", "base/icon.jpg",
-                                 "base/exefs/cover.png", "base/exefs/cover.jpg",
-                                 "base/exefs/icon.png", "base/exefs/icon.jpg"}) {
-        // symlink_status(candidate) does not detect symlinked ancestors.
-        // Check each ancestor before reading a user-supplied sidecar.
-        fs::path parent = title;
-        bool safe = true;
-        for (const auto& segment : fs::path(relative).parent_path()) {
-            parent /= segment;
-            if (!Eden::IsSafeExtractedDirectory(parent)) { safe = false; break; }
-        }
-        if (!safe) continue;
-        const fs::path candidate = title / relative;
-        std::error_code error;
-        const auto status = fs::symlink_status(candidate, error);
-        if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) continue;
-        const auto size = fs::file_size(candidate, error);
-        if (!error && size >= 128 && size <= (16u << 20)) return candidate.string();
+    fs::path parent = title;
+    for (const auto& segment : relative.parent_path()) {
+        if (segment == ".") continue;
+        parent /= segment;
+        if (!Eden::IsSafeExtractedDirectory(parent)) return {};
     }
-    // Eglantine's loose ExeFS sidecars are often JPEG images named
-    // icon_<language>.dat rather than *.jpg. The launcher decodes image
-    // CONTENT with stb_image, independently of the extension. Scan only
-    // known filenames at bounded depth; never follow symlinked parents.
+    const fs::path candidate = title / relative;
+    std::error_code error;
+    const auto status = fs::symlink_status(candidate, error);
+    if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) return {};
+    const auto size = fs::file_size(candidate, error);
+    if (error || size < 128 || size > (16u << 20)) return {};
+    if (require_image_magic) {
+        std::ifstream input(candidate, std::ios::binary);
+        char signature[8]{};
+        input.read(signature, sizeof(signature));
+        if (input.gcount() != static_cast<std::streamsize>(sizeof(signature))) return {};
+        const bool jpeg = static_cast<unsigned char>(signature[0]) == 0xff &&
+                          static_cast<unsigned char>(signature[1]) == 0xd8;
+        const bool png = std::memcmp(signature, "\x89PNG\r\n\x1a\n", 8) == 0;
+        if (!jpeg && !png) return {};
+    }
+    return candidate.string();
+}
+
+std::string ExtractedLocalIcon(const std::filesystem::path& title) {
+    // Match the upstream loose-ExeFS loader: the application icon is the
+    // canonical square Home/library tile and has priority over portrait
+    // retail cover scans. Nintendo dumps commonly store JPEG/PNG bytes in a
+    // language-named .dat sidecar.
     constexpr const char* languages[] = {
         "French", "CanadianFrench", "AmericanEnglish", "BritishEnglish",
         "Japanese", "German", "Spanish", "LatinAmericanSpanish", "Italian",
@@ -368,36 +369,56 @@ std::string ExtractedLocalCover(const std::filesystem::path& title) {
         "TraditionalChinese"
     };
     for (const char* base : {"exefs", "base/exefs", ".", "base"}) {
-        const fs::path dir = title / base;
-        // Check all ancestors, including base/; symlink_status(final) is not
-        // sufficient because it follows symlinked intermediate directories.
-        fs::path ancestor = title;
-        bool safe = true;
-        for (const auto& segment : fs::path(base)) {
-            ancestor /= segment;
-            if (!Eden::IsSafeExtractedDirectory(ancestor)) { safe = false; break; }
-        }
-        if (!safe) continue;
         for (const char* language : languages) {
-            const fs::path candidate = dir / (std::string("icon_") + language + ".dat");
-            std::error_code error;
-            const auto status = fs::symlink_status(candidate, error);
-            if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) continue;
-            const auto size = fs::file_size(candidate, error);
-            if (error || size < 128 || size > (16u << 20)) continue;
-            // Only JPEG/PNG sidecars. Other binary .dat resources must NOT be
-            // handed to the cover decoder as images.
-            std::ifstream input(candidate, std::ios::binary);
-            char signature[8]{};
-            input.read(signature, sizeof(signature));
-            if (input.gcount() != static_cast<std::streamsize>(sizeof(signature))) continue;
-            const bool jpeg = static_cast<unsigned char>(signature[0]) == 0xff &&
-                              static_cast<unsigned char>(signature[1]) == 0xd8;
-            const bool png = std::memcmp(signature, "\x89PNG\r\n\x1a\n", 8) == 0;
-            if (jpeg || png) return candidate.string();
+            const std::filesystem::path relative =
+                std::filesystem::path(base) /
+                (std::string("icon_") + language + ".dat");
+            if (auto icon = SafeExtractedImageSidecar(title, relative, true); !icon.empty())
+                return icon;
         }
     }
+    for (const char* relative : {
+             "icon.tga", "icon.png", "icon.jpg", "icon.jpeg",
+             "exefs/icon.png", "exefs/icon.jpg", "exefs/icon.jpeg",
+             "base/icon.tga", "base/icon.png", "base/icon.jpg", "base/icon.jpeg",
+             "base/exefs/icon.png", "base/exefs/icon.jpg", "base/exefs/icon.jpeg"}) {
+        if (auto icon = SafeExtractedImageSidecar(title, relative, false); !icon.empty())
+            return icon;
+    }
     return {};
+}
+
+std::string ExtractedLocalCover(const std::filesystem::path& title) {
+    // Prefer the actual application icon for square launcher tiles. Retail
+    // front/back media has its own role and is loaded separately.
+    if (auto icon = ExtractedLocalIcon(title); !icon.empty()) return icon;
+    for (const char* relative : {
+             "cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
+             "exefs/cover.png", "exefs/cover.jpg", "exefs/cover.jpeg",
+             "base/cover.tga", "base/cover.png", "base/cover.jpg", "base/cover.jpeg",
+             "base/exefs/cover.png", "base/exefs/cover.jpg", "base/exefs/cover.jpeg"}) {
+        if (auto cover = SafeExtractedImageSidecar(title, relative, false); !cover.empty())
+            return cover;
+    }
+    return {};
+}
+
+std::string ExtractedSelectionIcon(const std::string& selection) {
+    if (!Eden::IsDeconstructedGameSelection(selection)) return {};
+    const std::size_t slash = selection.find('/');
+    if (slash == std::string::npos || slash == 0) return {};
+    const std::filesystem::path title =
+        Eden::AssetsPath("roms/" + selection.substr(0, slash));
+    return ExtractedLocalIcon(title);
+}
+
+std::string ExtractedSelectionCover(const std::string& selection) {
+    if (!Eden::IsDeconstructedGameSelection(selection)) return {};
+    const std::size_t slash = selection.find('/');
+    if (slash == std::string::npos || slash == 0) return {};
+    const std::filesystem::path title =
+        Eden::AssetsPath("roms/" + selection.substr(0, slash));
+    return ExtractedLocalCover(title);
 }
 
 std::uint64_t ResolveTitleId(const std::string& path, const std::string& file) {
@@ -1967,6 +1988,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         bool has_cover = Eden::FileExists(cover);
         if (home.last_exists && home.setup_ready && !has_cover) {
             cover = EnsureCover(home.last_file, &title);
+            if (cover.empty()) cover = ExtractedSelectionCover(home.last_file);
             has_cover = !cover.empty();
         }
         home.last_title = title;
@@ -2060,6 +2082,16 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         else {
             const std::string cached_cover = CoverPath(name);
             if (IsFile(cached_cover)) recent.cover = cached_cover;
+        }
+        // Home discovery is intentionally shallow, but a loose ExeFS icon is
+        // already local and bounded. Use it immediately instead of showing
+        // "Network available" until focus/Nlib completes.
+        if (const std::string local_icon = ExtractedSelectionIcon(name);
+            !local_icon.empty()) {
+            recent.cover = local_icon;
+            recent.tile_icon = local_icon;
+        } else if (recent.cover.empty()) {
+            recent.cover = ExtractedSelectionCover(name);
         }
         if (home.setup_ready) {
             recent.title_id = ResolveTitleId(recent_path, name);

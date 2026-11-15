@@ -13,6 +13,7 @@ on:
       - 'tools/check-r457-ns1-audio-source.py'
       - 'tools/ns2/check_r457_sparse_kernel_source.py'
       - 'tools/ns2/check_r457_sparse_native_graph.py'
+      - 'tools/check-fc27-prmt-engine-selection.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,7 +29,7 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=f0324324768bdc090a003079bbf121df862bc7f7
+          expected=0ae51658a5d93e368408cad2484b99083ed7309f
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
@@ -41,4 +42,6 @@ jobs:
           python3 -B vendor/tests/fc27_ssa_definition_storage_host.py
           python3 -B vendor/tests/fc27_ssbo_search_pruning_host.py
           python3 -B vendor/tests/ps5_ir_bfs_adaptive_host.py
+          python3 -B tools/check-fc27-prmt-engine-selection.py
+          python3 -B vendor/tests/fc27_maxwell_prmt_operand_forms_source.py
           echo ENCORE_VENDOR_P0_CONSOLIDATED_ENGINE_PAIR_PASS

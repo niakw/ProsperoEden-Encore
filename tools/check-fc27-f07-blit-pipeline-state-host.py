@@ -2,8 +2,9 @@
 """F07: replay selected native Scheduler graphics state after DrawTexture blit.
 
 The raw VkImage BlitColor overload records a graphics pipeline on the command
-buffer without informing the scheduler, unlike BlitImpl. Verify that native
-DrawTexture invalidates the cached guest graphics state afterward. HOST ONLY.
+buffer. Eden #4559 moved the required scheduler invalidation from DrawTexture
+into the maintained BlitColor owner itself. Verify the selected source still
+invalidates guest graphics state after recording the raw blit. HOST ONLY.
 """
 from pathlib import Path
 import subprocess
@@ -11,7 +12,7 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-blit = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/blit_image.cpp").read_text()
+blit = (root / "vendor/encore-active/eden-vulkan/blit_image.cpp").read_text()
 sched = (root / "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 cmake = (root / "headless/vulkan.cmake").read_text()
@@ -31,14 +32,20 @@ raw = fragment(blit, "void BlitImageHelper::BlitColor(const Framebuffer* dst_fra
 ordinary = fragment(blit, "void BlitImageHelper::BlitImpl(",
                     "\nvoid BlitImageHelper::BlitColorMSAA(")
 assert draw.count("blit_image.BlitColor(framebuffer, texture.RenderTarget()") == 1
-assert draw.count("scheduler.InvalidateState();") == 1
-assert draw.index("blit_image.BlitColor(framebuffer, texture.RenderTarget()") < draw.index("scheduler.InvalidateState();")
+# Eden #4559 centralizes raw-blit invalidation in the selected helper. Keep
+# DrawTexture free of a duplicate invalidation while requiring the helper to
+# invalidate only after the command has been recorded.
+assert draw.count("scheduler.InvalidateState();") == 0
+assert raw.count("scheduler.InvalidateState();") == 1
+assert raw.index("scheduler.Record(") < raw.index("scheduler.InvalidateState();")
 assert "gpu_memory->FlushCaching();" in draw.split("std::scoped_lock l{texture_cache.mutex};", 1)[0]
 assert "cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);" in raw
 assert "cmdbuf.BindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS" in raw
-assert "scheduler.InvalidateState();" not in raw
-assert "scheduler.InvalidateState();" in ordinary
+assert raw.count("scheduler.InvalidateState();") == 1
+assert ordinary.count("scheduler.InvalidateState();") == 1
 assert "PORT_BUILD_DIR" in cmake and "vulkan_rasterizer.cpp" in cmake
+assert 'list(REMOVE_ITEM video_sources renderer_vulkan/blit_image.cpp)' in cmake
+assert 'list(APPEND video_sources "${PORT_BUILD_DIR}/blit_image.cpp")' in cmake
 assert '"    scheduler.InvalidateState();\\n"' in gen
 assert "F07 bypass cold guest graphics shader lookup in native raw DrawTexture" in gen
 for method_name,support in (("UpdateAlphaToCoverageEnable","SupportsAlphaToCoverage"),

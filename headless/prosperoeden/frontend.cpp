@@ -78,9 +78,9 @@ float MenuGain(int volume) {
 }
 
 // Draw the exact same source-generated loading scene used by Vulkan.
-// This replaces the selected-game jacket before the launcher relinquishes
-// scanout, so System::Load never needs a black interstitial or a screenshot
-// mailbox. Failure leaves the already-presented launcher frame untouched.
+// The native launcher enters this scene directly on game selection; there
+// is no separate timed cinematic loader. Transfer the existing scanout to
+// the same scene throughout System::Load. Failure retains the prior frame.
 bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion) {
     const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
         "uniform vec2 size; uniform float seconds; out vec4 color;\n"
@@ -292,6 +292,9 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
     sceSystemServiceHideSplashScreen();
 
     std::string selected_game;
+    bool loading_scene_started = false;
+    bool loading_scene_presented = false;
+    bool reduce_motion = false;
     {
         pe::gfx::GlBatch batch;
         pe::gfx::Font font;
@@ -341,7 +344,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
 
         const bool input_ready = radio_input_init();
         if (!input_ready) Eden::Report("menu failure", "The controller could not be opened");
-        pe::ui::Launcher launcher(services, textures, fonts, first_start);
+        pe::ui::Launcher launcher(services, textures, fonts, first_start, true);
         if (Eden::LaunchHandoff::TakeMultiplayerRequest())
             launcher.open_multiplayer_from_game();
         int menu_volume = launcher.menu_volume();
@@ -422,6 +425,17 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                 if (ms >= 50)
                     Eden::Report("slow input", ("key " + std::to_string(static_cast<int>(input.key)) + ": " +
                                                 std::to_string(ms) + " ms").c_str());
+            }
+            if (launcher.done() && !launcher.selected_game().empty()) {
+                // Present before releasing launcher resources or joining its
+                // workers. The first visible loading frame and all later
+                // stages use this same epoch, without the preview animation.
+                reduce_motion = launcher.reduce_motion();
+                Eden::LaunchHandoff::BeginLoading();
+                loading_scene_started = true;
+                loading_scene_presented = PresentUnifiedLoading(display, reduce_motion);
+                for (const pe::audio::Cue cue : launcher.take_cues()) sounds.play(*mixer, cue);
+                break;
             }
             launcher.update(dt);
             if (launcher.output() != output) {
@@ -523,8 +537,8 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             *restart_requested = launcher.restart_requested();
         selected_game = launcher.selected_game();
         if (!launcher.done()) selected_game.clear();
-        // The screenshot has been presented. Waiting up to 600 ms for a
-        // launch cue needlessly freezes the jacket before EGL->Vulkan.
+        // Waiting for a launch cue would needlessly freeze the shared scene
+        // before EGL->Vulkan.
         // Silence the UI bus and release audio promptly instead.
         if (audio_ready) mixer->set_bus_gain(pe::audio::Bus::ui, 0.0f);
         audio.stop();
@@ -538,9 +552,11 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         // context to the bounded loading presenter. It keeps the same shader
         // moving throughout System::Load until Vulkan/OpenGL joins it at the
         // explicit VideoOut takeover boundary.
-        const bool reduce_motion = Eden::LoadPreferences().reduce_motion;
-        Eden::LaunchHandoff::BeginLoading();
-        if (!PresentUnifiedLoading(display, reduce_motion))
+        if (!loading_scene_started) {
+            reduce_motion = Eden::LoadPreferences().reduce_motion;
+            Eden::LaunchHandoff::BeginLoading();
+        }
+        if (!loading_scene_presented && !PresentUnifiedLoading(display, reduce_motion))
             Eden::Report("loading screen", "Unified GL loading frame could not be presented; retaining last launcher frame");
         if (!display.defer_scanout_close(reduce_motion)) {
             Eden::Report("menu video failure", "Launcher display handoff failed");

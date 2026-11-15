@@ -1059,6 +1059,17 @@ if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/fixed_pipeline_state.cpp"
 endif()
 list(REMOVE_ITEM video_sources renderer_vulkan/fixed_pipeline_state.cpp)
 list(APPEND video_sources "${PORT_BUILD_DIR}/fixed_pipeline_state.cpp")
+# Eden #4559: DrawTexture raw blits must compile the maintained helper together
+# with its matched header. file(COPY) above stages the exact vendor owner.
+if(NOT EXISTS "${EDEN_ACTIVE_VULKAN}/blit_image.cpp")
+    message(FATAL_ERROR "Missing maintained Eden #4559 BlitImageHelper owner")
+endif()
+list(FIND video_sources "renderer_vulkan/blit_image.cpp" EDEN4559_PINNED_BLIT_INDEX)
+if(EDEN4559_PINNED_BLIT_INDEX LESS 0)
+    message(FATAL_ERROR "Pinned BlitImageHelper source moved; re-audit Eden #4559 selector")
+endif()
+list(REMOVE_ITEM video_sources renderer_vulkan/blit_image.cpp)
+list(APPEND video_sources "${PORT_BUILD_DIR}/blit_image.cpp")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp
     vulkan_common/vulkan_memory_allocator.cpp renderer_vulkan/vk_scheduler.cpp)
 # Spatial FSR1 stock percentage was reversed relative to RCAS stops:

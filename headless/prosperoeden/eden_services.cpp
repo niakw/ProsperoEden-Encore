@@ -1987,8 +1987,12 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         std::string cover = CoverPath(home.last_file);
         bool has_cover = Eden::FileExists(cover);
         if (home.last_exists && home.setup_ready && !has_cover) {
-            cover = EnsureCover(home.last_file, &title);
-            if (cover.empty()) cover = ExtractedSelectionCover(home.last_file);
+            // Loose ExeFS has no packaged Control NCA to extract here. Prefer
+            // its bounded local sidecar before invoking the generic metadata
+            // extractor, which previously emitted "No cover extracted from
+            // .../exefs/main" and delayed Home.
+            cover = ExtractedSelectionCover(home.last_file);
+            if (cover.empty()) cover = EnsureCover(home.last_file, &title);
             has_cover = !cover.empty();
         }
         home.last_title = title;
@@ -2077,21 +2081,21 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         recent.title = GameTitle(name);
         // A fallback tile must not extract an entire game's metadata before
         // Home can appear. The background Library scan fills missing art.
-        if (played.contains(name))
-            recent.cover = EnsureCover(name);
-        else {
-            const std::string cached_cover = CoverPath(name);
-            if (IsFile(cached_cover)) recent.cover = cached_cover;
-        }
         // Home discovery is intentionally shallow, but a loose ExeFS icon is
-        // already local and bounded. Use it immediately instead of showing
-        // "Network available" until focus/Nlib completes.
+        // already local and bounded. Use it immediately instead of running
+        // packaged metadata extraction or showing "Network available" until
+        // focus/Nlib completes.
         if (const std::string local_icon = ExtractedSelectionIcon(name);
             !local_icon.empty()) {
             recent.cover = local_icon;
             recent.tile_icon = local_icon;
-        } else if (recent.cover.empty()) {
+        } else if (played.contains(name)) {
             recent.cover = ExtractedSelectionCover(name);
+            if (recent.cover.empty()) recent.cover = EnsureCover(name);
+        } else {
+            const std::string cached_cover = CoverPath(name);
+            if (IsFile(cached_cover)) recent.cover = cached_cover;
+            else recent.cover = ExtractedSelectionCover(name);
         }
         if (home.setup_ready) {
             recent.title_id = ResolveTitleId(recent_path, name);

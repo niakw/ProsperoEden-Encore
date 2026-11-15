@@ -1474,6 +1474,29 @@ assert len(post_entries) == 40  # reviewed post-F07 source successors, including
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
+
+# Nov15 launcher tile-identity follow-up: keep the immutable historical and
+# prior post-F07 receipts, but admit only these two exact source successors.
+# library.cpp has no historical blob receipt in STATE and is covered by its
+# dedicated host/source tests instead.
+nov15_square_icon_successors = {
+    "headless/prosperoeden/eden_services.cpp": (
+        "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
+        "22f2111366f9bdbc60685da0ab4ee8ea303596f9",
+    ),
+    "headless/prosperoeden/pe/ui/switch_theme.cpp": (
+        "819f2c96a35a34035da68b487abda3fd08ed1cda",
+        "8b59abca5e756f6be6e5da70aec9c477c7e0e1ab",
+    ),
+}
+for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.items():
+    assert changed_path in post_index and changed_path in drift_index
+    assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
+    assert drift_index[changed_path]["actual"] == successor_blob, changed_path
+    post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
+print("NOV15_SQUARE_ICON_SOURCE_SUCCESSOR_PASS", "owners=2",
+      "console_validation=pending")
+
 # R457 only: retain immutable October F07 blobs while tracking the separately
 # reviewed 34-file November+Nov13 post-F07 delta register. Track
 # the separately selected and unqualified 12GiB resident owner with its

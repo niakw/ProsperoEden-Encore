@@ -27,7 +27,8 @@ class Launcher
 {
   public:
     // first_start: the app just opened (false after returning from a game).
-    Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start);
+    Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start,
+             bool native_unified_loading = false);
     ~Launcher();
     Launcher(const Launcher &) = delete;
     Launcher &operator=(const Launcher &) = delete;
@@ -77,6 +78,8 @@ class Launcher
     {
         return restart_requested_;
     }
+    // The real native presenter uses the current in-memory preference.
+    bool reduce_motion() const noexcept { return prefs_.reduce_motion; }
     // Empty until a game is chosen.
     const std::string &selected_game() const
     {
@@ -385,6 +388,7 @@ class Launcher
     std::array<tween::Spring, 24> home_springs_{};
     float intro_ = 0.0f;
     bool first_start_ = true;
+    const bool native_unified_loading_ = false;
 
     // library
     std::vector<Game> games_;

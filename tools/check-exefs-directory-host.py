@@ -78,9 +78,21 @@ assert 'ReadExtractedProgramMetadata(rom_path, vfs, &extracted)' in bridge
 assert 'metadata->Load(npdm) == Loader::ResultStatus::Success' in bridge
 assert 'IsSafeDeconstructedGamePath(root, relative)' in bridge
 assert 'extracted.GetTitleID()' in bridge
-assert 'ExtractedBaseBytes(entry.path(), cancel)' in library
-assert 'ExtractedLocalCover(entry.path())' in library
-assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in library
+scan_owner = library.split("std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel)", 1)[1].split(
+    "pe::ui::Game EdenServices::enrich_home_icon(", 1)[0]
+assert 'ExtractedBaseBytes(entry.path(), cancel)' not in scan_owner
+assert 'Folder size is not calculated during game discovery.' not in library  # upstream wording only
+assert 'status=%s bytes=%llu' in scan_owner and '"deferred"' in scan_owner
+assert 'ExtractedLocalCover(entry.path())' in scan_owner
+assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in scan_owner
+selected_media = library.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,", 1)[1].split(
+    "pe::ui::BoxArt EdenServices::box_art(", 1)[0]
+assert 'ExtractedBaseBytes(title_root, cancel)' in selected_media
+assert 'EDEN_EXEFS_SIZE_LAZY' in selected_media
+launcher_library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
+finish_media = launcher_library.split("void Launcher::finish_selected_media()", 1)[1].split(
+    "void Launcher::apply_games(", 1)[0]
+assert 'enriched.size != "—"' in finish_media and 'game.size = enriched.size;' in finish_media
 
 source = r"""
 #include <cassert>

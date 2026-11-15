@@ -4,6 +4,7 @@ from pathlib import Path
 import filecmp
 import json
 import hashlib
+import runpy
 import os
 import shutil
 import subprocess
@@ -92,9 +93,28 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         data = text.encode('utf-8')
         return hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
     raster_sha = raster_blob(raster_source)
+    # Eden #4559 is a later, independently reviewed DrawTexture delta.
+    # Reuse the vendor's exact immutable before/after receipt ONLY to reverse
+    # that one delta in the audit copy, then continue all historical engine
+    # proofs below unchanged.
+    if raster_sha == 'aa3ff8baf97f075d1adf44a9d19335c89403c8e1':
+        receipt_path = root/'vendor/tests/native_msaa_handle_receipt.py'
+        receipt_text = receipt_path.read_text()
+        assert raster_blob(receipt_text) == '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2'
+        receipt = runpy.run_path(str(receipt_path))
+        assert receipt['CURRENT_DRAWTEXTURE'] == raster_sha
+        draw_after = receipt['DRAW_TEXTURE_AFTER']
+        draw_before = receipt['DRAW_TEXTURE_BEFORE']
+        assert raster_source.count('#include <optional>\n') == 1
+        assert raster_source.count(draw_after) == 1 and draw_before not in raster_source
+        raster_source = raster_source.replace('#include <optional>\n', '', 1)
+        raster_source = raster_source.replace(draw_after, draw_before, 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
+        print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
-    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607'}:
+    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '1a9441ca85d50c6c56fb74b4eb7831ba70e9563a'}:
         # Vendor #156: only reverse the two exact reviewed cache-coherence
         # additions on an audit copy, as vendor's native_msaa_handle_receipt
         # does. Shipping source and historical oracle remain untouched.

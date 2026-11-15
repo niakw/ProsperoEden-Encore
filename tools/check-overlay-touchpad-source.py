@@ -217,7 +217,7 @@ int main() {
         for (int i = 0; i < row; ++i)
             assert(probe.Handle(down) == O::none);
         assert(probe.selected == row);
-        assert(probe.Handle(select) == O::none);
+        assert(probe.Handle(Eden::QuickOverlay::select) == O::none);
         assert(probe.tab == target && probe.selected == 0 && probe.writes == 0);
         assert(probe.Handle(back) == O::none);
         assert(probe.visible && probe.tab == 0 && probe.selected == row && probe.writes == 0);
@@ -227,20 +227,20 @@ int main() {
     assert(shoulder.Handle(next_tab) == O::none && shoulder.tab == 1);
     assert(shoulder.Handle(previous_tab) == O::none && shoulder.tab == 0);
     assert(shoulder.Handle(previous_tab) == O::none && shoulder.tab == 4);
-    assert(shoulder.Handle(select) == O::none && shoulder.multiplayer_confirm);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::none && shoulder.multiplayer_confirm);
     assert(shoulder.Handle(back) == O::none && !shoulder.multiplayer_confirm);
-    assert(shoulder.Handle(select) == O::none && shoulder.tab == 4);
-    assert(shoulder.Handle(select) == O::none && shoulder.multiplayer_confirm);
-    assert(shoulder.Handle(select) == O::multiplayer && !shoulder.visible);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::none && shoulder.tab == 4);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::none && shoulder.multiplayer_confirm);
+    assert(shoulder.Handle(Eden::QuickOverlay::select) == O::multiplayer && !shoulder.visible);
     MenuProbe old_actions;
     assert(old_actions.Handle(down) == O::none);
-    assert(old_actions.Handle(select) == O::none && old_actions.writes == 1);
+    assert(old_actions.Handle(Eden::QuickOverlay::select) == O::none && old_actions.writes == 1);
     assert(old_actions.Handle(down) == O::none);
-    assert(old_actions.Handle(select) == O::none && old_actions.writes == 2);
+    assert(old_actions.Handle(Eden::QuickOverlay::select) == O::none && old_actions.writes == 2);
     assert(old_actions.Handle(down) == O::none);
-    assert(old_actions.Handle(select) == O::library && !old_actions.visible);
+    assert(old_actions.Handle(Eden::QuickOverlay::select) == O::library && !old_actions.visible);
     MenuProbe resume;
-    assert(resume.Handle(select) == O::close && !resume.visible);
+    assert(resume.Handle(Eden::QuickOverlay::select) == O::close && !resume.visible);
 }
 ''', encoding="utf-8")
     subprocess.run(["c++", "-std=c++20", "-O2", "-Wall", "-Wextra", "-Werror",

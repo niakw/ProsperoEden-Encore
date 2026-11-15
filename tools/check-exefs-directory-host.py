@@ -84,6 +84,9 @@ assert 'ExtractedBaseBytes(entry.path(), cancel)' not in scan_owner
 assert 'Folder size is not calculated during game discovery.' not in library  # upstream wording only
 assert 'status=%s bytes=%llu' in scan_owner and '"deferred"' in scan_owner
 assert 'ExtractedLocalCover(entry.path())' in scan_owner
+assert 'ExtractedLocalIcon(const std::filesystem::path& title)' in library
+assert 'ExtractedSelectionIcon(const std::string& selection)' in library
+assert library.index('ExtractedLocalIcon(const std::filesystem::path& title)') < library.index('ExtractedLocalCover(const std::filesystem::path& title)')
 assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in scan_owner
 selected_media = library.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,", 1)[1].split(
     "pe::ui::BoxArt EdenServices::box_art(", 1)[0]
@@ -496,7 +499,7 @@ def extract_owner(begin, end):
 
 sizing = extract_owner("std::optional<std::uint64_t> ExtractedBaseBytes(",
                        "\n// Local user-supplied covers")
-covers = extract_owner("std::string ExtractedLocalCover(",
+covers = extract_owner("std::string SafeExtractedImageSidecar(",
                        "\nstd::uint64_t ResolveTitleId(")
 nacp = extract_owner("struct ExtractedSidecarMetadata {",
                      "\nstd::string ExtractedLocalCover(")

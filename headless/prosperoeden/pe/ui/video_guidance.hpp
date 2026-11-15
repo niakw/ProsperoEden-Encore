@@ -31,10 +31,10 @@ inline const char* AntiAliasingGuide(int aa) {
     // Do not describe MSAA as SMAA. The per-title forced-MSAA Vulkan
     // compositor is not yet console-qualified; exact mode labels are
     // already translatable via the shared settings catalog.
-    case 4: return tr(TR("MSAA 2x"));
-    case 5: return tr(TR("MSAA 4x"));
-    case 6: return tr(TR("MSAA 8x"));
-    case 7: return tr(TR("MSAA 16x"));
+    case 4: return tr(TR("MSAA 2x: samples each pixel twice before resolving the image. Lighter than higher MSAA levels, but uses more GPU memory and bandwidth than post-process AA."));
+    case 5: return tr(TR("MSAA 4x: samples each pixel four times for smoother polygon edges. It costs noticeably more GPU memory and bandwidth than 2x."));
+    case 6: return tr(TR("MSAA 8x: high-quality multi-sampling for polygon edges. Very demanding on GPU memory and bandwidth; use only when the game has substantial headroom."));
+    case 7: return tr(TR("MSAA 16x: maximum forced multi-sampling. Extremely demanding and still requires per-game PS5 validation; lower it first if performance or memory is unstable."));
     default: return tr(TR("SMAA Ultra: high-quality multi-pass edge smoothing. Clearer contours but more GPU work than FXAA."));
     }
 }

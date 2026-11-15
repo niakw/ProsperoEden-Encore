@@ -554,7 +554,7 @@ assert (root / "tools/ns2/check_native_ampere_semaphore_host.py").is_file()
 print("ENCORE_POST_F07_AMPERE_SEMAPHORE_OWNER_PASS",
       f"owners={len(post_f07_ampere_semaphore_owners)}")
 
-# P2.7: these three isolated native GPFIFO ownership files were added
+# P2.7: these four isolated native GPFIFO ownership files were added
 # after the frozen F07 source audit. The legacy NS1 DMA and scheduler
 # source remains immutable. Verify the production source selector rather
 # than quietly counting new NS2 files as historical F07 work.
@@ -562,6 +562,7 @@ post_f07_native_gpfifo_owners = {
     "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h",
     "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp",
     "ns2-runtime/gpu_dispatch/video_core/control/scheduler.h",
+    "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp",
 }
 assert post_f07_native_gpfifo_owners <= set(physical_all), (
     "Missing native GPFIFO suspend/resume owner",
@@ -571,12 +572,18 @@ native_gpfifo_cmake = (root / "headless/CMakeLists.txt").read_text()
 assert "EDEN_NS2_GPFIFO_SCHEDULER" in native_gpfifo_cmake
 assert 'list(REMOVE_ITEM eden_ns2_sched_sources "control/scheduler.cpp")' in native_gpfifo_cmake
 assert 'list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_SCHEDULER}")' in native_gpfifo_cmake
+assert 'list(REMOVE_ITEM eden_ns2_sched_sources "control/channel_state.cpp")' in native_gpfifo_cmake
+assert 'list(APPEND eden_ns2_sched_sources "${EDEN_NS2_GPFIFO_CHANNEL_STATE}")' in native_gpfifo_cmake
+native_channel_state = (active / "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp").read_text()
+assert "constexpr u32 NvkM2mfSubchannel = 2;" in native_channel_state
+assert "payload.kepler_memory, NvkM2mfSubchannel" in native_channel_state
+assert "Engines::EngineTypes::KeplerMemory" in native_channel_state
 native_dma_header = (active / "ns2-runtime/gpu_dispatch/video_core/dma_pusher.h").read_text()
 assert "command_resume_offset" in native_dma_header
 assert "#ifdef PS5_NATIVE" not in native_dma_header
 assert "ResumePendingNative" in (
     active / "ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp").read_text()
-print("ENCORE_POST_F07_NATIVE_GPFIFO_OWNER_PASS", "owners=3")
+print("ENCORE_POST_F07_NATIVE_GPFIFO_OWNER_PASS", "owners=4 m2mf_default=1")
 
 # The four merged feature PRs added sources after the frozen F07 snapshot.
 # They remain visible in a separate exact file ledger, not retroactively
@@ -966,7 +973,7 @@ fc27_compiler_pins = {
     "4572e581d011c444fd59428d5c042098f05dcfca",
     "f7ee793f1ee1bb1c2b1a35f68073844163658262",
     "3f019c64c2907ac3e84baa9b6200de8898f30636",
-    "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f",
+    "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1",
 }
 if gpu_table_vendor_pin in fc27_compiler_pins:
     assert fc27_ssa_present == set(fc27_ssa_receipts)
@@ -987,7 +994,7 @@ fc27_ssbo_receipts = {
         "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
 }
 fc27_ssbo_present = set(fc27_ssbo_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f"}:
+if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
     assert fc27_ssbo_present == set(fc27_ssbo_receipts)
     for relative, blob in fc27_ssbo_receipts.items():
         raw = (active / relative).read_bytes()
@@ -1006,7 +1013,7 @@ fc27_descriptor_receipts = {
         "be14d3396ff3871ceed46cb8499e9cfb546719de",
 }
 fc27_descriptor_present = set(fc27_descriptor_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
     assert fc27_descriptor_present == set(fc27_descriptor_receipts)
     for relative, blob in fc27_descriptor_receipts.items():
         raw = (active / relative).read_bytes()
@@ -1024,7 +1031,7 @@ fc27_scalar_unselected_receipts = {
         "68e14b3a0c4ae990933652baa51183a51eee4f81",
 }
 fc27_scalar_unselected_present = set(fc27_scalar_unselected_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca", "f7ee793f1ee1bb1c2b1a35f68073844163658262", "3f019c64c2907ac3e84baa9b6200de8898f30636", "f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1"}:
     assert fc27_scalar_unselected_present == set(fc27_scalar_unselected_receipts)
     for relative, blob in fc27_scalar_unselected_receipts.items():
         raw = (active / relative).read_bytes()

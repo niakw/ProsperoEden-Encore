@@ -7,7 +7,7 @@
 
 #include "pe/platform/display_egl.hpp"
 
-#include "loading_scene_glsl.h"
+#include "loading_artwork_gl.hpp"
 #include "launch_handoff.hpp"
 #include "pe/core/log.hpp"
 
@@ -71,71 +71,6 @@ EGLSurface deferred_surface = EGL_NO_SURFACE;
 EGLContext deferred_context = EGL_NO_CONTEXT;
 std::jthread deferred_loading_thread;
 
-GLuint compile_loading_shader(GLenum type, const char* source)
-{
-    const GLuint shader = glCreateShader(type);
-    if (!shader)
-        return 0;
-    glShaderSource(shader, 1, &source, nullptr);
-    glCompileShader(shader);
-    GLint ok = 0;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
-    if (!ok)
-    {
-        char log[512]{};
-        glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
-        sys::log("egl deferred loading shader failed: %s", log);
-        glDeleteShader(shader);
-        return 0;
-    }
-    return shader;
-}
-
-GLuint create_loading_program()
-{
-    const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
-        "uniform vec2 size; uniform float seconds; out vec4 color;\n"
-        "void main(){ color=vec4(loading_scene(gl_FragCoord.xy,size,seconds),1.0); }\n";
-    const char* vertex =
-        "#version 330 core\n"
-        "void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
-        "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}";
-
-    const GLuint vs = compile_loading_shader(GL_VERTEX_SHADER, vertex);
-    if (!vs)
-        return 0;
-    const GLuint fs = compile_loading_shader(GL_FRAGMENT_SHADER, fragment.c_str());
-    if (!fs)
-    {
-        glDeleteShader(vs);
-        return 0;
-    }
-
-    const GLuint program = glCreateProgram();
-    if (program)
-    {
-        glAttachShader(program, vs);
-        glAttachShader(program, fs);
-        glLinkProgram(program);
-    }
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-    if (!program)
-        return 0;
-
-    GLint ok = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &ok);
-    if (!ok)
-    {
-        char log[512]{};
-        glGetProgramInfoLog(program, sizeof(log), nullptr, log);
-        sys::log("egl deferred loading program failed: %s", log);
-        glDeleteProgram(program);
-        return 0;
-    }
-    return program;
-}
-
 void deferred_loading_loop(std::stop_token stop, EGLDisplay display, EGLSurface surface,
                            EGLContext context, int width, int height, bool reduce_motion)
 {
@@ -156,47 +91,22 @@ void deferred_loading_loop(std::stop_token stop, EGLDisplay display, EGLSurface 
                  egl_error_name(error), static_cast<unsigned>(error));
     }
 
-    const GLuint program = create_loading_program();
-    GLuint vao = 0;
-    if (program)
-        glGenVertexArrays(1, &vao);
-    if (!program || !vao)
-    {
-        if (vao) glDeleteVertexArrays(1, &vao);
-        if (program) glDeleteProgram(program);
-        eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        return;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDisable(GL_BLEND);
-    glUseProgram(program);
-    glBindVertexArray(vao);
-    glViewport(0, 0, width, height);
-    const GLint size_uniform = glGetUniformLocation(program, "size");
-    const GLint seconds_uniform = glGetUniformLocation(program, "seconds");
-    glUniform2f(size_uniform, static_cast<float>(width), static_cast<float>(height));
-
+    Eden::LoadingArtwork::GlPresenter presenter;
     unsigned frames = 0;
     while (!stop.stop_requested())
     {
-        const float seconds = static_cast<float>(
-            Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
-        glUniform1f(seconds_uniform, seconds);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glFlush();
-        if (glGetError() != GL_NO_ERROR || !eglSwapBuffers(display, surface))
+        const double seconds =
+            Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0);
+        if (!presenter.Draw(width, height, seconds) || !eglSwapBuffers(display, surface))
         {
             const EGLint error = eglGetError();
-            sys::log("egl deferred loading present stopped: %s (0x%04x)",
+            sys::log("egl deferred artwork present stopped: %s (0x%04x)",
                      egl_error_name(error), static_cast<unsigned>(error));
             break;
         }
         ++frames;
     }
-
-    glDeleteVertexArrays(1, &vao);
-    glDeleteProgram(program);
+    presenter.Release();
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     sys::log("egl deferred loading presenter stopped after %u frames", frames);
 }

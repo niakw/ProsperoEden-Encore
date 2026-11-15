@@ -188,7 +188,7 @@ with tempfile.TemporaryDirectory() as directory:
 #include "in_game_overlay.h"
 #include <cassert>
 #include <string>
-using namespace Eden::QuickOverlay;
+namespace Eden::QuickOverlay {
 struct MenuProbe {
     enum class Outcome { none, close, library, multiplayer };
     bool visible = true;
@@ -209,7 +209,9 @@ struct MenuProbe {
     }
     Outcome Handle(std::uint32_t actions) {''' + handle + r'''
 };
+} // namespace Eden::QuickOverlay
 int main() {
+    using namespace Eden::QuickOverlay;
     using O = MenuProbe::Outcome;
     for (int target = 1; target < kOverlayTabs; ++target) {
         MenuProbe probe;

@@ -37,8 +37,19 @@ active_presenter = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
 assert "PresentVulkanLoading(renderer);" in graphics
 assert "kLoadingSceneGlsl" in graphics
 assert "kLoadingSceneGlsl" in frontend
-assert "PresentUnifiedLoading(display)" in frontend
-assert "display.defer_scanout_close()" in frontend
+assert "bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion)" in frontend
+assert "PresentUnifiedLoading(display, reduce_motion)" in frontend
+assert "display.defer_scanout_close(reduce_motion)" in frontend
+assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(
+    "display.defer_scanout_close(reduce_motion)"
+)
+# R458 must animate the retained GL surface during System::Load, not merely
+# preserve the old last frame. The dedicated loading gate validates the whole
+# presenter; keep a small release-blocking witness here as well.
+assert "std::jthread deferred_loading_thread;" in display
+assert "std::jthread{deferred_loading_loop" in display
+assert "presenter.request_stop();" in display
+assert "presenter.join();" in display
 assert "close_deferred_scanout()" in active_renderer
 assert "surface(CreateHandoffSurface(instance, render_window.GetWindowInfo()))" in active_renderer
 assert "loading_jacket" not in active_renderer

@@ -20,6 +20,15 @@ enum Action : std::uint32_t {
     select = 1u << 4, back = 1u << 5,
     previous_tab = 1u << 6, next_tab = 1u << 7,
 };
+// Direct category entries on the initial game page. Keep the first four
+// action IDs stable and retain shoulder navigation as an alternative.
+inline constexpr int kHomeActionRows = 4;
+inline constexpr int kOverlayTabs = 5;
+inline constexpr int kHomeRows = kHomeActionRows + kOverlayTabs - 1;
+inline constexpr int HomeCategoryTab(int row) noexcept {
+    return row >= kHomeActionRows && row < kHomeRows
+        ? row - kHomeActionRows + 1 : 0;
+}
 inline constexpr std::size_t kMaxRows = 14;
 // The native quick-menu input model must retain text independently of the
 // legacy 3x5 HUD transport. Fixed storage keeps publication bounded and

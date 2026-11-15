@@ -2556,3 +2556,7 @@ msgstr "Báo cáo lỗi và sự cố tùy chọn. Không bật nhật ký chi t
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Chỉ xóa bộ nhớ đệm shader. Giữ nguyên dữ liệu lưu, cài đặt, khóa và trò chơi."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "MSAA cưỡng bức làm mượt cạnh đa giác bằng các mẫu bổ sung. Mức cao hơn dùng nhiều bộ nhớ và băng thông GPU hơn; hãy giảm mức này trước nếu hiệu năng hoặc bộ nhớ mất ổn định. Vẫn cần xác thực trên PS5 cho từng game."

@@ -85,10 +85,14 @@ assert 'status=deferred bytes=0' in library
 assert 'if (game.size == "—"' in library
 assert 'ExtractedBaseBytes(extracted, cancel)' in library
 assert 'status=measured bytes=%llu' in library
-# Standard Switch control-content icons are preferred before legacy ExeFS sidecars.
-assert 'for (const char* base : {"control", "base/control", "exefs", "base/exefs", ".", "base"})' in library
+# Standard Switch Control icons are preferred, localized, and surfaced
+# during the shallow Home scan instead of waiting for focus/network enrichment.
+assert 'for (const char* base : {"control", "base/control"})' in library
 assert 'std::string("icon_") + language + ".dat"' in library
-assert 'ExtractedLocalCover(entry.path())' in library
+assert 'locale == "fr-CA"' in library and 'locale == "en-GB"' in library
+assert 'ExtractedLocalCover(entry.path(), language_choice)' in library
+assert 'recent.tile_icon = local_icon;' in library
+assert 'Eden::IsDeconstructedGameSelection(name)' in library
 assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in library
 
 source = r"""

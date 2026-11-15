@@ -45,6 +45,7 @@ KNOWN_VENDOR_GRAPH = {
     "b68126c9cd95eef6c6656ff6d7834c62c092aa46": "same production owners + test-only #162 generated-C++ newline correction",
     "0fc157b7ccef428e675ff945bc48eceb08fff607": "same production lineage + upstream-confirmed Maxwell CB_BIND bounds guard #163",
     "c2f6ff8060ee623db2cd0efc758b4e6fd5a19c57": "same production lineage + bounded NS2 early-HLE source candidate #165",
+    "d1f8696448ed481e36380c3ea8431e3dc722304e": "same reviewed audio owners + merged NS2 early-HLE service successors",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

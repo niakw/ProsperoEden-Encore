@@ -31,7 +31,8 @@ assert 'if (!refresh) batch_.delete_texture(ink);' in textures_source
 # Failed scan state must remain sticky during a scheduled async retry.
 assert '(it->second.loaded || it->second.failed_loads != 0)' in textures_source
 assert 'provisional = !inputs_ready;' in launcher
-assert 'PageInputReady(page != 0, inputs_ready, seconds)' in launcher
+assert 'PageInputReady(page != 0, inputs_ready,' in launcher
+assert 'native_artwork_loading_ && done_ ? 4.0f : seconds))' in launcher
 assert 'paper_w, paper_h, page);' in launcher
 assert 'if (painting) reconstructed_cover(c, *painting, r);' in renderer
 assert 'reconstructed_paper(c, paper);' in renderer

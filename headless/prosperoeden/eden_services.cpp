@@ -2276,9 +2276,9 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
     std::size_t rom_candidates = 0;
     std::size_t stat_failures = 0;
     std::size_t non_regular = 0;
-    // Enumerate local assets immediately. Enrichment is independently queued for
-    // all installed titles by Launcher, so even games never selected acquire Nlib
-    // banners/icons/screenshots. Disk scanning itself must stay network-free.
+    // Enumerate local/cache-only assets immediately. Full Nlib media enrichment
+    // belongs to the selected-title worker; Home separately requests at most one
+    // missing square icon at a time. Disk scanning itself must stay network-free.
     for (const auto& entry : entries) {
         if (cancel && cancel->load(std::memory_order_acquire))
             return {}; // discard partial results and stop per-title disk work
@@ -2349,22 +2349,34 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
         game.file = file;
         // A game whose data cannot be read is still listed, by its file name.
         try {
-            char title[513]{};
-            // The cover is replaced in one step: the menu may be loading the old one right now.
             const std::string cover = CoverPath(file);
-            const std::string staged = cover + ".new";
-            const int metadata = eden_extract_game_metadata(path.c_str(), Eden::AssetsPath("keys").c_str(),
-                                                            staged.c_str(), title, sizeof(title));
-            if (metadata & EDEN_METADATA_TITLE) {
-                game.name = title;
-                SaveTitle(file, game.name);
-            }
-            if ((metadata & EDEN_METADATA_COVER) && std::rename(staged.c_str(), cover.c_str()) == 0)
-                game.cover = cover;
-            else {
-                (void)std::remove(staged.c_str());
-                if (IsFile(cover)) game.cover = cover; // previous successful extraction
-                else if (deconstructed) game.cover = ExtractedLocalCover(entry.path(), language_choice);
+            if (deconstructed) {
+                // Loose ExeFS/main has no embedded Control data. Upstream
+                // Eglantine 4d2cf418 resolves its name/icon from Control/NACP
+                // sidecars instead of opening the executable as a package.
+                // Prefer the canonical localized Control icon immediately;
+                // an older cached cover remains a fallback only.
+                game.cover = ExtractedLocalCover(entry.path(), language_choice);
+                if (game.cover.empty() && IsFile(cover)) game.cover = cover;
+            } else {
+                char title[513]{};
+                // Packaged NS1/NS2 inputs still own embedded metadata and
+                // cover data; preserve the existing atomic replacement path.
+                const std::string staged = cover + ".new";
+                const int metadata = eden_extract_game_metadata(
+                    path.c_str(), Eden::AssetsPath("keys").c_str(),
+                    staged.c_str(), title, sizeof(title));
+                if (metadata & EDEN_METADATA_TITLE) {
+                    game.name = title;
+                    SaveTitle(file, game.name);
+                }
+                if ((metadata & EDEN_METADATA_COVER) &&
+                    std::rename(staged.c_str(), cover.c_str()) == 0) {
+                    game.cover = cover;
+                } else {
+                    (void)std::remove(staged.c_str());
+                    if (IsFile(cover)) game.cover = cover;
+                }
             }
             if (cancel && cancel->load(std::memory_order_acquire))
                 return {}; // extraction finished; skip ID/Nlib/add-on metadata
@@ -2434,9 +2446,9 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
         games.push_back(std::move(game));
     }
 
-    // Metadata bridge work is finished. Home and Library start complete Nlib
-    // enrichment of every installed title in background, independently of user
-    // selection. A library enumeration itself must remain local/cache-only.
+    // Metadata bridge work is finished. Library enumeration remains
+    // local/cache-only; selected-title media and bounded Home icon workers run
+    // independently after this immutable snapshot is published.
     lock.unlock();
     Eden::Report("library", ("EDEN_ROM_SCAN entries=" + std::to_string(entries.size()) +
                              " candidates=" + std::to_string(rom_candidates) +

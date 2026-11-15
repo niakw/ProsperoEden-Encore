@@ -46,7 +46,12 @@ assert 'recent.max_players = enriched.max_players' in lib
 assert 'finish_home_media();' in launch
 assert 'home_media_scan_.wait();' in launch
 assert 'artwork_tasks' not in svc
-assert 'A library enumeration itself must remain local/cache-only' in svc
+assert 'Enumerate local/cache-only assets immediately.' in svc
+assert 'belongs to the selected-title worker' in svc
+assert 'Home separately requests at most one' in svc
+assert 'Disk scanning itself must stay network-free.' in svc
+assert 'Library enumeration remains' in svc
+assert 'local/cache-only; selected-title media and bounded Home icon workers run' in svc
 # A damaged/unavailable native ROM directory must not replace an existing
 # title snapshot with an empty result; the scan worker reports and throws.
 assert 'EDEN_ROM_SCAN entries=' in svc

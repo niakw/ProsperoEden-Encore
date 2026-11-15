@@ -605,7 +605,8 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
         const bool first = vulkan_loading_start < 0;
         if (first) vulkan_loading_start = now;
         if (vulkan_loading_pace.Due(now, idle)) {
-            vulkan_hud = MakeLoadingSnapshot(now - vulkan_loading_start + 1.0 + LoadingCalm());
+            vulkan_hud = MakeLoadingSnapshot(
+                LaunchHandoff::LoadingSeconds(LoadingCalm()));
             PresentVulkanLoading(renderer);
             ++vulkan_loading_frames;
             if (first) sceSystemServiceHideSplashScreen();
@@ -651,6 +652,7 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
         if (!pe::ps5::Display::close_deferred_scanout())
             throw std::runtime_error("Could not release launcher scanout for OpenGL game");
         LaunchHandoff::Clear();
+        LaunchHandoff::EndLoading();
     }
     vulkan_loading = vulkan;
     vulkan_loading_start = -1;
@@ -669,7 +671,8 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
         vulkan_hud_clock = {};
         vulkan_hud_clock_active = false;
         vulkan_hud_memo.Reset();
-        vulkan_hud = MakeLoadingSnapshot(1.0 + LoadingCalm());
+        vulkan_hud = MakeLoadingSnapshot(
+            LaunchHandoff::LoadingSeconds(LoadingCalm()));
         vulkan_hud_stats_time = vulkan_hud_speed = 0;
         window_info.type = Core::Frontend::WindowSystemType::PS5;
         window_info.render_surface = this;
@@ -766,6 +769,7 @@ void GraphicsWindow::OnFrameDisplayed() {
             std::printf("EDEN_LOADING_DONE frames=%u seconds=%.2f\n", vulkan_loading_frames,
                         now - vulkan_loading_start);
         vulkan_loading = false;
+        LaunchHandoff::EndLoading();
 #ifdef EDEN_PS5_VULKAN
         // Hidden FPS overlay must not advance the optional HUD-only clock.
         // A visible transition resets the clock and the glyph memo once,

@@ -7,6 +7,10 @@ on:
     paths:
       - 'headless/prosperoeden/pe/ui/**'
       - 'headless/prosperoeden/host/**'
+      - 'headless/loading_artwork_*.hpp'
+      - 'headless/loading_scene.glsl'
+      - 'tools/check-loading-artwork-egl-host.py'
+      - 'tools/loading-artwork-egl-check.cpp'
       - 'headless/prosperoeden/eden_services.cpp'
       - 'headless/prosperoeden/eden_services.h'
       - 'tools/check-launch-case-artwork.py'
@@ -64,6 +68,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential python3-pil libegl1-mesa-dev libgl1-mesa-dev libstb-dev nlohmann-json3-dev \
             mesa-utils libgl1-mesa-dri ca-certificates git pkg-config
+
+      - name: Render actual artwork handoff in independent Mesa contexts
+        run: python3 -B tools/check-loading-artwork-egl-host.py
 
       - name: Verify all 31 translations and original geometry
         run: |

@@ -2556,3 +2556,7 @@ msgstr "Laporan crash dan kesalahan opsional. Tidak mengaktifkan log terperinci.
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Hanya menghapus cache shader. Simpanan, pengaturan, kunci, dan game tetap ada."
+
+#: pe/ui/video_guidance.hpp
+msgid "Forced MSAA smooths polygon edges with extra samples. Higher levels use more GPU memory and bandwidth; lower it first if performance or memory becomes unstable. PS5 validation remains per game."
+msgstr "MSAA paksa menghaluskan tepi poligon dengan sampel tambahan. Tingkat yang lebih tinggi memakai lebih banyak memori dan bandwidth GPU; turunkan lebih dulu jika performa atau memori menjadi tidak stabil. Validasi PS5 tetap diperlukan per game."

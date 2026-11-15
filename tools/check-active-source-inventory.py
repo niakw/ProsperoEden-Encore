@@ -1101,6 +1101,25 @@ else:
     assert not pair_present
 print("ENCORE_NOV15_VENDOR_PAIR_OWNER_RECEIPT_PASS", f"new_owners={len(pair_present)}", "hardware=unverified")
 
+ns2_early_hle_receipts = {
+    "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp": "df3edaf42d0596c69eaa6fea18b33fc02c6bff3c",
+    "ns2-runtime/hle/core/hle/service/am/service/application_proxy.h": "903190e43dc10a0ca5067ca563d6d944e84ae5d2",
+    "ns2-runtime/hle/core/hle/service/am/service/graphics_scaling_parameters_functions.h": "bded1f902ac1a0995d71ffc3f425f33ba781b198",
+    "ns2-runtime/hle/core/hle/service/hid/hid_server.cpp": "c00ec7de86402abdd6693092f3e57917e80ab7ec",
+    "ns2-runtime/hle/core/hle/service/hid/hid_server.h": "cdc83734e27d5478f1981126950dd1f3f7a91227",
+}
+ns2_early_hle_present = set(ns2_early_hle_receipts) & set(physical_all)
+if gpu_table_vendor_pin in {"c2f6ff8060ee623db2cd0efc758b4e6fd5a19c57"}:
+    assert ns2_early_hle_present == set(ns2_early_hle_receipts)
+    for path, blob in ns2_early_hle_receipts.items():
+        raw = (active / path).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == blob, (path, actual)
+else:
+    assert not ns2_early_hle_present
+print("ENCORE_NS2_EARLY_HLE_OWNER_RECEIPT_PASS",
+      f"owners={len(ns2_early_hle_present)}", "blanket_autostub=0")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -1116,7 +1135,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | ns2_early_hle_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

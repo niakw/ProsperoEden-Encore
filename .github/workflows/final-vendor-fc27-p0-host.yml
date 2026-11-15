@@ -1,0 +1,21 @@
+name: Final FC27 and P0 vendor graph (host only)
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'headless/CMakeLists.txt'
+      - 'tools/check-final-vendor-fc27-p0-source.py'
+      - '.github/workflows/final-vendor-fc27-p0-host.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - run: python3 -B tools/check-final-vendor-fc27-p0-source.py

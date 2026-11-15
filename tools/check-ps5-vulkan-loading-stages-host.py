@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Source/host contract for one continuous PS5 GL -> Vulkan loading state.
 
-This does not prove physical scanout continuity. It proves the selected source
-keeps the same loading_scene.glsl animated on the retained GL owner during
-core load, stops/joins that owner at the Vulkan boundary, and never revives
-the retired jacket screenshot/bottom-band path.
+This does not prove physical scanout continuity. The same Encore artwork
+and three-dot indicator are reused during core load, then the retained
+GL owner is stopped/joined before Vulkan takes over. No purple band.
 """
 from pathlib import Path
 
@@ -18,6 +17,7 @@ renderer_h = (root / "headless/renderer_vulkan_r08.h").read_text()
 window = (root / "headless/vulkan_window_adapt_r08.cpp").read_text()
 shader = (root / "headless/vulkan_hud.frag").read_text()
 vulkan_cmake = (root / "headless/vulkan.cmake").read_text()
+gl_art = (root / "headless/loading_artwork_gl.hpp").read_text()
 vendor_egl = (root / "vendor/sources/opengl-source/src/egl/ps5_egl.c").read_text()
 vendor_present = (
     root / "vendor/sources/opengl-source/src/platform/ps5_agc_native_runtime.c"
@@ -42,16 +42,18 @@ assert "ps5_agc_gate2_shutdown_present()" in terminate
 assert "close(runtime_video_handle)" in shutdown
 assert "runtime_video_registered = 0;" in shutdown
 
-assert '#include "loading_scene_glsl.h"' in frontend
-assert '#include "loading_scene_glsl.h"' in display
+assert '#include "loading_artwork_gl.hpp"' in frontend
+assert '#include "loading_artwork_gl.hpp"' in display
 assert "bool PresentUnifiedLoading(pe::ps5::Display& display, bool reduce_motion)" in frontend
 unified = frontend.split("bool PresentUnifiedLoading(", 1)[1].split("\n}", 1)[0]
-assert "kLoadingSceneGlsl" in unified
-assert "loading_scene(gl_FragCoord.xy,size,seconds)" in unified
+assert "Eden::LoadingArtwork::GlPresenter presenter" in unified
+assert "presenter.Draw(display.width(), display.height()" in unified
+assert "loading_artwork_indicator(gl_FragCoord.xy,size,seconds)" in gl_art
 assert "display.swap()" in unified
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in unified
 assert "Eden::LaunchHandoff::BeginLoading();" in frontend
-assert "LaunchHandoff::Publish(" not in frontend
+assert "Eden::LoadingArtwork::Capture(" in frontend
+assert "LaunchHandoff::Publish(std::move(frame))" in gl_art
 assert "handoff_captured" not in frontend
 assert "handoff_attempts" not in frontend
 assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(
@@ -70,7 +72,8 @@ assert "eglDestroySurface(" not in defer
 assert "eglTerminate(" not in defer
 
 presenter = display.split("void deferred_loading_loop(", 1)[1].split("\n}", 1)[0]
-assert "kLoadingSceneGlsl" in display
+assert "Eden::LoadingArtwork::GlPresenter presenter" in presenter
+assert "presenter.Draw(width, height, seconds)" in presenter
 assert "while (!stop.stop_requested())" in presenter
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in presenter
 assert "eglSwapBuffers(display, surface)" in presenter
@@ -94,13 +97,14 @@ for api in ("defer_scanout_close", "close_deferred_scanout", "has_deferred_scano
 constructor = graphics.split("GraphicsWindow::GraphicsWindow(", 1)[1]
 ogl_release = constructor.split("if (!vulkan) {", 1)[1].split("}", 1)[0]
 assert "pe::ps5::Display::close_deferred_scanout()" in ogl_release
-assert "LaunchHandoff::Clear();" in ogl_release
+assert "LaunchHandoff::Clear();" not in ogl_release
+assert "LaunchHandoff::Clear();" in graphics
 
 draw_loading = graphics.split("bool DrawLoading(double seconds)", 1)[1].split(
     "void DrawHud(", 1
 )[0]
-assert "kLoadingSceneGlsl" in draw_loading
-assert "loading_scene(gl_FragCoord.xy,size,seconds)" in draw_loading
+assert "loading_artwork.Draw(width, height, seconds)" in draw_loading
+assert "loading_scene(gl_FragCoord.xy,size,seconds)" not in draw_loading
 assert "LaunchHandoff::LoadingSeconds(LoadingCalm())" in graphics
 assert "LaunchHandoff::EndLoading();" in graphics
 
@@ -117,14 +121,16 @@ assert "surface(CreateHandoffSurface(instance, render_window.GetWindowInfo()))" 
 present = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
     "void RendererVulkan::Report()", 1
 )[0]
-for retired in (
-    "LaunchHandoff::Peek", "loading_jacket", "CopyBufferToImage",
-    "EDEN_LOADER_JACKET_HANDOFF_VULKAN", "0x80000000u",
-):
+assert "LaunchHandoff::Peek()" in present
+assert "Eden::LoadingArtwork::Repack" in present
+assert present.index("CopyBufferToImage") < present.index("DrawHudOverlay")
+assert "live_loading.glyphs[0] = has_artwork ? 1u : 0u" in present
+for retired in ("loading_jacket", "EDEN_LOADER_JACKET_HANDOFF_VULKAN", "0x80000000u"):
     assert retired not in present, retired
 assert "blit_swapchain.DrawHudOverlay(device, frame, live_loading);" in present
 assert present.index("DrawHudOverlay") < present.index("scheduler.Flush")
 assert "loading_jacket_" not in renderer_h
+assert "loading_artwork_buffer" in renderer_h
 assert "vulkan_renderer_r08.cpp" in vulkan_cmake
 
 overlay = window.split("void WindowAdaptPass::DrawHudOverlay", 1)[1].split(
@@ -137,7 +143,9 @@ assert "cmdbuf.SetViewport(0, viewport);" in overlay
 assert "cmdbuf.SetScissor(0, scissor);" in overlay
 
 assert '#include "loading_scene.glsl"' in shader
-assert "color = vec4(loading_scene(" in shader
+assert "loading_artwork_indicator(" in shader
+assert "color = vec4(loading_scene(" not in shader
+assert "text.glyphs[0] == 1u ? dots" in shader
 
-print("ENCORE_GL_VK_CONTINUOUS_LOADING_SOURCE_PASS presenter=1 shared_shader=1 shared_epoch=1 jacket_upload=0 bottom_band=0 console_pending=1")
+print("ENCORE_GL_VK_CONTINUOUS_LOADING_SOURCE_PASS presenter=1 shared_shader=1 shared_epoch=1 jacket_upload=1 bottom_band=0 purple_loader=0 console_pending=1")
 print("ENCORE_VULKAN_LOADING_DIAGNOSTIC_PASS first_guest_frame_not_claimed=1 max_reports=2")

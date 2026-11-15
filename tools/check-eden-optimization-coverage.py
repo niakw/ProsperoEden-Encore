@@ -1506,13 +1506,65 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
     assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
     if changed_path == "headless/prosperoeden/eden_services.cpp" and \
             drift_index[changed_path]["actual"] == "54a37cf740f25c68aa0d5f93adf300144c5280d1":
-        # #208 is based on merged #207. Prove #207's intermediate owner from
-        # the exact merged commit rather than requiring the working tree to
-        # move backwards before admitting its reviewed successor.
-        historical_square = subprocess.check_output(
-            ["git", "rev-parse",
-             "f50cd16bde889d67c1a876817ad49bfa6f167d12:" + changed_path],
-            cwd=ROOT, text=True).strip()
+        # #208 is based on merged #207, but CI uses a shallow checkout and
+        # need not contain #207's commit object. Reverse ONLY #208's two exact
+        # eden_services.cpp hunks in memory and require the reconstructed Git
+        # blob to be #207's reviewed successor. This preserves the immutable
+        # chain without depending on repository history depth.
+        current_service = (ROOT / changed_path).read_text()
+        size_worker_method = """std::string EdenServices::exact_game_size(const std::string& file,
+                                               const std::atomic<bool>* cancel) {
+    if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
+        return {};
+    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
+    if (!Eden::IsSafeExtractedDirectory(extracted))
+        return {};
+    const auto bytes = ExtractedBaseBytes(extracted, cancel);
+    if (!bytes || (cancel && cancel->load(std::memory_order_acquire)))
+        return {};
+    char exact_size[32]{};
+    const double count = static_cast<double>(*bytes);
+    if (count >= 1073741824.0)
+        std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
+    else
+        std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
+    std::fprintf(stderr,
+        "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\\n",
+        file.c_str(), static_cast<unsigned long long>(*bytes));
+    return exact_size;
+}
+
+"""
+        prior_size_block = """    // Exact extracted-title size is useful in Library details, but it is not
+    // required to display or navigate the Library. Only Game objects coming
+    // from the Library scan carry the explicit unknown marker; Home media
+    // requests leave size empty and therefore never trigger this walk.
+    if (game.size == "—" && !(cancel && cancel->load(std::memory_order_acquire))) {
+        const std::filesystem::path extracted = Eden::AssetsPath("roms/" + game.file);
+        if (Eden::IsSafeExtractedDirectory(extracted)) {
+            if (const auto bytes = ExtractedBaseBytes(extracted, cancel)) {
+                char exact_size[32]{};
+                const double count = static_cast<double>(*bytes);
+                if (count >= 1073741824.0)
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f GB", count / 1073741824.0);
+                else
+                    std::snprintf(exact_size, sizeof(exact_size), "%.1f MB", count / 1048576.0);
+                game.size = exact_size;
+                std::fprintf(stderr,
+                    "EDEN_EXEFS_SIZE folder=%s status=measured bytes=%llu\\n",
+                    game.file.c_str(), static_cast<unsigned long long>(*bytes));
+            }
+        }
+    }
+"""
+        retail_marker = "    // Prioritize the requested ORIGINAL retail scans before any optional\n"
+        assert current_service.count(size_worker_method) == 1, changed_path
+        assert current_service.count(retail_marker) == 1, changed_path
+        reconstructed = current_service.replace(size_worker_method, "", 1)
+        reconstructed = reconstructed.replace(retail_marker, prior_size_block + retail_marker, 1)
+        raw = reconstructed.encode("utf-8")
+        historical_square = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert historical_square == successor_blob, changed_path
     else:
         assert drift_index[changed_path]["actual"] == successor_blob, changed_path

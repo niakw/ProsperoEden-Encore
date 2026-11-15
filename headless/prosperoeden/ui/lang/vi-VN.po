@@ -2556,3 +2556,7 @@ msgstr "Báo cáo lỗi và sự cố tùy chọn. Không bật nhật ký chi t
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Chỉ xóa bộ nhớ đệm shader. Giữ nguyên dữ liệu lưu, cài đặt, khóa và trò chơi."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA lấy mẫu các cạnh hình học nhiều lần. Giá trị cao hơn cải thiện chất lượng cạnh nhưng tăng mức dùng băng thông GPU và bộ nhớ; 8x và 16x rất nặng trên PS5."

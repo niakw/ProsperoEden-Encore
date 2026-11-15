@@ -135,7 +135,7 @@ bool IsDecodableAvatarFile(const std::string& path) {
 // Its executable 'main' is just one 20-40 MiB NSO; counting that alone makes
 // a multi-gigabyte game appear as a 32 MB title. Do NOT add updates or DLC,
 // follow symlinks, block on network media, or guess if traversal is incomplete.
-// The entire walk runs on the cancellable Library background scan.
+// The walk runs only for the selected title on the cancellable media worker; the initial Library scan never traverses the full extracted tree.
 std::optional<std::uint64_t> ExtractedBaseBytes(const std::filesystem::path& title,
                                                  const std::atomic<bool>* cancel) {
     namespace fs = std::filesystem;

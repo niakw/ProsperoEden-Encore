@@ -111,6 +111,23 @@ assert 'case 16: value = std::to_string(prefs_.panel_opacity)+"%";' in switch_di
 assert 'case 19: value = prefs_.show_game_background?' in switch_dialog
 print("R457_SETTINGS_GUIDE_SOURCE_PASS")
 
+# The user's tested 20ec9a build returned bare "MSAA 2x/4x/8x/16x"
+# as help text. Current guidance must stay explanatory in all three settings
+# surfaces (classic global, Switch global and per-game).
+guidance=(root/"headless/prosperoeden/pe/ui/video_guidance.hpp").read_text()
+aa=guidance.split("inline const char* AntiAliasingGuide(int aa)",1)[1].split(
+    "inline const char* SharpnessGuide",1)[0]
+assert 'case 4: return tr(TR("MSAA 2x"))' not in aa
+assert 'case 5: return tr(TR("MSAA 4x"))' not in aa
+assert 'case 6: return tr(TR("MSAA 8x"))' not in aa
+assert 'case 7: return tr(TR("MSAA 16x"))' not in aa
+assert "MSAA samples geometry edges multiple times." in aa
+assert "AntiAliasingGuide(prefs_.anti_aliasing)" in dialog
+assert "AntiAliasingGuide(aa)" in game
+assert "AntiAliasingGuide(aa)" in switch_dialog
+print("R457_SETTINGS_MSAA_GUIDANCE_PASS descriptive=1 three_surfaces=1")
+
+
 # R457: per-title row descriptions must not depend on an empty success toast.
 library=(root/"headless/prosperoeden/pe/ui/library.cpp").read_text()
 game=library.split("void Launcher::draw_game(",1)[1].split("// ---------------------------------------------------------------- a game's mods",1)[0]

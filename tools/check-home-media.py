@@ -82,6 +82,8 @@ assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recen
 assert "!recent.tile_icon.empty()" in icons
 assert "home_media_scan_title_id_" not in icons
 assert 'recent.cover.find("/box-front-")' not in icons
+assert 'recent.cover = !game.cover.empty() ? game.cover : game.box_front;' not in lib
+assert 'switch_game_tile(c,!g.cover.empty()?g.cover:g.box_front' not in (root/'headless/prosperoeden/pe/ui/switch_theme.cpp').read_text()
 assert "recent.tile_icon = previous.tile_icon;" in lib
 assert "cover(c, art, icon, 20.0f, 0.0f)" in home
 assert "home_icon_scan_.wait();" in launch and "finish_home_icons();" in launch

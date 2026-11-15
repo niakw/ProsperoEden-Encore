@@ -401,15 +401,18 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
         if (auto path = localized_icon(base); !path.empty()) return path;
     }
 
-    // Legacy loose-ExeFS sidecar discovery remains a fallback for old dumps.
-    for (const char* relative : {"cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
-                                 "icon.tga", "icon.png", "icon.jpg",
-                                 "exefs/cover.png", "exefs/cover.jpg",
+    // Legacy loose-ExeFS sidecars remain a fallback for old dumps. A file
+    // explicitly named icon.* owns the square UI slot. A legacy cover.* is
+    // admitted only when its decoded dimensions are square-ish; portrait
+    // retail scans belong to box_front/box_back and must never fill Home.
+    for (const char* relative : {"icon.tga", "icon.png", "icon.jpg",
                                  "exefs/icon.png", "exefs/icon.jpg",
-                                 "base/cover.tga", "base/cover.png", "base/cover.jpg",
                                  "base/icon.png", "base/icon.jpg",
-                                 "base/exefs/cover.png", "base/exefs/cover.jpg",
-                                 "base/exefs/icon.png", "base/exefs/icon.jpg"}) {
+                                 "base/exefs/icon.png", "base/exefs/icon.jpg",
+                                 "cover.tga", "cover.png", "cover.jpg", "cover.jpeg",
+                                 "exefs/cover.png", "exefs/cover.jpg",
+                                 "base/cover.tga", "base/cover.png", "base/cover.jpg",
+                                 "base/exefs/cover.png", "base/exefs/cover.jpg"}) {
         fs::path parent = title;
         bool safe = true;
         for (const auto& segment : fs::path(relative).parent_path()) {
@@ -422,7 +425,18 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
         const auto status = fs::symlink_status(candidate, error);
         if (error || !fs::is_regular_file(status) || fs::is_symlink(status)) continue;
         const auto size = fs::file_size(candidate, error);
-        if (!error && size >= 128 && size <= (16u << 20)) return candidate.string();
+        if (error || size < 128 || size > (16u << 20)) continue;
+        if (std::string_view(relative).find("cover.") != std::string_view::npos) {
+            int width = 0, height = 0, channels = 0;
+            if (!stbi_info(candidate.c_str(), &width, &height, &channels) ||
+                width < 64 || height < 64 || width > 4096 || height > 4096 ||
+                static_cast<std::uint64_t>(width) * 4u <
+                    static_cast<std::uint64_t>(height) * 3u ||
+                static_cast<std::uint64_t>(height) * 4u <
+                    static_cast<std::uint64_t>(width) * 3u)
+                continue;
+        }
+        return candidate.string();
     }
 
     // Older extractions sometimes leave icon_<language>.dat beside ExeFS.
@@ -2359,23 +2373,31 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 game.cover = ExtractedLocalCover(entry.path(), language_choice);
                 if (game.cover.empty() && IsFile(cover)) game.cover = cover;
             } else {
-                char title[513]{};
-                // Packaged NS1/NS2 inputs still own embedded metadata and
-                // cover data; preserve the existing atomic replacement path.
-                const std::string staged = cover + ".new";
-                const int metadata = eden_extract_game_metadata(
-                    path.c_str(), Eden::AssetsPath("keys").c_str(),
-                    staged.c_str(), title, sizeof(title));
-                if (metadata & EDEN_METADATA_TITLE) {
-                    game.name = title;
-                    SaveTitle(file, game.name);
-                }
-                if ((metadata & EDEN_METADATA_COVER) &&
-                    std::rename(staged.c_str(), cover.c_str()) == 0) {
-                    game.cover = cover;
-                } else {
-                    (void)std::remove(staged.c_str());
-                    if (IsFile(cover)) game.cover = cover;
+                // Eden upstream exposes a persistent game-list metadata cache.
+                // Encore already keeps the extracted name and square icon by
+                // ROM key, so reuse both on ordinary reload/return instead of
+                // reopening every package just to regenerate identical UI data.
+                const std::string cached_title = SavedTitle(file);
+                const bool cached_cover = IsFile(cover);
+                if (!cached_title.empty()) game.name = cached_title;
+                if (cached_cover) game.cover = cover;
+                if (cached_title.empty() || !cached_cover) {
+                    char title[513]{};
+                    const std::string staged = cover + ".new";
+                    const int metadata = eden_extract_game_metadata(
+                        path.c_str(), Eden::AssetsPath("keys").c_str(),
+                        staged.c_str(), title, sizeof(title));
+                    if (metadata & EDEN_METADATA_TITLE) {
+                        game.name = title;
+                        SaveTitle(file, game.name);
+                    }
+                    if ((metadata & EDEN_METADATA_COVER) &&
+                        std::rename(staged.c_str(), cover.c_str()) == 0) {
+                        game.cover = cover;
+                    } else {
+                        (void)std::remove(staged.c_str());
+                        if (cached_cover || IsFile(cover)) game.cover = cover;
+                    }
                 }
             }
             if (cancel && cancel->load(std::memory_order_acquire))
@@ -2412,34 +2434,29 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                              !local_control.developer.empty());
             }
             if (game.title_id != 0) {
-                const NlibEnrichment nlib = CachedNlibEnrichment(game.title_id, language_choice);
-                if (!nlib.icon.empty()) game.cover = nlib.icon;
-                game.hero = nlib.hero;
-                game.screenshots = nlib.screenshots;
-                AppendCaseScenes(game.screenshots, game.title_id);
-                game.max_players = nlib.max_players;
-                if (!nlib.name.empty()) game.name = nlib.name;
-                // Nlib's API primarily indexes NS1 releases; an empty NS2
-                // response must NOT erase the localized offline Title-ID
-                // description already admitted above.
-                if (!nlib.intro.empty()) game.intro = nlib.intro;
-                if (!nlib.description.empty()) game.description = nlib.description;
-                if (!nlib.publisher.empty()) game.publisher = nlib.publisher;
-                game.developer = nlib.developer;
-                if (!nlib.release_date.empty()) game.release_date = nlib.release_date;
-                if (!nlib.categories.empty()) game.categories = nlib.categories;
-                // Render already-cached real paper scans immediately during
-                // local enumeration, without waiting for network enrichment.
-                const pe::ui::BoxArt cached_case = box_art(game.title_id);
-                game.box_front = cached_case.front;
-                game.box_back = cached_case.back;
-                if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
+                // First paint needs only the square application icon and text
+                // already cached locally. Hero/screenshots, retail case faces,
+                // player count, language probing and add-on summaries belong
+                // to the selected-title worker below.
+                const std::string cached_icon = CachedNlibIcon(game.title_id);
+                if (!cached_icon.empty()) game.cover = cached_icon;
+                nlohmann::json metadata;
+                NlibEnrichment list_metadata;
+                if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
+                    ApplyNlibMetadata(metadata, &list_metadata);
+                if (!list_metadata.name.empty()) game.name = std::move(list_metadata.name);
+                if (!list_metadata.intro.empty()) game.intro = std::move(list_metadata.intro);
+                if (!list_metadata.description.empty())
+                    game.description = std::move(list_metadata.description);
+                if (!list_metadata.publisher.empty())
+                    game.publisher = std::move(list_metadata.publisher);
+                if (!list_metadata.developer.empty())
+                    game.developer = std::move(list_metadata.developer);
+                if (!list_metadata.release_date.empty())
+                    game.release_date = std::move(list_metadata.release_date);
+                if (!list_metadata.categories.empty())
+                    game.categories = std::move(list_metadata.categories);
             }
-            const GameLanguage language = LanguageFor(path, game.title_id, language_choice);
-            game.addons = AddOnSummary(game.title_id);
-            game.addons_short = AddOnSummary(game.title_id, true);
-            game.language = language.label;
-            game.language_note = language.note;
         } catch (const std::exception& error) {
             Eden::Report("library", (file + ": " + error.what()).c_str());
         }
@@ -2493,6 +2510,15 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         (cancel && cancel->load(std::memory_order_acquire))) return game;
     const int language_choice = Eden::LoadPreferences().language;
     const std::string scanned_name = game.name;
+    // Library detail-only work is intentionally deferred until this title is
+    // selected. None of these package/add-on probes delays the initial grid.
+    const std::string selected_path = Eden::AssetsPath("roms/" + game.file);
+    const GameLanguage selected_language =
+        LanguageFor(selected_path, game.title_id, language_choice);
+    game.language = selected_language.label;
+    game.language_note = selected_language.note;
+    game.addons = AddOnSummary(game.title_id);
+    game.addons_short = AddOnSummary(game.title_id, true);
 
     // Exact extracted-title size is useful in Library details, but it is not
     // required to display or navigate the Library. Only Game objects coming
@@ -2544,7 +2570,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     game.artwork_changed |= enrichment.artwork_changed;
     if (!enrichment.icon.empty()) game.cover = std::move(enrichment.icon);
-    else if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
+    // Missing square icon remains empty until Control/ExeFS or Nlib supplies one.
     if (!enrichment.hero.empty()) game.hero = std::move(enrichment.hero);
     if (!enrichment.screenshots.empty()) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
@@ -2578,7 +2604,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         if (!box.back.empty()) game.box_back = box.back;
         // A late local/NX2 retail-cover fetch may complete after the first
         // Nlib/cache snapshot. Always expose its real front to the game tile.
-        if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;
+        // Never promote a portrait retail front into the square tile slot.
         AppendCaseScenes(game.screenshots, game.title_id);
         if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement

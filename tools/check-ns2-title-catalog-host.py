@@ -32,7 +32,15 @@ for candidate in actual:
     assert not (parsed.path or parsed.query or parsed.fragment or parsed.username or parsed.password)
 
 assert 'EDEN_NS2_TITLE_RESOLVED' in services
-assert 'if (game.cover.empty() && !game.box_front.empty()) game.cover = game.box_front;' in services
+assert 'game.cover.empty() && !game.box_front.empty()' not in services
+# Behavior, not comments: the initial list must not promote physical case
+# media into the square application-icon field.
+games_owner = services.split(
+    "std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel)", 1
+)[1].split("\npe::ui::Game EdenServices::enrich_home_icon(", 1)[0]
+assert 'game.cover = game.box_front' not in games_owner
+assert 'const pe::ui::BoxArt cached_case = box_art(game.title_id);' not in games_owner
+assert 'const std::string cached_icon = CachedNlibIcon(game.title_id);' in games_owner
 assert 'base/exefs/icon.jpg' in services and 'exefs/icon.png' in services
 assert 'IsSafeExtractedDirectory(parent)' in services
 assert 'icon_' in services and 'std::memcmp(signature,' in services
@@ -82,3 +90,7 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-catalog-") as tmp:
                    check=True,timeout=30)
     subprocess.run([str(exe)],check=True,timeout=10)
 print("ENCORE_NS2_TITLE_CATALOG_HOST_PASS IDs=18 safety=1 launch_integration=1")
+
+# Portrait retail scans remain physical-case media, never square tile art.
+assert 'switch_game_tile(c,!g.cover.empty()?g.cover:g.box_front' not in (root/'headless/prosperoeden/pe/ui/switch_theme.cpp').read_text()
+assert 'recent.cover = !game.cover.empty() ? game.cover : game.box_front;' not in (root/'headless/prosperoeden/pe/ui/library.cpp').read_text()

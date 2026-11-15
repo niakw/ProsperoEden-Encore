@@ -99,6 +99,16 @@ assert 'case 2: preferred = "French"' in library
 assert 'case 3: preferred = "CanadianFrench"' in library
 assert 'ExtractedLocalCover(entry.path(), language_choice)' in library
 assert 'recent.tile_icon = local_icon;' in library
+# Loose legacy dumps must prefer true icon.* sidecars. A portrait cover.*
+# cannot be promoted into the square Home/All Software tile.
+icon_pos = library.index('for (const char* relative : {"icon.tga", "icon.png", "icon.jpg"')
+cover_pos = library.index('"cover.tga", "cover.png", "cover.jpg", "cover.jpeg"', icon_pos)
+assert icon_pos < cover_pos
+legacy = library[icon_pos:library.index('// Older extractions sometimes leave icon_<language>.dat', icon_pos)]
+assert 'std::string_view(relative).find("cover.")' in legacy
+assert 'stbi_info(candidate.c_str(), &width, &height, &channels)' in legacy
+assert 'static_cast<std::uint64_t>(width) * 4u' in legacy
+assert 'static_cast<std::uint64_t>(height) * 4u' in legacy
 assert 'Eden::IsDeconstructedGameSelection(name)' in library
 assert 'std::optional<std::uint64_t>{static_cast<std::uint64_t>(info.st_size)}' in library
 
@@ -126,6 +136,23 @@ assert 'const std::string staged = cover + ".new";' in packaged_cover
 assert 'std::rename(staged.c_str(), cover.c_str())' in packaged_cover
 assert 'Full Nlib media enrichment' in games_owner
 assert 'enrichment of every installed title' not in games_owner
+assert 'const std::string cached_title = SavedTitle(file);' in games_owner
+assert 'if (cached_title.empty() || !cached_cover)' in games_owner
+assert 'CachedNlibEnrichment(' not in games_owner
+assert 'game.hero = nlib.hero;' not in games_owner
+assert 'AppendCaseScenes(game.screenshots, game.title_id);' not in games_owner
+assert 'const pe::ui::BoxArt cached_case = box_art(game.title_id);' not in games_owner
+assert 'LanguageFor(path, game.title_id, language_choice)' not in games_owner
+assert 'AddOnSummary(game.title_id)' not in games_owner
+enrich_owner = library.split(
+    "pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n"
+    "                                             const std::atomic<bool>* cancel)", 1
+)[1].split("\npe::ui::BoxArt EdenServices::box_art(", 1)[0]
+assert 'LanguageFor(selected_path, game.title_id, language_choice)' in enrich_owner
+assert 'game.addons = AddOnSummary(game.title_id);' in enrich_owner
+assert 'game.addons_short = AddOnSummary(game.title_id, true);' in enrich_owner
+assert 'EnsureRetailCase(' in enrich_owner
+assert 'EnsureNlibEnrichment(' in enrich_owner
 
 source = r"""
 #include <cassert>
@@ -548,6 +575,7 @@ fixture = r"""
 #include <string_view>
 #include <utility>
 #include <unistd.h>
+#include <stb_image.h>
 #include "game_files.h"
 
 __ENCORE_SIZING_OWNER__
@@ -636,8 +664,10 @@ int main() {
         std::string(160, 'Q');
     assert(ExtractedLocalCover(game, 2).empty());
     fs::remove(game / "base" / "exefs" / "icon_AmericanEnglish.dat");
+    // A filename alone is not enough: invalid/portrait legacy cover media
+    // must not fill the square application-icon slot.
     std::ofstream(game / "cover.png") << std::string(160, 'p');
-    assert(ExtractedLocalCover(game, 2) == (game / "cover.png").string());
+    assert(ExtractedLocalCover(game, 2).empty());
     fs::remove(game / "cover.png");
     const auto outside = root / "outside.jpg";
     std::ofstream(outside) << std::string(4096, 'x');
@@ -650,6 +680,10 @@ int main() {
 }
 """.replace("__ENCORE_SIZING_OWNER__", sizing).replace(
     "__ENCORE_NACP_OWNER__", nacp).replace("__ENCORE_COVERS_OWNER__", covers)
+stb_owner = root / "vendor/encore-active/eden-core/src/common/stb_image_png.cpp"
+stb_headers = root / "vendor/sources/eden/externals/stb"
+assert stb_owner.is_file() and (stb_headers / "stb_image.h").is_file()
+
 with tempfile.TemporaryDirectory(prefix="encore-extracted-library-") as temp:
     cpp = Path(temp) / "test.cpp"
     cpp.write_text(fixture)
@@ -658,8 +692,10 @@ with tempfile.TemporaryDirectory(prefix="encore-extracted-library-") as temp:
             exe = Path(temp) / (Path(compiler).name + opt)
             built = subprocess.run(
                 [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
+                 "-Wno-error=missing-field-initializers",
                  "-fsanitize=undefined", "-fno-sanitize-recover=all",
-                 "-I", str(root / "headless"), str(cpp), "-o", str(exe)],
+                 "-I", str(root / "headless"), "-I", str(stb_headers),
+                 str(stb_owner), str(cpp), "-o", str(exe)],
                 capture_output=True, text=True, timeout=60)
             assert built.returncode == 0, (compiler, opt, built.stderr[-5000:])
             check = subprocess.run([str(exe)], capture_output=True, text=True, timeout=20)

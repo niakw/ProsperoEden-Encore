@@ -111,9 +111,27 @@ assert 'case 16: value = std::to_string(prefs_.panel_opacity)+"%";' in switch_di
 assert 'case 19: value = prefs_.show_game_background?' in switch_dialog
 print("R457_SETTINGS_GUIDE_SOURCE_PASS")
 
-# R457: per-title row descriptions must not depend on an empty success toast.
 library=(root/"headless/prosperoeden/pe/ui/library.cpp").read_text()
 game=library.split("void Launcher::draw_game(",1)[1].split("// ---------------------------------------------------------------- a game's mods",1)[0]
+
+# The user's tested 20ec9a build returned bare "MSAA 2x/4x/8x/16x"
+# as help text. Current guidance must stay explanatory in all three settings
+# surfaces (classic global, Switch global and per-game).
+guidance=(root/"headless/prosperoeden/pe/ui/video_guidance.hpp").read_text()
+aa=guidance.split("inline const char* AntiAliasingGuide(int aa)",1)[1].split(
+    "inline const char* SharpnessGuide",1)[0]
+assert 'case 4: return tr(TR("MSAA 2x"))' not in aa
+assert 'case 5: return tr(TR("MSAA 4x"))' not in aa
+assert 'case 6: return tr(TR("MSAA 8x"))' not in aa
+assert 'case 7: return tr(TR("MSAA 16x"))' not in aa
+assert "MSAA samples geometry edges multiple times." in aa
+assert "AntiAliasingGuide(prefs_.anti_aliasing)" in dialog
+assert "AntiAliasingGuide(aa)" in game
+assert "AntiAliasingGuide(prefs_.anti_aliasing)" in switch_dialog
+print("R457_SETTINGS_MSAA_GUIDANCE_PASS descriptive=1 three_surfaces=1")
+
+
+# R457: per-title row descriptions must not depend on an empty success toast.
 assert "const bool compact_game_success = !message_.empty() && !message_warning_ &&" in game
 assert "option_ >= row_mode && option_ < row_controls;" in game
 assert "if (!message_.empty() && !compact_game_success)" in game
@@ -121,6 +139,7 @@ assert "compact_game_success ? 405.0f : 736.0f" in game
 assert "if (compact_game_success)" in game
 assert "DrawVideoGuide(c, tr(kLabels[option_]), explanation," in game
 per_game=src.split("void Launcher::draw_switch_game(",1)[1].split("void Launcher::draw_switch_mods(",1)[0]
+assert "AntiAliasingGuide(aa)" in per_game
 assert "(message_.empty() || !message_warning_) && option_>=0 && option_<14" in per_game
 assert "constexpr Rect kGameClip{530.0f,302.0f,861.0f,402.0f};" in per_game
 assert "d.push_clip(kGameClip);" in per_game

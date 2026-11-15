@@ -2556,3 +2556,7 @@ msgstr "Προαιρετικές αναφορές σφαλμάτων και δι
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Εκκαθαρίζει μόνο την cache shader. Αποθηκεύσεις, ρυθμίσεις, κλειδιά και παιχνίδια διατηρούνται."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "Το MSAA δειγματοληπτεί πολλές φορές τις ακμές της γεωμετρίας. Οι υψηλότερες τιμές βελτιώνουν την ποιότητα των ακμών, αλλά αυξάνουν τη χρήση εύρους ζώνης GPU και μνήμης· τα 8x και 16x είναι απαιτητικά στο PS5."

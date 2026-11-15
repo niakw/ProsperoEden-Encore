@@ -239,6 +239,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
 
     std::string selected_game;
     bool loading_started = false;
+    bool loading_presented = false;
     bool reduce_motion = false;
     {
         pe::gfx::GlBatch batch;
@@ -423,6 +424,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                 const bool shown = ready && presenter.Draw(display.width(), display.height(),
                     Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
                 presenter.Release();
+                loading_presented = shown;
                 if (!shown) batch.draw(list, viewport, display.width(), display.height());
                 std::fprintf(stderr, "EDEN_LOADING_ARTWORK_CAPTURE ready=%d presented=%d\n",
                              int(ready), int(shown));
@@ -510,7 +512,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             reduce_motion = Eden::LoadPreferences().reduce_motion;
             Eden::LaunchHandoff::BeginLoading();
         }
-        if (!PresentUnifiedLoading(display, reduce_motion))
+        if (!loading_presented && !PresentUnifiedLoading(display, reduce_motion))
             Eden::Report("loading screen", "Unified GL loading frame could not be presented; retaining last launcher frame");
         if (!display.defer_scanout_close(reduce_motion)) {
             Eden::Report("menu video failure", "Launcher display handoff failed");

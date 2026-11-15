@@ -136,6 +136,23 @@ assert 'const std::string staged = cover + ".new";' in packaged_cover
 assert 'std::rename(staged.c_str(), cover.c_str())' in packaged_cover
 assert 'Full Nlib media enrichment' in games_owner
 assert 'enrichment of every installed title' not in games_owner
+assert 'const std::string cached_title = SavedTitle(file);' in games_owner
+assert 'if (cached_title.empty() || !cached_cover)' in games_owner
+assert 'CachedNlibEnrichment(' not in games_owner
+assert 'game.hero = nlib.hero;' not in games_owner
+assert 'AppendCaseScenes(game.screenshots, game.title_id);' not in games_owner
+assert 'const pe::ui::BoxArt cached_case = box_art(game.title_id);' not in games_owner
+assert 'LanguageFor(path, game.title_id, language_choice)' not in games_owner
+assert 'AddOnSummary(game.title_id)' not in games_owner
+enrich_owner = library.split(
+    "pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n"
+    "                                             const std::atomic<bool>* cancel)", 1
+)[1].split("\npe::ui::BoxArt EdenServices::box_art(", 1)[0]
+assert 'LanguageFor(selected_path, game.title_id, language_choice)' in enrich_owner
+assert 'game.addons = AddOnSummary(game.title_id);' in enrich_owner
+assert 'game.addons_short = AddOnSummary(game.title_id, true);' in enrich_owner
+assert 'EnsureRetailCase(' in enrich_owner
+assert 'EnsureNlibEnrichment(' in enrich_owner
 
 source = r"""
 #include <cassert>

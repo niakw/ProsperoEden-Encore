@@ -7,6 +7,7 @@ correct GPU execution; opt-in ON remains explicitly unqualified.
 from pathlib import Path
 import json
 import hashlib
+import runpy
 import subprocess
 import tempfile
 
@@ -308,6 +309,21 @@ def m07_source_blob(value):
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
 m07_selected_sha = m07_source_blob(original_m07)
+if m07_selected_sha == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1":
+    receipt_path = root / "vendor/tests/native_msaa_handle_receipt.py"
+    receipt_text = receipt_path.read_text()
+    assert m07_source_blob(receipt_text) == "18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2"
+    receipt = runpy.run_path(str(receipt_path))
+    assert receipt["CURRENT_DRAWTEXTURE"] == m07_selected_sha
+    draw_after = receipt["DRAW_TEXTURE_AFTER"]
+    draw_before = receipt["DRAW_TEXTURE_BEFORE"]
+    assert original_m07.count("#include <optional>\n") == 1
+    assert original_m07.count(draw_after) == 1 and draw_before not in original_m07
+    original_m07 = original_m07.replace("#include <optional>\n", "", 1)
+    original_m07 = original_m07.replace(draw_after, draw_before, 1)
+    m07_selected_sha = m07_source_blob(original_m07)
+    assert m07_selected_sha == "1c40cc3b968c76fc505f5cea63218b93e89b4529"
+    print("ENCORE_M07_EDEN4559_DRAWTEXTURE_REVERSE_EXACT_PASS")
 if m07_selected_sha == "1c40cc3b968c76fc505f5cea63218b93e89b4529":
     fc27_constructor = """    buffer_cache.SetPendingCpuWrites(
         [this](const std::function<void(DAddr, size_t)>& callback) {

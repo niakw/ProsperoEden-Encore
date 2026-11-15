@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert selected==checked=="1a9441ca85d50c6c56fb74b4eb7831ba70e9563a",(selected,checked)
+assert selected==checked=="42459a7893c51a178ecd0c2f74f3951cc20fa12d",(selected,checked)
 cm=(ROOT/"headless/vulkan.cmake").read_text()
 for marker in (
     'list(FIND video_sources "renderer_vulkan/blit_image.cpp" EDEN4559_PINNED_BLIT_INDEX)',

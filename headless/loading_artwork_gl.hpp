@@ -6,6 +6,7 @@
 #include <GL/glcorearb.h>
 #include <algorithm>
 #include <cstdint>
+#include <cstdio>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,6 +27,7 @@ bool Capture(Draw&& draw) {
         return false;
     }
     GLint old_read = 0, old_draw = 0, old_texture = 0, old_viewport[4]{};
+    GLint old_active_texture = GL_TEXTURE0;
     GLint old_pack = 0, old_unpack = 0, old_alignment = 4, old_row = 0;
     GLint old_rows = 0, old_pixels = 0;
     GLfloat old_clear[4]{};
@@ -33,6 +35,7 @@ bool Capture(Draw&& draw) {
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &old_read);
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &old_draw);
     glGetIntegerv(GL_VIEWPORT, old_viewport);
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &old_active_texture);
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_texture);
     glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &old_pack);
     glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &old_unpack);
@@ -43,7 +46,9 @@ bool Capture(Draw&& draw) {
     glGetFloatv(GL_COLOR_CLEAR_VALUE, old_clear);
 
     // Isolate earlier errors from this transaction without an unbounded loop.
-    for (int i = 0; i < 8 && glGetError() != GL_NO_ERROR; ++i) {}
+    int stale_errors = 0;
+    for (; stale_errors < 8 && glGetError() != GL_NO_ERROR; ++stale_errors) {}
+    if (stale_errors) std::fprintf(stderr, "EDEN_LOADING_ARTWORK prior_gl_errors=%d\n", stale_errors);
     GLuint texture = 0, fbo = 0;
     glGenTextures(1, &texture);
     glGenFramebuffers(1, &fbo);
@@ -63,7 +68,8 @@ bool Capture(Draw&& draw) {
             glViewport(0, 0, width, height);
             glClearColor(0.055f, 0.075f, 0.105f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            draw(width, height);
+            bool composed = true;
+            try { draw(width, height); } catch (...) { composed = false; }
             glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
             glReadBuffer(GL_COLOR_ATTACHMENT0);
             glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -71,12 +77,15 @@ bool Capture(Draw&& draw) {
             glPixelStorei(GL_PACK_ROW_LENGTH, 0);
             glPixelStorei(GL_PACK_SKIP_ROWS, 0);
             glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
-            glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, frame.rgba.data());
-            ok = glGetError() == GL_NO_ERROR;
+            if (composed) {
+                glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, frame.rgba.data());
+                ok = glGetError() == GL_NO_ERROR;
+            }
         }
     }
     glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLuint>(old_read));
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<GLuint>(old_draw));
+    glActiveTexture(static_cast<GLenum>(old_active_texture));
     glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(old_texture));
     glBindBuffer(GL_PIXEL_PACK_BUFFER, static_cast<GLuint>(old_pack));
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, static_cast<GLuint>(old_unpack));

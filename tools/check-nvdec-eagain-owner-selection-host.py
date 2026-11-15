@@ -28,7 +28,7 @@ assert blob(ORIG_SOURCE)=="676e5820a592b194d0c72ee61bfa67a0fa29f45a"
 assert blob(ORIG_HEADER)=="00cd3f5d4d9571b4c8de944e3aec8988d11ccda5"
 assert CAND_SOURCE.is_file()==CAND_HEADER.is_file(), "Half-selected NVDEC source/header ABI"
 if CAND_SOURCE.exists():
-    expected_ff="9a3cf0b0a2cf92e467a619352b9345c2b7823d8b" if CAND_VIC.is_file() else "4f12f3cc625b5d74f72272b9ac156c8be7a839e0"
+    expected_ff="1f3834ef66b97033fc662d7c7c9ee3456cb62bca" if CAND_VIC.is_file() else "4f12f3cc625b5d74f72272b9ac156c8be7a839e0"
     assert blob(CAND_SOURCE)==expected_ff
     assert blob(CAND_HEADER)=="4bca3f84dbc224e925e18c28001286ee0e337448"
     src=CAND_SOURCE.read_text()
@@ -88,10 +88,12 @@ print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
 assert blob(ORIG_VIC)=="1a89f3de06981f95be9e5dc743a7c36b8ab6c4cf"
 if CAND_VIC.exists():
     assert CAND_SOURCE.is_file() and CAND_HEADER.is_file()
-    assert blob(CAND_VIC)=="7e84c9eea181f72f8fc7d3364725d0486d50330b"
-    assert CAND_VIC.read_text().count("EDEN_NVDEC_STAGE stage=vic_input")==1
-    assert CAND_VIC.read_text().count("EDEN_NVDEC_STAGE stage=vic_output")==1
-    assert CAND_SOURCE.read_text().count("EDEN_NVDEC_STAGE stage=decode")==1
+    assert blob(CAND_VIC)=="279255ee6527d6fc13b77147f73168917e427ea8"
+    assert CAND_VIC.read_text().count("EDEN_NVDEC_STAGE stage=vic_input")==2
+    assert CAND_VIC.read_text().count("EDEN_NVDEC_STAGE stage=vic_output")==2
+    assert CAND_SOURCE.read_text().count("EDEN_NVDEC_STAGE stage=decode")==2
+    assert "EncoreDetailedVideoLogEnabled()" in CAND_SOURCE.read_text()
+    assert "EncoreDetailedVideoLogEnabled()" in CAND_VIC.read_text()
 
 # Exercise the actual CMake source-list branch in a no-compiler fixture.
 # This tests selection and failure modes, not real native VIC compilation.

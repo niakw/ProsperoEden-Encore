@@ -3062,6 +3062,10 @@ if(EDEN_SHARED_NS2_GPU_ACCESS_SVC)
     # The two maintained headers keep the complete pinned NS1 structures.
     target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_GPU_ACCESS_ROOT}")
+    # Shipping PS5 keeps this witness compiled but the vendor helper admits
+    # samples only when the user explicitly enables Detailed Logging. The
+    # trace is capped at 32 calls for the exact registered NS2 process.
+    target_compile_definitions(core PRIVATE EDEN_NS2_SVC_TRACE=1)
 endif()
 
 # P1.3: Switch 2 uses SVC arbitration type 3 (WaitIfEqual64), including

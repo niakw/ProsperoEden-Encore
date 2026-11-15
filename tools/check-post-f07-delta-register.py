@@ -14,7 +14,7 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==39  # GL/Vulkan deferred-scanout owners and sampled GPU submission breadcrumb
+assert len(entries)==40  # reviewed post-F07 source successors, including fail-closed stop watchdog
 assert len({e["path"] for e in entries})==len(entries)
 drifts=[]
 for entry in entries:

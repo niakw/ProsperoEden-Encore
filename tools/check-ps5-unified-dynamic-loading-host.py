@@ -46,6 +46,29 @@ assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < fronten
 )
 assert "bool defer_scanout_close(bool reduce_motion);" in display_h
 
+# Native game selection enters the canonical compositor before the launcher
+# can draw its preview-only jacket or wait for full media / a fixed timer.
+launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
+launcher_h = (root / "headless/prosperoeden/pe/ui/launcher.hpp").read_text()
+assert "bool native_unified_loading = false" in launcher_h
+assert "native_unified_loading_(native_unified_loading)" in launcher
+launch = launcher.split("void Launcher::launch(", 1)[1].split("void Launcher::press(", 1)[0]
+branch = launch.split("if (native_unified_loading_ && !selected_game_.empty()) {", 1)[1].split("}", 1)[0]
+assert "done_ = true;" in branch and "return;" in branch
+assert launch.index("services_.game_exists(file)") < launch.index("if (native_unified_loading_")
+assert launch.index("selected_media_cancel_.store(true") < launch.index("if (native_unified_loading_")
+assert launch.index("if (native_unified_loading_") < launch.index("textures_.clear_case_pages()")
+assert launch.index("if (native_unified_loading_") < launch.index("launch_.start(theme::kLaunchSeconds)")
+assert "pe::ui::Launcher launcher(services, textures, fonts, first_start, true);" in frontend
+entry = frontend.split("if (launcher.done() && !launcher.selected_game().empty()) {", 1)[1].split("}", 1)[0]
+assert entry.index("Eden::LaunchHandoff::BeginLoading();") < entry.index("PresentUnifiedLoading(display, reduce_motion)")
+assert "reduce_motion = launcher.reduce_motion();" in entry
+assert "break;" in entry
+assert frontend.index("if (launcher.done() && !launcher.selected_game().empty()) {") < frontend.index("launcher.draw(list)")
+assert "if (!loading_scene_started) {" in frontend
+assert "if (!loading_scene_presented && !PresentUnifiedLoading(display, reduce_motion))" in frontend
+print("PS5_NATIVE_SINGLE_LOADING_ENTRY_SOURCE_PASS preview_only_cinematic=1 no_fixed_dwell=1 first_present_before_teardown=1")
+
 # R458: System::Load is no longer a frozen last GL frame.
 assert "std::jthread deferred_loading_thread;" in display
 assert "EGLContext deferred_context = EGL_NO_CONTEXT;" in display

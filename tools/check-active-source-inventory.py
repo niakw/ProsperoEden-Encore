@@ -8,6 +8,7 @@ from pathlib import Path
 import json
 import re
 import runpy
+import subprocess
 
 root = Path(__file__).resolve().parents[1]
 active = root / "vendor/encore-active"
@@ -909,7 +910,6 @@ post_f07_gpu_table_owners = {"eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
-import subprocess
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
 if gpu_table_vendor_pin == "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864":
     assert not post_f07_gpu_table_present

@@ -931,6 +931,26 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert set(r23_combined_owners) <= set(p24_by_path)
     for name, receipt_sha in r23_combined_owners.items():
         combined = expected[name].read_text()
+        # Vendor #145 changes only the secondary sampler address in the
+        # graphics owner after this frozen R23 combined receipt. Require the
+        # exact shipping blob, then reverse that one audited hunk in-memory.
+        if name == 'vk_graphics_pipeline_cost.cpp':
+            assert git_blob_sha(combined) == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba', (
+                'FC27 fixed-sampler graphics owner drift', name)
+            fixed = 'const u32 second_offset{desc.secondary_cbuf_offset};'
+            indexed = 'const u32 second_offset{desc.secondary_cbuf_offset + index_offset};'
+            assert combined.count(fixed) == 1 and indexed not in combined
+            combined = combined.replace(fixed, indexed, 1)
+        # Vendor #142 and #145 deliberately invalidate the Vulkan pipeline
+        # cache as shader handle semantics change (19 -> 20 -> 21). No other
+        # source delta belongs to this historical receipt.
+        if name == 'vk_pipeline_cache_cost.cpp':
+            assert git_blob_sha(combined) == 'be5d48abd44996502b0829a6e0501d130a151455', (
+                'FC27 cache-version owner drift', name)
+            assert combined.count('constexpr u32 CACHE_VERSION = 21;') == 1
+            combined = combined.replace(
+                'constexpr u32 CACHE_VERSION = 21;',
+                'constexpr u32 CACHE_VERSION = 19;', 1)
         assert git_blob_sha(combined) == receipt_sha, (
             'Unreviewed merged R23 Vulkan source bytes', name)
         assert all(token in combined for token in r23_required_semantics[name]), (

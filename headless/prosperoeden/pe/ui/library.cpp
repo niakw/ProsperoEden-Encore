@@ -903,6 +903,15 @@ void Launcher::start_selected_size()
     const Game& game = games_[static_cast<std::size_t>(library_.selected)];
     if (!game.title_id || game.file.empty() || game.size != "—")
         return;
+    if (selected_size_failed_title_id_ == game.title_id &&
+        selected_size_failed_file_ == game.file)
+        return;
+    if (selected_size_failed_title_id_ &&
+        (selected_size_failed_title_id_ != game.title_id ||
+         selected_size_failed_file_ != game.file)) {
+        selected_size_failed_title_id_ = 0;
+        selected_size_failed_file_.clear();
+    }
     selected_size_cancel_.store(false, std::memory_order_release);
     selected_size_scan_title_id_ = game.title_id;
     selected_size_scan_file_ = game.file;
@@ -933,7 +942,13 @@ void Launcher::finish_selected_size()
     const bool cancelled = selected_size_cancel_.load(std::memory_order_acquire);
     try {
         const std::string measured = selected_size_scan_.get();
+        if (!cancelled && measured.empty()) {
+            selected_size_failed_title_id_ = selected_size_scan_title_id_;
+            selected_size_failed_file_ = selected_size_scan_file_;
+        }
         if (!cancelled && !measured.empty()) {
+            selected_size_failed_title_id_ = 0;
+            selected_size_failed_file_.clear();
             for (Game& game : games_) {
                 if (game.title_id == selected_size_scan_title_id_ &&
                     game.file == selected_size_scan_file_) {

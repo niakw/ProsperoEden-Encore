@@ -1118,6 +1118,7 @@ fc27_compiler_pins = {
     "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
     "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",
     "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e",
+    "4572e581d011c444fd59428d5c042098f05dcfca",
 }
 if gpu_table_vendor_pin in fc27_compiler_pins:
     assert post_f07_fc27_ssa_present == set(post_f07_fc27_ssa_receipts)
@@ -1134,7 +1135,7 @@ post_f07_fc27_ssbo_receipts = {
         "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
 }
 post_f07_fc27_ssbo_present = set(post_f07_fc27_ssbo_receipts) & all_owners
-if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e"}:
+if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca"}:
     assert post_f07_fc27_ssbo_present == set(post_f07_fc27_ssbo_receipts)
     for path, blob in post_f07_fc27_ssbo_receipts.items():
         assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
@@ -1149,7 +1150,7 @@ post_f07_fc27_descriptor_receipts = {
         "be14d3396ff3871ceed46cb8499e9cfb546719de",
 }
 post_f07_fc27_descriptor_present = set(post_f07_fc27_descriptor_receipts) & all_owners
-if gpu_table_vendor_pin == "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e":
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca"}:
     assert post_f07_fc27_descriptor_present == set(post_f07_fc27_descriptor_receipts)
     for path, blob in post_f07_fc27_descriptor_receipts.items():
         assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
@@ -1166,7 +1167,7 @@ post_f07_fc27_scalar_unselected_receipts = {
         "68e14b3a0c4ae990933652baa51183a51eee4f81",
 }
 post_f07_fc27_scalar_unselected_present = set(post_f07_fc27_scalar_unselected_receipts) & all_owners
-if gpu_table_vendor_pin == "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e":
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca"}:
     assert post_f07_fc27_scalar_unselected_present == set(post_f07_fc27_scalar_unselected_receipts)
     for path, blob in post_f07_fc27_scalar_unselected_receipts.items():
         assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob

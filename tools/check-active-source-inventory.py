@@ -963,7 +963,7 @@ fc27_compiler_pins = {
     "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
     "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",
     "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e",
-    "4572e581d011c444fd59428d5c042098f05dcfca",
+    "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636",
 }
 if gpu_table_vendor_pin in fc27_compiler_pins:
     assert fc27_ssa_present == set(fc27_ssa_receipts)
@@ -984,7 +984,7 @@ fc27_ssbo_receipts = {
         "41ad0f5cef1e070e552b43ea49648d5e74f10bad",
 }
 fc27_ssbo_present = set(fc27_ssbo_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca"}:
+if gpu_table_vendor_pin in {"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3", "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636"}:
     assert fc27_ssbo_present == set(fc27_ssbo_receipts)
     for relative, blob in fc27_ssbo_receipts.items():
         raw = (active / relative).read_bytes()
@@ -1003,7 +1003,7 @@ fc27_descriptor_receipts = {
         "be14d3396ff3871ceed46cb8499e9cfb546719de",
 }
 fc27_descriptor_present = set(fc27_descriptor_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636"}:
     assert fc27_descriptor_present == set(fc27_descriptor_receipts)
     for relative, blob in fc27_descriptor_receipts.items():
         raw = (active / relative).read_bytes()
@@ -1021,7 +1021,7 @@ fc27_scalar_unselected_receipts = {
         "68e14b3a0c4ae990933652baa51183a51eee4f81",
 }
 fc27_scalar_unselected_present = set(fc27_scalar_unselected_receipts) & set(physical_all)
-if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca"}:
+if gpu_table_vendor_pin in {"6f4bb38594b273fe7cc4fba960dfe62cdb9f508e", "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636"}:
     assert fc27_scalar_unselected_present == set(fc27_scalar_unselected_receipts)
     for relative, blob in fc27_scalar_unselected_receipts.items():
         raw = (active / relative).read_bytes()

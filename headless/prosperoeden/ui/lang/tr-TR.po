@@ -2556,3 +2556,7 @@ msgstr "İsteğe bağlı çökme ve hata raporları. Ayrıntılı günlükleri a
 #: pe/ui/settings.cpp, pe/ui/switch_theme.cpp
 msgid "Clear shader caches only. Saves, settings, keys and games are not removed."
 msgstr "Yalnızca shader önbelleğini temizler. Kayıtlar, ayarlar, anahtarlar ve oyunlar korunur."
+
+#: pe/ui/video_guidance.hpp
+msgid "MSAA samples geometry edges multiple times. Higher values improve edge quality but increase GPU bandwidth and memory use; 8x and 16x are expensive on PS5."
+msgstr "MSAA geometri kenarlarını birden fazla kez örnekler. Daha yüksek değerler kenar kalitesini artırır ancak GPU bant genişliği ve bellek kullanımını yükseltir; 8x ve 16x PS5’te yüksek maliyetlidir."

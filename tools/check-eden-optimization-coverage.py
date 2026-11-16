@@ -1597,6 +1597,46 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# P1 typography removes the ASCII-only quick-menu conversion while preserving
+# the legacy compact FPS HUD ABI. Reconstruct the exact pre-typography hud.h
+# blob so the existing post-F07 receipt remains immutable.
+typography_hud_path = "headless/hud.h"
+typography_hud_blob = "a506f5dca7efc289f47a172a353bff4f04d9f4e4"
+typography_hud_predecessor = "0ef8bf75efabf61628b44b91011eb461abcbde81"
+if (typography_hud_path in drift_index and
+        drift_index[typography_hud_path]["actual"] == typography_hud_blob):
+    hud_source = (ROOT/typography_hud_path).read_text()
+    anchor_text = """        glyphs[i] = HudGlyph(text[i]);
+    return glyphs;
+}
+// The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
+"""
+    predecessor_text = """        glyphs[i] = HudGlyph(text[i]);
+    return glyphs;
+}
+// Quick-menu text keeps ASCII codepoints so the Vulkan fragment shader can
+// index the Montserrat raster generated from the launcher's exact .pefont.
+inline std::array<uint32_t, 24> HudCodepoints(std::string_view text) {
+    std::array<uint32_t, 24> glyphs{};
+    for (size_t i = 0; i < text.size() && i < glyphs.size(); ++i) {
+        const unsigned char value = static_cast<unsigned char>(text[i]);
+        glyphs[i] = value >= 32 && value <= 126 ? value : static_cast<uint32_t>('?');
+    }
+    return glyphs;
+}
+// The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
+"""
+    assert hud_source.count(anchor_text) == 1
+    replay = hud_source.replace(anchor_text, predecessor_text, 1)
+    raw = replay.encode("utf-8")
+    replay_blob = hashlib.sha1(
+        b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+    ).hexdigest()
+    assert replay_blob == typography_hud_predecessor
+    drift_index[typography_hud_path]["actual"] = replay_blob
+    print("P1_TYPOGRAPHY_HUD_SUCCESSOR_PASS",
+          "legacy_fps_abi=preserved", "ascii_quick_menu=removed")
+
 # P1 typography also extends the existing SystemFonts owner with deterministic
 # Noto groups. Reverse the exact three reviewed hunks and require byte identity
 # with the pre-typography main owner before removing this post-F07 drift.

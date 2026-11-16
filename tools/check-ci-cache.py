@@ -110,6 +110,16 @@ assert 'HUD_GENERATED_TARGET = "eden-vulkan-hud-shaders"' in syntax_gate
 assert '"cmake", "--build", str(native_build_dir.resolve())' in syntax_gate
 assert '"--target", HUD_GENERATED_TARGET' in syntax_gate
 assert syntax_gate.index("prepare_generated_prerequisites(args.native_build_dir, selected)") < syntax_gate.index("for relative in selected:")
+# The tracked French fallback is generated from fr-FR.po. A native build must
+# rematerialize it immediately before Ninja and reject any generator/source
+# drift instead of compiling a contaminated raw PO payload as C++.
+assert 'embedded_fr_rel="headless/prosperoeden/fr_fr_embedded.h"' in build
+assert 'tools/launcher/strings.py" embed-fr' in build
+assert 'tools/launcher/strings.py" check' in build
+assert 'git -C "$root" diff --exit-code -- "$embedded_fr_rel"' in build
+assert 'EDEN_EMBEDDED_FR_NATIVE_HEADER_PASS' in build
+assert build.index('tools/launcher/strings.py" embed-fr') < build.index('cmake --build "$scratch/native-local"')
+assert build.index('git -C "$root" diff --exit-code -- "$embedded_fr_rel"') < build.index('cmake --build "$scratch/native-local"')
 # Publish a verified FTP title and release bundle independently of optional
 # dependency cache preservation. Do not restore an obsolete dev package path.
 assert "EDEN_TEST_ALL_ON" not in workflow

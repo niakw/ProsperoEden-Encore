@@ -2091,10 +2091,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         if (!nlib.icon.empty()) {
             home.last_cover = nlib.icon;
         } else if (home.last_cover.empty()) {
-            // Extracted NS2 dumps may have neither Control icon nor cached
-            // Nlib icon. A validated local retail front is still real artwork:
-            // use it as a presentation fallback without calling it tile_icon.
-            home.last_cover = box_art(title_id).front;
+            home.last_cover = CachedGamesDbSquare(title_id);
         }
         home.last_hero = nlib.hero;
         home.last_screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
@@ -2190,10 +2187,11 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
                 } else if (recent.cover.empty()) {
-                    // Do not mark a portrait case scan as canonical square
-                    // tile_icon; Home's existing aspect-safe cover renderer
-                    // can still show the genuine local front immediately.
-                    recent.cover = box_art(recent.title_id).front;
+                    const std::string square = CachedGamesDbSquare(recent.title_id);
+                    if (!square.empty()) {
+                        recent.cover = square;
+                        recent.tile_icon = square;
+                    }
                 }
                 recent.hero = nlib.hero;
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
@@ -2543,6 +2541,21 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
         return game;
     game.cover = CachedNlibIcon(game.title_id);
     if (!game.cover.empty()) return game;
+    game.cover = CachedGamesDbSquare(game.title_id);
+    if (!game.cover.empty()) return game;
+
+    // Switch 2 Control dumps often omit the canonical icon and Nlib may have
+    // no record. Use GamesDB's explicit Square category, not a cropped box.
+    if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
+        const int language_choice = Eden::LoadPreferences().language;
+        if (EnsureGamesDbSquare(game.title_id, std::string(known->name), game.name,
+                                language_choice, cancel)) {
+            game.cover = CachedGamesDbSquare(game.title_id);
+            game.artwork_changed = !game.cover.empty();
+            if (!game.cover.empty()) return game;
+        }
+    }
+
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX",
                   static_cast<unsigned long long>(game.title_id));
@@ -2624,8 +2637,16 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     game.artwork_changed |= enrichment.artwork_changed;
-    if (!enrichment.icon.empty()) game.cover = std::move(enrichment.icon);
-    // Missing square icon remains empty until Control/ExeFS or Nlib supplies one.
+    if (!enrichment.icon.empty()) {
+        game.cover = std::move(enrichment.icon);
+    } else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
+        if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
+                                language_choice, cancel)) {
+            game.cover = CachedGamesDbSquare(game.title_id);
+            game.artwork_changed |= !game.cover.empty();
+        }
+    }
+    // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.
     if (!enrichment.hero.empty()) game.hero = std::move(enrichment.hero);
     if (!enrichment.screenshots.empty()) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;

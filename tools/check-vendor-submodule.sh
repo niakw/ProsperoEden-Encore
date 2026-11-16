@@ -9,8 +9,12 @@ esac
 expected="$(printf '%s\n' "$entry" | awk '{print $3}')"
 test -n "$expected"
 mods="$(git ls-tree -r HEAD | awk '$1=="160000" {print $4}')"
-test "$mods" = vendor || { echo "External Gitlinks remain: $mods" >&2; exit 1; }
-test "$(grep -c "^\[submodule " .gitmodules)" -eq 1
+expected_mods="$(printf 'encore-overrides\nvendor')"
+test "$mods" = "$expected_mods" || { echo "Unexpected root Gitlinks: $mods" >&2; exit 1; }
+test "$(grep -c "^\[submodule " .gitmodules)" -eq 2
+test "$(git rev-parse HEAD:encore-overrides)" = 95f21edf13bfbd2888602f2b419dd856d6d0fbfa
+test "$(git config -f .gitmodules submodule.encore-overrides.update)" = none
+test ! -e encore-overrides/.git
 test ! -e vendor/.gitmodules
 test -f vendor/README.md
 test -f vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp

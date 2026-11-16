@@ -25,6 +25,17 @@ assert META['tracked_files']==9496
 LOCK = json.loads((ROOT/'tools/deps.json').read_text())
 record = next(x for x in LOCK['items'] if x['name']=='encore-overrides')
 assert record['commit']==PIN
+# The root submodule is a provenance/link surface only; the native build still
+# consumes the immutable vendor snapshot below. Keep both pinned to one source
+# commit so GitHub never advertises a different game-profile database.
+assert subprocess.check_output(
+    ['git','-C',str(ROOT),'rev-parse','HEAD:encore-overrides'], text=True
+).strip() == PIN
+gitmodules=(ROOT/'.gitmodules').read_text()
+assert '[submodule "encore-overrides"]' in gitmodules
+assert 'url = https://github.com/niakw/encore-overrides.git' in gitmodules
+assert 'update = none' in gitmodules
+assert 'shallow = true' in gitmodules
 manifest = json.loads((BASE/'manifest.json').read_text())
 assert manifest['schema_version']==1 and manifest['database_revision']>=6
 assert tuple(manifest['profile_order'])==TIERS

@@ -17,8 +17,24 @@ include_directories(BEFORE "${CMAKE_BINARY_DIR}/headless/sparse")
 if(PS5_NATIVE)
     # SDL3 is kept only for host-oriented dependencies; Encore removes its
     # SDL audio sink and uses the native PS5 audio path (see CMakeLists.txt).
-    # Do not probe the host runner for Linux ALSA on the PS5 target.
+    # Do not probe the Linux runner for desktop/audio/input backends which cannot
+    # become PS5 runtime dependencies. SDL's own CMake FAQ recommends the Unix
+    # console profile when no X11/Wayland window is needed; the pinned SDL 3.4.8
+    # still probes optional Unix backends unless they are explicitly disabled.
     set(SDL_ALSA OFF CACHE BOOL "PS5 uses the native audio backend, not Linux ALSA" FORCE)
+    set(SDL_JACK OFF CACHE BOOL "PS5 does not use Linux JACK" FORCE)
+    set(SDL_PIPEWIRE OFF CACHE BOOL "PS5 does not use Linux PipeWire" FORCE)
+    set(SDL_PULSEAUDIO OFF CACHE BOOL "PS5 does not use Linux PulseAudio" FORCE)
+    set(SDL_SNDIO OFF CACHE BOOL "PS5 does not use Unix sndio" FORCE)
+    set(SDL_X11 OFF CACHE BOOL "PS5 has no X11 window system" FORCE)
+    set(SDL_WAYLAND OFF CACHE BOOL "PS5 has no Wayland window system" FORCE)
+    set(SDL_KMSDRM OFF CACHE BOOL "PS5 does not use Linux KMS/DRM" FORCE)
+    set(SDL_FRIBIDI OFF CACHE BOOL "PS5 SDL does not provide X11 text shaping" FORCE)
+    set(SDL_LIBTHAI OFF CACHE BOOL "PS5 SDL does not provide X11 Thai input" FORCE)
+    set(SDL_IBUS OFF CACHE BOOL "PS5 SDL does not use Linux IBus" FORCE)
+    set(SDL_LIBUDEV OFF CACHE BOOL "PS5 SDL does not enumerate Linux udev devices" FORCE)
+    set(SDL_HIDAPI_LIBUSB OFF CACHE BOOL "PS5 controllers use the native input path" FORCE)
+    set(SDL_LIBURING OFF CACHE BOOL "PS5 SDL does not use Linux io_uring" FORCE)
     get_filename_component(EDEN_PORT_ROOT "${EDEN_PORT_DIR}/.." ABSOLUTE)
     # The pinned Opus CPM snapshot is Xiph v1.6.1 + 6 commits
     # (upstream a3f0ec02b342, after signed v1.6.1 tag 22244de5).

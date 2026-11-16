@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="50a849a93494f442d47573b8ce8b8797c3cecd26"
+EXPECTED="cd0c5df69199b5dc7fbb333f5e76c80314a020e4"
 SOURCE=V/"encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp"
 TEST=V/"tests/fc27_maxwell_prmt_operand_forms_source.py"
 

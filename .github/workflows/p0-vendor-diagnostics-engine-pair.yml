@@ -29,7 +29,7 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=50a849a93494f442d47573b8ce8b8797c3cecd26
+          expected=cd0c5df69199b5dc7fbb333f5e76c80314a020e4
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
@@ -45,6 +45,7 @@ jobs:
           python3 -B tools/check-fc27-prmt-engine-selection.py
           python3 -B vendor/tests/fc27_maxwell_prmt_operand_forms_source.py
           python3 -B vendor/tests/fc27_cpu_write_download_race_host.py
+          python3 -B vendor/tests/ps5_gpu_renderer_channel_teardown_host.py
           python3 -B vendor/tests/ns2_qmd_rejected_dispatch_release_host.py
           python3 -B vendor/tests/ns2_ldsm_m88_modes_host.py
           python3 -B vendor/tests/shader_bitfield_uextract_fold_host.py

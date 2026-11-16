@@ -275,7 +275,7 @@ STRICT_CATALOGS = {"fr-FR", "fr-CA", "es-ES", "es-419", "en-US", "en-GB"}
 INVISIBLE = {0x200B, 0x200C, 0x200D, 0x200E, 0x200F}
 
 
-def cmap_characters(data):
+def _cmap_characters_raw(data):
     """All Unicode characters mapped by TrueType/OpenType cmap format 4/12 tables.
 
     Subset fonts can legitimately carry several Unicode cmap subtables with
@@ -322,6 +322,27 @@ def cmap_characters(data):
                             glyph = (glyph + deltas[i]) & 0xFFFF
                     if glyph:
                         characters.add(code)
+    return characters
+
+
+def cmap_characters(data):
+    """Unicode cmap coverage, using fontTools when available.
+
+    build_noto_subsets.py already requires fontTools, so CI/native builds
+    validate generated subsets with the same parser that wrote them. The
+    dependency-free parser remains a fallback for local checks of console fonts.
+    """
+    try:
+        from fontTools.ttLib import TTFont
+        from io import BytesIO
+    except ImportError:
+        return _cmap_characters_raw(data)
+    font = TTFont(BytesIO(data), lazy=True)
+    characters = set()
+    for table in font["cmap"].tables:
+        if table.isUnicode():
+            characters.update(table.cmap)
+    font.close()
     return characters
 
 

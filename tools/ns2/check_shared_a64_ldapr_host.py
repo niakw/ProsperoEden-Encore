@@ -56,8 +56,8 @@ int main() {
     const auto reta=Dynarmic::A64::GetName<TranslatorVisitor>(0xD65F0BFFU);
     const auto retb=Dynarmic::A64::GetName<TranslatorVisitor>(0xD65F0FFFU);
     assert(ret && *ret == "RET");
-    assert(reta && *reta == "RETA");
-    assert(retb && *retb == "RETA");
+    assert(reta && *reta == "RETAA, RETAB");
+    assert(retb && *retb == "RETAA, RETAB");
     std::puts("SHARED_A64_LDAPR_RETA_REAL_DECODER_PASS");
 }
 '''

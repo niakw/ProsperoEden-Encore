@@ -43,6 +43,10 @@ assert 'if (media_cancel_.load(std::memory_order_acquire)' in lib
 assert 'home_.last_hero = enriched.hero' in lib
 assert 'home_.last_max_players = enriched.max_players' in lib
 assert 'recent.max_players = enriched.max_players' in lib
+for field in ('addons', 'language'):
+    assert f'game.{field} = enriched.{field}' in lib, field
+assert 'game.addons_short = enriched.addons_short' in lib
+assert 'game.language_note = enriched.language_note' in lib
 assert 'finish_home_media();' in launch
 assert 'home_media_scan_.wait();' in launch
 assert 'artwork_tasks' not in svc

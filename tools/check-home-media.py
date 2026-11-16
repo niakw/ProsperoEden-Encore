@@ -76,8 +76,14 @@ assert "services_.enrich_home_icon(std::move(request), &media_cancel_)" in icons
 assert "enrich_game_media" not in icons
 native_home = svc.split("pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel)", 1)[1].split("std::string EdenServices::clock()", 1)[0]
 assert "ExtractedLocalCover(" in native_home
-assert 'if (cover.empty()) cover = EnsureCover(home.last_file, &title);' in native_home
-assert native_home.index("ExtractedLocalCover(") < native_home.index("EnsureCover(home.last_file, &title)")
+assert 'const bool deconstructed = Eden::IsDeconstructedGameSelection(home.last_file);' in native_home
+assert 'else if (!has_cover)' in native_home
+assert 'if (!deconstructed && played.contains(name))' in native_home
+assert 'recent.cover = EnsureCover(name);' in native_home
+assert 'if (!recent.cover.empty()) recent.tile_icon = recent.cover;' in native_home
+# No generic package metadata extraction may run for an ExeFS /main.
+assert 'if (cover.empty()) cover = EnsureCover(home.last_file, &title);' not in native_home
+assert 'if (!nlib.icon.empty() && recent.tile_icon.empty())' in native_home
 native_icon = svc.split("pe::ui::Game EdenServices::enrich_home_icon(", 1)[1].split("pe::ui::Game EdenServices::enrich_game_media(", 1)[0]
 assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
 assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon
@@ -86,6 +92,9 @@ assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recen
 assert 'CachedGamesDbSquare(recent.title_id)' in svc
 assert 'CachedGamesDbSquare(title_id)' in svc
 assert 'EnsureGamesDbSquare(game.title_id' in native_icon
+full_media = svc.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n", 1)[1]
+assert 'if (!enrichment.icon.empty() && game.cover.empty())' in full_media
+assert 'else if (game.cover.empty()) {' in full_media
 assert 'recent.tile_icon = square;' in svc
 assert 'recent.cover = box_art(recent.title_id).front;' not in svc
 assert 'home.last_cover = box_art(title_id).front;' not in svc

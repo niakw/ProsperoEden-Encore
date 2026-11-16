@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""P0.2: test production-selected LDAPR decode and real Dynarmic translation.
+"""P0.2: test production-selected LDAPR + minimal RETAA/RETAB translation.
 
-CMake copies exactly four versioned sources reviewed against pinned Dynarmic,
-without selecting the research RETAA, LSE or CAS implementations.
-Host tests compile the unmodified A64 translation unit and execute Dynarmic's
-real decoder; no PS5 or full emulator build is performed.
+CMake copies exactly five versioned sources reviewed against pinned Dynarmic.
+Only stronger-acquire LDAPR and no-PAC RETAA/RETAB return semantics are added;
+general PAC, LSE and CAS research implementations remain unselected.
+Host tests compile the real A64 translation unit and execute Dynarmic's decoder;
+no PS5 or full emulator build is performed.
 """
 from pathlib import Path
 import difflib
@@ -20,7 +21,7 @@ SCRIPT=ROOT/'headless/shared_a64_ldapr.cmake'
 BASE=ROOT/'vendor/sources/eden/src/dynarmic/src'
 REL=Path('dynarmic/frontend/A64')
 FILES=('decoder/a64.h','decoder/a64.inc','translate/impl/impl.h',
-       'translate/impl/load_store_exclusive.cpp')
+       'translate/impl/load_store_exclusive.cpp','translate/impl/a64_branch.cpp')
 assert 'set(EDEN_SHARED_NS2_A64_LDAPR ON)' in CMAKE
 assert 'if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)' in CMAKE
 assert 'include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")' in CMAKE
@@ -55,9 +56,9 @@ int main() {
     const auto reta=Dynarmic::A64::GetName<TranslatorVisitor>(0xD65F0BFFU);
     const auto retb=Dynarmic::A64::GetName<TranslatorVisitor>(0xD65F0FFFU);
     assert(ret && *ret == "RET");
-    assert(!reta || *reta != "RETA");
-    assert(!retb || *retb != "RETA");
-    std::puts("SHARED_A64_LDAPR_REAL_DECODER_PASS");
+    assert(reta && *reta == "RETA");
+    assert(retb && *retb == "RETA");
+    std::puts("SHARED_A64_LDAPR_RETA_REAL_DECODER_PASS");
 }
 '''
 
@@ -99,7 +100,7 @@ def main():
         generated=temp/'include'
         result=transform(BASE,generated)
         assert result.returncode==0,result.stderr
-        # Exactly 4 reviewed files, anchored to the real pinned sources.
+        # Exactly 5 reviewed files, anchored to the real pinned sources.
         actual={str(p.relative_to(generated)) for p in generated.rglob('*') if p.is_file()}
         expected={str(REL/f) for f in FILES}
         assert actual==expected,(sorted(actual),sorted(expected))
@@ -113,29 +114,61 @@ def main():
             elif f=='decoder/a64.inc':
                 old='INST(RET, "RET", "1101011001011111000000nnnnn00000")'
                 assert before.count(old)==1
-                reviewed=before.replace(old,old+'\nINST(LDAPR, "LDAPR", "ss11100010111111110000nnnnnttttt")')
+                reviewed=before.replace(
+                    old, old+
+                    '\nINST(RETA, "RETAA, RETAB", "110101100101111100001M1111111111")'
+                    '\nINST(LDAPR, "LDAPR", "ss11100010111111110000nnnnnttttt")')
             elif f=='translate/impl/impl.h':
                 old='bool LDAPR(Reg Rn, Reg Rt);'
                 assert before.count(old)==1
                 reviewed=before.replace(old,'bool LDAPR(Imm<2> size, Reg Rn, Reg Rt);')
-            else:
+            elif f.endswith('load_store_exclusive.cpp'):
                 old='namespace Dynarmic::A64 {\n'
                 assert before.count(old)==1
                 reviewed=before.replace(old,old+
                     '\n// Reviewed RCpc LDAPR: LDAR\'s acquire ordering is strictly stronger.\n'
                     'bool TranslatorVisitor::LDAPR(Imm<2> size, Reg Rn, Reg Rt) {\n'
                     '    return LDAR(size, Rn, Rt);\n}\n')
+            else:
+                ret_owner='''bool TranslatorVisitor::RET(Reg Rn) {
+    const auto target = X(64, Rn);
+
+    ir.SetPC(target);
+    ir.SetTerm(IR::Term::PopRSBHint{});
+    return false;
+}
+'''
+                assert before.count(ret_owner)==1
+                reta_owner='''
+// ARMv8.3 authenticated returns. Encore does not emulate PAC keys/authentication
+// in the guest CPU today; match the reviewed Lichii no-PAC model and preserve
+// ordinary return-stack semantics. M selects RETAA vs RETAB but does not change
+// the raw X30 target while authentication is disabled.
+bool TranslatorVisitor::RETA(bool M) {
+    (void)M;
+    ir.SetPC(X(64, Reg::R30));
+    ir.SetTerm(IR::Term::PopRSBHint{});
+    return false;
+}
+'''
+                reviewed=before.replace(ret_owner,ret_owner+reta_owner)
             assert after==reviewed,('LDAPR static owner no longer equals pinned reviewed change',f)
             changes=list(difflib.unified_diff(before.splitlines(),after.splitlines()))
-            assert (len(changes)==0 if f=='decoder/a64.h' else 0<len(changes)<=26), (f,changes)
-            assert 'INST(RETA,' not in after and 'INST(CAS,' not in after and 'INST(LDADD,' not in after
+            assert (len(changes)==0 if f=='decoder/a64.h' else 0<len(changes)<=40), (f,changes)
+            assert 'INST(CAS,' not in after and 'INST(LDADD,' not in after
             if f=='decoder/a64.inc':
                 assert after.count('INST(LDAPR,')==1
+                assert after.count('INST(RETA,')==1
                 assert after.count('INST(RET,')==1
             if f.endswith('load_store_exclusive.cpp'):
                 assert after.count('TranslatorVisitor::LDAPR(')==1
                 assert 'return LDAR(size, Rn, Rt);' in after
-        print('P0_2_SHARED_A64_LDAPR_PINNED_SOURCE_DIFF_PASS files=4',flush=True)
+            if f.endswith('a64_branch.cpp'):
+                assert after.count('TranslatorVisitor::RETA(')==1
+                assert 'ir.SetPC(X(64, Reg::R30));' in after
+                assert 'ir.SetTerm(IR::Term::PopRSBHint{});' in after
+                assert 'EDEN_NS2_A64_EXPERIMENTAL' not in after
+        print('P0_2_SHARED_A64_LDAPR_RETA_PINNED_SOURCE_DIFF_PASS files=5',flush=True)
         # A duplicate source instruction or changed decode anchor fails closed.
         mutated=temp/'mutated';shutil.copytree(BASE/REL,mutated/REL)
         path=mutated/REL/'decoder/a64.inc'
@@ -167,8 +200,8 @@ def main():
                 assert build.returncode==0,(compiler,opt,build.stderr[-5000:])
                 run=subprocess.run([str(output)],capture_output=True,text=True,env=env,timeout=20)
                 assert run.returncode==0,(compiler,opt,run.stderr[-2500:])
-                assert 'SHARED_A64_LDAPR_REAL_DECODER_PASS' in run.stdout
-                print('P0_2_SHARED_A64_LDAPR_REAL_DECODER_PASS',Path(compiler).name,
+                assert 'SHARED_A64_LDAPR_RETA_REAL_DECODER_PASS' in run.stdout
+                print('P0_2_SHARED_A64_LDAPR_RETA_REAL_DECODER_PASS',Path(compiler).name,
                       f'O{opt}',flush=True)
 
 if __name__=='__main__':main()

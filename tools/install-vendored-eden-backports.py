@@ -244,6 +244,91 @@ def replay()->None:
               f'successors={len(getinfo_sources)}',
               'info_types=29,30,33', 'remote_memory_31_32=unimplemented',
               'historical_receipts=untouched')
+
+        # Vendor #178 moves the reviewed HTTPS-only JSON POST primitive into
+        # the shipping maintained Eden backport while restoring pinned Eden
+        # sources byte-for-byte. Prove the exact two-file successor can be
+        # reversed to this frozen patch replay; never whitelist arbitrary
+        # network-source drift.
+        diagnostics_cpp='src/common/net/net.cpp'
+        diagnostics_h='src/common/net/net.h'
+        if diagnostics_h in spec['entries']:
+            assert spec['entries'][diagnostics_cpp]['active']=='9d3d56b9fa6b4a47097aa32c18b42e8839c547915d3af19aa37830dd75ac5da8'
+            assert spec['entries'][diagnostics_h]['active']=='3ce233a0020b17b680f733a2ec41cdb8fd5100bd27cec8550ec3ca7202109f27'
+            generated_cpp=(stage/diagnostics_cpp).read_bytes()
+            current_cpp=(ACTIVE/diagnostics_cpp).read_bytes()
+            assert sha(generated_cpp)=='b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2'
+            assert len(generated_cpp)==9974
+            assert sha(current_cpp)==spec['entries'][diagnostics_cpp]['active']
+            post_json=b'''std::optional<HttpResponse> PostJson(const std::string& url, const std::string& path,
+                                     const std::string& body,
+                                     std::size_t timeout_seconds) {
+    try {
+        constexpr std::size_t max_timeout_seconds = 15;
+        constexpr std::size_t max_request_bytes = 64 * 1024;
+        constexpr std::size_t max_response_bytes = 64 * 1024;
+        if (!url.starts_with("https://") || path.empty() || path.front() != '/' ||
+            path.find_first_of("\\r\\n") != std::string::npos ||
+            body.empty() || body.size() > max_request_bytes ||
+            timeout_seconds == 0 || timeout_seconds > max_timeout_seconds) {
+            LOG_ERROR(Common, "Refusing invalid HTTPS JSON POST target or bounds");
+            return std::nullopt;
+        }
+
+        std::unique_ptr<httplib::Client> client = std::make_unique<httplib::Client>(url);
+        client->set_connection_timeout(timeout_seconds);
+        client->set_read_timeout(timeout_seconds);
+        client->set_write_timeout(timeout_seconds);
+#ifdef YUZU_BUNDLED_OPENSSL
+        client->load_ca_cert_store(kCert, sizeof(kCert));
+#endif
+        client->set_follow_location(false);
+        httplib::Result result = client->Post(path, body, "application/json");
+        if (!result) {
+            LOG_ERROR(Common, "POST to {}{} returned null", url, path);
+            return std::nullopt;
+        }
+        const auto& response = result.value();
+        if (response.body.size() > max_response_bytes) {
+            LOG_ERROR(Common, "POST to {}{} returned oversized response", url, path);
+            return std::nullopt;
+        }
+        return HttpResponse{.status = response.status, .body = response.body};
+    } catch (const std::exception& e) {
+        LOG_ERROR(Common, "POST to {}{} failed: {}", url, path, e.what());
+        return std::nullopt;
+    }
+}
+
+'''
+            assert current_cpp.count(post_json)==1
+            assert current_cpp.replace(post_json,b'',1)==generated_cpp
+            generated_h=(ORIGINAL/diagnostics_h).read_bytes()
+            current_h=(ACTIVE/diagnostics_h).read_bytes()
+            assert sha(generated_h)==spec['entries'][diagnostics_h]['upstream']
+            assert sha(current_h)==spec['entries'][diagnostics_h]['active']
+            active_header=current_h.decode('utf-8')
+            assert active_header.count('#include <cstddef>\n')==1
+            http_decl='''struct HttpResponse {
+    int status{};
+    std::string body;
+};
+
+// Small HTTPS-only JSON POST primitive for opt-in launcher services.
+// It never follows redirects and reports HTTP status to the caller so policy
+// can distinguish retryable transport failures from server rejection.
+std::optional<HttpResponse> PostJson(const std::string& url, const std::string& path,
+                                     const std::string& body,
+                                     std::size_t timeout_seconds = 5);
+
+'''
+            assert active_header.count(http_decl)==1
+            reversed_h=active_header.replace('#include <cstddef>\n','',1).replace(http_decl,'',1)
+            assert reversed_h.encode('utf-8')==generated_h
+            observed[diagnostics_cpp]=spec['entries'][diagnostics_cpp]
+            observed[diagnostics_h]=spec['entries'][diagnostics_h]
+            print('DIAGNOSTICS_NET_EXACT_POST_BACKPORT_REPLAY_PASS',
+                  'successors=2', 'https_post=bounded', 'pinned_sources=immutable')
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

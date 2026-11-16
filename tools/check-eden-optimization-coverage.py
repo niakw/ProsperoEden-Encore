@@ -1686,6 +1686,28 @@ for changed_path, (prior_blob, successor_blob) in nov15_library_size_worker_succ
 print("NOV15_LIBRARY_SIZE_WORKER_SOURCE_SUCCESSOR_PASS", "owners=5",
       "media_ungated=1", "console_validation=pending")
 
+# Nov16 add-on truth-state follow-up. The only EdenServices delta is
+# AddOnSummary's distinction between an incomplete scan and a confirmed empty
+# catalogue. Reverse only that reviewed hunk and require exact #208 identity.
+nov16_addon_summary_successor = "956e45e1becf0c8c15b6fb173f3602a5d7e2b280"
+changed_path = "headless/prosperoeden/eden_services.cpp"
+if drift_index[changed_path]["actual"] == nov16_addon_summary_successor:
+    current_service = (ROOT / changed_path).read_text()
+    new_summary = """    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
+    if (status < 0) return tr("Unknown");
+    std::string text;"""
+    prior_summary = """    eden_game_addons(title_id, update, sizeof(update), &dlc);
+    std::string text;"""
+    assert current_service.count(new_summary) == 1, changed_path
+    reconstructed = current_service.replace(new_summary, prior_summary, 1)
+    raw = reconstructed.encode("utf-8")
+    reconstructed_blob = hashlib.sha1(
+        b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert reconstructed_blob == "54a37cf740f25c68aa0d5f93adf300144c5280d1", changed_path
+    post_index[changed_path]["post_snapshot_git_blob"] = nov16_addon_summary_successor
+print("NOV16_ADDON_SUMMARY_SOURCE_SUCCESSOR_PASS", "owners=1",
+      "console_validation=pending")
+
 # R457 only: retain immutable October F07 blobs while tracking the separately
 # reviewed 34-file November+Nov13 post-F07 delta register. Track
 # the separately selected and unqualified 12GiB resident owner with its

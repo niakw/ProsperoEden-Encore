@@ -12,6 +12,11 @@
 #include <vector>
 
 namespace Eden::LoadingArtwork {
+// The launcher uses direct GL exports; the game renderer uses GLAD macros.
+// These helpers must have translation-unit-local linkage: otherwise weak ODR
+// definitions may resolve to the other dispatch implementation before GLAD
+// is initialized (native crash 0x97698, run 43877460207).
+namespace {
 // The caller supplies the already composed Encore draw list. Render once at
 // a bounded resolution using an explicit FBO, not the transient scanout.
 template<class Draw>
@@ -221,4 +226,5 @@ private:
     std::uint32_t width_{}, height_{};
     bool attempted_{};
 };
+} // anonymous namespace (GL dispatch is local to each translation unit)
 } // namespace Eden::LoadingArtwork

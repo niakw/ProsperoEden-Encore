@@ -6,12 +6,16 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
+#include <stdexcept>
+#include <cstdio>
 #include <boost/container/small_vector.hpp>
 
 #include "core/frontend/framebuffer_layout.h"
 #include "hud.h"
 #include "in_game_overlay.h"
 #include "eden_vulkan_hud_shaders.h"
+#include "vulkan_menu_font_data.h"
 #include "video_core/framebuffer_config.h"
 #include "video_core/host_shaders/vulkan_present_vert_spv.h"
 #include "video_core/renderer_vulkan/present/layer.h"
@@ -29,9 +33,10 @@ namespace Vulkan {
 // touch guest images or add a second swapchain/present. Closed sessions never
 // enter this draw path.
 static void DrawQuickOverlay(vk::CommandBuffer cmdbuf,
-                             VkPipeline pipeline, VkPipelineLayout layout,
+                             VkPipeline pipeline, VkPipelineLayout layout, VkDescriptorSet atlas_set,
                              VkExtent2D extent, const Eden::QuickOverlay::Frame& quick) {
-    if (!quick.visible) return;
+    if (!quick.visible || !pipeline || !layout || !atlas_set) return;
+    cmdbuf.BindDescriptorSets(VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, atlas_set, {});
     const auto units = [h = extent.height](std::uint32_t value) { return value * h / 1080u; };
     const auto draw = [&](VkRect2D scissor, Eden::HudSnapshot constants) {
         const VkViewport viewport{static_cast<float>(scissor.offset.x),
@@ -72,6 +77,78 @@ static void DrawQuickOverlay(vk::CommandBuffer cmdbuf,
     }
 }
 
+// The atlas is immutable after publication and is retired with this pass
+// after the existing BlitScreen scheduler/present drain.
+struct WindowAdaptPass::QuickMenuResources {
+    vk::Buffer atlas;
+    vk::DescriptorSetLayout descriptor_layout;
+    vk::DescriptorPool pool;
+    vk::DescriptorSets sets;
+    vk::PipelineLayout layout;
+    vk::Pipeline pipeline;
+};
+
+void WindowAdaptPass::PrepareQuickMenu(const Device& device, MemoryAllocator& allocator) {
+    if (quick_menu || quick_menu_failed) return;
+    try {
+        constexpr auto bytes = sizeof(Eden::QuickOverlay::FontAtlas::kWords);
+        if (bytes > device.GetMaxStorageBufferRange())
+            throw std::runtime_error("quick-menu atlas exceeds device storage range");
+        auto next = std::make_unique<QuickMenuResources>();
+        next->atlas = allocator.CreateBuffer(VkBufferCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .size = bytes,
+            .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        }, MemoryUsage::Upload);
+        auto mapped = next->atlas.Mapped();
+        if (mapped.size() < bytes)
+            throw std::runtime_error("quick-menu atlas mapping is incomplete");
+        std::memcpy(mapped.data(), Eden::QuickOverlay::FontAtlas::kWords, bytes);
+        next->atlas.Flush();
+
+        next->descriptor_layout = CreateWrappedDescriptorSetLayout(
+            device, {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER}, VK_SHADER_STAGE_FRAGMENT_BIT);
+        next->pool = CreateWrappedDescriptorPool(device, 1, 1,
+                                                 {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER});
+        const std::array<VkDescriptorSetLayout, 1> layouts{*next->descriptor_layout};
+        next->sets = CreateWrappedDescriptorSets(next->pool,
+            vk::Span<VkDescriptorSetLayout>{layouts.data(), layouts.size()});
+        if (next->sets.IsOutOfPoolMemory() || next->sets.size() != 1)
+            throw std::runtime_error("quick-menu atlas descriptor allocation failed");
+        const VkDescriptorBufferInfo buffer{*next->atlas, 0, bytes};
+        const VkWriteDescriptorSet write{
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = next->sets[0],
+            .dstBinding = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pBufferInfo = &buffer,
+        };
+        device.GetLogical().UpdateDescriptorSets(std::array{write}, {});
+        const VkPushConstantRange range{VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+                                       sizeof(Eden::HudSnapshot)};
+        next->layout = device.GetLogical().CreatePipelineLayout(VkPipelineLayoutCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .setLayoutCount = 1,
+            .pSetLayouts = next->descriptor_layout.address(),
+            .pushConstantRangeCount = 1,
+            .pPushConstantRanges = &range,
+        });
+        auto vertex = BuildShader(device, EDEN_HUD_VERT_SPV);
+        auto fragment = BuildShader(device, EDEN_QUICK_MENU_FRAG_SPV);
+        // The ordinary and load-preserving overlay render passes are
+        // compatible, as they use the same attachment/subpass configuration.
+        next->pipeline = CreateWrappedCoverageBlendingPipeline(
+            device, render_pass, next->layout, std::tie(vertex, fragment));
+        quick_menu = std::move(next);
+        std::fprintf(stderr, "EDEN_QUICK_MENU_ATLAS ready=1 bytes=%zu\n", bytes);
+    } catch (const std::exception& e) {
+        quick_menu_failed = true;
+        std::fprintf(stderr, "EDEN_QUICK_MENU_ATLAS ready=0 reason=%s\n", e.what());
+    }
+}
+
 WindowAdaptPass::WindowAdaptPass(const Device& device, VkFormat frame_format, vk::Sampler&& sampler_, vk::ShaderModule&& fragment_shader_)
     : sampler(std::move(sampler_))
     , fragment_shader(std::move(fragment_shader_))
@@ -87,7 +164,8 @@ WindowAdaptPass::WindowAdaptPass(const Device& device, VkFormat frame_format, vk
 
 WindowAdaptPass::~WindowAdaptPass() = default;
 
-void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, Scheduler& scheduler, size_t image_index,
+void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, MemoryAllocator& allocator,
+                           Scheduler& scheduler, size_t image_index,
                            std::list<Layer>& layers,
                            std::span<const Tegra::FramebufferConfig> configs,
                            const Layout::FramebufferLayout& layout, Frame* dst, bool draw_hud) {
@@ -152,6 +230,10 @@ void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, S
     // Null handles are never bound: both draw branches are skipped.
     const VkPipeline hud_graphics_pipeline = hud_pipeline ? *hud_pipeline : VK_NULL_HANDLE;
     const VkPipelineLayout hud_pipeline_layout = hud_layout ? *hud_layout : VK_NULL_HANDLE;
+    if (quick.visible && !hud.loading) PrepareQuickMenu(device, allocator);
+    const VkPipeline menu_pipeline = quick_menu ? *quick_menu->pipeline : VK_NULL_HANDLE;
+    const VkPipelineLayout menu_layout = quick_menu ? *quick_menu->layout : VK_NULL_HANDLE;
+    const VkDescriptorSet menu_set = quick_menu ? quick_menu->sets[0] : VK_NULL_HANDLE;
 
     scheduler.Record([=, draws = std::move(draws)](vk::CommandBuffer cmdbuf) {
         const f32 bg_red = Settings::values.bg_red.GetValue() / 255.0f;
@@ -214,19 +296,20 @@ void WindowAdaptPass::Draw(const Device& device, RasterizerVulkan& rasterizer, S
             cmdbuf.PushConstants(hud_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
             cmdbuf.Draw(4, 1, 0, 0);
         }
-        DrawQuickOverlay(cmdbuf, hud_graphics_pipeline, hud_pipeline_layout, render_area, quick);
+        DrawQuickOverlay(cmdbuf, menu_pipeline, menu_layout, menu_set, render_area, quick);
 
         cmdbuf.EndRenderPass();
     });
 }
 
-void WindowAdaptPass::DrawHudOverlay(const Device& device, Scheduler& scheduler,
+void WindowAdaptPass::DrawHudOverlay(const Device& device, MemoryAllocator& allocator, Scheduler& scheduler,
                                      Frame* dst, const Eden::HudSnapshot& hud) {
     // Does not clear the target. Both interpolated and real frames are
     // already GENERAL after copy/blit barriers, so LOAD preserves image.
     const auto quick = Eden::QuickOverlay::Snapshot();
     if ((!hud.width && !quick.visible) || !dst || !dst->framebuffer) return;
     if (!hud_overlay_pipeline) {
+        std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=hud_pipeline_begin words=%zu\n", std::size(EDEN_HUD_FRAG_SPV));
         const VkPushConstantRange range{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(hud)};
         hud_overlay_layout = device.GetLogical().CreatePipelineLayout(VkPipelineLayoutCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -237,7 +320,12 @@ void WindowAdaptPass::DrawHudOverlay(const Device& device, Scheduler& scheduler,
         auto fragment = BuildShader(device, EDEN_HUD_FRAG_SPV);
         hud_overlay_pipeline = CreateWrappedCoverageBlendingPipeline(
             device, hud_overlay_render_pass, hud_overlay_layout, std::tie(vertex, fragment));
+        std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=hud_pipeline_ready\n");
     }
+    if (quick.visible && !hud.loading) PrepareQuickMenu(device, allocator);
+    const VkPipeline menu_pipeline = quick_menu ? *quick_menu->pipeline : VK_NULL_HANDLE;
+    const VkPipelineLayout menu_layout = quick_menu ? *quick_menu->layout : VK_NULL_HANDLE;
+    const VkDescriptorSet menu_set = quick_menu ? quick_menu->sets[0] : VK_NULL_HANDLE;
 
     const VkFramebuffer fb = *dst->framebuffer;
     const VkRenderPass rp = *hud_overlay_render_pass;
@@ -277,7 +365,7 @@ void WindowAdaptPass::DrawHudOverlay(const Device& device, Scheduler& scheduler,
             cmdbuf.PushConstants(layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
             cmdbuf.Draw(4, 1, 0, 0);
         }
-        DrawQuickOverlay(cmdbuf, pipeline, layout, size, quick);
+        DrawQuickOverlay(cmdbuf, menu_pipeline, menu_layout, menu_set, size, quick);
         cmdbuf.EndRenderPass();
     });
 }

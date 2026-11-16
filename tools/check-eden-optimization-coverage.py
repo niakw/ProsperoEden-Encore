@@ -1568,6 +1568,51 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 add-on catalogue truth-state: metadata bridge changes only the
+# tri-state completeness contract. Pin the two exact historical-source
+# successors and remove them from the F07 drift ledger.
+nov16_addon_metadata_successors = {
+    "headless/metadata_bridge.cpp": (
+        "8c6f59e7810bad7964d82dd6416f77617afe9ffa",
+        "728f220da4942cf4b849f75cfdda974ad5fd7508",
+    ),
+    "headless/metadata_bridge.h": (
+        "a8ebfa5fad322c81b6562dedc6e2a7c680a5cfa9",
+        "0523a44856385ba64b20298c44e735be1c06180b",
+    ),
+}
+for changed_path, (prior_blob, successor_blob) in nov16_addon_metadata_successors.items():
+    assert changed_path not in post_index, changed_path
+    assert changed_path in drift_index, changed_path
+    delta = drift_index.pop(changed_path)
+    assert delta["expected"] == prior_blob, changed_path
+    assert delta["actual"] == successor_blob, changed_path
+print("NOV16_ADDON_METADATA_SOURCE_SUCCESSOR_PASS", "owners=2",
+      "console_validation=pending")
+
+# The AddOnSummary hunk is layered on the already-reviewed Home Square
+# EdenServices owner. Reverse only those two lines, then continue the exact
+# Home Square -> #239 -> Nov15 provenance chain below.
+nov16_addon_summary_blob = "964a3a490948aa01149ade2b47dd95ea2b57628b"
+nov16_home_square_pre_addon = "91acb4ba1918308efb38f52db043ee299611926b"
+nov16_home_square_replay_source = None
+if drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] == nov16_addon_summary_blob:
+    current_service = (ROOT / "headless/prosperoeden/eden_services.cpp").read_text()
+    new_summary = """    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
+    if (status < 0) return tr("Unknown");
+    std::string text;"""
+    old_summary = """    eden_game_addons(title_id, update, sizeof(update), &dlc);
+    std::string text;"""
+    assert current_service.count(new_summary) == 1
+    nov16_home_square_replay_source = current_service.replace(new_summary, old_summary, 1)
+    reconstructed = nov16_home_square_replay_source.encode("utf-8")
+    reconstructed_blob = hashlib.sha1(
+        b"blob " + str(len(reconstructed)).encode() + bytes([0]) + reconstructed).hexdigest()
+    assert reconstructed_blob == nov16_home_square_pre_addon
+    drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] = reconstructed_blob
+    print("NOV16_ADDON_SUMMARY_SOURCE_SUCCESSOR_PASS", "owners=1",
+          "predecessor=home-square", "console_validation=pending")
+
 # Nov16 Home Square media successor. Exact source identity is reviewed here;
 # behavior/geometry/network bounds are independently exercised by the Home and
 # case-art host tests. The historical chain below recognizes this immutable
@@ -1578,7 +1623,9 @@ nov16_home_square_path = "headless/prosperoeden/eden_services.cpp"
 nov16_home_square_active = (
     drift_index[nov16_home_square_path]["actual"] == nov16_home_square_blob)
 if nov16_home_square_active:
-    current_home_square = (ROOT / nov16_home_square_path).read_text()
+    current_home_square = (nov16_home_square_replay_source
+                           if nov16_home_square_replay_source is not None
+                           else (ROOT / nov16_home_square_path).read_text())
     home_square_raw = current_home_square.encode("utf-8")
     assert hashlib.sha1(b"blob " + str(len(home_square_raw)).encode() +
                         bytes([0]) + home_square_raw).hexdigest() == nov16_home_square_blob

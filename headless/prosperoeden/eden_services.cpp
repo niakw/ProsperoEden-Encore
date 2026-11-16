@@ -1680,7 +1680,8 @@ std::string StorageSize(std::uintmax_t bytes) {
 std::string AddOnSummary(uint64_t title_id, bool brief = false) {
     char update[64]{};
     unsigned dlc = 0;
-    eden_game_addons(title_id, update, sizeof(update), &dlc);
+    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
+    if (status < 0) return tr("Unknown");
     std::string text;
     if (update[0]) text = brief ? (update[0] == 'v' ? std::string{update} : "v" + std::string{update}) :
                                   fill(tr("Update {0}"), {update});

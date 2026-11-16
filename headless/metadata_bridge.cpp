@@ -626,7 +626,9 @@ int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, u
     AddOns snapshot;
     {
         const std::lock_guard lock{ScannedAddOnsMutex()};
-        if (!UpdatesScanCompleted()) return 0;
+        // -1 means the catalogue is not authoritative yet. Do not let
+        // the launcher render an incomplete/failed scan as "No DLC/updates".
+        if (!UpdatesScanCompleted()) return -1;
         const auto& scanned = ScannedAddOns();
         const auto found = scanned.find(FileSys::GetBaseTitleID(title_id));
         if (!title_id || found == scanned.end()) return 0;

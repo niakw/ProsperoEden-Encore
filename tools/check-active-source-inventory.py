@@ -1161,6 +1161,22 @@ else:
 print("ENCORE_NS2_EARLY_HLE_OWNER_RECEIPT_PASS",
       f"owners={len(ns2_early_hle_present)}", "blanket_autostub=0")
 
+# Vendor #178 adds the diagnostics HTTPS declaration after the frozen F07
+# source graph. Keep it explicit and byte-pinned rather than inflating the
+# historical 337-owner baseline.
+post_f07_diagnostics_net_owners = {"eden-backports/src/common/net/net.h"}
+post_f07_diagnostics_net_present = post_f07_diagnostics_net_owners & set(physical_all)
+if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175":
+    assert post_f07_diagnostics_net_present == post_f07_diagnostics_net_owners
+    diagnostics_net = active / "eden-backports/src/common/net/net.h"
+    raw = diagnostics_net.read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "f8244b366d591ce10342f110d282c295f835474f", actual
+else:
+    assert not post_f07_diagnostics_net_present
+print("ENCORE_DIAGNOSTICS_NET_POST_F07_OWNER_PASS",
+      f"owners={len(post_f07_diagnostics_net_present)}")
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -1176,7 +1192,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | post_f07_diagnostics_net_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {
@@ -1212,6 +1228,12 @@ post_expected = [
     for path in sorted(post_f07_cpu6_ldapr_owners)]
 assert post_rows == post_expected, ("post-F07 vendor source owner drift",
                                    post_rows, post_expected)
+diagnostics_rows = [line for line in document.split(post_begin)[1].split(post_end)[0].splitlines()
+                    if line.startswith("| `eden-backports/src/common/net/net.h`")]
+assert diagnostics_rows == (
+    ["| `eden-backports/src/common/net/net.h` | U98 |"]
+    if post_f07_diagnostics_net_present else []
+), ("Diagnostics net owner catalogue drift", diagnostics_rows)
 r437_rows = [line for line in document.split(post_begin)[1].split(post_end)[0].splitlines()
              if line.startswith("| `eden-core/src/video_core/buffer_cache/buffer_cache_base.h`")]
 assert r437_rows == [

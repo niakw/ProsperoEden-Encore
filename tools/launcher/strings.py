@@ -276,43 +276,50 @@ INVISIBLE = {0x200B, 0x200C, 0x200D, 0x200E, 0x200F}
 
 
 def cmap_characters(data):
-    """The characters a TrueType or OpenType font file maps (its Unicode cmap, format 4 or 12)."""
+    """All Unicode characters mapped by TrueType/OpenType cmap format 4/12 tables.
+
+    Subset fonts can legitimately carry several Unicode cmap subtables with
+    different platform/encoding IDs. Coverage is the union of those maps, not
+    whichever table happens to rank first.
+    """
     offset = struct.unpack_from(">I", data, 12)[0] if data[:4] == b"ttcf" else 0
     tables = {}
     for index in range(struct.unpack_from(">H", data, offset + 4)[0]):
         tag, _sum, start, _length = struct.unpack_from(">4sIII", data, offset + 12 + 16 * index)
         tables[tag] = start
     cmap = tables[b"cmap"]
-    best = None
-    for index in range(struct.unpack_from(">H", data, cmap + 2)[0]):
-        platform, encoding, at = struct.unpack_from(">HHI", data, cmap + 4 + 8 * index)
-        kind = struct.unpack_from(">H", data, cmap + at)[0]
-        rank = {(3, 10): 4, (0, 4): 4, (0, 6): 4, (3, 1): 2, (0, 3): 2}.get((platform, encoding), 0)
-        if kind in (4, 12) and (best is None or rank > best[0]):
-            best = (rank, kind, cmap + at)
     characters = set()
-    if best is None:
-        return characters
-    _rank, kind, at = best
-    if kind == 12:
-        for index in range(struct.unpack_from(">I", data, at + 12)[0]):
-            first, last, _glyph = struct.unpack_from(">III", data, at + 16 + 12 * index)
-            characters.update(range(first, last + 1))
-        return characters
-    segments = struct.unpack_from(">H", data, at + 6)[0] // 2
-    ends = struct.unpack_from(f">{segments}H", data, at + 14)
-    starts = struct.unpack_from(f">{segments}H", data, at + 16 + 2 * segments)
-    deltas = struct.unpack_from(f">{segments}h", data, at + 16 + 4 * segments)
-    ranges_at = at + 16 + 6 * segments
-    ranges = struct.unpack_from(f">{segments}H", data, ranges_at)
-    for i in range(segments):
-        for code in range(starts[i], min(ends[i], 0xFFFE) + 1):
-            if ranges[i] == 0:
-                glyph = (code + deltas[i]) & 0xFFFF
-            else:
-                glyph = struct.unpack_from(">H", data, ranges_at + 2 * i + ranges[i] + 2 * (code - starts[i]))[0]
-            if glyph:
-                characters.add(code)
+    for index in range(struct.unpack_from(">H", data, cmap + 2)[0]):
+        platform, encoding, relative = struct.unpack_from(">HHI", data, cmap + 4 + 8 * index)
+        # Unicode platform, or Microsoft Unicode BMP/full repertoire.
+        if platform != 0 and (platform, encoding) not in {(3, 1), (3, 10)}:
+            continue
+        at = cmap + relative
+        kind = struct.unpack_from(">H", data, at)[0]
+        if kind == 12:
+            for group in range(struct.unpack_from(">I", data, at + 12)[0]):
+                first, last, first_glyph = struct.unpack_from(">III", data, at + 16 + 12 * group)
+                if first_glyph == 0 and first == last:
+                    continue
+                characters.update(range(first, last + 1))
+        elif kind == 4:
+            segments = struct.unpack_from(">H", data, at + 6)[0] // 2
+            ends = struct.unpack_from(f">{segments}H", data, at + 14)
+            starts = struct.unpack_from(f">{segments}H", data, at + 16 + 2 * segments)
+            deltas = struct.unpack_from(f">{segments}h", data, at + 16 + 4 * segments)
+            ranges_at = at + 16 + 6 * segments
+            ranges = struct.unpack_from(f">{segments}H", data, ranges_at)
+            for i in range(segments):
+                for code in range(starts[i], min(ends[i], 0xFFFE) + 1):
+                    if ranges[i] == 0:
+                        glyph = (code + deltas[i]) & 0xFFFF
+                    else:
+                        pos = ranges_at + 2 * i + ranges[i] + 2 * (code - starts[i])
+                        glyph = struct.unpack_from(">H", data, pos)[0]
+                        if glyph:
+                            glyph = (glyph + deltas[i]) & 0xFFFF
+                    if glyph:
+                        characters.add(code)
     return characters
 
 

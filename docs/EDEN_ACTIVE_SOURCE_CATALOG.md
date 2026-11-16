@@ -384,9 +384,9 @@ L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
 | `ns2-runtime/cpu6/maintained/core/hle/kernel/global_scheduler_context.cpp` | U90 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.h` | U93 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc` | U94 |
+| `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp` | U97 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h` | U95 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | U96 |
-| `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp` | U97 |
 | `eden-core/src/video_core/buffer_cache/buffer_cache_base.h` | R437 |
 <!-- POST_F07_MAINTAINED_OWNER_END -->
 

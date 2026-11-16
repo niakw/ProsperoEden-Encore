@@ -1577,7 +1577,7 @@ runtime_headless = {
     "headless/metadata_bridge.cpp":
         'add_library(eden-metadata STATIC "${EDEN_PORT_DIR}/metadata_bridge.cpp")',
     "headless/stop_limit.cpp":
-        '"${EDEN_PORT_DIR}/crash_report.cpp" "${EDEN_PORT_DIR}/stop_limit.cpp"',
+        '"${EDEN_PORT_DIR}/stop_limit.cpp"',
     "headless/zbic_compression.cpp":
         'target_sources(common PRIVATE "${EDEN_PORT_DIR}/zbic_compression.cpp")',
 }

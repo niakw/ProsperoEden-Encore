@@ -80,6 +80,8 @@ with tempfile.TemporaryDirectory() as tmp:
         'set -euo pipefail\n'
         'root=/ci-mock; scratch=/ci-mock; probe=OFF; graphics=ON\n'
         'python3() { printf "%s\\n" "$*" >> "$EDEN_GATE_CALLS"; }\n'
+        'git() { return 0; }\n'
+        'grep() { return 0; }\n'
         + gate_shell
     )
     def run_gate(skip_source: str, skip_prebuild: str) -> list[str]:
@@ -92,13 +94,23 @@ with tempfile.TemporaryDirectory() as tmp:
         assert result.returncode == 0, result.stderr
         return calls.read_text().splitlines()
 
+    def assert_embedded_fr_tail(calls: list[str]) -> None:
+        assert len(calls) >= 2, calls
+        assert "tools/launcher/strings.py embed-fr" in calls[-2], calls
+        assert "tools/launcher/strings.py check" in calls[-1], calls
+
     bypass_source=run_gate("1", "0")
-    assert len(bypass_source)==1 and "check-native-source-syntax.py" in bypass_source[0], bypass_source
+    assert len(bypass_source)==3 and "check-native-source-syntax.py" in bypass_source[0], bypass_source
+    assert_embedded_fr_tail(bypass_source)
     release=run_gate("0", "0")
     assert release and "check-native-source-syntax.py" in release[0], release
     assert any("check-load-failure.py" in call for call in release), release
-    assert run_gate("1", "1")==[]
-    assert run_gate("0", "1")==[]
+    assert_embedded_fr_tail(release)
+    # Skipping the optional/source preflight suite must NOT skip the generated
+    # fallback rematerialization that the real native compiler consumes.
+    for bypass in (run_gate("1", "1"), run_gate("0", "1")):
+        assert len(bypass)==2, bypass
+        assert_embedded_fr_tail(bypass)
 # A real regression check for the argument-vector bug in run #231. The
 # upstream-generated units inherit a Clang-18-unsupported -Wno-error-all;
 # dropping it in this preflight cannot suppress actual syntax errors.

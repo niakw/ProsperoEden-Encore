@@ -332,20 +332,34 @@ def launch_error_problems():
             if '"' + escape(joined(literal)) + '"' not in reported]
 
 
+EMBEDDED_FR_PREFIX = (
+    "// SPDX-License-Identifier: GPL-3.0-or-later\n"
+    "#pragma once\n"
+    "#include <string_view>\n"
+    "namespace pe::ui::embedded {\n"
+    "inline constexpr std::string_view kFrFr = R\"FRPO("
+)
+EMBEDDED_FR_SUFFIX = ')FRPO";\n}\n'
+
+
 def embedded_fr_text():
     source = EMBEDDED_FR.read_text(encoding="utf-8")
-    match = re.search(r'R"FRPO\((.*)\)FRPO";', source, re.S)
-    return match.group(1) if match else None
+    # Validate the physical C++ envelope, not merely the raw-string marker.
+    # A historical bad regeneration preserved R"FRPO(...) but serialized the
+    # wrapper newlines as literal "\\n", leaving the PO payload as C++ tokens.
+    if not source.startswith(EMBEDDED_FR_PREFIX) or not source.endswith(EMBEDDED_FR_SUFFIX):
+        return None
+    return source[len(EMBEDDED_FR_PREFIX):-len(EMBEDDED_FR_SUFFIX)]
 
 
 def write_embedded_fr():
     po = (CATALOGS / "fr-FR.po").read_text(encoding="utf-8")
     if ')FRPO"' in po:
         raise SystemExit("fr-FR.po collides with the embedded raw-string delimiter")
-    source = ("// SPDX-License-Identifier: GPL-3.0-or-later\n#pragma once\n#include <string_view>\n"
-              "namespace pe::ui::embedded {\ninline constexpr std::string_view kFrFr = R\"FRPO(" +
-              po + ")FRPO\";\n}\n")
-    EMBEDDED_FR.write_text(source, encoding="utf-8", newline="\n")
+    EMBEDDED_FR.write_text(
+        EMBEDDED_FR_PREFIX + po + EMBEDDED_FR_SUFFIX,
+        encoding="utf-8", newline="\n",
+    )
 
 
 def check():

@@ -204,7 +204,9 @@ if ! git -C "$root" diff --quiet -- "$embedded_fr_rel"; then
     echo "EDEN_EMBEDDED_FR_WORKTREE_DRIFT before_sha256=$before_embedded_fr; rematerializing canonical generated header"
 fi
 python3 -B "$root/tools/launcher/strings.py" embed-fr
-python3 -B "$root/tools/launcher/strings.py" check
+noto_fallback_dir="${EDEN_NOTO_FALLBACK_DIR:-$root/build/generated/noto-fallback}"
+python3 -B "$root/tools/launcher/build_noto_subsets.py" --output "$noto_fallback_dir"
+PE_SYSTEM_FONTS="$noto_fallback_dir" python3 -B "$root/tools/launcher/strings.py" check
 git -C "$root" diff --exit-code -- "$embedded_fr_rel"
 grep -Fq 'inline constexpr std::string_view kFrFr = R"FRPO(' "$root/$embedded_fr_rel"
 grep -Fq ')FRPO";' "$root/$embedded_fr_rel"

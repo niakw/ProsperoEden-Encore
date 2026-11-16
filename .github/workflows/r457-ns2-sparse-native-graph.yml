@@ -117,3 +117,9 @@ jobs:
             -DSDL_UNIX_CONSOLE_BUILD=ON -DSDL_OPENGL=OFF -DSDL_OPENGLES=OFF \
             -DSDL_RENDER=OFF -DSDL_GPU=OFF
           python3 -B tools/ns2/check_r457_sparse_native_graph.py "$native"
+          # The production native profile fixes EDEN_PS5_OPENGL=ON, so CMake
+          # selects this maintained G21 GPU owner. Compile it with the exact
+          # PS5 command now: run 43864640130 previously reached 1200+ objects
+          # before exposing its incomplete-type failure.
+          python3 -B tools/check-native-source-syntax.py "$native" \
+            --only vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp

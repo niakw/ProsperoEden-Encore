@@ -1196,7 +1196,7 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
         const std::string staged = destination + ".new";
         bool decode_failed = false;
         const bool encoded = WriteJpegWebP(
-            body, staged, true, &decode_failed, require_square ? 512 : 0);
+            body, staged, !require_square, &decode_failed, require_square ? 512 : 0);
         if (cancel && cancel->load(std::memory_order_acquire)) {
             (void)std::remove(staged.c_str());
             break;

@@ -26,6 +26,7 @@ TARGETS = (
     "headless/main.cpp",
     "headless/performance.cpp",
     "headless/prosperoeden/eden_services.cpp",
+    "headless/prosperoeden/frontend.cpp",
     "headless/prosperoeden/pe/ui/home.cpp",
     "headless/prosperoeden/pe/ui/library.cpp",
     "headless/prosperoeden/pe/ui/launcher.cpp",

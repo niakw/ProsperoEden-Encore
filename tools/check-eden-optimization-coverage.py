@@ -1579,7 +1579,9 @@ nov16_home_square_active = (
     drift_index[nov16_home_square_path]["actual"] == nov16_home_square_blob)
 if nov16_home_square_active:
     current_home_square = (ROOT / nov16_home_square_path).read_text()
-    assert git_blob(current_home_square.encode("utf-8")) == nov16_home_square_blob
+    home_square_raw = current_home_square.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(home_square_raw)).encode() +
+                        bytes([0]) + home_square_raw).hexdigest() == nov16_home_square_blob
     for marker in (
         "CachedGamesDbSquare(",
         "EnsureGamesDbSquare(",

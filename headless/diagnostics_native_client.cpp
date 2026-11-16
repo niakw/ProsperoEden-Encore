@@ -18,7 +18,8 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <future>
+#include <memory>
+#include <thread>
 #include <iterator>
 #include <limits>
 #include <optional>
@@ -67,6 +68,10 @@ struct TransferResult {
     Queue::Result result = Queue::Result::Retry;
     std::string server_result;
 };
+struct TransferState {
+    TransferResult result;
+    std::atomic_bool completed{false};
+};
 struct State {
     bool initialized{};
     bool idle{};
@@ -79,7 +84,7 @@ struct State {
     Queue queue;
     std::vector<Pending> pending;
     std::vector<Receipt> receipts;
-    std::future<TransferResult> transfer;
+    std::shared_ptr<TransferState> transfer;
     std::string erase_in_flight;
     std::uint32_t erase_attempts{};
     std::uint64_t erase_last_attempt{};
@@ -460,12 +465,22 @@ TransferResult SendErase(const Receipt& receipt) {
     return out;
 }
 bool TransferReady() {
-    return state.transfer.valid() &&
-           state.transfer.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    return state.transfer &&
+           state.transfer->completed.load(std::memory_order_acquire);
+}
+template <typename Task>
+void StartTransfer(Task task) {
+    auto transfer = std::make_shared<TransferState>();
+    state.transfer = transfer;
+    std::thread([transfer, task = std::move(task)]() mutable {
+        transfer->result = task();
+        transfer->completed.store(true, std::memory_order_release);
+    }).detach();
 }
 void FinishTransfer() {
     if (!TransferReady()) return;
-    const TransferResult result = state.transfer.get();
+    const TransferResult result = std::move(state.transfer->result);
+    state.transfer.reset();
     if (result.kind == TransferResult::Kind::Report) {
         auto pending = std::find_if(state.pending.begin(), state.pending.end(),
             [&](const Pending& item) { return item.id == result.id; });
@@ -539,7 +554,7 @@ void EnterLauncher(std::string_view launch_error) {
         const std::string path{launch_error.substr(Eden::Crash::kNotice.size())};
         const std::string root = Eden::LogsDir() + "/";
         if (path.starts_with(root) && path.find('/', root.size()) == std::string::npos) {
-            const std::string crash = ReadSmallFile(path, DiagnosticsSharing::kMaxReportBytes);
+            const std::string crash = ReadSmallFile(path, kMaxReadBytes);
             if (!crash.empty()) (void)QueueProjected(Category::Standard, StandardReport(crash));
         }
     }
@@ -558,7 +573,7 @@ void Activity() noexcept {
 void Poll() {
     if (!state.initialized) return;
     FinishTransfer();
-    if (state.transfer.valid() || !state.idle) return;
+    if (state.transfer || !state.idle) return;
     const auto now = Now();
     if (now < state.last_activity || now - state.last_activity < DiagnosticsSharing::kIdleSeconds)
         return;
@@ -574,12 +589,12 @@ void Poll() {
             state.erase_last_attempt = now;
             ++state.erase_attempts;
             const Receipt copy = *erase;
-            state.transfer = std::async(std::launch::async, [copy] { return SendErase(copy); });
+            StartTransfer([copy] { return SendErase(copy); });
             return;
         }
     }
     if (const auto work = state.queue.TryStart(now)) {
-        state.transfer = std::async(std::launch::async, [work] { return SendReport(work); });
+        StartTransfer([work] { return SendReport(work); });
     }
 }
 void GameStarting() noexcept {

@@ -1584,13 +1584,32 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
     assert changed_path in post_index and changed_path in drift_index
     assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
     if changed_path == "headless/prosperoeden/eden_services.cpp" and \
-            drift_index[changed_path]["actual"] == "54a37cf740f25c68aa0d5f93adf300144c5280d1":
+            drift_index[changed_path]["actual"] in {"54a37cf740f25c68aa0d5f93adf300144c5280d1", "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd"}:
         # #208 is based on merged #207, but CI uses a shallow checkout and
         # need not contain #207's commit object. Reverse ONLY #208's two exact
         # eden_services.cpp hunks in memory and require the reconstructed Git
         # blob to be #207's reviewed successor. This preserves the immutable
         # chain without depending on repository history depth.
         current_service = (ROOT / changed_path).read_text()
+        # Nov16 console retest: exact_game_size receives a relative executable
+        # selection, not a directory. Normalize only the reviewed root fix
+        # and require that every remaining byte is the immutable #208 blob.
+        if drift_index[changed_path]["actual"] == "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd":
+            fixed_root = """    const std::filesystem::path roms_root = Eden::AssetsPath("roms");
+    // The Library row persists the executable selection, not the directory.
+    // Revalidate every directory component and measure the top-level title.
+    if (!Eden::IsSafeDeconstructedGamePath(roms_root, file))
+        return {};
+    const std::filesystem::path extracted = roms_root / file.substr(0, file.find('/'));
+"""
+            old_root = """    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
+    if (!Eden::IsSafeExtractedDirectory(extracted))
+        return {};
+"""
+            assert current_service.count(fixed_root) == 1, changed_path
+            current_service = current_service.replace(fixed_root, old_root, 1)
+            old_raw = current_service.encode("utf-8")
+            assert hashlib.sha1(b"blob " + str(len(old_raw)).encode() + bytes([0]) + old_raw).hexdigest() == "54a37cf740f25c68aa0d5f93adf300144c5280d1", changed_path
         size_worker_method = """std::string EdenServices::exact_game_size(const std::string& file,
                                                const std::atomic<bool>* cancel) {
     if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
@@ -1659,7 +1678,7 @@ print("NOV15_SQUARE_ICON_SOURCE_SUCCESSOR_PASS", "owners=2",
 nov15_library_size_worker_successors = {
     "headless/prosperoeden/eden_services.cpp": (
         "4e2afa5d81375727f2fb6a98853c212b10f2de3c",
-        "54a37cf740f25c68aa0d5f93adf300144c5280d1",
+        "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd",
     ),
     "headless/prosperoeden/eden_services.h": (
         "604a9d15118390b7f9b7e1265d38a91ff97c4a23",

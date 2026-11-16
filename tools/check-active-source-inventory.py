@@ -1512,12 +1512,14 @@ print("ENCORE_R23_FINAL_POST_F07_HEADLESS_PASS added=6 historic=193")
 # Isolated post-F07 diagnostic queue prototype; never change historical counts.
 post_f07_diagnostics_receipts = {
     "headless/diagnostics_sharing_policy.h": "2515badbeb070d0f22b02e0ec8dde8a30afdeef4",
-    "headless/diagnostics_report_queue.h": "28e59bc710b1c27a5fbe75c9b5e8a0e6fbb15aae",
+    "headless/diagnostics_report_queue.h": "2a000792ac99ec40532b97f2e2645c1473039d5f",
+    "headless/diagnostics_native_client.cpp": "358e3d675f44d4a1bf664f14697b074af7f666db",
+    "headless/diagnostics_native_client.h": "cd843218b18d581599940f44e93003d84f19598c",
 }
 post_f07_diagnostics_owners = set(post_f07_diagnostics_receipts)
 for path, blob in post_f07_diagnostics_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip() == blob, path
-print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=2 native_transport=unwired")
+print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=4 native_transport=https_idle_client")
 
 # The title-aware loading correction adds two independently reviewed
 # headers; neither belongs to the immutable F07 baseline.

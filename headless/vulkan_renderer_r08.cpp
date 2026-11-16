@@ -9,6 +9,8 @@
 #include <cstring>
 #include <memory>
 #include <optional>
+#include <utility>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -673,13 +675,20 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 // Runs on the existing GPU worker, before the first guest Composite. Reuse its
 // swapchain and composition pass without guest captures or FPS notifications.
 void RendererVulkan::PresentLoading() {
+    const bool first = std::exchange(loading_boot_trace, false);
+    const auto trace = [first](const char* stage) {
+        if (first) std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=%s\n", stage);
+    };
+    trace("loading_frame_acquire_begin");
     Frame* frame = present_manager.GetRenderFrame();
+    trace("loading_frame_acquired");
     scheduler.RequestOutsideRenderPassOperationContext();
     // Prepare the output image without the opaque legacy loading HUD.
     blit_swapchain.DrawToFrame(device, rasterizer, frame, {},
                               render_window.GetFramebufferLayout(),
                               present_manager.SwapchainImageCount(),
                               present_manager.SwapchainImageViewFormat(), false);
+    trace("loading_frame_blit_ready");
 #ifdef PS5_NATIVE
     const VkFormat format = present_manager.SwapchainImageViewFormat();
     if (!loading_artwork_buffer && !loading_artwork_unavailable &&
@@ -801,6 +810,7 @@ void RendererVulkan::PresentLoading() {
         blit_swapchain.DrawHudOverlay(device, frame, live_loading);
     }
 #endif
+    trace("loading_hud_recorded");
 #ifdef PS5_NATIVE
     const u64 tick = scheduler.Flush(*frame->render_ready);
     if (has_artwork) {
@@ -812,7 +822,9 @@ void RendererVulkan::PresentLoading() {
 #else
     scheduler.Flush(*frame->render_ready);
 #endif
+    trace("loading_flush_returned");
     present_manager.Present(frame);
+    trace("loading_present_queued");
     ::Eden::FrameMetrics::OnLoadingQueued();
 }
 

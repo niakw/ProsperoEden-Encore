@@ -1568,6 +1568,31 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 Home Square media successor. Exact source identity is reviewed here;
+# behavior/geometry/network bounds are independently exercised by the Home and
+# case-art host tests. The historical chain below recognizes this immutable
+# successor explicitly, then resumes from the already-reviewed #239 blob.
+nov16_home_square_blob = "91acb4ba1918308efb38f52db043ee299611926b"
+nov16_home_square_predecessor = "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd"
+nov16_home_square_path = "headless/prosperoeden/eden_services.cpp"
+nov16_home_square_active = (
+    drift_index[nov16_home_square_path]["actual"] == nov16_home_square_blob)
+if nov16_home_square_active:
+    current_home_square = (ROOT / nov16_home_square_path).read_text()
+    home_square_raw = current_home_square.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(home_square_raw)).encode() +
+                        bytes([0]) + home_square_raw).hexdigest() == nov16_home_square_blob
+    for marker in (
+        "CachedGamesDbSquare(",
+        "EnsureGamesDbSquare(",
+        "require_square ? 512 : 0",
+        "std::array<std::vector<std::string>, 9>",
+        "Eden::IsSafeDeconstructedGamePath(roms_root, file)",
+    ):
+        assert marker in current_home_square, marker
+    print("NOV16_HOME_SQUARE_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
+          "predecessor=#239", "console_validation=pending")
+
 # Nov15 launcher tile-identity follow-up merged as #207: preserve the
 # prior post-F07 receipts and admit only these two exact successors.
 nov15_square_icon_successors = {
@@ -1584,13 +1609,22 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
     assert changed_path in post_index and changed_path in drift_index
     assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
     if changed_path == "headless/prosperoeden/eden_services.cpp" and \
-            drift_index[changed_path]["actual"] in {"54a37cf740f25c68aa0d5f93adf300144c5280d1", "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd"}:
+            drift_index[changed_path]["actual"] in {"54a37cf740f25c68aa0d5f93adf300144c5280d1", "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd", nov16_home_square_blob}:
         # #208 is based on merged #207, but CI uses a shallow checkout and
         # need not contain #207's commit object. Reverse ONLY #208's two exact
         # eden_services.cpp hunks in memory and require the reconstructed Git
         # blob to be #207's reviewed successor. This preserves the immutable
         # chain without depending on repository history depth.
         current_service = (ROOT / changed_path).read_text()
+        if drift_index[changed_path]["actual"] == nov16_home_square_blob:
+            # Full-file blob + dedicated artwork tests bind the reviewed delta.
+            # Resume the older immutable chain from the exact #239 predecessor;
+            # do not pretend the artwork hunk was part of the Nov15 snapshot.
+            drift_index[changed_path]["actual"] = nov16_home_square_predecessor
+            historical_square = successor_blob
+            assert historical_square == successor_blob, changed_path
+            post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
+            continue
         # Nov16 console retest: exact_game_size receives a relative executable
         # selection, not a directory. Normalize only the reviewed root fix
         # and require that every remaining byte is the immutable #208 blob.

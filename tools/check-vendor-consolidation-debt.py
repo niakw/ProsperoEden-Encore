@@ -826,7 +826,10 @@ assert 'list(REMOVE_ITEM core_sources "hle/service/service.cpp" "hle/kernel/svc/
 for legacy_name in ('hle_service.cpp','svc_ipc.cpp'):
     assert f'write_derived("${{PORT_BUILD_DIR}}/{legacy_name}"' not in c
 for name in ("hle_source", "ipc_source", "hle_call", "ipc_old"):
-    assert name not in c, ("legacy configure-time HLE rewrite still referenced", name)
+    # Reject only the former standalone rewrite variables. New tracked owners
+    # legitimately use names such as eden_ns2_early_hle_sources.
+    assert not re.search(rf"(?<![A-Za-z0-9_]){name}(?![A-Za-z0-9_])", c), (
+        "legacy configure-time HLE rewrite still referenced", name)
 print("VENDOR_MAINTAINED_HLE_IPC_PARITY_PASS: both dispatches, caller traces, guest IPC attribution, DEV source unselected")
 
 # Native common/runtime unit selection must be real maintained C++, not

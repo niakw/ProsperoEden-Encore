@@ -20,9 +20,9 @@
 namespace {
 constexpr int kPixel = 20;
 constexpr int kRange = 4;
-constexpr int kCellW = 48;
+constexpr int kCellW = 32;
 constexpr int kCellH = 36;
-constexpr int kWords = 2;
+constexpr int kWords = 1;
 constexpr std::uint32_t kMaxSlots = 0x7fffu;
 
 struct FontSpec {

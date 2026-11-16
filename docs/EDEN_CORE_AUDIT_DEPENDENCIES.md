@@ -245,17 +245,17 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 509 | 486 | 1019 |
+| Graphe connu | 510 | 487 | 1021 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 424 | 414 | 853 |
+| SOURCE — lecture effectuée, preuve insuffisante | 425 | 415 | 855 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **439** | **428** | **881** |
+| **Encore à qualifier (SOURCE + OPEN)** | **440** | **429** | **883** |
 | Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
 
-Le **noyau restant** compte donc 439 critères répartis sur
-428 fichiers et 881 mentions fonction/contrat :
-15 OPEN et 424 SOURCE.
+Le **noyau restant** compte donc 440 critères répartis sur
+429 fichiers et 883 mentions fonction/contrat :
+15 OPEN et 425 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans
@@ -964,6 +964,7 @@ function/contract tokens are checked by CI for existence only; the
 | U95 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h | bool LDAPR(Imm<2> size, Reg Rn, Reg Rt) | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Reviewed A64 translator declaration for RCpc acquisition; no LSE/CAS promotion | 🟡 Source étudiée |
 | U96 | P0 | U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp | bool TranslatorVisitor::LDAPR( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Real LDAPR-to-LDAR acquire lowering, exact pinned diff and Clang host decoder/syntax proof, no PS5 validation | 🟡 Source étudiée |
 | U97 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp | bool TranslatorVisitor::RETA( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Lichii-compatible no-PAC RETAA/RETAB raw-X30 return with PopRSBHint; exact pinned-base delta, general PAC/LSE excluded, PS5 gameplay pending | 🟡 Source étudiée |
+| U98 | P2 | F31 | vendor/encore-active/eden-backports/src/common/net/net.h | HttpResponse; PostJson | SOURCE | tools/check-active-source-inventory.py | Bounded HTTPS-only JSON POST declaration selected from vendor #178; vendor/tests/common_net_post_json_source.py remains the vendor-side contract; no credentials or PS5 transmission proof | 🟡 Source étudiée |
 <!-- AUDIT_ROWS_END -->
 
 

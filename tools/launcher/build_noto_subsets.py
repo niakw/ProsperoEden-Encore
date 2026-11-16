@@ -31,9 +31,7 @@ def fetch(repo: str, commit: str, path: str) -> bytes:
 def catalog_codepoints(locales: list[str]) -> set[int]:
     module=runpy.run_path(str(ROOT/"tools/launcher/strings.py"))
     parse_po=module["parse_po"]
-    # The in-game menu composes localized labels with language-neutral Vulkan/AA/FPS values.
-    # Keep printable ASCII in every fallback so a whole mixed row can be shaped by one face.
-    codepoints=set(range(0x20,0x7f)) | {0x00A0,0xFFFD}
+    codepoints=set()
     for locale in locales:
         path=CATALOGS/f"{locale}.po"
         entries=parse_po(path)
@@ -43,10 +41,11 @@ def catalog_codepoints(locales: list[str]) -> set[int]:
             for char in value:
                 if char not in "\r\n":
                     codepoints.add(ord(char))
-    # HarfBuzz consumes these controls during shaping; keep them if a catalog
-    # starts using them even when they render no outline.
-    codepoints.update({0x200B,0x200C,0x200D,0x200E,0x200F,0x061C})
     return codepoints
+
+# These codepoints influence shaping/bidi but intentionally need no drawable
+# glyph. HarfBuzz removes default ignorables after applying their effect.
+SHAPING_CONTROLS={0x061C,0x200B,0x200C,0x200D,0x200E,0x200F}
 
 def subset_font(data: bytes, codepoints: set[int], axes: dict[str,float]) -> bytes:
     try:
@@ -94,6 +93,8 @@ def main() -> None:
     out.mkdir(parents=True,exist_ok=True)
     receipts=[]
     total=0
+    primary_data=(ROOT/"third_party/fonts/Montserrat-Medium.ttf").read_bytes()
+    primary_covered=cmap(primary_data)
     for item in spec["fonts"]:
         source_name=Path(item["source"]).name
         if args.offline_source:
@@ -104,9 +105,18 @@ def main() -> None:
         if actual_blob!=item["git_blob"]:
             raise RuntimeError(f"{item['id']}: source blob {actual_blob} != {item['git_blob']}")
         required=catalog_codepoints(item["locales"])
-        built=subset_font(data,required,item.get("axes",{}))
+        source_covered=cmap(data)
+        drawable=required-SHAPING_CONTROLS
+        fallback_required=drawable-primary_covered
+        source_missing=sorted(fallback_required-source_covered)
+        if source_missing:
+            raise RuntimeError(f"{item['id']}: neither Montserrat nor fallback covers "+
+                               ",".join(f"U+{c:04X}" for c in source_missing[:20]))
+        # Keep the fallback subset limited to glyphs Montserrat cannot render.
+        # fontTools retains the GSUB/GPOS closure needed by shaped scripts.
+        built=subset_font(data,fallback_required,item.get("axes",{}))
         covered=cmap(built)
-        missing=sorted(required-covered)
+        missing=sorted(fallback_required-covered)
         if missing:
             raise RuntimeError(f"{item['id']}: subset misses "+",".join(f"U+{c:04X}" for c in missing[:20]))
         target=out/item["output"]
@@ -116,10 +126,12 @@ def main() -> None:
             "id":item["id"],"file":item["output"],"locales":item["locales"],
             "source_git_blob":actual_blob,"source_bytes":len(data),
             "subset_bytes":len(built),"subset_sha256":hashlib.sha256(built).hexdigest(),
-            "required_codepoints":len(required),
+            "catalog_codepoints":len(required),
+            "primary_codepoints":len(drawable & primary_covered),
+            "fallback_codepoints":len(fallback_required),
         })
         print(f"NOTO_SUBSET_PASS id={item['id']} locales={','.join(item['locales'])} "
-              f"codepoints={len(required)} bytes={len(built)}")
+              f"catalog={len(required)} fallback={len(fallback_required)} bytes={len(built)}")
     if total>int(spec["max_total_bytes"]):
         raise RuntimeError(f"Noto fallback budget exceeded: {total} > {spec['max_total_bytes']}")
     receipt={

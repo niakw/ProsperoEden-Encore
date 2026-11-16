@@ -37,7 +37,11 @@ python3 -B "$root/tools/stage-vendored-opengl-deps.py" "$source_dir"
 actual=$(git -C "$source_dir" rev-parse HEAD)
 [[ $actual == "$expected" ]] || { echo "PS5 OpenGL pin mismatch: $actual != $expected" >&2; exit 1; }
 git -C "$source_dir" diff --quiet -- && git -C "$source_dir" diff --cached --quiet -- || {
-    echo "PS5 OpenGL tracked source is modified" >&2; exit 1;
+    echo "PS5 OpenGL tracked source is modified" >&2
+    git -C "$source_dir" status --short >&2 || true
+    git -C "$source_dir" diff --stat >&2 || true
+    git -C "$source_dir" diff --cached --stat >&2 || true
+    exit 1
 }
 
 if [[ ! -d $template/.git ]]; then

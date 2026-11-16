@@ -754,7 +754,10 @@ void Launcher::finish_home_media()
         }
         for (Recent& recent : home_.recents) {
             if (recent.title_id != enriched.title_id) continue;
-            if (!enriched.cover.empty()) recent.cover = enriched.cover;
+            if (!enriched.cover.empty()) {
+                recent.cover = enriched.cover;
+                if (recent.tile_icon.empty()) recent.tile_icon = enriched.cover;
+            }
             if (!enriched.hero.empty()) recent.hero = enriched.hero;
             if (!enriched.screenshots.empty()) recent.screenshot = enriched.screenshots.front();
             if (enriched.max_players > 0) recent.max_players = enriched.max_players;
@@ -1098,7 +1101,10 @@ void Launcher::sync_home_game(const Game& game)
         if (recent.file == game.file)
         {
             recent.title = game.name;
-            if (!game.cover.empty()) recent.cover = game.cover;
+            if (!game.cover.empty()) {
+                recent.cover = game.cover;
+                if (recent.tile_icon.empty()) recent.tile_icon = game.cover;
+            }
             if (game.title_id != 0) recent.title_id = game.title_id;
             if (!game.addons.empty()) recent.addons = game.addons;
             if (!game.language.empty()) recent.language = game.language;
@@ -1128,6 +1134,7 @@ void Launcher::name_home_games()
             recent.title = game.name;
             recent.title_id = game.title_id;
             recent.cover = game.cover; // square icon only; case fronts stay in box_front
+            recent.tile_icon = game.cover;
             recent.hero = game.hero;
             recent.screenshot = game.screenshots.empty() ? std::string{} :
                                 game.screenshots.front();

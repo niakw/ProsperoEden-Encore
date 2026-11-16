@@ -216,7 +216,7 @@ def replay()->None:
         assert getinfo['page_size_vendor']=='f6ace750bf7a1b37101b420203a7f9633888d4f2'
         assert getinfo['vamm_region_vendor']=='035c0333a05954beaa8810c6e28c1377cf500eec'
         assert getinfo['manifest_receipt_vendor']=='67926ea4b6960eefebf0427929cf299e8e056013'
-        assert getinfo['active_vendor']=='053acc8ddf30fe65f6376564bbd6efef58f07ddc'
+        assert getinfo['active_vendor']=='ffa519db0f68fb0d5d2acf791e381c898a34a175'
         getinfo_sources=getinfo['reviewed_getinfo_sources']
         assert len(getinfo_sources)==2 and len({entry['path'] for entry in getinfo_sources})==2
         for entry in getinfo_sources:
@@ -244,6 +244,38 @@ def replay()->None:
               f'successors={len(getinfo_sources)}',
               'info_types=29,30,33', 'remote_memory_31_32=unimplemented',
               'historical_receipts=untouched')
+        # Vendor #178 moves the bounded diagnostics HTTPS POST primitive
+        # out of immutable vendor/sources and into the active Encore backport.
+        # It is a reviewed post-replay successor: prove both active net owners
+        # reverse byte-for-byte to the frozen patch replay before admitting it.
+        diagnostics=json.loads(
+            (ROOT/'tools/fixtures/diagnostics-post-json-backport-reverse.json').read_text())
+        assert diagnostics['schema_version']==1
+        assert diagnostics['predecessor_vendor']=='053acc8ddf30fe65f6376564bbd6efef58f07ddc'
+        assert diagnostics['active_vendor']=='ffa519db0f68fb0d5d2acf791e381c898a34a175'
+        diagnostics_sources=diagnostics['reviewed_net_sources']
+        assert len(diagnostics_sources)==2 and len({entry['path'] for entry in diagnostics_sources})==2
+        for entry in diagnostics_sources:
+            rel=entry['path']
+            assert rel in spec['entries'], ('Unexpected diagnostics successor',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'Historical diagnostics patch replay drift',rel)
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed integrated diagnostics source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256']
+            prior=current.decode('utf-8')
+            for hunk in reversed(entry['hunks']):
+                assert prior.count(hunk['after'])==1, (
+                    'Diagnostics exact reverse span moved',rel)
+                prior=prior.replace(hunk['after'],hunk['before'],1)
+            assert prior.encode('utf-8')==generated, (
+                'Diagnostics source not derivable from frozen patch replay',rel)
+            observed[rel]=spec['entries'][rel]
+        print('DIAGNOSTICS_POST_JSON_EXACT_POST_BACKPORT_REPLAY_PASS',
+              f'successors={len(diagnostics_sources)}',
+              'pinned_upstream_immutable=1', 'historical_receipts=untouched')
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

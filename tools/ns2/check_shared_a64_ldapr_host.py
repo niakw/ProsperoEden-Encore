@@ -71,8 +71,10 @@ def main():
     compilers=[]
     signatures=set()
     for candidate in candidates:
+        # Compiler identity is a setup probe, not the bounded decoder test.
+        # Busy hosted runners have exceeded 10s before starting the driver.
         info=subprocess.run([candidate, '--version'], capture_output=True,
-                            text=True, timeout=10)
+                            text=True, timeout=30)
         assert info.returncode==0
         version=info.stdout.splitlines()[0]
         # Apple-clang executable frontends are aliases regardless of basename.

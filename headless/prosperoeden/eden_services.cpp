@@ -2046,7 +2046,14 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         const GameLanguage language = LanguageFor(last_path, title_id, selected_language);
         home.last_title_id = title_id;
         const NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
-        if (!nlib.icon.empty()) home.last_cover = nlib.icon;
+        if (!nlib.icon.empty()) {
+            home.last_cover = nlib.icon;
+        } else if (home.last_cover.empty()) {
+            // Extracted NS2 dumps may have neither Control icon nor cached
+            // Nlib icon. A validated local retail front is still real artwork:
+            // use it as a presentation fallback without calling it tile_icon.
+            home.last_cover = box_art(title_id).front;
+        }
         home.last_hero = nlib.hero;
         home.last_screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
         home.last_max_players = nlib.max_players;
@@ -2140,6 +2147,11 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
                 if (!nlib.icon.empty()) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
+                } else if (recent.cover.empty()) {
+                    // Do not mark a portrait case scan as canonical square
+                    // tile_icon; Home's existing aspect-safe cover renderer
+                    // can still show the genuine local front immediately.
+                    recent.cover = box_art(recent.title_id).front;
                 }
                 recent.hero = nlib.hero;
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();

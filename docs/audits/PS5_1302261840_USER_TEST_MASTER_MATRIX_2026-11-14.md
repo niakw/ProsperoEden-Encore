@@ -237,3 +237,25 @@ Build demandé sur le `main` courant après intégration et nettoyage, sans publ
 - le package, les symboles, warnings et artefacts doivent être inspectés avant tout test console.
 
 Cette entrée sert uniquement de déclencheur attribuable et de reçu d'autorisation ; elle ne modifie aucun code runtime.
+
+
+## AC — Candidat final du retest du 16 novembre 2026
+
+Source/hôte finalisée avant nouveau build PS5. Cette section n'est **pas** une validation console.
+
+- Crash natif commun des lancements NS1/NS2 du lot `logs16111520.zip` : correctif GLAD/ODR fusionné par #238 ; validation hôte verte, PS5 à retester.
+- Tailles ExeFS : résolution du chemin sélectionné fusionnée par #239 ; taille réelle à retester sur DKB/MKW.
+- Artwork ExeFS/NS2 et stabilité des vignettes : fallback carré #244 puis priorité à l'icône Control locale #248 ; aucun portrait de jaquette ne doit remplacer l'icône carrée.
+- DLC/MAJ et langue : vérité tri-state + propagation asynchrone fusionnées par #246 ; `Unknown` reste réservé à l'état réellement inconnu/incomplet.
+- Bibliothèque ExeFS : double scan DLC/MAJ de démarrage supprimé par #252 ; latence froide/chaude à mesurer sur console.
+- MKW NS2 : RETAA/RETAB production sélectionné par #242 avec vendor `053acc8...` puis conservé dans le vendor actuel ; cela corrige l'instruction inconnue observée, sans prouver le boot complet.
+- Partage des logs : transport HTTPS vendor #178 et client privacy-minimized #256 fusionnés ; consentement/toggles, DNS/TLS, envoi différé et effacement restent à valider sur PS5.
+- Typographie : #257 fusionnée après **29/29 workflows verts**. Montserrat reste la face primaire ; fallbacks Noto bornés + HarfBuzz couvrent les 31 catalogues, et le menu Vulkan n'est plus limité à l'ASCII. Ceci ne prouve rien pour les glyphes internes des jeux suivis dans #100.
+- Nettoyage : #258 a supprimé par SHA exact les branches Nov16 obsolètes ; après exécution, moteur et vendor n'exposent plus que `main`, sans PR ouverte.
+
+Candidat runtime après #257 : `3963ba8e2e6e8c56df3b1c70bfd5ddaf1d763bb6`.
+Candidat main après nettoyage documentaire/CI : `d1b40f9f2d2ba6445b87562bd4c08f043a64e393`.
+Vendor sélectionné par gitlink : `ffa519db0f68fb0d5d2acf791e381c898a34a175`.
+Firmware cible : **PS5 13.60**.
+
+Le build natif suivant doit être non publié et son ELF, symboles, link map, provenance, warnings et package doivent être audités avant installation console.

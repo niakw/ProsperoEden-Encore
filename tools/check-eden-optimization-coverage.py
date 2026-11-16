@@ -1209,7 +1209,8 @@ if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175":
 post_f07_diagnostics_owners = set(post_f07_diagnostics_receipts)
 for path, blob in post_f07_diagnostics_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=ROOT, text=True).strip() == blob, path
-print("ENCORE_DIAGNOSTICS_POST_F07_PASS", f"owners={len(post_f07_diagnostics_owners)}",\n      "native_transport=https_primitive_only" if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175" else "native_transport=unwired")
+print("ENCORE_DIAGNOSTICS_POST_F07_PASS", f"owners={len(post_f07_diagnostics_owners)}",
+      "native_transport=https_primitive_only" if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175" else "native_transport=unwired")
 assert post_f07_diagnostics_owners <= all_owners
 # The title-aware loading correction adds two independently reviewed
 # headers; neither belongs to the immutable F07 baseline.

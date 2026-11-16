@@ -193,6 +193,23 @@ if [[ ${EDEN_SKIP_SOURCE_CHECKS:-0} != 1 && ${EDEN_SKIP_PREBUILD_SOURCE_CHECKS:-
     python3 -B "$root/tools/check-game-frame-summary.py"
 fi
 
+# fr_fr_embedded.h is a deterministic generated C++ wrapper around fr-FR.po.
+# A previous native run proved that the worktree can be mutated after the
+# early translation gate, leaving the raw PO payload at the .h path. Repair
+# only this generated resource immediately before Ninja, then require the
+# result to be byte-identical to the version committed in this checkout.
+embedded_fr_rel="headless/prosperoeden/fr_fr_embedded.h"
+if ! git -C "$root" diff --quiet -- "$embedded_fr_rel"; then
+    before_embedded_fr=$(sha256sum "$root/$embedded_fr_rel" | cut -d' ' -f1)
+    echo "EDEN_EMBEDDED_FR_WORKTREE_DRIFT before_sha256=$before_embedded_fr; rematerializing canonical generated header"
+fi
+python3 -B "$root/tools/launcher/strings.py" embed-fr
+python3 -B "$root/tools/launcher/strings.py" check
+git -C "$root" diff --exit-code -- "$embedded_fr_rel"
+grep -Fq 'inline constexpr std::string_view kFrFr = R"FRPO(' "$root/$embedded_fr_rel"
+grep -Fq ')FRPO";' "$root/$embedded_fr_rel"
+echo "EDEN_EMBEDDED_FR_NATIVE_HEADER_PASS"
+
 echo "Building Eden with $jobs parallel jobs"
 # The native build is expensive to prepare. If independent C++ files fail,
 # finish every buildable Ninja edge (-k 0) so one CI run reports ALL compiler

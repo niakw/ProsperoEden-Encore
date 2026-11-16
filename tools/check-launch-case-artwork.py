@@ -356,19 +356,20 @@ assert "Box - Front" in indexer and "Box - Back" in indexer
 assert "gamesdb.launchbox-app.com/Metadata.zip" in indexer
 assert "if len(matching) != 1:" in indexer
 assert "SafeCaseFilename" in native
-assert 'std::array<std::vector<std::string>, 8>' in native
+assert 'std::array<std::vector<std::string>, 9>' in native
 # A physical scan remains independent; only missing backs use LaunchBox
 # game-specific scenic art and all CDN traffic stays on the worker.
 assert '"Screenshot - Gameplay"' in indexer
 assert '"Fanart - Background"' in indexer
 assert '"Screenshot - Game Title"' in indexer
+assert '"Square"' in indexer
 assert 'EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}' in indexer
 assert 'AppendCaseScenes(game.screenshots, game.title_id);' in native
 assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in native
 assert "// Gameplay previews remain independent of real back paper." in native
 assert 'const char* const names[]' in native
 assert '"scene-1", "scene-2", "scene-3", "scene-4", "scene-5"' in native
-assert "for (int side = 0; side < 8; ++side)" in native
+assert "for (int side = 0; side < 8; ++side)" in native\nassert 'selected->second[8]' in native
 assert 'scene_columns{"-", "-", "-", "-", "-"}' in native
 assert "if (receipt) receipt << filename" in native
 assert "std::ofstream receipt(destination + \".source\"" in native
@@ -404,6 +405,8 @@ assert "r2_22b0967c-08e4-4988-9eeb-c5d7a1c34408.png" in fallback_index
 assert "991fd827-5f47-47ee-a400-4c6f22266b4f.jpg" in fallback_index
 assert "r2_02551e34-3f1e-4bf6-88d5-d083b700cf9f.jpg" in fallback_index
 assert "r2_eee1b6d5-ca97-4fd1-be20-2eda2fe1b979.jpg" in fallback_index
+assert "r2_e12e1a63-a18e-4857-860d-043fc58f86a7.png" in fallback_index
+assert "r2_856693ee-cdd3-4784-bc66-225936136aec.jpg" in fallback_index
 assert 'Eden::AppResourceFile("ui/box-art-fallback.tsv")' in native
 assert "load_rows(input, false);" in native and "load_rows(fallback, true);" in native
 assert "if (it->second[side].empty())" in native
@@ -805,7 +808,7 @@ print("PASS regional fronts/backs, case geometry and zoom/pan source contracts")
 # controlled here; the existing codec suite separately tests real WebP.
 # A valid image header must not turn a failed full decode into a dead end.
 fetch = "bool FetchCaseFace(" + native.split("bool FetchCaseFace(", 1)[1].split(
-    "\n\n// All physical box scans", 1)[0]
+    "\n\nbool EnsureGamesDbSquare", 1)[0]
 writer = native.split("bool WriteJpegWebP(", 1)[1].split("std::string NlibPlayersPath", 1)[0]
 assert "if (decode_failed) *decode_failed = false;" in writer
 assert "if (!rgba) {" in writer and "*decode_failed = true;" in writer
@@ -846,7 +849,8 @@ int stbi_info_from_memory(const unsigned char*, int, int* w,int* h,int* c){
     *w=400;*h=640;*c=3;return 1;
 }
 const char* stbi_failure_reason(){ return "fixture"; }
-bool WriteJpegWebP(const string& body,const string& out,bool,bool* decode_failed) {
+bool WriteJpegWebP(const string& body,const string& out,bool,bool* decode_failed,int max_edge=0) {
+    assert(max_edge == 0 || max_edge == 512);
     ++encodes;
     *decode_failed=body[2]=='b';
     if(*decode_failed) return false;
@@ -885,6 +889,10 @@ int main(int argc,char** argv) {
     cancelled=false; cancel_encode=false;
     assert(FetchCaseFace({"offline.jpg","good2.jpg"},dst,false,&cancelled));
     assert(fetched.size()==2 && encodes==1 && read(receipt)=="good2.jpg\n");
+    fetched.clear(); encodes=0;
+    const string square=root_dir+"/box-square-title.webp";
+    assert(FetchCaseFace({"good-square.png"},square,false,&cancelled,true));
+    assert(fetched.size()==1 && encodes==1);
 }
 """, encoding="utf-8")
     for opt in ("-O0", "-O2"):

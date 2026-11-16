@@ -34,10 +34,29 @@ sdk="$template/.deps/native/ps5-payload-sdk"
 # the original upstream repositories or release servers.
 python3 -B "$root/tools/stage-vendored-opengl-deps.py" "$source_dir"
 
+# Recover only the one legacy backup name produced by the previous
+# single-dollar typo. Never clean arbitrary dirty source: the abandoned backup
+# must match the pinned Git blob byte-for-byte before it can be restored.
+legacy_mesa_backup="$source_dir/toolchain/build-mesa-ps5.sh.encore-backup.$"
+if [[ -f "$legacy_mesa_backup" ]]; then
+    expected_mesa_sha=$(git -C "$source_dir" show HEAD:toolchain/build-mesa-ps5.sh | sha256sum | awk '{print $1}')
+    backup_mesa_sha=$(sha256sum "$legacy_mesa_backup" | awk '{print $1}')
+    [[ "$backup_mesa_sha" == "$expected_mesa_sha" ]] || {
+        echo "Stale PS5 OpenGL Mesa backup does not match pinned Git source" >&2
+        exit 1
+    }
+    mv -f "$legacy_mesa_backup" "$source_dir/toolchain/build-mesa-ps5.sh"
+    echo "Recovered exact stale PS5 OpenGL Mesa build-script backup"
+fi
+
 actual=$(git -C "$source_dir" rev-parse HEAD)
 [[ $actual == "$expected" ]] || { echo "PS5 OpenGL pin mismatch: $actual != $expected" >&2; exit 1; }
 git -C "$source_dir" diff --quiet -- && git -C "$source_dir" diff --cached --quiet -- || {
-    echo "PS5 OpenGL tracked source is modified" >&2; exit 1;
+    echo "PS5 OpenGL tracked source is modified" >&2
+    git -C "$source_dir" status --short >&2 || true
+    git -C "$source_dir" diff --stat >&2 || true
+    git -C "$source_dir" diff --cached --stat >&2 || true
+    exit 1
 }
 
 if [[ ! -d $template/.git ]]; then

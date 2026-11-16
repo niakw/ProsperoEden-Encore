@@ -1201,11 +1201,13 @@ print("ENCORE_FC27_SCALAR_DUPLICATE_F07_ISOLATION_PASS",
 post_f07_diagnostics_receipts = {
     "headless/diagnostics_sharing_policy.h": "2515badbeb070d0f22b02e0ec8dde8a30afdeef4",
     "headless/diagnostics_report_queue.h": "28e59bc710b1c27a5fbe75c9b5e8a0e6fbb15aae",
+    "vendor/encore-active/eden-backports/src/common/net/net.h":
+        "f8244b366d591ce10342f110d282c295f835474f",
 }
 post_f07_diagnostics_owners = set(post_f07_diagnostics_receipts)
 for path, blob in post_f07_diagnostics_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=ROOT, text=True).strip() == blob, path
-print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=2 native_transport=unwired")
+print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=3 transport_primitive=selected client_worker=unwired")
 assert post_f07_diagnostics_owners <= all_owners
 # The title-aware loading correction adds two independently reviewed
 # headers; neither belongs to the immutable F07 baseline.

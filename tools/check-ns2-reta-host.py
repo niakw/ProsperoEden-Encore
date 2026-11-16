@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Archived A64 RETAA/RETAB decoder oracle; production promotes LDAPR only."""
+"""Retain the broad A64 research oracle while production selects only LDAPR + RETAA/RETAB."""
 from __future__ import annotations
 from pathlib import Path
 import os
@@ -14,6 +14,9 @@ CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
 BRANCH=(BASE/"dynarmic/frontend/A64/translate/impl/a64_branch.cpp").read_text()
 DEC=(BASE/"dynarmic/frontend/A64/decoder/a64.inc").read_text()
 HEADER=(BASE/"dynarmic/frontend/A64/decoder/a64.h").read_text()
+PROD=ROOT/"vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64"
+PROD_DEC=(PROD/"decoder/a64.inc").read_text()
+PROD_BRANCH=(PROD/"translate/impl/a64_branch.cpp").read_text()
 
 def main() -> int:
     if ('EDEN_NS2_A64_EXPERIMENTAL' in CMAKE
@@ -28,8 +31,15 @@ def main() -> int:
         or 'bool TranslatorVisitor::LDAPR(Imm<2> size, Reg Rn, Reg Rt)' not in (BASE/"dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp").read_text()
         or 'bool TranslatorVisitor::RETA(' not in BRANCH
         or 'return RET(Reg::R30);' not in BRANCH
-        or '#if defined(EDEN_NS2_A64_EXPERIMENTAL)' not in BRANCH):
-        print("Archived RETAA decoder or production LDAPR-only source ownership missing",file=sys.stderr)
+        or '#if defined(EDEN_NS2_A64_EXPERIMENTAL)' not in BRANCH
+        or 'INST(RETA, "RETAA, RETAB", "110101100101111100001M1111111111")' not in PROD_DEC
+        or 'bool TranslatorVisitor::RETA(bool M)' not in PROD_BRANCH
+        or 'ir.SetPC(X(64, Reg::R30));' not in PROD_BRANCH
+        or 'ir.SetTerm(IR::Term::PopRSBHint{});' not in PROD_BRANCH
+        or 'EDEN_NS2_A64_EXPERIMENTAL' in PROD_BRANCH
+        or 'INST(CAS,' in PROD_DEC
+        or 'INST(LDADD,' in PROD_DEC):
+        print("Archived oracle or minimal production RETAA/RETAB ownership missing",file=sys.stderr)
         return 2
     compiler=shutil.which("clang++") or shutil.which("g++")
     if not compiler:
@@ -45,7 +55,7 @@ def main() -> int:
             subprocess.run(cmd,check=True)
             subprocess.run([target],check=True,env={**os.environ,"UBSAN_OPTIONS":"halt_on_error=1"})
             print(f"NS2 A64 RETA/LDAPR/LSE opcode decoder table {opt}: PASS")
-    print("Archived RETAA/LDAPR/LSE decoder only; production selects LDAPR, not PAC/LSE. No PS5 execution proof.")
+    print("Broad RETAA/LDAPR/LSE research oracle retained; production selects only LDAPR + raw-X30 RETAA/RETAB, not general PAC/LSE. No PS5 execution proof.")
     return 0
 
 if __name__=="__main__":

@@ -42,6 +42,10 @@ MAINTAINED_CORE_TARGETS = (
     "vendor/encore-active/eden-threading/src/core/hle/kernel/k_condition_variable.cpp",
     "vendor/encore-active/eden-threading/src/core/hle/kernel/k_scheduler.cpp",
     "vendor/encore-active/eden-core/src/video_core/memory_manager.cpp",
+    # Native release fixes EDEN_PS5_OPENGL=ON, so this is the exact maintained
+    # G21 GPU translation unit selected by CMake. Native run 43864640130 failed
+    # here after 1200+ objects; keep it in the cheap real-PS5 compile preflight.
+    "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp",
     "vendor/encore-active/eden-core/src/common/fiber.cpp",
 )
 # Native release renderer TUs share the selected CMake ABI header overlay.

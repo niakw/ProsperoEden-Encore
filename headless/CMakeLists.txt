@@ -2940,6 +2940,13 @@ endif()
                 "${launcher_dir}/pe/ui/widgets.cpp"
                 "${EDEN_PORT_DIR}/quick_overlay_font.cpp")
             target_sources(eden-headless PRIVATE ${launcher_sources})
+            if(TARGET eden-vulkan-hud-shaders)
+                target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
+                add_dependencies(eden-headless eden-vulkan-hud-shaders)
+                set_property(SOURCE "${EDEN_PORT_DIR}/quick_overlay_font.cpp"
+                    TARGET_DIRECTORY eden-headless APPEND PROPERTY OBJECT_DEPENDS
+                    "${EDEN_HUD_MENU_MAP}")
+            endif()
             # The launcher calls OpenGL by name (the SDK's headers), not through glad.
             set(launcher_definitions "GL_GLEXT_PROTOTYPES=1")
             if(EXISTS "${EDEN_PORT_DIR}/ryujinx_saves.h")

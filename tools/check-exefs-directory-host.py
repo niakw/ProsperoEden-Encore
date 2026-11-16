@@ -92,6 +92,8 @@ size_owner = library.split(
     "std::string EdenServices::exact_game_size(const std::string& file,", 1
 )[1].split("\npe::ui::Game EdenServices::enrich_game_media(", 1)[0]
 assert 'ExtractedBaseBytes(extracted, cancel)' in size_owner
+assert 'Eden::IsSafeDeconstructedGamePath(roms_root, file)' in size_owner
+assert "roms_root / file.substr(0, file.find('/'))" in size_owner
 assert 'status=measured bytes=%llu' in size_owner
 launcher_library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
 assert "void Launcher::start_selected_size()" in launcher_library
@@ -570,6 +572,8 @@ def extract_owner(begin, end):
 
 sizing = extract_owner("std::optional<std::uint64_t> ExtractedBaseBytes(",
                        "\n// Local user-supplied covers")
+exact_size = extract_owner("std::string EdenServices::exact_game_size(",
+                           "\npe::ui::Game EdenServices::enrich_game_media(")
 covers = extract_owner("std::string ExtractedLocalCover(",
                        "\nstd::uint64_t ResolveTitleId(")
 nacp = extract_owner("struct ExtractedSidecarMetadata {",
@@ -593,6 +597,17 @@ fixture = r"""
 #include "game_files.h"
 
 __ENCORE_SIZING_OWNER__
+namespace Eden {
+    static std::filesystem::path fixture_roms;
+    std::string AssetsPath(const std::string& path) {
+        assert(path == "roms");
+        return fixture_roms.string();
+    }
+}
+struct EdenServices {
+    std::string exact_game_size(const std::string&, const std::atomic<bool>*);
+};
+__ENCORE_EXACT_SIZE_OWNER__
 __ENCORE_NACP_OWNER__
 __ENCORE_COVERS_OWNER__
 
@@ -616,6 +631,21 @@ int main() {
     assert(Eden::FindDeconstructedGameMain(game) == "base/exefs/main");
     const auto bytes = ExtractedBaseBytes(game, nullptr);
     assert(bytes && *bytes == 4 + 8 + 4096);
+    Eden::fixture_roms = root;
+    EdenServices services;
+    // The real API receives the same /main filename stored by the Library.
+    // A sparse file exercises GiB formatting without allocating disk blocks.
+    fs::resize_file(game / "base" / "romfs" / "data.bin", 2ULL << 30);
+    fs::resize_file(game / "updates" / "458752" / "update.bin", 1ULL << 30);
+    assert(services.exact_game_size("Extracted Game/base/exefs/main", nullptr) == "2.0 GB");
+    assert(services.exact_game_size("Extracted Game/base/exefs", nullptr).empty());
+    assert(services.exact_game_size("../Extracted Game/base/exefs/main", nullptr).empty());
+    fs::create_directory_symlink(game, root / "Linked Game");
+    assert(services.exact_game_size("Linked Game/base/exefs/main", nullptr).empty());
+    std::atomic<bool> stop_size{true};
+    assert(services.exact_game_size("Extracted Game/base/exefs/main", &stop_size).empty());
+    fs::resize_file(game / "base" / "romfs" / "data.bin", 4096);
+    fs::resize_file(game / "updates" / "458752" / "update.bin", 65536);
     assert(ExtractedLocalNacp(game, 2).name.empty());
     // Test the actual, bounded NACP reader with both localized and English
     // titles. French takes priority, irrespective of folder names.
@@ -693,6 +723,7 @@ int main() {
     std::puts("EXTRACTED_BASE_FOOTPRINT_AND_ARTWORK_PASS");
 }
 """.replace("__ENCORE_SIZING_OWNER__", sizing).replace(
+    "__ENCORE_EXACT_SIZE_OWNER__", exact_size).replace(
     "__ENCORE_NACP_OWNER__", nacp).replace("__ENCORE_COVERS_OWNER__", covers)
 stb_owner = root / "vendor/encore-active/eden-core/src/common/stb_image_png.cpp"
 stb_headers = root / "vendor/sources/eden/externals/stb"

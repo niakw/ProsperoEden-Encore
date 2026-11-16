@@ -1227,10 +1227,26 @@ assert len(pair_new_owners) == 2 and len(pair_receipt["files"]) == 14
 pair_present = pair_new_owners & all_owners
 if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab"}:
     assert pair_present == pair_new_owners
+    gpu_dirty_include = b'#include "core/gpu_dirty_memory_manager.h"\n'
+    gpu_dirty_include_successor = "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab"
+    gpu_dirty_include_owners = {
+        "eden-core/src/video_core/gpu_gl_native.cpp",
+        "eden-core/src/video_core/gpu_gl_native_dev.cpp",
+        "eden-core/src/video_core/gpu_vulkan.cpp",
+    }
     for path, blob in pair_receipt["files"].items():
-        actual = subprocess.check_output(
-            ["git", "hash-object", "vendor/encore-active/" + path],
-            cwd=ROOT, text=True).strip()
+        source_path = ROOT / "vendor/encore-active" / path
+        raw = source_path.read_bytes()
+        if gpu_table_vendor_pin == gpu_dirty_include_successor and path in gpu_dirty_include_owners:
+            assert raw.count(gpu_dirty_include) == 1, path
+            historical = raw.replace(gpu_dirty_include, b"", 1)
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + b"\0" + historical
+            ).hexdigest()
+        else:
+            actual = subprocess.check_output(
+                ["git", "hash-object", str(source_path)], cwd=ROOT, text=True
+            ).strip()
         if (gpu_table_vendor_pin in {"42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab"} and
                 path == "eden-vulkan/vulkan_rasterizer.cpp"):
             assert actual == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1", path

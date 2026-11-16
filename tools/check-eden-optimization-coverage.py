@@ -1568,6 +1568,30 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 stable Home icon successor. The full EdenServices blob is pinned,
+# and dedicated Home-media tests verify the changed dispatch/identity rules.
+# Resume the existing metadata -> Home Square -> #239 provenance chain only
+# after this exact reviewed successor is recognized.
+nov16_stable_home_blob = "fbe04395576c244c158a60748cc4cd765eb58f0f"
+nov16_metadata_pre_stable = "964a3a490948aa01149ade2b47dd95ea2b57628b"
+stable_home_path = "headless/prosperoeden/eden_services.cpp"
+if drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
+    stable_source = (ROOT / stable_home_path).read_text()
+    stable_raw = stable_source.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(stable_raw)).encode() +
+                        bytes([0]) + stable_raw).hexdigest() == nov16_stable_home_blob
+    for marker in (
+        "const bool deconstructed = Eden::IsDeconstructedGameSelection(home.last_file);",
+        "if (!deconstructed && played.contains(name))",
+        "if (!recent.cover.empty()) recent.tile_icon = recent.cover;",
+        "if (!nlib.icon.empty() && recent.tile_icon.empty())",
+        "if (!enrichment.icon.empty() && game.cover.empty())",
+    ):
+        assert marker in stable_source, marker
+    drift_index[stable_home_path]["actual"] = nov16_metadata_pre_stable
+    print("NOV16_STABLE_HOME_ICON_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
+          "predecessor=metadata", "console_validation=pending")
+
 # Nov16 add-on catalogue truth-state: metadata bridge changes only the
 # tri-state completeness contract. Pin the two exact historical-source
 # successors and remove them from the F07 drift ledger.

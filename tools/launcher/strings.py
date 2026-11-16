@@ -29,6 +29,8 @@ against those when PE_SYSTEM_FONTS names a folder holding copies of them, and on
 Latin text otherwise.
 """
 
+import hashlib
+import json
 import os
 import re
 import struct
@@ -347,12 +349,11 @@ def cmap_characters(data):
 
 
 def system_font_characters(locale):
-    """Characters available to one locale through deterministic fallback files.
+    """Characters supplied by one deterministic fallback family.
 
-    CI points PE_SYSTEM_FONTS at build_noto_subsets.py output. A developer may
-    instead point it at a PS5 system-font copy; when the named Noto subset is
-    absent all local OTF/TTF files are considered, matching the runtime's
-    multi-face system fallback.
+    Generated Noto subsets carry a receipt with the exact Unicode set and the
+    SHA-256 of each output TTF. Prefer that signed-by-content build evidence;
+    fall back to parsing cmap for developer-provided console font copies.
     """
     folder = os.environ.get("PE_SYSTEM_FONTS")
     if not folder:
@@ -365,9 +366,26 @@ def system_font_characters(locale):
     if preferred and not files:
         files = [path for path in sorted(root.iterdir())
                  if path.suffix.lower() in (".otf", ".ttf")]
+
+    receipt_by_file = {}
+    receipt_path = root / "receipt.json"
+    if receipt_path.is_file():
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        assert receipt.get("schema") == 1, "unsupported fallback receipt schema"
+        receipt_by_file = {item["file"]: item for item in receipt.get("fonts", [])}
+
     characters = set()
     for path in files:
-        characters |= cmap_characters(path.read_bytes())
+        data = path.read_bytes()
+        item = receipt_by_file.get(path.name)
+        if item is not None and "fallback_unicode" in item:
+            actual = hashlib.sha256(data).hexdigest()
+            assert actual == item["subset_sha256"], (
+                f"{path}: fallback receipt SHA mismatch {actual} != {item['subset_sha256']}"
+            )
+            characters.update(int(codepoint) for codepoint in item["fallback_unicode"])
+        else:
+            characters |= cmap_characters(data)
     return characters
 
 

@@ -129,6 +129,10 @@ jobs:
                   ('acd8f6f66bb2aae341244681f191bcb28e2f62b1', 225),
               'fix/vendor-gpu-dirty-complete-type-repin-20261116':
                   ('c961db323e82b131e6936fd866180a6cfffddfd3', 229),
+              # PR #232 was squash-merged after its staging branch advanced;
+              # retain exact head provenance and remove only that immutable ref.
+              'build/add-encore-overrides-submodule-20261116':
+                  ('1e2d0fb208df7196bf5e3d7241c23ca64f075df0', 232),
           }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:

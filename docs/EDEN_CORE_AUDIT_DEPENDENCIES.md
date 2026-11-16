@@ -253,9 +253,9 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 | **Encore à qualifier (SOURCE + OPEN)** | **440** | **429** | **883** |
 | Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
 
-Le **noyau restant** compte donc 439 critères répartis sur
-428 fichiers et 881 mentions fonction/contrat :
-15 OPEN et 424 SOURCE.
+Le **noyau restant** compte donc 440 critères répartis sur
+429 fichiers et 883 mentions fonction/contrat :
+15 OPEN et 425 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans

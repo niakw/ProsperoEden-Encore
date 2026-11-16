@@ -87,6 +87,13 @@ jobs:
               # superseded by newer main owners and currently points at the
               # fully integrated R458 ancestor. Keep the ancestry gate below.
               'fix/r457-home-canonical-icon-rail': 'c50d6abf32e6ce98d930bf42cf404815a0384855',
+              # Build-fix staging heads now fully contained by main. Both
+              # exact SHAs are ancestors; the ancestry gate below must still
+              # prove current main contains them before deletion.
+              'fix/native-preflight-generated-hud-dep':
+                  '01d57ca7b57f8edcf9478d8dc2f64cf4986eb7a7',
+              'build/add-encore-overrides-submodule-20261116':
+                  '8c392ab42d36c08f8c1b4b5b393e12ec5ece300c',
           }
           # Exact closed/unmerged heads superseded by merged #187. Their unique
           # commits were reviewed as obsolete rebase/fixture/vendor-pin receipts;
@@ -113,6 +120,15 @@ jobs:
                   ('b972055c40f8428bda823956f21c223db593f7c1', 215),
               'fix/nov15-ns2-early-hle-clean':
                   ('ee38f269e73e98114bc73272fa9852995a7860c4', 215),
+              # Native build repair candidates superseded by the reviewed
+              # successors already selected on main / PR #231. These were
+              # closed unmerged after exact diff/provenance review.
+              'fix/embedded-fr-header-native-build':
+                  ('22a2ecf086e63b136d65013ae3e4809a9d7a2fc4', 223),
+              'fix/tracked-fr-header-newlines-20261116':
+                  ('acd8f6f66bb2aae341244681f191bcb28e2f62b1', 225),
+              'fix/vendor-gpu-dirty-complete-type-repin-20261116':
+                  ('c961db323e82b131e6936fd866180a6cfffddfd3', 229),
           }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:

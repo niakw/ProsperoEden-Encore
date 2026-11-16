@@ -7,10 +7,12 @@ DEPS=ROOT/"vendor/sources/eden-cpm"
 V=ROOT/"vendor"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert selected==checked=="f6ace750bf7a1b37101b420203a7f9633888d4f2",(selected,checked)
+assert selected==checked=="67926ea4b6960eefebf0427929cf299e8e056013",(selected,checked)
 subprocess.run(["python3","-B",str(V/"tests/ns2_early_hle_services_source.py")],
                cwd=ROOT,check=True,timeout=60)
 subprocess.run(["python3","-B",str(V/"tests/ns2_getinfo_page_size_source.py")],
+               cwd=ROOT,check=True,timeout=60)
+subprocess.run(["python3","-B",str(V/"tests/ns2_getinfo_vamm_region_source.py")],
                cwd=ROOT,check=True,timeout=60)
 cm=(ROOT/"headless/CMakeLists.txt").read_text()
 for marker in (

@@ -62,10 +62,11 @@ find_program(EDEN_R07_FSR31_SPIRV_DIS NAMES spirv-dis REQUIRED)
 set(EDEN_HUD_GENERATED_DIR "${PORT_BUILD_DIR}/hud-generated")
 set(EDEN_HUD_MENU_GLSL "${EDEN_HUD_GENERATED_DIR}/vulkan_menu_font.glsl")
 set(EDEN_HUD_MENU_MAP "${EDEN_HUD_GENERATED_DIR}/vulkan_menu_font_map.h")
+set(EDEN_HUD_MENU_DATA "${EDEN_HUD_GENERATED_DIR}/vulkan_menu_font_data.h")
 set(EDEN_HUD_SHADER_HEADER "${EDEN_HUD_GENERATED_DIR}/eden_vulkan_hud_shaders.h")
 set(EDEN_HUD_FALLBACK_DIR "${PORT_ROOT}/build/generated/noto-fallback")
 add_custom_command(
-    OUTPUT "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_GLSL}" "${EDEN_HUD_MENU_MAP}"
+    OUTPUT "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_GLSL}" "${EDEN_HUD_MENU_MAP}" "${EDEN_HUD_MENU_DATA}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${EDEN_HUD_GENERATED_DIR}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/launcher/bake_vulkan_menu_font.py"
@@ -97,13 +98,13 @@ add_custom_command(
         "${EDEN_PORT_DIR}/loading_scene.glsl"
     COMMENT "Build native Vulkan HUD + Montserrat quick-menu SPIR-V"
     VERBATIM)
-add_custom_target(eden-vulkan-hud-shaders DEPENDS "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_MAP}")
+add_custom_target(eden-vulkan-hud-shaders DEPENDS "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_MAP}" "${EDEN_HUD_MENU_DATA}")
 add_dependencies(video_core eden-vulkan-hud-shaders)
 target_include_directories(video_core BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
 # eden-headless is declared later; attach its generated map in CMakeLists.txt.
 set_property(SOURCE "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
-    "${EDEN_HUD_SHADER_HEADER}")
+    "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_DATA}")
 
 set(EDEN_FSR31_SHADER_DIR "${PORT_BUILD_DIR}/include/video_core/host_shaders")
 set(EDEN_FSR31_NAMES

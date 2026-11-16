@@ -2013,6 +2013,54 @@ assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
 print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
       "new_owner_consoles_qualified=0")
 # Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.\n# R458 advances the already-reviewed launcher owner from a frozen retained frame\n# to one bounded GL presenter; the historical F07/R457 receipts stay immutable.
+# P1 typography changes only the launcher's fallback-font collection policy.
+# Reverse that exact block before resuming the existing NS2 launcher provenance
+# chain; never rewrite the historical R457/F07 receipt.
+typography_frontend_path = "headless/prosperoeden/frontend.cpp"
+typography_frontend_blob = "1de983352dad85e4dd6c1520a0c9e9aec26d052d"
+typography_frontend_predecessor = "25884807fdf7759834cb232548184ffefca715d4"
+if (typography_frontend_path in drift_index and
+        drift_index[typography_frontend_path]["actual"] == typography_frontend_blob):
+    frontend_source = (ROOT/typography_frontend_path).read_text()
+    typography_block = """    std::vector<std::string> fallback_files;
+    std::vector<std::string> font_folders;
+    font_folders.push_back(Eden::AppFile("ui/fonts/fallback"));
+    for (const std::string& candidate : pe::gfx::system_font_folders())
+        if (std::find(font_folders.begin(), font_folders.end(), candidate) == font_folders.end())
+            font_folders.push_back(candidate);
+    for (const std::string& candidate : font_folders) {
+        std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
+        if (found.empty()) continue;
+        if (folder == "none") folder = candidate;
+        for (std::string& file : found)
+            if (std::find(fallback_files.begin(), fallback_files.end(), file) == fallback_files.end())
+                fallback_files.push_back(std::move(file));
+    }
+    const std::size_t files = fallback_files.size();
+    if (!fallback_files.empty())
+        font.use_system_fonts(std::move(fallback_files), tag);
+"""
+    predecessor_block = """    std::size_t files = 0;
+    for (const std::string& candidate : pe::gfx::system_font_folders()) {
+        std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
+        if (found.empty()) continue;
+        folder = candidate;
+        files = found.size();
+        font.use_system_fonts(std::move(found), tag);
+        break;
+    }
+"""
+    assert frontend_source.count(typography_block) == 1
+    replay = frontend_source.replace(typography_block, predecessor_block, 1)
+    replay_raw = replay.encode("utf-8")
+    replay_blob = hashlib.sha1(
+        b"blob " + str(len(replay_raw)).encode() + bytes([0]) + replay_raw
+    ).hexdigest()
+    assert replay_blob == typography_frontend_predecessor
+    drift_index[typography_frontend_path]["actual"] = replay_blob
+    print("P1_TYPOGRAPHY_FRONTEND_SUCCESSOR_PASS",
+          "owner=frontend", "historical_predecessor=preserved")
+
 ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU
     # readback; the launcher presents loading_scene.glsl and retains VideoOut

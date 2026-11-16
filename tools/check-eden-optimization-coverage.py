@@ -1397,6 +1397,10 @@ vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
 historical_usage_tracker_vendor = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+diagnostics_net_successor = (
+    "b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,
+    "9d3d56b9fa6b4a47097aa32c18b42e8839c547915d3af19aa37830dd75ac5da8", 11862,
+)
 historical_getinfo_relpaths = {
     "src/core/hle/kernel/svc/svc_info.cpp",
     "src/core/hle/kernel/svc_types.h",
@@ -1420,6 +1424,11 @@ for e in entries:
                 e["shipping_relpath"] in historical_getinfo_relpaths):
             expected_active = (old_sha,old_size)
         assert (record["active"],record["bytes"]) == expected_active
+    elif (e["shipping_relpath"] == "src/common/net/net.cpp" and
+          vendor_head == "ffa519db0f68fb0d5d2acf791e381c898a34a175"):
+        old_sha, old_size, new_sha, new_size = diagnostics_net_successor
+        assert (e["shipping_active_sha256"], e["shipping_bytes"]) == (old_sha, old_size)
+        assert (record["active"], record["bytes"]) == (new_sha, new_size)
     else:
         assert e["shipping_active_sha256"]==record["active"]
         assert e["shipping_bytes"]==record["bytes"]

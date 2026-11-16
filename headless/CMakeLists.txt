@@ -3350,9 +3350,37 @@ if(EDEN_SHARED_NS2_AM)
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_ROOT}")
 endif()
 
-# Retired prototype AM graphics scaling: command 60 used an unverified
-# constant response with no event contract. Do not compile/advertise it.
-# A future real NS2 implementation must derive values from GPU/display state.
+# Switch 2 early SDK services: upstream Eglantine/Lichii and nxnative now
+# corroborate the reply contract that the old prototype lacked. Select the
+# bounded AM graphics-scale and HID JCMS owners together; do not enable the
+# global auto-stub fallback for unrelated NS2 commands.
+if(EDEN_SHARED_NS2_AM)
+    set(EDEN_NS2_EARLY_HLE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+    foreach(eden_ns2_early_hle_relative IN ITEMS
+            "hle/service/am/service/application_proxy.cpp"
+            "hle/service/hid/hid_server.cpp")
+        set(eden_ns2_early_hle_owner
+            "${EDEN_NS2_EARLY_HLE_ROOT}/core/${eden_ns2_early_hle_relative}")
+        if(NOT EXISTS "${eden_ns2_early_hle_owner}")
+            message(FATAL_ERROR "Missing bounded NS2 early-HLE owner: ${eden_ns2_early_hle_relative}")
+        endif()
+        get_target_property(eden_ns2_early_hle_sources core SOURCES)
+        list(FIND eden_ns2_early_hle_sources
+            "${eden_ns2_early_hle_relative}" eden_ns2_early_hle_index)
+        if(eden_ns2_early_hle_index EQUAL -1)
+            message(FATAL_ERROR "Pinned early-HLE owner moved: ${eden_ns2_early_hle_relative}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_early_hle_sources
+            "${eden_ns2_early_hle_relative}")
+        list(APPEND eden_ns2_early_hle_sources
+            "${eden_ns2_early_hle_owner}")
+        set_property(TARGET core PROPERTY SOURCES
+            "${eden_ns2_early_hle_sources}")
+    endforeach()
+    target_include_directories(core BEFORE PRIVATE
+        "${EDEN_NS2_EARLY_HLE_ROOT}")
+endif()
 
 # Native Switch 2 GPU capabilities IOCTLs, experimental only; original
 # Maxwell IOCTL path remains active for all other request IDs.

@@ -1353,9 +1353,7 @@ shipping=json.loads((ROOT/"vendor/encore-active/eden-backports/manifest.json").r
 upstream=json.loads((ROOT/"UPSTREAM.json").read_text())
 assert shipping["pinned_eden_commit"]==upstream["eden_commit"]
 assert len(shipping["entries"])==83
-# Four FW23 maintained sources gained reviewed R23 backports. Their
-# historical F07 source receipts stay immutable; the active shipping manifest
-# contains the new verified exact SHA256 and byte lengths (vendor PR #83).
+# Post-snapshot maintained backports can legitimately advance after the F07\n# optimization register was frozen. Keep the historical register receipts\n# immutable while pinning each reviewed successor to exact active bytes.\n# Includes the four FW23/R23 successors plus GetInfo 29/30/33 from vendor #169-#171.
 r23_fw23_successors = {
     "src/core/hle/service/filesystem/fsp/fsp_srv.cpp": ("14a61732f3a2a8092d2abf452e6929b8eb4e61c0cfc64d1dbe2d23e62cbd7740", 28654,
         "17446c9eb530d62dded19cd174c876be4730a4f845e3fa891d40f45dfd606a60", 28814),
@@ -1365,8 +1363,12 @@ r23_fw23_successors = {
         "763fc78e61b64ef26649a375225dcc395ab971c0b654f8b2e94b3bb0edcd4ff5", 48191),
     "src/core/hle/service/ns/application_manager_interface.h": ("63db35276eed6a82a2f6bc0ad05dd75e2d481fb947c8ab839587853d45e29a33", 5373,
         "9e58227eb0aa757c801a9b5fbd46cf6679fe97d2a615aa87e0d6993865eda400", 6279),
+    "src/core/hle/kernel/svc/svc_info.cpp": ("b118f5e32d2dd711e9815bc85c94e0d10f7d0351a678c772b6d3535de3b4a317", 13479,
+        "fca95ca301fac4bda2d38f53e3254ee2cb287ad7fa6d8556ecf155cfefc79f56", 14845),
+    "src/core/hle/kernel/svc_types.h": ("d7160d1d89405a168a681cf3d261cd4e8089e786f2edb2041d7f932383458ac1", 14184,
+        "9279f2f72c0ac8c1abc9352dafd4fae6f9f2500a0b0fae47ae4312a081098ce9", 14523),
 }
-assert len(r23_fw23_successors)==4
+assert len(r23_fw23_successors)==6
 for e in entries:
     if e["disposition"]!="shipping_backport_integrated_previously":
         continue

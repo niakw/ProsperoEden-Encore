@@ -4,7 +4,8 @@ This documentation-only commit intentionally carries the `[full-build]` marker t
 
 Exact candidate:
 - engine runtime/source baseline after #257: `3963ba8e2e6e8c56df3b1c70bfd5ddaf1d763bb6`;
-- engine main immediately before this trigger: `052031ab7e44f94af8aec8aa07734615072a07bb`;
+- engine main immediately before the first trigger: `052031ab7e44f94af8aec8aa07734615072a07bb`;
+- corrected native-preflight successor receipt merged as #259, main: `568511473450bc4a805139b5472d0f249d109761`;
 - selected vendor gitlink: `ffa519db0f68fb0d5d2acf791e381c898a34a175`;
 - vendor repository main contains only later maintenance/cleanup beyond that selected runtime pin;
 - firmware target: PS5 13.60.
@@ -36,3 +37,5 @@ Acceptance for this run:
 7. only after that mark the package ready for PS5 installation/testing.
 
 Console validation remains separate from a green build.
+
+Retry note: native run `43961249048` stopped before toolchain installation/compilation because the early post-F07 gate had stale exact blobs for `eden_services.{cpp,h}`. PR #259 updated only those reviewed receipts; no runtime/vendor source changed. This trigger is the corrected full build.

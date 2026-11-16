@@ -4,7 +4,7 @@
   "page_size_vendor": "f6ace750bf7a1b37101b420203a7f9633888d4f2",
   "vamm_region_vendor": "035c0333a05954beaa8810c6e28c1377cf500eec",
   "manifest_receipt_vendor": "67926ea4b6960eefebf0427929cf299e8e056013",
-  "active_vendor": "053acc8ddf30fe65f6376564bbd6efef58f07ddc",
+  "active_vendor": "ffa519db0f68fb0d5d2acf791e381c898a34a175",
   "reviewed_getinfo_sources": [
     {
       "path": "src/core/hle/kernel/svc/svc_info.cpp",

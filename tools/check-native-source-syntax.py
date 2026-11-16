@@ -86,6 +86,33 @@ GENERATED_TARGETS = (
     "headless/physical_core.cpp",
 )
 
+# This translation unit includes a CMake-generated SPIR-V header. The real
+# Ninja graph materializes it through eden-vulkan-hud-shaders / OBJECT_DEPENDS,
+# but this standalone -fsyntax-only checker deliberately invokes Clang itself.
+# Reproduce only that prerequisite target before bypassing Ninja.
+HUD_GENERATED_CONSUMER = "headless/vulkan_window_adapt_r08.cpp"
+HUD_GENERATED_TARGET = "eden-vulkan-hud-shaders"
+
+
+def prepare_generated_prerequisites(native_build_dir: Path, selected: tuple[str, ...]) -> str | None:
+    if HUD_GENERATED_CONSUMER not in selected:
+        return None
+    command = [
+        "cmake", "--build", str(native_build_dir.resolve()),
+        "--target", HUD_GENERATED_TARGET,
+    ]
+    try:
+        built = subprocess.run(
+            command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return f"{HUD_GENERATED_TARGET}: {exc}"
+    if built.returncode:
+        detail = (built.stderr or built.stdout)[-3500:]
+        return f"{HUD_GENERATED_TARGET}: prerequisite generation failed\n{detail}"
+    print(f"PS5 generated prerequisite PASS: {HUD_GENERATED_TARGET}", flush=True)
+    return None
+
 def syntax_check_flags(argv: list[str], generated: bool) -> list[str]:
     """Check with the actual target's warning policy, minus invalid Clang flags."""
     result = [flag for flag in argv if flag != "-Wno-error-all"]
@@ -114,6 +141,10 @@ def main() -> int:
     selected = tuple(args.only) if args.only else (
         *TARGETS, *MAINTAINED_CORE_TARGETS, *NATIVE_GRAPHICS_TARGETS,
         *GENERATED_TARGETS, *PINNED_CACHE_TARGETS)
+    generated_failure = prepare_generated_prerequisites(args.native_build_dir, selected)
+    if generated_failure:
+        print(generated_failure, file=sys.stderr, flush=True)
+        return 1
     for relative in selected:
         source_root = (args.native_build_dir.resolve() if relative in GENERATED_TARGETS else
                        args.native_build_dir.resolve().parent / "source"

@@ -104,6 +104,12 @@ assert "-exec touch" not in build
 assert '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON' in build
 assert 'tools/check-native-source-syntax.py' in build
 assert build.index('tools/check-native-source-syntax.py') < build.index('cmake --build "$scratch/native-local"')
+syntax_gate = (root / "tools/check-native-source-syntax.py").read_text()
+assert 'HUD_GENERATED_CONSUMER = "headless/vulkan_window_adapt_r08.cpp"' in syntax_gate
+assert 'HUD_GENERATED_TARGET = "eden-vulkan-hud-shaders"' in syntax_gate
+assert '"cmake", "--build", str(native_build_dir.resolve())' in syntax_gate
+assert '"--target", HUD_GENERATED_TARGET' in syntax_gate
+assert syntax_gate.index("prepare_generated_prerequisites(args.native_build_dir, selected)") < syntax_gate.index("for relative in selected:")
 # Publish a verified FTP title and release bundle independently of optional
 # dependency cache preservation. Do not restore an obsolete dev package path.
 assert "EDEN_TEST_ALL_ON" not in workflow

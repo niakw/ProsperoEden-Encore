@@ -79,6 +79,14 @@ assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
 assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon
 assert "EnsureRetailCase" not in native_icon and "EnsureNlibEnrichment" not in native_icon
 assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
+assert 'CachedGamesDbSquare(recent.title_id)' in svc
+assert 'CachedGamesDbSquare(title_id)' in svc
+assert 'EnsureGamesDbSquare(game.title_id' in native_icon
+assert 'recent.tile_icon = square;' in svc
+assert 'recent.cover = box_art(recent.title_id).front;' not in svc
+assert 'home.last_cover = box_art(title_id).front;' not in svc
+assert 'recent.tile_icon = box_art' not in svc
+assert 'game.box_front' not in native_icon
 assert "!recent.tile_icon.empty()" in icons
 assert "home_media_scan_title_id_" not in icons
 assert 'recent.cover.find("/box-front-")' not in icons

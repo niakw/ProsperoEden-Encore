@@ -123,7 +123,7 @@ def parse(source):
             filename = element.findtext("FileName", "")
             if (gid in games and kind in ("Box - Front", "Box - Back", "Box - Spine",
                                  "Screenshot - Gameplay", "Fanart - Background",
-                                 "Screenshot - Game Title")
+                                 "Screenshot - Game Title", "Square")
                     and IMAGE_FILE.fullmatch(filename)):
                 images.setdefault(gid, {}).setdefault(kind, []).append(
                     (region_code(element.findtext("Region", "")), filename))
@@ -138,7 +138,7 @@ def parse(source):
             key = normalize(label)
             if key:
                 names.setdefault(key, set()).add(gid)
-    lines = ["# Eden Encore retail case index v8 (NS1+NS2, front, back, spine, fanart, title, three gameplay slots)\n"]
+    lines = ["# Eden Encore media index v9 (NS1+NS2: case faces, scenes, square tile)\n"]
     for key, matching in sorted(names.items()):
         if len(matching) != 1:
             continue  # avoid colliding editions / ambiguous matching
@@ -153,16 +153,17 @@ def parse(source):
         # No longer discard Game Title artwork when fanart also exists.
         fanart = regional_candidates(media.get("Fanart - Background", []))
         title_screen = regional_candidates(media.get("Screenshot - Game Title", []))
+        square = regional_candidates(media.get("Square", []))
         # Split three gameplay slots; each gets independent CDN fallback candidates.
         gameplay = regional_candidates(media.get("Screenshot - Gameplay", []),
                                        per_region=3)
         selected = [] if gameplay == "-" else gameplay.split(";")
         shots = [";".join(selected[i::3]) or "-" for i in range(3)]
         if front or back or spine or any(
-                v != "-" for v in (fanart, title_screen, *shots)):
+                v != "-" for v in (fanart, title_screen, *shots, square)):
             lines.append(f"{key}\t{regional_candidates(front)}\t{regional_candidates(back)}"
                          f"\t{regional_candidates(spine)}\t{fanart}"
-                         f"\t{title_screen}\t{shots[0]}\t{shots[1]}\t{shots[2]}\n")
+                         f"\t{title_screen}\t{shots[0]}\t{shots[1]}\t{shots[2]}\t{square}\n")
     return "".join(lines)
 
 def build(archive_path):
@@ -204,6 +205,7 @@ def self_test():
     <GameImage><DatabaseID>5</DatabaseID><Type>Box - Back</Type><Region>North America</Region><FileName>r2_33333333-3333-3333-3333-333333333333.jpg</FileName></GameImage>
     <GameImage><DatabaseID>5</DatabaseID><Type>Box - Spine</Type><Region>North America</Region><FileName>r2_77777777-7777-7777-7777-777777777777.jpg</FileName></GameImage>
     <GameImage><DatabaseID>5</DatabaseID><Type>Fanart - Background</Type><Region>World</Region><FileName>r2_aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.png</FileName></GameImage>
+    <GameImage><DatabaseID>5</DatabaseID><Type>Square</Type><Region>World</Region><FileName>r2_cccccccc-cccc-cccc-cccc-cccccccccccc.png</FileName></GameImage>
     <GameImage><DatabaseID>3</DatabaseID><Type>Box - Back</Type><FileName>55555555-5555-5555-5555-555555555555.jpg</FileName></GameImage>
     <GameImage><DatabaseID>4</DatabaseID><Type>Box - Back</Type><FileName>66666666-6666-6666-6666-666666666666.jpg</FileName></GameImage>
     <GameAlternateName><DatabaseID>1</DatabaseID><AlternateName>Example Voyage</AlternateName></GameAlternateName>
@@ -221,10 +223,11 @@ def self_test():
     assert ns2[2].startswith("us:r2_33333333"), ns2
     assert ns2[3].startswith("us:r2_77777777"), ns2
     assert ns2[4].startswith("world:r2_aaaaaaaa"), ns2
+    assert ns2[9].startswith("world:r2_cccccccc"), ns2
     assert "eu:77777777-7777-7777-7777-777777777777.png" in result
     fields = next(row.split("\t") for row in result.splitlines()
                   if row.startswith("example journey\t"))
-    assert len(fields) == 9, fields
+    assert len(fields) == 10, fields
     assert fields[4].startswith("world:aaaaaaaa"), fields
     assert fields[5].startswith("world:bbbbbbbb"), fields
     assert fields[6].startswith("world:88888888"), fields
@@ -261,7 +264,7 @@ def main():
     # just the total number of matching Switch title names.
     rows = [row.split("\t") for row in result.splitlines()
             if row and not row.startswith("#")]
-    coverage = tuple(sum(len(row) == 7 and row[col] != "-"
+    coverage = tuple(sum(len(row) >= 10 and row[col] != "-"
                          for row in rows) for col in (4, 5, 6))
     print("EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}".format(
         *coverage, len(rows)), flush=True)

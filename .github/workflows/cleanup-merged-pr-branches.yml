@@ -98,6 +98,22 @@ jobs:
           # the final integration contains the maintained runtime/source owners.
           # This is deliberately an exact branch+SHA allowlist, never a pattern.
           approved_superseded = {
+              # Nov16 retest candidates superseded by their reviewed merged successors.
+              # Exact immutable heads only; all corresponding PRs are closed.
+              'fix/diagnostics-sharing-client-20261116':
+                  ('956b7fbacf53591adbdc6a53131d5a360edf35cd', 256),
+              'fix/home-exefs-retail-fallback-20261116':
+                  ('26fe40a0686f84b6407819cfc05a25d6d6376150', 241),
+              'fix/home-local-icon-stability-20261116':
+                  ('44f1f46a88f6fad784fb2fe35babc7b73a642a23', 247),
+              'fix/library-addon-language-propagation-20261116':
+                  ('9eab62b0777554f6fbba50527d4c8a313d7495e8', 240),
+              'fix/library-addon-language-propagation-main-20261116':
+                  ('02b816b40a7f8c5bf8d3d32a2d13fdeed3c9bfdf', 243),
+              'fix/library-metadata-current-main-20261116':
+                  ('aaf07bcc193613d99fddd2d4eb5eae04de946fef', 245),
+              'integration/vendor-retab-diagnostics-post-20261116':
+                  ('58c8ff2587e1d98fcb1dbc795693b440e56ddab4', 254),
               'integrate/vendor-p0-diagnostics-nov14':
                   ('f5a6ddccec29a139311b993564617a2f7590ccab', 179),
               'integration/p0-vendor-ssa-fresh':

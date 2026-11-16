@@ -261,6 +261,15 @@ def font_characters():
 
 # Catalogs written in scripts the console's fonts draw.
 SYSTEM_FONT_CATALOGS = {"ja-JP", "ko-KR", "zh-Hans", "zh-Hant", "el-GR", "th-TH", "ar"}
+FALLBACK_FONT_FILES = {
+    "el-GR": ("NotoSans-Greek.ttf",),
+    "ar": ("NotoSansArabic.ttf",),
+    "th-TH": ("NotoSansThai.ttf",),
+    "ja-JP": ("NotoSansJP.ttf",),
+    "ko-KR": ("NotoSansKR.ttf",),
+    "zh-Hans": ("NotoSansSC.ttf",),
+    "zh-Hant": ("NotoSansTC.ttf",),
+}
 STRICT_CATALOGS = {"fr-FR", "fr-CA", "es-ES", "es-419", "en-US", "en-GB"}
 # Characters that take no room: the zero-width space (a line may break there), direction marks.
 INVISIBLE = {0x200B, 0x200C, 0x200D, 0x200E, 0x200F}
@@ -307,15 +316,28 @@ def cmap_characters(data):
     return characters
 
 
-def system_font_characters():
-    """The characters of the console's fonts in PE_SYSTEM_FONTS, or None when it is not set."""
+def system_font_characters(locale):
+    """Characters available to one locale through deterministic fallback files.
+
+    CI points PE_SYSTEM_FONTS at build_noto_subsets.py output. A developer may
+    instead point it at a PS5 system-font copy; when the named Noto subset is
+    absent all local OTF/TTF files are considered, matching the runtime's
+    multi-face system fallback.
+    """
     folder = os.environ.get("PE_SYSTEM_FONTS")
     if not folder:
         return None
+    root = Path(folder)
+    if not root.is_dir():
+        return None
+    preferred = [root / name for name in FALLBACK_FONT_FILES.get(locale, ())]
+    files = [path for path in preferred if path.is_file()]
+    if preferred and not files:
+        files = [path for path in sorted(root.iterdir())
+                 if path.suffix.lower() in (".otf", ".ttf")]
     characters = set()
-    for path in sorted(Path(folder).iterdir()):
-        if path.suffix.lower() in (".otf", ".ttf"):
-            characters |= cmap_characters(path.read_bytes())
+    for path in files:
+        characters |= cmap_characters(path.read_bytes())
     return characters
 
 
@@ -365,7 +387,6 @@ def write_embedded_fr():
 def check():
     texts = marked_text()
     baked = font_characters()
-    system = system_font_characters()
     failed = False
     french_source = (CATALOGS / "fr-FR.po").read_text(encoding="utf-8")
     if embedded_fr_text() != french_source:
@@ -383,11 +404,12 @@ def check():
         # What can be drawn: the launcher's font, and for the catalogs of other scripts the
         # console's fonts (when they are at hand; otherwise only their Latin text is checked).
         characters = baked | INVISIBLE
-        unchecked = set()
         if path.stem in SYSTEM_FONT_CATALOGS:
+            system = system_font_characters(path.stem)
             if system is None:
-                unchecked = {ord(c) for text in entries.values() for c in text if ord(c) not in characters and c != "\n"}
-                characters = characters | unchecked
+                problems.append(
+                    "deterministic fallback fonts unavailable; run "
+                    "tools/launcher/build_noto_subsets.py and set PE_SYSTEM_FONTS")
             else:
                 characters = characters | system
         strict = path.stem in STRICT_CATALOGS
@@ -412,8 +434,7 @@ def check():
                 warnings.append(f"label not uppercase: {text!r} -> {translation!r}")
             if translation and len(translation) > max(len(text) * 1.7, len(text) + 12):
                 warnings.append(f"long ({len(text)} -> {len(translation)}): {translation!r}")
-        note = f", {len(unchecked)} characters of the console's fonts not checked" if unchecked else ""
-        print(f"{path.name}: {len(entries)} texts, {len(problems)} problems, {len(warnings)} warnings{note}")
+        print(f"{path.name}: {len(entries)} texts, {len(problems)} problems, {len(warnings)} warnings")
         for line in (problems if strict else problems[:40]):
             print("   ", line)
         for line in warnings[:12]:

@@ -2609,7 +2609,8 @@ if(PS5_NATIVE)
     endif()
     add_executable(eden-headless "${EDEN_PORT_DIR}/main.cpp" "${PORT_ROOT}/src/aligned_alloc.c"
         "${EDEN_PORT_DIR}/heap_pages.cpp" "${EDEN_PORT_DIR}/performance.cpp"
-        "${EDEN_PORT_DIR}/crash_report.cpp" "${EDEN_PORT_DIR}/stop_limit.cpp"
+        "${EDEN_PORT_DIR}/crash_report.cpp" "${EDEN_PORT_DIR}/diagnostics_native_client.cpp"
+        "${EDEN_PORT_DIR}/stop_limit.cpp"
         "${EDEN_PORT_DIR}/elevation/elevation.cpp" "${EDEN_PORT_DIR}/ps5_net_compat.c"
         "${EDEN_PORT_DIR}/network_domain_rules.c"
         "${EDEN_PORT_DIR}/network_audit.c"
@@ -2699,6 +2700,9 @@ target_compile_definitions(eden-headless PRIVATE
     EDEN_SHARED_JIT_AVAILABLE=0
     EDEN_JIT_COMPILE_BATCH_AVAILABLE=0)
 target_link_libraries(eden-headless PRIVATE core eden-pad)
+if(PS5_NATIVE)
+    target_link_libraries(eden-headless PRIVATE "${sdk}/target/lib/libSceRandom.so")
+endif()
 add_library(eden-metadata STATIC "${EDEN_PORT_DIR}/metadata_bridge.cpp")
 target_include_directories(eden-metadata PUBLIC "${EDEN_PORT_DIR}" PRIVATE "${PROJECT_SOURCE_DIR}/src")
 target_link_libraries(eden-metadata PUBLIC core stb PRIVATE ZLIB::ZLIB)

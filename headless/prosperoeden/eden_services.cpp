@@ -16,6 +16,7 @@
 #include "performance.h"
 #endif
 #include "diagnostics.h"
+#include "diagnostics_native_client.h"
 #include "encore_overrides_runtime.h"
 #include "metadata_bridge.h"
 #include "title_id_fallback.h"
@@ -2969,7 +2970,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.volume = preferences.volume;
     value.mute = preferences.mute;
     value.detailed_logging = preferences.detailed_logging;
-    // No native collector yet. A stale or hand-edited preference cannot turn sharing on.
+    // Consent remains fail-closed until the native client has a verified HTTPS collector.
     value.share_standard_logs = log_sharing_available() && preferences.share_standard_logs;
     value.share_advanced_logs = log_sharing_available() && preferences.share_advanced_logs;
     value.backend = preferences.renderer == 0 ? Eden::GraphicsBackend::OpenGL : Eden::GraphicsBackend::Vulkan;
@@ -3012,6 +3013,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.show_game_background = preferences.show_game_background;
     value.wallpaper_file = preferences.wallpaper_file;
     const bool saved = Eden::SavePreferences(value);
+    if (saved) Eden::DiagnosticsClient::SetConsent(value.share_standard_logs, value.share_advanced_logs);
     if (!saved) Eden::Report("settings", "Could not write preferences");
 #ifdef PS5_NATIVE
     if (saved) {
@@ -4120,6 +4122,14 @@ std::string EdenServices::setup_details() {
     return setup_.empty() ?
         tr("Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch.") :
         SetupMessage(setup_);
+}
+
+bool EdenServices::log_sharing_available() const {
+#ifdef PS5_NATIVE
+    return Eden::DiagnosticsClient::Available();
+#else
+    return false;
+#endif
 }
 
 pe::ui::DiagnosticsInfo EdenServices::diagnostics() {

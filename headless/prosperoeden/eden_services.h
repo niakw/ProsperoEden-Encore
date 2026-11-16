@@ -64,6 +64,7 @@ public:
     const std::vector<std::string>& language_labels() override;
     std::string language_region(int language) override;
     std::string setup_details() override;
+    bool log_sharing_available() const override;
     pe::ui::DiagnosticsInfo diagnostics() override;
     pe::ui::DiagnosticsInfo diagnostics(const std::atomic<bool>* cancel) override;
     bool clear_shader_caches(std::string* message) override;

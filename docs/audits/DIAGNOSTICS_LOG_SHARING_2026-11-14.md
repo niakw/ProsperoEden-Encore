@@ -1,6 +1,11 @@
 # Diagnostic sharing: event-driven, opt-in, privacy-minimized
 
-Draft only. No native build, no upload or production endpoint enabled.
+Implementation status, 16 November 2026: the controlled collector is deployed at
+`https://encore.dynv6.net/api/diagnostics/v1/` and the VPS production proof
+(run 43928528203) completed report acceptance, duplicate handling, authenticated
+erasure and tombstone rejection. The native client is source/host-qualified in
+the dependent engine PR; no PS5 transmission claim is made until the next native
+build and console test.
 
 The project website niakw/encore-website is a static nginx runtime (Dockerfile 9afc5068b5c80c6924431f365066f5507cc0a667). It has no collector today. The intended independent HTTPS service is separate from static asset serving, on Encore's controlled infrastructure. No GitHub/Forgejo credentials on PS5. Both destinations must be private; Git history is not an erasable log database. Store actual reports in expiring private storage, mirror reviewed nonpersonal aggregates/receipts in separate diagnostics/standard and diagnostics/advanced folders. If individual report mirroring is required, use encrypted report blobs with revocable keys and a tested deletion policy across backups; do not commit raw logs. No public report dump in engine or vendor.
 
@@ -15,3 +20,14 @@ The project website niakw/encore-website is a static nginx runtime (Dockerfile 9
 
 ### State
 UI/persistence, C++ pure admission policy (not yet called) and offline Python reference projection/test. Collector, durable queue, native owner calls, consent epoch and actual transmission not implemented. Settings sharing availability remains false by design. Additional locale translations, synthetic host/relay and PS5 validation pending. No native build without user consent.
+
+
+### Implemented native client contract (source/host; PS5 runtime pending)
+- `DiagnosticsClient::Initialize` performs no network request and accepts only the exact 40-hex build SHA compiled into the native app.
+- User consent remains category-specific and versioned. Revocation immediately drops unsent reports and schedules authenticated erasure of accepted reports.
+- Report identity is per-report UUIDv4 and the 256-bit erase secret is generated from `sceRandomGetRandomNumber`; no account, console, IP or device identifier is included.
+- Crash evidence is projected only after the next healthy launcher opens. Raw reports/logs are never used as the request body.
+- Advanced metrics are projected only from the closed game-session log range after returning to the launcher.
+- Transfers start only after five seconds of launcher inactivity, maximum two attempts per visit, one detached request at a time, one-second HTTP timeout. Game start, shutdown, activity or consent changes cancel queue ownership; no transfer is initiated from a render, guest or crash thread.
+- Local pending/erasure state is bounded and atomically stored mode 0600. The collector caps requests at 32 KiB and retains private reports for 30 days.
+- Production collector deployment is independent from the app build. Native build, PS5 toggle behavior, DNS/TLS and real report delivery/erasure remain explicit hardware acceptance gates.

@@ -51,6 +51,7 @@
 #include "encore_performance_policy.h"
 #include "jit_memory_policy.h"
 #include "diagnostics.h"
+#include "diagnostics_native_client.h"
 #include "display_refresh.h"
 #include "lossless_user_file.h"
 #include "nr_dll_user_file.h"
@@ -547,6 +548,9 @@ int main(int argc, char** argv) {
         // A crash report the previous run left: that run's logs move beside it, and the launcher
         // says where it is (crash_report.h).
         const Eden::Crash::Last last_crash = Eden::Crash::TakeLast(Eden::LogsDir(), Eden::UserDir() + "/log/eden_log.txt");
+#ifdef EDEN_NATIVE_SOURCE_COMMIT
+        Eden::DiagnosticsClient::Initialize(EDEN_NATIVE_SOURCE_COMMIT);
+#endif
         if (!persist_detailed_logs) {
             // TakeLast above has already archived any real crash evidence.
             // Discard leftovers from clean/older runs; never remove crash-*.
@@ -890,6 +894,7 @@ int main(int argc, char** argv) {
         Eden::BootTrace::Line("launcher closed: %s", selected_game.empty() ? "quit" : "game selected");
 #endif
         if (selected_game.empty()) {
+            Eden::DiagnosticsClient::Shutdown();
             Eden::Report("exit", "Launcher closed");
 #ifdef EDEN_DEV_ROM_ID
             // Development runs end here (EDEN_DEV_QUIT): flush the logs and let the log pipes copy
@@ -2854,6 +2859,9 @@ int main(int argc, char** argv) {
         }
 #endif
     } catch (const std::exception& error) {
+#ifdef PS5_NATIVE
+        Eden::DiagnosticsClient::Shutdown();
+#endif
         std::fflush(stdout);
         Eden::Report("fatal startup failure", error.what());
         return 1;

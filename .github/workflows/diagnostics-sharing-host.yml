@@ -4,6 +4,12 @@ on:
     paths:
       - 'headless/diagnostics_sharing_policy.h'
       - 'headless/diagnostics_report_queue.h'
+      - 'headless/CMakeLists.txt'
+      - 'headless/prosperoeden/eden_services.h'
+      - 'headless/prosperoeden/eden_services.cpp'
+      - 'headless/prosperoeden/frontend.cpp'
+      - 'headless/diagnostics_native_client.cpp'
+      - 'headless/diagnostics_native_client.h'
       - 'tools/diagnostics/**'
       - 'headless/settings_store.h'
       - '.github/workflows/diagnostics-sharing-host.yml'
@@ -19,6 +25,7 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 -B tools/diagnostics/test_diagnostic_report_projection.py
+      - run: python3 -B tools/diagnostics/check_native_client_source.py
       - run: |
           c++ -std=c++20 -Wall -Wextra -Werror -Iheadless tools/diagnostics/test_report_queue.cpp -o /tmp/diagnostics-queue-host
           /tmp/diagnostics-queue-host

@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace Eden::DiagnosticsSharing {
@@ -83,6 +84,11 @@ public:
         }
         items_[count_++] = std::move(report);
         return true;
+    }
+    bool Contains(std::string_view id) const noexcept {
+        for (std::size_t i = 0; i < count_; ++i)
+            if (items_[i]->id == id) return true;
+        return active_ && active_.report->id == id;
     }
     std::size_t Count() const noexcept { return count_; }
     std::size_t Bytes() const noexcept {

@@ -38,6 +38,24 @@ assert 'std::array<std::uint8_t, 16> uuid' in client
 assert 'std::array<std::uint8_t, 32> erase' in client
 assert 'libSceRandom.so' in cmake
 
+# Exercise the actual native package policy with the exact successfully linked
+# production binary's import inventory (native run 43968429091).
+import runpy
+import sys
+sys.path.insert(0, str(root / "headless"))
+expected_native_libraries = runpy.run_path(str(root / "headless/check_package.py"))["expected_native_libraries"]
+profile = {"renderer": "opengl-4.6-compatibility", "vulkan": True, "gpu_probe": False}
+observed = sorted(["libSceAgc.prx", "libSceAgcDriver.prx", "libSceAudioOut.sprx",
+                   "libSceLibcInternal.sprx", "libSceNet.sprx", "libScePad.sprx",
+                   "libSceRandom.sprx", "libSceSysmodule.sprx",
+                   "libSceSystemService.sprx", "libSceUserService.sprx",
+                   "libSceVideoOut.sprx", "libkernel.sprx"])
+expected = expected_native_libraries(profile)
+assert expected == observed
+assert expected != [module for module in observed if module != "libSceRandom.sprx"]
+assert expected != sorted(observed + ["libUnexpected.sprx"])
+print("DIAGNOSTICS_PACKAGE_IMPORT_CONTRACT_PASS production_exact=12")
+
 # Explicit versioned consent, queue bounds, idle-only lifecycle and nonblocking detached transfer.
 assert "sharing_consent_version" in settings
 assert "bool log_sharing_available() const override;" in service_h

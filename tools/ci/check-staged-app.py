@@ -3,6 +3,7 @@
 from pathlib import Path
 import json
 import os
+import runpy
 import sys
 
 root = Path(__file__).resolve().parents[2]
@@ -56,7 +57,10 @@ legal_source = root / "LICENSES"
 legal_expected = {"legal/LICENSE", "legal/THIRD_PARTY_NOTICES.md", "legal/LIBWEBP_LICENSE.txt", "legal/LIBWEBP_PATENTS.txt", "legal/MIHAWKGEN_LICENSE.md", "legal/MIHAWKGEN_THIRD_PARTY_NOTICES.txt", "legal/FSR3_OPTICAL_LICENSE.txt", "legal/FSR3_OPTICAL_SHADER_LICENSE.txt"} | {
     "legal/LICENSES/" + p.name for p in legal_source.iterdir() if p.is_file()
 }
-expected = base | ui_expected | legal_expected
+# The generated fonts are not checked into source_ui. Verify their exact
+# content and admit only the expected generated paths, including on resume.
+verify_fonts = runpy.run_path(str(root / "tools/launcher/check_packaged_fonts.py"))["verify_fonts"]
+expected = base | ui_expected | legal_expected | verify_fonts(root, app)
 actual = {p.relative_to(app).as_posix() for p in app.rglob("*") if p.is_file()}
 # Daily art downloads belong only to the user's opt-in data directory;
 # neither a first install nor a release update may stage them.

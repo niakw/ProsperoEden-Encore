@@ -10,6 +10,11 @@ on:
       - 'headless/prosperoeden/frontend.cpp'
       - 'headless/diagnostics_native_client.cpp'
       - 'headless/diagnostics_native_client.h'
+      - 'headless/check_package.py'
+      - 'tools/ci/check-staged-app.py'
+      - 'tools/launcher/check_packaged_fonts.py'
+      - 'tools/launcher/test_packaged_fonts.py'
+      - 'tools/launcher/noto_fallbacks.json'
       - 'tools/diagnostics/**'
       - 'headless/settings_store.h'
       - '.github/workflows/diagnostics-sharing-host.yml'
@@ -26,6 +31,7 @@ jobs:
           persist-credentials: false
       - run: python3 -B tools/diagnostics/test_diagnostic_report_projection.py
       - run: python3 -B tools/diagnostics/check_native_client_source.py
+      - run: python3 -B tools/launcher/test_packaged_fonts.py
       - run: |
           c++ -std=c++20 -Wall -Wextra -Werror -Iheadless tools/diagnostics/test_report_queue.cpp -o /tmp/diagnostics-queue-host
           /tmp/diagnostics-queue-host

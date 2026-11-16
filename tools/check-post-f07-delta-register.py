@@ -19,18 +19,18 @@ assert len({e["path"] for e in entries})==len(entries)
 stop_entry=next(e for e in entries if e["path"]=="headless/stop_limit.cpp")
 assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"
 assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting app without automatic restart"
-# Nov15 launcher successors merged by engine #207/#209. Preserve each prior
+# Nov15-Nov16 launcher/service successors. Preserve each prior
 # register blob and admit only the exact currently selected reviewed successor;
-# #209's size worker changes eden_services.cpp but does not rewrite the frozen
+# Later reviewed ExeFS/media/diagnostics changes do not rewrite the frozen
 # historical register or widen acceptance to arbitrary drift.
 successors={
     "headless/prosperoeden/eden_services.cpp": (
         "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
-        "310e21f75f4e2524b90534d5b9122c6bc587a4f2",
+        "6efc431641ace097b7216748e1e232c8cc9f1ae1",
     ),
     "headless/prosperoeden/eden_services.h": (
         "604a9d15118390b7f9b7e1265d38a91ff97c4a23",
-        "f3d2ca33cc2e42eeafef26207784bd43b6da918b",
+        "7c4133b4e2f0340aa1e0e182ae469619d5a8c687",
     ),
     "headless/prosperoeden/pe/ui/launcher.cpp": (
         "1e488a05689b29baf8c4318d98be52506816cfaa",

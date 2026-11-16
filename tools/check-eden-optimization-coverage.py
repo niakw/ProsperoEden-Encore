@@ -1399,6 +1399,12 @@ historical_getinfo_relpaths = {
     "src/core/hle/kernel/svc/svc_info.cpp",
     "src/core/hle/kernel/svc_types.h",
 }
+post_f07_diagnostics_successors = {
+    "src/common/net/net.cpp": (
+        "b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,
+        "9d3d56b9fa6b4a47097aa32c18b42e8839c547915d3af19aa37830dd75ac5da8", 11862,
+    ),
+}
 for e in entries:
     if e["disposition"]!="shipping_backport_integrated_previously":
         continue

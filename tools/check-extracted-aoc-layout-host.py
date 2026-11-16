@@ -131,7 +131,7 @@ end = ui.index("\nvoid eden_scan_addons(", start)
 snapshot_owner = ui[start:end]
 assert "class AddOnScanTransaction" in snapshot_owner
 assert "ScannedAddOns().clear();" not in ui
-assert "if (!UpdatesScanCompleted()) return 0;" in ui
+assert "if (!UpdatesScanCompleted()) return -1;" in ui
 assert "if (!UpdatesScanCompleted()) return chosen;" in ui
 snapshot_test = r"""
 #include <cassert>

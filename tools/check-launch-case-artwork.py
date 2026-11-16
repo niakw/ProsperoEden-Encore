@@ -843,15 +843,19 @@ std::optional<string> MakeRequest(const char*, const string& path) {
     string bytes(1200, 'x');
     bytes[0]=static_cast<char>(0xff); bytes[1]=static_cast<char>(0xd8);
     bytes[2]=path.find("bad")!=string::npos ? 'b' : 'g';
+    bytes[3]=path.find("square")!=string::npos ? 's' : 'r';
     return bytes;
 }
 }
-int stbi_info_from_memory(const unsigned char*, int, int* w,int* h,int* c){
-    *w=400;*h=640;*c=3;return 1;
+int stbi_info_from_memory(const unsigned char* body, int, int* w,int* h,int* c){
+    *w=body[3]=='s' ? 512 : 400;
+    *h=body[3]=='s' ? 512 : 640;
+    *c=3;return 1;
 }
 const char* stbi_failure_reason(){ return "fixture"; }
-bool WriteJpegWebP(const string& body,const string& out,bool,bool* decode_failed,int max_edge=0) {
+bool WriteJpegWebP(const string& body,const string& out,bool tall_case,bool* decode_failed,int max_edge=0) {
     assert(max_edge == 0 || max_edge == 512);
+    if (max_edge == 512) assert(!tall_case);
     ++encodes;
     *decode_failed=body[2]=='b';
     if(*decode_failed) return false;

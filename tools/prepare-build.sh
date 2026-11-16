@@ -67,6 +67,7 @@ fi
 # existing native CPM caches remain available for incremental builds.
 step "Pinned PS5 Eden CPM source cache (fully vendored)"
 python3 -B tools/vendor-eden-cpm.py --stage "$eden"
+python3 -B tools/stage-lz4-cmake-policy.py "$eden"
 # The FFmpeg source Eden pins, where Eden's package cache keeps it.
 ffmpeg_source="$eden/.cache/cpm/ffmpeg/c7b5f1537d"
 if [[ ! -f $ffmpeg_source/configure ]]; then

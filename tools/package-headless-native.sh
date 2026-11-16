@@ -53,7 +53,7 @@ cp -a "$root/headless/prosperoeden/ui" "$app/ui"
 noto_fallback_dir="${EDEN_NOTO_FALLBACK_DIR:-$root/build/generated/noto-fallback}"
 test -f "$noto_fallback_dir/receipt.json"
 mkdir -p "$app/ui/fonts/fallback"
-cp "$noto_fallback_dir/"*.ttf "$noto_fallback_dir/receipt.json" "$app/ui/fonts/fallback/"
+cp "$noto_fallback_dir/"*.ttf "$noto_fallback_dir/receipt.json" "$app/ui/fonts/fallback/"\ncp "$root/third_party/fonts/Montserrat-Medium.ttf" "$app/ui/fonts/fallback/Montserrat-Medium.ttf"
 # Daily Switch artwork is deliberately NOT bundled with the base install.
 # The first user selection of the opt-in Daily background initializes its
 # eight-image WebP cache under UserDir()/wallpapers/daily on a background

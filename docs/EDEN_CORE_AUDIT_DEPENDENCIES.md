@@ -245,17 +245,17 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 508 | 485 | 1018 |
+| Graphe connu | 509 | 486 | 1019 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 423 | 413 | 852 |
+| SOURCE — lecture effectuée, preuve insuffisante | 424 | 414 | 853 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **438** | **427** | **880** |
-| Dont priorité P0 (SOURCE + OPEN) | 110 | 105 | 242 |
+| **Encore à qualifier (SOURCE + OPEN)** | **439** | **428** | **881** |
+| Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
 
-Le **noyau restant** compte donc 438 critères répartis sur
-427 fichiers et 880 mentions fonction/contrat :
-15 OPEN et 423 SOURCE.
+Le **noyau restant** compte donc 439 critères répartis sur
+428 fichiers et 881 mentions fonction/contrat :
+15 OPEN et 424 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans
@@ -960,9 +960,10 @@ function/contract tokens are checked by CI for existence only; the
 | U91 | P0 | J11 | vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_32.cpp | m_process->GetPhysicalCoreMask() | SOURCE | tools/ns2/check_cpu6_scheduler_tick_host.py | A32 per-process physical affinity preserves four-core cadence on NS1; full-source parity and UBSan host only | 🟡 Source étudiée |
 | U92 | P0 | J11 | vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_64.cpp | m_process->GetPhysicalCoreMask() | SOURCE | tools/ns2/check_cpu6_scheduler_tick_host.py | Optimized G11/N76 native A64 owner plus reviewed six-core tick rule, selected without a DEV build switch; no console proof | 🟡 Source étudiée |
 | U93 | P0 | J11 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.h | GetName | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Identical pinned decoder interface, static copy to the single A64 overlay, no research PAC decoder | 🟡 Source étudiée |
-| U94 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc | INST(LDAPR, | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | One reviewed LDAPR decode instruction added to pinned A64 table; full byte parity and negative-drift host check | 🟡 Source étudiée |
+| U94 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc | INST(LDAPR, | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Reviewed LDAPR plus RETAA/RETAB decode rows added to pinned A64 table; full byte parity and negative-drift host check, no general PAC/LSE | 🟡 Source étudiée |
 | U95 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h | bool LDAPR(Imm<2> size, Reg Rn, Reg Rt) | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Reviewed A64 translator declaration for RCpc acquisition; no LSE/CAS promotion | 🟡 Source étudiée |
 | U96 | P0 | U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp | bool TranslatorVisitor::LDAPR( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Real LDAPR-to-LDAR acquire lowering, exact pinned diff and Clang host decoder/syntax proof, no PS5 validation | 🟡 Source étudiée |
+| U97 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp | bool TranslatorVisitor::RETA( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Lichii-compatible no-PAC RETAA/RETAB raw-X30 return with PopRSBHint; exact pinned-base delta, general PAC/LSE excluded, PS5 gameplay pending | 🟡 Source étudiée |
 <!-- AUDIT_ROWS_END -->
 
 

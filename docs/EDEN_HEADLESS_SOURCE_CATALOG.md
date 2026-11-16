@@ -53,7 +53,7 @@ Quarante-cinq en-têtes applicatifs supplémentaires sont désormais rattachés
 `tools/check-headless-final-owners.py`. Ce classement ne les
 transforme pas en overrides des dépendances ni en preuves d'exécution PS5.
 
-Les sept propriétaires CPU6/LDAPR (U90–U96) résident dans
+Les huit propriétaires CPU6/LDAPR/RETA (U90–U97) résident dans
 `vendor/encore-active/ns2-runtime/`, pas dans `headless/`. Ils restent
 audités séparément du catalogue historique F07 et des sources NS2 de recherche.
 

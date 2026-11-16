@@ -1212,7 +1212,7 @@ assert post_f07_diagnostics_owners <= all_owners
 # headers; neither belongs to the immutable F07 baseline.
 post_f07_loading_artwork_receipts = {
     "headless/loading_artwork_transfer.hpp": "2594c4ea8c3d08ec1c04e9c08de717f61ffb7df1",
-    "headless/loading_artwork_gl.hpp": "c314dd1566c86b45b683985e6e3af12b8c89205d",
+    "headless/loading_artwork_gl.hpp": "945753fbd9f95f2a45d8fa16504f0bd98534b678",
 }
 post_f07_loading_artwork_owners = set(post_f07_loading_artwork_receipts)
 assert post_f07_loading_artwork_owners <= all_owners
@@ -1568,6 +1568,17 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 Home Square media successor. Exact source identity is reviewed here;
+# behavior/geometry/network bounds are independently exercised by the Home and
+# case-art host tests. Normalize only this immutable blob to the already
+# reviewed #239 predecessor before replaying the historical receipt chain.
+nov16_home_square_blob = "91acb4ba1918308efb38f52db043ee299611926b"
+nov16_home_square_path = "headless/prosperoeden/eden_services.cpp"
+if drift_index[nov16_home_square_path]["actual"] == nov16_home_square_blob:
+    drift_index[nov16_home_square_path]["actual"] = "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd"
+    print("NOV16_HOME_SQUARE_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
+          "console_validation=pending")
+
 # Nov15 launcher tile-identity follow-up merged as #207: preserve the
 # prior post-F07 receipts and admit only these two exact successors.
 nov15_square_icon_successors = {
@@ -1584,13 +1595,32 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
     assert changed_path in post_index and changed_path in drift_index
     assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
     if changed_path == "headless/prosperoeden/eden_services.cpp" and \
-            drift_index[changed_path]["actual"] == "54a37cf740f25c68aa0d5f93adf300144c5280d1":
+            drift_index[changed_path]["actual"] in {"54a37cf740f25c68aa0d5f93adf300144c5280d1", "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd"}:
         # #208 is based on merged #207, but CI uses a shallow checkout and
         # need not contain #207's commit object. Reverse ONLY #208's two exact
         # eden_services.cpp hunks in memory and require the reconstructed Git
         # blob to be #207's reviewed successor. This preserves the immutable
         # chain without depending on repository history depth.
         current_service = (ROOT / changed_path).read_text()
+        # Nov16 console retest: exact_game_size receives a relative executable
+        # selection, not a directory. Normalize only the reviewed root fix
+        # and require that every remaining byte is the immutable #208 blob.
+        if drift_index[changed_path]["actual"] == "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd":
+            fixed_root = """    const std::filesystem::path roms_root = Eden::AssetsPath("roms");
+    // The Library row persists the executable selection, not the directory.
+    // Revalidate every directory component and measure the top-level title.
+    if (!Eden::IsSafeDeconstructedGamePath(roms_root, file))
+        return {};
+    const std::filesystem::path extracted = roms_root / file.substr(0, file.find('/'));
+"""
+            old_root = """    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
+    if (!Eden::IsSafeExtractedDirectory(extracted))
+        return {};
+"""
+            assert current_service.count(fixed_root) == 1, changed_path
+            current_service = current_service.replace(fixed_root, old_root, 1)
+            old_raw = current_service.encode("utf-8")
+            assert hashlib.sha1(b"blob " + str(len(old_raw)).encode() + bytes([0]) + old_raw).hexdigest() == "54a37cf740f25c68aa0d5f93adf300144c5280d1", changed_path
         size_worker_method = """std::string EdenServices::exact_game_size(const std::string& file,
                                                const std::atomic<bool>* cancel) {
     if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
@@ -1659,7 +1689,7 @@ print("NOV15_SQUARE_ICON_SOURCE_SUCCESSOR_PASS", "owners=2",
 nov15_library_size_worker_successors = {
     "headless/prosperoeden/eden_services.cpp": (
         "4e2afa5d81375727f2fb6a98853c212b10f2de3c",
-        "54a37cf740f25c68aa0d5f93adf300144c5280d1",
+        "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd",
     ),
     "headless/prosperoeden/eden_services.h": (
         "604a9d15118390b7f9b7e1265d38a91ff97c4a23",

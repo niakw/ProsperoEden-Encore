@@ -2130,7 +2130,7 @@ msgstr "雙三次：比雙線性更銳利，但可能會產生明亮的邊緣。
 
 #: R07 SGSR graphics
 msgid "Image sharpness affects FSR 1 and SGSR only. Start at 50% and reduce it if fine edges shimmer or show halos."
-msgstr "图像清晰度仅影响 FSR 1 和 SGSR。從 50% 開始，如果細邊緣閃爍或出現光暈，則減少該值。"
+msgstr "圖像清晰度僅影響 FSR 1 和 SGSR。從 50% 開始，如果細邊緣閃爍或出現光暈，則減少該值。"
 
 #: R07 SGSR graphics
 msgid "SHARPNESS"

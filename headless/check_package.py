@@ -95,6 +95,10 @@ def check():
                      'libSceVideoOut.sprx']
     if frontend.get('vulkan'):
         expected.append('libSceSysmodule.sprx')
+    if not frontend.get('gpu_probe'):
+        # The production diagnostics client uses the SDK RNG for report IDs
+        # and erase secrets. Keep the DT_NEEDED contract exact (run 43968429091).
+        expected.append('libSceRandom.sprx')
     if frontend.get('gpu_probe'):
         expected.remove('libSceNet.sprx')  # Guest networking is dead-stripped from this entry.
     assert needed == sorted(expected), needed

@@ -31,7 +31,9 @@ def fetch(repo: str, commit: str, path: str) -> bytes:
 def catalog_codepoints(locales: list[str]) -> set[int]:
     module=runpy.run_path(str(ROOT/"tools/launcher/strings.py"))
     parse_po=module["parse_po"]
-    # The in-game menu composes localized labels with language-neutral Vulkan/AA/FPS values.\n    # Keep printable ASCII in every fallback so a whole mixed row can be shaped by one face.\n    codepoints=set(range(0x20,0x7f)) | {0x00A0,0xFFFD}
+    # The in-game menu composes localized labels with language-neutral Vulkan/AA/FPS values.
+    # Keep printable ASCII in every fallback so a whole mixed row can be shaped by one face.
+    codepoints=set(range(0x20,0x7f)) | {0x00A0,0xFFFD}
     for locale in locales:
         path=CATALOGS/f"{locale}.po"
         entries=parse_po(path)

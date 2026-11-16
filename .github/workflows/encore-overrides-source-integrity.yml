@@ -16,6 +16,8 @@ on:
   pull_request:
     paths:
       - 'vendor'
+      - 'encore-overrides'
+      - '.gitmodules'
       - 'tools/deps.json'
       - 'tools/check-vendored-overrides.py'
       - 'tools/check-vendored-deps.py'

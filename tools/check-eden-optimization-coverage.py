@@ -1568,6 +1568,29 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 add-on catalogue truth-state: these two historical U13/U14 owners
+# change only the tri-state API contract. They are not inserted into the
+# immutable post-F07 register; pin and retire their exact drifts here.
+nov16_addon_metadata_successors = {
+    "headless/metadata_bridge.cpp": (
+        "8c6f59e7810bad7964d82dd6416f77617afe9ffa",
+        "728f220da4942cf4b849f75cfdda974ad5fd7508",
+    ),
+    "headless/metadata_bridge.h": (
+        "a8ebfa5fad322c81b6562dedc6e2a7c680a5cfa9",
+        "0523a44856385ba64b20298c44e735be1c06180b",
+    ),
+}
+for changed_path, (prior_blob, successor_blob) in nov16_addon_metadata_successors.items():
+    assert changed_path not in post_index, changed_path
+    assert changed_path in drift_index, changed_path
+    delta = drift_index.pop(changed_path)
+    assert delta["expected"] == prior_blob, changed_path
+    assert delta["actual"] == successor_blob, changed_path
+print("NOV16_ADDON_METADATA_SOURCE_SUCCESSOR_PASS", "owners=2",
+      "console_validation=pending")
+
+
 # Nov15 launcher tile-identity follow-up merged as #207: preserve the
 # prior post-F07 receipts and admit only these two exact successors.
 nov15_square_icon_successors = {
@@ -1704,6 +1727,27 @@ for changed_path, (prior_blob, successor_blob) in nov15_library_size_worker_succ
     post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
 print("NOV15_LIBRARY_SIZE_WORKER_SOURCE_SUCCESSOR_PASS", "owners=5",
       "media_ungated=1", "console_validation=pending")
+
+# AddOnSummary now distinguishes scan-unknown from confirmed empty. Reverse
+# only this reviewed hunk and require the exact #239 EdenServices predecessor.
+nov16_addon_summary_successor = "ea879f0aca249fabf6a5624d2f72a126e035cd8a"
+changed_path = "headless/prosperoeden/eden_services.cpp"
+if drift_index[changed_path]["actual"] == nov16_addon_summary_successor:
+    current_service = (ROOT / changed_path).read_text()
+    new_summary = """    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
+    if (status < 0) return tr("Unknown");
+    std::string text;"""
+    prior_summary = """    eden_game_addons(title_id, update, sizeof(update), &dlc);
+    std::string text;"""
+    assert current_service.count(new_summary) == 1, changed_path
+    reconstructed = current_service.replace(new_summary, prior_summary, 1)
+    raw = reconstructed.encode("utf-8")
+    reconstructed_blob = hashlib.sha1(
+        b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert reconstructed_blob == "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd", changed_path
+    post_index[changed_path]["post_snapshot_git_blob"] = nov16_addon_summary_successor
+print("NOV16_ADDON_SUMMARY_SOURCE_SUCCESSOR_PASS", "owners=1",
+      "console_validation=pending")
 
 # R457 only: retain immutable October F07 blobs while tracking the separately
 # reviewed 34-file November+Nov13 post-F07 delta register. Track

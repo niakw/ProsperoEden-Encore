@@ -78,8 +78,8 @@ def build_matrix(rows: list[dict], workflow: str, catalog: str) -> tuple[list[di
         "<!-- ACTIVE_SOURCE_CATALOG_END -->")[0]
     new_catalog = catalog.split(post_begin)[1].split(post_end)[0]
     post_source_ids = {r["id"] for r in rows if r["id"] in {
-        "U90", "U91", "U92", "U93", "U94", "U95", "U96"}}
-    assert len(post_source_ids) == 7, "lost post-F07 owner audit IDs"
+        "U90", "U91", "U92", "U93", "U94", "U95", "U96", "U97"}}
+    assert len(post_source_ids) == 8, "lost post-F07 owner audit IDs"
     accounted = 0
     for row in rows:
         assert all(p in keyed and p != row["id"] for p in row["prerequisites"]), row["id"]

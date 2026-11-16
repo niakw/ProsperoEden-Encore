@@ -779,6 +779,11 @@ void Launcher::finish_home_media()
             if (!enriched.developer.empty()) game.developer = enriched.developer;
             if (!enriched.release_date.empty()) game.release_date = enriched.release_date;
             if (!enriched.categories.empty()) game.categories = enriched.categories;
+            if (!enriched.addons.empty()) game.addons = enriched.addons;
+            if (!enriched.addons_short.empty()) game.addons_short = enriched.addons_short;
+            if (!enriched.language.empty()) game.language = enriched.language;
+            if (!enriched.language_note.empty()) game.language_note = enriched.language_note;
+            sync_home_game(game);
             // Home's Nlib result must refresh every installed copy of this
             // TitleID, not just the first item encountered in a rescan.
             // A zero or changed identity never inherits its metadata.
@@ -872,6 +877,10 @@ void Launcher::finish_selected_media()
             if (!enriched.developer.empty()) game.developer = enriched.developer;
             if (!enriched.release_date.empty()) game.release_date = enriched.release_date;
             if (!enriched.categories.empty()) game.categories = enriched.categories;
+            if (!enriched.addons.empty()) game.addons = enriched.addons;
+            if (!enriched.addons_short.empty()) game.addons_short = enriched.addons_short;
+            if (!enriched.language.empty()) game.language = enriched.language;
+            if (!enriched.language_note.empty()) game.language_note = enriched.language_note;
             if (!enriched.size.empty() && enriched.size != "—") game.size = enriched.size;
             // A single Nlib lookup belongs to a TitleID and must update
             // EVERY installed copy; moving into the first one silently
@@ -1907,7 +1916,8 @@ void Launcher::draw_library(Canvas &c)
             library_format(game->format),
             library_size(game->size),
             mode,
-            game->language.empty() ? std::string{tr("Unknown")} : game->language,
+            tr("Language") + ": " +
+                (game->language.empty() ? std::string{tr("Unknown")} : game->language),
             addons,
         };
         float chip_x = 337.0f;

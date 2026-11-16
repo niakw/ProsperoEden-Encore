@@ -3177,7 +3177,7 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     # load_store_exclusive.cpp as source text. All 4 generated files must
     # resolve under one include root, before the vendored Dynarmic headers.
     target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")
-    message(STATUS "Encore shared A64: reviewed LDAPR acquire (LDAR), no PAC/LSE research")
+    message(STATUS "Encore shared A64: reviewed LDAPR + RETAA/RETAB no-PAC return; no general PAC/LSE research")
 endif()
 
 # Unified NS2 six-core kernel owner; each process retains its physical

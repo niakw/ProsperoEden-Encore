@@ -1584,6 +1584,46 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 diagnostics-sharing source successors. These application-owned files
+# layer the reviewed native diagnostics client onto source owners already
+# covered by the immutable post-F07 provenance chains below. Bind each exact
+# successor blob and its required client marker, then resume qualification from
+# the exact main predecessor. Independent diagnostics-sharing host tests cover
+# consent/queue/idle/fail-closed behavior; this block is source identity only.
+nov16_diagnostics_source_successors = {
+    "headless/prosperoeden/eden_services.cpp": (
+        "310e21f75f4e2524b90534d5b9122c6bc587a4f2",
+        "6efc431641ace097b7216748e1e232c8cc9f1ae1",
+        ("DiagnosticsClient::SetConsent(", "bool EdenServices::log_sharing_available() const"),
+    ),
+    "headless/prosperoeden/eden_services.h": (
+        "f3d2ca33cc2e42eeafef26207784bd43b6da918b",
+        "7c4133b4e2f0340aa1e0e182ae469619d5a8c687",
+        ("bool log_sharing_available() const override;",),
+    ),
+    "headless/prosperoeden/frontend.cpp": (
+        "25884807fdf7759834cb232548184ffefca715d4",
+        "c199a16ae2d894baca14ea2373273e09c38e872a",
+        ("DiagnosticsClient::EnterLauncher(", "DiagnosticsClient::Poll();"),
+    ),
+    "headless/main.cpp": (
+        "4ae6fdfb9fbb9e405169ef397ef4ada994614260",
+        "cec82ca188a151264acb3d2498fd7ad41a7cb697",
+        ("DiagnosticsClient::Initialize(", "DiagnosticsClient::Shutdown();"),
+    ),
+}
+for changed_path, (predecessor_blob, successor_blob, markers) in nov16_diagnostics_source_successors.items():
+    if changed_path not in drift_index:
+        continue
+    if drift_index[changed_path]["actual"] != successor_blob:
+        continue
+    current_source = (ROOT / changed_path).read_text()
+    for marker in markers:
+        assert marker in current_source, (changed_path, marker)
+    drift_index[changed_path]["actual"] = predecessor_blob
+    print("NOV16_DIAGNOSTICS_SOURCE_SUCCESSOR_PASS", changed_path,
+          "predecessor=main", "console_validation=pending")
+
 # Nov16 startup Library latency: Home already owns the complete add-on scan
 # before it starts the initial Library worker. Reverse only the removed
 # duplicate games() scan and require exact parity with the reviewed #248 blob.

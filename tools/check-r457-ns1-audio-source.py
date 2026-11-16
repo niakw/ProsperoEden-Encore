@@ -51,6 +51,7 @@ KNOWN_VENDOR_GRAPH = {
     "50a849a93494f442d47573b8ce8b8797c3cecd26": "same reviewed graph + NS2 GetInfo 29/30/33 + GPU-access SVC header parity",
     "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab": "same reviewed graph + exact native GPU dirty-manager complete-type includes; vendor maintenance/tests only otherwise",
     "053acc8ddf30fe65f6376564bbd6efef58f07ddc": "same reviewed NS1/audio/GPU graph + NS2 A64 RETAA/RETAB maintained owner only",
+    "ffa519db0f68fb0d5d2acf791e381c898a34a175": "same reviewed NS1/audio/GPU/RETA graph + bounded HTTPS JSON diagnostics transport",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

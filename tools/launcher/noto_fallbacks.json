@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "source_repository": "google/fonts",
+  "source_commit": "7af0d90b4d532ffa4b041937b560c6df4e7b1e95",
+  "generated_weight": 500,
+  "generated_width": 100,
+  "max_total_bytes": 6291456,
+  "fonts": [
+    {
+      "id": "greek",
+      "output": "NotoSans-Greek.ttf",
+      "source": "ofl/notosans/NotoSans[wdth,wght].ttf",
+      "git_blob": "75575046c015ff623a848096a15779867ba71453",
+      "locales": [
+        "el-GR"
+      ],
+      "axes": {
+        "wdth": 100,
+        "wght": 500
+      }
+    },
+    {
+      "id": "arabic",
+      "output": "NotoSansArabic.ttf",
+      "source": "ofl/notosansarabic/NotoSansArabic[wdth,wght].ttf",
+      "git_blob": "f1d01edce4ebaedcbe9a06fc75fec07b304ec3df",
+      "locales": [
+        "ar"
+      ],
+      "axes": {
+        "wdth": 100,
+        "wght": 500
+      }
+    },
+    {
+      "id": "thai",
+      "output": "NotoSansThai.ttf",
+      "source": "ofl/notosansthai/NotoSansThai[wdth,wght].ttf",
+      "git_blob": "34b48ab6f74867dbfce19410a2f452abef34e3ff",
+      "locales": [
+        "th-TH"
+      ],
+      "axes": {
+        "wdth": 100,
+        "wght": 500
+      }
+    },
+    {
+      "id": "japanese",
+      "output": "NotoSansJP.ttf",
+      "source": "ofl/notosansjp/NotoSansJP[wght].ttf",
+      "git_blob": "cdd8f083c1f5928ff3361f8cda4d3fc9462cbe89",
+      "locales": [
+        "ja-JP"
+      ],
+      "axes": {
+        "wght": 500
+      }
+    },
+    {
+      "id": "korean",
+      "output": "NotoSansKR.ttf",
+      "source": "ofl/notosanskr/NotoSansKR[wght].ttf",
+      "git_blob": "b386890ba945e1f39448a6b59f20c5d194f58808",
+      "locales": [
+        "ko-KR"
+      ],
+      "axes": {
+        "wght": 500
+      }
+    },
+    {
+      "id": "simplified-chinese",
+      "output": "NotoSansSC.ttf",
+      "source": "ofl/notosanssc/NotoSansSC[wght].ttf",
+      "git_blob": "fb0637bafbcd804fe32152370a1225990745b4bc",
+      "locales": [
+        "zh-Hans"
+      ],
+      "axes": {
+        "wght": 500
+      }
+    },
+    {
+      "id": "traditional-chinese",
+      "output": "NotoSansTC.ttf",
+      "source": "ofl/notosanstc/NotoSansTC[wght].ttf",
+      "git_blob": "82943579ad39c281212df8f14ac999824694a6ab",
+      "locales": [
+        "zh-Hant"
+      ],
+      "axes": {
+        "wght": 500
+      }
+    }
+  ]
+}

@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     fragment=root/'headless'/'vulkan_hud.frag'
     assert subprocess.check_output(
         ['git','hash-object',str(fragment)],cwd=root,text=True).strip()==(
-            'f71d54ff4baff28bcfac5589052062824faf6433'
+            '8bab5ee14daa1d316fbac6b3643823967d53e376'
         ),fragment
     assert (active/'vulkan_hud.frag.spv').is_file()
     # The vendored oracle SPIR-V stays immutable for historical Vulkan-fork

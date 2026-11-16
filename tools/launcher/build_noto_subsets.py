@@ -94,7 +94,10 @@ def main() -> None:
     receipts=[]
     total=0
     primary_data=(ROOT/"third_party/fonts/Montserrat-Medium.ttf").read_bytes()
-    primary_covered=cmap(primary_data)
+    # Coverage must hold for both the original shaping face and the shipping
+    # OpenGL atlas, which intentionally does not bake the entire TTF cmap.
+    baked=runpy.run_path(str(ROOT/"tools/launcher/strings.py"))["font_characters"]()
+    primary_covered=cmap(primary_data) & baked
     for item in spec["fonts"]:
         source_name=Path(item["source"]).name
         if args.offline_source:
@@ -112,7 +115,7 @@ def main() -> None:
         if source_missing:
             raise RuntimeError(f"{item['id']}: neither Montserrat nor fallback covers "+
                                ",".join(f"U+{c:04X}" for c in source_missing[:20]))
-        # Keep the fallback subset limited to glyphs Montserrat cannot render.
+        # Keep the fallback subset limited to glyphs not supplied by both primary paths.
         # fontTools retains the GSUB/GPOS closure needed by shaped scripts.
         built=subset_font(data,fallback_required,item.get("axes",{}))
         covered=cmap(built)

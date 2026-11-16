@@ -299,9 +299,11 @@ def cmap_characters(data):
         if kind == 12:
             for group in range(struct.unpack_from(">I", data, at + 12)[0]):
                 first, last, first_glyph = struct.unpack_from(">III", data, at + 16 + 12 * group)
-                if first_glyph == 0 and first == last:
-                    continue
-                characters.update(range(first, last + 1))
+                # Format 12 maps glyph = first_glyph + (code - first).
+                # Glyph zero is .notdef and therefore not coverage.
+                mapped_first = first + (1 if first_glyph == 0 else 0)
+                if mapped_first <= last:
+                    characters.update(range(mapped_first, last + 1))
         elif kind == 4:
             segments = struct.unpack_from(">H", data, at + 6)[0] // 2
             ends = struct.unpack_from(f">{segments}H", data, at + 14)

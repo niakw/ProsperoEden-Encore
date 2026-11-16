@@ -1372,6 +1372,14 @@ r23_fw23_successors = {
         "9279f2f72c0ac8c1abc9352dafd4fae6f9f2500a0b0fae47ae4312a081098ce9", 14523),
 }
 assert len(r23_fw23_successors)==6
+vendor_head = subprocess.check_output(
+    ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
+).strip()
+historical_usage_tracker_vendor = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+historical_getinfo_relpaths = {
+    "src/core/hle/kernel/svc/svc_info.cpp",
+    "src/core/hle/kernel/svc_types.h",
+}
 for e in entries:
     if e["disposition"]!="shipping_backport_integrated_previously":
         continue
@@ -1386,12 +1394,11 @@ for e in entries:
     if e["shipping_relpath"] in r23_fw23_successors:
         old_sha,old_size,new_sha,new_size = r23_fw23_successors[e["shipping_relpath"]]
         assert (e["shipping_active_sha256"],e["shipping_bytes"]) == (old_sha,old_size)
-        # Historical vendor checks may still select the frozen pre-successor
-        # bytes. Admit only the exact historical receipt or the single reviewed
-        # successor; any third digest/size remains a hard failure.
-        assert (record["active"],record["bytes"]) in {
-            (old_sha,old_size), (new_sha,new_size)
-        }
+        expected_active = (new_sha,new_size)
+        if (vendor_head == historical_usage_tracker_vendor and
+                e["shipping_relpath"] in historical_getinfo_relpaths):
+            expected_active = (old_sha,old_size)
+        assert (record["active"],record["bytes"]) == expected_active
     else:
         assert e["shipping_active_sha256"]==record["active"]
         assert e["shipping_bytes"]==record["bytes"]

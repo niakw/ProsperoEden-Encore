@@ -1497,7 +1497,7 @@ print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=2 native_transport=unwired")
 # headers; neither belongs to the immutable F07 baseline.
 post_f07_loading_artwork_receipts = {
     "headless/loading_artwork_transfer.hpp": "2594c4ea8c3d08ec1c04e9c08de717f61ffb7df1",
-    "headless/loading_artwork_gl.hpp": "c314dd1566c86b45b683985e6e3af12b8c89205d",
+    "headless/loading_artwork_gl.hpp": "945753fbd9f95f2a45d8fa16504f0bd98534b678",
 }
 post_f07_loading_artwork_owners = set(post_f07_loading_artwork_receipts)
 for path, blob in post_f07_loading_artwork_receipts.items():

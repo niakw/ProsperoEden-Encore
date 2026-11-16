@@ -10,6 +10,8 @@
 #include <iostream>
 #include <vector>
 
+extern "C" bool LoadingMockGladDraw(int width, int height, double seconds);
+
 namespace {
 constexpr int W = 960, H = 540;
 using Pixel = std::array<std::uint8_t, 4>;
@@ -120,6 +122,9 @@ int main() {
     ExpectCorners();
     const auto initial = ReadFrame();
     launcher.Release();
+    assert(LoadingMockGladDraw(W,H,1.0));
+    ExpectCorners();
+    assert(ReadFrame()==initial);
     assert(eglMakeCurrent(display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT));
     assert(eglDestroyContext(display,first));
     const EGLContext second=eglCreateContext(display,config,EGL_NO_CONTEXT,nullptr);

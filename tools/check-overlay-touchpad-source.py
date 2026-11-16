@@ -68,15 +68,15 @@ assert "build-vulkan-hud-shaders.py" in vulkan_cmake
 assert "EDEN_HUD_SHADER_HEADER" in vulkan_cmake
 assert "--output" in font_baker
 assert "--spirv-val" in hud_builder and "0x07230203" in hud_builder
-assert "HudCodepoints(std::string_view text)" in hud
-assert "HudCodepoints(value.substr(0, 24))" not in menu
+assert "HudCodepoints(std::string_view text)" not in hud
+assert "HudCodepoints(" not in menu
 
 # All five pages retain shoulder navigation, but category labels now come
 # from the same 31 launcher catalogues instead of a French-only parallel UI.
 assert "const std::array<std::string, kOverlayTabs> headings" in menu
 for index in range(1, 6):
     assert f" {index}/5 / R1" in menu
-for key in ("Game settings", "Renderer", "Controls", "Diagnostics", "Browse"):
+for key in ("Game settings", "Renderer", "Controls", "Diagnostics", "Multiplayer"):
     assert f'Text("{key}")' in menu
 assert "line(headings[static_cast<std::size_t>(tab)], kSelectedRow);" in menu
 

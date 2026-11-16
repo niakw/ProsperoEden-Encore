@@ -29,6 +29,8 @@ against those when PE_SYSTEM_FONTS names a folder holding copies of them, and on
 Latin text otherwise.
 """
 
+import hashlib
+import json
 import os
 import re
 import struct
@@ -261,61 +263,129 @@ def font_characters():
 
 # Catalogs written in scripts the console's fonts draw.
 SYSTEM_FONT_CATALOGS = {"ja-JP", "ko-KR", "zh-Hans", "zh-Hant", "el-GR", "th-TH", "ar"}
+FALLBACK_FONT_FILES = {
+    "el-GR": ("NotoSans-Greek.ttf",),
+    "ar": ("NotoSansArabic.ttf",),
+    "th-TH": ("NotoSansThai.ttf",),
+    "ja-JP": ("NotoSansJP.ttf",),
+    "ko-KR": ("NotoSansKR.ttf",),
+    "zh-Hans": ("NotoSansSC.ttf",),
+    "zh-Hant": ("NotoSansTC.ttf",),
+}
 STRICT_CATALOGS = {"fr-FR", "fr-CA", "es-ES", "es-419", "en-US", "en-GB"}
 # Characters that take no room: the zero-width space (a line may break there), direction marks.
 INVISIBLE = {0x200B, 0x200C, 0x200D, 0x200E, 0x200F}
 
 
-def cmap_characters(data):
-    """The characters a TrueType or OpenType font file maps (its Unicode cmap, format 4 or 12)."""
+def _cmap_characters_raw(data):
+    """All Unicode characters mapped by TrueType/OpenType cmap format 4/12 tables.
+
+    Subset fonts can legitimately carry several Unicode cmap subtables with
+    different platform/encoding IDs. Coverage is the union of those maps, not
+    whichever table happens to rank first.
+    """
     offset = struct.unpack_from(">I", data, 12)[0] if data[:4] == b"ttcf" else 0
     tables = {}
     for index in range(struct.unpack_from(">H", data, offset + 4)[0]):
         tag, _sum, start, _length = struct.unpack_from(">4sIII", data, offset + 12 + 16 * index)
         tables[tag] = start
     cmap = tables[b"cmap"]
-    best = None
-    for index in range(struct.unpack_from(">H", data, cmap + 2)[0]):
-        platform, encoding, at = struct.unpack_from(">HHI", data, cmap + 4 + 8 * index)
-        kind = struct.unpack_from(">H", data, cmap + at)[0]
-        rank = {(3, 10): 4, (0, 4): 4, (0, 6): 4, (3, 1): 2, (0, 3): 2}.get((platform, encoding), 0)
-        if kind in (4, 12) and (best is None or rank > best[0]):
-            best = (rank, kind, cmap + at)
     characters = set()
-    if best is None:
-        return characters
-    _rank, kind, at = best
-    if kind == 12:
-        for index in range(struct.unpack_from(">I", data, at + 12)[0]):
-            first, last, _glyph = struct.unpack_from(">III", data, at + 16 + 12 * index)
-            characters.update(range(first, last + 1))
-        return characters
-    segments = struct.unpack_from(">H", data, at + 6)[0] // 2
-    ends = struct.unpack_from(f">{segments}H", data, at + 14)
-    starts = struct.unpack_from(f">{segments}H", data, at + 16 + 2 * segments)
-    deltas = struct.unpack_from(f">{segments}h", data, at + 16 + 4 * segments)
-    ranges_at = at + 16 + 6 * segments
-    ranges = struct.unpack_from(f">{segments}H", data, ranges_at)
-    for i in range(segments):
-        for code in range(starts[i], min(ends[i], 0xFFFE) + 1):
-            if ranges[i] == 0:
-                glyph = (code + deltas[i]) & 0xFFFF
-            else:
-                glyph = struct.unpack_from(">H", data, ranges_at + 2 * i + ranges[i] + 2 * (code - starts[i]))[0]
-            if glyph:
-                characters.add(code)
+    for index in range(struct.unpack_from(">H", data, cmap + 2)[0]):
+        platform, encoding, relative = struct.unpack_from(">HHI", data, cmap + 4 + 8 * index)
+        # Unicode platform, or Microsoft Unicode BMP/full repertoire.
+        if platform != 0 and (platform, encoding) not in {(3, 1), (3, 10)}:
+            continue
+        at = cmap + relative
+        kind = struct.unpack_from(">H", data, at)[0]
+        if kind == 12:
+            for group in range(struct.unpack_from(">I", data, at + 12)[0]):
+                first, last, first_glyph = struct.unpack_from(">III", data, at + 16 + 12 * group)
+                # Format 12 maps glyph = first_glyph + (code - first).
+                # Glyph zero is .notdef and therefore not coverage.
+                mapped_first = first + (1 if first_glyph == 0 else 0)
+                if mapped_first <= last:
+                    characters.update(range(mapped_first, last + 1))
+        elif kind == 4:
+            segments = struct.unpack_from(">H", data, at + 6)[0] // 2
+            ends = struct.unpack_from(f">{segments}H", data, at + 14)
+            starts = struct.unpack_from(f">{segments}H", data, at + 16 + 2 * segments)
+            deltas = struct.unpack_from(f">{segments}h", data, at + 16 + 4 * segments)
+            ranges_at = at + 16 + 6 * segments
+            ranges = struct.unpack_from(f">{segments}H", data, ranges_at)
+            for i in range(segments):
+                for code in range(starts[i], min(ends[i], 0xFFFE) + 1):
+                    if ranges[i] == 0:
+                        glyph = (code + deltas[i]) & 0xFFFF
+                    else:
+                        pos = ranges_at + 2 * i + ranges[i] + 2 * (code - starts[i])
+                        glyph = struct.unpack_from(">H", data, pos)[0]
+                        if glyph:
+                            glyph = (glyph + deltas[i]) & 0xFFFF
+                    if glyph:
+                        characters.add(code)
     return characters
 
 
-def system_font_characters():
-    """The characters of the console's fonts in PE_SYSTEM_FONTS, or None when it is not set."""
+def cmap_characters(data):
+    """Unicode cmap coverage, using fontTools when available.
+
+    build_noto_subsets.py already requires fontTools, so CI/native builds
+    validate generated subsets with the same parser that wrote them. The
+    dependency-free parser remains a fallback for local checks of console fonts.
+    """
+    try:
+        from fontTools.ttLib import TTFont
+        from io import BytesIO
+    except ImportError:
+        return _cmap_characters_raw(data)
+    font = TTFont(BytesIO(data), lazy=True)
+    characters = set()
+    for table in font["cmap"].tables:
+        if table.isUnicode():
+            characters.update(table.cmap)
+    font.close()
+    return characters
+
+
+def system_font_characters(locale):
+    """Characters supplied by one deterministic fallback family.
+
+    Generated Noto subsets carry a receipt with the exact Unicode set and the
+    SHA-256 of each output TTF. Prefer that signed-by-content build evidence;
+    fall back to parsing cmap for developer-provided console font copies.
+    """
     folder = os.environ.get("PE_SYSTEM_FONTS")
     if not folder:
         return None
+    root = Path(folder)
+    if not root.is_dir():
+        return None
+    preferred = [root / name for name in FALLBACK_FONT_FILES.get(locale, ())]
+    files = [path for path in preferred if path.is_file()]
+    if preferred and not files:
+        files = [path for path in sorted(root.iterdir())
+                 if path.suffix.lower() in (".otf", ".ttf")]
+
+    receipt_by_file = {}
+    receipt_path = root / "receipt.json"
+    if receipt_path.is_file():
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        assert receipt.get("schema") == 1, "unsupported fallback receipt schema"
+        receipt_by_file = {item["file"]: item for item in receipt.get("fonts", [])}
+
     characters = set()
-    for path in sorted(Path(folder).iterdir()):
-        if path.suffix.lower() in (".otf", ".ttf"):
-            characters |= cmap_characters(path.read_bytes())
+    for path in files:
+        data = path.read_bytes()
+        item = receipt_by_file.get(path.name)
+        if item is not None and "fallback_unicode" in item:
+            actual = hashlib.sha256(data).hexdigest()
+            assert actual == item["subset_sha256"], (
+                f"{path}: fallback receipt SHA mismatch {actual} != {item['subset_sha256']}"
+            )
+            characters.update(int(codepoint) for codepoint in item["fallback_unicode"])
+        else:
+            characters |= cmap_characters(data)
     return characters
 
 
@@ -365,7 +435,6 @@ def write_embedded_fr():
 def check():
     texts = marked_text()
     baked = font_characters()
-    system = system_font_characters()
     failed = False
     french_source = (CATALOGS / "fr-FR.po").read_text(encoding="utf-8")
     if embedded_fr_text() != french_source:
@@ -383,11 +452,12 @@ def check():
         # What can be drawn: the launcher's font, and for the catalogs of other scripts the
         # console's fonts (when they are at hand; otherwise only their Latin text is checked).
         characters = baked | INVISIBLE
-        unchecked = set()
         if path.stem in SYSTEM_FONT_CATALOGS:
+            system = system_font_characters(path.stem)
             if system is None:
-                unchecked = {ord(c) for text in entries.values() for c in text if ord(c) not in characters and c != "\n"}
-                characters = characters | unchecked
+                problems.append(
+                    "deterministic fallback fonts unavailable; run "
+                    "tools/launcher/build_noto_subsets.py and set PE_SYSTEM_FONTS")
             else:
                 characters = characters | system
         strict = path.stem in STRICT_CATALOGS
@@ -412,8 +482,7 @@ def check():
                 warnings.append(f"label not uppercase: {text!r} -> {translation!r}")
             if translation and len(translation) > max(len(text) * 1.7, len(text) + 12):
                 warnings.append(f"long ({len(text)} -> {len(translation)}): {translation!r}")
-        note = f", {len(unchecked)} characters of the console's fonts not checked" if unchecked else ""
-        print(f"{path.name}: {len(entries)} texts, {len(problems)} problems, {len(warnings)} warnings{note}")
+        print(f"{path.name}: {len(entries)} texts, {len(problems)} problems, {len(warnings)} warnings")
         for line in (problems if strict else problems[:40]):
             print("   ", line)
         for line in warnings[:12]:

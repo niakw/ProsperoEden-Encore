@@ -87,10 +87,25 @@ void main() {
     if (menu_row && p.x >= 0 && p.y >= 0) {
         float menu_scale = max(float(text.width) / 1080.0, 0.001);
         ivec2 menu_px = ivec2(vec2(p) / menu_scale);
-        int i = menu_px.x / MENU_FONT_W;
-        int x = menu_px.x % MENU_FONT_W;
-        if (i >= 0 && i < 24)
-            menu_alpha = menuFontAlpha(glyphs[i], x, menu_px.y);
+        // Quick-menu words pack: 15-bit atlas slot, 10-bit absolute X,
+        // signed 7-bit Y offset. HarfBuzz positions combining marks and
+        // contextual Arabic glyphs on the CPU; the fragment shader only
+        // samples the immutable generated atlas. The ordinary FPS HUD below
+        // keeps its legacy 3x5 bitfield interpretation.
+        for (int i = 0; i < 24; ++i) {
+            uint packed = glyphs[i];
+            if (packed == 0u) continue;
+            uint slot = packed & 0x7fffu;
+            int origin_x = int((packed >> 15u) & 0x3ffu);
+            int origin_y = int((packed >> 25u) & 0x7fu);
+            if (origin_y >= 64) origin_y -= 128;
+            if (slot == 0u || slot >= uint(MENU_FONT_SLOT_COUNT)) continue;
+            ivec4 metric = MENU_FONT_METRICS[int(slot)];
+            int gx = menu_px.x - (origin_x + metric.x);
+            int gy = menu_px.y - (MENU_FONT_BASELINE + origin_y + metric.y);
+            if (gx >= 0 && gy >= 0 && gx < metric.z && gy < metric.w)
+                menu_alpha = max(menu_alpha, menuFontSlotAlpha(slot, gx, gy));
+        }
     }
     bool ink = false;
     if (!menu_row && p.x >= 0 && p.y >= 0) {

@@ -8,6 +8,9 @@ on:
       - 'headless/prosperoeden/pe/ui/**'
       - 'headless/settings_store.h'
       - 'tools/launcher/strings.py'
+      - 'LICENSES/Noto*.txt'
+      - 'tools/launcher/noto_fallbacks.json'
+      - 'tools/launcher/build_noto_subsets.py'
       - 'tools/check-launcher-translation-coverage.py'
       - 'tools/check-english-regional-variants.py'
       - '.github/workflows/launcher-translation-qa.yml'
@@ -40,8 +43,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+      - name: Install deterministic font subsetting dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends python3-fonttools
       - name: Verify all 31 language catalogs, fonts and placeholders
-        run: python3 -B tools/launcher/strings.py check
+        run: |
+          python3 -B tools/launcher/build_noto_subsets.py --output build/generated/noto-fallback
+          PE_SYSTEM_FONTS="$PWD/build/generated/noto-fallback" python3 -B tools/launcher/strings.py check
       - name: Enforce active translations and no obsolete keys
         run: python3 -B tools/check-launcher-translation-coverage.py
       - name: Verify US and UK catalog parity against live launcher template

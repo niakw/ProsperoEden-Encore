@@ -15,11 +15,17 @@ on:
       - 'headless/vulkan.cmake'
       - 'headless/prosperoeden/ui/fonts/montserrat-medium.pefont'
       - 'tools/launcher/bake_vulkan_menu_font.py'
+      - 'tools/launcher/bake_vulkan_menu_font.cpp'
+      - 'tools/launcher/build_noto_subsets.py'
+      - 'tools/launcher/noto_fallbacks.json'
+      - 'headless/quick_overlay_font.cpp'
+      - 'headless/quick_overlay_font.h'
       - 'tools/graphics/build-vulkan-hud-shaders.py'
       - 'headless/vulkan_window_adapt_r08.cpp'
       - 'tools/check-fc27-f06-native-pad-transition-host.py'
       - 'tools/check-ps5-autocontrol-context.py'
       - 'tools/check-overlay-touchpad-source.py'
+      - 'tools/check-overlay-i18n.py'
       - 'tools/overlay-style-check.cpp'
       - '.github/workflows/encore-touchpad-overlay-host.yml'
   push:
@@ -59,7 +65,9 @@ jobs:
       - name: Validate immutable prelaunch controller mapping
         run: python3 -B tools/check-ps5-autocontrol-context.py
       - name: Validate overlay and Vulkan compositor source contracts
-        run: python3 -B tools/check-overlay-touchpad-source.py
+        run: |
+          python3 -B tools/check-overlay-touchpad-source.py
+          python3 -B tools/check-overlay-i18n.py
       - name: Check 40 launcher palette, accent and contrast combinations
         run: |
           c++ -std=c++20 -O2 -Wall -Wextra -Werror -pedantic \
@@ -68,10 +76,12 @@ jobs:
       - name: Validate quick-menu fragment GLSL in host-only mode
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends glslang-tools spirv-tools
+          sudo apt-get install -y -qq --no-install-recommends glslang-tools spirv-tools python3-fonttools
           mkdir -p /tmp/eden-hud-generated
           python3 -B tools/launcher/bake_vulkan_menu_font.py \
-            --output /tmp/eden-hud-generated/vulkan_menu_font.glsl
+            --output /tmp/eden-hud-generated/vulkan_menu_font.glsl \
+            --map-output /tmp/eden-hud-generated/vulkan_menu_font_map.h \
+            --fallback-dir /tmp/eden-hud-generated/noto-fallback
           python3 -B tools/graphics/build-vulkan-hud-shaders.py \
             --glslang "$(command -v glslangValidator)" \
             --spirv-val "$(command -v spirv-val)" \

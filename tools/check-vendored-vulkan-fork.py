@@ -39,14 +39,22 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             backport_install.stdout[-1200:])
     # Pin shader input text separately from binary reproducibility. Avoid
     # depending on a nondeterministic host glslangValidator version in CI.
-    expected_shaders={
+    expected_shader_sha256={
         'vert':'b7efb0f17a2cfb2ac044d0d678dfd7f970323deef86c10d25dde8ed723ef0290',
-        'frag':'e12c28605cfa4b33f77f9013ea4a0ca300eb920e85d561fe9037f9e562ad94a1',
     }
-    for stage, digest in expected_shaders.items():
+    for stage, digest in expected_shader_sha256.items():
         source=root/'headless'/f'vulkan_hud.{stage}'
         assert hashlib.sha256(source.read_bytes()).hexdigest()==digest,source
         assert (active/f'vulkan_hud.{stage}.spv').is_file()
+    # The maintained fragment changed for the Unicode quick menu. Pin its
+    # exact Git blob while keeping the immutable historical oracle SPIR-V
+    # below; native CI rebuilds and validates the maintained source separately.
+    fragment=root/'headless'/'vulkan_hud.frag'
+    assert subprocess.check_output(
+        ['git','hash-object',str(fragment)],cwd=root,text=True).strip()==(
+            'f71d54ff4baff28bcfac5589052062824faf6433'
+        ),fragment
+    assert (active/'vulkan_hud.frag.spv').is_file()
     # The vendored oracle SPIR-V stays immutable for historical Vulkan-fork
     # reproduction. The native Encore renderer no longer consumes this fragment
     # after the Montserrat quick-menu change: headless/vulkan.cmake generates

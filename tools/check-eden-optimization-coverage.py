@@ -1214,6 +1214,19 @@ for path, blob in post_f07_diagnostics_receipts.items():
 print("ENCORE_DIAGNOSTICS_POST_F07_PASS", f"owners={len(post_f07_diagnostics_owners)}",
       "native_transport=https_idle_client" if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175" else "native_transport=unwired")
 assert post_f07_diagnostics_owners <= all_owners
+
+# P1 typography: two post-F07 launcher-owned Unicode quick-menu sources.
+# Preserve the immutable 518-owner baseline and pin the exact reviewed files.
+post_f07_typography_receipts = {
+    "headless/quick_overlay_font.cpp": "834b4b97602cb1d098944fb687123862bdf0e5e8",
+    "headless/quick_overlay_font.h": "28fd15ac08a2744588a90dd6de0d9228e417719c",
+}
+post_f07_typography_owners = set(post_f07_typography_receipts)
+assert post_f07_typography_owners <= all_owners
+for path, blob in post_f07_typography_receipts.items():
+    assert subprocess.check_output(["git","hash-object",path], cwd=ROOT, text=True).strip() == blob, path
+print("ENCORE_TYPOGRAPHY_F07_ISOLATION_PASS owners=2 historical_F07=518")
+
 # The title-aware loading correction adds two independently reviewed
 # headers; neither belongs to the immutable F07 baseline.
 post_f07_loading_artwork_receipts = {
@@ -1302,7 +1315,7 @@ else:
 print("ENCORE_NS2_EARLY_HLE_F07_ISOLATION_PASS",
       f"owners={len(ns2_early_hle_present)}", "blanket_autostub=0")
 
-owners=all_owners-pair_present-drawtexture_present-ns2_early_hle_present-post_f07_loading_artwork_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
+owners=all_owners-pair_present-drawtexture_present-ns2_early_hle_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1583,6 +1596,206 @@ assert len(post_entries) == 40  # reviewed post-F07 source successors, including
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
+
+# P1 typography removes the ASCII-only quick-menu conversion while preserving
+# the legacy compact FPS HUD ABI. Reconstruct the exact pre-typography hud.h
+# blob so the existing post-F07 receipt remains immutable.
+typography_hud_path = "headless/hud.h"
+typography_hud_blob = "a506f5dca7efc289f47a172a353bff4f04d9f4e4"
+typography_hud_predecessor = "0ef8bf75efabf61628b44b91011eb461abcbde81"
+if (typography_hud_path in drift_index and
+        drift_index[typography_hud_path]["actual"] == typography_hud_blob):
+    hud_source = (ROOT/typography_hud_path).read_text()
+    anchor_text = """        glyphs[i] = HudGlyph(text[i]);
+    return glyphs;
+}
+// The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
+"""
+    predecessor_text = """        glyphs[i] = HudGlyph(text[i]);
+    return glyphs;
+}
+// Quick-menu text keeps ASCII codepoints so the Vulkan fragment shader can
+// index the Montserrat raster generated from the launcher's exact .pefont.
+inline std::array<uint32_t, 24> HudCodepoints(std::string_view text) {
+    std::array<uint32_t, 24> glyphs{};
+    for (size_t i = 0; i < text.size() && i < glyphs.size(); ++i) {
+        const unsigned char value = static_cast<unsigned char>(text[i]);
+        glyphs[i] = value >= 32 && value <= 126 ? value : static_cast<uint32_t>('?');
+    }
+    return glyphs;
+}
+// The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
+"""
+    assert hud_source.count(anchor_text) == 1
+    replay = hud_source.replace(anchor_text, predecessor_text, 1)
+    raw = replay.encode("utf-8")
+    replay_blob = hashlib.sha1(
+        b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+    ).hexdigest()
+    assert replay_blob == typography_hud_predecessor
+    drift_index[typography_hud_path]["actual"] = replay_blob
+    print("P1_TYPOGRAPHY_HUD_SUCCESSOR_PASS",
+          "legacy_fps_abi=preserved", "ascii_quick_menu=removed")
+
+# P1 typography also extends the existing SystemFonts owner with deterministic
+# Noto groups. Reverse the exact three reviewed hunks and require byte identity
+# with the pre-typography main owner before removing this post-F07 drift.
+typography_fonts_path = "headless/prosperoeden/pe/gfx/system_fonts.cpp"
+typography_fonts_blob = "c5068cbf5291e2cfafe9edf51cca29ce40e9b42e"
+typography_fonts_predecessor = "a721c95a81c9fe309fcff9fa3be01b8b21cd9272"
+if (typography_fonts_path in drift_index and
+        drift_index[typography_fonts_path]["actual"] == typography_fonts_blob):
+    replay = (ROOT/typography_fonts_path).read_text()
+    font_hunks = [
+        ("""    Script script;
+    // The same font in the weights and generations a system software version may carry; the
+    // first one found is used.
+    const char *files[5];
+};
+constexpr Group kLatin{Script::other, {"SST-Medium.otf", "SST-Roman.otf", nullptr}};
+constexpr Group kJapanese{Script::japanese, {"SSTJpPro-Regular.otf", "SIE-RDC-Pr5N-M-JPN.otf", "SCE-RDC-R-JPN.otf", nullptr}};
+constexpr Group kKorean{Script::korean, {"YoonGothicProSIE760.otf", "SCEPS4Yoongd-Medium.otf", nullptr}};
+constexpr Group kChinese{Script::chinese, {"DFHEI5-SONY.ttf", nullptr}};
+constexpr Group kThai{Script::thai, {"SSTThai-Medium.otf", "SSTThai-Roman.otf", nullptr}};
+constexpr Group kArabic{Script::arabic, {"SSTArabic-Medium.otf", "SSTArabic-Roman.otf", nullptr}};
+// Deterministic, catalog-bounded OFL fallbacks generated by build_noto_subsets.py.
+// They are tried before the console fonts, while the latter remain available
+// for game titles/file names containing codepoints outside the UI subsets.
+constexpr Group kNotoGreek{Script::other, {"NotoSans-Greek.ttf", nullptr}};
+constexpr Group kNotoJapanese{Script::japanese, {"NotoSansJP.ttf", nullptr}};
+constexpr Group kNotoKorean{Script::korean, {"NotoSansKR.ttf", nullptr}};
+constexpr Group kNotoChineseSC{Script::chinese, {"NotoSansSC.ttf", nullptr}};
+constexpr Group kNotoChineseTC{Script::chinese, {"NotoSansTC.ttf", nullptr}};
+constexpr Group kNotoThai{Script::thai, {"NotoSansThai.ttf", nullptr}};
+constexpr Group kNotoArabic{Script::arabic, {"NotoSansArabic.ttf", nullptr}};
+
+// A character only one of the fonts should draw, whatever their order.
+Script own_script(char32_t c)""",
+         """    Script script;
+    // The same font in the weights and generations a system software version may carry; the
+    // first one found is used.
+    const char *files[3];
+};
+constexpr Group kLatin{Script::other, {"SST-Medium.otf", "SST-Roman.otf", nullptr}};
+constexpr Group kJapanese{Script::japanese, {"SSTJpPro-Regular.otf", "SIE-RDC-Pr5N-M-JPN.otf", "SCE-RDC-R-JPN.otf"}};
+constexpr Group kKorean{Script::korean, {"YoonGothicProSIE760.otf", "SCEPS4Yoongd-Medium.otf", nullptr}};
+constexpr Group kChinese{Script::chinese, {"DFHEI5-SONY.ttf", nullptr, nullptr}};
+constexpr Group kThai{Script::thai, {"SSTThai-Medium.otf", "SSTThai-Roman.otf", nullptr}};
+constexpr Group kArabic{Script::arabic, {"SSTArabic-Medium.otf", "SSTArabic-Roman.otf", nullptr}};
+
+// A character only one of the fonts should draw, whatever their order.
+Script own_script(char32_t c)"""),
+        ("""    const std::string_view prefix = language.substr(0, 2);
+    std::vector<const Group *> order;
+    if (prefix == "ja")
+        order = {&kNotoJapanese, &kJapanese, &kLatin, &kChinese, &kKorean, &kThai, &kArabic};
+    else if (prefix == "ko")
+        order = {&kNotoKorean, &kKorean, &kLatin, &kJapanese, &kChinese, &kThai, &kArabic};
+    else if (prefix == "zh" && language.find("Hant") != std::string_view::npos)
+        order = {&kNotoChineseTC, &kChinese, &kLatin, &kJapanese, &kKorean, &kThai, &kArabic};
+    else if (prefix == "zh")
+        order = {&kNotoChineseSC, &kChinese, &kLatin, &kJapanese, &kKorean, &kThai, &kArabic};
+    else if (prefix == "th")
+        order = {&kNotoThai, &kThai, &kLatin, &kJapanese, &kChinese, &kKorean, &kArabic};
+    else if (prefix == "ar")
+        order = {&kNotoArabic, &kArabic, &kLatin, &kJapanese, &kChinese, &kKorean, &kThai};
+    else if (prefix == "el")
+        order = {&kNotoGreek, &kLatin, &kJapanese, &kChinese, &kKorean, &kThai, &kArabic};
+    else
+        order = {&kLatin, &kJapanese, &kChinese, &kKorean, &kThai, &kArabic};
+    std::vector<std::string> files;""",
+         """    const std::string_view prefix = language.substr(0, 2);
+    std::vector<const Group *> order;
+    if (prefix == "ja")
+        order = {&kJapanese, &kLatin, &kChinese, &kKorean, &kThai, &kArabic};
+    else if (prefix == "ko")
+        order = {&kKorean, &kLatin, &kJapanese, &kChinese, &kThai, &kArabic};
+    else if (prefix == "zh")
+        order = {&kChinese, &kLatin, &kJapanese, &kKorean, &kThai, &kArabic};
+    else if (prefix == "th")
+        order = {&kThai, &kLatin, &kJapanese, &kChinese, &kKorean, &kArabic};
+    else if (prefix == "ar")
+        order = {&kArabic, &kLatin, &kJapanese, &kChinese, &kKorean, &kThai};
+    else
+        order = {&kLatin, &kJapanese, &kChinese, &kKorean, &kThai, &kArabic};
+    std::vector<std::string> files;"""),
+        ("""            break;
+        auto face = std::make_unique<Face>();
+        const std::string name = path.substr(path.find_last_of('/') + 1);
+        for (const Group *group : {&kNotoJapanese, &kJapanese, &kNotoKorean, &kKorean,
+                                   &kNotoChineseSC, &kNotoChineseTC, &kChinese,
+                                   &kNotoThai, &kThai, &kNotoArabic, &kArabic})
+            for (const char *file : group->files)
+                if (file != nullptr && name == file)
+                    face->script = group->script;""",
+         """            break;
+        auto face = std::make_unique<Face>();
+        const std::string name = path.substr(path.find_last_of('/') + 1);
+        for (const Group *group : {&kJapanese, &kKorean, &kChinese, &kThai, &kArabic})
+            for (const char *file : group->files)
+                if (file != nullptr && name == file)
+                    face->script = group->script;"""),
+    ]
+    for current_hunk, previous_hunk in font_hunks:
+        assert replay.count(current_hunk) == 1
+        replay = replay.replace(current_hunk, previous_hunk, 1)
+    raw = replay.encode("utf-8")
+    replay_blob = hashlib.sha1(
+        b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+    ).hexdigest()
+    assert replay_blob == typography_fonts_predecessor
+    delta = drift_index.pop(typography_fonts_path)
+    assert delta["expected"] == typography_fonts_predecessor
+    print("P1_TYPOGRAPHY_SYSTEM_FONTS_SUCCESSOR_PASS",
+          "owner=system_fonts", "historical_predecessor=preserved")
+
+# P1 typography changes only the launcher's fallback-font collection policy.
+# Reverse it first so the diagnostics successor replay below sees the exact
+# current-main predecessor, then resumes the older R457/F07 chain unchanged.
+typography_frontend_path = "headless/prosperoeden/frontend.cpp"
+typography_frontend_blob = "1de983352dad85e4dd6c1520a0c9e9aec26d052d"
+typography_frontend_predecessor = "c199a16ae2d894baca14ea2373273e09c38e872a"
+if (typography_frontend_path in drift_index and
+        drift_index[typography_frontend_path]["actual"] == typography_frontend_blob):
+    frontend_source = (ROOT/typography_frontend_path).read_text()
+    typography_block = """    std::vector<std::string> fallback_files;
+    std::vector<std::string> font_folders;
+    font_folders.push_back(Eden::AppFile("ui/fonts/fallback"));
+    for (const std::string& candidate : pe::gfx::system_font_folders())
+        if (std::find(font_folders.begin(), font_folders.end(), candidate) == font_folders.end())
+            font_folders.push_back(candidate);
+    for (const std::string& candidate : font_folders) {
+        std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
+        if (found.empty()) continue;
+        if (folder == "none") folder = candidate;
+        for (std::string& file : found)
+            if (std::find(fallback_files.begin(), fallback_files.end(), file) == fallback_files.end())
+                fallback_files.push_back(std::move(file));
+    }
+    const std::size_t files = fallback_files.size();
+    if (!fallback_files.empty())
+        font.use_system_fonts(std::move(fallback_files), tag);
+"""
+    predecessor_block = """    std::size_t files = 0;
+    for (const std::string& candidate : pe::gfx::system_font_folders()) {
+        std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
+        if (found.empty()) continue;
+        folder = candidate;
+        files = found.size();
+        font.use_system_fonts(std::move(found), tag);
+        break;
+    }
+"""
+    assert frontend_source.count(typography_block) == 1
+    replay = frontend_source.replace(typography_block, predecessor_block, 1)
+    replay_raw = replay.encode("utf-8")
+    replay_blob = hashlib.sha1(
+        b"blob " + str(len(replay_raw)).encode() + bytes([0]) + replay_raw
+    ).hexdigest()
+    assert replay_blob == typography_frontend_predecessor
+    drift_index[typography_frontend_path]["actual"] = replay_blob
+    print("P1_TYPOGRAPHY_FRONTEND_SUCCESSOR_PASS",
+          "owner=frontend", "predecessor=diagnostics-main")
 
 # Nov16 diagnostics-sharing source successors. These application-owned files
 # layer the reviewed native diagnostics client onto source owners already

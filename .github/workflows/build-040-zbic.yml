@@ -105,7 +105,7 @@ jobs:
             cmake ninja-build ccache make nasm meson rsync git \
             glslang-tools spirv-tools bison flex autoconf binutils coreutils util-linux \
             curl wget unzip librsvg2-bin imagemagick \
-            python3 python3-venv python3-pip python3-mako python3-yaml python3-lxml python3-rnc2rng pkg-config \
+            python3 python3-venv python3-pip python3-mako python3-yaml python3-lxml python3-rnc2rng python3-fonttools pkg-config \
             libboost-container-dev
           # The host core gate already installed Boost.Container; the native
           # workflow did not. Verify the real C++ include before lengthy
@@ -135,7 +135,8 @@ jobs:
       - name: Validate launcher translations and locale runtime
         if: ${{ env.RESUME_STAGE_RUN_ID == '' && !inputs.build_only }}
         run: |
-          python3 -B tools/launcher/strings.py check
+          python3 -B tools/launcher/build_noto_subsets.py --output build/generated/noto-fallback
+          PE_SYSTEM_FONTS="$PWD/build/generated/noto-fallback" python3 -B tools/launcher/strings.py check
           python3 -B tools/check-language-runtime.py
           python3 -B tools/check-launcher-translation-coverage.py
 

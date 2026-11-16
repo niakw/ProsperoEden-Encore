@@ -1521,6 +1521,19 @@ for path, blob in post_f07_diagnostics_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip() == blob, path
 print("ENCORE_DIAGNOSTICS_POST_F07_PASS", "owners=4 native_transport=https_idle_client")
 
+# P1 typography adds two launcher-owned Unicode quick-menu sources after the
+# frozen 193-file F07 headless catalogue. Pin them exactly and keep them out
+# of historical counts; their runtime behavior is qualified separately.
+post_f07_typography_receipts = {
+    "headless/quick_overlay_font.cpp": "834b4b97602cb1d098944fb687123862bdf0e5e8",
+    "headless/quick_overlay_font.h": "28fd15ac08a2744588a90dd6de0d9228e417719c",
+}
+post_f07_typography_owners = set(post_f07_typography_receipts)
+for path, blob in post_f07_typography_receipts.items():
+    assert subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip() == blob, path
+assert "quick_overlay_font.cpp" in native_cmake
+print("ENCORE_TYPOGRAPHY_POST_F07_PASS", "owners=2 unicode_quick_menu=1")
+
 # The title-aware loading correction adds two independently reviewed
 # headers; neither belongs to the immutable F07 baseline.
 post_f07_loading_artwork_receipts = {
@@ -1539,7 +1552,7 @@ headless_actual = sorted(
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
         post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners |
-        post_f07_diagnostics_owners | post_f07_loading_artwork_owners)
+        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

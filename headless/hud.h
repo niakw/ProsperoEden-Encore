@@ -103,16 +103,6 @@ inline std::array<uint32_t, 24> HudText(std::string_view text) {
         glyphs[i] = HudGlyph(text[i]);
     return glyphs;
 }
-// Quick-menu text keeps ASCII codepoints so the Vulkan fragment shader can
-// index the Montserrat raster generated from the launcher's exact .pefont.
-inline std::array<uint32_t, 24> HudCodepoints(std::string_view text) {
-    std::array<uint32_t, 24> glyphs{};
-    for (size_t i = 0; i < text.size() && i < glyphs.size(); ++i) {
-        const unsigned char value = static_cast<unsigned char>(text[i]);
-        glyphs[i] = value >= 32 && value <= 126 ? value : static_cast<uint32_t>('?');
-    }
-    return glyphs;
-}
 // The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
 // they are scaled to the picture, and `width` then carries the picture's height to the shader
 // (vulkan_hud_draw.inc).

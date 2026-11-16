@@ -7,6 +7,10 @@
 #include <string>
 #include <string_view>
 #include "in_game_overlay.h"
+#include "pe/core/strings.hpp"
+#include "prosperoeden/pe/ui/texture_quality.hpp"
+#include "prosperoeden/pe/ui/video_guidance.hpp"
+#include "quick_overlay_font.h"
 #include "log_pipe.h"
 #include "settings_store.h"
 
@@ -31,7 +35,7 @@ public:
             tab = 0;
             selected = 0;
             multiplayer_confirm = false;
-            notice = restart_required ? "MODIFS ENREGISTREES" : "REGLAGES DE CE JEU";
+            notice = Text("Game settings");
         }
         Rebuild();
     }
@@ -87,7 +91,7 @@ public:
             if (selected == 0) {
                 if (multiplayer_confirm) { Show(false); return Outcome::multiplayer; }
                 multiplayer_confirm = true;
-                notice = "CONFIRMER : FERMER JEU";
+                notice = Text("Confirm this action?");
             }
         }
         Rebuild();
@@ -114,30 +118,78 @@ private:
         return tab == 0 ? kHomeRows : tab == 1 ? kGraphicsRows : tab == 2 ? kMappingRows : tab == 3 ? 4 : 2;
     }
     static std::string Name(const char* const* keys, int count, int index) {
-        return index >= 0 && index < count ? keys[index] : "AUTO";
+        return index >= 0 && index < count ? keys[index] : pe::tr("Automatic");
     }
     template<std::size_t N>
     static std::string Name(const char* const (&keys)[N], int index) {
         return Name(keys, int(N), index);
     }
+    static std::string Text(const char* english) {
+        return std::string{pe::tr(english)};
+    }
     static std::string Percent(int value) {
-        return value < 0 ? "AUTO" : std::to_string(value) + "%";
+        return value < 0 ? std::string{pe::tr("Automatic")} : std::to_string(value) + "%";
+    }
+    static std::string Toggle(bool enabled) {
+        return std::string{pe::tr(enabled ? "On" : "Off")};
+    }
+    std::string LanguageLine() const {
+        const int language = std::clamp(prefs.language, 0,
+            static_cast<int>(std::size(kLanguageCatalogTags)) - 1);
+        return std::string{pe::tr(kLanguageLabels[language])} + " / " +
+               kLanguageCatalogTags[language];
+    }
+    static std::string FrameGenerationName(int value) {
+        if (value < 0) return std::string{pe::tr("Automatic")};
+        switch (value) {
+        case 0: return std::string{pe::tr("Off")};
+        case 1: return "MihawkGen";
+        case 2: return "FSR 3";
+        case 3: return "LSFG";
+        default: return std::string{pe::tr("Automatic")};
+        }
     }
     std::string GraphicsRow(int row) const {
+        const auto translated = [](const char* value) { return std::string{pe::tr(value)}; };
         switch (row) {
-        case 0: return "RENDER " + Name(kRendererKeys, game.renderer);
-        case 1: return "RES " + Name(kResolutionKeys, game.resolution);
-        case 2: return "UPSCALE " + Name(kUpscalingFilterKeys, game.upscaling_filter);
-        case 3: return "SHARP " + Percent(game.fsr_sharpness);
-        case 4: return "AA " + Name(kAntiAliasingKeys, game.anti_aliasing);
-        case 5: return "ANISO " + Name(kTextureAnisotropyKeys, game.texture_anisotropy);
-        case 6: return "REFRESH " + Name(kRefreshKeys, game.refresh);
-        case 7: return "FRAME GEN " + Name(kFrameGenerationKeys, game.frame_generation);
-        case 8: return "NEURAL " + Name(kNeuralModeKeys, game.neural_mode);
-        case 9: return "NR POWER " + Percent(game.neural_strength);
-        case 10: return "OUTPUT " + Name(kOutputKeys, game.output);
-        case 11: return "DOCKED " + std::string(game.console_mode < 0 ? "AUTO" :
-                                              game.console_mode ? "YES" : "NO");
+        case 0:
+            return Text("Renderer") + " " +
+                   std::string(game.renderer < 0 ? pe::tr("Automatic") :
+                               game.renderer == 0 ? "OpenGL" : "Vulkan");
+        case 1:
+            return Text("Game resolution") + " " +
+                   std::string(game.resolution < 0 ? pe::tr("Automatic") :
+                               kResolutionKeys[game.resolution]);
+        case 2:
+            return Text("Upscaling") + " " + (game.upscaling_filter < 0
+                ? std::string{pe::tr("Automatic")}
+                : translated(kUpscalingFilterLabels[game.upscaling_filter]));
+        case 3: return Text("Sharpness") + " " + Percent(game.fsr_sharpness);
+        case 4:
+            return Text("Anti-aliasing") + " " + (game.anti_aliasing < 0
+                ? std::string{pe::tr("Automatic")}
+                : translated(kAntiAliasingLabels[game.anti_aliasing]));
+        case 5:
+            return Text("Texture filtering") + " " +
+                   (game.texture_anisotropy < 0 ? std::string{pe::tr("Automatic")}
+                                                : pe::ui::TextureAnisotropyName(game.texture_anisotropy));
+        case 6:
+            return Text("Refresh rate") + " " +
+                   (game.refresh < 0 ? std::string{pe::tr("Automatic")}
+                                     : std::to_string(kRefreshHz[game.refresh]) + " Hz");
+        case 7:
+            return Text("Frame Generation") + " " + FrameGenerationName(game.frame_generation);
+        case 8:
+            return Text("Neural Rendering") + " " + std::string(game.neural_mode < 0 ? pe::tr("Automatic")
+                                                             : pe::ui::NeuralModeName(game.neural_mode));
+        case 9: return Text("Intensité DLSS-NR") + " " + Percent(game.neural_strength);
+        case 10:
+            return Text("TV output") + " " +
+                   std::string(game.output < 0 ? pe::tr("Automatic") : kOutputKeys[game.output]);
+        case 11:
+            return Text("Console mode") + " " +
+                   std::string(game.console_mode < 0 ? pe::tr("Automatic") :
+                               game.console_mode ? pe::tr("Docked") : pe::tr("Handheld"));
         default: return {};
         }
     }
@@ -145,33 +197,36 @@ private:
         static constexpr const char* guest[kGameButtons] = {
             "SW A", "SW B", "SW X", "SW Y", "SW L", "SW R", "SW ZL", "SW ZR",
             "SW PLUS", "SW MINUS", "SW L3", "SW R3"};
+        static constexpr const char* pad[kPadButtons] = {
+            "X", "O", "SQ", "TR", "L1", "R1", "L2", "R2",
+            "L3", "R3", "OPT", "CR", "TP"};
         const auto& map = game.own_mapping ? game.mapping : prefs.mapping;
-        return std::string(guest[row]) + " > " + kPadButtonKeys[map[row]];
+        return std::string(guest[row]) + " > " + pad[map[row]];
     }
     std::string Row(int row) const {
         if (tab == 0) {
             switch (row) {
-            case 0: return "REPRENDRE LE JEU";
-            case 1: return prefs.hud ? "AFFICHAGE FPS OUI" : "AFFICHAGE FPS NON";
-            case 2: return prefs.detailed_logging ? "LOGS DETAILLES OUI" : "LOGS DETAILLES NON";
-            case 3: return "RETOUR BIBLIOTHEQUE";
-            case 4: return "GRAPHISMES >";
-            case 5: return "COMMANDES >";
-            case 6: return "DIAGNOSTICS >";
-            case 7: return "MULTIJOUEUR >";
+            case 0: return Text("CONTINUE PLAYING");
+            case 1: return Text("FPS OVERLAY") + " " + Toggle(prefs.hud);
+            case 2: return Text("DETAILED LOGGING") + " " + Toggle(prefs.detailed_logging);
+            case 3: return Text("Browse games");
+            case 4: return Text("Renderer") + " >";
+            case 5: return Text("Controls") + " >";
+            case 6: return Text("Diagnostics") + " >";
+            case 7: return Text("Multiplayer") + " >";
             }
         } else if (tab == 1) return GraphicsRow(row);
         else if (tab == 2) return MappingRow(row);
         else if (tab == 4) {
-            return row == 0 ? "OUVRIR SALON MULTI" : "RESTER DANS LE JEU";
+            return row == 0 ? Text("Multiplayer") : Text("CONTINUE PLAYING");
         } else if (tab == 3) {
             switch (row) {
-            case 0: return prefs.hud ? "AFFICHAGE FPS OUI" : "AFFICHAGE FPS NON";
-            case 1: return prefs.detailed_logging ? "LOGS DETAILLES OUI" : "LOGS DETAILLES NON";
-            case 2: return "FPS = HOST PRESENT";
+            case 0: return Text("FPS OVERLAY") + (prefs.hud ? " 1" : " 0");
+            case 1: return Text("DETAILED LOGGING") + (prefs.detailed_logging ? " 1" : " 0");
+            case 2: return "FPS / PRESENT";
             case 3: {
                 char text[25]{};
-                std::snprintf(text, sizeof(text), "TITLE %016llX",
+                std::snprintf(text, sizeof(text), "ID %016llX",
                               static_cast<unsigned long long>(title_id));
                 return text;
             }
@@ -182,11 +237,11 @@ private:
     bool PersistGame(const GameSettings& old) {
         if (SaveGameSettings(title_id, game)) {
             restart_required = true;
-            notice = "MODIFS ENREGISTREES";
+            notice = Text("Game settings");
             return true;
         }
         game = old;
-        notice = "SAVE FAILED OR INCOMPAT";
+        notice = Text("Could not save settings. Please try again.");
         return false;
     }
     static int Cycle(int value, int count, int direction) {
@@ -243,22 +298,22 @@ private:
         prefs.hud = !prefs.hud;
         if (!SavePreferences(prefs)) {
             prefs = previous;
-            notice = "CANNOT SAVE FPS SETTING";
+            notice = Text("Could not save settings. Please try again.");
             return;
         }
         SetHudEnabled(prefs.hud);
-        notice = prefs.hud ? "FPS DISPLAY ENABLED" : "FPS DISPLAY DISABLED";
+        notice = Text("FPS OVERLAY") + " " + Toggle(prefs.hud);
     }
     void ToggleLogs() {
         auto previous = prefs;
         prefs.detailed_logging = !prefs.detailed_logging;
         if (!SavePreferences(prefs)) {
             prefs = previous;
-            notice = "CANNOT SAVE LOG SETTING";
+            notice = Text("Could not save settings. Please try again.");
             return;
         }
         NativeLogs::SetDetailed(prefs.detailed_logging);
-        notice = prefs.detailed_logging ? "DETAILED LOGS ENABLED" : "DETAILED LOGS DISABLED";
+        notice = Text("DETAILED LOGGING") + " " + Toggle(prefs.detailed_logging);
     }
     void Rebuild() const {
         Frame result;
@@ -274,33 +329,32 @@ private:
             const auto index = result.count++;
             result.text[index].Assign(value);
             auto& dst = result.rows[index];
-            dst.glyphs = HudCodepoints(value.substr(0, 24));
+            dst.glyphs = EncodeMenuText(value, prefs.language);
             dst.width = 680;
             dst.loading = StyledMode(mode,result.style);
         };
-        line("EDEN ENCORE / PAD FERMER", kRow);
-        // All five pages remain visible, including before the first L1/R1.
-        // The highlighted second line identifies the active page and its
-        // position; keep each label within the current 24-glyph HUD ABI.
-        static constexpr std::string_view headings[] = {
-            "L1 / JEU 1/5 / R1", "L1 / GRAPH 2/5 / R1",
-            "L1 / PAD 3/5 / R1", "L1 / DIAG 4/5 / R1",
-            "L1 / MULTI 5/5 / R1"};
-        static_assert(std::size(headings) == kOverlayTabs);
-        line(headings[tab], kSelectedRow);
-        line("JEU GRAPH PAD DIAG MULTI", kRow);
+        line("EDEN ENCORE / O " + Text("Back"), kRow);
+        // Category names come from the same 31 maintained launcher catalogs.
+        // Technical L1/R1 and page numbers stay language-neutral.
+        const std::array<std::string, kOverlayTabs> headings{
+            "L1 / " + Text("Game settings") + " 1/5 / R1",
+            "L1 / " + Text("Renderer") + " 2/5 / R1",
+            "L1 / " + Text("Controls") + " 3/5 / R1",
+            "L1 / " + Text("Diagnostics") + " 4/5 / R1",
+            "L1 / " + Text("Multiplayer") + " 5/5 / R1"};
+        line(headings[static_cast<std::size_t>(tab)], kSelectedRow);
+        line(LanguageLine(), kRow);
         const int start = std::clamp(selected - 3, 0, std::max(0, Count() - kVisibleRows));
         for (int index = 0; index < kVisibleRows; ++index) {
             const int item = start + index;
             line(item < Count() ? Row(item) : "",
                  item == selected ? kSelectedRow : kRow);
         }
-        line(tab == 0 ? "X OUVRIR / O FERMER" :
-             tab == 4 ? "X OK / O RETOUR" : "X CHANGER / O RETOUR", kRow);
-        line(tab == 4 && !multiplayer_confirm ? "SALON = FERMER LE JEU" : notice, kRow);
-        // A persistent, visually distinct banner when a per-title change
-        // needs a fresh game launch (never a full PS5/system restart).
-        line(restart_required ? "RELANCER LE JEU REQUIS" : "",
+        line("X " + Text("Change") + " / O " + Text("Back"), kRow);
+        line(tab == 4 && !multiplayer_confirm ? Text("Confirm this action?") : notice, kRow);
+        // A persistent banner uses an already-maintained localized launcher
+        // key; no second quick-menu-only translation catalogue exists.
+        line(restart_required ? Text("Game settings") : "",
              restart_required ? kWarningRow : kRow);
         Publish(result);
     }

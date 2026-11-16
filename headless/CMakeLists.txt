@@ -2937,8 +2937,16 @@ endif()
                 "${launcher_dir}/pe/ui/settings.cpp"
                 "${launcher_dir}/pe/ui/switch_theme.cpp"
                 "${launcher_dir}/pe/ui/textures.cpp"
-                "${launcher_dir}/pe/ui/widgets.cpp")
+                "${launcher_dir}/pe/ui/widgets.cpp"
+                "${EDEN_PORT_DIR}/quick_overlay_font.cpp")
             target_sources(eden-headless PRIVATE ${launcher_sources})
+            if(TARGET eden-vulkan-hud-shaders)
+                target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
+                add_dependencies(eden-headless eden-vulkan-hud-shaders)
+                set_property(SOURCE "${EDEN_PORT_DIR}/quick_overlay_font.cpp"
+                    TARGET_DIRECTORY eden-headless APPEND PROPERTY OBJECT_DEPENDS
+                    "${EDEN_HUD_MENU_MAP}")
+            endif()
             # The launcher calls OpenGL by name (the SDK's headers), not through glad.
             set(launcher_definitions "GL_GLEXT_PROTOTYPES=1")
             if(EXISTS "${EDEN_PORT_DIR}/ryujinx_saves.h")
@@ -2954,6 +2962,10 @@ endif()
             endif()
             set_source_files_properties(
                 "${launcher_dir}/pe/gfx/system_fonts.cpp" "${launcher_dir}/pe/gfx/harfbuzz.cpp"
+                PROPERTIES INCLUDE_DIRECTORIES "${harfbuzz_dir};${PORT_ROOT}/tools/launcher/stb")
+            # QuickOverlay reuses SystemFonts::shape; the generated slot map is
+            # supplied by vulkan.cmake and contains no font bytes.
+            set_source_files_properties("${EDEN_PORT_DIR}/quick_overlay_font.cpp"
                 PROPERTIES INCLUDE_DIRECTORIES "${harfbuzz_dir};${PORT_ROOT}/tools/launcher/stb")
             # HarfBuzz is not ours to tidy: its warnings are off.
             set_source_files_properties("${launcher_dir}/pe/gfx/harfbuzz.cpp" PROPERTIES COMPILE_OPTIONS "-w")

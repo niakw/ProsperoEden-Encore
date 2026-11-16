@@ -95,12 +95,13 @@ with tempfile.TemporaryDirectory() as tmp:
         return calls.read_text().splitlines()
 
     def assert_embedded_fr_tail(calls: list[str]) -> None:
-        assert len(calls) >= 2, calls
-        assert "tools/launcher/strings.py embed-fr" in calls[-2], calls
+        assert len(calls) >= 3, calls
+        assert "tools/launcher/strings.py embed-fr" in calls[-3], calls
+        assert "tools/launcher/build_noto_subsets.py --output" in calls[-2], calls
         assert "tools/launcher/strings.py check" in calls[-1], calls
 
     bypass_source=run_gate("1", "0")
-    assert len(bypass_source)==3 and "check-native-source-syntax.py" in bypass_source[0], bypass_source
+    assert len(bypass_source)==4 and "check-native-source-syntax.py" in bypass_source[0], bypass_source
     assert_embedded_fr_tail(bypass_source)
     release=run_gate("0", "0")
     assert release and "check-native-source-syntax.py" in release[0], release
@@ -109,7 +110,7 @@ with tempfile.TemporaryDirectory() as tmp:
     # Skipping the optional/source preflight suite must NOT skip the generated
     # fallback rematerialization that the real native compiler consumes.
     for bypass in (run_gate("1", "1"), run_gate("0", "1")):
-        assert len(bypass)==2, bypass
+        assert len(bypass)==3, bypass
         assert_embedded_fr_tail(bypass)
 # A real regression check for the argument-vector bug in run #231. The
 # upstream-generated units inherit a Clang-18-unsupported -Wno-error-all;

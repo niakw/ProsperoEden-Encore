@@ -121,6 +121,15 @@ files.** The selected license text is preserved as
   started from that project.
 - **Montserrat** by Julieta Ulanovsky and contributors — SIL Open Font License
   1.1. The exact bundled notice is preserved under `LICENSES/`.
+- **Noto Sans / Noto Sans Arabic / Noto Sans Thai / Noto Sans CJK** —
+  SIL Open Font License 1.1. Encore generates bounded Medium-weight subsets
+  from the exact Google Fonts commit
+  `7af0d90b4d532ffa4b041937b560c6df4e7b1e95`, containing only codepoints
+  required by the active Greek, Arabic, Thai, Japanese, Korean, Simplified
+  Chinese and Traditional Chinese launcher catalogs. Source Git blob IDs are
+  pinned in `tools/launcher/noto_fallbacks.json`; exact OFL notices are
+  preserved under `LICENSES/Noto*.txt`. The full upstream font families are
+  not bundled.
 - **[HarfBuzz](https://github.com/harfbuzz/harfbuzz)** — its upstream COPYING
   terms. It shapes launcher text for complex scripts such as Thai and Arabic.
 - **[stb](https://github.com/nothings/stb)** — upstream dual public-domain/MIT

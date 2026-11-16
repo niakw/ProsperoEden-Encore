@@ -20,6 +20,8 @@ hud = read("headless/hud.h")
 vulkan_cmake = read("headless/vulkan.cmake")
 hud_builder = read("tools/graphics/build-vulkan-hud-shaders.py")
 font_baker = read("tools/launcher/bake_vulkan_menu_font.py")
+font_baker_cpp = read("tools/launcher/bake_vulkan_menu_font.cpp")
+quick_font = read("headless/quick_overlay_font.cpp")
 
 # Click the physical touchpad, never the reserved console system button; legacy shortcuts
 # and OpenGL guest Minus remain unchanged.
@@ -54,7 +56,11 @@ assert "menuAccent(uint palette,uint accent)" in shader
 assert "menuPanel(uint palette)" in shader
 assert "prefs = LoadPreferences();" in menu
 assert '#include "vulkan_menu_font.glsl"' in shader
-assert "menuFontAlpha(" in shader
+assert "menuFontSlotAlpha(" in shader
+assert "15-bit atlas slot" in shader
+assert "EncodeMenuText(value, prefs.language)" in menu
+assert "SystemFonts" in quick_font and "bidi::resolve" in quick_font
+assert "stbtt_GetGlyphSDF" in font_baker_cpp
 assert '#include "eden_vulkan_hud_shaders.h"' in vulkan
 assert "eden-vulkan-hud-shaders" in vulkan_cmake
 assert "bake_vulkan_menu_font.py" in vulkan_cmake
@@ -62,31 +68,26 @@ assert "build-vulkan-hud-shaders.py" in vulkan_cmake
 assert "EDEN_HUD_SHADER_HEADER" in vulkan_cmake
 assert "--output" in font_baker
 assert "--spirv-val" in hud_builder and "0x07230203" in hud_builder
-assert "HudCodepoints(std::string_view text)" in hud
+assert "HudCodepoints(std::string_view text)" not in hud
+assert "HudCodepoints(" not in menu
 
-# Every tab displays its accessible page index and both shoulder controls,
-# with the fifth Multiplayer tab visible even on initial opening.
-import re
-headings = menu.split("static constexpr std::string_view headings[] = {", 1)[1].split("};", 1)[0]
-labels = re.findall(r'"([^"]+)"', headings)
-assert len(labels) == 5
-for idx, (label, category) in enumerate(zip(labels, ("JEU", "GRAPH", "PAD", "DIAG", "MULTI")), 1):
-    assert label == f"L1 / {category} {idx}/5 / R1"
-    assert len(label) <= 24
-assert 'line(headings[tab], kSelectedRow);' in menu
-assert 'line("JEU GRAPH PAD DIAG MULTI", kRow);' in menu
-assert len("JEU GRAPH PAD DIAG MULTI") <= 24
-assert len("EDEN ENCORE / PAD FERMER") <= 24
-assert 'line("EDEN ENCORE / PAD FERMER", kRow);' in menu
+# All five pages retain shoulder navigation, but category labels now come
+# from the same 31 launcher catalogues instead of a French-only parallel UI.
+assert "const std::array<std::string, kOverlayTabs> headings" in menu
+for index in range(1, 6):
+    assert f" {index}/5 / R1" in menu
+for key in ("Game settings", "Renderer", "Controls", "Diagnostics", "Multiplayer"):
+    assert f'Text("{key}")' in menu
+assert "line(headings[static_cast<std::size_t>(tab)], kSelectedRow);" in menu
 
 # Home must expose every other category as a selectable row, even if the
 # user never presses a shoulder button. Circle returns to that home row.
-for row, label in enumerate(("GRAPHISMES >", "COMMANDES >", "DIAGNOSTICS >", "MULTIJOUEUR >"), 4):
-    assert f'case {row}: return "{label}";' in menu
+for row in range(4, 8):
+    assert f"case {row}:" in menu
 assert "tab == 0 ? kHomeRows" in menu
 assert "HomeCategoryTab(selected)" in menu
 assert "selected = kHomeActionRows + previous - 1;" in menu
-assert "X OUVRIR / O FERMER" in menu and "X CHANGER / O RETOUR" in menu
+assert 'Text("Change")' in menu and 'Text("Back")' in menu
 assert "kHomeRows <= kVisibleRows" in menu
 
 
@@ -95,7 +96,7 @@ assert "SaveGameSettings(title_id, game)" in menu
 assert "SavePreferences(prefs)" in menu
 assert "bool restart_required{};" in menu
 assert "restart_required = true;" in menu
-assert "RELANCER LE JEU REQUIS" in menu
+assert 'restart_required ? Text("Game settings")' in menu
 assert "restart_required ? kWarningRow : kRow" in menu
 assert "SetHudEnabled(prefs.hud);" in menu
 assert "NativeLogs::SetDetailed(prefs.detailed_logging);" in menu
@@ -121,7 +122,7 @@ print("FPS_TOUCHPAD_GUIDE_CATALOG_PARITY_PASS themes=2 locales=31")
 import subprocess
 import tempfile
 assert "result.text[index].Assign(value);" in menu
-assert "dst.glyphs = HudCodepoints(value.substr(0, 24));" in menu
+assert "dst.glyphs = EncodeMenuText(value, prefs.language);" in menu
 with tempfile.TemporaryDirectory() as directory:
     source = Path(directory) / "overlay_text.cpp"
     binary = Path(directory) / "overlay_text"
@@ -146,7 +147,7 @@ int main() {
     visible.visible = true;
     visible.count = 2;
     visible.text[0].Assign("Full-length label beyond twenty-four characters");
-    visible.rows[0].glyphs = Eden::HudCodepoints("Full-length label beyond");
+    visible.rows[0].glyphs = Eden::HudText("FPS");
     const std::string prefix(MenuText::kCapacity - 1, 'x');
     const std::string accented = prefix + "\xc3\xa9";
     visible.text[1].Assign(accented);
@@ -173,7 +174,7 @@ int main() {
                     "-pthread", "-I", str(root / "headless"), str(source),
                     "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True)
-print("OVERLAY_MENU_TEXT_MODEL_HOST_PASS utf8_boundary=1 immutable=1 legacy_abi=112 montserrat_codepoints=1")
+print("OVERLAY_MENU_TEXT_MODEL_HOST_PASS utf8_boundary=1 immutable=1 legacy_abi=112 shaped_quick_menu_separate=1")
 
 
 # Compile the actual Menu::Handle body and Count() into a controlled host
@@ -205,6 +206,7 @@ struct MenuProbe {
     void ToggleLogs() { ++writes; }
     void EditGraphics(int) { ++writes; }
     void EditMapping(int) { ++writes; }
+    static std::string Text(const char* english) { return std::string{english}; }
     int Count() const {''' + count + r'''
     }
     Outcome Handle(std::uint32_t actions) {''' + handle + r'''

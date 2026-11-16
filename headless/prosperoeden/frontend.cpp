@@ -115,15 +115,23 @@ void LoadLanguage(pe::gfx::Font& font) {
 #endif
 
     std::string folder = "none";
-    std::size_t files = 0;
-    for (const std::string& candidate : pe::gfx::system_font_folders()) {
+    std::vector<std::string> fallback_files;
+    std::vector<std::string> font_folders;
+    font_folders.push_back(Eden::AppFile("ui/fonts/fallback"));
+    for (const std::string& candidate : pe::gfx::system_font_folders())
+        if (std::find(font_folders.begin(), font_folders.end(), candidate) == font_folders.end())
+            font_folders.push_back(candidate);
+    for (const std::string& candidate : font_folders) {
         std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
         if (found.empty()) continue;
-        folder = candidate;
-        files = found.size();
-        font.use_system_fonts(std::move(found), tag);
-        break;
+        if (folder == "none") folder = candidate;
+        for (std::string& file : found)
+            if (std::find(fallback_files.begin(), fallback_files.end(), file) == fallback_files.end())
+                fallback_files.push_back(std::move(file));
     }
+    const std::size_t files = fallback_files.size();
+    if (!fallback_files.empty())
+        font.use_system_fonts(std::move(fallback_files), tag);
 
     // Every launcher instance starts with a clean catalog. This is essential when switching from
     // any other language, including the two English regional variants.

@@ -433,7 +433,7 @@ jobs:
           else
             # Network/catalog outages must never prevent an emulator build.
             rm -f headless/prosperoeden/ui/box-art-index.tsv
-            echo "::warning::Optional case index unavailable; cached/user-provided artwork remains supported"
+            echo "::notice::Optional case index unavailable; cached/user-provided artwork remains supported"
           fi
 
       - name: Build and stage native release

@@ -332,6 +332,8 @@ assert "Color::rgb(0xb61626, 0.78f)" not in draw
 assert "c.list.case_spine(side_strip, angle, 3.2f," not in draw
 indexer = (root / "tools/launcher/build-box-art-index.py").read_text()
 workflow = (root / ".github/workflows/build-040-zbic.yml").read_text()
+assert '::notice::Optional case index unavailable; cached/user-provided artwork remains supported' in workflow
+assert '::warning::Optional case index unavailable' not in workflow
 packager = (root / "tools/package-headless-native.sh").read_text()
 assert '"Nintendo Switch", "Nintendo Switch 2"' in indexer
 assert '"https://gamesdb-images.launchbox.gg"' in native

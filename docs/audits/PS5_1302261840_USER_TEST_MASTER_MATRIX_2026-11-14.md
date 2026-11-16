@@ -195,3 +195,31 @@ The 32 original IDs A01–A09, B01–B15 and C01–C08 are retained. Do not turn
 - B19 — In-game controls/overlay: L1/R1 discoverability, all five pages, actual shared font, readable lower resolution and translated text; ordinary guest text issue A04 is independent.
 - B20 — Guest language: Nintendo `fr` vs launcher `fr-FR`, verify real EDEN_GUEST_LANGUAGE_REPLY, not merely launcher selection.
 - D01 — Log sharing: #176 merged at 0f8c89e51a4e57da44c98c478ab4c1027b92af90 after 9/9 head workflows; #2 website merged f54814052e6b6b53a019beb693333aeedf1e84d5, 2/2. UI consent, queue and offline collector boundary tested. Native worker, durable consent epochs, actual idle-only transport, private GitHub/Forgejo destinations, GDPR notice/retention/deletion and end-to-end activation **not finished**. No upload during play, load, app shutdown or crash callback; next healthy idle launcher only. Keep service unavailable.
+
+
+## AA — 16 novembre 2026 : gate console du `main` nettoyé
+
+Couple à qualifier après intégration/cleanup :
+- **moteur** : `5cfa4e4a920d90c91afc1eb3e5394c72f3b2ec92` (maintenance #219 uniquement après la fusion runtime #218 `ad7b7e0f9e195aa6467f1349f5b9d5b47d590233`);
+- **vendor sélectionné par le moteur** : `50a849a93494f442d47573b8ce8b8797c3cecd26`;
+- moteur et vendor : **0 PR ouverte, branche `main` uniquement** au contrôle du 16/11 ;
+- #218 : **29/29 workflows hôte/source verts** avant fusion ;
+- aucune nouvelle compilation native PS5 n'est inférée de ces résultats.
+
+La recherche upstream/source est désormais au **gate matériel** pour les symptômes P0/P1 principaux : les correctifs applicables identifiés sont sélectionnés, et les pistes récentes non correspondantes ont été rejetées explicitement plutôt que portées à l'aveugle. Un nouveau changement runtime avant mesure console risquerait de mélanger les causes.
+
+### Ordre de test obligatoire du prochain package exact
+
+1. **Launcher à froid** : noter temps d'apparition des cinq premières vignettes, cadrage carré NS2, absence de `Network available` persistant et arrivée des détails/captures sans focus obligatoire.
+2. **FC27 NS1** : intro EA (image + son), menu/HUD/glyphes, joueurs/bras/cheveux/maillots, puis deux matchs successifs. Faire le premier match cache froid et le second chaud ; relever hitchs visibles et compteur FPS. Comparer **AA None** puis **MSAA 4x** sur la même scène avant toute nouvelle modification du chemin MSAA.
+3. **Retour FC27 -> launcher** : temps de retour, icônes NS2 toujours présentes, pas de nouveau travail massif visible.
+4. **Bananza NS2** : lancement à froid ; vérifier disparition ou persistance du guest `PC=0x4 LR=0`, et conserver le dernier marqueur guest/service avant faute.
+5. **MKW NS2** : lancement séparé ; à 10 s et 30 s vérifier progression guest + premier vrai submit/frame, sans attribuer le préfixe Bananza à MKW.
+6. **Chargement GL -> Vulkan** : filmer si possible la transition FC27 puis NS2 ; rechercher spécifiquement noir/blanc entre dernier frame launcher et jaquette, sans confondre loader app et premier frame invité.
+7. **Overlay/paramètres** : police Montserrat lisible, cinq catégories visibles, descriptions MSAA/vidéo présentes, réglage opacité 0/50/100, paramètres globaux vs Triangle par jeu.
+8. **Sortie** : après chaque famille de test, retour au launcher ; en fin de session quitter l'application par Rond et relancer. Aucun restart système/SIGSEGV ne doit être considéré acceptable.
+9. **Mesh/RADV A09** : ne pas provoquer volontairement un hang GPU sur console utilisateur. Le correctif NGG reste qualifié par un lancement NS2 ordinaire + absence de device-lost ; le test synthétique risqué demeure séparé.
+
+### Décision
+
+**Le prochain progrès utile nécessite maintenant un package natif construit depuis ce couple exact (ou un successeur dont seules les modifications sont documentées).** Ne pas réutiliser le package R457/R458 pour conclure sur #218, les Home icons actuelles ou le GetInfo NS2. Après installation, renseigner chaque résultat A/B/C avec SHA moteur, vendor, hash package et firmware 13.60.

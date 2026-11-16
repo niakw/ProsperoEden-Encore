@@ -92,8 +92,6 @@ jobs:
               # prove current main contains them before deletion.
               'fix/native-preflight-generated-hud-dep':
                   '01d57ca7b57f8edcf9478d8dc2f64cf4986eb7a7',
-              'build/add-encore-overrides-submodule-20261116':
-                  '8c392ab42d36c08f8c1b4b5b393e12ec5ece300c',
           }
           # Exact closed/unmerged heads superseded by merged #187. Their unique
           # commits were reviewed as obsolete rebase/fixture/vendor-pin receipts;
@@ -132,7 +130,7 @@ jobs:
               # PR #232 was squash-merged after its staging branch advanced;
               # retain exact head provenance and remove only that immutable ref.
               'build/add-encore-overrides-submodule-20261116':
-                  ('1e2d0fb208df7196bf5e3d7241c23ca64f075df0', 232),
+                  ('8c392ab42d36c08f8c1b4b5b393e12ec5ece300c', 232),
           }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:

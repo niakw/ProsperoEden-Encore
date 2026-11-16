@@ -49,6 +49,7 @@ KNOWN_VENDOR_GRAPH = {
     "c5614d3c7ef75958965bac93c9e343eccdbc0fbe": "same reviewed graph + Lichii #1825 BitFieldUExtract constant-fold UB fix",
     "67926ea4b6960eefebf0427929cf299e8e056013": "same reviewed graph + NS2 GetInfo 29/30 VAMM range + 0x21/33 4 KiB page-size contracts",
     "50a849a93494f442d47573b8ce8b8797c3cecd26": "same reviewed graph + NS2 GetInfo 29/30/33 + GPU-access SVC header parity",
+    "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab": "same reviewed graph + exact native GPU dirty-manager complete-type includes; vendor maintenance/tests only otherwise",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

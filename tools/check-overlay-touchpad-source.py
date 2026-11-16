@@ -206,6 +206,7 @@ struct MenuProbe {
     void ToggleLogs() { ++writes; }
     void EditGraphics(int) { ++writes; }
     void EditMapping(int) { ++writes; }
+    static std::string Text(const char* english) { return std::string{english}; }
     int Count() const {''' + count + r'''
     }
     Outcome Handle(std::uint32_t actions) {''' + handle + r'''

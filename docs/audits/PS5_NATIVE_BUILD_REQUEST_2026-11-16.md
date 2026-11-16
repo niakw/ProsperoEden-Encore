@@ -39,3 +39,5 @@ Acceptance for this run:
 Console validation remains separate from a green build.
 
 Retry note: native run `43961249048` stopped before toolchain installation/compilation because the early post-F07 gate had stale exact blobs for `eden_services.{cpp,h}`. PR #259 updated only those reviewed receipts; no runtime/vendor source changed. This trigger is the corrected full build.
+
+Second retry note: native run `43963114431` also stopped before toolchain installation. The same strict Post-F07 gate then exposed the remaining already-reviewed typography/diagnostics successors for `headless/hud.h` and `headless/prosperoeden/frontend.cpp`. PR #260 admitted those exact blobs. The full 40-entry Post-F07 register was then compared against the current tree with zero uncovered drifts. Main after #260: `6e863387f2513b55d95ecd07faab0f8389cfbf42`.

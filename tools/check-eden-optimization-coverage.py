@@ -1227,10 +1227,23 @@ assert len(pair_new_owners) == 2 and len(pair_receipt["files"]) == 14
 pair_present = pair_new_owners & all_owners
 if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "cd0c5df69199b5dc7fbb333f5e76c80314a020e4"}:
     assert pair_present == pair_new_owners
+    dirty_manager_successor_owners = {
+        "eden-core/src/video_core/gpu_gl_native.cpp",
+        "eden-core/src/video_core/gpu_gl_native_dev.cpp",
+        "eden-core/src/video_core/gpu_vulkan.cpp",
+    }
+    dirty_manager_include = b'#include "core/gpu_dirty_memory_manager.h"\n'
     for path, blob in pair_receipt["files"].items():
-        actual = subprocess.check_output(
-            ["git", "hash-object", "vendor/encore-active/" + path],
-            cwd=ROOT, text=True).strip()
+        if gpu_table_vendor_pin == "cd0c5df69199b5dc7fbb333f5e76c80314a020e4" and path in dirty_manager_successor_owners:
+            raw = (ROOT / "vendor/encore-active" / path).read_bytes()
+            assert raw.count(dirty_manager_include) == 1, path
+            prior = raw.replace(dirty_manager_include, b"", 1)
+            actual = hashlib.sha1(
+                b"blob " + str(len(prior)).encode() + b"\0" + prior).hexdigest()
+        else:
+            actual = subprocess.check_output(
+                ["git", "hash-object", "vendor/encore-active/" + path],
+                cwd=ROOT, text=True).strip()
         if (gpu_table_vendor_pin in {"42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "cd0c5df69199b5dc7fbb333f5e76c80314a020e4"} and
                 path == "eden-vulkan/vulkan_rasterizer.cpp"):
             assert actual == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1", path

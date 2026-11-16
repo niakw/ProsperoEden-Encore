@@ -387,6 +387,7 @@ L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp` | U97 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h` | U95 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | U96 |
+| `eden-backports/src/common/net/net.h` | U98 |
 | `eden-core/src/video_core/buffer_cache/buffer_cache_base.h` | R437 |
 <!-- POST_F07_MAINTAINED_OWNER_END -->
 

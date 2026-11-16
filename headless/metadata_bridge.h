@@ -34,7 +34,8 @@ int eden_game_language(const char* rom_path, const char* keys_dir, uint64_t titl
 // provider. Metadata, not the folder name, decides update/AOC ownership.
 void eden_scan_addons(const char* updates_dir, const char* keys_dir, const char* roms_dir);
 // For a base game: the newest update's display version (empty without one) and its DLC count.
-// Returns nonzero when either exists.
+// Returns 1 when either exists, 0 when a complete scan confirms none,
+ // and -1 while/after an incomplete scan (unknown; never render as confirmed empty).
 int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, unsigned* dlc_count);
 // Resolved IN-GAME GRAPHICS version: scanned update if present, else base NACP
 // display-version from the selected title. Returns 0 if metadata/scan unknown.

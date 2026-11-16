@@ -245,12 +245,12 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 509 | 486 | 1019 |
+| Graphe connu | 510 | 487 | 1021 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 424 | 414 | 853 |
+| SOURCE — lecture effectuée, preuve insuffisante | 425 | 415 | 855 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **439** | **428** | **881** |
+| **Encore à qualifier (SOURCE + OPEN)** | **440** | **429** | **883** |
 | Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
 
 Le **noyau restant** compte donc 439 critères répartis sur

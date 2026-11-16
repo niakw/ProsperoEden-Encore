@@ -1590,6 +1590,7 @@ drift_index = {item['path']: item for item in reviewed_blob_drifts}
 # successor blob and its required client marker, then resume qualification from
 # the exact main predecessor. Independent diagnostics-sharing host tests cover
 # consent/queue/idle/fail-closed behavior; this block is source identity only.
+nov16_diagnostics_service_replay_source = None
 nov16_diagnostics_source_successors = {
     "headless/prosperoeden/eden_services.cpp": (
         "310e21f75f4e2524b90534d5b9122c6bc587a4f2",
@@ -1620,6 +1621,35 @@ for changed_path, (predecessor_blob, successor_blob, markers) in nov16_diagnosti
     current_source = (ROOT / changed_path).read_text()
     for marker in markers:
         assert marker in current_source, (changed_path, marker)
+    if changed_path == "headless/prosperoeden/eden_services.cpp":
+        # Reconstruct the exact current-main predecessor so the older Home/
+        # Library provenance replayers below do not accidentally re-read the
+        # diagnostics branch source and mix unrelated deltas.
+        replay = current_source
+        replay = replay.replace('#include "diagnostics_native_client.h"\n', "", 1)
+        replay = replay.replace(
+            "    // Consent remains fail-closed until the native client has a verified HTTPS collector.\n",
+            "    // No native collector yet. A stale or hand-edited preference cannot turn sharing on.\n",
+            1)
+        replay = replay.replace(
+            "    if (saved) Eden::DiagnosticsClient::SetConsent(value.share_standard_logs, value.share_advanced_logs);\n",
+            "", 1)
+        method = """bool EdenServices::log_sharing_available() const {
+#ifdef PS5_NATIVE
+    return Eden::DiagnosticsClient::Available();
+#else
+    return false;
+#endif
+}
+
+"""
+        assert replay.count(method) == 1
+        replay = replay.replace(method, "", 1)
+        raw = replay.encode("utf-8")
+        replay_blob = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert replay_blob == predecessor_blob
+        nov16_diagnostics_service_replay_source = replay
     drift_index[changed_path]["actual"] = predecessor_blob
     print("NOV16_DIAGNOSTICS_SOURCE_SUCCESSOR_PASS", changed_path,
           "predecessor=main", "console_validation=pending")
@@ -1632,7 +1662,9 @@ nov16_pre_no_duplicate_addon_blob = "fbe04395576c244c158a60748cc4cd765eb58f0f"
 service_path = "headless/prosperoeden/eden_services.cpp"
 nov16_no_duplicate_replay_source = None
 if drift_index[service_path]["actual"] == nov16_no_duplicate_addon_blob:
-    current_service = (ROOT / service_path).read_text()
+    current_service = (nov16_diagnostics_service_replay_source
+                       if nov16_diagnostics_service_replay_source is not None
+                       else (ROOT / service_path).read_text())
     new_block = """    if (cancel && cancel->load(std::memory_order_acquire)) return games;
     // Initial Library enumeration starts only after finish_home_scan() has
     // applied EdenServices::home(), whose worker already published the

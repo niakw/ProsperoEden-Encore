@@ -100,11 +100,7 @@ add_custom_command(
 add_custom_target(eden-vulkan-hud-shaders DEPENDS "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_MAP}")
 add_dependencies(video_core eden-vulkan-hud-shaders)
 target_include_directories(video_core BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
-target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
-add_dependencies(eden-headless eden-vulkan-hud-shaders)
-set_property(SOURCE "${EDEN_PORT_DIR}/quick_overlay_font.cpp"
-    TARGET_DIRECTORY eden-headless APPEND PROPERTY OBJECT_DEPENDS
-    "${EDEN_HUD_MENU_MAP}")
+# eden-headless is declared later; attach its generated map in CMakeLists.txt.
 set_property(SOURCE "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_HUD_SHADER_HEADER}")

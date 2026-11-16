@@ -24,6 +24,14 @@ assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting 
 # Later reviewed ExeFS/media/diagnostics changes do not rewrite the frozen
 # historical register or widen acceptance to arbitrary drift.
 successors={
+    "headless/hud.h": (
+        "0ef8bf75efabf61628b44b91011eb461abcbde81",
+        "a506f5dca7efc289f47a172a353bff4f04d9f4e4",
+    ),
+    "headless/prosperoeden/frontend.cpp": (
+        "25884807fdf7759834cb232548184ffefca715d4",
+        "1de983352dad85e4dd6c1520a0c9e9aec26d052d",
+    ),
     "headless/prosperoeden/eden_services.cpp": (
         "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
         "6efc431641ace097b7216748e1e232c8cc9f1ae1",

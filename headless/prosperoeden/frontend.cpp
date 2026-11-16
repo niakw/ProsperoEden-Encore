@@ -4,6 +4,7 @@
 // starts: the game's own window takes over the screen.
 #include "frontend.h"
 #include "launch_handoff.hpp"
+#include "diagnostics_native_client.h"
 #include "loading_artwork_gl.hpp"
 
 #include "assets_dir.h"
@@ -291,6 +292,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
         const bool input_ready = radio_input_init();
         if (!input_ready) Eden::Report("menu failure", "The controller could not be opened");
         pe::ui::Launcher launcher(services, textures, fonts, first_start, true);
+        Eden::DiagnosticsClient::EnterLauncher(launch_error);
         if (Eden::LaunchHandoff::TakeMultiplayerRequest())
             launcher.open_multiplayer_from_game();
         int menu_volume = launcher.menu_volume();
@@ -364,6 +366,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             radio_input_event_t input{};
             while (radio_input_next(&input)) {
                 if (!input.pressed) continue;
+                Eden::DiagnosticsClient::Activity();
                 // A slow handler names itself in the log (opening the Library reads every game).
                 const auto pressed_at = Clock::now();
                 launcher.press(static_cast<pe::ui::Key>(input.key));
@@ -374,10 +377,12 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             }
             if (!loading_started && !launcher.selected_game().empty()) {
                 reduce_motion = launcher.reduce_motion();
+                Eden::DiagnosticsClient::GameStarting();
                 Eden::LaunchHandoff::BeginLoading();
                 loading_started = true;
             }
             launcher.update(dt);
+            Eden::DiagnosticsClient::Poll();
             if (launcher.output() != output) {
                 // Output resolution changed in Settings > Video: the display opens again at the new
                 // size, and with it everything that lives in its GL context. The launcher stays as

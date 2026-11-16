@@ -369,7 +369,8 @@ assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in 
 assert "// Gameplay previews remain independent of real back paper." in native
 assert 'const char* const names[]' in native
 assert '"scene-1", "scene-2", "scene-3", "scene-4", "scene-5"' in native
-assert "for (int side = 0; side < 8; ++side)" in native\nassert 'selected->second[8]' in native
+assert "for (int side = 0; side < 8; ++side)" in native
+assert 'selected->second[8]' in native
 assert 'scene_columns{"-", "-", "-", "-", "-"}' in native
 assert "if (receipt) receipt << filename" in native
 assert "std::ofstream receipt(destination + \".source\"" in native

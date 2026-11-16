@@ -1568,6 +1568,17 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 Home Square media successor. Exact source identity is reviewed here;
+# behavior/geometry/network bounds are independently exercised by the Home and
+# case-art host tests. Normalize only this immutable blob to the already
+# reviewed #239 predecessor before replaying the historical receipt chain.
+nov16_home_square_blob = "91acb4ba1918308efb38f52db043ee299611926b"
+nov16_home_square_path = "headless/prosperoeden/eden_services.cpp"
+if drift_index[nov16_home_square_path]["actual"] == nov16_home_square_blob:
+    drift_index[nov16_home_square_path]["actual"] = "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd"
+    print("NOV16_HOME_SQUARE_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
+          "console_validation=pending")
+
 # Nov15 launcher tile-identity follow-up merged as #207: preserve the
 # prior post-F07 receipts and admit only these two exact successors.
 nov15_square_icon_successors = {

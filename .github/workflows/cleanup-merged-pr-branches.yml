@@ -103,6 +103,16 @@ jobs:
                   ('5374adcbf3a7a65c75729536bb794dee58fbbda9', 184),
               'perf/fc27-ssbo-pruning-fresh':
                   ('bce11d5f28a26e2a89c4461a49ce04993b7f392a', 185),
+              # Nov15/16 pre-cleanup heads superseded by the clean merged
+              # successors #213 (DrawTexture) and #215 (early NS2 HLE).
+              # These refs are intentionally divergent after rebases/squashes:
+              # only their exact immutable heads are admitted.
+              'fix/nov15-eden4559-drawtexture-pair':
+                  ('20cfe596511f32c7574354eb9342a9d564f7e287', 213),
+              'fix/nov15-ns2-early-hle-pair':
+                  ('b972055c40f8428bda823956f21c223db593f7c1', 215),
+              'fix/nov15-ns2-early-hle-clean':
+                  ('ee38f269e73e98114bc73272fa9852995a7860c4', 215),
           }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:

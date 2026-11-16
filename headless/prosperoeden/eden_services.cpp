@@ -2575,9 +2575,12 @@ std::string EdenServices::exact_game_size(const std::string& file,
                                                const std::atomic<bool>* cancel) {
     if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
         return {};
-    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
-    if (!Eden::IsSafeExtractedDirectory(extracted))
+    const std::filesystem::path roms_root = Eden::AssetsPath("roms");
+    // The Library row persists the executable selection, not the directory.
+    // Revalidate every directory component and measure the top-level title.
+    if (!Eden::IsSafeDeconstructedGamePath(roms_root, file))
         return {};
+    const std::filesystem::path extracted = roms_root / file.substr(0, file.find('/'));
     const auto bytes = ExtractedBaseBytes(extracted, cancel);
     if (!bytes || (cancel && cancel->load(std::memory_order_acquire)))
         return {};

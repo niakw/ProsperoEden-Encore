@@ -326,7 +326,8 @@ handoff=read('headless/launch_handoff.hpp')
 launcher_frontend=read('headless/prosperoeden/frontend.cpp')
 launcher_header=read('headless/prosperoeden/pe/ui/launcher.hpp')
 assert 'Outcome::multiplayer' in quick_menu and 'multiplayer_confirm' in quick_menu
-assert 'SALON = FERMER LE JEU' in quick_menu
+assert 'Text("Multiplayer")' in quick_menu and 'Text("Confirm this action?")' in quick_menu
+assert 'SALON = FERMER LE JEU' not in quick_menu
 assert 'QueueMultiplayer()' in handoff and 'TakeMultiplayerRequest()' in handoff
 assert 'Eden::LaunchHandoff::QueueMultiplayer();' in main
 assert 'Eden::LaunchHandoff::TakeMultiplayerRequest()' in launcher_frontend

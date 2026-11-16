@@ -1269,7 +1269,7 @@ ns2_early_hle_receipts = {
         "cdc83734e27d5478f1981126950dd1f3f7a91227",
 }
 ns2_early_hle_present = set(ns2_early_hle_receipts) & all_owners
-if gpu_table_vendor_pin == "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe":
+if gpu_table_vendor_pin in {"d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe"}:
     assert ns2_early_hle_present == set(ns2_early_hle_receipts)
     for path, blob in ns2_early_hle_receipts.items():
         assert subprocess.check_output(

@@ -147,7 +147,7 @@ int main() {
     visible.visible = true;
     visible.count = 2;
     visible.text[0].Assign("Full-length label beyond twenty-four characters");
-    visible.rows[0].glyphs = Eden::HudCodepoints("Full-length label beyond");
+    visible.rows[0].glyphs = Eden::HudText("FPS");
     const std::string prefix(MenuText::kCapacity - 1, 'x');
     const std::string accented = prefix + "\xc3\xa9";
     visible.text[1].Assign(accented);

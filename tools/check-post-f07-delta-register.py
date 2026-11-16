@@ -26,7 +26,7 @@ assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting 
 successors={
     "headless/prosperoeden/eden_services.cpp": (
         "4e9159c716e7eb6759ba3aef7d200ef869d069aa",
-        "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd",
+        "ea879f0aca249fabf6a5624d2f72a126e035cd8a",
     ),
     "headless/prosperoeden/eden_services.h": (
         "604a9d15118390b7f9b7e1265d38a91ff97c4a23",

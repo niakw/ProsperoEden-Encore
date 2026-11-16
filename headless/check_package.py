@@ -55,6 +55,24 @@ def verified_opengl_sdk_files():
         files.append(path)
     return files
 
+def expected_native_libraries(frontend):
+    """Explicit, exact import contract; do not learn it from the candidate binary."""
+    expected = ['libSceAudioOut.sprx', 'libSceLibcInternal.sprx', 'libSceNet.sprx',
+                'libScePad.sprx', 'libSceUserService.sprx', 'libkernel.sprx']
+    if frontend['renderer'] == 'opengl-4.6-compatibility':
+        expected += ['libSceAgc.prx', 'libSceAgcDriver.prx', 'libSceSystemService.sprx',
+                     'libSceVideoOut.sprx']
+    if frontend.get('vulkan'):
+        expected.append('libSceSysmodule.sprx')
+    if not frontend.get('gpu_probe'):
+        # Production diagnostics uses the SDK RNG for report IDs and erase
+        # secrets. Native run 43968429091 observed this exact added import.
+        expected.append('libSceRandom.sprx')
+    if frontend.get('gpu_probe'):
+        expected.remove('libSceNet.sprx')  # Historical probe import contract.
+    return sorted(expected)
+
+
 def check():
     # A previously staged or partial package must not silently retain an old
     # hosts list. Verify the actual installed file, not just its filename.
@@ -86,22 +104,13 @@ def check():
     runpy.run_path(str(ROOT / 'tools/load_alignment.py'))['check_load_alignment']((APP / 'eboot.bin').read_bytes())
     imports = (OUT / 'imports.txt').read_text()
     needed = sorted(imports.split('NeededLibraries [', 1)[1].split(']', 1)[0].split())
-    expected = ['libSceAudioOut.sprx', 'libSceLibcInternal.sprx', 'libSceNet.sprx',
-                'libScePad.sprx', 'libSceUserService.sprx', 'libkernel.sprx']
-    if json.loads((OUT / 'frontend.json').read_text())['renderer'] == 'opengl-4.6-compatibility':
+    expected = expected_native_libraries(frontend)
+    assert needed == expected, (
+        f"native imports mismatch: missing={sorted(set(expected)-set(needed))} "
+        f"unexpected={sorted(set(needed)-set(expected))} actual={needed}")
+    if frontend['renderer'] == 'opengl-4.6-compatibility':
         verified_opengl_sdk_files()
         assert b'[ps5-batch-summary] config gpu-present=1 multidraw=1 deferred=1 ' in (OUT / 'llvm-pie.elf').read_bytes(), 'SDK batching disabled or missing compiled receipt'
-        expected += ['libSceAgc.prx', 'libSceAgcDriver.prx', 'libSceSystemService.sprx',
-                     'libSceVideoOut.sprx']
-    if frontend.get('vulkan'):
-        expected.append('libSceSysmodule.sprx')
-    if not frontend.get('gpu_probe'):
-        # The production diagnostics client uses the SDK RNG for report IDs
-        # and erase secrets. Keep the DT_NEEDED contract exact (run 43968429091).
-        expected.append('libSceRandom.sprx')
-    if frontend.get('gpu_probe'):
-        expected.remove('libSceNet.sprx')  # Guest networking is dead-stripped from this entry.
-    assert needed == sorted(expected), needed
     for symbol in imports.split('Symbol {')[1:]:
         assert not ('Binding: Weak' in symbol and 'Section: Undefined' in symbol), symbol
     assert 'integrity: valid' in (OUT / 'fself-inspection.txt').read_text()

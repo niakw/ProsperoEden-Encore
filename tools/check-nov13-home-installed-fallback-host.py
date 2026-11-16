@@ -67,7 +67,7 @@ struct Game {
     int mods = 0, mods_on = 0, max_players = 0;
 };
 struct Recent {
-    std::string file, title, cover, hero, screenshot, intro, description, addons, language;
+    std::string file, title, cover, tile_icon, hero, screenshot, intro, description, addons, language;
     std::uint64_t title_id = 0;
     int max_players = 0;
 };

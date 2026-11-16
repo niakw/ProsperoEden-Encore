@@ -458,9 +458,7 @@ assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in unified_rasterizer
 assert 'vulkan_abi/video_core/rasterizer_interface.h' in release_cmake
 print('NS1_NS2_UNIFIED_VULKAN_ABI_F07_ISOLATION_PASS new_native_headers=1')
 
-# Seven reviewed static CPU6/LDAPR units were moved from headless into
-# vendor AFTER the frozen 518-owner F07 historical review. They are verified
-# by exact pinned-source parity/UBSan, never retroactively counted as F07.
+# Eight reviewed static CPU6/A64 units are selected outside the frozen F07 set.
 post_f07_static_engine_owners = {
     "vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_32.cpp",
     "vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_64.cpp",
@@ -469,8 +467,9 @@ post_f07_static_engine_owners = {
     "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc",
     "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h",
     "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp",
+    "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp",
 }
-assert len(post_f07_static_engine_owners) == 7
+assert len(post_f07_static_engine_owners) == 8
 assert post_f07_static_engine_owners <= all_owners, (
     "Missing post-F07 maintained native source owner",
     sorted(post_f07_static_engine_owners - all_owners))
@@ -479,7 +478,7 @@ assert 'vendor/encore-active/ns2-runtime/cpu6/maintained' in (
     ROOT/'headless/ns2_cpu6_source_bridge.cmake').read_text()
 assert 'vendor/encore-active/ns2-runtime/ldapr/maintained' in (
     ROOT/'headless/shared_a64_ldapr.cmake').read_text()
-print("ENCORE_POST_F07_NATIVE_SOURCE_ISOLATION_PASS owners=7")
+print("ENCORE_POST_F07_NATIVE_SOURCE_ISOLATION_PASS owners=8")
 
 # These three real NVDRV source owners joined the shared engine in P1.3,
 # after the 518-file F07 review. Keep that immutable historical set and

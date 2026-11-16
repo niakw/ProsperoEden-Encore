@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "predecessor_vendor": "053acc8ddf30fe65f6376564bbd6efef58f07ddc",
+  "active_vendor": "ffa519db0f68fb0d5d2acf791e381c898a34a175",
+  "reviewed_net_sources": [
+    {
+      "path": "src/common/net/net.cpp",
+      "before_bytes": 9974,
+      "before_sha256": "b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2",
+      "after_bytes": 11862,
+      "after_sha256": "9d3d56b9fa6b4a47097aa32c18b42e8839c547915d3af19aa37830dd75ac5da8",
+      "hunks": [
+        {
+          "before": "\nstd::vector<Release> GetReleases() {",
+          "after": "\nstd::optional<HttpResponse> PostJson(const std::string& url, const std::string& path,\n                                     const std::string& body,\n                                     std::size_t timeout_seconds) {\n    try {\n        constexpr std::size_t max_timeout_seconds = 15;\n        constexpr std::size_t max_request_bytes = 64 * 1024;\n        constexpr std::size_t max_response_bytes = 64 * 1024;\n        if (!url.starts_with(\"https://\") || path.empty() || path.front() != '/' ||\n            path.find_first_of(\"\\\\r\\\\n\") != std::string::npos ||\n            body.empty() || body.size() > max_request_bytes ||\n            timeout_seconds == 0 || timeout_seconds > max_timeout_seconds) {\n            LOG_ERROR(Common, \"Refusing invalid HTTPS JSON POST target or bounds\");\n            return std::nullopt;\n        }\n\n        std::unique_ptr<httplib::Client> client = std::make_unique<httplib::Client>(url);\n        client->set_connection_timeout(timeout_seconds);\n        client->set_read_timeout(timeout_seconds);\n        client->set_write_timeout(timeout_seconds);\n#ifdef YUZU_BUNDLED_OPENSSL\n        client->load_ca_cert_store(kCert, sizeof(kCert));\n#endif\n        client->set_follow_location(false);\n        httplib::Result result = client->Post(path, body, \"application/json\");\n        if (!result) {\n            LOG_ERROR(Common, \"POST to {}{} returned null\", url, path);\n            return std::nullopt;\n        }\n        const auto& response = result.value();\n        if (response.body.size() > max_response_bytes) {\n            LOG_ERROR(Common, \"POST to {}{} returned oversized response\", url, path);\n            return std::nullopt;\n        }\n        return HttpResponse{.status = response.status, .body = response.body};\n    } catch (const std::exception& e) {\n        LOG_ERROR(Common, \"POST to {}{} failed: {}\", url, path, e.what());\n        return std::nullopt;\n    }\n}\n\nstd::vector<Release> GetReleases() {"
+        }
+      ]
+    },
+    {
+      "path": "src/common/net/net.h",
+      "before_bytes": 1689,
+      "before_sha256": "7905b53d92150c14d194bb762ad292e50f2febbbda3ea1fbe50df1202cfe0295",
+      "after_bytes": 2213,
+      "after_sha256": "3ce233a0020b17b680f733a2ec41cdb8fd5100bd27cec8550ec3ca7202109f27",
+      "hunks": [
+        {
+          "before": "#pragma once\n\n#include <optional>",
+          "after": "#pragma once\n\n#include <cstddef>\n#include <optional>"
+        },
+        {
+          "before": "// Make a request via httplib, and return the response body if applicable.\nstd::optional<std::string> MakeRequest(const std::string &url, const std::string &path);\n\n",
+          "after": "// Make a request via httplib, and return the response body if applicable.\nstd::optional<std::string> MakeRequest(const std::string &url, const std::string &path);\n\nstruct HttpResponse {\n    int status{};\n    std::string body;\n};\n\n// Small HTTPS-only JSON POST primitive for opt-in launcher services.\n// It never follows redirects and reports HTTP status to the caller so policy\n// can distinguish retryable transport failures from server rejection.\nstd::optional<HttpResponse> PostJson(const std::string& url, const std::string& path,\n                                     const std::string& body,\n                                     std::size_t timeout_seconds = 5);\n\n"
+        }
+      ]
+    }
+  ]
+}

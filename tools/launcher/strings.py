@@ -40,6 +40,14 @@ LAUNCHER = ROOT / "headless/prosperoeden"
 CATALOGS = LAUNCHER / "ui/lang"
 TEMPLATE = ROOT / "tools/launcher/launcher.pot"
 EMBEDDED_FR = LAUNCHER / "fr_fr_embedded.h"
+EMBEDDED_FR_PREFIX = (
+    "// SPDX-License-Identifier: GPL-3.0-or-later\n"
+    "#pragma once\n"
+    "#include <string_view>\n"
+    "namespace pe::ui::embedded {\n"
+    'inline constexpr std::string_view kFrFr = R"FRPO('
+)
+EMBEDDED_FR_SUFFIX = ')FRPO";\n}\n'
 FONT = LAUNCHER / "ui/fonts/montserrat-medium.pefont"
 SETTINGS = ROOT / "headless/settings_store.h"
 SETTING_LABELS = ("kResolutionLabels", "kUpscalingFilterLabels", "kAntiAliasingLabels",
@@ -334,17 +342,16 @@ def launch_error_problems():
 
 def embedded_fr_text():
     source = EMBEDDED_FR.read_text(encoding="utf-8")
-    match = re.search(r'R"FRPO\((.*)\)FRPO";', source, re.S)
-    return match.group(1) if match else None
+    if not source.startswith(EMBEDDED_FR_PREFIX) or not source.endswith(EMBEDDED_FR_SUFFIX):
+        return None
+    return source[len(EMBEDDED_FR_PREFIX):-len(EMBEDDED_FR_SUFFIX)]
 
 
 def write_embedded_fr():
     po = (CATALOGS / "fr-FR.po").read_text(encoding="utf-8")
     if ')FRPO"' in po:
         raise SystemExit("fr-FR.po collides with the embedded raw-string delimiter")
-    source = ("// SPDX-License-Identifier: GPL-3.0-or-later\n#pragma once\n#include <string_view>\n"
-              "namespace pe::ui::embedded {\ninline constexpr std::string_view kFrFr = R\"FRPO(" +
-              po + ")FRPO\";\n}\n")
+    source = EMBEDDED_FR_PREFIX + po + EMBEDDED_FR_SUFFIX
     EMBEDDED_FR.write_text(source, encoding="utf-8", newline="\n")
 
 

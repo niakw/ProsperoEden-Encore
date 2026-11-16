@@ -129,6 +129,7 @@ def main() -> None:
             "catalog_codepoints":len(required),
             "primary_codepoints":len(drawable & primary_covered),
             "fallback_codepoints":len(fallback_required),
+            "fallback_unicode":sorted(fallback_required),
         })
         print(f"NOTO_SUBSET_PASS id={item['id']} locales={','.join(item['locales'])} "
               f"catalog={len(required)} fallback={len(fallback_required)} bytes={len(built)}")

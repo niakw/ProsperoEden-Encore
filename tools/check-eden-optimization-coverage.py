@@ -1595,6 +1595,7 @@ print("NOV16_ADDON_METADATA_SOURCE_SUCCESSOR_PASS", "owners=2",
 # Home Square -> #239 -> Nov15 provenance chain below.
 nov16_addon_summary_blob = "964a3a490948aa01149ade2b47dd95ea2b57628b"
 nov16_home_square_pre_addon = "91acb4ba1918308efb38f52db043ee299611926b"
+nov16_home_square_replay_source = None
 if drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] == nov16_addon_summary_blob:
     current_service = (ROOT / "headless/prosperoeden/eden_services.cpp").read_text()
     new_summary = """    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
@@ -1603,7 +1604,8 @@ if drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] == nov16_add
     old_summary = """    eden_game_addons(title_id, update, sizeof(update), &dlc);
     std::string text;"""
     assert current_service.count(new_summary) == 1
-    reconstructed = current_service.replace(new_summary, old_summary, 1).encode("utf-8")
+    nov16_home_square_replay_source = current_service.replace(new_summary, old_summary, 1)
+    reconstructed = nov16_home_square_replay_source.encode("utf-8")
     reconstructed_blob = hashlib.sha1(
         b"blob " + str(len(reconstructed)).encode() + bytes([0]) + reconstructed).hexdigest()
     assert reconstructed_blob == nov16_home_square_pre_addon
@@ -1621,7 +1623,9 @@ nov16_home_square_path = "headless/prosperoeden/eden_services.cpp"
 nov16_home_square_active = (
     drift_index[nov16_home_square_path]["actual"] == nov16_home_square_blob)
 if nov16_home_square_active:
-    current_home_square = (ROOT / nov16_home_square_path).read_text()
+    current_home_square = (nov16_home_square_replay_source
+                           if nov16_home_square_replay_source is not None
+                           else (ROOT / nov16_home_square_path).read_text())
     home_square_raw = current_home_square.encode("utf-8")
     assert hashlib.sha1(b"blob " + str(len(home_square_raw)).encode() +
                         bytes([0]) + home_square_raw).hexdigest() == nov16_home_square_blob

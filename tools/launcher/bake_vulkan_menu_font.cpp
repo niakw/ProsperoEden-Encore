@@ -75,16 +75,31 @@ std::string q(std::string_view s) {
     out.push_back('\"'); return out;
 }
 template<class T>
-void emit_uint_array(std::ostream& out,const char* name,const std::vector<T>& values) {
-    out<<"const uint "<<name<<"["<<values.size()<<"] = uint["<<values.size()<<"](\n";
-    for(std::size_t i=0;i<values.size();++i){
-        if(i%8==0) out<<"    ";
-        out<<"0x"<<std::hex<<std::setw(8)<<std::setfill('0')
-           <<static_cast<std::uint32_t>(values[i])<<"u"<<std::dec;
-        if(i+1!=values.size()) out<<", ";
-        if(i%8==7||i+1==values.size()) out<<"\n";
+void emit_uint_chunks(std::ostream& out,const char* name,const std::vector<T>& values) {
+    // SPIR-V encodes instruction word counts in 16 bits. A single atlas-sized
+    // OpConstantComposite can overflow that field; split constants well below it.
+    constexpr std::size_t kChunk = 16384;
+    const std::size_t chunks=(values.size()+kChunk-1)/kChunk;
+    for(std::size_t c=0;c<chunks;++c){
+        const std::size_t first=c*kChunk;
+        const std::size_t count=std::min(kChunk,values.size()-first);
+        out<<"const uint "<<name<<"_"<<c<<"["<<count<<"] = uint["<<count<<"](\n";
+        for(std::size_t i=0;i<count;++i){
+            if(i%8==0) out<<"    ";
+            out<<"0x"<<std::hex<<std::setw(8)<<std::setfill('0')
+               <<static_cast<std::uint32_t>(values[first+i])<<"u"<<std::dec;
+            if(i+1!=count) out<<", ";
+            if(i%8==7||i+1==count) out<<"\n";
+        }
+        out<<");\n";
     }
-    out<<");\n";
+    out<<"uint "<<name<<"At(int index) {\n"
+       <<"    int chunk = index / "<<kChunk<<";\n"
+       <<"    int local = index - chunk * "<<kChunk<<";\n"
+       <<"    switch (chunk) {\n";
+    for(std::size_t c=0;c<chunks;++c)
+        out<<"    case "<<c<<": return "<<name<<"_"<<c<<"[local];\n";
+    out<<"    default: return 0u;\n    }\n}\n";
 }
 } // namespace
 
@@ -144,8 +159,8 @@ int main(int argc,char** argv) {
         high.insert(high.end(),s.high.begin(),s.high.end());
     }
     glsl<<");\n";
-    emit_uint_array(glsl,"MENU_FONT_LOW",low);
-    emit_uint_array(glsl,"MENU_FONT_HIGH",high);
+    emit_uint_chunks(glsl,"MENU_FONT_LOW",low);
+    emit_uint_chunks(glsl,"MENU_FONT_HIGH",high);
     glsl<<R"GLSL(
 float menuFontSlotAlpha(uint slot, int x, int y) {
     if (slot == 0u || slot >= uint(MENU_FONT_SLOT_COUNT) ||
@@ -154,8 +169,8 @@ float menuFontSlotAlpha(uint slot, int x, int y) {
     int bit_index = 31 - (x & 31);
     int index = (int(slot) * MENU_FONT_CELL_H + y) * MENU_FONT_WORDS + word;
     uint bit = 1u << uint(bit_index);
-    uint level = ((MENU_FONT_LOW[index] & bit) != 0u ? 1u : 0u) |
-                 ((MENU_FONT_HIGH[index] & bit) != 0u ? 2u : 0u);
+    uint level = ((MENU_FONT_LOWAt(index) & bit) != 0u ? 1u : 0u) |
+                 ((MENU_FONT_HIGHAt(index) & bit) != 0u ? 2u : 0u);
     return float(level) / 3.0;
 }
 )GLSL";

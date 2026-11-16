@@ -245,17 +245,17 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 510 | 487 | 1021 |
+| Graphe connu | 512 | 489 | 1028 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 425 | 415 | 855 |
+| SOURCE — lecture effectuée, preuve insuffisante | 427 | 417 | 862 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **440** | **429** | **883** |
+| **Encore à qualifier (SOURCE + OPEN)** | **442** | **431** | **890** |
 | Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
 
 Le **noyau restant** compte donc 440 critères répartis sur
 429 fichiers et 883 mentions fonction/contrat :
-15 OPEN et 425 SOURCE.
+15 OPEN et 427 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans
@@ -965,6 +965,8 @@ function/contract tokens are checked by CI for existence only; the
 | U96 | P0 | U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp | bool TranslatorVisitor::LDAPR( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Real LDAPR-to-LDAR acquire lowering, exact pinned diff and Clang host decoder/syntax proof, no PS5 validation | 🟡 Source étudiée |
 | U97 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp | bool TranslatorVisitor::RETA( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Lichii-compatible no-PAC RETAA/RETAB raw-X30 return with PopRSBHint; exact pinned-base delta, general PAC/LSE excluded, PS5 gameplay pending | 🟡 Source étudiée |
 | U98 | P2 | F31 | vendor/encore-active/eden-backports/src/common/net/net.h | HttpResponse; PostJson | SOURCE | tools/check-active-source-inventory.py | Bounded HTTPS-only JSON POST declaration selected from vendor #178; vendor/tests/common_net_post_json_source.py remains the vendor-side contract; no credentials or PS5 transmission proof | 🟡 Source étudiée |
+| U99 | P2 | U36,U98 | headless/diagnostics_native_client.cpp | Initialize(; EnterLauncher(; Poll(; SetConsent( | SOURCE | tools/diagnostics/check_native_client_source.py | Opt-in privacy-minimized launcher diagnostics client; bounded projection/queue/idle HTTPS/erasure contract is source-qualified, PS5 DNS/TLS/delivery/erasure and gameplay-impact remain unverified | 🟡 Source étudiée |
+| U100 | P2 | U99 | headless/diagnostics_native_client.h | void Initialize(; bool Available(; void GameStarting( | SOURCE | tools/diagnostics/check_native_client_source.py | Public lifecycle/consent interface for the launcher-owned diagnostics client; no render/guest/crash-thread transport and no native runtime proof yet | 🟡 Source étudiée |
 <!-- AUDIT_ROWS_END -->
 
 

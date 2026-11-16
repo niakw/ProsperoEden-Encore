@@ -1200,7 +1200,9 @@ print("ENCORE_FC27_SCALAR_DUPLICATE_F07_ISOLATION_PASS",
 # Isolated post-F07 diagnostic queue prototype; never change historical counts.
 post_f07_diagnostics_receipts = {
     "headless/diagnostics_sharing_policy.h": "2515badbeb070d0f22b02e0ec8dde8a30afdeef4",
-    "headless/diagnostics_report_queue.h": "28e59bc710b1c27a5fbe75c9b5e8a0e6fbb15aae",
+    "headless/diagnostics_report_queue.h": "2a000792ac99ec40532b97f2e2645c1473039d5f",
+    "headless/diagnostics_native_client.cpp": "358e3d675f44d4a1bf664f14697b074af7f666db",
+    "headless/diagnostics_native_client.h": "cd843218b18d581599940f44e93003d84f19598c",
 }
 if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175":
     post_f07_diagnostics_receipts[
@@ -1210,7 +1212,7 @@ post_f07_diagnostics_owners = set(post_f07_diagnostics_receipts)
 for path, blob in post_f07_diagnostics_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=ROOT, text=True).strip() == blob, path
 print("ENCORE_DIAGNOSTICS_POST_F07_PASS", f"owners={len(post_f07_diagnostics_owners)}",
-      "native_transport=https_primitive_only" if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175" else "native_transport=unwired")
+      "native_transport=https_idle_client" if gpu_table_vendor_pin == "ffa519db0f68fb0d5d2acf791e381c898a34a175" else "native_transport=unwired")
 assert post_f07_diagnostics_owners <= all_owners
 # The title-aware loading correction adds two independently reviewed
 # headers; neither belongs to the immutable F07 baseline.
@@ -1582,6 +1584,76 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 diagnostics-sharing source successors. These application-owned files
+# layer the reviewed native diagnostics client onto source owners already
+# covered by the immutable post-F07 provenance chains below. Bind each exact
+# successor blob and its required client marker, then resume qualification from
+# the exact main predecessor. Independent diagnostics-sharing host tests cover
+# consent/queue/idle/fail-closed behavior; this block is source identity only.
+nov16_diagnostics_service_replay_source = None
+nov16_diagnostics_source_successors = {
+    "headless/prosperoeden/eden_services.cpp": (
+        "310e21f75f4e2524b90534d5b9122c6bc587a4f2",
+        "6efc431641ace097b7216748e1e232c8cc9f1ae1",
+        ("DiagnosticsClient::SetConsent(", "bool EdenServices::log_sharing_available() const"),
+    ),
+    "headless/prosperoeden/eden_services.h": (
+        "f3d2ca33cc2e42eeafef26207784bd43b6da918b",
+        "7c4133b4e2f0340aa1e0e182ae469619d5a8c687",
+        ("bool log_sharing_available() const override;",),
+    ),
+    "headless/prosperoeden/frontend.cpp": (
+        "25884807fdf7759834cb232548184ffefca715d4",
+        "c199a16ae2d894baca14ea2373273e09c38e872a",
+        ("DiagnosticsClient::EnterLauncher(", "DiagnosticsClient::Poll();"),
+    ),
+    "headless/main.cpp": (
+        "4ae6fdfb9fbb9e405169ef397ef4ada994614260",
+        "cec82ca188a151264acb3d2498fd7ad41a7cb697",
+        ("DiagnosticsClient::Initialize(", "DiagnosticsClient::Shutdown();"),
+    ),
+}
+for changed_path, (predecessor_blob, successor_blob, markers) in nov16_diagnostics_source_successors.items():
+    if changed_path not in drift_index:
+        continue
+    if drift_index[changed_path]["actual"] != successor_blob:
+        continue
+    current_source = (ROOT / changed_path).read_text()
+    for marker in markers:
+        assert marker in current_source, (changed_path, marker)
+    if changed_path == "headless/prosperoeden/eden_services.cpp":
+        # Reconstruct the exact current-main predecessor so the older Home/
+        # Library provenance replayers below do not accidentally re-read the
+        # diagnostics branch source and mix unrelated deltas.
+        replay = current_source
+        replay = replay.replace('#include "diagnostics_native_client.h"\n', "", 1)
+        replay = replay.replace(
+            "    // Consent remains fail-closed until the native client has a verified HTTPS collector.\n",
+            "    // No native collector yet. A stale or hand-edited preference cannot turn sharing on.\n",
+            1)
+        replay = replay.replace(
+            "    if (saved) Eden::DiagnosticsClient::SetConsent(value.share_standard_logs, value.share_advanced_logs);\n",
+            "", 1)
+        method = """bool EdenServices::log_sharing_available() const {
+#ifdef PS5_NATIVE
+    return Eden::DiagnosticsClient::Available();
+#else
+    return false;
+#endif
+}
+
+"""
+        assert replay.count(method) == 1
+        replay = replay.replace(method, "", 1)
+        raw = replay.encode("utf-8")
+        replay_blob = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert replay_blob == predecessor_blob
+        nov16_diagnostics_service_replay_source = replay
+    drift_index[changed_path]["actual"] = predecessor_blob
+    print("NOV16_DIAGNOSTICS_SOURCE_SUCCESSOR_PASS", changed_path,
+          "predecessor=main", "console_validation=pending")
+
 # Nov16 startup Library latency: Home already owns the complete add-on scan
 # before it starts the initial Library worker. Reverse only the removed
 # duplicate games() scan and require exact parity with the reviewed #248 blob.
@@ -1590,7 +1662,9 @@ nov16_pre_no_duplicate_addon_blob = "fbe04395576c244c158a60748cc4cd765eb58f0f"
 service_path = "headless/prosperoeden/eden_services.cpp"
 nov16_no_duplicate_replay_source = None
 if drift_index[service_path]["actual"] == nov16_no_duplicate_addon_blob:
-    current_service = (ROOT / service_path).read_text()
+    current_service = (nov16_diagnostics_service_replay_source
+                       if nov16_diagnostics_service_replay_source is not None
+                       else (ROOT / service_path).read_text())
     new_block = """    if (cancel && cancel->load(std::memory_order_acquire)) return games;
     // Initial Library enumeration starts only after finish_home_scan() has
     // applied EdenServices::home(), whose worker already published the

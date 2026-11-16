@@ -29,7 +29,9 @@ int main() {
     }
     q.SetPhase(Phase::LauncherIdle,100);
     assert(!q.TryStart(104));
-    auto first=q.TryStart(105);
+    q.Activity(104);
+    assert(!q.TryStart(108));
+    auto first=q.TryStart(109);
     assert(first && first.report->category==Category::Standard && first.report->id==id(5));
     assert(!q.TryStart(106));
     q.SetPhase(Phase::GameStarting,106);

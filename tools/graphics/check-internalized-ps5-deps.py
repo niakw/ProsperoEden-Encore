@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Offline source closure: one vendor Gitlink, three exact upstream Git trees."""
+"""Offline source closure: vendor build Gitlink plus explicit overrides provenance Gitlink."""
 from pathlib import Path
 import hashlib, subprocess
 root=Path(__file__).resolve().parents[2]
 vendor=root/"vendor"
 def git(c,*args): return subprocess.check_output(["git","-C",str(c),*args],text=True).strip()
 modules=[s.split()[-1] for s in git(root,"ls-tree","-r","HEAD").splitlines() if s.startswith("160000 commit ")]
-assert modules==["vendor"],modules
-assert (root/".gitmodules").read_text().count('[submodule "')==1
+assert modules==["encore-overrides","vendor"],modules
+assert (root/".gitmodules").read_text().count('[submodule "')==2
+assert git(root,"rev-parse","HEAD:encore-overrides")=="95f21edf13bfbd2888602f2b419dd856d6d0fbfa"
 assert not (vendor/".gitmodules").exists()
 assert git(root,"rev-parse","HEAD:vendor")==git(vendor,"rev-parse","HEAD")
 pins={"ps5-mihawkgen":("aad67f4bd28c040db7aa0d78cfd3d0de85cfba7a","c57232a9f16bcb6df5fe07c9bb631518f2b1cc0e"),
@@ -39,4 +40,4 @@ assert hashlib.sha256(net.read_bytes()).hexdigest()=="31ecc7d69af1e9defd62b9abad
 for p in ["ps5-mihawkgen/LICENSE.md","ps5-mihawkgen/THIRD_PARTY_NOTICES.txt","ps5-fsr3-optical-flow/COPYING","ps5-fsr3-optical-flow/shaders/LICENSE.txt","libwebp/COPYING","libwebp/PATENTS"]:
     assert (vendor/"sources"/p).is_file(),p
 assert "version 1.6.0" in (vendor/"sources/libwebp/NEWS").read_text()
-print("PS5_INTERNAL_DEPENDENCIES_PASS gitlinks=1 sources=3 trees=byte_exact_except_reviewed_mihawk_training_patch model=sha256 libwebp=1.6.0 no_ps5_build=1")
+print("PS5_INTERNAL_DEPENDENCIES_PASS gitlinks=2 vendor_build_gitlink=1 overrides_provenance_gitlink=1 sources=3 trees=byte_exact_except_reviewed_mihawk_training_patch model=sha256 libwebp=1.6.0 no_ps5_build=1")

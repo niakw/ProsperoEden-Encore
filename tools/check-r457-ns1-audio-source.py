@@ -46,6 +46,7 @@ KNOWN_VENDOR_GRAPH = {
     "0fc157b7ccef428e675ff945bc48eceb08fff607": "same production lineage + upstream-confirmed Maxwell CB_BIND bounds guard #163",
     "42459a7893c51a178ecd0c2f74f3951cc20fa12d": "same reviewed graph + Eden #4559 DrawTexture state successor",
     "d1f8696448ed481e36380c3ea8431e3dc722304e": "same reviewed graph + Eden #4559 DrawTexture plus bounded NS2 AM graphics-scale and HID JCMS owners",
+    "c5614d3c7ef75958965bac93c9e343eccdbc0fbe": "same reviewed graph + Lichii #1825 BitFieldUExtract constant-fold UB fix",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

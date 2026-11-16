@@ -7,7 +7,7 @@ DEPS=ROOT/"vendor/sources/eden-cpm"
 V=ROOT/"vendor"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert selected==checked=="d1f8696448ed481e36380c3ea8431e3dc722304e",(selected,checked)
+assert selected==checked=="c5614d3c7ef75958965bac93c9e343eccdbc0fbe",(selected,checked)
 subprocess.run(["python3","-B",str(V/"tests/ns2_early_hle_services_source.py")],
                cwd=ROOT,check=True,timeout=60)
 cm=(ROOT/"headless/CMakeLists.txt").read_text()

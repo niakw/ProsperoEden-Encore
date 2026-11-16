@@ -326,7 +326,8 @@ handoff=read('headless/launch_handoff.hpp')
 launcher_frontend=read('headless/prosperoeden/frontend.cpp')
 launcher_header=read('headless/prosperoeden/pe/ui/launcher.hpp')
 assert 'Outcome::multiplayer' in quick_menu and 'multiplayer_confirm' in quick_menu
-assert 'SALON = FERMER LE JEU' in quick_menu
+assert 'Text("Multiplayer")' in quick_menu and 'Text("Confirm this action?")' in quick_menu
+assert 'SALON = FERMER LE JEU' not in quick_menu
 assert 'QueueMultiplayer()' in handoff and 'TakeMultiplayerRequest()' in handoff
 assert 'Eden::LaunchHandoff::QueueMultiplayer();' in main
 assert 'Eden::LaunchHandoff::TakeMultiplayerRequest()' in launcher_frontend
@@ -361,7 +362,9 @@ print('Encore UX/media/profile contracts: PASS')
 # game relaunch, not merely until the menu is closed. FPS/log toggles are live.
 assert 'bool restart_required{};' in quick_menu
 assert 'restart_required = true;' in quick_menu
-assert 'RELANCER LE JEU REQUIS' in quick_menu
+assert 'restart_required ? NextLaunchNotice()' in quick_menu
+assert 'Text("Next launch: {0}")' in quick_menu
+assert 'RELANCER LE JEU REQUIS' not in quick_menu
 assert 'restart_required ? kWarningRow : kRow' in quick_menu
 assert 'SetHudEnabled(prefs.hud);' in quick_menu
 assert 'NativeLogs::SetDetailed(prefs.detailed_logging);' in quick_menu

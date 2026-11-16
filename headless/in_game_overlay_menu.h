@@ -127,6 +127,13 @@ private:
     static std::string Text(const char* english) {
         return std::string{pe::tr(english)};
     }
+    static std::string NextLaunchNotice() {
+        auto text = Text("Next launch: {0}");
+        const auto placeholder = text.find("{0}");
+        if (placeholder != std::string::npos)
+            text.replace(placeholder, 3, Text("Game settings"));
+        return text;
+    }
     static std::string Percent(int value) {
         return value < 0 ? std::string{pe::tr("Automatic")} : std::to_string(value) + "%";
     }
@@ -237,7 +244,7 @@ private:
     bool PersistGame(const GameSettings& old) {
         if (SaveGameSettings(title_id, game)) {
             restart_required = true;
-            notice = Text("Game settings");
+            notice = NextLaunchNotice();
             return true;
         }
         game = old;
@@ -354,7 +361,7 @@ private:
         line(tab == 4 && !multiplayer_confirm ? Text("Confirm this action?") : notice, kRow);
         // A persistent banner uses an already-maintained localized launcher
         // key; no second quick-menu-only translation catalogue exists.
-        line(restart_required ? Text("Game settings") : "",
+        line(restart_required ? NextLaunchNotice() : "",
              restart_required ? kWarningRow : kRow);
         Publish(result);
     }

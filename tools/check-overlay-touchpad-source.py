@@ -96,7 +96,8 @@ assert "SaveGameSettings(title_id, game)" in menu
 assert "SavePreferences(prefs)" in menu
 assert "bool restart_required{};" in menu
 assert "restart_required = true;" in menu
-assert 'restart_required ? Text("Game settings")' in menu
+assert 'restart_required ? NextLaunchNotice()' in menu
+assert 'Text("Next launch: {0}")' in menu
 assert "restart_required ? kWarningRow : kRow" in menu
 assert "SetHudEnabled(prefs.hud);" in menu
 assert "NativeLogs::SetDetailed(prefs.detailed_logging);" in menu

@@ -4,6 +4,8 @@ on:
     branches: [main, feat/overrides-compiled-catalog-95f21ed]
     paths:
       - 'vendor'
+      - 'encore-overrides'
+      - '.gitmodules'
       - 'tools/deps.json'
       - 'tools/check-vendored-overrides.py'
       - 'tools/check-vendored-deps.py'

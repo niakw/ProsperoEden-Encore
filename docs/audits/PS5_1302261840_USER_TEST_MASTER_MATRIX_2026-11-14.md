@@ -223,3 +223,17 @@ La recherche upstream/source est désormais au **gate matériel** pour les sympt
 ### Décision
 
 **Le prochain progrès utile nécessite maintenant un package natif construit depuis ce couple exact (ou un successeur dont seules les modifications sont documentées).** Ne pas réutiliser le package R457/R458 pour conclure sur #218, les Home icons actuelles ou le GetInfo NS2. Après installation, renseigner chaque résultat A/B/C avec SHA moteur, vendor, hash package et firmware 13.60.
+
+
+## AB — Build natif autorisé le 16 novembre 2026
+
+Autorisation utilisateur explicite : **go build**.
+
+Build demandé sur le `main` courant après intégration et nettoyage, sans publication :
+- moteur runtime de référence : `5cfa4e4a920d90c91afc1eb3e5394c72f3b2ec92` + changements documentaires ultérieurs uniquement ;
+- vendor sélectionné : `50a849a93494f442d47573b8ce8b8797c3cecd26`;
+- workflow natif : `.github/workflows/build-040-zbic.yml`;
+- **publish=false** attendu ; aucun marqueur `[release]`;
+- le package, les symboles, warnings et artefacts doivent être inspectés avant tout test console.
+
+Cette entrée sert uniquement de déclencheur attribuable et de reçu d'autorisation ; elle ne modifie aucun code runtime.

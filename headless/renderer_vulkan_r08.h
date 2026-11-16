@@ -135,8 +135,8 @@ private:
     VkFormat loading_artwork_format{VK_FORMAT_UNDEFINED};
     u64 loading_artwork_tick{};
     bool loading_artwork_unavailable{};
-    bool loading_boot_trace{true};
 #endif
+    bool loading_boot_trace{true};
     Frame applet_frame;
 };
 

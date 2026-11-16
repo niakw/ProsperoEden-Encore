@@ -1370,7 +1370,8 @@ for e in entries:
 shipping=json.loads((ROOT/"vendor/encore-active/eden-backports/manifest.json").read_text())
 upstream=json.loads((ROOT/"UPSTREAM.json").read_text())
 assert shipping["pinned_eden_commit"]==upstream["eden_commit"]
-assert len(shipping["entries"])==83
+assert len(shipping["entries"])==84
+assert "src/common/net/net.h" in shipping["entries"]
 # Post-snapshot maintained backports can legitimately advance after the F07
 # optimization register was frozen. Keep the historical register receipts
 # immutable while pinning each reviewed successor to exact active bytes.

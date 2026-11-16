@@ -62,7 +62,7 @@ assert "game.language = enriched.language;" in media_finish
 assert "game.language_note = enriched.language_note;" in media_finish
 assert "game.addons = enriched.addons;" in home_finish
 assert "game.language = enriched.language;" in home_finish
-assert 'tr("Language") + ": " +' in source
+assert 'std::string{tr("Language")} + ": " +' in source
 
 cpp = r"""
 #include <algorithm>

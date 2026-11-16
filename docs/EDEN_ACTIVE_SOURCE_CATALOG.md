@@ -370,8 +370,8 @@ reste dans `docs/EDEN_OVERRIDE_MIGRATION_INVENTORY.md`.
 <!-- ACTIVE_SOURCE_CATALOG_END -->
 
 ## Sources maintenues après le gel F07 — propriétaires natifs versionnés
-Les sept unités CPU6/LDAPR appartiennent au **moteur maintenu dans le sous-module vendor**.
-Elles sont sélectionnées par le CMake PS5 unique et vérifiées contre leurs
+Les huit unités CPU6/LDAPR et le nouvel en-tête réseau diagnostics appartiennent aux **sources maintenues du sous-module vendor**.
+Elles sont sélectionnées par le graphe PS5 ou le backport actif et vérifiées contre leurs
 sources épinglées. Ce registre complémentaire est séparé des **337 sources
 historiques F07**, conservées sans modification de leur décompte.
 L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
@@ -388,6 +388,7 @@ L'inscription ci-dessous ne constitue pas une preuve d'exécution console.
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h` | U95 |
 | `ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp` | U96 |
 | `eden-core/src/video_core/buffer_cache/buffer_cache_base.h` | R437 |
+| `eden-backports/src/common/net/net.h` | U98 |
 <!-- POST_F07_MAINTAINED_OWNER_END -->
 
 ### P1.3 — décodeur vidéo H.264/VP8/VP9 natif commun (06/11/2026)

@@ -42,6 +42,14 @@ assert 'FindAddOnContentDirectories(' in main and 'title_root, &complete' in mai
 assert 'Eden::IsAddOnContainerName' in main
 assert 'FindAddOnContentDirectories(path, &complete)' in (root / "headless/metadata_bridge.cpp").read_text()
 assert 'eden_scan_addons(const char* updates_dir, const char* keys_dir, const char* roms_dir)' in (root / "headless/metadata_bridge.cpp").read_text()
+home_owner = library.split("pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel)", 1)[1].split("std::string EdenServices::clock()", 1)[0]
+games_owner = library.split("std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel)", 1)[1].split("pe::ui::Game EdenServices::enrich_home_icon(", 1)[0]
+assert "if (home.setup_ready)" in home_owner and home_owner.count("eden_scan_addons(") == 1
+assert games_owner.count("eden_scan_addons(") == 1  # explanatory comment only
+assert "Repeating eden_scan_addons() here" in games_owner
+launcher_library = (root / "headless/prosperoeden/pe/ui/library.cpp").read_text()
+finish_home_owner = launcher_library.split("void Launcher::finish_home_scan()", 1)[1].split("void Launcher::check_games_present()", 1)[0]
+assert finish_home_owner.index("home_ = std::move(snapshot);") < finish_home_owner.index("start_scan();")
 assert 'FindGameFolderInput(entry.path())' in main
 assert 'if (!Eden::ValidRomFilename(file)) continue;' in library
 assert 'game.name = CleanTitle(entry_name);' in library

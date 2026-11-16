@@ -1568,6 +1568,39 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 startup Library latency: Home already owns the complete add-on scan
+# before it starts the initial Library worker. Reverse only the removed
+# duplicate games() scan and require exact parity with the reviewed #248 blob.
+nov16_no_duplicate_addon_blob = "310e21f75f4e2524b90534d5b9122c6bc587a4f2"
+nov16_pre_no_duplicate_addon_blob = "fbe04395576c244c158a60748cc4cd765eb58f0f"
+service_path = "headless/prosperoeden/eden_services.cpp"
+nov16_no_duplicate_replay_source = None
+if drift_index[service_path]["actual"] == nov16_no_duplicate_addon_blob:
+    current_service = (ROOT / service_path).read_text()
+    new_block = """    if (cancel && cancel->load(std::memory_order_acquire)) return games;
+    // Initial Library enumeration starts only after finish_home_scan() has
+    // applied EdenServices::home(), whose worker already published the
+    // complete add-on snapshot. Repeating eden_scan_addons() here walked the
+    // same update/DLC roots twice before the first Library list could appear.
+    // Later storage refreshes queue read_home() before start_scan() as well.
+    // Keep games() local/cache-only; selected media reads the atomically
+    // published snapshot and reports Unknown if that snapshot is incomplete.
+    const int language_choice = Eden::LoadPreferences().language;"""
+    old_block = """    if (cancel && cancel->load(std::memory_order_acquire)) return games;
+    eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
+                         Eden::AssetsPath("roms").c_str());
+    if (cancel && cancel->load(std::memory_order_acquire)) return {};
+    const int language_choice = Eden::LoadPreferences().language;"""
+    assert current_service.count(new_block) == 1
+    reconstructed = current_service.replace(new_block, old_block, 1).encode("utf-8")
+    reconstructed_blob = hashlib.sha1(
+        b"blob " + str(len(reconstructed)).encode() + bytes([0]) + reconstructed).hexdigest()
+    assert reconstructed_blob == nov16_pre_no_duplicate_addon_blob
+    nov16_no_duplicate_replay_source = reconstructed.decode("utf-8")
+    drift_index[service_path]["actual"] = reconstructed_blob
+    print("NOV16_LIBRARY_NO_DUPLICATE_ADDON_SCAN_SOURCE_SUCCESSOR_PASS",
+          "owner=eden_services", "predecessor=#248", "console_validation=pending")
+
 # Nov16 stable Home icon successor. The full EdenServices blob is pinned,
 # and dedicated Home-media tests verify the changed dispatch/identity rules.
 # Resume the existing metadata -> Home Square -> #239 provenance chain only
@@ -1577,7 +1610,9 @@ nov16_metadata_pre_stable = "964a3a490948aa01149ade2b47dd95ea2b57628b"
 stable_home_path = "headless/prosperoeden/eden_services.cpp"
 stable_home_replay_source = None
 if drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
-    stable_source = (ROOT / stable_home_path).read_text()
+    stable_source = (nov16_no_duplicate_replay_source
+                     if nov16_no_duplicate_replay_source is not None
+                     else (ROOT / stable_home_path).read_text())
     stable_raw = stable_source.encode("utf-8")
     assert hashlib.sha1(b"blob " + str(len(stable_raw)).encode() +
                         bytes([0]) + stable_raw).hexdigest() == nov16_stable_home_blob

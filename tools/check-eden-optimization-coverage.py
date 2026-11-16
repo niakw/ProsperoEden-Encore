@@ -1568,6 +1568,47 @@ post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
 
+# Nov16 stable Home icon successor. The full EdenServices blob is pinned,
+# and dedicated Home-media tests verify the changed dispatch/identity rules.
+# Resume the existing metadata -> Home Square -> #239 provenance chain only
+# after this exact reviewed successor is recognized.
+nov16_stable_home_blob = "fbe04395576c244c158a60748cc4cd765eb58f0f"
+nov16_metadata_pre_stable = "964a3a490948aa01149ade2b47dd95ea2b57628b"
+stable_home_path = "headless/prosperoeden/eden_services.cpp"
+stable_home_replay_source = None
+if drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
+    stable_source = (ROOT / stable_home_path).read_text()
+    stable_raw = stable_source.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(stable_raw)).encode() +
+                        bytes([0]) + stable_raw).hexdigest() == nov16_stable_home_blob
+    for marker in (
+        "const bool deconstructed = Eden::IsDeconstructedGameSelection(home.last_file);",
+        "if (!deconstructed && played.contains(name))",
+        "if (!recent.cover.empty()) recent.tile_icon = recent.cover;",
+        "if (!nlib.icon.empty() && recent.tile_icon.empty())",
+        "if (!enrichment.icon.empty() && game.cover.empty())",
+    ):
+        assert marker in stable_source, marker
+    # Reverse exactly the four reviewed source hunks and verify the predecessor.
+    stable_home_replay_source = stable_source
+    for current_hunk, previous_hunk in (
+        ("    home.last_exists = !home.last_file.empty() && IsFile(last_path);\n    if (!home.last_file.empty()) {\n        std::string title = GameTitle(home.last_file);\n        const bool deconstructed = Eden::IsDeconstructedGameSelection(home.last_file);\n        // CoverPath is Encore's generated packaged-Control cache. It must not\n        // shadow a deconstructed title's real local Control icon or make us\n        // retry package extraction against <title>/exefs/main.\n        std::string cover = deconstructed ? std::string{} : CoverPath(home.last_file);\n        bool has_cover = !cover.empty() && Eden::FileExists(cover);\n        if (home.last_exists && home.setup_ready) {\n            if (deconstructed) {\n                const std::size_t slash = home.last_file.find('/');\n                if (slash != std::string::npos && slash > 0) {\n                    cover = ExtractedLocalCover(\n                        Eden::AssetsPath(\"roms/\" + home.last_file.substr(0, slash)),\n                        selected_language);\n                    has_cover = !cover.empty();\n                }\n            } else if (!has_cover) {\n                cover = EnsureCover(home.last_file, &title);\n                has_cover = !cover.empty();\n            }\n        }\n        home.last_title = title;\n        home.last_caption = home.last_exists ? tr(\"Last game opened\") :",
+         "    home.last_exists = !home.last_file.empty() && IsFile(last_path);\n    if (!home.last_file.empty()) {\n        std::string title = GameTitle(home.last_file);\n        std::string cover = CoverPath(home.last_file);\n        bool has_cover = Eden::FileExists(cover);\n        if (home.last_exists && home.setup_ready && !has_cover) {\n            // Extracted titles already own a small local Control icon. Use it\n            // before generic metadata extraction so Home does not probe\n            // <title>/exefs/main as if it were a packaged game's cover.\n            if (Eden::IsDeconstructedGameSelection(home.last_file)) {\n                const std::size_t slash = home.last_file.find('/');\n                if (slash != std::string::npos && slash > 0) {\n                    cover = ExtractedLocalCover(\n                        Eden::AssetsPath(\"roms/\" + home.last_file.substr(0, slash)),\n                        selected_language);\n                }\n            }\n            if (cover.empty()) cover = EnsureCover(home.last_file, &title);\n            has_cover = !cover.empty();\n        }\n        home.last_title = title;\n        home.last_caption = home.last_exists ? tr(\"Last game opened\") :"),
+        ("        pe::ui::Recent recent;\n        recent.file = name;\n        recent.title = GameTitle(name);\n        // A deconstructed /main is not a package and must never enter\n        // EnsureCover(). For packaged titles CoverPath is Encore's generated\n        // Control-icon cache, so it is already the canonical square Home tile.\n        const bool deconstructed = Eden::IsDeconstructedGameSelection(name);\n        if (!deconstructed && played.contains(name))\n            recent.cover = EnsureCover(name);\n        else if (!deconstructed) {\n            const std::string cached_cover = CoverPath(name);\n            if (IsFile(cached_cover)) recent.cover = cached_cover;\n        }\n        if (!recent.cover.empty()) recent.tile_icon = recent.cover;\n        // An extracted NS2 title already carries its square Control icon.\n        // Surface it during the shallow Home scan instead of waiting for\n        // focus, Nlib/network enrichment or the full Library media worker.",
+         "        pe::ui::Recent recent;\n        recent.file = name;\n        recent.title = GameTitle(name);\n        // A fallback tile must not extract an entire game's metadata before\n        // Home can appear. The background Library scan fills missing art.\n        if (played.contains(name))\n            recent.cover = EnsureCover(name);\n        else {\n            const std::string cached_cover = CoverPath(name);\n            if (IsFile(cached_cover)) recent.cover = cached_cover;\n        }\n        // An extracted NS2 title already carries its square Control icon.\n        // Surface it during the shallow Home scan instead of waiting for\n        // focus, Nlib/network enrichment or the full Library media worker."),
+        ("            recent.title_id = ResolveTitleId(recent_path, name);\n            if (recent.title_id != 0) {\n                const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);\n                if (!nlib.icon.empty() && recent.tile_icon.empty()) {\n                    recent.cover = nlib.icon;\n                    recent.tile_icon = nlib.icon;\n                } else if (recent.cover.empty()) {",
+         "            recent.title_id = ResolveTitleId(recent_path, name);\n            if (recent.title_id != 0) {\n                const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);\n                if (!nlib.icon.empty()) {\n                    recent.cover = nlib.icon;\n                    recent.tile_icon = nlib.icon;\n                } else if (recent.cover.empty()) {"),
+        ("    if (cancel && cancel->load(std::memory_order_acquire)) return game;\n    NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);\n    game.artwork_changed |= enrichment.artwork_changed;\n    if (!enrichment.icon.empty() && game.cover.empty()) {\n        game.cover = std::move(enrichment.icon);\n    } else if (game.cover.empty()) {\n        if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {\n            if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,\n                                    language_choice, cancel)) {\n                game.cover = CachedGamesDbSquare(game.title_id);\n                game.artwork_changed |= !game.cover.empty();\n            }\n        }\n    }\n    // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.",
+         "    if (cancel && cancel->load(std::memory_order_acquire)) return game;\n    NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);\n    game.artwork_changed |= enrichment.artwork_changed;\n    if (!enrichment.icon.empty()) {\n        game.cover = std::move(enrichment.icon);\n    } else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {\n        if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,\n                                language_choice, cancel)) {\n            game.cover = CachedGamesDbSquare(game.title_id);\n            game.artwork_changed |= !game.cover.empty();\n        }\n    }\n    // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss."),
+    ):
+        assert stable_home_replay_source.count(current_hunk) == 1
+        stable_home_replay_source = stable_home_replay_source.replace(current_hunk, previous_hunk, 1)
+    predecessor_raw = stable_home_replay_source.encode("utf-8")
+    assert hashlib.sha1(b"blob " + str(len(predecessor_raw)).encode() + bytes([0]) + predecessor_raw).hexdigest() == nov16_metadata_pre_stable
+    drift_index[stable_home_path]["actual"] = nov16_metadata_pre_stable
+    print("NOV16_STABLE_HOME_ICON_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
+          "predecessor=metadata", "console_validation=pending")
+
 # Nov16 add-on catalogue truth-state: metadata bridge changes only the
 # tri-state completeness contract. Pin the two exact historical-source
 # successors and remove them from the F07 drift ledger.
@@ -1597,7 +1638,8 @@ nov16_addon_summary_blob = "964a3a490948aa01149ade2b47dd95ea2b57628b"
 nov16_home_square_pre_addon = "91acb4ba1918308efb38f52db043ee299611926b"
 nov16_home_square_replay_source = None
 if drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] == nov16_addon_summary_blob:
-    current_service = (ROOT / "headless/prosperoeden/eden_services.cpp").read_text()
+    current_service = (stable_home_replay_source if stable_home_replay_source is not None
+                       else (ROOT / "headless/prosperoeden/eden_services.cpp").read_text())
     new_summary = """    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
     if (status < 0) return tr("Unknown");
     std::string text;"""

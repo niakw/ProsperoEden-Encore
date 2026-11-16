@@ -2053,22 +2053,25 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
     home.last_exists = !home.last_file.empty() && IsFile(last_path);
     if (!home.last_file.empty()) {
         std::string title = GameTitle(home.last_file);
-        std::string cover = CoverPath(home.last_file);
-        bool has_cover = Eden::FileExists(cover);
-        if (home.last_exists && home.setup_ready && !has_cover) {
-            // Extracted titles already own a small local Control icon. Use it
-            // before generic metadata extraction so Home does not probe
-            // <title>/exefs/main as if it were a packaged game's cover.
-            if (Eden::IsDeconstructedGameSelection(home.last_file)) {
+        const bool deconstructed = Eden::IsDeconstructedGameSelection(home.last_file);
+        // CoverPath is Encore's generated packaged-Control cache. It must not
+        // shadow a deconstructed title's real local Control icon or make us
+        // retry package extraction against <title>/exefs/main.
+        std::string cover = deconstructed ? std::string{} : CoverPath(home.last_file);
+        bool has_cover = !cover.empty() && Eden::FileExists(cover);
+        if (home.last_exists && home.setup_ready) {
+            if (deconstructed) {
                 const std::size_t slash = home.last_file.find('/');
                 if (slash != std::string::npos && slash > 0) {
                     cover = ExtractedLocalCover(
                         Eden::AssetsPath("roms/" + home.last_file.substr(0, slash)),
                         selected_language);
+                    has_cover = !cover.empty();
                 }
+            } else if (!has_cover) {
+                cover = EnsureCover(home.last_file, &title);
+                has_cover = !cover.empty();
             }
-            if (cover.empty()) cover = EnsureCover(home.last_file, &title);
-            has_cover = !cover.empty();
         }
         home.last_title = title;
         home.last_caption = home.last_exists ? tr("Last game opened") :
@@ -2157,14 +2160,17 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         pe::ui::Recent recent;
         recent.file = name;
         recent.title = GameTitle(name);
-        // A fallback tile must not extract an entire game's metadata before
-        // Home can appear. The background Library scan fills missing art.
-        if (played.contains(name))
+        // A deconstructed /main is not a package and must never enter
+        // EnsureCover(). For packaged titles CoverPath is Encore's generated
+        // Control-icon cache, so it is already the canonical square Home tile.
+        const bool deconstructed = Eden::IsDeconstructedGameSelection(name);
+        if (!deconstructed && played.contains(name))
             recent.cover = EnsureCover(name);
-        else {
+        else if (!deconstructed) {
             const std::string cached_cover = CoverPath(name);
             if (IsFile(cached_cover)) recent.cover = cached_cover;
         }
+        if (!recent.cover.empty()) recent.tile_icon = recent.cover;
         // An extracted NS2 title already carries its square Control icon.
         // Surface it during the shallow Home scan instead of waiting for
         // focus, Nlib/network enrichment or the full Library media worker.
@@ -2184,7 +2190,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
                 const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
-                if (!nlib.icon.empty()) {
+                if (!nlib.icon.empty() && recent.tile_icon.empty()) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
                 } else if (recent.cover.empty()) {
@@ -2641,13 +2647,15 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     game.artwork_changed |= enrichment.artwork_changed;
-    if (!enrichment.icon.empty()) {
+    if (!enrichment.icon.empty() && game.cover.empty()) {
         game.cover = std::move(enrichment.icon);
-    } else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
-        if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
-                                language_choice, cancel)) {
-            game.cover = CachedGamesDbSquare(game.title_id);
-            game.artwork_changed |= !game.cover.empty();
+    } else if (game.cover.empty()) {
+        if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
+            if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
+                                    language_choice, cancel)) {
+                game.cover = CachedGamesDbSquare(game.title_id);
+                game.artwork_changed |= !game.cover.empty();
+            }
         }
     }
     // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.

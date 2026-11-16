@@ -103,7 +103,7 @@ std::string tr(const char* message) { return message; }
 struct Textures { int invalidated = 0; void invalidate(const std::string&) { ++invalidated; } };
 struct Recent {
     std::uint64_t title_id = 0;
-    std::string cover, hero, screenshot, title, intro, description;
+    std::string cover, tile_icon, hero, screenshot, title, intro, description;
     int max_players = 0;
 };
 struct Home {
@@ -226,6 +226,10 @@ int main() {
         Recent last_played;
         last_played.title_id = 0x777;
         home.home_.recents.push_back(std::move(last_played));
+        Recent local_icon;
+        local_icon.title_id = 0x777;
+        local_icon.tile_icon = "local-control.webp";
+        home.home_.recents.push_back(std::move(local_icon));
         Game a{"MKW alpha", true}; a.title_id = 0x777;
         Game b{"MKW beta", true}; b.title_id = 0x777;
         Game other{"Different", true}; other.title_id = 0x888;
@@ -249,6 +253,8 @@ int main() {
         assert(home.games_[2].box_back.empty());
         assert(home.home_.last_cover == "icon.webp");
         assert(home.home_.recents.front().hero == "hero.webp");
+        assert(home.home_.recents.front().tile_icon == "icon.webp");
+        assert(home.home_.recents.back().tile_icon == "local-control.webp");
         assert(home.home_media_started == 1);
         Game zero{"Invalid", false};
         zero.title_id = 0;

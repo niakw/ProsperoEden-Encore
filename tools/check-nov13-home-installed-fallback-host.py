@@ -25,7 +25,8 @@ assert "Eden::ValidRomFilename(name)" in native_home
 assert "std::sort(unplayed_installed.begin(), unplayed_installed.end());" in native_home
 assert "history.insert(history.end(), unplayed_installed.begin()," in native_home
 assert "for (const auto& name : history)" in native_home
-assert "if (played.contains(name))" in native_home
+assert "if (!deconstructed && played.contains(name))" in native_home
+assert "else if (!deconstructed)" in native_home
 assert "if (IsFile(cached_cover)) recent.cover = cached_cover;" in native_home
 assert "if (home.recents.size() == 7) break;" in native_home
 assert "SaveRecentGame(name)" not in native_home
@@ -66,7 +67,7 @@ struct Game {
     int mods = 0, mods_on = 0, max_players = 0;
 };
 struct Recent {
-    std::string file, title, cover, hero, screenshot, intro, description, addons, language;
+    std::string file, title, cover, tile_icon, hero, screenshot, intro, description, addons, language;
     std::uint64_t title_id = 0;
     int max_players = 0;
 };

@@ -1723,7 +1723,23 @@ nov15_library_size_worker_successors = {
 for changed_path, (prior_blob, successor_blob) in nov15_library_size_worker_successors.items():
     assert changed_path in post_index and changed_path in drift_index, changed_path
     assert post_index[changed_path]["post_snapshot_git_blob"] == prior_blob, changed_path
-    assert drift_index[changed_path]["actual"] == successor_blob, changed_path
+    verified_actual = drift_index[changed_path]["actual"]
+    if (changed_path == "headless/prosperoeden/eden_services.cpp" and
+            verified_actual == "ea879f0aca249fabf6a5624d2f72a126e035cd8a"):
+        # #243 is layered on #239. Remove only the later AddOnSummary
+        # tri-state hunk before checking the exact #239 size-owner successor.
+        current_service = (ROOT / changed_path).read_text()
+        new_summary = """    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
+    if (status < 0) return tr("Unknown");
+    std::string text;"""
+        prior_summary = """    eden_game_addons(title_id, update, sizeof(update), &dlc);
+    std::string text;"""
+        assert current_service.count(new_summary) == 1, changed_path
+        reconstructed = current_service.replace(new_summary, prior_summary, 1)
+        raw = reconstructed.encode("utf-8")
+        verified_actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert verified_actual == successor_blob, changed_path
     post_index[changed_path]["post_snapshot_git_blob"] = successor_blob
 print("NOV15_LIBRARY_SIZE_WORKER_SOURCE_SUCCESSOR_PASS", "owners=5",
       "media_ungated=1", "console_validation=pending")

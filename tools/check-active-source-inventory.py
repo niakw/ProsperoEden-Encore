@@ -365,6 +365,7 @@ post_f07_cpu6_ldapr_owners = {
     "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc",
     "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h",
     "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp",
 }
 assert post_f07_cpu6_ldapr_owners <= set(physical_all), (
     "Missing vendor-maintained CPU6/LDAPR owners",
@@ -375,7 +376,7 @@ assert 'vendor/encore-active/ns2-runtime/cpu6/maintained/core' in (
     root/'headless/ns2_cpu6_source_bridge.cmake').read_text()
 assert 'vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64' in (
     root/'headless/shared_a64_ldapr.cmake').read_text()
-print("ENCORE_VENDOR_MAINTAINED_CPU6_LDAPR_PASS owners=7")
+print("ENCORE_VENDOR_MAINTAINED_CPU6_LDAPR_PASS owners=8")
 
 # P1.3 post-F07 live NVDRV owners. These two complete C++ translation
 # units are shipped by the single shared core; neither alters the original

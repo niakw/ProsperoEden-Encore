@@ -41,10 +41,17 @@ jobs:
       - name: Verify historical pinned tracker and frozen F07 oracles
         run: |
           set -euo pipefail
+          current_vendor="$(git ls-tree HEAD -- vendor | awk '{print $3}')"
           git -C vendor fetch --no-tags --depth=1 origin 1ec7b429238d1175a76dc94b7c0a7f1c2eb62864
           git -C vendor checkout --detach FETCH_HEAD
           test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          # Historical tracker behavior is exercised against its exact old tree.
           python3 -B tools/check-ps5-usage-tracker-selection-host.py
+          # Production owner inventories describe HEAD's shipping graph. Restore
+          # the exact gitlink before running them; otherwise a new maintained
+          # owner can make an unrelated historical witness fail spuriously.
+          git -C vendor checkout --detach "$current_vendor"
+          test "$(git -C vendor rev-parse HEAD)" = "$current_vendor"
           python3 -B tools/check-active-source-inventory.py
           python3 -B tools/check-eden-optimization-coverage.py
       - name: Distinguish native and host testing

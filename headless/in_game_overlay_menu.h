@@ -157,20 +157,20 @@ private:
                    std::string(game.renderer < 0 ? pe::tr("Automatic") :
                                game.renderer == 0 ? "OpenGL" : "Vulkan");
         case 1:
-            return Text("GAME RESOLUTION") + " " +
+            return Text("Game resolution") + " " +
                    std::string(game.resolution < 0 ? pe::tr("Automatic") :
                                kResolutionKeys[game.resolution]);
         case 2:
-            return "UPSCALE " + (game.upscaling_filter < 0
+            return Text("Upscaling") + " " + (game.upscaling_filter < 0
                 ? std::string{pe::tr("Automatic")}
                 : translated(kUpscalingFilterLabels[game.upscaling_filter]));
-        case 3: return "FSR " + Percent(game.fsr_sharpness);
+        case 3: return Text("Sharpness") + " " + Percent(game.fsr_sharpness);
         case 4:
             return Text("Anti-aliasing") + " " + (game.anti_aliasing < 0
                 ? std::string{pe::tr("Automatic")}
                 : translated(kAntiAliasingLabels[game.anti_aliasing]));
         case 5:
-            return Text("TEXTURE FILTERING") + " " +
+            return Text("Texture filtering") + " " +
                    (game.texture_anisotropy < 0 ? std::string{pe::tr("Automatic")}
                                                 : pe::ui::TextureAnisotropyName(game.texture_anisotropy));
         case 6:
@@ -178,13 +178,13 @@ private:
                    (game.refresh < 0 ? std::string{pe::tr("Automatic")}
                                      : std::to_string(kRefreshHz[game.refresh]) + " Hz");
         case 7:
-            return "FG " + FrameGenerationName(game.frame_generation);
+            return Text("Frame Generation") + " " + FrameGenerationName(game.frame_generation);
         case 8:
-            return "NR " + std::string(game.neural_mode < 0 ? pe::tr("Automatic")
+            return Text("Neural Rendering") + " " + std::string(game.neural_mode < 0 ? pe::tr("Automatic")
                                                              : pe::ui::NeuralModeName(game.neural_mode));
-        case 9: return "NR " + Percent(game.neural_strength);
+        case 9: return Text("Intensité DLSS-NR") + " " + Percent(game.neural_strength);
         case 10:
-            return Text("OUTPUT RESOLUTION") + " " +
+            return Text("TV output") + " " +
                    std::string(game.output < 0 ? pe::tr("Automatic") : kOutputKeys[game.output]);
         case 11:
             return Text("Console mode") + " " +
@@ -198,8 +198,8 @@ private:
             "SW A", "SW B", "SW X", "SW Y", "SW L", "SW R", "SW ZL", "SW ZR",
             "SW PLUS", "SW MINUS", "SW L3", "SW R3"};
         static constexpr const char* pad[kPadButtons] = {
-            "X", "O", "SQUARE", "TRIANGLE", "L1", "R1", "L2", "R2",
-            "L3", "R3", "OPTIONS", "CREATE", "TOUCHPAD"};
+            "X", "O", "SQ", "TR", "L1", "R1", "L2", "R2",
+            "L3", "R3", "OPT", "CR", "TP"};
         const auto& map = game.own_mapping ? game.mapping : prefs.mapping;
         return std::string(guest[row]) + " > " + pad[map[row]];
     }
@@ -213,12 +213,12 @@ private:
             case 4: return Text("Renderer") + " >";
             case 5: return Text("Controls") + " >";
             case 6: return Text("Diagnostics") + " >";
-            case 7: return Text("Browse") + " >";
+            case 7: return Text("Multiplayer") + " >";
             }
         } else if (tab == 1) return GraphicsRow(row);
         else if (tab == 2) return MappingRow(row);
         else if (tab == 4) {
-            return row == 0 ? Text("Browse") : Text("CONTINUE PLAYING");
+            return row == 0 ? Text("Multiplayer") : Text("CONTINUE PLAYING");
         } else if (tab == 3) {
             switch (row) {
             case 0: return Text("FPS OVERLAY") + (prefs.hud ? " 1" : " 0");
@@ -341,7 +341,7 @@ private:
             "L1 / " + Text("Renderer") + " 2/5 / R1",
             "L1 / " + Text("Controls") + " 3/5 / R1",
             "L1 / " + Text("Diagnostics") + " 4/5 / R1",
-            "L1 / " + Text("Browse") + " 5/5 / R1"};
+            "L1 / " + Text("Multiplayer") + " 5/5 / R1"};
         line(headings[static_cast<std::size_t>(tab)], kSelectedRow);
         line(LanguageLine(), kRow);
         const int start = std::clamp(selected - 3, 0, std::max(0, Count() - kVisibleRows));

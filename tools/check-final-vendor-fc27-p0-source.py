@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="c5614d3c7ef75958965bac93c9e343eccdbc0fbe"
+EXPECTED="50a849a93494f442d47573b8ce8b8797c3cecd26"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -38,8 +38,10 @@ tests=(
     "ps5_spirv_scalar_constant_cache_host.py",
     "fc27_maxwell_prmt_operand_forms_source.py",
     "shader_bitfield_uextract_fold_host.py",
+    "ns2_getinfo_page_size_source.py",
+    "ns2_getinfo_vamm_region_source.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)
 
-print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ps5=unverified")
+print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ns2_getinfo_page_size=1 ns2_getinfo_vamm=1 ps5=unverified")

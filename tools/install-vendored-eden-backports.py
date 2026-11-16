@@ -205,6 +205,45 @@ def replay()->None:
             observed[rel]=spec['entries'][rel]
         print('FW23_R23_EXACT_POST_BACKPORT_REPLAY_PASS',
               f'successors={len(reviewed)}', 'historical_receipts=untouched')
+        # GetInfo 29/30/33 was reviewed later as a bounded NS2 successor to
+        # the same frozen Eden patch replay. Keep that provenance separate
+        # from FW23 and prove the exact maintained files reverse byte-for-byte
+        # to the generated pre-GetInfo sources.
+        getinfo=json.loads(
+            (ROOT/'tools/fixtures/ns2-getinfo-backports-reverse.json').read_text())
+        assert getinfo['schema_version']==1
+        assert getinfo['baseline_vendor']=='c5614d3c7ef75958965bac93c9e343eccdbc0fbe'
+        assert getinfo['page_size_vendor']=='f6ace750bf7a1b37101b420203a7f9633888d4f2'
+        assert getinfo['vamm_region_vendor']=='035c0333a05954beaa8810c6e28c1377cf500eec'
+        assert getinfo['manifest_receipt_vendor']=='67926ea4b6960eefebf0427929cf299e8e056013'
+        assert getinfo['active_vendor']=='50a849a93494f442d47573b8ce8b8797c3cecd26'
+        getinfo_sources=getinfo['reviewed_getinfo_sources']
+        assert len(getinfo_sources)==2 and len({entry['path'] for entry in getinfo_sources})==2
+        for entry in getinfo_sources:
+            rel=entry['path']
+            assert rel in observed and rel in spec['entries'], (
+                'Unexpected GetInfo replay successor',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'Historical GetInfo patch replay drift',rel)
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed integrated GetInfo source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256']
+            prior=current.decode('utf-8')
+            for hunk in reversed(entry['hunks']):
+                assert prior.count(hunk['after'])==1, (
+                    'GetInfo exact reverse span moved',rel)
+                prior=prior.replace(hunk['after'],hunk['before'],1)
+            assert prior.encode('utf-8')==generated, (
+                'GetInfo source not derivable from frozen patch replay',rel)
+            observed[rel]=spec['entries'][rel]
+        assert 'Nx2RemoteMemorySize = 31' not in (ACTIVE/'src/core/hle/kernel/svc_types.h').read_text()
+        assert 'Nx2RemoteMemoryUsed = 32' not in (ACTIVE/'src/core/hle/kernel/svc_types.h').read_text()
+        print('NS2_GETINFO_EXACT_POST_BACKPORT_REPLAY_PASS',
+              f'successors={len(getinfo_sources)}',
+              'info_types=29,30,33', 'remote_memory_31_32=unimplemented',
+              'historical_receipts=untouched')
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

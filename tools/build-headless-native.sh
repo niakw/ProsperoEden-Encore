@@ -194,10 +194,10 @@ if [[ ${EDEN_SKIP_SOURCE_CHECKS:-0} != 1 && ${EDEN_SKIP_PREBUILD_SOURCE_CHECKS:-
 fi
 
 # fr_fr_embedded.h is a deterministic generated C++ wrapper around fr-FR.po.
-# A previous native run proved that the worktree can be mutated after the
-# early translation gate, leaving the raw PO payload at the .h path. Repair
-# only this generated resource immediately before Ninja, then require the
-# result to be byte-identical to the version committed in this checkout.
+# Native run #43861573018 exposed a tracked header whose wrapper contained
+# literal backslash-n escapes: gettext parity still passed, but C++ parsing
+# did not. Rematerialize immediately before Ninja and require exact tracked
+# bytes so malformed/stale generated source can never reach the compiler.
 embedded_fr_rel="headless/prosperoeden/fr_fr_embedded.h"
 if ! git -C "$root" diff --quiet -- "$embedded_fr_rel"; then
     before_embedded_fr=$(sha256sum "$root/$embedded_fr_rel" | cut -d' ' -f1)

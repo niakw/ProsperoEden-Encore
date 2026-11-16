@@ -29,7 +29,7 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=c5614d3c7ef75958965bac93c9e343eccdbc0fbe
+          expected=f6ace750bf7a1b37101b420203a7f9633888d4f2
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
@@ -48,4 +48,5 @@ jobs:
           python3 -B vendor/tests/ns2_qmd_rejected_dispatch_release_host.py
           python3 -B vendor/tests/ns2_ldsm_m88_modes_host.py
           python3 -B vendor/tests/shader_bitfield_uextract_fold_host.py
+          python3 -B vendor/tests/ns2_getinfo_page_size_source.py
           echo ENCORE_VENDOR_P0_CONSOLIDATED_ENGINE_PAIR_PASS

@@ -56,6 +56,14 @@ assert "std::clamp(selected_valid ? library_.selected - slots / 2 : 0," in draw_
 assert "const Game* game = selected_valid" in draw_library
 assert "count > 0 ? &games_[static_cast<std::size_t>(library_.selected)]" not in draw_library
 
+assert "game.addons = enriched.addons;" in media_finish
+assert "game.addons_short = enriched.addons_short;" in media_finish
+assert "game.language = enriched.language;" in media_finish
+assert "game.language_note = enriched.language_note;" in media_finish
+assert "game.addons = enriched.addons;" in home_finish
+assert "game.language = enriched.language;" in home_finish
+assert 'std::string{tr("Language")} + ": " +' in source
+
 cpp = r"""
 #include <algorithm>
 #include <atomic>
@@ -81,6 +89,7 @@ struct Game {
     std::string cover, box_front, box_back, hero;
     std::vector<std::string> screenshots;
     std::string intro, description, publisher, developer, release_date, categories, size = "—";
+    std::string addons, addons_short, language, language_note;
     int max_players = 0;
     Game() = default;
     Game(std::string file_, bool docked_) : file(std::move(file_)), docked(docked_) {}

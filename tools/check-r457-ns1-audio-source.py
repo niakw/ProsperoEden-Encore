@@ -44,7 +44,8 @@ KNOWN_VENDOR_GRAPH = {
     "89d70eb505594447b3ca98658311002e74dac8ad": "same production owners + test-only #161 warning-clean host model",
     "b68126c9cd95eef6c6656ff6d7834c62c092aa46": "same production owners + test-only #162 generated-C++ newline correction",
     "0fc157b7ccef428e675ff945bc48eceb08fff607": "same production lineage + upstream-confirmed Maxwell CB_BIND bounds guard #163",
-    "42459a7893c51a178ecd0c2f74f3951cc20fa12d": "same reviewed owners + Eden #4559 DrawTexture state successor",
+    "42459a7893c51a178ecd0c2f74f3951cc20fa12d": "same reviewed graph + Eden #4559 DrawTexture state successor",
+    "d1f8696448ed481e36380c3ea8431e3dc722304e": "same reviewed graph + bounded NS2 AM graphics-scale and HID JCMS early-service owners", "same reviewed owners + Eden #4559 DrawTexture state successor",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

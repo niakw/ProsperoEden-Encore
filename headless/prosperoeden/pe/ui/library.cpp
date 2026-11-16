@@ -1079,6 +1079,7 @@ void Launcher::sync_home_game(const Game& game)
         home_.last_mods_on = game.mods_on;
         home_.last_title = game.name;
         if (!game.cover.empty()) home_.last_cover = game.cover;
+        else if (home_.last_cover.empty() && !game.box_front.empty()) home_.last_cover = game.box_front;
         if (!game.hero.empty()) home_.last_hero = game.hero;
         if (!game.screenshots.empty()) home_.last_screenshot = game.screenshots.front();
         if (!game.intro.empty()) home_.last_intro = game.intro;
@@ -1090,6 +1091,7 @@ void Launcher::sync_home_game(const Game& game)
         {
             recent.title = game.name;
             if (!game.cover.empty()) recent.cover = game.cover;
+            else if (recent.cover.empty() && !game.box_front.empty()) recent.cover = game.box_front;
             if (game.title_id != 0) recent.title_id = game.title_id;
             if (!game.addons.empty()) recent.addons = game.addons;
             if (!game.language.empty()) recent.language = game.language;

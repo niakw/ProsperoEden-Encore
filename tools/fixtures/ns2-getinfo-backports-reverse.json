@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "baseline_vendor": "c5614d3c7ef75958965bac93c9e343eccdbc0fbe",
+  "page_size_vendor": "f6ace750bf7a1b37101b420203a7f9633888d4f2",
+  "vamm_region_vendor": "035c0333a05954beaa8810c6e28c1377cf500eec",
+  "manifest_receipt_vendor": "67926ea4b6960eefebf0427929cf299e8e056013",
+  "active_vendor": "50a849a93494f442d47573b8ce8b8797c3cecd26",
+  "reviewed_getinfo_sources": [
+    {
+      "path": "src/core/hle/kernel/svc/svc_info.cpp",
+      "before_sha256": "b118f5e32d2dd711e9815bc85c94e0d10f7d0351a678c772b6d3535de3b4a317",
+      "before_bytes": 13479,
+      "after_sha256": "fca95ca301fac4bda2d38f53e3254ee2cb287ad7fa6d8556ecf155cfefc79f56",
+      "after_bytes": 14845,
+      "hunks": [
+        {
+          "before": "#include \"core/core_timing.h\"\n#include \"core/hle/kernel/k_memory_manager.h\"\n",
+          "after": "#include \"core/core_timing.h\"\n#include \"core/memory.h\"\n#include \"core/hle/kernel/k_memory_manager.h\"\n"
+        },
+        {
+          "before": "    case InfoType::FreeThreadCount:\n    case InfoType::AliasRegionExtraSize: {\n",
+          "after": "    case InfoType::FreeThreadCount:\n    case InfoType::Nx2RegionAddress:\n    case InfoType::Nx2RegionSize:\n    case InfoType::Nx2VammSize:\n    case InfoType::AliasRegionExtraSize: {\n"
+        },
+        {
+          "before": "        case InfoType::HeapRegionSize:\n            *result = process->GetPageTable().GetHeapRegionSize();\n            R_SUCCEED();\n        case InfoType::AslrRegionAddress:\n",
+          "after": "        case InfoType::HeapRegionSize:\n            *result = process->GetPageTable().GetHeapRegionSize();\n            R_SUCCEED();\n        case InfoType::Nx2RegionAddress:\n        case InfoType::Nx2RegionSize: {\n            // Lichii and Eglantine reserve the upper half of the process alias region for the\n            // Switch 2 VAMM range. MapPhysicalMemory already operates in the alias region, so\n            // this exposes virtual address space without inventing a physical remote-memory pool.\n            auto& page_table = process->GetPageTable();\n            const u64 half = page_table.GetAliasRegionSize() / 2;\n            *result = info_id_type == InfoType::Nx2RegionAddress\n                          ? GetInteger(page_table.GetAliasRegionStart()) + half\n                          : half;\n            LOG_WARNING(Kernel_SVC, \"(STUBBED) Switch 2 InfoType {}, returning {:#x}\",\n                        static_cast<u32>(info_id_type), *result);\n            R_SUCCEED();\n        }\n        case InfoType::Nx2VammSize:\n            // Switch 2 SDKs use InfoType 33 as the page granule for VAMM / RELRO alignment.\n            // Lichii/Eglantine and nxnative agree on the 4 KiB ARM granule.\n            *result = Core::Memory::YUZU_PAGESIZE;\n            LOG_WARNING(Kernel_SVC, \"(STUBBED) Switch 2 InfoType 33, returning {:#x}\", *result);\n            R_SUCCEED();\n        case InfoType::AslrRegionAddress:\n"
+        }
+      ]
+    },
+    {
+      "path": "src/core/hle/kernel/svc_types.h",
+      "before_sha256": "d7160d1d89405a168a681cf3d261cd4e8089e786f2edb2041d7f932383458ac1",
+      "before_bytes": 14184,
+      "after_sha256": "9279f2f72c0ac8c1abc9352dafd4fae6f9f2500a0b0fae47ae4312a081098ce9",
+      "after_bytes": 14523,
+      "hunks": [
+        {
+          "before": "    AliasRegionExtraSize = 28,\n\n    TransferMemoryHint = 34,\n",
+          "after": "    AliasRegionExtraSize = 28,\n\n    // Switch 2 kernels: VAMM / remote-region virtual address range. The graphics SDK maps\n    // physical pages into this range; the physical remote-memory allowance is separate.\n    Nx2RegionAddress = 29,\n    Nx2RegionSize = 30,\n\n    // Switch 2 kernels: page granule queried by the SDK during VAMM / RELRO setup.\n    Nx2VammSize = 33,\n\n    TransferMemoryHint = 34,\n"
+        }
+      ]
+    }
+  ]
+}

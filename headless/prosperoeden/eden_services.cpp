@@ -2649,11 +2649,13 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     game.artwork_changed |= enrichment.artwork_changed;
     if (!enrichment.icon.empty() && game.cover.empty()) {
         game.cover = std::move(enrichment.icon);
-    } else if (game.cover.empty()) if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
-        if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
-                                language_choice, cancel)) {
-            game.cover = CachedGamesDbSquare(game.title_id);
-            game.artwork_changed |= !game.cover.empty();
+    } else if (game.cover.empty()) {
+        if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
+            if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
+                                    language_choice, cancel)) {
+                game.cover = CachedGamesDbSquare(game.title_id);
+                game.artwork_changed |= !game.cover.empty();
+            }
         }
     }
     // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.

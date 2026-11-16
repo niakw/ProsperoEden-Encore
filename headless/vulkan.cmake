@@ -61,13 +61,17 @@ find_program(EDEN_R07_FSR31_SPIRV_DIS NAMES spirv-dis REQUIRED)
 # EDEN_HUD_*_SPV arrays in the PS5 package.
 set(EDEN_HUD_GENERATED_DIR "${PORT_BUILD_DIR}/hud-generated")
 set(EDEN_HUD_MENU_GLSL "${EDEN_HUD_GENERATED_DIR}/vulkan_menu_font.glsl")
+set(EDEN_HUD_MENU_MAP "${EDEN_HUD_GENERATED_DIR}/vulkan_menu_font_map.h")
 set(EDEN_HUD_SHADER_HEADER "${EDEN_HUD_GENERATED_DIR}/eden_vulkan_hud_shaders.h")
+set(EDEN_HUD_FALLBACK_DIR "${PORT_ROOT}/build/generated/noto-fallback")
 add_custom_command(
-    OUTPUT "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_GLSL}"
+    OUTPUT "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_GLSL}" "${EDEN_HUD_MENU_MAP}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${EDEN_HUD_GENERATED_DIR}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/launcher/bake_vulkan_menu_font.py"
         --output "${EDEN_HUD_MENU_GLSL}"
+        --map-output "${EDEN_HUD_MENU_MAP}"
+        --fallback-dir "${EDEN_HUD_FALLBACK_DIR}"
     COMMAND "${Python3_EXECUTABLE}"
         "${PORT_ROOT}/tools/graphics/build-vulkan-hud-shaders.py"
         --glslang "${EDEN_R07_FSR31_GLSLANG}"
@@ -77,17 +81,30 @@ add_custom_command(
         --output "${EDEN_HUD_SHADER_HEADER}"
     DEPENDS
         "${PORT_ROOT}/tools/launcher/bake_vulkan_menu_font.py"
+        "${PORT_ROOT}/tools/launcher/bake_vulkan_menu_font.cpp"
         "${PORT_ROOT}/tools/graphics/build-vulkan-hud-shaders.py"
-        "${EDEN_PORT_DIR}/prosperoeden/ui/fonts/montserrat-medium.pefont"
+        "${PORT_ROOT}/third_party/fonts/Montserrat-Medium.ttf"
+        "${EDEN_HUD_FALLBACK_DIR}/NotoSans-Greek.ttf"
+        "${EDEN_HUD_FALLBACK_DIR}/NotoSansArabic.ttf"
+        "${EDEN_HUD_FALLBACK_DIR}/NotoSansThai.ttf"
+        "${EDEN_HUD_FALLBACK_DIR}/NotoSansJP.ttf"
+        "${EDEN_HUD_FALLBACK_DIR}/NotoSansKR.ttf"
+        "${EDEN_HUD_FALLBACK_DIR}/NotoSansSC.ttf"
+        "${EDEN_HUD_FALLBACK_DIR}/NotoSansTC.ttf"
         "${EDEN_PORT_DIR}/vulkan_hud.vert"
         "${EDEN_PORT_DIR}/vulkan_hud.frag"
         "${EDEN_PORT_DIR}/loading_wordmark.glsl"
         "${EDEN_PORT_DIR}/loading_scene.glsl"
     COMMENT "Build native Vulkan HUD + Montserrat quick-menu SPIR-V"
     VERBATIM)
-add_custom_target(eden-vulkan-hud-shaders DEPENDS "${EDEN_HUD_SHADER_HEADER}")
+add_custom_target(eden-vulkan-hud-shaders DEPENDS "${EDEN_HUD_SHADER_HEADER}" "${EDEN_HUD_MENU_MAP}")
 add_dependencies(video_core eden-vulkan-hud-shaders)
 target_include_directories(video_core BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
+target_include_directories(eden-headless BEFORE PRIVATE "${EDEN_HUD_GENERATED_DIR}")
+add_dependencies(eden-headless eden-vulkan-hud-shaders)
+set_property(SOURCE "${EDEN_PORT_DIR}/quick_overlay_font.cpp"
+    TARGET_DIRECTORY eden-headless APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_HUD_MENU_MAP}")
 set_property(SOURCE "${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp"
     TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_HUD_SHADER_HEADER}")

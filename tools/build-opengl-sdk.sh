@@ -12,7 +12,8 @@ marker="$prefix/ENCORE_SOURCE_COMMIT"
 nir_fix_marker="$prefix/ENCORE_PSBC_NIR_LOCATION_FIX"
 nir_fix_identity=$(
     for script in "$root/tools/ci/patch-psbc-nir-location-print.py" \
-                  "$root/tools/ci/patch-psbc-nir-build-hooks.py"; do
+                  "$root/tools/ci/patch-psbc-nir-build-hooks.py" \
+                  "$root/tools/ci/patch-ps5-opengl-mesa-options.py"; do
         sha256sum "$script" | awk '{print $1}'
     done | sha256sum | awk '{print $1}'
 )
@@ -93,6 +94,8 @@ nir_print_backup=""
 radv_stub_source=""
 radv_stub_backup=""
 psbc_extra_sources=()
+mesa_build_script="$source_dir/toolchain/build-mesa-ps5.sh"
+mesa_build_script_backup=""
 cleanup() {
     if [[ -n ${host_test_backup:-} && -f $host_test_backup ]]; then
         mv -f "$host_test_backup" "$host_test"
@@ -105,6 +108,9 @@ cleanup() {
     fi
     if [[ -n ${radv_stub_backup:-} && -f $radv_stub_backup ]]; then
         mv -f "$radv_stub_backup" "$radv_stub_source"
+    fi
+    if [[ -n ${mesa_build_script_backup:-} && -f $mesa_build_script_backup ]]; then
+        mv -f "$mesa_build_script_backup" "$mesa_build_script"
     fi
     for extra in "${psbc_extra_sources[@]}"; do
         if [[ -f "${extra}.encore-backup.$$" ]]; then
@@ -153,6 +159,19 @@ fi
 # Upstream's own fetcher pins and hashes Mesa/compiler dependencies. Building the SDK here keeps
 # Encore on a reviewed source commit instead of silently consuming an untagged moving HEAD.
 python3 "$source_dir/tools/fetch-sources.py"
+
+# Mesa 26.2 declares display-info, SPIRV-Tools and lm-sensors as optional
+# feature options. The frozen PS5 OpenGL profile uses softpipe only, no
+# Vulkan drivers/tools/HUD sensors, so letting Meson auto-probe these target
+# libraries produces misleading "NOT FOUND" noise. Apply only the exact
+# option selections to the mutable pinned OpenGL checkout after upstream
+# verification, then restore the tracked script on every exit path.
+[[ -f "$mesa_build_script" && ! -L "$mesa_build_script" ]] || {
+    echo "Missing pinned PS5 OpenGL Mesa build script" >&2; exit 1;
+}
+mesa_build_script_backup="${mesa_build_script}.encore-backup.$"
+cp -p "$mesa_build_script" "$mesa_build_script_backup"
+python3 -B "$root/tools/ci/patch-ps5-opengl-mesa-options.py" "$mesa_build_script"
 
 # Fix the pinned PSBC Mesa 26.2 NIR printer's real decimal truncation.
 # A 32-bit location needs 11 bytes (10 digits + NUL), not four. Patch only

@@ -135,6 +135,7 @@ vk::SurfaceKHR CreateHandoffSurface(
 } // Anonymous namespace
 
 Device CreateDevice(const vk::Instance& instance, const vk::InstanceDispatch& dld, VkSurfaceKHR surface) {
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_enumerate_begin\n");
     const std::vector<VkPhysicalDevice> devices = instance.EnumeratePhysicalDevices();
     const u32 device_index = Settings::values.vulkan_device.GetValue();
     if (device_index >= u32(devices.size())) {
@@ -142,6 +143,7 @@ Device CreateDevice(const vk::Instance& instance, const vk::InstanceDispatch& dl
         throw vk::Exception(VK_ERROR_INITIALIZATION_FAILED);
     }
     const vk::PhysicalDevice physical_device(devices[device_index], dld);
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_create_begin\n");
     return Device(*instance, physical_device, surface, dld);
 }
 
@@ -167,22 +169,22 @@ try
     // Create surface
     , surface(CreateHandoffSurface(instance, render_window.GetWindowInfo()))
     , device(CreateDevice(instance, dld, *surface))
-    , memory_allocator(device)
+    , memory_allocator((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_ready\n"), device))
     , state_tracker()
-    , scheduler(device, state_tracker)
-    , swapchain(*surface,
+    , scheduler((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=allocator_ready\n"), device), state_tracker)
+    , swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_begin\n"), *surface),
                 device,
                 scheduler,
                render_window.GetFramebufferLayout().width,
                render_window.GetFramebufferLayout().height)
-    , present_manager(instance,
+    , present_manager((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_ready\n"), instance),
                       render_window,
                       device,
                       memory_allocator,
                       scheduler,
                       swapchain,
                       surface)
-    , blit_swapchain(device_memory,
+    , blit_swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=present_manager_ready\n"), device_memory),
                    device,
                    memory_allocator,
                    present_manager,
@@ -211,7 +213,9 @@ try
         scheduler.RegisterOnSubmit([this] { turbo_mode->QueueSubmitted(); });
     }
 
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=renderer_members_ready\n");
     PresentLoading();
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=loading_present_returned\n");
     Report();
 } catch (const vk::Exception& exception) {
     LOG_ERROR(Render_Vulkan, "Vulkan initialization failed with error: {}", exception.what());

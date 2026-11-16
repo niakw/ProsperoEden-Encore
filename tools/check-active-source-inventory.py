@@ -1097,7 +1097,8 @@ pair_present = pair_new_owners & set(physical_all)
 if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc"}:
     assert pair_present == pair_new_owners
     gpu_dirty_include = b'#include "core/gpu_dirty_memory_manager.h"\n'
-    gpu_dirty_include_successor = "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc"
+    gpu_dirty_include_successors = {"2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab",
+                                    "053acc8ddf30fe65f6376564bbd6efef58f07ddc"}
     gpu_dirty_include_owners = {
         "eden-core/src/video_core/gpu_gl_native.cpp",
         "eden-core/src/video_core/gpu_gl_native_dev.cpp",
@@ -1106,7 +1107,7 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
     for path, blob in pair_receipt["files"].items():
         source_path = active / path
         raw = source_path.read_bytes()
-        if gpu_table_vendor_pin == gpu_dirty_include_successor and path in gpu_dirty_include_owners:
+        if gpu_table_vendor_pin in gpu_dirty_include_successors and path in gpu_dirty_include_owners:
             # Vendor #175 changes only compile ownership here. Reconstruct the
             # exact pre-#175 blob in memory before applying the frozen Nov15
             # source receipt; unknown/duplicate include drift fails closed.

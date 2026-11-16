@@ -2340,9 +2340,13 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
         throw std::system_error(directory_error, "ROM directory scan failed");
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return games;
-    eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
-                         Eden::AssetsPath("roms").c_str());
-    if (cancel && cancel->load(std::memory_order_acquire)) return {};
+    // Initial Library enumeration starts only after finish_home_scan() has
+    // applied EdenServices::home(), whose worker already published the
+    // complete add-on snapshot. Repeating eden_scan_addons() here walked the
+    // same update/DLC roots twice before the first Library list could appear.
+    // Later storage refreshes queue read_home() before start_scan() as well.
+    // Keep games() local/cache-only; selected media reads the atomically
+    // published snapshot and reports Unknown if that snapshot is incomplete.
     const int language_choice = Eden::LoadPreferences().language;
     // A failed stat or unexpected file type previously hid a title with no
     // diagnostic. Keep the UI thread free of IO: report only on this worker.

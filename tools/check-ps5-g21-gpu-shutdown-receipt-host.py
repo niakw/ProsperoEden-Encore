@@ -12,7 +12,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 from ci.ps5_g21_gpu_shutdown_receipt import (
-    OLD, REVIEWED, POST_FC27_CPU_WRITE, git_blob, normalize_g21_shutdown_source,
+    OLD, REVIEWED, POST_FC27_CPU_WRITE, POST_GPU_DIRTY_COMPLETE_TYPE,
+    git_blob, normalize_g21_shutdown_source,
 )
 
 assert len(OLD) == len(REVIEWED) == 5
@@ -30,6 +31,8 @@ for filename in sorted(OLD):
         expected_live = {REVIEWED[filename]}
         if filename in POST_FC27_CPU_WRITE:
             expected_live.add(POST_FC27_CPU_WRITE[filename])
+        if filename in POST_GPU_DIRTY_COMPLETE_TYPE:
+            expected_live.add(POST_GPU_DIRTY_COMPLETE_TYPE[filename])
         assert live_blob in expected_live, (filename, live_blob, sorted(expected_live))
     else:
         assert live_blob == OLD[filename], (filename, live_blob, OLD[filename])

@@ -37,6 +37,12 @@ POST_FC27_CPU_WRITE = {
     "gpu_gl_native.cpp": "9e8bc036d0ed9d1d71024aa241f3e835d61be3e1",
     "gpu_gl_native_dev.cpp": "8dddf44da8d6306fa52f801a88127e29b3d1c7a8",
 }
+POST_GPU_DIRTY_COMPLETE_TYPE = {
+    "gpu_vulkan.cpp": "842a0289f75bc2a0763285173e4616060348ec22",
+    "gpu_gl_native.cpp": "8abd4f3652b4a10f27281a2fd43a3764bd6d5c6e",
+    "gpu_gl_native_dev.cpp": "091431333f6f05e7e81c691051d64771cab4a5dd",
+}
+GPU_DIRTY_COMPLETE_TYPE_INCLUDE = '#include "core/gpu_dirty_memory_manager.h"\n'
 CPU_WRITE_OLD = """        std::function<void(PAddr, size_t)> callback_writes([this](PAddr address, size_t size) {
             renderer->ReadRasterizer()->OnCacheInvalidation(address, size);
         });
@@ -65,6 +71,13 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
     if filename not in OLD:
         raise AssertionError(("Unrecognized G21 source owner", filename))
     current = git_blob(source)
+    if filename in POST_GPU_DIRTY_COMPLETE_TYPE and current == POST_GPU_DIRTY_COMPLETE_TYPE[filename]:
+        assert source.count(GPU_DIRTY_COMPLETE_TYPE_INCLUDE) == 1, filename
+        source = source.replace(GPU_DIRTY_COMPLETE_TYPE_INCLUDE, "", 1)
+        current = git_blob(source)
+        assert current == POST_FC27_CPU_WRITE[filename], (
+            "GPU dirty-manager complete-type normalization changed unrelated bytes",
+            filename, current)
     if filename in POST_FC27_CPU_WRITE and current == POST_FC27_CPU_WRITE[filename]:
         assert source.count(CPU_WRITE_NEW) == source.count(CPU_WRITE_FORWARDER) == 1
         source = source.replace(CPU_WRITE_NEW, CPU_WRITE_OLD, 1)

@@ -1916,7 +1916,7 @@ void Launcher::draw_library(Canvas &c)
             library_format(game->format),
             library_size(game->size),
             mode,
-            tr("Language") + ": " +
+            std::string{tr("Language")} + ": " +
                 (game->language.empty() ? std::string{tr("Unknown")} : game->language),
             addons,
         };

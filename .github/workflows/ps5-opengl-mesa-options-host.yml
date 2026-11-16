@@ -1,0 +1,27 @@
+name: PS5 OpenGL Mesa optional feature host
+on:
+  pull_request:
+    paths:
+      - 'tools/build-opengl-sdk.sh'
+      - 'tools/ci/patch-ps5-opengl-mesa-options.py'
+      - 'tools/check-ps5-opengl-mesa-options-host.py'
+      - '.github/workflows/ps5-opengl-mesa-options-host.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/build-opengl-sdk.sh'
+      - 'tools/ci/patch-ps5-opengl-mesa-options.py'
+      - 'tools/check-ps5-opengl-mesa-options-host.py'
+      - '.github/workflows/ps5-opengl-mesa-options-host.yml'
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - run: python3 -B tools/check-ps5-opengl-mesa-options-host.py

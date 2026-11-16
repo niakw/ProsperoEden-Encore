@@ -1265,6 +1265,8 @@ manifest = json.loads((active / "eden-backports/manifest.json").read_text())
 shipping = set(manifest["entries"])
 shipping_cpp = {"src/" + p.removeprefix("eden-backports/src/")
                 for p in physical if p.startswith("eden-backports/src/")}
+shipping_cpp |= {"src/" + p.removeprefix("eden-backports/src/")
+                 for p in post_f07_diagnostics_net_present}
 build_recipes = {"src/common/CMakeLists.txt", "src/core/CMakeLists.txt"}
 assert shipping == shipping_cpp | build_recipes, (
     "Shipping backport source/build manifest coverage drift",
@@ -1272,7 +1274,7 @@ assert shipping == shipping_cpp | build_recipes, (
 )
 # Keep the expected count tied to the reviewed manifest revision: every
 # additional shipping patch requires an explicit inventory review.
-assert len(shipping) == 83 and len(manifest["shipping_receipts"]) == 50
+assert len(shipping) == (84 if post_f07_diagnostics_net_present else 83) and len(manifest["shipping_receipts"]) == 50
 assert all(re.fullmatch(r"[0-9a-f]{64}", digest)
            for digest in manifest["shipping_receipts"].values()), (
     "invalid shipping patch SHA256 receipt",

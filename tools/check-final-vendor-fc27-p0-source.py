@@ -37,7 +37,7 @@ tests=(
     "p0_bananza_low_write_current_source.py",
     "ps5_spirv_scalar_constant_cache_host.py",
     "fc27_maxwell_prmt_operand_forms_source.py",
-    "bitfield_uextract_ub_host.py",
+    "shader_bitfield_uextract_fold_host.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)

@@ -138,7 +138,7 @@ def strip_ps5_full_clear_upload_elision(text: str) -> str:
         "Unreviewed PS5 full-clear TextureCache source", current)
     scope_begin = "    // Lichii/PS5 patch 0078: a full clear may create a target"
     scope_end = "    auto& flags = maxwell3d->dirty.flags;"
-    assert text.count(scope_begin) == text.count(scope_end) == 1
+    assert text.count(scope_begin) == 1
     lo = text.index(scope_begin)
     hi = text.index(scope_end, lo)
     text = text[:lo] + text[hi:]

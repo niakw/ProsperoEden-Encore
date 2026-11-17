@@ -15,6 +15,7 @@ assert source.count(begin)==1
 helper=begin+source.split(begin,1)[1].split(end,1)[0]
 for required in ("Loader::FileType::NSP","Loader::FileType::XCI",
                  "Loader::FileType::NCA","metadata.Load(npdm)",
+                 "metadata.IsSwitch2()", "EDEN_NS2_PREKERNEL_NPDM",
                  "GetSecurePartitionNSP()","GetExeFS()"):
     assert required in helper
 
@@ -41,7 +42,7 @@ struct File {
     Loader::FileType kind{Loader::FileType::Unknown};
     VirtualDir directory{},exefs{};
     VirtualFile program{},secure{};
-    bool valid{true},is_second{},throwing{};
+    bool valid{true},is_second{},throwing{},late_error{};
     u64 title{0x100};
     VirtualDir GetContainingDirectory() const { return directory; }
 };
@@ -56,7 +57,7 @@ struct ProgramMetadata {
     Loader::ResultStatus Load(const VirtualFile& npdm) {
         if (!npdm || !npdm->valid) return Loader::ResultStatus::Error;
         second=npdm->is_second;
-        return Loader::ResultStatus::Success;
+        return npdm->late_error ? Loader::ResultStatus::Error : Loader::ResultStatus::Success;
     }
     bool IsSwitch2() const { return second; }
 };
@@ -101,6 +102,11 @@ FileType IdentifyFile(const FileSys::VirtualFile& file) {
     return file->kind;
 }
 }
+// The production logger is tested in the SDK syntax gate. This isolated
+// source-extracted fixture must evaluate the real arguments, without needing
+// the full Core logging category implementation.
+template<typename... Args> void CheckLogArgs(Args&&...) {}
+#define LOG_INFO(category, format, ...) CheckLogArgs(format, __VA_ARGS__)
 __HELPER__
 int main() {
     using namespace FileSys;
@@ -125,6 +131,16 @@ int main() {
     npdm2->valid=false;
     assert(!IsSwitch2LaunchProgram(pkg,0x200,0));
     npdm2->valid=true;
+    // The extended ACID already establishes generation. A later NPDM
+    // validation failure must not silently switch to a 4 GiB NS1 layout.
+    npdm2->late_error=true;
+    assert(IsSwitch2LaunchProgram(extracted,0,0));
+    assert(IsSwitch2LaunchProgram(pkg,0x200,0));
+    assert(IsSwitch2LaunchProgram(card,0x200,0));
+    npdm2->late_error=false;
+    npdm1->late_error=true;
+    assert(!IsSwitch2LaunchProgram(old,0,0));
+    npdm1->late_error=false;
     pkg->valid=false;
     assert(!IsSwitch2LaunchProgram(card,0x200,0));
     pkg->valid=true;

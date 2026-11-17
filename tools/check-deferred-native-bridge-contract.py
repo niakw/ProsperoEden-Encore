@@ -309,6 +309,17 @@ def m07_source_blob(value):
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
 m07_selected_sha = m07_source_blob(original_m07)
+# FC27 sibling-page preservation was added after the frozen M07/R23 chain.
+# Unmap is the one call site where page siblings must NOT be downloaded because
+# the mapping is being destroyed. Reverse that reviewed call-site flag only.
+if m07_selected_sha == "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35":
+    current_unmap = "        buffer_cache.WriteMemory(addr, size, false);\n"
+    historical_unmap = "        buffer_cache.WriteMemory(addr, size);\n"
+    assert original_m07.count(current_unmap) == 1
+    original_m07 = original_m07.replace(current_unmap, historical_unmap, 1)
+    m07_selected_sha = m07_source_blob(original_m07)
+    assert m07_selected_sha == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1"
+    print("ENCORE_M07_FC27_GPU_PAGE_SIBLING_UNMAP_EXACT_REVERSE_PASS")
 if m07_selected_sha == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1":
     receipt_path = root / "vendor/tests/native_msaa_handle_receipt.py"
     receipt_text = receipt_path.read_text()

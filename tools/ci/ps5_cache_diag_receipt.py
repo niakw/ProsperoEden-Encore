@@ -19,6 +19,7 @@ REVIEWED_CACHE_VERSION_20_BLOB = "36aae4b17ef8e9681f62fabdd4cf37f09d0beefb"
 REVIEWED_CACHE_VERSION_21_BLOB = "be5d48abd44996502b0829a6e0501d130a151455"
 REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB = "e10c4893c03da57dce7f607d3e0af46d62e343f1"
 REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB = "dcc4c9cbb4e3cec48ab4d1dece9f8708196c5f56"
+REVIEWED_PIPELINE_DRAIN_BLOB = "e3910d11f33376097a90858118ba276f7e02cb70"
 # Exact five reviewed #115 diff hunks, inverted ONLY for source comparison.
 # Both raw source hashes must match; actual build uses the new vendor file.
 DRIVER_HEADER_REVERSES = [
@@ -65,6 +66,29 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    # Lichii 499e2e4 successor drains queued pipeline workers before teardown.
+    # Reverse this exact shipping PS5-only hunk to reapply the existing R23 proof.
+    if current == REVIEWED_PIPELINE_DRAIN_BLOB:
+        new = """    // Lichii 499e2e4: queued builders capture pipeline objects by pointer.
+    // Drain them while the cache still owns every pipeline; otherwise member
+    // destruction can race a late builder during title teardown.
+    workers.WaitForRequests();
+    // First-use shader environments are serialized on this worker. Let all
+    // accepted writes finish before destroying the worker and VkPipelineCache,
+    // or a later launch re-translates shaders that were never persisted.
+    // These are shutdown-only drains, never waits in the draw hot path.
+"""
+        old = """    // First-use shader environments are serialized on this worker. Let all
+    // accepted writes finish before destroying the worker and VkPipelineCache,
+    // or a later launch re-translates shaders that were never persisted.
+    // This is a shutdown-only drain, never a wait in the draw hot path.
+"""
+        assert source.count(new) == 1, "Pipeline worker teardown successor drift"
+        source = source.replace(new, old, 1)
+        current = git_blob(source)
+        assert current == REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB, (
+            "Pipeline teardown predecessor drift", current)
+
     # Vendor #183 adds only a bounded standard-stderr witness around the
     # already-reviewed PS5 fragment-shuffle fallback. Reverse that exact block
     # first, then require the prior reviewed fallback blob before continuing

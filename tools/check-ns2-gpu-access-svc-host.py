@@ -73,7 +73,12 @@ assert 'else if (process.Is64Bit())' in src and 'Call64(system, imm, args);' in 
 assert 'active_pid.load(std::memory_order_acquire) == pid' in pid
 assert '#ifdef PS5_NATIVE' in pid
 assert 'eden_native_detailed_logging() noexcept __attribute__((weak))' in pid
-assert 'if (!eden_native_detailed_logging || !eden_native_detailed_logging())' in pid
+assert 'return eden_native_detailed_logging && eden_native_detailed_logging();' in pid
+assert 'if (!IsActive(pid) || !DetailedEnabled())' in pid
+assert 'constexpr std::uint32_t RecentSamples = 64;' in pid
+assert 'inline void RecordRecent(' in pid
+assert 'inline void DumpRecent(' in pid
+assert 'entry.sequence.store(seq, std::memory_order_release);' in pid
 assert 'inline void ResetForTitle() noexcept' in pid
 assert 'active_pid.store(0, std::memory_order_release)' in pid
 core = (vendor / "ns2-runtime/process/core/core.cpp").read_text()

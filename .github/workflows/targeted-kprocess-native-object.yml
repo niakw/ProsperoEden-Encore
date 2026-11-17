@@ -64,6 +64,13 @@ jobs:
               exit 1
             }
             echo "TARGETED_KPROCESS_NATIVE_COMMAND_FOUND"
+            # The cached command was emitted through ccache in the full build.
+            # This one-object probe does not need ccache itself; compile with
+            # the exact underlying clang command and cached PS5 sysroot.
+            case "$command_line" in
+              "/usr/bin/ccache "*) command_line="${command_line#/usr/bin/ccache }" ;;
+            esac
+            test -x /usr/bin/clang++-18
             (
               cd "$build_dir"
               bash -o pipefail -c "$command_line"

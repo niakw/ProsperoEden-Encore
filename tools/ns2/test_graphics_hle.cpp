@@ -501,7 +501,7 @@ int main(){
             "NVDRV VA region query must reject zero sizes and uint64 overflow");
     const std::array<GP::U32,3> partition{219,1,17};
     const auto part=GP::DecodeAddressSpacePartition(partition,203);
-    require(part && part->address_space==17 && part->user,
+    require(part && part->address_space==17 && part->command==203,
             "TIPC user GPU address-space partition");
     require(!GP::DecodeAddressSpacePartition(partition,202),
             "GPU partition header must match command");

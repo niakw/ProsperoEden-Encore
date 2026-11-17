@@ -22,6 +22,8 @@ jobs:
           persist-credentials: false
           submodules: true
           fetch-depth: 1
+      - name: Validate machine-readable NS2/PS5 compatibility catalogue
+        run: python3 -B tools/ns2/check_ns2_ps5_compatibility_catalog.py
       - name: P2.4 cross-repo verified Ampere uniform shift, surface reduction and signed minmax
         shell: bash
         run: |

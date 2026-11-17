@@ -2227,7 +2227,7 @@ ns2_production_blobs = {
     "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h": "460b5d95453cb974eefff10c4af76c5b318e685f",
     "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp": "1877d43aa8facfabf193dac16b8beea3ff7e188e",
     "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp": "70bc538c71ba1327a0c2a51a6bcb57d1835db2e0",
-    "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": "5ad7f02ff58260bf330265d6a9e49db3bd778ea4"
+    "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": "7c2ceac388905a883abbcf8354d1b61e66ec2f77"
 }
 for changed_path, expected_sha in ns2_production_blobs.items():
     if changed_path in drift_index:

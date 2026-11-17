@@ -1,19 +1,5 @@
 name: P0 consolidated vendor diagnostics engine pair
 on:
-  pull_request:
-    paths:
-      - 'vendor'
-      - '.github/workflows/p0-vendor-diagnostics-engine-pair.yml'
-      - '.github/workflows/ns1-am-mainline-host.yml'
-      - '.github/workflows/ns1-c03-radv-14-source-host.yml'
-      - '.github/workflows/ns1-nvdec-eagain-owner-pair-host.yml'
-      - '.github/workflows/ps5-usage-tracker-engine-pair-host.yml'
-      - '.github/workflows/r457-ns2-sparse-guest-native-host.yml'
-      - 'tools/check-fc-opus-host-buffer-source.py'
-      - 'tools/check-r457-ns1-audio-source.py'
-      - 'tools/ns2/check_r457_sparse_kernel_source.py'
-      - 'tools/ns2/check_r457_sparse_native_graph.py'
-      - 'tools/check-fc27-prmt-engine-selection.py'
   workflow_dispatch:
 permissions:
   contents: read

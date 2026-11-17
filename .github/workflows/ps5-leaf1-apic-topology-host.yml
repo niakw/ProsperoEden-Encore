@@ -1,18 +1,7 @@
 name: PS5 Zen2 leaf-1 APIC topology fallback (host only)
 
 on:
-  pull_request:
-    paths:
-      - "headless/performance.cpp"
-      - "tools/check-worker-affinity.py"
-      - "tools/check-worker-topology.py"
-      - "tools/check-experimental-performance.py"
-      - ".github/workflows/ps5-leaf1-apic-topology-host.yml"
-  push:
-    branches:
-      - fix/nov14-ps5-leaf1-apic-topology-fallback
   workflow_dispatch:
-
 permissions:
   contents: read
 

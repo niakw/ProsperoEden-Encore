@@ -1,16 +1,7 @@
 name: PS5 NS1 AM/HID exact native CMake and focused C++ (no app link)
 
 on:
-  push:
-    branches:
-      - research/ns1-am-applets-mainline-20261111
-    paths:
-      - "headless/CMakeLists.txt"
-      - "headless/r23_am_frontend_applets_ps5.cpp"
-      - "tools/check-native-source-syntax.py"
-      - ".github/workflows/ns1-am-mainline-native-graph.yml"
   workflow_dispatch:
-
 permissions:
   contents: read
 

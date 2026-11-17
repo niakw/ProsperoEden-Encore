@@ -1,24 +1,7 @@
 name: NS2 research JIT runtime
 
 on:
-  push:
-    branches:
-      - research/ns2-ps5-compatibility
-    paths:
-      - 'vendor/**'
-      - 'tools/ns2/jit-host/**'
-      - 'tools/ns2/build_public_nso_fixture.py'
-      - 'tools/ns2/build_public_exefs_fixture.py'
-      - 'tools/ns2/test_program_metadata.cpp'
-      - 'tools/ns2/test_real_kcapabilities.py'
-      - 'tools/ns2/test_real_kprocess_loadmodule.py'
-      - 'tools/ns2/test_real_kprocess_metadata.py'
-      - 'vendor/encore-active/ns2-experimental/src/core/file_sys/program_metadata.cpp'
-      - 'headless/CMakeLists.txt'
-      - 'vendor'
-      - '.github/workflows/ns2-research-jit.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

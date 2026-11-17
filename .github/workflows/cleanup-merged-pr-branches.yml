@@ -1,12 +1,5 @@
 name: Cleanup merged pull request branches
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/cleanup-merged-pr-branches.yml'
-  pull_request:
-    types: [closed]
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: write

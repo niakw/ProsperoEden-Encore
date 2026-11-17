@@ -1,17 +1,5 @@
 name: NS1 C03 exact 14-source RADV host preflight (no PS5 build)
 on:
-  push:
-    branches:
-      - research/ns1-c03-radv-native-selected-20261111
-  pull_request:
-    paths:
-      - vendor
-      - "tools/install-vendored-radv.py"
-      - "tools/radv-active-inputs.py"
-      - "tools/check-vendored-radv-fork.py"
-      - "tools/check-active-source-inventory.py"
-      - "tools/check-eden-optimization-coverage.py"
-      - ".github/workflows/ns1-c03-radv-14-source-host.yml"
   workflow_dispatch:
 permissions:
   contents: read

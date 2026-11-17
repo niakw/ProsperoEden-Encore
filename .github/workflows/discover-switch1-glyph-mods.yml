@@ -3,25 +3,6 @@ name: Discover guest controller glyph metadata
 # Manual-only metadata research on main; no automatic search on source pushes.
 on:
   workflow_dispatch:
-    inputs:
-      provider:
-        description: "Source; none = offline links, Yandex requires paid API credentials"
-        required: true
-        type: choice
-        options: [none, github, curl_duckduckgo, curl_yandex, firefox_duckduckgo, firefox_yandex, duckduckgo, yandex]
-        default: github
-      max_games:
-        description: "Next 1-250 Switch titles"
-        required: true
-        type: number
-        default: 20
-      query_variant:
-        description: "0=Switch; 1=multiplatform; 2=GameBanana; 3=Russian"
-        required: true
-        type: choice
-        options: ["0", "1", "2", "3"]
-        default: "0"
-
 permissions:
   contents: write
 concurrency:

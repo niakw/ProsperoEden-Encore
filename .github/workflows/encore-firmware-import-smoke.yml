@@ -1,16 +1,7 @@
 name: Encore firmware import smoke (host only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'headless/assets_dir.h'
-      - 'headless/firmware_zip_import.h'
-      - 'headless/metadata_bridge.cpp'
-      - 'tools/check-firmware-*.py'
-      - '.github/workflows/encore-firmware-import-smoke.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

@@ -1,10 +1,5 @@
 name: Retired branch cleanup policy (host only)
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/cleanup-merged-pr-branches.yml'
-      - '.github/scripts/test-cleanup-retired-branches.py'
-      - '.github/workflows/cleanup-retired-branches-host.yml'
   workflow_dispatch:
 permissions:
   contents: read

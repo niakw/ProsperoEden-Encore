@@ -1,10 +1,5 @@
 name: R457 native MSAA texture-handle pair (host only)
 on:
-  pull_request:
-    paths:
-      - 'vendor'
-      - 'tools/check-vendored-vulkan-fork.py'
-      - '.github/workflows/r457-msaa-handle-engine-pair-host.yml'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,16 +1,6 @@
 name: NS1 R23 subgroup geometry selected source proof
 on:
-  push:
-    branches: [integration/ns1-subgroup-geometry-active-20261112]
-    paths:
-      - 'headless/CMakeLists.txt'
-      - 'tools/ns2/check_r457_fw23_ns_source.py'
-      - '.github/workflows/ns1-r23-subgroup-selected-host.yml'
-  pull_request:
-    paths:
-      - 'headless/CMakeLists.txt'
-      - 'tools/ns2/check_r457_fw23_ns_source.py'
-      - '.github/workflows/ns1-r23-subgroup-selected-host.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

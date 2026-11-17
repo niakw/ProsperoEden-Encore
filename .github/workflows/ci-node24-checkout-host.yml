@@ -1,23 +1,6 @@
 name: Node24 checkout pin and release safety host preflight
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/prepare-encore-r2-draft.yml'
-      - '.github/workflows/encore-overrides-source-integrity.yml'
-      - '.github/workflows/r09-host-link.yml'
-      - '.github/workflows/r09-vit-boundary-qualification.yml'
-      - '.github/workflows/ci-node24-checkout-host.yml'
-      - 'tools/check-node24-checkout-host.py'
-  push:
-    branches:
-      - ci/node24-checkout-migration-20261111
-    paths:
-      - '.github/workflows/prepare-encore-r2-draft.yml'
-      - '.github/workflows/encore-overrides-source-integrity.yml'
-      - '.github/workflows/r09-host-link.yml'
-      - '.github/workflows/r09-vit-boundary-qualification.yml'
-      - '.github/workflows/ci-node24-checkout-host.yml'
-      - 'tools/check-node24-checkout-host.py'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

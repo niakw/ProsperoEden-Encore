@@ -16,7 +16,6 @@ name: Full guest glyph source research (manual)
 # the long crawl, preventing unrelated F07 changes from launching research.
 on:
   workflow_dispatch:
-
 permissions:
   contents: write
 

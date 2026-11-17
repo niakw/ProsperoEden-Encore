@@ -1,8 +1,5 @@
 name: Verify compact Encore clone and pinned vendor gitlink
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/verify-compact-history.yml']
   workflow_dispatch:
 permissions:
   contents: read

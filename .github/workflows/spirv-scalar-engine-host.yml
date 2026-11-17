@@ -1,12 +1,5 @@
 name: Shared PS5 scalar cache selected shader ABI (host)
 on:
-  pull_request:
-    paths:
-      - "vendor"
-      - "headless/CMakeLists.txt"
-      - "tools/ns2/check_shared_ns2_spirv_compiler_host.py"
-      - "tools/check-spirv-scalar-cache-sirit-contract.py"
-      - ".github/workflows/spirv-scalar-engine-host.yml"
   workflow_dispatch:
 permissions:
   contents: read

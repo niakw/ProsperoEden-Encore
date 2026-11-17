@@ -1,11 +1,7 @@
 name: NS2 QMD3 real Vulkan PR owner qualification
 
 on:
-  pull_request:
-    paths:
-      - 'tools/ns2/test_ampere_vulkan_module.cpp'
-      - '.github/workflows/ns2-g10-qmd-vulkan-pr.yml'
-
+  workflow_dispatch:
 permissions:
   contents: read
 

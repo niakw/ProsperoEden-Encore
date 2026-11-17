@@ -1,19 +1,7 @@
 name: NS2 real SPIR-V emitter (research)
 
 on:
-  push:
-    branches:
-      - research/ns2-ps5-compatibility
-    paths:
-      - 'vendor'
-      - 'vendor/encore-active/ns2-runtime/ampere/**'
-      - 'tools/ns2/test_ampere_real_spirv.cpp'
-      - 'tools/ns2/test_ampere_vulkan_module.cpp'
-      - 'tools/check-ns2-spirv-host.py'
-      - '.github/workflows/ns2-research-spirv.yml'
   workflow_dispatch:
-  workflow_call:
-
 permissions:
   contents: read
 

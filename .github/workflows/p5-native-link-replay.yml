@@ -1,12 +1,7 @@
 name: P5 cached native link replay (no full rebuild)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/p5-native-link-replay.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

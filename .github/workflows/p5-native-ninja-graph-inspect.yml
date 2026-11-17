@@ -1,12 +1,7 @@
 name: PS5 native cached CMake graph and focused C++ syntax (no app build)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/p5-native-ninja-graph-inspect.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

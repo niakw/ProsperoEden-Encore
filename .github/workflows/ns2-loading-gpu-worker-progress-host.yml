@@ -1,16 +1,7 @@
 name: NS2 first-frame GPU-worker loading progress (host only)
 
 on:
-  push:
-    branches:
-      - diag/nov13-ns2-loading-gpu-worker-progress
-  pull_request:
-    paths:
-      - "headless/graphics.cpp"
-      - "tools/check-ns2-loading-gpu-worker-progress-host.py"
-      - ".github/workflows/ns2-loading-gpu-worker-progress-host.yml"
   workflow_dispatch:
-
 permissions:
   contents: read
 

@@ -1,17 +1,7 @@
 name: PS5 shader cache vendor source receipts (current and historical)
 
 on:
-  pull_request:
-    paths:
-      - "tools/ci/ps5_cache_diag_receipt.py"
-      - "tools/check-vendored-vulkan-fork.py"
-      - "tools/check-ps5-cache-diag-receipt-host.py"
-      - ".github/workflows/ps5-cache-vendor-receipt-host.yml"
-  push:
-    branches:
-      - fix/nov13-cache-probe-vendor-source-receipt
   workflow_dispatch:
-
 permissions:
   contents: read
 

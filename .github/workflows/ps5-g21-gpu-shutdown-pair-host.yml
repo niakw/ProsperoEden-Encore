@@ -1,17 +1,7 @@
 name: PS5 G21 GPU shutdown selected-source engine/vendor parity
 
 on:
-  pull_request:
-    paths:
-      - "tools/ci/ps5_g21_gpu_shutdown_receipt.py"
-      - "tools/check-g21-gpu-profile-matrix-host.py"
-      - "tools/check-ps5-g21-gpu-shutdown-receipt-host.py"
-      - ".github/workflows/ps5-g21-gpu-shutdown-pair-host.yml"
-  push:
-    branches:
-      - ci/nov14-g21-gpu-shutdown-source-receipt
   workflow_dispatch:
-
 permissions:
   contents: read
 

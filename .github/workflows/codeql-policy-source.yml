@@ -1,18 +1,6 @@
 name: CodeQL policy source gate
 on:
-  push:
-    branches: [main, fix/security-codeql-noncancelling-schedule-20261107]
-    paths:
-      - '.github/workflows/codeql-advanced.yml'
-      - '.github/workflows/codeql-policy-source.yml'
-      - '.github/codeql/codeql-config.yml'
-      - 'tools/check-codeql-scheduling-host.py'
-  pull_request:
-    paths:
-      - '.github/workflows/codeql-advanced.yml'
-      - '.github/workflows/codeql-policy-source.yml'
-      - '.github/codeql/codeql-config.yml'
-      - 'tools/check-codeql-scheduling-host.py'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

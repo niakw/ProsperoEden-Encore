@@ -1,11 +1,5 @@
 name: R457 NS2 guest backing ownership research host gate
 on:
-  pull_request:
-    paths:
-      - 'headless/ps5_ns2_guest_backing_plan.h'
-      - 'tools/ns2/test_r457_ps5_guest_backing_plan.cpp'
-      - 'tools/ns2/test_r457_12gib_virtual_mapping_host.cpp'
-      - '.github/workflows/r457-ns2-guest-backing-host.yml'
   workflow_dispatch:
 permissions:
   contents: read

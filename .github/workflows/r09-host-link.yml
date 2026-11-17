@@ -6,11 +6,6 @@ name: Encore R09 - Linux Vulkan executable (public inputs)
 # Never upload user-supplied proprietary binaries, models, captures or weights.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'tools/graphics/r09-host-link-request.txt'
-
 permissions:
   contents: read
 

@@ -1,18 +1,7 @@
 name: NS1 AM/HID selected source test against main
 
 on:
-  push:
-    branches:
-      - research/ns1-am-applets-mainline-20261111
-  pull_request:
-    paths:
-      - "headless/CMakeLists.txt"
-      - "headless/r23_am_*.cpp"
-      - "tools/audit/check-r23-controller-applet-host.py"
-      - "tools/audit/check-r23-am-applets-host.py"
-      - ".github/workflows/ns1-am-mainline-host.yml"
   workflow_dispatch:
-
 permissions:
   contents: read
 

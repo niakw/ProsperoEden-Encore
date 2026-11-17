@@ -1,18 +1,5 @@
 name: LZ4 CMake policy staging host
 on:
-  pull_request:
-    paths:
-      - 'tools/stage-lz4-cmake-policy.py'
-      - 'tools/check-lz4-cmake-policy-host.py'
-      - 'tools/prepare-build.sh'
-      - '.github/workflows/lz4-cmake-policy-host.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'tools/stage-lz4-cmake-policy.py'
-      - 'tools/check-lz4-cmake-policy-host.py'
-      - 'tools/prepare-build.sh'
-      - '.github/workflows/lz4-cmake-policy-host.yml'
   workflow_dispatch:
 permissions:
   contents: read

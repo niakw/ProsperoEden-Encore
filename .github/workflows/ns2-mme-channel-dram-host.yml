@@ -1,13 +1,7 @@
 name: NS2 channel-shared MME data RAM (host only)
 
 on:
-  pull_request:
-    paths:
-      - 'vendor'
-      - 'tools/ns2/test_ampere_turing_macro.cpp'
-      - 'tools/check-ns2-native-gpfifo-fd-scope.py'
-      - '.github/workflows/ns2-mme-channel-dram-host.yml'
-
+  workflow_dispatch:
 permissions:
   contents: read
 

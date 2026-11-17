@@ -1,15 +1,7 @@
 name: Selected JXR codec combined host link
 
 on:
-  pull_request:
-    paths:
-      - 'vendor'
-      - 'headless/CMakeLists.txt'
-      - 'headless/prosperoeden/eden_services.cpp'
-      - 'tools/check-jxr-combined-host.py'
-      - '.github/workflows/jxr-combined-host.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

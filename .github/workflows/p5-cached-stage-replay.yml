@@ -4,7 +4,6 @@ name: P5 recovered native package from cached objects (no full rebuild)
 # outdated cached binary automatically when NS2 native source changes.
 on:
   workflow_dispatch:
-
 permissions:
   contents: read
 

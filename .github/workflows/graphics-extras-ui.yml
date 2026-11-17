@@ -1,24 +1,6 @@
 name: Graphics extras UI consistency
 on:
-  pull_request:
-    paths:
-      - 'headless/prosperoeden/pe/ui/**'
-      - 'headless/settings_store.h'
-      - 'headless/encore_overrides_generated.h'
-      - 'headless/neural_video_policy.h'
-      - 'tools/graphics/check-extras-defaults-ui.py'
-      - 'tools/graphics/check-r07-spatial-filters.py'
-      - '.github/workflows/graphics-extras-ui.yml'
-  push:
-    branches: [main, fix/graphics-extras-switch-ui-security-20261107]
-    paths:
-      - 'headless/prosperoeden/pe/ui/**'
-      - 'headless/settings_store.h'
-      - 'headless/encore_overrides_generated.h'
-      - 'headless/neural_video_policy.h'
-      - 'tools/graphics/check-extras-defaults-ui.py'
-      - 'tools/graphics/check-r07-spatial-filters.py'
-      - '.github/workflows/graphics-extras-ui.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

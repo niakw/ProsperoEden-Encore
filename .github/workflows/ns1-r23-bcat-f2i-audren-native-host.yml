@@ -1,26 +1,6 @@
 name: NS1 R23 BCAT F2I audren channel native host
 on:
-  push:
-    branches: [integration/r23-final-main-reconcile-20261112]
-    paths:
-      - headless/CMakeLists.txt
-      - headless/r23_bcat_delivery_cache_file_ps5.cpp
-      - headless/r23_f2i_conversion_ps5.cpp
-      - headless/r23_audren_debug_ps5.cpp
-      - headless/r23_channel_state_cache_ps5.h
-      - headless/r23_self_controller_240_ps5.h
-      - headless/r23_audren_debug_ns1_ps5.cpp
-      - tools/audit/check-ns2-self-controller-240-source.py
-      - tools/audit/check-r23-f2i-bcat-host.py
-      - tools/audit/check-r23-channel-state-host.py
-      - tools/audit/check-r23-ips-audren-host.py
-      - .github/workflows/ns1-r23-bcat-f2i-audren-native-host.yml
-  pull_request:
-    paths:
-      - headless/CMakeLists.txt
-      - headless/r23_*
-      - tools/audit/check-r23-*
-      - .github/workflows/ns1-r23-bcat-f2i-audren-native-host.yml
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

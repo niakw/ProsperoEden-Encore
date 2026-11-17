@@ -5,7 +5,6 @@ name: NS2 PS5 native research compilation (not a release)
 # Reactivation requires a deliberate source change AFTER those proof gates.
 on:
   workflow_dispatch:
-
 permissions:
   contents: read
 

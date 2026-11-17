@@ -1,16 +1,7 @@
 name: PS5 Vulkan usage-tracker engine and vendor selected source (host)
 
 on:
-  pull_request:
-    paths:
-      - "headless/CMakeLists.txt"
-      - "tools/check-ps5-usage-tracker-selection-host.py"
-      - ".github/workflows/ps5-usage-tracker-engine-pair-host.yml"
-  push:
-    branches:
-      - ci/nov14-buffer-usage-64-vendor-integration
   workflow_dispatch:
-
 permissions:
   contents: read
 

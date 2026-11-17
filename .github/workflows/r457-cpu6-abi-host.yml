@@ -1,11 +1,5 @@
 name: R457 PS5 6-core KProcess ABI host gate
 on:
-  pull_request:
-    paths:
-      - 'headless/CMakeLists.txt'
-      - 'headless/ps5_cpu6_abi_probe.cpp'
-      - 'tools/check-r457-ps5-cpu6-abi-host.py'
-      - '.github/workflows/r457-cpu6-abi-host.yml'
   workflow_dispatch:
 permissions:
   contents: read

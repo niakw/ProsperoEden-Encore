@@ -1,11 +1,6 @@
 name: Prepare Encore R2 release draft (no build or assets)
 on:
-  push:
-    branches:
-      - release/encore-r2-draft-20261109
-    paths:
-      - 'docs/releases/ENCORE_R2_DRAFT_2026-11-09.md'
-      - '.github/workflows/prepare-encore-r2-draft.yml'
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:

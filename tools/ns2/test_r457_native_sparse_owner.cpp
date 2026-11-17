@@ -47,7 +47,24 @@ extern "C" std::int32_t sceKernelReleaseDirectMemory(std::int64_t pa, std::size_
 }
 
 int main() {
-    assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule)); // NS1 no active owner
+    assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule)); // no active owner
+    {
+        // Nov 17 regression: ordinary NS2 4 GiB backing must use the same
+        // transaction owner instead of a single 4098 MiB direct allocation.
+        constexpr std::size_t kStandardGuest = 4ull << 30;
+        Runtime standard(kStandardGuest,2*kGranule);
+        assert(standard.Valid() && standard.VirtualBytes()==kStandardGuest);
+        assert(standard.Install());
+        auto* base = static_cast<std::uint8_t*>(standard.Base());
+        assert(EdenNs2CommitGuestBacking(base,0,1));
+        assert(EdenNs2CommitGuestBacking(base,kStandardGuest-1,1));
+        assert(standard.UsedBytes()==2*kGranule);
+        base[0]=0x41; base[kStandardGuest-1]=0x42;
+        standard.Uninstall();
+    }
+    assert(released==2);
+    for (const auto& [pa,live]:alive) assert(!live);
+    pa_next=0; successful_commits=0; released=0; fail_at=-1; alive.clear();
     {
         Runtime guest(kNs2Dram,5*kGranule);
         assert(guest.Valid() && guest.VirtualBytes()==kNs2Dram);

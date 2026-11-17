@@ -24,6 +24,18 @@
 | [mihawk-99/PS5_Lichii](https://github.com/mihawk-99/PS5_Lichii), [PS5_Vulkan](https://github.com/mihawk-99/PS5_Vulkan) | Variante Fritchii native et comportement RADV/cache pilote PS5 | Différences de matériel/driver/snapshots ; ne jamais copier un cache driver brut |
 | [Lichii mesh compute](https://github.com/zortos293/Lichii/pull/569), [Lichii #1801](https://github.com/zortos293/Lichii/issues/1801) | Compatibilité mesh/task sur RADV RDNA2, fallback compute et cas de blocage GPU | Exige tests de fonctionnalités réelles du pilote et sortie des shaders ; un simple feature flag n'est pas une validation |
 
+## 2bis. Ce qu'un « listing de shaders/adresses » peut réellement précharger
+
+**Recette réutilisable entre sessions et versions compatibles (oui)** : ID de programme et build ID, empreinte de code shader, étape (compute/graphics/task/mesh), environnement sérialisé validé, réglages influant sur SPIR-V, profil de descripteurs, versions de compilation/cache, driver/device. Le préchauffage utilise ensuite **le propre jeu installé par l'utilisateur** pour relire le code nécessaire. Il conserve les compilations natives seulement si les empreintes correspondent, avec invalidation après mise à jour.
+
+**Adresse CPU/GPU absolue réutilisable d'un jeu à l'autre (non)** : l'adresse CPU invitée, l'adresse GMMU, une position de texture et une adresse physique hôte ont des propriétaires et durées de vie distincts. Seuls les mappers et descripteurs runtime peuvent établir leur correspondance à un instant donné. Des constantes extraites d'un dump particulier ne doivent jamais être forcées dans Encore.
+
+**Référence concrète plus récente** : [Lichii releases, cache shader v2](https://github.com/zortos293/Lichii/releases) rapporte, dans ses propres conditions, Mario Kart World passant de **48 à 2** compilations lors d'une relance et de **35 % à 97 %** de cache hits. Ce résultat est **upstream**, pas PS5 Encore. Les travaux [#899](https://github.com/zortos293/Lichii/issues/899) et [#895](https://github.com/zortos293/Lichii/issues/895) distinguent « compute warm à partir des fichiers » et « recettes graphiques observées », ces dernières n'inventant pas les combinaisons jamais vues.
+
+[PS5_Lichii](https://github.com/mihawk-99/PS5_Lichii) documente un port **PS5 Pro**, avec davantage de mémoire : ne pas reprendre son budget mémoire, ses timings ni ses gains comme capacités d'une PS5 standard firmware 13.60.
+
+[nxnative : NVN object / memory ABI](https://github.com/seedds/nxnative/blob/main/docs/reference/nvn-objects.md) documente des risques de corruption par taille d'objet SDK, alignement mémoire, réaffectation d'un buffer et distinction pools physiques/virtuels/CPU-inaccessibles, avec tests synthétiques. Beaucoup de cas sont NS1 et suivent **une autre couche NVN** que le chemin Horizon/NVDRV/Vulkan Encore : référence de contrats, **pas** offsets à backporter littéralement. Les données Ampere NS2 disponibles décrivent des capacités (par exemple 32 bindings et descripteurs, limites de scratch et texture) : elles doivent être comparées aux registres et headers sélectionnés dans notre vendor avant d'entrer dans le tableau d'exigences.
+
 ## 3. Compatibilité de référence (observations **des autres ports**, non Encore)
 
 | Jeu | Identité connue dans les logs Encore | Preuves externes à croiser | Ce que la couverture moteur doit garantir |

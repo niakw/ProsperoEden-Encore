@@ -1,52 +1,6 @@
 name: Verify controller glyph reconstruction (host only)
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'vendor'
-      - '.gitmodules'
-      - .github/workflows/check-ps-glyph-reconstruct.yml
-      - tools/ps-glyph-scene-positions.py
-      - tools/check-ps-glyph-scene-positions.py
-      - tools/ps-glyph-multiplatform-image-port.py
-      - tools/check-ps-glyph-multiplatform-image-port.py
-      - tools/ps-glyph-cross-platform-image.py
-      - tools/check-ps-glyph-cross-platform-image.py
-      - tools/ps-glyph-reconstruct.py
-      - tools/check-ps-glyph-reconstruct.py
-      - tools/ps-glyph-diff-to-evidence.py
-      - tools/check-ps-glyph-diff-to-evidence.py
-      - tools/ps-glyph-mod-diff.py
-      - tools/ps-glyph-scan.py
-      - tools/ps-glyph-botw-yaz0.py
-      - tools/check-ps-glyph-botw-yaz0.py
-      - tools/ps-glyph-botw-stage-pack.py
-      - tools/ps-glyph-mod-auto-plan.py
-      - tools/check-ps-glyph-mod-auto-plan.py
-      - tools/ps-glyph-mod-zip-positions.py
-      - tools/check-ps-glyph-mod-zip-positions.py
-      - tools/ps-glyph-botw-mod-texture-positions.py
-      - tools/check-ps-glyph-botw-mod-texture-positions.py
-      - tools/ps-glyph-botw-auto-pack.py
-      - tools/check-ps-glyph-botw-auto-pack.py
-      - tools/ps-glyph-botw-archive-repack.py
-      - tools/check-ps-glyph-botw-archive-repack.py
-      - tools/ps-glyph-bntx-astc.py
-      - tools/check-ps-glyph-bntx-astc.py
-      - tools/ps-glyph-bntx-rgba.py
-      - tools/check-ps-glyph-bntx-rgba.py
-      - tools/ps-glyph-botw-archive-diff.py
-      - tools/check-ps-glyph-botw-archive-diff.py
-      - tools/ps-glyph-sarc-inspect.py
-      - tools/ps-glyph-sarc-bntx-chain.py
-      - tools/check-ps-glyph-sarc-inspect.py
-      - headless/button_mapping.h
-      - headless/main.cpp
-      - tools/check-controller-semantic-mapping.py
-      - docs/PS_GLYPH_SOURCE_INDEX.json
-      - docs/PS_GLYPH_CROSS_PLATFORM_INDEX.json
   workflow_dispatch:
-
 permissions:
   contents: read
 

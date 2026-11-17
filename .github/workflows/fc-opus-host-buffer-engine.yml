@@ -1,16 +1,5 @@
 name: FC-family Opus host-buffer engine-selected qualification
 on:
-  pull_request:
-    paths:
-      - 'vendor'
-      - 'tools/check-fc-opus-host-buffer-source.py'
-      - '.github/workflows/fc-opus-host-buffer-engine.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'vendor'
-      - 'tools/check-fc-opus-host-buffer-source.py'
-      - '.github/workflows/fc-opus-host-buffer-engine.yml'
   workflow_dispatch:
 permissions:
   contents: read

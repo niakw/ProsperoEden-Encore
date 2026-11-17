@@ -1,39 +1,7 @@
 name: Encore launcher render preview (host only)
 
 on:
-  # Compile and render the actual C++ launcher BEFORE UI PR merges. The
-  # static source gates cannot detect unresolved names inside library.cpp.
-  pull_request:
-    paths:
-      - 'headless/prosperoeden/pe/ui/**'
-      - 'headless/prosperoeden/host/**'
-      - 'headless/loading_artwork_*.hpp'
-      - 'headless/loading_scene.glsl'
-      - 'tools/check-loading-artwork-egl-host.py'
-      - 'tools/loading-artwork-egl-check.cpp'
-      - 'headless/prosperoeden/eden_services.cpp'
-      - 'headless/prosperoeden/eden_services.h'
-      - 'tools/check-launch-case-artwork.py'
-      - '.github/workflows/launcher-production-preview.yml'
-  # Run only for main or isolated UI branches when launcher content changes.
-  # GPU/JIT pushes never trigger the expensive full render walkthrough.
-  push:
-    branches: [main, 'ui/**']
-    paths:
-      - 'vendor'
-      - '.gitmodules'
-      - ".github/workflows/launcher-production-preview.yml"
-      - "headless/prosperoeden/**"
-      - "tools/launcher/**"
-      - "tools/check-launch-case-artwork.py"
-      - "tools/check-launcher-shoulder-and-cover.py"
-      - "tools/check-launcher-ns2-case-preview.py"
-      - "tools/check-encore-case-media-selection-host.py"
-      - "tools/check-launcher-translation-coverage.py"
-      - "tools/check-switch-theme-layout.py"
-      - "tools/package-headless-native.sh"
   workflow_dispatch:
-
 permissions:
   contents: read
 

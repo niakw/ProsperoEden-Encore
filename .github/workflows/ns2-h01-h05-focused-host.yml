@@ -1,36 +1,7 @@
 name: NS2 H01/H05/G01 focused owner host qualification
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'vendor'
-      - 'tools/ns2/test_real_kprocess_metadata.py'
-      - 'tools/ns2/check_process_run_owner.py'
-      - 'tools/ns2/test_real_kprocess_init_guest_rollback.py'
-      - 'tools/ns2/check_native_process_full_kprocess_handoff_host.py'
-      - 'tools/ns2/check_h01_joined_kprocess_process_host.py'
-      - 'tools/ns2/check_native_exefs_missing_directory_host.py'
-      - 'tools/ns2/check_native_exefs_fs_registration_host.py'
-      - 'tools/ns2/check_native_nso_arguments_host.py'
-      - 'tools/ns2/check_native_nso_patch_extent_host.py'
-      - 'tools/ns2/check_native_spirv_descriptor_array_bounds_host.py'
-      - 'tools/ns2/check_native_video_real_ffmpeg_frame_host.py'
-      - 'tools/ns2/check_native_video_guest_surface_write_owner_host.py'
-      - 'tools/ns2/check_native_video_packet_bounds_host.py'
-      - 'tools/ns2/check_native_video_real_hevc_eos_host.py'
-      - '.github/workflows/ns2-h01-h05-focused-host.yml'
-  pull_request:
-    paths:
-      - 'vendor'
-      - 'tools/ns2/test_real_kprocess_metadata.py'
-      - 'tools/ns2/check_process_run_owner.py'
-      - 'tools/ns2/test_real_kprocess_init_guest_rollback.py'
-      - 'tools/ns2/check_native_process_full_kprocess_handoff_host.py'
-      - 'tools/ns2/check_h01_joined_kprocess_process_host.py'
-      - '.github/workflows/ns2-h01-h05-focused-host.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

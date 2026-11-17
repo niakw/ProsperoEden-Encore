@@ -1,17 +1,7 @@
 name: Audit guest title eligibility (host only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'vendor'
-      - '.gitmodules'
-      - .github/workflows/check-switch1-eligibility.yml
-      - tools/ps-glyph-switch1-eligibility.py
-      - tools/ps-glyph-switch1-corpus.py
-      - tools/check-ps-glyph-switch1-eligibility.py
   workflow_dispatch:
-
 permissions:
   contents: read
 

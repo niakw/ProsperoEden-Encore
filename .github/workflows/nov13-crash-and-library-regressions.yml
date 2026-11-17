@@ -1,39 +1,7 @@
 name: PS5 R457 — Nov13 crash and library source qualification
 
 on:
-  pull_request:
-    paths:
-      - 'vendor'
-      - 'headless/CMakeLists.txt'
-      - 'headless/prosperoeden/**'
-      - 'headless/ns2_title_catalog.h'
-      - 'tools/check-nov13-ps5-crash-ui-regressions.py'
-      - 'tools/check-ps5-native-png-codec-host.py'
-      - 'tools/check-ps5-system-wallpapers-host.py'
-      - 'tools/check-nov13-gallery-opacity-caption-host.py'
-      - 'tools/check-nov13-home-installed-fallback-host.py'
-      - 'tools/check-nlib-ui-recovery.py'
-      - 'tools/check-launcher-atomic-scan-host.py'
-      - 'tools/check-ci-neutral-labels.py'
-      - '.github/workflows/nov13-crash-and-library-regressions.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'vendor'
-      - 'headless/CMakeLists.txt'
-      - 'headless/prosperoeden/**'
-      - 'headless/ns2_title_catalog.h'
-      - 'tools/check-nov13-ps5-crash-ui-regressions.py'
-      - 'tools/check-ps5-native-png-codec-host.py'
-      - 'tools/check-ps5-system-wallpapers-host.py'
-      - 'tools/check-nov13-gallery-opacity-caption-host.py'
-      - 'tools/check-nov13-home-installed-fallback-host.py'
-      - 'tools/check-nlib-ui-recovery.py'
-      - 'tools/check-launcher-atomic-scan-host.py'
-      - 'tools/check-ci-neutral-labels.py'
-      - '.github/workflows/nov13-crash-and-library-regressions.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

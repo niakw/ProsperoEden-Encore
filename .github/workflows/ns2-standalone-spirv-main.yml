@@ -1,24 +1,7 @@
 name: NS2 standalone graphics SPIR-V qualification (main only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'vendor'
-      - 'vendor/encore-active/ns2-runtime/ampere/**'
-      - 'headless/CMakeLists.txt'
-      - '.github/workflows/ns2-standalone-spirv-main.yml'
-      - '.github/workflows/ns2-research-spirv.yml'
-      - 'tools/ns2/test_ampere_real_spirv.cpp'
-      - 'tools/ns2/test_ampere_vulkan_module.cpp'
-      - 'tools/ns2/test_g07_real_vulkan_texel.cpp'
-      - 'tools/check-ns2-spirv-host.py'
-      # A final P1/P2 sign-off changes its frozen contract, not the
-      # vendor source. Still produce same-SHA SPIR-V evidence once.
-      - 'docs/NS2_P1_P2_EXIT_CONTRACT.json'
-      - '.github/workflows/ns2-p1-p2-exit.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

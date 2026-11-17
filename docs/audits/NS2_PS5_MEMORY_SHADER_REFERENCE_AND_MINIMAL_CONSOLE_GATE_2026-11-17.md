@@ -85,6 +85,14 @@ Critère matériel ordonné : `EDEN_NS2_PREKERNEL_NPDM ... switch2=1` → config
 
 **Politique console minimale** : lancer FC27 et MKW au prochain build de validation groupé. Si MKW échoue avant la première commande GPU sur une cause commune déjà identifiée, ne pas faire subir immédiatement le même essai à Bananza ; utiliser son lancement uniquement après la correction du seuil concerné, ou pour isoler un comportement spécifique NS2. Un scénario est une session de jeu, pas un test par pipeline, adresse mémoire ou sous-système.
 
+### Backports PS5 tardifs intégrés sur main — qualification hôte
+
+Le vendor sélectionné pour le prochain lot est `dcfe3d23` (successeur de `568ae541`). Les backports sont génériques et sans exception Title ID : **0075** quantifie la référence alpha-test réellement consommée afin de réduire les variantes de pipeline ; **0081** publie l'arrêt des workers sous le même mutex que le prédicat d'attente ; **0078** évite l'upload initial d'une nouvelle cible seulement lorsqu'un clear complet et mono-image la remplace intégralement. Le chemin 0078 reste conservateur : mip/layer/sample multiples, alias/copie, scissor partiel, cible plus petite ou masque couleur/profondeur/stencil incomplet conservent `RefreshContents`.
+
+Le correctif **0079** n'est pas dupliqué : le rasterizer Encore sélectionné vérifie déjà `CanExecuteRecordedDraw()` au moment de l'émission différée et abandonne le draw si le pipeline worker est inutilisable. Les correctifs 0074, 0076, 0077 et 0080 étaient déjà présents sous des formes équivalentes. Les oracles historiques N60/R23 ne sont pas rebaptisés : les tests pinning vérifient d'abord le blob courant de 0078, retirent seulement son delta exact en mémoire, puis exigent encore les anciens hashes byte-for-byte.
+
+Ces qualifications restent **source/hôte uniquement**. Aucun gain FC27/OoT, aucune première frame NS2 et aucune amélioration mémoire PS5 ne sont revendiqués sans test matériel groupé.
+
 ## 7. Statut au 17 novembre
 
 - **Confirmé par lecture des sources** : défaut de définition PS5_NATIVE sur l'unité KProcess du graphe natif ; patch source écrit sur branche moteur.

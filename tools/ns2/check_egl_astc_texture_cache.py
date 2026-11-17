@@ -60,6 +60,12 @@ def native_block(text: str, following: str) -> str:
     return result
 
 base_owned = (OWNER / "texture_cache_base.h").read_text()
+base_owned_sha = subprocess.check_output([
+    "git", "hash-object", str(OWNER / "texture_cache_base.h")
+], text=True).strip()
+assert base_owned_sha == "af026d2aceff146cb1a230b07aecd32034f04066", (
+    "N60/0078 CacheBase selected source owner drift", base_owned_sha
+)
 base_footer = "\n    /// Fill image_view_ids"
 base_native = native_block(base_owned, base_footer)
 assert base_native == native_block(
@@ -75,7 +81,12 @@ owner_marker = """// Host ABI witness: when the ASTC profile is selected, the ac
 """
 assert base_owned.count(owner_marker) == 1, "N60 ASTC owner provenance drift"
 assert base_owned.count("#include <memory>\n") == 1
-legacy_base = base_owned.replace(owner_marker, "", 1).replace(
+clear_flag = """    /// True only while UpdateRenderTargets(true) binds a clear target; JoinImages
+    /// uses it to skip an initial upload that a proven full clear overwrites.
+    bool clearing_render_targets = false;
+"""
+assert base_owned.count(clear_flag) == 1, "N60/0078 clear-state declaration drift"
+legacy_base = base_owned.replace(clear_flag, "", 1).replace(owner_marker, "", 1).replace(
     "#include <memory>\n", "", 1
 ).replace("\n" + base_native, "", 1)
 assert legacy_base == base, "N60 patched CacheBase owner drift after native ABI isolation"
@@ -99,7 +110,7 @@ legacy_sha = subprocess.run(
 owner_full_sha = subprocess.check_output([
     "git", "hash-object", str(OWNER / "texture_cache.h")
 ], text=True).strip()
-assert owner_full_sha == "7c2ceac388905a883abbcf8354d1b61e66ec2f77", (
+assert owner_full_sha == "744bf30e1421dcce212146f7e26e9d90558676a8", (
     "N60/R4 ASTC selected source owner drift", owner_full_sha
 )
 assert legacy_sha == "77f6051ea65933df920669ad61499f5847ad7516", (

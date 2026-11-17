@@ -124,6 +124,35 @@ def strip_p25_reinterpret(text: str) -> str:
         '        cmdbuf.CopyBufferToImage(copy_buffer, dst_image, VK_IMAGE_LAYOUT_GENERAL, vk_out_copies);')
     return text
 
+def strip_ps5_full_clear_upload_elision(text: str) -> str:
+    """Reverse only the reviewed Lichii/PS5 0078 TextureCache delta.
+
+    The full current blob is pinned before any normalization. Runtime keeps
+    the optimization; this helper exists only so frozen R23/N60 oracles can
+    still prove their historical bytes exactly.
+    """
+    current = git_blob(text.encode())
+    if current == "7c2ceac388905a883abbcf8354d1b61e66ec2f77":
+        return text
+    assert current == "744bf30e1421dcce212146f7e26e9d90558676a8", (
+        "Unreviewed PS5 full-clear TextureCache source", current)
+    scope_begin = "    // Lichii/PS5 patch 0078: a full clear may create a target"
+    scope_end = "    auto& flags = maxwell3d->dirty.flags;"
+    assert text.count(scope_begin) == text.count(scope_end) == 1
+    lo = text.index(scope_begin)
+    hi = text.index(scope_end, lo)
+    text = text[:lo] + text[hi:]
+    clear_begin = "    // A new render target that the clear binding overwrites whole needs no"
+    clear_end = "\n    if (can_rescale)"
+    assert text.count(clear_begin) == 1
+    lo = text.index(clear_begin)
+    hi = text.index(clear_end, lo)
+    text = text[:lo] + "    // TODO: Only upload what we need\n    RefreshContents(new_image, new_image_id);\n" + text[hi:]
+    assert git_blob(text.encode()) == "7c2ceac388905a883abbcf8354d1b61e66ec2f77", (
+        "PS5 0078 normalization did not recover the reviewed pre-0078 owner")
+    return text
+
+
 def strip_post_r23_active_image_pages(text: str) -> str:
     """Reverse only the PS5 active TextureCache image-page publication.
 
@@ -132,6 +161,7 @@ def strip_post_r23_active_image_pages(text: str) -> str:
     R1 predates that optimization. Keep the historical R23 oracle byte-exact by
     stripping this later additive repair before its existing reconstruction.
     """
+    text = strip_ps5_full_clear_upload_elision(text)
     assert git_blob(text.encode()) == "7c2ceac388905a883abbcf8354d1b61e66ec2f77", (
         "Unreviewed active TextureCache image-page publication source")
     text = once(text,
@@ -257,7 +287,7 @@ def normalized(root: Path) -> dict[str, str]:
         path = root / ASTC / name
         if name == "vk_texture_cache.h":
             selected = path.read_text()
-            if git_blob(selected.encode()) == "7c2ceac388905a883abbcf8354d1b61e66ec2f77":
+            if git_blob(selected.encode()) in {"7c2ceac388905a883abbcf8354d1b61e66ec2f77", "744bf30e1421dcce212146f7e26e9d90558676a8"}:
                 selected = strip_post_r23_active_image_pages(selected)
             n73 = strip_post_n73_msaa_attachment_header(
                 reverse_r23_checked_astc(root, "vk_texture_cache.h", selected))

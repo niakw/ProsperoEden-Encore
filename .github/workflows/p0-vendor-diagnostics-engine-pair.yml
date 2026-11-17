@@ -15,7 +15,7 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=568ae541c07691518e9663aa0fc5f3b017a98d53
+          expected=dcfe3d2384bd800c6139ede672518ea2c66922a6
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
@@ -37,4 +37,5 @@ jobs:
           python3 -B vendor/tests/ns2_getinfo_page_size_source.py
           python3 -B vendor/tests/ns2_getinfo_vamm_region_source.py
           python3 -B vendor/tests/ps5-late-upstream-fixes-source.py
+          python3 -B vendor/tests/ps5-full-clear-skip-upload-source.py
           echo ENCORE_VENDOR_P0_CONSOLIDATED_ENGINE_PAIR_PASS

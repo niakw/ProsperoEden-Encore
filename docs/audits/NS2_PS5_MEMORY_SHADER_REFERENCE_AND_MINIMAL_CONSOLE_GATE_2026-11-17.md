@@ -75,6 +75,16 @@ Une entrée se clé sur `{title_id, build_id, update_version, content_hash, sour
 3. **Trois scénarios console maximum pour cette campagne** : FC27 NS1 (entrée en match à froid puis retour/relance à chaud, changement HUD, OPTIONS, sortie), MKW NS2 (lancement puis course courte), Bananza NS2 (lancement puis première scène et sortie). Les deux jeux NS2 couvrent des chemins différents, sans tester toute la ludothèque.
 4. **Escalade conditionnelle** : s'il manque encore une preuve décisive (par exemple `gpu_submit=0`), garder l'anomalie P0 ouverte et n'ajouter qu'un test causal après correction ciblée, pas 100 tests de jeux.
 
+## 6bis. Repriorisation après le dernier véritable test PS5
+
+La trace R457 documentée dans [PS5_R457_2026-11-17_BLACK_SCREEN.md](PS5_R457_2026-11-17_BLACK_SCREEN.md) prime sur l'ancienne signature `PC=0x4` : la session PS5 du 17 novembre à 00:44 (moteur `b4e99818`, vendor `ffa519db`) démarre FC27 NS1 mais MKW et Bananza s'arrêtent **avant le thread invité** sur la demande dense `4297064448` octets (4098 MiB), avec un plus grand bloc disponible de ~3822 MiB. La génération NS2 n'était pas détectée à temps. Ce n'est pas la preuve d'un OOM cumulatif des 12 GiB.
+
+Le vendor actuel sélectionné `772f06c8` possède déjà le détecteur pré-kernel qui prend `ProgramMetadata::IsSwitch2()` après identification de l'ACID étendu, indépendamment d'un échec ultérieur de validation NPDM. L'ExeFS effectif et les mises à jour restent sous validation du loader. **Ne pas redévelopper cette correction ni déclencher des tests d'adresses shader avant la levée de ce P0.**
+
+Critère matériel ordonné : `EDEN_NS2_PREKERNEL_NPDM ... switch2=1` → configuration 12 GiB virtuelle à backing sparse (pas de demande dense 4098 MiB) → `EDEN_MAIN_STACK_MAP` et `EDEN_MAIN_THREAD_CONTEXT` → SVC/GPFIFO → première frame. La PR instrumentale de ce document commence à devenir utile à la troisième étape, pas à la première.
+
+**Politique console minimale** : lancer FC27 et MKW au prochain build de validation groupé. Si MKW échoue avant la première commande GPU sur une cause commune déjà identifiée, ne pas faire subir immédiatement le même essai à Bananza ; utiliser son lancement uniquement après la correction du seuil concerné, ou pour isoler un comportement spécifique NS2. Un scénario est une session de jeu, pas un test par pipeline, adresse mémoire ou sous-système.
+
 ## 7. Statut au 17 novembre
 
 - **Confirmé par lecture des sources** : défaut de définition PS5_NATIVE sur l'unité KProcess du graphe natif ; patch source écrit sur branche moteur.

@@ -29,8 +29,8 @@ assert body.count("::Eden::BufferPages::NeverRegistered(addr, size)") == 1
 assert body.index("::Eden::ImagePages::NeverHeld(addr, size)") < body.index(
     "texture_cache.UnmapMemory(addr, size)")
 assert body.index("texture_cache.UnmapMemory(addr, size)") < body.index(
-    "buffer_cache.WriteMemory(addr, size)")
-assert body.index("buffer_cache.WriteMemory(addr, size)") < body.index(
+    "buffer_cache.WriteMemory(addr, size, false)")
+assert body.index("buffer_cache.WriteMemory(addr, size, false)") < body.index(
     "pipeline_cache.OnCacheInvalidation(addr, size)")
 gpu_part = body.split("void RasterizerVulkan::ModifyGPUMemory(",1)[1]
 assert "ImagePages::NeverHeld" not in gpu_part
@@ -68,7 +68,7 @@ struct TextureCache {
 struct BufferCache {
   CountingMutex mutex;
   unsigned write_calls{}, gpu_unmaps{};
-  void WriteMemory(DAddr, u64) {++write_calls;}
+  void WriteMemory(DAddr, u64, bool keep_page_gpu_data) {assert(!keep_page_gpu_data); ++write_calls;}
   void UnmapGPUMemory(std::size_t, GPUVAddr, u64) {++gpu_unmaps;}
 };
 struct PipelineCache {

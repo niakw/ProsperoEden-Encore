@@ -78,6 +78,17 @@ def check() -> None:
             'list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")' in CMAKE and
             'list(APPEND eden_ns2_process_sources "${EDEN_NS2_KPROCESS_SOURCE}")' in CMAKE,
             'upstream NS2 KProcess alias-region budget is not the selected owner')
+    # Source-scoped PS5 receipt: core is a static archive and never inherits
+    # eden-headless PS5_NATIVE. The full CMake selection test below must keep
+    # selecting this exact owner; otherwise the guest stack/context markers
+    # silently vanish from native logs.
+    require('set_property(SOURCE "${EDEN_NS2_KPROCESS_SOURCE}"' in CMAKE and
+            'TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"' in
+            CMAKE.split('set_property(SOURCE "${EDEN_NS2_KPROCESS_SOURCE}"', 1)[1].split(')', 1)[0] and
+            '#if defined(PS5_NATIVE)' in kprocess and
+            'EDEN_MAIN_STACK_MAP' in kprocess and
+            'EDEN_MAIN_THREAD_CONTEXT' in kprocess,
+            'selected native KProcess stack/context receipts are not compiled')
     svc=read('vendor/encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp')
     require('Eden::NS2::GpuAccess::Validate' in svc and
             'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")' in CMAKE and

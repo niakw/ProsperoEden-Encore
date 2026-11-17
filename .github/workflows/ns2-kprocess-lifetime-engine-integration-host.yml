@@ -41,8 +41,10 @@ jobs:
       - name: Isolate reviewed vendor PR111 SHA, never move engine gitlink
         run: |
           set -euo pipefail
-          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov13-ns2-kprocess-unlinked-failed-load
-          git -C vendor checkout --detach FETCH_HEAD
+          # The historical branch was cleaned after review; pin the immutable
+          # commit itself so this oracle survives branch deletion.
+          git -C vendor fetch --no-tags --depth=1 origin c6541bf15d1841a996c60b8086f5149b51828df0
+          git -C vendor checkout --detach c6541bf15d1841a996c60b8086f5149b51828df0
           test "$(git -C vendor rev-parse HEAD)" = "c6541bf15d1841a996c60b8086f5149b51828df0"
           python3 -B tools/ns2/check_process_run_owner.py
           python3 -B tools/ns2/check_native_process_handoff_transaction_host.py

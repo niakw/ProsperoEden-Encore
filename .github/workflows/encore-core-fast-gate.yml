@@ -350,6 +350,11 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B tools/check-active-source-inventory.py
+      - name: NS2 shader archive inventory and compatibility catalogue (host only)
+        run: |
+          set -euo pipefail
+          python3 -B tools/ns2/check_shader_archive_inventory_host.py
+          python3 -B tools/ns2/check_ns2_ps5_compatibility_catalog.py
       - name: Vulkan arithmetic and frame worker guards
         run: |
           set -euo pipefail

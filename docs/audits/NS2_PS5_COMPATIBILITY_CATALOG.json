@@ -162,7 +162,7 @@
         "zortos293/Lichii:src/video_core/shader_warm/shader_archives.cpp",
         "zortos293/Lichii:src/video_core/shader_warm/warm_records.cpp"
       ],
-      "reason": "Requires a reviewed adaptation to Encore's older pipeline-cache/lowering/NUP graph; do not copy blindly."
+      "reason": "Host-only static archive inventory exists, but runtime warm-cache generation still requires a reviewed adaptation to Encore's older FileEnvironment/pipeline-cache/lowering graph; no raw shader bytes or driver cache are shared."
     },
     "isbe_output_stage_read": {
       "implemented": true,
@@ -277,6 +277,21 @@
         "zortos293/Lichii#2094@187a90bfa87bde02eccf492ff1e9d2cafc79acd6"
       ],
       "reason": "Open Cyberpunk candidate for USHF.L.U64.HI, REDUX.AND and LDG.STRONG.GPU; must be matched to Encore's Maxwell lowering and PS5 memory semantics."
+    },
+    "static_shader_archive_inventory": {
+      "implemented": true,
+      "owners": {
+        "tools/ns2/shader_archive_inventory.py": [
+          "UPSTREAM_COMMIT = \"6b34d6ee1398e27080bda6b64cc7b790e30c579e\"",
+          "UPSTREAM_BLOB = \"89f2afc5eeda1f6429984391ae8100148ac72fe2\"",
+          "\"mode\": \"manifest-only\""
+        ],
+        "tools/ns2/check_shader_archive_inventory_host.py": [
+          "NS2_SHADER_ARCHIVE_INVENTORY_HOST_PASS"
+        ]
+      },
+      "upstream": "zortos293/Lichii@6b34d6ee1398e27080bda6b64cc7b790e30c579e:tools/nx2/shader_archive.py@89f2afc5eeda1f6429984391ae8100148ac72fe2",
+      "scope": "host-only inventory; does not compile, cache or ship shader bytes"
     }
   },
   "known_games": {

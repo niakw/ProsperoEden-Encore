@@ -3171,6 +3171,22 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
     endif()
     list(REMOVE_ITEM eden_ns2_process_sources "hle/service/os/process.cpp")
     list(APPEND eden_ns2_process_sources "${EDEN_NS2_NATIVE_PROCESS_SOURCE}")
+
+    # Upstream Eglantine/Lichii dce3adbc: once metadata proves Switch 2,
+    # KProcess must count the alias region in its process memory budget.
+    # Select a complete source successor rather than mutating the pinned Eden TU.
+    set(EDEN_NS2_KPROCESS_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp")
+    if(NOT EXISTS "${EDEN_NS2_KPROCESS_SOURCE}")
+        message(FATAL_ERROR "N52 maintained NS2 KProcess memory-budget owner missing")
+    endif()
+    list(FIND eden_ns2_process_sources "hle/kernel/k_process.cpp" eden_ns2_kprocess_source_idx)
+    if(eden_ns2_kprocess_source_idx EQUAL -1)
+        message(FATAL_ERROR "N52 original KProcess owner is not selected")
+    endif()
+    list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")
+    list(APPEND eden_ns2_process_sources "${EDEN_NS2_KPROCESS_SOURCE}")
+
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_process_sources}")
     target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)
     target_include_directories(core BEFORE PRIVATE

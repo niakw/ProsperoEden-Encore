@@ -85,7 +85,7 @@ The shared startup regression is no longer reproduced: FC27 reaches gameplay. Us
 - player-shirt names absent;
 - stadium-seat texture can render green.
 
-This hardware result qualifies #264 as a startup-regression repair candidate for NS1, not as a complete FC27 fix. R1 source `5629395324ff65c98b50c44f35f2142a4a92654a`, recalled by the tester to render FC27 text, uses the same authored FC27 profile tuples as current Encore and predates the selected Eden #4503 non-NVIDIA fragment-shader drop. Vendor #180 tests the newer Lichii/Eglantine broadcast/select fragment-shuffle fallback on PS5 instead of discarding the complete matching guest shader. Hardware effect remains unqualified. Intro video stays a separate NVDEC/VIC track; selected source already carries bounded `EDEN_NVDEC_STAGE` decode/VIC input/VIC output witnesses for the next FC27 log.
+This hardware result qualifies #264 as a startup-regression repair candidate for NS1, not as a complete FC27 fix. The tester confirms published R1 source `5629395324ff65c98b50c44f35f2142a4a92654a` rendered **both FC27 guest text and the EA intro picture** on the same PS5 setup. R1 used Eden mirror `5f142c7926d0c7fcbbd0ce30794d72f638a43b2a` and predates Eden #4503's non-NVIDIA fragment-pipeline drop. R1's FFmpeg source already had the older EAGAIN behavior, so EAGAIN alone cannot explain the current black intro. Vendor #180 tests the newer Lichii/Eglantine broadcast/select fragment-shuffle fallback on PS5 instead of discarding the complete matching guest shader. Engine validation #268 pins #180 with #264 and no NS2 memory change. If text returns but the intro stays black, use the existing bounded `EDEN_NVDEC_STAGE` decode/VIC input/VIC output witnesses to continue the video path separately.
 
 ### NS2 memory gate
 
@@ -95,20 +95,23 @@ Both Bananza and MKW fail before the historical guest execution/first-frame path
 
 followed by `Backing allocation: Cannot allocate memory`. The requested direct allocation is 4098 MiB (4 GiB guest layout plus one 2 MiB span) while the immediately preceding native memory diagnostic reports the largest contiguous direct-memory extent as 3822 MiB. This is a contiguous-allocation mismatch, not proof of total PS5 RAM exhaustion.
 
-Upstream ProsperoEden #156 / commit `9ce26e650e26112d958f6db4b20d93260de77825` demand-backs ordinary guest memory rather than taking the whole 4 GiB block at startup. Encore already had a stricter transactional 2 MiB sparse owner but admitted it only for exactly 12 GiB. Engine #265 adapts the upstream guest-backing principle to that existing owner for ordinary 4+ GiB non-fastmem layouts, with bounded physical residency and fail-closed dense fallback. Exact host/CMake/syntax/P0-P4 qualification is green; native build and console test remain required.
+The more important fact is that the tested log never emits the existing pre-kernel marker `NS2 ExeFS: selecting 12 GiB guest layout before kernel initialization`. The tested vendor already contains that selector, so both titles were misclassified as the 4 GiB layout before `InitializeKernel`. The selector previously required `ProgramMetadata::Load(npdm) == Success && metadata.IsSwitch2()`. The maintained parser safely latches `is_switch2` immediately after locating the extended ACID body, then can still reject later ACI/FAC/KAC metadata. Requiring full NPDM success merely to select the generation can therefore erase a known NS2 generation before the authoritative loader reports the later metadata status.
 
-Integration #266 combines #264 + #265 + vendor #180 strictly for hardware validation. It must not be merged merely because CI/build is green.
+Upstream ProsperoEden #156 / commit `9ce26e650e26112d958f6db4b20d93260de77825` remains relevant as a general demand-backing design, but engine #265 is **not** the immediate P0 console candidate: shipping PS5 fastmem is off, so its `>=4 GiB` admission also changes ordinary NS1 4 GiB backing and would confound FC27. Keep #265 as a separate memory experiment.
+
+Vendor #181 (`e6670e9b7592869dc4af5c0571af6c46c7b6e18d`) instead preserves the safely identified extended-ACID generation only for pre-kernel layout selection; the real loader still requires complete NPDM admission and remains fail-closed. Its dedicated source qualification and vendor security/null-loader workflows are green. Engine validation #269 (`59d59133d6d86e44f51292ecf532cba6536b8a29`) pins #181 with #264 and adds a real `ProgramMetadata::Load` regression: extended ACID must remain NS2 after later ACI or FAC rejection. It contains neither #265 nor FC27 vendor #180.
+
+Integration #266 is retained only as build evidence and is explicitly **not testable** for the current A/B because it mixes broad #265 with the FC27 renderer candidate.
 
 ## Required PS5 acceptance
 
-Do not merge or close #263/#264 from the green build alone.
+Do not merge or close the runtime issues from CI/build alone. The 43985261580 package has already served its startup qualification and exposed the next independent failures.
 
-1. Install the FTP artifact from run 43985261580.
-2. FC27 NS1 `0100C49025D3E000`: require transition through Vulkan loading to a real guest frame, then normal return to launcher.
-3. MKW NS2 `0400C3F00006E000`: require progress at least to the historical `guest_run_begin` boundary and observe whether the existing first-guest-frame stall remains separately.
-4. Open the touchpad quick menu once after successful startup to exercise lazy Unicode-atlas creation, then close it normally.
-5. Exit the game and application normally; no ten-second stop timeout, SIGSEGV or forced restart.
-6. If either title still blocks, preserve the new logs. The last `EDEN_VULKAN_BOOT stage=...` marker now distinguishes device enumeration/creation, allocator, swapchain, present-manager, renderer-member construction, loading-frame acquisition/blit/HUD flush and first present.
+1. **FC27 A/B (#268):** require the same title/settings as the 00:44 capture. Check EA intro picture+audio, main-menu text, HUD/clock digits, pause letters, jersey names, stadium-seat texture, first-match hitch and normal return. If text improves but video does not, preserve the bounded NVDEC/VIC stage logs rather than combining the causes.
+2. **NS2 A/B (#269):** require `EDEN_NS2_PREKERNEL_NPDM ... switch2=1`, then the 12 GiB pre-kernel layout marker. The previous `4297064448` monolithic request must disappear. Any later sparse/kernel/guest failure is a new stage and must not be called the same OOM.
+3. Keep the quick-menu Unicode test after a successful game start to retain #264 coverage.
+4. Exit game and application normally; no ten-second stop timeout, SIGSEGV or forced restart.
+5. Preserve new logs on either failure. `EDEN_VULKAN_BOOT stage=...` still distinguishes the shared renderer startup phases.
 
 ## Other findings
 

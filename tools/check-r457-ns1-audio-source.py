@@ -62,6 +62,7 @@ KNOWN_VENDOR_GRAPH = {
     "b806bc497049819e716ef6de81f2a85312b188ce": "same reviewed NS1/audio owners + bounded PS5 KProcess stack/context receipts; no audio owner change",
     "a0e17271e94342c32b02acdc3199c3f258a8aecf": "same runtime owners as merged vendor #183; cleanup-only vendor main successor",
     "772f06c8f5b12fdc81066e61f3db2dedfe3eed81": "same runtime owners as vendor main; security receipt-only successor",
+    "568ae541c07691518e9663aa0fc5f3b017a98d53": "same NS1/audio owners plus reviewed PS5 alpha-pipeline and ThreadWorker lost-wake fixes",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

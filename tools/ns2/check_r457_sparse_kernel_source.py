@@ -36,7 +36,7 @@ reviewed_vendors={
     "b9f6052a65ef01e23ca4a46ba1654ed3a58cf181",
     "76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3",
     "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e",
-    "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636","f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1","b1bb49abea63b6664e0945df8431e10aac128c2f","89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175",
+    "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636","f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1","b1bb49abea63b6664e0945df8431e10aac128c2f","89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356",
 }
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
@@ -148,8 +148,21 @@ transaction=physical[start:end]
 assert transaction.index("Common::CommitMemoryRange(")<transaction.index(
     "plan.Publish(*admit)")
 host=read("src/host_memory.cpp")
-assert host.index("if (requested == Ns2Dram)")<host.index(
-    "AllocateMemoryPages(requested)")
+# Nov 17 hardware evidence: the standard 4 GiB guest layout fell through to
+# AllocateMemoryPages and became a 4098 MiB contiguous direct allocation.
+# The reviewed sparse owner must now admit ordinary 4/6/8 GiB non-fastmem
+# layouts as well as the historical 12 GiB research layout.
+for required in (
+    "constexpr std::size_t DemandGuestMinimum = 4ull << 30;",
+    "constexpr std::size_t DemandGranule = 2ull << 20;",
+    "const bool demand_guest = !fastmem && requested >= DemandGuestMinimum",
+    "(std::min)(requested, PhysicalBudgetMaximum)",
+    "EDEN_GUEST_BACKING mode=demand",
+    "demand-backed guest memory not active; refusing dense allocation",
+):
+    assert required in host, required
+assert host.index("if (demand_guest)") < host.index("AllocateMemoryPages(requested)")
+assert host.index("refusing dense allocation") < host.index("AllocateMemoryPages(requested)")
 assert "if (impl->sparse && !impl->sparse->Commit(offset, length))" in host
 print("R457_NS2_KERNEL_PTE_GPU_RESIDENCY_CHAIN_SOURCE_PASS"
-      " native_runtime_unqualified=1 gpu_fences_unqualified=1")
+      " standard_4g_demand_backing=1 native_runtime_unqualified=1 gpu_fences_unqualified=1")

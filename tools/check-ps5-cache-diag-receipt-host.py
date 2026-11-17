@@ -15,7 +15,8 @@ sys.path.insert(0, str(root / "tools"))
 from ci.ps5_cache_diag_receipt import (
     OPEN, CLOSE, OWNER, ORIGINAL_BLOB, REVIEWED_DIAGNOSTIC_BLOB,
     REVIEWED_DRIVER_HEADER_BLOB, REVIEWED_CACHE_VERSION_20_BLOB,
-    REVIEWED_CACHE_VERSION_21_BLOB, DRIVER_HEADER_REVERSES,
+    REVIEWED_CACHE_VERSION_21_BLOB, REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB,
+    DRIVER_HEADER_REVERSES,
     git_blob, normalize_for_historical_proof,
 )
 
@@ -30,6 +31,7 @@ reviewed_sources = {
     REVIEWED_DRIVER_HEADER_BLOB,
     REVIEWED_CACHE_VERSION_20_BLOB,
     REVIEWED_CACHE_VERSION_21_BLOB,
+    REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB,
 }
 if was_diagnostic:
     assert raw_blob in reviewed_sources

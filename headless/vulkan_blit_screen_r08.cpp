@@ -90,7 +90,7 @@ void BlitScreen::SetWindowAdaptPass(const Device& device) {
 
 void BlitScreen::DrawHudOverlay(const Device& device, Frame* frame,
                                 const Eden::HudSnapshot& hud) {
-    if (window_adapt) window_adapt->DrawHudOverlay(device, scheduler, frame, hud);
+    if (window_adapt) window_adapt->DrawHudOverlay(device, memory_allocator, scheduler, frame, hud);
 }
 
 void BlitScreen::PrepareFrame(const Device& device, Frame* frame,
@@ -159,7 +159,7 @@ void BlitScreen::DrawToFrame(const Device& device, RasterizerVulkan& rasterizer,
         }
     }
 
-    window_adapt->Draw(device, rasterizer, scheduler, image_index, layers, framebuffers, layout, frame, draw_hud);
+    window_adapt->Draw(device, rasterizer, memory_allocator, scheduler, image_index, layers, framebuffers, layout, frame, draw_hud);
 
     if (++image_index >= image_count) {
         image_index = 0;

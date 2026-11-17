@@ -7,6 +7,7 @@
 #pragma once
 
 #include <list>
+#include <memory>
 
 #include "common/math_util.h"
 #include "video_core/vulkan_common/vulkan_wrapper.h"
@@ -24,6 +25,7 @@ namespace Eden { struct HudSnapshot; }
 namespace Vulkan {
 
 class Device;
+class MemoryAllocator;
 struct Frame;
 class Layer;
 class Scheduler;
@@ -35,14 +37,15 @@ public:
                              vk::ShaderModule&& fragment_shader);
     ~WindowAdaptPass();
 
-    void Draw(const Device& device, RasterizerVulkan& rasterizer, Scheduler& scheduler, size_t image_index,
+    void Draw(const Device& device, RasterizerVulkan& rasterizer, MemoryAllocator& allocator,
+              Scheduler& scheduler, size_t image_index,
               std::list<Layer>& layers, std::span<const Tegra::FramebufferConfig> configs,
               const Layout::FramebufferLayout& layout, Frame* dst, bool draw_hud = false);
 
     // Draw Encore's own HUD AFTER neural generation on either real or
     // synthetic image. Does not touch guest framebuffer/UI embedded in it.
     // The attachment's current layout must be GENERAL, contents preserved.
-    void DrawHudOverlay(const Device& device, Scheduler& scheduler,
+    void DrawHudOverlay(const Device& device, MemoryAllocator& allocator, Scheduler& scheduler,
                         Frame* dst, const Eden::HudSnapshot& hud);
 
     VkDescriptorSetLayout GetDescriptorSetLayout();
@@ -54,6 +57,11 @@ private:
     void CreateVertexShader(const Device& device);
     void CreateRenderPass(const Device& device, VkFormat frame_format);
     void CreatePipelines(const Device& device);
+
+    struct QuickMenuResources;
+    void PrepareQuickMenu(const Device& device, MemoryAllocator& allocator);
+    std::unique_ptr<QuickMenuResources> quick_menu;
+    bool quick_menu_failed{};
 
     vk::DescriptorSetLayout descriptor_set_layout;
     vk::PipelineLayout pipeline_layout;

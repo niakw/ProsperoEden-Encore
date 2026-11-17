@@ -9,6 +9,8 @@
 #include <cstring>
 #include <memory>
 #include <optional>
+#include <utility>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -135,6 +137,7 @@ vk::SurfaceKHR CreateHandoffSurface(
 } // Anonymous namespace
 
 Device CreateDevice(const vk::Instance& instance, const vk::InstanceDispatch& dld, VkSurfaceKHR surface) {
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_enumerate_begin\n");
     const std::vector<VkPhysicalDevice> devices = instance.EnumeratePhysicalDevices();
     const u32 device_index = Settings::values.vulkan_device.GetValue();
     if (device_index >= u32(devices.size())) {
@@ -142,6 +145,7 @@ Device CreateDevice(const vk::Instance& instance, const vk::InstanceDispatch& dl
         throw vk::Exception(VK_ERROR_INITIALIZATION_FAILED);
     }
     const vk::PhysicalDevice physical_device(devices[device_index], dld);
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_create_begin\n");
     return Device(*instance, physical_device, surface, dld);
 }
 
@@ -167,22 +171,22 @@ try
     // Create surface
     , surface(CreateHandoffSurface(instance, render_window.GetWindowInfo()))
     , device(CreateDevice(instance, dld, *surface))
-    , memory_allocator(device)
+    , memory_allocator((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_ready\n"), device))
     , state_tracker()
-    , scheduler(device, state_tracker)
-    , swapchain(*surface,
+    , scheduler((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=allocator_ready\n"), device), state_tracker)
+    , swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_begin\n"), *surface),
                 device,
                 scheduler,
                render_window.GetFramebufferLayout().width,
                render_window.GetFramebufferLayout().height)
-    , present_manager(instance,
+    , present_manager((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_ready\n"), instance),
                       render_window,
                       device,
                       memory_allocator,
                       scheduler,
                       swapchain,
                       surface)
-    , blit_swapchain(device_memory,
+    , blit_swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=present_manager_ready\n"), device_memory),
                    device,
                    memory_allocator,
                    present_manager,
@@ -211,7 +215,9 @@ try
         scheduler.RegisterOnSubmit([this] { turbo_mode->QueueSubmitted(); });
     }
 
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=renderer_members_ready\n");
     PresentLoading();
+    std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=loading_present_returned\n");
     Report();
 } catch (const vk::Exception& exception) {
     LOG_ERROR(Render_Vulkan, "Vulkan initialization failed with error: {}", exception.what());
@@ -669,13 +675,20 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 // Runs on the existing GPU worker, before the first guest Composite. Reuse its
 // swapchain and composition pass without guest captures or FPS notifications.
 void RendererVulkan::PresentLoading() {
+    const bool first = std::exchange(loading_boot_trace, false);
+    const auto trace = [first](const char* stage) {
+        if (first) std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=%s\n", stage);
+    };
+    trace("loading_frame_acquire_begin");
     Frame* frame = present_manager.GetRenderFrame();
+    trace("loading_frame_acquired");
     scheduler.RequestOutsideRenderPassOperationContext();
     // Prepare the output image without the opaque legacy loading HUD.
     blit_swapchain.DrawToFrame(device, rasterizer, frame, {},
                               render_window.GetFramebufferLayout(),
                               present_manager.SwapchainImageCount(),
                               present_manager.SwapchainImageViewFormat(), false);
+    trace("loading_frame_blit_ready");
 #ifdef PS5_NATIVE
     const VkFormat format = present_manager.SwapchainImageViewFormat();
     if (!loading_artwork_buffer && !loading_artwork_unavailable &&
@@ -797,6 +810,7 @@ void RendererVulkan::PresentLoading() {
         blit_swapchain.DrawHudOverlay(device, frame, live_loading);
     }
 #endif
+    trace("loading_hud_recorded");
 #ifdef PS5_NATIVE
     const u64 tick = scheduler.Flush(*frame->render_ready);
     if (has_artwork) {
@@ -808,7 +822,9 @@ void RendererVulkan::PresentLoading() {
 #else
     scheduler.Flush(*frame->render_ready);
 #endif
+    trace("loading_flush_returned");
     present_manager.Present(frame);
+    trace("loading_present_queued");
     ::Eden::FrameMetrics::OnLoadingQueued();
 }
 

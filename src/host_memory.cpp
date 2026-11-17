@@ -561,19 +561,28 @@ public:
 #endif
     Impl(size_t requested, bool fastmem) : size(requested) {
 #if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
-        constexpr std::size_t Ns2Dram = 12ull << 30;
-        constexpr std::size_t PhysicalBudget = 6ull << 30;
-        if (requested == Ns2Dram) {
-            // Preserve the full 12 GiB guest-physical address range. The
-            // production backing commits independent 2 MiB direct mappings
-            // before a kernel PTE or ClearBackingRegion can expose them.
-            // A32 fastmem's single-PA alias is intentionally NOT created.
+        // Upstream ProsperoEden #156 backs the ordinary guest block where
+        // the guest kernel uses it instead of taking 4+ GiB of direct RAM
+        // contiguously at session start. Keep the qualified Encore owner/
+        // rollback transaction, but apply it to every large non-fastmem
+        // guest layout instead of only the former 12 GiB research layout.
+        constexpr std::size_t DemandGuestMinimum = 4ull << 30;
+        constexpr std::size_t DemandGranule = 2ull << 20;
+        constexpr std::size_t PhysicalBudgetMaximum = 6ull << 30;
+        const bool demand_guest = !fastmem && requested >= DemandGuestMinimum &&
+                                  requested % DemandGranule == 0;
+        if (demand_guest) {
+            const std::size_t physical_budget =
+                (std::min)(requested, PhysicalBudgetMaximum);
             sparse = std::make_unique<Eden::PS5::GuestBacking::Runtime>(
-                requested, PhysicalBudget);
+                requested, physical_budget);
             if (!sparse->Valid() || !sparse->Install())
                 throw std::system_error(ENOMEM, std::generic_category(),
-                                        "NS2 sparse guest VA reservation");
+                                        "demand-backed guest VA reservation");
             base = static_cast<u8*>(sparse->Base());
+            std::fprintf(stderr,
+                         "EDEN_GUEST_BACKING mode=demand virtual_mib=%zu budget_mib=%zu fastmem=0\n",
+                         requested >> 20, physical_budget >> 20);
             return;
         }
 #endif
@@ -588,12 +597,15 @@ public:
         }
 #endif
 #ifdef PS5_NATIVE
-        // NS2 must never request 12 GiB of physical RAM because a
-        // compile-flag mismatch silently disabled the sparse owner.
-        // Fail clearly instead of reproducing the PS5 launch ENOMEM.
-        if (requested == (12ull << 30)) {
-            throw std::system_error(ENOMEM, std::generic_category(),
-                                    "NS2 sparse backing not active; refusing 12 GiB dense allocation");
+        // Large non-fastmem guest layouts must never silently fall back to
+        // one monolithic direct allocation. The Nov 17 console trace showed
+        // a 4 GiB payload becoming a 4098 MiB allocator span while the
+        // largest free direct-memory extent was only 3822 MiB.
+        if (!fastmem && requested >= (4ull << 30) &&
+            requested % (2ull << 20) == 0) {
+            throw std::system_error(
+                ENOMEM, std::generic_category(),
+                "demand-backed guest memory not active; refusing dense allocation");
         }
 #endif
         if (!base) base = static_cast<u8*>(AllocateMemoryPages(requested));

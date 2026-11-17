@@ -124,6 +124,39 @@ def strip_p25_reinterpret(text: str) -> str:
         '        cmdbuf.CopyBufferToImage(copy_buffer, dst_image, VK_IMAGE_LAYOUT_GENERAL, vk_out_copies);')
     return text
 
+def strip_post_r23_active_image_pages(text: str) -> str:
+    """Reverse only the PS5 active TextureCache image-page publication.
+
+    The rasterizer's ImagePages::NeverHeld optimization is safe only when the
+    actually selected TextureCache publishes ownership before registration.
+    R1 predates that optimization. Keep the historical R23 oracle byte-exact by
+    stripping this later additive repair before its existing reconstruction.
+    """
+    assert git_blob(text.encode()) == "7c2ceac388905a883abbcf8354d1b61e66ec2f77", (
+        "Unreviewed active TextureCache image-page publication source")
+    text = once(text,
+        '#include "common/slot_vector.h"\n#ifdef PS5_NATIVE\n#include "image_pages.h"\n#endif\n',
+        '#include "common/slot_vector.h"\n')
+    text = once(text,
+        '    if (False(image.flags & ImageFlagBits::Sparse)) {\n'
+        '#ifdef PS5_NATIVE\n'
+        '        // RasterizerVulkan may elide later CPU/DMA texture invalidations only\n'
+        '        // after this monotonic witness has been published. The shadow Vulkan\n'
+        '        // cache already did this; the PS5-selected ns2-astc owner must too.\n'
+        '        ::Eden::ImagePages::Mark(image.cpu_addr, image.guest_size_bytes);\n'
+        '#endif\n',
+        '    if (False(image.flags & ImageFlagBits::Sparse)) {\n')
+    text = once(text,
+        '        image, [this, image_id, &sparse_maps](GPUVAddr gpu_addr, DAddr cpu_addr, size_t size) {\n'
+        '#ifdef PS5_NATIVE\n'
+        '            ::Eden::ImagePages::Mark(cpu_addr, size);\n'
+        '#endif\n',
+        '        image, [this, image_id, &sparse_maps](GPUVAddr gpu_addr, DAddr cpu_addr, size_t size) {\n')
+    assert git_blob(text.encode()) == "da6ab6dcea2a1c02fcb2e862d111dc410b025d66", (
+        "Active TextureCache image-page reversal did not restore reviewed pre-fix owner")
+    return text
+
+
 def reverse_r23_checked_astc(root: Path, name: str, text: str) -> str:
     """Restore the exact historic ASTC owner from the new TIR/retirement ABI."""
     receipts = {
@@ -223,8 +256,11 @@ def normalized(root: Path) -> dict[str, str]:
     for name, expected in AUXILIARY.items():
         path = root / ASTC / name
         if name == "vk_texture_cache.h":
+            selected = path.read_text()
+            if git_blob(selected.encode()) == "7c2ceac388905a883abbcf8354d1b61e66ec2f77":
+                selected = strip_post_r23_active_image_pages(selected)
             n73 = strip_post_n73_msaa_attachment_header(
-                reverse_r23_checked_astc(root, "vk_texture_cache.h", path.read_text()))
+                reverse_r23_checked_astc(root, "vk_texture_cache.h", selected))
             n73 = strip_p22_native_gpu_pins(n73)
             n73 = strip_p22_runtime_header(n73)
             before = "    void Finish();\n"

@@ -115,6 +115,26 @@ int main(int argc, char** argv) {
     auto extended=valid(true);
     require(parse(extended,&ns2,&id)==Loader::ResultStatus::Success,"extended NPDM load");
     require(ns2 && id==0x0100000000000420ULL,"NS2 identity");
+
+    // Pre-kernel generation selection is intentionally narrower than full
+    // application admission. Once the real parser has safely found the
+    // extended ACID body, a later ACI/FAC/KAC error must not erase the known
+    // Switch 2 generation; the real application loader still rejects that
+    // metadata before guest code is admitted.
+    auto late_invalid_aci=valid(true);
+    magic(late_invalid_aci,0x80,"BAD!");
+    ns2=false;
+    require(parse(late_invalid_aci,&ns2)==Loader::ResultStatus::ErrorBadACIHeader,
+            "late-invalid ACI rejected");
+    require(ns2,"extended ACID generation survives later ACI failure");
+
+    auto late_invalid_fac=valid(true);
+    put32(late_invalid_fac,0x100+0x300+0x24,0);
+    ns2=false;
+    require(parse(late_invalid_fac,&ns2)==Loader::ResultStatus::ErrorBadFileAccessControl,
+            "late-invalid FAC rejected");
+    require(ns2,"extended ACID generation survives later FAC failure");
+
     // If both bodies exist, legacy wins, preserving Switch 1 compatibility.
     auto ambiguous=extended;
     magic(ambiguous,0x100+0x200,"ACID");

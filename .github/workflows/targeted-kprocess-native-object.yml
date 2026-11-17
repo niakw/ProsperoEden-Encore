@@ -1,0 +1,62 @@
+name: Targeted PS5 KProcess native object compile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/targeted-kprocess-native-object.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  kprocess-object:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - name: Restore exact failed-build native cache
+        id: native-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cache/ccache
+            ~/.cache/prosperoeden-deps
+            ~/.cache/ps5-eden-headless.*
+            ~/.cache/prosperoeden-mkpfs
+            .deps
+          key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-44172375670
+          fail-on-cache-miss: true
+
+      - name: Recompile only selected PS5 KProcess object
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_file="$GITHUB_WORKSPACE/vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp"
+          grep -Fq 'GetInteger(stack_bottom)' "$source_file"
+          grep -Fq 'GetInteger(this->GetEntryPoint())' "$source_file"
+
+          found=0
+          while IFS= read -r build_ninja; do
+            build_dir="${build_ninja%/build.ninja}"
+            target="$(ninja -C "$build_dir" -t targets all |
+              sed 's/:.*$//' |
+              grep 'ns2-runtime/process/core/hle/kernel/k_process.cpp.o$' |
+              head -n1 || true)"
+            [[ -n "$target" ]] || continue
+            found=$((found + 1))
+            echo "TARGETED_KPROCESS_NATIVE_OBJECT build_dir=$build_dir target=$target"
+            rm -f "$build_dir/$target"
+            ninja -C "$build_dir" -j1 -v "$target"
+          done < <(find "$HOME/.cache" -type f -path '*/native-local/build.ninja' -print)
+
+          [[ "$found" -eq 1 ]] || {
+            echo "::error::Expected exactly one cached KProcess native object target, found $found"
+            exit 1
+          }
+          echo "TARGETED_KPROCESS_NATIVE_OBJECT_PASS objects=1 full_build=0"

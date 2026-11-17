@@ -8,9 +8,18 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 header = (root / "headless/image_pages.h").read_text()
 raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-cache = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+active_cache_path = root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
+shadow_cache_path = root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
+cache = active_cache_path.read_text()
+shadow_cache = shadow_cache_path.read_text()
+cmake = (root / "headless/CMakeLists.txt").read_text()
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 ast.parse(generator)
+# PS5_NATIVE selects ns2-astc ahead of the pinned/legacy texture-cache headers
+# for both NS1 and NS2. The old test accidentally validated only shadow_cache.
+assert 'vendor/encore-active/ns2-astc/include' in cmake
+assert 'EDEN_R4_ACTIVE_TEXTURE_CACHE' in cmake
+assert '"video_core/texture_cache/texture_cache.h"' in cmake
 assert raster.count("::Eden::ImagePages::NeverHeld(addr, size)") == 9
 write_start = raster.index("bool RasterizerVulkan::OnCPUWrite")
 write_end = raster.index("void RasterizerVulkan::OnCacheInvalidation", write_start)
@@ -28,6 +37,8 @@ assert raster.index("::Eden::ImagePages::NeverHeld(addr, size)") < raster.index(
     raster.index("RasterizerVulkan::GetFlushArea"))
 assert cache.count("::Eden::ImagePages::Mark(image.cpu_addr, image.guest_size_bytes);") == 1
 assert cache.count("::Eden::ImagePages::Mark(cpu_addr, size);") == 1
+assert shadow_cache.count("::Eden::ImagePages::Mark(image.cpu_addr, image.guest_size_bytes);") == 1
+assert shadow_cache.count("::Eden::ImagePages::Mark(cpu_addr, size);") == 1
 assert cache.index("::Eden::ImagePages::Mark(image.cpu_addr") < cache.index(
     "slot_map_views.insert(image.gpu_addr")
 assert cache.index("::Eden::ImagePages::Mark(cpu_addr, size);") < cache.index(

@@ -505,7 +505,16 @@ assert last_commit_guard > expected_m07.index("bool RasterizerVulkan::DispatchNa
 expected_m07 = (expected_m07[:last_commit_guard] + g07_new_commit +
                 expected_m07[last_commit_guard + len(g07_old_commit):])
 assert expected_m07.count(g07_old_commit) == 1
+# The maintained guest bridge carries the same reviewed FC27 unmap policy as
+# the active renderer. Re-apply ONLY that call-site flag after reconstructing
+# the historical M07 body, so parity still rejects every unrelated byte.
+bridge_unmap_before = "        buffer_cache.WriteMemory(addr, size);\n"
+bridge_unmap_after = "        buffer_cache.WriteMemory(addr, size, false);\n"
+assert m07_source_blob(maintained_m07_text) == "055e1cb9c53a8fa430c0027a95e098696296e5c0"
+assert expected_m07.count(bridge_unmap_before) == 1
+expected_m07 = expected_m07.replace(bridge_unmap_before, bridge_unmap_after, 1)
 assert maintained_m07_text == expected_m07, "M07 maintained Vulkan variant parity drift"
+print("ENCORE_M07_GUEST_BRIDGE_FC27_UNMAP_PARITY_PASS")
 # The inactive deferred-write bridge shares the *entire* maintained rasterizer
 # except its two historic DEV write-interception substitutions. Keep the F07
 # present remap drain as well, ahead of the texture-cache mutex: losing this

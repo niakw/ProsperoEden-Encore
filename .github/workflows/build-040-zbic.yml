@@ -34,7 +34,7 @@ permissions:
 # preserving one-at-a-time supersession for deliberate native candidates.
 # workflow_dispatch is already isolated by its event name.
 concurrency:
-  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[full-build]') && !contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
+  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[full-build]') && !contains(github.event.head_commit.message || '', '[build-only]') && !contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
   cancel-in-progress: true
 
 jobs:
@@ -42,11 +42,12 @@ jobs:
     # Compilation and publication are separate operator decisions. P5 is
     # a roadmap/console-qualification milestone, never a CMake or CI build
     # selector. Ordinary main pushes do not compile. Manual dispatch, or an
-    # explicit [full-build] / verified [resume-stage:...] commit, does.
+    # explicit [full-build], [build-only] or verified [resume-stage:...] commit, does.
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
           (github.event_name == 'push' &&
            (contains(github.event.head_commit.message || '', '[full-build]') ||
+            contains(github.event.head_commit.message || '', '[build-only]') ||
             contains(github.event.head_commit.message || '', '[resume-stage:37728435816]'))) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
@@ -54,6 +55,9 @@ jobs:
       PROSPEROEDEN_GIT_DEPS_ROOT: .deps/repos
       PROSPEROEDEN_DEPS_OFFLINE: '1' # source dependency pulls must never contact upstream
       EDEN_STAGE_DIR: build/release/PPSA99008
+      # Push-side equivalent of workflow_dispatch build_only. This is used only
+      # after the exact source gates and a targeted native-object receipt are green.
+      BUILD_ONLY: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_only) || (github.event_name == 'push' && contains(github.event.head_commit.message || '', '[build-only]')) }}
       # GitHub-only push resume for an already compiled staged app. This marker
       # is one-shot and cannot alter the downloaded binary or publish a release.
       RESUME_STAGE_RUN_ID: ${{ contains(github.event.head_commit.message || '', '[resume-stage:37728435816]') && '37728435816' || inputs.resume_run_id || '' }}
@@ -129,11 +133,11 @@ jobs:
           "$HOME/.local/bin/meson" --version
 
       - name: Check toolchain
-        if: ${{ env.RESUME_STAGE_RUN_ID == '' && !inputs.build_only }}
+        if: ${{ env.RESUME_STAGE_RUN_ID == '' && env.BUILD_ONLY != 'true' }}
         run: make toolchain
 
       - name: Validate launcher translations and locale runtime
-        if: ${{ env.RESUME_STAGE_RUN_ID == '' && !inputs.build_only }}
+        if: ${{ env.RESUME_STAGE_RUN_ID == '' && env.BUILD_ONLY != 'true' }}
         run: |
           python3 -B tools/launcher/build_noto_subsets.py --output build/generated/noto-fallback
           PE_SYSTEM_FONTS="$PWD/build/generated/noto-fallback" python3 -B tools/launcher/strings.py check
@@ -161,7 +165,7 @@ jobs:
         run: bash tools/ci/link-sibling-deps.sh
 
       - name: Validate release metadata and legal bundle
-        if: ${{ env.RESUME_STAGE_RUN_ID == '' && !inputs.build_only }}
+        if: ${{ env.RESUME_STAGE_RUN_ID == '' && env.BUILD_ONLY != 'true' }}
         run: |
           python3 -B tools/ci/check-repo-hygiene.py
           python3 -B tools/ci/check-native-boilerplate-setup.py
@@ -169,7 +173,7 @@ jobs:
           python3 -B tools/ci/check-licenses.py
 
       - name: Validate startup, elevation and storage contracts
-        if: ${{ env.RESUME_STAGE_RUN_ID == '' && !inputs.build_only }}
+        if: ${{ env.RESUME_STAGE_RUN_ID == '' && env.BUILD_ONLY != 'true' }}
         run: |
           # Collect ALL independent source/harness failures in this one run,
           # but fail the gate if any check fails. Never bypass verification.
@@ -378,7 +382,7 @@ jobs:
           fi
 
       - name: Preflight release packaging
-        if: ${{ env.RESUME_STAGE_RUN_ID == '' && !inputs.build_only }}
+        if: ${{ env.RESUME_STAGE_RUN_ID == '' && env.BUILD_ONLY != 'true' }}
         run: bash tools/ci/package-image.sh --prepare
 
       # Resume from an internal GitHub cache instead of an extra public
@@ -441,7 +445,7 @@ jobs:
         id: stage
         if: ${{ env.RESUME_STAGE_RUN_ID == '' }}
         env:
-          EDEN_SKIP_PREBUILD_SOURCE_CHECKS: ${{ inputs.build_only && '1' || '0' }}
+          EDEN_SKIP_PREBUILD_SOURCE_CHECKS: ${{ env.BUILD_ONLY == 'true' && '1' || '0' }}
         run: |
           set -euo pipefail
           bash tools/build-package.sh release-stage

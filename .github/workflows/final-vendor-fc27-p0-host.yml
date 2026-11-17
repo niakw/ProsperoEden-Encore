@@ -1,5 +1,12 @@
 name: Final FC27 and P0 vendor graph (host only)
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'vendor'
+      - 'headless/CMakeLists.txt'
+      - 'tools/check-final-vendor-fc27-p0-source.py'
+      - '.github/workflows/final-vendor-fc27-p0-host.yml'
   pull_request:
     paths:
       - 'vendor'

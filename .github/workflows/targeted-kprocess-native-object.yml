@@ -1,4 +1,5 @@
 name: Targeted PS5 KProcess native object compile
+# One-shot cached-object qualification; remove after the receipt is green.
 
 on:
   push:

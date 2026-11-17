@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "generated_policy": {
+    "purpose": "Machine-verifiable NS2/PS5 compatibility contracts; no copyrighted shader bytes or guessed game addresses.",
+    "absolute_guest_addresses": "runtime_only",
+    "absolute_gpu_addresses": "runtime_only",
+    "cache_identity": ["title_id", "build_id", "update_version", "shader_hash", "cache_version", "driver", "device", "render_variant"]
+  },
+  "stable_abi": {
+    "native_page_size": 4096,
+    "ampere_engine_classes": ["0xC797", "0xC7C0", "0xC7B5", "0xC56F"],
+    "ampere_storage_buffers": 32,
+    "ns2_cpu_cores": 6,
+    "native_texture_address_bits": 49
+  },
+  "capabilities": {
+    "pre_kernel_generation": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/process/core/core.cpp": [
+          "EDEN_NS2_PREKERNEL_NPDM",
+          "metadata.IsSwitch2()"
+        ]
+      }
+    },
+    "alias_memory_budget": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp": [
+          "if (metadata.IsSwitch2())",
+          "GetHeapRegionSize() + m_page_table.GetAliasRegionSize()"
+        ]
+      }
+    },
+    "sparse_guest_backing": {
+      "implemented": true,
+      "owners": {
+        "headless/CMakeLists.txt": [
+          "set(EDEN_NS2_SPARSE_BACKING ON)",
+          "target_compile_definitions(core PRIVATE EDEN_NS2_SPARSE_BACKING=1)"
+        ],
+        "src/host_memory.cpp": [
+          "EDEN_NS2_SPARSE_BACKING"
+        ]
+      }
+    },
+    "native_kprocess_receipts": {
+      "implemented": true,
+      "owners": {
+        "headless/CMakeLists.txt": [
+          "set_property(SOURCE \"${EDEN_NS2_KPROCESS_SOURCE}\"",
+          "TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS \"PS5_NATIVE=1\""
+        ],
+        "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp": [
+          "EDEN_MAIN_STACK_MAP",
+          "EDEN_MAIN_THREAD_CONTEXT"
+        ]
+      }
+    },
+    "cpu6": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/cpu6/core/hardware_properties.h": [
+          "NUM_CPU_CORES = 6",
+          "NUM_LEGACY_CPU_CORES = 4"
+        ]
+      }
+    },
+    "gmmu_native_4k": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": [
+          "MapNative4K",
+          "UnmapNative4K"
+        ]
+      }
+    },
+    "ampere_engine_classes": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_context.h": [
+          "case 0xc797:",
+          "case 0xc7c0:",
+          "case 0xc7b5:",
+          "case 0xc56f:"
+        ]
+      }
+    },
+    "qmd3_compute_dispatch": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": [
+          "ProcessNativeComputeQmdAt",
+          "DispatchNativeCompute"
+        ],
+        "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_qmd.h": [
+          "class NativeQmdScheduler"
+        ]
+      }
+    },
+    "ampere_storage_32": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h": [
+          "NUM_STORAGE_BUFFERS = 32"
+        ],
+        "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h": [
+          "NUM_STORAGE_BUFFERS = 16"
+        ]
+      }
+    },
+    "texture_49bit_mapping": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp": [
+          "NativeQmdTextureMetadata",
+          "49-bit GMMU"
+        ],
+        "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": [
+          "49-bit GMMU"
+        ]
+      }
+    },
+    "astc_cache_bridge": {
+      "implemented": true,
+      "owners": {
+        "headless/CMakeLists.txt": [
+          "EDEN_NS2_ASTC_CACHE_BRIDGE=1"
+        ],
+        "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": [
+          "EDEN_NS2_ASTC_CACHE_BRIDGE"
+        ]
+      }
+    },
+    "disk_pipeline_prewarm": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp": [
+          "kStartupPrewarmPipelines = 32",
+          "EDEN_PS5_SHADER_PREWARM"
+        ]
+      }
+    },
+    "gamefile_shader_warm_extract": {
+      "implemented": false,
+      "upstream": [
+        "zortos293/Lichii:src/video_core/shader_warm/shader_warm_builder.cpp",
+        "zortos293/Lichii:src/video_core/shader_warm/shader_archives.cpp",
+        "zortos293/Lichii:src/video_core/shader_warm/warm_records.cpp"
+      ],
+      "reason": "Requires a reviewed adaptation to Encore's older pipeline-cache/lowering/NUP graph; do not copy blindly."
+    }
+  },
+  "known_games": {
+    "0400C3F00006E000": {
+      "name": "Mario Kart World",
+      "generation": "NS2",
+      "required_capabilities": [
+        "pre_kernel_generation",
+        "alias_memory_budget",
+        "sparse_guest_backing",
+        "native_kprocess_receipts",
+        "cpu6",
+        "gmmu_native_4k",
+        "ampere_engine_classes",
+        "qmd3_compute_dispatch",
+        "ampere_storage_32",
+        "texture_49bit_mapping",
+        "astc_cache_bridge"
+      ],
+      "reference_memory": {
+        "kind": "upstream_observation_only",
+        "guest_peak_mib_range": [5400, 5900]
+      }
+    },
+    "040074A01BF12000": {
+      "name": "Donkey Kong Bananza",
+      "generation": "NS2",
+      "required_capabilities": [
+        "pre_kernel_generation",
+        "alias_memory_budget",
+        "sparse_guest_backing",
+        "native_kprocess_receipts",
+        "cpu6",
+        "gmmu_native_4k",
+        "ampere_engine_classes",
+        "qmd3_compute_dispatch",
+        "ampere_storage_32",
+        "texture_49bit_mapping",
+        "astc_cache_bridge"
+      ]
+    }
+  },
+  "console_gate": {
+    "primary": [
+      "FC27 NS1: cold match -> HUD/OPTIONS -> warm relaunch -> normal exit",
+      "Mario Kart World NS2: pre-kernel generation -> sparse backing -> KProcess -> GPFIFO -> first frame -> normal exit"
+    ],
+    "conditional": [
+      "Donkey Kong Bananza NS2 only after MKW crosses the currently failing stage or to distinguish a title-specific path"
+    ]
+  }
+}

@@ -4,11 +4,25 @@
     "purpose": "Machine-verifiable NS2/PS5 compatibility contracts; no copyrighted shader bytes or guessed game addresses.",
     "absolute_guest_addresses": "runtime_only",
     "absolute_gpu_addresses": "runtime_only",
-    "cache_identity": ["title_id", "build_id", "update_version", "shader_hash", "cache_version", "driver", "device", "render_variant"]
+    "cache_identity": [
+      "title_id",
+      "build_id",
+      "update_version",
+      "shader_hash",
+      "cache_version",
+      "driver",
+      "device",
+      "render_variant"
+    ]
   },
   "stable_abi": {
     "native_page_size": 4096,
-    "ampere_engine_classes": ["0xC797", "0xC7C0", "0xC7B5", "0xC56F"],
+    "ampere_engine_classes": [
+      "0xC797",
+      "0xC7C0",
+      "0xC7B5",
+      "0xC56F"
+    ],
     "ampere_storage_buffers": 32,
     "ns2_cpu_cores": 6,
     "native_texture_address_bits": 49
@@ -149,6 +163,36 @@
         "zortos293/Lichii:src/video_core/shader_warm/warm_records.cpp"
       ],
       "reason": "Requires a reviewed adaptation to Encore's older pipeline-cache/lowering/NUP graph; do not copy blindly."
+    },
+    "isbe_output_stage_read": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_stage_buffer.h": [
+          "const bool output_read = !write && output && is_32 && !skew;",
+          "(write != output && !output_read)"
+        ],
+        "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/ir/opcodes.inc": [
+          "OPCODE(IsbeReadOutput"
+        ],
+        "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_mesh.cpp": [
+          "Id EmitIsbeReadOutput(EmitContext& ctx, Id address)"
+        ]
+      },
+      "upstream": "zortos293/Lichii@31f1378a3893948ba0fc0885cbc3582cf23e4ff4"
+    },
+    "imad_negated_register_addend": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
+          "Lichii 6df7441 / #2083",
+          "(insn.words[2] & ~0xaffU) != 0x078e0000",
+          "if (insn.Bits(75, 1) && addend != 255)"
+        ],
+        "vendor/tests/ns2_ampere_imad_negated_addend_host.py": [
+          "NS2_AMPERE_IMAD_NEGATED_ADDEND_HOST_PASS"
+        ]
+      },
+      "upstream": "zortos293/Lichii@6df74415631f9e03ed006ff1f8a33683cd6220c7"
     }
   },
   "known_games": {
@@ -170,7 +214,10 @@
       ],
       "reference_memory": {
         "kind": "upstream_observation_only",
-        "guest_peak_mib_range": [5400, 5900]
+        "guest_peak_mib_range": [
+          5400,
+          5900
+        ]
       }
     },
     "040074A01BF12000": {

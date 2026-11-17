@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="2be9cb8c64e3427519778b98ffd73567d423346a"
+EXPECTED="affa3c761f70268c89e9f7c7de24eec958c7f889"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -44,6 +44,7 @@ tests=(
     "ns2_getinfo_vamm_region_source.py",
     "ps5-late-upstream-fixes-source.py",
     "ps5-full-clear-skip-upload-source.py",
+    "ns2_ampere_imad_negated_addend_host.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)

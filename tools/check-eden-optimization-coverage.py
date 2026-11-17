@@ -2181,39 +2181,37 @@ assert sparse_path not in post_index
 assert sparse_path in drift_index
 sparse_drift = drift_index.pop(sparse_path)
 assert sparse_drift["expected"] == sparse_receipt["historical_f07_git_blob"]
-# The 2026-11-11 reviewed sparse owner remains the historical base. The
-# Nov-17 hardware trace proved that limiting the production owner to exactly
-# 12 GiB still let the ordinary 4 GiB guest layout fall into one dense direct
-# allocation. Admit only the exact reviewed demand-backed successor here; do
-# not broaden F07 drift acceptance.
+# The 2026-11-11 reviewed sparse host owner is immutable, but a
+# production safety guard now forbids a 12GiB dense fallback when the PS5
+# preprocessor path is absent. Reconstruct the earlier checked Git blob.
 assert sparse_receipt["research_source_git_blob"] == (
     "4f109a0286a13afc93dcacd3b287b26b256d13f4")
-assert sparse_drift["actual"] == "75eccb9a0064df6a24ec3697b39518dfaf300a48"
+assert sparse_drift["actual"] == "b9349360b3f615784247133026ac7aaf8d71eb9e"
+dense_fallback_guard = """#ifdef PS5_NATIVE
+        // NS2 must never request 12 GiB of physical RAM because a
+        // compile-flag mismatch silently disabled the sparse owner.
+        // Fail clearly instead of reproducing the PS5 launch ENOMEM.
+        if (requested == (12ull << 30)) {
+            throw std::system_error(ENOMEM, std::generic_category(),
+                                    "NS2 sparse backing not active; refusing 12 GiB dense allocation");
+        }
+#endif
+"""
 current_sparse_source = (ROOT/sparse_path).read_text()
-for required in (
-    "constexpr std::size_t DemandGuestMinimum = 4ull << 30;",
-    "constexpr std::size_t DemandGranule = 2ull << 20;",
-    "constexpr std::size_t PhysicalBudgetMaximum = 6ull << 30;",
-    "const bool demand_guest = !fastmem && requested >= DemandGuestMinimum",
-    "(std::min)(requested, PhysicalBudgetMaximum)",
-    "EDEN_GUEST_BACKING mode=demand",
-    "demand-backed guest memory not active; refusing dense allocation",
-):
-    assert required in current_sparse_source, required
-assert "if (requested == Ns2Dram)" not in current_sparse_source
-assert current_sparse_source.index("if (demand_guest)") < current_sparse_source.index(
-    "AllocateMemoryPages(requested)")
-print("R457_NS2_DEMAND_BACKING_SUCCESSOR_PASS",
-      "predecessor=b9349360", "standard_4GiB=admitted",
-      "dense_large_guest=forbidden", "historical_F07=preserved")
-assert sparse_receipt["opt_in"] in current_sparse_source
-# The historical receipt remains immutable evidence of the former 12 GiB-only
-# research admission. Its exact source fragment must now be absent from the
-# reviewed production successor rather than required to survive forever.
-assert sparse_receipt["source_fragment"] == "if (requested == Ns2Dram) {"
-assert sparse_receipt["source_fragment"] not in current_sparse_source
+assert current_sparse_source.count(dense_fallback_guard) == 1
+pre_guard = current_sparse_source.replace(dense_fallback_guard, "", 1)
+pre_guard_bytes = pre_guard.encode("utf-8")
+pre_guard_blob = hashlib.sha1(
+    b"blob " + str(len(pre_guard_bytes)).encode() + bytes([0]) +
+    pre_guard_bytes).hexdigest()
+assert pre_guard_blob == sparse_receipt["research_source_git_blob"], (
+    "NS2 dense-fallback guard modified other sparse source code")
+print("R457_NS2_SPARSE_DENSE_FALLBACK_GUARD_PASS",
+      "12GiB_dense=forbidden", "original_receipt=preserved")
+assert sparse_receipt["opt_in"] in (ROOT/sparse_path).read_text()
+assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
 print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
-      "historical_12GiB_fragment=replaced", "new_owner_consoles_qualified=0")
+      "new_owner_consoles_qualified=0")
 # Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.\n# R458 advances the already-reviewed launcher owner from a frozen retained frame\n# to one bounded GL presenter; the historical F07/R457 receipts stay immutable.
 ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU

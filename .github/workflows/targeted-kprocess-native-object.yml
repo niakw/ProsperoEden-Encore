@@ -34,7 +34,7 @@ jobs:
           key: prospero-eden-encore-040-Linux-fc370fe9ce80cd597292415e2be5ec6a07a034248d03b6fd2f8cc2be59ef6d3e-44172375670
           fail-on-cache-miss: true
 
-      - name: Recompile only selected PS5 KProcess object
+      - name: Recompile only selected native KProcess object
         shell: bash
         run: |
           set -euo pipefail

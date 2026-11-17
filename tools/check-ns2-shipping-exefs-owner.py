@@ -76,7 +76,14 @@ assert 'PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM' in selector
 assert 'ns2-runtime/process/core/core.cpp' in selector
 assert '#include "diagnostics.h"' in native_core and shared_core.startswith('#include "diagnostics.h"')
 assert 'IsSwitch2LaunchProgram(' in shared_core
-assert 'metadata.Load(npdm) == Loader::ResultStatus::Success' in shared_core
+# The pre-kernel selector may preserve an already-identified NS2 extended ACID
+# generation even if a *later* ACI/FAC/KAC validation fails. The real
+# application loader still requires a fully valid NPDM; this early probe only
+# determines the guest layout before InitializeKernel.
+assert 'const auto status = metadata.Load(npdm);' in shared_core
+assert 'const bool switch2 = metadata.IsSwitch2();' in shared_core
+assert 'return switch2;' in shared_core
+assert 'EDEN_NS2_PREKERNEL_NPDM status={} switch2={}' in shared_core
 assert 'metadata.IsSwitch2()' in shared_core
 for kind in ('NSP', 'XCI', 'NCA'):
     assert f'Loader::FileType::{kind}' in shared_core

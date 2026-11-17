@@ -182,6 +182,38 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-shader-inventory-") as td:
     assert len(loaded["programs"]) == 4
     assert str(root) not in output.read_text()
 
+    # The former fixed "<output>.tmp" staging file would overwrite this
+    # user-owned BNSH archive despite --output pointing somewhere else.
+    collision_source = root / "collision-manifest.json.tmp"
+    collision_source.write_bytes(bnsh)
+    collision_output = root / "collision-manifest.json"
+    proc = subprocess.run([
+        sys.executable, "-B", str(ROOT / "tools" / "ns2" / "shader_archive_inventory.py"),
+        "--source", f"04003F40232DE000={collision_source}",
+        "--output", str(collision_output),
+    ], text=True, capture_output=True, timeout=30)
+    if proc.returncode:
+        raise AssertionError(proc.stdout + proc.stderr)
+    assert collision_source.read_bytes() == bnsh, "manifest clobbered its input archive"
+    assert len(json.loads(collision_output.read_text())["programs"]) == 4
+
+    # A predictable staging name could also follow an existing symlink.
+    protected_source = root / "protected-source.bnsh"
+    protected_source.write_bytes(bnsh)
+    symlink_output = root / "alias-manifest.json"
+    staged_alias = root / "alias-manifest.json.tmp"
+    staged_alias.symlink_to(protected_source)
+    proc = subprocess.run([
+        sys.executable, "-B", str(ROOT / "tools" / "ns2" / "shader_archive_inventory.py"),
+        "--source", f"04003F40232DE000={protected_source}",
+        "--output", str(symlink_output),
+    ], text=True, capture_output=True, timeout=30)
+    if proc.returncode:
+        raise AssertionError(proc.stdout + proc.stderr)
+    assert protected_source.read_bytes() == bnsh, "manifest followed predictable staging symlink"
+    assert staged_alias.is_symlink(), "manifest unexpectedly replaced neighboring staging link"
+    assert len(json.loads(symlink_output.read_text())["programs"]) == 4
+
     too_big = root / "too-big.bin"
     too_big.write_bytes(b"x" * 4097)
     try:

@@ -70,10 +70,8 @@ gpumethods="\n".join(native(GPU,signature) for signature in (
     "    void RequestComposite(",
     "    void WaitForComposite(",
 ))
-start=SYNC.index("namespace {\n// Each domain")
-stop=SYNC.index("\nSyncpointManager::ActionHandle",start)
-helpers=SYNC[start:stop].replace("std::array<std::recursive_mutex, 192>& HostDispatchLocks()",
-                                   "[[maybe_unused]] std::array<std::recursive_mutex, 192>& HostDispatchLocks()")
+assert "due.pending.splice(" in SYNC
+assert "action_done_cv.notify_all();" in SYNC
 syncmethods="\n".join(native(SYNC,signature) for signature in (
     "SyncpointManager::ActionHandle SyncpointManager::RegisterAction(",
     "void SyncpointManager::IncrementGuest(",
@@ -81,7 +79,7 @@ syncmethods="\n".join(native(SYNC,signature) for signature in (
 ))
 host=once(host,"__NV_METHODS__",nvmethods,"nvdisp")
 host=once(host,"__GPU_METHODS__",gpumethods,"GPU")
-host=once(host,"__SYNC_METHODS__",helpers+"\n"+syncmethods,"Host1x")
+host=once(host,"__SYNC_METHODS__",syncmethods,"Host1x")
 host=once(host,"namespace Service::Nvidia {",
     """extern "C" void F05PipeStart();
 extern "C" void F05PipeForward(std::uint64_t game,std::uint64_t hud);

@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NV = (ROOT/"vendor/sources/eden/src/core/hle/service/nvdrv/devices/nvdisp_disp0.cpp").read_text()
 GPU = (ROOT/"vendor/sources/eden/src/video_core/gpu.cpp").read_text()
 SYNC = (ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
+SYNC_HDR = (ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
 FAST = (ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL = (ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 NAME = "python3 -B tools/check-native-gpu-composite-syncpoint-host.py"
@@ -44,9 +45,12 @@ gpu_methods = "\n".join(extract(GPU, marker) for marker in (
     "    void RequestComposite(",
     "    void WaitForComposite(",
 ))
-hs=SYNC.index("namespace {\n// Each domain")
-he=SYNC.index("\nSyncpointManager::ActionHandle",hs)
-sync_helpers=SYNC[hs:he].replace("std::array<std::recursive_mutex, 192>& HostDispatchLocks()", "[[maybe_unused]] std::array<std::recursive_mutex, 192>& HostDispatchLocks()")
+assert "using ActionHandle = u64;" in SYNC_HDR
+assert "struct DueActions" in SYNC_HDR and "action_done_cv" in SYNC_HDR
+assert "due.pending.splice(" in SYNC
+assert "due.running = due.pending.front().id;" in SYNC
+assert "action_done_cv.notify_all();" in SYNC
+assert SYNC.index("wait_cv.notify_all();") < SYNC.index("due.pending.splice(")
 
 sync_methods = "\n".join(extract(SYNC, marker) for marker in (
     "SyncpointManager::ActionHandle SyncpointManager::RegisterAction(",
@@ -58,7 +62,7 @@ assert "pending_composite_fence = RequestSyncOperation(" in gpu_methods
 assert "syncpoint_manager.RegisterGuestAction(" in gpu_methods
 assert "renderer->Composite(composite_layers);" in gpu_methods
 assert "WaitForSyncOperation(fence);" in gpu_methods
-assert "action();" in sync_methods and "ready.action();" in sync_methods
+assert "action();" in sync_methods and "due.pending.splice(" in sync_methods
 
 cpp = r"""
 #include <algorithm>
@@ -74,11 +78,14 @@ cpp = r"""
 #include <list>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <span>
+#include <thread>
 #include <utility>
 #include <vector>
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
+#define LOG_ERROR(...) ((void)0)
 namespace Service::Nvidia {
 struct NvFence { int id{-1}; u32 value{}; };
 }
@@ -94,27 +101,41 @@ struct FramebufferConfig {
 namespace Host1x {
 class SyncpointManager {
 public:
+    static constexpr size_t NUM_MAX_SYNCPOINTS = 192;
     struct RegisteredAction {
         u32 expected_value{};
+        u64 id{};
         std::function<void()> action;
-        RegisteredAction(u32 v,std::function<void()>&& a)
-            : expected_value(v),action(std::move(a)) {}
+        RegisteredAction(u32 v,u64 id_,std::function<void()>&& a)
+            : expected_value(v),id(id_),action(std::move(a)) {}
     };
-    using ActionHandle=std::list<RegisteredAction>::iterator;
-    std::array<std::atomic<u32>,192> syncpoints_guest{};
-    std::array<std::list<RegisteredAction>,192> guest_action_storage;
-    std::mutex guard;
-    std::condition_variable wait_guest_cv;
+    using ActionHandle=u64;
+    using GuestMirror=std::function<void(u32,u32)>;
     template<typename Func>
     ActionHandle RegisterGuestAction(u32 id,u32 expected,Func&& action) {
+        if (id>=NUM_MAX_SYNCPOINTS) return {};
         return RegisterAction(syncpoints_guest[id],guest_action_storage[id],
                               expected,std::move(action));
     }
     ActionHandle RegisterAction(std::atomic<u32>&,std::list<RegisteredAction>&,
                                 u32,std::function<void()>&&);
     void IncrementGuest(u32);
+private:
     void Increment(std::atomic<u32>&,std::condition_variable&,
-                   std::list<RegisteredAction>&);
+                   std::list<RegisteredAction>&,std::optional<u32> = std::nullopt);
+    struct DueActions {
+        std::list<RegisteredAction> pending;
+        ActionHandle running{};
+        std::thread::id thread{std::this_thread::get_id()};
+    };
+    std::array<std::atomic<u32>,NUM_MAX_SYNCPOINTS> syncpoints_guest{};
+    std::array<std::list<RegisteredAction>,NUM_MAX_SYNCPOINTS> guest_action_storage;
+    std::mutex guard;
+    u64 last_action_id{};
+    GuestMirror guest_mirror;
+    std::vector<DueActions*> due_actions;
+    std::condition_variable wait_guest_cv;
+    std::condition_variable action_done_cv;
 };
 __SYNC_METHODS__
 struct Host1x {
@@ -319,7 +340,7 @@ int main() {
 """
 cpp=cpp.replace("__NV_METHODS__",nv_methods)
 cpp=cpp.replace("__GPU_METHODS__",gpu_methods)
-cpp=cpp.replace("__SYNC_METHODS__",sync_helpers+"\n"+sync_methods)
+cpp=cpp.replace("__SYNC_METHODS__",sync_methods)
 assert "__GPU_METHODS__" not in cpp and "__NV_METHODS__" not in cpp
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"

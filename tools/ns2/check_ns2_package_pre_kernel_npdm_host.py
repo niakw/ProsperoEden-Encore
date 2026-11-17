@@ -13,6 +13,12 @@ begin="[[nodiscard]] bool IsSwitch2LaunchProgram("
 end="\n} // namespace"
 assert source.count(begin)==1
 helper=begin+source.split(begin,1)[1].split(end,1)[0]
+# PS5 library launches loose ExeFS by ".../exefs/main". Generation detection
+# must resolve main.npdm from that launched file's VFS parent before the kernel.
+assert 'Common::SplitPath(filepath, &launch_dir, &launch_filename, nullptr);' in source
+assert 'launch_filename == "main" ? launch_dir' in source
+assert 'virtual_filesystem->OpenDirectory(npdm_dir, FileSys::OpenMode::Read)' in source
+assert source.index('exefs_dir->GetFile("main.npdm")') < source.index("InitializeKernel(system)")
 for required in ("Loader::FileType::NSP","Loader::FileType::XCI",
                  "Loader::FileType::NCA","metadata.Load(npdm)",
                  "metadata.IsSwitch2()", "EDEN_NS2_PREKERNEL_NPDM",

@@ -519,9 +519,20 @@ bridge_unmap_after = """    if (!::Eden::BufferPages::NeverRegistered(addr, size
     }
 """
 assert m07_source_blob(maintained_m07_text) == "055e1cb9c53a8fa430c0027a95e098696296e5c0"
+# OnCacheInvalidation has the same BufferPages block, so never use a global
+# count/replace here. Only UnmapMemory disables sibling preservation because
+# that mapping is being destroyed. Keep OnCacheInvalidation conservative.
+unmap_marker = "void RasterizerVulkan::UnmapMemory(DAddr addr, u64 size) {"
+assert expected_m07.count(unmap_marker) == 1
+unmap_start = expected_m07.index(unmap_marker)
+unmap_end = expected_m07.index("\nvoid RasterizerVulkan::", unmap_start + len(unmap_marker))
+expected_unmap = expected_m07[unmap_start:unmap_end]
+assert expected_unmap.count(bridge_unmap_before) == 1
+assert bridge_unmap_after not in expected_unmap
+expected_unmap = expected_unmap.replace(bridge_unmap_before, bridge_unmap_after, 1)
+expected_m07 = expected_m07[:unmap_start] + expected_unmap + expected_m07[unmap_end:]
 assert expected_m07.count(bridge_unmap_before) == 1
-assert bridge_unmap_after not in expected_m07
-expected_m07 = expected_m07.replace(bridge_unmap_before, bridge_unmap_after, 1)
+assert expected_m07.count(bridge_unmap_after) == 1
 assert maintained_m07_text == expected_m07, "M07 maintained Vulkan variant parity drift"
 print("ENCORE_M07_GUEST_BRIDGE_FC27_UNMAP_PARITY_PASS")
 # The inactive deferred-write bridge shares the *entire* maintained rasterizer

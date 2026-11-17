@@ -70,7 +70,7 @@ jobs:
             /tmp/eden-hud-generated/eden_vulkan_hud_shaders.h \
             vulkan_hud.frag.spv
           sha256sum vulkan_hud.frag.quick.spv /tmp/eden-hud-generated/vulkan_menu_font_data.h
-      - name: Compile exact boot and Unicode pipelines on a real Mesa host driver
+      - name: Compile exact boot and Unicode pipelines on a real Vulkan host driver
         shell: bash
         run: |
           set -euo pipefail

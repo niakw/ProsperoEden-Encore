@@ -18,6 +18,7 @@ REVIEWED_DRIVER_HEADER_BLOB = "c7e3ca901ea7ab82ec679c23cf43a1c556ac7e41"
 REVIEWED_CACHE_VERSION_20_BLOB = "36aae4b17ef8e9681f62fabdd4cf37f09d0beefb"
 REVIEWED_CACHE_VERSION_21_BLOB = "be5d48abd44996502b0829a6e0501d130a151455"
 REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB = "e10c4893c03da57dce7f607d3e0af46d62e343f1"
+REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB = "dcc4c9cbb4e3cec48ab4d1dece9f8708196c5f56"
 # Exact five reviewed #115 diff hunks, inverted ONLY for source comparison.
 # Both raw source hashes must match; actual build uses the new vendor file.
 DRIVER_HEADER_REVERSES = [
@@ -64,6 +65,26 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    # Vendor #183 adds only a bounded standard-stderr witness around the
+    # already-reviewed PS5 fragment-shuffle fallback. Reverse that exact block
+    # first, then require the prior reviewed fallback blob before continuing
+    # the immutable R23 normalization chain.
+    if current == REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB:
+        witness = """            static std::atomic<unsigned> fragment_shuffle_witness{};
+            const unsigned fallback_witness =
+                fragment_shuffle_witness.fetch_add(1, std::memory_order_relaxed) + 1;
+            if (fallback_witness <= 8) {
+                std::fprintf(stderr,
+                             \"EDEN_FRAGMENT_SHUFFLE_FALLBACK count=%u hash=0x%016llx\\n\",
+                             fallback_witness,
+                             static_cast<unsigned long long>(key.unique_hashes[index]));
+            }
+"""
+        assert source.count(witness) == 1, "Fragment-shuffle witness drift"
+        source = source.replace(witness, "", 1)
+        current = git_blob(source)
+        assert current == REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB, (
+            "Fragment-shuffle witness predecessor drift", current)
     # Vendor #180 preserves Eden #4503's exact broken-pattern predicate but
     # replaces the PS5-native whole-shader drop with the reviewed
     # Lichii/Eglantine broadcast/select fallback. Reverse ONLY those three

@@ -147,6 +147,21 @@ jobs:
               # retain exact head provenance and remove only that immutable ref.
               'build/add-encore-overrides-submodule-20261116':
                   ('8c392ab42d36c08f8c1b4b5b393e12ec5ece300c', 232),
+              # Nov17 superseded validation/research heads. Useful maintained
+              # changes are consolidated in #271; broad demand-backed memory
+              # candidates were explicitly rejected from the native test graph.
+              'integration/r457-fc27-ns2-targeted-20261117':
+                  ('c9549b40e1a45d6e2f4e141791cdd8eeaf3241f1', 270),
+              'integration/r457-p0-memory-fc27-shuffle-20261117':
+                  ('90eab35306147ab6cd9614b9d2bfe76beb0764f2', 'superseded-266'),
+              'p0/compact-vulkan-hud-atlas-20261117':
+                  ('f9da701114dd7dbb5a70c00535d061c390e050fc', 264),
+              'p0/demand-backed-guest-memory-20261117':
+                  ('87eab2cfc87447cec2be454a12f1cb532c454a79', 'rejected-265'),
+              'validation/fc27-r1-shuffle-20261117':
+                  ('68cc0f8db9dcd3642a8551fb05ebc7cf98ee9399', 268),
+              'validation/ns2-prekernel-generation-20261117':
+                  ('9acd36cc1b3ec729a52ba89b6b3f2deda3430d31', 269),
           }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:

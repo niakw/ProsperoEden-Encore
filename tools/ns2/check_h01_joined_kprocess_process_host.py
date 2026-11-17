@@ -293,7 +293,13 @@ os_tail=os_tail.replace("__EXPECTED_REGISTERED__",
 main_helpers=kernel_host.TEST.split("static void VerifyCase(",1)[0]
 assert "ParseKnownPublicFixture" in main_helpers and "PrepareGuestImage" in main_helpers
 with tempfile.TemporaryDirectory(prefix="eden-h01-joined-kernel-os-") as tmp:
-    for name,owner_path,_expect_ns2_budget in [kernel_host.OWNERS[1]]:
+    # The synthetic setup functions are reused from the canonical host fixture,
+    # but execute the exact CMake-selected NS2 KProcess, not the older eden-core
+    # owner. Its OWNERS tuples have two fields, not three, and relying on that
+    # list silently binds the wrong translation unit after the NS2 override.
+    selected = ROOT / "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp"
+    assert selected.is_file() and 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
+    for name,owner_path in [("shipping_ns2", selected)]:
         source=owner_path.read_text()
         code=base+"\n"+kernel_host.actual_initializer(source)+"\n"
         code+=kernel_host.unchanged_member(source)+"\n"

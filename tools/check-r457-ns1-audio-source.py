@@ -56,6 +56,7 @@ KNOWN_VENDOR_GRAPH = {
     "e298a9b05732346141b685eb4c9850bfa02d9e58": "same reviewed NS1/audio owners + FC27 fragment fallback + targeted NS2 pre-kernel generation; no audio owner change",
     "f7ccfda091fd7429f44159318a07391881a3e7c0": "same reviewed NS1/audio owners; NS2 generation logging only after vendor #182; no audio owner change",
     "92c480e17fedecc21ab4882b76e8507b5aed3771": "same reviewed NS1/audio owners + selected PS5 texture-page publication + NS2 generation receipts; no audio owner change",
+    "7039d7752c5d8b1a53db50be0d8f2f7803867e13": "same reviewed NS1/audio owners + selected PS5 texture-page publication + NS2 generation receipts; parser logger bounded to PS5; no audio owner change",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

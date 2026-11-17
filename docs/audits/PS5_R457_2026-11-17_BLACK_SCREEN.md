@@ -68,6 +68,37 @@ Do not hide these diagnostics:
 
 Track 1–4 as maintenance warnings, but do not delay P0 hardware qualification on them.
 
+## Hardware follow-up — 2026-11-17 00:44 capture
+
+Tested installed source `b4e99818ae53a95f7c3597771e7ed52750287261` from native run 43985261580, vendor `ffa519db0f68fb0d5d2acf791e381c898a34a175`, firmware 13.60.
+
+### FC27 NS1
+
+The shared startup regression is no longer reproduced: FC27 reaches gameplay. User reports smoother overall behavior but remaining P1 failures are unchanged or only partially improved:
+
+- EA intro: black picture, audio present;
+- main menu: no guest text;
+- first-match severe hitch, then stabilization;
+- HUD text initially absent and appearing late;
+- refreshed match-clock digits disappear;
+- pause-menu text appears with missing letters;
+- player-shirt names absent;
+- stadium-seat texture can render green.
+
+This hardware result qualifies #264 as a startup-regression repair candidate for NS1, not as a complete FC27 fix. R1 source `5629395324ff65c98b50c44f35f2142a4a92654a`, recalled by the tester to render FC27 text, uses the same authored FC27 profile tuples as current Encore and predates the selected Eden #4503 non-NVIDIA fragment-shader drop. Vendor #180 tests the newer Lichii/Eglantine broadcast/select fragment-shuffle fallback on PS5 instead of discarding the complete matching guest shader. Hardware effect remains unqualified. Intro video stays a separate NVDEC/VIC track; selected source already carries bounded `EDEN_NVDEC_STAGE` decode/VIC input/VIC output witnesses for the next FC27 log.
+
+### NS2 memory gate
+
+Both Bananza and MKW fail before the historical guest execution/first-frame paths:
+
+`Direct allocation failed: rc=80020023 bytes=4297064448 limit=13019119616`
+
+followed by `Backing allocation: Cannot allocate memory`. The requested direct allocation is 4098 MiB (4 GiB guest layout plus one 2 MiB span) while the immediately preceding native memory diagnostic reports the largest contiguous direct-memory extent as 3822 MiB. This is a contiguous-allocation mismatch, not proof of total PS5 RAM exhaustion.
+
+Upstream ProsperoEden #156 / commit `9ce26e650e26112d958f6db4b20d93260de77825` demand-backs ordinary guest memory rather than taking the whole 4 GiB block at startup. Encore already had a stricter transactional 2 MiB sparse owner but admitted it only for exactly 12 GiB. Engine #265 adapts the upstream guest-backing principle to that existing owner for ordinary 4+ GiB non-fastmem layouts, with bounded physical residency and fail-closed dense fallback. Exact host/CMake/syntax/P0-P4 qualification is green; native build and console test remain required.
+
+Integration #266 combines #264 + #265 + vendor #180 strictly for hardware validation. It must not be merged merely because CI/build is green.
+
 ## Required PS5 acceptance
 
 Do not merge or close #263/#264 from the green build alone.

@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 # Exercise both the canonical source and the actual linked shipping owner:
 # a green test against sources/ alone previously missed the KProcess OOM bug.
 OWNERS = (
-    ("canonical", ROOT / "vendor/sources/eden/src/core/hle/kernel/k_process.cpp"),
-    ("shipping", ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/k_process.cpp"),
+    ("canonical", ROOT / "vendor/sources/eden/src/core/hle/kernel/k_process.cpp", False),
+    ("shipping_ns2", ROOT / "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp", True),
 )
 START = "Result KProcess::LoadFromMetadata("
 STOP = "\nvoid KProcess::LoadModule("
@@ -80,9 +80,11 @@ struct ProgramMetadata {
     unsigned core = 0;
     int pool = 0;
     bool arm64 = true;
+    bool switch2 = false;
     ProgramAddressSpaceType address_type = ProgramAddressSpaceType::Is39Bit;
     int GetPoolPartition() const { return pool; }
     bool Is64BitProgram() const { return arm64; }
+    bool IsSwitch2() const { return switch2; }
     ProgramAddressSpaceType GetAddressSpaceType() const { return address_type; }
     u64 GetTitleID() const { return title; }
     std::size_t GetSystemResourceSize() const { return system_resource_size; }
@@ -147,8 +149,14 @@ inline KResourceLimit* CreateResourceLimitForProcess(DummySystem& system,
     static KResourceLimit limit;
     return &limit;
 }
+struct FakePageTable {
+    std::size_t GetHeapRegionSize() const { return 0x60000000ULL; }
+    std::size_t GetAliasRegionSize() const { return 0x20000000ULL; }
+};
 struct KProcess {
     bool m_is_application = false;
+    std::size_t m_max_process_memory = 0;
+    FakePageTable m_page_table{};
     unsigned m_ideal_core_id = 999;
     bool fail_initialize = false;
     bool initialized = false;
@@ -162,6 +170,7 @@ struct KProcess {
                       KMemoryManager::Pool pool, KProcessAddress start) {
         if (!resource) throw std::runtime_error("null kernel resource limit");
         initialized = true;
+        m_max_process_memory = m_page_table.GetHeapRegionSize();
         captured = params;
         captured_caps.assign(caps.begin(), caps.end());
         captured_pool = pool;
@@ -235,6 +244,25 @@ static std::size_t CodeBytesFromKnownNso(const std::vector<u8>& nso) {
     const auto total=last+len+bss;
     return (total+0xFFF)&~std::size_t{0xFFF};
 }
+static void VerifySwitch2Budget(const FileSys::ProgramMetadata& metadata,
+                                std::size_t code_bytes) {
+    auto m = metadata;
+    m.switch2 = true;
+    Kernel::KResourceLimit::created = 0;
+    Kernel::KResourceLimit::closed = 0;
+    Kernel::KProcess process;
+    Kernel::KernelCore kernel;
+    const auto result = process.LoadFromMetadata(kernel, m, code_bytes, 0x200000, 0x4000);
+    Require(result.IsSuccess(), "Switch2 KProcess metadata path did not initialize");
+#if EXPECT_NS2_BUDGET
+    Require(process.m_max_process_memory == 0x80000000ULL,
+            "selected NS2 KProcess did not count alias region in memory budget");
+#else
+    Require(process.m_max_process_memory == 0x60000000ULL,
+            "canonical Eden KProcess unexpectedly changed NS2 memory budget");
+#endif
+}
+
 static void VerifyCase(const FileSys::ProgramMetadata& metadata,
                        std::size_t code_bytes,
                        FileSys::ProgramAddressSpaceType address_type,
@@ -301,6 +329,7 @@ int main(int argc, char** argv) {
                    F::AddressSpace32BitWithoutAlias,true);
         VerifyCase(metadata,code_bytes,A::Is39Bit,0x80000000ULL+start+offset,
                    F::AddressSpace64Bit,false);
+        VerifySwitch2Budget(metadata, code_bytes);
 
         Kernel::KResourceLimit::created=0;
         Kernel::KResourceLimit::closed=0;
@@ -363,11 +392,15 @@ def main() -> None:
     if not args.npdm.is_file() or not args.nso.is_file():
         raise FileNotFoundError("Missing paired public ExeFS homebrew")
     with tempfile.TemporaryDirectory(prefix="ns2-kprocess-metadata-host-") as d:
-        for owner_name, owner_path in OWNERS:
+        for owner_name, owner_path, expect_ns2_budget in OWNERS:
             src = owner_path.read_text(encoding="utf-8")
             method = unchanged_member(src)
             cpp = Path(d) / f"kprocess_metadata_{owner_name}.cpp"
-            cpp.write_text(PREFIX + "\n" + method + "\n" + TEST, encoding="utf-8")
+            cpp.write_text(
+                f"#define EXPECT_NS2_BUDGET {int(expect_ns2_budget)}\n" +
+                PREFIX + "\n" + method + "\n" + TEST,
+                encoding="utf-8",
+            )
             for cxx in ("clang++","g++"):
                 if not shutil.which(cxx):
                     raise RuntimeError("Host compiler unavailable: "+cxx)

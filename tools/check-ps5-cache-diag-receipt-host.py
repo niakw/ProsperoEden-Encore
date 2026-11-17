@@ -16,7 +16,7 @@ from ci.ps5_cache_diag_receipt import (
     OPEN, CLOSE, OWNER, ORIGINAL_BLOB, REVIEWED_DIAGNOSTIC_BLOB,
     REVIEWED_DRIVER_HEADER_BLOB, REVIEWED_CACHE_VERSION_20_BLOB,
     REVIEWED_CACHE_VERSION_21_BLOB, REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB,
-    DRIVER_HEADER_REVERSES,
+    REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB, DRIVER_HEADER_REVERSES,
     git_blob, normalize_for_historical_proof,
 )
 
@@ -32,6 +32,7 @@ reviewed_sources = {
     REVIEWED_CACHE_VERSION_20_BLOB,
     REVIEWED_CACHE_VERSION_21_BLOB,
     REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB,
+    REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB,
 }
 if was_diagnostic:
     assert raw_blob in reviewed_sources
@@ -52,6 +53,9 @@ rejects(source + "\n// unrelated native source drift\n")
 rejects(source.replace("PipelineCache", "PipelineCacheX", 1))
 rejects(source + "\n// ENCORE_PS5_CACHE_DIAG_BEGIN\n")
 rejects(source + "\n// ENCORE_PS5_CACHE_DIAG_END\n")
+if raw_blob == REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB:
+    assert source.count("EDEN_FRAGMENT_SHUFFLE_FALLBACK count=%u hash=0x%016llx") == 1
+    assert source.count("fragment_shuffle_witness") == 2
 if raw_blob in {
         REVIEWED_DRIVER_HEADER_BLOB,
         REVIEWED_CACHE_VERSION_20_BLOB,

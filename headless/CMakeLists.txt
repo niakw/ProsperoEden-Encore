@@ -67,6 +67,25 @@ endif()
 file(REMOVE "${PORT_BUILD_DIR}/include/common/slot_vector.h")
 target_include_directories(common BEFORE PUBLIC "${EDEN_MAINTAINED_SLOT_VECTOR_ROOT}")
 target_include_directories(video_core BEFORE PRIVATE "${EDEN_MAINTAINED_SLOT_VECTOR_ROOT}")
+
+# Lichii #290 / PS5 patch 0081: publish StatefulThreadWorker termination under
+# the same mutex used by WaitForRequests' condition predicate. Keep pinned Eden
+# pristine and select one narrow maintained header for every native consumer.
+if(PS5_NATIVE)
+    set(EDEN_MAINTAINED_THREAD_WORKER_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/thread-worker")
+    set(EDEN_MAINTAINED_THREAD_WORKER_HEADER
+        "${EDEN_MAINTAINED_THREAD_WORKER_ROOT}/common/thread_worker.h")
+    if(NOT EXISTS "${EDEN_MAINTAINED_THREAD_WORKER_HEADER}")
+        message(FATAL_ERROR "Missing maintained PS5 ThreadWorker lost-wake fix")
+    endif()
+    target_include_directories(common BEFORE PUBLIC "${EDEN_MAINTAINED_THREAD_WORKER_ROOT}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_MAINTAINED_THREAD_WORKER_ROOT}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_MAINTAINED_THREAD_WORKER_ROOT}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${EDEN_MAINTAINED_THREAD_WORKER_HEADER}")
+    message(STATUS "PS5 ThreadWorker: reviewed lost-wake override selected")
+endif()
 file(GLOB overlay_inputs CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/*.inc")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${overlay_inputs})
 function(write_derived path content)

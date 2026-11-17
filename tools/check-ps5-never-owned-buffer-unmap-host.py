@@ -15,7 +15,7 @@ def get(s):
 source=get(active)
 assert source==get(bridge), "DEV bridge must follow native Unmap source"
 assert source.count("::Eden::BufferPages::NeverRegistered(addr, size)")==1
-assert source.index("texture_cache.UnmapMemory(addr, size)") < source.index("buffer_cache.WriteMemory(addr, size)") < source.index("pipeline_cache.OnCacheInvalidation(addr, size)")
+assert source.index("texture_cache.UnmapMemory(addr, size)") < source.index("buffer_cache.WriteMemory(addr, size, false)") < source.index("pipeline_cache.OnCacheInvalidation(addr, size)")
 oracle=(root/"tools/prepare-vulkan-port.py").read_text()
 assert "The CPU Unmap path may skip ONLY buffer invalidation" in oracle
 owner=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
@@ -47,7 +47,7 @@ struct TextureCache {
 struct BufferCache {
     CountMutex mutex;
     int writes=0;
-    void WriteMemory(DAddr,u64) { ++writes; }
+    void WriteMemory(DAddr,u64,bool keep_page_gpu_data) { assert(!keep_page_gpu_data); ++writes; }
 };
 struct PipelineCache {
     int invalidations=0;

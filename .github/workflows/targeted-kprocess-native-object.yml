@@ -52,12 +52,26 @@ jobs:
             [[ -n "$target" ]] || continue
             found=$((found + 1))
             echo "TARGETED_KPROCESS_NATIVE_OBJECT build_dir=$build_dir target=$target"
-            rm -f "$build_dir/$target"
-            ninja -C "$build_dir" -j1 -v "$target"
+            # Do not invoke normal Ninja: a newer checkout mtime would ask CMake
+            # to regenerate the entire native graph and require RADV staging.
+            # Extract and run only the already-generated compiler command.
+            command_line="$(ninja -C "$build_dir" -t commands "$target" |
+              grep -F 'ns2-runtime/process/core/hle/kernel/k_process.cpp' |
+              grep -F ' -c ' |
+              tail -n1)"
+            [[ -n "$command_line" ]] || {
+              echo "::error::Cached KProcess compiler command not found"
+              exit 1
+            }
+            echo "TARGETED_KPROCESS_NATIVE_COMMAND_FOUND"
+            (
+              cd "$build_dir"
+              bash -o pipefail -c "$command_line"
+            )
           done < <(find "$HOME/.cache" -type f -path '*/native-local/build.ninja' -print)
 
           [[ "$found" -eq 1 ]] || {
             echo "::error::Expected exactly one cached KProcess native object target, found $found"
             exit 1
           }
-          echo "TARGETED_KPROCESS_NATIVE_OBJECT_PASS objects=1 full_build=0"
+          echo "TARGETED_KPROCESS_NATIVE_OBJECT_PASS objects=1 full_build=0 cmake_regeneration=0"

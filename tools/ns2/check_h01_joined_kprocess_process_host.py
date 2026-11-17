@@ -18,6 +18,11 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import test_real_kprocess_init_guest_rollback as kernel_host
 
 PROCESS_SOURCE=(ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp").read_text()
+CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
+assert 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
+assert 'ns2-runtime/process/core/hle/kernel/k_process.cpp' in CMAKE
+assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")' in CMAKE
+assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_KPROCESS_SOURCE}")' in CMAKE
 
 def extract_owner(start,stop):
     assert PROCESS_SOURCE.count(start)==1 and stop in PROCESS_SOURCE.split(start,1)[1]

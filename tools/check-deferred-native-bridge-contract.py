@@ -508,10 +508,19 @@ assert expected_m07.count(g07_old_commit) == 1
 # The maintained guest bridge carries the same reviewed FC27 unmap policy as
 # the active renderer. Re-apply ONLY that call-site flag after reconstructing
 # the historical M07 body, so parity still rejects every unrelated byte.
-bridge_unmap_before = "        buffer_cache.WriteMemory(addr, size);\n"
-bridge_unmap_after = "        buffer_cache.WriteMemory(addr, size, false);\n"
+bridge_unmap_before = """    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {
+        std::scoped_lock lock{buffer_cache.mutex};
+        buffer_cache.WriteMemory(addr, size);
+    }
+"""
+bridge_unmap_after = """    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {
+        std::scoped_lock lock{buffer_cache.mutex};
+        buffer_cache.WriteMemory(addr, size, false);
+    }
+"""
 assert m07_source_blob(maintained_m07_text) == "055e1cb9c53a8fa430c0027a95e098696296e5c0"
 assert expected_m07.count(bridge_unmap_before) == 1
+assert bridge_unmap_after not in expected_m07
 expected_m07 = expected_m07.replace(bridge_unmap_before, bridge_unmap_after, 1)
 assert maintained_m07_text == expected_m07, "M07 maintained Vulkan variant parity drift"
 print("ENCORE_M07_GUEST_BRIDGE_FC27_UNMAP_PARITY_PASS")

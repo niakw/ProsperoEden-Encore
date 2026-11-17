@@ -88,12 +88,15 @@ ns2_shared_release_owners = {
     "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp",
     "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/svc/svc_physical_memory.cpp",
     "vendor/encore-active/ns2-runtime/process/core/core.cpp",
+    "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp",
 }
 assert ns2_shared_release_owners <= all_owners, sorted(ns2_shared_release_owners-all_owners)
 assert not ns2_shared_release_owners & (research_owners | hygiene_owners | extracted_aoc_owners)
 release_cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 assert 'set(EDEN_SHARED_NS2_KERNEL_HEAP ON)' in release_cmake
 assert 'ns2-runtime/process/core/core.cpp' in release_cmake
+assert 'set(EDEN_NS2_KPROCESS_SOURCE' in release_cmake
+assert 'ns2-runtime/process/core/hle/kernel/k_process.cpp' in release_cmake
 print("NS2_SHARED_RELEASE_F07_ISOLATION_PASS", f"new_release_sources={len(ns2_shared_release_owners)}")
 ns2_shared_audio_owners = {
     "vendor/encore-active/ns2-runtime/audio/core/hle/service/audio/audio.cpp",

@@ -18,7 +18,8 @@ fc27_sibling_page_reversal = [
         "void BufferCache<P>::WriteMemory(DAddr device_addr, u64 size) {",
     ),
     (
-        """    // Upstream Lichii/Eglantine b13c4c1: the memory tracker owns whole pages.
+        """
+    // Upstream Lichii/Eglantine b13c4c1: the memory tracker owns whole pages.
     // A small CPU write therefore clears the tracker's GPU state for its page,
     // even when other bytes on that page are still newer on the GPU. Preserve
     // those sibling bytes before the page becomes CPU-owned, otherwise a later

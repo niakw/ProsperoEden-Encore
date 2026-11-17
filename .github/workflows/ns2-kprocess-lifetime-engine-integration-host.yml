@@ -50,6 +50,12 @@ jobs:
           python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
           python3 -B tools/check-native-slab-index-host.py
           python3 -B vendor/tests/ns2_kprocess_failed_load_list_host.py
+          # Historical PR111 is an isolated oracle only. Restore the exact
+          # production gitlink before current-source inventory and joined
+          # KProcess/NPDM fixtures below.
+          selected_vendor="$(git rev-parse HEAD:vendor)"
+          git -C vendor checkout --detach "$selected_vendor"
+          test "$(git -C vendor rev-parse HEAD)" = "$selected_vendor"
       - name: Verify selected CMake/HLE ownership and immutable native source catalog
         run: |
           set -euo pipefail

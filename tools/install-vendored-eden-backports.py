@@ -216,7 +216,7 @@ def replay()->None:
         assert getinfo['page_size_vendor']=='f6ace750bf7a1b37101b420203a7f9633888d4f2'
         assert getinfo['vamm_region_vendor']=='035c0333a05954beaa8810c6e28c1377cf500eec'
         assert getinfo['manifest_receipt_vendor']=='67926ea4b6960eefebf0427929cf299e8e056013'
-        assert getinfo['active_vendor']=='ffa519db0f68fb0d5d2acf791e381c898a34a175'
+        assert getinfo['active_vendor'] in {'ffa519db0f68fb0d5d2acf791e381c898a34a175','9e38066a508716fd959477eccf32c7fb2fde3356', 'e6670e9b7592869dc4af5c0571af6c46c7b6e18d'}
         getinfo_sources=getinfo['reviewed_getinfo_sources']
         assert len(getinfo_sources)==2 and len({entry['path'] for entry in getinfo_sources})==2
         for entry in getinfo_sources:

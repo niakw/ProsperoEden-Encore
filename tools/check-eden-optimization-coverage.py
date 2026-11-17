@@ -1033,8 +1033,8 @@ post_f07_vic_receipt = "vendor/encore-active/eden-core/src/video_core/host1x/vic
 post_f07_vic_present = {post_f07_vic_receipt} & all_owners
 if post_f07_vic_present:
     assert len(post_f07_nvdec_owners) == 2
-    assert subprocess.check_output(["git","hash-object",post_f07_vic_receipt],cwd=ROOT,text=True).strip() == "279255ee6527d6fc13b77147f73168917e427ea8"
-    assert subprocess.check_output(["git","hash-object","vendor/encore-active/eden-core/src/video_core/host1x/ffmpeg.cpp"],cwd=ROOT,text=True).strip() == "1f3834ef66b97033fc662d7c7c9ee3456cb62bca"
+    assert subprocess.check_output(["git","hash-object",post_f07_vic_receipt],cwd=ROOT,text=True).strip() == "48008fc5f3b05c3e95432827c03e20b815cce21c"
+    assert subprocess.check_output(["git","hash-object","vendor/encore-active/eden-core/src/video_core/host1x/ffmpeg.cpp"],cwd=ROOT,text=True).strip() == "2eadc437cec5559560e5aaf849dd3b6446782e99"
     assert 'list(REMOVE_ITEM eden_vic_video_sources "host1x/vic.cpp")' in release_cmake
     assert 'list(APPEND eden_vic_video_sources "${EDEN_VIC_MAINTAINED_SOURCE}")' in release_cmake
 print("ENCORE_POST_F07_VIC_F07_ISOLATION_PASS", f"owners={len(post_f07_vic_present)}")

@@ -288,7 +288,7 @@ os_tail=os_tail.replace("__EXPECTED_REGISTERED__",
 main_helpers=kernel_host.TEST.split("static void VerifyCase(",1)[0]
 assert "ParseKnownPublicFixture" in main_helpers and "PrepareGuestImage" in main_helpers
 with tempfile.TemporaryDirectory(prefix="eden-h01-joined-kernel-os-") as tmp:
-    for name,owner_path in [kernel_host.OWNERS[1]]:
+    for name,owner_path,_expect_ns2_budget in [kernel_host.OWNERS[1]]:
         source=owner_path.read_text()
         code=base+"\n"+kernel_host.actual_initializer(source)+"\n"
         code+=kernel_host.unchanged_member(source)+"\n"

@@ -1142,6 +1142,50 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         p.write_text(baseline)
         normalized_expected[name] = p
 
+    # PS5/Lichii 0078 is a reviewed maintained-source successor to the
+    # historical Vulkan generator. Pin both complete shadow TextureCache blobs,
+    # remove ONLY the full-clear upload elision in memory, and require the exact
+    # pre-0078 owners before ordinary generated-source parity continues.
+    shadow_tex_name = 'vulkan-cache/video_core/texture_cache/texture_cache.h'
+    shadow_base_name = 'vulkan-cache/video_core/texture_cache/texture_cache_base.h'
+    shadow_tex = expected[shadow_tex_name].read_text()
+    shadow_base = expected[shadow_base_name].read_text()
+    assert git_blob_sha(shadow_tex) == 'd3252c6ee7726d4536cdb3e27d3c1105837f5e56', (
+        'Unreviewed PS5 0078 shadow TextureCache owner')
+    assert git_blob_sha(shadow_base) == 'e51b171adae9b7d2e67f72629ef8e49de06f8e9c', (
+        'Unreviewed PS5 0078 shadow CacheBase owner')
+    scope_begin = '    // Lichii/PS5 patch 0078: a full clear may create a target'
+    scope_end = '    auto& flags = maxwell3d->dirty.flags;'
+    assert shadow_tex.count(scope_begin) == shadow_tex.count(scope_end) == 1
+    lo = shadow_tex.index(scope_begin)
+    hi = shadow_tex.index(scope_end, lo)
+    shadow_tex = shadow_tex[:lo] + shadow_tex[hi:]
+    clear_begin = '    // A new render target that the clear binding overwrites whole needs no'
+    clear_end = '\n    if (can_rescale)'
+    assert shadow_tex.count(clear_begin) == 1
+    lo = shadow_tex.index(clear_begin)
+    hi = shadow_tex.index(clear_end, lo)
+    shadow_tex = (shadow_tex[:lo] +
+                  '    // TODO: Only upload what we need\n'
+                  '    RefreshContents(new_image, new_image_id);\n' +
+                  shadow_tex[hi:])
+    clear_flag = ('    /// True only while UpdateRenderTargets(true) binds a clear target; JoinImages\n'
+                  '    /// uses it to skip an initial upload that a proven full clear overwrites.\n'
+                  '    bool clearing_render_targets = false;\n')
+    assert shadow_base.count(clear_flag) == 1
+    shadow_base = shadow_base.replace(clear_flag, '', 1)
+    assert git_blob_sha(shadow_tex) == '9f7f0d4633b61b9bc06d6572ad68350e34241f4e', (
+        'PS5 0078 shadow normalization did not recover prior TextureCache')
+    assert git_blob_sha(shadow_base) == '9a7a8bdcabc860c97f56ca86d5e5f30b8a59169c', (
+        'PS5 0078 shadow normalization did not recover prior CacheBase')
+    for name, text_value in ((shadow_tex_name, shadow_tex), (shadow_base_name, shadow_base)):
+        output = temp/'normalized-vendor-ps5-0078'/name
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text_value)
+        normalized_expected[name] = output
+    print('ENCORE_PS5_0078_GENERATOR_REVERSE_PARITY_PASS',
+          'owners=2', 'current_blobs_pinned=1', 'historical_generator_unchanged=1', flush=True)
+
     # N72: exact vendor-owned serialized sparse submit API. Preserve full
     # baseline byte-equivalence after removing only these additive guards.
     n72_additions = {

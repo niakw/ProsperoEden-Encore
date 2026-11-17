@@ -148,8 +148,21 @@ transaction=physical[start:end]
 assert transaction.index("Common::CommitMemoryRange(")<transaction.index(
     "plan.Publish(*admit)")
 host=read("src/host_memory.cpp")
-assert host.index("if (requested == Ns2Dram)")<host.index(
-    "AllocateMemoryPages(requested)")
+# Nov 17 hardware evidence: the standard 4 GiB guest layout fell through to
+# AllocateMemoryPages and became a 4098 MiB contiguous direct allocation.
+# The reviewed sparse owner must now admit ordinary 4/6/8 GiB non-fastmem
+# layouts as well as the historical 12 GiB research layout.
+for required in (
+    "constexpr std::size_t DemandGuestMinimum = 4ull << 30;",
+    "constexpr std::size_t DemandGranule = 2ull << 20;",
+    "const bool demand_guest = !fastmem && requested >= DemandGuestMinimum",
+    "(std::min)(requested, PhysicalBudgetMaximum)",
+    "EDEN_GUEST_BACKING mode=demand",
+    "demand-backed guest memory not active; refusing dense allocation",
+):
+    assert required in host, required
+assert host.index("if (demand_guest)") < host.index("AllocateMemoryPages(requested)")
+assert host.index("refusing dense allocation") < host.index("AllocateMemoryPages(requested)")
 assert "if (impl->sparse && !impl->sparse->Commit(offset, length))" in host
 print("R457_NS2_KERNEL_PTE_GPU_RESIDENCY_CHAIN_SOURCE_PASS"
-      " native_runtime_unqualified=1 gpu_fences_unqualified=1")
+      " standard_4g_demand_backing=1 native_runtime_unqualified=1 gpu_fences_unqualified=1")

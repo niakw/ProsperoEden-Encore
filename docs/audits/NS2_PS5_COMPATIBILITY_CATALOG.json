@@ -25,7 +25,8 @@
     ],
     "ampere_storage_buffers": 32,
     "ns2_cpu_cores": 6,
-    "native_texture_address_bits": 49
+    "native_texture_address_bits": 49,
+    "ns2_alias_region_gib": 128
   },
   "capabilities": {
     "pre_kernel_generation": {
@@ -237,11 +238,35 @@
       "upstream": "zortos293/Lichii#1914@c9b6e96da6a0d8fdb2ef5d7557645629dc5b2a10"
     },
     "ns2_alias_128g_vamm": {
-      "implemented": false,
-      "upstream": [
-        "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
-      ],
-      "reason": "Open upstream candidate: Switch 2 39-bit alias size must reach 128 GiB for two 60 GiB VAMM reservations. Encore must thread generation into page-table sizing without adding a KProcess layout field or breaking the shared 4/6-core ABI."
+      "implemented": true,
+      "owners": {
+        "headless/CMakeLists.txt": [
+          "set(EDEN_NS2_WAIT64_ROOT",
+          "target_include_directories(core BEFORE PUBLIC \"${EDEN_NS2_WAIT64_ROOT}\")",
+          "\"hle/kernel/k_address_space_info.cpp\"",
+          "set(EDEN_MAINTAINED_PAGE_TABLE"
+        ],
+        "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp": [
+          "Ns2AliasRegionSize = 128_GiB",
+          "is_switch2 && width == 39 && type == KAddressSpaceInfo::Type::Alias"
+        ],
+        "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp": [
+          "aslr_space_start, metadata.IsSwitch2())",
+          "aslr_space_start, is_switch2));"
+        ],
+        "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_process.h": [
+          "KProcessAddress aslr_space_start,",
+          "bool is_switch2);"
+        ],
+        "vendor/tests/ns2_alias_128g_no_kprocess_layout_host.py": [
+          "NS2_ALIAS_128G_NO_KPROCESS_LAYOUT_HOST_PASS"
+        ],
+        "vendor/tests/ns2-kprocess-memory-budget-source.py": [
+          "alias128_reversed=1"
+        ]
+      },
+      "upstream": "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8",
+      "scope": "128 GiB guest virtual alias region for NS2 39-bit processes; does not reserve 128 GiB of PS5 physical memory"
     },
     "shared_store_warp_order": {
       "implemented": false,
@@ -391,7 +416,7 @@
       "required_capabilities": [
         "ns2_alias_128g_vamm"
       ],
-      "source_status": "upstream_gap",
+      "source_status": "covered_host_only",
       "console_validated": false,
       "upstream_refs": [
         "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
@@ -403,7 +428,7 @@
       "required_capabilities": [
         "ns2_alias_128g_vamm"
       ],
-      "source_status": "upstream_gap",
+      "source_status": "covered_host_only",
       "console_validated": false,
       "upstream_refs": [
         "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
@@ -415,7 +440,7 @@
       "required_capabilities": [
         "ns2_alias_128g_vamm"
       ],
-      "source_status": "upstream_gap",
+      "source_status": "covered_host_only",
       "console_validated": false,
       "upstream_refs": [
         "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"

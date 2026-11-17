@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="1cfeb182b34a0e82bc5d79761e4c486045d38e16"
+EXPECTED="26681ecae2767c86b1e7442492794499c2a0449e"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -49,8 +49,10 @@ tests=(
     "ns2_duskbloods_tld4_imad_host.py",
     "fc27_gpu_page_sibling_preservation_host.py",
     "ns2_ampere_hsetp2_cbuf_host.py",
+    "ns2-kprocess-memory-budget-source.py",
+    "ns2_alias_128g_no_kprocess_layout_host.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)
 
-print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ns2_getinfo_page_size=1 ns2_getinfo_vamm=1 alpha_ref=1 worker_lost_wake=1 full_clear_upload_elision=1 dynamic_texture_limit=1 duskbloods_shader=1 fc27_sibling_preservation=1 hsetp2_cbuf=1 ps5=unverified")
+print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ns2_getinfo_page_size=1 ns2_getinfo_vamm=1 alpha_ref=1 worker_lost_wake=1 full_clear_upload_elision=1 dynamic_texture_limit=1 duskbloods_shader=1 fc27_sibling_preservation=1 hsetp2_cbuf=1 alias128=1 kprocess_abi=1 ps5=unverified")

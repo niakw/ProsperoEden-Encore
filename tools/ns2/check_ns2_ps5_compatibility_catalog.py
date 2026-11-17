@@ -34,6 +34,7 @@ def main() -> None:
         "ampere_storage_buffers": 32,
         "ns2_cpu_cores": 6,
         "native_texture_address_bits": 49,
+        "ns2_alias_region_gib": 128,
     }
     for key, value in expected.items():
         if stable.get(key) != value:

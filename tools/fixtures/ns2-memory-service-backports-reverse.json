@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "base_vendor": "edcc311c09eed3a33e5acc373c63a436f662cb5b",
+  "source_vendor": "59574291db02cbbfccd09049b1221e7847b175e4",
+  "description": "Exact reversible successor to frozen Eden backport replay; physical 34-bit and SVC remote-memory 31/32 with no PS5 physical pool",
+  "reviewed_sources": {
+    "src/core/device_memory_manager.h": {
+      "before_sha256": "4f762c2d5560c9988c8842a8b461acb42e52c154cb8d4fc69e35248be1c82bc9",
+      "before_bytes": 11309,
+      "after_sha256": "87ac22b80a44c637d01f031bb26ab573a000baba5b522269c1f6f2cd4e9ba17a",
+      "after_bytes": 11442,
+      "hunks": [
+        {
+          "before": "<< device_virtual_bits;\n    static constexpr size_t physical_min_bits = 32;\n    static constexpr size_t physical_max_bits = 33;\n    static constexpr size_t page_bits = 12;\n    static constexpr size_t page_s",
+          "after": "<< device_virtual_bits;\n    static constexpr size_t physical_min_bits = 32;\n    // Lichii 2835fec7 / bb7b14ac: Switch 2 10/12 GiB layouts require\n    // physical addresses above the historical 33-bit ceiling.\n    static constexpr size_t physical_max_bits = 34;\n    static constexpr size_t page_bits = 12;\n    static constexpr size_t page_s"
+        }
+      ]
+    },
+    "src/core/hle/kernel/svc/svc_info.cpp": {
+      "before_sha256": "fca95ca301fac4bda2d38f53e3254ee2cb287ad7fa6d8556ecf155cfefc79f56",
+      "before_bytes": 14845,
+      "after_sha256": "96d07b8eb9d30493576abba46e40ebe8b2b6c0cbd7428abc81e9fd6d12395785",
+      "after_bytes": 15493,
+      "hunks": [
+        {
+          "before": "Type::Nx2RegionAddress:\n    case InfoType::Nx2RegionSize:\n    case InfoType::Nx2VammSize:\n    case InfoType::AliasRegionExtraSize: {\n        R_UNLESS(info_sub_id == 0, ResultInvalidEnumValue);\n\n        const auto& handle_table = GetCurrentProcess(system.Kernel()).GetHandleTable();\n        KScopedAutoObject process = handle_table.GetObject<KProcess>(system.Kernel(), handle);\n        R_UNLESS(process.IsNotNull(), ResultInvalidHandle);\n\n        switch (info_id_type) {\n        case InfoType::CoreMask:\n            *result = process->GetCoreMask();\n            R_SUCCEED();\n        case InfoType::PriorityMask:\n            *result = process->GetPriorityMask();\n            R_SUCCEED();\n        case InfoType::AliasRegionAddress:\n            *result = GetInteger(process->GetPageTable().GetAliasRegionStart());\n            R_SUCCEED();\n        case InfoType::AliasRegionSize:\n            *result = process->GetPageTable().GetAliasRegionSize();\n            R_SUCCEED();\n        case InfoType::HeapRegionAddress:\n            *result = GetInteger(process->GetPageTable().GetHeapRegionStart());\n            R_SUCCEED();\n        case InfoType::HeapRegionSize:\n            *result = process->GetPageTable().GetHeapRegionSize();\n            R_SUCCEED();\n        case InfoType::Nx2RegionAddress:\n        case InfoType::Nx2RegionSize: {\n            // Lichii and Eglantine reserve the upper half of the process alias region for the\n            // Switch 2 VAMM range. MapPhysicalMemory already operates in the alias region, so\n            // this exposes virtual address space without inventing a physical remote-memory pool.\n            auto& page_table = process->GetPageTable();\n            const u64 half = page_table.GetAliasRegionSize() / 2;\n            *result = info_id_type == InfoType::Nx2RegionAddress\n                          ? GetInteger(page_table.GetAliasRegionStart()) + half\n                          : half;\n            LOG_WARNING(Kernel_SVC, \"(STUBBED) Switch 2 InfoType {}, returning {:#x}\",\n                        static_cast<u32>(info_id_type), *result);\n            R_SUCCEED();\n        }\n        case InfoType::Nx2VammSize:\n            // Switch 2 SDKs use InfoType 3",
+          "after": "Type::Nx2RegionAddress:\n    case InfoType::Nx2RegionSize:\n    case InfoType::Nx2RemoteMemorySize:\n    case InfoType::Nx2RemoteMemoryUsed:\n    case InfoType::Nx2VammSize:\n    case InfoType::AliasRegionExtraSize: {\n        R_UNLESS(info_sub_id == 0, ResultInvalidEnumValue);\n\n        const auto& handle_table = GetCurrentProcess(system.Kernel()).GetHandleTable();\n        KScopedAutoObject process = handle_table.GetObject<KProcess>(system.Kernel(), handle);\n        R_UNLESS(process.IsNotNull(), ResultInvalidHandle);\n\n        switch (info_id_type) {\n        case InfoType::CoreMask:\n            *result = process->GetCoreMask();\n            R_SUCCEED();\n        case InfoType::PriorityMask:\n            *result = process->GetPriorityMask();\n            R_SUCCEED();\n        case InfoType::AliasRegionAddress:\n            *result = GetInteger(process->GetPageTable().GetAliasRegionStart());\n            R_SUCCEED();\n        case InfoType::AliasRegionSize:\n            *result = process->GetPageTable().GetAliasRegionSize();\n            R_SUCCEED();\n        case InfoType::HeapRegionAddress:\n            *result = GetInteger(process->GetPageTable().GetHeapRegionStart());\n            R_SUCCEED();\n        case InfoType::HeapRegionSize:\n            *result = process->GetPageTable().GetHeapRegionSize();\n            R_SUCCEED();\n        case InfoType::Nx2RegionAddress:\n        case InfoType::Nx2RegionSize: {\n            // Lichii and Eglantine reserve the upper half of the process alias region for the\n            // Switch 2 VAMM range. MapPhysicalMemory already operates in the alias region, so\n            // this exposes virtual address space without inventing a physical remote-memory pool.\n            auto& page_table = process->GetPageTable();\n            const u64 half = page_table.GetAliasRegionSize() / 2;\n            *result = info_id_type == InfoType::Nx2RegionAddress\n                          ? GetInteger(page_table.GetAliasRegionStart()) + half\n                          : half;\n            LOG_WARNING(Kernel_SVC, \"(STUBBED) Switch 2 InfoType {}, returning {:#x}\",\n                        static_cast<u32>(info_id_type), *result);\n            R_SUCCEED();\n        }\n        case InfoType::Nx2RemoteMemorySize:\n        case InfoType::Nx2RemoteMemoryUsed:\n            // Current Lichii returns zero for titles without an explicitly qualified\n            // remote-memory pool. Preserve that protocol success on base PS5 without\n            // copying its desktop/title-specific 512 MiB physical reservation.\n            *result = 0;\n            LOG_WARNING(Kernel_SVC, \"(STUBBED) Switch 2 InfoType {}, returning 0 (no qualified PS5 remote-memory pool)\",\n                        static_cast<u32>(info_id_type));\n            R_SUCCEED();\n        case InfoType::Nx2VammSize:\n            // Switch 2 SDKs use InfoType 3"
+        }
+      ]
+    },
+    "src/core/hle/kernel/svc_types.h": {
+      "before_sha256": "9279f2f72c0ac8c1abc9352dafd4fae6f9f2500a0b0fae47ae4312a081098ce9",
+      "before_bytes": 14523,
+      "after_sha256": "fe9c75c0a63cf3b5519de3790230e8828780dcd1988e023bc75dc5760d96cafd",
+      "after_bytes": 14838,
+      "hunks": [
+        {
+          "before": "e.\n    Nx2RegionAddress = 29,\n    Nx2RegionSize = 30,\n\n    // Switch 2 kernels: page granule queried by the SDK during VAMM / RELRO setup.\n    Nx2VammSize = 33,",
+          "after": "e.\n    Nx2RegionAddress = 29,\n    Nx2RegionSize = 30,\n\n    // Switch 2 kernels: remote-memory allowance and current usage. On base-PS5 Encore\n    // these protocol values are exposed as zero unless a title-specific, host-qualified\n    // physical policy exists; answering the query must not invent guest RAM.\n    Nx2RemoteMemorySize = 31,\n    Nx2RemoteMemoryUsed = 32,\n\n    // Switch 2 kernels: page granule queried by the SDK during VAMM / RELRO setup.\n    Nx2VammSize = 33,"
+        }
+      ]
+    }
+  }
+}

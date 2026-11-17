@@ -189,12 +189,12 @@ def replay()->None:
             assert rel in observed and rel in spec['entries'], (
                 'Unexpected replay successor',rel)
             generated=(stage/rel).read_bytes()
-            current=(ACTIVE/rel).read_bytes()
+            current=reverse_ns2_successor(rel,(ACTIVE/rel).read_bytes())
             assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
                 'Historical FW23 patch replay drift',rel)
             assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
                 'Unreviewed integrated FW23 source',rel)
-            assert spec['entries'][rel]['active']==entry['after_sha256']
+            assert spec['entries'][rel]['active']==reviewed_ns2[rel]['after_sha256']
             prior=current.decode('utf-8')
             for hunk in reversed(entry['hunks']):
                 assert prior.count(hunk['after'])==1, (
@@ -217,6 +217,31 @@ def replay()->None:
         assert getinfo['vamm_region_vendor']=='035c0333a05954beaa8810c6e28c1377cf500eec'
         assert getinfo['manifest_receipt_vendor']=='67926ea4b6960eefebf0427929cf299e8e056013'
         assert getinfo['active_vendor'] in {'ffa519db0f68fb0d5d2acf791e381c898a34a175','9e38066a508716fd959477eccf32c7fb2fde3356','e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47'}
+
+        # Review each NS2 successor byte-for-byte against the previously
+        # qualified maintainer overlay before applying the historical reverse.
+        ns2_successor=json.loads(
+            (ROOT/'tools/fixtures/ns2-memory-service-backports-reverse.json').read_text())
+        assert ns2_successor['schema_version']==1
+        reviewed_ns2=ns2_successor['reviewed_sources']
+        assert set(reviewed_ns2)=={
+            'src/core/device_memory_manager.h',
+            'src/core/hle/kernel/svc/svc_info.cpp',
+            'src/core/hle/kernel/svc_types.h',
+        }
+        def reverse_ns2_successor(rel, content):
+            record=reviewed_ns2[rel]
+            assert len(content)==record['after_bytes'] and sha(content)==record['after_sha256'], rel
+            value=content.decode('utf-8')
+            for hunk in reversed(record['hunks']):
+                assert value.count(hunk['after'])==1, rel
+                value=value.replace(hunk['after'],hunk['before'],1)
+            prior=value.encode('utf-8')
+            assert len(prior)==record['before_bytes'] and sha(prior)==record['before_sha256'], rel
+            assert spec['entries'][rel]['active']==record['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==record['after_bytes'], rel
+            return prior
+
         getinfo_sources=getinfo['reviewed_getinfo_sources']
         assert len(getinfo_sources)==2 and len({entry['path'] for entry in getinfo_sources})==2
         for entry in getinfo_sources:
@@ -238,11 +263,15 @@ def replay()->None:
             assert prior.encode('utf-8')==generated, (
                 'GetInfo source not derivable from frozen patch replay',rel)
             observed[rel]=spec['entries'][rel]
-        assert 'Nx2RemoteMemorySize = 31' not in (ACTIVE/'src/core/hle/kernel/svc_types.h').read_text()
-        assert 'Nx2RemoteMemoryUsed = 32' not in (ACTIVE/'src/core/hle/kernel/svc_types.h').read_text()
+        device_rel='src/core/device_memory_manager.h'
+        device_previous=reverse_ns2_successor(device_rel,(ACTIVE/device_rel).read_bytes())
+        assert device_previous==(stage/device_rel).read_bytes(), 'NS2 SMMU precursor replay drift'
+        observed[device_rel]=spec['entries'][device_rel]
+        assert 'Nx2RemoteMemorySize = 31' in (ACTIVE/'src/core/hle/kernel/svc_types.h').read_text()
+        assert 'Nx2RemoteMemoryUsed = 32' in (ACTIVE/'src/core/hle/kernel/svc_types.h').read_text()
         print('NS2_GETINFO_EXACT_POST_BACKPORT_REPLAY_PASS',
               f'successors={len(getinfo_sources)}',
-              'info_types=29,30,33', 'remote_memory_31_32=unimplemented',
+              'info_types=29,30,31,32,33', 'remote_memory_31_32=zero_without_pool',
               'historical_receipts=untouched')
 
         # Vendor #178 moves the reviewed HTTPS-only JSON POST primitive into

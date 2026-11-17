@@ -17,9 +17,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import struct
+import tempfile
 from typing import Iterable
 
 UPSTREAM_COMMIT = "6b34d6ee1398e27080bda6b64cc7b790e30c579e"
@@ -396,9 +398,22 @@ def main() -> None:
         sources = {path.resolve() for _, path in args.source}
         if output in sources:
             parser.error("--output must not replace a source archive")
-        temporary = output.with_name(output.name + ".tmp")
-        temporary.write_text(payload)
-        temporary.replace(output)
+        # A fixed "<output>.tmp" may be a user-supplied archive (or a
+        # symlink to one). Never truncate it while creating the manifest.
+        # Exclusive, random same-directory staging keeps replace atomic
+        # without touching any existing source or neighboring file.
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=output.parent,
+                prefix=f".{output.name}.", suffix=".tmp", delete=False,
+            ) as staged:
+                temporary = Path(staged.name)
+                staged.write(payload)
+            os.replace(temporary, output)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
     else:
         print(payload, end="")
 

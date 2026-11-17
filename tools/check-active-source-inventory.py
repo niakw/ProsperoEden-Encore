@@ -96,6 +96,7 @@ shared_ns2_kernel_owners = {
     "ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp",
     "ns2-runtime/kernel/core/hle/kernel/svc/svc_physical_memory.cpp",
     "ns2-runtime/process/core/core.cpp",
+    "ns2-runtime/process/core/hle/kernel/k_process.cpp",
 }
 assert shared_ns2_kernel_owners <= set(physical_all), (
     "Missing shipping NS2 kernel overlays", sorted(shared_ns2_kernel_owners - set(physical_all))
@@ -108,6 +109,9 @@ for relative in shared_ns2_kernel_owners:
     if relative.startswith("ns2-runtime/kernel/core/"):
         assert relative.removeprefix("ns2-runtime/kernel/core/") in kernel_select
 assert 'ns2-runtime/process/core/core.cpp' in kernel_select
+assert 'set(EDEN_NS2_KPROCESS_SOURCE' in kernel_select
+assert 'ns2-runtime/process/core/hle/kernel/k_process.cpp' in kernel_select
+assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")' in kernel_select
 print("ENCORE_SHARED_NS2_KERNEL_SOURCE_PASS", f"new_shipping={len(shared_ns2_kernel_owners)}")
 shared_ns2_audio_owners = {
     "ns2-runtime/audio/core/hle/service/audio/audio.cpp",

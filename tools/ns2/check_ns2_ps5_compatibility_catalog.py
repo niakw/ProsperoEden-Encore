@@ -19,7 +19,7 @@ def fail(message: str) -> None:
 
 def main() -> None:
     data = json.loads(CATALOG.read_text())
-    if data.get("schema_version") != 1:
+    if data.get("schema_version") != 2:
         fail("unexpected compatibility catalogue schema")
 
     policy = data["generated_policy"]
@@ -85,6 +85,35 @@ def main() -> None:
     if "gamefile_shader_warm_extract" in required_by_games:
         fail("static shader extraction is not yet a shipping compatibility requirement")
 
+    future = data.get("future_profiles", {})
+    if not isinstance(future, dict) or not future:
+        fail("future NS2 profiles must remain explicit")
+    for title_id, profile in future.items():
+        if len(title_id) != 16 or any(c not in "0123456789ABCDEF" for c in title_id):
+            fail(f"invalid future title id {title_id!r}")
+        if profile.get("generation") != "NS2":
+            fail(f"{title_id}: future catalogue accepts NS2 profiles only")
+        if profile.get("console_validated") is not False:
+            fail(f"{title_id}: source/upstream profile must not claim console validation")
+        refs = profile.get("upstream_refs")
+        if not isinstance(refs, list) or not refs:
+            fail(f"{title_id}: future profile lost pinned upstream evidence")
+        required = profile.get("required_capabilities", [])
+        if not required:
+            fail(f"{title_id}: future profile has no capability contract")
+        missing = []
+        for capability in required:
+            if capability not in capabilities:
+                fail(f"{title_id}: unknown future capability {capability}")
+            if capabilities[capability].get("implemented") is not True:
+                missing.append(capability)
+        expected_status = "upstream_gap" if missing else "covered_host_only"
+        if profile.get("source_status") != expected_status:
+            fail(
+                f"{title_id}: source_status={profile.get('source_status')!r}, "
+                f"expected {expected_status!r} for missing={missing}"
+            )
+
     raw = CATALOG.read_text()
     forbidden_keys = (
         '"absolute_guest_address"',
@@ -108,6 +137,7 @@ def main() -> None:
         f"capabilities={len(capabilities)}",
         f"implemented={sum(1 for value in capabilities.values() if value['implemented'])}",
         f"known_games={len(data['known_games'])}",
+        f"future_profiles={len(data['future_profiles'])}",
         "console_primary=2",
         "absolute_addresses=runtime_only",
     )

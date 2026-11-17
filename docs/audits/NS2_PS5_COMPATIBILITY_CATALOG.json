@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "generated_policy": {
     "purpose": "Machine-verifiable NS2/PS5 compatibility contracts; no copyrighted shader bytes or guessed game addresses.",
     "absolute_guest_addresses": "runtime_only",
@@ -193,6 +193,90 @@
         ]
       },
       "upstream": "zortos293/Lichii@6df74415631f9e03ed006ff1f8a33683cd6220c7"
+    },
+    "hsetp2_cbuf": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
+          "Lichii #1511 / 19be851d",
+          "case 0x234: case 0x634:",
+          "case 0x434: { // HSETP2.GEU.AND"
+        ],
+        "vendor/tests/ns2_ampere_hsetp2_cbuf_host.py": [
+          "NS2_AMPERE_HSETP2_CBUF_HOST_PASS"
+        ]
+      },
+      "upstream": "zortos293/Lichii#1511@19be851d5846092a2336bde3bf08f29e9ad366b4"
+    },
+    "duskbloods_tld4_negated_cbuf_imad": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": [
+          "Lichii #851 / cdeb7ace",
+          "case 0x364:",
+          "const bool negated_cbuf_addend = opcode == 0x624 && insn.Bits(63, 1);"
+        ],
+        "vendor/tests/ns2_duskbloods_tld4_imad_host.py": [
+          "NS2_DUSKBLOODS_TLD4_IMAD_HOST_PASS"
+        ]
+      },
+      "upstream": "zortos293/Lichii#851@cdeb7acec9247d39b17d4e8c0e5fe8cb38248efd"
+    },
+    "dynamic_texture_found_bit_limit": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/texture_pass.cpp": [
+          "Upstream Lichii 5e33a765 / #1914",
+          "DynamicDescriptorIndexLimit",
+          "return is_bit_index(index) ? 32U : ~0U;"
+        ],
+        "vendor/tests/ns2_dynamic_texture_found_bit_limit_host.py": [
+          "NS2_DYNAMIC_TEXTURE_FOUND_BIT_LIMIT_HOST_PASS"
+        ]
+      },
+      "upstream": "zortos293/Lichii#1914@c9b6e96da6a0d8fdb2ef5d7557645629dc5b2a10"
+    },
+    "ns2_alias_128g_vamm": {
+      "implemented": false,
+      "upstream": [
+        "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
+      ],
+      "reason": "Open upstream candidate: Switch 2 39-bit alias size must reach 128 GiB for two 60 GiB VAMM reservations. Encore must thread generation into page-table sizing without adding a KProcess layout field or breaking the shared 4/6-core ABI."
+    },
+    "shared_store_warp_order": {
+      "implemented": false,
+      "upstream": [
+        "zortos293/Lichii#2082@5fcc5329d0a0a4157b01e27481c43f219a741c49"
+      ],
+      "reason": "Open upstream SPIR-V ordering fix; needs semantic comparison with Encore's PS5 RADV memory/barrier lowering before adoption."
+    },
+    "nvn2_root_tables_1_7": {
+      "implemented": false,
+      "upstream": [
+        "zortos293/Lichii#2089@f9e03df9eb8e89c555837a1f86117f6e6804a026"
+      ],
+      "reason": "Open Cyberpunk candidate for constant banks 25-31 via root table bank 17; must be adapted to Encore's authenticated native CBUF/resource graph."
+    },
+    "tld_ll_txq_uniform_handle": {
+      "implemented": false,
+      "upstream": [
+        "zortos293/Lichii#2090@04593ac9a63da95d266322d0549ae9f9062b0f6f"
+      ],
+      "reason": "Open Cyberpunk candidate; uniform-handle TLD.B.LL/TXQ forms require fail-closed lowering and descriptor tests."
+    },
+    "surface_register_handle_ops": {
+      "implemented": false,
+      "upstream": [
+        "zortos293/Lichii#2093@1a12decc811db8ddff5cc1ea359b078ab55d881e"
+      ],
+      "reason": "Open Cyberpunk candidate for register-handle SUATOM/SURED and buffer SULD/SUST; needs storage/surface ABI and atomic-span validation."
+    },
+    "ampere_ushf_redux_strong_gpu": {
+      "implemented": false,
+      "upstream": [
+        "zortos293/Lichii#2094@187a90bfa87bde02eccf492ff1e9d2cafc79acd6"
+      ],
+      "reason": "Open Cyberpunk candidate for USHF.L.U64.HI, REDUX.AND and LDG.STRONG.GPU; must be matched to Encore's Maxwell lowering and PS5 memory semantics."
     }
   },
   "known_games": {
@@ -246,5 +330,99 @@
     "conditional": [
       "Donkey Kong Bananza NS2 only after MKW crosses the currently failing stage or to distinguish a title-specific path"
     ]
+  },
+  "future_profiles": {
+    "04003F40232DE000": {
+      "name": "Hyrule Warriors: Age of Imprisonment",
+      "generation": "NS2",
+      "required_capabilities": [
+        "hsetp2_cbuf"
+      ],
+      "source_status": "covered_host_only",
+      "console_validated": false,
+      "upstream_refs": [
+        "zortos293/Lichii#1511@19be851d5846092a2336bde3bf08f29e9ad366b4"
+      ]
+    },
+    "0400D1D02399A000": {
+      "name": "The Duskbloods network test",
+      "generation": "NS2",
+      "required_capabilities": [
+        "duskbloods_tld4_negated_cbuf_imad"
+      ],
+      "source_status": "covered_host_only",
+      "console_validated": false,
+      "upstream_refs": [
+        "zortos293/Lichii#851@cdeb7acec9247d39b17d4e8c0e5fe8cb38248efd"
+      ]
+    },
+    "040032B023CA4000": {
+      "name": "Orbitals",
+      "generation": "NS2",
+      "required_capabilities": [
+        "imad_negated_register_addend",
+        "shared_store_warp_order"
+      ],
+      "source_status": "upstream_gap",
+      "console_validated": false,
+      "upstream_refs": [
+        "zortos293/Lichii#2083@0661eb14a49c9b956a585ed3ba684cce598caba0",
+        "zortos293/Lichii#2082@5fcc5329d0a0a4157b01e27481c43f219a741c49"
+      ]
+    },
+    "0400E95004038001": {
+      "name": "Xenoblade Chronicles 2 (Nintendo Switch 2)",
+      "generation": "NS2",
+      "required_capabilities": [
+        "ns2_alias_128g_vamm"
+      ],
+      "source_status": "upstream_gap",
+      "console_validated": false,
+      "upstream_refs": [
+        "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
+      ]
+    },
+    "0400FF500E34A001": {
+      "name": "Xenoblade Chronicles: Definitive Edition (Nintendo Switch 2)",
+      "generation": "NS2",
+      "required_capabilities": [
+        "ns2_alias_128g_vamm"
+      ],
+      "source_status": "upstream_gap",
+      "console_validated": false,
+      "upstream_refs": [
+        "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
+      ]
+    },
+    "0400453019AA8001": {
+      "name": "Xenoblade Chronicles X: Definitive Edition (Nintendo Switch 2)",
+      "generation": "NS2",
+      "required_capabilities": [
+        "ns2_alias_128g_vamm"
+      ],
+      "source_status": "upstream_gap",
+      "console_validated": false,
+      "upstream_refs": [
+        "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
+      ]
+    },
+    "0400DDB020648000": {
+      "name": "Cyberpunk 2077: Ultimate Edition",
+      "generation": "NS2",
+      "required_capabilities": [
+        "nvn2_root_tables_1_7",
+        "tld_ll_txq_uniform_handle",
+        "surface_register_handle_ops",
+        "ampere_ushf_redux_strong_gpu"
+      ],
+      "source_status": "upstream_gap",
+      "console_validated": false,
+      "upstream_refs": [
+        "zortos293/Lichii#2089@f9e03df9eb8e89c555837a1f86117f6e6804a026",
+        "zortos293/Lichii#2090@04593ac9a63da95d266322d0549ae9f9062b0f6f",
+        "zortos293/Lichii#2093@1a12decc811db8ddff5cc1ea359b078ab55d881e",
+        "zortos293/Lichii#2094@187a90bfa87bde02eccf492ff1e9d2cafc79acd6"
+      ]
+    }
   }
 }

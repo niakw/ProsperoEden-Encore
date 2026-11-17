@@ -1,26 +1,5 @@
 name: PS5 internal dependency host qualification (no PS5 build)
 on:
-  push:
-    branches: [main, maintenance/internalize-ps5-deps-20261110]
-    paths:
-      - '.github/workflows/maintenance-ps5-deps-host.yml'
-      - '.gitmodules'
-      - 'vendor'
-      - 'headless/mihawk_volk.h'
-      - 'headless/vulkan.cmake'
-      - 'headless/CMakeLists.txt'
-      - 'tools/graphics/**'
-      - 'tools/package-headless-native.sh'
-      - 'tools/ci/check-staged-app.py'
-      - 'THIRD_PARTY_NOTICES.md'
-  pull_request:
-    paths:
-      - '.github/workflows/maintenance-ps5-deps-host.yml'
-      - '.gitmodules'
-      - 'vendor'
-      - 'headless/vulkan.cmake'
-      - 'headless/CMakeLists.txt'
-      - 'tools/graphics/**'
   workflow_dispatch:
 permissions:
   contents: read

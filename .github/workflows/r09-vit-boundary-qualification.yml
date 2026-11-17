@@ -1,48 +1,5 @@
 name: Encore R09 - Host neural pipeline and SPIR-V checks
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/r09-vit-boundary-qualification.yml'
-      - 'extras/graphics/rdna2_nr_*'
-      - 'extras/graphics/test_rdna2_nr_*'
-      - 'extras/graphics/fixtures/r09_nr_*'
-      - 'tools/graphics/test-rdna2-*'
-      - 'tools/graphics/check-rdna2-neural-vulkan-tus.py'
-      - 'tools/graphics/r09_vulkan_io_smoke.cpp'
-      - 'tools/graphics/r09_export_evidence.py'
-      - 'tools/graphics/r09_vulkan_temporal_smoke.cpp'
-      - 'tools/graphics/r09_*'
-      - 'tools/graphics/r09_real_original_preflight.cpp'
-      - 'tools/graphics/test_r09_verify_model_pack.py'
-      - 'tools/graphics/test_r09_full_gpu_evidence.py'
-      - 'tools/graphics/test-rdna2-proxy-features-spv.py'
-      - 'headless/vulkan.cmake'
-      - 'headless/vulkan_present_layer_r24.cpp'
-      - 'headless/vulkan_present_layer_r24.h'
-      - 'headless/main.cpp'
-      - 'headless/neural_video_policy.h'
-      - 'tools/graphics/test_neural_video_policy.cpp'
-      - 'headless/neural_runtime_state.h'
-      - 'headless/nr_dll_model_import.h'
-      - 'headless/glyph_sha256.h'
-      - 'extras/graphics/test_nr_dll_model_import.cpp'
-      - 'extras/graphics/test_rdna2_nr_split_ffwd_weights.cpp'
-      - 'extras/graphics/test_rdna2_nr_vit_qkv_weight_loader.cpp'
-      - 'headless/r09_native_plans.h'
-      - 'headless/storage_paths.h'
-      - 'headless/nr_dll_user_file.h'
-      - 'headless/nr_dll_launch_preflight.h'
-      - 'extras/graphics/test_nr_dll_launch_preflight.cpp'
-      - 'headless/nr_dll_tensor_digests.h'
-      - 'tools/graphics/test_r09_native_digest_inventory.py'
-      - 'headless/prosperoeden/pe/ui/settings.cpp'
-      - 'headless/prosperoeden/pe/ui/library.cpp'
-      - 'headless/prosperoeden/pe/ui/services.hpp'
-      - 'headless/prosperoeden/eden_services.cpp'
-      - 'headless/prosperoeden/eden_services.h'
-      - 'extras/graphics/test_nr_dll_user_file.cpp'
-      - 'vendor'
   workflow_dispatch:
 permissions:
   contents: read

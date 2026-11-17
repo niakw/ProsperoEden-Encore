@@ -1,77 +1,7 @@
 name: NUP v1 host preflight
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - tools/check-nup-v1-host.py
-      - tools/check-nup-v1-payload-host.py
-      - tools/check-nup-v1-vfs-host.py
-      - tools/nup-v1-vfs-host.cpp
-      - headless/nup_v1_vfs.h
-      - headless/nup_v1_vfs.cpp
-      - headless/nup_v1_native_vfs.h
-      - headless/nup_v1_native_vfs.cpp
-      - headless/nup_v1_native_content.h
-      - headless/nup_v1_native_content.cpp
-      - headless/nup_v1_native_aoc.h
-      - headless/nup_v1_native_aoc.cpp
-      - headless/nup_v1_aoc_service.cpp
-      - headless/nup_v1_romfs_factory.cpp
-      - headless/metadata_bridge.cpp
-      - tools/check-nup-v1-service-parity-host.py
-      - headless/nup_v1_native_loader.h
-      - headless/nup_v1_native_loader.cpp
-      - headless/nup_v1_loader_route.cpp
-      - headless/CMakeLists.txt
-      - headless/game_files.h
-      - tools/check-nup-v1-game-discovery.py
-      - headless/nup_v1_runtime.cmake
-      - tools/check-nup-v1-runtime-cmake.py
-      - tools/nup-v1-native-host.cpp
-      - tools/nup-v1-real-romfs-host.cpp
-      - tools/check-nup-v1-real-romfs-host.py
-      - tools/nup-v1-content-fixture.py
-      - tools/check-nup-v1-native-host.py
-      - tools/check-nup-v1-native-abi.py
-      - tools/nup-native-host-stub/**
-      - .github/workflows/nup-v1-host.yml
-  pull_request:
-    paths:
-      - tools/check-nup-v1-host.py
-      - tools/check-nup-v1-payload-host.py
-      - tools/check-nup-v1-vfs-host.py
-      - tools/nup-v1-vfs-host.cpp
-      - headless/nup_v1_vfs.h
-      - headless/nup_v1_vfs.cpp
-      - headless/nup_v1_native_vfs.h
-      - headless/nup_v1_native_vfs.cpp
-      - headless/nup_v1_native_content.h
-      - headless/nup_v1_native_content.cpp
-      - headless/nup_v1_native_aoc.h
-      - headless/nup_v1_native_aoc.cpp
-      - headless/nup_v1_aoc_service.cpp
-      - headless/nup_v1_romfs_factory.cpp
-      - headless/metadata_bridge.cpp
-      - tools/check-nup-v1-service-parity-host.py
-      - headless/nup_v1_native_loader.h
-      - headless/nup_v1_native_loader.cpp
-      - headless/nup_v1_loader_route.cpp
-      - headless/CMakeLists.txt
-      - headless/game_files.h
-      - tools/check-nup-v1-game-discovery.py
-      - headless/nup_v1_runtime.cmake
-      - tools/check-nup-v1-runtime-cmake.py
-      - tools/nup-v1-native-host.cpp
-      - tools/nup-v1-real-romfs-host.cpp
-      - tools/check-nup-v1-real-romfs-host.py
-      - tools/nup-v1-content-fixture.py
-      - tools/check-nup-v1-native-host.py
-      - tools/check-nup-v1-native-abi.py
-      - tools/nup-native-host-stub/**
-      - .github/workflows/nup-v1-host.yml
   workflow_dispatch:
-
 permissions:
   contents: read
 

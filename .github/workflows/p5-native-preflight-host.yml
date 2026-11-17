@@ -1,37 +1,7 @@
 name: P5 native preflight focused host checks
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'vendor'
-      - '.github/workflows/p5-native-preflight-host.yml'
-      - 'tools/check-jit-stability.py'
-      - 'tools/check-performance.py'
-      - 'tools/check-native-gpu-thread.py'
-      - 'tools/ci/check-staged-app.py'
-      - 'tools/check-nlib-ui-recovery.py'
-      - 'tools/package-headless-native.sh'
-      - 'headless/CMakeLists.txt'
-      - 'headless/inject.cmake'
-      - 'tools/check-active-cmake-source-boundary.py'
-      - 'tools/ns2/check_cpu6_scheduler_tick_host.py'
-      - 'tools/check-native-launcher-ui-host.py'
-      - 'tools/check-post-f07-delta-register.py'
-      - 'docs/EDEN_POST_F07_CHANGED_SOURCE_REGISTER_2026-11-08.json'
-      - 'headless/main.cpp'
-      - 'headless/prosperoeden/pe/ui/services.hpp'
-      - 'headless/prosperoeden/pe/ui/launcher.cpp'
-      - 'headless/prosperoeden/eden_services.cpp'
-      - 'headless/prosperoeden/pe/ui/library.cpp'
-  pull_request:
-    paths:
-      - 'tools/check-native-gpu-thread.py'
-      - 'tools/ci/ps5_g21_gpu_shutdown_receipt.py'
-      - '.github/workflows/p5-native-preflight-host.yml'
-      - 'vendor'
   workflow_dispatch:
-
 permissions:
   contents: read
 

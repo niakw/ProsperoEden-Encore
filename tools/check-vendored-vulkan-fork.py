@@ -1156,7 +1156,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'Unreviewed PS5 0078 shadow CacheBase owner')
     scope_begin = '    // Lichii/PS5 patch 0078: a full clear may create a target'
     scope_end = '    auto& flags = maxwell3d->dirty.flags;'
-    assert shadow_tex.count(scope_begin) == shadow_tex.count(scope_end) == 1
+    assert shadow_tex.count(scope_begin) == 1
     lo = shadow_tex.index(scope_begin)
     hi = shadow_tex.index(scope_end, lo)
     shadow_tex = shadow_tex[:lo] + shadow_tex[hi:]

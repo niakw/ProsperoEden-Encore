@@ -38,6 +38,29 @@ for snippet in (real_os_initialize,real_os_finalize,real_os_run):
     assert "m_process" in snippet and "Finalize()" in snippet
 
 base=kernel_host.PREFIX
+# Extend only this joined NS2 fixture with the interfaces consumed by the
+# selected Switch-2 KProcess memory-budget code. The public fixture carries
+# the extended ACID body used by the maintained generation parser.
+base=base.replace(
+    "    bool arm64 = true;\n    ProgramAddressSpaceType address_type =",
+    "    bool arm64 = true;\n    bool switch2 = true;\n"
+    "    bool IsSwitch2() const { return switch2; }\n"
+    "    ProgramAddressSpaceType address_type =",
+    1)
+base=base.replace(
+    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
+    "    u64 GetHeapRegionSize() const { return 0x300000000ULL; }\n"
+    "    u64 GetAliasRegionSize() const { return 0x100000000ULL; }\n"
+    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
+    1)
+base=base.replace(
+    "    bool m_is_application=false;\n",
+    "    bool m_is_application=false;\n    u64 m_max_process_memory=0;\n",
+    1)
+assert "bool IsSwitch2() const" in base
+assert "GetHeapRegionSize() const" in base and "GetAliasRegionSize() const" in base
+assert "m_max_process_memory=0" in base
+
 def replace_once(old,new):
     global base
     assert base.count(old)==1,("KProcess host fixture drift",old[:80],base.count(old))
@@ -188,6 +211,11 @@ Loader::AppLoader::Load(Kernel::KProcess& process,Core::System& system) {
     auto result=process.LoadFromMetadata(system.Kernel(),metadata,bytes,
                                          0x200000,0x4000);
     if(result.IsError())return {ResultStatus::ErrorUnableToParseKernelMetadata,{}};
+    Require(metadata.IsSwitch2(), "public extended-ACID fixture lost NS2 identity");
+    Require(process.m_max_process_memory ==
+                process.m_page_table.GetHeapRegionSize() +
+                process.m_page_table.GetAliasRegionSize(),
+            "selected NS2 KProcess did not include alias region in memory budget");
     // Exact maintained LoadModule writes public NSO segments after the
     // real KProcess page-table owner admitted its mapping and KAC.
     process.LoadModule(system.Kernel(),image,process.captured.code_address);

@@ -28,10 +28,13 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Verify unchanged main production KProcess and historical N52 receipts
+      - name: Verify selected production KProcess and historical N52 receipts
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          # The selected vendor may advance on a validation branch. Require
+          # checkout/gitlink identity, then let the byte-strict receipt
+          # normalize only reviewed overlays back to immutable N52/H01.
+          test "$(git -C vendor rev-parse HEAD)" = "$(git rev-parse HEAD:vendor)"
           python3 -B tools/ns2/check_process_run_owner.py
           python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
           python3 -B tools/check-native-slab-index-host.py

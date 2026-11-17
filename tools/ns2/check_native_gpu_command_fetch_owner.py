@@ -93,10 +93,16 @@ cache_blob = subprocess.check_output(
     text=True).strip()
 if cache_blob == "469eddd0ea9e0a3498446bf08ab473caac3b76f9":
     write_marker = "device_memory.WriteBlockUnsafe(copy_device_addr, copy_mapped_memory, copy.size);"
-elif cache_blob == "c4ed79a1fe6aec09da8040b7af3901f6184f910b":
+elif cache_blob in {
+    "c4ed79a1fe6aec09da8040b7af3901f6184f910b",
+    "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
+}:
     write_marker = "WriteDownloadedMemory(cpu_written, copy_device_addr, copy_mapped_memory, copy.size);"
     assert "void BufferCache<P>::WriteDownloadedMemory" in buffer_cache
     assert "device_memory.WriteBlockUnsafe(start, data + (start - device_addr), end - start);" in buffer_cache
+    if cache_blob == "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972":
+        assert "Upstream Lichii/Eglantine b13c4c1" in buffer_cache
+        assert "keep_page_gpu_data" in buffer_cache
 else:
     raise AssertionError(("Unreviewed live-fetch BufferCache owner", cache_blob))
 assert download.index("runtime.CopyBuffer(") < download.index("runtime.Finish();") < download.index(write_marker)

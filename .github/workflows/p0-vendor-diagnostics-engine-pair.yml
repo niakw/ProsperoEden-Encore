@@ -15,12 +15,12 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=dcfe3d2384bd800c6139ede672518ea2c66922a6
+          expected=1cfeb182b34a0e82bc5d79761e4c486045d38e16
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
           test "$checked" = "$expected"
-          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = aa3ff8baf97f075d1adf44a9d19335c89403c8e1
+          test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = 01c6880e5a8836da45601b0a3cb7c0fd6c46cf35
           python3 -B vendor/tests/native_msaa_attribute_handle_rebind_host.py
           python3 -B vendor/tests/r457_native_emit_invalid_warning_host.py
           python3 -B vendor/tests/p0_guest_fault_context_source.py
@@ -31,6 +31,10 @@ jobs:
           python3 -B tools/check-fc27-prmt-engine-selection.py
           python3 -B vendor/tests/fc27_maxwell_prmt_operand_forms_source.py
           python3 -B vendor/tests/fc27_cpu_write_download_race_host.py
+          python3 -B vendor/tests/fc27_gpu_page_sibling_preservation_host.py
+          python3 -B vendor/tests/ns2_dynamic_texture_found_bit_limit_host.py
+          python3 -B vendor/tests/ns2_duskbloods_tld4_imad_host.py
+          python3 -B vendor/tests/ns2_ampere_hsetp2_cbuf_host.py
           python3 -B vendor/tests/ns2_qmd_rejected_dispatch_release_host.py
           python3 -B vendor/tests/ns2_ldsm_m88_modes_host.py
           python3 -B vendor/tests/shader_bitfield_uextract_fold_host.py

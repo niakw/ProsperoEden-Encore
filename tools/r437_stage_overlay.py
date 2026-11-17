@@ -11,6 +11,30 @@ import hashlib
 
 _PRODUCTION_BUFFER_BLOB = "469eddd0ea9e0a3498446bf08ab473caac3b76f9"
 _FC27_BUFFER_BLOB = "c4ed79a1fe6aec09da8040b7af3901f6184f910b"
+_FC27_SIBLING_BUFFER_BLOB = "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972"
+fc27_sibling_page_reversal = [
+    (
+        "void BufferCache<P>::WriteMemory(DAddr device_addr, u64 size, bool keep_page_gpu_data) {",
+        "void BufferCache<P>::WriteMemory(DAddr device_addr, u64 size) {",
+    ),
+    (
+        """    // Upstream Lichii/Eglantine b13c4c1: the memory tracker owns whole pages.
+    // A small CPU write therefore clears the tracker's GPU state for its page,
+    // even when other bytes on that page are still newer on the GPU. Preserve
+    // those sibling bytes before the page becomes CPU-owned, otherwise a later
+    // upload can overwrite correct host-buffer data with the stale guest copy.
+    const DAddr page_begin = Common::AlignDown(device_addr, DEVICE_PAGESIZE);
+    const DAddr page_end = Common::AlignUp(device_addr + size, DEVICE_PAGESIZE);
+    if (keep_page_gpu_data && page_end > page_begin &&
+        IsRegionGpuModified(page_begin, page_end - page_begin)) {
+        DownloadMemory(page_begin, page_end - page_begin);
+    }
+
+""",
+        "",
+    ),
+]
+
 fc27_cpu_write_reversal = [
     ("""template <class P>
 void BufferCache<P>::ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges) {
@@ -73,6 +97,14 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    if actual == _FC27_SIBLING_BUFFER_BLOB:
+        for inserted, baseline in fc27_sibling_page_reversal:
+            assert source.count(inserted) == 1, "FC27 sibling-page hunk drift"
+            source = source.replace(inserted, baseline, 1)
+        raw = source.encode("utf-8")
+        restored = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert restored == _FC27_BUFFER_BLOB, "FC27 sibling-page reversal changed unrelated bytes"
+        actual = restored
     if actual == _FC27_BUFFER_BLOB:
         for inserted, baseline in fc27_cpu_write_reversal:
             assert source.count(inserted) == 1, "FC27 CPU-write hunk drift"

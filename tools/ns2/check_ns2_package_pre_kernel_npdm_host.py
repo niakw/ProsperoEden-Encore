@@ -16,7 +16,7 @@ helper=begin+source.split(begin,1)[1].split(end,1)[0]
 for required in ("Loader::FileType::NSP","Loader::FileType::XCI",
                  "Loader::FileType::NCA","metadata.Load(npdm)",
                  "metadata.IsSwitch2()", "EDEN_NS2_PREKERNEL_NPDM",
-                 "GetSecurePartitionNSP()","GetExeFS()"):
+                 "GetSecurePartitionNSP()","GetExeFS()", "direct_extracted_npdm"):
     assert required in helper
 
 cpp=r"""
@@ -117,40 +117,43 @@ int main() {
     auto prog=std::make_shared<File>();prog->kind=Loader::FileType::NCA;prog->exefs=dir2;
     auto pkg=std::make_shared<File>();pkg->kind=Loader::FileType::NSP;pkg->title=0x200;pkg->program=prog;
     auto card=std::make_shared<File>();card->kind=Loader::FileType::XCI;card->secure=pkg;
-    auto extracted=std::make_shared<File>();extracted->directory=dir2;
-    assert(IsSwitch2LaunchProgram(extracted,0,0));
-    assert(IsSwitch2LaunchProgram(prog,0,0));
-    assert(IsSwitch2LaunchProgram(pkg,0x200,0));
-    assert(IsSwitch2LaunchProgram(card,0x200,0));
+    auto extracted=std::make_shared<File>();
+    // Reproduce the PS5 extracted-ExeFS boundary: a bootable main file can
+    // arrive without a preserved containing-directory owner. The direct NPDM
+    // resolved from the launch directory must still select Switch 2.
+    assert(IsSwitch2LaunchProgram(extracted,npdm2,0,0));
+    assert(IsSwitch2LaunchProgram(prog,{},0,0));
+    assert(IsSwitch2LaunchProgram(pkg,{},0x200,0));
+    assert(IsSwitch2LaunchProgram(card,{},0x200,0));
     auto old=std::make_shared<File>();old->directory=dir1;
-    assert(!IsSwitch2LaunchProgram(old,0,0));
+    assert(!IsSwitch2LaunchProgram(old,{},0,0));
     prog->exefs=dir1;
-    assert(!IsSwitch2LaunchProgram(pkg,0x200,0));
-    assert(!IsSwitch2LaunchProgram(card,0x200,0));
+    assert(!IsSwitch2LaunchProgram(pkg,{},0x200,0));
+    assert(!IsSwitch2LaunchProgram(card,{},0x200,0));
     prog->exefs=dir2;
     npdm2->valid=false;
-    assert(!IsSwitch2LaunchProgram(pkg,0x200,0));
+    assert(!IsSwitch2LaunchProgram(pkg,{},0x200,0));
     npdm2->valid=true;
     // The extended ACID already establishes generation. A later NPDM
     // validation failure must not silently switch to a 4 GiB NS1 layout.
     npdm2->late_error=true;
-    assert(IsSwitch2LaunchProgram(extracted,0,0));
-    assert(IsSwitch2LaunchProgram(pkg,0x200,0));
-    assert(IsSwitch2LaunchProgram(card,0x200,0));
+    assert(IsSwitch2LaunchProgram(extracted,npdm2,0,0));
+    assert(IsSwitch2LaunchProgram(pkg,{},0x200,0));
+    assert(IsSwitch2LaunchProgram(card,{},0x200,0));
     npdm2->late_error=false;
     npdm1->late_error=true;
-    assert(!IsSwitch2LaunchProgram(old,0,0));
+    assert(!IsSwitch2LaunchProgram(old,{},0,0));
     npdm1->late_error=false;
     pkg->valid=false;
-    assert(!IsSwitch2LaunchProgram(card,0x200,0));
+    assert(!IsSwitch2LaunchProgram(card,{},0x200,0));
     pkg->valid=true;
     pkg->throwing=true;
-    assert(!IsSwitch2LaunchProgram(pkg,0x200,0));
+    assert(!IsSwitch2LaunchProgram(pkg,{},0x200,0));
     pkg->throwing=false;
     auto missing=std::make_shared<File>(*pkg);missing->program.reset();
-    assert(!IsSwitch2LaunchProgram(missing,0x200,0));
-    assert(!IsSwitch2LaunchProgram({},0,0));
-    assert(IsSwitch2LaunchProgram(card,0x200,0));
+    assert(!IsSwitch2LaunchProgram(missing,{},0x200,0));
+    assert(!IsSwitch2LaunchProgram({}, {},0,0));
+    assert(IsSwitch2LaunchProgram(card,{},0x200,0));
     std::puts("P1_1_NS2_PREKERNEL_CONTAINER_NPDM_PASS");
 }
 """.replace("__HELPER__",helper)

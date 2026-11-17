@@ -1,0 +1,40 @@
+name: NS2 pre-kernel real ProgramMetadata qualification
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'tools/ns2/test_program_metadata.cpp'
+      - '.github/workflows/ns2-prekernel-program-metadata-host.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  program-metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          submodules: true
+          fetch-depth: 1
+      - name: Compile and execute maintained ProgramMetadata parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-ns2-prekernel
+          git clone --depth 1 --branch 12.1.0 https://github.com/fmtlib/fmt.git build-ns2-prekernel/fmt
+          test "$(git -C build-ns2-prekernel/fmt rev-parse HEAD)" = "407c905e45ad75fc29bf0f9bb7c5c2fd3475976f"
+          clang++ -std=c++20 -O1 -fno-omit-frame-pointer \
+            -fsanitize=address,undefined -fno-sanitize-recover=all \
+            -ffunction-sections -fdata-sections -Wl,--gc-sections \
+            -Ibuild-ns2-prekernel/fmt/include \
+            -Ivendor/encore-active/ns2-helpers/include \
+            -Ivendor/encore-active/ns2-runtime/metadata \
+            -Ivendor/sources/eden/src/dynarmic/src \
+            -Ivendor/sources/eden/src \
+            tools/ns2/test_program_metadata.cpp \
+            vendor/encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp \
+            -o build-ns2-prekernel/npdm-real-test
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
+            build-ns2-prekernel/npdm-real-test

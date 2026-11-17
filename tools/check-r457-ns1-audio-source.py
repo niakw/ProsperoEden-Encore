@@ -52,6 +52,14 @@ KNOWN_VENDOR_GRAPH = {
     "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab": "same reviewed graph + exact native GPU dirty-manager complete-type includes; vendor maintenance/tests only otherwise",
     "053acc8ddf30fe65f6376564bbd6efef58f07ddc": "same reviewed NS1/audio/GPU graph + NS2 A64 RETAA/RETAB maintained owner only",
     "ffa519db0f68fb0d5d2acf791e381c898a34a175": "same reviewed graph + RETAA/RETAB + bounded HTTPS JSON POST active backport; no NS1 audio source change",
+    "9e38066a508716fd959477eccf32c7fb2fde3356": "same reviewed NS1/audio owners + PS5 fragment-shuffle fallback; no audio owner change",
+    "e298a9b05732346141b685eb4c9850bfa02d9e58": "same reviewed NS1/audio owners + FC27 fragment fallback + targeted NS2 pre-kernel generation; no audio owner change",
+    "f7ccfda091fd7429f44159318a07391881a3e7c0": "same reviewed NS1/audio owners; NS2 generation logging only after vendor #182; no audio owner change",
+    "92c480e17fedecc21ab4882b76e8507b5aed3771": "same reviewed NS1/audio owners + selected PS5 texture-page publication + NS2 generation receipts; no audio owner change",
+    "7039d7752c5d8b1a53db50be0d8f2f7803867e13": "same reviewed NS1/audio owners + selected PS5 texture-page publication + NS2 generation receipts; parser logger bounded to PS5; no audio owner change",
+    "d3fca0aa188052f0efd2bad102950aeaeeb36ab0": "same reviewed NS1/audio owners + direct extracted-ExeFS NPDM prekernel resolution; no audio owner change",
+    "dfc39fcc087738955b0373b45fa97facdeb2fc47": "same reviewed NS1/audio owners + extracted-ExeFS NPDM + upstream KProcess memory budget; no audio owner change",
+    "b806bc497049819e716ef6de81f2a85312b188ce": "same reviewed NS1/audio owners + bounded PS5 KProcess stack/context receipts; no audio owner change",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()

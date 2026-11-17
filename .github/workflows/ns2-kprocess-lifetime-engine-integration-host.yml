@@ -28,23 +28,34 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - name: Verify unchanged main production KProcess and historical N52 receipts
+      - name: Verify selected production KProcess and historical N52 receipts
         run: |
           set -euo pipefail
-          test "$(git -C vendor rev-parse HEAD)" = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
+          # The selected vendor may advance on a validation branch. Require
+          # checkout/gitlink identity, then let the byte-strict receipt
+          # normalize only reviewed overlays back to immutable N52/H01.
+          test "$(git -C vendor rev-parse HEAD)" = "$(git rev-parse HEAD:vendor)"
           python3 -B tools/ns2/check_process_run_owner.py
           python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
           python3 -B tools/check-native-slab-index-host.py
       - name: Isolate reviewed vendor PR111 SHA, never move engine gitlink
         run: |
           set -euo pipefail
-          git -C vendor fetch --no-tags --depth=1 origin refs/heads/fix/nov13-ns2-kprocess-unlinked-failed-load
-          git -C vendor checkout --detach FETCH_HEAD
+          # The historical branch was cleaned after review; pin the immutable
+          # commit itself so this oracle survives branch deletion.
+          git -C vendor fetch --no-tags --depth=1 origin c6541bf15d1841a996c60b8086f5149b51828df0
+          git -C vendor checkout --detach c6541bf15d1841a996c60b8086f5149b51828df0
           test "$(git -C vendor rev-parse HEAD)" = "c6541bf15d1841a996c60b8086f5149b51828df0"
           python3 -B tools/ns2/check_process_run_owner.py
           python3 -B tools/ns2/check_native_process_handoff_transaction_host.py
           python3 -B tools/check-native-slab-index-host.py
           python3 -B vendor/tests/ns2_kprocess_failed_load_list_host.py
+          # Historical PR111 is an isolated oracle only. Restore the exact
+          # production gitlink before current-source inventory and joined
+          # KProcess/NPDM fixtures below.
+          selected_vendor="$(git rev-parse HEAD:vendor)"
+          git -C vendor checkout --detach "$selected_vendor"
+          test "$(git -C vendor rev-parse HEAD)" = "$selected_vendor"
       - name: Verify selected CMake/HLE ownership and immutable native source catalog
         run: |
           set -euo pipefail

@@ -136,6 +136,7 @@ private:
     u64 loading_artwork_tick{};
     bool loading_artwork_unavailable{};
 #endif
+    bool loading_boot_trace{true};
     Frame applet_frame;
 };
 

@@ -28,7 +28,7 @@ assert blob(ORIG_SOURCE)=="676e5820a592b194d0c72ee61bfa67a0fa29f45a"
 assert blob(ORIG_HEADER)=="00cd3f5d4d9571b4c8de944e3aec8988d11ccda5"
 assert CAND_SOURCE.is_file()==CAND_HEADER.is_file(), "Half-selected NVDEC source/header ABI"
 if CAND_SOURCE.exists():
-    expected_ff="1f3834ef66b97033fc662d7c7c9ee3456cb62bca" if CAND_VIC.is_file() else "4f12f3cc625b5d74f72272b9ac156c8be7a839e0"
+    expected_ff="2eadc437cec5559560e5aaf849dd3b6446782e99" if CAND_VIC.is_file() else "4f12f3cc625b5d74f72272b9ac156c8be7a839e0"
     assert blob(CAND_SOURCE)==expected_ff
     assert blob(CAND_HEADER)=="4bca3f84dbc224e925e18c28001286ee0e337448"
     src=CAND_SOURCE.read_text()
@@ -88,17 +88,19 @@ print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
 assert blob(ORIG_VIC)=="1a89f3de06981f95be9e5dc743a7c36b8ab6c4cf"
 if CAND_VIC.exists():
     assert CAND_SOURCE.is_file() and CAND_HEADER.is_file()
-    assert blob(CAND_VIC)=="279255ee6527d6fc13b77147f73168917e427ea8"
+    assert blob(CAND_VIC)=="48008fc5f3b05c3e95432827c03e20b815cce21c"
     vic_text=CAND_VIC.read_text()
     ff_text=CAND_SOURCE.read_text()
     assert vic_text.count("EDEN_NVDEC_STAGE stage=vic_input")==2
     assert vic_text.count("EDEN_NVDEC_STAGE stage=vic_output")==2
     assert ff_text.count("EDEN_NVDEC_STAGE stage=decode")==2
-    # Vendor #150 mirrors the already-bounded receipts to stderr only when
-    # Detailed Logging is explicitly enabled; decode/VIC behavior is unchanged.
-    assert "EncoreDetailedVideoLogEnabled()" in ff_text and "EncoreDetailedVideoLogEnabled()" in vic_text
-    assert "eden_native_detailed_logging && eden_native_detailed_logging()" in ff_text
-    assert "eden_native_detailed_logging && eden_native_detailed_logging()" in vic_text
+    # Current PS5 diagnostic mirrors only the first bounded decode/VIC receipts
+    # to the standard console trace, so ordinary user logs can separate decode,
+    # VIC input and VIC output without enabling expensive detailed logging.
+    assert "EncoreDetailedVideoLogEnabled()" not in ff_text
+    assert "EncoreDetailedVideoLogEnabled()" not in vic_text
+    assert "eden_native_detailed_logging" not in ff_text
+    assert "eden_native_detailed_logging" not in vic_text
     assert ff_text.count("std::fprintf(stderr") >= 1
     assert vic_text.count("std::fprintf(stderr") >= 2
 

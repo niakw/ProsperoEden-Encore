@@ -18,6 +18,23 @@ start="AppLoader_DeconstructedRomDirectory::LoadResult AppLoader_DeconstructedRo
 end="\n#ifdef EDEN_NS2_GUEST_COUNTER\n    // This is the real KProcess loader"
 assert code.count(start)==code.count(end)==1
 actual=start+code.split(start,1)[1].split(end,1)[0]
+generation_receipt='''    // The preliminary generation probe and this effective patched loader
+    // are deliberately separate. Report the outcome even for Switch 1
+    // classifications; previously the NS2-only identity receipt could be
+    // absent, hiding a wrong-generation classification behind a guest PC=4.
+    // No filenames, user paths, keys or NPDM bytes leave the runtime.
+    LOG_INFO(Loader,
+             "EDEN_EXEFS_GENERATION title={:016x} switch2={} extended_acid={}"
+             " npdm_bytes={} update_override={} effective_main={}",
+             metadata.GetTitleID(), int(metadata.IsSwitch2()),
+             int(metadata.UsesExtendedAcid()), npdm->GetSize(), int(override_update),
+             int(bool(dir->GetFile("main"))));
+'''
+assert actual.count(generation_receipt)==1
+# The bounded executable fixture deliberately tests only early admission.
+# The generation receipt has its own exact source/ordering tests and depends
+# on the full logger/metadata/VFS interfaces not mocked by this tiny fixture.
+actual=actual.replace(generation_receipt,"",1)
 # This fixture exercises ONLY the real early null/NPDM/NSO admissions.
 # Vendor #105 added a full extracted-update VFS overlay in the middle.
 # That complete layer is qualified separately in its own exact-source
@@ -25,8 +42,17 @@ actual=start+code.split(start,1)[1].split(end,1)[0]
 import hashlib
 raw=OWNER.read_bytes()
 owner_blob=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-assert owner_blob == "e8c227b4420ebc38055e3e4c331f39fb6f755595", (
-    "Unreviewed selected NS2 loader source; requalify executable fixture",owner_blob)
+expected_owner="e8c227b4420ebc38055e3e4c331f39fb6f755595"
+if owner_blob != expected_owner:
+    # Vendor #183 adds one bounded generation receipt after successful NPDM
+    # Reload. Reverse exactly that diagnostics-only block and require the
+    # executable loader owner underneath to remain byte-identical.
+    text=raw.decode()
+    assert text.count(generation_receipt)==1, ("Unreviewed selected NS2 loader source; missing reviewed receipt",owner_blob)
+    prior=text.replace(generation_receipt,"",1).encode()
+    restored=hashlib.sha1(b"blob "+str(len(prior)).encode()+bytes([0])+prior).hexdigest()
+    assert restored == expected_owner, (
+        "Unreviewed selected NS2 loader source; requalify executable fixture",owner_blob,restored)
 overlay_start=actual.index("    // Loose ExeFS content can have most of its RomFS")
 overlay_end=actual.index("    // Read meta to determine title ID",overlay_start)
 overlay=actual[overlay_start:overlay_end]

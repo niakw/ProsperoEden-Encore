@@ -2,7 +2,7 @@
 """N60: exact vendor-owned ASTC cache bridge parity; no native header generator."""
 from pathlib import Path
 import subprocess
-from native_astc_vendor_parity import reverse_r23_checked_astc
+from native_astc_vendor_parity import reverse_r23_checked_astc, strip_post_r23_active_image_pages
 
 ROOT = Path(__file__).resolve().parents[2]
 PIN = ROOT / "vendor/sources/eden/src/video_core/texture_cache"
@@ -86,8 +86,9 @@ impl_native = native_block(tex, impl_footer)
 assert impl_native == native_block(
     (VULKAN / "texture_cache.h").read_text(), impl_footer
 ), "N60 ASTC native implementation ABI diverged from shared Vulkan owner"
-legacy_tex = reverse_r23_checked_astc(ROOT, "texture_cache.h", tex).replace(
-    impl_native + "\n", "", 1)
+legacy_tex = reverse_r23_checked_astc(
+    ROOT, "texture_cache.h", strip_post_r23_active_image_pages(tex)
+).replace(impl_native + "\n", "", 1)
 legacy_sha = subprocess.run(
     ["git", "hash-object", "--stdin"], input=legacy_tex,
     text=True, check=True, capture_output=True
@@ -98,7 +99,7 @@ legacy_sha = subprocess.run(
 owner_full_sha = subprocess.check_output([
     "git", "hash-object", str(OWNER / "texture_cache.h")
 ], text=True).strip()
-assert owner_full_sha == "da6ab6dcea2a1c02fcb2e862d111dc410b025d66", (
+assert owner_full_sha == "7c2ceac388905a883abbcf8354d1b61e66ec2f77", (
     "N60/R4 ASTC selected source owner drift", owner_full_sha
 )
 assert legacy_sha == "77f6051ea65933df920669ad61499f5847ad7516", (

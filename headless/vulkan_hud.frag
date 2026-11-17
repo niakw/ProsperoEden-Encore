@@ -5,7 +5,9 @@ layout(push_constant) uniform Text { uint glyphs[24]; uint width; uint x; uint y
 layout(location = 0) out vec4 color;
 #include "loading_wordmark.glsl"
 #include "loading_scene.glsl"
+#ifdef EDEN_QUICK_MENU
 #include "vulkan_menu_font.glsl"
+#endif
 // Matches pe::ui::theme::apply_palette: 4 palettes × 5 accents.
 vec3 color24(uint rgb) {
     return vec3(float((rgb>>16u)&255u),float((rgb>>8u)&255u),
@@ -32,7 +34,11 @@ void main() {
     // milliseconds of the loading scene. No texture or guest frame readback.
     // Menu-only bit tag. The normal FPS HUD and loading-time path
     // keep their previous push-constant contract.
+#ifdef EDEN_QUICK_MENU
     bool quick = (text.loading & 0xfff00000u) == 0xff100000u;
+#else
+    const bool quick = false;
+#endif
     uint kind = text.loading & 15u;
     uint style = (text.loading >> 8u) & 63u;
     uint palette = style % 4u;
@@ -84,6 +90,7 @@ void main() {
     // from the same .pefont. The ordinary FPS HUD retains the compact legacy
     // 3x5 path below, so this change cannot perturb its established ABI.
     float menu_alpha = 0.0;
+#ifdef EDEN_QUICK_MENU
     if (menu_row && p.x >= 0 && p.y >= 0) {
         float menu_scale = max(float(text.width) / 1080.0, 0.001);
         ivec2 menu_px = ivec2(vec2(p) / menu_scale);
@@ -100,13 +107,14 @@ void main() {
             int origin_y = int((packed >> 25u) & 0x7fu);
             if (origin_y >= 64) origin_y -= 128;
             if (slot == 0u || slot >= uint(MENU_FONT_SLOT_COUNT)) continue;
-            ivec4 metric = MENU_FONT_METRICS[int(slot)];
+            ivec4 metric = menuFontMetric(slot);
             int gx = menu_px.x - (origin_x + metric.x);
             int gy = menu_px.y - (MENU_FONT_BASELINE + origin_y + metric.y);
             if (gx >= 0 && gy >= 0 && gx < metric.z && gy < metric.w)
                 menu_alpha = max(menu_alpha, menuFontSlotAlpha(slot, gx, gy));
         }
     }
+#endif
     bool ink = false;
     if (!menu_row && p.x >= 0 && p.y >= 0) {
         ivec2 cell = ivec2(vec2(p) / cell_size);

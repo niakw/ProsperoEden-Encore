@@ -18,6 +18,11 @@ sys.path.insert(0,str(Path(__file__).resolve().parent))
 import test_real_kprocess_init_guest_rollback as kernel_host
 
 PROCESS_SOURCE=(ROOT/"vendor/encore-active/ns2-runtime/process/core/hle/service/os/process.cpp").read_text()
+CMAKE=(ROOT/"headless/CMakeLists.txt").read_text()
+assert 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
+assert 'ns2-runtime/process/core/hle/kernel/k_process.cpp' in CMAKE
+assert 'list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")' in CMAKE
+assert 'list(APPEND eden_ns2_process_sources "${EDEN_NS2_KPROCESS_SOURCE}")' in CMAKE
 
 def extract_owner(start,stop):
     assert PROCESS_SOURCE.count(start)==1 and stop in PROCESS_SOURCE.split(start,1)[1]
@@ -33,6 +38,29 @@ for snippet in (real_os_initialize,real_os_finalize,real_os_run):
     assert "m_process" in snippet and "Finalize()" in snippet
 
 base=kernel_host.PREFIX
+# Extend only this joined NS2 fixture with the interfaces consumed by the
+# selected Switch-2 KProcess memory-budget code. The public fixture carries
+# the extended ACID body used by the maintained generation parser.
+base=base.replace(
+    "    bool arm64 = true;\n    ProgramAddressSpaceType address_type =",
+    "    bool arm64 = true;\n    bool switch2 = true;\n"
+    "    bool IsSwitch2() const { return switch2; }\n"
+    "    ProgramAddressSpaceType address_type =",
+    1)
+base=base.replace(
+    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
+    "    u64 GetHeapRegionSize() const { return 0x300000000ULL; }\n"
+    "    u64 GetAliasRegionSize() const { return 0x100000000ULL; }\n"
+    "    bool CanContain(u64,std::size_t,KMemoryState)const{return !fail_containment;}\n",
+    1)
+base=base.replace(
+    "    bool m_is_application=false;\n",
+    "    bool m_is_application=false;\n    u64 m_max_process_memory=0;\n",
+    1)
+assert "bool IsSwitch2() const" in base
+assert "GetHeapRegionSize() const" in base and "GetAliasRegionSize() const" in base
+assert "m_max_process_memory=0" in base
+
 def replace_once(old,new):
     global base
     assert base.count(old)==1,("KProcess host fixture drift",old[:80],base.count(old))
@@ -183,6 +211,11 @@ Loader::AppLoader::Load(Kernel::KProcess& process,Core::System& system) {
     auto result=process.LoadFromMetadata(system.Kernel(),metadata,bytes,
                                          0x200000,0x4000);
     if(result.IsError())return {ResultStatus::ErrorUnableToParseKernelMetadata,{}};
+    Require(metadata.IsSwitch2(), "public extended-ACID fixture lost NS2 identity");
+    Require(process.m_max_process_memory ==
+                process.m_page_table.GetHeapRegionSize() +
+                process.m_page_table.GetAliasRegionSize(),
+            "selected NS2 KProcess did not include alias region in memory budget");
     // Exact maintained LoadModule writes public NSO segments after the
     // real KProcess page-table owner admitted its mapping and KAC.
     process.LoadModule(system.Kernel(),image,process.captured.code_address);
@@ -288,7 +321,13 @@ os_tail=os_tail.replace("__EXPECTED_REGISTERED__",
 main_helpers=kernel_host.TEST.split("static void VerifyCase(",1)[0]
 assert "ParseKnownPublicFixture" in main_helpers and "PrepareGuestImage" in main_helpers
 with tempfile.TemporaryDirectory(prefix="eden-h01-joined-kernel-os-") as tmp:
-    for name,owner_path in [kernel_host.OWNERS[1]]:
+    # The synthetic setup functions are reused from the canonical host fixture,
+    # but execute the exact CMake-selected NS2 KProcess, not the older eden-core
+    # owner. Its OWNERS tuples have two fields, not three, and relying on that
+    # list silently binds the wrong translation unit after the NS2 override.
+    selected = ROOT / "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp"
+    assert selected.is_file() and 'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE
+    for name,owner_path in [("shipping_ns2", selected)]:
         source=owner_path.read_text()
         code=base+"\n"+kernel_host.actual_initializer(source)+"\n"
         code+=kernel_host.unchanged_member(source)+"\n"

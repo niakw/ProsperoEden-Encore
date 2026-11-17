@@ -28,16 +28,17 @@ args.output.parent.mkdir(parents=True, exist_ok=True)
 if args.spv_dir:
     args.spv_dir.mkdir(parents=True, exist_ok=True)
 
-def build(stage: str, source: pathlib.Path, variable: str) -> tuple[str, list[int]]:
+def build(stage: str, source: pathlib.Path, variable: str, quick: bool = False) -> tuple[str, list[int]]:
     if args.spv_dir:
-        spv = args.spv_dir / f"{source.name}.spv"
+        spv = args.spv_dir / (f"{source.name}.quick.spv" if quick else f"{source.name}.spv")
         cleanup = None
     else:
         cleanup = tempfile.TemporaryDirectory(prefix="eden-hud-spv-")
         spv = pathlib.Path(cleanup.name) / f"{source.name}.spv"
     subprocess.run([
         args.glslang, "-V", "--target-env", "vulkan1.1", "-S", stage,
-        f"-I{include_dir}", f"-I{source_dir}", "-o", str(spv), str(source)
+        f"-I{include_dir}", f"-I{source_dir}",
+        *(["-DEDEN_QUICK_MENU=1"] if quick else []), "-o", str(spv), str(source)
     ], check=True)
     subprocess.run([args.spirv_val, "--target-env", "vulkan1.1", str(spv)], check=True)
     raw = spv.read_bytes()
@@ -46,6 +47,8 @@ def build(stage: str, source: pathlib.Path, variable: str) -> tuple[str, list[in
     words = list(struct.unpack("<" + "I" * (len(raw) // 4), raw))
     if not words or words[0] != 0x07230203:
         raise SystemExit(f"{source}: invalid SPIR-V magic")
+    if len(words) > 32768:
+        raise SystemExit(f"{variable}: shader exceeds 128 KiB instruction/data budget ({len(words)} words)")
     if cleanup is not None:
         cleanup.cleanup()
     return variable, words
@@ -53,6 +56,7 @@ def build(stage: str, source: pathlib.Path, variable: str) -> tuple[str, list[in
 compiled = [
     build("vert", source_dir / "vulkan_hud.vert", "EDEN_HUD_VERT_SPV"),
     build("frag", source_dir / "vulkan_hud.frag", "EDEN_HUD_FRAG_SPV"),
+    build("frag", source_dir / "vulkan_hud.frag", "EDEN_QUICK_MENU_FRAG_SPV", quick=True),
 ]
 
 lines = [
@@ -66,4 +70,4 @@ for variable, words in compiled:
         lines.append("    " + ", ".join(f"0x{word:08x}u" for word in words[i:i+8]) + ",")
     lines.append("};")
 args.output.write_text("\n".join(lines) + "\n")
-print(f"{args.output}: vert_words={len(compiled[0][1])} frag_words={len(compiled[1][1])}")
+print(f"{args.output}: vert_words={len(compiled[0][1])} frag_words={len(compiled[1][1])} quick_words={len(compiled[2][1])}")

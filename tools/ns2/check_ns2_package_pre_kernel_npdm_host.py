@@ -13,9 +13,16 @@ begin="[[nodiscard]] bool IsSwitch2LaunchProgram("
 end="\n} // namespace"
 assert source.count(begin)==1
 helper=begin+source.split(begin,1)[1].split(end,1)[0]
+# PS5 library launches loose ExeFS by ".../exefs/main". Generation detection
+# must resolve main.npdm from that launched file's VFS parent before the kernel.
+assert 'Common::SplitPath(filepath, &launch_dir, &launch_filename, nullptr);' in source
+assert 'launch_filename == "main" ? launch_dir' in source
+assert 'virtual_filesystem->OpenDirectory(npdm_dir, FileSys::OpenMode::Read)' in source
+assert source.index('exefs_dir->GetFile("main.npdm")') < source.index("InitializeKernel(system)")
 for required in ("Loader::FileType::NSP","Loader::FileType::XCI",
                  "Loader::FileType::NCA","metadata.Load(npdm)",
-                 "GetSecurePartitionNSP()","GetExeFS()"):
+                 "metadata.IsSwitch2()", "EDEN_NS2_PREKERNEL_NPDM",
+                 "GetSecurePartitionNSP()","GetExeFS()", "direct_extracted_npdm"):
     assert required in helper
 
 cpp=r"""
@@ -41,7 +48,7 @@ struct File {
     Loader::FileType kind{Loader::FileType::Unknown};
     VirtualDir directory{},exefs{};
     VirtualFile program{},secure{};
-    bool valid{true},is_second{},throwing{};
+    bool valid{true},is_second{},throwing{},late_error{};
     u64 title{0x100};
     VirtualDir GetContainingDirectory() const { return directory; }
 };
@@ -56,7 +63,7 @@ struct ProgramMetadata {
     Loader::ResultStatus Load(const VirtualFile& npdm) {
         if (!npdm || !npdm->valid) return Loader::ResultStatus::Error;
         second=npdm->is_second;
-        return Loader::ResultStatus::Success;
+        return npdm->late_error ? Loader::ResultStatus::Error : Loader::ResultStatus::Success;
     }
     bool IsSwitch2() const { return second; }
 };
@@ -101,6 +108,11 @@ FileType IdentifyFile(const FileSys::VirtualFile& file) {
     return file->kind;
 }
 }
+// The production logger is tested in the SDK syntax gate. This isolated
+// source-extracted fixture must evaluate the real arguments, without needing
+// the full Core logging category implementation.
+template<typename... Args> void CheckLogArgs(Args&&...) {}
+#define LOG_INFO(category, ...) CheckLogArgs(__VA_ARGS__)
 __HELPER__
 int main() {
     using namespace FileSys;
@@ -111,30 +123,43 @@ int main() {
     auto prog=std::make_shared<File>();prog->kind=Loader::FileType::NCA;prog->exefs=dir2;
     auto pkg=std::make_shared<File>();pkg->kind=Loader::FileType::NSP;pkg->title=0x200;pkg->program=prog;
     auto card=std::make_shared<File>();card->kind=Loader::FileType::XCI;card->secure=pkg;
-    auto extracted=std::make_shared<File>();extracted->directory=dir2;
-    assert(IsSwitch2LaunchProgram(extracted,0,0));
-    assert(IsSwitch2LaunchProgram(prog,0,0));
-    assert(IsSwitch2LaunchProgram(pkg,0x200,0));
-    assert(IsSwitch2LaunchProgram(card,0x200,0));
+    auto extracted=std::make_shared<File>();
+    // Reproduce the PS5 extracted-ExeFS boundary: a bootable main file can
+    // arrive without a preserved containing-directory owner. The direct NPDM
+    // resolved from the launch directory must still select Switch 2.
+    assert(IsSwitch2LaunchProgram(extracted,npdm2,0,0));
+    assert(IsSwitch2LaunchProgram(prog,{},0,0));
+    assert(IsSwitch2LaunchProgram(pkg,{},0x200,0));
+    assert(IsSwitch2LaunchProgram(card,{},0x200,0));
     auto old=std::make_shared<File>();old->directory=dir1;
-    assert(!IsSwitch2LaunchProgram(old,0,0));
+    assert(!IsSwitch2LaunchProgram(old,{},0,0));
     prog->exefs=dir1;
-    assert(!IsSwitch2LaunchProgram(pkg,0x200,0));
-    assert(!IsSwitch2LaunchProgram(card,0x200,0));
+    assert(!IsSwitch2LaunchProgram(pkg,{},0x200,0));
+    assert(!IsSwitch2LaunchProgram(card,{},0x200,0));
     prog->exefs=dir2;
     npdm2->valid=false;
-    assert(!IsSwitch2LaunchProgram(pkg,0x200,0));
+    assert(!IsSwitch2LaunchProgram(pkg,{},0x200,0));
     npdm2->valid=true;
+    // The extended ACID already establishes generation. A later NPDM
+    // validation failure must not silently switch to a 4 GiB NS1 layout.
+    npdm2->late_error=true;
+    assert(IsSwitch2LaunchProgram(extracted,npdm2,0,0));
+    assert(IsSwitch2LaunchProgram(pkg,{},0x200,0));
+    assert(IsSwitch2LaunchProgram(card,{},0x200,0));
+    npdm2->late_error=false;
+    npdm1->late_error=true;
+    assert(!IsSwitch2LaunchProgram(old,{},0,0));
+    npdm1->late_error=false;
     pkg->valid=false;
-    assert(!IsSwitch2LaunchProgram(card,0x200,0));
+    assert(!IsSwitch2LaunchProgram(card,{},0x200,0));
     pkg->valid=true;
     pkg->throwing=true;
-    assert(!IsSwitch2LaunchProgram(pkg,0x200,0));
+    assert(!IsSwitch2LaunchProgram(pkg,{},0x200,0));
     pkg->throwing=false;
     auto missing=std::make_shared<File>(*pkg);missing->program.reset();
-    assert(!IsSwitch2LaunchProgram(missing,0x200,0));
-    assert(!IsSwitch2LaunchProgram({},0,0));
-    assert(IsSwitch2LaunchProgram(card,0x200,0));
+    assert(!IsSwitch2LaunchProgram(missing,{},0x200,0));
+    assert(!IsSwitch2LaunchProgram({}, {},0,0));
+    assert(IsSwitch2LaunchProgram(card,{},0x200,0));
     std::puts("P1_1_NS2_PREKERNEL_CONTAINER_NPDM_PASS");
 }
 """.replace("__HELPER__",helper)

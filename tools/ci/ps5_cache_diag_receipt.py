@@ -17,6 +17,8 @@ REVIEWED_DIAGNOSTIC_BLOB = "c79131ffafce0e2b33213051ae7a028c3c4ff33d"
 REVIEWED_DRIVER_HEADER_BLOB = "c7e3ca901ea7ab82ec679c23cf43a1c556ac7e41"
 REVIEWED_CACHE_VERSION_20_BLOB = "36aae4b17ef8e9681f62fabdd4cf37f09d0beefb"
 REVIEWED_CACHE_VERSION_21_BLOB = "be5d48abd44996502b0829a6e0501d130a151455"
+REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB = "e10c4893c03da57dce7f607d3e0af46d62e343f1"
+REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB = "dcc4c9cbb4e3cec48ab4d1dece9f8708196c5f56"
 # Exact five reviewed #115 diff hunks, inverted ONLY for source comparison.
 # Both raw source hashes must match; actual build uses the new vendor file.
 DRIVER_HEADER_REVERSES = [
@@ -63,6 +65,43 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    # Vendor #183 adds only a bounded standard-stderr witness around the
+    # already-reviewed PS5 fragment-shuffle fallback. Reverse that exact block
+    # first, then require the prior reviewed fallback blob before continuing
+    # the immutable R23 normalization chain.
+    if current == REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB:
+        witness = """            static std::atomic<unsigned> fragment_shuffle_witness{};
+            const unsigned fallback_witness =
+                fragment_shuffle_witness.fetch_add(1, std::memory_order_relaxed) + 1;
+            if (fallback_witness <= 8) {
+                std::fprintf(stderr,
+                             \"EDEN_FRAGMENT_SHUFFLE_FALLBACK count=%u hash=0x%016llx\\n\",
+                             fallback_witness,
+                             static_cast<unsigned long long>(key.unique_hashes[index]));
+            }
+"""
+        assert source.count(witness) == 1, "Fragment-shuffle witness drift"
+        source = source.replace(witness, "", 1)
+        current = git_blob(source)
+        assert current == REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB, (
+            "Fragment-shuffle witness predecessor drift", current)
+    # Vendor #180 preserves Eden #4503's exact broken-pattern predicate but
+    # replaces the PS5-native whole-shader drop with the reviewed
+    # Lichii/Eglantine broadcast/select fallback. Reverse ONLY those three
+    # exact hunks for the immutable historical receipt.
+    if current == REVIEWED_FRAGMENT_SHUFFLE_FALLBACK_BLOB:
+        post_programs = "    std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;\n#ifdef PS5_NATIVE\n    // Eden #4503 drops known-broken non-NVIDIA fragment shaders entirely.\n    // On PS5 that visibly removes guest draws. Keep the exact predicate but\n    // route only matching programs through the newer Lichii/Eglantine\n    // broadcast/select SPIR-V fallback.\n    std::array<bool, Maxwell::MaxShaderProgram> fragment_shuffle_fallback{};\n#endif\n"
+        pre_programs = "    std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;\n"
+        post_skip = "        // Avoid native subgroup shuffle for the known PositionXY fragment\n        // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's\n        // fail-closed skip. PS5 instead uses the newer upstream broadcast\n        // fallback so the whole guest draw is not silently discarded.\n        if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&\n            Shader::Optimization::HasBrokenPattern(programs[index])) {\n#ifdef PS5_NATIVE\n            fragment_shuffle_fallback[index] = true;\n            LOG_WARNING(Render_Vulkan,\n                        \"0x{:016x}: using PS5 fragment shuffle fallback\",\n                        key.unique_hashes[index]);\n#else\n            LOG_WARNING(Render_Vulkan,\n                        \"0x{:016x}: skipping fragment shuffle with known driver issue\",\n                        key.unique_hashes[index]);\n            return nullptr;\n#endif\n        }"
+        pre_skip = "        // Avoid compiling a known-broken fragment shuffle sourced from\n        // PositionXY on non-NVIDIA drivers (notably RADV/RDNA2). Recognize\n        // the IR pattern, not a broad title or vendor blacklist.\n        if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&\n            Shader::Optimization::HasBrokenPattern(programs[index])) {\n            LOG_WARNING(Render_Vulkan,\n                        \"0x{:016x}: skipping fragment shuffle with known driver issue\",\n                        key.unique_hashes[index]);\n            return nullptr;\n        }"
+        post_emit = "        auto emit_profile = profile;\n#ifdef PS5_NATIVE\n        emit_profile.has_broken_spirv_fragment_shuffle = fragment_shuffle_fallback[index];\n#endif\n        const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};"
+        pre_emit = "        const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(profile, runtime_info, program, binding); }())};"
+        assert source.count(post_programs) == source.count(post_skip) == source.count(post_emit) == 1
+        source = source.replace(post_programs, pre_programs, 1)
+        source = source.replace(post_skip, pre_skip, 1)
+        source = source.replace(post_emit, pre_emit, 1)
+        current = git_blob(source)
+        assert current == REVIEWED_CACHE_VERSION_21_BLOB, "Fragment-shuffle predecessor drift"
     # FC27 shader-IR changes deliberately invalidate the persistent cache.
     # Vendor's own frozen-R23 receipt proves these exact successors differ
     # from the reviewed driver-header owner only by CACHE_VERSION 19 -> 20/21.

@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     fragment=root/'headless'/'vulkan_hud.frag'
     assert subprocess.check_output(
         ['git','hash-object',str(fragment)],cwd=root,text=True).strip()==(
-            'f71d54ff4baff28bcfac5589052062824faf6433'
+            '8bab5ee14daa1d316fbac6b3643823967d53e376'
         ),fragment
     assert (active/'vulkan_hud.frag.spv').is_file()
     # The vendored oracle SPIR-V stays immutable for historical Vulkan-fork
@@ -122,7 +122,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
-    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175'}:
+    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce'}:
         # Vendor #156: only reverse the two exact reviewed cache-coherence
         # additions on an audit copy, as vendor's native_msaa_handle_receipt
         # does. Shipping source and historical oracle remain untouched.
@@ -218,6 +218,20 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     cache_owner = 'vk_pipeline_cache_cost.cpp'
     cache_source = expected[cache_owner].read_text()
     cache_sha = raster_blob(cache_source)
+    if cache_sha == 'e10c4893c03da57dce7f607d3e0af46d62e343f1':
+        post_programs = "    std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;\n#ifdef PS5_NATIVE\n    // Eden #4503 drops known-broken non-NVIDIA fragment shaders entirely.\n    // On PS5 that visibly removes guest draws. Keep the exact predicate but\n    // route only matching programs through the newer Lichii/Eglantine\n    // broadcast/select SPIR-V fallback.\n    std::array<bool, Maxwell::MaxShaderProgram> fragment_shuffle_fallback{};\n#endif\n"
+        pre_programs = "    std::array<Shader::IR::Program, Maxwell::MaxShaderProgram> programs;\n"
+        post_skip = "        // Avoid native subgroup shuffle for the known PositionXY fragment\n        // pattern on non-NVIDIA drivers. Desktop/mobile preserve Eden #4503's\n        // fail-closed skip. PS5 instead uses the newer upstream broadcast\n        // fallback so the whole guest draw is not silently discarded.\n        if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&\n            Shader::Optimization::HasBrokenPattern(programs[index])) {\n#ifdef PS5_NATIVE\n            fragment_shuffle_fallback[index] = true;\n            LOG_WARNING(Render_Vulkan,\n                        \"0x{:016x}: using PS5 fragment shuffle fallback\",\n                        key.unique_hashes[index]);\n#else\n            LOG_WARNING(Render_Vulkan,\n                        \"0x{:016x}: skipping fragment shuffle with known driver issue\",\n                        key.unique_hashes[index]);\n            return nullptr;\n#endif\n        }"
+        pre_skip = "        // Avoid compiling a known-broken fragment shuffle sourced from\n        // PositionXY on non-NVIDIA drivers (notably RADV/RDNA2). Recognize\n        // the IR pattern, not a broad title or vendor blacklist.\n        if (device.GetDriverID() != VK_DRIVER_ID_NVIDIA_PROPRIETARY &&\n            Shader::Optimization::HasBrokenPattern(programs[index])) {\n            LOG_WARNING(Render_Vulkan,\n                        \"0x{:016x}: skipping fragment shuffle with known driver issue\",\n                        key.unique_hashes[index]);\n            return nullptr;\n        }"
+        post_emit = "        auto emit_profile = profile;\n#ifdef PS5_NATIVE\n        emit_profile.has_broken_spirv_fragment_shuffle = fragment_shuffle_fallback[index];\n#endif\n        const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(emit_profile, runtime_info, program, binding); }())};"
+        pre_emit = "        const std::vector<u32> code{([&] { auto cost = Eden::Performance::VulkanTimer(22); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderSpirv, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return EmitSPIRV(profile, runtime_info, program, binding); }())};"
+        assert cache_source.count(post_programs) == cache_source.count(post_skip) == cache_source.count(post_emit) == 1
+        cache_source = cache_source.replace(post_programs, pre_programs, 1)
+        cache_source = cache_source.replace(post_skip, pre_skip, 1)
+        cache_source = cache_source.replace(post_emit, pre_emit, 1)
+        cache_sha = raster_blob(cache_source)
+        assert cache_sha == 'be5d48abd44996502b0829a6e0501d130a151455', 'fragment-shuffle predecessor drift'
+        print("ENCORE_FC27_FRAGMENT_SHUFFLE_EXACT_RECEIPT_PASS")
     if cache_sha == 'be5d48abd44996502b0829a6e0501d130a151455':
         assert cache_source.count('constexpr u32 CACHE_VERSION = 21;') == 1
         historical_cache = cache_source.replace('constexpr u32 CACHE_VERSION = 21;',
@@ -348,7 +362,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 ['git', 'hash-object', str(expected[name])], text=True
             ).strip() == blob, ('R09 maintained native additional owner drift', name)
         approved_native_additions |= set(r09_extra)
-        if pair_vendor_pin in {'42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175'}:
+        if pair_vendor_pin in {'42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce'}:
             drawtexture_extra = {
                 'blit_image.cpp': 'bbde031a184b93745fa0449aef74f351355fb70d',
                 'include/video_core/renderer_vulkan/blit_image.h':
@@ -363,7 +377,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip() == (
             'c4ed79a1fe6aec09da8040b7af3901f6184f910b'
-            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175'}
+            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce'}
             else '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
             'R2 real deleted-buffer source owner changed')
     unexpected_additions = set(expected) - set(actual)

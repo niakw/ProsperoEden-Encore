@@ -70,6 +70,14 @@ def check() -> None:
     require('EDEN_NS2_PROCESS_RUN_GUARD' in process and
             'target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)' in CMAKE,
             'native process Run admission omitted')
+    kprocess=read('vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp')
+    require('if (metadata.IsSwitch2())' in kprocess and
+            'm_page_table.GetHeapRegionSize() + m_page_table.GetAliasRegionSize()' in kprocess and
+            'm_is_switch2' not in kprocess and
+            'set(EDEN_NS2_KPROCESS_SOURCE' in CMAKE and
+            'list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")' in CMAKE and
+            'list(APPEND eden_ns2_process_sources "${EDEN_NS2_KPROCESS_SOURCE}")' in CMAKE,
+            'upstream NS2 KProcess alias-region budget is not the selected owner')
     svc=read('vendor/encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp')
     require('Eden::NS2::GpuAccess::Validate' in svc and
             'target_include_directories(core BEFORE PUBLIC "${EDEN_NS2_GPU_ACCESS_ROOT}")' in CMAKE and

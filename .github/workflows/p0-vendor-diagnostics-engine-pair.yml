@@ -15,7 +15,7 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=edcc311c09eed3a33e5acc373c63a436f662cb5b
+          expected=8157c79614b3deee00a9bbfbf5d6dd30239e1b42
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
@@ -44,4 +44,16 @@ jobs:
           python3 -B vendor/tests/ns2_getinfo_vamm_region_source.py
           python3 -B vendor/tests/ps5-late-upstream-fixes-source.py
           python3 -B vendor/tests/ps5-full-clear-skip-upload-source.py
+          python3 -B vendor/tests/fc27_waited_pipeline_inline_source.py
+          python3 -B vendor/tests/fc27_pipeline_teardown_and_syncwait_source.py
+          python3 -B vendor/tests/ps5_host1x_wait_notification_host.py
+          python3 -B vendor/tests/ns2_gpu_partition_new_sdk_source.py
+          python3 -B vendor/tests/ns2_syncpt_bootstrap_source.py
+          python3 -B vendor/tests/ns2_recent_svc_fault_trace_host.py
+          python3 -B vendor/tests/ns2_ipc_started_thread_handoff_source.py
+          python3 -B vendor/tests/ns2_gpu_access_svc_info_types_source.py
+          python3 -B vendor/tests/ns2_gpu_identity_mapping_source.py
+          python3 -B vendor/tests/ns2_nvhost_unknown_node_fallback_source.py
+          python3 -B vendor/tests/ns2_smmu_34bit_capacity_source.py
+          python3 -B vendor/tests/ns2_syncpoint_shim_source.py
           echo ENCORE_VENDOR_P0_CONSOLIDATED_ENGINE_PAIR_PASS

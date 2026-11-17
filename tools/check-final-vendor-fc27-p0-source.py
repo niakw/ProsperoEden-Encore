@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="edcc311c09eed3a33e5acc373c63a436f662cb5b"
+EXPECTED="8157c79614b3deee00a9bbfbf5d6dd30239e1b42"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -51,8 +51,20 @@ tests=(
     "ns2_ampere_hsetp2_cbuf_host.py",
     "ns2-kprocess-memory-budget-source.py",
     "ns2_alias_128g_no_kprocess_layout_host.py",
+    "fc27_waited_pipeline_inline_source.py",
+    "fc27_pipeline_teardown_and_syncwait_source.py",
+    "ps5_host1x_wait_notification_host.py",
+    "ns2_gpu_partition_new_sdk_source.py",
+    "ns2_syncpt_bootstrap_source.py",
+    "ns2_recent_svc_fault_trace_host.py",
+    "ns2_ipc_started_thread_handoff_source.py",
+    "ns2_gpu_access_svc_info_types_source.py",
+    "ns2_gpu_identity_mapping_source.py",
+    "ns2_nvhost_unknown_node_fallback_source.py",
+    "ns2_smmu_34bit_capacity_source.py",
+    "ns2_syncpoint_shim_source.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)
 
-print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ns2_getinfo_page_size=1 ns2_getinfo_vamm=1 alpha_ref=1 worker_lost_wake=1 full_clear_upload_elision=1 dynamic_texture_limit=1 duskbloods_shader=1 fc27_sibling_preservation=1 hsetp2_cbuf=1 alias128=1 kprocess_abi=1 ps5=unverified")
+print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ns2_getinfo_page_size=1 ns2_getinfo_vamm=1 alpha_ref=1 worker_lost_wake=1 full_clear_upload_elision=1 dynamic_texture_limit=1 duskbloods_shader=1 fc27_sibling_preservation=1 hsetp2_cbuf=1 alias128=1 kprocess_abi=1 fc27_pipeline=1 ns2_gpu_memory=1 host1x_wait=1 ipc_handoff=1 ps5=unverified")

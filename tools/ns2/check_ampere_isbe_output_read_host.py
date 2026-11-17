@@ -86,7 +86,7 @@ int main() {
     assert(!DecodeNativeStageBufferAccess(map));
 
     auto ordinary_read = output_read;
-    ordinary_read.words[3] &= ~(1U << 15);
+    ordinary_read.words[2] &= ~(1U << 15);
     const auto ordinary = DecodeNativeStageBufferAccess(ordinary_read);
     assert(ordinary.has_value());
     assert(!ordinary->output);

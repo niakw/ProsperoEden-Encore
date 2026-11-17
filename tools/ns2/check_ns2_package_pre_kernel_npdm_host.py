@@ -106,7 +106,7 @@ FileType IdentifyFile(const FileSys::VirtualFile& file) {
 // source-extracted fixture must evaluate the real arguments, without needing
 // the full Core logging category implementation.
 template<typename... Args> void CheckLogArgs(Args&&...) {}
-#define LOG_INFO(category, format, ...) CheckLogArgs(format, __VA_ARGS__)
+#define LOG_INFO(category, ...) CheckLogArgs(__VA_ARGS__)
 __HELPER__
 int main() {
     using namespace FileSys;

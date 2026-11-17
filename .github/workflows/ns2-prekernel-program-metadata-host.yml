@@ -22,13 +22,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libfmt-dev
           mkdir -p build-ns2-prekernel
+          git clone --depth 1 --branch 12.1.0 https://github.com/fmtlib/fmt.git build-ns2-prekernel/fmt
+          test "$(git -C build-ns2-prekernel/fmt rev-parse HEAD)" = "407c905e45ad75fc29bf0f9bb7c5c2fd3475976f"
           clang++ -std=c++20 -O1 -fno-omit-frame-pointer \
             -fsanitize=address,undefined -fno-sanitize-recover=all \
             -ffunction-sections -fdata-sections -Wl,--gc-sections \
-            -I/usr/include \
+            -Ibuild-ns2-prekernel/fmt/include \
             -Ivendor/encore-active/ns2-helpers/include \
             -Ivendor/encore-active/ns2-runtime/metadata \
             -Ivendor/sources/eden/src/dynarmic/src \

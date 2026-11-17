@@ -1,6 +1,6 @@
 # NS2 / PS5 — catalogue de compatibilité mémoire, shaders et stratégie de validation (2026-11-17)
 
-> État : recherche upstream + correctif instrumental candidat sur branche dédiée. Aucun démarrage NS2, rendu, performance ni succès de compilation PS5 n'est revendiqué par ce document. Les résultats d'autres forks ne constituent pas une preuve pour Encore.
+> État : recherche upstream et instrumentation KProcess intégrées directement sur `main` ; inventaire d'archives shaders NS2 disponible comme outil hôte (métadonnées/empreintes uniquement). Aucune réussite de démarrage NS2, rendu ou performance PS5 n'est revendiquée. Les résultats d'autres forks ne constituent pas une preuve pour Encore.
 
 ## 1. Invariants à qualifier, sans table d'adresses codées en dur
 
@@ -95,7 +95,7 @@ Ces qualifications restent **source/hôte uniquement**. Aucun gain FC27/OoT, auc
 
 ## 7. Statut au 17 novembre
 
-- **Confirmé par lecture des sources** : défaut de définition PS5_NATIVE sur l'unité KProcess du graphe natif ; patch source écrit sur branche moteur.
+- **Confirmé par lecture des sources** : le correctif PS5_NATIVE de l'unité KProcess est déjà dans `main` ; il rend les témoins de diagnostic compilables, sans prouver le démarrage invité.
 - **Sources externes examinées** : portages PS5 et Lichii, avec mécanisme de warm-compute et exemples memory/ASTC/task-mesh.
-- **En attente** : qualification complète du patch via CI/source et native compile ; comparaison détaillée par fonctions avec les chemins Encore shader warm et texture GPU ; intégration d'un builder de precache adapté à la mémoire/driver PS5.
+- **En attente** : qualification CI à SHA exact et compilation native ; intégration éventuelle du préchauffage de shaders adapté aux contraintes mémoire/driver PS5. L'inventaire BNSH/BFSHA/SARC n'est qu'une extraction de métadonnées hôte, pas un compilateur de cache utilisable en jeu.
 - **Non effectué** : build PS5, test de jeu console, adoption de caches ou adresses issus d'autres forks, prétention de boot NS2 résolu.

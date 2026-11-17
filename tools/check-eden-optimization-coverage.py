@@ -2207,9 +2207,13 @@ print("R457_NS2_DEMAND_BACKING_SUCCESSOR_PASS",
       "predecessor=b9349360", "standard_4GiB=admitted",
       "dense_large_guest=forbidden", "historical_F07=preserved")
 assert sparse_receipt["opt_in"] in current_sparse_source
-assert sparse_receipt["source_fragment"] in current_sparse_source
+# The historical receipt remains immutable evidence of the former 12 GiB-only
+# research admission. Its exact source fragment must now be absent from the
+# reviewed production successor rather than required to survive forever.
+assert sparse_receipt["source_fragment"] == "if (requested == Ns2Dram) {"
+assert sparse_receipt["source_fragment"] not in current_sparse_source
 print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
-      "new_owner_consoles_qualified=0")
+      "historical_12GiB_fragment=replaced", "new_owner_consoles_qualified=0")
 # Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.\n# R458 advances the already-reviewed launcher owner from a frozen retained frame\n# to one bounded GL presenter; the historical F07/R457 receipts stay immutable.
 ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU

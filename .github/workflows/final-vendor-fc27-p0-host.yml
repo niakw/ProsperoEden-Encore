@@ -6,12 +6,14 @@ on:
       - 'vendor'
       - 'headless/CMakeLists.txt'
       - 'tools/check-final-vendor-fc27-p0-source.py'
+      - 'tools/ns2/check_ampere_isbe_output_read_host.py'
       - '.github/workflows/final-vendor-fc27-p0-host.yml'
   pull_request:
     paths:
       - 'vendor'
       - 'headless/CMakeLists.txt'
       - 'tools/check-final-vendor-fc27-p0-source.py'
+      - 'tools/ns2/check_ampere_isbe_output_read_host.py'
       - '.github/workflows/final-vendor-fc27-p0-host.yml'
   workflow_dispatch:
 permissions:
@@ -26,3 +28,5 @@ jobs:
           submodules: true
           persist-credentials: false
       - run: python3 -B tools/check-final-vendor-fc27-p0-source.py
+      - name: NS2 Ampere ISBERD output-region read (Lichii 31f1378)
+        run: python3 -B tools/ns2/check_ampere_isbe_output_read_host.py

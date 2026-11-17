@@ -3186,6 +3186,13 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
     endif()
     list(REMOVE_ITEM eden_ns2_process_sources "hle/kernel/k_process.cpp")
     list(APPEND eden_ns2_process_sources "${EDEN_NS2_KPROCESS_SOURCE}")
+    # This selected KProcess unit is in the core static target, which does not
+    # inherit PS5_NATIVE from eden-headless. Without the source-scoped define,
+    # the stack-map and initial-thread receipts compiled under #if PS5_NATIVE
+    # disappear from PS5 builds although the source graph check still passes.
+    # Keep NS1 and unrelated core units unchanged.
+    set_property(SOURCE "${EDEN_NS2_KPROCESS_SOURCE}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
 
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_process_sources}")
     target_compile_definitions(core PRIVATE EDEN_NS2_PROCESS_RUN_GUARD=1)

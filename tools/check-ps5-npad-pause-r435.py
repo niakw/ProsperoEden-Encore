@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R435: DEV Fullkey witness uses one full source with normal null guards."""
+"""R435 successor: shipping NPad exposes bounded Plus timing only in Detailed logs."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -18,7 +18,13 @@ assert 'set(EDEN_NPAD_SELECTED "${EDEN_MAINTAINED_NPAD}")' in cmake
 assert cmake.count('list(APPEND npad_sources "${EDEN_NPAD_SELECTED}")') == 1
 assert 'write_derived("${PORT_BUILD_DIR}/npad_pause_diag.cpp"' not in cmake
 assert hid.count('                npad->fullkey_lifo.WriteNextEntry(pad_state);') == 2
-assert 'EDEN_NPAD_PLUS_LIFO' not in normal
+assert normal.count('EDEN_NPAD_PLUS_LIFO edges=%llu') == 1
+assert normal.count('EDEN_NPAD_PROGRESS fullkey_writes=%llu') == 1
+assert 'eden_native_detailed_logging() noexcept __attribute__((weak))' in normal
+assert 'return eden_native_detailed_logging && eden_native_detailed_logging();' in normal
+assert 'std::chrono::steady_clock::now()' in normal
+assert 'sample=%llu' in normal and 'mono_ns=%lld' in normal
+assert 'eden_edges <= 64' in normal
 assert dev.count('EDEN_NPAD_PLUS_LIFO edges=%llu') == 1
 assert dev.count('EDEN_NPAD_PROGRESS fullkey_writes=%llu') == 1
 assert 'std::atomic<bool> eden_fullkey_last_plus' in dev
@@ -57,4 +63,4 @@ with tempfile.TemporaryDirectory(prefix='eden-r435-') as d:
     subprocess.run([cxx,'-std=c++20','-O2','-pthread',str(src),'-o',str(exe)],
                    check=True,timeout=90)
     subprocess.run([str(exe)],check=True,timeout=90)
-print("R435 PASS: historical dev NPad Plus LIFO tested; unified PS5 selects safe standard NPad")
+print("R435 PASS: release Detailed NPad Plus LIFO selected; mapping unchanged; dev witness retained")

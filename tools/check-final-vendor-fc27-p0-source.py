@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="2acf67ac8c6b8b1973ba29043206782a13ac8f41"
+EXPECTED="ab38816078a53b81d4c59152ec660fcb653d4e7f"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -65,6 +65,7 @@ tests=(
     "ns2_syncpoint_shim_source.py",
     "ns2_font_service_source.py",
     "ns2_backport_manifest_preserved_source.py",
+    "fc27_release_npad_detailed_source.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)

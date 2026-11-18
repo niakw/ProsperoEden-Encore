@@ -1411,10 +1411,44 @@ assert npad_expected.count(npad_r23_prior_hold) == 1
 npad_r23 = npad_expected.replace(npad_r23_constructor, npad_r23_initialized, 1)
 npad_r23 = npad_r23.replace(npad_r23_prior_hold, npad_r23_checked_hold, 1)
 npad_maintained = (active / "eden-core/src/hid_core/resources/npad/npad.cpp").read_text()
-assert r23_blob_sha(npad_maintained) == "454138c445bc140568068737646349cac98a686d"
-assert npad_maintained == npad_r23, (
-    "R23 NPad JoyHold changed beyond its two source-reviewed edits")
-print("ENCORE_R23_NPAD_ORIENTATION_SOURCE_PASS", "reset=1", "successful_hold_update=1")
+assert r23_blob_sha(npad_maintained) == "001df5c99e36d176f6db72d0c7c542737e897dc9"
+npad_release_diag = npad_maintained
+release_includes = "#include <atomic>\\n#include <chrono>\\n#include <cstdio>\\n".replace("\\n", "\n")
+assert npad_release_diag.count(release_includes) == 1
+npad_release_diag = npad_release_diag.replace(release_includes, "", 1)
+release_helper = """#ifdef PS5_NATIVE
+extern "C" bool eden_native_detailed_logging() noexcept __attribute__((weak));
+#endif
+
+namespace Service::HID {
+namespace {
+[[nodiscard]] bool EdenDetailedNpadLogging() noexcept {
+#ifdef PS5_NATIVE
+    return eden_native_detailed_logging && eden_native_detailed_logging();
+#else
+    return false;
+#endif
+}
+} // namespace
+"""
+assert npad_release_diag.count(release_helper) == 1
+npad_release_diag = npad_release_diag.replace(release_helper, "namespace Service::HID {\n", 1)
+release_start = "                if (EdenDetailedNpadLogging()) {\n"
+release_end = "                break;\n            case Core::HID::NpadStyleIndex::Handheld:"
+release_loc = npad_release_diag.index(release_start)
+release_tail = npad_release_diag.index(release_end, release_loc)
+release_body = npad_release_diag[release_loc:release_tail]
+for marker in ("EDEN_NPAD_PLUS_LIFO edges=%llu", "EDEN_NPAD_PROGRESS fullkey_writes=%llu",
+               "eden_edges <= 64", "std::chrono::steady_clock::now()", "sample=%llu",
+               "mono_ns=%lld"):
+    assert marker in release_body, ("release NPad diagnostic drift", marker)
+assert "WriteNextEntry" not in release_body
+npad_release_diag = npad_release_diag[:release_loc] + npad_release_diag[release_tail:]
+assert r23_blob_sha(npad_release_diag) == "454138c445bc140568068737646349cac98a686d"
+assert npad_release_diag == npad_r23, (
+    "Shipping NPad changed beyond R23 edits plus bounded Detailed diagnostic")
+print("ENCORE_R23_NPAD_ORIENTATION_SOURCE_PASS", "reset=1", "successful_hold_update=1",
+      "release_detailed_plus=1")
 assert c.count('list(APPEND npad_sources "${EDEN_NPAD_SELECTED}")') == 1
 assert c.count('list(FILTER npad_sources EXCLUDE REGEX "(^|/)npad\\\\.cpp$")') == 1
 assert 'write_derived("${PORT_BUILD_DIR}/npad.cpp"' not in c

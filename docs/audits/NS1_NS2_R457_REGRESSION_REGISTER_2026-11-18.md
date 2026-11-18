@@ -4,7 +4,7 @@
 
 **Build PS5 testé :** R457, moteur `e8493417f914783069e09d7f8fae19b5fd4049fe`, vendor `edcc311c09eed3a33e5acc373c63a436f662cb5b`, archive de logs utilisateur `17112259.zip`. Pas de backtrace native terminale FC27 dans cette archive.
 
-**Lot source candidat :** vendor `2acf67ac8c6b8b1973ba29043206782a13ac8f41` (15 commits), incluant le service de polices NS2 `f43a3696`, non encore sélectionné pour la compilation par le moteur. Tests source et host vendor verts, **pas de build PS5 ni de test console de ce candidat**.
+**Lot source candidat :** vendor `ab38816078a53b81d4c59152ec660fcb653d4e7f` (15 commits), incluant le service de polices NS2 `f43a3696`, non encore sélectionné pour la compilation par le moteur. Tests source et host vendor verts, **pas de build PS5 ni de test console de ce candidat**.
 
 | Priorité | Symptôme / jeu | Logs R457 | Cause candidate / modification | Amont | Validation restante |
 |---|---|---|---|---|---|
@@ -21,7 +21,7 @@
 3. Réserver **une** validation console groupée : FC27 froid puis chaud, pause/HUD, stabilité jusqu'à mi-temps, sortie normale ; MKW NS2 jusqu'au premier rendu réel. Bananza seulement si un second diagnostic est nécessaire.
 4. Ne jamais classer le problème corrigé sur la base de la CI seule. Ne pas confondre la cause du crash FC27 avec les retards de pause sans pile native.
 
-Références : [Lot vendor figé](https://github.com/niakw/Prospero.Eden-Encore-vendor/compare/edcc311c09eed3a33e5acc373c63a436f662cb5b...2acf67ac8c6b8b1973ba29043206782a13ac8f41), [Lichii NX2_NOTES](https://github.com/zortos293/Lichii/blob/nx2/NX2_NOTES.md), [Eglantine #350](https://github.com/Eglantine-Community/Eglantine/issues/350), [Eglantine #74](https://github.com/Djihads80/Eglantine/issues/74), [Eden Issue-Reports #771](https://github.com/eden-emulator/Issue-Reports/issues/771).
+Références : [Lot vendor figé](https://github.com/niakw/Prospero.Eden-Encore-vendor/compare/edcc311c09eed3a33e5acc373c63a436f662cb5b...ab38816078a53b81d4c59152ec660fcb653d4e7f), [Lichii NX2_NOTES](https://github.com/zortos293/Lichii/blob/nx2/NX2_NOTES.md), [Eglantine #350](https://github.com/Eglantine-Community/Eglantine/issues/350), [Eglantine #74](https://github.com/Djihads80/Eglantine/issues/74), [Eden Issue-Reports #771](https://github.com/eden-emulator/Issue-Reports/issues/771).
 
 ## Source provenance follow-up
 
@@ -33,4 +33,10 @@ Références : [Lot vendor figé](https://github.com/niakw/Prospero.Eden-Encore-
 
 - Host1x qualification updated for the numeric `u64` action-handle implementation: pending cancellation, running cancellation, waiter publication, same-id progress and 256-action stress are exercised at O0/O2 before any console build.
 
-- Vendor `2acf67ac8c6b8b1973ba29043206782a13ac8f41`: snapshot Eden `sources/eden/src/video_core/memory_manager.h` restauré immuable; déclarations NVN syncpoint shim déplacées vers `encore-active/eden-core/guest-bridge/memory_manager.h`, propriétaire réellement sélectionné par le build PS5. Le contrôle M04 reconstruit désormais byte-for-byte la composition deferred bridge + shim NS2.
+- Vendor `ab38816078a53b81d4c59152ec660fcb653d4e7f`: snapshot Eden `sources/eden/src/video_core/memory_manager.h` restauré immuable; déclarations NVN syncpoint shim déplacées vers `encore-active/eden-core/guest-bridge/memory_manager.h`, propriétaire réellement sélectionné par le build PS5. Le contrôle M04 reconstruit désormais byte-for-byte la composition deferred bridge + shim NS2.
+
+## Detailed-log successor ab388160
+
+- Shipping NPad now emits bounded `EDEN_NPAD_PLUS_LIFO` only while Detailed Logging is enabled; each rising Plus edge carries the guest LIFO sample number and monotonic timestamp.
+- Quiet mode performs no NPad diagnostic counters or clock reads. Mapping, sampling cadence and LIFO writes are unchanged.
+- Vendor regression reverses the diagnostic byte-for-byte to previous NPad blob `454138c445bc140568068737646349cac98a686d`.

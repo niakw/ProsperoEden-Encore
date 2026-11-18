@@ -49,7 +49,7 @@ inline bool WriteSessionFailureReceipt(const std::string& path, const char* sour
         "title=%016llx attempt=%llu kind=%.32s detailed=%u "
         "largest_query_ok=%u largest_free_bytes=%zu "
         "direct_failure=%u direct_stage=%u direct_rc=0x%08x "
-        "direct_bytes=%llu direct_extent=%llu reason=%.240s\\n",
+        "direct_bytes=%llu direct_extent=%llu reason=%.240s\n",
         static_cast<long long>(mono_ms), source_sha ? source_sha : "unknown",
         static_cast<unsigned long long>(title_id),
         static_cast<unsigned long long>(attempt), kind ? kind : "unknown",
@@ -91,7 +91,7 @@ inline bool WriteSessionPhaseReceipt(const std::string& path, const char* source
     char message[256];
     const int n = std::snprintf(message, sizeof(message),
         "EDEN_SESSION_ACTIVE_V1 mono_ms=%lld sha=%.40s title=%016llx "
-        "attempt=%llu stage=%.32s\\n",
+        "attempt=%llu stage=%.32s\n",
         static_cast<long long>(now_ms), source_sha ? source_sha : "unknown",
         static_cast<unsigned long long>(title_id),
         static_cast<unsigned long long>(attempt), stage);

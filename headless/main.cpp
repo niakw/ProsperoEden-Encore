@@ -540,10 +540,17 @@ int main(int argc, char** argv) {
             const std::string first = Eden::LogFile(std::string{base} + ".first.log");
             const std::string previous = Eden::LogFile(std::string{base} + ".prev.log");
             const std::string previous_first = Eden::LogFile(std::string{base} + ".prev.first.log");
-            (void)std::remove(previous.c_str());
-            (void)std::remove(previous_first.c_str());
-            (void)std::rename(current.c_str(), previous.c_str());
-            (void)std::rename(first.c_str(), previous_first.c_str());
+            // A quiet boot has no current log. Never erase the preserved
+            // previous run merely because the user turned diagnostics OFF.
+            struct stat current_info {}, first_info {};
+            if (::stat(current.c_str(), &current_info) == 0) {
+                (void)std::remove(previous.c_str());
+                (void)std::rename(current.c_str(), previous.c_str());
+            }
+            if (::stat(first.c_str(), &first_info) == 0) {
+                (void)std::remove(previous_first.c_str());
+                (void)std::rename(first.c_str(), previous_first.c_str());
+            }
         }
         // A crash report the previous run left: that run's logs move beside it, and the launcher
         // says where it is (crash_report.h).
@@ -551,18 +558,10 @@ int main(int argc, char** argv) {
 #ifdef EDEN_NATIVE_SOURCE_COMMIT
         Eden::DiagnosticsClient::Initialize(EDEN_NATIVE_SOURCE_COMMIT);
 #endif
-        if (!persist_detailed_logs) {
-            // TakeLast above has already archived any real crash evidence.
-            // Discard leftovers from clean/older runs; never remove crash-*.
-            for (const char* name : {
-                    "stderr.log", "stderr.first.log", "stderr.prev.log", "stderr.prev.first.log",
-                    "heap.log", "heap.first.log", "heap.prev.log", "heap.prev.first.log",
-                    "result.tsv", "boot-trace.txt", "boot-trace.prev.txt", "boot-trace.sandbox-prev.txt"})
-                (void)std::remove(Eden::LogFile(name).c_str());
-            for (const char* name : {
-                    "eden_log.txt", "eden_log.txt.first.txt", "eden_log.txt.old.txt"})
-                (void)std::remove((Eden::UserDir() + "/log/" + name).c_str());
-        }
+        // The OFF preference disables new routine writes, not forensic
+        // retention. Crash::TakeLast archived any crash already. Keep the
+        // previous capped stdout/stderr, boot trace, result TSV and Eden logs
+        // intact until explicit user cleanup or regular bounded rotation.
         // Older Eden releases could leave a 100 MiB .old.txt behind. The current
         // first/recent segments are capped separately, but a stale legacy file can
         // survive upgrades and needlessly occupy storage. Give crash collection

@@ -32,9 +32,12 @@ permissions:
 # A skipped main push must not cancel a running explicit native build.
 # Distinguish build-capable commits from ordinary UI/docs pushes, while
 # preserving one-at-a-time supersession for deliberate native candidates.
+# Only an explicit prefix at the START of the commit subject can trigger
+# a native build. A release note or prose saying a marker was NOT used must
+# never accidentally schedule a 1458-object compiler run.
 # workflow_dispatch is already isolated by its event name.
 concurrency:
-  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !contains(github.event.head_commit.message || '', '[full-build]') && !contains(github.event.head_commit.message || '', '[build-only]') && !contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
+  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !startsWith(github.event.head_commit.message || '', '[full-build]') && !startsWith(github.event.head_commit.message || '', '[build-only]') && !startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
   cancel-in-progress: true
 
 jobs:
@@ -46,9 +49,9 @@ jobs:
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
           (github.event_name == 'push' &&
-           (contains(github.event.head_commit.message || '', '[full-build]') ||
-            contains(github.event.head_commit.message || '', '[build-only]') ||
-            contains(github.event.head_commit.message || '', '[resume-stage:37728435816]'))) }}
+           (startsWith(github.event.head_commit.message || '', '[full-build]') ||
+            startsWith(github.event.head_commit.message || '', '[build-only]') ||
+            startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]'))) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     env:
@@ -57,10 +60,10 @@ jobs:
       EDEN_STAGE_DIR: build/release/PPSA99008
       # Push-side equivalent of workflow_dispatch build_only. This is used only
       # after the exact source gates and a targeted native-object receipt are green.
-      BUILD_ONLY: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_only) || (github.event_name == 'push' && contains(github.event.head_commit.message || '', '[build-only]')) }}
+      BUILD_ONLY: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_only) || (github.event_name == 'push' && startsWith(github.event.head_commit.message || '', '[build-only]')) }}
       # GitHub-only push resume for an already compiled staged app. This marker
       # is one-shot and cannot alter the downloaded binary or publish a release.
-      RESUME_STAGE_RUN_ID: ${{ contains(github.event.head_commit.message || '', '[resume-stage:37728435816]') && '37728435816' || inputs.resume_run_id || '' }}
+      RESUME_STAGE_RUN_ID: ${{ startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]') && '37728435816' || inputs.resume_run_id || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

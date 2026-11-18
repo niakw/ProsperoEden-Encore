@@ -78,7 +78,33 @@ for entry in entries:
     if entry["path"] in successors:
         prior, successor=successors[entry["path"]]
         assert expected==prior,(entry["path"],expected,prior)
-        assert actual==successor,("Unreviewed Nov15 launcher successor",entry["path"],actual)
+        if entry["path"] == "headless/prosperoeden/eden_services.cpp":
+            # R457 logging retention is a strict successor to the reviewed
+            # Nov15/16 service owner. Reconstruct the exact predecessor before
+            # checking its immutable Git blob; do not widen the source list.
+            assert actual == "be163317ca482765f31ddf3b7d1dbe24be041294", (
+                "Unreviewed R457 log-retention service owner", actual)
+            before = """        if (!value.detailed_logging) {
+            // Stop recording, but never erase earlier sessions simply by
+            // toggling this option. A user may need those files after a hang.
+            Eden::BootTrace::Quiet(Eden::LogsDir());
+        }"""
+            after = """        if (!value.detailed_logging) {
+            Eden::BootTrace::Quiet(Eden::LogsDir());
+            for (const char* name : {
+                    "eden_log.txt", "eden_log.txt.first.txt", "eden_log.txt.old.txt"})
+                (void)std::remove((Eden::UserDir() + "/log/" + name).c_str());
+        }"""
+            reviewed = path.read_text(encoding="utf-8")
+            assert reviewed.count(before) == 1, "Unexpected log-retention source delta"
+            prior_bytes = reviewed.replace(before, after, 1).encode("utf-8")
+            prior_blob = subprocess.run(
+                ["git", "hash-object", "--stdin"], input=prior_bytes,
+                stdout=subprocess.PIPE, check=True
+            ).stdout.decode().strip()
+            assert prior_blob == successor, ("Historical launcher service receipt changed", prior_blob)
+        else:
+            assert actual==successor,("Unreviewed Nov15 launcher successor",entry["path"],actual)
         successor_hits.add(entry["path"])
     elif actual!=expected:
         drifts.append((entry["path"],expected,actual))

@@ -32,7 +32,7 @@ assert run.returncode==0,run.stdout[-2500:]+run.stderr[-2500:]
 assert 'UNIFIED_NATIVE_GPU_SOURCE_GRAPH_PASS' in run.stdout,run.stdout
 build_workflow=(root/'.github/workflows/build-040-zbic.yml').read_text()
 assert "if: >-\n      ${{ github.event_name == 'workflow_dispatch' ||" in build_workflow
-assert "contains(github.event.head_commit.message || '', '[full-build]')" in build_workflow
+assert "startsWith(github.event.head_commit.message || '', '[full-build]')" in build_workflow
 assert "(github.event_name == 'workflow_dispatch' && inputs.publish)" in build_workflow
 assert "needs.build.result == 'success'" in build_workflow
 assert 'if: ${{ false }}' not in build_workflow

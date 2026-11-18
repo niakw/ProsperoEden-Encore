@@ -78,6 +78,72 @@ inline bool WriteSessionFailureReceipt(const std::string& path, const char* sour
     const bool closed = close(file) == 0;
     return synced && closed;
 }
+// Crash-only lifecycle breadcrumb: at most a handful of writes per title.
+// Retained if the PS5 process exits unexpectedly before C++ stack unwinding.
+// Do not sample the GPU, guest memory or per-frame state.
+inline bool WriteSessionPhaseReceipt(const std::string& path, const char* source_sha,
+                                     std::uint64_t title_id, std::uint64_t attempt,
+                                     const char* stage) noexcept {
+    if (!stage) return false;
+    const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    char message[256];
+    const int n = std::snprintf(message, sizeof(message),
+        "EDEN_SESSION_ACTIVE_V1 mono_ms=%lld sha=%.40s title=%016llx "
+        "attempt=%llu stage=%.32s\\n",
+        static_cast<long long>(now_ms), source_sha ? source_sha : "unknown",
+        static_cast<unsigned long long>(title_id),
+        static_cast<unsigned long long>(attempt), stage);
+    if (n <= 0 || static_cast<std::size_t>(n) >= sizeof(message)) return false;
+    const int file = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0600);
+    if (file < 0) return false;
+    struct stat info{};
+    if (fstat(file, &info) != 0 || !S_ISREG(info.st_mode)) {
+        (void)close(file);
+        return false;
+    }
+    std::size_t done = 0;
+    while (done < static_cast<std::size_t>(n)) {
+        const ssize_t count = write(file, message + done, static_cast<std::size_t>(n) - done);
+        if (count > 0) done += static_cast<std::size_t>(count);
+        else if (count < 0 && errno == EINTR) continue;
+        else break;
+    }
+    const bool ok = done == static_cast<std::size_t>(n) && fsync(file) == 0;
+    const bool closed = close(file) == 0;
+    return ok && closed;
+}
+
+inline bool ReadPreviousSessionPhase(const std::string& path, char* buffer,
+                                     std::size_t capacity) noexcept {
+    if (!buffer || capacity < 2) return false;
+    buffer[0] = '\0';
+    const int file = open(path.c_str(), O_RDONLY | O_NOFOLLOW);
+    if (file < 0) return false;
+    struct stat info{};
+    if (fstat(file, &info) != 0 || !S_ISREG(info.st_mode) ||
+        info.st_size <= 0 || info.st_size >= static_cast<off_t>(capacity)) {
+        (void)close(file);
+        return false;
+    }
+    const ssize_t n = read(file, buffer, capacity - 1);
+    const bool closed = close(file) == 0;
+    if (!closed || n != info.st_size) {
+        buffer[0] = '\0';
+        return false;
+    }
+    buffer[n] = '\0';
+    if (std::strncmp(buffer, "EDEN_SESSION_ACTIVE_V1 ", 23) != 0) {
+        buffer[0] = '\0';
+        return false;
+    }
+    // This file is written exclusively from the fixed-format phase helper.
+    // Sanitize anyway before including it in a new incident record.
+    for (ssize_t i = 0; i < n; ++i)
+        if (static_cast<unsigned char>(buffer[i]) < 32) buffer[i] = ' ';
+    return true;
+}
+
 // A shutdown step with the milliseconds since the previous one (some games take 14-16 s).
 inline void ReportStep(const char* stage, const char* message) {
     using Clock = std::chrono::steady_clock;

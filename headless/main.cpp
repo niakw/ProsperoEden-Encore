@@ -653,6 +653,26 @@ int main(int argc, char** argv) {
         Eden::BootTrace::Line("host network init result=%d", host_net_result);
         if (host_net_result != 0)
             Eden::Report("network", "Native host network initialization failed; online metadata is unavailable");
+        // On next boot, preserve the last stable stage from a title that
+        // never completed C++ teardown (forced app close, crash or hard hang).
+        // No per-frame logging and no dependence on Detailed Logging.
+        const std::string unfinished_session_path = Eden::LogFile("session-active.txt");
+        char previous_session_phase[256]{};
+        if (Eden::ReadPreviousSessionPhase(
+                unfinished_session_path, previous_session_phase, sizeof(previous_session_phase))) {
+#ifdef EDEN_NATIVE_SOURCE_COMMIT
+            constexpr const char* previous_phase_sha = EDEN_NATIVE_SOURCE_COMMIT;
+#else
+            constexpr const char* previous_phase_sha = "unknown";
+#endif
+            if (Eden::WriteSessionFailureReceipt(
+                    Eden::LogFile("session-failures.log"), previous_phase_sha,
+                    0, 0, "previous_session_unfinished", previous_session_phase,
+                    persist_detailed_logs, false, 0, false, 0, 0, 0, 0))
+                (void)std::remove(unfinished_session_path.c_str());
+            else
+                Eden::Report("incident", "Could not retain unfinished-session marker");
+        }
         const std::string stop_note = Eden::LogFile("stop-limit.txt");
         if (std::remove(stop_note.c_str()) == 0) {
             // The native watchdog's marker was previously deleted before
@@ -962,6 +982,23 @@ int main(int argc, char** argv) {
         };
 #endif
         try {
+#ifdef PS5_NATIVE
+        const bool session_marker_owned = Eden::WriteSessionPhaseReceipt(
+            unfinished_session_path, failure_source_sha,
+            incident_title_id, session_failure_attempt, "selected");
+        // A successful return or a caught C++ exception cleans this marker.
+        // SIGKILL, a deadlocked process and a hard app crash cannot unwind,
+        // so the next boot captures its last durable stage.
+        SCOPE_EXIT {
+            if (session_marker_owned) (void)std::remove(unfinished_session_path.c_str());
+        };
+        const auto record_session_phase = [&](const char* stage) {
+            if (session_marker_owned)
+                (void)Eden::WriteSessionPhaseReceipt(
+                    unfinished_session_path, failure_source_sha,
+                    incident_title_id, session_failure_attempt, stage);
+        };
+#endif
         launch_error.clear();
         const bool safe_launch = std::getenv("EDEN_SAFE_LAUNCH") != nullptr;
         if (safe_launch) unsetenv("EDEN_SAFE_LAUNCH");
@@ -973,6 +1010,7 @@ int main(int argc, char** argv) {
             Eden::ResolveGameTitleId(rom_metadata_id, selected_game);
 #ifdef PS5_NATIVE
         incident_title_id = launch_title_id;
+        record_session_phase("title_resolved");
 #endif
         if (rom_metadata_id == 0 && launch_title_id != 0)
             std::fprintf(stderr, "EDEN_TITLE_ID_LAUNCH_FALLBACK title=%016llx source=filename\n",
@@ -2258,6 +2296,9 @@ int main(int argc, char** argv) {
                     // NS2 NPDM programs before any guest CPU thread runs.
                     Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency);
 #endif
+#ifdef PS5_NATIVE
+                    record_session_phase("guest_loading");
+#endif
                     loaded = system.Load(window, guest, params);
                 } catch (const std::exception& error) {
                     load_input.request_stop();
@@ -2354,6 +2395,9 @@ int main(int argc, char** argv) {
 #endif
 #if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
                 Eden::Stall::Trace("main gpu_start");
+#endif
+#ifdef PS5_NATIVE
+                record_session_phase("gpu_starting");
 #endif
                 system.GPU().Start();
                 std::fprintf(stderr, "EDEN_BOOT_STAGE stage=gpu_started\n");
@@ -2502,6 +2546,9 @@ int main(int argc, char** argv) {
                 }
                 Eden::TakeGuestFault(); // Nothing from an earlier session belongs to this one.
                 std::fprintf(stderr, "EDEN_BOOT_STAGE stage=guest_run_begin\n");
+#ifdef PS5_NATIVE
+                record_session_phase("guest_running");
+#endif
                 system.Run();
                 if (left_while_loading) {
                     std::lock_guard lock(completion->mutex);
@@ -2796,10 +2843,16 @@ int main(int argc, char** argv) {
                 jit_list.Finish();  // while the JITs still exist: their block list is saved
                 // Shutdown requests cancellation before suspending cores; Pause can
                 // block while a CPU producer is waiting on a full GPU queue.
+#ifdef PS5_NATIVE
+                record_session_phase("guest_stopping");
+#endif
                 Eden::ReportStep("shutdown", "Stopping the game");
                 Eden::StopLimit::Begin();
                 system.ShutdownMainProcess();
                 Eden::StopLimit::End();
+#ifdef PS5_NATIVE
+                record_session_phase("renderer_release");
+#endif
                 Eden::Report("shutdown", "Game stopped; releasing renderer");
 #ifndef PS5_NATIVE
                 if (devices) {
@@ -2882,6 +2935,9 @@ int main(int argc, char** argv) {
         // Guest workers have stopped above; restore the original allowed mask.
         Eden::Performance::SetSecondaryPlacement(false);
         if (return_to_menu) continue;
+#endif
+#ifdef PS5_NATIVE
+        record_session_phase("title_destroyed");
 #endif
         passed("HEADLESS_COMPLETE");
 #ifdef EDEN_DEV_PROFILE

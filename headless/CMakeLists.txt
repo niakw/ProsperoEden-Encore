@@ -2302,6 +2302,22 @@ set(EDEN_MAINTAINED_HOST1X_SYNCPOINT
 if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
     message(FATAL_ERROR "Missing maintained Host1x syncpoint source")
 endif()
+# The native build may materialize an older Eden dependency header which
+# still exposes iterator-based ActionHandle. The maintained source above and
+# the NS2 graphics supervisor require the reviewed numeric-handle/guest-mirror
+# ABI. Select its matching pinned vendor header for ALL native consumers.
+# Keep this root narrow: only the Host1x syncpoint manager header is copied.
+set(EDEN_MAINTAINED_HOST1X_HEADER
+    "${PORT_ROOT}/vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h")
+if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_HEADER}")
+    message(FATAL_ERROR "Missing reviewed native Host1x syncpoint ABI header")
+endif()
+set(EDEN_HOST1X_SYNCPOINT_ABI_ROOT "${PORT_BUILD_DIR}/host1x-syncpoint-abi")
+file(MAKE_DIRECTORY "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}/video_core/host1x")
+configure_file("${EDEN_MAINTAINED_HOST1X_HEADER}"
+    "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}/video_core/host1x/syncpoint_manager.h" COPYONLY)
+target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")
+target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
 # N54: shared PS5 texture-cache scratch ownership, both guests. Only

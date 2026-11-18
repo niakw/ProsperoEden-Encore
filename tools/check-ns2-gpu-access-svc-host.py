@@ -76,7 +76,11 @@ assert 'eden_native_detailed_logging() noexcept __attribute__((weak))' in pid
 assert 'return eden_native_detailed_logging && eden_native_detailed_logging();' in pid
 assert 'if (!IsActive(pid) || !DetailedEnabled())' in pid
 assert 'constexpr std::uint32_t RecentSamples = 64;' in pid
-assert 'inline void RecordRecent(' in pid
+assert 'inline std::uint64_t RecordRecent(' in pid
+assert 'inline void RecordOutcome(' in pid
+assert 'outcome=completed' in pid and 'outcome=pending' in pid
+assert 'GetContext(svc_context)' in src
+assert 'SvcTrace::RecordOutcome(' in src
 assert 'inline void DumpRecent(' in pid
 assert 'entry.sequence.store(seq, std::memory_order_release);' in pid
 assert 'inline void ResetForTitle() noexcept' in pid
@@ -139,4 +143,15 @@ with tempfile.TemporaryDirectory(prefix="encore-ns2-gpu-access-") as d:
                     "-I", str(base), "-I", str(vendor / "ns2-helpers/include"),
                     str(p / "test.cpp"), "-o", str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
-print("ENCORE_NS2_GPU_ACCESS_SVC_HOST_PASS pid=exact mask=0x20 alignment=4k overflow=guarded ns1=unchanged stale_pid=blocked")
+# Engine controls must exercise the exact *pinned* vendor witness. This is
+# the full selected dispatcher TU, not only a mock of its logging header.
+for vendor_test, receipt in (
+    ("ns2_recent_svc_fault_trace_host.py", "NS2_RECENT_SVC_OUTCOME_HOST_PASS"),
+    ("ns2_svc_real_native_tu_host.py", "NS2_SVC_REAL_NATIVE_TU_HOST_PASS"),
+):
+    run = subprocess.run([shutil.which("python3") or "python3", "-B",
+                          str(root / "vendor/tests" / vendor_test)],
+                         capture_output=True, text=True, timeout=200)
+    assert run.returncode == 0 and receipt in run.stdout, (
+        vendor_test, run.returncode, run.stdout[-1600:], run.stderr[-4000:])
+print("ENCORE_NS2_GPU_ACCESS_SVC_HOST_PASS pid=exact mask=0x20 alignment=4k overflow=guarded ns1=unchanged stale_pid=blocked returned_outcomes=1 real_TU=1")

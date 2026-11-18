@@ -4,7 +4,7 @@
 
 **Build PS5 testé :** R457, moteur `e8493417f914783069e09d7f8fae19b5fd4049fe`, vendor `edcc311c09eed3a33e5acc373c63a436f662cb5b`, archive de logs utilisateur `17112259.zip`. Pas de backtrace native terminale FC27 dans cette archive.
 
-**Lot source candidat :** vendor `1e51d1f3383f149a599e36052aba7d887d4b1f77`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, Lichii #1199 pour les remaps GPU, #2085 pour I2M, l'adaptation de la PR Lichii #2121 pour les blits 2D en tiling natif et Lichii #2100 pour la persistance atomique du cache Vulkan statique et Lichii #1952 pour arrêter le cheat VM avant le teardown. Encore ajoute l'activation du layout uniquement après authentification du canal GPU NS2 afin de conserver le layout Maxwell par défaut pour NS1. **Pas encore de build PS5 ni de validation console de ce candidat.**
+**Lot source candidat :** vendor `b79c774d5d976b7d374b7f851354a652f6aa69c4`, successeur de `1e51d1f3383f149a599e36052aba7d887d4b1f77`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, Lichii #1199 pour les remaps GPU, #2085 pour I2M, l'adaptation de la PR Lichii #2121 pour les blits 2D en tiling natif et Lichii #2100 pour la persistance atomique du cache Vulkan statique et Lichii #1952 pour arrêter le cheat VM avant le teardown. Encore ajoute l'activation du layout uniquement après authentification du canal GPU NS2 afin de conserver le layout Maxwell par défaut pour NS1. **Pas encore de build PS5 ni de validation console de ce candidat.**
 
 | Priorité | Symptôme / jeu | Logs R457 | Cause candidate / modification | Amont | Validation restante |
 |---|---|---|---|---|---|
@@ -83,3 +83,13 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 - Lichii #1952 détruit le cheat VM avant `CoreTiming::SyncPause(false)`, suspension guest et destruction des services. Le vendor `1e51d1f3383f149a599e36052aba7d887d4b1f77` applique cet ordre aux trois variantes Core maintenues : standard, PS5 native et dérivée NS2.
 - `tests/shutdown_teardown_lifetime_source.py` reconstruit byte-for-byte les trois blobs prédécesseurs et vérifie aussi #1957. L'oracle moteur reconstruit le G14 historique au lieu de modifier son snapshot.
 - Ce correctif ferme une fenêtre de use-after-teardown documentée upstream ; le crash cercle/sortie PS5 #97 reste ouvert jusqu'au build natif et au test console.
+
+
+## Teardown PS5 — Lichii #1932 general-channel / failed-load lifetime
+
+- Le balayage upstream final a identifié Lichii #1932 (merge `a3b4397afda67f0c87e2244451f4a9c048838fce`), distinct de #1952/#1957 : un `Service::Event` et son `ServiceContext` pouvaient survivre à `kernel.Shutdown()`, puis fermer un objet noyau sur un kernel déjà détruit.
+- Vendor `b79c774d5d976b7d374b7f851354a652f6aa69c4` adapte le correctif aux trois propriétaires Core sélectionnés (standard, PS5 native, NS2) : `general_channel_event` puis `general_channel_context` sont détruits sous `general_channel_mutex` avant `kernel.Shutdown()`.
+- La file `general_channel` reste volontairement intacte ; le prochain Event est recréé et signalé si des données étaient déjà en attente. `TryPopGeneralChannel` recrée aussi l'Event avant de vider une file survivante.
+- Les trois chemins après `CreateApplicationProcess` détruisent désormais le `KProcess` local avant `ShutdownMainProcess()`, y compris le chemin `!app_loader` qui manquait dans Encore.
+- `tests/shutdown_general_channel_lifetime_source.py` reconstruit byte-for-byte les trois blobs prédécesseurs `5fbd4b90...`, `ba5b2cf0...`, `7e3159eb...`. Le témoin #1952/#1957 retire d'abord #1932 avant de vérifier ses prédécesseurs historiques.
+- Cette correction ferme une cause upstream documentée de SIGSEGV à l'arrêt/échec de chargement ; elle ne permet toujours pas de déclarer l'incident PS5 #97 corrigé sans compilation native puis sortie réelle sur console.

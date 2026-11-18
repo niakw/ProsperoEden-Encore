@@ -1698,6 +1698,31 @@ assert len(post_entries) == 41  # reviewed post-F07 source successors, including
 post_index = {item['path']: item for item in post_entries}
 assert len(post_index) == len(post_entries)
 drift_index = {item['path']: item for item in reviewed_blob_drifts}
+# R457 log-retention review is later than all archived Nov15/16 UI owners.
+# Reconstruct ONLY this change, then run the existing historical reverse
+# replay on the proven predecessor. Never rewrite frozen audit receipts.
+r457_service_path = "headless/prosperoeden/eden_services.cpp"
+r457_service_source = (ROOT / r457_service_path).read_text()
+r457_service_prior_blob = "6efc431641ace097b7216748e1e232c8cc9f1ae1"
+r457_service_current_blob = "be163317ca482765f31ddf3b7d1dbe24be041294"
+assert drift_index[r457_service_path]["actual"] == r457_service_current_blob
+r457_current = """        if (!value.detailed_logging) {
+            // Stop recording, but never erase earlier sessions simply by
+            // toggling this option. A user may need those files after a hang.
+            Eden::BootTrace::Quiet(Eden::LogsDir());
+        }"""
+r457_previous = """        if (!value.detailed_logging) {
+            Eden::BootTrace::Quiet(Eden::LogsDir());
+            for (const char* name : {
+                    "eden_log.txt", "eden_log.txt.first.txt", "eden_log.txt.old.txt"})
+                (void)std::remove((Eden::UserDir() + "/log/" + name).c_str());
+        }"""
+assert r457_service_source.count(r457_current) == 1
+r457_service_prior_source = r457_service_source.replace(r457_current, r457_previous, 1)
+r457_data = r457_service_prior_source.encode("utf-8")
+assert hashlib.sha1(b"blob " + str(len(r457_data)).encode() + bytes([0]) + r457_data).hexdigest() == r457_service_prior_blob
+drift_index[r457_service_path]["actual"] = r457_service_prior_blob
+print("R457_LOG_RETENTION_SOURCE_SUCCESSOR_PASS reviewed=1 prior_reconstructed=1")
 
 # P1 typography removes the ASCII-only quick-menu conversion while preserving
 # the legacy compact FPS HUD ABI. Reconstruct the exact pre-typography hud.h
@@ -1933,7 +1958,8 @@ for changed_path, (predecessor_blob, successor_blob, markers) in nov16_diagnosti
         continue
     if drift_index[changed_path]["actual"] != successor_blob:
         continue
-    current_source = (ROOT / changed_path).read_text()
+    current_source = (r457_service_prior_source if changed_path == r457_service_path
+                      else (ROOT / changed_path).read_text())
     for marker in markers:
         assert marker in current_source, (changed_path, marker)
     if changed_path == "headless/prosperoeden/eden_services.cpp":
@@ -2142,7 +2168,8 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
         # eden_services.cpp hunks in memory and require the reconstructed Git
         # blob to be #207's reviewed successor. This preserves the immutable
         # chain without depending on repository history depth.
-        current_service = (ROOT / changed_path).read_text()
+        current_service = (r457_service_prior_source if changed_path == r457_service_path
+                           else (ROOT / changed_path).read_text())
         if drift_index[changed_path]["actual"] == nov16_home_square_blob:
             # Full-file blob + dedicated artwork tests bind the reviewed delta.
             # Resume the older immutable chain from the exact #239 predecessor;

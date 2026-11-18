@@ -4,7 +4,7 @@
 
 **Build PS5 testé :** R457, moteur `e8493417f914783069e09d7f8fae19b5fd4049fe`, vendor `edcc311c09eed3a33e5acc373c63a436f662cb5b`, archive de logs utilisateur `17112259.zip`. Pas de backtrace native terminale FC27 dans cette archive.
 
-**Lot source candidat :** vendor `c92ce9a8b90808869be76d02e73d35636857a0d4`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, Lichii #1199 pour les remaps GPU, #2085 pour I2M, l'adaptation de la PR Lichii #2121 pour les blits 2D en tiling natif et Lichii #2100 pour la persistance atomique du cache Vulkan statique. Encore ajoute l'activation du layout uniquement après authentification du canal GPU NS2 afin de conserver le layout Maxwell par défaut pour NS1. **Pas encore de build PS5 ni de validation console de ce candidat.**
+**Lot source candidat :** vendor `1e51d1f3383f149a599e36052aba7d887d4b1f77`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, Lichii #1199 pour les remaps GPU, #2085 pour I2M, l'adaptation de la PR Lichii #2121 pour les blits 2D en tiling natif et Lichii #2100 pour la persistance atomique du cache Vulkan statique et Lichii #1952 pour arrêter le cheat VM avant le teardown. Encore ajoute l'activation du layout uniquement après authentification du canal GPU NS2 afin de conserver le layout Maxwell par défaut pour NS1. **Pas encore de build PS5 ni de validation console de ce candidat.**
 
 | Priorité | Symptôme / jeu | Logs R457 | Cause candidate / modification | Amont | Validation restante |
 |---|---|---|---|---|---|
@@ -53,15 +53,33 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 
 - Le premier backport Lichii #2085/commit `7702ac4` couvre les écritures I2M, mais le retour de test upstream #2042 indique que les bandes sombres persistaient.
 - L'analyse upstream a ensuite identifié le blitter logiciel Fermi2D comme second écrivain restant en layout Switch 1 ; la PR Lichii #2121 transmet `UsesNativeTiling()` aux chemins `UnswizzleSubrect` et `SwizzleSubrect`.
-- Vendor Encore `c92ce9a8b90808869be76d02e73d35636857a0d4` porte ces deux appels, ajoute le flag `MemoryManager` par défaut à `false` et ne l'active qu'après `NativeGpuChannelRegistry::Bind` réussi pour un canal NS2 prêt.
+- Vendor Encore `1e51d1f3383f149a599e36052aba7d887d4b1f77` porte ces deux appels, ajoute le flag `MemoryManager` par défaut à `false` et ne l'active qu'après `NativeGpuChannelRegistry::Bind` réussi pour un canal NS2 prêt.
 - Le moteur sélectionne le même header `MemoryManager` pour `core` et `video_core`, plus un seul owner I2M et un seul owner software-blitter. NS1 reste sur le layout Maxwell tant qu'aucun canal natif NS2 n'est authentifié.
 - Qualification source/host uniquement à ce stade ; ni la disparition des bandes dans DKB/Bananza, ni le premier rendu MKW, ni les crashs `PC=0x4` ne sont déclarés corrigés avant test PS5.
 
 
 ## Vulkan static pipeline cache — Lichii #2100
 
-- Le vendor `c92ce9a8b90808869be76d02e73d35636857a0d4` porte le correctif upstream fusionné Lichii #2100 sur le propriétaire réellement sélectionné `encore-active/eden-vulkan/vulkan_device.cpp`.
+- Le vendor `1e51d1f3383f149a599e36052aba7d887d4b1f77` porte le correctif upstream fusionné Lichii #2100 sur le propriétaire réellement sélectionné `encore-active/eden-vulkan/vulkan_device.cpp`.
 - Une sauvegarde est écrite dans `.tmp`, fermée puis renommée ; un crash ou une sortie interrompue ne tronque plus le dernier cache valide.
 - Si le driver rejette un cache statique sauvegardé, le chargement retombe sur un cache vide au lieu de laisser l'exception remonter pendant la création du device.
 - Le test vendor et l'oracle moteur reconstruisent tous deux byte-for-byte le blob antérieur `50578df547b769bd45cf4964ffa3f793c1749273`.
 - Ce durcissement réduit un risque de redémarrage/cache après crash ; il ne prouve ni le crash FC27 ni la sortie PS5 #97 corrigés avant build et test console.
+
+
+## Bananza VP9 EOS — Lichii build 70 audit
+
+- Lichii issue #2 reproduit le même Title ID Bananza `040074A01BF12000`, avec abort 2111-3604 peu après la fin d'une vidéo VP9 960×540 ; le reporter confirme la disparition de ce crash après build 70.
+- Lichii #48 désactive les notifications vidéo pendant Stop/Finalize. Encore possède déjà l'équivalent sélectionné : Stop désactive l'état et Finalize fait `Set(false,false)` → `Detach()` → `UnscheduleEvent()` → reset du timer → clear de l'event.
+- Lichii #41 (framing/EOS) est couvert par le decoder maintenu : conversion H.264/HEVC length-prefixed, retry FFmpeg EAGAIN, `Drain()` EOS puis reset. Les tests EOS refusent une sortie/fence synthétique lorsqu'aucune image réelle n'existe.
+- Lichii #49 corrige une file asynchrone de paquets compressés absente de l'architecture Encore ; Lichii #70 corrige son `GpuSplit` front/back également absent du graphe sélectionné. Aucun port aveugle de ces architectures.
+- Le crash R457 Encore reste distinct : `PC=0x4/LR=0` avec SP sous la pile. Si Bananza progresse au prochain build, surveiller le VP9 EOS et le marqueur `0x1c286f` sans déclarer les deux causes identiques.
+
+
+## Teardown PS5 — Lichii #1950 / #1952 / #1957
+
+- Lichii #1950 documente un SIGSEGV à l'arrêt après force-stop. Deux causes distinctes ont été corrigées puis validées par une session utilisateur de 87 minutes avec nettoyage normal.
+- Lichii #1957 ferme un thread terminé hors du scheduler lock. Encore avait déjà l'équivalent exact dans `encore-active/eden-threading/src/core/hle/kernel/k_thread.cpp`; l'immuable Eden conserve l'ancien témoin.
+- Lichii #1952 détruit le cheat VM avant `CoreTiming::SyncPause(false)`, suspension guest et destruction des services. Le vendor `1e51d1f3383f149a599e36052aba7d887d4b1f77` applique cet ordre aux trois variantes Core maintenues : standard, PS5 native et dérivée NS2.
+- `tests/shutdown_teardown_lifetime_source.py` reconstruit byte-for-byte les trois blobs prédécesseurs et vérifie aussi #1957. L'oracle moteur reconstruit le G14 historique au lieu de modifier son snapshot.
+- Ce correctif ferme une fenêtre de use-after-teardown documentée upstream ; le crash cercle/sortie PS5 #97 reste ouvert jusqu'au build natif et au test console.

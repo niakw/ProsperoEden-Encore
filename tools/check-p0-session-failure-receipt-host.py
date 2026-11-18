@@ -111,12 +111,16 @@ with tempfile.TemporaryDirectory(prefix="encore-p0-receipt-") as tmp:
     binary = work / "test"
     src.write_text(cpp, encoding="utf-8")
     for opt in ("-O0", "-O2"):
+        # The O2 witness must start with an independent filesystem: the O0
+        # case intentionally leaves an attacker-controlled symlink behind.
+        test_dir = work / opt.removeprefix("-")
+        test_dir.mkdir()
         compilation = subprocess.run(
             [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror", "-pedantic",
              "-I", str(ROOT / "headless"), str(src), "-o", str(binary)],
             capture_output=True, text=True, timeout=60)
         assert compilation.returncode == 0, (opt, compilation.stdout, compilation.stderr)
-        result = subprocess.run([str(binary), str(work)], capture_output=True, text=True, timeout=15)
+        result = subprocess.run([str(binary), str(test_dir)], capture_output=True, text=True, timeout=15)
         assert result.returncode == 0, (opt, result.stdout, result.stderr)
 
 print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 title=1 bounded=1 no_symlink=1")

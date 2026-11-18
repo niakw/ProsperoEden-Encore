@@ -2455,6 +2455,49 @@ assert hashlib.sha1(
 scene_baseline = scene_pre_opt.replace(scene_added, scene_prior, 1).encode()
 assert hashlib.sha1(b"blob " + str(len(scene_baseline)).encode() + bytes([0]) + scene_baseline).hexdigest() == scene_drift["expected"]
 print("NOV13_GAMEPLAY_SCENE_4_5_REVERSIBLE_PASS historical_F07_preserved=1")
+# R457 runtime log sink is independent of historical F07 owner entries.
+# Verify its exact reviewed successor and reconstruct the earlier bounded
+# sink byte-for-byte, then discard ONLY this separately qualified drift.
+pipe_path = "headless/log_pipe.h"
+assert pipe_path in drift_index and pipe_path not in post_index
+pipe_drift = drift_index.pop(pipe_path)
+assert pipe_drift["expected"] == "275a75da7baadbcb95be91996adb5cbdf35c59c2"
+assert pipe_drift["actual"] == "fd3f0cdbe0e9f1d6440275b177e7dad4a027e52f"
+pipe_source = (ROOT / pipe_path).read_text()
+new_toggle = """        // Disabling collection must not delete already recorded evidence.
+        // Re-enabling within the same process appends to the bounded current
+        // segment instead of truncating the earlier game/fault diagnostics.
+        const int next = want_enabled ?
+            open(log_path.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0666) :
+            open("/dev/null", O_WRONLY);
+        if (next < 0) return false;
+        close(file_fd);
+        file_fd = next;
+        // Keep bytes and rotated across OFF/ON. The draining thread still
+        // accounts for the existing segment, so an append cannot bypass the
+        // 8 MiB per-segment limit or remove the preserved first segment.
+        enabled = want_enabled;"""
+old_toggle = """        const int next = want_enabled ?
+            open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666) :
+            open("/dev/null", O_WRONLY);
+        if (next < 0) return false;
+        close(file_fd);
+        file_fd = next;
+        enabled = want_enabled;
+        rotated = false;
+        bytes = 0;
+        if (!want_enabled) {
+            (void)std::remove(log_path.c_str());
+            (void)std::remove(first_log_path.c_str());
+        } else {
+            (void)std::remove(first_log_path.c_str());
+        }"""
+assert pipe_source.count(new_toggle) == 1, "Unreviewed R457 log sink delta"
+prior_pipe = pipe_source.replace(new_toggle, old_toggle, 1).encode("utf-8")
+assert hashlib.sha1(b"blob " + str(len(prior_pipe)).encode() + bytes([0]) +
+                    prior_pipe).hexdigest() == pipe_drift["expected"]
+print("R457_LOG_PIPE_F07_SOURCE_DELTA_PASS reviewed=1 prior_reconstructed=1")
+
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

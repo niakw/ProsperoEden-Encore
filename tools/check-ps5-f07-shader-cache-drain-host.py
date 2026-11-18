@@ -18,8 +18,9 @@ start="PipelineCache::~PipelineCache() {"
 end="\n\nnamespace {\nstd::mutex eden_attributeless_mutex;"
 assert shader.count(start)==1 and shader.count(end)==1
 method=start+shader.split(start,1)[1].split(end,1)[0]
+assert method.count("workers.WaitForRequests();")==1
 assert method.count("serialization_thread.WaitForRequests();")==1
-assert method.index("serialization_thread.WaitForRequests();") < method.index("SerializeVulkanPipelineCache(")
+assert method.index("workers.WaitForRequests();") < method.index("serialization_thread.WaitForRequests();") < method.index("SerializeVulkanPipelineCache(")
 assert "#ifdef PS5_NATIVE" in method and "#endif" in method
 assert "f07_drain_old" in gen and "f07_drain_new" in gen
 assert gen.index("shader_source = shader_source.replace(f07_drain_old, f07_drain_new, 1)") < gen.index("shader_output.write_text(shader_source)")
@@ -72,6 +73,7 @@ struct Worker {
 };
 class PipelineCache {
 public:
+    Worker workers;
     Worker serialization_thread;
     bool use_vulkan_pipeline_cache{true};
     std::string vulkan_pipeline_cache_filename{"driver.bin"};
@@ -90,15 +92,16 @@ public:
 int main() {
     // Source destructor executes on return; observe effects through captured
     // external counters because its members are destroyed thereafter.
-    bool metadata=false;
+    bool builder=false, metadata=false;
     {
         PipelineCache cache;
+        cache.workers.QueueWork([&]{builder=true;});
         cache.serialization_thread.QueueWork([&]{metadata=true; cache.metadata_persisted=true;});
     }
 #ifdef PS5_NATIVE
-    assert(metadata);
+    assert(builder && metadata);
 #else
-    assert(!metadata);
+    assert(!builder && !metadata);
 #endif
     bool no_driver=false;
     {
@@ -125,4 +128,4 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-shader-exit-") as temp:
                             "-Werror",str(path),"-o",str(exe)],check=True,
                            capture_output=True,text=True,timeout=30)
             subprocess.run([str(exe)],check=True,timeout=15)
-print("F07_SHADER_CACHE_EXIT_DRAIN_HOST_PASS native=1 desktop=1 O0=1 O2=1")
+print("F07_SHADER_CACHE_EXIT_DRAIN_HOST_PASS native=1 desktop=1 builders=drained serializers=drained O0=1 O2=1")

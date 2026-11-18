@@ -30,7 +30,7 @@ assert 'bash tools/build-package.sh release-stage' in workflow
 assert 'EDEN_STAGE_DIR: build/release/PPSA99008' in workflow
 assert 'build/dev/PPSA99008' not in workflow
 assert "if: >-\n      ${{ github.event_name == 'workflow_dispatch' ||" in workflow
-assert "contains(github.event.head_commit.message || '', '[full-build]')" in workflow
+assert "startsWith(github.event.head_commit.message || '', '[full-build]')" in workflow
 assert "(github.event_name == 'workflow_dispatch' && inputs.publish)" in workflow
 assert "needs.build.result == 'success'" in workflow
 assert 'if: ${{ false }}' not in workflow

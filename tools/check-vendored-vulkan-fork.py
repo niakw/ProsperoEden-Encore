@@ -192,6 +192,18 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     graphics_owner = 'vk_graphics_pipeline_cost.cpp'
     graphics_source = expected[graphics_owner].read_text()
     graphics_sha = raster_blob(graphics_source)
+    if graphics_sha == '526aa16b22ba3918c29ce85c884d606dcfd185a1':
+        runbuild_after = "    configure_func = ConfigureFunc(spv_modules, stage_infos);\n    build_task = std::move(func);\n    if (worker_thread) {\n#ifdef PS5_NATIVE\n        if (::Eden::DevVulkan::fast_first_pipelines) {\n            pending_first_use_graphics_builds.fetch_add(1, std::memory_order_release);\n            try {\n                worker_thread->QueueWork([this] {\n                    SCOPE_EXIT {\n                        pending_first_use_graphics_builds.fetch_sub(1, std::memory_order_release);\n                    };\n                    RunBuild();\n                });\n            } catch (...) {\n                pending_first_use_graphics_builds.fetch_sub(1, std::memory_order_release);\n                throw;\n            }\n        } else\n#endif\n        {\n            worker_thread->QueueWork([this] { RunBuild(); });\n        }\n        build_handed_off = true;\n    } else {\n        build_handed_off = true;\n        RunBuild();\n    }\n}\n\nvoid GraphicsPipeline::RunBuild() {\n    if (build_claimed.exchange(true, std::memory_order_acq_rel)) {\n        return;\n    }\n    build_task();\n    build_task = nullptr;\n}\n\n"
+        runbuild_before = "    configure_func = ConfigureFunc(spv_modules, stage_infos);\n    if (worker_thread) {\n#ifdef PS5_NATIVE\n        if (::Eden::DevVulkan::fast_first_pipelines) {\n            // Cold first-use compilation has priority over speculative optimization.\n            // Publish BEFORE enqueuing, including work waiting in the builder queue.\n            pending_first_use_graphics_builds.fetch_add(1, std::memory_order_release);\n            try {\n                worker_thread->QueueWork([build = std::move(func)]() mutable {\n                    SCOPE_EXIT {\n                        pending_first_use_graphics_builds.fetch_sub(1, std::memory_order_release);\n                    };\n                    build();\n                });\n            } catch (...) {\n                pending_first_use_graphics_builds.fetch_sub(1, std::memory_order_release);\n                throw;\n            }\n        } else\n#endif\n        {\n            worker_thread->QueueWork(std::move(func));\n        }\n        // QueueWork returned successfully; the worker now owns completion,\n        // including paths where pipeline validation or compilation fails.\n        build_handed_off = true;\n    } else {\n        // Synchronous func() owns the completion callback from this point.\n        build_handed_off = true;\n        func();\n    }\n}\n\n"
+        scheduler_after = "        // Wait for the pipeline to be built\n        scheduler.Record([this](vk::CommandBuffer) {\n            RunBuild();\n"
+        scheduler_before = "        // Wait for the pipeline to be built\n        scheduler.Record([this](vk::CommandBuffer) {\n"
+        assert graphics_source.count(runbuild_after) == 1
+        assert graphics_source.count(scheduler_after) == 1
+        graphics_source = graphics_source.replace(runbuild_after, runbuild_before, 1)
+        graphics_source = graphics_source.replace(scheduler_after, scheduler_before, 1)
+        graphics_sha = raster_blob(graphics_source)
+        assert graphics_sha == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba'
+        print("ENCORE_FC27_GRAPHICS_RUNBUILD_EXACT_REVERSE_PASS")
     if graphics_sha == 'efa8fd4d73c111655fced67fe7dd1e6b7c0178ba':
         fixed_sampler = 'const u32 second_offset{desc.secondary_cbuf_offset};'
         indexed_sampler = 'const u32 second_offset{desc.secondary_cbuf_offset + index_offset};'
@@ -211,6 +223,18 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     compute_owner = 'vk_compute_pipeline_cost.cpp'
     compute_source = expected[compute_owner].read_text()
     compute_sha = raster_blob(compute_source)
+    if compute_sha == '7122e9ad2d0d5e8af812223c85d0d9cdb6ae5600':
+        runbuild_after = "    build_task = std::move(func);\n    if (thread_worker) {\n#ifdef PS5_NATIVE\n        pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);\n        try {\n            thread_worker->QueueWork([this] {\n                SCOPE_EXIT {\n                    pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n                };\n                RunBuild();\n            });\n        } catch (...) {\n            pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n            throw;\n        }\n        build_handed_off = true;\n#else\n        thread_worker->QueueWork([this] { RunBuild(); });\n#endif\n    } else {\n#ifdef PS5_NATIVE\n        build_handed_off = true;\n#endif\n        RunBuild();\n    }\n}\n\nvoid ComputePipeline::RunBuild() {\n    if (build_claimed.exchange(true, std::memory_order_acq_rel)) {\n        return;\n    }\n    build_task();\n    build_task = nullptr;\n}\n\n"
+        runbuild_before = "    if (thread_worker) {\n#ifdef PS5_NATIVE\n        // Reserve a slot BEFORE QueueWork: a pending compute shader has\n        // priority over a speculative optimized graphics rebuild.\n        pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);\n        try {\n            thread_worker->QueueWork([build = std::move(func)]() mutable {\n                SCOPE_EXIT {\n                    pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n                };\n                build();\n            });\n        } catch (...) {\n            pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n            throw;\n        }\n        build_handed_off = true;\n#else\n        thread_worker->QueueWork(std::move(func));\n#endif\n    } else {\n#ifdef PS5_NATIVE\n        // Inline func() has its own completion guard.\n        build_handed_off = true;\n#endif\n        func();\n    }\n}\n\n"
+        scheduler_after = "        // Wait for the pipeline to be built\n        scheduler.Record([this](vk::CommandBuffer) {\n            RunBuild();\n"
+        scheduler_before = "        // Wait for the pipeline to be built\n        scheduler.Record([this](vk::CommandBuffer) {\n"
+        assert compute_source.count(runbuild_after) == 1
+        assert compute_source.count(scheduler_after) == 1
+        compute_source = compute_source.replace(runbuild_after, runbuild_before, 1)
+        compute_source = compute_source.replace(scheduler_after, scheduler_before, 1)
+        compute_sha = raster_blob(compute_source)
+        assert compute_sha == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2'
+        print("ENCORE_FC27_COMPUTE_RUNBUILD_EXACT_REVERSE_PASS")
     if compute_sha == '7d9fa72ce2afff5a7b1b75a05fc894b1d99ce6a2':
         fixed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset};'
         indexed_compute = 'const u32 secondary_offset{desc.secondary_cbuf_offset + index_offset};'
@@ -224,6 +248,39 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         print("ENCORE_FC27_STATIC_SAMPLER_COMPUTE_EXACT_RECEIPT_PASS")
     else:
         assert compute_sha == '53a545c32a034cfdd3421f381f354a28b306c259', compute_sha
+    # Lichii f8f29b5 adds only a first-use build claim to the two pipeline
+    # headers. Reverse those exact fields in the audit copy before comparing
+    # with the frozen generated Vulkan tree.
+    for header_name, current_blob, previous_blob in (
+        ('include/video_core/renderer_vulkan/vk_graphics_pipeline.h',
+         'bafff9a441a60b3dfb7e7d5a7a260741f45f59dc',
+         'd49090a476f6a9bf61026331f59c9fbb1d918729'),
+        ('include/video_core/renderer_vulkan/vk_compute_pipeline.h',
+         'bb6f143cc66b4f1e3dd3eddc312194bd751eb91b',
+         'bafd78ae572ba40ac2d3964a4df45831ae4d5e36'),
+    ):
+        header_source = expected[header_name].read_text()
+        header_sha = raster_blob(header_source)
+        if header_sha == current_blob:
+            for addition in (
+                '#include <functional>\n',
+                '    // Lichii f8f29b5: first use may claim a queued build instead of waiting\n'
+                '    // behind unrelated worker jobs.\n'
+                '    void RunBuild();\n\n',
+                '    std::function<void()> build_task;\n'
+                '    std::atomic_bool build_claimed{false};\n',
+            ):
+                assert header_source.count(addition) == 1, (header_name, addition)
+                header_source = header_source.replace(addition, '', 1)
+            assert raster_blob(header_source) == previous_blob, header_name
+            historical_header = temp/'normalized-vendor-first-use-runbuild'/header_name
+            historical_header.parent.mkdir(parents=True, exist_ok=True)
+            historical_header.write_text(header_source)
+            expected[header_name] = historical_header
+            print("ENCORE_FC27_PIPELINE_HEADER_RUNBUILD_EXACT_REVERSE_PASS", header_name)
+        else:
+            assert header_sha == previous_blob, (header_name, header_sha)
+
     # Shader IR successors #142/#145 deliberately advance the persistent
     # Vulkan cache ABI 19 -> 20 -> 21. Historical R23/P24 receipts predate
     # both changes, so normalize only this exact constant in the audit copy.
@@ -388,10 +445,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
         core_blob = subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip()
-        if pair_vendor_pin in {'edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9'}:
-            # Vendor b13c4c1 successor: sibling bytes on a GPU-dirty page are
-            # preserved before a partial CPU write. The focused vendor host
-            # test owns semantics; this audit pins the exact selected blob.
+        if pair_vendor_pin == '945385cb96f539a5b2ab2edf269683dd1e9ebad9':
+            assert core_blob == '505ee80a37d5991b7925019282e71926c1648e02'
+            selected_buffer = core_owner.read_text()
+            assert 'Lichii 44bf47d' in selected_buffer
+            assert '!gpu_modified_ranges.Intersects(page_begin, page_end - page_begin)' in selected_buffer
+        elif pair_vendor_pin == 'edcc311c09eed3a33e5acc373c63a436f662cb5b':
+            # Vendor b13c4c1 predecessor remains historically pinned.
             assert core_blob == '09e1578dec6dcbcb0b8f54d4bb819b71d0eed972'
         else:
             assert core_blob == (

@@ -121,6 +121,7 @@ int main(){
   m.IncrementGuest(3);
   assert(mirrored==1 && observed==0 && m.GetGuestSyncpointValue(3)==1);
   m.WithGuestValuesStable([&]{assert(m.GetGuestSyncpointValue(3)==1);});
+  m.SetGuestMirror({});
 
   std::atomic<unsigned> stress{};
   for(u32 i=1;i<=256;++i){

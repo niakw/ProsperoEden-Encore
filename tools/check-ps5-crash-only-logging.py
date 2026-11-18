@@ -28,17 +28,26 @@ assert 'Eden::NativeLogs::Register(stderr_attached ? &stderr_pipe : nullptr,' in
 assert 'Eden::NativeLogs::SetDetailed(persist_detailed_logs);' in main
 assert 'Eden::BootTrace::Quiet(Eden::LogsDir());' in main
 assert 'Eden::BootTrace::Ready(Eden::LogsDir(), Eden::FilesystemAccess());' in main
-assert main.index('const Eden::Crash::Last last_crash =') < main.index('if (!persist_detailed_logs) {')
+assert main.index('const Eden::Crash::Last last_crash =') < main.index('// The OFF preference disables new routine writes')
 assert main.index('Eden::Crash::Install(') < main.index('Eden::BootTrace::Quiet(Eden::LogsDir());')
-assert 'std::remove(Eden::LogFile(name).c_str());' in main
-assert '"result.tsv", "boot-trace.txt"' in main
+assert 'std::remove(Eden::LogFile(name).c_str());' not in main
+assert 'The OFF preference disables new routine writes' in main
+assert 'if (::stat(current.c_str(), &current_info) == 0)' in main
+assert 'if (::stat(first.c_str(), &first_info) == 0)' in main
 assert '''if (persist_detailed_logs) {
             report = std::fopen(Eden::LogFile("result.tsv").c_str(), "w");''' in main
-assert 'std::remove((Eden::UserDir() + "/log/" + name).c_str());' in main
+assert 'std::remove((Eden::UserDir() + "/log/" + name).c_str());' not in main
+assert 'std::remove((Eden::UserDir() + "/log/" + name).c_str());' not in service
 
 assert 'Eden::NativeLogs::SetDetailed(value.detailed_logging);' in service
 assert 'if (saved) {' in service.split('bool EdenServices::set_preferences(', 1)[1]
 assert 'Eden::BootTrace::Quiet(Eden::LogsDir());' in service
+assert 'open(log_path.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0666)' in pipe
+set_enabled = pipe.split('bool SetEnabled(bool want_enabled) {',1)[1].split('void Detach()',1)[0]
+assert 'std::remove(log_path.c_str())' not in set_enabled
+assert 'std::remove(first_log_path.c_str())' not in set_enabled
+assert 'bytes = 0;' not in set_enabled
+assert 'rotated = false;' not in set_enabled
 assert "inline bool& QuietMode()" in boot
 graphics = read("headless/graphics.cpp")
 assert "if (Eden::NativeLogs::Detailed()) {" in graphics
@@ -49,7 +58,11 @@ assert 'Eden::Performance::vulkan_cost_enabled = launch_preferences.detailed_log
 assert 'const bool pc_sample_run = launch_preferences.detailed_logging &&' in main
 assert 'if (detail::QuietMode()) return;' in boot
 assert 'std::remove("/download0/boot-trace.txt");' in boot
-assert 'std::remove("/download0/boot-trace.prev.txt");' in boot
+quiet = boot.split('inline void Quiet(const std::string& logs_dir) {',1)[1].split('inline void Ready(',1)[0]
+assert 'std::remove("/download0/boot-trace.prev.txt");' not in quiet
+assert 'std::remove((logs_dir + name).c_str());' not in quiet
+assert 'detail::QuietMode() = true;' in quiet
+assert 'detail::Memory().clear();' in quiet
 assert 'detail::File() = -1;' in boot
 
 # The upstream Eden file backend must not create or format routine logs in
@@ -128,6 +141,7 @@ source = r"""
 #include <cassert>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <thread>
 #include <chrono>
@@ -158,11 +172,13 @@ int main(int argc, char** argv) {
         assert(fs::file_size(recent) > 0);
 
         assert(stream.SetEnabled(false));
-        assert(!fs::exists(recent) && !fs::exists(first));
+        assert(fs::exists(recent) && !fs::exists(first));
+        const auto before_quiet = fs::file_size(recent);
         for (int i=0;i<150;++i) std::fprintf(out, "QUIET-AGAIN-%d\n", i);
         std::fflush(out);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
-        assert(!fs::exists(recent) && !fs::exists(first));
+        assert(fs::exists(recent) && !fs::exists(first));
+        assert(fs::file_size(recent) == before_quiet);
 
         assert(stream.SetEnabled(true));
         std::fprintf(out, "AFTER-REENABLE\n");
@@ -175,6 +191,12 @@ int main(int argc, char** argv) {
     assert(!fs::exists(first));
     const auto size = fs::file_size(recent);
     assert(size > 0 && size < 4096);
+    std::ifstream retained(recent);
+    const std::string all((std::istreambuf_iterator<char>(retained)),
+                          std::istreambuf_iterator<char>());
+    assert(all.find("DETAIL-0") != std::string::npos);
+    assert(all.find("AFTER-REENABLE") != std::string::npos);
+    assert(all.find("QUIET-AGAIN") == std::string::npos);
     return 0;
 }
 """
@@ -231,5 +253,5 @@ with tempfile.TemporaryDirectory(prefix="encore-unmapped-error-budget-") as tmp:
     subprocess.run([str(binary)], check=True, timeout=15)
 
 print("PASS R304: 100k bounded unmapped reports, concurrent counter, reset, crash snapshot")
-print("PASS: quiet stdout/stderr no files; live enable/disable/re-enable; crash reporter independent")
+print("PASS: no new quiet logs; evidence retained on OFF; re-enable append; crash reporter independent")
 print("SOURCE/HOST ONLY: PS5 native binary, startup sequence and actual FPS still unverified")

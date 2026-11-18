@@ -6,6 +6,7 @@ on:
       - 'headless/main.cpp'
       - 'src/memory_pages.cpp'
       - 'tools/check-p0-session-failure-receipt-host.py'
+      - 'tools/check-eden-optimization-coverage.py'
       - '.github/workflows/p0-session-failure-receipt-host.yml'
   push:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - 'headless/main.cpp'
       - 'src/memory_pages.cpp'
       - 'tools/check-p0-session-failure-receipt-host.py'
+      - 'tools/check-eden-optimization-coverage.py'
       - '.github/workflows/p0-session-failure-receipt-host.yml'
 permissions:
   contents: read

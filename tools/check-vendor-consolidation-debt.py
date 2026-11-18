@@ -274,8 +274,63 @@ nvctrl_new = """    const auto wait_start = ::Eden::Performance::detailed_gpu_pr
             if (wait_start) ::Eden::Performance::AddSince(::Eden::Performance::guest_sync_wait, wait_start);
             auto& event_ = events[slot];"""
 assert nvctrl_pinned.count(nvctrl_old) == 1
-assert nvctrl_maintained == '#include "performance.h"\n' + nvctrl_pinned.replace(nvctrl_old, nvctrl_new), (
-    "Maintained nvhost_ctrl source diverges from original event-wait instrumentation")
+# Vendor 47d1916 adds a detailed-only timing split around the already-existing
+# synchronous WaitHost fallback. Preserve exact source parity by replaying both
+# reviewed deltas: the historical RegisterHostAction timer and this newer
+# diagnostic. Functional wait/stall ordering is unchanged.
+nvctrl_stall_old = """        if (events[slot].fails > 2) {
+            {
+                auto lk = system.StallApplication();
+                host1x_syncpoint_manager.WaitHost(fence_id, target_value);
+                system.UnstallApplication();
+            }
+            params.value.raw = target_value;
+            return true;
+        }"""
+nvctrl_stall_new = """        if (events[slot].fails > 2) {
+            const bool detailed =
+                ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed);
+            const long long begin_ns = detailed ? ::Eden::Performance::NowNs() : 0;
+            const u32 before = detailed
+                ? host1x_syncpoint_manager.GetHostSyncpointValue(fence_id) : 0;
+            long long suspended_ns = 0;
+            long long wait_ns = 0;
+            {
+                auto lk = system.StallApplication();
+                const long long suspended_at =
+                    detailed ? ::Eden::Performance::NowNs() : 0;
+                host1x_syncpoint_manager.WaitHost(fence_id, target_value);
+                const long long waited_at =
+                    detailed ? ::Eden::Performance::NowNs() : 0;
+                system.UnstallApplication();
+                if (detailed) {
+                    suspended_ns = suspended_at - begin_ns;
+                    wait_ns = waited_at - suspended_at;
+                }
+            }
+            if (detailed) {
+                const u32 after = host1x_syncpoint_manager.GetHostSyncpointValue(fence_id);
+                std::fprintf(stderr,
+                    "EDEN_NVHOST_STALL slot=%u fence=%u target=%u before=%u after=%u "
+                    "suspend_ns=%lld wait_ns=%lld fails=%u\\n",
+                    slot, fence_id, target_value, before, after,
+                    suspended_ns, wait_ns, events[slot].fails);
+            }
+            params.value.raw = target_value;
+            return true;
+        }"""
+assert nvctrl_pinned.count(nvctrl_stall_old) == 1
+nvctrl_expected = '#include "performance.h"\n' + nvctrl_pinned.replace(nvctrl_old, nvctrl_new)
+assert nvctrl_expected.count("#include <cstring>\n") == 1
+nvctrl_expected = nvctrl_expected.replace(
+    "#include <cstring>\n", "#include <cstring>\n#include <cstdio>\n", 1)
+assert nvctrl_expected.count(nvctrl_stall_old) == 1
+nvctrl_expected = nvctrl_expected.replace(nvctrl_stall_old, nvctrl_stall_new, 1)
+assert nvctrl_maintained == nvctrl_expected, (
+    "Maintained nvhost_ctrl diverges from reviewed callback + detailed WaitHost diagnostics")
+assert nvctrl_maintained.index("StallApplication") < nvctrl_maintained.index(
+    "WaitHost(fence_id, target_value)") < nvctrl_maintained.index("UnstallApplication")
+assert "EDEN_NVHOST_STALL" in nvctrl_maintained
 assert 'EDEN_MAINTAINED_PROFILE_NVCTRL' not in c
 assert 'list(REMOVE_ITEM core_sources "hle/service/nvdrv/devices/nvhost_ctrl.cpp")' not in c
 assert 'EDEN_MAINTAINED_PROFILE_NVCTRL' not in c

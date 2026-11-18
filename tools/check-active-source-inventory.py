@@ -1228,6 +1228,30 @@ else:
 print("ENCORE_NS2_EARLY_HLE_OWNER_RECEIPT_PASS",
       f"owners={len(ns2_early_hle_present)}", "blanket_autostub=0")
 
+# Lichii-derived NS2 built-in font service sources are present in the maintained
+# vendor tree but are not selected by the PS5 CMake graph yet. Keep them visible
+# and byte-pinned without silently treating availability as shipping support.
+ns2_font_service_unselected_receipts = {
+    "ns2-runtime/font_service/core/hle/service/ns/font_merge.cpp":
+        "015ff25ee80bb2197b18e96a6c39fe4271db5f5b",
+    "ns2-runtime/font_service/core/hle/service/ns/font_merge.h":
+        "4380ec17e9d602e26839f6c8a4dddddb916a0f02",
+    "ns2-runtime/font_service/core/hle/service/ns/platform_service_manager.cpp":
+        "87994714900728c1c7acabfc94fc5cfa6d2028ca",
+    "ns2-runtime/font_service/core/hle/service/ns/platform_service_manager.h":
+        "ed0bb0a17d01d10339bb8263f690aa52666158ad",
+}
+ns2_font_service_unselected = set(ns2_font_service_unselected_receipts) & set(physical_all)
+assert ns2_font_service_unselected == set(ns2_font_service_unselected_receipts)
+for path, blob in ns2_font_service_unselected_receipts.items():
+    raw = (active / path).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == blob, (path, actual, blob)
+    assert path not in kernel_select, ("Unreviewed NS2 font source became shipping", path)
+assert not ns2_font_service_unselected.intersection(research_paths)
+print("ENCORE_NS2_FONT_SERVICE_UNSELECTED_PASS",
+      f"owners={len(ns2_font_service_unselected)}", "shipping=0")
+
 # Vendor #178 adds the diagnostics HTTPS declaration after the frozen F07
 # source graph. Keep it explicit and byte-pinned rather than inflating the
 # historical 337-owner baseline.
@@ -1259,7 +1283,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | post_f07_thread_worker_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | post_f07_diagnostics_net_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_unselected | post_f07_diagnostics_net_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

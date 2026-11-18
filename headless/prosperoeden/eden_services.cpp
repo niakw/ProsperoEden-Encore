@@ -3029,6 +3029,11 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
             // Stop recording, but never erase earlier sessions simply by
             // toggling this option. A user may need those files after a hang.
             Eden::BootTrace::Quiet(Eden::LogsDir());
+        } else if (!Eden::BootTrace::Resume(Eden::LogsDir())) {
+            // Normal stderr/stdout and fatal crash reports remain independent.
+            // A failed bootstrap reopen must not truncate prior traces or
+            // misrepresent this additional trace as available.
+            Eden::Report("logs", "Early trace unavailable after logging was enabled");
         }
     }
 #endif

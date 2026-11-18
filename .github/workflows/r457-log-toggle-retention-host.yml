@@ -1,0 +1,41 @@
+name: R457 log toggle retention and crash-evidence contract (host)
+
+on:
+  pull_request:
+    paths:
+      - 'headless/log_pipe.h'
+      - 'headless/boot_trace.h'
+      - 'headless/main.cpp'
+      - 'headless/prosperoeden/eden_services.cpp'
+      - 'tools/check-ps5-crash-only-logging.py'
+      - 'tools/check-log-pipe-rotation-source.py'
+      - 'tools/check-ps5-release-saved-diagnostics-host.py'
+      - '.github/workflows/r457-log-toggle-retention-host.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'headless/log_pipe.h'
+      - 'headless/boot_trace.h'
+      - 'headless/main.cpp'
+      - 'headless/prosperoeden/eden_services.cpp'
+      - 'tools/check-ps5-crash-only-logging.py'
+      - 'tools/check-log-pipe-rotation-source.py'
+      - 'tools/check-ps5-release-saved-diagnostics-host.py'
+      - '.github/workflows/r457-log-toggle-retention-host.yml'
+permissions:
+  contents: read
+jobs:
+  retain-logs-and-quiet-collection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Host C++ log pipe OFF ON OFF ON regression and retained evidence
+        run: python3 -B tools/check-ps5-crash-only-logging.py
+      - name: Verify bounded 8 MiB segment rotation
+        run: python3 -B tools/check-log-pipe-rotation-source.py
+      - name: Verify release-only GPU sampling gating through saved preference
+        run: python3 -B tools/check-ps5-release-saved-diagnostics-host.py

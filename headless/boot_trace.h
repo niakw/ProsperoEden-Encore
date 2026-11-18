@@ -116,8 +116,9 @@ inline void Begin(const char* version, const char* build) {
          static_cast<int>(getgid()), static_cast<int>(getegid()), detail::File());
 }
 
-// The startup bootstrap can write a trace before preferences are readable.
-// Once crash handling is installed, quiet sessions do not retain those files.
+// The startup bootstrap writes before preferences are readable. Quiet mode
+// stops further writes and drops only this boot's temporary trace; prior
+// session evidence under logs_dir and the previous bootstrap are retained.
 // Fatal events still use the independent Crash::WriteReport path.
 inline void Quiet(const std::string& logs_dir) {
     detail::QuietMode() = true;
@@ -126,11 +127,11 @@ inline void Quiet(const std::string& logs_dir) {
         detail::File() = -1;
     }
     detail::Memory().clear();
+    // This temporary file was created by Begin() for the current boot.
+    // Its previous sibling and the log-root trace may be the ONLY record of
+    // a failed game after the application was restarted with logging OFF.
     (void)std::remove("/download0/boot-trace.txt");
-    (void)std::remove("/download0/boot-trace.prev.txt");
-    for (const char* name : {"/boot-trace.txt", "/boot-trace.prev.txt",
-                              "/boot-trace.sandbox-prev.txt"})
-        (void)std::remove((logs_dir + name).c_str());
+    (void)logs_dir;
 }
 
 inline void Ready(const std::string& logs_dir, bool full_filesystem) {

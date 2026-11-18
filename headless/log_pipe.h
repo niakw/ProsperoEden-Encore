@@ -83,21 +83,19 @@ public:
         std::fflush(stream);
         std::scoped_lock lock{file_mutex};
         if (enabled == want_enabled) return true;
+        // Disabling collection must not delete already recorded evidence.
+        // Re-enabling within the same process appends to the bounded current
+        // segment instead of truncating the earlier game/fault diagnostics.
         const int next = want_enabled ?
-            open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666) :
+            open(log_path.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0666) :
             open("/dev/null", O_WRONLY);
         if (next < 0) return false;
         close(file_fd);
         file_fd = next;
+        // Keep bytes and rotated across OFF/ON. The draining thread still
+        // accounts for the existing segment, so an append cannot bypass the
+        // 8 MiB per-segment limit or remove the preserved first segment.
         enabled = want_enabled;
-        rotated = false;
-        bytes = 0;
-        if (!want_enabled) {
-            (void)std::remove(log_path.c_str());
-            (void)std::remove(first_log_path.c_str());
-        } else {
-            (void)std::remove(first_log_path.c_str());
-        }
         return true;
     }
 

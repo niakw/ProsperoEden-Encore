@@ -1,0 +1,35 @@
+name: FC27 release cache-lock tail and dropped-draw evidence (host)
+
+on:
+  pull_request:
+    paths:
+      - 'headless/graphics.cpp'
+      - 'headless/graphics.h'
+      - 'headless/performance.h'
+      - 'tools/check-fc27-release-cache-tail-draw-drop-host.py'
+      - 'tools/check-ps5-quiet-frame-pressure.py'
+      - '.github/workflows/fc27-release-causal-evidence-host.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'headless/graphics.cpp'
+      - 'headless/graphics.h'
+      - 'headless/performance.h'
+      - 'tools/check-fc27-release-cache-tail-draw-drop-host.py'
+      - 'tools/check-ps5-quiet-frame-pressure.py'
+      - '.github/workflows/fc27-release-causal-evidence-host.yml'
+permissions:
+  contents: read
+jobs:
+  causal-source-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Compile extracted production counter snapshots with positive and negative controls
+        run: python3 -B tools/check-fc27-release-cache-tail-draw-drop-host.py
+      - name: Validate pre-existing quiet mode and frame-pressure source contracts
+        run: python3 -B tools/check-ps5-quiet-frame-pressure.py

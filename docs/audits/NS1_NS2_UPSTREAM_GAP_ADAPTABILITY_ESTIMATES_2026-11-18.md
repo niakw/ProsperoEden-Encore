@@ -49,6 +49,25 @@
 | UI / médias P2 | Plusieurs écarts remontés portent sur le launcher (jaquettes, langues, overlay, réglages) et non sur le GPU invité | Tout traiter comme un bug de shader |
 | Build/CI/sécurité P3 | Outillage réinstallé, cache et 5 alertes picomatch déclarées ; qualité des contrôles source à maintenir | « Corriger » en supprimant les vérifications ou en modifiant les snapshots épinglés |
 
+## 2 bis. Catalogue NS2 machine-readable : six capacités « non implémentées » et quatre statuts upstream périmés
+
+La source actuelle [\`NS2_PS5_COMPATIBILITY_CATALOG.json\`](NS2_PS5_COMPATIBILITY_CATALOG.json) (\`schema_version=2\`) définit **25 capacités**, dont **19 \`implemented=true\` et 6 \`implemented=false\`**. Son [contrôle](../../tools/ns2/check_ns2_ps5_compatibility_catalog.py) exige des propriétaires source/chaînes pour les capacités \`true\` : **ce booléen ne signifie ni succès de compilation PS5 ni compatibilité du jeu**. MKW et Bananza n’exigent que des capacités classées \`true\` dans le catalogue, **alors que la première image MKW et le démarrage Bananza restent des incidents ouverts**.
+
+| ID du catalogue (\`false\`) | État upstream réellement vérifié le 18/11 | Transposition PS5 | Effort si écart shipping démontré | Décision |
+|---|---|---|---:|---|
+| \`gamefile_shader_warm_extract\` | Références Lichii \`shader_warm_builder\`, \`shader_archives\`, \`warm_records\` ; registre local uniquement statique | **Moyenne** : importer le mécanisme, pas les shaders du jeu ou le cache driver | **5–16 J** | Comparer \`FileEnvironment\`, format des clés, annulabilité et budget avant implémentation |
+| \`shared_store_warp_order\` | [Lichii #2082](https://github.com/zortos293/Lichii/pull/2082) **ouverte**, tête \`5fcc5329\` | **Faible/moyenne** : ordre mémoire entre lanes, SPIR-V et barrières GPU | **4–14 J** | Candidat non fusionné : tests sémantiques et driver PS5 avant toute adoption |
+| \`nvn2_root_tables_1_7\` | [Lichii #2089](https://github.com/zortos293/Lichii/pull/2089) **fusionnée le 17/11** (\`f9e03df9\`) | **Moyenne** : root table banque 17 / constantes 25–31, ABI CBUF native | **4–12 J** | Source amont devenue stable, mais **pas preuve d’absence locale** ; comparer les banques sélectionnées |
+| \`tld_ll_txq_uniform_handle\` | [Lichii #2090](https://github.com/zortos293/Lichii/pull/2090) **fusionnée le 17/11** (\`04593ac9\`) | **Moyenne** : descripteur et lowering TLD.B.LL/TXQ | **3–10 J** | Vérifier modes supportés et tests de formats/handle avant port |
+| \`surface_register_handle_ops\` | [Lichii #2093](https://github.com/zortos293/Lichii/pull/2093) **fusionnée le 17/11** (\`1a12decc\`) | **Moyenne/faible** : SUATOM/SURED/SULD/SUST, mémoire GPU/atomiques | **6–20 J** | Sémantique d’accès, bornes et durée de vie des surfaces à qualifier |
+| \`ampere_ushf_redux_strong_gpu\` | [Lichii #2094](https://github.com/zortos293/Lichii/pull/2094) **fusionnée le 17/11** (\`187a90bf\`) | **Moyenne/faible** : USHF, REDUX et ordre fort LDG sur PS5 | **5–16 J** | Tests vérité ISA + mémoire/cohérence ; aucun NOP approximatif |
+
+**Écart documentaire concret :** les quatre entrées Cyberpunk ci-dessus sont toujours décrites comme « Open Cyberpunk candidate » dans le JSON de référence alors que les PR upstream sont fusionnées depuis le 17/11. **Le statut local \`implemented=false\` reste valide tant qu’on n’a pas prouvé l’équivalent ou l’intégration dans notre build ; seul le statut de la PR upstream est périmé.** Il faudra corriger le *texte* du catalogue à une étape documentaire dédiée, sans basculer \`implemented\` à \`true\` sans sources et tests.
+
+Les 19 entrées \`true\` comprennent notamment CPU6, backing sparse, GMMU 4 KiB, QMD3, 32 storage buffers, mapping 49 bits, pont ASTC et inventaire statique des shaders. Elles prouvent **des témoins de source** ; leur exactitude runtime et leur suffisance pour un titre restent à démontrer. Les profils supplémentaires (Orbitals/Cyberpunk/Xenoblade) présents dans le JSON sont des **fixtures de compatibilité**, pas des tests console Encore.
+
+**Conséquence sur l’estimation :** ne pas additionner ces six lignes au coût G01–G14 lorsque les causes se recouvrent (warm-up G10, ISA G01/G02/G04, mémoire G05/G06). Les candidats fusionnés ne sont pas automatiquement P0 pour les jeux actuellement testés : examiner d’abord les signatures et les shaders réellement rencontrés.
+
 ## 3. Matrice P0 — démarrage, vie des objets, mémoire et services
 
 | ID / état | Écart potentiel, source/raison, preuve | Adaptabilité PS5 / risque NS1 | Effort indicatif | Acceptation indispensable |

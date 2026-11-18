@@ -3,6 +3,12 @@
 #include <chrono>
 #include <cstdio>
 #include <string>
+#include <cstdint>
+#include <cstddef>
+#include <cerrno>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #if defined(__PROSPERO__)
 extern "C" int sceKernelDebugOutText(int, const char*);
 #endif
@@ -16,6 +22,61 @@ inline void Report(const char* stage, const char* message) {
 #if defined(__PROSPERO__)
     (void)sceKernelDebugOutText(0, line);
 #endif
+}
+// A recoverable PS5 failure is NOT a fatal signal. When Detailed Logs are OFF,
+// stdout/stderr deliberately go to /dev/null, so Report() alone can never retain
+// the allocation RC, title, failing stage or the final memory headroom.
+// Persist exactly ONE bounded incident at the catch site. Do not change
+// general logging policy or write during an emulator/GPU frame.
+inline bool WriteSessionFailureReceipt(const std::string& path, const char* source_sha,
+                                       std::uint64_t title_id, std::uint64_t attempt,
+                                       const char* kind, const char* reason, bool detailed,
+                                       bool free_query_ok, std::size_t largest_free,
+                                       bool direct_failure, std::uint32_t direct_stage,
+                                       std::uint32_t direct_rc, std::uint64_t direct_bytes,
+                                       std::uint64_t direct_extent) noexcept {
+    char clean_reason[241]{};
+    for (std::size_t i = 0; reason && reason[i] && i < sizeof(clean_reason) - 1; ++i) {
+        const unsigned char ch = static_cast<unsigned char>(reason[i]);
+        clean_reason[i] = ch < 32 || ch == 127 ? ' ' : static_cast<char>(ch);
+    }
+    const auto mono_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    char line[1024];
+    const int size = std::snprintf(line, sizeof(line),
+        "EDEN_SESSION_FAILURE_V1 monotonic_ms=%lld sha=%.40s "
+        "title=%016llx attempt=%llu kind=%.32s detailed=%u "
+        "largest_query_ok=%u largest_free_bytes=%zu "
+        "direct_failure=%u direct_stage=%u direct_rc=0x%08x "
+        "direct_bytes=%llu direct_extent=%llu reason=%.240s\\n",
+        static_cast<long long>(mono_ms), source_sha ? source_sha : "unknown",
+        static_cast<unsigned long long>(title_id),
+        static_cast<unsigned long long>(attempt), kind ? kind : "unknown",
+        unsigned(detailed), unsigned(free_query_ok), largest_free,
+        unsigned(direct_failure), direct_stage, direct_rc,
+        static_cast<unsigned long long>(direct_bytes),
+        static_cast<unsigned long long>(direct_extent), clean_reason);
+    if (size <= 0 || static_cast<std::size_t>(size) >= sizeof(line)) return false;
+    // The log is application-private and only grows on actual failed sessions.
+    // Keep the last 2 MiB without rotating away potentially unique evidence.
+    const int file = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW, 0600);
+    if (file < 0) return false;
+    struct stat info{};
+    if (fstat(file, &info) != 0 || !S_ISREG(info.st_mode) ||
+        info.st_size < 0 || info.st_size > 2 * 1024 * 1024 - size) {
+        (void)close(file);
+        return false;
+    }
+    std::size_t at = 0;
+    while (at < static_cast<std::size_t>(size)) {
+        const ssize_t written = write(file, line + at, static_cast<std::size_t>(size) - at);
+        if (written > 0) at += static_cast<std::size_t>(written);
+        else if (written < 0 && errno == EINTR) continue;
+        else break;
+    }
+    const bool synced = at == static_cast<std::size_t>(size) && fsync(file) == 0;
+    const bool closed = close(file) == 0;
+    return synced && closed;
 }
 // A shutdown step with the milliseconds since the previous one (some games take 14-16 s).
 inline void ReportStep(const char* stage, const char* message) {

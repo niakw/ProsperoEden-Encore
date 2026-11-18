@@ -97,6 +97,24 @@ def check() -> None:
     memory=read('vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp')
     require('MapNative4K' in memory and 'UnmapNative4K' in memory,
             '4 KiB native GMMU memory source missing')
+    decoder=read('vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp')
+    decoder_header=read('vendor/encore-active/eden-core/overrides/native-tiling/video_core/textures/decoders.h')
+    i2m=read('vendor/encore-active/eden-core/src/video_core/engines/engine_upload.cpp')
+    pinned_decoder_header=read('vendor/sources/eden/src/video_core/textures/decoders.h')
+    require('NativeGobOffset' in decoder and
+            decoder.count('bool native_tiling')>=8 and
+            'bool native_tiling = false' in decoder_header and
+            'native_tiling' not in pinned_decoder_header and
+            'memory_manager.UsesNativeTiling()' in i2m,
+            'Lichii #2085 native I2M tiling source contract missing')
+    for token in (
+        'set(EDEN_NS2_NATIVE_TILING_ROOT',
+        'set(EDEN_NS2_I2M_UPLOAD',
+        'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")',
+        'list(REMOVE_ITEM video_sources "engines/engine_upload.cpp")',
+        'list(APPEND video_sources "${EDEN_NS2_I2M_UPLOAD}")',
+    ):
+        require(token in CMAKE,'Lichii #2085 source owner not selected: '+token)
     nvdrv=read('vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
     require('ValidateChannelOwner(' in nvdrv and
             nvdrv.count('ValidateChannelOwner(fd, program_id)')>=2 and
@@ -194,4 +212,4 @@ if __name__=='__main__':
     except (AssertionError,OSError,subprocess.SubprocessError) as error:
         print('NS1_NS2_UNIFIED_SOURCE_OWNER_FAIL',error,file=sys.stderr)
         sys.exit(1)
-    print('NS1_NS2_UNIFIED_SOURCE_OWNER_PASS cpu6=6 nvdrv=4k qmd=real font=selected nup=always maxwell=unchanged')
+    print('NS1_NS2_UNIFIED_SOURCE_OWNER_PASS cpu6=6 nvdrv=4k qmd=real font=selected i2m_native_tiling=1 nup=always maxwell=unchanged')

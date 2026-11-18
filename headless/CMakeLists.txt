@@ -2447,6 +2447,33 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VIEW_DIMENSION_GUARD=1)
 endif()
+# Lichii #2085 / build 341: Switch 2 I2M block-linear uploads must use
+# the native GOB bit 5/6 layout. Keep immutable Eden headers/sources pristine;
+# select one native-only decoder header and one maintained upload owner.
+if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
+    set(EDEN_NS2_NATIVE_TILING_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/native-tiling")
+    set(EDEN_NS2_NATIVE_TILING_HEADER
+        "${EDEN_NS2_NATIVE_TILING_ROOT}/video_core/textures/decoders.h")
+    set(EDEN_NS2_I2M_UPLOAD
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/engine_upload.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NATIVE_TILING_HEADER}" OR NOT EXISTS "${EDEN_NS2_I2M_UPLOAD}")
+        message(FATAL_ERROR "Lichii #2085 native I2M tiling owner missing")
+    endif()
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")
+    list(FIND video_sources "engines/engine_upload.cpp" eden_ns2_i2m_pinned)
+    if(eden_ns2_i2m_pinned EQUAL -1)
+        message(FATAL_ERROR "Pinned I2M upload owner changed; re-audit native tiling")
+    endif()
+    list(FIND video_sources "${EDEN_NS2_I2M_UPLOAD}" eden_ns2_i2m_duplicate)
+    if(NOT eden_ns2_i2m_duplicate EQUAL -1)
+        message(FATAL_ERROR "Maintained I2M upload already selected; refusing duplicate TU")
+    endif()
+    list(REMOVE_ITEM video_sources "engines/engine_upload.cpp")
+    list(APPEND video_sources "${EDEN_NS2_I2M_UPLOAD}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${EDEN_NS2_NATIVE_TILING_HEADER}" "${EDEN_NS2_I2M_UPLOAD}")
+endif()
 # R3: production selection of the maintained GOB16 decoder TU. Never
 # mutate the pinned Eden source tree or include TWO definitions of the public
 # SwizzleTexture/UnswizzleTexture/SwizzleSubrect API in a single binary.

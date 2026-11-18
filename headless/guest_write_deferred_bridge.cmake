@@ -125,6 +125,19 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
     set_property(SOURCE "${EDEN_DEFERRED_CPU_SOURCE}" TARGET_DIRECTORY core
         APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
 
+    # The DEV bridge replaces the production I2M owner after the normal native
+    # source graph has been selected. It still needs the same #2085 header.
+    set(EDEN_DEFERRED_NATIVE_TILING_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/native-tiling")
+    if(NOT EXISTS "${EDEN_DEFERRED_NATIVE_TILING_ROOT}/video_core/textures/decoders.h")
+        message(FATAL_ERROR "Missing native-tiling decoder header for DEV bridge")
+    endif()
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_DEFERRED_NATIVE_TILING_ROOT}")
+    set(eden_deferred_upload_base "engines/engine_upload.cpp")
+    if(DEFINED EDEN_NS2_I2M_UPLOAD)
+        set(eden_deferred_upload_base "${EDEN_NS2_I2M_UPLOAD}")
+    endif()
+
     get_target_property(bridge_sources video_core SOURCES)
     foreach(old IN ITEMS
         "memory_manager.cpp"
@@ -132,7 +145,7 @@ if(EDEN_GUEST_WRITE_BRIDGE_DEV)
         "${EDEN_MAINTAINED_GPU_DMA}"
         "engines/maxwell_dma.cpp"
         "engines/kepler_compute.cpp"
-        "engines/engine_upload.cpp")
+        "${eden_deferred_upload_base}")
         list(FIND bridge_sources "${old}" found)
         if(found EQUAL -1)
             message(FATAL_ERROR "Missing native source ${old}")

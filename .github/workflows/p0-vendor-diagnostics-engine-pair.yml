@@ -15,7 +15,7 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=2a8d841c4c7e34e89254e532fc75fd23e16f01fe
+          expected=3b3a26afd70fbfbfb706e5b9964e3303c07a944c
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
@@ -57,6 +57,7 @@ jobs:
           python3 -B vendor/tests/ns2_smmu_34bit_capacity_source.py
           python3 -B vendor/tests/ns2_syncpoint_shim_source.py
           python3 -B tools/ns2/check_native_gpu_worker_sparse_ipc_host.py
+          python3 -B tools/check-ns2-source-selection.py
           python3 -B vendor/tests/ns2_font_service_source.py
           python3 -B vendor/tests/ns2_backport_manifest_preserved_source.py
           python3 -B vendor/tests/fc27_release_npad_detailed_source.py

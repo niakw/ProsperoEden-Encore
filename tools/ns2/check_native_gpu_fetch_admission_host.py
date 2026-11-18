@@ -131,7 +131,18 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     assert 'EnqueueDeferredCPUWrite' not in mmh, 'DEV bridge is not shipping owner'
     assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")' in cmake
     assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")' in cmake
-    includes=[native_tiling,shader,abi,ROOT/'headless',
+
+    # Match the shipping NVDEC public-header override as well. The production
+    # graph COPYONLY-stages this maintained header ahead of pinned Eden; the
+    # real MemoryManager TU reaches it through Host1x even though this gate
+    # does not compile/link the decoder implementation itself.
+    nvdec_override=ROOT/'vendor/encore-active/eden-core/overrides'
+    nvdec_ffmpeg=nvdec_override/'video_core/host1x/ffmpeg.h'
+    assert nvdec_ffmpeg.is_file()
+    assert 'set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")' in cmake
+    assert 'configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"' in cmake
+    assert '"${EDEN_NVDEC_HEADER_DIR}/video_core/host1x/ffmpeg.h" COPYONLY)' in cmake
+    includes=[native_tiling,nvdec_override,shader,abi,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

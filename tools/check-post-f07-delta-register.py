@@ -14,7 +14,15 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==40  # reviewed post-F07 successors, including fail-closed stop watchdog
+assert len(entries)==41  # 40 existing successors + reviewed Lichii IPC started-thread header
+# The additional vendor entry is a documented source-interface successor,
+# not a relaxation of historical F07 provenance or a console performance claim.
+thread_entry=next(e for e in entries if e["path"]==
+    "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h")
+assert thread_entry["historical_reviewed_git_blob"]=="e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6"
+assert thread_entry["post_snapshot_git_blob"]=="89bbcbd2b0d3627210a980496d00f30a45c7d944"
+assert thread_entry["required_source_fragment"]=="std::vector<KThread*>& GetPendingStartedThreads()"
+assert thread_entry["review_kind"]=="source_interface"
 assert len({e["path"] for e in entries})==len(entries)
 stop_entry=next(e for e in entries if e["path"]=="headless/stop_limit.cpp")
 assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"

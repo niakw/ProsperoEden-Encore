@@ -1705,6 +1705,24 @@ r457_service_path = "headless/prosperoeden/eden_services.cpp"
 r457_service_source = (ROOT / r457_service_path).read_text()
 r457_service_prior_blob = "6efc431641ace097b7216748e1e232c8cc9f1ae1"
 r457_service_current_blob = "be163317ca482765f31ddf3b7d1dbe24be041294"
+# PS5 boot-trace OFF -> ON resume comes AFTER the log-retention fix. Revert
+# ONLY this reviewed hunk in the audit copy, preserving both exact originals.
+# This does not retrofit any historical F07 source SHA or native PS5 proof.
+r457_resume_blob = "90f1f4fb2d239d71d0a856943cc4328704e2058b"
+r457_resume_block = """        } else if (!Eden::BootTrace::Resume(Eden::LogsDir())) {
+            // Normal stderr/stdout and fatal crash reports remain independent.
+            // A failed bootstrap reopen must not truncate prior traces or
+            // misrepresent this additional trace as available.
+            Eden::Report("logs", "Early trace unavailable after logging was enabled");
+        }"""
+assert drift_index[r457_service_path]["actual"] == r457_resume_blob
+assert r457_service_source.count(r457_resume_block) == 1
+r457_service_source = r457_service_source.replace(r457_resume_block, "        }", 1)
+r457_resume_predecessor = r457_service_source.encode("utf-8")
+assert hashlib.sha1(b"blob " + str(len(r457_resume_predecessor)).encode() +
+                    bytes([0]) + r457_resume_predecessor).hexdigest() == r457_service_current_blob
+drift_index[r457_service_path]["actual"] = r457_service_current_blob
+print("R457_BOOTTRACE_REENABLE_SOURCE_SUCCESSOR_PASS prior_reconstructed=1 append_only=1")
 assert drift_index[r457_service_path]["actual"] == r457_service_current_blob
 r457_current = """        if (!value.detailed_logging) {
             // Stop recording, but never erase earlier sessions simply by

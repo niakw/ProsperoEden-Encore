@@ -82,8 +82,25 @@ for entry in entries:
             # R457 logging retention is a strict successor to the reviewed
             # Nov15/16 service owner. Reconstruct the exact predecessor before
             # checking its immutable Git blob; do not widen the source list.
-            assert actual == "be163317ca482765f31ddf3b7d1dbe24be041294", (
-                "Unreviewed R457 log-retention service owner", actual)
+            # Exact additive PS5 boottrace OFF->ON resume after log retention.
+            # Audit the two independent successors without changing F07 baselines.
+            assert actual == "90f1f4fb2d239d71d0a856943cc4328704e2058b", (
+                "Unreviewed R457 bootstrap-resume owner", actual)
+            restored = path.read_text(encoding="utf-8")
+            resume_block = """        } else if (!Eden::BootTrace::Resume(Eden::LogsDir())) {
+            // Normal stderr/stdout and fatal crash reports remain independent.
+            // A failed bootstrap reopen must not truncate prior traces or
+            // misrepresent this additional trace as available.
+            Eden::Report("logs", "Early trace unavailable after logging was enabled");
+        }"""
+            assert restored.count(resume_block) == 1
+            restored = restored.replace(resume_block, "        }", 1)
+            restored_blob = subprocess.run(
+                ["git", "hash-object", "--stdin"], input=restored.encode("utf-8"),
+                stdout=subprocess.PIPE, check=True
+            ).stdout.decode().strip()
+            assert restored_blob == "be163317ca482765f31ddf3b7d1dbe24be041294", (
+                "Exact reviewed R457 log retention predecessor changed", restored_blob)
             before = """        if (!value.detailed_logging) {
             // Stop recording, but never erase earlier sessions simply by
             // toggling this option. A user may need those files after a hang.
@@ -95,7 +112,7 @@ for entry in entries:
                     "eden_log.txt", "eden_log.txt.first.txt", "eden_log.txt.old.txt"})
                 (void)std::remove((Eden::UserDir() + "/log/" + name).c_str());
         }"""
-            reviewed = path.read_text(encoding="utf-8")
+            reviewed = restored
             assert reviewed.count(before) == 1, "Unexpected log-retention source delta"
             prior_bytes = reviewed.replace(before, after, 1).encode("utf-8")
             prior_blob = subprocess.run(

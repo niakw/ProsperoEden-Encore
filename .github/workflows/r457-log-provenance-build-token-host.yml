@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'tools/check-post-f07-delta-register.py'
+      - 'tools/check-eden-optimization-coverage.py'
       - '.github/workflows/build-040-zbic.yml'
       - 'tools/check-native-manual-run-isolation.py'
       - 'tools/check-ci-cache.py'
@@ -14,6 +15,7 @@ on:
     branches: [main]
     paths:
       - 'tools/check-post-f07-delta-register.py'
+      - 'tools/check-eden-optimization-coverage.py'
       - '.github/workflows/build-040-zbic.yml'
       - 'tools/check-native-manual-run-isolation.py'
       - 'tools/check-ci-cache.py'
@@ -33,6 +35,8 @@ jobs:
           submodules: true
       - name: Historical reviewed service blob (strict inverse source delta)
         run: python3 -B tools/check-post-f07-delta-register.py
+      - name: Full post-F07 Nov15 and Nov16 source-history replay
+        run: python3 -B tools/check-eden-optimization-coverage.py
       - name: Workflow trigger isolation
         run: python3 -B tools/check-native-manual-run-isolation.py
       - name: Cache and build job concurrency

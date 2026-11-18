@@ -69,8 +69,8 @@ assert native_toolchain.index("libboost-container-dev") < native_toolchain.index
 native_group = workflow.split("concurrency:", 1)[1].split("jobs:", 1)[0]
 assert "github.ref == 'refs/heads/main'" in native_group
 assert "github.event_name == 'push'" in native_group
-assert "!contains(github.event.head_commit.message || '', '[full-build]')" in native_group
-assert "!contains(github.event.head_commit.message || '', '[resume-stage:37728435816]')" in native_group
+assert "!startsWith(github.event.head_commit.message || '', '[full-build]')" in native_group
+assert "!startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]')" in native_group
 assert "'skip-only' || 'build-capable'" in native_group
 assert "cancel-in-progress: true" in native_group
 # Preserve existing one-at-a-time build-capable behavior for explicitly

@@ -21,6 +21,16 @@ for before, after in indirect_guards:
     assert baseline.count(before) == 1, "pinned OpenGL indirect draw moved"
     baseline = baseline.replace(before, after)
 
+# Upstream Lichii/Eglantine b13c4c1: WriteMemory normally preserves
+# GPU-written sibling bytes on a touched page, but UnmapMemory is discarding
+# the mapping and must not perform that download. Keep this exact upstream
+# rasterizer call-site delta in both maintained OpenGL profiles.
+unmap_before = "        buffer_cache.WriteMemory(addr, size);\n"
+unmap_after = "        buffer_cache.WriteMemory(addr, size, false);\n"
+assert baseline.count(unmap_before) == 1, "pinned OpenGL unmap call moved"
+baseline = baseline.replace(unmap_before, unmap_after, 1)
+assert baseline.count(unmap_after) == 1
+
 assert (maintained / "gl_rasterizer.cpp").read_text() == baseline
 dev = "#include \"dev_render_passes.inc\"\n#include \"performance.h\"\n" + baseline
 assert dev.count("        static unsigned traced_draws{};") == 1

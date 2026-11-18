@@ -41,6 +41,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
         'hle/service/am/service/self_controller.cpp',
+        'hle/service/ns/platform_service_manager.cpp',
         'control/scheduler.cpp',
         'control/channel_state.cpp',
         'backend/spirv/spirv_emit_context.cpp',
@@ -65,7 +66,8 @@ add_library(core STATIC dummy.cpp
     hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
     hle/service/nvdrv/devices/nvhost_as_gpu.cpp
     hle/service/nvdrv/devices/nvhost_gpu.cpp
-    hle/service/am/service/self_controller.cpp)
+    hle/service/am/service/self_controller.cpp
+    hle/service/ns/platform_service_manager.cpp)
 add_library(video_core STATIC "{puller}" dummy.cpp control/scheduler.cpp control/channel_state.cpp)
 add_library(shader_recompiler STATIC dummy.cpp
     backend/spirv/spirv_emit_context.cpp
@@ -109,6 +111,26 @@ foreach(needle IN ITEMS
         message(FATAL_ERROR "Missing unified native core owner: ${needle}: ${selected_core}")
     endif()
 endforeach()
+# Model Eden's real legacy pl:u owner too: the release selector must remove
+# that relative TU and install exactly one maintained NS2/NS1-compatible owner.
+list(FIND selected_core "hle/service/ns/platform_service_manager.cpp" legacy_pl_u)
+if(NOT legacy_pl_u EQUAL -1)
+    message(FATAL_ERROR "Pinned pl:u owner compiled beside maintained font service")
+endif()
+string(REGEX MATCHALL
+    "ns2-runtime/font_service/core/hle/service/ns/platform_service_manager\\.cpp"
+    native_pl_u_owners "${selected_core}")
+list(LENGTH native_pl_u_owners native_pl_u_count)
+if(NOT native_pl_u_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one maintained pl:u owner")
+endif()
+string(REGEX MATCHALL
+    "ns2-runtime/font_service/core/hle/service/ns/font_merge\\.cpp"
+    native_font_merge_owners "${selected_core}")
+list(LENGTH native_font_merge_owners native_font_merge_count)
+if(NOT native_font_merge_count EQUAL 1)
+    message(FATAL_ERROR "Expected exactly one native font merge owner")
+endif()
 foreach(needle IN ITEMS "ns2-runtime/gpu_dispatch/" "ns2-runtime/ampere/")
     string(FIND "${selected_video}" "${needle}" found)
     if(found LESS 0)

@@ -134,6 +134,22 @@ inline void Quiet(const std::string& logs_dir) {
     (void)logs_dir;
 }
 
+// This is the inverse of Quiet() for a *live* launcher preference change.
+// Ready() is only for first-boot migration: calling it again would rotate
+// boot-trace.txt to boot-trace.prev.txt and overwrite older crash evidence.
+// Re-enable only the current process' trace in append mode. Do not recreate
+// discarded bootstrap records or rotate/delete a previous session.
+inline bool Resume(const std::string& logs_dir) {
+    if (!detail::QuietMode()) return true;
+    const std::string path = logs_dir + "/boot-trace.txt";
+    const int output = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0666);
+    if (output < 0) return false; // remain quiet; never claim disk evidence
+    detail::File() = output;
+    detail::QuietMode() = false;
+    Line("early trace resumed after logging enabled");
+    return true;
+}
+
 inline void Ready(const std::string& logs_dir, bool full_filesystem) {
     if (!full_filesystem) {
         Line("filesystem unavailable; trace remains in /download0");

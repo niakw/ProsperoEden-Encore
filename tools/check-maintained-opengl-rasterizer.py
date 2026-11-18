@@ -27,9 +27,16 @@ for before, after in indirect_guards:
 # rasterizer call-site delta in both maintained OpenGL profiles.
 unmap_before = "        buffer_cache.WriteMemory(addr, size);\n"
 unmap_after = "        buffer_cache.WriteMemory(addr, size, false);\n"
-assert baseline.count(unmap_before) == 1, "pinned OpenGL unmap call moved"
-baseline = baseline.replace(unmap_before, unmap_after, 1)
-assert baseline.count(unmap_after) == 1
+unmap_sig = "void RasterizerOpenGL::UnmapMemory(DAddr addr, u64 size) {"
+unmap_next = "\nvoid RasterizerOpenGL::ModifyGPUMemory"
+assert baseline.count(unmap_sig) == baseline.count(unmap_next) == 1
+unmap_prefix, unmap_tail = baseline.split(unmap_sig, 1)
+unmap_body, unmap_suffix = unmap_tail.split(unmap_next, 1)
+assert unmap_body.count(unmap_before) == 1, "pinned OpenGL unmap call moved"
+assert unmap_after not in unmap_body
+unmap_body = unmap_body.replace(unmap_before, unmap_after, 1)
+baseline = unmap_prefix + unmap_sig + unmap_body + unmap_next + unmap_suffix
+assert baseline.split(unmap_sig, 1)[1].split(unmap_next, 1)[0].count(unmap_after) == 1
 
 assert (maintained / "gl_rasterizer.cpp").read_text() == baseline
 dev = "#include \"dev_render_passes.inc\"\n#include \"performance.h\"\n" + baseline

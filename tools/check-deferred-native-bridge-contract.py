@@ -236,17 +236,34 @@ maintained_m04 = root/"vendor/encore-active/eden-core/guest-bridge/memory_manage
 pinned_m04 = (root/"vendor/sources/eden/src/video_core/memory_manager.h").read_text()
 assert pinned_m04.count("    void FlushCaching();") == 1
 assert pinned_m04.count("    Core::System& system;") == 1
+assert "SetNativeSyncpointShim" not in pinned_m04
+assert "native_syncpoint_shim" not in pinned_m04
 expected_m04 = ('#include "gpu_deferred_replay.h"\n' +
-    pinned_m04.replace("    void FlushCaching();",
+    pinned_m04.replace(
+        "    ~MemoryManager();\n\n    static constexpr bool HAS_FLUSH_INVALIDATION = true;",
+        "    ~MemoryManager();\n\n"
+        "    // Lichii 12125bc / NX2 blocker #46: NVN reads Host1x syncpoints\n"
+        "    // through a read-only GPU virtual shim. Zero leaves NS1 unchanged.\n"
+        "    void SetNativeSyncpointShim(GPUVAddr address);\n"
+        "    static constexpr u32 NumShimSyncpoints = 192;\n\n"
+        "    static constexpr bool HAS_FLUSH_INVALIDATION = true;").replace(
+        "    void FlushCaching();",
         "    bool EnqueueDeferredCPUWrite(u64 address, u64 size);\n    void FlushCaching();").replace(
         "    Core::System& system;",
-        "    ::Eden::GpuDeferredWrite::Queue deferred_cpu_write_queue;\n    Core::System& system;"))
+        "    ::Eden::GpuDeferredWrite::Queue deferred_cpu_write_queue;\n    Core::System& system;").replace(
+        "    static std::atomic<size_t> unique_identifier_generator;\n\n"
+        "    Common::ScratchBuffer<u8> tmp_buffer;",
+        "    static std::atomic<size_t> unique_identifier_generator;\n"
+        "    std::atomic<GPUVAddr> native_syncpoint_shim{0};\n\n"
+        "    Common::ScratchBuffer<u8> tmp_buffer;"))
 assert maintained_m04.read_text() == expected_m04, "M04 maintained header parity drift"
 assert 'configure_file("${EDEN_DEFERRED_MEMORY_HEADER}"' in code
 assert 'write_derived("${PORT_BUILD_DIR}/include/video_core/memory_manager.h"' not in code
 assert 'target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")' in base
 assert 'target_include_directories(video_core PRIVATE "${EDEN_PORT_DIR}")' in base
-print("ENCORE_M04_MAINTAINED_HEADER_PARITY_PASS")
+assert "void SetNativeSyncpointShim(GPUVAddr address);" in maintained_m04.read_text()
+assert "std::atomic<GPUVAddr> native_syncpoint_shim{0};" in maintained_m04.read_text()
+print("ENCORE_M04_MAINTAINED_HEADER_PARITY_PASS", "ns2_syncpoint_shim=selected")
 
 # M05: preserve the exactly generated experimental GPU-dirty collector.
 pinned_dirty = (root/"vendor/sources/eden/src/core/gpu_dirty_memory_manager.h").read_text()

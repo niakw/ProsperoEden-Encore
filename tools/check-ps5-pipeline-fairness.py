@@ -20,7 +20,11 @@ assert vulkan.count('std::atomic<unsigned> pending_first_use_graphics_builds{0};
 assert 'F07 graphics first-use counter exported at Vulkan namespace scope' in generator
 assert 'pending_first_use_graphics_builds.fetch_add(1, std::memory_order_release);' in vulkan
 assert vulkan.count('pending_first_use_graphics_builds.fetch_sub(1, std::memory_order_release);') == 2
-assert 'worker_thread->QueueWork([build = std::move(func)]() mutable {' in vulkan
+assert 'build_task = std::move(func);' in vulkan
+assert 'worker_thread->QueueWork([this] {' in vulkan
+assert 'void GraphicsPipeline::RunBuild()' in vulkan
+assert 'build_claimed.exchange(true, std::memory_order_acq_rel)' in vulkan
+assert vulkan.index('build_task = std::move(func);') < vulkan.index('worker_thread->QueueWork([this] {')
 assert 'SCOPE_EXIT {' in vulkan
 assert '::Eden::Performance::ProbeSchedulerOnce("VkPipelineOptimize");' in vulkan
 assert '::Eden::Performance::ProbeSchedulerOnce("VkPipelineOptimize");' in generator
@@ -40,7 +44,12 @@ assert 'F07 shared compute first-use backlog' in generator
 assert 'F07 optimized graphics yields to compute builds' in generator
 assert compute.count('pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);') == 1
 assert compute.count('pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);') == 2
-assert compute.index('pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);') < compute.index('thread_worker->QueueWork([build = std::move(func)]() mutable {')
+assert 'build_task = std::move(func);' in compute
+assert 'thread_worker->QueueWork([this] {' in compute
+assert 'void ComputePipeline::RunBuild()' in compute
+assert 'build_claimed.exchange(true, std::memory_order_acq_rel)' in compute
+assert compute.index('build_task = std::move(func);') < compute.index('pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);')
+assert compute.index('pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);') < compute.index('thread_worker->QueueWork([this] {')
 assert gate.count('std::scoped_lock lock{state->mutex}') == 1
 assert gate.count('if (state->cancelled) return;') == 1
 assert gate.count('sleep_for') == 1

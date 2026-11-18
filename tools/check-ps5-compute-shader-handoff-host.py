@@ -111,14 +111,16 @@ int main() {
     assert(pending_first_use_compute_builds.load() == 0);
     Worker good;
     Notify d;
-    Try(&d, &good, false);
+    Harness deferred{.shader_notify=&d, .thread_worker=&good};
+    deferred.Build(false);
     assert(d.start == 1 && d.done == 0 && d.pending == 1 && good.job);
     assert(pending_first_use_compute_builds.load() == 1);
     good.job();
     assert(d.done == 1 && d.pending == 0);
     assert(pending_first_use_compute_builds.load() == 0);
     Worker empty;
-    Try(nullptr, &empty, false);
+    Harness no_notify{.shader_notify=nullptr, .thread_worker=&empty};
+    no_notify.Build(false);
     assert(empty.job);
     empty.job();
     assert(pending_first_use_compute_builds.load() == 0);

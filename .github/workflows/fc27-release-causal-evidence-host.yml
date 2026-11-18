@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: true
       - name: Compile extracted production counter snapshots with positive and negative controls
         run: python3 -B tools/check-fc27-release-cache-tail-draw-drop-host.py
       - name: Validate pre-existing quiet mode and frame-pressure source contracts

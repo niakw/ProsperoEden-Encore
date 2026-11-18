@@ -2516,6 +2516,42 @@ assert hashlib.sha1(b"blob " + str(len(prior_pipe)).encode() + bytes([0]) +
                     prior_pipe).hexdigest() == pipe_drift["expected"]
 print("R457_LOG_PIPE_F07_SOURCE_DELTA_PASS reviewed=1 prior_reconstructed=1")
 
+# 18 Nov P0: the crash-only recoverable-failure receipt lives in the
+# historically reviewed U36 diagnostics.h, with no new per-frame logging.
+# Reconstruct the exact original source from its changed C++ owner BEFORE
+# resuming the immutable F07 source comparison. Do not rewrite old Git blobs.
+incident_header = "headless/diagnostics.h"
+incident_header_original = "0bc6a2c89def2a5be80df854e5ced443cb3c2e3d"
+incident_header_current = "6c0218658b42f522a6a16faad4b5e388dcb11668"
+assert incident_header in drift_index and incident_header not in post_index
+incident_drift = drift_index.pop(incident_header)
+assert incident_drift["expected"] == incident_header_original
+assert incident_drift["actual"] == incident_header_current
+header_text = (ROOT / incident_header).read_text(encoding="utf-8")
+incident_begin = "// A recoverable PS5 failure is NOT a fatal signal."
+incident_end = "// A shutdown step with the milliseconds since the previous one (some games take 14-16 s)."
+assert header_text.count(incident_begin) == header_text.count(incident_end) == 1
+assert "inline bool WriteSessionFailureReceipt(" in header_text
+assert "O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW" in header_text
+start = header_text.index(incident_begin)
+stop = header_text.index(incident_end)
+assert start < stop
+header_pre = header_text[:start] + header_text[stop:]
+added_includes = """#include <cstdint>
+#include <cstddef>
+#include <cerrno>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+"""
+assert header_pre.count(added_includes) == 1
+header_pre = header_pre.replace(added_includes, "", 1).encode("utf-8")
+header_pre_sha = hashlib.sha1(
+    b"blob " + str(len(header_pre)).encode() + bytes([0]) + header_pre).hexdigest()
+assert header_pre_sha == incident_header_original, (
+    "P0 session-failure diagnostics predecessor altered", header_pre_sha)
+print("P0_CRASH_ONLY_DIAGNOSTICS_F07_REVERSE_PASS U36=1 historical=unchanged")
+
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

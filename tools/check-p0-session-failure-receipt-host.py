@@ -111,10 +111,11 @@ with tempfile.TemporaryDirectory(prefix="encore-p0-receipt-") as tmp:
     binary = work / "test"
     src.write_text(cpp, encoding="utf-8")
     for opt in ("-O0", "-O2"):
-        subprocess.run(
+        compilation = subprocess.run(
             [compiler, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror", "-pedantic",
              "-I", str(ROOT / "headless"), str(src), "-o", str(binary)],
-            check=True, capture_output=True, text=True, timeout=60)
+            capture_output=True, text=True, timeout=60)
+        assert compilation.returncode == 0, (opt, compilation.stdout, compilation.stderr)
         result = subprocess.run([str(binary), str(work)], capture_output=True, text=True, timeout=15)
         assert result.returncode == 0, (opt, result.stdout, result.stderr)
 

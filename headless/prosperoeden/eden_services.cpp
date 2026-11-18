@@ -3026,10 +3026,9 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
                                                        std::memory_order_relaxed);
         eden_network_audit_enable(value.detailed_logging ? 1 : 0);
         if (!value.detailed_logging) {
+            // Stop recording, but never erase earlier sessions simply by
+            // toggling this option. A user may need those files after a hang.
             Eden::BootTrace::Quiet(Eden::LogsDir());
-            for (const char* name : {
-                    "eden_log.txt", "eden_log.txt.first.txt", "eden_log.txt.old.txt"})
-                (void)std::remove((Eden::UserDir() + "/log/" + name).c_str());
         }
     }
 #endif

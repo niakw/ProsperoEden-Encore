@@ -57,6 +57,9 @@ on:
       # The G11 parity checker is an executable source-ownership gate. A PR
       # changing it must run the same preflight that main will run after merge.
       - 'tools/check-g11-jit-profile-matrix-host.py'
+      # Native full-build gate parser changes must execute their exact host
+      # fixture on the PR before another expensive SDK build is authorized.
+      - 'tools/check-ps5-direct-limit-host.py'
       - '.github/workflows/encore-core-preflight.yml'
   workflow_dispatch:
 
@@ -166,6 +169,7 @@ jobs:
           python3 -B tools/check-native-quiet-shutdown-heap-host.py
           python3 -B tools/check-native-quiet-gpu-report-host.py
           python3 -B tools/check-native-host-pagesize-cache-host.py
+          python3 -B tools/check-ps5-direct-limit-host.py
           python3 -B tools/check-native-quiet-heap-commit-host.py
           python3 -B tools/check-native-quiet-counters-host.py
           python3 -B tools/ci/check-final-one-profile-source.py

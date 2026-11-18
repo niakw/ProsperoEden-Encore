@@ -2703,6 +2703,7 @@ if(PS5_NATIVE)
     add_executable(eden-headless "${EDEN_PORT_DIR}/main.cpp" "${PORT_ROOT}/src/aligned_alloc.c"
         "${EDEN_PORT_DIR}/heap_pages.cpp" "${EDEN_PORT_DIR}/performance.cpp"
         "${EDEN_PORT_DIR}/crash_report.cpp" "${EDEN_PORT_DIR}/diagnostics_native_client.cpp"
+        "${EDEN_PORT_DIR}/ns2_fault_receipt.cpp"
         "${EDEN_PORT_DIR}/stop_limit.cpp"
         "${EDEN_PORT_DIR}/elevation/elevation.cpp" "${EDEN_PORT_DIR}/ps5_net_compat.c"
         "${EDEN_PORT_DIR}/network_domain_rules.c"
@@ -2715,8 +2716,8 @@ if(PS5_NATIVE)
     # The guest derived DNS source includes the matching policy prototype.
     target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
 target_compile_definitions(eden-headless PRIVATE PS5_NATIVE=1)
-    # Only main.cpp needs to recompile when the SHA changes. The stable
-    # video_core and other native app objects keep their incremental caches.
+    # Only main.cpp and the tiny native NS2-fault receipt owner need to
+    # recompile when the SHA changes. Keep all vendor/video objects cached.
     if(NOT DEFINED EDEN_ENCORE_SOURCE_COMMIT)
         set(EDEN_ENCORE_SOURCE_COMMIT "unknown")
     endif()
@@ -2728,6 +2729,8 @@ target_compile_definitions(eden-headless PRIVATE PS5_NATIVE=1)
         endif()
     endif()
     set_property(SOURCE "${EDEN_PORT_DIR}/main.cpp" APPEND PROPERTY
+        COMPILE_DEFINITIONS "EDEN_NATIVE_SOURCE_COMMIT=\"${EDEN_ENCORE_SOURCE_COMMIT}\"")
+    set_property(SOURCE "${EDEN_PORT_DIR}/ns2_fault_receipt.cpp" APPEND PROPERTY
         COMPILE_DEFINITIONS "EDEN_NATIVE_SOURCE_COMMIT=\"${EDEN_ENCORE_SOURCE_COMMIT}\"")
     # Native-title libc rejects socket fcntl and its resolver may depend on an
     # unloaded WebKit module. ps5_net_compat.c supplies sceNetResolver DNS and

@@ -96,7 +96,16 @@ inline bool WriteSessionPhaseReceipt(const std::string& path, const char* source
         static_cast<unsigned long long>(title_id),
         static_cast<unsigned long long>(attempt), stage);
     if (n <= 0 || static_cast<std::size_t>(n) >= sizeof(message)) return false;
-    const int file = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0600);
+    // Atomic replacement: a crash *while* writing the next stage must keep
+    // the previous complete stage. Never truncate the sole incident marker.
+    struct stat prior{};
+    if (lstat(path.c_str(), &prior) == 0 && !S_ISREG(prior.st_mode))
+        return false;
+    char staging[384];
+    const int path_size = std::snprintf(staging, sizeof(staging), "%s.next", path.c_str());
+    if (path_size <= 0 || static_cast<std::size_t>(path_size) >= sizeof(staging))
+        return false;
+    const int file = open(staging, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0600);
     if (file < 0) return false;
     struct stat info{};
     if (fstat(file, &info) != 0 || !S_ISREG(info.st_mode)) {
@@ -110,9 +119,13 @@ inline bool WriteSessionPhaseReceipt(const std::string& path, const char* source
         else if (count < 0 && errno == EINTR) continue;
         else break;
     }
-    const bool ok = done == static_cast<std::size_t>(n) && fsync(file) == 0;
+    const bool synced = done == static_cast<std::size_t>(n) && fsync(file) == 0;
     const bool closed = close(file) == 0;
-    return ok && closed;
+    if (!synced || !closed || rename(staging, path.c_str()) != 0) {
+        (void)unlink(staging);
+        return false;
+    }
+    return true;
 }
 
 inline bool ReadPreviousSessionPhase(const std::string& path, char* buffer,

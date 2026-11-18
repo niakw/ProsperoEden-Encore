@@ -99,20 +99,41 @@ def check() -> None:
             '4 KiB native GMMU memory source missing')
     decoder=read('vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp')
     decoder_header=read('vendor/encore-active/eden-core/overrides/native-tiling/video_core/textures/decoders.h')
+    memory_header=read('vendor/encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h')
+    pinned_memory_header=read('vendor/sources/eden/src/video_core/memory_manager.h')
     i2m=read('vendor/encore-active/eden-core/src/video_core/engines/engine_upload.cpp')
+    blitter=read('vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp')
+    nvhost=read('vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
+    channel_state=read('vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp')
     pinned_decoder_header=read('vendor/sources/eden/src/video_core/textures/decoders.h')
     require('NativeGobOffset' in decoder and
             decoder.count('bool native_tiling')>=8 and
             'bool native_tiling = false' in decoder_header and
             'native_tiling' not in pinned_decoder_header and
-            'memory_manager.UsesNativeTiling()' in i2m,
-            'Lichii #2085 native I2M tiling source contract missing')
+            'EnableNativeTiling()' in memory_header and
+            'UsesNativeTiling() const' in memory_header and
+            'bool native_tiling{};' in memory_header and
+            'EnableNativeTiling' not in pinned_memory_header and
+            'EnableNativeTiling' not in channel_state and
+            'memory_manager.UsesNativeTiling()' in i2m and
+            blitter.count('memory_manager.UsesNativeTiling()') == 2,
+            'Lichii #2085/#2121 native tiling source contract missing')
+    bind_pos=nvhost.index('NativeGpuChannelRegistry::Instance().Bind(')
+    enable_pos=nvhost.index('channel_state->memory_manager->EnableNativeTiling();')
+    require(bind_pos < enable_pos and
+            'if (native && (!channel_state->initialized || !channel_state->memory_manager))' in nvhost,
+            'NS2 native tiling is not gated by authenticated ready channel admission')
     for token in (
         'set(EDEN_NS2_NATIVE_TILING_ROOT',
+        'set(EDEN_NS2_MEMORY_MANAGER_HEADER',
         'set(EDEN_NS2_I2M_UPLOAD',
+        'set(EDEN_NS2_SW_BLITTER',
         'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")',
+        'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")',
         'list(REMOVE_ITEM video_sources "engines/engine_upload.cpp")',
         'list(APPEND video_sources "${EDEN_NS2_I2M_UPLOAD}")',
+        'list(REMOVE_ITEM video_sources "engines/sw_blitter/blitter.cpp")',
+        'list(APPEND video_sources "${EDEN_NS2_SW_BLITTER}")',
     ):
         require(token in CMAKE,'Lichii #2085 source owner not selected: '+token)
     nvdrv=read('vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp')
@@ -212,4 +233,4 @@ if __name__=='__main__':
     except (AssertionError,OSError,subprocess.SubprocessError) as error:
         print('NS1_NS2_UNIFIED_SOURCE_OWNER_FAIL',error,file=sys.stderr)
         sys.exit(1)
-    print('NS1_NS2_UNIFIED_SOURCE_OWNER_PASS cpu6=6 nvdrv=4k qmd=real font=selected i2m_native_tiling=1 nup=always maxwell=unchanged')
+    print('NS1_NS2_UNIFIED_SOURCE_OWNER_PASS cpu6=6 nvdrv=4k qmd=real font=selected i2m_native_tiling=1 blitter_native_tiling=1 tiling_auth=1 nup=always maxwell=unchanged')

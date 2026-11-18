@@ -4,7 +4,7 @@
 
 **Build PS5 testé :** R457, moteur `e8493417f914783069e09d7f8fae19b5fd4049fe`, vendor `edcc311c09eed3a33e5acc373c63a436f662cb5b`, archive de logs utilisateur `17112259.zip`. Pas de backtrace native terminale FC27 dans cette archive.
 
-**Lot source candidat :** vendor `3b3a26afd70fbfbfb706e5b9964e3303c07a944c`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, l'adaptation de Lichii #1199 pour retirer/restaurer les remaps GPU 216 avant la destruction mémoire 102, et Lichii #2085 pour les uploads I2M utilisant le tiling natif Switch 2. Tests vendor host/sécurité verts sur le vendor ; **pas encore de build PS5 ni de test console de ce candidat**.
+**Lot source candidat :** vendor `49070af1bfee1ef67ed8037221345baf71d02373`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, Lichii #1199 pour les remaps GPU, #2085 pour I2M et l'adaptation de la PR Lichii #2121 pour les blits 2D en tiling natif. Encore ajoute l'activation du layout uniquement après authentification du canal GPU NS2 afin de conserver le layout Maxwell par défaut pour NS1. **Pas encore de build PS5 ni de validation console de ce candidat.**
 
 | Priorité | Symptôme / jeu | Logs R457 | Cause candidate / modification | Amont | Validation restante |
 |---|---|---|---|---|---|
@@ -21,7 +21,7 @@
 3. Réserver **une** validation console groupée : FC27 froid puis chaud, pause/HUD, stabilité jusqu'à mi-temps, sortie normale ; MKW NS2 jusqu'au premier rendu réel. Bananza seulement si un second diagnostic est nécessaire.
 4. Ne jamais classer le problème corrigé sur la base de la CI seule. Ne pas confondre la cause du crash FC27 avec les retards de pause sans pile native.
 
-Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Encore-vendor/compare/edcc311c09eed3a33e5acc373c63a436f662cb5b...3b3a26afd70fbfbfb706e5b9964e3303c07a944c), [Lichii #1199](https://github.com/zortos293/Lichii/pull/1199), [Lichii #2085](https://github.com/zortos293/Lichii/pull/2085), [Lichii NX2_NOTES](https://github.com/zortos293/Lichii/blob/nx2/NX2_NOTES.md), [Eglantine #350](https://github.com/Eglantine-Community/Eglantine/issues/350), [Eglantine #74](https://github.com/Djihads80/Eglantine/issues/74), [Eden Issue-Reports #771](https://github.com/eden-emulator/Issue-Reports/issues/771).
+Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Encore-vendor/compare/edcc311c09eed3a33e5acc373c63a436f662cb5b...3b3a26afd70fbfbfb706e5b9964e3303c07a944c), [Lichii #1199](https://github.com/zortos293/Lichii/pull/1199), [Lichii #2085](https://github.com/zortos293/Lichii/pull/2085), [Lichii #2042](https://github.com/zortos293/Lichii/issues/2042), [Lichii #2121](https://github.com/zortos293/Lichii/pull/2121), [Lichii NX2_NOTES](https://github.com/zortos293/Lichii/blob/nx2/NX2_NOTES.md), [Eglantine #350](https://github.com/Eglantine-Community/Eglantine/issues/350), [Eglantine #74](https://github.com/Djihads80/Eglantine/issues/74), [Eden Issue-Reports #771](https://github.com/eden-emulator/Issue-Reports/issues/771).
 
 ## Source provenance follow-up
 
@@ -47,3 +47,12 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 - The maintained overlay preserves legacy NS1 commands 0–6 and adds NS2 commands 2000/2010/2020/2100 plus `font_merge.cpp`.
 - Release CMake replaces the single Eden `platform_service_manager.cpp` owner and adds the merge TU; the four files remain post-F07 and do not alter historical audit counts.
 - Source/host qualification only until a native PS5 build and NS2 launch.
+
+
+## NS2 native tiling — upstream #2042 / PR #2121
+
+- Le premier backport Lichii #2085/commit `7702ac4` couvre les écritures I2M, mais le retour de test upstream #2042 indique que les bandes sombres persistaient.
+- L'analyse upstream a ensuite identifié le blitter logiciel Fermi2D comme second écrivain restant en layout Switch 1 ; la PR Lichii #2121 transmet `UsesNativeTiling()` aux chemins `UnswizzleSubrect` et `SwizzleSubrect`.
+- Vendor Encore `49070af1bfee1ef67ed8037221345baf71d02373` porte ces deux appels, ajoute le flag `MemoryManager` par défaut à `false` et ne l'active qu'après `NativeGpuChannelRegistry::Bind` réussi pour un canal NS2 prêt.
+- Le moteur sélectionne le même header `MemoryManager` pour `core` et `video_core`, plus un seul owner I2M et un seul owner software-blitter. NS1 reste sur le layout Maxwell tant qu'aucun canal natif NS2 n'est authentifié.
+- Qualification source/host uniquement à ce stade ; ni la disparition des bandes dans DKB/Bananza, ni le premier rendu MKW, ni les crashs `PC=0x4` ne sont déclarés corrigés avant test PS5.

@@ -2447,20 +2447,38 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
     target_compile_definitions(video_core PRIVATE EDEN_NS2_VIEW_DIMENSION_GUARD=1)
 endif()
-# Lichii #2085 / build 341: Switch 2 I2M block-linear uploads must use
-# the native GOB bit 5/6 layout. Keep immutable Eden headers/sources pristine;
-# select one native-only decoder header and one maintained upload owner.
+# Lichii #2085 / build 341 + #2121: Switch 2 block-linear uploads and
+# software 2D blits must use the native GOB bit 5/6 layout. Keep immutable
+# Eden headers/sources pristine. The unified binary shares ONE MemoryManager
+# ABI across core/video_core; its native_tiling flag defaults false and is
+# enabled only after NativeGpuChannelRegistry authenticates an NS2 channel.
 if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_NATIVE_TILING_ROOT
         "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/native-tiling")
     set(EDEN_NS2_NATIVE_TILING_HEADER
         "${EDEN_NS2_NATIVE_TILING_ROOT}/video_core/textures/decoders.h")
+    set(EDEN_NS2_MEMORY_MANAGER_HEADER
+        "${EDEN_NS2_NATIVE_TILING_ROOT}/video_core/memory_manager.h")
     set(EDEN_NS2_I2M_UPLOAD
         "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/engine_upload.cpp")
-    if(NOT EXISTS "${EDEN_NS2_NATIVE_TILING_HEADER}" OR NOT EXISTS "${EDEN_NS2_I2M_UPLOAD}")
-        message(FATAL_ERROR "Lichii #2085 native I2M tiling owner missing")
-    endif()
+    set(EDEN_NS2_SW_BLITTER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp")
+    foreach(eden_ns2_tiling_owner IN ITEMS
+        "${EDEN_NS2_NATIVE_TILING_HEADER}"
+        "${EDEN_NS2_MEMORY_MANAGER_HEADER}"
+        "${EDEN_NS2_I2M_UPLOAD}"
+        "${EDEN_NS2_SW_BLITTER}")
+        if(NOT EXISTS "${eden_ns2_tiling_owner}")
+            message(FATAL_ERROR "Lichii native tiling owner missing: ${eden_ns2_tiling_owner}")
+        endif()
+    endforeach()
+
+    # nvhost_gpu.cpp is a core source and flips the per-address-space flag
+    # only after authenticated native-channel admission. Every TU that sees
+    # MemoryManager must therefore consume the same class definition.
     target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")
+
     list(FIND video_sources "engines/engine_upload.cpp" eden_ns2_i2m_pinned)
     if(eden_ns2_i2m_pinned EQUAL -1)
         message(FATAL_ERROR "Pinned I2M upload owner changed; re-audit native tiling")
@@ -2471,8 +2489,21 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN AND EDEN_REVIEWED_DUAL_NPDM)
     endif()
     list(REMOVE_ITEM video_sources "engines/engine_upload.cpp")
     list(APPEND video_sources "${EDEN_NS2_I2M_UPLOAD}")
+
+    list(FIND video_sources "engines/sw_blitter/blitter.cpp" eden_ns2_blitter_pinned)
+    if(eden_ns2_blitter_pinned EQUAL -1)
+        message(FATAL_ERROR "Pinned software blitter owner changed; re-audit native tiling")
+    endif()
+    list(FIND video_sources "${EDEN_NS2_SW_BLITTER}" eden_ns2_blitter_duplicate)
+    if(NOT eden_ns2_blitter_duplicate EQUAL -1)
+        message(FATAL_ERROR "Maintained software blitter already selected; refusing duplicate TU")
+    endif()
+    list(REMOVE_ITEM video_sources "engines/sw_blitter/blitter.cpp")
+    list(APPEND video_sources "${EDEN_NS2_SW_BLITTER}")
+
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-        "${EDEN_NS2_NATIVE_TILING_HEADER}" "${EDEN_NS2_I2M_UPLOAD}")
+        "${EDEN_NS2_NATIVE_TILING_HEADER}" "${EDEN_NS2_MEMORY_MANAGER_HEADER}"
+        "${EDEN_NS2_I2M_UPLOAD}" "${EDEN_NS2_SW_BLITTER}")
 endif()
 # R3: production selection of the maintained GOB16 decoder TU. Never
 # mutate the pinned Eden source tree or include TWO definitions of the public

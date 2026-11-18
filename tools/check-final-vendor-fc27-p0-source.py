@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="3b3a26afd70fbfbfb706e5b9964e3303c07a944c"
+EXPECTED="49070af1bfee1ef67ed8037221345baf71d02373"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -65,9 +65,11 @@ tests=(
     "ns2_syncpoint_shim_source.py",
     "ns2_font_service_source.py",
     "ns2_backport_manifest_preserved_source.py",
+    "ns2_sw_blitter_native_tiling_source.py",
+    "ns2_native_tiling_activation_source.py",
     "fc27_release_npad_detailed_source.py",
 )
 for name in tests:
     subprocess.run(["python3","-B",str(V/"tests"/name)],check=True,timeout=240)
 
-print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ns2_getinfo_page_size=1 ns2_getinfo_vamm=1 alpha_ref=1 worker_lost_wake=1 full_clear_upload_elision=1 dynamic_texture_limit=1 duskbloods_shader=1 fc27_sibling_preservation=1 hsetp2_cbuf=1 alias128=1 kprocess_abi=1 fc27_pipeline=1 ns2_gpu_memory=1 host1x_wait=1 ipc_handoff=1 ps5=unverified")
+print("ENCORE_FINAL_VENDOR_FC27_P0_PASS pin=exact xmad=1 dynamic_sampler=1 descriptor_fastpath=1 storage_audit=1 bananza_low_write=1 scalar_cache=1 bitfield_uextract=1 ns2_getinfo_page_size=1 ns2_getinfo_vamm=1 alpha_ref=1 worker_lost_wake=1 full_clear_upload_elision=1 dynamic_texture_limit=1 duskbloods_shader=1 fc27_sibling_preservation=1 hsetp2_cbuf=1 alias128=1 kprocess_abi=1 fc27_pipeline=1 ns2_gpu_memory=1 native_tiling=auth+blitter host1x_wait=1 ipc_handoff=1 ps5=unverified")

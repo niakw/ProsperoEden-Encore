@@ -95,11 +95,21 @@ struct Scheduler {
 };
 struct Probe {
     std::atomic<bool> is_built{false};
+    // The production callback now calls RunBuild() before checking readiness.
+    // This wait witness models the already-owned async builder: the callback
+    // observes that ownership and must not start a second build.
+    std::atomic<bool> build_claimed{true};
+    std::atomic<unsigned> run_build_calls{0};
     CountingMutex build_mutex;
     std::condition_variable_any build_condvar;
     Scheduler scheduler;
     struct Key { std::uint64_t Hash() const { return 0xBEEF; } } key;
     bool CanExecuteDraw() const { return is_built.load(std::memory_order_acquire); }
+    void RunBuild() {
+        run_build_calls.fetch_add(1, std::memory_order_relaxed);
+        if (build_claimed.exchange(true, std::memory_order_acq_rel)) return;
+        assert(false && "completed-build wait fixture unexpectedly claimed builder");
+    }
     void Publish() {
         { std::scoped_lock lock{build_mutex};
           is_built.store(true, std::memory_order_release); }
@@ -117,6 +127,7 @@ int main() {
         Probe p; p.Queue(); assert(p.scheduler.queued.size() == 1);
         p.Publish(); p.build_mutex.count.store(0);
         p.scheduler.queued[0](0);
+        assert(p.run_build_calls.load() == 1);
         assert(p.build_mutex.count.load() == 0);
     }
     assert(Eden::Performance::measured_waits.load() == 0);

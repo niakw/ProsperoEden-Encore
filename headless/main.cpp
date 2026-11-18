@@ -654,8 +654,23 @@ int main(int argc, char** argv) {
         if (host_net_result != 0)
             Eden::Report("network", "Native host network initialization failed; online metadata is unavailable");
         const std::string stop_note = Eden::LogFile("stop-limit.txt");
-        if (std::remove(stop_note.c_str()) == 0)
+        if (std::remove(stop_note.c_str()) == 0) {
+            // The native watchdog's marker was previously deleted before
+            // either verbose log could open. In quiet mode that destroyed
+            // the only evidence of a frozen game stop between process boots.
+#ifdef EDEN_NATIVE_SOURCE_COMMIT
+            constexpr const char* timeout_source_sha = EDEN_NATIVE_SOURCE_COMMIT;
+#else
+            constexpr const char* timeout_source_sha = "unknown";
+#endif
+            if (!Eden::WriteSessionFailureReceipt(
+                    Eden::LogFile("session-failures.log"), timeout_source_sha,
+                    0, 0, "stop_timeout_previous_boot",
+                    "game shutdown exceeded the 10-second watchdog; title unavailable",
+                    persist_detailed_logs, false, 0, false, 0, 0, 0, 0))
+                Eden::Report("incident", "Could not persist prior stop-limit timeout");
             Eden::Report("exit", "The previous game did not stop within ten seconds; Eden closed without automatic restart to protect console state");
+        }
         Eden::StopLimit::Start(stop_note);
         for (const char* candidate : {"/app0", Eden::kMountedAppDir, Eden::kInstallDir,
                                       "/mnt/sandbox/PPSA99008_000/app0"})

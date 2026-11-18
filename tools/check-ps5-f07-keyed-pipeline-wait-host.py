@@ -51,6 +51,8 @@ def callback_body(text, kind):
     last = text.index("        });", first) + len("        });")
     block = text[first:last]
     assert text.rfind("if (!is_built.load(std::memory_order_acquire)) {", 0, first) >= 0
+    assert "RunBuild();" in block
+    assert block.index("RunBuild();") < block.index("if (is_built.load(std::memory_order_acquire)) return;")
     assert "if (is_built.load(std::memory_order_acquire)) return;" in block
     assert block.count("std::unique_lock lock{build_mutex};") == 2
     assert block.count("if (is_built.load(std::memory_order_acquire)) return;") == 1
@@ -106,6 +108,10 @@ struct Key {
 struct Pipeline {
     Scheduler scheduler;
     std::atomic_bool is_built{false};
+    // RunBuild models the maintained first-use claim. Existing wait scenarios
+    // start with claimed=true to represent a builder already executing.
+    std::atomic_bool build_claimed{true};
+    std::function<void()> build_task;
     std::mutex build_mutex;
     std::condition_variable build_condvar;
     Key key;
@@ -117,6 +123,13 @@ struct Pipeline {
         return is_built.load(std::memory_order_acquire) && bound;
     }
     bool IsBound() const { return bound; }
+    void RunBuild() {
+        if (build_claimed.exchange(true, std::memory_order_acq_rel)) return;
+        assert(build_task);
+        auto task=std::move(build_task);
+        build_task=nullptr;
+        task();
+    }
     void Queue() {
         if (is_built.load(std::memory_order_acquire)) return;
 __ACTUAL_CALLBACK__
@@ -129,6 +142,18 @@ __ACTUAL_CALLBACK__
 };
 int main() {
     using Eden::Performance::detailed_gpu_profile;
+    // New first-use path: if queued work has not been claimed yet, the
+    // ordered GPU callback claims and builds it inline instead of waiting
+    // behind unrelated ThreadWorker jobs.
+    {
+        Pipeline first_use;
+        first_use.build_claimed.store(false,std::memory_order_release);
+        first_use.build_task=[&]{first_use.Publish();};
+        first_use.Queue();
+        first_use.scheduler.Run();
+        assert(first_use.IsBound() && first_use.build_claimed.load());
+        assert(!first_use.build_task);
+    }
     // Quiet mode may wait, but must never add a wall-clock log.
     {
         Pipeline quiet;
@@ -299,4 +324,5 @@ with tempfile.TemporaryDirectory(prefix="f07-v01-worker-keyed-") as tmp:
                 else:
                     assert not lines, (kind, opt, lines)
                 print(f"F07_KEYED_PIPELINE_WAIT_PASS kind={kind} native={int(native)} {opt}")
+print("F07_FIRST_USE_INLINE_CLAIM_PASS graphics_compute=1 queued_worker_bypass=1")
 print("HOST_ONLY no Sony SDK, real GPU worker, FIFO timing in FC27 or frame latency proof")

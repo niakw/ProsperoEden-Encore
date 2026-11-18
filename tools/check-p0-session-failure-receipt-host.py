@@ -123,5 +123,52 @@ with tempfile.TemporaryDirectory(prefix="encore-p0-receipt-") as tmp:
         result = subprocess.run([str(binary), str(test_dir)], capture_output=True, text=True, timeout=15)
         assert result.returncode == 0, (opt, result.stdout, result.stderr)
 
-print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 title=1 bounded=1 no_symlink=1")
+# Exercise the production lock-free/no-heap failure snapshot extracted from
+# the actual allocator source, not an independently reimplemented test double.
+state_start = native.index("struct LastDirectAllocationFailure {")
+state_end = native.index("std::atomic<std::int64_t> cached_direct_memory_extent{0};", state_start)
+snap_start = native.index('extern "C" std::uint64_t eden_ps5_direct_failure_snapshot(')
+snap_end = native.index("\n#endif\n\nnamespace Common {", snap_start)
+allocator_fixture = (
+    "#include <atomic>\\n#include <cassert>\\n#include <cstdint>\\n"
+    "namespace {\\n" + native[state_start:state_end] + "}\\n" +
+    native[snap_start:snap_end] + """
+int main() {
+    std::uint64_t bytes = 7, extent = 7;
+    std::uint32_t rc = 7, stage = 7;
+    const auto before = eden_ps5_direct_failure_snapshot(&bytes, &extent, &rc, &stage);
+    assert(before == 0 && bytes == 0 && extent == 0 && rc == 0 && stage == 0);
+    NoteDirectAllocationFailure(1, 0x80020023u, 4297064448ull, 13019119616ull);
+    const auto one = eden_ps5_direct_failure_snapshot(&bytes, &extent, &rc, &stage);
+    assert(one == 1 && stage == 1 && rc == 0x80020023u);
+    assert(bytes == 4297064448ull && extent == 13019119616ull);
+    NoteDirectAllocationFailure(2, 0x80020104u, 262144ull, 13019119616ull);
+    const auto two = eden_ps5_direct_failure_snapshot(&bytes, &extent, &rc, &stage);
+    assert(two == 2 && stage == 2 && rc == 0x80020104u);
+    assert(bytes == 262144ull && extent == 13019119616ull);
+    // A fresh title records its baseline sequence and cannot report a
+    // previous title's last failed allocation as this title's kernel RC.
+    const auto next_title_baseline = two;
+    const auto now = eden_ps5_direct_failure_snapshot(&bytes, &extent, &rc, &stage);
+    assert(now == next_title_baseline);
+    NoteDirectAllocationFailure(3, 22u, 0ull, 0ull);
+    const auto three = eden_ps5_direct_failure_snapshot(&bytes, &extent, &rc, &stage);
+    assert(three > next_title_baseline && stage == 3 && rc == 22u);
+    return 0;
+}
+""")
+with tempfile.TemporaryDirectory(prefix="encore-p0-allocator-") as temp:
+    root = Path(temp)
+    fixture = root / "allocator.cpp"
+    binary = root / "allocator"
+    fixture.write_text(allocator_fixture, encoding="utf-8")
+    for opt in ("-O0", "-O2"):
+        compiled = subprocess.run([compiler, "-std=c++20", opt, "-Wall", "-Wextra",
+                                   "-Werror", str(fixture), "-o", str(binary)],
+                                  capture_output=True, text=True, timeout=60)
+        assert compiled.returncode == 0, (opt, compiled.stderr)
+        run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
+        assert run.returncode == 0, (opt, run.stderr)
+
+print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 allocator_real=1 title=1 bounded=1 no_symlink=1")
 print("This does not prove PS5 native ABI, real FC27 relaunch, NS2 frame or performance.")

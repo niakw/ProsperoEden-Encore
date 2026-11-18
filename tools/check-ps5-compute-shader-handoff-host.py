@@ -17,15 +17,17 @@ assert ctor.count(mark) == 1
 a = ctor.index("#ifdef PS5_NATIVE\n    // Layout setup and worker queue admission")
 b = ctor.index("#endif\n", a) + len("#endif\n")
 guard = ctor[a:b]
-start = "    if (thread_worker) {\n#ifdef PS5_NATIVE\n        // Reserve a slot BEFORE QueueWork:"
+start = "    build_task = std::move(func);\n    if (thread_worker) {"
 i = ctor.index(start)
-j = ctor.index("\n}", i)
+j = ctor.index("\n}\n\nvoid ComputePipeline::RunBuild()", i)
 handoff = ctor[i:j]
 assert "if (!build_handed_off && shader_notify)" in guard
 assert handoff.count("build_handed_off = true;") == 2
-assert handoff.index("pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);") < handoff.index("thread_worker->QueueWork([build = std::move(func)]")
-assert handoff.index("thread_worker->QueueWork([build = std::move(func)]") < handoff.index("build_handed_off = true;")
+assert handoff.index("build_task = std::move(func);") < handoff.index("if (thread_worker)")
+assert handoff.index("pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);") < handoff.index("thread_worker->QueueWork([this]")
+assert handoff.index("thread_worker->QueueWork([this]") < handoff.index("build_handed_off = true;")
 assert handoff.count("pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);") == 2
+assert handoff.count("RunBuild();") >= 2
 assert "F07 counted compute worker handoff" in gen
 assert "F07 compute shader build notification unwind" in gen
 assert "F07 compute worker completion ownership transfer" in gen
@@ -58,21 +60,35 @@ struct Worker {
         job = std::move(fn);
     }
 };
-void Build(Notify* shader_notify, Worker* thread_worker, bool fail_setup) {
+struct Harness {
+    Notify* shader_notify{};
+    Worker* thread_worker{};
+    std::function<void()> build_task;
+    std::atomic_bool build_claimed{false};
+
+    void RunBuild() {
+        if (build_claimed.exchange(true, std::memory_order_acq_rel)) return;
+        build_task();
+        build_task = nullptr;
+    }
+
+    void Build(bool fail_setup) {
 MARK
 #ifndef OLD_BUG
 GUARD
 #else
-    [[maybe_unused]] bool build_handed_off = false;
+        [[maybe_unused]] bool build_handed_off = false;
 #endif
-    if (fail_setup) throw std::runtime_error("layout");
-    auto func = [shader_notify] {
-        if (shader_notify) shader_notify->MarkShaderComplete();
-    };
+        if (fail_setup) throw std::runtime_error("layout");
+        auto func = [this] {
+            if (shader_notify) shader_notify->MarkShaderComplete();
+        };
 HANDOFF
-}
+    }
+};
 void Try(Notify* n, Worker* w, bool setup) {
-    try { Build(n, w, setup); } catch (const std::runtime_error&) {}
+    Harness harness{.shader_notify=n, .thread_worker=w};
+    try { harness.Build(setup); } catch (const std::runtime_error&) {}
 }
 int main() {
 #ifdef OLD_BUG

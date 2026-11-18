@@ -224,6 +224,37 @@ publish_source = extract(NPAD, "void NPad::OnUpdate(")
 assert "npad->fullkey_lifo.WriteNextEntry(pad_state);" in publish_source
 assert "npad->system_ext_lifo.WriteNextEntry(libnx_state);" in publish_source
 assert "if (!data->flag.enable_pad_input)" in publish_source
+
+# Shipping Detailed Logging is source-qualified separately. These F06 fixtures
+# test the HID/LIFO behaviour with intentionally minimal mock types, so remove
+# exactly the bounded diagnostic block from the extracted method only.
+diag_start = "                if (EdenDetailedNpadLogging()) {"
+assert publish_source.count(diag_start) == 1
+diag_pos = publish_source.index(diag_start)
+diag_brace = publish_source.index("{", diag_pos)
+depth = 0
+diag_end = None
+for pos in range(diag_brace, len(publish_source)):
+    if publish_source[pos] == "{":
+        depth += 1
+    elif publish_source[pos] == "}":
+        depth -= 1
+        if depth == 0:
+            diag_end = pos + 1
+            break
+assert diag_end is not None
+diag_block = publish_source[diag_pos:diag_end]
+for marker in (
+    "EDEN_NPAD_PLUS_LIFO edges=%llu",
+    "EDEN_NPAD_PROGRESS fullkey_writes=%llu",
+    "eden_edges <= 64",
+    "std::chrono::steady_clock::now()",
+    "pad_state.npad_buttons.plus",
+):
+    assert marker in diag_block, marker
+assert "WriteNextEntry" not in diag_block
+publish_source = publish_source[:diag_pos] + publish_source[diag_end:]
+assert "EdenDetailedNpadLogging" not in publish_source
 for token, value in (
     ("__BUTTON_METHOD__", button_source),
     ("__NPAD_METHOD__", request_source),

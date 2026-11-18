@@ -22,6 +22,13 @@ assert "inline bool WriteSessionPhaseReceipt(" in record
 assert "inline bool ReadPreviousSessionPhase(" in record
 assert "EDEN_SESSION_ACTIVE_V1" in record
 assert "O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW" in record
+phase_body = record.split("inline bool WriteSessionPhaseReceipt(", 1)[1].split(
+    "inline bool ReadPreviousSessionPhase(", 1)[0]
+assert 'lstat(path.c_str(), &prior)' in phase_body
+assert 'std::snprintf(staging, sizeof(staging), "%s.next", path.c_str())' in phase_body
+assert 'rename(staging, path.c_str())' in phase_body
+assert phase_body.index('fsync(file)') < phase_body.index('rename(staging, path.c_str())')
+assert 'unlink(staging)' in phase_body
 for marker in (
     '"previous_session_unfinished"',
     '"selected"', '"title_resolved"', '"guest_loading"', '"gpu_starting"',
@@ -128,6 +135,8 @@ int main(int argc, char** argv) {
         0x0400c3f00006e000ull, 42, "gpu_starting"));
     assert(Eden::ReadPreviousSessionPhase(active, previous, sizeof(previous)));
     assert(std::string(previous).find("stage=gpu_starting") != std::string::npos);
+    // Each atomic stage update leaves no temporary file on success.
+    assert(access((active + ".next").c_str(), F_OK) != 0);
     assert(std::string(previous).find("stage=guest_loading") == std::string::npos);
     assert(!Eden::WriteSessionPhaseReceipt(
         link, "unknown", 4, 42, "guest_running"));
@@ -206,5 +215,5 @@ with tempfile.TemporaryDirectory(prefix="encore-p0-allocator-") as temp:
         run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
         assert run.returncode == 0, (opt, run.stderr)
 
-print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 allocator_real=1 lifecycle=1 title=1 bounded=1 no_symlink=1")
+print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 allocator_real=1 lifecycle_atomic=1 title=1 bounded=1 no_symlink=1")
 print("This does not prove PS5 native ABI, real FC27 relaunch, NS2 frame or performance.")

@@ -128,4 +128,3 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 | Suite | Corréler les valeurs réelles retournées et le SP avant/après dernier SVC ; établir la première instruction fautive avant de toucher à la taille de pile ou au JIT. P0 #123 ouvert |
 
 **FC27 P0 #281 et journalisation.** L’ancienne observation `CACHE=0 Ko` mesure un inventaire asynchrone du disque et ne prouve pas une purge. `Cannot allocate memory` au second lancement et les blocages de fin de session restent **non résolus**. En parallèle, la [PR moteur #285](https://github.com/niakw/ProsperoEden-Encore/pull/285) traite isolément un défaut confirmé : après `BootTrace::Quiet`, les logs ON ne rouvraient jamais cette trace du processus ; ajout append-only et conservation des anciennes traces avec tests O0/O2. Cela n’est **pas** un correctif mémoire ni une validation console.
-

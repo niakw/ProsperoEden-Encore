@@ -1,0 +1,43 @@
+name: R457 retained log source provenance and explicit native build token
+
+on:
+  pull_request:
+    paths:
+      - 'tools/check-post-f07-delta-register.py'
+      - '.github/workflows/build-040-zbic.yml'
+      - 'tools/check-native-manual-run-isolation.py'
+      - 'tools/check-ci-cache.py'
+      - 'tools/ci/check-final-one-profile-source.py'
+      - 'tools/ns2/check_native_research_selector.py'
+      - '.github/workflows/r457-log-provenance-build-token-host.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/check-post-f07-delta-register.py'
+      - '.github/workflows/build-040-zbic.yml'
+      - 'tools/check-native-manual-run-isolation.py'
+      - 'tools/check-ci-cache.py'
+      - 'tools/ci/check-final-one-profile-source.py'
+      - 'tools/ns2/check_native_research_selector.py'
+      - '.github/workflows/r457-log-provenance-build-token-host.yml'
+permissions:
+  contents: read
+jobs:
+  prove-exact-source-and-no-accidental-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Historical reviewed service blob (strict inverse source delta)
+        run: python3 -B tools/check-post-f07-delta-register.py
+      - name: Workflow trigger isolation
+        run: python3 -B tools/check-native-manual-run-isolation.py
+      - name: Cache and build job concurrency
+        run: python3 -B tools/check-ci-cache.py
+      - name: One final native source profile
+        run: python3 -B tools/ci/check-final-one-profile-source.py
+      - name: NS2 source profile and workflow selector
+        run: python3 -B tools/ns2/check_native_research_selector.py

@@ -146,6 +146,7 @@ struct Pipeline {
     bool IsBound() const {return is_built.load(std::memory_order_acquire);}
     explicit Pipeline(Scheduler& s):scheduler(s){}
     std::atomic_bool is_built{false};
+    std::atomic_bool build_claimed{false};
     std::mutex build_mutex;
     std::condition_variable build_condvar;
 #ifdef PS5_NATIVE
@@ -154,6 +155,10 @@ struct Pipeline {
     void Ready(){
         is_built.store(true,std::memory_order_release);
         build_condvar.notify_all();
+    }
+    void RunBuild(){
+        if(build_claimed.exchange(true,std::memory_order_acq_rel)) return;
+        Ready();
     }
 """
 end = r"""
@@ -174,11 +179,13 @@ void Exercise(bool compute){
 #else
     assert(s.jobs.size()==128);
 #endif
+    // Lichii f8f29b5: the first queued wait is now allowed to claim the
+    // pending builder itself. No unrelated builder-worker progress or external
+    // Ready() publication is required to release the first-use draw.
     std::thread execution([&]{s.Drain();});
-    std::this_thread::sleep_for(std::chrono::milliseconds(4));
-    assert(completed==0);
-    p.Ready();
     execution.join();
+    assert(p.build_claimed.load(std::memory_order_acquire));
+    assert(p.is_built.load(std::memory_order_acquire));
     assert(completed==64);
 
     Scheduler retry_scheduler;
@@ -193,7 +200,9 @@ void Exercise(bool compute){
 #endif
     if(compute)retry.ComputeWait();else retry.GraphicsWait();
     assert(retry_scheduler.jobs.size()==1);
-    retry.Ready();retry_scheduler.Drain();
+    retry_scheduler.Drain();
+    assert(retry.build_claimed.load(std::memory_order_acquire));
+    assert(retry.is_built.load(std::memory_order_acquire));
 
     Scheduler ready_scheduler;
     Pipeline ready{ready_scheduler};
@@ -217,6 +226,6 @@ with tempfile.TemporaryDirectory(prefix="f07-ordered-wait-") as folder:
             assert built.returncode == 0,(definition,mode,built.stderr[-4000:])
             result = subprocess.run([str(exe)],capture_output=True,text=True,timeout=20)
             assert result.returncode == 0,(definition,mode,result.stderr[-4000:])
-print("F07_FIFO_ONE_WAIT_HOST_PASS graphics=1 compute=1 native_once=1 desktop_original=1 order=1 enqueue_failure=1 O0=1 O2=1")
+print("F07_FIFO_ONE_WAIT_HOST_PASS graphics=1 compute=1 native_once=1 desktop_inline_claim=1 order=1 enqueue_failure=1 O0=1 O2=1")
 
 print("F07_PIPELINE_PUBLICATION_PASS release_store=1 acquire_reader=2 failed_build=1 O0=1 O2=1")

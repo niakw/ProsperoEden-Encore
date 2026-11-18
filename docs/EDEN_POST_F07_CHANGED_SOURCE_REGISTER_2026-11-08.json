@@ -387,13 +387,13 @@
     {
       "path": "headless/graphics.h",
       "historical_reviewed_git_blob": "4a958fea2d32bf897ecc3337293cb47fb909fce7",
-      "post_snapshot_git_blob": "60fb9eec370c11b386cb0f446050584747db2ae6",
+      "post_snapshot_git_blob": "fcfeb8b2a8a29bcfbaeb915b8e008ecd47338c85",
       "original_disposition": "reviewed_without_new_code_edit",
-      "source_scope": "Nov13 FC27 detailed-only buffer/texture cache pressure split adds a 6-counter per-GraphicsWindow baseline; no new per-present activity, rendering logic, GPU ownership or performance outcome implied.",
+      "source_scope": "Nov13 FC27 detailed-only buffer/texture cache pressure split adds a 6-counter per-GraphicsWindow baseline; no new per-present activity, rendering logic, GPU ownership or performance outcome implied. PR #283 (18 Nov): exact two new read-only per-window snapshots for ≥1ms/≥10ms cache lock tails and five GPU draw-drop counters; once-per-five-second detailed diagnostics only, no owner or graphics behavior change.",
       "review_kind": "source_interface",
       "required_source_fragment": "std::array<unsigned long long, 6> frame_cache_domain_previous{};",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
-      "review_note": "Nov13 console regression fd00c7f: historical U19 F07 reviewed blob immutable; new baseline lives with GraphicsWindow to avoid cross-title stale deltas. Exact new source Git blob 60fb9eec370c11b386cb0f446050584747db2ae6; host source check covers both detailed-only call sites; PS5 run unqualified."
+      "review_note": "Nov13 console regression fd00c7f: historical U19 F07 reviewed blob immutable; new baseline lives with GraphicsWindow to avoid cross-title stale deltas. Exact new source Git blob 60fb9eec370c11b386cb0f446050584747db2ae6; host source check covers both detailed-only call sites; PS5 run unqualified.\n2026-11-18 independently reviewed PR #283 exact header blob fcfeb8b2a8a29bcfbaeb915b8e008ecd47338c85 (previous 60fb9eec370c11b386cb0f446050584747db2ae6), corresponding to engine merge 3ab748a975243450d97e4ce4a3317b813336a9e9. Host proof 44370716775 and security PR 44369534262 green; no native/console validation. Historical F07 blob unchanged."
     },
     {
       "path": "headless/preferences_check.cpp",

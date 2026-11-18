@@ -19,6 +19,69 @@ EARLY_1952 = """        Settings::values.use_squashed_iterated_blend = false;
 OLD_FLAG = """        Settings::values.use_squashed_iterated_blend = false;
 """
 
+
+# Lichii #1932 (merged upstream a3b4397): the three maintained Core owners
+# contain four additional exact, already-qualified teardown/lifetime edits.
+# Reconstruct the #1952 predecessors before comparing them to the retired G14
+# oracle; neither historic snapshot nor production source is changed here.
+loader_after = """            // The kernel was initialized before loader admission. Leaving it
+            // alive retains lists into device memory already being destroyed,
+            // and can crash during failed-launch teardown or next title.
+            // Lichii #1932: the local KProcess must die while its kernel is alive.
+            process.reset();
+            ShutdownMainProcess();"""
+loader_before = """            // The kernel was initialized before loader admission. Leaving it
+            // alive retains lists into device memory already being destroyed,
+            // and can crash during failed-launch teardown or next title.
+            ShutdownMainProcess();"""
+shutdown_after = """        debugger.reset();
+        {
+            // Lichii #1932: these are kernel-owned objects. Destroy them while
+            // the kernel still exists; keep queued general-channel bytes for
+            // the next kernel/session.
+            std::scoped_lock lk{general_channel_mutex};
+            general_channel_event.reset();
+            general_channel_context.reset();
+        }
+        kernel.Shutdown();"""
+shutdown_before = """        debugger.reset();
+        kernel.Shutdown();"""
+ensure_after = """            general_channel_context.emplace(system, "GeneralChannel");
+            general_channel_event.emplace(*general_channel_context);
+            if (!general_channel.empty()) {
+                general_channel_event->Signal(kernel);
+            }
+        }"""
+ensure_before = """            general_channel_context.emplace(system, "GeneralChannel");
+            general_channel_event.emplace(*general_channel_context);
+        }"""
+pop_after = """bool System::TryPopGeneralChannel(std::vector<u8>& out_data) {
+    std::scoped_lock lk{impl->general_channel_mutex};
+    if (impl->general_channel.empty()) {
+        return false;
+    }
+    // A queue can survive a kernel restart while its old Event cannot.
+    impl->EnsureGeneralChannelInitialized(*this);
+    out_data = std::move(impl->general_channel.back());"""
+pop_before = """bool System::TryPopGeneralChannel(std::vector<u8>& out_data) {
+    std::scoped_lock lk{impl->general_channel_mutex};
+    if (!impl->general_channel_event || impl->general_channel.empty()) {
+        return false;
+    }
+    out_data = std::move(impl->general_channel.back());"""
+
+def reverse_1932(text: str) -> str:
+    for after, before, label in (
+        (loader_after, loader_before, "failed-loader"),
+        (shutdown_after, shutdown_before, "teardown"),
+        (ensure_after, ensure_before, "recreate"),
+        (pop_after, pop_before, "pop"),
+    ):
+        assert text.count(after) == 1, ("#1932 source drift", label)
+        text = text.replace(after, before, 1)
+    return text
+
+
 def reverse_1952(text: str, native: bool) -> str:
     assert text.count(EARLY_1952) == 1
     text = text.replace(EARLY_1952, OLD_FLAG, 1)
@@ -83,22 +146,30 @@ for native in (False, True):
             False: "5fbd4b90de30d20bff7a9fe07be85e4fc187fa93",
             True: "ba5b2cf06c5885bafc2e16c424bc146e24455b00",
         }[native]
-        assert git_blob(actual) == expected_current, ("reviewed #1952 source drift", filename)
-        predecessor = reverse_1952(actual, native)
+        current_1932 = {
+            False: "024e35e6e4274c0c8fc8fcb4450176c8c97bd984",
+            True: "9a62448fa07ce437da719b8a08e6a241541cbb29",
+        }[native]
+        assert git_blob(actual) == current_1932, ("reviewed #1932 source drift", filename)
+        before_1932 = reverse_1932(actual)
+        assert git_blob(before_1932) == expected_current, ("reviewed #1932 reverse drift", filename)
+        predecessor = reverse_1952(before_1932, native)
         assert generated == predecessor, ("G14 byte parity after #1952 reverse", filename)
         shutdown = actual.split("    void ShutdownMainProcess() {", 1)[1].split(
             "\n    bool IsShuttingDown()", 1)[0]
         assert shutdown.count("cheat_engine.reset();") == 1
         assert shutdown.index("cheat_engine.reset();") < shutdown.index(
             "core_timing.SyncPause(false);")
-        assert actual.count("process.reset();\n            ShutdownMainProcess()") == 2
+        assert actual.count("process.reset();\n            ShutdownMainProcess()") == 3
         assert 'GameSettings::LoadOverrides(params.program_id,' in actual
         assert ("::Eden::ReportStep" in actual) == native
 
 # The release PS5 graph replaces core_native with the NS2-capable derivative.
 ns2 = (root / "vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
-assert git_blob(ns2) == "7e3159eb648e92cca3543cfd01bcfd26a0caa135"
-assert git_blob(reverse_1952(ns2, True)) == "ac37dcd3d33373d6f5189dc4963f3dfbce898391"
+assert git_blob(ns2) == "13146ad60fb374f188eae1940ebaa0eff034bb56"
+ns2_before_1932 = reverse_1932(ns2)
+assert git_blob(ns2_before_1932) == "7e3159eb648e92cca3543cfd01bcfd26a0caa135"
+assert git_blob(reverse_1952(ns2_before_1932, True)) == "ac37dcd3d33373d6f5189dc4963f3dfbce898391"
 ns2_shutdown = ns2.split("    void ShutdownMainProcess() {", 1)[1].split(
     "\n    bool IsShuttingDown()", 1)[0]
 assert ns2_shutdown.count("cheat_engine.reset();") == 1
@@ -107,4 +178,4 @@ assert ns2_shutdown.index("cheat_engine.reset();") < ns2_shutdown.index(
 assert 'vendor/encore-active/ns2-runtime/process/core/core.cpp' not in cmake
 assert 'ns2-runtime/process/core/core.cpp' in cmake
 print("ENCORE_MAINTAINED_CORE_SYSTEM_PARITY_PASS G14=retired variants=2"
-      " lichii1952=3 exact_reverse=3 ns2_release=1")
+      " lichii1952=3 lichii1932=3 exact_reverse=3 ns2_release=1")

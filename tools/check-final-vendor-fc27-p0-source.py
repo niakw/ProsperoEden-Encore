@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="b79c774d5d976b7d374b7f851354a652f6aa69c4"
+EXPECTED="cd476e6e93e8a786bef6260006baec134f5df71f"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)

@@ -116,7 +116,39 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     # the pinned NS1 Shader::Stage header for authenticated native 0xC797 TUs.
     # Keep this include order identical to the shared release compiler graph.
     shader=ROOT/'vendor/encore-active/eden-shader/src'
-    includes=[shader,abi,ROOT/'headless',
+    # Match the shipping PS5 graph: this header owns BOTH the authenticated
+    # NS2 native tiling flag and Lichii #46 Host1x syncpoint shim. The
+    # experimental deferred guest-write bridge must never mask it.
+    native_tiling=ROOT/'vendor/encore-active/eden-core/overrides/native-tiling'
+    selected_mm=native_tiling/'video_core/memory_manager.h'
+    assert selected_mm.is_file()
+    mmh=selected_mm.read_text()
+    for required in ('void SetNativeSyncpointShim(GPUVAddr address);',
+                     'static constexpr u32 NumShimSyncpoints = 192;',
+                     'std::atomic<GPUVAddr> native_syncpoint_shim{0};',
+                     'void EnableNativeTiling()', 'bool native_tiling{};'):
+        assert required in mmh, ('shipping MemoryManager header missing native ABI', required)
+    assert 'EnqueueDeferredCPUWrite' not in mmh, 'DEV bridge is not shipping owner'
+    assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")' in cmake
+    assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")' in cmake
+
+    # Match the shipping NVDEC public-header override as well. The production
+    # graph COPYONLY-stages this maintained header ahead of pinned Eden; the
+    # real MemoryManager TU reaches it through Host1x even though this gate
+    # does not compile/link the decoder implementation itself.
+    nvdec_override=ROOT/'vendor/encore-active/eden-core/overrides'
+    nvdec_ffmpeg=nvdec_override/'video_core/host1x/ffmpeg.h'
+    assert nvdec_ffmpeg.is_file()
+    assert 'set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")' in cmake
+    assert 'configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"' in cmake
+    assert '"${EDEN_NVDEC_HEADER_DIR}/video_core/host1x/ffmpeg.h" COPYONLY)' in cmake
+    nvdec_stage=Path(td)/'nvdec-eagain'
+    (nvdec_stage/'video_core/host1x').mkdir(parents=True)
+    shutil.copyfile(nvdec_ffmpeg,nvdec_stage/'video_core/host1x/ffmpeg.h')
+    assert [p.relative_to(nvdec_stage).as_posix() for p in nvdec_stage.rglob('*') if p.is_file()] == [
+        'video_core/host1x/ffmpeg.h'
+    ]
+    includes=[native_tiling,nvdec_stage,shader,abi,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',
@@ -133,6 +165,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
            *standard,*inc]
     sources=[DMA/'dma_pusher.cpp',DMA/'dma_pusher_dev.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
+             ROOT/'vendor/encore-active/eden-core/src/video_core/memory_manager.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp',
              ROOT/'vendor/encore-active/ns2-runtime/ampere/video_core/native_shader_capture.cpp',
@@ -146,7 +179,7 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
         # The shipping DMA sources still undergo the Clang source check.
         active_flags=flags.copy()
         is_heavy=path.name in {
-            'nvhost_as_gpu.cpp','nvhost_gpu.cpp','puller.cpp',
+            'nvhost_as_gpu.cpp','nvhost_gpu.cpp','memory_manager.cpp','puller.cpp',
             'native_shader_capture.cpp','ns2_shader_spirv_compile.cpp'}
         if sys.platform=='linux' and is_heavy:
             gcc=shutil.which('g++')
@@ -167,4 +200,5 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
             raise AssertionError((name,result.returncode,
                                   result.stderr[:1500],result.stderr[-5000:]))
         print('P2_7_NATIVE_GPU_REAL_MACRO_TU_PASS',name,flush=True)
+    print('P2_7_PRODUCTION_MEMORY_MANAGER_COMBINED_ABI_PASS ns1_default=0 shim_192=1 native_tiling=1 real_TUs=2',flush=True)
     print('P2_7_GPFIFO_NATIVE_FETCH_OWNER_AND_UBSAN_PASS PS5_runtime=P5',flush=True)

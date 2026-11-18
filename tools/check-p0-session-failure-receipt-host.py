@@ -18,6 +18,20 @@ native = read("src/memory_pages.cpp")
 assert "inline bool WriteSessionFailureReceipt(" in record
 assert "O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW" in record
 assert "EDEN_SESSION_FAILURE_V1" in record
+assert "inline bool WriteSessionPhaseReceipt(" in record
+assert "inline bool ReadPreviousSessionPhase(" in record
+assert "EDEN_SESSION_ACTIVE_V1" in record
+assert "O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW" in record
+for marker in (
+    '"previous_session_unfinished"',
+    '"selected"', '"title_resolved"', '"guest_loading"', '"gpu_starting"',
+    '"guest_running"', '"guest_stopping"', '"renderer_release"', '"title_destroyed"',
+    'SCOPE_EXIT {',
+    'if (session_marker_owned) (void)std::remove(unfinished_session_path.c_str());',
+):
+    assert marker in main, marker
+assert main.index('ReadPreviousSessionPhase(') < main.index('Eden::StopLimit::Start(stop_note);')
+
 assert "fsync(file)" in record
 assert "2 * 1024 * 1024 - size" in record
 assert "eden_ps5_direct_failure_snapshot(" in main and "eden_ps5_direct_failure_snapshot(" in native
@@ -101,6 +115,28 @@ int main(int argc, char** argv) {
         full, "unknown", 0, 5, "std_exception", "x", false,
         false, 0, false, 0, 0, 0, 0));
     assert(read(path) == second);
+    const std::string active = dir + "/session-active.txt";
+    assert(Eden::WriteSessionPhaseReceipt(
+        active, "0123456789abcdef0123456789abcdef01234567",
+        0x0400c3f00006e000ull, 42, "guest_loading"));
+    char previous[256]{};
+    assert(Eden::ReadPreviousSessionPhase(active, previous, sizeof(previous)));
+    assert(std::string(previous).find("title=0400c3f00006e000") != std::string::npos);
+    assert(std::string(previous).find("attempt=42 stage=guest_loading") != std::string::npos);
+    assert(Eden::WriteSessionPhaseReceipt(
+        active, "0123456789abcdef0123456789abcdef01234567",
+        0x0400c3f00006e000ull, 42, "gpu_starting"));
+    assert(Eden::ReadPreviousSessionPhase(active, previous, sizeof(previous)));
+    assert(std::string(previous).find("stage=gpu_starting") != std::string::npos);
+    assert(std::string(previous).find("stage=guest_loading") == std::string::npos);
+    assert(!Eden::WriteSessionPhaseReceipt(
+        link, "unknown", 4, 42, "guest_running"));
+    assert(!Eden::ReadPreviousSessionPhase(link, previous, sizeof(previous)));
+    assert(read(target) == "immutable");
+    // Clean C++ shutdown removes the marker, so only an interrupted session
+    // is imported during the next launcher process boot.
+    assert(std::remove(active.c_str()) == 0);
+    assert(!Eden::ReadPreviousSessionPhase(active, previous, sizeof(previous)));
 }
 """
 compiler = shutil.which("clang++") or shutil.which("g++")
@@ -170,5 +206,5 @@ with tempfile.TemporaryDirectory(prefix="encore-p0-allocator-") as temp:
         run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
         assert run.returncode == 0, (opt, run.stderr)
 
-print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 allocator_real=1 title=1 bounded=1 no_symlink=1")
+print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 allocator_real=1 lifecycle=1 title=1 bounded=1 no_symlink=1")
 print("This does not prove PS5 native ABI, real FC27 relaunch, NS2 frame or performance.")

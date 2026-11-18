@@ -21,7 +21,7 @@ root = Path(__file__).resolve().parents[1]
 rel = "vendor/encore-active/eden-threading/src/core/hle/kernel"
 directory = root / rel
 expected_hashes = {
-    "k_thread.h": "git:e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6",
+    "k_thread.h": "git:89bbcbd2b0d3627210a980496d00f30a45c7d944",
     "k_slab_heap.h": "git:307b8ff131df472cbca0e6eed27d9d142821b8b7",
     "k_scheduler.cpp": "git:6bf49c0165ecac602628679adbb8cee8d8407190",
 }
@@ -37,6 +37,23 @@ for name, expected_sha in expected_hashes.items():
     sources[name] = data.decode("utf-8")
 
 thread = sources["k_thread.h"]
+# Lichii 3140648 adds only the started-thread IPC handoff storage/accessor
+# on top of the previously audited scheduler-lock overlay. Reverse those exact
+# spans and require the historical Git blob byte-for-byte.
+thread_accessor = """    // Lichii 3140648: same-core lower-priority threads started by this
+    // thread may need one real IPC scheduling window before the caller
+    // reuses their stack-resident startup arguments.
+    std::vector<KThread*>& GetPendingStartedThreads() {
+        return m_pending_started_threads;
+    }
+
+"""
+thread_member = "    std::vector<KThread*> m_pending_started_threads;\n"
+assert thread.count(thread_accessor) == 1
+assert thread.count(thread_member) == 1
+rewound_thread = thread.replace(thread_accessor, "", 1).replace(thread_member, "", 1).encode("utf-8")
+rewound_blob = hashlib.sha1(b"blob " + str(len(rewound_thread)).encode() + b"\0" + rewound_thread).hexdigest()
+assert rewound_blob == "e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6", rewound_blob
 slab = sources["k_slab_heap.h"]
 scheduler = sources["k_scheduler.cpp"]
 assert "#include \"common/spin_lock.h\"" not in thread + slab

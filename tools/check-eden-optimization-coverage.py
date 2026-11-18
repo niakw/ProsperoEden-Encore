@@ -2572,7 +2572,7 @@ print("P0_DIRECT_MEMORY_FAILURE_ONLY_F07_REVERSE_PASS M01=1 historical=unchanged
 # resuming the immutable F07 source comparison. Do not rewrite old Git blobs.
 incident_header = "headless/diagnostics.h"
 incident_header_original = "0bc6a2c89def2a5be80df854e5ced443cb3c2e3d"
-incident_header_current = "6c0218658b42f522a6a16faad4b5e388dcb11668"
+incident_header_current = "39175999ed2a95ecb88ba8deab43392dc2e666e7"
 assert incident_header in drift_index and incident_header not in post_index
 incident_drift = drift_index.pop(incident_header)
 assert incident_drift["expected"] == incident_header_original
@@ -2590,6 +2590,7 @@ header_pre = header_text[:start] + header_text[stop:]
 added_includes = """#include <cstdint>
 #include <cstddef>
 #include <cerrno>
+#include <cstring>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>

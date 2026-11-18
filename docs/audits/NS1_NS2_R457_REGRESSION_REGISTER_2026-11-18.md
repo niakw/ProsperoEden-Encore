@@ -93,3 +93,13 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 - Les trois chemins après `CreateApplicationProcess` détruisent désormais le `KProcess` local avant `ShutdownMainProcess()`, y compris le chemin `!app_loader` qui manquait dans Encore.
 - `tests/shutdown_general_channel_lifetime_source.py` reconstruit byte-for-byte les trois blobs prédécesseurs `5fbd4b90...`, `ba5b2cf0...`, `7e3159eb...`. Le témoin #1952/#1957 retire d'abord #1932 avant de vérifier ses prédécesseurs historiques.
 - Cette correction ferme une cause upstream documentée de SIGSEGV à l'arrêt/échec de chargement ; elle ne permet toujours pas de déclarer l'incident PS5 #97 corrigé sans compilation native puis sortie réelle sur console.
+
+
+## 18 novembre 2026 — R457 A/B replay PASS ; NS2 MemoryManager production ABI candidate
+
+- At engine SHA `981b72f1ce4fa3797039982c511a9c471384f1a4`, core fast gate run [44275639851](https://github.com/niakw/ProsperoEden-Encore/actions/runs/44275639851) passed. The source Preflight run [44275640053](https://github.com/niakw/ProsperoEden-Encore/actions/runs/44275640053) failed on `source-audit`, not on F07.
+- The F07 R457 historical controls **passed**: graphics and compute, O0/O2; maintained callbacks passed desktop/native O0/O2. This is a host-only scheduler/condvar mechanism witness, not measured FC27 PS5 frame times, Options latency or HUD freshness.
+- At `tools/ns2/check_native_gpu_fetch_admission_host.py`, the `PS5_NATIVE` compiler failed compiling real `nvhost_as_gpu.cpp` because `Tegra::MemoryManager` lacked `SetNativeSyncpointShim` and `NumShimSyncpoints`. Pinned Eden deliberately lacks these Switch 2 declarations. Lichii `nx2/NX2_NOTES.md` blocker **#46**, commit `12125bc`, carries the shim API.
+- Root cause: the shipping PS5 `EDEN_NS2_NATIVE_TILING_ROOT/video_core/memory_manager.h` contains `EnableNativeTiling` but not the shim API/state. The shim was present in the separate DEV-only `guest-bridge/memory_manager.h`, selected only with `EDEN_GUEST_WRITE_BRIDGE_DEV=ON`; that DEV feature remains OFF.
+- Candidate: vendor [PR #185](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/185) composes the two independent Switch 2 APIs in the shipping header, leaves NS1 defaults unchanged and adds paired parity gates. The engine host test selects the actual shipping include root before pinned Eden and compiles both real native NVDRV AS and native GPU MemoryManager units.
+- **Pending:** vendor CI and paired engine preflight at the new Gitlink; full PS5 compilation/package; FC27 NS1 and MKW/Bananza NS2 console gameplay. No performance or runtime correction claimed.

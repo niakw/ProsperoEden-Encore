@@ -445,7 +445,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
         core_blob = subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip()
-        if pair_vendor_pin == '2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c':
+        if pair_vendor_pin in {'2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c'}:
             # Vendor #189 fixes a real native build ABI mismatch. The reviewed
             # BufferCache header uses the pinned ForEachInRange-backed query;
             # every other Vulkan fork receipt below stays byte-for-byte exact.

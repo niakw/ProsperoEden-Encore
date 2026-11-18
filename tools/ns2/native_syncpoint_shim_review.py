@@ -33,7 +33,8 @@ SCALAR = """    if constexpr (sizeof(T) == sizeof(u32)) {
 
 """
 
-BLOCK = """    // NVN's syncpoint shim is deliberately not backed by guest/device RAM. Serve reads wholly
+BLOCK = """
+    // NVN's syncpoint shim is deliberately not backed by guest/device RAM. Serve reads wholly
     // inside its 192 u32 words directly from Host1x; all ordinary NS1 addresses keep this path.
     const GPUVAddr shim = native_syncpoint_shim.load(std::memory_order_acquire);
     constexpr u64 shim_bytes = u64{NumShimSyncpoints} * sizeof(u32);
@@ -54,7 +55,6 @@ BLOCK = """    // NVN's syncpoint shim is deliberately not backed by guest/devic
         }
         return;
     }
-
 """
 
 def recover_before_syncpoint_shim(actual: str) -> str:

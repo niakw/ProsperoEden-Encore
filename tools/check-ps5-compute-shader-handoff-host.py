@@ -87,7 +87,9 @@ HANDOFF
     }
 };
 void Try(Notify* n, Worker* w, bool setup) {
-    Harness harness;\n    harness.shader_notify = n;\n    harness.thread_worker = w;
+    Harness harness;
+    harness.shader_notify = n;
+    harness.thread_worker = w;
     try { harness.Build(setup); } catch (const std::runtime_error&) {}
 }
 int main() {
@@ -111,7 +113,9 @@ int main() {
     assert(pending_first_use_compute_builds.load() == 0);
     Worker good;
     Notify d;
-    Harness deferred;\n    deferred.shader_notify = &d;\n    deferred.thread_worker = &good;
+    Harness deferred;
+    deferred.shader_notify = &d;
+    deferred.thread_worker = &good;
     deferred.Build(false);
     assert(d.start == 1 && d.done == 0 && d.pending == 1 && good.job);
     assert(pending_first_use_compute_builds.load() == 1);
@@ -119,7 +123,8 @@ int main() {
     assert(d.done == 1 && d.pending == 0);
     assert(pending_first_use_compute_builds.load() == 0);
     Worker empty;
-    Harness no_notify;\n    no_notify.thread_worker = &empty;
+    Harness no_notify;
+    no_notify.thread_worker = &empty;
     no_notify.Build(false);
     assert(empty.job);
     empty.job();

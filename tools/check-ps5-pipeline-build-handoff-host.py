@@ -44,7 +44,14 @@ assert ctor.index("configure_func = ConfigureFunc(spv_modules, stage_infos);") <
     ctor.index("    if (worker_thread) {")
 )
 assert ctor.index("build_handed_off = true;") > ctor.index("worker_thread->QueueWork(")
-assert ctor.index("build_handed_off = true;") < ctor.index("    } else {\n        // Synchronous func()")
+# First-use builders are now claimed by RunBuild() whether queued or inline.
+# Keep the construction/notification handoff ordering, without relying on
+# the historical synchronous func() comment removed by the upstream adaptation.
+assert "build_task = std::move(func);" in ctor
+assert "worker_thread->QueueWork([this] { RunBuild(); });" in ctor
+assert ctor.index("build_task = std::move(func);") < ctor.index("    if (worker_thread) {")
+assert ctor.index("build_handed_off = true;") < ctor.index("    } else {\n        build_handed_off = true;\n        RunBuild();")
+assert ctor.count("RunBuild();") >= 2
 
 # The exact real guard, including its destructor lambda, is compiled. Only
 # descriptor preparation and worker queue ownership are stand-ins.

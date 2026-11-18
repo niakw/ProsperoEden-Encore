@@ -38,7 +38,21 @@ replacement = """            s64 absolute{};
                 timeout = absolute;
             }"""
 assert pinned.count(old) == 1
-assert native == pinned.replace(old, replacement)
+# Lichii 3140648 adds the reviewed same-core startup handoff to
+# StartThread, separately from this SleepThread timeout fix.
+start_marker = "Result StartThread(Core::System& system, Handle thread_handle) {"
+end_marker = "/// Called when a thread exits"
+assert native.count(start_marker) == pinned.count(start_marker) == 1
+assert native.count(end_marker) == pinned.count(end_marker) == 1
+native_start = native.split(start_marker, 1)[1].split(end_marker, 1)[0]
+pinned_start = pinned.split(start_marker, 1)[1].split(end_marker, 1)[0]
+for token in ("GetPendingStartedThreads().push_back", "thread->Open(system.Kernel());",
+              "thread->GetActiveCore() == cur_thread.GetActiveCore()"):
+    assert token in native_start, token
+assert token not in pinned_start
+reversed_native = native.replace(native_start, pinned_start, 1)
+assert reversed_native == pinned.replace(old, replacement), (
+    "Unreviewed SleepThread/source drift beyond startup handoff")
 
 def sleep(source):
     start = "void SleepThread(Core::System& system, s64 ns) {"

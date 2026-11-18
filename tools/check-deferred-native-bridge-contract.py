@@ -615,7 +615,19 @@ anchor_m11 = "void State::ProcessData(std::span<const u8> read_buffer) {"
 assert original_m11.count(anchor_m11) == 1, "M11 original anchor drift"
 expected_m11 = original_m11.replace(anchor_m11,
     anchor_m11 + "\n    memory_manager.FlushCaching();")
-assert maintained_m11.read_text() == expected_m11, "M11 maintained source parity drift"
+# Lichii nx2 native tiling extends SwizzleSubrect with a layout selector.
+# Encore's guest bridge must retain BOTH that reviewed NS2 argument and the
+# M11 cache-coherency flush; accepting either change alone would hide a
+# regression in the other contract.
+m11_swizzle_old = """                                       regs.dest.BlockDepth(), regs.line_length_in);"""
+m11_swizzle_native = """                                       regs.dest.BlockDepth(), regs.line_length_in,
+                                       memory_manager.UsesNativeTiling());"""
+assert expected_m11.count(m11_swizzle_old) == 1, "M11 pinned swizzle anchor drift"
+expected_m11 = expected_m11.replace(m11_swizzle_old, m11_swizzle_native)
+maintained_m11_text = maintained_m11.read_text()
+assert maintained_m11_text == expected_m11, "M11 maintained source parity drift"
+assert maintained_m11_text.count("memory_manager.FlushCaching();") == 1
+assert maintained_m11_text.count("memory_manager.UsesNativeTiling()") == 1
 assert 'configure_file("${EDEN_DEFERRED_UPLOAD_SOURCE}"' in code
 assert 'write_derived("${PORT_BUILD_DIR}/engine_upload_deferred.cpp"' not in code
 print("ENCORE_M11_MAINTAINED_ENGINE_PARITY_PASS")

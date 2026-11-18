@@ -867,8 +867,50 @@ assert ipc_pinned.count(ipc_success_old) == 1
 ipc_standard_expected = (ipc_pinned.replace(ipc_timeout_old, ipc_timeout_fixed)
                          .replace(ipc_index_old, ipc_index_fixed)
                          .replace(ipc_success_old, ipc_success_safe))
-assert ipc_standard == ipc_standard_expected, (
-    "Maintained normal IPC source diverges from pinned + deadline, initialized index, guarded successful slot")
+
+# Lichii 3140648 adds one reviewed scheduling handoff around SendSyncRequest:
+# same-core lower-priority workers are allowed to reach their first blocking
+# point before the caller reuses stack-backed startup arguments. Reverse that
+# complete function and its two new includes, then require byte-for-byte parity
+# with the already reconstructed timeout/index/success-slot source.
+def _whole_function(text, signature):
+    assert text.count(signature) == 1, signature
+    start = text.index(signature)
+    opening = text.index("{", start)
+    depth = 0
+    for pos in range(opening, len(text)):
+        if text[pos] == "{":
+            depth += 1
+        elif text[pos] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:pos + 1]
+    raise AssertionError(("unbalanced function", signature))
+
+ipc_send_signature = "Result SendSyncRequestImpl("
+ipc_standard_send = _whole_function(ipc_standard, ipc_send_signature)
+ipc_pinned_send = _whole_function(ipc_pinned, ipc_send_signature)
+for marker in (
+    "GetPendingStartedThreads()",
+    "std::chrono::milliseconds(20)",
+    "KScopedSchedulerLock sl{kernel};",
+    "thread->Close(kernel);",
+    "pending.clear();",
+):
+    assert marker in ipc_standard_send, ("Lichii 3140648 IPC handoff missing", marker)
+    assert marker not in ipc_pinned_send, ("Pinned Eden unexpectedly contains handoff", marker)
+
+ipc_standard_rewound = ipc_standard.replace(
+    ipc_standard_send, ipc_pinned_send, 1)
+assert ipc_standard_rewound.count("#include <chrono>\n\n") == 1
+ipc_standard_rewound = ipc_standard_rewound.replace("#include <chrono>\n\n", "", 1)
+ipc_scheduler_include = '#include "core/hle/kernel/k_scheduler.h"\n'
+assert ipc_standard_rewound.count(ipc_scheduler_include) == 1
+ipc_standard_rewound = ipc_standard_rewound.replace(ipc_scheduler_include, "", 1)
+assert ipc_standard_rewound == ipc_standard_expected, (
+    "Maintained normal IPC diverges beyond reviewed Lichii 3140648 handoff + "
+    "deadline/index/success-slot fixes")
+print("VENDOR_MAINTAINED_IPC_3140648_REVERSE_PASS", "handoff=exact", "includes=exact")
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")' in c
 # The maintained normal SVC now owns the native IPC process; the old
 # HLE/DEV services remain exact source-provenance witnesses but are not

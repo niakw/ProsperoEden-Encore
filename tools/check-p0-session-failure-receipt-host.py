@@ -130,8 +130,8 @@ state_end = native.index("std::atomic<std::int64_t> cached_direct_memory_extent{
 snap_start = native.index('extern "C" std::uint64_t eden_ps5_direct_failure_snapshot(')
 snap_end = native.index("\n#endif\n\nnamespace Common {", snap_start)
 allocator_fixture = (
-    "#include <atomic>\\n#include <cassert>\\n#include <cstdint>\\n"
-    "namespace {\\n" + native[state_start:state_end] + "}\\n" +
+    "#include <atomic>\n#include <cassert>\n#include <cstdint>\n"
+    "namespace {\n" + native[state_start:state_end] + "}\n" +
     native[snap_start:snap_end] + """
 int main() {
     std::uint64_t bytes = 7, extent = 7;

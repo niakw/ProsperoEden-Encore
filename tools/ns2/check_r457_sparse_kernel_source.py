@@ -49,7 +49,7 @@ reviewed_vendors={
     "dcfe3d2384bd800c6139ede672518ea2c66922a6",
     # Vendor PR #185: shim+tiling header/test/workflow only;
     # sparse kernel and GPU publisher blobs are still checked below.
-    "383f855804f74e6cf298b23b5a6284f9dfadac63",
+    "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d",
 }
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()

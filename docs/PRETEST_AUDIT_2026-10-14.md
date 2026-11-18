@@ -73,6 +73,14 @@ diagnostic directory **without renaming or omitting first/previous files**:
   `stderr.prev.first.log`, `result.tsv`, `boot-trace*.txt`
 - `network-accepted.log` if present; `crash-*.txt` if a native fatal
   signal produced one; `/data/prosperoeden/user/log/eden_log.txt` if present
+- **R457+ incident receipt candidate (#286):** `session-failures.log` from the
+  same `/data/prosperoeden/logs/` directory, **even with Detailed Logging OFF**.
+  Includes title, monotonic attempt, error and allocator rc/bytes when known.
+  It can also record the prior session's last stable phase after a hard app exit.
+  Include `session-active.txt` and `session-active.txt.next` if still present:
+  these tiny files distinguish a hung title from a completed teardown, and
+  the staging file must never be mistaken for a successfully promoted phase.
+  This is a new **source candidate**, not a console-verified path yet.
 
 The new one-line `EDEN_SESSION_SOURCE source_sha=<sha>` identifies the
 build at **each** game session (alongside the startup `EDEN_BUILD_SOURCE`).

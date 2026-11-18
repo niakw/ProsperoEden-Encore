@@ -53,6 +53,29 @@ namespace {
 // Demand-backed sparse JIT previously asked the kernel for it for EVERY
 // newly committed 2 MiB page; CPU heap and zero-table allocations did too.
 // Cache only a positive successful answer, so transient early errors retry.
+// Failed direct-memory requests must survive quiet stderr redirection.
+// No per-frame or successful-allocation overhead. One coherent last
+// failure is retained without heap allocations.
+struct LastDirectAllocationFailure {
+    std::atomic_flag gate = ATOMIC_FLAG_INIT;
+    std::uint64_t sequence{};
+    std::uint64_t bytes{};
+    std::uint64_t extent{};
+    std::uint32_t result{};
+    std::uint32_t stage{}; // 1=allocate, 2=map, 3=invalid_size
+};
+LastDirectAllocationFailure last_direct_allocation_failure;
+void NoteDirectAllocationFailure(std::uint32_t stage, std::uint32_t result,
+                                 std::uint64_t bytes, std::uint64_t extent) noexcept {
+    auto& record = last_direct_allocation_failure;
+    if (record.gate.test_and_set(std::memory_order_acquire)) return;
+    record.bytes = bytes;
+    record.extent = extent;
+    record.result = result;
+    record.stage = stage;
+    ++record.sequence;
+    record.gate.clear(std::memory_order_release);
+}
 std::atomic<std::int64_t> cached_direct_memory_extent{0};
 std::int64_t DirectMemoryExtent() noexcept {
     const auto cached = cached_direct_memory_extent.load(std::memory_order_acquire);
@@ -88,6 +111,21 @@ void* ReserveCpuVirtualRange(std::size_t bytes, std::size_t alignment) noexcept 
     return address;
 }
 } // namespace
+// A C ABI keeps the crash-only frontend free of allocator dependencies.
+// No mutation of physical ownership and no syscalls in the snapshot.
+extern "C" std::uint64_t eden_ps5_direct_failure_snapshot(
+    std::uint64_t* bytes, std::uint64_t* extent,
+    std::uint32_t* result, std::uint32_t* stage) noexcept {
+    auto& record = last_direct_allocation_failure;
+    if (record.gate.test_and_set(std::memory_order_acquire)) return 0;
+    if (bytes) *bytes = record.bytes;
+    if (extent) *extent = record.extent;
+    if (result) *result = record.result;
+    if (stage) *stage = record.stage;
+    const auto sequence = record.sequence;
+    record.gate.clear(std::memory_order_release);
+    return sequence;
+}
 #endif
 
 namespace Common {
@@ -168,7 +206,13 @@ void* AllocateMemoryPages(std::size_t size) noexcept {
     const long page = CachedHostPageSize();
     const std::size_t lead = page > 0 ? lead_size(size, static_cast<std::size_t>(page)) : 0;
     const auto total = page > 0 ? allocation_size(size, page, lead) : 0;
-    if (!total) { errno = EINVAL; return nullptr; }
+    if (!total) {
+#ifdef PS5_NATIVE
+        NoteDirectAllocationFailure(3, EINVAL, size, 0);
+#endif
+        errno = EINVAL;
+        return nullptr;
+    }
     void* base = nullptr;
     std::int64_t physical = -1;
 #ifdef PS5_NATIVE
@@ -176,6 +220,8 @@ void* AllocateMemoryPages(std::size_t size) noexcept {
     const auto limit = DirectMemoryExtent();
     auto rc = limit > 0 ? sceKernelAllocateDirectMemory(0, limit, total, lead, 12, &physical) : -1;
     if (rc != 0) {
+        NoteDirectAllocationFailure(1, static_cast<std::uint32_t>(rc), total,
+                                    static_cast<std::uint64_t>(limit));
         std::fprintf(stderr, "Direct allocation failed: rc=%08x bytes=%zu limit=%lld\n",
                      unsigned(rc), total, static_cast<long long>(limit));
         errno = ENOMEM;
@@ -185,6 +231,8 @@ void* AllocateMemoryPages(std::size_t size) noexcept {
     // Reject a kernel-chosen CPU mapping whose START is legal but whose
     // final page crosses into RADV's protected high VA/device-memory window.
     if (rc != 0 || !cpu_mapping_range(base, total)) {
+        NoteDirectAllocationFailure(2, static_cast<std::uint32_t>(rc), total,
+                                    static_cast<std::uint64_t>(limit));
         std::fprintf(stderr, "Direct mapping failed: rc=%08x bytes=%zu\n", unsigned(rc), total);
         // A failed non-fixed mapping must not change its output pointer:
         // the kernel may have created an alias before returning an error.

@@ -51,6 +51,11 @@
 #include "encore_performance_policy.h"
 #include "jit_memory_policy.h"
 #include "diagnostics.h"
+#ifdef PS5_NATIVE
+extern "C" std::uint64_t eden_ps5_direct_failure_snapshot(
+    std::uint64_t* bytes, std::uint64_t* extent,
+    std::uint32_t* result, std::uint32_t* stage) noexcept;
+#endif
 #include "diagnostics_native_client.h"
 #include "display_refresh.h"
 #include "lossless_user_file.h"
@@ -648,9 +653,44 @@ int main(int argc, char** argv) {
         Eden::BootTrace::Line("host network init result=%d", host_net_result);
         if (host_net_result != 0)
             Eden::Report("network", "Native host network initialization failed; online metadata is unavailable");
+        // On next boot, preserve the last stable stage from a title that
+        // never completed C++ teardown (forced app close, crash or hard hang).
+        // No per-frame logging and no dependence on Detailed Logging.
+        const std::string unfinished_session_path = Eden::LogFile("session-active.txt");
+        char previous_session_phase[256]{};
+        if (Eden::ReadPreviousSessionPhase(
+                unfinished_session_path, previous_session_phase, sizeof(previous_session_phase))) {
+#ifdef EDEN_NATIVE_SOURCE_COMMIT
+            constexpr const char* previous_phase_sha = EDEN_NATIVE_SOURCE_COMMIT;
+#else
+            constexpr const char* previous_phase_sha = "unknown";
+#endif
+            if (Eden::WriteSessionFailureReceipt(
+                    Eden::LogFile("session-failures.log"), previous_phase_sha,
+                    0, 0, "previous_session_unfinished", previous_session_phase,
+                    persist_detailed_logs, false, 0, false, 0, 0, 0, 0))
+                (void)std::remove(unfinished_session_path.c_str());
+            else
+                Eden::Report("incident", "Could not retain unfinished-session marker");
+        }
         const std::string stop_note = Eden::LogFile("stop-limit.txt");
-        if (std::remove(stop_note.c_str()) == 0)
+        if (std::remove(stop_note.c_str()) == 0) {
+            // The native watchdog's marker was previously deleted before
+            // either verbose log could open. In quiet mode that destroyed
+            // the only evidence of a frozen game stop between process boots.
+#ifdef EDEN_NATIVE_SOURCE_COMMIT
+            constexpr const char* timeout_source_sha = EDEN_NATIVE_SOURCE_COMMIT;
+#else
+            constexpr const char* timeout_source_sha = "unknown";
+#endif
+            if (!Eden::WriteSessionFailureReceipt(
+                    Eden::LogFile("session-failures.log"), timeout_source_sha,
+                    0, 0, "stop_timeout_previous_boot",
+                    "game shutdown exceeded the 10-second watchdog; title unavailable",
+                    persist_detailed_logs, false, 0, false, 0, 0, 0, 0))
+                Eden::Report("incident", "Could not persist prior stop-limit timeout");
             Eden::Report("exit", "The previous game did not stop within ten seconds; Eden closed without automatic restart to protect console state");
+        }
         Eden::StopLimit::Start(stop_note);
         for (const char* candidate : {"/app0", Eden::kMountedAppDir, Eden::kInstallDir,
                                       "/mnt/sandbox/PPSA99008_000/app0"})
@@ -827,6 +867,12 @@ int main(int argc, char** argv) {
         }
 #endif
 #endif
+#ifdef PS5_NATIVE
+        // Precompute before launching. A bad_alloc handler must not allocate
+        // a log path while recovering from a failing C++/PS5 heap.
+        const std::string session_failure_path = Eden::LogFile("session-failures.log");
+        std::uint64_t session_failure_attempt = 0;
+#endif
         for (;;) {
 #ifdef EDEN_PS5_OPENGL
         std::error_code trim_error;
@@ -904,7 +950,55 @@ int main(int argc, char** argv) {
 #endif
             return 0;
         }
+#ifdef PS5_NATIVE
+        ++session_failure_attempt;
+        std::uint64_t incident_title_id = 0;
+        std::uint64_t prior_direct_bytes = 0, prior_direct_extent = 0;
+        std::uint32_t prior_direct_rc = 0, prior_direct_stage = 0;
+        const std::uint64_t direct_failure_baseline = eden_ps5_direct_failure_snapshot(
+            &prior_direct_bytes, &prior_direct_extent,
+            &prior_direct_rc, &prior_direct_stage);
+#ifdef EDEN_NATIVE_SOURCE_COMMIT
+        constexpr const char* failure_source_sha = EDEN_NATIVE_SOURCE_COMMIT;
+#else
+        constexpr const char* failure_source_sha = "unknown";
+#endif
+        const auto capture_session_failure = [&](const char* kind, const char* detail,
+                                                 bool largest_ok, std::size_t largest) {
+            std::uint64_t bytes = 0, extent = 0;
+            std::uint32_t rc = 0, stage = 0;
+            const std::uint64_t sequence = eden_ps5_direct_failure_snapshot(
+                &bytes, &extent, &rc, &stage);
+            const bool direct_current = sequence > direct_failure_baseline;
+            // Persist ON or OFF: a bounded incident, never a continuous log.
+            if (!Eden::WriteSessionFailureReceipt(
+                    session_failure_path, failure_source_sha,
+                    incident_title_id, session_failure_attempt, kind, detail,
+                    Eden::NativeLogs::Detailed(), largest_ok, largest,
+                    direct_current, direct_current ? stage : 0,
+                    direct_current ? rc : 0, direct_current ? bytes : 0,
+                    direct_current ? extent : 0))
+                Eden::Report("incident", "Could not persist session-failures.log");
+        };
+#endif
         try {
+#ifdef PS5_NATIVE
+        const bool session_marker_owned = Eden::WriteSessionPhaseReceipt(
+            unfinished_session_path, failure_source_sha,
+            incident_title_id, session_failure_attempt, "selected");
+        // A successful return or a caught C++ exception cleans this marker.
+        // SIGKILL, a deadlocked process and a hard app crash cannot unwind,
+        // so the next boot captures its last durable stage.
+        SCOPE_EXIT {
+            if (session_marker_owned) (void)std::remove(unfinished_session_path.c_str());
+        };
+        const auto record_session_phase = [&](const char* stage) {
+            if (session_marker_owned)
+                (void)Eden::WriteSessionPhaseReceipt(
+                    unfinished_session_path, failure_source_sha,
+                    incident_title_id, session_failure_attempt, stage);
+        };
+#endif
         launch_error.clear();
         const bool safe_launch = std::getenv("EDEN_SAFE_LAUNCH") != nullptr;
         if (safe_launch) unsetenv("EDEN_SAFE_LAUNCH");
@@ -914,6 +1008,10 @@ int main(int argc, char** argv) {
         const std::uint64_t rom_metadata_id = eden_game_title_id(selected_game.c_str());
         const std::uint64_t launch_title_id =
             Eden::ResolveGameTitleId(rom_metadata_id, selected_game);
+#ifdef PS5_NATIVE
+        incident_title_id = launch_title_id;
+        record_session_phase("title_resolved");
+#endif
         if (rom_metadata_id == 0 && launch_title_id != 0)
             std::fprintf(stderr, "EDEN_TITLE_ID_LAUNCH_FALLBACK title=%016llx source=filename\n",
                          static_cast<unsigned long long>(launch_title_id));
@@ -2198,6 +2296,9 @@ int main(int argc, char** argv) {
                     // NS2 NPDM programs before any guest CPU thread runs.
                     Eden::GuestCounter::SelectProgram(false, Common::g_cpu_caps.tsc_frequency);
 #endif
+#ifdef PS5_NATIVE
+                    record_session_phase("guest_loading");
+#endif
                     loaded = system.Load(window, guest, params);
                 } catch (const std::exception& error) {
                     load_input.request_stop();
@@ -2294,6 +2395,9 @@ int main(int argc, char** argv) {
 #endif
 #if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
                 Eden::Stall::Trace("main gpu_start");
+#endif
+#ifdef PS5_NATIVE
+                record_session_phase("gpu_starting");
 #endif
                 system.GPU().Start();
                 std::fprintf(stderr, "EDEN_BOOT_STAGE stage=gpu_started\n");
@@ -2442,6 +2546,9 @@ int main(int argc, char** argv) {
                 }
                 Eden::TakeGuestFault(); // Nothing from an earlier session belongs to this one.
                 std::fprintf(stderr, "EDEN_BOOT_STAGE stage=guest_run_begin\n");
+#ifdef PS5_NATIVE
+                record_session_phase("guest_running");
+#endif
                 system.Run();
                 if (left_while_loading) {
                     std::lock_guard lock(completion->mutex);
@@ -2736,10 +2843,16 @@ int main(int argc, char** argv) {
                 jit_list.Finish();  // while the JITs still exist: their block list is saved
                 // Shutdown requests cancellation before suspending cores; Pause can
                 // block while a CPU producer is waiting on a full GPU queue.
+#ifdef PS5_NATIVE
+                record_session_phase("guest_stopping");
+#endif
                 Eden::ReportStep("shutdown", "Stopping the game");
                 Eden::StopLimit::Begin();
                 system.ShutdownMainProcess();
                 Eden::StopLimit::End();
+#ifdef PS5_NATIVE
+                record_session_phase("renderer_release");
+#endif
                 Eden::Report("shutdown", "Game stopped; releasing renderer");
 #ifndef PS5_NATIVE
                 if (devices) {
@@ -2823,6 +2936,9 @@ int main(int argc, char** argv) {
         Eden::Performance::SetSecondaryPlacement(false);
         if (return_to_menu) continue;
 #endif
+#ifdef PS5_NATIVE
+        record_session_phase("title_destroyed");
+#endif
         passed("HEADLESS_COMPLETE");
 #ifdef EDEN_DEV_PROFILE
         // Keep the sandbox mounted long enough to collect final driver counters.
@@ -2843,6 +2959,8 @@ int main(int argc, char** argv) {
             const bool oom_query_ok = Eden::Performance::QueryLargestDirectMemoryBlock(&oom_largest_free);
             std::printf("EDEN_PS5_OOM largest_query_ok=%u largest_free_mib=%zu\n",
                         unsigned(oom_query_ok), oom_largest_free / Eden::JitMemory::kMiB);
+            capture_session_failure("std_bad_alloc", "native memory allocation failure",
+                                    oom_query_ok, oom_largest_free);
             launch_error = "The game could not allocate PS5 memory. Close Eden Encore completely before retrying to release memory retained between games.";
             Eden::Report("session failed", "std::bad_alloc: native memory allocation");
             std::fflush(stderr);
@@ -2851,6 +2969,12 @@ int main(int argc, char** argv) {
             // An experimental run can fail before normal game teardown.
             Eden::Performance::SetSecondaryPlacement(false);
             launch_error = error.what();
+            // Physical backing may fail as std::system_error, not bad_alloc.
+            std::size_t failed_largest_free = 0;
+            const bool failed_query_ok =
+                Eden::Performance::QueryLargestDirectMemoryBlock(&failed_largest_free);
+            capture_session_failure("std_exception", error.what(),
+                                    failed_query_ok, failed_largest_free);
             Eden::Report("session failed", error.what());
             std::fflush(stderr);
             std::fflush(stdout);

@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor"
 # Both exact cross-repo graphs are reviewed. No arbitrary vendor SHA allowed.
 KNOWN_VENDOR_GRAPH = {
+    "97ac02f263ec90f40a029f4aa62980c76bc25d5c": "reviewed NS2 SVC-only #190 successor; NS1 audio owners are unchanged",
     "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864": "original",
     "fe9edd661d6f0824c7339865d50aa9cf99cab150": "integrated",
     "c339fd06f02e42e67d5416ae82194ba619b7ee68": "integrated+jxr",

@@ -112,3 +112,19 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 - The new additional syntax check of the selected production `memory_manager.cpp` then stopped in Eden's Host1x include graph because the shard lacked the system header `libavcodec/avcodec.h`. This is a host-CI dependency gap, not an emulator compile diagnostic: other native Vulkan/NS2 gates already install the same FFmpeg development declarations.
 - Engine commit `2e55ab098f237718821173fd8defd0fbc318d05c` adds only `libavcodec-dev libavutil-dev libswscale-dev` to the existing host-preflight package set. No runtime source, PS5 binary, shader behavior or guest ABI changes in this follow-up.
 - **Pending:** rerun must compile the real `memory_manager.cpp`, emit `P2_7_PRODUCTION_MEMORY_MANAGER_COMBINED_ABI_PASS`, complete source-audit and aggregate core-tests. No console/runtime claim.
+
+## 18 novembre — qualification de la pile NS2 par observation des retours SVC (P0 toujours ouvert)
+
+| Champ | Donnée vérifiée / limite |
+|---|---|
+| Symptômes | Bananza `040074A01BF12000` (deux crashs), MKW `0400C3F00006E000` (un crash), tous `PC=0x4 LR=0` |
+| Logs PS5 | `EDEN_MAIN_STACK_MAP` valide, 1 Mio réellement mappé ; SP final respectivement 0x110 / 0x100 octets sous la pile ; `EDEN_NS2_RECENT_SVC` finit par `GetInfo` IDs 28–30 puis `QueryMemory` |
+| Cause | **Non démontrée** : dépassement réel du guest, retour de service invalide, NPDM/ExeFS non cohérent, contexte JIT ou ABI |
+| Piste upstream | Eglantine #335/#350 : problèmes de contenu/montage distincts ; Lichii #1413/#1592 : blocages GPU ou second titre distincts ; aucun transfert automatique |
+| Correctif d’observation | Vendor [PR #190](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/190), SHA `97ac02f263ec90f40a029f4aa62980c76bc25d5c` ; engine [PR #284](https://github.com/niakw/ProsperoEden-Encore/pull/284), gitlink candidat non fusionné |
+| Métrique ajoutée | Sur SVC 0x29/0x06 uniquement, PC/SP au point d’arrêt du CPU, vrais x0/x1 après dispatch et `outcome=pending` si incomplet ; anneau de 64 sans I/O par appel et détaillé seulement |
+| Tests | Vendor [réel TU C++ sous macros natives](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/44381048231) **vert** ; qualité vendor [44381047964](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/44381047964) **verte** ; revue complète vendor CodeQL [44381038285](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/44381038285) **verte** ; pair engine encore en cours de validation |
+| PS5 | **Aucun nouveau build, aucune installation, aucune exécution console ni première frame NS2 validés** |
+| Suite | Corréler les valeurs réelles retournées et le SP avant/après dernier SVC ; établir la première instruction fautive avant de toucher à la taille de pile ou au JIT. P0 #123 ouvert |
+
+**FC27 P0 #281 et journalisation.** L’ancienne observation `CACHE=0 Ko` mesure un inventaire asynchrone du disque et ne prouve pas une purge. `Cannot allocate memory` au second lancement et les blocages de fin de session restent **non résolus**. En parallèle, la [PR moteur #285](https://github.com/niakw/ProsperoEden-Encore/pull/285) traite isolément un défaut confirmé : après `BootTrace::Quiet`, les logs ON ne rouvraient jamais cette trace du processus ; ajout append-only et conservation des anciennes traces avec tests O0/O2. Cela n’est **pas** un correctif mémoire ni une validation console.

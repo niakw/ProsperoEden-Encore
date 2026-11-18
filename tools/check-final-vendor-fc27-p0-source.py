@@ -10,10 +10,12 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="2ccc4b0a714ca621ac2879768f87118a64ed65f6"
+# Vendor #190 touches only NS2 SVC/trace and source tests; the FC27 GPU
+# owners remain byte-sealed by the focused tests below.
+REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c"}
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert selected==checked==EXPECTED,(selected,checked)
+assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 
 cmake=(ROOT/"headless/CMakeLists.txt").read_text()
 for needle in (

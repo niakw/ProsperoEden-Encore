@@ -4,7 +4,7 @@
 
 **Build PS5 testé :** R457, moteur `e8493417f914783069e09d7f8fae19b5fd4049fe`, vendor `edcc311c09eed3a33e5acc373c63a436f662cb5b`, archive de logs utilisateur `17112259.zip`. Pas de backtrace native terminale FC27 dans cette archive.
 
-**Lot source candidat :** vendor `388f0bda53806cd89d9c2f85139ec0491f212654`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, Lichii #1199 pour les remaps GPU, #2085 pour I2M et l'adaptation de la PR Lichii #2121 pour les blits 2D en tiling natif. Encore ajoute l'activation du layout uniquement après authentification du canal GPU NS2 afin de conserver le layout Maxwell par défaut pour NS1. **Pas encore de build PS5 ni de validation console de ce candidat.**
+**Lot source candidat :** vendor `c92ce9a8b90808869be76d02e73d35636857a0d4`, successeur du lot `ec3757b3f17d974577b304faa0d54279e01d0a5a`, incluant le service de polices NS2, Lichii #1199 pour les remaps GPU, #2085 pour I2M, l'adaptation de la PR Lichii #2121 pour les blits 2D en tiling natif et Lichii #2100 pour la persistance atomique du cache Vulkan statique. Encore ajoute l'activation du layout uniquement après authentification du canal GPU NS2 afin de conserver le layout Maxwell par défaut pour NS1. **Pas encore de build PS5 ni de validation console de ce candidat.**
 
 | Priorité | Symptôme / jeu | Logs R457 | Cause candidate / modification | Amont | Validation restante |
 |---|---|---|---|---|---|
@@ -53,6 +53,15 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 
 - Le premier backport Lichii #2085/commit `7702ac4` couvre les écritures I2M, mais le retour de test upstream #2042 indique que les bandes sombres persistaient.
 - L'analyse upstream a ensuite identifié le blitter logiciel Fermi2D comme second écrivain restant en layout Switch 1 ; la PR Lichii #2121 transmet `UsesNativeTiling()` aux chemins `UnswizzleSubrect` et `SwizzleSubrect`.
-- Vendor Encore `388f0bda53806cd89d9c2f85139ec0491f212654` porte ces deux appels, ajoute le flag `MemoryManager` par défaut à `false` et ne l'active qu'après `NativeGpuChannelRegistry::Bind` réussi pour un canal NS2 prêt.
+- Vendor Encore `c92ce9a8b90808869be76d02e73d35636857a0d4` porte ces deux appels, ajoute le flag `MemoryManager` par défaut à `false` et ne l'active qu'après `NativeGpuChannelRegistry::Bind` réussi pour un canal NS2 prêt.
 - Le moteur sélectionne le même header `MemoryManager` pour `core` et `video_core`, plus un seul owner I2M et un seul owner software-blitter. NS1 reste sur le layout Maxwell tant qu'aucun canal natif NS2 n'est authentifié.
 - Qualification source/host uniquement à ce stade ; ni la disparition des bandes dans DKB/Bananza, ni le premier rendu MKW, ni les crashs `PC=0x4` ne sont déclarés corrigés avant test PS5.
+
+
+## Vulkan static pipeline cache — Lichii #2100
+
+- Le vendor `c92ce9a8b90808869be76d02e73d35636857a0d4` porte le correctif upstream fusionné Lichii #2100 sur le propriétaire réellement sélectionné `encore-active/eden-vulkan/vulkan_device.cpp`.
+- Une sauvegarde est écrite dans `.tmp`, fermée puis renommée ; un crash ou une sortie interrompue ne tronque plus le dernier cache valide.
+- Si le driver rejette un cache statique sauvegardé, le chargement retombe sur un cache vide au lieu de laisser l'exception remonter pendant la création du device.
+- Le test vendor et l'oracle moteur reconstruisent tous deux byte-for-byte le blob antérieur `50578df547b769bd45cf4964ffa3f793c1749273`.
+- Ce durcissement réduit un risque de redémarrage/cache après crash ; il ne prouve ni le crash FC27 ni la sortie PS5 #97 corrigés avant build et test console.

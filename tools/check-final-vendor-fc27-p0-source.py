@@ -10,7 +10,7 @@ import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
-EXPECTED="388f0bda53806cd89d9c2f85139ec0491f212654"
+EXPECTED="c92ce9a8b90808869be76d02e73d35636857a0d4"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked==EXPECTED,(selected,checked)
@@ -44,6 +44,7 @@ tests=(
     "ns2_getinfo_vamm_region_source.py",
     "ps5-late-upstream-fixes-source.py",
     "ps5-full-clear-skip-upload-source.py",
+    "vulkan_static_pipeline_cache_source.py",
     "ns2_ampere_imad_negated_addend_host.py",
     "ns2_dynamic_texture_found_bit_limit_host.py",
     "ns2_duskbloods_tld4_imad_host.py",

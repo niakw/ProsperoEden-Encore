@@ -134,7 +134,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
-    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce','a0e17271e94342c32b02acdc3199c3f258a8aecf','772f06c8f5b12fdc81066e61f3db2dedfe3eed81','568ae541c07691518e9663aa0fc5f3b017a98d53','dcfe3d2384bd800c6139ede672518ea2c66922a6','affa3c761f70268c89e9f7c7de24eec958c7f889','edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654'}:
+    if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce','a0e17271e94342c32b02acdc3199c3f258a8aecf','772f06c8f5b12fdc81066e61f3db2dedfe3eed81','568ae541c07691518e9663aa0fc5f3b017a98d53','dcfe3d2384bd800c6139ede672518ea2c66922a6','affa3c761f70268c89e9f7c7de24eec958c7f889','edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654','c92ce9a8b90808869be76d02e73d35636857a0d4'}:
         # Vendor #156: only reverse the two exact reviewed cache-coherence
         # additions on an audit copy, as vendor's native_msaa_handle_receipt
         # does. Shipping source and historical oracle remain untouched.
@@ -431,7 +431,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 ['git', 'hash-object', str(expected[name])], text=True
             ).strip() == blob, ('R09 maintained native additional owner drift', name)
         approved_native_additions |= set(r09_extra)
-        if pair_vendor_pin in {'42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce','a0e17271e94342c32b02acdc3199c3f258a8aecf','772f06c8f5b12fdc81066e61f3db2dedfe3eed81','568ae541c07691518e9663aa0fc5f3b017a98d53','dcfe3d2384bd800c6139ede672518ea2c66922a6','affa3c761f70268c89e9f7c7de24eec958c7f889','edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654'}:
+        if pair_vendor_pin in {'42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce','a0e17271e94342c32b02acdc3199c3f258a8aecf','772f06c8f5b12fdc81066e61f3db2dedfe3eed81','568ae541c07691518e9663aa0fc5f3b017a98d53','dcfe3d2384bd800c6139ede672518ea2c66922a6','affa3c761f70268c89e9f7c7de24eec958c7f889','edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654','c92ce9a8b90808869be76d02e73d35636857a0d4'}:
             drawtexture_extra = {
                 'blit_image.cpp': 'bbde031a184b93745fa0449aef74f351355fb70d',
                 'include/video_core/renderer_vulkan/blit_image.h':
@@ -445,7 +445,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
         core_blob = subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip()
-        if pair_vendor_pin in {'945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654'}:
+        if pair_vendor_pin in {'945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654','c92ce9a8b90808869be76d02e73d35636857a0d4'}:
             assert core_blob == '505ee80a37d5991b7925019282e71926c1648e02'
             selected_buffer = core_owner.read_text()
             assert 'Lichii 44bf47d' in selected_buffer
@@ -456,7 +456,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         else:
             assert core_blob == (
             'c4ed79a1fe6aec09da8040b7af3901f6184f910b'
-            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce','a0e17271e94342c32b02acdc3199c3f258a8aecf','772f06c8f5b12fdc81066e61f3db2dedfe3eed81','568ae541c07691518e9663aa0fc5f3b017a98d53','dcfe3d2384bd800c6139ede672518ea2c66922a6','affa3c761f70268c89e9f7c7de24eec958c7f889','edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654'}
+            if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce','a0e17271e94342c32b02acdc3199c3f258a8aecf','772f06c8f5b12fdc81066e61f3db2dedfe3eed81','568ae541c07691518e9663aa0fc5f3b017a98d53','dcfe3d2384bd800c6139ede672518ea2c66922a6','affa3c761f70268c89e9f7c7de24eec958c7f889','edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654','c92ce9a8b90808869be76d02e73d35636857a0d4'}
             else '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
                 'R2 real deleted-buffer source owner changed')
     unexpected_additions = set(expected) - set(actual)
@@ -971,6 +971,74 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     def git_blob_sha(text):
         data=text.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+    # Lichii #2100 is a reviewed successor to the merged R23 Vulkan device
+    # owner. Reverse its two exact cache-hardening hunks before immutable
+    # R23/P24 receipts; unrelated vulkan_device.cpp edits remain rejected.
+    def reverse_static_pipeline_cache_2100(name, text, verify_hash=True):
+        if name != 'vulkan_device.cpp':
+            return text
+        current = git_blob_sha(text)
+        if current == 'c1126bd34a026ccc5c46acea49c9b4a3deeb5d26':
+            load_after = '''    try {
+        create(data.size(), data.empty() ? nullptr : data.data());
+    } catch (const vk::Exception& e) {
+        LOG_ERROR(Render_Vulkan,
+                  "Driver rejected the static pipeline cache ({}), starting empty", e.what());
+        create(0, nullptr);
+    }
+}'''
+            load_before = '''    create(data.size(), data.empty() ? nullptr : data.data());
+}'''
+            save_after = '''    // Lichii #2100: keep the last known-good cache if the app exits or
+    // crashes while a replacement is being written.
+    auto temporary = filename;
+    temporary += ".tmp";
+    try {
+        std::ofstream file(temporary, std::ios::binary | std::ios::trunc);
+        file.exceptions(std::ofstream::failbit);
+        if (!file.is_open()) {
+            return;
+        }
+        file.write(STATIC_CACHE_MAGIC_NUMBER.data(), STATIC_CACHE_MAGIC_NUMBER.size())
+            .write(reinterpret_cast<const char*>(&STATIC_CACHE_VERSION),
+                   sizeof(STATIC_CACHE_VERSION))
+            .write(data.data(), static_cast<std::streamsize>(size));
+        file.close();
+    } catch (const std::ios_base::failure& e) {
+        Common::FS::RemoveFile(temporary);
+        return;
+    }
+    std::error_code error;
+    std::filesystem::rename(temporary, filename, error);
+    if (error) {
+        LOG_ERROR(Render_Vulkan, "Couldn't replace the static pipeline cache: {}", error.message());
+        Common::FS::RemoveFile(temporary);
+    }
+}'''
+            save_before = '''    try {
+        std::ofstream file(filename, std::ios::binary | std::ios::trunc);
+        file.exceptions(std::ofstream::failbit);
+        if (!file.is_open()) {
+            return;
+        }
+        file.write(STATIC_CACHE_MAGIC_NUMBER.data(), STATIC_CACHE_MAGIC_NUMBER.size())
+            .write(reinterpret_cast<const char*>(&STATIC_CACHE_VERSION),
+                   sizeof(STATIC_CACHE_VERSION))
+            .write(data.data(), static_cast<std::streamsize>(size));
+    } catch (const std::ios_base::failure& e) {
+        Common::FS::RemoveFile(filename);
+    }
+}'''
+            assert text.count(load_after) == text.count(save_after) == 1
+            text = text.replace(load_after, load_before, 1).replace(save_after, save_before, 1)
+            assert git_blob_sha(text) == '50578df547b769bd45cf4964ffa3f793c1749273', (
+                'Lichii #2100 predecessor reconstruction drift')
+            print('ENCORE_LICHII_2100_STATIC_CACHE_EXACT_REVERSE_PASS')
+            return text
+        if verify_hash:
+            assert current == '50578df547b769bd45cf4964ffa3f793c1749273', (
+                'Unreviewed late vulkan_device.cpp successor', current)
+        return text
     # Full source-verified reverse of the six post-P24 R23 Vulkan patches:
     # preserve immutable P24/N57 generator receipts without accepting any
     # unreviewed vendor edit. Every reverse hunk has unique context and
@@ -983,6 +1051,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     r23_reverse_by_path = {entry['path']: entry for entry in r23_reverse_receipt['files']}
     assert set(r23_reverse_by_path) == set(r23_combined_owners) if 'r23_combined_owners' in locals() else len(r23_reverse_by_path) == 6
     def reverse_r23(name, text, verify_hash=True):
+        text = reverse_static_pipeline_cache_2100(name, text, verify_hash)
         receipt = r23_reverse_by_path.get(name)
         if receipt is None:
             return text
@@ -1143,7 +1212,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     }
     assert set(r23_combined_owners) <= set(p24_by_path)
     for name, receipt_sha in r23_combined_owners.items():
-        combined = expected[name].read_text()
+        combined = reverse_static_pipeline_cache_2100(
+            name, expected[name].read_text())
         assert git_blob_sha(combined) == receipt_sha, (
             'Unreviewed merged R23 Vulkan source bytes', name)
         assert all(token in combined for token in r23_required_semantics[name]), (

@@ -1,0 +1,32 @@
+name: NS2 quiet fatal SVC native sink (host only)
+on:
+  pull_request:
+    paths:
+      - 'vendor'
+      - 'headless/ns2_fault_receipt.cpp'
+      - 'headless/CMakeLists.txt'
+      - 'headless/diagnostics.h'
+      - 'tools/check-ns2-quiet-fault-native-host.py'
+      - '.github/workflows/ns2-quiet-fatal-native-host.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'vendor'
+      - 'headless/ns2_fault_receipt.cpp'
+      - 'headless/CMakeLists.txt'
+      - 'headless/diagnostics.h'
+      - 'tools/check-ns2-quiet-fault-native-host.py'
+      - '.github/workflows/ns2-quiet-fatal-native-host.yml'
+permissions:
+  contents: read
+jobs:
+  exact-selected-native-witness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Compile and execute native fatal fault sink O0/O2 with selected vendor
+        run: python3 -B tools/check-ns2-quiet-fault-native-host.py

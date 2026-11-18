@@ -44,6 +44,10 @@ private:
     std::array<unsigned long long, 24> frame_pressure_previous{};
     // Detailed-only reporting baseline for existing guest buffer/texture-cache counters.
     std::array<unsigned long long, 6> frame_cache_domain_previous{};
+    // Release diagnostic read-only snapshots of already-accounted cache tail
+    // counts and skipped draws; no new per-frame/per-draw profiling.
+    std::array<unsigned long long, 4> frame_cache_tail_previous{};
+    std::array<unsigned long long, 5> frame_draw_drop_previous{};
     bool frame_pressure_was_detailed{}; // a disabled log sink has no valid five-second baseline
     unsigned frame_pressure_logging_generation{}; // detect OFF->ON between report boundaries
     EGLDisplay display{EGL_NO_DISPLAY};

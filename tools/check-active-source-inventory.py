@@ -1654,6 +1654,17 @@ for path, blob in post_f07_loading_artwork_receipts.items():
     assert subprocess.check_output(["git","hash-object",path], cwd=root, text=True).strip() == blob, path
 print("ENCORE_LOADING_ARTWORK_POST_F07_PASS owners=2 historical_headless_catalog_preserved=193")
 
+# Newly selected native PS5 guest-fault sink is post-F07; retain the
+# historical 193-file catalogue unchanged and prove its exact source blob.
+post_f07_ns2_fault_receipts = {
+    "headless/ns2_fault_receipt.cpp": "a5338f48aca155f5862a3eb40cade12b6f99a7d8",
+}
+post_f07_ns2_fault_owners = set(post_f07_ns2_fault_receipts)
+for path, blob in post_f07_ns2_fault_receipts.items():
+    assert subprocess.check_output(["git", "hash-object", path], cwd=root, text=True).strip() == blob
+assert '"${EDEN_PORT_DIR}/ns2_fault_receipt.cpp"' in native_cmake
+print("ENCORE_NS2_QUIET_FAULT_POST_F07_PASS", "owners=1")
+
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
@@ -1661,7 +1672,7 @@ headless_actual = sorted(
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
         post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners |
-        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners)
+        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners | post_f07_ns2_fault_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

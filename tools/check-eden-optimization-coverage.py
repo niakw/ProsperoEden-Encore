@@ -2516,6 +2516,56 @@ assert hashlib.sha1(b"blob " + str(len(prior_pipe)).encode() + bytes([0]) +
                     prior_pipe).hexdigest() == pipe_drift["expected"]
 print("R457_LOG_PIPE_F07_SOURCE_DELTA_PASS reviewed=1 prior_reconstructed=1")
 
+# 18 Nov P0: native memory_pages.cpp now remembers only failed direct
+# allocation/mapping details for a fatal or recoverable incident. Reconstruct
+# the exact reviewed production owner (no physical allocation changes).
+direct_path = "src/memory_pages.cpp"
+direct_prior = "30676a42a10ac7d03e812ce69d39bc38a499bc44"
+direct_current = "72b3283a855b3fb4c62b0ee0b5d310b7756ef297"
+assert direct_path in drift_index and direct_path not in post_index
+direct_drift = drift_index.pop(direct_path)
+assert direct_drift["expected"] == direct_prior
+assert direct_drift["actual"] == direct_current
+direct_text = (ROOT / direct_path).read_text(encoding="utf-8")
+direct_start = "// Failed direct-memory requests must survive quiet stderr redirection."
+direct_end = "std::atomic<std::int64_t> cached_direct_memory_extent{0};"
+assert direct_text.count(direct_start) == direct_text.count(direct_end) == 1
+first = direct_text.index(direct_start)
+last = direct_text.index(direct_end, first)
+direct_text = direct_text[:first] + direct_text[last:]
+export_start = "// A C ABI keeps the crash-only frontend free of allocator dependencies."
+export_end = "#endif\n\nnamespace Common {"
+assert direct_text.count(export_start) == direct_text.count(export_end) == 1
+first = direct_text.index(export_start)
+last = direct_text.index(export_end, first)
+direct_text = direct_text[:first] + direct_text[last:]
+expanded_invalid = """    if (!total) {
+#ifdef PS5_NATIVE
+        NoteDirectAllocationFailure(3, EINVAL, size, 0);
+#endif
+        errno = EINVAL;
+        return nullptr;
+    }"""
+assert direct_text.count(expanded_invalid) == 1
+direct_text = direct_text.replace(
+    expanded_invalid, "    if (!total) { errno = EINVAL; return nullptr; }", 1)
+for recorded in (
+    """        NoteDirectAllocationFailure(1, static_cast<std::uint32_t>(rc), total,
+                                    static_cast<std::uint64_t>(limit));
+""",
+    """        NoteDirectAllocationFailure(2, static_cast<std::uint32_t>(rc), total,
+                                    static_cast<std::uint64_t>(limit));
+""",
+):
+    assert direct_text.count(recorded) == 1
+    direct_text = direct_text.replace(recorded, "", 1)
+direct_bytes = direct_text.encode("utf-8")
+direct_reconstructed = hashlib.sha1(
+    b"blob " + str(len(direct_bytes)).encode() + bytes([0]) + direct_bytes).hexdigest()
+assert direct_reconstructed == direct_prior, (
+    "Native direct allocation predecessor does not match F07", direct_reconstructed)
+print("P0_DIRECT_MEMORY_FAILURE_ONLY_F07_REVERSE_PASS M01=1 historical=unchanged")
+
 # 18 Nov P0: the crash-only recoverable-failure receipt lives in the
 # historically reviewed U36 diagnostics.h, with no new per-frame logging.
 # Reconstruct the exact original source from its changed C++ owner BEFORE

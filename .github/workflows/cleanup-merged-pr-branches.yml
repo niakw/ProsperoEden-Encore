@@ -1,5 +1,14 @@
 name: Cleanup merged pull request branches
 on:
+  # Clean only exact merged PR heads; this workflow verifies the immutable
+  # branch SHA again before deletion and keeps open/unmerged research heads.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cleanup-merged-pr-branches.yml'
+  pull_request:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: write

@@ -175,7 +175,14 @@ ns2_shutdown = ns2.split("    void ShutdownMainProcess() {", 1)[1].split(
 assert ns2_shutdown.count("cheat_engine.reset();") == 1
 assert ns2_shutdown.index("cheat_engine.reset();") < ns2_shutdown.index(
     "core_timing.SyncPause(false);")
-assert 'vendor/encore-active/ns2-runtime/process/core/core.cpp' not in cmake
-assert 'ns2-runtime/process/core/core.cpp' in cmake
+# Native dual-NPDM uses this maintained NS2 Core owner intentionally.
+# Verify the exact conditional selection, not the pre-NS2 G14 exclusion.
+ns2_selected_core = """if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
+    set(EDEN_MAINTAINED_CORE_SYSTEM
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/process/core/core.cpp")
+endif()"""
+assert cmake.count(ns2_selected_core) == 1, "NS2 Core owner or admission guard changed"
+assert cmake.count("ns2-runtime/process/core/core.cpp") == 1, (
+    "unexpected duplicate NS2 Core source selection")
 print("ENCORE_MAINTAINED_CORE_SYSTEM_PARITY_PASS G14=retired variants=2"
       " lichii1952=3 lichii1932=3 exact_reverse=3 ns2_release=1")

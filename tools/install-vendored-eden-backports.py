@@ -189,12 +189,12 @@ def replay()->None:
             assert rel in observed and rel in spec['entries'], (
                 'Unexpected replay successor',rel)
             generated=(stage/rel).read_bytes()
-            current=reverse_ns2_successor(rel,(ACTIVE/rel).read_bytes())
+            current=(ACTIVE/rel).read_bytes()
             assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
                 'Historical FW23 patch replay drift',rel)
             assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
                 'Unreviewed integrated FW23 source',rel)
-            assert spec['entries'][rel]['active']==reviewed_ns2[rel]['after_sha256']
+            assert spec['entries'][rel]['active']==entry['after_sha256']
             prior=current.decode('utf-8')
             for hunk in reversed(entry['hunks']):
                 assert prior.count(hunk['after'])==1, (
@@ -249,12 +249,15 @@ def replay()->None:
             assert rel in observed and rel in spec['entries'], (
                 'Unexpected GetInfo replay successor',rel)
             generated=(stage/rel).read_bytes()
-            current=(ACTIVE/rel).read_bytes()
+            # svc_info.cpp/svc_types.h have a later reviewed NS2 successor.
+            # Reverse only that successor first, then prove the historical
+            # GetInfo 29/30/33 delta against the frozen backport replay.
+            current=reverse_ns2_successor(rel,(ACTIVE/rel).read_bytes())
             assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
                 'Historical GetInfo patch replay drift',rel)
             assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
                 'Unreviewed integrated GetInfo source',rel)
-            assert spec['entries'][rel]['active']==entry['after_sha256']
+            assert spec['entries'][rel]['active']==reviewed_ns2[rel]['after_sha256']
             prior=current.decode('utf-8')
             for hunk in reversed(entry['hunks']):
                 assert prior.count(hunk['after'])==1, (

@@ -24,6 +24,85 @@ assert "EDEN_MAINTAINED_HOST1X_SYNCPOINT" in CM
 assert "using ActionHandle = u64;" in HDR
 assert "std::list<RegisteredAction>::iterator" not in HDR
 
+# The full native PS5 graph can materialize a stale Eden header under its
+# dependency checkout, even when the vendor's source/header unit test passes.
+# Require CMake to select the matching reviewed pinned header for both
+# video_core (maintained .cpp) and core (NS2 graphics supervisor).
+for token in (
+    'set(EDEN_MAINTAINED_HOST1X_HEADER',
+    'vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h',
+    'configure_file("${EDEN_MAINTAINED_HOST1X_HEADER}"',
+    'target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")',
+    'target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")',
+):
+    assert token in CM, ("Native Host1x ABI header not selected",token)
+for token in (
+    'using ActionHandle = u64;',
+    'void SetGuestMirror(GuestMirror mirror);',
+    'void WithGuestValuesStable(Func&& func)',
+    'u64 last_action_id{};',
+    'struct DueActions {',
+    'std::condition_variable action_done_cv;',
+):
+    assert token in HDR, token
+
+# Compile the ACTUAL maintained Host1x TU with a clean stub platform and a
+# conflicting old header. The reviewed include root MUST win; a reversed
+# include order is the deliberate negative control.
+vendor_root=ROOT/"vendor"
+host1x_source=vendor_root/"encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
+host1x_header=vendor_root/"sources/eden/src/video_core/host1x/syncpoint_manager.h"
+compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-host1x-native-abi-") as d:
+    base=Path(d)
+    selected=base/"reviewed"
+    stale=base/"stale"
+    sdk=base/"sdk"
+    for root in (selected,stale):
+        (root/"video_core/host1x").mkdir(parents=True)
+    (sdk/"common").mkdir(parents=True)
+    (selected/"video_core/host1x/syncpoint_manager.h").write_text(HDR)
+    (stale/"video_core/host1x/syncpoint_manager.h").write_text(
+        '#pragma once\n#include "common/common_types.h"\n'
+        'namespace Tegra::Host1x { class SyncpointManager { public:\n'
+        ' using ActionHandle = int; }; }\n')
+    (sdk/"common/common_types.h").write_text(
+        "#pragma once\n#include <cstdint>\n"
+        "using u32=std::uint32_t; using u64=std::uint64_t;\n")
+    (sdk/"common/logging.h").write_text(
+        "#pragma once\n#define LOG_ERROR(...) ((void)0)\n")
+    main=base/"main.cpp"
+    main.write_text(r'''
+#include <type_traits>
+#include "video_core/host1x/syncpoint_manager.h"
+using Tegra::Host1x::SyncpointManager;
+static_assert(std::is_same_v<SyncpointManager::ActionHandle, u64>);
+static_assert(SyncpointManager::NUM_MAX_SYNCPOINTS == 192);
+int main() {
+  SyncpointManager sync;
+  sync.SetGuestMirror([](u32, u32){});
+  sync.WithGuestValuesStable([&] { (void)sync.GetGuestSyncpointValue(7); });
+  auto handle=sync.RegisterGuestAction(7, 2, []{});
+  if (!handle) return 1;
+  sync.DeregisterGuestAction(7, handle);
+  return 0;
+}
+''')
+    base_cmd=[compiler,"-std=c++20","-O0","-Wall","-Wextra","-Werror",
+              "-pthread","-I",str(sdk)]
+    positive=subprocess.run(base_cmd+["-I",str(selected),"-I",str(stale),
+                           str(host1x_source),str(main),"-o",str(base/"match")],
+                          capture_output=True,text=True,timeout=60)
+    assert positive.returncode==0,("Matching shipping Host1x API did not compile",positive.stderr[-4000:])
+    run=subprocess.run([str(base/"match")],capture_output=True,text=True,timeout=15)
+    assert run.returncode==0,(run.returncode,run.stderr)
+    negative=subprocess.run(base_cmd+["-I",str(stale),"-I",str(selected),
+                           str(host1x_source),str(main),"-o",str(base/"stale-bin")],
+                          capture_output=True,text=True,timeout=60)
+    assert negative.returncode!=0,"Stale Host1x header unexpectedly accepted"
+    print("NATIVE_HOST1X_SHIPPING_ABI_PASS selected_header=1 numeric_handles=1 guest_mirror=1 stale_negative=1")
+
 def extract(text,name):
     assert text.count(name)==1,name
     start=text.index(name); opening=text.index("{",start); depth=0

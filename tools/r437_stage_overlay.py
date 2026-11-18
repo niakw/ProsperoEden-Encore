@@ -13,6 +13,27 @@ _PRODUCTION_BUFFER_BLOB = "469eddd0ea9e0a3498446bf08ab473caac3b76f9"
 _FC27_BUFFER_BLOB = "c4ed79a1fe6aec09da8040b7af3901f6184f910b"
 _FC27_SIBLING_BUFFER_BLOB = "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972"
 _FC27_FAST_WRITE_BUFFER_BLOB = "505ee80a37d5991b7925019282e71926c1648e02"
+_PS5_RANGE_API_BUFFER_BLOB = "c6bab56cbd4e58458d010e423d74df9f933a8f8d"
+# Vendor #189 ported the reviewed Lichii 44bf47d clean-write guard to
+# Encore's pinned RangeSet API. Restore its exact predecessor ONLY in the
+# historical verifier; the compiled vendor owner is never rewritten.
+ps5_range_api_reversal = [
+    (
+        """    // Lichii 44bf47d: the written range is wholly inside these pages. If the
+    // pages contain no GPU-written bytes, the exact range cannot contain any
+    // either. Use the maintained IsRegionGpuModified/ForEachInRange API:
+    // this pinned RangeSet has no upstream Intersects member. Keep the
+    // single-query clean CPU-write fast path and b13c4c1 sibling preservation.""",
+        """    // Lichii 44bf47d: the written range is wholly inside these pages. If the
+    // pages contain no GPU-written bytes, the exact range cannot contain any
+    // either, so avoid a second interval-tree walk on the overwhelmingly
+    // common clean CPU-write path. This preserves b13c4c1 semantics.""",
+    ),
+    (
+        "!IsRegionGpuModified(page_begin, page_end - page_begin)",
+        "!gpu_modified_ranges.Intersects(page_begin, page_end - page_begin)",
+    ),
+]
 fc27_fast_write_reversal = [
     ("const DAddr page_begin = Common::AlignDown(device_addr, DEVICE_PAGESIZE);\n    const DAddr page_end = Common::AlignUp(device_addr + size, DEVICE_PAGESIZE);\n\n    // Lichii 44bf47d: the written range is wholly inside these pages. If the\n    // pages contain no GPU-written bytes, the exact range cannot contain any\n    // either, so avoid a second interval-tree walk on the overwhelmingly\n    // common clean CPU-write path. This preserves b13c4c1 semantics.\n    if (keep_page_gpu_data && page_end > page_begin &&\n        !gpu_modified_ranges.Intersects(page_begin, page_end - page_begin)) {\n        memory_tracker.MarkRegionAsCpuModified(device_addr, size);\n        return;\n    }\n\n    if (IsRegionGpuModified(device_addr, size)) {\n        ClearDownload(device_addr, size);\n        gpu_modified_ranges.Subtract(device_addr, size);\n    }\n\n    // Upstream Lichii/Eglantine b13c4c1: the memory tracker owns whole pages.\n    // A small CPU write therefore clears the tracker's GPU state for its page,\n    // even when other bytes on that page are still newer on the GPU. Preserve\n    // those sibling bytes before the page becomes CPU-owned, otherwise a later\n    // upload can overwrite correct host-buffer data with the stale guest copy.", "if (IsRegionGpuModified(device_addr, size)) {\n        ClearDownload(device_addr, size);\n        gpu_modified_ranges.Subtract(device_addr, size);\n    }\n\n    // Upstream Lichii/Eglantine b13c4c1: the memory tracker owns whole pages.\n    // A small CPU write therefore clears the tracker's GPU state for its page,\n    // even when other bytes on that page are still newer on the GPU. Preserve\n    // those sibling bytes before the page becomes CPU-owned, otherwise a later\n    // upload can overwrite correct host-buffer data with the stale guest copy.\n    const DAddr page_begin = Common::AlignDown(device_addr, DEVICE_PAGESIZE);\n    const DAddr page_end = Common::AlignUp(device_addr + size, DEVICE_PAGESIZE);"),
 ]
@@ -102,6 +123,14 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    if actual == _PS5_RANGE_API_BUFFER_BLOB:
+        for revised, historical in ps5_range_api_reversal:
+            assert source.count(revised) == 1, "Reviewed RangeSet ABI adaptation drift"
+            source = source.replace(revised, historical, 1)
+        data = source.encode("utf-8")
+        actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert actual == _FC27_FAST_WRITE_BUFFER_BLOB, (
+            "RangeSet ABI reversal modified unrelated historical BufferCache bytes")
     if actual == _FC27_FAST_WRITE_BUFFER_BLOB:
         for inserted, baseline in fc27_fast_write_reversal:
             assert source.count(inserted) == 1, "FC27 clean-page fastpath hunk drift"

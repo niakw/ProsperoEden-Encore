@@ -142,7 +142,13 @@ with tempfile.TemporaryDirectory(prefix='encore-gpfifo-fetch-') as td:
     assert 'set(EDEN_NVDEC_HEADER_DIR "${PORT_BUILD_DIR}/nvdec-eagain")' in cmake
     assert 'configure_file("${EDEN_NVDEC_MAINTAINED_HEADER}"' in cmake
     assert '"${EDEN_NVDEC_HEADER_DIR}/video_core/host1x/ffmpeg.h" COPYONLY)' in cmake
-    includes=[native_tiling,nvdec_override,shader,abi,ROOT/'headless',
+    nvdec_stage=Path(td)/'nvdec-eagain'
+    (nvdec_stage/'video_core/host1x').mkdir(parents=True)
+    shutil.copyfile(nvdec_ffmpeg,nvdec_stage/'video_core/host1x/ffmpeg.h')
+    assert [p.relative_to(nvdec_stage).as_posix() for p in nvdec_stage.rglob('*') if p.is_file()] == [
+        'video_core/host1x/ffmpeg.h'
+    ]
+    includes=[native_tiling,nvdec_stage,shader,abi,ROOT/'headless',
               *[ROOT/'vendor/encore-active/ns2-runtime'/n for n in (
                   'kernel_wait64','gpu_access_svc','gpu_dispatch','nvdrv_gpu',
                   'nvdrv_as','gpu_session','graphics_supervisor','self_controller',

@@ -3685,6 +3685,37 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
 endif()
 
+# Native NS2 built-in font protocol (Lichii NX2 blocker #36).
+# The maintained owner preserves legacy pl:u commands 0..6 and adds the
+# Switch 2 2000/2010/2020/2100 contract. Replace the one Eden owner; never
+# append a second IPlatformServiceManager implementation.
+if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
+    set(EDEN_NS2_FONT_SERVICE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/font_service")
+    foreach(eden_ns2_font_file
+        "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/platform_service_manager.cpp"
+        "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/platform_service_manager.h"
+        "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/font_merge.cpp"
+        "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/font_merge.h")
+        if(NOT EXISTS "${eden_ns2_font_file}")
+            message(FATAL_ERROR "Missing maintained NS2 font-service owner: ${eden_ns2_font_file}")
+        endif()
+    endforeach()
+    get_target_property(eden_ns2_font_sources core SOURCES)
+    list(FIND eden_ns2_font_sources
+        "hle/service/ns/platform_service_manager.cpp" eden_ns2_font_idx)
+    if(eden_ns2_font_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned pl:u owner changed: re-audit NS2 font bridge")
+    endif()
+    list(REMOVE_ITEM eden_ns2_font_sources
+        "hle/service/ns/platform_service_manager.cpp")
+    list(APPEND eden_ns2_font_sources
+        "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/platform_service_manager.cpp"
+        "${EDEN_NS2_FONT_SERVICE_ROOT}/core/hle/service/ns/font_merge.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_font_sources}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_FONT_SERVICE_ROOT}")
+endif()
+
 # P0.2: Compile the same native Ampere-to-Maxwell frontend in the ONE
 # qualified native release source graph. Shader execution is still routed
 # exclusively by the separate GPU session/renderer owner: compiling these

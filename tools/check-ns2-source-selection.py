@@ -113,6 +113,31 @@ def check() -> None:
             'EDEN_NS2_GPU_SESSION_SOURCE' in CMAKE and
             'EDEN_NS2_SUPERVISOR_ROOT' in CMAKE,
             'IPC native session/VI2 owners missing')
+    font=read('vendor/encore-active/ns2-runtime/font_service/core/hle/service/ns/platform_service_manager.cpp')
+    font_merge=read('vendor/encore-active/ns2-runtime/font_service/core/hle/service/ns/font_merge.cpp')
+    for legacy in (
+        '{0, D<&IPlatformServiceManager::RequestLoad>, "RequestLoad"}',
+        '{1, D<&IPlatformServiceManager::GetLoadState>, "GetLoadState"}',
+        '{2, D<&IPlatformServiceManager::GetSize>, "GetSize"}',
+        '{3, D<&IPlatformServiceManager::GetSharedMemoryAddressOffset>, "GetSharedMemoryAddressOffset"}',
+        '{4, D<&IPlatformServiceManager::GetSharedMemoryNativeHandle>, "GetSharedMemoryNativeHandle"}',
+        '{5, D<&IPlatformServiceManager::GetSharedFontInOrderOfPriority>, "GetSharedFontInOrderOfPriority"}',
+    ):
+        require(legacy in font, 'legacy NS1 pl:u command lost: '+legacy)
+    for native in (
+        '{2000, &IPlatformServiceManager::GetBuiltInFontSharedMemory',
+        '{2010, &IPlatformServiceManager::GetBuiltInFontData',
+        '{2020, &IPlatformServiceManager::GetBuiltInFontDataSet',
+        '{2100, &IPlatformServiceManager::RequestLoadNxFont',
+    ):
+        require(native in font, 'NS2 built-in font protocol missing: '+native)
+    require('MergeGlyphs(' in font and 'MergeGlyphs(' in font_merge and
+            'set(EDEN_NS2_FONT_SERVICE_ROOT' in CMAKE and
+            'list(REMOVE_ITEM eden_ns2_font_sources' in CMAKE and
+            '"hle/service/ns/platform_service_manager.cpp")' in CMAKE and
+            'core/hle/service/ns/font_merge.cpp' in CMAKE and
+            'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_FONT_SERVICE_ROOT}")' in CMAKE,
+            'reviewed NS2 font service is not the selected pl:u owner')
     puller=read('vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp')
     require('NativeGpuChannelRegistry::Instance().IsNative(' in puller and
             'ProcessNativeComputeQmdAt(' in puller and
@@ -169,4 +194,4 @@ if __name__=='__main__':
     except (AssertionError,OSError,subprocess.SubprocessError) as error:
         print('NS1_NS2_UNIFIED_SOURCE_OWNER_FAIL',error,file=sys.stderr)
         sys.exit(1)
-    print('NS1_NS2_UNIFIED_SOURCE_OWNER_PASS cpu6=6 nvdrv=4k qmd=real nup=always maxwell=unchanged')
+    print('NS1_NS2_UNIFIED_SOURCE_OWNER_PASS cpu6=6 nvdrv=4k qmd=real font=selected nup=always maxwell=unchanged')

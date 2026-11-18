@@ -40,3 +40,10 @@ Références : [Lot vendor figé](https://github.com/niakw/Prospero.Eden-Encore-
 - Shipping NPad now emits bounded `EDEN_NPAD_PLUS_LIFO` only while Detailed Logging is enabled; each rising Plus edge carries the guest LIFO sample number and monotonic timestamp.
 - Quiet mode performs no NPad diagnostic counters or clock reads. Mapping, sampling cadence and LIFO writes are unchanged.
 - Vendor regression reverses the diagnostic byte-for-byte to previous NPad blob `454138c445bc140568068737646349cac98a686d`.
+
+## NS2 built-in font service — upstream blocker #36
+
+- Lichii `NX2_NOTES.md` records blocker #36 as a built-in-font header check on a wild pointer when `pl:u` command 2010/2000 is absent.
+- The maintained overlay preserves legacy NS1 commands 0–6 and adds NS2 commands 2000/2010/2020/2100 plus `font_merge.cpp`.
+- Release CMake replaces the single Eden `platform_service_manager.cpp` owner and adds the merge TU; the four files remain post-F07 and do not alter historical audit counts.
+- Source/host qualification only until a native PS5 build and NS2 launch.

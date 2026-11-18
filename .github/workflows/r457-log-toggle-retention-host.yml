@@ -8,6 +8,7 @@ on:
       - 'headless/main.cpp'
       - 'headless/prosperoeden/eden_services.cpp'
       - 'tools/check-ps5-crash-only-logging.py'
+      - 'tools/check-ps5-boottrace-resume-host.py'
       - 'tools/check-log-pipe-rotation-source.py'
       - 'tools/check-ps5-release-saved-diagnostics-host.py'
       - '.github/workflows/r457-log-toggle-retention-host.yml'
@@ -19,6 +20,7 @@ on:
       - 'headless/main.cpp'
       - 'headless/prosperoeden/eden_services.cpp'
       - 'tools/check-ps5-crash-only-logging.py'
+      - 'tools/check-ps5-boottrace-resume-host.py'
       - 'tools/check-log-pipe-rotation-source.py'
       - 'tools/check-ps5-release-saved-diagnostics-host.py'
       - '.github/workflows/r457-log-toggle-retention-host.yml'
@@ -35,6 +37,8 @@ jobs:
           persist-credentials: false
       - name: Host C++ log pipe OFF ON OFF ON regression and retained evidence
         run: python3 -B tools/check-ps5-crash-only-logging.py
+      - name: Boot trace OFF ON OFF ON append and previous evidence retention (actual C++ host)
+        run: python3 -B tools/check-ps5-boottrace-resume-host.py
       - name: Verify bounded 8 MiB segment rotation
         run: python3 -B tools/check-log-pipe-rotation-source.py
       - name: Verify release-only GPU sampling gating through saved preference

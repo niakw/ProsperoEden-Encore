@@ -46,6 +46,7 @@ on:
       - 'tools/check-ps5-f07-*.py'
       - 'tools/check-ps5-consecutive-sampler-reuse-host.py'
       - 'tools/check-ps5-compute-sampler-memo-host.py'
+      - 'tools/check-ps5-compute-shader-handoff-host.py'
       - 'tools/check-ps5-known-empty-graphics-descriptors-host.py'
       - 'tools/check-ps5-graphics-payload-preflight-host.py'
       # A change to the gate itself must also rerun the gate.

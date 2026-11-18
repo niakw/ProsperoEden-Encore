@@ -44,7 +44,39 @@ slot_after="            if (R_SUCCEEDED(result)) {\n                // Even a su
 expected=pinned.replace(old,fixed).replace(old_index,fixed_index)
 assert expected.count(slot_before)==1
 expected=expected.replace(slot_before,slot_after)
-assert normal==expected
+
+def whole_function(source, signature):
+    assert source.count(signature)==1, signature
+    start=source.index(signature)
+    opening=source.index("{",start)
+    depth=0
+    for pos in range(opening,len(source)):
+        if source[pos]=="{": depth+=1
+        elif source[pos]=="}":
+            depth-=1
+            if depth==0: return source[start:pos+1]
+    raise AssertionError(("unbalanced",signature))
+
+send_sig="Result SendSyncRequestImpl("
+normal_send=whole_function(normal,send_sig)
+pinned_send=whole_function(pinned,send_sig)
+for marker in (
+    "GetPendingStartedThreads()",
+    "std::chrono::milliseconds(20)",
+    "KScopedSchedulerLock sl{kernel};",
+    "thread->Close(kernel);",
+    "pending.clear();",
+):
+    assert marker in normal_send,marker
+rewound=normal.replace(normal_send,pinned_send,1)
+assert rewound.count("#include <chrono>\n\n")==1
+rewound=rewound.replace("#include <chrono>\n\n","",1)
+scheduler_include='#include "core/hle/kernel/k_scheduler.h"\n'
+assert rewound.count(scheduler_include)==1
+rewound=rewound.replace(scheduler_include,"",1)
+assert rewound==expected, "Lichii 3140648 IPC handoff changed unrelated standard IPC source"
+print("NATIVE_IPC_STARTED_THREAD_HANDOFF_EXACT_REVERSE_PASS upstream=3140648")
+
 assert slot_before in dev and slot_after not in dev
 assert dev.count(fixed_index)==1
 assert old not in dev and dev.count(fixed)==1

@@ -4,6 +4,7 @@
 Do not infer PS5 game stalls from these simulated build completions.
 """
 from pathlib import Path
+import hashlib
 import shutil
 import subprocess
 import tempfile
@@ -71,6 +72,22 @@ def callback_body(text, kind):
 
 graphics = callback_body(g, "graphics")
 compute = callback_body(c, "compute")
+
+# Exact R457 (vendor edcc311c) GPU wait callbacks: the maintained change
+# is a single RunBuild() claim before the acquire. A baseline witness must
+# reconstruct both old excerpts byte-for-byte, not approximate old behavior.
+r457_callback_sha1 = {
+    "graphics": "3c8a59d1202924e6d8668294dcfa22151b3c455f",
+    "compute": "55cb6c5e18d151229860f8ff2208657ecdb9d30c",
+}
+r457_callbacks = {}
+for kind, updated in (("graphics", graphics), ("compute", compute)):
+    addition = "            RunBuild();\\n".replace("\\n", "\n")
+    assert updated.count(addition) == 1, (kind, "first-use callback drift")
+    old_callback = updated.replace(addition, "", 1)
+    assert hashlib.sha1(old_callback.encode()).hexdigest() == r457_callback_sha1[kind], (
+        kind, "exact R457 callback predecessor not recovered")
+    r457_callbacks[kind] = old_callback
 
 cpp = r"""
 #include <atomic>
@@ -150,9 +167,36 @@ int main() {
         first_use.build_claimed.store(false,std::memory_order_release);
         first_use.build_task=[&]{first_use.Publish();};
         first_use.Queue();
+#ifdef R457_NEGATIVE_CONTROL
+        // Historical callback has no inline RunBuild claim. Make the GPU
+        // callback enter its actual condvar wait, prove it cannot complete
+        // before a separate worker publishes, then release it. No wall-clock
+        // threshold or host scheduler speed is used for the comparison.
+        std::atomic_bool entered_wait{false};
+        std::atomic_bool callback_returned{false};
+        first_use.on_before_wait = [&] {
+            entered_wait.store(true, std::memory_order_release);
+            entered_wait.notify_one();
+        };
+        std::thread gpu_callback([&] {
+            first_use.scheduler.Run();
+            callback_returned.store(true, std::memory_order_release);
+        });
+        entered_wait.wait(false, std::memory_order_acquire);
+        assert(!callback_returned.load(std::memory_order_acquire));
+        assert(!first_use.build_claimed.load(std::memory_order_acquire));
+        assert(first_use.build_task);
+        first_use.Publish();
+        gpu_callback.join();
+        assert(callback_returned.load(std::memory_order_acquire));
+        assert(!first_use.build_claimed.load(std::memory_order_acquire));
+#else
+        // The maintained callback itself claims the queued build without
+        // requiring an external shader-worker publication.
         first_use.scheduler.Run();
         assert(first_use.IsBound() && first_use.build_claimed.load());
         assert(!first_use.build_task);
+#endif
     }
     // Quiet mode may wait, but must never add a wall-clock log.
     {
@@ -324,5 +368,32 @@ with tempfile.TemporaryDirectory(prefix="f07-v01-worker-keyed-") as tmp:
                 else:
                     assert not lines, (kind, opt, lines)
                 print(f"F07_KEYED_PIPELINE_WAIT_PASS kind={kind} native={int(native)} {opt}")
+# Compare against the byte-identical R457 wait callbacks under a
+# forced unclaimed shader task. Both old callbacks need a separate worker;
+# both current callbacks are validated above to claim that work inline.
+# The legacy run preserves ALL other wait and diagnostic scenarios.
+    for kind, predecessor in r457_callbacks.items():
+        source = Path(tmp) / f"{kind}-r457-wait.cpp"
+        source.write_text(cpp.replace("__ACTUAL_CALLBACK__", predecessor.replace(
+            "            std::unique_lock lock{build_mutex};",
+            "            on_before_lock();\\n            std::unique_lock lock{build_mutex};".replace("\\n", "\n"), 1).replace(
+            "            build_condvar.wait(lock,",
+            "            on_before_wait();\\n            build_condvar.wait(lock,".replace("\\n", "\n"), 1)))
+        for opt in ("-O0", "-O2"):
+            exe = Path(tmp) / f"{kind}-r457-ps5-{opt[1:]}"
+            cmd = [compiler, "-std=c++20", opt, "-Wall", "-Wextra",
+                   "-Werror", "-pthread", "-fsanitize=undefined",
+                   "-fno-sanitize-recover=all", "-DPS5_NATIVE=1",
+                   "-DR457_NEGATIVE_CONTROL=1", str(source), "-o", str(exe)]
+            built = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+            assert built.returncode == 0, (kind, opt, built.stderr[-4000:])
+            out = subprocess.run([str(exe)], capture_output=True, text=True, timeout=20)
+            assert out.returncode == 0, (kind, opt, out.stderr[-4000:])
+            lines = [line for line in out.stdout.splitlines()
+                     if line.startswith("EDEN_VULKAN_PIPELINE_WAIT ")]
+            assert len(lines) == 4, (kind, opt, lines)
+            print(f"F07_R457_WAIT_NEGATIVE_CONTROL_PASS kind={kind} {opt}")
+
 print("F07_FIRST_USE_INLINE_CLAIM_PASS graphics_compute=1 queued_worker_bypass=1")
+print("F07_R457_VS_CURRENT_CALLBACK_REPLAY_PASS exact_r457=1 blocked_until_external_worker=1 current_inline_claim=1")
 print("HOST_ONLY no Sony SDK, real GPU worker, FIFO timing in FC27 or frame latency proof")

@@ -171,6 +171,35 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         header_audit.write_text(header_source)
         expected[header_name] = header_audit
         print('ENCORE_FC27_CPU_WRITE_RACE_EXACT_REVERSE_PARITY_PASS', 'owners=2')
+    # R457 GPU CPU-write race: the shipping Vulkan rasterizer installs a
+    # PendingCpuWrites callback and claims an entire invalidation batch before
+    # individual downloads. This source predated the NS2 quiet-SVC work;
+    # remove only these two exact chunks from the audit COPY before the
+    # independent MSAA and frozen R23 oracle comparisons.
+    if raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529':
+        cpu_writes_ctor = """    buffer_cache.SetPendingCpuWrites(
+        [this](const std::function<void(DAddr, size_t)>& callback) {
+            gpu.ForEachPendingCpuWrite(callback);
+        });
+"""
+        cpu_writes_batch = """void RasterizerVulkan::OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) {
+    // Remove the complete CPU-write batch from GPU-owned ranges before any
+    // individual invalidation can download stale bytes over a later write.
+    {
+        std::scoped_lock lock{buffer_cache.mutex};
+        buffer_cache.ClaimCpuWrites(ranges);
+    }
+    for (const auto& [addr, size] : ranges) OnCacheInvalidation(addr, size);
+}
+
+"""
+        assert raster_source.count(cpu_writes_ctor) == 1
+        assert raster_source.count(cpu_writes_batch) == 1
+        raster_source = raster_source.replace(cpu_writes_ctor, "", 1)
+        raster_source = raster_source.replace(cpu_writes_batch, "", 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == 'efd77028f0710ea9e50cbbe77b04eebf3f306610', raster_sha
+        print("ENCORE_R457_GPU_CPU_WRITE_RACE_EXACT_REVERSE_PASS owner=1 prior=efd77028")
     if raster_sha == 'efd77028f0710ea9e50cbbe77b04eebf3f306610':
         before = "    // Mesh draw workgroups are not indexed vertices. Only standard vertex\n    // draw calls may be split into handle-homogeneous runs.\n    attribute_handle_pipeline = nullptr;\n    attribute_handle_runs.clear();\n    if (split_attribute_handles && !mesh_draw && pipeline->UsesAttributeHandle()) {\n        CollectAttributeHandleRuns(is_indexed);\n        if (!attribute_handle_runs.empty()) {\n            attribute_handle_pipeline = pipeline;\n            pipeline->SetAttributeHandle(attribute_handle_runs.front().handle);\n        }\n    }\n    bool pipeline_ok = pipeline->Configure(is_indexed);\n    if (!pipeline_ok && pipeline->UsesForcedMsaaShadow()) {\n        // The shader may read/store its destination or the texture cache\n        // may have ended the shadow pass while binding descriptors.\n        // Resolve and RETRY this draw via the unchanged guest 1x pipeline.\n        if (native_msaa_shadow) (void)native_msaa_shadow->EndPrepared();\n        native_msaa_clear.reset();\n        native_samples = VK_SAMPLE_COUNT_1_BIT;\n        pipeline = pipeline_cache.CurrentGraphicsPipeline();\n        if (pipeline) {\n            prepared_pipeline = pipeline;\n            probe_pipeline = pipeline;\n            pipeline->SetEngine(maxwell3d, gpu_memory);\n            pipeline_ok = pipeline->Configure(is_indexed);\n        }\n    }\n"
         after = "    // Mesh draw workgroups are not indexed vertices. Only standard vertex\n    // draw calls may be split into handle-homogeneous runs.\n    const auto prepare_attribute_handles = [&] {\n        attribute_handle_pipeline = nullptr;\n        attribute_handle_runs.clear();\n        if (split_attribute_handles && !pipeline->IsMeshPipeline() && pipeline->UsesAttributeHandle()) {\n            CollectAttributeHandleRuns(is_indexed);\n            if (!attribute_handle_runs.empty()) {\n                attribute_handle_pipeline = pipeline;\n                pipeline->SetAttributeHandle(attribute_handle_runs.front().handle);\n            }\n        }\n    };\n    prepare_attribute_handles();\n    bool pipeline_ok = pipeline->Configure(is_indexed);\n    if (!pipeline_ok && pipeline->UsesForcedMsaaShadow()) {\n        // The shader may read/store its destination or the texture cache\n        // may have ended the shadow pass while binding descriptors.\n        // Resolve and RETRY this draw via the unchanged guest 1x pipeline.\n        if (native_msaa_shadow) (void)native_msaa_shadow->EndPrepared();\n        native_msaa_clear.reset();\n        native_samples = VK_SAMPLE_COUNT_1_BIT;\n        pipeline = pipeline_cache.CurrentGraphicsPipeline();\n        if (pipeline) {\n            prepared_pipeline = pipeline;\n            probe_pipeline = pipeline;\n            pipeline->SetEngine(maxwell3d, gpu_memory);\n            // The 1x pipeline owns its own descriptor/attribute state. The\n            // rejected shadow is not a valid owner for later split draws.\n            prepare_attribute_handles();\n            pipeline_ok = pipeline->Configure(is_indexed);\n        }\n    }\n"

@@ -1,0 +1,27 @@
+name: Native PS5 Host1x selected-header ABI (host only)
+
+on:
+  pull_request:
+    paths:
+      - 'headless/CMakeLists.txt'
+      - 'tools/check-native-host1x-register-reentrant-host.py'
+      - '.github/workflows/native-host1x-header-abi-host.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'headless/CMakeLists.txt'
+      - 'tools/check-native-host1x-register-reentrant-host.py'
+      - '.github/workflows/native-host1x-header-abi-host.yml'
+permissions:
+  contents: read
+jobs:
+  compile-source-header-pair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Compile real Host1x TU with native selected header and negative control
+        run: python3 -B tools/check-native-host1x-register-reentrant-host.py

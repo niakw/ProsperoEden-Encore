@@ -16,7 +16,7 @@
 namespace Eden::NS2Fault {
 inline constexpr std::size_t MaxBytes = 2U * 1024U * 1024U;
 
-bool AppendIncident(const char* path, std::uint64_t pid,
+bool AppendIncident(const char* path, std::uint64_t pid, std::uint64_t program_id,
                     std::uint64_t pc, std::uint64_t lr, std::uint64_t sp,
                     const char* critical_svc) noexcept {
     if (!path || !*path || !critical_svc) return false;
@@ -39,10 +39,11 @@ bool AppendIncident(const char* path, std::uint64_t pid,
         std::chrono::steady_clock::now().time_since_epoch()).count();
     char line[512]{};
     const int length = std::snprintf(line, sizeof(line),
-        "EDEN_NS2_GUEST_FAULT_V1 mono_ms=%lld sha=%.40s pid=%llu "
+        "EDEN_NS2_GUEST_FAULT_V1 mono_ms=%lld sha=%.40s pid=%llu title=%016llx "
         "pc=0x%llx lr=0x%llx sp=0x%llx svc=%.220s\n",
         static_cast<long long>(monotonic_ms), source_sha,
         static_cast<unsigned long long>(pid),
+        static_cast<unsigned long long>(program_id),
         static_cast<unsigned long long>(pc),
         static_cast<unsigned long long>(lr),
         static_cast<unsigned long long>(sp), clean_svc);
@@ -78,13 +79,13 @@ bool AppendIncident(const char* path, std::uint64_t pid,
 // vendor ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp. The same path is
 // used by P0 recoverable OOM and previous-launch interruption receipts.
 extern "C" void eden_native_capture_ns2_svc_fault(
-    std::uint64_t pid, std::uint64_t fault_pc,
+    std::uint64_t pid, std::uint64_t program_id, std::uint64_t fault_pc,
     std::uint64_t fault_lr, std::uint64_t fault_sp,
     const char* critical_svc) noexcept {
     constexpr const char* elevated = "/data/prosperoeden/logs/session-failures.log";
     constexpr const char* sandbox = "/download0/eden-headless-g7/session-failures.log";
     (void)Eden::NS2Fault::AppendIncident(
         Eden::FilesystemAccess() ? elevated : sandbox,
-        pid, fault_pc, fault_lr, fault_sp, critical_svc);
+        pid, program_id, fault_pc, fault_lr, fault_sp, critical_svc);
 }
 #endif

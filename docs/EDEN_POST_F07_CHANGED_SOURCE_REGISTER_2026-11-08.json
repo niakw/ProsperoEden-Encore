@@ -438,6 +438,17 @@
       "required_source_fragment": "game stop exceeded 10s; exiting app without automatic restart",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-15 P0 exit safety follow-up to #97. Exact successor of the prior automatic-restart watchdog; host policy proof only. No native PS5 build or hardware shutdown/relaunch qualification."
+    },
+    {
+      "path": "vendor/encore-active/eden-threading/src/core/hle/kernel/k_thread.h",
+      "historical_reviewed_git_blob": "e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6",
+      "post_snapshot_git_blob": "89bbcbd2b0d3627210a980496d00f30a45c7d944",
+      "original_disposition": "reviewed_without_new_code_edit",
+      "source_scope": "NS2 same-core started-thread IPC handoff stores retained worker references on KThread until the next synchronous IPC scheduling window; this is a scheduler/lifetime source successor, not an FC27 performance or console proof.",
+      "review_kind": "source_interface",
+      "required_source_fragment": "std::vector<KThread*>& GetPendingStartedThreads()",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-18: Lichii 3140648-derived IPC startup handoff. Paired with svc_thread.cpp/svc_ipc_standard.cpp and vendor test ns2_ipc_started_thread_handoff_source.py; exact prior/current Git blobs retained. PS5 runtime still unverified."
     }
   ]
 }

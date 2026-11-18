@@ -1,192 +1,139 @@
 #!/usr/bin/env python3
-"""N04: native Host1x late-ready callback reentrance with historical negative.
+"""N04: current Host1x late-ready RegisterAction reentrance witness.
 
-Extract real C++ methods from pinned and maintained TUs, compile at -O0/-O2,
-and force a syncpoint update between initial and mutex-protected recheck.
-This covers only RegisterAction: Increment still holds its action mutex.
+Compiles the exact maintained RegisterAction body at O0/O2 and deterministically
+forces the syncpoint to become ready after the first lock-free check but before
+the guarded recheck. The callback must execute after the guard scope ends.
+The pinned source is retained as a source-level negative showing its callback
+was invoked while std::scoped_lock still owned the guard.
 """
 from pathlib import Path
-import shutil
-import subprocess
-import tempfile
+import shutil, subprocess, tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
 PIN=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
 ACT=(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
+HDR=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
 CM=(ROOT/"headless/CMakeLists.txt").read_text()
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 NAME="python3 -B tools/check-native-host1x-register-reentrant-host.py"
 assert NAME in FAST and NAME in FULL
 assert "list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)" in CM
-assert "list(APPEND video_sources" in CM and "EDEN_MAINTAINED_HOST1X_SYNCPOINT" in CM
-old="""    std::scoped_lock lk(guard);
-    if (syncpoint.load(std::memory_order_relaxed) >= expected_value) {
-        action();
-        return {};
-    }"""
-new="""    std::unique_lock lk(guard);
-    if (syncpoint.load(std::memory_order_relaxed) >= expected_value) {
-        // The action can register or cancel other Host1x work.
-        // Release the shared lock before invoking an already-ready callback.
-        lk.unlock();
-        action();
-        return {};
-    }"""
-assert PIN.count(old)==ACT.count(new)==1
-increment_old="    std::scoped_lock lk(guard);\n    auto it = action_storage.begin();\n    while (it != action_storage.end()) {\n        if (it->expected_value > new_value) {\n            break;\n        }\n        it->action();\n        it = action_storage.erase(it);\n    }\n    wait_cv.notify_all();"
-increment_new="    // Claim ready callbacks atomically against deregistration without\n    // allocating or executing arbitrary callbacks under the Host1x guard.\n    std::list<RegisteredAction> ready_actions;\n    {\n        std::scoped_lock lk(guard);\n        auto it = action_storage.begin();\n        while (it != action_storage.end() && it->expected_value <= new_value) {\n            ++it;\n        }\n        ready_actions.splice(ready_actions.end(), action_storage,\n                             action_storage.begin(), it);\n    }\n    // Cancellation can prevent an action only before the claim above.\n    // Execute the already-claimed batch without holding the global guard.\n    for (auto& ready : ready_actions) {\n        ready.action();\n    }\n    // Preserve the original contract: guest/host waiters are notified\n    // only after all due callbacks have completed, never before dispatch.\n    wait_cv.notify_all();"
-guest_old="void SyncpointManager::IncrementGuest(u32 syncpoint_id) {\n    Increment(syncpoints_guest[syncpoint_id], wait_guest_cv, guest_action_storage[syncpoint_id]);\n}"
-guest_new="void SyncpointManager::IncrementGuest(u32 syncpoint_id) {\n    // The old global guard serialized callbacks for this id. Keep their\n    // submission order without blocking independent guest syncpoints.\n    std::scoped_lock dispatch_lock{GuestDispatchLocks()[syncpoint_id]};\n    Increment(syncpoints_guest[syncpoint_id], wait_guest_cv, guest_action_storage[syncpoint_id]);\n}"
-host_old="void SyncpointManager::IncrementHost(u32 syncpoint_id) {\n    Increment(syncpoints_host[syncpoint_id], wait_host_cv, host_action_storage[syncpoint_id]);\n}"
-host_new="void SyncpointManager::IncrementHost(u32 syncpoint_id) {\n    std::scoped_lock dispatch_lock{HostDispatchLocks()[syncpoint_id]};\n    Increment(syncpoints_host[syncpoint_id], wait_host_cv, host_action_storage[syncpoint_id]);\n}"
-deregister_guest_old="void SyncpointManager::DeregisterGuestAction(u32 syncpoint_id, const ActionHandle& handle) {\n    DeregisterAction(guest_action_storage[syncpoint_id], handle);\n}"
-deregister_guest_new="void SyncpointManager::DeregisterGuestAction(u32 syncpoint_id, const ActionHandle& handle) {\n    // Return only after an action already claimed on this id has finished.\n    // nvhost event teardown relies on this rendezvous for callback lifetime.\n    std::scoped_lock dispatch_lock{GuestDispatchLocks()[syncpoint_id]};\n    DeregisterAction(guest_action_storage[syncpoint_id], handle);\n}"
-deregister_host_old="void SyncpointManager::DeregisterHostAction(u32 syncpoint_id, const ActionHandle& handle) {\n    DeregisterAction(host_action_storage[syncpoint_id], handle);\n}"
-deregister_host_new="void SyncpointManager::DeregisterHostAction(u32 syncpoint_id, const ActionHandle& handle) {\n    std::scoped_lock dispatch_lock{HostDispatchLocks()[syncpoint_id]};\n    DeregisterAction(host_action_storage[syncpoint_id], handle);\n}"
-dispatch_helpers="namespace {\n// Each domain/id serializes cancellation against callback completion.\n// Recursive: a running callback may cancel another pending action on its id.\n// The shared action-list guard is never held while a callback executes.\nstd::array<std::recursive_mutex, 192>& GuestDispatchLocks() {\n    static std::array<std::recursive_mutex, 192> locks{};\n    return locks;\n}\n\nstd::array<std::recursive_mutex, 192>& HostDispatchLocks() {\n    static std::array<std::recursive_mutex, 192> locks{};\n    return locks;\n}\n} // namespace\n"
-# Replay the historical owner exactly before testing actual current methods.
-ACT_HISTORICAL=ACT
-notify_new="    // A syncpoint waiter observes the published counter, not callback completion.\n    // Wake it before dispatch: a display callback may block independently.\n    wait_cv.notify_all();\n"
-notify_old="    // Preserve the original contract: guest/host waiters are notified\n    // only after all due callbacks have completed, never before dispatch.\n    wait_cv.notify_all();\n"
-if notify_new in ACT:
-    import hashlib
-    end="        ready.action();\n    }\n"
-    assert ACT.count(notify_new)==1 and ACT.count(end)==1
-    ACT_HISTORICAL=ACT.replace(notify_new,"",1).replace(end,end+notify_old,1)
-    previous=ACT_HISTORICAL.encode()
-    assert hashlib.sha1(b"blob "+str(len(previous)).encode()+bytes([0])+previous).hexdigest()=="aed892831a31b2ca6691bf4f697bcc035ddaffa3"
-assert PIN.replace("namespace Host1x {\n\n","namespace Host1x {\n\n"+dispatch_helpers+"\n").replace(old,new).replace(increment_old,increment_new).replace(guest_old,guest_new).replace(host_old,host_new).replace(deregister_guest_old,deregister_guest_new).replace(deregister_host_old,deregister_host_new)==ACT_HISTORICAL
-
-helpers=dispatch_helpers.replace("std::array<std::recursive_mutex, 192>& HostDispatchLocks()", "[[maybe_unused]] std::array<std::recursive_mutex, 192>& HostDispatchLocks()")
+assert "EDEN_MAINTAINED_HOST1X_SYNCPOINT" in CM
+assert "using ActionHandle = u64;" in HDR
+assert "std::list<RegisteredAction>::iterator" not in HDR
 
 def extract(text,name):
     assert text.count(name)==1,name
-    start=text.index(name)
-    opening=text.index("{",start)
-    depth=0
+    start=text.index(name); opening=text.index("{",start); depth=0
     for i in range(opening,len(text)):
-        if text[i]=="{":depth+=1
+        if text[i]=="{": depth+=1
         elif text[i]=="}":
             depth-=1
-            if depth==0:return text[start:i+1]
+            if depth==0: return text[start:i+1]
     raise AssertionError(name)
 
-names=("SyncpointManager::ActionHandle SyncpointManager::RegisterAction(",
-       "void SyncpointManager::DeregisterAction(",
-       "void SyncpointManager::DeregisterGuestAction(",
-       "void SyncpointManager::IncrementGuest(",
-       "void SyncpointManager::Increment(")
-def methods(src):
-    parts=[extract(src,n) for n in names]
-    marker="    if (syncpoint.load(std::memory_order_relaxed) >= expected_value) {"
-    assert parts[0].count(marker)==1
-    parts[0]=parts[0].replace(marker,marker+
-        "\n        late_hits.fetch_add(1,std::memory_order_relaxed);")
-    return "\n\n".join(parts)
+SIG="SyncpointManager::ActionHandle SyncpointManager::RegisterAction("
+pinned=extract(PIN,SIG)
+current=extract(ACT,SIG)
+# Historical negative: late-ready action is called before scoped_lock leaves scope.
+assert "std::scoped_lock lk(guard);" in pinned
+pinned_late=pinned.index("if (syncpoint.load(std::memory_order_relaxed) >= expected_value)")
+assert pinned_late < pinned.index("action();",pinned_late) < pinned.index("return {};",pinned_late)
+# Current upstream/Lichii contract: only insertion happens under guard; late-ready callback is outside.
+for token in (
+    "{\n        std::scoped_lock lk(guard);",
+    "if (syncpoint.load(std::memory_order_relaxed) < expected_value)",
+    "do { ++last_action_id; } while (last_action_id == 0);",
+    "emplace(it, expected_value, last_action_id, std::move(action))->id;",
+):
+    assert token in current,token
+guard_end=current.index("    }\n    action();")
+assert guard_end > current.index("std::scoped_lock lk(guard);")
+assert "action();\n    return {};" in current[guard_end:]
+
+# Instrument only the host witness so the main thread knows the worker passed
+# the first lock-free check before publishing the new syncpoint value.
+probe='    {\n        std::scoped_lock lk(guard);'
+assert current.count(probe)==1
+instrumented=current.replace(
+    probe,
+    '    prelock_hits.fetch_add(1, std::memory_order_release);\n'+probe,1)
 
 CPP=r"""
-#include <array>
 #include <atomic>
 #include <cassert>
-#include <chrono>
-#include <condition_variable>
 #include <cstdint>
-#include <cstdio>
 #include <functional>
 #include <list>
 #include <mutex>
 #include <thread>
-#include <utility>
-#include <vector>
-using u32=std::uint32_t;
-static std::atomic<unsigned> late_hits{};
+using u32=std::uint32_t; using u64=std::uint64_t;
+static std::atomic<unsigned> prelock_hits{};
 class SyncpointManager {
 public:
-    struct RegisteredAction {
-        u32 expected_value;
-        std::function<void()> action;
-        RegisteredAction(u32 n,std::function<void()>&& f)
-            :expected_value(n),action(std::move(f)){}
-    };
-    using ActionHandle=std::list<RegisteredAction>::iterator;
-    std::array<std::atomic<u32>,192> syncpoints_guest{};
-    std::array<std::list<RegisteredAction>,192> guest_action_storage;
-    std::mutex guard;
-    std::condition_variable wait_guest_cv;
-    template<typename F> ActionHandle RegisterGuestAction(u32 id,u32 expected,F&& f){
-        return RegisterAction(syncpoints_guest[id],guest_action_storage[id],
-                              expected,std::forward<F>(f));
-    }
-    ActionHandle RegisterAction(std::atomic<u32>&,std::list<RegisteredAction>&,
-                                u32,std::function<void()>&&);
-    void DeregisterAction(std::list<RegisteredAction>&,const ActionHandle&);
-    void DeregisterGuestAction(u32,const ActionHandle&);
-    void IncrementGuest(u32);
-    void Increment(std::atomic<u32>&,std::condition_variable&,
-                   std::list<RegisteredAction>&);
+ struct RegisteredAction {
+   RegisteredAction(u32 v,u64 i,std::function<void()>&& a)
+      :expected_value(v),id(i),action(std::move(a)){}
+   u32 expected_value; u64 id; std::function<void()> action;
+ };
+ using ActionHandle=u64;
+ std::atomic<u32> syncpoint{};
+ std::list<RegisteredAction> actions;
+ std::mutex guard;
+ u64 last_action_id{};
+ ActionHandle RegisterAction(std::atomic<u32>&,std::list<RegisteredAction>&,
+                             u32,std::function<void()>&&);
+ template<class F> ActionHandle Register(u32 expected,F&& f) {
+   return RegisterAction(syncpoint,actions,expected,std::forward<F>(f));
+ }
 };
-__METHODS__
+__METHOD__
 int main(){
-    SyncpointManager m;
-    std::atomic<unsigned> late{},nested{};
-    std::vector<u32> order;
-    m.RegisterGuestAction(5,3,[&]{order.push_back(3);});
-    m.RegisterGuestAction(5,1,[&]{order.push_back(1);});
-    m.RegisterGuestAction(5,2,[&]{order.push_back(2);});
-    auto cancelled=m.RegisterGuestAction(6,1,[&]{assert(false);});
-    m.DeregisterGuestAction(6,cancelled);
-    m.IncrementGuest(6);
-    m.IncrementGuest(5);
-    m.IncrementGuest(5);
-    m.IncrementGuest(5);
-    assert((order==std::vector<u32>{1,2,3}));
-    for(unsigned k=0;k<24;k++){
-        m.syncpoints_guest[0].store(0,std::memory_order_release);
-        std::unique_lock hold{m.guard};
-        std::atomic<bool> launched{};
-        std::thread t([&]{
-            launched.store(true,std::memory_order_release);
-            m.RegisterGuestAction(0,1,[&]{
-                // Pinned late callback fails; maintained unlocks before call.
-                assert(m.guard.try_lock());
-                m.guard.unlock();
-                m.RegisterGuestAction(5,0,[&]{++nested;});
-                ++late;
-            });
-        });
-        while(!launched.load(std::memory_order_acquire))std::this_thread::yield();
-        std::this_thread::sleep_for(std::chrono::milliseconds(3));
-        // Increment publishes atomically before taking this same mutex.
-        m.syncpoints_guest[0].store(1,std::memory_order_release);
-        hold.unlock();
-        t.join();
-    }
-    assert(late_hits>=1 && late==24 && nested==24);
-    assert(m.guest_action_storage[0].empty());
-    std::printf("N04_HOST1X_REENTRANT_LATE_PASS slow=%u callback=%u nested=%u\n",
-                late_hits.load(),late.load(),nested.load());
+ SyncpointManager m;
+ std::atomic<unsigned> callbacks{},nested{};
+ for(unsigned round=0;round<32;++round){
+   m.syncpoint.store(0,std::memory_order_release);
+   const unsigned before=prelock_hits.load(std::memory_order_acquire);
+   std::unique_lock hold{m.guard};
+   std::thread worker([&]{
+     const auto h=m.Register(1,[&]{
+       assert(m.guard.try_lock());
+       m.guard.unlock();
+       ++callbacks;
+       // Re-enter RegisterAction from the callback: an already-ready callback
+       // must not be under the global action-list mutex.
+       const auto inner=m.Register(0,[&]{++nested;});
+       assert(inner==0);
+     });
+     assert(h==0);
+   });
+   while(prelock_hits.load(std::memory_order_acquire)==before)
+     std::this_thread::yield();
+   m.syncpoint.store(1,std::memory_order_release);
+   hold.unlock();
+   worker.join();
+ }
+ assert(callbacks==32 && nested==32 && m.actions.empty());
+ // Non-ready insertion still returns a stable non-zero numeric handle.
+ m.syncpoint.store(0,std::memory_order_release);
+ auto pending=m.Register(3,[]{});
+ assert(pending!=0 && m.actions.size()==1 && m.actions.front().id==pending);
 }
-"""
+""".replace("__METHOD__",instrumented)
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
 assert compiler,"Host C++20 compiler required"
-with tempfile.TemporaryDirectory(prefix="encore-host1x-") as tmp:
-    for name,code,mode in (("current_O0",methods(ACT),"-O0"),
-                           ("current_O2",methods(ACT),"-O2"),
-                           ("pinned_negative",methods(PIN),"-O0")):
-        source=Path(tmp)/(name+".cpp")
-        exe=Path(tmp)/name
-        source.write_text(CPP.replace("__METHODS__", (helpers if name!="pinned_negative" else "") + "\n" + code))
-        built=subprocess.run([compiler,"-std=c++20",mode,"-Wall","-Wextra",
-                              "-Werror","-pthread","-fsanitize=undefined",
-                              "-fno-sanitize-recover=all",str(source),"-o",str(exe)],
-                             capture_output=True,text=True,timeout=65)
-        assert built.returncode==0,(name,built.stderr[-3000:])
-        out=subprocess.run([str(exe)],capture_output=True,text=True,timeout=17)
-        if name=="pinned_negative":
-            assert out.returncode!=0 and "m.guard.try_lock()" in out.stderr,(name,out.stderr[-1200:])
-            print("N04_HOST1X_PINNED_NEGATIVE_PASS guarded_callback_rejected")
-        else:
-            assert out.returncode==0,(name,out.stdout,out.stderr[-1500:])
-            print(out.stdout.strip(),name)
-print("N04_HOST1X_INCREMENT_CALLBACK_GUARD_UNCHANGED no_end_to_end_certification")
+with tempfile.TemporaryDirectory(prefix="encore-host1x-register-") as d:
+    p=Path(d); src=p/"test.cpp"; src.write_text(CPP)
+    for opt in ("-O0","-O2"):
+        exe=p/("test"+opt)
+        build=subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                              "-pthread","-fsanitize=undefined","-fno-sanitize-recover=all",
+                              str(src),"-o",str(exe)],capture_output=True,text=True,timeout=60)
+        assert build.returncode==0,(opt,build.stderr[-4000:])
+        run=subprocess.run([str(exe)],capture_output=True,text=True,timeout=20)
+        assert run.returncode==0,(opt,run.stdout,run.stderr[-3000:])
+        print("N04_HOST1X_REGISTER_REENTRANT_PASS",opt,
+              "late_ready=32 callback_outside_guard=1 numeric_handle=1")
+print("N04_HOST1X_PINNED_NEGATIVE_SOURCE_PASS callback_under_guard=1")

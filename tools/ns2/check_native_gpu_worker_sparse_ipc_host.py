@@ -22,6 +22,7 @@ def extract(begin,end):
 translate=extract("Result TranslateMappingStatus(", "} // namespace\n\nvoid IGpuWorker::NormalMapGpuMemory4K(")
 sparse=extract("void IGpuWorker::CreateSparseRegion(", "void IGpuWorker::DestroySparseRegion(")
 remap=extract("void IGpuWorker::ExecuteSparseMapRequests(", "Result IGpuWorker::RegisterMemory(")
+release=extract("Result IGpuWorker::ReleaseMemory(", "void IGpuWorker::CreateGpuAccessibleMemory(")
 for symbol in ("m_mappings.PrepareSparse(", "as->ReserveNativeSparse4K(",
                "m_mappings.CommitPrepared(", "as->ReleaseNativeSparse4K(",
                "BackGpuOnlyRegion(", "m_shared->events[request->notification]->Signal(kernel)"):
@@ -33,6 +34,17 @@ for symbol in ("GW::DecodeSparseBatch(command)", "ctx.GetReadBufferSize() == byt
                "as->RemapNativeSparse(staged)", "ctx.WriteBuffer(selected)",
                "result = Kernel::ResultOutOfResource;"):
     assert symbol in remap,symbol
+for symbol in ("auto staged_entry = *entry;", "m_dense_regions.upper_bound(",
+               "staged_entry.handle = region.nvmap_handle;",
+               "staged_entry.source_pages ="):
+    assert symbol in remap,symbol
+for symbol in ("SnapshotNativeSparseHandle(id, ranges)",
+               "m_mappings.SparsePageShift(", "sparse_restore",
+               "EDEN_NS2_GPU_102_SPARSE_RESTORE"):
+    assert symbol in release or symbol in source,symbol
+assert release.index("SnapshotNativeSparseHandle(id, ranges)") < release.index("system.GPU().WaitForIdle()")
+assert release.index("system.GPU().WaitForIdle()") < release.index("batch.owner->RemapNativeSparse(batch.entries)")
+assert release.index("batch.owner->RemapNativeSparse(batch.entries)") < release.index("nvmap.FreeHandle(id, false)")
 fixture=r"""
 #include <algorithm>
 #include <array>
@@ -94,6 +106,8 @@ struct NativeAS {
     NvResult release_result{NvResult::Success};
     NvResult remap_result{NvResult::Success};
     unsigned reserves{}, releases{}, remaps{};
+    u32 last_handle{};
+    u64 last_source_pages{};
     NvResult ReserveNativeSparse4K(u64 begin,u64 size,u8 shift) {
         assert(begin==0x20000 && size==0x2000 && shift==12);
         ++reserves;return reserve_result;
@@ -105,7 +119,8 @@ struct NativeAS {
     template<class V> NvResult RemapNativeSparse(const V& entries) {
         assert(entries.size()==1);
         assert(u64{entries.front().destination_pages}==0x20);
-        assert(u32{entries.front().handle}==27);
+        last_handle=u32{entries.front().handle};
+        last_source_pages=u64{entries.front().source_pages};
         ++remaps;return remap_result;
     }
 };
@@ -167,6 +182,12 @@ struct IGpuWorker {
     std::shared_ptr<Nvidia::Module> m_module=std::make_shared<Nvidia::Module>();
     std::vector<u32> m_memory{27};
     GW::MappingLedger m_mappings{};
+    struct Dense {
+        u64 address{}, size{}, alias{};
+        u32 nvmap_handle{};
+        bool gmmu_released{}, nvmap_released{};
+    };
+    std::map<std::pair<u32,u64>,Dense> m_dense_regions{};
     System system{};
     Kernel::KernelCore kernel{};
     bool back_fail{};
@@ -174,7 +195,10 @@ struct IGpuWorker {
     Result BackGpuOnlyRegion(u32 as,u64 begin,u64 size,u8 shift) {
         assert(as==7 && begin==0x20000 && size==0x2000 && shift==12);
         ++backs;
-        return back_fail ? Kernel::ResultOutOfResource : ResultSuccess;
+        if (back_fail) return Kernel::ResultOutOfResource;
+        m_dense_regions.emplace(std::make_pair(as,begin),
+                                Dense{begin,size,0,91,false,false});
+        return ResultSuccess;
     }
     void CreateSparseRegion(HLERequestContext&);
     void ExecuteSparseMapRequests(HLERequestContext&);
@@ -271,8 +295,16 @@ int main() {
     assert(good.response_words==4 && good.reply.size()==2);
     assert(good.reply[0]==0 && good.reply[1]==1);
     assert(good.output.size()==1 && good.output[0]==0);
-    assert(gpu.remaps==2 && event.signals==2 && worker.system.gpu.waits==2);
+    assert(gpu.remaps==2 && gpu.last_handle==27);
+    assert(event.signals==2 && worker.system.gpu.waits==2);
     assert(worker.m_mappings.Count()==1);
+
+    // Mode-1 sparse VA has no private 214 backing: handle 0 must stay sparse/zero.
+    auto sparse_unmap=batch(false);
+    worker.ExecuteSparseMapRequests(sparse_unmap);
+    assert(sparse_unmap.reply[0]==0 && sparse_unmap.reply[1]==1);
+    assert(gpu.remaps==3 && gpu.last_handle==0 && gpu.last_source_pages==0);
+    assert(event.signals==3 && worker.system.gpu.waits==3);
 
     Service::AM::IGpuWorker dense;
     Kernel::KEvent ready{};
@@ -287,7 +319,17 @@ int main() {
     auto good_back=region(0);
     dense.CreateSparseRegion(good_back);
     assert(good_back.reply[0]==0 && dense.backs==2);
-    assert(dense.m_mappings.Count()==1 && ready.signals==1);
+    assert(dense.m_mappings.Count()==1 && dense.m_dense_regions.size()==1 &&
+           ready.signals==1);
+
+    // Dense 214 VA owns backing handle 91. A guest 216 "unmap" must reveal
+    // that backing again instead of publishing sparse zero pages.
+    auto dense_unmap=batch(false);
+    dense.ExecuteSparseMapRequests(dense_unmap);
+    assert(dense_unmap.reply[0]==0 && dense_unmap.reply[1]==1);
+    assert(dense.m_shared->owner->last_handle==91);
+    assert(dense.m_shared->owner->last_source_pages==0);
+    assert(dense.system.gpu.waits==1 && ready.signals==2);
 }
 """.replace("__TRANSLATE__",translate).replace("__SPARSE__",sparse).replace("__REMAP__",remap)
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
@@ -308,5 +350,5 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-worker214-216-") as directory:
             done=subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
             assert done.returncode==0,done.stderr[-6500:]
             print("H06_REAL_WORKER_214_216_PASS",Path(cc).name,opt,
-                  "reserve=real ledger remap=real owner fail_closed=1 oom=rollback output=exact",
+                  "reserve=real ledger remap=real owner fail_closed=1 oom=rollback sparse_zero=1 dense_restore=1 output=exact",
                   flush=True)

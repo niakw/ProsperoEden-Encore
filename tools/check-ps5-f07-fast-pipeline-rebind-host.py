@@ -100,10 +100,11 @@ print("F07_PIPELINE_VARIANT_REBIND_PASS same_owner=1 transition=1 invalidation=1
 graphics_header = (vulkan / "include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
 admission_begin = "    [[nodiscard]] bool CanExecuteDraw() const noexcept {"
 admission_end = "\n\n    template <typename Spec>"
-assert graphics_header.count(admission_begin) == graphics_header.count(admission_end) == 1
-admission = graphics_header[
-    graphics_header.index(admission_begin):graphics_header.index(
-        admission_end, graphics_header.index(admission_begin))]
+assert graphics_header.count(admission_begin) == 1
+admission_start = graphics_header.index(admission_begin)
+admission_stop = graphics_header.index(admission_end, admission_start)
+assert admission_stop > admission_start
+admission = graphics_header[admission_start:admission_stop]
 assert "if (!is_built.load(std::memory_order::acquire)) return false;" in admission
 assert "optimized_ready.load(std::memory_order_acquire)" in admission
 assert "return static_cast<bool>(pipeline) ||" in admission

@@ -118,11 +118,27 @@ update_after = """    void KThread::UpdateState(KernelCore& kernel) {
     }"""
 assert pinned.count(update_before) == 1
 assert pinned.count(state_before) == 1
-assert active == (pinned.replace(old, fixed).replace(wait_before, wait_after)
-                  .replace(notify_before, notify_after)
-                  .replace(cancel_before, cancel_after)
-                  .replace(state_before, state_after)
-                  .replace(update_before, update_after)), "Unexpected maintained KThread drift"
+finalize_before = """    void KThread::Finalize(KernelCore& kernel) {
+        // If the thread has an owner process, unregister it."""
+finalize_after = """    void KThread::Finalize(KernelCore& kernel) {
+        // A starter may exit without issuing the IPC that normally releases
+        // these retained worker references.
+        for (KThread* thread : m_pending_started_threads) {
+            thread->Close(kernel);
+        }
+        m_pending_started_threads.clear();
+
+        // If the thread has an owner process, unregister it."""
+expected_thread = (pinned.replace(old, fixed).replace(wait_before, wait_after)
+                   .replace(notify_before, notify_after)
+                   .replace(cancel_before, cancel_after)
+                   .replace(state_before, state_after)
+                   .replace(update_before, update_after))
+assert expected_thread.count(finalize_before) == 1
+expected_thread = expected_thread.replace(finalize_before, finalize_after, 1)
+assert active == expected_thread, "Unexpected maintained KThread drift"
+assert "m_pending_started_threads.clear();" in active
+print("HLE_NS2_STARTED_THREAD_FINALIZE_SUCCESSOR_PASS upstream=3140648")
 slab_pinned = (root / "vendor/sources/eden/src/core/hle/kernel/slab_helpers.h").read_text()
 slab_active = (thread_root / "slab_helpers.h").read_text()
 slab_before = """        Free(kernel, static_cast<Derived*>(this));

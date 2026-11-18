@@ -14,7 +14,7 @@ paths={
 }
 expected={
  "sm": "83e0b7e26a867d578eb869389a807fe3b9c7035b",
- "thread": "e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6",
+ "thread": "89bbcbd2b0d3627210a980496d00f30a45c7d944",
  # J10 was a "reviewed without edit" historical source. The JIT drain
  # is now a source correction; retain the old hash below as provenance and
  # pin the new reviewed source with the source-extracted reentrant witness.
@@ -28,7 +28,9 @@ def gitblob(data: bytes)->str:
 # publishes under invalidation_mutex. The source-extracted host witness
 # checks both paths and reentrant guest requests.
 JIT_PREVIOUS_REVIEW_BLOB = "20362a046adfe89d65225c1822104f2910eeb2c5"
+THREAD_PREVIOUS_REVIEW_BLOB = "e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6"
 assert expected["jit"] != JIT_PREVIOUS_REVIEW_BLOB
+assert expected["thread"] != THREAD_PREVIOUS_REVIEW_BLOB
 sources={key:(root/path).read_text() for key,path in paths.items()}
 for key,path in paths.items():
     assert gitblob((root/path).read_bytes())==expected[key], (key,"source changed; re-audit")
@@ -51,7 +53,9 @@ assert getter.count("SleepThread(")==1
 header=sources["thread"]
 for invariant in ("std::binary_semaphore m_context_guard{1};",
                   "std::atomic<ThreadState> m_thread_state{};",
-                  "m_dummy_thread_cv{}", "m_dummy_thread_mutex{}"):
+                  "m_dummy_thread_cv{}", "m_dummy_thread_mutex{}",
+                  "std::vector<KThread*>& GetPendingStartedThreads()",
+                  "std::vector<KThread*> m_pending_started_threads;"):
     assert invariant in header, invariant
 thread_cmake=(root/"vendor/encore-active/eden-threading/native-hle-overrides.cmake").read_text()
 scheduler=(root/"vendor/encore-active/eden-threading/src/core/hle/kernel/k_scheduler.cpp").read_text()

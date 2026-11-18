@@ -718,19 +718,21 @@ def run() -> int:
                                          sort_keys=True), flush=True)
                 if ok and script == "check-native-host1x-increment-handoff-host.py":
                     passes = re.findall(
-                        r"N04_HOST1X_INCREMENT_HANDOFF_PASS ordered=3 nested=1 "
-                        r"claimed=1 pending_cancelled=1 independent=1 same_id_serial=1 stress=256",
+                        r"N04_HOST1X_CURRENT_PASS -(O0|O2) numeric_handles=1 "
+                        r"pending_cancel=1 running_cancel=1 same_id_progress=1 "
+                        r"counter_wake=1 guest_mirror=1 stress=256",
                         result.stdout)
-                    negative = re.findall(
-                        r"N04_HOST1X_INCREMENT_PINNED_NEGATIVE_PASS guard_blocks_callback",
-                        result.stdout)
-                    if len(passes) != 2 or len(negative) != 1:
-                        ok, reason = False, "f05_host1x_claimed_dispatch_witness_missing"
+                    scoped = result.stdout.count(
+                        "N04_HOST1X_GUEST_PROGRESS_UNVERIFIED host_concurrency_only") == 1
+                    if sorted(passes) != ["O0", "O2"] or not scoped:
+                        ok, reason = False, "f05_host1x_current_dispatch_witness_missing"
                     else:
                         fixture_metrics["F05_host1x_increment_handoff_host"] = {
                             "stress": 256, "optimization_levels": ["O0", "O2"],
-                            "scope": "native Host1x action claim, cancel and reentrance; "
-                                     "NOT PS5 device-fence progress",
+                            "pending_cancel": True, "running_cancel_waits": True,
+                            "same_id_progress": True, "counter_wake_before_callback": True,
+                            "scope": "current native Host1x numeric-handle action claim/cancel/reentrance; "
+                                     "NOT PS5 device-fence or gameplay progress",
                         }
                         print("F05_MEASURED_HOST_SUBPATH=" +
                               json.dumps(fixture_metrics["F05_host1x_increment_handoff_host"],

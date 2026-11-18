@@ -939,7 +939,7 @@ void GraphicsWindow::OnFrameDisplayed() {
                     for (unsigned d = 0; d < 2; ++d) {
                         const auto& stats = Eden::Performance::guest_cache_domain_totals[d];
                         std::printf("EDEN_FRAME_CACHE_TAIL frame=%u domain=%s "
-                                    "ge1ms=%llu ge10ms=%llu peak_wait_ns=%llu "
+                                    "ge1ms=%llu ge10ms=%llu lifetime_peak_wait_ns=%llu "
                                     "scope=measured_guest_waits\n",
                             frame_total, d ? "texture" : "buffer",
                             cache_tail_delta[2 * d], cache_tail_delta[2 * d + 1],

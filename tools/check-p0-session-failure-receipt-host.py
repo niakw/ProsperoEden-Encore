@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
     assert(truncate(full.c_str(), 2 * 1024 * 1024 + 1) == 0);
     assert(!Eden::WriteSessionFailureReceipt(
         full, "unknown", 0, 5, "std_exception", "x", false,
-        false, 0, false, 0, 0, 0));
+        false, 0, false, 0, 0, 0, 0));
     assert(read(path) == second);
 }
 """

@@ -7,7 +7,7 @@ assert "group: encore-native-${{ github.ref }}-${{ github.event_name }}" in work
 assert "group: encore-native-${{ github.ref }}\n" not in workflow
 assert "cancel-in-progress: true" in workflow
 assert "github.event_name == 'workflow_dispatch'" in workflow
-assert "contains(github.event.head_commit.message || '', '[full-build]')" in workflow
+assert "startsWith(github.event.head_commit.message || '', '[full-build]')" in workflow
 assert "if: >-\n      ${{ github.event_name == 'workflow_dispatch' ||" in workflow
 assert "(github.event_name == 'workflow_dispatch' && inputs.publish)" in workflow
 assert "needs.build.result == 'success'" in workflow
@@ -15,3 +15,11 @@ assert 'if: ${{ false }}' not in workflow
 assert "  push:\n    branches:\n      - main\n" in workflow
 assert "      - dev/ps5-sparse-jit\n" not in workflow
 print("NATIVE_MANUAL_RUN_ISOLATION_PASS event-separated concurrency")
+
+# The R457 log-retention merge exposed a false build trigger: mentioning a
+# build token in the commit BODY must not authorize a full native rebuild.
+for token in ("[full-build]", "[build-only]", "[resume-stage:37728435816]"):
+    marker = "startsWith(github.event.head_commit.message || '', '" + token + "')"
+    assert marker in workflow, token
+    assert ("contains(github.event.head_commit.message || '', '" + token + "')") not in workflow
+assert "Only an explicit prefix at the START of the commit subject" in workflow

@@ -103,3 +103,11 @@ Références : [Lot vendor candidat](https://github.com/niakw/Prospero.Eden-Enco
 - Root cause: the shipping PS5 `EDEN_NS2_NATIVE_TILING_ROOT/video_core/memory_manager.h` contains `EnableNativeTiling` but not the shim API/state. The shim was present in the separate DEV-only `guest-bridge/memory_manager.h`, selected only with `EDEN_GUEST_WRITE_BRIDGE_DEV=ON`; that DEV feature remains OFF.
 - Vendor [PR #185](https://github.com/niakw/Prospero.Eden-Encore-vendor/pull/185) **fusionnée** sur `main` au commit `9d324ca5ca2cdd84053f2d3dfadde5b86084c13d`. Elle compose les deux API Switch 2 indépendantes dans le header de production, conserve les valeurs par défaut NS1, et qualifie les contrats shim/tiling. Le moteur doit pinner ce SHA fusionné et compiler les vrais TU native NVDRV AS + GPU MemoryManager contre le même header de production.
 - **Pending:** vendor CI and paired engine preflight at the new Gitlink; full PS5 compilation/package; FC27 NS1 and MKW/Bananza NS2 console gameplay. No performance or runtime correction claimed.
+
+
+### 18 novembre — preflight merged-vendor rerun: infrastructure dependency isolated
+
+- Engine preflight run `44284073734`, job `source-audit`, reached and passed the R457/current callback replay and compiled the real native `nvhost_as_gpu.cpp` against the shipping combined MemoryManager ABI. The original missing `SetNativeSyncpointShim` / `NumShimSyncpoints` error did **not** recur.
+- The new additional syntax check of the selected production `memory_manager.cpp` then stopped in Eden's Host1x include graph because the shard lacked the system header `libavcodec/avcodec.h`. This is a host-CI dependency gap, not an emulator compile diagnostic: other native Vulkan/NS2 gates already install the same FFmpeg development declarations.
+- Engine commit `2e55ab098f237718821173fd8defd0fbc318d05c` adds only `libavcodec-dev libavutil-dev libswscale-dev` to the existing host-preflight package set. No runtime source, PS5 binary, shader behavior or guest ABI changes in this follow-up.
+- **Pending:** rerun must compile the real `memory_manager.cpp`, emit `P2_7_PRODUCTION_MEMORY_MANAGER_COMBINED_ABI_PASS`, complete source-audit and aggregate core-tests. No console/runtime claim.

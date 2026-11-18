@@ -92,9 +92,20 @@ struct Compute {
     CountingMutex build_mutex;
     std::condition_variable_any build_condvar;
     std::atomic_bool is_built{false};
+    // This witness exercises the race where the async worker already owns
+    // the build but has not yet published completion. The separate FIFO
+    // first-use witness proves that the GPU callback can claim an unowned
+    // build inline through the real RunBuild path.
+    std::atomic_bool build_claimed{true};
+    std::atomic<unsigned> run_build_calls{0};
     int pipeline{};
     std::uint64_t diagnostic_cache_key_hash{0xC0FFEE};
     bool IsBound() const { return pipeline != 0; }
+    void RunBuild() {
+        run_build_calls.fetch_add(1, std::memory_order_relaxed);
+        if (build_claimed.exchange(true, std::memory_order_acq_rel)) return;
+        assert(false && "ready-callback race fixture unexpectedly owned the build");
+    }
     void Queue() {
         if (!is_built.load(std::memory_order_acquire)) {
 """ + callback + r"""
@@ -116,6 +127,7 @@ int main() {
         producer.join();
         c.build_mutex.lock_calls.store(0);
         c.scheduler.run();
+        assert(c.run_build_calls.load() == 1);
         assert(c.build_mutex.lock_calls.load() == 0);
         assert(c.pipeline == 93);
     }
@@ -130,6 +142,7 @@ int main() {
             std::thread([&c] { c.Publish(true); }).join();
         };
         c.scheduler.run();
+        assert(c.run_build_calls.load() == 1);
         assert(c.pipeline == 93);
         assert(c.build_mutex.lock_calls.load() == 2);
 #ifdef PS5_NATIVE
@@ -154,6 +167,7 @@ int main() {
         });
         c.scheduler.run();
         producer.join();
+        assert(c.run_build_calls.load() == 1);
         assert(c.build_mutex.lock_calls.load() >= 1);
         assert(c.pipeline == 93);
     }
@@ -173,6 +187,7 @@ int main() {
         });
         c.scheduler.run();
         producer.join();
+        assert(c.run_build_calls.load() == 1);
         assert(c.pipeline == 93);
         assert(Eden::Performance::measured_waits.load() == wait_baseline + 120);
     }
@@ -181,6 +196,7 @@ int main() {
     failed.Publish(false);
     failed.build_mutex.lock_calls.store(0);
     failed.scheduler.run();
+    assert(failed.run_build_calls.load() == 1);
     assert(failed.build_mutex.lock_calls.load() == 0);
     assert(failed.pipeline == 0);
     assert(Eden::Performance::measured_waits.load() == wait_baseline + 120);
@@ -201,4 +217,4 @@ with tempfile.TemporaryDirectory(prefix="encore-f07-compute-ready-") as d:
             command.extend([str(file), "-o", str(executable)])
             subprocess.run(command, capture_output=True, text=True, timeout=40, check=True)
             subprocess.run([str(executable)], check=True, timeout=25)
-print("F07_COMPUTE_READY_CALLBACK_PASS native_desktop=1 second_acquire=1 publication_race=1 quiet=1 O0=1 O2=1")
+print("F07_COMPUTE_READY_CALLBACK_PASS native_desktop=1 runbuild_claimed=1 second_acquire=1 publication_race=1 quiet=1 O0=1 O2=1")

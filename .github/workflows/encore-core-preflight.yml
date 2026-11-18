@@ -96,6 +96,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 -B tools/check-active-cmake-source-boundary.py
+          # The next full native build exercises this source-extracted direct
+          # allocator/incident ABI. Catch its regressions on a PR first.
+          python3 -B tools/check-ps5-direct-limit-host.py
           python3 -B tools/check-vendored-guest-title-version.py
           python3 -B tools/check-codeql-security-scope.py
           python3 -B tools/check-ns2-shipping-exefs-owner.py

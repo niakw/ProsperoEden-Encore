@@ -17,9 +17,15 @@ begin = s.index("namespace {\n// This is the fixed addressable direct-memory EXT
 # reservation wrapper, which needs native mapping mocks from another harness.
 # Extract only the direct-extent cache and allocator exercised here.
 reservation_begin = s.index("void* ReserveCpuVirtualRange(", begin)
-namespace_end = s.index("} // namespace\n#endif", begin)
-assert reservation_begin < namespace_end
-helper = s[begin:reservation_begin] + "} // namespace\n"
+# The native fault receipt's C ABI now follows the anonymous namespace.
+# Extract its real implementation too: the old "} // namespace\\n#endif"
+# adjacency disappeared when the durable error snapshot was added.
+namespace_end = s.index("} // namespace\n", reservation_begin)
+receipt_begin = s.index('extern "C" std::uint64_t eden_ps5_direct_failure_snapshot(', namespace_end)
+native_guard_end = s.index("\n#endif", receipt_begin)
+assert reservation_begin < namespace_end < receipt_begin < native_guard_end
+helper = (s[begin:reservation_begin] + "} // namespace\n" +
+          s[receipt_begin:native_guard_end] + "\n")
 assert helper.count("sceKernelGetDirectMemorySize()") == 1
 assert "cached_direct_memory_extent.store(current, std::memory_order_release)" in helper
 assert "return extent > 0 ? sceKernelAllocateDirectMemory(" in helper
@@ -61,6 +67,22 @@ int main() {
     assert(extent_queries.load() == 1 && issued_allocations.load() == 0);
     assert(AllocateDirectOwned(2u << 20, 2u << 20, &physical) == 0);
     assert(extent_queries.load() == 2 && issued_allocations.load() == 1);
+    // The actual native fault snapshot remains available after the extra
+    // C ABI definition; otherwise this host gate would miss receipt drift.
+    std::uint64_t failed_bytes = 0, failed_extent = 0;
+    std::uint32_t failed_result = 0, failed_stage = 0;
+    assert(eden_ps5_direct_failure_snapshot(
+        &failed_bytes, &failed_extent, &failed_result, &failed_stage) == 0);
+    NoteDirectAllocationFailure(1, 0x80020023u, 4u << 20, std::uint64_t{12} << 30);
+    assert(eden_ps5_direct_failure_snapshot(
+        &failed_bytes, &failed_extent, &failed_result, &failed_stage) == 1);
+    assert(failed_stage == 1 && failed_result == 0x80020023u);
+    assert(failed_bytes == (4u << 20) && failed_extent == (std::uint64_t{12} << 30));
+    NoteDirectAllocationFailure(2, 0x80020024u, 8u << 20, std::uint64_t{12} << 30);
+    assert(eden_ps5_direct_failure_snapshot(
+        &failed_bytes, &failed_extent, &failed_result, &failed_stage) == 2);
+    assert(failed_stage == 2 && failed_result == 0x80020024u);
+    assert(failed_bytes == (8u << 20) && failed_extent == (std::uint64_t{12} << 30));
     std::vector<std::thread> threads;
     for (unsigned i = 0; i < 8; ++i)
         threads.emplace_back([] {

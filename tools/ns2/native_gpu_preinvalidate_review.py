@@ -22,6 +22,14 @@ def blob(content: str) -> str:
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 def recover_prior_memory_manager(actual: str) -> str:
+    # Lichii 12125bc / vendor 8157c79 adds a read-only NVN syncpoint
+    # virtual shim to this same maintained owner after the range-cache review.
+    # Peel it first, proving the complete successor and predecessor blobs.
+    if "native_syncpoint_shim" in actual:
+        recover_shim = runpy.run_path(
+            str(ROOT / "tools/ns2/native_syncpoint_shim_review.py")
+        )["recover_before_syncpoint_shim"]
+        actual = recover_shim(actual)
     if "gpu_page_table_revision" in actual:
         # Peel back only the pinned, independently reviewed performance
         # extension; the original 4K/big-page predecessor hash still MUST

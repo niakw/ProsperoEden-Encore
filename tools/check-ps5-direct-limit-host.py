@@ -17,7 +17,10 @@ begin = s.index("namespace {\n// This is the fixed addressable direct-memory EXT
 # reservation wrapper, which needs native mapping mocks from another harness.
 # Extract only the direct-extent cache and allocator exercised here.
 reservation_begin = s.index("void* ReserveCpuVirtualRange(", begin)
-namespace_end = s.index("} // namespace\n#endif", begin)
+# The direct-failure receipt now lives after the anonymous namespace and
+# before the native #endif. Anchor to the namespace itself, not to a
+# historical "} // namespace\\n#endif" adjacency.
+namespace_end = s.index("} // namespace", reservation_begin)
 assert reservation_begin < namespace_end
 helper = s[begin:reservation_begin] + "} // namespace\n"
 assert helper.count("sceKernelGetDirectMemorySize()") == 1

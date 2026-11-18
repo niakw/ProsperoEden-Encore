@@ -42,7 +42,33 @@ a=s.index('        if (init_result != SystemResultStatus::Success) {')
 b=s.index('        // Waiting for GPU', a)
 branch=s[a:b]
 assert 'process.reset();' in branch and branch.index('process.reset();') < branch.index('ShutdownMainProcess();')
-assert s.count('            process.reset();\n            ShutdownMainProcess();') == 2
+# Lichii #1932 added the missing-loader failure path: the local KProcess must
+# be destroyed while the kernel still exists in ALL THREE exit branches.
+# Test selected native core source rather than relying on a historical count
+# that predates the added protection.
+failed_load_start=s.index('        // Create the application process')
+failed_load_source=s[failed_load_start:s.index('        // Waiting for GPU', failed_load_start)]
+reset_before_shutdown='            process.reset();\n            ShutdownMainProcess();'
+failure_paths=(
+    ('load-result failure',
+     'if (load_result != Loader::ResultStatus::Success) {',
+     '        if (!app_loader) {'),
+    ('missing loader',
+     'if (!app_loader) {',
+     '        if (app_loader->ReadProgramId'),
+    ('setup failure',
+     'if (init_result != SystemResultStatus::Success) {',
+     None),
+)
+for label, start_marker, end_marker in failure_paths:
+    start=failed_load_source.index(start_marker)
+    end=(failed_load_source.index(end_marker, start)
+         if end_marker is not None else len(failed_load_source))
+    path=failed_load_source[start:end]
+    assert path.count(reset_before_shutdown)==1, (
+        label, 'KProcess must be released before kernel shutdown')
+assert failed_load_source.count(reset_before_shutdown)==3, (
+    'unexpected KProcess reset/shutdown pair in failed-load handlers')
 with tempfile.TemporaryDirectory(prefix='eden-process-order-') as tmp:
  p=Path(tmp);src=p/'test.cpp';exe=p/'test'
  src.write_text('''#include <memory>

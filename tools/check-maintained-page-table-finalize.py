@@ -20,27 +20,25 @@ replacement = """        // The memory manager is recreated after a kernel shutd
 
 """ + original
 assert pinned.count(original) == 1, "upstream finalizer changed"
-# The maintained shipping kernel also owns the NS2 address-space extension.
-# Rebuild its exact reviewed delta from pinned Eden before applying G16:
-# legacy NS1 callers must continue to select is_switch2=False.
-legacy_signature = """Result KPageTableBase::InitializeForProcess(Svc::CreateProcessFlag as_type, bool enable_aslr, bool enable_das_merge, bool from_back, KMemoryManager::Pool pool, KProcessAddress code_address, size_t code_size, KSystemResource* system_resource, KResourceLimit* resource_limit, Core::Memory::Memory& memory, KProcessAddress aslr_space_start) {
-    // Calculate region extents."""
-ns2_signature = """Result KPageTableBase::InitializeForProcess(Svc::CreateProcessFlag as_type, bool enable_aslr, bool enable_das_merge, bool from_back, KMemoryManager::Pool pool, KProcessAddress code_address, size_t code_size, KSystemResource* system_resource, KResourceLimit* resource_limit, Core::Memory::Memory& memory, KProcessAddress aslr_space_start) {
-    R_RETURN(this->InitializeForProcess(as_type, enable_aslr, enable_das_merge, from_back, pool,
-                                        code_address, code_size, system_resource, resource_limit,
-                                        memory, aslr_space_start, false));
-}
-
-Result KPageTableBase::InitializeForProcess(Svc::CreateProcessFlag as_type, bool enable_aslr, bool enable_das_merge, bool from_back, KMemoryManager::Pool pool, KProcessAddress code_address, size_t code_size, KSystemResource* system_resource, KResourceLimit* resource_limit, Core::Memory::Memory& memory, KProcessAddress aslr_space_start, bool is_switch2) {
-    // Calculate region extents."""
-old_extent = "return KAddressSpaceInfo::GetAddressSpaceSize(m_address_space_width, type);"
-ns2_extent = "return KAddressSpaceInfo::GetAddressSpaceSize(m_address_space_width, type, is_switch2);"
-assert pinned.count(legacy_signature) == 1, "upstream process initializer changed"
-assert pinned.count(old_extent) == 1, "upstream address-space extent changed"
-expected = pinned.replace(legacy_signature, ns2_signature, 1).replace(old_extent, ns2_extent, 1)
-assert expected.count(original) == 1, "G16 finalizer anchor changed"
-expected = expected.replace(original, replacement, 1)
-assert maintained == expected, "G16/NS2 exact source parity broken"
+# The current reviewed NS2 kernel uses Lichii/Eglantine's 64 GiB alias
+# geometry, with 32 GiB VAMM (InfoType 29/30). The experimental #1773
+# generation-specific 128 GiB alias and its extra InitializeForProcess bool
+# were deliberately removed from shipping vendor. Do not resurrect that ABI.
+# The selected page-table translation unit must contain the exact G16 lifetime
+# guard as its ONLY difference from the pinned Eden base.
+expected = pinned.replace(original, replacement, 1)
+assert maintained == expected, "G16 page-table shipping delta drift"
+page_h = (root / "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_page_table_base.h").read_text()
+address_cpp = (root / "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp").read_text()
+assert maintained.count("Result KPageTableBase::InitializeForProcess(") == 1
+assert "bool is_switch2" not in page_h
+assert "bool is_switch2" not in maintained
+assert "aslr_space_start, is_switch2" not in maintained
+assert address_cpp.count(
+    "std::size_t KAddressSpaceInfo::GetAddressSpaceSize(size_t width, KAddressSpaceInfo::Type type)"
+) == 1
+assert ".size = 64_GiB           , .type = KAddressSpaceInfo::Type::Alias" in address_cpp
+assert "Ns2HeapInfo" in address_cpp and ".size = 16_GiB" in address_cpp
 assert maintained.count("m_system.Kernel().IsShuttingDown()") >= 1
 assert 'write_derived("${PORT_BUILD_DIR}/k_page_table_base.cpp"' not in cm
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/k_page_table_base.cpp"' not in cm
@@ -48,4 +46,4 @@ assert 'list(REMOVE_ITEM page_table_core_sources hle/kernel/k_page_table_base.cp
 assert 'list(APPEND page_table_core_sources "${EDEN_MAINTAINED_PAGE_TABLE}")' in cm
 assert 'set_property(TARGET core PROPERTY SOURCES "${page_table_core_sources}")' in cm
 assert 'vendor/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp' in cm
-print("ENCORE_MAINTAINED_PAGE_TABLE_FINALIZE_PASS G16=retired parity=exact")
+print("ENCORE_MAINTAINED_PAGE_TABLE_FINALIZE_PASS G16=retired parity=exact ns2_alias=64GiB obsolete_128GiB_ABI=absent")

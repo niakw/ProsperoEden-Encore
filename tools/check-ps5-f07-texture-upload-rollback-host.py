@@ -7,6 +7,15 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 s = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
+selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+for marker in (
+    "bool upload_completed = false;",
+    "if (!upload_completed)",
+    "SCOPE_EXIT",
+    "if (!staging.buffer || staging.mapped_span.size_bytes() < upload_size)",
+    "catch (const std::bad_alloc&)",
+):
+    assert marker in selected, ("selected NS1/NS2 TextureCache rollback missing",marker)
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 start = "void TextureCache<P>::RefreshContents(Image& image, ImageId image_id) {"
 end = "\ntemplate <class P>\ntemplate <typename StagingBuffer>"

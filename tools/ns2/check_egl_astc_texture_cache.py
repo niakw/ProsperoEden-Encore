@@ -97,25 +97,53 @@ impl_native = native_block(tex, impl_footer)
 assert impl_native == native_block(
     (VULKAN / "texture_cache.h").read_text(), impl_footer
 ), "N60 ASTC native implementation ABI diverged from shared Vulkan owner"
-legacy_tex = reverse_r23_checked_astc(
-    ROOT, "texture_cache.h", strip_post_r23_active_image_pages(tex)
-).replace(impl_native + "\n", "", 1)
-legacy_sha = subprocess.run(
-    ["git", "hash-object", "--stdin"], input=legacy_tex,
-    text=True, check=True, capture_output=True
-).stdout.strip()
-# The original N60 baseline was fc3125dc... before R4's independently
-# reviewed native volume-copy path. Require the exact integrated R4 owner and
-# its guarded source, rather than treating R4 as a source-parity regression.
-owner_full_sha = subprocess.check_output([
-    "git", "hash-object", str(OWNER / "texture_cache.h")
-], text=True).strip()
-assert owner_full_sha == "744bf30e1421dcce212146f7e26e9d90558676a8", (
-    "N60/R4 ASTC selected source owner drift", owner_full_sha
-)
-assert legacy_sha == "77f6051ea65933df920669ad61499f5847ad7516", (
-    "N60/R4 normalized selected ASTC implementation changed", legacy_sha
-)
+# The pre-F07 N60/R4 oracle is immutable. Only run historical byte
+# reconstruction for the original reviewed source. The new PS5 source is a
+# fully byte-sealed successor with the previous shadow F07 methods restored.
+owner_full_sha = subprocess.check_output(
+    ["git", "hash-object", str(OWNER / "texture_cache.h")], text=True
+).strip()
+assert owner_full_sha in {"744bf30e1421dcce212146f7e26e9d90558676a8", "0d99f9a861c645562519f71d62f4f49bfedd8101"}, (
+    "N60/R4 selected TextureCache owner drift", owner_full_sha)
+if owner_full_sha == "744bf30e1421dcce212146f7e26e9d90558676a8":
+    legacy_tex = reverse_r23_checked_astc(
+        ROOT, "texture_cache.h", strip_post_r23_active_image_pages(tex)
+    ).replace(impl_native + "\n", "", 1)
+    legacy_sha = subprocess.run(
+        ["git", "hash-object", "--stdin"], input=legacy_tex,
+        text=True, check=True, capture_output=True
+    ).stdout.strip()
+    # The original N60 baseline was fc3125dc... before R4's independently
+    # reviewed native volume-copy path. Require the exact integrated R4 owner and
+    # its guarded source, rather than treating R4 as a source-parity regression.
+    owner_full_sha = subprocess.check_output([
+        "git", "hash-object", str(OWNER / "texture_cache.h")
+    ], text=True).strip()
+    assert owner_full_sha == "744bf30e1421dcce212146f7e26e9d90558676a8", (
+        "N60/R4 ASTC selected source owner drift", owner_full_sha
+    )
+    assert legacy_sha == "77f6051ea65933df920669ad61499f5847ad7516", (
+        "N60/R4 normalized selected ASTC implementation changed", legacy_sha
+    )
+    else:
+    shadow = (VULKAN / "texture_cache.h").read_text()
+    for signature in (
+        "void TextureCache<P>::QueueAsyncUnswizzle(",
+        "void TextureCache<P>::TickAsyncDecode()",
+        "TextureCache<P>::TryFindFramebufferImageView(",
+    ):
+        def selected_method(body):
+            return body.split(signature, 1)[1].split("\n}\n", 1)[0]
+        assert selected_method(tex) == selected_method(shadow), (
+            "selected F07 method does not match reviewed shadow owner", signature)
+    for marker in (
+        "bool upload_completed = false;",
+        "if (!upload_completed)",
+        "if (True(image.flags & ImageFlagBits::IsDecoding))",
+        "if (!staging.buffer || staging.mapped_span.size_bytes() < upload_size)",
+        "catch (const std::bad_alloc&)",
+    ):
+        assert marker in tex, ("selected F07 upload rollback missing", marker)
 assert tex.count("#if defined(PS5_NATIVE) && defined(EDEN_NS2_VOLUME_COPY)") == 2
 assert tex.count("copy_native_volume_slice") == 2
 assert "registry.IsGraphicsCurrent(maxwell3d, *ticket)" in tex

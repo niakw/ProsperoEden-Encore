@@ -21,6 +21,9 @@ full = (root/".github/workflows/encore-core-preflight.yml").read_text()
 sig = "TextureCache<P>::TryFindFramebufferImageView("
 assert cache.count(sig) == 1
 method = cache.split(sig,1)[1].split("\ntemplate <class P>",1)[0]
+selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+assert selected.split(sig,1)[1].split("\ntemplate <class P>",1)[0] == method, (
+    "selected NS1/NS2 framebuffer freshness diverged from F07 host witness")
 start = "    for (const ImageMapId map_id : image_map_ids) {"
 stop = "\n\n    const auto view_format ="
 assert method.count(start) == 1

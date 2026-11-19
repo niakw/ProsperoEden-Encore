@@ -6,7 +6,7 @@ La comparaison avec [Lichii #1518](https://github.com/zortos293/Lichii/pull/1518
 
 ## Retrait de l'optimisation risquée, sans perdre les autres correctifs
 
-Le vendor [`87b5a4d674e2a1616cd19b5234203e80920abcc4`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/87b5a4d674e2a1616cd19b5234203e80920abcc4) restaure les fichiers de production **exactement** dans leur version synchrone pré-#194 :
+Le vendor [`c15cdfe96a3d836bf32ba21b8070088add81cdc9`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/c15cdfe96a3d836bf32ba21b8070088add81cdc9) restaure les fichiers de production **exactement** dans leur version synchrone pré-#194 :
 - `encore-active/eden-vulkan/vulkan_rasterizer.cpp` Git blob `01c6880e5a8836da45601b0a3cb7c0fd6c46cf35`.
 - `encore-active/eden-core/overrides/core/device_memory_manager.inc` Git blob `daf493ce6e863397ec44bfae467c4f7533570477`.
 

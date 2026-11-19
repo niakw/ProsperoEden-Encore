@@ -464,7 +464,7 @@ if fc27_deferred_selected:
     r437_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 # Reconstructed reviewed successor: same R437 GPU owners as d024,
 # plus preserved RomFS index-0 source and full synchronous page protection.
-if r437_vendor_pin == "87b5a4d674e2a1616cd19b5234203e80920abcc4":
+if r437_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
     for relative, blob in {
         "eden-core/overrides/core/device_memory_manager.inc":
             "daf493ce6e863397ec44bfae467c4f7533570477",
@@ -661,7 +661,7 @@ post_f07_native_gpfifo_owners = {
 native_m2mf_channel_state = "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if native_gpfifo_vendor_pin == "87b5a4d674e2a1616cd19b5234203e80920abcc4":
+if native_gpfifo_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
     native_gpfifo_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 if native_gpfifo_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "67759611edc13414c112ea9d2b6664d54827a200"}:
     native_gpfifo_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
@@ -1030,7 +1030,7 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
-if gpu_table_vendor_pin == "87b5a4d674e2a1616cd19b5234203e80920abcc4":
+if gpu_table_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
     gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 if gpu_table_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "67759611edc13414c112ea9d2b6664d54827a200"}:
     gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"

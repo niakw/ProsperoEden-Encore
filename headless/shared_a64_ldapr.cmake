@@ -1,8 +1,8 @@
-# P0.2: stage audited full A64/LDAPR owner sources, never generate C++.
-# The retained host contract compares these files byte-for-byte against
-# pinned Dynarmic + the reviewed stronger-acquire LDAPR adaptation and the
-# minimal RETAA/RETAB no-PAC return owner. General PAC and CAS/LSE research
-# decoders are not selected.
+# P0.2: stage reviewed Switch 2 ARMv8.1-8.5 A64 owner sources, never generate C++.
+# Vendor #192 promotes the exact Lichii 11aac324 decoder/translator blobs for
+# LDAPR, RETAA/B, LSE/CAS/CASP/SWP, pointer-auth compatibility and the MTE
+# subset used by NX2. The engine enables their translator units only on the
+# reviewed native dual-NPDM target; NS1 source selection remains unchanged.
 if(NOT DEFINED EDEN_A64_LDAPR_SOURCE_ROOT OR NOT DEFINED EDEN_A64_LDAPR_OUTPUT_ROOT)
     message(FATAL_ERROR "LDAPR requires explicit pinned source and output directories")
 endif()
@@ -12,7 +12,10 @@ set(eden_ldapr_static "${CMAKE_CURRENT_LIST_DIR}/../vendor/encore-active/ns2-run
 foreach(eden_ldapr_file IN ITEMS
         "decoder/a64.h" "decoder/a64.inc"
         "translate/impl/impl.h" "translate/impl/load_store_exclusive.cpp"
-        "translate/impl/a64_branch.cpp")
+        "translate/impl/a64_branch.cpp"
+        "translate/impl/load_store_atomic.cpp"
+        "translate/impl/memory_tagging.cpp"
+        "translate/impl/pointer_authentication.cpp")
     if(NOT EXISTS "${eden_ldapr_source}/${eden_ldapr_file}" OR
        NOT EXISTS "${eden_ldapr_static}/${eden_ldapr_file}")
         message(FATAL_ERROR "Missing reviewed A64 source: ${eden_ldapr_file}")

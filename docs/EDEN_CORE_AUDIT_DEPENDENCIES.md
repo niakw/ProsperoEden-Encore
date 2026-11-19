@@ -1,6 +1,6 @@
 # Eden Encore — active native dependency audit register
 
-**Branch:** main + NS2 research. **Updated:** 2026-10-31. **Baseline reviewed:** 436a102 (sources précédant cet enregistrement).
+**Branch:** main + NS2 research. **Updated:** 2026-11-19. **Baseline reviewed:** 436a102 (sources précédant cet enregistrement).
 **Technical scope:** guest CPU/HLE, JIT, GPU worker, Vulkan, memory coherency,
 native build/CI. Launcher and theme work belongs to its separate conversation.
 
@@ -11,7 +11,7 @@ This is the **single place to resume this technical audit**.
 **P0 source review batch:** see [EDEN_P0_SOURCE_REVIEW_2026-10-20.md](EDEN_P0_SOURCE_REVIEW_2026-10-20.md) for ten explicitly inspected IPC/HLE/JIT/GPU source paths. The host IPC wake proof is not guest progress; no contract statuses or qualification debt counters are reduced.
 
 **Two-axis progress rule:** read [EDEN_TWO_AXIS_PROGRESS_2026-10-20.md](EDEN_TWO_AXIS_PROGRESS_2026-10-20.md). SOURCE+OPEN means *qualification pending*, **not** code files necessarily requiring further optimization. Do not repeatedly modify a recently fixed hotpath merely to lower that count; distinguish host test, current-SHA native build, and PS5/gameplay evidence.
-**Non, this is not an exhaustive repository-wide inventory.** The 491
+**Non, this is not an exhaustive repository-wide inventory.** The 515
 indexed graph rows cover known high-relevance paths; the completed register
 captures prior host checks, and unenumerated dependencies are separately
 flagged below. New source discoveries must be added rather than forgotten. Do not open
@@ -245,9 +245,9 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 512 | 489 | 1028 |
+| Graphe connu | 515 | 492 | 1037 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 427 | 417 | 862 |
+| SOURCE — lecture effectuée, preuve insuffisante | 430 | 420 | 871 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
 | **Encore à qualifier (SOURCE + OPEN)** | **442** | **431** | **890** |

@@ -77,6 +77,7 @@ def transform(base: Path, out: Path) -> subprocess.CompletedProcess[str]:
 
 TEST_CPP = r'''
 #include <cassert>
+#include <cstdint>
 #include <string_view>
 #include "dynarmic/frontend/A64/decoder/a64.h"
 #include "dynarmic/frontend/A64/translate/impl/impl.h"

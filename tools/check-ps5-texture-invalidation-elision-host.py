@@ -31,21 +31,7 @@ def methods(source):
     return (source.split(start, 1)[1].split(mid, 1)[0],
             source.split(end0, 1)[1].split(end1, 1)[0])
 new = methods(raster)
-# Lichii #1328: the shipping Vulkan owner claims the complete CPU-write
-# sequence before page download. The inactive bridge remains the historical
-# oracle, so reverse ONLY that single reviewed addition for parity.
-cpu_batch_claim = """        // Protect the ENTIRE guest CPU-write batch before the first
-        // WriteMemory. Otherwise preserving GPU-written sibling bytes on
-        // the first page can download them over a later CPU write to that
-        // same page. Match the ordered claim in OnCacheInvalidations.
-        // This is synchronous: no deferred page-protection publication.
-        buffer_cache.ClaimCpuWrites(sequences);
-"""
-assert new[0].count(cpu_batch_claim) == 1
-assert methods(bridge) == (new[0].replace(cpu_batch_claim, "", 1), new[1]), (
-    "inactive bridge differs beyond the reviewed synchronous batch claim")
-assert new[0].index("buffer_cache.ClaimCpuWrites(sequences);") < new[0].index(
-    "buffer_cache.WriteMemory(addr, size);")
+assert methods(bridge) == new, "inactive bridge invalidation methods drifted"
 assert new[0].count("::Eden::BufferPages::NeverRegistered(addr, size)") == 3
 assert "bool buffer_may_overlap = false;" in new[0]
 assert "if (buffer_may_overlap)" in new[0]
@@ -115,8 +101,6 @@ struct CountingMutex {
 struct Cache {
     CountingMutex mutex;
     int writes{};
-    int claims{};
-    template <typename Ranges> void ClaimCpuWrites(const Ranges&) { ++claims; }
     void WriteMemory(DAddr, u64) { ++writes; }
 };
 struct QueryCache {
@@ -228,7 +212,6 @@ int main() {
     x.InnerInvalidation(empty);
     assert(x.texture_cache.mutex.locks == 9 && x.buffer_cache.writes == 6);
     assert(x.buffer_cache.mutex.locks == 5);
-    assert(x.buffer_cache.claims == 4);
 }
 """.replace("__EXTRACT__", real_methods)
 compiler = shutil.which("clang++-18") or shutil.which("clang++")

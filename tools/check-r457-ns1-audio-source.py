@@ -80,7 +80,7 @@ KNOWN_VENDOR_GRAPH = {
     "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a": "same FC27 owners + NS2 TIPC handshake input preservation",
     "9136d2e88c43233bcd029f22bdfda0e5c94a552f": "same C++ owners + corrected token-preservation regression test",
     "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6": "same FC27 owners + real NS2 VI2 handshake and session rollback",
-    "5336659f7ccce1b378bae78587ae5592a11a61f6": "synchronous CPU batch ownership + NS2 GPU and VI2 initialization",
+    "34f02a3800cb6fb5330c099c81571ab03fd69ae1": "same runtime owners as reviewed NS2 VI2 handshake; unsafe FC27 coarse claim withdrawn",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

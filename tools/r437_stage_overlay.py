@@ -123,14 +123,6 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
-    if actual == "1dd743515bae8c2829205ec8b3528666ceba8a73":
-        current = "template <class P>\ntemplate <typename Ranges>\nvoid BufferCache<P>::ClaimCpuWrites(const Ranges& ranges) {"
-        previous = "template <class P>\nvoid BufferCache<P>::ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges) {"
-        assert source.count(current) == 1
-        source = source.replace(current, previous, 1)
-        data = source.encode("utf-8")
-        actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
-        assert actual == _PS5_RANGE_API_BUFFER_BLOB
     if actual == _PS5_RANGE_API_BUFFER_BLOB:
         for revised, historical in ps5_range_api_reversal:
             assert source.count(revised) == 1, "Reviewed RangeSet ABI adaptation drift"

@@ -103,13 +103,6 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
-    if exact_vendor_pin == "5336659f7ccce1b378bae78587ae5592a11a61f6":
-        assert raster_sha == "49e7a97dfafffe8b5433b4c77bcc1b8ce0800cbb"
-        batch_added = "        // Protect the ENTIRE guest CPU-write batch before the first\n        // WriteMemory. Otherwise preserving GPU-written sibling bytes on\n        // the first page can download them over a later CPU write to that\n        // same page. Match the ordered claim in OnCacheInvalidations.\n        // This is synchronous: no deferred page-protection publication.\n        buffer_cache.ClaimCpuWrites(sequences);\n"
-        assert raster_source.count(batch_added) == 1
-        raster_source = raster_source.replace(batch_added, "", 1)
-        raster_sha = raster_blob(raster_source)
-        assert raster_sha == "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35", "historical renderer reversal drift"
     if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200'}:
         assert raster_sha == '38d5630570675088a0620ef533112bb314a40ae8', 'Unexpected new PS5 FC27 rasterizer blob'
         receipt_path = root/'vendor/tests/native_msaa_handle_receipt.py'
@@ -164,11 +157,11 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     if pair_vendor_pin in {
         "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
         "729f7e5a734b5a890a7bbf3ab60ce1100492af13",
-        "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "5336659f7ccce1b378bae78587ae5592a11a61f6",
+        "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1",
     }:
         # New vendor changes only the selected NS2 SVC trace owners; seal their
         # exact bytes without weakening the preserved Vulkan reverse-oracle.
-        if pair_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "5336659f7ccce1b378bae78587ae5592a11a61f6"}:
+        if pair_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1"}:
             for owner, expected_blob in (
                 ("encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h",
                  "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86"),
@@ -182,15 +175,15 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                     text=True,
                 ).strip()
                 assert actual_blob == expected_blob, ("NS2 quiet SVC source drift", owner)
-        if pair_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "5336659f7ccce1b378bae78587ae5592a11a61f6"}:
+        if pair_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1"}:
             actual_blob = subprocess.check_output(
                 ["git", "hash-object", str(root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h")],
                 text=True,
             ).strip()
-            assert actual_blob == ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if pair_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "5336659f7ccce1b378bae78587ae5592a11a61f6"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if pair_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 texture owner drift", actual_blob)
+            assert actual_blob == ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if pair_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if pair_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 texture owner drift", actual_blob)
         # The exact reverted synchronous rasterizer is byte-identical
         # to the old d024 path before the F07 historical replay.
-        assert raster_blob((root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()) == ('49e7a97dfafffe8b5433b4c77bcc1b8ce0800cbb' if exact_vendor_pin == "5336659f7ccce1b378bae78587ae5592a11a61f6" else '01c6880e5a8836da45601b0a3cb7c0fd6c46cf35')
+        assert raster_blob((root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()) == '01c6880e5a8836da45601b0a3cb7c0fd6c46cf35'
         assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
         pair_vendor_pin = 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc'
     # Only AFTER exact receipt reversal, the historical R23/P24 oracle
@@ -541,7 +534,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             # Vendor #189 fixes a real native build ABI mismatch. The reviewed
             # BufferCache header uses the pinned ForEachInRange-backed query;
             # every other Vulkan fork receipt below stays byte-for-byte exact.
-            assert core_blob == ('1dd743515bae8c2829205ec8b3528666ceba8a73' if exact_vendor_pin == "5336659f7ccce1b378bae78587ae5592a11a61f6" else 'c6bab56cbd4e58458d010e423d74df9f933a8f8d')
+            assert core_blob == 'c6bab56cbd4e58458d010e423d74df9f933a8f8d'
             selected_buffer = core_owner.read_text()
             assert '!IsRegionGpuModified(page_begin, page_end - page_begin)' in selected_buffer
             assert '!gpu_modified_ranges.Intersects(' not in selected_buffer

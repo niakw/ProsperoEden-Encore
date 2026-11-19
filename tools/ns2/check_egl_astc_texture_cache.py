@@ -103,7 +103,7 @@ assert impl_native == native_block(
 owner_full_sha = subprocess.check_output(
     ["git", "hash-object", str(OWNER / "texture_cache.h")], text=True
 ).strip()
-assert owner_full_sha in {"744bf30e1421dcce212146f7e26e9d90558676a8", "0d99f9a861c645562519f71d62f4f49bfedd8101"}, (
+assert owner_full_sha in {"744bf30e1421dcce212146f7e26e9d90558676a8", "0d99f9a861c645562519f71d62f4f49bfedd8101", "859a9e46fb63a97fee82c8ea6b1566317264f98f"}, (
     "N60/R4 selected TextureCache owner drift", owner_full_sha)
 if owner_full_sha == "744bf30e1421dcce212146f7e26e9d90558676a8":
     legacy_tex = reverse_r23_checked_astc(
@@ -136,6 +136,10 @@ else:
             return body.split(signature, 1)[1].split("\n}\n", 1)[0]
         assert selected_method(tex) == selected_method(shadow), (
             "selected F07 method does not match reviewed shadow owner", signature)
+    if owner_full_sha == "859a9e46fb63a97fee82c8ea6b1566317264f98f":
+        signature = "void TextureCache<P>::TickAsyncUnswizzle()"
+        assert selected_method(tex) == selected_method(shadow), (
+            "selected PS5 BCn 3D F07 safety diverged from tested Vulkan owner")
     for marker in (
         "bool upload_completed = false;",
         "if (!upload_completed)",

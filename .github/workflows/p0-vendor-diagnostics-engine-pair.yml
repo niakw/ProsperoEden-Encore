@@ -15,14 +15,14 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=1a09972eea6f473fda1b714efe84cd52219bf681
+          expected=3e6647827122c34704c2699a6f5e9b20fff3e9a6
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
           test "$checked" = "$expected"
-          test "$(git -C vendor hash-object encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h)" = 0d99f9a861c645562519f71d62f4f49bfedd8101
-          test "$(git -C vendor hash-object tests/ns1_r23_18_tir_host.py)" = 520c5eb05f23c5fc6ad4438c9f6df774533644e1
-          test "$(git -C vendor hash-object tests/fc27_deferred_page_protection_host.py)" = cb821c1aaab3f968ce25d7ac92d489e01ba3b8f6
+          test "$(git -C vendor hash-object encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h)" = 859a9e46fb63a97fee82c8ea6b1566317264f98f
+          test "$(git -C vendor hash-object tests/ns1_r23_18_tir_host.py)" = 7c225ac2065a1721eb53cc034ea3bc4e3b581770
+          test "$(git -C vendor hash-object tests/fc27_deferred_page_protection_host.py)" = 876ebf0f43ffc3999d7ed6d983160d3447bc15f0
           test "$(git -C vendor hash-object encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h)" = 86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86
           test "$(git -C vendor hash-object encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp)" = 09ae2494b2b6f620a25ab549c06c69045a9fb73d
           test "$(git -C vendor hash-object tests/ns2_recent_svc_fault_trace_host.py)" = 79d8d7294e37e141d6c669d9b55fa5a02d94287e

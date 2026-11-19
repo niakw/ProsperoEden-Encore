@@ -3,6 +3,9 @@
 #ifdef EDEN_PS5_VULKAN
 #include "crash_report.h"
 #include "gpu_failure.h"
+#ifdef PS5_NATIVE
+#include "ns2_loading_svc_snapshot.h"
+#endif
 #endif
 #ifdef EDEN_DEV_PROFILE
 #include "present_interval_witness.h"
@@ -600,6 +603,9 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
                 static_cast<unsigned long long>(gpu.submitted_sample),
                 static_cast<unsigned long long>(gpu.total_floor64),
                 static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
+#ifdef PS5_NATIVE
+            ::Eden::NS2::LoadingSvcSnapshot::Report(10);
+#endif
         } else if (vulkan_loading_diagnostic_stage == 1 && elapsed >= 30.0) {
             vulkan_loading_diagnostic_stage = 2;
             const auto gpu = SampleLoadingGpuProgress();
@@ -611,6 +617,9 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
                 static_cast<unsigned long long>(gpu.submitted_sample),
                 static_cast<unsigned long long>(gpu.total_floor64),
                 static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
+#ifdef PS5_NATIVE
+            ::Eden::NS2::LoadingSvcSnapshot::Report(30);
+#endif
         }
         return true;
     }

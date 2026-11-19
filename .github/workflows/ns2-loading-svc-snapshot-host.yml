@@ -1,0 +1,27 @@
+name: NS2 bounded loading SVC snapshot host
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - vendor
+      - headless/graphics.cpp
+      - headless/ns2_loading_svc_snapshot.h
+      - tools/check-ns2-loading-svc-snapshot-host.py
+      - .github/workflows/ns2-loading-svc-snapshot-host.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  svc-snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+      - name: Exercise exact NS2 loading milestone snapshot with sanitizers
+        run: python3 -B tools/check-ns2-loading-svc-snapshot-host.py

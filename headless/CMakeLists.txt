@@ -3296,11 +3296,11 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
 endif()
 
-# P0.2: limited A64 LDAPR promotion for the unified PS5 JIT. It uses the
-# original pinned Dynarmic decoder and load/store owner with one reviewed
-# instruction, not the unvalidated RETAA/PAC or LSE research extensions.
-# This runs only in the reviewed final dual-NPDM target and is independent
-# of the opt-in research flags (which remain explicitly forbidden at release).
+# P0.2: reviewed ARMv8.1-8.5 A64 promotion for the unified PS5 JIT.
+# Vendor #192 is the exact Lichii 11aac324 frontend delta on the same pinned
+# Dynarmic base: LSE/CAS/CASP, LDAPR, authenticated branch/load forms, PAC/AUT/
+# XPAC/PACGA and the MTE subset used by Switch 2. Keep activation source-scoped
+# to the one maintained A64 translator; do not define it across all Dynarmic TUs.
 set(EDEN_SHARED_NS2_A64_LDAPR OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_A64_LDAPR ON)
@@ -3308,11 +3308,13 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src")
     set(EDEN_A64_LDAPR_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
     include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")
-    # Dynarmic's a64.h includes ./a64.inc, and a64_translate.cpp includes
-    # load_store_exclusive.cpp as source text. All 4 generated files must
-    # resolve under one include root, before the vendored Dynarmic headers.
+    # a64.h/a64.inc and all included implementation units must resolve from
+    # one reviewed output root before the immutable Dynarmic headers.
     target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")
-    message(STATUS "Encore shared A64: reviewed LDAPR + RETAA/RETAB no-PAC return; no general PAC/LSE research")
+    set_property(SOURCE "${EDEN_MAINTAINED_SCALAR_TRANSLATOR}"
+        TARGET_DIRECTORY dynarmic APPEND PROPERTY COMPILE_DEFINITIONS
+        "EDEN_NS2_A64_V81_V85=1")
+    message(STATUS "Encore shared A64: reviewed ARMv8.1-8.5 NS2 frontend enabled on maintained translator")
 endif()
 
 # Unified NS2 six-core kernel owner; each process retains its physical

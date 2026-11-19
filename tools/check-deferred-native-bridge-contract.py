@@ -327,6 +327,12 @@ def m07_source_blob(value):
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
 m07_selected_sha = m07_source_blob(original_m07)
+if m07_selected_sha == "49e7a97dfafffe8b5433b4c77bcc1b8ce0800cbb":
+    reviewed = "        // Protect the ENTIRE guest CPU-write batch before the first\n        // WriteMemory. Otherwise preserving GPU-written sibling bytes on\n        // the first page can download them over a later CPU write to that\n        // same page. Match the ordered claim in OnCacheInvalidations.\n        // This is synchronous: no deferred page-protection publication.\n        buffer_cache.ClaimCpuWrites(sequences);\n"
+    assert original_m07.count(reviewed) == 1
+    original_m07 = original_m07.replace(reviewed, "", 1)
+    m07_selected_sha = m07_source_blob(original_m07)
+    assert m07_selected_sha == "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35"
 # Vendor #194: the exact shipping FC27 post-buffer-lock page-protection
 # publication is newer than M07. Remove only its reviewed hunk AND header
 # from the historical audit copy, then keep all M07/R23/MSAA proofs intact.

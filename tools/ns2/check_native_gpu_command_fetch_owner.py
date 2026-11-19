@@ -98,18 +98,19 @@ elif cache_blob in {
     "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "505ee80a37d5991b7925019282e71926c1648e02",
     "c6bab56cbd4e58458d010e423d74df9f933a8f8d",  # vendor #189: reviewed pinned RangeSet native ABI adaptation
+    "1dd743515bae8c2829205ec8b3528666ceba8a73",  # Lichii #1328 selected synchronous batch claim
 }:
     write_marker = "WriteDownloadedMemory(cpu_written, copy_device_addr, copy_mapped_memory, copy.size);"
     assert "void BufferCache<P>::WriteDownloadedMemory" in buffer_cache
     assert "device_memory.WriteBlockUnsafe(start, data + (start - device_addr), end - start);" in buffer_cache
     if cache_blob in {"09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
-                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d"}:
+                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "1dd743515bae8c2829205ec8b3528666ceba8a73"}:
         assert "Upstream Lichii/Eglantine b13c4c1" in buffer_cache
         assert "keep_page_gpu_data" in buffer_cache
     if cache_blob == "505ee80a37d5991b7925019282e71926c1648e02":
         assert "Lichii 44bf47d" in buffer_cache
         assert "!gpu_modified_ranges.Intersects(page_begin, page_end - page_begin)" in buffer_cache
-    if cache_blob == "c6bab56cbd4e58458d010e423d74df9f933a8f8d":
+    if cache_blob in {"c6bab56cbd4e58458d010e423d74df9f933a8f8d", "1dd743515bae8c2829205ec8b3528666ceba8a73"}:
         assert "Lichii 44bf47d" in buffer_cache
         assert "!IsRegionGpuModified(page_begin, page_end - page_begin)" in buffer_cache
         assert "gpu_modified_ranges.Intersects(" not in buffer_cache

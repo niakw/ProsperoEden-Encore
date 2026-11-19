@@ -358,7 +358,8 @@ jobs:
           python3 -B tools/ns2/check_shader_archive_inventory_host.py
           python3 -B tools/ns2/check_ns2_ps5_compatibility_catalog.py
           python3 -B vendor/tests/ns2-kprocess-memory-budget-source.py
-          python3 -B vendor/tests/ns2_alias_128g_no_kprocess_layout_host.py
+          python3 -B vendor/tests/ns2_alias_64g_upstream_parity_host.py
+          python3 -B vendor/tests/ns2_a64_v81_v85_source.py
       - name: Vulkan arithmetic and frame worker guards
         run: |
           set -euo pipefail

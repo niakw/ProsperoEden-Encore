@@ -20,7 +20,7 @@ BASE = ROOT / "vendor/sources/eden/src/dynarmic/src"
 REL = Path("dynarmic/frontend/A64")
 ACTIVE = ROOT / "vendor/encore-active/ns2-runtime/ldapr/maintained" / REL
 TRANSLATOR = ROOT / "vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp"
-EXPECTED_VENDOR = "d869577e8ccad200fa84646341ac38a007c93a90"
+EXPECTED_VENDOR = "435d49bd2a37439340b640443190d87893052347"
 FILES = (
     "decoder/a64.h",
     "decoder/a64.inc",

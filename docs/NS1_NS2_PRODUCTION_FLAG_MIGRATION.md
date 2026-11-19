@@ -137,31 +137,27 @@ propriétaire d'implémentation réel et n'est pas un interrupteur mort.
 mais aucun des 9 chemins de recherche complets n'est activé
 en production. Certains comportements ont déjà des propriétaires partagés `EDEN_SHARED_NS2_*` — cela ne suffit pas à certifier les chemins verrouillés ici.
 
-**P0.2c — LDAPR ARM64 promu sélectivement, sans le bloc A64 de recherche (05/11/2026).**
-Le profil final PS5 dual-NPDM compile le décodeur Dynarmic original avec
-**une seule instruction supplémentaire** (`LDAPR`, tailles 8/16/32/64 bits),
-sans activer le sélecteur de recherche A64. `headless/shared_a64_ldapr.cmake`
-génère précisément quatre fichiers au-dessus des sources Dynarmic épinglées :
-`a64.h` identique (son `./a64.inc` doit provenir du même répertoire),
-la table `a64.inc`, la signature `impl.h` et la fonction de traduction
-`load_store_exclusive.cpp`. La sémantique RCpc (acquire) est conservativement
-émulée par la fonction existante `LDAR` (acquire plus fort). Cela ne modifie
-aucune instruction NS1 existante ni le backend JIT commun.
+**P0.2c — ARMv8.1–8.5 NX2 promu depuis le vendor #192 (19/11/2026).**
+Le profil final PS5 dual-NPDM sélectionne désormais le lot A64 revu du vendor
+`435d49bd`, issu du commit Lichii `11aac324` : LDAPR/RCpc, RETAA/RETAB,
+atomiques LSE (`LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN/LDUMAX/LDUMIN/SWP`),
+CAS/CASP, compatibilité PAC/authenticated branches/loads et sous-ensemble MTE.
 
-**Pas de portage aveugle de RETAA/RETAB ou CAS/LSE :** ces opérations
-appartiennent toujours à l'overlay expérimental, notamment en raison de
-l'absence d'authentification PAC et des règles de reprise atomique non
-validées. La présence de `LDAPR` ne valide pas CPU6, HOS ou les nouveaux
-opcodes ARM64 restants.
+`headless/shared_a64_ldapr.cmake` copie **huit** propriétaires maintenus dans
+un seul overlay prioritaire. Le macro `EDEN_NS2_A64_V81_V85=1` est limité à
+l'unité `a64_translate.cpp` réellement maintenue ; il n'est défini ni sur
+tout `dynarmic`, ni sur `core`. NS1 conserve donc son graphe CPU existant.
 
-Preuves hôte : les 4 sorties générées sont diffées avec leur vrai propriétaire
-épinglé (modifications uniquement LDAPR), changement d'ancre refusé,
-`a64_translate.cpp` complet syntax-checké par Apple Clang, vrai décodeur
-Dynarmic exécuté pour toutes les tailles (**O0/O2**, UBSan, 2/2 PASS sur
-le Mac courant). `g++` système est un alias Apple Clang et n’est pas
-un deuxième compilateur indépendant. Le décodage `RET` est conservé et
-`RETA` n’est pas ajouté. Le build PS5 et la progression CPU
-invitée restent **P5** ; les 9 commutateurs de recherche restent OFF.
+Le garde hôte compile le vrai traducteur maintenu sous ce macro et vérifie les
+familles de décodeur. Le JIT hôte exécute CAS/LSE avec retry exclusif, RETAA,
+LDAPR, PACGA, ADDG/MTE et la contention du moniteur exclusif sur six cœurs.
+Le packaging natif inspecte ensuite le vrai `compile_commands.json` et refuse
+une release si le macro n'apparaît pas **exactement** sur ce TU.
+
+Cette promotion ne prouve pas que MKW/Bananza démarrent sur PS5 : la correction
+VAMM est volontairement traitée dans une PR moteur distincte. Le modèle PAC
+reste une compatibilité sans clés cryptographiques réelles, et MTE conserve le
+modèle zero-tag revu upstream.
 
 **P0.2 CPU6 — preflight de six cœurs corrigé, recherche seulement (05/11/2026).**
 L’ancien override CPU6 portait `NUM_CPU_CORES` à six sans adapter les

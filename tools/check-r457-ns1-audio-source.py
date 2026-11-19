@@ -69,6 +69,7 @@ KNOWN_VENDOR_GRAPH = {
     "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc": "same byte-sealed NS1/audio owners + reviewed NS2 A64 v8.1-v8.5 and 64GiB-alias/32GiB-VAMM successors",
     "8153654a2f1fe809fb2caa28dcadca90a7661446": "same exact AudioOut owners + reviewed PS5 FC27 deferred buffer-cache publication/race-barrier vendor #194",
     "6c38328fbef33de747f5c31ea30d13541a513a4a": "same byte-sealed AudioOut/FC27 owners + reviewed PS5 A64 64Ki fast-dispatch tables (EglantinePS5 #104)",
+    "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6": "same sealed AudioOut/FC27 owners; P0 uniform 16MiB A64 dispatch ABI restored",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

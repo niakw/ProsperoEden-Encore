@@ -49,7 +49,7 @@ reviewed_vendors={
     "dcfe3d2384bd800c6139ede672518ea2c66922a6",
     # Vendor PR #185: shim+tiling header/test/workflow only;
     # sparse kernel and GPU publisher blobs are still checked below.
-    "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a",
+    "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6",
 }
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
@@ -66,11 +66,11 @@ for path,expected in (
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp",
      "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
     ("vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc",
-     "852a0272696c7ce182bc05aee92bc7cbb195446b" if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
+     "852a0272696c7ce182bc05aee92bc7cbb195446b" if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6"} else "daf493ce6e863397ec44bfae467c4f7533570477"),
 ):
     assert gitblob(path)==expected,("Unexpected sparse kernel source owner",path)
 
-if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a"}:
+if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6"}:
     deferred_header = "vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h"
     assert gitblob(deferred_header) == "33262f511777cdd1b4a74ac0cd6dc39caa12c9d0"
     device = read("vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc")

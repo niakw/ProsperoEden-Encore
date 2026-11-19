@@ -361,10 +361,10 @@ assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in unified_rasterizer
 assert 'vulkan_abi/video_core/rasterizer_interface.h' in kernel_select
 print('ENCORE_POST_F07_UNIFIED_RASTERIZER_ABI_OWNER_PASS owners=1')
 
-# Production-selected CPU6 scheduler/JIT and A64 LDAPR owners live in the
+# Production-selected CPU6 scheduler/JIT and reviewed A64 v8.1-v8.5 owners live in the
 # vendor submodule, not headless. Preserve the frozen F07 catalogue; these
 # are separately audited shipping owners, never the opt-in research ledger.
-post_f07_cpu6_ldapr_owners = {
+post_f07_cpu6_a64_owners = {
     "ns2-runtime/cpu6/maintained/core/hle/kernel/global_scheduler_context.cpp",
     "ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_32.cpp",
     "ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_64.cpp",
@@ -373,17 +373,20 @@ post_f07_cpu6_ldapr_owners = {
     "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h",
     "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp",
     "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_atomic.cpp",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/pointer_authentication.cpp",
+    "ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/memory_tagging.cpp",
 }
-assert post_f07_cpu6_ldapr_owners <= set(physical_all), (
-    "Missing vendor-maintained CPU6/LDAPR owners",
-    sorted(post_f07_cpu6_ldapr_owners - set(physical_all)))
-assert not post_f07_cpu6_ldapr_owners.intersection(research_paths), (
-    "Shipping CPU6/LDAPR owners misclassified as research")
+assert post_f07_cpu6_a64_owners <= set(physical_all), (
+    "Missing vendor-maintained CPU6/A64-v8.1-v8.5 owners",
+    sorted(post_f07_cpu6_a64_owners - set(physical_all)))
+assert not post_f07_cpu6_a64_owners.intersection(research_paths), (
+    "Shipping CPU6/A64-v8.1-v8.5 owners misclassified as research")
 assert 'vendor/encore-active/ns2-runtime/cpu6/maintained/core' in (
     root/'headless/ns2_cpu6_source_bridge.cmake').read_text()
 assert 'vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64' in (
     root/'headless/shared_a64_v81_v85.cmake').read_text()
-print("ENCORE_VENDOR_MAINTAINED_CPU6_LDAPR_PASS owners=8")
+print("ENCORE_VENDOR_MAINTAINED_CPU6_A64_PASS owners=11")
 
 # P1.3 post-F07 live NVDRV owners. These two complete C++ translation
 # units are shipped by the single shared core; neither alters the original
@@ -1293,7 +1296,7 @@ physical = [p for p in physical_all
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
             post_f07_native_atomic_owners | post_f07_native_gpfifo_fetch_owners |
             shared_ns2_wait64_owners | post_f07_unified_rasterizer_owners |
-            post_f07_cpu6_ldapr_owners | post_f07_shared_nvdrv_owners |
+            post_f07_cpu6_a64_owners | post_f07_shared_nvdrv_owners |
             post_f07_video_decoder_owners | post_f07_native_global_atomic_owners |
             post_f07_native_stage_buffer_owners | post_f07_task_mesh_source_owners |
             post_f07_r437_buffer_base_owners | post_f07_image_array_owners |
@@ -1322,9 +1325,9 @@ for line in audit.splitlines():
         continue
     relative = fields[3].removeprefix("vendor/encore-active/")
     graph.setdefault(relative, []).append(fields[0])
-assert all(path in graph for path in post_f07_cpu6_ldapr_owners), (
-    "Vendor-maintained CPU6/LDAPR owners missing exact audit rows",
-    sorted(path for path in post_f07_cpu6_ldapr_owners if path not in graph))
+assert all(path in graph for path in post_f07_cpu6_a64_owners), (
+    "Vendor-maintained CPU6/A64-v8.1-v8.5 owners missing exact audit rows",
+    sorted(path for path in post_f07_cpu6_a64_owners if path not in graph))
 # A separate supplemental catalog keeps new runtime sources explicitly owned,
 # without re-dating or silently increasing the immutable 337-path F07 snapshot.
 post_begin, post_end = ("<!-- POST_F07_MAINTAINED_OWNER_START -->",
@@ -1334,7 +1337,7 @@ post_rows = [line for line in document.split(post_begin)[1].split(post_end)[0].s
              if line.startswith("| `ns2-runtime/")]
 post_expected = [
     f"| `{path}` | {','.join(graph[path])} |"
-    for path in sorted(post_f07_cpu6_ldapr_owners)]
+    for path in sorted(post_f07_cpu6_a64_owners)]
 assert post_rows == post_expected, ("post-F07 vendor source owner drift",
                                    post_rows, post_expected)
 diagnostics_rows = [line for line in document.split(post_begin)[1].split(post_end)[0].splitlines()

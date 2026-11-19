@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Final engine/vendor source qualification for FC27 + P0 additions.
+""Final engine/vendor source qualification for FC27 + P0 additions.
 
 Host/source only. This proves the engine selects the exact reviewed vendor
 graph and replays the vendor's own focused contracts. It is not a PS5 build,
 FC27 visual pass, Bananza boot proof, or performance measurement.
-"""
+""
 from pathlib import Path
 import subprocess
 
@@ -12,7 +12,7 @@ ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 # Vendor #190 touches only NS2 SVC/trace and source tests; the FC27 GPU
 # owners remain byte-sealed by the focused tests below.
-REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b"}
+REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d869577e8ccad200fa84646341ac38a007c93a90"}
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)

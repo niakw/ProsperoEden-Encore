@@ -3296,11 +3296,11 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
 endif()
 
-# P0.2: limited A64 LDAPR promotion for the unified PS5 JIT. It uses the
-# original pinned Dynarmic decoder and load/store owner with one reviewed
-# instruction, not the unvalidated RETAA/PAC or LSE research extensions.
-# This runs only in the reviewed final dual-NPDM target and is independent
-# of the opt-in research flags (which remain explicitly forbidden at release).
+# P0.2: reviewed Switch 2 ARMv8.1-8.5 frontend promotion for the unified
+# PS5 JIT. Vendor #192 is byte-anchored to Lichii 11aac324 and the exact
+# Dynarmic parent used by Encore: LSE atomics/CAS/CASP, LDAPR, pointer-auth
+# compatibility branches/loads and the MTE subset used by NX2. This is not
+# the archived EDEN_NS2_A64_EXPERIMENTAL graph and introduces no title switch.
 set(EDEN_SHARED_NS2_A64_LDAPR OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_A64_LDAPR ON)
@@ -3308,11 +3308,13 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src")
     set(EDEN_A64_LDAPR_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
     include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")
-    # Dynarmic's a64.h includes ./a64.inc, and a64_translate.cpp includes
-    # load_store_exclusive.cpp as source text. All 4 generated files must
-    # resolve under one include root, before the vendored Dynarmic headers.
+    # Dynarmic's decoder and translator include adjacent implementation
+    # sources as source text. Keep the complete reviewed set under one
+    # prioritized include root, then enable the matching methods only on the
+    # production PS5 dual-NPDM Dynarmic target.
     target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")
-    message(STATUS "Encore shared A64: reviewed LDAPR + RETAA/RETAB no-PAC return; no general PAC/LSE research")
+    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1)
+    message(STATUS "Encore shared A64: reviewed Lichii ARMv8.1-8.5 NX2 coverage enabled")
 endif()
 
 # Unified NS2 six-core kernel owner; each process retains its physical

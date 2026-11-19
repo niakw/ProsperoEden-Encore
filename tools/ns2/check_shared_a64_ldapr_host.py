@@ -54,6 +54,27 @@ assert "EDEN_NS2_A64_EXPERIMENTAL" not in CMAKE
 assert all((STATIC / f).is_file() for f in FILES)
 assert PROD_TRANSLATOR.is_file()
 
+# Keep the exact production owner ledger and independent pair gates in sync
+# with the reviewed vendor. A later source addition must not pass merely
+# because the CMake overlay happened to find a file.
+audit = (ROOT / "docs/EDEN_CORE_AUDIT_DEPENDENCIES.md").read_text(encoding="utf-8")
+catalog = (ROOT / "docs/EDEN_ACTIVE_SOURCE_CATALOG.md").read_text(encoding="utf-8")
+for file in FILES:
+    owner = "vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/" + file
+    assert owner in audit, ("A64 owner missing central audit row", owner)
+    assert owner.removeprefix("vendor/encore-active/") in catalog, (
+        "A64 owner missing supplemental active-source catalog", owner
+    )
+for workflow in (
+    ".github/workflows/r457-ns2-sparse-guest-native-host.yml",
+    ".github/workflows/ns1-nvdec-eagain-owner-pair-host.yml",
+    ".github/workflows/ps5-usage-tracker-engine-pair-host.yml",
+    ".github/workflows/ns1-c03-radv-14-source-host.yml",
+):
+    body = (ROOT / workflow).read_text(encoding="utf-8")
+    assert EXPECTED_VENDOR in body, ("Reviewed vendor absent from independent pair gate", workflow)
+print("P0_NS2_A64_V81_V85_OWNER_LEDGER_PASS owners=8 pair_gates=4", flush=True)
+
 # Reuse the vendor's exact upstream provenance and VAMM parity oracles.
 for check in (
     VENDOR / "tests/ns2_a64_v81_v85_source.py",

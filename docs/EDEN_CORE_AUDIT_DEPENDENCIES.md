@@ -245,23 +245,23 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 512 | 489 | 1028 |
+| Graphe connu | 515 | 492 | 1040 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 427 | 417 | 862 |
+| SOURCE — lecture effectuée, preuve insuffisante | 430 | 420 | 874 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **442** | **431** | **890** |
-| Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
+| **Encore à qualifier (SOURCE + OPEN)** | **445** | **434** | **902** |
+| Dont priorité P0 (SOURCE + OPEN) | 114 | 109 | 255 |
 
-Le **noyau restant** compte donc 442 critères répartis sur
-431 fichiers et 890 mentions fonction/contrat :
-15 OPEN et 427 SOURCE.
+Le **noyau restant** compte donc 445 critères répartis sur
+434 fichiers et 902 mentions fonction/contrat :
+15 OPEN et 430 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans
 [`EDEN_ACTIVE_SOURCE_CATALOG.md`](EDEN_ACTIVE_SOURCE_CATALOG.md) :
-337 fichiers de code/en-têtes maintenus (hors 107 unités NS2 expérimentales), dont 335 avec un chemin de
-graphe exact et deux en-têtes d'hygiène à preuve dédiée.
+337 fichiers historiques de code/en-têtes maintenus, complétés par 13 propriétaires post-F07 suivis dans un registre séparé (350 entrées suivies au total ; les unités NS2 expérimentales restent hors de ce catalogue de production). Le socle historique conserve ses 335 chemins de
+graphe exacts et deux en-têtes d'hygiène à preuve dédiée.
 Cette couverture de chemins n'est **pas** une preuve fonctionnelle ni une
 certification de la sélection du code à l'exécution.
 Le contrôle hôte vérifie la complétude des chemins et les références,

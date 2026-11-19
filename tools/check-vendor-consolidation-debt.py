@@ -1924,11 +1924,11 @@ assert base_trans.count(old_inc) == 1
 # original scalar include rewrite and fail closed on any other difference.
 native_a64_anchor = '#include "dynarmic/frontend/A64/translate/impl/load_store_load_literal.cpp"'
 native_a64_includes = (
-    '#if defined(EDEN_NS2_A64_V81_V85)\\n'
-    '#include "dynarmic/frontend/A64/translate/impl/load_store_atomic.cpp"\\n'
-    '#include "dynarmic/frontend/A64/translate/impl/memory_tagging.cpp"\\n'
-    '#include "dynarmic/frontend/A64/translate/impl/pointer_authentication.cpp"\\n'
-    '#endif\\n'
+    '#if defined(EDEN_NS2_A64_V81_V85)\n'
+    '#include "dynarmic/frontend/A64/translate/impl/load_store_atomic.cpp"\n'
+    '#include "dynarmic/frontend/A64/translate/impl/memory_tagging.cpp"\n'
+    '#include "dynarmic/frontend/A64/translate/impl/pointer_authentication.cpp"\n'
+    '#endif\n'
 )
 assert base_trans.count(native_a64_anchor) == 1
 native_a64_expected = base_trans.replace(old_inc, '"impl/impl.cpp"').replace(

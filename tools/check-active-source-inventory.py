@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-""Fail if the active C/C++ source catalogue drifts from tracked files.
+"""Fail if the active C/C++ source catalogue drifts from tracked files.
 
 This verifies file-level coverage and exact graph cross-links only.
 It is not a function audit, compiler check or console-test certificate.
-""
+"""
 from pathlib import Path
 import json
 import re
@@ -448,10 +448,10 @@ if r437_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f5
         raw = source.encode("utf-8")
         return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
     assert current_r437_blob(r437_body) == "bd424e728182500b573a4cc4cf07987ddc4cbdc3"
-    sibling_decl = ""    /// Preserve GPU-written bytes elsewhere on touched pages before a CPU write
+    sibling_decl = """    /// Preserve GPU-written bytes elsewhere on touched pages before a CPU write
     /// changes the page-granular ownership. Disable only when the mapping is going away.
     void WriteMemory(DAddr device_addr, u64 size, bool keep_page_gpu_data = true);
-""
+"""
     historical_decl = "    void WriteMemory(DAddr device_addr, u64 size);\n"
     assert r437_body.count(sibling_decl) == 1
     r437_body = r437_body.replace(sibling_decl, historical_decl, 1)
@@ -464,35 +464,35 @@ if r437_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f5
         return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
     assert r437_blob(r437_body) == "42f7b4287d9457b26113d10819bbe4ddaf065aaa"
     additions = (
-        ""    using PendingCpuWrites = std::function<void(const std::function<void(DAddr, size_t)>&)>;
+        """    using PendingCpuWrites = std::function<void(const std::function<void(DAddr, size_t)>&)>;
     void SetPendingCpuWrites(PendingCpuWrites source) { pending_cpu_writes = std::move(source); }
 
     /// Remove all about-to-be-applied CPU writes from GPU-owned ranges before
     /// any one write can trigger a download of older bytes over another.
     void ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges);
 
-"",
-        ""    [[nodiscard]] Common::RangeSet<DAddr> PendingCpuWriteRanges();
+""",
+        """    [[nodiscard]] Common::RangeSet<DAddr> PendingCpuWriteRanges();
     void WriteDownloadedMemory(const Common::RangeSet<DAddr>& cpu_written,
                                DAddr device_addr, const u8* data, u64 size);
 
-"",
+""",
         "    PendingCpuWrites pending_cpu_writes;\n",
     )
     for addition in additions:
         assert r437_body.count(addition) == 1
-        r437_body = r437_body.replace(addition, ", 1)
+        r437_body = r437_body.replace(addition, "", 1)
     assert r437_blob(r437_body) == "b4b7480e6a3d52ef7ec8c597f8e81c9e2f9fe1d9"
     print("ENCORE_FC27_BUFFER_BASE_EXACT_REVERSE_PARITY_PASS")
 pinned_base = (root / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 old_mark = "    void MarkWrittenBuffer(BufferId buffer_id, DAddr device_addr, u32 size);"
-new_mark = ""    // R437: preserve the legacy three-argument call while exposing explicit
+new_mark = """    // R437: preserve the legacy three-argument call while exposing explicit
     // write-tick ownership to the maintained native BufferCache implementation.
     void MarkWrittenBuffer(BufferId buffer_id, DAddr device_addr, u32 size,
-                           bool needs_sync = true);""
+                           bool needs_sync = true);"""
 old_wait = "    void WaitForGpuFenceIfNeeded(Buffer& buffer);"
-new_wait = ""    // Same fence-wait member as the maintained R437 BufferCache body.
-    void SynchronizeBufferWrites(Buffer& buffer);""
+new_wait = """    // Same fence-wait member as the maintained R437 BufferCache body.
+    void SynchronizeBufferWrites(Buffer& buffer);"""
 assert r437_body.count(new_mark) == r437_body.count(new_wait) == 1
 assert r437_body.replace(new_mark, old_mark).replace(new_wait, old_wait) == pinned_base, (
     "Unreviewed R437 BufferCache base-source drift")
@@ -1192,7 +1192,7 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             # exact pre-#175 blob in memory before applying the frozen Nov15
             # source receipt; unknown/duplicate include drift fails closed.
             assert raw.count(gpu_dirty_include) == 1, path
-            historical = raw.replace(gpu_dirty_include, b", 1)
+            historical = raw.replace(gpu_dirty_include, b"", 1)
             header = b"blob " + str(len(historical)).encode() + b"\0"
             actual = hashlib.sha1(header + historical).hexdigest()
         else:

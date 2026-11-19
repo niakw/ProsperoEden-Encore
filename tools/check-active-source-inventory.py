@@ -671,7 +671,15 @@ post_f07_native_gpfifo_owners = {
 native_m2mf_channel_state = "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-if native_gpfifo_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
+if native_gpfifo_vendor_pin in {
+    "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
+    "729f7e5a734b5a890a7bbf3ab60ce1100492af13",
+}:
+    # The selected channel-state owner is unchanged by the SVC-only successor.
+    raw = (active / native_m2mf_channel_state).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "dd30183f72a9a9dfc2a17700db263f85e4d77596", (
+        "NS2 M2MF channel-state source drift", actual)
     native_gpfifo_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 if native_gpfifo_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "67759611edc13414c112ea9d2b6664d54827a200"}:
     native_gpfifo_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"

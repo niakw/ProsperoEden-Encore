@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 # Vendor #192/#193 touch only reviewed NS2 A64/kernel owners and their tests.
 # The FC27 GPU owners remain byte-sealed by the focused tests below.
-REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "1e5cd625297e7dcc62d1fb5af05ffc1149e55961"}
+REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "87b5a4d674e2a1616cd19b5234203e80920abcc4"}
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
@@ -32,7 +32,7 @@ if selected == "67759611edc13414c112ea9d2b6664d54827a200":
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("RomFS-only successor drift",relative,actual)
 
-if selected == "1e5cd625297e7dcc62d1fb5af05ffc1149e55961":
+if selected == "87b5a4d674e2a1616cd19b5234203e80920abcc4":
     # PR #194 is rolled back only in production GPU cache protection.
     # Preserve newly reviewed NS2 RomFS and A64 uniform 16MiB ABI.
     for relative, expected in {
@@ -43,7 +43,7 @@ if selected == "1e5cd625297e7dcc62d1fb5af05ffc1149e55961":
         "encore-active/eden-core/src/core/file_sys/romfs_factory.cpp":
             "4775cf98c3bfbc587402928bad424dcb471047a0",
         "tests/fc27_deferred_page_protection_host.py":
-            "df0bcd9cf0193ce2227f298ea409240ef8b22e73",
+            "7051e22341bf7a5374221700834917fc74e4f746",
     }.items():
         raw = (V/relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()

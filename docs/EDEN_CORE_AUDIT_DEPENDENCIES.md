@@ -245,17 +245,17 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 512 | 489 | 1028 |
+| Graphe connu | 515 | 492 | 1031 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 427 | 417 | 862 |
+| SOURCE — lecture effectuée, preuve insuffisante | 430 | 420 | 865 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **442** | **431** | **890** |
-| Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
+| **Encore à qualifier (SOURCE + OPEN)** | **445** | **434** | **893** |
+| Dont priorité P0 (SOURCE + OPEN) | 114 | 109 | 246 |
 
-Le **noyau restant** compte donc 442 critères répartis sur
-431 fichiers et 890 mentions fonction/contrat :
-15 OPEN et 427 SOURCE.
+Le **noyau restant** compte donc 445 critères répartis sur
+434 fichiers et 893 mentions fonction/contrat :
+15 OPEN et 430 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans
@@ -959,11 +959,14 @@ function/contract tokens are checked by CI for existence only; the
 | U90 | P0 | U01 | vendor/encore-active/ns2-runtime/cpu6/maintained/core/hle/kernel/global_scheduler_context.cpp | static constexpr std::array<u32, Core::Hardware::NUM_CPU_CORES> per_core | SOURCE | tools/ns2/check_cpu6_scheduler_tick_host.py | Full maintained six-core preemption schedule, copied without CMake C++ fabrication; exact pinned-source and sanitizer host witness, no PS5 execution | 🟡 Source étudiée |
 | U91 | P0 | J11 | vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_32.cpp | m_process->GetPhysicalCoreMask() | SOURCE | tools/ns2/check_cpu6_scheduler_tick_host.py | A32 per-process physical affinity preserves four-core cadence on NS1; full-source parity and UBSan host only | 🟡 Source étudiée |
 | U92 | P0 | J11 | vendor/encore-active/ns2-runtime/cpu6/maintained/core/arm/dynarmic/arm_dynarmic_64.cpp | m_process->GetPhysicalCoreMask() | SOURCE | tools/ns2/check_cpu6_scheduler_tick_host.py | Optimized G11/N76 native A64 owner plus reviewed six-core tick rule, selected without a DEV build switch; no console proof | 🟡 Source étudiée |
-| U93 | P0 | J11 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.h | GetName | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Identical pinned decoder interface, static copy to the single A64 overlay, no research PAC decoder | 🟡 Source étudiée |
-| U94 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc | INST(LDAPR, | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Reviewed LDAPR plus RETAA/RETAB decode rows added to pinned A64 table; full byte parity and negative-drift host check, no general PAC/LSE | 🟡 Source étudiée |
-| U95 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h | bool LDAPR(Imm<2> size, Reg Rn, Reg Rt) | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Reviewed A64 translator declaration for RCpc acquisition; no LSE/CAS promotion | 🟡 Source étudiée |
-| U96 | P0 | U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp | bool TranslatorVisitor::LDAPR( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Real LDAPR-to-LDAR acquire lowering, exact pinned diff and Clang host decoder/syntax proof, no PS5 validation | 🟡 Source étudiée |
-| U97 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp | bool TranslatorVisitor::RETA( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Lichii-compatible no-PAC RETAA/RETAB raw-X30 return with PopRSBHint; exact pinned-base delta, general PAC/LSE excluded, PS5 gameplay pending | 🟡 Source étudiée |
+| U93 | P0 | J11 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.h | GetName | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Pinned decoder interface staged into the single reviewed A64 overlay | 🟡 Source étudiée |
+| U94 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/decoder/a64.inc | INST(AtomicMemOp, | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Exact Lichii 11aac324 decoder output: LDAPR, LSE/CAS/CASP, PAC/authenticated control flow and MTE subset | 🟡 Source étudiée |
+| U95 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/impl.h | bool AtomicMemOp( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Exact reviewed translator declarations for the promoted ARMv8.1-v8.5 instruction families | 🟡 Source étudiée |
+| U96 | P0 | U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp | bool TranslatorVisitor::LDAR( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Exact pinned exclusive-load/store owner retained alongside the new atomic implementation; host translator compilation required | 🟡 Source étudiée |
+| U97 | P0 | U93 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/a64_branch.cpp | TranslatorVisitor | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Upstream branch owner after RETAA/RETAB authentication handling moved to pointer_authentication.cpp | 🟡 Source étudiée |
+| U101 | P0 | U94,U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/load_store_atomic.cpp | bool TranslatorVisitor::CompareAndSwapPair( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Exact Lichii 11aac324 LSE/CAS/CASP/LDAPR owner; retries failed exclusive stores rather than committing partial register state | 🟡 Source étudiée |
+| U102 | P0 | U94,U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/memory_tagging.cpp | bool TranslatorVisitor::STG_family( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Exact Lichii 11aac324 Switch 2 MTE subset with tags modeled as zero; host source qualification only | 🟡 Source étudiée |
+| U103 | P0 | U94,U95 | vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64/translate/impl/pointer_authentication.cpp | bool TranslatorVisitor::PACGA( | SOURCE | tools/ns2/check_shared_a64_ldapr_host.py | Exact Lichii 11aac324 PAC/AUT/XPAC/authenticated branch/load owner with identity authentication model | 🟡 Source étudiée |
 | U98 | P2 | F31 | vendor/encore-active/eden-backports/src/common/net/net.h | HttpResponse; PostJson | SOURCE | tools/check-active-source-inventory.py | Bounded HTTPS-only JSON POST declaration selected from vendor #178; vendor/tests/common_net_post_json_source.py remains the vendor-side contract; no credentials or PS5 transmission proof | 🟡 Source étudiée |
 | U99 | P2 | U36,U98 | headless/diagnostics_native_client.cpp | Initialize(; EnterLauncher(; Poll(; SetConsent( | SOURCE | tools/diagnostics/check_native_client_source.py | Opt-in privacy-minimized launcher diagnostics client; bounded projection/queue/idle HTTPS/erasure contract is source-qualified, PS5 DNS/TLS/delivery/erasure and gameplay-impact remain unverified | 🟡 Source étudiée |
 | U100 | P2 | U99 | headless/diagnostics_native_client.h | void Initialize(; bool Available(; void GameStarting( | SOURCE | tools/diagnostics/check_native_client_source.py | Public lifecycle/consent interface for the launcher-owned diagnostics client; no render/guest/crash-thread transport and no native runtime proof yet | 🟡 Source étudiée |

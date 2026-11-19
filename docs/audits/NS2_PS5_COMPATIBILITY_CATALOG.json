@@ -26,7 +26,8 @@
     "ampere_storage_buffers": 32,
     "ns2_cpu_cores": 6,
     "native_texture_address_bits": 49,
-    "ns2_alias_region_gib": 128
+    "ns2_alias_region_gib": 64,
+    "ns2_vamm_region_gib": 32
   },
   "capabilities": {
     "pre_kernel_generation": {
@@ -46,6 +47,48 @@
           "GetHeapRegionSize() + m_page_table.GetAliasRegionSize()"
         ]
       }
+    },
+    "a64_v81_v85": {
+      "implemented": true,
+      "owners": {
+        "headless/CMakeLists.txt": [
+          "set(EDEN_SHARED_NS2_A64_V81_V85 ON)",
+          "target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1)"
+        ],
+        "vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp": [
+          "#if defined(EDEN_NS2_A64_V81_V85)",
+          "load_store_atomic.cpp",
+          "pointer_authentication.cpp",
+          "memory_tagging.cpp"
+        ],
+        "vendor/tests/ns2_a64_v81_v85_source.py": [
+          "NS2_A64_V81_V85_SOURCE_PASS"
+        ]
+      },
+      "upstream": "zortos293/Lichii@11aac324010eb2fe3c0fc9dca3c196f33aaef10c"
+    },
+    "ns2_alias_64g_vamm32": {
+      "implemented": true,
+      "owners": {
+        "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp": [
+          ".size = 64_GiB           , .type = KAddressSpaceInfo::Type::Alias",
+          ".size = 16_GiB"
+        ],
+        "vendor/encore-active/eden-backports/src/core/hle/kernel/svc/svc_info.cpp": [
+          "const u64 half = page_table.GetAliasRegionSize() / 2;",
+          "GetInteger(page_table.GetAliasRegionStart()) + half"
+        ],
+        "vendor/tests/ns2_alias_64g_upstream_parity_host.py": [
+          "NS2_ALIAS_64G_UPSTREAM_PARITY_HOST_PASS"
+        ]
+      },
+      "upstream": "current Lichii/Eglantine nx2; vendor #193",
+      "scope": "64 GiB 39-bit alias region; InfoType 29/30 exposes upper half = 32 GiB VAMM; 16 GiB virtual heap retained for 12 GiB guest layout"
+    },
+    "ns2_alias_128g_vamm": {
+      "implemented": false,
+      "upstream": "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8",
+      "reason": "Open/unmerged Xenoblade-specific generation-dependent 128 GiB alias experiment; deliberately removed from the common production geometry by vendor #193."
     },
     "sparse_guest_backing": {
       "implemented": true,
@@ -237,37 +280,6 @@
       },
       "upstream": "zortos293/Lichii#1914@c9b6e96da6a0d8fdb2ef5d7557645629dc5b2a10"
     },
-    "ns2_alias_128g_vamm": {
-      "implemented": true,
-      "owners": {
-        "headless/CMakeLists.txt": [
-          "set(EDEN_NS2_WAIT64_ROOT",
-          "target_include_directories(core BEFORE PUBLIC \"${EDEN_NS2_WAIT64_ROOT}\")",
-          "\"hle/kernel/k_address_space_info.cpp\"",
-          "set(EDEN_MAINTAINED_PAGE_TABLE"
-        ],
-        "vendor/encore-active/ns2-runtime/kernel/core/hle/kernel/k_address_space_info.cpp": [
-          "Ns2AliasRegionSize = 128_GiB",
-          "is_switch2 && width == 39 && type == KAddressSpaceInfo::Type::Alias"
-        ],
-        "vendor/encore-active/ns2-runtime/process/core/hle/kernel/k_process.cpp": [
-          "aslr_space_start, metadata.IsSwitch2())",
-          "aslr_space_start, is_switch2));"
-        ],
-        "vendor/encore-active/ns2-runtime/kernel_wait64/core/hle/kernel/k_process.h": [
-          "KProcessAddress aslr_space_start,",
-          "bool is_switch2);"
-        ],
-        "vendor/tests/ns2_alias_128g_no_kprocess_layout_host.py": [
-          "NS2_ALIAS_128G_NO_KPROCESS_LAYOUT_HOST_PASS"
-        ],
-        "vendor/tests/ns2-kprocess-memory-budget-source.py": [
-          "alias128_reversed=1"
-        ]
-      },
-      "upstream": "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8",
-      "scope": "128 GiB guest virtual alias region for NS2 39-bit processes; does not reserve 128 GiB of PS5 physical memory"
-    },
     "shared_store_warp_order": {
       "implemented": false,
       "upstream": [
@@ -325,6 +337,8 @@
       "generation": "NS2",
       "required_capabilities": [
         "pre_kernel_generation",
+        "a64_v81_v85",
+        "ns2_alias_64g_vamm32",
         "alias_memory_budget",
         "sparse_guest_backing",
         "native_kprocess_receipts",
@@ -349,6 +363,8 @@
       "generation": "NS2",
       "required_capabilities": [
         "pre_kernel_generation",
+        "a64_v81_v85",
+        "ns2_alias_64g_vamm32",
         "alias_memory_budget",
         "sparse_guest_backing",
         "native_kprocess_receipts",
@@ -416,7 +432,7 @@
       "required_capabilities": [
         "ns2_alias_128g_vamm"
       ],
-      "source_status": "covered_host_only",
+      "source_status": "upstream_gap",
       "console_validated": false,
       "upstream_refs": [
         "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
@@ -428,7 +444,7 @@
       "required_capabilities": [
         "ns2_alias_128g_vamm"
       ],
-      "source_status": "covered_host_only",
+      "source_status": "upstream_gap",
       "console_validated": false,
       "upstream_refs": [
         "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"
@@ -440,7 +456,7 @@
       "required_capabilities": [
         "ns2_alias_128g_vamm"
       ],
-      "source_status": "covered_host_only",
+      "source_status": "upstream_gap",
       "console_validated": false,
       "upstream_refs": [
         "zortos293/Lichii#1773@d3a4e273646d37e5afccddcec4c4c5e8280319d8"

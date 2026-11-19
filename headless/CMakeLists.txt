@@ -3296,23 +3296,24 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
 endif()
 
-# P0.2: limited A64 LDAPR promotion for the unified PS5 JIT. It uses the
-# original pinned Dynarmic decoder and load/store owner with one reviewed
-# instruction, not the unvalidated RETAA/PAC or LSE research extensions.
-# This runs only in the reviewed final dual-NPDM target and is independent
-# of the opt-in research flags (which remain explicitly forbidden at release).
-set(EDEN_SHARED_NS2_A64_LDAPR OFF)
+# P0.2: production A64 v8.1-v8.5 promotion for the unified PS5 JIT.
+# Vendor #192 is the reviewed Lichii 11aac324 backport on the exact pinned
+# Dynarmic parent: LDAPR, LSE/CAS/CASP, PAC/AUT/XPAC/PACGA, authenticated
+# branches/loads and the Switch 2 MTE subset. Keep it coupled to the reviewed
+# dual-NPDM PS5 product; the old broad experimental A64 build mode stays forbidden.
+set(EDEN_SHARED_NS2_A64_V81_V85 OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
-    set(EDEN_SHARED_NS2_A64_LDAPR ON)
-    set(EDEN_A64_LDAPR_SOURCE_ROOT
+    set(EDEN_SHARED_NS2_A64_V81_V85 ON)
+    set(EDEN_A64_V81_V85_SOURCE_ROOT
         "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src")
-    set(EDEN_A64_LDAPR_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
+    set(EDEN_A64_V81_V85_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
     include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")
-    # Dynarmic's a64.h includes ./a64.inc, and a64_translate.cpp includes
-    # load_store_exclusive.cpp as source text. All 4 generated files must
-    # resolve under one include root, before the vendored Dynarmic headers.
-    target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")
-    message(STATUS "Encore shared A64: reviewed LDAPR + RETAA/RETAB no-PAC return; no general PAC/LSE research")
+    # a64.h includes ./a64.inc and the maintained translator includes the
+    # implementation .cpp files as source text. All reviewed files therefore
+    # resolve from one overlay before pristine Dynarmic.
+    target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_V81_V85_OUTPUT_ROOT}")
+    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1)
+    message(STATUS "Encore shared A64: reviewed ARMv8.1-v8.5 Switch 2 coverage (Lichii 11aac324)")
 endif()
 
 # Unified NS2 six-core kernel owner; each process retains its physical

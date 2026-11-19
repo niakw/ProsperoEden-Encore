@@ -66,6 +66,7 @@ KNOWN_VENDOR_GRAPH = {
     "568ae541c07691518e9663aa0fc5f3b017a98d53": "same NS1/audio owners plus reviewed PS5 alpha-pipeline and ThreadWorker lost-wake fixes",
     "dcfe3d2384bd800c6139ede672518ea2c66922a6": "same NS1/audio owners plus reviewed PS5 full-clear texture upload elision; audio owners unchanged",
     "697159fd0c183f8a164d0493929ae3b4bcb391d1": "same reviewed graph + NS2 NVK M2MF default-subchannel candidate",
+    "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc": "same byte-sealed NS1/audio owners + reviewed NS2 A64 v8.1-v8.5 and 64GiB-alias/32GiB-VAMM successors",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

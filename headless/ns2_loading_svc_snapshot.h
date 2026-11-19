@@ -35,8 +35,8 @@ inline void Report(unsigned stage_seconds) noexcept {
     const auto snapshot = Capture();
     // A zero PID during an NS2 launch is itself diagnostic: the loader
     // never installed, or already retired, its guest SVC process owner.
-    // In quiet mode the ring counts only GetInfo/QueryMemory; zero does
-    // NOT mean that the guest executed no SVC at all.
+    // Quiet mode retains only selected memory, wait and IPC SVC boundaries;
+    // a zero count does NOT prove absence of guest CPU or SVC progress.
     std::fprintf(stderr,
         "EDEN_NS2_LOADING_SVC stage=%us active_pid=%llu tracked_recent=%llu "
         "sampled_first32=%u detailed=%u critical=%s\n",

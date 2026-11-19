@@ -23,7 +23,11 @@ assert "EDEN_NATIVE_SOURCE_COMMIT" in src
 assert "eden_native_capture_ns2_svc_fault(pid, program_id, fault_pc, fault_lr, fault_sp, last_svc)" in svc
 assert '"svc=not_observed"' in svc
 assert "RecentSamples = 64" in ring
-assert "(!fatal_relevant && !DetailedEnabled())" in ring
+assert "(!IsHangBoundarySvc(imm) && !DetailedEnabled())" in ring
+assert "case 0x18: // WaitSynchronization" in ring
+assert "case 0x21: // SendSyncRequest" in ring
+assert "case 0x43: // ReplyAndReceive" in ring
+assert "Eden::NS2::SvcTrace::IsHangBoundarySvc(imm)" in svc
 for source in (std, dev):
     assert "eden_ns2_dump_recent_svc(process->GetProcessId()," in source
     assert "process->GetProgramId(), fault_context.pc," in source

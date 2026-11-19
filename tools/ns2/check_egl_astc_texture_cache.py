@@ -125,7 +125,7 @@ if owner_full_sha == "744bf30e1421dcce212146f7e26e9d90558676a8":
     assert legacy_sha == "77f6051ea65933df920669ad61499f5847ad7516", (
         "N60/R4 normalized selected ASTC implementation changed", legacy_sha
     )
-    else:
+else:
     shadow = (VULKAN / "texture_cache.h").read_text()
     for signature in (
         "void TextureCache<P>::QueueAsyncUnswizzle(",

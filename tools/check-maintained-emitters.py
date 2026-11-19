@@ -51,9 +51,33 @@ assert a64 == expected_std, "A64 standard original-to-maintained parity"
 proto = "    BlockDescriptor Emit(IR::Block& block) noexcept;"
 pub_proto = "    BlockDescriptor Emit(IR::Block& block, bool publish = true) noexcept;"
 assert orig_h.count(proto) == 1
-assert normal_h == orig_h.replace(proto,
-    "#if defined(EDEN_JIT_A64_PUBLISH)\n" + pub_proto
-    + "\n#else\n" + proto + "\n#endif")
+# EglantinePS5 #104: native 64 Ki fast-dispatch entries (1 MiB per JIT)
+# rather than 1 Mi entries (16 MiB). This must never affect non-PS5
+# builds, including host and the historical shared-JIT reference.
+dispatch_old = ("    static constexpr u64 fast_dispatch_table_mask = 0xFFFFF0;\\n"
+                "    static constexpr size_t fast_dispatch_table_size = 0x100000;")
+dispatch_native = """#if defined(PS5_NATIVE)
+    // EglantinePS5 #104: 64K entries (1 MiB per A64 JIT) rather than
+    // 1M (16 MiB). The hash mask shrinks with the table; collisions
+    // fall through to the existing block lookup, not incorrect execution.
+    static constexpr u64 fast_dispatch_table_mask = 0xFFFF0;
+    static constexpr size_t fast_dispatch_table_size = 0x10000;
+#else
+    static constexpr u64 fast_dispatch_table_mask = 0xFFFFF0;
+    static constexpr size_t fast_dispatch_table_size = 0x100000;
+#endif"""
+# Build expected source exclusively from the pinned baseline and two
+# independently reviewed changes: publication ABI and dispatch capacity.
+expected_h = orig_h.replace(proto,
+    "#if defined(EDEN_JIT_A64_PUBLISH)\\n" + pub_proto
+    + "\\n#else\\n" + proto + "\\n#endif")
+assert orig_h.count(dispatch_old) == 1
+assert expected_h.count(dispatch_old) == 1
+assert normal_h == expected_h.replace(dispatch_old, dispatch_native)
+assert normal_h.count("fast_dispatch_table_size = 0x10000;") == 1
+assert "fast_dispatch_table_size = 0x10000;" not in shared_h
+assert "fast_dispatch_table_size = 0x10000;" not in orig_h
+
 assert pub_proto in shared_h and proto not in shared_h
 assert "JitGroup* eden_group = nullptr;" in shared_h
 assert "eden_pending_sites" in shared_h

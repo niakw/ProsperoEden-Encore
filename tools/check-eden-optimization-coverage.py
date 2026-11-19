@@ -1528,6 +1528,13 @@ assert len(r23_fw23_successors)==6
 vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
+# Historical backport records are immutable. The new vendor changes only
+# the exact reviewed FC27 rasterizer and device-memory owners already
+# byte-checked above; eden-backports are unchanged from the preceding pin.
+# Reuse the preceding history branch ONLY after those three exact receipts.
+if vendor_head == "8153654a2f1fe809fb2caa28dcadca90a7661446":
+    assert fc27_deferred_selected
+    vendor_head = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 historical_usage_tracker_vendor = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
 diagnostics_net_successor = (
     "b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,

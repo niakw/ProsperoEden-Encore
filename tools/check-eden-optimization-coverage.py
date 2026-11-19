@@ -1584,6 +1584,20 @@ vendor_head = subprocess.check_output(
 if vendor_head in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}:
     assert fc27_deferred_selected
     vendor_head = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
+# Rollback #194: the old shipping-backport applicability profile stays
+# valid only because the exact synchronous Vulkan/guest-memory owners
+# and independent NS2 RomFS successor were already checked in this run.
+if vendor_head == "87b5a4d674e2a1616cd19b5234203e80920abcc4":
+    assert not fc27_deferred_selected
+    for relative, expected in {
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35",
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc": "daf493ce6e863397ec44bfae467c4f7533570477",
+        "encore-active/eden-core/src/core/file_sys/romfs_factory.cpp": "4775cf98c3bfbc587402928bad424dcb471047a0",
+    }.items():
+        actual = subprocess.check_output(["git", "-C", str(ROOT/"vendor"), "hash-object", relative], text=True).strip()
+        assert actual == expected, ("new rollback source drift", relative, actual)
+    assert not (ROOT/"vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h").exists()
+    vendor_head = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 historical_usage_tracker_vendor = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"
 diagnostics_net_successor = (
     "b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,

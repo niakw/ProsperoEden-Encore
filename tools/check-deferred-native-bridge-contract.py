@@ -361,8 +361,12 @@ if m07_selected_sha == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1":
     receipt_text = receipt_path.read_text()
     assert m07_source_blob(receipt_text) == (
         "236713fa06672b39e2a4b9a84907882bbbb1bbbd"
-        if (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text().find(
-            'core/deferred_cached_updates.h') >= 0 else
+        if (
+            subprocess.check_output(["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"],
+                                    text=True).strip() == "87b5a4d674e2a1616cd19b5234203e80920abcc4" or
+            (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text().find(
+                'core/deferred_cached_updates.h') >= 0
+        ) else
         "18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2")
     receipt = runpy.run_path(str(receipt_path))
     assert receipt["CURRENT_DRAWTEXTURE"] == m07_selected_sha

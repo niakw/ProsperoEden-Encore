@@ -140,7 +140,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         receipt_text = receipt_path.read_text()
         assert raster_blob(receipt_text) == (
             '236713fa06672b39e2a4b9a84907882bbbb1bbbd'
-            if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200'} else
+            if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200', '87b5a4d674e2a1616cd19b5234203e80920abcc4'} else
             '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2')
         receipt = runpy.run_path(str(receipt_path))
         assert receipt['CURRENT_DRAWTEXTURE'] == raster_sha
@@ -154,6 +154,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
         print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = exact_vendor_pin
+    if pair_vendor_pin == "87b5a4d674e2a1616cd19b5234203e80920abcc4":
+        # The exact reverted synchronous rasterizer is byte-identical
+        # to the old d024 path before the F07 historical replay.
+        assert raster_blob((root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()) == '01c6880e5a8836da45601b0a3cb7c0fd6c46cf35'
+        assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
+        pair_vendor_pin = 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc'
     # Only AFTER exact receipt reversal, the historical R23/P24 oracle
     # uses the old pin's unchanged owner/provenance applicability matrix.
     if pair_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200'}:

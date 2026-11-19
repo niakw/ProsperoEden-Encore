@@ -1,4 +1,6 @@
 <a id="encore"></a>
+> **Architecture & research reference (NS1/NS2 → PS5):** [Complete component map, source ownership, official specifications, papers and validation methodology](docs/ENCORE_TECHNICAL_ARCHITECTURE_AND_RESEARCH.md).
+
 > **12 Nov 2026 — development integration, not a stable download:** the previous native CI compiled 1,588 objects but package staging failed. Updated PS5 source includes NS1 CPU6 ABI alignment, NS2 sparse guest memory, R09 source policies, launcher GL/Vulkan handoff and eight **opt-in-only** daily WebP backgrounds (no artwork bundled). **NS1 and NS2 boot remain unverified on a new PS5 candidate.** [33-case upstream integration register](docs/audits/ENCORE_NS1_GLOBAL_R23_33_GAPS_PR_BRANCH_HANDOFF_2026-11-12.md) · [unpublished R457 addendum](docs/audits/ENCORE_DRAFT_RELEASE_CHANGELOG_2026-11-12.md).
 
 > **Exactly the 31 official PS5 system language/region choices; 31 launcher translation catalogs (including en-US and en-GB):** [Language directory](LANGUAGES.md). No extra launcher languages are exposed. This strict policy follows [Sony's official console-language list](https://www.playstation.com/fr-fr/legal/language-support/); translation/font quality still requires validation.

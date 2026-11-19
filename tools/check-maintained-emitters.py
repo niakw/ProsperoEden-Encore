@@ -54,7 +54,7 @@ assert orig_h.count(proto) == 1
 # EglantinePS5 #104: native 64 Ki fast-dispatch entries (1 MiB per JIT)
 # rather than 1 Mi entries (16 MiB). This must never affect non-PS5
 # builds, including host and the historical shared-JIT reference.
-dispatch_old = ("    static constexpr u64 fast_dispatch_table_mask = 0xFFFFF0;\\n"
+dispatch_old = ("    static constexpr u64 fast_dispatch_table_mask = 0xFFFFF0;\n"
                 "    static constexpr size_t fast_dispatch_table_size = 0x100000;")
 dispatch_native = """#if defined(PS5_NATIVE)
     // EglantinePS5 #104: 64K entries (1 MiB per A64 JIT) rather than
@@ -69,8 +69,8 @@ dispatch_native = """#if defined(PS5_NATIVE)
 # Build expected source exclusively from the pinned baseline and two
 # independently reviewed changes: publication ABI and dispatch capacity.
 expected_h = orig_h.replace(proto,
-    "#if defined(EDEN_JIT_A64_PUBLISH)\\n" + pub_proto
-    + "\\n#else\\n" + proto + "\\n#endif")
+    "#if defined(EDEN_JIT_A64_PUBLISH)\n" + pub_proto
+    + "\n#else\n" + proto + "\n#endif")
 assert orig_h.count(dispatch_old) == 1
 assert expected_h.count(dispatch_old) == 1
 assert normal_h == expected_h.replace(dispatch_old, dispatch_native)

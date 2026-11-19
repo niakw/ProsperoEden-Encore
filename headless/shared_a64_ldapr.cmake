@@ -25,7 +25,9 @@ foreach(eden_ldapr_file IN ITEMS
     if(NOT EXISTS "${eden_ldapr_static}/${eden_ldapr_file}")
         message(FATAL_ERROR "Missing reviewed maintained A64 source: ${eden_ldapr_file}")
     endif()
-    if(eden_ldapr_file IN_LIST eden_ldapr_added_sources)
+    # Also runs under cmake -P: avoid IN_LIST (CMP0057 defaults to OLD there).
+    list(FIND eden_ldapr_added_sources "${eden_ldapr_file}" eden_ldapr_new_index)
+    if(NOT eden_ldapr_new_index EQUAL -1)
         if(EXISTS "${eden_ldapr_source}/${eden_ldapr_file}")
             message(FATAL_ERROR "Unexpected new A64 owner in pinned base; requalify overlay: ${eden_ldapr_file}")
         endif()

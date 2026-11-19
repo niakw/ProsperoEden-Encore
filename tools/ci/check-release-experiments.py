@@ -35,6 +35,16 @@ MARKERS = (
     b"EDEN_JIT_SPARSE_TRIM released=",
     b"EDEN_PS5_JIT_POLICY scope=all_titles",
     b"EDEN_GPU_REPORT_STALLED age_ms=",
+    # These selected NS2 GPU worker strings were silently compiled out on
+    # R457 2b0975f7 because its core translation unit lacked PS5_NATIVE.
+    # Source-only checks were green. Assert the *actual staged SELF* contains
+    # the bounded failure/IPC/wait receipts before shipping another build.
+    b"EDEN_NS2_IPC owner=gpu_worker",
+    b"EDEN_NS2_BLOCKING_BOUNDARY",
+    b"EDEN_NS2_GPU_WORKER_RESULT",
+    b"EDEN_NS2_GPU_214",
+    b"EDEN_NS2_GPU_216",
+    b"EDEN_NS2_GPU_102_SPARSE_RESTORE",
 )
 
 def verify(cache: str, eboot: bytes) -> None:

@@ -27,9 +27,13 @@ for body,klass in ((source,"IGpuSession"),(worker_source,"IGpuWorker")):
     handshake=body.split(signature,1)[1].split("\n}\n",1)[0]
     for marker in ("ctx.CommandBuffer()", "IPC::ResponseBuilder rb{ctx, 4};",
                    "rb.PushRaw<u32>(ResultSuccess.raw);",
-                   "rb.PushRaw<u32>(command[2]);",
-                   "rb.PushRaw<u32>(command[3]);"):
+                   "const u32 token_lo = command[2];",
+                   "const u32 token_hi = command[3];",
+                   "rb.PushRaw<u32>(token_lo);",
+                   "rb.PushRaw<u32>(token_hi);"):
         assert marker in handshake,(klass,marker)
+    assert handshake.index("const u32 token_lo = command[2];") < handshake.index("IPC::ResponseBuilder rb{ctx, 4};")
+    assert handshake.index("const u32 token_hi = command[3];") < handshake.index("IPC::ResponseBuilder rb{ctx, 4};")
 assert "handlers_tipc.contains(ctx.GetCommand())" in owner
 assert "Kernel::ResultNotImplemented.raw" in owner
 assert "ctx.WriteToOutgoingCommandBuffer()" in owner

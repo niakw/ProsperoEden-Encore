@@ -114,7 +114,7 @@ def main() -> int:
     additional = [
         BASE,
         ROOT / "vendor/sources/eden/src",
-        deps / "fmt/12.1.0/include",
+        ROOT / "vendor/sources/fmt/include",
     ] + list((deps / "boost/boost-1.90.0/libs").glob("*/include"))
 
     with tempfile.TemporaryDirectory(prefix="encore-a64-v81-v85-") as td:

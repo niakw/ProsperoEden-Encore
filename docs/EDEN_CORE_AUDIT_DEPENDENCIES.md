@@ -245,7 +245,7 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 512 | 489 | 1028 |
+| Graphe connu | 515 | 492 | 1031 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
 | SOURCE — lecture effectuée, preuve insuffisante | 427 | 417 | 862 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |

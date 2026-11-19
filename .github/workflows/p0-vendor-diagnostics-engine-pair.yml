@@ -15,7 +15,7 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=8153654a2f1fe809fb2caa28dcadca90a7661446
+          expected=6c38328fbef33de747f5c31ea30d13541a513a4a
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"

@@ -76,7 +76,7 @@ de compilation native. Cette preuve couvre les frontières de build
 | `headless/nup_v1_runtime.cmake` | Sélection des sources NUP v1 et des propriétaires AoC/RomFS existants | **Intégré à chaque build PS5 ; aucun verrou P5 ni option de release ; aucune génération C++** |
 | `headless/ps5.cmake` | Orchestration ou toolchain | Sélecteur / configuration |
 | `headless/scalar-memory.cmake` | Sélection des émetteurs vectoriel et data processing maintenus | Sélecteur conforme ; X08 retiré |
-| `headless/shared_a64_ldapr.cmake` | Prise en charge LDAPR A64 dans l'interface partagée | Sélecteur conforme, NS1 préservé |
+| `headless/shared_a64_v81_v85.cmake` | ARMv8.1–8.5 A64 partagé (LSE/CAS/CASP, LDAPR, PAC, MTE) | Sélecteur PS5 dual-NPDM, sources complètes versionnées ; ancien prototype non sélectionné |
 | `headless/vulkan.cmake` | Sélection/copie de sources Encore maintenues | Sélecteur / configuration |
 <!-- SINGLE_SOURCE_CMAKE_END -->
 

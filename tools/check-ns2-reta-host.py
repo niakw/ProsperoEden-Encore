@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Retain the broad A64 research oracle while production selects only LDAPR + RETAA/RETAB."""
+"""Retain the historical A64 oracle after its reviewed upstream successor enters production."""
 from __future__ import annotations
 from pathlib import Path
 import os
@@ -32,14 +32,19 @@ def main() -> int:
         or 'bool TranslatorVisitor::RETA(' not in BRANCH
         or 'return RET(Reg::R30);' not in BRANCH
         or '#if defined(EDEN_NS2_A64_EXPERIMENTAL)' not in BRANCH
+        or 'target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1)' not in CMAKE
         or 'INST(RETA, "RETAA, RETAB", "110101100101111100001M1111111111")' not in PROD_DEC
+        or 'INST(AtomicMemOp, "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN/LDUMAX/LDUMIN/SWP"' not in PROD_DEC
+        or 'INST(CompareAndSwap, "CASB, CASH, CAS"' not in PROD_DEC
+        or 'INST(BRA_BLRA, "BRAA/BRAB/BLRAA/BLRAB (+Z)"' not in PROD_DEC
         or 'bool TranslatorVisitor::RETA(bool M)' not in PROD_BRANCH
         or 'ir.SetPC(X(64, Reg::R30));' not in PROD_BRANCH
         or 'ir.SetTerm(IR::Term::PopRSBHint{});' not in PROD_BRANCH
         or 'EDEN_NS2_A64_EXPERIMENTAL' in PROD_BRANCH
-        or 'INST(CAS,' in PROD_DEC
-        or 'INST(LDADD,' in PROD_DEC):
-        print("Archived oracle or minimal production RETAA/RETAB ownership missing",file=sys.stderr)
+        or not (PROD/"translate/impl/load_store_atomic.cpp").is_file()
+        or not (PROD/"translate/impl/pointer_authentication.cpp").is_file()
+        or not (PROD/"translate/impl/memory_tagging.cpp").is_file()):
+        print("Archived oracle or promoted production ARMv8.1-8.5 ownership missing",file=sys.stderr)
         return 2
     compiler=shutil.which("clang++") or shutil.which("g++")
     if not compiler:
@@ -55,7 +60,7 @@ def main() -> int:
             subprocess.run(cmd,check=True)
             subprocess.run([target],check=True,env={**os.environ,"UBSAN_OPTIONS":"halt_on_error=1"})
             print(f"NS2 A64 RETA/LDAPR/LSE opcode decoder table {opt}: PASS")
-    print("Broad RETAA/LDAPR/LSE research oracle retained; production selects only LDAPR + raw-X30 RETAA/RETAB, not general PAC/LSE. No PS5 execution proof.")
+    print("Historical RETA/LDAPR/LSE oracle retained; production now selects the reviewed Lichii ARMv8.1-8.5 successor. No PS5 execution proof.")
     return 0
 
 if __name__=="__main__":

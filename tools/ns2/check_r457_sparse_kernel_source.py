@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-""R457 exact source graph: guest PTE + raw kernel fill -> resident PA -> GPU.
+"""R457 exact source graph: guest PTE + raw kernel fill -> resident PA -> GPU.
 
 Host-only structural audit. It does not execute guest code or confirm
 physical alias lifetime, PS5 SDK, GPU fences, or first frame.
-""
+"""
 from pathlib import Path
 import hashlib
 import subprocess
@@ -81,8 +81,8 @@ guarded=(r"^#if defined\(PS5_NATIVE\) && "
          r"defined\(EDEN_NS2_SPARSE_BACKING\)\n"
          r"[\s\S]*?^#endif\n")
 assert len(re.findall(guarded,kernel,flags=re.MULTILINE))==4
-stripped=re.sub(guarded,",kernel,flags=re.MULTILINE)
-stripped=stripped.replace("#include <new>\n#include <limits>\n",")
+stripped=re.sub(guarded,"",kernel,flags=re.MULTILINE)
+stripped=stripped.replace("#include <new>\n#include <limits>\n","")
 normalize=lambda source: re.sub(r"\n\s*\n","\n\n",source).strip()
 assert normalize(stripped)==normalize(baseline), "kernel semantics drift"
 assert "set(EDEN_NS2_SPARSE_BACKING OFF)" in cmake
@@ -95,7 +95,7 @@ assert 'set_property(SOURCE "${EDEN_R457_SPARSE_SLAB_SRC}"' in cmake
 subprocess.run([sys.executable, "-B",
     str(root / "vendor/tests/ns2_r457_kernel_slab_precommit_host.py")], check=True)
 
-assert kernel_rel.replace("vendor/",") in cmake
+assert kernel_rel.replace("vendor/","") in cmake
 assert 'list(REMOVE_ITEM eden_r457_sparse_kernel_units' in cmake
 assert 'hle/kernel/k_memory_manager.cpp' in cmake
 
@@ -107,7 +107,7 @@ slab = read(slab_rel)
 slab_baseline = read("vendor/sources/eden/src/core/hle/kernel/init/init_slab_setup.cpp")
 slab_guarded = re.findall(guarded, slab, flags=re.MULTILINE)
 assert len(slab_guarded) == 3, "slab direct-memory diff exceeded declaration and two reviewed guards"
-assert normalize(re.sub(guarded, ", slab, flags=re.MULTILINE)) == normalize(slab_baseline), (
+assert normalize(re.sub(guarded, "", slab, flags=re.MULTILINE)) == normalize(slab_baseline), (
     "unreviewed slab kernel semantics drift")
 start = slab.index("    if (size > 0) {")
 end = slab.index("    return start + size;", start)
@@ -122,7 +122,7 @@ assert page_slab.index("EdenNs2CommitGuestBacking(") < page_slab.index(
     "KPageBuffer::InitializeSlabHeap(")
 assert 'physical - Core::DramMemoryMap::Base, slab_size' in page_slab
 
-assert slab_rel.replace("vendor/", ") in cmake
+assert slab_rel.replace("vendor/", "") in cmake
 assert 'hle/kernel/init/init_slab_setup.cpp" eden_r457_sparse_slab_original' in cmake
 assert 'TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"' in cmake
 

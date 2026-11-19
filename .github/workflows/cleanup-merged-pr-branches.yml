@@ -165,6 +165,23 @@ jobs:
               'validation/ns2-prekernel-generation-20261117':
                   ('9acd36cc1b3ec729a52ba89b6b3f2deda3430d31', 269),
           }
+          # Owner-directed 19 Nov 2026 cleanup: UNMERGED heads are first
+          # preserved as immutable, recoverable lightweight Git archive tags.
+          # Exact ref+SHA only; moved/open/protected branches are never removed.
+          # These are abandoned alternative A64/VAMM and documentary heads;
+          # closed PR histories and their unique host tests remain recoverable.
+          approved_to_archive = {
+              'docs/english-default-project-records-20261118': '914ae7be23fbe3d7d863b3f5986decbd08abe696',
+              'docs/ns1-ns2-upstream-gap-informational-20261118': '0e15a2f9f1abb40a160212ababfc49e64ece367f',
+              'fix/native-direct-limit-source-extract-20261118': '2afb7d4dd0028cf8eab9a488da5ed9cd66bf8c05',
+              'fix/ns2-a64-v81-v85-engine-20261119': '7efe0fb27bd61be954c45276504f5d2eab785273',
+              'fix/ns2-a64-v81-v85-production-20261119': '4a87ae7c1dfac7f1f8b32463ab35586a6546b4a2',
+              'fix/ns2-p0-a64-vamm-vendor-20261119': 'f0e8d03910e5576e7192ec2832ffad29b14bfad6',
+              'fix/ns2-p0-vamm-a64-parity-20261119': 'e7f67f3984c793ad783aa30e1110fb51e06fdd74',
+              'fix/ns2-vamm-64g-upstream-parity-engine-20261119': 'adb66ed53b97ac8f680a8a5ed16024538674ac05',
+              'fix/ns2-vamm-a64-v81-v85-prod-20261119': '1e8faf11f37790ca866c875bcfe11cb7e87c9431',
+              'fix/p0-ns2-a64-v81-v85-vamm-parity-20261119': 'd41f63ff7c1227bb91f70dbc4c14813429131636',
+          }
           main_ref = next((item for item in branches if item['name'] == 'main'), None)
           if not main_ref:
               raise RuntimeError('Missing main branch in cleanup inventory')
@@ -186,10 +203,15 @@ jobs:
                   approved_sha, superseded_pr = approved_superseded[name]
                   if approved_sha == sha:
                       pr_number = f'superseded-{superseded_pr}'
+              archival_tag = None
+              if not pr_number and approved_to_archive.get(name) == sha:
+                  archival_tag = f'archive/2026-11-19/{name}'
+                  pr_number = 'archived-unmerged'
               if not pr_number:
                   skipped.append(name)
                   continue
-              # Exact merged PR head SHA only; never delete later unmerged work.
+              # Original merged/ancestor/superseded eligibility remains intact;
+              # historical unmerged candidate commits are preserved by a tag.
               ref = quote('heads/' + name, safe='/')
               # Last-minute safety check for every deletion. If a branch
               # has moved, become protected or gained an open PR, retain it.
@@ -209,6 +231,28 @@ jobs:
                   if compare.get('status') not in ('ahead', 'identical') or compare.get('behind_by') != 0:
                       skipped.append(name)
                       continue
+              if archival_tag is not None:
+                  # Preserve EVERY unmerged commit and source/test blob even
+                  # after its branch is deleted. A tag name/target collision
+                  # fails closed rather than erasing the wrong work.
+                  full_tag = 'refs/tags/' + archival_tag
+                  tag_request = Request(
+                      base + '/git/refs',
+                      data=json.dumps({'ref': full_tag, 'sha': sha}).encode('utf-8'),
+                      headers={**headers, 'Content-Type': 'application/json'},
+                      method='POST')
+                  try:
+                      with urlopen(tag_request, timeout=25):
+                          pass
+                  except HTTPError as exc:
+                      if exc.code != 422:
+                          raise
+                  verified_tag = api('/git/ref/tags/' + quote(archival_tag, safe='/'))
+                  if (verified_tag.get('ref') != full_tag or
+                      verified_tag.get('object', {}).get('type') != 'commit' or
+                      verified_tag.get('object', {}).get('sha') != sha):
+                      raise RuntimeError(f'Archive tag mismatch: {archival_tag}')
+                  print(f'ARCHIVED {name} sha={sha} tag={full_tag}')
               try:
                   api(f'/git/refs/{ref}', 'DELETE')
               except HTTPError as exc:

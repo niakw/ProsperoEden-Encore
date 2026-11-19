@@ -443,6 +443,7 @@ r437_body = (active / r437_path).read_text()
 # before applying the original R437 byte-for-byte proof.
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+production_r437_vendor_pin = r437_vendor_pin  # Preserve selected SHA through historic-d024 normalization
 fc27_deferred_selected = r437_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owner = "eden-core/overrides/core/deferred_cached_updates.h"
 fc27_deferred_present = {fc27_deferred_owner} & set(physical_all)
@@ -497,7 +498,7 @@ if r437_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f5
     def current_r437_blob(source):
         raw = source.encode("utf-8")
         return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    if r437_vendor_pin == "5336659f7ccce1b378bae78587ae5592a11a61f6":
+    if production_r437_vendor_pin == "5336659f7ccce1b378bae78587ae5592a11a61f6":
         assert current_r437_blob(r437_body) == "3696c708962271ee0b6ed08d308d88a1f4e5b290"
         reviewed_decl = "    template <typename Ranges>\n    void ClaimCpuWrites(const Ranges& ranges);"
         historical_decl = "    void ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges);"
@@ -1237,7 +1238,7 @@ native_range_api_pair_successor_blobs = dict(latest_pair_successor_blobs)
 native_range_api_pair_successor_blobs["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = (
     "c6bab56cbd4e58458d010e423d74df9f933a8f8d"
 )
-if r437_vendor_pin == "5336659f7ccce1b378bae78587ae5592a11a61f6":
+if production_r437_vendor_pin == "5336659f7ccce1b378bae78587ae5592a11a61f6":
     native_range_api_pair_successor_blobs.update({
         "eden-core/src/video_core/buffer_cache/buffer_cache.h": "1dd743515bae8c2829205ec8b3528666ceba8a73",
         "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "3696c708962271ee0b6ed08d308d88a1f4e5b290",

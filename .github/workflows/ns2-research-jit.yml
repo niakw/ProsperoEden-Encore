@@ -47,6 +47,13 @@ jobs:
             cmake --build "build-ns2-jit/$pkg-build" --parallel 2
             cmake --install "build-ns2-jit/$pkg-build"
           done
+      - name: Verify reviewed A64 provenance before disposable overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          # This vendor contract verifies BOTH the immutable Dynarmic base and
+          # the exact reviewed #192 overlay blobs. Run it before copying.
+          python3 -B vendor/tests/ns2_a64_v81_v85_source.py
       - name: Copy reviewed production A64 owners into disposable vendor checkout
         shell: bash
         run: |
@@ -65,7 +72,6 @@ jobs:
             test -f "$overlay/$path"
             cp "$overlay/$path" "$original/$path"
           done
-          python3 -B vendor/tests/ns2_a64_v81_v85_source.py
       - name: Cross-assemble and package immutable public HOS AArch64 NSO0
         shell: bash
         run: |

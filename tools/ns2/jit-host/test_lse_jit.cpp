@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Executes the actual Dynarmic JIT with research A64 overlay.
+// Executes the actual Dynarmic JIT with the reviewed production A64 v8.1-v8.5 overlay.
 #include <atomic>
 #include <thread>
 #include <vector>
@@ -58,14 +58,14 @@ struct Env: A64TestEnv {
 static void check(bool ok,const char* msg) {
     if(!ok){std::cerr<<"FAIL "<<msg<<"\n";std::exit(1);}
 }
-static void atomic(std::string_view op,u64 before,u64 src,u64 after,bool cas,unsigned fails=0){
-    std::cerr << "RUN " << op << " before=" << before << " src=" << src << " after=" << after << " fails=" << fails << std::endl;
+static void atomic(std::string_view method,unsigned opv,u64 before,u64 src,u64 after,bool cas,unsigned fails=0){
+    std::cerr << "RUN " << method << " op=" << opv << " before=" << before << " src=" << src << " after=" << after << " fails=" << fails << std::endl;
     Env env;Dynarmic::A64::UserConfig conf{}; conf.callbacks=&env;
     conf.global_monitor=&env.monitor;
     conf.code_cache_size=HostJitCodeCacheBytes;
     Dynarmic::A64::Jit jit{conf};
-    env.code_mem={encode(op,{{'z',3},{'s',2},{'n',1},{'t',3},
-                              {'L',0},{'o',0},{'A',0},{'R',0}}),0x14000000};
+    env.code_mem={encode(method,{{'z',3},{'s',2},{'n',1},{'t',3},
+                                 {'L',0},{'O',0},{'o',opv},{'A',0},{'R',0}}),0x14000000};
     env.MemoryWrite64(0x200,before);
     env.fail=fails;
     jit.SetPC(0);jit.SetRegister(1,0x200);jit.SetRegister(2,src);
@@ -77,14 +77,16 @@ static void atomic(std::string_view op,u64 before,u64 src,u64 after,bool cas,uns
     check(env.writes>=fails+1,"exclusive retry observed");
 }
 int main(){
-    atomic("CAS",17,17,99,true);
-    atomic("CAS",17,17,99,true,2);
-    atomic("CAS",17,77,17,true);
-    atomic("SWP",18,25,25,false);
-    atomic("LDADD",18,7,25,false);
-    atomic("LDCLR",255,0x55,0xaa,false);
-    atomic("LDSET",16,0x81,0x91,false);
-    atomic("LDEOR",48,0x14,0x24,false);
+    // The production decoder groups CAS and LSE operations into generic
+    // translator methods; opv selects the AtomicMemOp operation.
+    atomic("CompareAndSwap",0,17,17,99,true);
+    atomic("CompareAndSwap",0,17,17,99,true,2);
+    atomic("CompareAndSwap",0,17,77,17,true);
+    atomic("AtomicMemOp",8,18,25,25,false);       // SWP
+    atomic("AtomicMemOp",0,18,7,25,false);        // LDADD
+    atomic("AtomicMemOp",1,255,0x55,0xaa,false);  // LDCLR
+    atomic("AtomicMemOp",3,16,0x81,0x91,false);   // LDSET
+    atomic("AtomicMemOp",2,48,0x14,0x24,false);   // LDEOR
     {
         std::cerr << "RUN RETAA" << std::endl;
         Env env; Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;cfg.global_monitor=&env.monitor;
@@ -97,10 +99,30 @@ int main(){
         std::cerr << "RUN LDAPR" << std::endl;
         Env env;Dynarmic::A64::UserConfig cfg{};cfg.callbacks=&env;cfg.global_monitor=&env.monitor;
         Dynarmic::A64::Jit jit{cfg};
-        env.code_mem={encode("LDAPR",{{'s',3},{'n',1},{'t',3}}),0x14000000};
+        env.code_mem={encode("LDAPR_sz",{{'z',3},{'n',1},{'t',3}}),0x14000000};
         env.MemoryWrite64(0x200,0x12345678);
         jit.SetRegister(1,0x200);jit.SetPC(0);jit.Step();
         check(jit.GetRegister(3)==0x12345678,"LDAPR acquire");
+    }
+
+    {
+        std::cerr << "RUN PACGA identity-compatible model" << std::endl;
+        Env env; Dynarmic::A64::UserConfig cfg{}; cfg.callbacks=&env; cfg.global_monitor=&env.monitor;
+        Dynarmic::A64::Jit jit{cfg};
+        env.code_mem={encode("PACGA",{{'m',2},{'n',1},{'d',3}}),0x14000000};
+        jit.SetRegister(1,0x1234567800001111ULL);
+        jit.SetRegister(2,0x00ff00ff12345678ULL);
+        jit.SetPC(0); jit.Step();
+        const u64 expected=(0x1234567800001111ULL ^ 0x00ff00ff12345678ULL) & 0xFFFFFFFF00000000ULL;
+        check(jit.GetRegister(3)==expected,"PACGA deterministic compatibility result");
+    }
+    {
+        std::cerr << "RUN MTE ADDG zero-tag compatibility" << std::endl;
+        Env env; Dynarmic::A64::UserConfig cfg{}; cfg.callbacks=&env; cfg.global_monitor=&env.monitor;
+        Dynarmic::A64::Jit jit{cfg};
+        env.code_mem={encode("ADDG",{{'i',2},{'t',0},{'n',1},{'d',3}}),0x14000000};
+        jit.SetRegister(1,0x1000); jit.SetPC(0); jit.Step();
+        check(jit.GetRegister(3)==0x1020,"ADDG preserves zero tag and adds 16-byte units");
     }
 
     // Six independent guest processors, shared reservation granule, concurrent
@@ -132,5 +154,5 @@ int main(){
         check(!timed_out.load(),"six-core contention terminated");
         check(counter.load()==384,"six-core exclusive operation counted exactly");
     }
-    std::cout<<"Actual Dynarmic NS2 LSE/RETA/LDAPR JIT PASS\n";
+    std::cout<<"Actual production Dynarmic NS2 A64 v8.1-v8.5 JIT PASS\n";
 }

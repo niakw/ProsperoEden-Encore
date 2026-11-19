@@ -250,12 +250,12 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 | SOURCE — lecture effectuée, preuve insuffisante | 430 | 420 | 877 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
-| **Encore à qualifier (SOURCE + OPEN)** | **442** | **431** | **890** |
-| Dont priorité P0 (SOURCE + OPEN) | 111 | 106 | 243 |
+| **Encore à qualifier (SOURCE + OPEN)** | **445** | **434** | **905** |
+| Dont priorité P0 (SOURCE + OPEN) | 114 | 109 | 258 |
 
-Le **noyau restant** compte donc 442 critères répartis sur
-431 fichiers et 890 mentions fonction/contrat :
-15 OPEN et 427 SOURCE.
+Le **noyau restant** compte donc 445 critères répartis sur
+434 fichiers et 905 mentions fonction/contrat :
+15 OPEN et 430 SOURCE.
 Cela **ne signifie pas que toutes ces fonctions sont jamais lues** :
 plusieurs sont déjà étudiées, mais nécessitent une preuve spécifique.
 L'inventaire exhaustif des sources Encore est suivi séparément dans

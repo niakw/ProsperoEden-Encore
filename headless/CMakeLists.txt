@@ -3814,9 +3814,11 @@ if(EDEN_SHARED_NS2_AMPERE_CORE)
     if(NOT EDEN_REVIEWED_DUAL_NPDM)
         message(FATAL_ERROR "NS2 Ampere ISA requires reviewed native NPDM")
     endif()
-    # The alternative 32-slot resource header changes BufferCache signatures,
-    # NUM_STORAGE_BUFFERS (16 -> 32), and is NOT ABI-safe as a header-only
-    # native override. Do not include it in the shared 16-slot NS1 BufferCache ABI.
+    # The alternative shader-resource BufferCache header is still a divergent
+    # class definition and is NOT ABI-safe as a header-only override. The PS5
+    # build above already selects one maintained shared BufferCache ABI; Lichii
+    # 15dd980 widens that selected ABI to 32 storage slots uniformly. Keep only
+    # the reviewed Generic31 shader header from this alternate include tree.
     set(EDEN_NS2_SHADER_RESOURCE_ROOT
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/shader_resource/include")
     if(NOT EXISTS "${EDEN_NS2_SHADER_RESOURCE_ROOT}/shader_recompiler/frontend/ir/attribute.h" OR

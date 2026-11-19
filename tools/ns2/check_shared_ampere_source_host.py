@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify P0.2 Ampere source selection without overriding the NS1 BufferCache ABI."""
+"""Verify P0.2 Ampere selection while preserving one shared PS5 BufferCache class ABI."""
 from pathlib import Path
 import os
 import platform
@@ -22,8 +22,10 @@ assert "PORT_BUILD_DIR" in shared
 assert shared.count("target_include_directories(")>=3
 assert not re.search(r"target_include_directories\([^)]*EDEN_NS2_SHADER_RESOURCE_ROOT",shared)
 assert 'configure_file(' in shared
-# The shared ISA adapter never replaces the legacy 16-slot Maxwell cache ABI.
+# The shared ISA adapter never selects the stale alternate BufferCache class.
+# The maintained PS5 BufferCache selected earlier in CMake owns the 32-slot ABI.
 assert 'target_include_directories(shader_recompiler BEFORE PRIVATE "${EDEN_NS2_SHADER_RESOURCE_ROOT}")' not in shared
+assert "EDEN_MAINTAINED_BUFFER_BASE" in cmake
 
 pinned=(ROOT/"vendor/sources/eden/src/shader_recompiler/frontend/ir/attribute.h").read_text()
 reviewed=(ROOT/"vendor/encore-active/ns2-runtime/shader_resource/include/shader_recompiler/frontend/ir/attribute.h").read_text()
@@ -34,8 +36,13 @@ assert reviewed.replace(
     "    // vertex/geometry varying and must be classified like slots 0..30.\n"
     "    return attribute >= Attribute::Generic0X && attribute <= Attribute::Generic31W;",
     "    return attribute >= Attribute::Generic0X && attribute <= Attribute::Generic31X;") == pinned
-assert "NUM_STORAGE_BUFFERS = 16" in (ROOT/"vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
-assert "NUM_STORAGE_BUFFERS = 32" in (ROOT/"vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h").read_text()
+pinned_buffer=(ROOT/"vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+selected_buffer=(ROOT/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+alternate_buffer=(ROOT/"vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h").read_text()
+assert "NUM_STORAGE_BUFFERS = 16" in pinned_buffer
+assert "NUM_STORAGE_BUFFERS = 32" in selected_buffer
+assert 'static_assert(NUM_STORAGE_BUFFERS <= 32, "storage-buffer bitmasks must fit u32");' in selected_buffer
+assert "NUM_STORAGE_BUFFERS = 32" in alternate_buffer
 
 selector=section[section.index('set(EDEN_SHARED_NS2_AMPERE_CORE OFF)'):section.index(
     'if(EDEN_SHARED_NS2_AMPERE_CORE)')]
@@ -95,4 +102,4 @@ for name in files:
     result=subprocess.run(cmd+[str(ampere/name)],capture_output=True,text=True,env=env,timeout=90)
     assert result.returncode==0,(name,result.stderr[-5000:])
     print("P0_2_REAL_AMPERE_OWNER_PASS",name)
-print("P0_2_SHARED_AMPERE_COMPILE_ONLY_PASS units=8 ns1_cache_abi=PINNED ps5=NOT_TESTED")
+print("P0_2_SHARED_AMPERE_COMPILE_ONLY_PASS units=8 selected_shared_cache=32 pinned_snapshot=16 ps5=NOT_TESTED")

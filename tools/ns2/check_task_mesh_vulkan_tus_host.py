@@ -236,6 +236,8 @@ with tempfile.TemporaryDirectory(prefix="encore-task-mesh-host-") as scratch:
     base_contract = maintained_base.read_text()
     assert "bool needs_sync = true" in base_contract
     assert "void SynchronizeBufferWrites(Buffer& buffer);" in base_contract
+    assert "constexpr u32 NUM_STORAGE_BUFFERS = 32;" in base_contract
+    assert 'static_assert(NUM_STORAGE_BUFFERS <= 32, "storage-buffer bitmasks must fit u32");' in base_contract
     assert "EDEN_MAINTAINED_BUFFER_BASE" in cmake
     shutil.copyfile(maintained_base, buffer_overlay / "buffer_cache_base.h")
     # Header search must prefer the PS5-native generated R437 owner over

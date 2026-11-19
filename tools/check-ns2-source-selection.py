@@ -213,11 +213,14 @@ def check() -> None:
     require('file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in vk_select and
             '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in vk_select,
             'production Vulkan renderer no longer uses maintained source')
-    maxwell=read('vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h')
+    pinned=read('vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h')
+    selected=read('vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h')
     ampere=read('vendor/encore-active/ns2-runtime/shader_resource/include/video_core/buffer_cache/buffer_cache_base.h')
-    require('NUM_STORAGE_BUFFERS = 16;' in maxwell and
-            'NUM_STORAGE_BUFFERS = 32;' in ampere,
-            'NS1 Maxwell and NS2 Ampere storage ABIs no longer isolated')
+    require('NUM_STORAGE_BUFFERS = 16;' in pinned and
+            'NUM_STORAGE_BUFFERS = 32;' in selected and
+            'NUM_STORAGE_BUFFERS = 32;' in ampere and
+            'static_assert(NUM_STORAGE_BUFFERS <= 32' in selected,
+            'selected shared PS5 storage ABI is not the reviewed 32-slot layout')
     read('tools/ns2/check_unified_native_gpu_graph_host.py')
     read('tools/ns2/check_unified_jit_cpu6_baseline_host.py')
 

@@ -24,6 +24,7 @@ assert "wide_bindings == 0 && rollback_count == 1" in source
 native = (ROOT / "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/native_qmd_compute_environment.h").read_text()
 vulkan = (ROOT / "vendor/encore-active/eden-vulkan/vk_compute_pipeline_cost.cpp").read_text()
 legacy = (ROOT / "vendor/sources/eden/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
+selected = (ROOT / "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_text()
 assert "storage_buffers.size() > 32" in native
 assert "desc.count > 32 - result.storage_buffers.size()" in native
 assert "bool ComputePipeline::ConfigureNative(" in vulkan
@@ -32,6 +33,10 @@ assert "resources.StageVulkanBufferBindings(" in native_method
 assert "buffer_cache.ObtainBuffer(" in native_method
 assert "buffer_cache.BindComputeStorageBuffer(" not in native_method
 assert "constexpr u32 NUM_STORAGE_BUFFERS = 16;" in legacy
+assert "constexpr u32 NUM_STORAGE_BUFFERS = 32;" in selected
+assert 'static_assert(NUM_STORAGE_BUFFERS <= 32, "storage-buffer bitmasks must fit u32");' in selected
+assert "u32 enabled_compute_storage_buffers = 0;" in selected
+assert "u32 written_compute_storage_buffers = 0;" in selected
 
 base = ROOT / "vendor/sources/eden-cpm"
 includes = [
@@ -67,4 +72,4 @@ for compiler in ("clang++", "g++"):
         assert result.returncode == 0, (
             compiler, optimization, result.stdout[-2000:], result.stderr[-4000:])
         print(f"P0_2_QMD32_REAL_STAGING_PASS {compiler} {optimization}", flush=True)
-print("P0_2_QMD32_NS1_ABI_UNCHANGED_PASS valid=32 refused=33 owner=ObtainBuffer")
+print("P0_2_QMD32_SHARED_ABI_PASS valid=32 refused=33 owner=ObtainBuffer selected=32 pinned_snapshot=16")

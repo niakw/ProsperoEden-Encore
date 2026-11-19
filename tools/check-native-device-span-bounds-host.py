@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Compile actual selected device spans and registry; reject stale native forks."""
 from pathlib import Path
+import hashlib
 import shutil
 import subprocess
 import sys
@@ -36,7 +37,57 @@ ns2_cut = '''#ifdef EDEN_NS2_DEVICE_CONTINUITY
 '''
 assert native.count(ns2_header) == 1, 'N50 include duplicated or modified'
 assert native.count(ns2_cut) == 2, 'N50 map/unmap continuity blocks drifted'
-unqualified_native = native.replace(ns2_header, '', 1).replace(ns2_cut, '', 2)
+# Vendor #194 adds FC27 deferred page-protection publication. Keep the live
+# native source intact: reverse exactly the reviewed additions in this
+# parity-only copy before checking the historical device-span/ASID contract.
+# Fail closed on any additional change to the selected vendor owner.
+def git_blob(text):
+    data = text.encode()
+    return hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\\0' + data).hexdigest()
+
+assert git_blob(native) == '852a0272696c7ce182bc05aee92bc7cbb195446b', (
+    'FC27/NS2 selected device owner changed; review the new delta')
+fc27_header = (ROOT / 'vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h').read_text()
+assert git_blob(fc27_header) == '33262f511777cdd1b4a74ac0cd6dc39caa12c9d0'
+fc27_include = '#include "core/deferred_cached_updates.h"\\n'
+fc27_wait = '''#ifdef PS5_NATIVE
+    // A guest CPU write may already have changed buffer-cache word state but
+    // deliberately publish its host page-protection decrement after dropping
+    // buffer_cache.mutex. InvalidateRegion orders us behind that cache lock;
+    // wait before removing backing so the deferred decrement cannot be lost
+    // against a later remap.
+    ::Eden::DeferredCachedUpdates::WaitForPublished();
+#endif
+'''
+fc27_batch = '''#ifdef PS5_NATIVE
+    if (auto* deferred = ::Eden::DeferredCachedUpdates::active_collector) {
+        if (delta < 0) {
+            if (deferred->TryAdd(
+                    this,
+                    [](void* owner, std::span<const ::Eden::DeferredCachedUpdates::Range> runs,
+                       s32 run_delta) {
+                        static_cast<DeviceMemoryManager<Traits>*>(owner)
+                            ->UpdatePagesCachedBatch(runs, run_delta);
+                    },
+                    ranges, delta)) {
+                return;
+            }
+        } else if (!deferred->Empty()) {
+            // Tracking must never lag behind the word state. Flush any older
+            // decrements synchronously before a +1/zero update, preserving the
+            // exact call order and falling back to the original locked path.
+            deferred->Flush();
+        }
+    }
+#endif
+'''
+fc27_prior = native
+for addition in (fc27_include, fc27_wait, fc27_batch):
+    assert fc27_prior.count(addition) == 1, 'FC27 page-publication hunk drift'
+    fc27_prior = fc27_prior.replace(addition, '', 1)
+assert git_blob(fc27_prior) == 'daf493ce6e863397ec44bfae467c4f7533570477', (
+    'FC27 parity reversal changed unrelated native code')
+unqualified_native = fc27_prior.replace(ns2_header, '', 1).replace(ns2_cut, '', 2)
 assert unqualified_native == expected, 'Native device implementation drifted beyond the reviewed span reuse'
 assert 'id_pool' not in native + header
 map_body = native.split('void DeviceMemoryManager<Traits>::Map(', 1)[1].split('void DeviceMemoryManager<Traits>::Unmap(', 1)[0]

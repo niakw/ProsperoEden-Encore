@@ -14,7 +14,7 @@ data=json.loads(register.read_text())
 assert data["schema_version"]==1
 assert data["historical_f07_source_snapshots_preserved"] is True
 entries=data["files"]
-assert len(entries)==41  # 40 existing successors + reviewed Lichii IPC started-thread header
+assert len(entries)==42  # 41 previous successors + reviewed NS2 program-index-zero RomFS owner
 # The additional vendor entry is a documented source-interface successor,
 # not a relaxation of historical F07 provenance or a console performance claim.
 thread_entry=next(e for e in entries if e["path"]==
@@ -24,6 +24,13 @@ assert thread_entry["post_snapshot_git_blob"]=="89bbcbd2b0d3627210a980496d00f30a
 assert thread_entry["required_source_fragment"]=="std::vector<KThread*>& GetPendingStartedThreads()"
 assert thread_entry["review_kind"]=="source_interface"
 assert len({e["path"] for e in entries})==len(entries)
+romfs=next(e for e in entries if e["path"] ==
+    "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp")
+assert romfs["historical_reviewed_git_blob"] == "cd11cb32429efcceaf6b3e1144d495cce1569383"
+assert romfs["post_snapshot_git_blob"] == "4775cf98c3bfbc587402928bad424dcb471047a0"
+assert romfs["original_disposition"] == "new_source_issue_corrected"
+assert romfs["required_source_fragment"] == "program_index == 0 && type == ContentRecordType::Program"
+assert romfs["review_kind"] == "source_contract"
 stop_entry=next(e for e in entries if e["path"]=="headless/stop_limit.cpp")
 assert stop_entry["post_snapshot_git_blob"]=="a8124257c1a3a068973d6b1e98970f717ac40559"
 assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting app without automatic restart"

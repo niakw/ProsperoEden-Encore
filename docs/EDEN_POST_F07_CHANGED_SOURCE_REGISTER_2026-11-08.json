@@ -449,6 +449,17 @@
       "required_source_fragment": "std::vector<KThread*>& GetPendingStartedThreads()",
       "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
       "review_note": "2026-11-18: Lichii 3140648-derived IPC startup handoff. Paired with svc_thread.cpp/svc_ipc_standard.cpp and vendor test ns2_ipc_started_thread_handoff_source.py; exact prior/current Git blobs retained. PS5 runtime still unverified."
+    },
+    {
+      "path": "vendor/encore-active/eden-core/src/core/file_sys/romfs_factory.cpp",
+      "historical_reviewed_git_blob": "cd11cb32429efcceaf6b3e1144d495cce1569383",
+      "post_snapshot_git_blob": "4775cf98c3bfbc587402928bad424dcb471047a0",
+      "original_disposition": "new_source_issue_corrected",
+      "source_scope": "NS2 FSP command 205 program index zero uses exact mounted loader RomFS only if no NCA provider, Program and nonupdatable; official Lichii #159 backport with vendor SHA 67759611; no console first frame claimed.",
+      "review_kind": "source_contract",
+      "required_source_fragment": "program_index == 0 && type == ContentRecordType::Program",
+      "classification": "post_snapshot_source_delta_only_not_performance_or_console_proof",
+      "review_note": "2026-11-19: Lichii PR #159 commit 2ae4c3e; vendor main commit 67759611 modifies only this production RomFSFactory source and one isolated C++ host test compared with its parent 8e564f61. Old F07 SHA cd11cb unchanged. New source blob 4775cf pin. Engine NUP replacement has an identical guarded method, test CI #44555226402 green; PS5 runtime/first game frame unverified."
     }
   ]
 }

@@ -1,5 +1,8 @@
 # Eden Encore — architecture technique, composants, sources et recherche
 
+> **Actualisation du 19 novembre (sans modifier l'architecture de référence) :** le correctif historique de table A64 PS5 réduite à 64K entrées ne fait **plus partie du chemin natif validé à la compilation**. Il a été retiré après un défaut de disposition C++ entre unités de traduction ; vendor `8e564f61` puis `67759611` conservent la table uniforme 16 MiB. Le build natif moteur `4a5b8cc` l'atteste en ELF ; le test PS5 FC27/MKW/Bananza atteint l'entrée invitée sans garantir les premières frames NS2. Les sections JIT doivent être lues avec le [registre de l'incident](audits/PS5_R457_CC8044CE_P0_CROSS_TITLE_A64_JIT_SIGSEGV_2026-11-19.md) et le [suivi du 19 novembre](audits/PS5_R457_2026-11-19_FC27_NS2_POST_TEST.md). Le correctif upstream Lichii #159 sur l'index RomFS zéro est dorénavant intégré aux deux sources sélectionnées, mais la réussite du boot NS2 n'est pas prouvée.
+
+
 > **Document de référence — 19 novembre 2026.** Architecture commune Nintendo Switch 1 / Nintendo Switch 2 portée sur PlayStation 5 (firmware de test 13.60).
 > **Moteur :** [niakw/ProsperoEden-Encore](https://github.com/niakw/ProsperoEden-Encore) ; **vendor :** [niakw/Prospero.Eden-Encore-vendor](https://github.com/niakw/Prospero.Eden-Encore-vendor).
 > **Instantané examiné :** moteur <code>cc8044cee42ad0e74af4edadaac6595de9128c31</code> ; gitlink vendor / vendor main <code>6c38328fbef33de747f5c31ea30d13541a513a4a</code>. Les pointeurs évoluent après publication de ce document ; vérifier les Gitlinks et CMake avant chaque diagnostic.

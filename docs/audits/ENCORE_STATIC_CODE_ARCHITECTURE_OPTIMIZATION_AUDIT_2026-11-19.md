@@ -1,5 +1,8 @@
 # Encore — audit statique transversal du code, de l'architecture et des optimisations (19 novembre 2026)
 
+> **Mise à jour du 19 novembre — correction d'une conclusion devenue obsolète.** L'instantané de cet audit (vendor `6c38328f`) décrit une table JIT A64 PS5 de **64K** entrées. Cette variante a provoqué sur PS5 un décalage de disposition de classe entre unités de compilation portant et ne portant pas `PS5_NATIVE`, puis trois SIGSEGV au démarrage des titres. Elle a été annulée par [vendor `8e564f61`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/8e564f61e6c8b86149ce0a0d6d2aa323a268dda6), conservée dans `67759611`. Le binaire natif R457 `4a5b8cc` [run #44538202373](https://github.com/niakw/ProsperoEden-Encore/actions/runs/44538202373) confirme en désassemblage l'allocation **16 MiB** et les constructeurs correspondants ; l'archive console `logs19111615.zip` atteint `guest_run_begin` sur FC27 et deux titres NS2 sans reproduire les SIGSEGV. Les observations **F-03 / D-02 / JIT 64K** restent des faits historiques du snapshot, pas une optimisation active ni une recommandation de réactivation. [Registre P0](PS5_R457_CC8044CE_P0_CROSS_TITLE_A64_JIT_SIGSEGV_2026-11-19.md).
+
+
 > **AUDIT DOCUMENTAIRE UNIQUEMENT — aucune correction, aucun test exécuté, aucun build, aucun changement du vendor ni du binaire.**
 >
 > **Périmètre :** [moteur Encore](https://github.com/niakw/ProsperoEden-Encore) et [vendor Encore](https://github.com/niakw/Prospero.Eden-Encore-vendor), architecture NS1/NS2 sur PS5 firmware 13.60.

@@ -43,13 +43,13 @@ assert native.count(ns2_cut) == 2, 'N50 map/unmap continuity blocks drifted'
 # Fail closed on any additional change to the selected vendor owner.
 def git_blob(text):
     data = text.encode()
-    return hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\\0' + data).hexdigest()
+    return hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
 
 assert git_blob(native) == '852a0272696c7ce182bc05aee92bc7cbb195446b', (
     'FC27/NS2 selected device owner changed; review the new delta')
 fc27_header = (ROOT / 'vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h').read_text()
 assert git_blob(fc27_header) == '33262f511777cdd1b4a74ac0cd6dc39caa12c9d0'
-fc27_include = '#include "core/deferred_cached_updates.h"\\n'
+fc27_include = '#include "core/deferred_cached_updates.h"' + chr(10)
 fc27_wait = '''#ifdef PS5_NATIVE
     // A guest CPU write may already have changed buffer-cache word state but
     // deliberately publish its host page-protection decrement after dropping

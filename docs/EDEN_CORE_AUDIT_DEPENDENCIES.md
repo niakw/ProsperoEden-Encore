@@ -245,9 +245,9 @@ historiques ci-dessous recoupent le graphe : **ne pas les additionner**.
 
 | Périmètre | Points | Fichiers distincts | Mentions de fonctions / contrats |
 | --- | ---: | ---: | ---: |
-| Graphe connu | 512 | 489 | 1028 |
+| Graphe connu | 515 | 492 | 1040 |
 | HOST — preuve ciblée hôte | 62 | 57 | 127 |
-| SOURCE — lecture effectuée, preuve insuffisante | 427 | 417 | 862 |
+| SOURCE — lecture effectuée, preuve insuffisante | 430 | 420 | 874 |
 | OPEN — question technique non résolue | 15 | 15 | 28 |
 | PARKED — expérimentation suspendue | 8 | 8 | 11 |
 | **Encore à qualifier (SOURCE + OPEN)** | **442** | **431** | **890** |

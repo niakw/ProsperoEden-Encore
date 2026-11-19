@@ -1,0 +1,52 @@
+name: Verified artifact reader host and API smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - tools/ci/download-verified-artifact.py
+      - tools/ci/test-download-verified-artifact.py
+      - .github/workflows/artifact-reader-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  artifact-reader:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run offline artifact security tests
+        run: python3 -B tools/ci/test-download-verified-artifact.py
+
+      - name: Create deterministic small upload
+        run: |
+          mkdir -p artifact-reader-sample/PPSA99008
+          printf 'Encore artifact reader smoke v1\n' > artifact-reader-sample/PPSA99008/marker.txt
+
+      - name: Upload sample through official GitHub transport
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: encore-verified-artifact-smoke
+          path: artifact-reader-sample/
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Download from actual GitHub API with SHA and CRC verification
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 -B tools/ci/download-verified-artifact.py \
+            --repo "$GITHUB_REPOSITORY" \
+            --run-id "$GITHUB_RUN_ID" \
+            --name encore-verified-artifact-smoke \
+            --dest artifact-reader-verified
+          cmp artifact-reader-sample/PPSA99008/marker.txt \
+              artifact-reader-verified/PPSA99008/marker.txt

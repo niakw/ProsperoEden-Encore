@@ -103,7 +103,7 @@ assert impl_native == native_block(
 owner_full_sha = subprocess.check_output(
     ["git", "hash-object", str(OWNER / "texture_cache.h")], text=True
 ).strip()
-assert owner_full_sha in {"744bf30e1421dcce212146f7e26e9d90558676a8", "0d99f9a861c645562519f71d62f4f49bfedd8101", "859a9e46fb63a97fee82c8ea6b1566317264f98f"}, (
+assert owner_full_sha in {"744bf30e1421dcce212146f7e26e9d90558676a8", "0d99f9a861c645562519f71d62f4f49bfedd8101", "859a9e46fb63a97fee82c8ea6b1566317264f98f", "c7cb95ecaf388b925fc29582499bbd4b54a77f75"}, (
     "N60/R4 selected TextureCache owner drift", owner_full_sha)
 if owner_full_sha == "744bf30e1421dcce212146f7e26e9d90558676a8":
     legacy_tex = reverse_r23_checked_astc(
@@ -136,10 +136,17 @@ else:
             return body.split(signature, 1)[1].split("\n}\n", 1)[0]
         assert selected_method(tex) == selected_method(shadow), (
             "selected F07 method does not match reviewed shadow owner", signature)
-    if owner_full_sha == "859a9e46fb63a97fee82c8ea6b1566317264f98f":
+    if owner_full_sha in {"859a9e46fb63a97fee82c8ea6b1566317264f98f", "c7cb95ecaf388b925fc29582499bbd4b54a77f75"}:
         signature = "void TextureCache<P>::TickAsyncUnswizzle()"
         assert selected_method(tex) == selected_method(shadow), (
             "selected PS5 BCn 3D F07 safety diverged from tested Vulkan owner")
+    if owner_full_sha == "c7cb95ecaf388b925fc29582499bbd4b54a77f75":
+        queue_signature = "void TextureCache<P>::QueueAsyncDecode("
+        selected_queue = tex.split(queue_signature, 1)[1].split("\n}\n", 1)[0]
+        shadow_queue = shadow.split(queue_signature, 1)[1].split("\n}\n", 1)[0]
+        alloc_marker = "Common::ScratchBuffer<u8> local_unswizzle_data_buffer;"
+        assert alloc_marker in selected_queue and alloc_marker in shadow_queue
+        assert "local_unswizzle_data_buffer.resize_destructive(image.unswizzled_size_bytes);" in selected_queue
     for marker in (
         "bool upload_completed = false;",
         "if (!upload_completed)",

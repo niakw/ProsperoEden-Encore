@@ -75,6 +75,7 @@ KNOWN_VENDOR_GRAPH = {
     "729f7e5a734b5a890a7bbf3ab60ce1100492af13": "same sealed NS1/AudioOut owners + reviewed quiet NS2 IPC and wait SVC receipts",
     "1a09972eea6f473fda1b714efe84cd52219bf681": "same sealed NS1/AudioOut owners + restored active NS1/NS2 F07 TextureCache lifetime and freshness",
     "3e6647827122c34704c2699a6f5e9b20fff3e9a6": "same sealed NS1/AudioOut owners + F07 BCn-3D unswizzle safety in selected NS1/NS2 runtime",
+    "6d64217ea5804fb86dbf57685a3da0cb1d45ba32": "same owners + selected async texture decode zero-fill elimination",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

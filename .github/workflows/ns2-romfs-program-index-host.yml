@@ -1,0 +1,27 @@
+name: NS2 RomFS program index 0 host contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - vendor
+      - headless/nup_v1_romfs_factory.cpp
+      - headless/nup_v1_runtime.cmake
+      - tools/check-ns2-romfs-program-index-host.py
+      - .github/workflows/ns2-romfs-program-index-host.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  index0-host:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Compile exact selected FileSys method and test negative cases
+        run: python3 -B tools/check-ns2-romfs-program-index-host.py

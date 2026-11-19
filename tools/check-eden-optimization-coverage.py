@@ -2615,7 +2615,7 @@ print("P0_DIRECT_MEMORY_FAILURE_ONLY_F07_REVERSE_PASS M01=1 historical=unchanged
 # resuming the immutable F07 source comparison. Do not rewrite old Git blobs.
 incident_header = "headless/diagnostics.h"
 incident_header_original = "0bc6a2c89def2a5be80df854e5ced443cb3c2e3d"
-incident_header_current = "76f88afd2459aaa77bc5e9e5d28a4aa16aaebefe"
+incident_header_current = "df373c11780ae174b1b9db4c54a9f0b4d2a652e2"
 assert incident_header in drift_index and incident_header not in post_index
 incident_drift = drift_index.pop(incident_header)
 assert incident_drift["expected"] == incident_header_original
@@ -2625,6 +2625,9 @@ incident_begin = "// A recoverable PS5 failure is NOT a fatal signal."
 incident_end = "// A shutdown step with the milliseconds since the previous one (some games take 14-16 s)."
 assert header_text.count(incident_begin) == header_text.count(incident_end) == 1
 assert "inline bool WriteSessionFailureReceipt(" in header_text
+assert header_text.count("inline bool WriteSessionBoundaryReceipt(") == 1
+assert "EDEN_SESSION_BOUNDARY_V1" in header_text
+assert "phase=%.32s age_ms=%llu gpu_completed=%llu gpu_stalls=%u" in header_text
 assert "O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW" in header_text
 start = header_text.index(incident_begin)
 stop = header_text.index(incident_end)

@@ -115,3 +115,7 @@ the engine gitlink matches this commit at the time of review.
 **Result:** upstream architecture research and three lowerer implementations
 compared; **no runtime Ampere correction claimed** on the strength of this paper
 alone. Recheck on PS5 13.60 after a genuinely qualified build.
+
+## Maxwell/Ampere primary-source cross-reference — 2026-11-19
+
+The nine NVIDIA and academic architecture sources, real Encore GPU/cache source owners, explicit applicability limits and NS1/NS2 console qualification gates are tracked in [`docs/audits/NVIDIA_GPU_ARCHITECTURE_REFERENCE_REGISTER_2026-11-19.md`](audits/NVIDIA_GPU_ARCHITECTURE_REFERENCE_REGISTER_2026-11-19.md). Measurements on GTX980 and A100 are *not* PS5 or Nintendo GPU timing constants. No unsupported opcode is implemented on the strength of these papers alone.

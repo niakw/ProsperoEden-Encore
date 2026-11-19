@@ -79,6 +79,57 @@ inline bool WriteSessionFailureReceipt(const std::string& path, const char* sour
     const bool closed = close(file) == 0;
     return synced && closed;
 }
+// Durable, low-frequency session boundary: lets a second launch be compared
+// with the first even if Detailed Logs are OFF. Never call on a render/guest
+// frame or while holding a GPU/cache lock. The kernel free-extent query is
+// performed by the caller at a handful of title lifecycle transitions.
+// Numbers are snapshots, not attribution of driver versus guest allocations.
+inline bool WriteSessionBoundaryReceipt(const std::string& path, const char* source_sha,
+                                        std::uint64_t title_id, std::uint64_t attempt,
+                                        const char* phase, std::uint64_t age_ms,
+                                        bool detailed, std::uint32_t logging_generation,
+                                        bool free_query_ok, std::size_t largest_free,
+                                        std::uint64_t gpu_completed,
+                                        std::uint32_t gpu_stall_suspicions) noexcept {
+    if (!phase) return false;
+    const auto mono_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    char line[512];
+    const int size = std::snprintf(line, sizeof(line),
+        "EDEN_SESSION_BOUNDARY_V1 mono_ms=%lld sha=%.40s "
+        "title=%016llx attempt=%llu phase=%.32s age_ms=%llu "
+        "detailed=%u logging_generation=%u largest_query_ok=%u "
+        "largest_free_bytes=%zu gpu_completed=%llu gpu_stall_suspicions=%u\n",
+        static_cast<long long>(mono_ms), source_sha ? source_sha : "unknown",
+        static_cast<unsigned long long>(title_id),
+        static_cast<unsigned long long>(attempt), phase,
+        static_cast<unsigned long long>(age_ms), unsigned(detailed),
+        logging_generation, unsigned(free_query_ok), largest_free,
+        static_cast<unsigned long long>(gpu_completed), gpu_stall_suspicions);
+    if (size <= 0 || static_cast<std::size_t>(size) >= sizeof(line)) return false;
+    constexpr std::size_t kMaxBytes = 2U * 1024U * 1024U;
+    const int fd = open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW, 0600);
+    if (fd < 0) return false;
+    struct stat info{};
+    if (fstat(fd, &info) != 0 || !S_ISREG(info.st_mode) ||
+        info.st_size < 0 ||
+        static_cast<std::uint64_t>(info.st_size) >
+            kMaxBytes - static_cast<std::size_t>(size)) {
+        (void)close(fd);
+        return false;
+    }
+    std::size_t at = 0;
+    while (at < static_cast<std::size_t>(size)) {
+        const ssize_t count = write(fd, line + at, static_cast<std::size_t>(size) - at);
+        if (count > 0) at += static_cast<std::size_t>(count);
+        else if (count < 0 && errno == EINTR) continue;
+        else break;
+    }
+    const bool synced = at == static_cast<std::size_t>(size) && fsync(fd) == 0;
+    const bool closed = close(fd) == 0;
+    return synced && closed;
+}
+
 // Crash-only lifecycle breadcrumb: at most a handful of writes per title.
 // Retained if the PS5 process exits unexpectedly before C++ stack unwinding.
 // Do not sample the GPU, guest memory or per-frame state.

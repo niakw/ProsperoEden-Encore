@@ -24,6 +24,33 @@ Engine `headless/CMakeLists.txt` applies `PS5_NATIVE=1` **per source** to the `a
 
 A Clang two-TU AddressSanitizer fixture reproducing exactly the old member-array sizes yields a **heap-buffer-overflow** when the `-DPS5_NATIVE=1` owner allocates 1,048,576 bytes and the unflagged method fills 16,777,216 bytes. The same fixture with the rollback's unconditionally 16,777,216-byte class terminates successfully. This proves a real native corruption mechanism, **not** that the exact PS5 `0x8000ac03f` RIP was definitely caused by this particular write.
 
+### Native machine-code proof from the exact crashed package
+
+Independently disassembled the **real compiled** `Encore-R457-symbols.elf` from the
+verified `cc8044ce` package (SHA256
+`719895f14998f0001000d2437bb5c516bf22f7d65ed39b9a2216c1afcf603a27`).
+The incompatible class layouts are visible in x86-64 instructions, **not only
+in the CMake or headers**:
+
+```asm
+0x242d807: mov edi, 0x104000               ; Jit::Jit allocates 1,064,960 bytes
+0x242d811: call operator new               ; aligned owning Jit::Impl
+0x242dbc5: lea r12, [rbx+0x1700]          ; emitter member inside Impl
+0x242dc0f: call 0x242f000                  ; A64EmitX64::A64EmitX64(...)
+0x242f224: mov qword ptr [rbx+0x10017f0], 0x3f ; constructor field at >16 MiB
+0x242f23a: mov qword ptr [rbx+0x1001808], 0
+```
+
+The out-of-line constructor writes to an object field more than **14.99 MiB
+past** the total heap allocation made by the inlined owner constructor, even
+*before* accounting for the emitter member's positive offset. This proves a
+definite out-of-bounds code path in the **installed console binary**. A
+separate source-level ASan reproducer supports the same mechanism, but the
+exact system-library `RIP=0x8000ac03f` remains to be confirmed via new
+console execution. The corrected ELF must be checked for a consistent
+`Jit::Impl` allocation and `A64EmitX64` field offsets before asking for
+another hardware test.
+
 ## Corrective lineage and test controls
 
 - Vendor [8e564f61](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/8e564f61e6c8b86149ce0a0d6d2aa323a268dda6): restores the **byte-exact previously used** stable 16-MiB A64 dispatch table and old mask, keeping all other vendor runtime fixes untouched.

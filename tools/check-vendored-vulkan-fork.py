@@ -154,7 +154,26 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
         print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = exact_vendor_pin
-    if pair_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
+    if pair_vendor_pin in {
+        "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
+        "729f7e5a734b5a890a7bbf3ab60ce1100492af13",
+    }:
+        # New vendor changes only the selected NS2 SVC trace owners; seal their
+        # exact bytes without weakening the preserved Vulkan reverse-oracle.
+        if pair_vendor_pin == "729f7e5a734b5a890a7bbf3ab60ce1100492af13":
+            for owner, expected_blob in (
+                ("encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h",
+                 "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86"),
+                ("encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp",
+                 "09ae2494b2b6f620a25ab549c06c69045a9fb73d"),
+                ("tests/ns2_recent_svc_fault_trace_host.py",
+                 "79d8d7294e37e141d6c669d9b55fa5a02d94287e"),
+            ):
+                actual_blob = subprocess.check_output(
+                    ["git", "hash-object", str(root / "vendor" / owner)],
+                    text=True,
+                ).strip()
+                assert actual_blob == expected_blob, ("NS2 quiet SVC source drift", owner)
         # The exact reverted synchronous rasterizer is byte-identical
         # to the old d024 path before the F07 historical replay.
         assert raster_blob((root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()) == '01c6880e5a8836da45601b0a3cb7c0fd6c46cf35'

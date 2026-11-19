@@ -3296,23 +3296,24 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM AND
         "${PORT_ROOT}/vendor/encore-active/ns2-helpers/include")
 endif()
 
-# P0.2: limited A64 LDAPR promotion for the unified PS5 JIT. It uses the
-# original pinned Dynarmic decoder and load/store owner with one reviewed
-# instruction, not the unvalidated RETAA/PAC or LSE research extensions.
-# This runs only in the reviewed final dual-NPDM target and is independent
-# of the opt-in research flags (which remain explicitly forbidden at release).
-set(EDEN_SHARED_NS2_A64_LDAPR OFF)
+# P0 NS2: reviewed ARMv8.1-ARMv8.5 promotion for the unified PS5 JIT.
+# Lichii 11aac324 is based on the exact pinned Dynarmic snapshot used here
+# and covers instruction families observed in retail NX2 code: LSE/CAS/CASP,
+# LDAPR, PAC/authenticated branches/loads and the required zero-tag MTE subset.
+# The old opt-in research A64 selector remains forbidden at release.
+set(EDEN_SHARED_NS2_A64_V81_V85 OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
-    set(EDEN_SHARED_NS2_A64_LDAPR ON)
-    set(EDEN_A64_LDAPR_SOURCE_ROOT
+    set(EDEN_SHARED_NS2_A64_V81_V85 ON)
+    set(EDEN_A64_V81_V85_SOURCE_ROOT
         "${PORT_ROOT}/vendor/sources/eden/src/dynarmic/src")
-    set(EDEN_A64_LDAPR_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
-    include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_ldapr.cmake")
-    # Dynarmic's a64.h includes ./a64.inc, and a64_translate.cpp includes
-    # load_store_exclusive.cpp as source text. All 4 generated files must
-    # resolve under one include root, before the vendored Dynarmic headers.
-    target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_LDAPR_OUTPUT_ROOT}")
-    message(STATUS "Encore shared A64: reviewed LDAPR + RETAA/RETAB no-PAC return; no general PAC/LSE research")
+    set(EDEN_A64_V81_V85_OUTPUT_ROOT "${PORT_BUILD_DIR}/include")
+    include("${CMAKE_CURRENT_LIST_DIR}/shared_a64_v81_v85.cmake")
+    # The generated include root owns the full reviewed frontend files.
+    # Only this reviewed dual-NPDM PS5 product enables the guarded extra
+    # implementation units in Encore's maintained scalar translator.
+    target_include_directories(dynarmic BEFORE PRIVATE "${EDEN_A64_V81_V85_OUTPUT_ROOT}")
+    target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1)
+    message(STATUS "Encore shared A64: reviewed ARMv8.1-8.5 LSE/CAS/PAC/MTE production owners")
 endif()
 
 # Unified NS2 six-core kernel owner; each process retains its physical

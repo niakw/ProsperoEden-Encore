@@ -32,4 +32,4 @@ for symbol in ("vkCmdDraw", "radv_shader_nir_to_asm", "glDrawArrays"):
     assert test.returncode == 0, (symbol, test.returncode, test.stderr)
 subprocess.run(["bash","-n",str(root/"tools/link-headless-native.sh")],
                check=True,timeout=10)
-print("PASS native weak symbol scan/resolution preserved; unsupported linker option removed")
+print("PASS native weak symbol scan/resolution; required PS5 imports reject NULL; optional Mesa GPU entrypoints allowed")

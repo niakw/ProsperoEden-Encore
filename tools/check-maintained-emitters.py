@@ -78,6 +78,37 @@ assert normal_h.count("fast_dispatch_table_size = 0x10000;") == 1
 assert "fast_dispatch_table_size = 0x10000;" not in shared_h
 assert "fast_dispatch_table_size = 0x10000;" not in orig_h
 
+# Compile the *actual* maintained table constants in both preprocessing
+# modes. A source-only size assertion cannot detect an incorrect mask, and a
+# host build alone must never silently enable the PS5-specific layout.
+dispatch_begin = normal_h.index("#if defined(PS5_NATIVE)\n", normal_h.index(
+    "static_assert(sizeof(FastDispatchEntry) == 0x10);"))
+dispatch_end = normal_h.index("\n\n    void ClearFastDispatchTable();", dispatch_begin)
+dispatch_selected = normal_h[dispatch_begin:dispatch_end]
+compiler_dispatch = shutil.which("clang++") or shutil.which("g++")
+assert compiler_dispatch, "C++20 compiler required"
+with tempfile.TemporaryDirectory(prefix="encore-ps5-dispatch-") as folder:
+    src = Path(folder) / "dispatch.cpp"
+    src.write_text(
+        "#include <cstdint>\n"
+        "using u64 = std::uint64_t;\n"
+        "struct A64Dispatch {\n" + dispatch_selected + "\n};\n"
+        "#ifdef PS5_NATIVE\n"
+        "static_assert(A64Dispatch::fast_dispatch_table_mask == 0xFFFF0);\n"
+        "static_assert(A64Dispatch::fast_dispatch_table_size == 0x10000);\n"
+        "static_assert(A64Dispatch::fast_dispatch_table_size * 16 == 1024 * 1024);\n"
+        "#else\n"
+        "static_assert(A64Dispatch::fast_dispatch_table_mask == 0xFFFFF0);\n"
+        "static_assert(A64Dispatch::fast_dispatch_table_size == 0x100000);\n"
+        "static_assert(A64Dispatch::fast_dispatch_table_size * 16 == 16 * 1024 * 1024);\n"
+        "#endif\n")
+    for flags in ([], ["-DPS5_NATIVE=1"]):
+        result = subprocess.run(
+            [compiler_dispatch, "-std=c++20", "-Werror", "-Wall", "-fsyntax-only",
+             *flags, str(src)], capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0, (flags, result.stderr)
+print("ENCORE_A64_PS5_DISPATCH_COMPILE_PASS native=1MiB host=16MiB mask_matched=1")
+
 assert pub_proto in shared_h and proto not in shared_h
 assert "JitGroup* eden_group = nullptr;" in shared_h
 assert "eden_pending_sites" in shared_h

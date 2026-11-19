@@ -701,6 +701,21 @@ native_gpfifo_vendor_pin = subprocess.check_output(
 # Shallow submodule checkouts may not contain the parent object: pin the
 # entire vendor SHA and the exact new RomFS, host-test, and GPFIFO blobs
 # instead of requiring an unavailable historical git-diff base.
+if native_gpfifo_vendor_pin == "1e5cd625297e7dcc62d1fb5af05ffc1149e55961":
+    # Selected vendor rollback is byte-exact to its pre-#194 cached-page ABI.
+    # The independent RomFS successor is checked in the final source gate.
+    for path,blob in {
+        "encore-active/eden-core/overrides/core/device_memory_manager.inc":
+            "daf493ce6e863397ec44bfae467c4f7533570477",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp":
+            "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35",
+        "encore-active/eden-core/src/core/file_sys/romfs_factory.cpp":
+            "4775cf98c3bfbc587402928bad424dcb471047a0",
+    }.items():
+        actual=subprocess.check_output(["git","-C",str(ROOT/"vendor"),"hash-object",path],
+                                       text=True).strip()
+        assert actual == blob, ("Reviewed sync-rollback owner drift",path,actual)
+    native_gpfifo_vendor_pin="d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 if native_gpfifo_vendor_pin == "67759611edc13414c112ea9d2b6664d54827a200":
     for name, expected in {
         "encore-active/eden-core/src/core/file_sys/romfs_factory.cpp":
@@ -1119,6 +1134,8 @@ if post_f07_jxr_adapter_owners:
 post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
+if gpu_table_vendor_pin == "1e5cd625297e7dcc62d1fb5af05ffc1149e55961":
+    gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 fc27_deferred_selected = gpu_table_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owners = {"vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h"} & all_owners
 if fc27_deferred_selected:

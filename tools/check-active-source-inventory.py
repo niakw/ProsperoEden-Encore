@@ -382,7 +382,7 @@ assert not post_f07_cpu6_ldapr_owners.intersection(research_paths), (
 assert 'vendor/encore-active/ns2-runtime/cpu6/maintained/core' in (
     root/'headless/ns2_cpu6_source_bridge.cmake').read_text()
 assert 'vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64' in (
-    root/'headless/shared_a64_ldapr.cmake').read_text()
+    root/'headless/shared_a64_v81_v85.cmake').read_text()
 print("ENCORE_VENDOR_MAINTAINED_CPU6_LDAPR_PASS owners=8")
 
 # P1.3 post-F07 live NVDRV owners. These two complete C++ translation

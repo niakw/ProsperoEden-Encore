@@ -952,6 +952,8 @@ int main(int argc, char** argv) {
         }
 #ifdef PS5_NATIVE
         ++session_failure_attempt;
+        const auto session_selected_at = std::chrono::steady_clock::now();
+        const char* active_session_stage = "selected";
         std::uint64_t incident_title_id = 0;
         std::uint64_t prior_direct_bytes = 0, prior_direct_extent = 0;
         std::uint32_t prior_direct_rc = 0, prior_direct_stage = 0;
@@ -977,7 +979,12 @@ int main(int argc, char** argv) {
                     Eden::NativeLogs::Detailed(), largest_ok, largest,
                     direct_current, direct_current ? stage : 0,
                     direct_current ? rc : 0, direct_current ? bytes : 0,
-                    direct_current ? extent : 0))
+                    direct_current ? extent : 0,
+                    active_session_stage,
+                    static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::steady_clock::now() - session_selected_at).count()),
+                    Eden::Crash::gpu_completed_commands.load(std::memory_order_relaxed),
+                    Eden::Crash::gpu_stall_suspicions.load(std::memory_order_relaxed)))
                 Eden::Report("incident", "Could not persist session-failures.log");
         };
 #endif
@@ -993,10 +1000,31 @@ int main(int argc, char** argv) {
             if (session_marker_owned) (void)std::remove(unfinished_session_path.c_str());
         };
         const auto record_session_phase = [&](const char* stage) {
+            active_session_stage = stage;
             if (session_marker_owned)
                 (void)Eden::WriteSessionPhaseReceipt(
                     unfinished_session_path, failure_source_sha,
                     incident_title_id, session_failure_attempt, stage);
+        };
+        // A few transition-only receipts per title; never write in guest,
+        // shader compilation or Vulkan frame hot paths. PS5 pool largest-free
+        // is not total RAM and never proves a particular owner is leaking.
+        const auto record_session_boundary = [&](const char* stage) {
+            std::size_t largest_free = 0;
+            const bool largest_ok =
+                Eden::Performance::QueryLargestDirectMemoryBlock(&largest_free);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - session_selected_at).count();
+            if (!Eden::WriteSessionBoundaryReceipt(
+                    Eden::LogFile("session-boundaries.log"), failure_source_sha,
+                    incident_title_id, session_failure_attempt, stage,
+                    static_cast<std::uint64_t>(elapsed),
+                    Eden::NativeLogs::Detailed(),
+                    static_cast<std::uint32_t>(Eden::NativeLogs::Generation()),
+                    largest_ok, largest_free,
+                    Eden::Crash::gpu_completed_commands.load(std::memory_order_relaxed),
+                    Eden::Crash::gpu_stall_suspicions.load(std::memory_order_relaxed)))
+                Eden::Report("incident", "Could not persist session-boundaries.log");
         };
 #endif
         launch_error.clear();
@@ -1011,6 +1039,7 @@ int main(int argc, char** argv) {
 #ifdef PS5_NATIVE
         incident_title_id = launch_title_id;
         record_session_phase("title_resolved");
+        record_session_boundary("title_resolved");
 #endif
         if (rom_metadata_id == 0 && launch_title_id != 0)
             std::fprintf(stderr, "EDEN_TITLE_ID_LAUNCH_FALLBACK title=%016llx source=filename\n",
@@ -2550,6 +2579,9 @@ int main(int argc, char** argv) {
                 record_session_phase("guest_running");
 #endif
                 system.Run();
+#ifdef PS5_NATIVE
+                record_session_boundary("system_run_returned");
+#endif
                 if (left_while_loading) {
                     std::lock_guard lock(completion->mutex);
                     completion->return_to_menu = true;
@@ -2934,10 +2966,9 @@ int main(int argc, char** argv) {
         // Undo any per-title logical-CPU trial before the next launcher/game.
         // Guest workers have stopped above; restore the original allowed mask.
         Eden::Performance::SetSecondaryPlacement(false);
-        if (return_to_menu) continue;
-#endif
-#ifdef PS5_NATIVE
         record_session_phase("title_destroyed");
+        record_session_boundary("title_destroyed");
+        if (return_to_menu) continue;
 #endif
         passed("HEADLESS_COMPLETE");
 #ifdef EDEN_DEV_PROFILE

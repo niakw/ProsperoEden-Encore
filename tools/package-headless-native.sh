@@ -253,6 +253,27 @@ launcher_args = (launcher['arguments'] if 'arguments' in launcher
 frontend_flags = [flag for flag in launcher_args if flag.startswith('-DEDEN_DEVICE_FRONTEND=')]
 assert frontend_flags == ['-DEDEN_DEVICE_FRONTEND=0'], (
     'Shipping PS5 native frontend must be compiled OFF', frontend_flags)
+
+# P0 NS2 CPU correctness: vendor #192 is useful only if the maintained A64
+# translator was really compiled with its reviewed v8.1-v8.5 owner set.
+# Source tests alone previously allowed native-only branches to disappear.
+a64_suffix = '/vendor/encore-active/eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp'
+a64_units = [entry for entry in compiled_db
+             if pathlib.Path(entry['file']).as_posix().endswith(a64_suffix)]
+assert len(a64_units) == 1, ('Cannot prove selected maintained A64 translator', a64_units)
+a64_args = (a64_units[0]['arguments'] if 'arguments' in a64_units[0]
+            else shlex.split(a64_units[0]['command']))
+assert [flag for flag in a64_args if flag == '-DEDEN_NS2_A64_V81_V85=1'] == [
+    '-DEDEN_NS2_A64_V81_V85=1'
+], 'Native A64 translator lacks reviewed v8.1-v8.5 compile definition'
+macro_owners = []
+for entry in compiled_db:
+    argv = entry['arguments'] if 'arguments' in entry else shlex.split(entry['command'])
+    if '-DEDEN_NS2_A64_V81_V85=1' in argv:
+        macro_owners.append(pathlib.Path(entry['file']).as_posix())
+assert macro_owners == [pathlib.Path(a64_units[0]['file']).as_posix()], (
+    'A64 v8.1-v8.5 macro escaped its reviewed translation unit', macro_owners)
+
 assert 'EDEN_DEVICE_FRONTEND:BOOL=ON' not in profile
 assert 'EDEN_DEVICE_FRONTEND:UNINITIALIZED=ON' not in profile
 devices = False

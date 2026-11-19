@@ -1693,6 +1693,21 @@ for path, blob in post_f07_ns2_fault_receipts.items():
 assert '"${EDEN_PORT_DIR}/ns2_fault_receipt.cpp"' in native_cmake
 print("ENCORE_NS2_QUIET_FAULT_POST_F07_PASS", "owners=1")
 
+# A bounded, read-only, 10s/30s NS2 SVC loading witness arrived after F07.
+# It is included by the shipping PS5 Vulkan owner and must stay byte-sealed;
+# it is not an addition to the immutable 193-file historical table.
+post_f07_ns2_loading_svc_receipts = {
+    "headless/ns2_loading_svc_snapshot.h": "82c4b55483fe165909c790819a41b9d5609e0773",
+}
+post_f07_ns2_loading_svc_owners = set(post_f07_ns2_loading_svc_receipts)
+for path, blob in post_f07_ns2_loading_svc_receipts.items():
+    assert subprocess.check_output(["git", "hash-object", path], cwd=root,
+                                   text=True).strip() == blob, path
+assert '#include "ns2_loading_svc_snapshot.h"' in (root / "headless/graphics.cpp").read_text()
+assert '::Eden::NS2::LoadingSvcSnapshot::Report(10);' in (root / "headless/graphics.cpp").read_text()
+assert '::Eden::NS2::LoadingSvcSnapshot::Report(30);' in (root / "headless/graphics.cpp").read_text()
+print("ENCORE_NS2_LOADING_SVC_POST_F07_PASS owners=1 diagnostics_only=1")
+
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
@@ -1700,7 +1715,7 @@ headless_actual = sorted(
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
         post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners |
-        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners | post_f07_ns2_fault_owners)
+        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners | post_f07_ns2_fault_owners | post_f07_ns2_loading_svc_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

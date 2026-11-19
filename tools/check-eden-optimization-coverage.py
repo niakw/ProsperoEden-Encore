@@ -2708,6 +2708,7 @@ for e in entries:
                                    "V94","V95","V96","V99"}
         bridge=(ROOT/"headless/guest_write_deferred_bridge.cmake").read_text()
         assert 'option(EDEN_GUEST_WRITE_BRIDGE_DEV "Compile inactive native deferred-write bridge" OFF)' in bridge
+        assert 'guest_write_deferred_bridge.cmake' not in (ROOT/"headless/CMakeLists.txt").read_text()
     else: raise AssertionError(("unexpected profile",kind))
 assert sum(e["disposition"]=="preexisting_generated_or_inactive_unit"
            for e in entries)==19

@@ -1834,7 +1834,9 @@ assert (root / "tools/check-maintained-scalar-emitters.py").is_file()
 for fermi_variant in ("fermi_2d_observed.cpp", "fermi_2d_experimental.cpp"):
     assert (active / "eden-core/src/video_core/engines" / fermi_variant).is_file()
 fermi_selector = (root / "headless/gpu_native_observability.cmake").read_text()
-assert 'option(EDEN_UNQUALIFIED_FERMI2D_COPY "3D software blit experiments" OFF)' in fermi_selector
+assert 'EDEN_UNQUALIFIED_FERMI2D_COPY' not in fermi_selector
+assert 'fermi_2d_experimental.cpp' not in fermi_selector
+assert 'fermi_2d_observed.cpp' in fermi_selector
 assert 'write_derived(' not in fermi_selector
 assert (root / "tools/check-maintained-fermi2d-variants.py").is_file()
 print("VENDOR_MAINTAINED_FERMI2D_VARIANTS_OWNER_PASS")

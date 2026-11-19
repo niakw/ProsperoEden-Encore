@@ -32,7 +32,8 @@ replay=(root/"headless/gpu_deferred_replay.h").read_text()
 perf=(root/"headless/performance.h").read_text()
 assert 'option(EDEN_GUEST_WRITE_BRIDGE_DEV "Compile inactive native deferred-write bridge" OFF)' in code
 assert "NOT EDEN_DEV_PROFILE" in code and "NOT EDEN_PS5_VULKAN" in code
-assert "guest_write_deferred_bridge.cmake" in base
+assert 'include("${CMAKE_CURRENT_LIST_DIR}/guest_write_deferred_bridge.cmake")' not in base
+assert 'EDEN_GUEST_WRITE_BRIDGE_DEV' not in base
 assert "cpu_write_defer{false}" in perf
 assert "cpu_write_defer.store(true" not in code
 assert "ScopedReplay" in replay and "replaying_guest_write" in replay

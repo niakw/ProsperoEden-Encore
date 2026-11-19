@@ -36,8 +36,8 @@ assert "startsWith(github.event.head_commit.message || '', '[full-build]')" in b
 assert "(github.event_name == 'workflow_dispatch' && inputs.publish)" in build_workflow
 assert "needs.build.result == 'success'" in build_workflow
 assert 'if: ${{ false }}' not in build_workflow
-# An archived alternate workflow remains unselected; only the single real
-# native app/package workflow can be invoked deliberately by its operator.
-legacy=(root/'.github/workflows/ns2-native-ps5-research.yml').read_text()
-assert 'if: ${{ false }}' in legacy
+# The abandoned alternative package workflow has been retired, not
+# silently left available as a second build profile.
+assert not (root/'.github/workflows/ns2-native-ps5-research.yml').exists()
+assert not (root/'tools/ns2/package_native_research.sh').exists()
 print('P0_SINGLE_NATIVE_GPU_CMAKE_GRAPH_PASS build_modes=1 native_owners=registered ps5_console=not_tested')

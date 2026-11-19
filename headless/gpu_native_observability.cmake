@@ -27,16 +27,12 @@ list(FILTER sw_blitter_sources EXCLUDE REGEX "engines/sw_blitter/blitter[.]cpp$"
 set_property(TARGET video_core PROPERTY SOURCES "${sw_blitter_sources}")
 target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")
 
-option(EDEN_UNQUALIFIED_FERMI2D_COPY "3D software blit experiments" OFF)
+# One reviewed native Fermi2D owner for both tests and production.
+# The unqualified 3D/pitch software-copy variant is NOT a build selector.
 set(EDEN_MAINTAINED_FERMI_ROOT
     "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines")
-if(EDEN_UNQUALIFIED_FERMI2D_COPY)
-    set(EDEN_MAINTAINED_FERMI_FILE
-        "${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_experimental.cpp")
-else()
-    set(EDEN_MAINTAINED_FERMI_FILE
-        "${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp")
-endif()
+set(EDEN_MAINTAINED_FERMI_FILE
+    "${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp")
 if(NOT EXISTS "${EDEN_MAINTAINED_FERMI_FILE}")
     message(FATAL_ERROR "Missing maintained native Fermi2D variant")
 endif()

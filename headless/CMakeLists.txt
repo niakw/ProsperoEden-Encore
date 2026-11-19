@@ -3088,8 +3088,9 @@ endif()
 # Capture reproducible GPU compatibility evidence without changing any
 # Maxwell/Fermi instructions or swallowing unsupported feature failures.
 include("${CMAKE_CURRENT_LIST_DIR}/gpu_native_observability.cmake")
-# Disabled native GPU coherency bridge, explicit developer compilation only.
-include("${CMAKE_CURRENT_LIST_DIR}/guest_write_deferred_bridge.cmake")
+# No inactive developer-only guest-write bridge is included in the
+# single PS5 test/production source graph. Its original source-only tests
+# remain as historical evidence until post-store/read ordering is proven.
 
 # Experimental ExeFS bridge must be selected AFTER all Encore-owned source
 # substitutions (NCZ/XCZ and the PS5 16-KiB aligned NSO loader).

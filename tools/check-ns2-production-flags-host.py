@@ -21,6 +21,15 @@ for source in (CMAKE,SCRIPT,NUP):
                    'EDEN_FINAL_RELEASE_PROFILE','EDEN_NS2_NATIVE_EXPERIMENTAL'):
         assert option not in source,option
 assert not re.search(r'^\s*option\(EDEN_NS2_',CMAKE,re.M)
+# Only source-selected production owners; no old cache-dependent Fermi2D
+# alternative, guest-write developer bridge, or installable research workflow.
+fermi=(ROOT/'headless/gpu_native_observability.cmake').read_text()
+assert 'EDEN_UNQUALIFIED_FERMI2D_COPY' not in fermi
+assert fermi.count('fermi_2d_observed.cpp') == 1
+assert 'fermi_2d_experimental.cpp' not in fermi
+assert 'guest_write_deferred_bridge.cmake' not in CMAKE
+assert not (ROOT/'.github/workflows/ns2-native-ps5-research.yml').exists()
+assert not (ROOT/'tools/ns2/package_native_research.sh').exists()
 assert '"${ns2_cmake_args[@]}"' not in SCRIPT
 assert '-DEDEN_PS5_VULKAN=ON' in SCRIPT
 assert '-DEDEN_VULKAN_DRIVER=RADV' in SCRIPT

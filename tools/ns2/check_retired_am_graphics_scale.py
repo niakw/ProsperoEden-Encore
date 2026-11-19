@@ -10,7 +10,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 cmake = (ROOT / "headless/CMakeLists.txt").read_text()
 script = (ROOT / "tools/build-headless-native.sh").read_text()
-research = (ROOT / ".github/workflows/ns2-native-ps5-research.yml").read_text()
+retired_research = ROOT / ".github/workflows/ns2-native-ps5-research.yml"
+assert not retired_research.exists(), "Alternate research PS5 package workflow revived"
 host = (ROOT / ".github/workflows/ns2-research-host.yml").read_text()
 retired = ROOT / "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service"
 for name in ("application_proxy.cpp", "application_proxy.h",
@@ -22,7 +23,7 @@ assert "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in cmake
 # The single shipping product no longer offers any retired research selector.
 assert "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in script
 assert "EDEN_NS2_SPARSE_QUEUE_EXPERIMENTAL" not in script
-assert "EDEN_NS2_GRAPHICS_SCALE_EXPERIMENTAL" not in research
+assert not (ROOT / "tools/ns2/package_native_research.sh").exists()
 assert "graphics_scaling_parameters_functions" not in host
 assert "EDEN_SHARED_NS2_AM" in cmake
 assert "EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp" in cmake

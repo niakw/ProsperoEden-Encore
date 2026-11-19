@@ -49,5 +49,6 @@ assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' 
 assert 'list(FILTER sw_blitter_sources EXCLUDE REGEX "engines/sw_blitter/blitter[.]cpp$")' in module
 assert 'write_derived("${PORT_BUILD_DIR}/sw_blitter_sized.cpp"' not in module
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/video_core/engines/sw_blitter/blitter.cpp"' not in module
-assert "EDEN_UNQUALIFIED_FERMI2D_COPY" in module
+assert "EDEN_UNQUALIFIED_FERMI2D_COPY" not in module
+assert '"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp"' in module
 print("VENDOR_MAINTAINED_SW_BLITTER_PARITY_PASS: shipping backport plus 3 arithmetic corrections plus Lichii_2121_native_tiling=2")

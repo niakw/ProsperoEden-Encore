@@ -25,10 +25,9 @@ for old,new in edits:
     assert pinned.count(old)==1, ("pinned Fermi compatibility anchor changed",old[:64])
     pinned=pinned.replace(old,new)
 assert experimental==prefix+pinned
-assert 'option(EDEN_UNQUALIFIED_FERMI2D_COPY "3D software blit experiments" OFF)' in selector
-assert 'if(EDEN_UNQUALIFIED_FERMI2D_COPY)' in selector
-assert '"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp"' in selector
-assert '"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_experimental.cpp"' in selector
+assert 'EDEN_UNQUALIFIED_FERMI2D_COPY' not in selector
+assert selector.count('"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp"') == 1
+assert '"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_experimental.cpp"' not in selector
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in selector
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in selector
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in selector
@@ -36,4 +35,4 @@ assert selector.count("target_sources(") == 3
 assert 'write_derived(' not in selector and 'string(REPLACE' not in selector
 assert 'EDEN_GPU_FERMI2D_SOFTWARE_BOUNDS_INVALID' in experimental
 assert 'EDEN_GPU_FERMI2D_SOFTWARE_BOUNDS_INVALID' not in standard
-print("VENDOR_MAINTAINED_FERMI2D_VARIANTS_PARITY_PASS: standard=1 optional_experimental=1 rewrites=3")
+print("VENDOR_MAINTAINED_FERMI2D_VARIANTS_PARITY_PASS: shipping_observed=1 alternate_build_selector=0 archived_source_oracle=1 rewrites=3")

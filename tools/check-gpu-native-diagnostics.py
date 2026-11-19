@@ -14,9 +14,9 @@ assert 'include("${CMAKE_CURRENT_LIST_DIR}/gpu_native_observability.cmake")' in 
 assert cmake.count('if(NOT PS5_NATIVE)') == 1
 # FC27 hardware regression: unqualified 3D/pitch software blits can skip
 # texture writes and stall the GPU frame. They must not be compiled by default.
-assert 'option(EDEN_UNQUALIFIED_FERMI2D_COPY "3D software blit experiments" OFF)' in cmake
-assert cmake.count('if(EDEN_UNQUALIFIED_FERMI2D_COPY)') == 1
-assert 'if(EDEN_UNQUALIFIED_FERMI2D_COPY)\n    set(EDEN_MAINTAINED_FERMI_FILE' in cmake
+assert 'EDEN_UNQUALIFIED_FERMI2D_COPY' not in cmake
+assert cmake.count('"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp"') == 1
+assert 'fermi_2d_experimental.cpp' not in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
@@ -264,7 +264,7 @@ assert pitch_layer_address(0x1000, 0, 1080, 1, 2) is None
 
 assert "return;" in fermi_copy_new
 assert (ROOT / "tools/check-maintained-fermi2d-variants.py").is_file()
-assert 'option(EDEN_UNQUALIFIED_FERMI2D_COPY "3D software blit experiments" OFF)' in cmake
+assert 'EDEN_UNQUALIFIED_FERMI2D_COPY' not in cmake
 assert "src.depth = 1;" in fermi_copy_new
 assert "Surface dst = regs.dst;" in fermi_copy_new
 assert "dst.depth = 1;" in fermi_copy_new
@@ -306,5 +306,5 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-print("GPU SOURCE CONTRACT: PRMT immediate/register Index implemented; original Fermi2D transfer path restored by default; extended software copies unqualified and gated")
+print("GPU SOURCE CONTRACT: PRMT immediate/register Index implemented; one fixed observed Fermi2D owner; unqualified copy removed from native selection")
 print("NOTE graphics correctness and PS5 native CMake build remain to be qualified")

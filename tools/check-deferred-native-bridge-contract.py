@@ -327,6 +327,24 @@ def m07_source_blob(value):
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
 m07_selected_sha = m07_source_blob(original_m07)
+# Vendor #194: the exact shipping FC27 post-buffer-lock page-protection
+# publication is newer than M07. Remove only its reviewed hunk AND header
+# from the historical audit copy, then keep all M07/R23/MSAA proofs intact.
+if m07_selected_sha == "38d5630570675088a0620ef533112bb314a40ae8":
+    receipt_path = root / "vendor/tests/native_msaa_handle_receipt.py"
+    receipt_text = receipt_path.read_text()
+    assert m07_source_blob(receipt_text) == "236713fa06672b39e2a4b9a84907882bbbb1bbbd"
+    receipt = runpy.run_path(str(receipt_path))
+    assert receipt["CURRENT_DEFERRED_PAGE_PROTECTION"] == m07_selected_sha
+    assert receipt["CURRENT_PAGE_SIBLING"] == "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35"
+    before, after = receipt["DEFERRED_BEFORE"], receipt["DEFERRED_AFTER"]
+    include = receipt["DEFERRED_INCLUDE"]
+    assert original_m07.count(after) == original_m07.count(include) == 1
+    assert before not in original_m07
+    original_m07 = original_m07.replace(include, "", 1).replace(after, before, 1)
+    m07_selected_sha = m07_source_blob(original_m07)
+    assert m07_selected_sha == receipt["CURRENT_PAGE_SIBLING"]
+    print("ENCORE_M07_FC27_DEFERRED_PAGE_EXACT_REVERSE_PASS")
 # FC27 sibling-page preservation was added after the frozen M07/R23 chain.
 # Unmap is the one call site where page siblings must NOT be downloaded because
 # the mapping is being destroyed. Reverse that reviewed call-site flag only.
@@ -341,7 +359,11 @@ if m07_selected_sha == "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35":
 if m07_selected_sha == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1":
     receipt_path = root / "vendor/tests/native_msaa_handle_receipt.py"
     receipt_text = receipt_path.read_text()
-    assert m07_source_blob(receipt_text) == "18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2"
+    assert m07_source_blob(receipt_text) == (
+        "236713fa06672b39e2a4b9a84907882bbbb1bbbd"
+        if (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text().find(
+            'core/deferred_cached_updates.h') >= 0 else
+        "18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2")
     receipt = runpy.run_path(str(receipt_path))
     assert receipt["CURRENT_DRAWTEXTURE"] == m07_selected_sha
     draw_after = receipt["DRAW_TEXTURE_AFTER"]

@@ -3300,7 +3300,7 @@ endif()
 # Vendor #192 is the reviewed Lichii 11aac324 backport on the exact pinned
 # Dynarmic parent: LDAPR, LSE/CAS/CASP, PAC/AUT/XPAC/PACGA, authenticated
 # branches/loads and the Switch 2 MTE subset. Keep it coupled to the reviewed
-# dual-NPDM PS5 product; the old broad EDEN_NS2_A64_EXPERIMENTAL flag stays forbidden.
+# dual-NPDM PS5 product; the old broad experimental A64 build mode stays forbidden.
 set(EDEN_SHARED_NS2_A64_V81_V85 OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_A64_V81_V85 ON)

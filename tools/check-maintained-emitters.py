@@ -51,65 +51,53 @@ assert a64 == expected_std, "A64 standard original-to-maintained parity"
 proto = "    BlockDescriptor Emit(IR::Block& block) noexcept;"
 pub_proto = "    BlockDescriptor Emit(IR::Block& block, bool publish = true) noexcept;"
 assert orig_h.count(proto) == 1
-# EglantinePS5 #104: native 64 Ki fast-dispatch entries (1 MiB per JIT)
-# rather than 1 Mi entries (16 MiB). This must never affect non-PS5
-# builds, including host and the historical shared-JIT reference.
+# P0: vendor #104 introduced a PS5_NATIVE-dependent A64EmitX64 array.
+# The native graph compiles the owning a64_interface.cpp with PS5_NATIVE=1,
+# but its a64_emit_x64.cpp and a64_emit_x64_memory.cpp methods without it.
+# Therefore independent compiler passes accepted incompatible C++ layouts.
+# Keep exactly ONE unconditional array size and hash mask across every TU.
 dispatch_old = ("    static constexpr u64 fast_dispatch_table_mask = 0xFFFFF0;\n"
                 "    static constexpr size_t fast_dispatch_table_size = 0x100000;")
-dispatch_native = """#if defined(PS5_NATIVE)
-    // EglantinePS5 #104: 64K entries (1 MiB per A64 JIT) rather than
-    // 1M (16 MiB). The hash mask shrinks with the table; collisions
-    // fall through to the existing block lookup, not incorrect execution.
-    static constexpr u64 fast_dispatch_table_mask = 0xFFFF0;
-    static constexpr size_t fast_dispatch_table_size = 0x10000;
-#else
-    static constexpr u64 fast_dispatch_table_mask = 0xFFFFF0;
-    static constexpr size_t fast_dispatch_table_size = 0x100000;
-#endif"""
-# Build expected source exclusively from the pinned baseline and two
-# independently reviewed changes: publication ABI and dispatch capacity.
 expected_h = orig_h.replace(proto,
     "#if defined(EDEN_JIT_A64_PUBLISH)\n" + pub_proto
     + "\n#else\n" + proto + "\n#endif")
-assert orig_h.count(dispatch_old) == 1
-assert expected_h.count(dispatch_old) == 1
-assert normal_h == expected_h.replace(dispatch_old, dispatch_native)
-assert normal_h.count("fast_dispatch_table_size = 0x10000;") == 1
+assert orig_h.count(dispatch_old) == expected_h.count(dispatch_old) == 1
+assert normal_h == expected_h, "A64 dispatch class ABI drift from pinned stable layout"
+assert normal_h.count(dispatch_old) == 1
+assert "fast_dispatch_table_size = 0x10000;" not in normal_h
 assert "fast_dispatch_table_size = 0x10000;" not in shared_h
 assert "fast_dispatch_table_size = 0x10000;" not in orig_h
 
-# Compile the *actual* maintained table constants in both preprocessing
-# modes. A source-only size assertion cannot detect an incorrect mask, and a
-# host build alone must never silently enable the PS5-specific layout.
-dispatch_begin = normal_h.index("#if defined(PS5_NATIVE)\n", normal_h.index(
+# Verify split compile ownership. Never change core PS5_NATIVE globally merely
+# to mask this ABI mismatch; its other uses are intentionally source-scoped.
+assert "a64_interface.cpp" in cm and "a64_emit_x64.cpp" in cm
+assert 'TARGET_DIRECTORY dynarmic APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"' in cm
+dispatch_begin = normal_h.index(dispatch_old, normal_h.index(
     "static_assert(sizeof(FastDispatchEntry) == 0x10);"))
 dispatch_end = normal_h.index("\n\n    void ClearFastDispatchTable();", dispatch_begin)
 dispatch_selected = normal_h[dispatch_begin:dispatch_end]
+assert "#if" not in dispatch_selected and "#else" not in dispatch_selected
 compiler_dispatch = shutil.which("clang++") or shutil.which("g++")
 assert compiler_dispatch, "C++20 compiler required"
-with tempfile.TemporaryDirectory(prefix="encore-ps5-dispatch-") as folder:
+with tempfile.TemporaryDirectory(prefix="encore-ps5-dispatch-abi-") as folder:
     src = Path(folder) / "dispatch.cpp"
     src.write_text(
         "#include <cstdint>\n"
         "#include <cstddef>\n"
         "using u64 = std::uint64_t;\n"
         "using std::size_t;\n"
-        "struct A64Dispatch {\n" + dispatch_selected + "\n};\n"
-        "#ifdef PS5_NATIVE\n"
-        "static_assert(A64Dispatch::fast_dispatch_table_mask == 0xFFFF0);\n"
-        "static_assert(A64Dispatch::fast_dispatch_table_size == 0x10000);\n"
-        "static_assert(A64Dispatch::fast_dispatch_table_size * 16 == 1024 * 1024);\n"
-        "#else\n"
+        "struct A64Dispatch {\n" + dispatch_selected
+        + "\nstruct Entry { u64 location; void* code; };\n"
+        "Entry entries[fast_dispatch_table_size];\n};\n"
         "static_assert(A64Dispatch::fast_dispatch_table_mask == 0xFFFFF0);\n"
         "static_assert(A64Dispatch::fast_dispatch_table_size == 0x100000);\n"
-        "static_assert(A64Dispatch::fast_dispatch_table_size * 16 == 16 * 1024 * 1024);\n"
-        "#endif\n")
+        "static_assert(sizeof(A64Dispatch) == 16 * 1024 * 1024);\n")
     for flags in ([], ["-DPS5_NATIVE=1"]):
         result = subprocess.run(
             [compiler_dispatch, "-std=c++20", "-Werror", "-Wall", "-fsyntax-only",
              *flags, str(src)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, (flags, result.stderr)
-print("ENCORE_A64_PS5_DISPATCH_COMPILE_PASS native=1MiB host=16MiB mask_matched=1")
+print("ENCORE_A64_PS5_DISPATCH_ABI_PASS all_TUs=16MiB stable_layout=1")
 
 assert pub_proto in shared_h and proto not in shared_h
 assert "JitGroup* eden_group = nullptr;" in shared_h

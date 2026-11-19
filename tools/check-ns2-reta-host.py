@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Retain the broad A64 research oracle while production selects only LDAPR + RETAA/RETAB."""
+"""Retain the archived A64 oracle while production selects reviewed ARMv8.1-8.5 owners."""
 from __future__ import annotations
 from pathlib import Path
 import os
@@ -16,7 +16,7 @@ DEC=(BASE/"dynarmic/frontend/A64/decoder/a64.inc").read_text()
 HEADER=(BASE/"dynarmic/frontend/A64/decoder/a64.h").read_text()
 PROD=ROOT/"vendor/encore-active/ns2-runtime/ldapr/maintained/dynarmic/frontend/A64"
 PROD_DEC=(PROD/"decoder/a64.inc").read_text()
-PROD_BRANCH=(PROD/"translate/impl/a64_branch.cpp").read_text()
+PROD_BRANCH=(PROD/"translate/impl/a64_branch.cpp").read_text()\nPROD_ATOMIC=(PROD/"translate/impl/load_store_atomic.cpp").read_text()\nPROD_PAUTH=(PROD/"translate/impl/pointer_authentication.cpp").read_text()\nPROD_MTE=(PROD/"translate/impl/memory_tagging.cpp").read_text()
 
 def main() -> int:
     if ('EDEN_NS2_A64_EXPERIMENTAL' in CMAKE
@@ -33,13 +33,16 @@ def main() -> int:
         or 'return RET(Reg::R30);' not in BRANCH
         or '#if defined(EDEN_NS2_A64_EXPERIMENTAL)' not in BRANCH
         or 'INST(RETA, "RETAA, RETAB", "110101100101111100001M1111111111")' not in PROD_DEC
-        or 'bool TranslatorVisitor::RETA(bool M)' not in PROD_BRANCH
-        or 'ir.SetPC(X(64, Reg::R30));' not in PROD_BRANCH
-        or 'ir.SetTerm(IR::Term::PopRSBHint{});' not in PROD_BRANCH
+        or 'INST(CompareAndSwap, "CASB, CASH, CAS"' not in PROD_DEC
+        or 'INST(AtomicMemOp, "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN/LDUMAX/LDUMIN/SWP"' not in PROD_DEC
+        or 'bool TranslatorVisitor::RETA(bool M)' not in PROD_PAUTH
+        or 'TranslatorVisitor::AtomicMemOp' not in PROD_ATOMIC
+        or 'TranslatorVisitor::CompareAndSwap' not in PROD_ATOMIC
+        or 'TranslatorVisitor::STG_family' not in PROD_MTE
         or 'EDEN_NS2_A64_EXPERIMENTAL' in PROD_BRANCH
-        or 'INST(CAS,' in PROD_DEC
-        or 'INST(LDADD,' in PROD_DEC):
-        print("Archived oracle or minimal production RETAA/RETAB ownership missing",file=sys.stderr)
+        or 'set_property(SOURCE "${EDEN_MAINTAINED_SCALAR_TRANSLATOR}"' not in CMAKE
+        or '"EDEN_NS2_A64_V81_V85=1"' not in CMAKE):
+        print("Archived oracle or production ARMv8.1-8.5 ownership missing",file=sys.stderr)
         return 2
     compiler=shutil.which("clang++") or shutil.which("g++")
     if not compiler:
@@ -55,7 +58,7 @@ def main() -> int:
             subprocess.run(cmd,check=True)
             subprocess.run([target],check=True,env={**os.environ,"UBSAN_OPTIONS":"halt_on_error=1"})
             print(f"NS2 A64 RETA/LDAPR/LSE opcode decoder table {opt}: PASS")
-    print("Broad RETAA/LDAPR/LSE research oracle retained; production selects only LDAPR + raw-X30 RETAA/RETAB, not general PAC/LSE. No PS5 execution proof.")
+    print("Archived RETA/LDAPR/LSE oracle retained; production selects reviewed LSE/CAS/CASP/PAC/MTE frontend. No PS5 execution proof.")
     return 0
 
 if __name__=="__main__":

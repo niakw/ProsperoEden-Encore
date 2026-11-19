@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-""Final engine/vendor source qualification for FC27 + P0 additions.
+"""Final engine/vendor source qualification for FC27 + P0 additions.
 
 Host/source only. This proves the engine selects the exact reviewed vendor
 graph and replays the vendor's own focused contracts. It is not a PS5 build,
 FC27 visual pass, Bananza boot proof, or performance measurement.
-""
+"""
 from pathlib import Path
 import subprocess
 

@@ -201,7 +201,7 @@ Les **spécifications et contrats API** sont normatifs pour les interfaces conce
 [S-JIT-PLAN]: https://github.com/niakw/ProsperoEden-Encore/blob/15ea79bb23cac7cec195306a76c9923b1a516d39/headless/jit-sparse-commit.h#L17-L85
 [S-JIT-A64]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c15cdfe96a3d836bf32ba21b8070088add81cdc9/encore-active/eden-core/src/dynarmic/backend/x64/a64_emit_x64_standard.h#L60-L77
 [S-GMMU]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c15cdfe96a3d836bf32ba21b8070088add81cdc9/encore-active/eden-core/src/video_core/memory_manager.cpp#L43-L70
-[S-GPU-NS1]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c15cdfe96a3d836bf32ba21b8070088add81cdc9/sources/eden/src/video_core/engines/
+[S-GPU-NS1]: https://github.com/niakw/Prospero.Eden-Encore-vendor/tree/c15cdfe96a3d836bf32ba21b8070088add81cdc9/sources/eden/src/video_core/engines/
 [S-AMP]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c15cdfe96a3d836bf32ba21b8070088add81cdc9/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h
 [S-TRANS]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c15cdfe96a3d836bf32ba21b8070088add81cdc9/encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/translation_cache.cpp#L35-L110
 [S-NS2-SPV]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c15cdfe96a3d836bf32ba21b8070088add81cdc9/encore-active/ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.cpp#L14-L71

@@ -194,7 +194,7 @@
       "owner": "vendor/encore-active/eden-core/src/video_core/dma_pusher.cpp",
       "validators": [
         "tools/ns2/check_native_dma_unbound_subchannel_host.py",
-        "tools/ns2/check_shared_a64_ldapr_host.py"
+        "tools/ns2/check_shared_a64_v81_v85_host.py"
       ],
       "positive": "NS1 Maxwell DMA, kernel/JIT and shader paths match their preserved successful behavior.",
       "negative": "NS2 native fail-closed paths do not throw or alter semantics on NS1 channels.",

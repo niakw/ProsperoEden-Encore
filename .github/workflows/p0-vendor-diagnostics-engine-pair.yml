@@ -15,11 +15,14 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=c15cdfe96a3d836bf32ba21b8070088add81cdc9
+          expected=729f7e5a734b5a890a7bbf3ab60ce1100492af13
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
           test "$checked" = "$expected"
+          test "$(git -C vendor hash-object encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h)" = 86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86
+          test "$(git -C vendor hash-object encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp)" = 09ae2494b2b6f620a25ab549c06c69045a9fb73d
+          test "$(git -C vendor hash-object tests/ns2_recent_svc_fault_trace_host.py)" = 79d8d7294e37e141d6c669d9b55fa5a02d94287e
           test "$(git -C vendor hash-object encore-active/eden-core/src/core/file_sys/romfs_factory.cpp)" = 4775cf98c3bfbc587402928bad424dcb471047a0
           test "$(git -C vendor hash-object tests/ns2_romfs_program_index_fallback_host.py)" = abac08b40623febec02c58d2703b4ec3676b88f0
           test "$(git -C vendor hash-object encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp)" = dd30183f72a9a9dfc2a17700db263f85e4d77596

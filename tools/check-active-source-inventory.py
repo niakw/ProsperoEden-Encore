@@ -464,7 +464,7 @@ if fc27_deferred_selected:
     r437_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 # Reconstructed reviewed successor: same R437 GPU owners as d024,
 # plus preserved RomFS index-0 source and full synchronous page protection.
-if r437_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
+if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13"}:
     for relative, blob in {
         "eden-core/overrides/core/device_memory_manager.inc":
             "daf493ce6e863397ec44bfae467c4f7533570477",
@@ -476,6 +476,16 @@ if r437_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
         source=(active/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(source)).encode()+bytes([0])+source).hexdigest()
         assert actual==blob, ("FC27 sync rollback owner drift",relative,actual)
+    if r437_vendor_pin == "729f7e5a734b5a890a7bbf3ab60ce1100492af13":
+        for relative, blob in {
+            "ns2-helpers/include/core/loader/ns2_svc_trace.h":
+                "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
+            "ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp":
+                "09ae2494b2b6f620a25ab549c06c69045a9fb73d",
+        }.items():
+            raw = (active / relative).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == blob, ("NS2 reviewed SVC boundary source drift", relative, actual)
     assert fc27_deferred_present == set()
     r437_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 

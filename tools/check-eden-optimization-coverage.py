@@ -701,7 +701,7 @@ native_gpfifo_vendor_pin = subprocess.check_output(
 # Shallow submodule checkouts may not contain the parent object: pin the
 # entire vendor SHA and the exact new RomFS, host-test, and GPFIFO blobs
 # instead of requiring an unavailable historical git-diff base.
-if native_gpfifo_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
+if native_gpfifo_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13"}:
     # Selected vendor rollback is byte-exact to its pre-#194 cached-page ABI.
     # The independent RomFS successor is checked in the final source gate.
     for path,blob in {
@@ -715,6 +715,17 @@ if native_gpfifo_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
         actual=subprocess.check_output(["git","-C",str(ROOT/"vendor"),"hash-object",path],
                                        text=True).strip()
         assert actual == blob, ("Reviewed sync-rollback owner drift",path,actual)
+    if native_gpfifo_vendor_pin == "729f7e5a734b5a890a7bbf3ab60ce1100492af13":
+        for path, blob in {
+            "encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h":
+                "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
+            "encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp":
+                "09ae2494b2b6f620a25ab549c06c69045a9fb73d",
+        }.items():
+            actual = subprocess.check_output(
+                ["git", "-C", str(ROOT / "vendor"), "hash-object", path], text=True
+            ).strip()
+            assert actual == blob, ("Reviewed quiet NS2 SVC owner drift", path, actual)
     native_gpfifo_vendor_pin="d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 if native_gpfifo_vendor_pin == "67759611edc13414c112ea9d2b6664d54827a200":
     for name, expected in {

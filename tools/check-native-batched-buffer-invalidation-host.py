@@ -54,7 +54,17 @@ struct CountMutex {
 struct Cache {
   CountMutex mutex;
   std::vector<std::pair<DAddr, std::size_t>> written;
-  void WriteMemory(DAddr address, std::size_t size) { written.emplace_back(address, size); }
+  std::vector<std::pair<DAddr, std::size_t>> claimed;
+  std::vector<char> operations;
+  template <typename Ranges>
+  void ClaimCpuWrites(const Ranges& ranges) {
+    for (const auto& [addr, size] : ranges) claimed.emplace_back(addr, size);
+    operations.push_back('C');
+  }
+  void WriteMemory(DAddr address, std::size_t size) {
+    written.emplace_back(address, size);
+    operations.push_back('W');
+  }
 };
 struct Owner {
   unsigned calls = 0;
@@ -82,6 +92,8 @@ int main() {
   std::array<Pair, 2> two{Pair{0x200000, 4096}, Pair{0x210000, 4096}};
   mixed.InnerInvalidation(two);
   assert(mixed.buffer_cache.mutex.locks == 1);
+  assert(mixed.buffer_cache.claimed.size() == two.size());
+  assert(mixed.buffer_cache.operations.front() == 'C');
   assert(mixed.buffer_cache.written.size() == 1);
   assert(mixed.buffer_cache.written[0].first == 0x200000);
   assert(mixed.query_cache.calls == 2 && mixed.pipeline_cache.calls == 2);
@@ -134,6 +146,10 @@ int main() {
   many.InnerInvalidation(batch);
   assert(many.texture_cache.mutex.locks == 0);
   assert(many.buffer_cache.mutex.locks == 1);
+  assert(many.buffer_cache.operations.front() == 'C');
+  assert(many.buffer_cache.claimed.size() == batch.size());
+  for (unsigned i = 0; i < batch.size(); ++i)
+    assert(many.buffer_cache.claimed[i] == batch[i]);
   assert(many.query_cache.calls == batch.size() && many.pipeline_cache.calls == batch.size());
   assert(many.buffer_cache.written.size() == expected.size());
   for (unsigned i = 0; i < expected.size(); ++i)

@@ -3300,7 +3300,7 @@ endif()
 # PS5 JIT. Vendor #192 is byte-anchored to Lichii 11aac324 and the exact
 # Dynarmic parent used by Encore: LSE atomics/CAS/CASP, LDAPR, pointer-auth
 # compatibility branches/loads and the MTE subset used by NX2. This is not
-# the archived EDEN_NS2_A64_EXPERIMENTAL graph and introduces no title switch.
+# the archived research graph and introduces no title switch.
 set(EDEN_SHARED_NS2_A64_LDAPR OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_SHARED_NS2_A64_LDAPR ON)

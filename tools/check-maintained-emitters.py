@@ -91,7 +91,9 @@ with tempfile.TemporaryDirectory(prefix="encore-ps5-dispatch-") as folder:
     src = Path(folder) / "dispatch.cpp"
     src.write_text(
         "#include <cstdint>\n"
+        "#include <cstddef>\n"
         "using u64 = std::uint64_t;\n"
+        "using std::size_t;\n"
         "struct A64Dispatch {\n" + dispatch_selected + "\n};\n"
         "#ifdef PS5_NATIVE\n"
         "static_assert(A64Dispatch::fast_dispatch_table_mask == 0xFFFF0);\n"

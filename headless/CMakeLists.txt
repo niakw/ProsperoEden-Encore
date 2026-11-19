@@ -3691,6 +3691,11 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     endif()
     target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"
         "${EDEN_NS2_GPU_WORKER_SOURCE}" "${EDEN_NS2_GPU_SHARED_SOURCE}")
+    # The selected worker owns native-only, bounded GPU command/failure
+    # receipts. Core is not globally PS5_NATIVE: without a TU-local flag
+    # these blocks disappear from the actual PS5 binary (R457 2b0975f7).
+    set_property(SOURCE "${EDEN_NS2_GPU_WORKER_SOURCE}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_NS2_GPU_SESSION_ROOT}"
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")

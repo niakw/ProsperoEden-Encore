@@ -1145,7 +1145,7 @@ if post_f07_jxr_adapter_owners:
 post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
-if gpu_table_vendor_pin == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
+if gpu_table_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13"}:
     gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 fc27_deferred_selected = gpu_table_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owners = {"vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h"} & all_owners
@@ -1486,7 +1486,7 @@ assert not post_f07_ns2_loading_svc_owners & research_owners
 assert subprocess.check_output(
     ["git", "hash-object", "headless/ns2_loading_svc_snapshot.h"],
     cwd=ROOT, text=True
-).strip() == "82c4b55483fe165909c790819a41b9d5609e0773"
+).strip() == "ec3e66533c231877ab3066db51ec15a940bdc21a"
 assert (ROOT / "tools/check-ns2-loading-svc-snapshot-host.py").is_file()
 assert '::Eden::NS2::LoadingSvcSnapshot::Report(10);' in (ROOT / "headless/graphics.cpp").read_text()
 assert '::Eden::NS2::LoadingSvcSnapshot::Report(30);' in (ROOT / "headless/graphics.cpp").read_text()
@@ -1598,7 +1598,7 @@ if vendor_head in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de7
 # Rollback #194: the old shipping-backport applicability profile stays
 # valid only because the exact synchronous Vulkan/guest-memory owners
 # and independent NS2 RomFS successor were already checked in this run.
-if vendor_head == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
+if vendor_head in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13"}:
     assert not fc27_deferred_selected
     for relative, expected in {
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35",
@@ -1607,6 +1607,17 @@ if vendor_head == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
     }.items():
         actual = subprocess.check_output(["git", "-C", str(ROOT/"vendor"), "hash-object", relative], text=True).strip()
         assert actual == expected, ("new rollback source drift", relative, actual)
+    if vendor_head == "729f7e5a734b5a890a7bbf3ab60ce1100492af13":
+        for relative, expected in {
+            "encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h":
+                "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
+            "encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp":
+                "09ae2494b2b6f620a25ab549c06c69045a9fb73d",
+        }.items():
+            actual = subprocess.check_output(
+                ["git", "-C", str(ROOT/"vendor"), "hash-object", relative], text=True
+            ).strip()
+            assert actual == expected, ("Reviewed SVC source drift", relative, actual)
     assert not (ROOT/"vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h").exists()
     vendor_head = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 historical_usage_tracker_vendor = "1ec7b429238d1175a76dc94b7c0a7f1c2eb62864"

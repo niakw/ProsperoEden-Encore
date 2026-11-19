@@ -1728,7 +1728,7 @@ print("ENCORE_NS2_QUIET_FAULT_POST_F07_PASS", "owners=1")
 # It is included by the shipping PS5 Vulkan owner and must stay byte-sealed;
 # it is not an addition to the immutable 193-file historical table.
 post_f07_ns2_loading_svc_receipts = {
-    "headless/ns2_loading_svc_snapshot.h": "82c4b55483fe165909c790819a41b9d5609e0773",
+    "headless/ns2_loading_svc_snapshot.h": "ec3e66533c231877ab3066db51ec15a940bdc21a",
 }
 post_f07_ns2_loading_svc_owners = set(post_f07_ns2_loading_svc_receipts)
 for path, blob in post_f07_ns2_loading_svc_receipts.items():

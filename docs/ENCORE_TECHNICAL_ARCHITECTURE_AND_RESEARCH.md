@@ -372,7 +372,7 @@ Le moteur utilise la HLE (High-Level Emulation) pour les appels système et serv
 |---|---|
 | Kernel / SVC / scheduler | Création processus, thread, waits, atomiques, arbitrage, deadlocks, exit |
 | AM / applets | Menus, lancement, pause, contrôleurs et cycle de vie |
-| VI / NVNFl inger | Layers, buffers affichés, présentation et events |
+| VI / NVNFlinger | Layers, buffers affichés, présentation et events |
 | NVDRV / NVMap | Sessions GPU, mappings, handles, allocation/fermeture |
 | HID | Entrées, vibrations, options, gestion des contrôleurs |
 | FS / FSP / RomFS | Chemins, ouverture fichiers, latences I/O, mauvais montages |
@@ -752,7 +752,7 @@ Les spécifications publiques NVIDIA, AMD ou Sony ne décrivent **pas** nécessa
 | Shader Recompiler | Traduction des programmes GPU invités vers des backends hôtes |
 | SPIR-V | Format shader intermédiaire Khronos |
 | TIC/TSC | Structures NVIDIA de texture et sampler |
-| VI / NVNFl inger | Services/chaîne de composition et présentation Nintendo |
+| VI / NVNFlinger | Services/chaîne de composition et présentation Nintendo |
 | Vulkan | API graphique utilisée pour exécuter le rendu sur la PS5 |
 
 ### 17.3 Politique d'actualisation

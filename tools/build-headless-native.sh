@@ -117,11 +117,14 @@ print(f'Encore incremental source stamps: {restored}/{len(files)} restored')
 PY_STAMPS
 
 
+# Bundled SDL 3.4.8 is an upstream release snapshot without its own .git.
+# Stamp its actual release tag instead of upstream's HEAD-HASH-NOTFOUND.
+# This changes version metadata only, never the native application profile.
 # The native PS5 binary uses one source graph and one renderer profile.
 # No release/DEV/P5 selector may alter the compiled program.
 cmake -S "$scratch/source" -B "$scratch/native-local" -G Ninja \
     -DCMAKE_TOOLCHAIN_FILE="$root/headless/ps5.cmake" -DPS5_NATIVE=ON \
-    -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DSDL_REVISION=SDL-release-3.4.8 \
     -DEDEN_ENCORE_SOURCE_COMMIT="$source_commit" \
     -DEDEN_LAUNCHER_BUILD_LABEL="$build_label" \
     -DEDEN_LAUNCHER_PACKAGE_VERSION="$native_version" \

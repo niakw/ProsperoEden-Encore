@@ -73,6 +73,14 @@ for name in "${unresolved_weak[@]}"; do
         echo "Unsafe weak symbol name from linker: $name" >&2
         exit 2
     }
+    # Mesa Vulkan dispatch has thousands of legitimate optional weak slots.
+    # Never silently turn required native kernel/CRT functions into null calls.
+    case "$name" in
+        sceKernel*|sceSystemService*|sceVideoOut*|sceAudioOut*|sceNet*|pthread_create|pthread_join|__cxa_throw|__cxa_allocate_exception)
+            printf 'Refusing to null required PS5 runtime symbol: %s\n' "$name" >&2
+            exit 2
+            ;;
+    esac
     weak_flags+=("--defsym=${name}=0")
 done
 printf 'Native weak imports resolved to NULL: %d\n' "${#weak_flags[@]}"

@@ -102,6 +102,10 @@ assert "os.utime(path" in build
 assert "-exec touch" not in build
 # Catch PS5 ABI/source errors before spending time on the native Ninja build.
 assert '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON' in build
+# The native CMake cache must report the real vendored SDL3 release.
+sdl_cmake = (root / "vendor/sources/eden-cpm/sdl3/release-3.4.8/CMakeLists.txt").read_text()
+assert 'project(SDL3 LANGUAGES C VERSION "3.4.8")' in sdl_cmake
+assert '-DSDL_REVISION=SDL-release-3.4.8' in build
 assert 'tools/check-native-source-syntax.py' in build
 assert build.index('tools/check-native-source-syntax.py') < build.index('cmake --build "$scratch/native-local"')
 syntax_gate = (root / "tools/check-native-source-syntax.py").read_text()

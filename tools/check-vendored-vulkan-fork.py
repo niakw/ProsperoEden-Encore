@@ -140,7 +140,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         receipt_text = receipt_path.read_text()
         assert raster_blob(receipt_text) == (
             '236713fa06672b39e2a4b9a84907882bbbb1bbbd'
-            if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200''} else
+            if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200'} else
             '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2')
         receipt = runpy.run_path(str(receipt_path))
         assert receipt['CURRENT_DRAWTEXTURE'] == raster_sha

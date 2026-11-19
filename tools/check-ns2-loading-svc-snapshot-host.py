@@ -14,7 +14,7 @@ assert graphics.count("::Eden::NS2::LoadingSvcSnapshot::Report(30);") == 1
 assert graphics.index("Report(10);") > graphics.index('stage=10s')
 assert graphics.index("Report(30);") > graphics.index('stage=30s')
 assert graphics.count('#include "ns2_loading_svc_snapshot.h"') == 1
-assert graphics.index("Report(10);") < graphics.index("return true;",graphics.index("bool LoadingTick("))
+assert graphics.index("Report(10);") < graphics.index("return true;",graphics.index("bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {"))
 assert 'target_include_directories(core BEFORE PUBLIC' in cmake
 assert '"${EDEN_NS2_CORE_HELPERS}"' in cmake
 assert "SvcTrace::FormatCriticalRecent" in header

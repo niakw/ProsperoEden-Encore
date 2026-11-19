@@ -19,8 +19,8 @@ import urllib.request
 import zipfile
 
 API = "https://api.github.com"
-REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\\Z")
-SHA256 = re.compile(r"sha256:([0-9a-f]{64})\\Z")
+REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
+SHA256 = re.compile(r"sha256:([0-9a-f]{64})\Z")
 MAX_ARCHIVE = 512 * 1024 * 1024
 MAX_UNPACKED = 3 * 1024 * 1024 * 1024
 MAX_ENTRIES = 10000
@@ -109,7 +109,7 @@ def inspect_zip(archive: Path) -> int:
         for info in infos:
             name = info.filename
             parts = name.rstrip("/").split("/")
-            if not name or name.startswith("/") or "\\\\" in name or ":" in name or any(p in ("", ".", "..") for p in parts):
+            if not name or name.startswith("/") or "\\" in name or ":" in name or any(p in ("", ".", "..") for p in parts):
                 raise ValueError(f"unsafe ZIP path: {name!r}")
             normalized = str(PurePosixPath(*parts))
             if normalized in paths:

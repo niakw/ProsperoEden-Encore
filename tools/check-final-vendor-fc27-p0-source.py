@@ -33,7 +33,7 @@ if selected == "67759611edc13414c112ea9d2b6664d54827a200":
         assert actual == expected, ("RomFS-only successor drift",relative,actual)
 
 if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
-                "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32":
+                "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a"}:
     # PR #194 is rolled back only in production GPU cache protection.
     # Preserve newly reviewed NS2 RomFS and A64 uniform 16MiB ABI.
     for relative, expected in {

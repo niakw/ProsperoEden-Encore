@@ -13,11 +13,26 @@ ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 # Vendor #192/#193 touch only reviewed NS2 A64/kernel owners and their tests.
 # The FC27 GPU owners remain byte-sealed by the focused tests below.
-REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6"}
+REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
-if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6"}:
+if selected == "67759611edc13414c112ea9d2b6664d54827a200":
+    # Confirm the new release modifies only its reviewed RomFS owner/test;
+    # actual GitHub commit comparison is documented in the incident register.
+    for relative, expected in {
+        "encore-active/eden-core/src/core/file_sys/romfs_factory.cpp":
+            "4775cf98c3bfbc587402928bad424dcb471047a0",
+        "tests/ns2_romfs_program_index_fallback_host.py":
+            "abac08b40623febec02c58d2703b4ec3676b88f0",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp":
+            "dd30183f72a9a9dfc2a17700db263f85e4d77596",
+    }.items():
+        raw = (V/relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("RomFS-only successor drift",relative,actual)
+
+if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}:
     reviewed_fc27_owners = {
         "encore-active/eden-core/overrides/core/deferred_cached_updates.h": "33262f511777cdd1b4a74ac0cd6dc39caa12c9d0",
         "encore-active/eden-core/overrides/core/device_memory_manager.inc": "852a0272696c7ce182bc05aee92bc7cbb195446b",
@@ -35,7 +50,7 @@ if selected in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f
         dispatch_blob = hashlib.sha1(b"blob " + str(len(reviewed_dispatch)).encode()
                                      + bytes([0]) + reviewed_dispatch).hexdigest()
         assert dispatch_blob == "633dceaf5e7adf2b17a6b97af3862e9c7ecd1147", dispatch_blob
-    elif selected == "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6":
+    elif selected in {"8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}:
         # Source-exact P0 rollback: stable A64 class has no PS5_NATIVE-dependent member size.
         repaired_dispatch = (V/"encore-active/eden-core/src/dynarmic/backend/x64/"
                              "a64_emit_x64_standard.h").read_bytes()

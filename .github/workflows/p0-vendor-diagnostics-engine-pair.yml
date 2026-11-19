@@ -15,11 +15,15 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=8e564f61e6c8b86149ce0a0d6d2aa323a268dda6
+          expected=67759611edc13414c112ea9d2b6664d54827a200
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
           test "$checked" = "$expected"
+          test "$(git -C vendor hash-object encore-active/eden-core/src/core/file_sys/romfs_factory.cpp)" = 4775cf98c3bfbc587402928bad424dcb471047a0
+          test "$(git -C vendor hash-object tests/ns2_romfs_program_index_fallback_host.py)" = abac08b40623febec02c58d2703b4ec3676b88f0
+          test "$(git -C vendor hash-object encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp)" = dd30183f72a9a9dfc2a17700db263f85e4d77596
+          python3 -B vendor/tests/ns2_romfs_program_index_fallback_host.py
           test "$(git -C vendor hash-object encore-active/eden-vulkan/vulkan_rasterizer.cpp)" = 38d5630570675088a0620ef533112bb314a40ae8
           python3 -B vendor/tests/native_msaa_attribute_handle_rebind_host.py
           python3 -B vendor/tests/r457_native_emit_invalid_warning_host.py

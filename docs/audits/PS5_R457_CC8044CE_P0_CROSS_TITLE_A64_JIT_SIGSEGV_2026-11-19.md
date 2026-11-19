@@ -1,6 +1,6 @@
 # P0 PS5 — native SIGSEGV during A64 JIT initialization, 19 November 2026
 
-**Status:** source-level ABI mismatch reproduced and rollback committed; host CI and new native build remain qualification gates; PS5 console runtime NOT yet revalidated. [Issue #297](https://github.com/niakw/ProsperoEden-Encore/issues/297).
+**Status (19 Nov, 15:30 Europe/Paris):** A64 class-layout bug corrected in source and verified in the newly compiled native ELF; host CI and PS5 native build #44538202373 succeeded. PS5 console runtime NOT yet revalidated; P0 remains open. [Issue #297](https://github.com/niakw/ProsperoEden-Encore/issues/297).
 
 ## Verified console evidence from `Archive(4).zip`
 
@@ -67,3 +67,37 @@ another hardware test.
 4. For A/B comparison, preserve current shader caches and old logs; do not wipe saves. New full build must be distinguishable from tested `cc8044ce` even though the displayed R revision may remain R457.
 
 **Do not close #297 from a compiler-green result alone.**
+
+
+## 19 November — verification of the **corrected** machine code and real downloadable artifacts
+
+**Exact qualification:** [native PS5 run #44538202373](https://github.com/niakw/ProsperoEden-Encore/actions/runs/44538202373), engine `4a5b8cc05a662130b9033f7d9b97869c8df3310a`, Git submodule vendor **`8e564f61e6c8b86149ce0a0d6d2aa323a268dda6`** (confirmed in the engine commit's Git tree, mode `160000`). The build job completed successfully, including native compilation, staged app verification, FTP archive round-trip, release checks, ELF/map binding and artifact publishing. The independent `release` job was skipped, not a second build pass.
+
+The actual downloaded corrected release ZIP and its contained `build/symbols/Prospero.Eden-Encore-R457.elf` were opened; the ELF is x86-64 PIE **unstripped** and matches the manifest (202,775,120 bytes, SHA-256 `87a12ed2cc08cb7bfeb97c306f6420e1308e71060f349920a0161a695be4a174`). Disassembly of the corrected executable, **at the same code addresses as the crashed build**, confirms the ODR-layout repair:
+
+```asm
+0x242d807: mov edi, 0x1004000               ; owning Jit::Impl allocation: 16,793,600 bytes
+0x242d811: call operator new
+0x242dbc5: lea r12, [rbx+0x1700]          ; A64EmitX64 object within Jit::Impl
+0x242dc0f: call 0x242f000                  ; A64EmitX64::A64EmitX64(...)
+0x242f20b: cmp rax, 0x10018b0              ; constructor's 16 MiB table initialization bound
+0x242f224: mov qword ptr [rbx+0x10017f0], 0x3f
+0x242f2bf: mov qword ptr [rbx+0x10018b8], 0x1
+```
+
+The sampled last constructor write through `rbx+0x1700+0x10018b8` ends at `0x1002fc0`, **4,160 bytes inside the 0x1004000 allocation boundary**. The old confirmed broken artifact allocated only `0x104000` but used the *same* >16 MiB constructor field offsets. Thus the exact observed cross-TU allocation/constructor inconsistency is no longer present in this binary. This is binary proof for **this ABI fix**, not a claim that all JIT bugs or the previous console RIP are resolved.
+
+**Distribution audit — downloaded bytes, SHA-256 and every ZIP member individually checked:**
+
+| Archive | Size compressed | ZIP members | SHA-256 |
+|---|---:|---:|---|
+| `Eden-Encore-PS5-FTP-PPSA99008` | 41,188,012 B | 200 | `8882d8998c4a3429fbce7eaa4d1ddbe19305879b342d843c2a4b96c4315ede42` |
+| `Prospero.Eden-Encore-release` | 163,369,892 B | 7 | `e8ac89ebf68be780b3fd44d5e6894ad5e28191101007e2b5cccd7bb774139a2e` |
+| Nested full distribution `Prospero.Eden-Encore-R457.zip` | 40,983,122 B | 279 | `425f944e47010726f405659a56f9c80215e4545403d2461367f9cbcb4c2bb804` |
+| Nested light FTP `Eden-Encore-R457-4a5b8cc0-FTP-PPSA99008.zip` | 39,544,158 B | 87 | `60d42722e3b6c8cc2eee4ef98df2e7c4bdd9df32c4d9ba3e8bc8fd4116fb4001` |
+
+All four ZIPs pass CRC and name/path validation; **zero** duplicate members, zero empty files and zero unsafe paths. Each of 200 FTP files is byte-identical to its counterpart in the full distribution; each of 87 light FTP files likewise matches. The full ZIP adds 79 root-level documentation/license files. The light FTP ZIP deliberately omits legal documents and the 31 redundant `.txt` locale copies; the complete FTP artifact preserves **31 `.po` and 31 identical `.txt` catalogs**. `eboot.bin` SHA-256 `a681cc396cd64cb66258f61d1d93f3a26c22abe963fc34778ed675ac63c5c8f6` matches all packages and the crash-provenance manifest. `link.map` and debug ELF also match manifest sizes and hashes. No payload mismatch found.
+
+**Native warnings:** 8,380 build-log lines read. No actual C/C++ `warning:` diagnostic or compiler error is present in this run; note that caching can hide warnings from unchanged dependencies. Remaining nonblocking output: Mesa cross-compile TLS-dialect auto-detection (`meson.build:639`), Node `[DEP0005] Buffer()` from third-party GitHub `download-artifact`, and an OS-version `#pragma message` note in `u_process.c:186`. Keep these tracked under [#108](https://github.com/niakw/ProsperoEden-Encore/issues/108), without muting diagnostics.
+
+**Still unverified:** `crash-provenance.json` intentionally reports `confirmed_same_console_binary=false` and `native_ps5_execution_verified=false`. The user is testing the new package on firmware 13.60. Preserve shader caches, pre-fix crash reports and saves for the A/B test. Do not close [#297](https://github.com/niakw/ProsperoEden-Encore/issues/297) without FC27, Bananza and MKW startup evidence; [#281](https://github.com/niakw/ProsperoEden-Encore/issues/281), [#100](https://github.com/niakw/ProsperoEden-Encore/issues/100) and [#123](https://github.com/niakw/ProsperoEden-Encore/issues/123) remain independent.

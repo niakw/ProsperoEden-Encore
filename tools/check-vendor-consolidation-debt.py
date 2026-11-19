@@ -1919,7 +1919,23 @@ assert (active / "eden-core/src/dynarmic/frontend/A64/translate/impl/impl.cpp").
 base_trans = (scalar_root / "frontend/A64/translate/a64_translate.cpp").read_text()
 old_inc = '"dynarmic/frontend/A64/translate/impl/impl.cpp"'
 assert base_trans.count(old_inc) == 1
-assert (active / "eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp").read_text() == base_trans.replace(old_inc, '"impl/impl.cpp"')
+# The production A64 v8.1-v8.5 backport adds exactly three native-guarded
+# implementation includes (Lichii 11aac324, vendor #192). Preserve the
+# original scalar include rewrite and fail closed on any other difference.
+native_a64_anchor = '#include "dynarmic/frontend/A64/translate/impl/load_store_load_literal.cpp"'
+native_a64_includes = (
+    '#if defined(EDEN_NS2_A64_V81_V85)\\n'
+    '#include "dynarmic/frontend/A64/translate/impl/load_store_atomic.cpp"\\n'
+    '#include "dynarmic/frontend/A64/translate/impl/memory_tagging.cpp"\\n'
+    '#include "dynarmic/frontend/A64/translate/impl/pointer_authentication.cpp"\\n'
+    '#endif\\n'
+)
+assert base_trans.count(native_a64_anchor) == 1
+native_a64_expected = base_trans.replace(old_inc, '"impl/impl.cpp"').replace(
+    native_a64_anchor, native_a64_includes + native_a64_anchor, 1)
+assert (active / "eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp").read_text() == native_a64_expected, (
+    "Maintained A64 translator deviates from exact reviewed native ARMv8.1-v8.5 includes")
+print("VENDOR_MAINTAINED_A64_V81_V85_TRANSLATOR_PARITY_PASS includes=3 guard=1")
 base_opt = (scalar_root / "ir/opt_passes.cpp").read_text()
 opt_anchor = "        case Op::LeastSignificantWord:\n            FoldLeastSignificantWord(inst);\n            break;"
 assert base_opt.count(opt_anchor) == 1

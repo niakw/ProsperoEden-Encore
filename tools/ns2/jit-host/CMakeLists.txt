@@ -24,7 +24,9 @@ if(NOT EXISTS "${REPO}/vendor/encore-active/ns2-runtime/cpu6/dynarmic/interface/
     message(FATAL_ERROR "Required vendor CPU6 Dynarmic exclusive monitor is missing")
 endif()
 target_include_directories(dynarmic BEFORE PUBLIC "${REPO}/vendor/encore-active/ns2-runtime/cpu6")
-target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_EXPERIMENTAL=1 DYNARMIC_ENABLE_CPU_FEATURE_DETECTION=1)
+# Exercise the same reviewed production A64 family enabled by the PS5 dual target.
+# The workflow copies the exact vendor #192 owners into this disposable host checkout.
+target_compile_definitions(dynarmic PRIVATE EDEN_NS2_A64_V81_V85=1 DYNARMIC_ENABLE_CPU_FEATURE_DETECTION=1)
 add_executable(ns2_lse_jit_test "${CMAKE_CURRENT_LIST_DIR}/test_lse_jit.cpp")
 target_include_directories(ns2_lse_jit_test PRIVATE "${DYN}" "${DYN}/src")
 find_package(Threads REQUIRED)

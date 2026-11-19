@@ -1,7 +1,7 @@
 # Eden Encore — architecture technique, composants, sources et recherche
 
-> **Document de référence — 19 novembre 2026.** Architecture commune Nintendo Switch 1 / Nintendo Switch 2 portée sur PlayStation 5 (firmware de test 13.60).  
-> **Moteur :** [niakw/ProsperoEden-Encore](https://github.com/niakw/ProsperoEden-Encore) ; **vendor :** [niakw/Prospero.Eden-Encore-vendor](https://github.com/niakw/Prospero.Eden-Encore-vendor).  
+> **Document de référence — 19 novembre 2026.** Architecture commune Nintendo Switch 1 / Nintendo Switch 2 portée sur PlayStation 5 (firmware de test 13.60).
+> **Moteur :** [niakw/ProsperoEden-Encore](https://github.com/niakw/ProsperoEden-Encore) ; **vendor :** [niakw/Prospero.Eden-Encore-vendor](https://github.com/niakw/Prospero.Eden-Encore-vendor).
 > **Instantané examiné :** moteur <code>cc8044cee42ad0e74af4edadaac6595de9128c31</code> ; gitlink vendor / vendor main <code>6c38328fbef33de747f5c31ea30d13541a513a4a</code>. Les pointeurs évoluent après publication de ce document ; vérifier les Gitlinks et CMake avant chaque diagnostic.
 >
 > **Objet :** expliquer les couches, la circulation des données, les composants et leurs responsabilités, leurs chemins dans les DEUX dépôts, les risques de correction/optimisation, les sources officielles et la littérature académique pertinente.

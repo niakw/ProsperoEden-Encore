@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 # Vendor #192/#193 touch only reviewed NS2 A64/kernel owners and their tests.
 # The FC27 GPU owners remain byte-sealed by the focused tests below.
-REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "c15cdfe96a3d836bf32ba21b8070088add81cdc9"}
+REVIEWED_PINS={"2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13"}
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
@@ -32,7 +32,8 @@ if selected == "67759611edc13414c112ea9d2b6664d54827a200":
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("RomFS-only successor drift",relative,actual)
 
-if selected == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
+if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
+                "729f7e5a734b5a890a7bbf3ab60ce1100492af13"}:
     # PR #194 is rolled back only in production GPU cache protection.
     # Preserve newly reviewed NS2 RomFS and A64 uniform 16MiB ABI.
     for relative, expected in {
@@ -48,6 +49,18 @@ if selected == "c15cdfe96a3d836bf32ba21b8070088add81cdc9":
         raw = (V/relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("Sync rollback source drift",relative,actual)
+    if selected == "729f7e5a734b5a890a7bbf3ab60ce1100492af13":
+        for relative, expected in {
+            "encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h":
+                "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
+            "encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp":
+                "09ae2494b2b6f620a25ab549c06c69045a9fb73d",
+            "tests/ns2_recent_svc_fault_trace_host.py":
+                "79d8d7294e37e141d6c669d9b55fa5a02d94287e",
+        }.items():
+            raw = (V/relative).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == expected, ("Quiet NS2 SVC witness drift",relative,actual)
     assert not (V/"encore-active/eden-core/overrides/core/deferred_cached_updates.h").exists()
     subprocess.run(["python3", "-B", str(V/"tests/fc27_deferred_page_protection_host.py")],
                    check=True, timeout=240)

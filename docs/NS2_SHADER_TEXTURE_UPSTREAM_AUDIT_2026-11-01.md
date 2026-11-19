@@ -52,3 +52,66 @@ The shader host fixtures are `tools/ns2/test_shader_generic31.cpp`, `tools/ns2/t
 - `41313252594`: PS5 experimental native build success for previous GPU/VI2/Compute lot `ea2a5cb`; artifact contains **none** of the new shader/texture fixes here.
 - A subsequent host run is required to verify Generic31, 32 storage bindings, and native LDC/HSETP2 changes; mark as *source-integrated, not console-tested* until it finishes.
 - No claim that all upstream commits were ported: this audit is about **high-impact structural and visual gaps**, not a full diff of every third-party tree.
+
+
+## 2026-11-19 verification — Ampere architecture references and live PS5 owner
+
+**This section supersedes the historical "opt-in/research" status descriptions above.**
+The one native PS5 build currently selects the maintained native Ampere translation
+and NVDRV/GPU paths for authenticated NS2 titles via
+`headless/CMakeLists.txt`. It does **not** enable an experimental app profile.
+The vendor source examined here is `6c38328fbef33de747f5c31ea30d13541a513a4a`;
+the engine gitlink matches this commit at the time of review.
+
+### Independent architectural evidence and scope
+
+- NVIDIA, [*Ampere Tuning Guide*](https://docs.nvidia.com/cuda/ampere-tuning-guide/index.html):
+  async global-to-shared copies, split arrive/wait barriers, warp-wide reductions,
+  tensor math modes, L1/L2 residency and occupancy. The explicit A100/SM80 and
+  SM86 resource figures are **not** constants for the Nintendo T239.
+- H. Abdelkhalik et al., [*Demystifying the Nvidia Ampere Architecture through
+  Microbenchmarking and Instruction-level Analysis*](https://arxiv.org/abs/2208.11174),
+  arXiv:2208.11174v1 (2022), especially pp. 3–7 (PTX-to-SASS mapping,
+  dependent versus independent instructions, Tables III–V). Table IV's
+  measured A100 values are approximately 290 cycles for global memory,
+  200 for L2, 33 for L1, and 23/19 for shared load/store. These are
+  **A100 microbenchmark measurements**, not PS5 RADV timings or a reliable
+  model of Switch 2 T239 shader latency.
+- Independent PS5 implementation:
+  [EglantinePS5 native Ampere lowerer](https://github.com/heydemoura/EglantinePS5/blob/main/Eglantine/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h).
+  Compare against [Lichii](https://github.com/zortos293/Lichii/blob/nx2/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h)
+  and [Eglantine](https://github.com/Eglantine-Community/Eglantine/blob/main/src/shader_recompiler/frontend/ampere/lower_to_maxwell.h)
+  before lifting any opcode encoding; implementations are not byte-identical.
+- The paper studies CUDA/PTX and Ampere SASS on a Tesla A100. Encore processes
+  **guest NVIDIA graphics/compute instructions**, lowers reviewed native SASS
+  forms to a Maxwell-compatible intermediate form, then emits host SPIR-V and
+  executes through **PS5 AMD RADV**. A CUDA launch optimization does not directly
+  improve this host path; an emulator instruction *semantic* correction can.
+
+### Source-level audit of the currently selected NS2 translation
+
+| ISA or dependency concern | Active vendor source | Evidence and decision |
+|---|---|---|
+| Global-to-shared async copy | `ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h`: `0xfae` LDGSTS, `0x9af` LDGDEPBAR, `0x91a` DEPBAR | Restricted encodings lower via **synchronous** guest memory copy plus ordering. Supported modes have explicit guards. Do **not** replace this with CUDA `cp.async` or omit barriers; test producer/consumer ordering against actual guest shader captures. |
+| Warp reconvergence and memory visibility | Same lowerer: `0x948` full-mask WARPSYNC, `0x348` register-mask WARPSYNC, `0x992` MEMBAR | Selected modes are processed, including branch reachability and outer-convergence tests; other modes deliberately fail closed. The lightweight `classify.h` tag `OpKind::Nop` is **not** evidence that the final lowerer silently ignores all WARPSYNC/DEPBAR semantics. |
+| Tensor instructions and lane layout | Same lowerer: `0x23a` MOVM, `0x83b` LDSM, `0x23c` HMMA | Contains bounded 8x8 transpose/shared matrix loads and software FP16 HMMA expansion. The A100 WMMA shapes and cycles in the paper cannot be transplanted as hardcoded PS5 costs or host Tensor Core operations. |
+| Missing native integer tensor lowering | `ampere_isa_table.h` lists `Imma` as `0x237`; `lower_to_maxwell.h` lacks `case 0x237` and ends in `unsupported native opcode` | **P1 candidate:** a captured NS2 shader using this opcode may be rejected. Neither user logs nor the document demonstrate that MKW/Bananza needs it. Obtain stage, exact opcode words, and shader identity before implementing; keep rejection rather than emitting an incorrect computation. |
+| Warp reductions and atomics | `0x3c4` Redux handled in lowerer; `renderer_spirv_bridge.cpp` checks native QMD atomic binding and SPIR-V admissibility | Protect stage-specific ordering and native-width support. Do not promote unsupported 64-bit atomics to ordinary non-atomic stores. |
+| Guest boot PC=0x4 | `headless/ns2_fault_receipt.cpp`, selected NS2 kernel, loader and Dynarmic | **Still P0 and independent of this shader audit.** Existing MKW/Bananza guest faults occur before any proved Ampere shader failure; no GPU timing table can establish their cause. |
+
+### Next bounded verification before the native build
+
+1. Confirm real vendor/engine SHAs and CMake graph (the existing
+   `tools/ns2/check_shared_ampere_source_host.py` and
+   `tools/ns2/check_shared_ns2_spirv_compiler_host.py`).
+2. Check actual shader-capture status/rejection counters against the last
+   console evidence; only prioritize unsupported opcode `0x237` if exercised.
+3. Keep all memory-order / fence tests and fail-closed SPIR-V stage guards;
+   no speculative NVIDIA timing constants or new experimental switches.
+4. Close outstanding source/host-CI regressions, then qualify one native PS5
+   build and confirm package symbols and exact gitlink. Guest gameplay is
+   **not** proven by compilation.
+
+**Result:** upstream architecture research and three lowerer implementations
+compared; **no runtime Ampere correction claimed** on the strength of this paper
+alone. Recheck on PS5 13.60 after a genuinely qualified build.

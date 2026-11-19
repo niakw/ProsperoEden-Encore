@@ -18,6 +18,15 @@ native = read("src/memory_pages.cpp")
 assert "inline bool WriteSessionFailureReceipt(" in record
 assert "O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW" in record
 assert "EDEN_SESSION_FAILURE_V1" in record
+assert "inline bool WriteSessionBoundaryReceipt(" in record
+assert "EDEN_SESSION_BOUNDARY_V1" in record
+assert "2U * 1024U * 1024U" in record
+assert "O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW" in record
+assert 'record_session_boundary("title_resolved");' in main
+assert 'record_session_boundary("system_run_returned");' in main
+assert 'record_session_boundary("title_destroyed");' in main
+assert 'Eden::NativeLogs::Generation()' in main
+assert 'active_session_stage' in main
 assert "inline bool WriteSessionPhaseReceipt(" in record
 assert "inline bool ReadPreviousSessionPhase(" in record
 assert "EDEN_SESSION_ACTIVE_V1" in record
@@ -103,6 +112,34 @@ int main(int argc, char** argv) {
     assert(second.starts_with(first));
     assert(second.find("detailed=1 largest_query_ok=0 largest_free_bytes=0") != std::string::npos);
     assert(second.find("direct_failure=0") != std::string::npos);
+    // No GPU/frame I/O: two lifecycle boundaries are explicit, durable and
+    // independent of detailed logging. The preceding game survives relaunch.
+    const std::string boundaries = dir + "/session-boundaries.log";
+    assert(Eden::WriteSessionBoundaryReceipt(
+        boundaries, "0123456789abcdef0123456789abcdef01234567",
+        0x0400c3f00006e000ull, 1, "title_destroyed", 150000,
+        false, 3, true, 10ull * 1024 * 1024 * 1024, 1200, 1));
+    assert(Eden::WriteSessionBoundaryReceipt(
+        boundaries, "0123456789abcdef0123456789abcdef01234567",
+        0x0400c3f00006e000ull, 2, "title_resolved", 1,
+        true, 4, true, 9ull * 1024 * 1024 * 1024, 1200, 0));
+    const auto b = read(boundaries);
+    assert(b.find("EDEN_SESSION_BOUNDARY_V1") != std::string::npos);
+    assert(b.find("attempt=1 phase=title_destroyed") != std::string::npos);
+    assert(b.find("attempt=2 phase=title_resolved") != std::string::npos);
+    assert(b.find("detailed=0 logging_generation=3") != std::string::npos);
+    assert(b.find("detailed=1 logging_generation=4") != std::string::npos);
+    assert(b.find("gpu_completed=1200 gpu_stall_suspicions=1") != std::string::npos);
+    const std::string boundary_link = dir + "/boundary-trap";
+    assert(symlink(boundaries.c_str(), boundary_link.c_str()) == 0);
+    assert(!Eden::WriteSessionBoundaryReceipt(
+        boundary_link, "unknown", 0, 3, "fault", 0, false, 0, false, 0, 0, 0));
+    assert(read(boundaries) == b);
+    const std::string boundary_full = dir + "/boundary-full";
+    { std::ofstream out(boundary_full); out << "historical"; }
+    assert(truncate(boundary_full.c_str(), 2 * 1024 * 1024 + 1) == 0);
+    assert(!Eden::WriteSessionBoundaryReceipt(
+        boundary_full, "unknown", 0, 3, "fault", 0, false, 0, false, 0, 0, 0));
     struct stat st{};
     assert(stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode));
     // Logging failure must not follow an attacker-controlled symlink.
@@ -215,5 +252,5 @@ with tempfile.TemporaryDirectory(prefix="encore-p0-allocator-") as temp:
         run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
         assert run.returncode == 0, (opt, run.stderr)
 
-print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 allocator_real=1 lifecycle_atomic=1 title=1 bounded=1 no_symlink=1")
+print("P0_SESSION_FAILURE_RECEIPT_HOST_PASS O0=1 O2=1 quiet=1 append=1 kernel_rc=1 allocator_real=1 lifecycle_atomic=1 boundaries=1 relaunch=1 title=1 bounded=1 no_symlink=1")
 print("This does not prove PS5 native ABI, real FC27 relaunch, NS2 frame or performance.")

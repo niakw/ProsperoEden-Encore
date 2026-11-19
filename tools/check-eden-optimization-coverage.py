@@ -483,7 +483,7 @@ assert not post_f07_static_engine_owners & research_owners
 assert 'vendor/encore-active/ns2-runtime/cpu6/maintained' in (
     ROOT/'headless/ns2_cpu6_source_bridge.cmake').read_text()
 assert 'vendor/encore-active/ns2-runtime/ldapr/maintained' in (
-    ROOT/'headless/shared_a64_ldapr.cmake').read_text()
+    ROOT/'headless/shared_a64_v81_v85.cmake').read_text()
 print("ENCORE_POST_F07_NATIVE_SOURCE_ISOLATION_PASS owners=8")
 
 # These three real NVDRV source owners joined the shared engine in P1.3,

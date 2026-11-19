@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""Verify tracked native Vulkan C++ fork exactly matches validated R337 source generator.""
+"""Verify tracked native Vulkan C++ fork exactly matches validated R337 source generator."""
 from pathlib import Path
 import filecmp
 import json
@@ -139,12 +139,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         # additions on an audit copy, as vendor's native_msaa_handle_receipt
         # does. Shipping source and historical oracle remain untouched.
         assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
-        constructor = ""    buffer_cache.SetPendingCpuWrites(
+        constructor = """    buffer_cache.SetPendingCpuWrites(
         [this](const std::function<void(DAddr, size_t)>& callback) {
             gpu.ForEachPendingCpuWrite(callback);
         });
-""
-        batch = ""void RasterizerVulkan::OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) {
+"""
+        batch = """void RasterizerVulkan::OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) {
     // Remove the complete CPU-write batch from GPU-owned ranges before any
     // individual invalidation can download stale bytes over a later write.
     {
@@ -154,7 +154,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     for (const auto& [addr, size] : ranges) OnCacheInvalidation(addr, size);
 }
 
-""
+"""
         assert raster_source.count(constructor) == raster_source.count(batch) == 1
         raster_source = raster_source.replace(constructor, '', 1).replace(batch, '', 1)
         raster_sha = raster_blob(raster_source)
@@ -177,12 +177,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # remove only these two exact chunks from the audit COPY before the
     # independent MSAA and frozen R23 oracle comparisons.
     if raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529':
-        cpu_writes_ctor = ""    buffer_cache.SetPendingCpuWrites(
+        cpu_writes_ctor = """    buffer_cache.SetPendingCpuWrites(
         [this](const std::function<void(DAddr, size_t)>& callback) {
             gpu.ForEachPendingCpuWrite(callback);
         });
-""
-        cpu_writes_batch = ""void RasterizerVulkan::OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) {
+"""
+        cpu_writes_batch = """void RasterizerVulkan::OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) {
     // Remove the complete CPU-write batch from GPU-owned ranges before any
     // individual invalidation can download stale bytes over a later write.
     {
@@ -192,11 +192,11 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     for (const auto& [addr, size] : ranges) OnCacheInvalidation(addr, size);
 }
 
-""
+"""
         assert raster_source.count(cpu_writes_ctor) == 1
         assert raster_source.count(cpu_writes_batch) == 1
-        raster_source = raster_source.replace(cpu_writes_ctor, ", 1)
-        raster_source = raster_source.replace(cpu_writes_batch, ", 1)
+        raster_source = raster_source.replace(cpu_writes_ctor, "", 1)
+        raster_source = raster_source.replace(cpu_writes_batch, "", 1)
         raster_sha = raster_blob(raster_source)
         assert raster_sha == 'efd77028f0710ea9e50cbbe77b04eebf3f306610', raster_sha
         print("ENCORE_R457_GPU_CPU_WRITE_RACE_EXACT_REVERSE_PASS owner=1 prior=efd77028")
@@ -741,7 +741,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             ("    present_manager.Present(frame);\n    scheduler.DispatchWork();", "    present_manager.Present(frame);\n    ::Eden::FrameMetrics::OnRealQueued();\n    scheduler.DispatchWork();"),
         ],
         "vulkan_present_manager.cpp": [
-            ("#include \"common/settings.h\", "#include \"common/settings.h\"\n#include \"frame_metrics.h\"),
+            ("#include \"common/settings.h\"", "#include \"common/settings.h\"\n#include \"frame_metrics.h\""),
             ("    // Present\n    swapchain.Present(render_semaphore);\n}", "    // CPU API return only, not proof of HDMI scanout.\n    swapchain.Present(render_semaphore);\n    ::Eden::FrameMetrics::OnSwapchainPresentReturned();\n}"),
         ],
     }
@@ -1481,7 +1481,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 "    // needed for strict neural LDR/HDR and MSAA source admission.\n"
                 "    VkFormat sampled_format{VK_FORMAT_UNDEFINED};\n"
                 "    VkSampleCountFlagBits sample_count{VK_SAMPLE_COUNT_1_BIT};\n",
-                ",
+                "",
             )],
         ),
         "include/video_core/renderer_vulkan/vk_pipeline_cache.h": (

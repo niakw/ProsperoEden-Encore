@@ -14,6 +14,7 @@ import re
 import shutil
 import stat
 import tempfile
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -70,13 +71,22 @@ def download(repository: str, artifact: dict, token: str, archive: Path) -> None
         url, headers={"Authorization": f"Bearer {token}", "User-Agent": "encore-ci-artifact-verify"},
     )
     opener = urllib.request.build_opener(NoRedirect)
-    try:
-        with opener.open(request, timeout=45):
-            raise RuntimeError("expected GitHub artifact ZIP to redirect to blob storage")
-    except urllib.error.HTTPError as error:
-        if error.code not in (302, 303, 307, 308):
-            raise
-        location = error.headers.get("Location", "")
+    # The public artifact redirect may become readable a few seconds after
+    # upload completion, even when the artifact list already exposes its ID.
+    location = None
+    for attempt in range(8):
+        try:
+            with opener.open(request, timeout=45):
+                raise RuntimeError("expected GitHub artifact ZIP to redirect to blob storage")
+        except urllib.error.HTTPError as error:
+            if error.code in (302, 303, 307, 308):
+                location = error.headers.get("Location", "")
+                break
+            if error.code != 404 or attempt == 7:
+                raise
+            time.sleep(3)
+    if not location:
+        raise ValueError("GitHub did not return an artifact ZIP redirect")
     from urllib.parse import urlsplit
     u = urlsplit(location)
     if u.scheme != "https" or not u.netloc or u.username or u.password:

@@ -161,7 +161,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     }:
         # New vendor changes only the selected NS2 SVC trace owners; seal their
         # exact bytes without weakening the preserved Vulkan reverse-oracle.
-        if pair_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32":
+        if pair_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a"}:
             for owner, expected_blob in (
                 ("encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h",
                  "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86"),
@@ -175,7 +175,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                     text=True,
                 ).strip()
                 assert actual_blob == expected_blob, ("NS2 quiet SVC source drift", owner)
-        if pair_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32":
+        if pair_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a"}:
             actual_blob = subprocess.check_output(
                 ["git", "hash-object", str(root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h")],
                 text=True,

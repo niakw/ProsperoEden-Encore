@@ -36,7 +36,8 @@ jobs:
           python3 -B vendor/tests/ns2_duskbloods_tld4_imad_host.py
           python3 -B vendor/tests/ns2_ampere_hsetp2_cbuf_host.py
           python3 -B vendor/tests/ns2-kprocess-memory-budget-source.py
-          python3 -B vendor/tests/ns2_alias_128g_no_kprocess_layout_host.py
+          python3 -B vendor/tests/ns2_alias_64g_upstream_parity_host.py
+          python3 -B vendor/tests/ns2_a64_v81_v85_source.py
           python3 -B vendor/tests/ns2_qmd_rejected_dispatch_release_host.py
           python3 -B vendor/tests/ns2_ldsm_m88_modes_host.py
           python3 -B vendor/tests/shader_bitfield_uextract_fold_host.py

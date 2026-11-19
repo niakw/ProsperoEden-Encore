@@ -1919,7 +1919,17 @@ assert (active / "eden-core/src/dynarmic/frontend/A64/translate/impl/impl.cpp").
 base_trans = (scalar_root / "frontend/A64/translate/a64_translate.cpp").read_text()
 old_inc = '"dynarmic/frontend/A64/translate/impl/impl.cpp"'
 assert base_trans.count(old_inc) == 1
-assert (active / "eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp").read_text() == base_trans.replace(old_inc, '"impl/impl.cpp"')
+expected_trans = base_trans.replace(old_inc, '"impl/impl.cpp"')
+a64_anchor = '#include "dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp"'
+assert expected_trans.count(a64_anchor) == 1
+a64_units = '''#include "dynarmic/frontend/A64/translate/impl/load_store_exclusive.cpp"
+#if defined(EDEN_NS2_A64_V81_V85)
+#include "dynarmic/frontend/A64/translate/impl/load_store_atomic.cpp"
+#include "dynarmic/frontend/A64/translate/impl/memory_tagging.cpp"
+#include "dynarmic/frontend/A64/translate/impl/pointer_authentication.cpp"
+#endif'''
+expected_trans = expected_trans.replace(a64_anchor, a64_units)
+assert (active / "eden-core/src/dynarmic/frontend/A64/translate/a64_translate.cpp").read_text() == expected_trans
 base_opt = (scalar_root / "ir/opt_passes.cpp").read_text()
 opt_anchor = "        case Op::LeastSignificantWord:\n            FoldLeastSignificantWord(inst);\n            break;"
 assert base_opt.count(opt_anchor) == 1

@@ -2507,7 +2507,7 @@ ns2_production_blobs = {
     "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp": "1877d43aa8facfabf193dac16b8beea3ff7e188e",
     "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp": "70bc538c71ba1327a0c2a51a6bcb57d1835db2e0",
     "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h":
-        ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if selected_texture_vendor == "6d64217ea5804fb86dbf57685a3da0cb1d45ba32" else
+        ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if selected_texture_vendor in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a"} else
          "859a9e46fb63a97fee82c8ea6b1566317264f98f" if selected_texture_vendor == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else
          "0d99f9a861c645562519f71d62f4f49bfedd8101" if selected_texture_vendor == "1a09972eea6f473fda1b714efe84cd52219bf681" else
          "744bf30e1421dcce212146f7e26e9d90558676a8")

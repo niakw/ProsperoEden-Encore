@@ -17,6 +17,19 @@ begin="Result IGpuSession::HandleSyncRequest("
 end="static Result Translate("
 assert source.count(begin)==source.count(end)==1
 owner=begin+source.split(begin,1)[1].split(end,1)[0]
+# The selected GSV and acquired worker must accept NS2 SDK TIPC-0 before any
+# GPU VA/GPFIFO work. Unknown opcodes still fail closed in the tested owner.
+worker_source=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp").read_text()
+for body,klass in ((source,"IGpuSession"),(worker_source,"IGpuWorker")):
+    assert f'{{0, &{klass}::Handshake, "Handshake"}}' in body
+    signature=f"void {klass}::Handshake(HLERequestContext& ctx) {{"
+    assert body.count(signature)==1
+    handshake=body.split(signature,1)[1].split("\n}\n",1)[0]
+    for marker in ("ctx.CommandBuffer()", "IPC::ResponseBuilder rb{ctx, 4};",
+                   "rb.PushRaw<u32>(ResultSuccess.raw);",
+                   "rb.PushRaw<u32>(command[2]);",
+                   "rb.PushRaw<u32>(command[3]);"):
+        assert marker in handshake,(klass,marker)
 assert "handlers_tipc.contains(ctx.GetCommand())" in owner
 assert "Kernel::ResultNotImplemented.raw" in owner
 assert "ctx.WriteToOutgoingCommandBuffer()" in owner

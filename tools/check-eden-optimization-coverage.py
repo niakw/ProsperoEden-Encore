@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-""Count Encore-owned files not yet handled in the optimization work pass.
+"""Count Encore-owned files not yet handled in the optimization work pass.
 
 Fast-skip previously maintained sources with a specific historical proof, but
 never confuse code triage with host or console performance validation.
-""
+"""
 import json
 import hashlib
 import subprocess
@@ -15,7 +15,7 @@ ROOT=Path(__file__).resolve().parents[1]
 P=ROOT/"docs/EDEN_OPTIMIZATION_COVERAGE_2026-10-20.json"
 STATE=json.loads(P.read_text())
 assert STATE["schema_version"]==1
-tracked=set(subprocess.check_output(["git","ls-files","-z"],cwd=ROOT).decode().split("\0"))-{"}
+tracked=set(subprocess.check_output(["git","ls-files","-z"],cwd=ROOT).decode().split("\0"))-{""}
 # When vendor is moved to an immutable gitlink, the parent index lists only
 # "vendor". Preserve the original vendor/… owner namespace by merging the
 # pinned submodule index; never infer source ownership from arbitrary disk files.
@@ -1315,7 +1315,7 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             continue
         if gpu_table_vendor_pin in gpu_dirty_include_successors and path in gpu_dirty_include_owners:
             assert raw.count(gpu_dirty_include) == 1, path
-            historical = raw.replace(gpu_dirty_include, b", 1)
+            historical = raw.replace(gpu_dirty_include, b"", 1)
             actual = hashlib.sha1(
                 b"blob " + str(len(historical)).encode() + b"\0" + historical
             ).hexdigest()
@@ -1478,7 +1478,7 @@ for e in entries:
                           else "SOURCE")
     assert e["path"].startswith("vendor/encore-active/")
     # A skipped *first code review* still leaves independent test/console debt.
-    assert "PS5" not in e.get("claimed_performance",")
+    assert "PS5" not in e.get("claimed_performance","")
 # Shipping backports are a code-modification fact, not a HOST label.
 # Lock every fast-triaged source to its installed bytes, its immutable
 # previous source digest, and the exact register owner (verified above).
@@ -1725,12 +1725,12 @@ r457_service_current_blob = "be163317ca482765f31ddf3b7d1dbe24be041294"
 # ONLY this reviewed hunk in the audit copy, preserving both exact originals.
 # This does not retrofit any historical F07 source SHA or native PS5 proof.
 r457_resume_blob = "90f1f4fb2d239d71d0a856943cc4328704e2058b"
-r457_resume_block = ""        } else if (!Eden::BootTrace::Resume(Eden::LogsDir())) {
+r457_resume_block = """        } else if (!Eden::BootTrace::Resume(Eden::LogsDir())) {
             // Normal stderr/stdout and fatal crash reports remain independent.
             // A failed bootstrap reopen must not truncate prior traces or
             // misrepresent this additional trace as available.
             Eden::Report("logs", "Early trace unavailable after logging was enabled");
-        }""
+        }"""
 assert drift_index[r457_service_path]["actual"] == r457_resume_blob
 assert r457_service_source.count(r457_resume_block) == 1
 r457_service_source = r457_service_source.replace(r457_resume_block, "        }", 1)
@@ -1740,17 +1740,17 @@ assert hashlib.sha1(b"blob " + str(len(r457_resume_predecessor)).encode() +
 drift_index[r457_service_path]["actual"] = r457_service_current_blob
 print("R457_BOOTTRACE_REENABLE_SOURCE_SUCCESSOR_PASS prior_reconstructed=1 append_only=1")
 assert drift_index[r457_service_path]["actual"] == r457_service_current_blob
-r457_current = ""        if (!value.detailed_logging) {
+r457_current = """        if (!value.detailed_logging) {
             // Stop recording, but never erase earlier sessions simply by
             // toggling this option. A user may need those files after a hang.
             Eden::BootTrace::Quiet(Eden::LogsDir());
-        }""
-r457_previous = ""        if (!value.detailed_logging) {
+        }"""
+r457_previous = """        if (!value.detailed_logging) {
             Eden::BootTrace::Quiet(Eden::LogsDir());
             for (const char* name : {
                     "eden_log.txt", "eden_log.txt.first.txt", "eden_log.txt.old.txt"})
                 (void)std::remove((Eden::UserDir() + "/log/" + name).c_str());
-        }""
+        }"""
 assert r457_service_source.count(r457_current) == 1
 r457_service_prior_source = r457_service_source.replace(r457_current, r457_previous, 1)
 r457_data = r457_service_prior_source.encode("utf-8")
@@ -1767,12 +1767,12 @@ typography_hud_predecessor = "0ef8bf75efabf61628b44b91011eb461abcbde81"
 if (typography_hud_path in drift_index and
         drift_index[typography_hud_path]["actual"] == typography_hud_blob):
     hud_source = (ROOT/typography_hud_path).read_text()
-    anchor_text = ""        glyphs[i] = HudGlyph(text[i]);
+    anchor_text = """        glyphs[i] = HudGlyph(text[i]);
     return glyphs;
 }
 // The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
-""
-    predecessor_text = ""        glyphs[i] = HudGlyph(text[i]);
+"""
+    predecessor_text = """        glyphs[i] = HudGlyph(text[i]);
     return glyphs;
 }
 // Quick-menu text keeps ASCII codepoints so the Vulkan fragment shader can
@@ -1786,7 +1786,7 @@ inline std::array<uint32_t, 24> HudCodepoints(std::string_view text) {
     return glyphs;
 }
 // The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
-""
+"""
     assert hud_source.count(anchor_text) == 1
     replay = hud_source.replace(anchor_text, predecessor_text, 1)
     raw = replay.encode("utf-8")
@@ -1808,7 +1808,7 @@ if (typography_fonts_path in drift_index and
         drift_index[typography_fonts_path]["actual"] == typography_fonts_blob):
     replay = (ROOT/typography_fonts_path).read_text()
     font_hunks = [
-        (""    Script script;
+        ("""    Script script;
     // The same font in the weights and generations a system software version may carry; the
     // first one found is used.
     const char *files[5];
@@ -1831,8 +1831,8 @@ constexpr Group kNotoThai{Script::thai, {"NotoSansThai.ttf", nullptr}};
 constexpr Group kNotoArabic{Script::arabic, {"NotoSansArabic.ttf", nullptr}};
 
 // A character only one of the fonts should draw, whatever their order.
-Script own_script(char32_t c)"",
-         ""    Script script;
+Script own_script(char32_t c)""",
+         """    Script script;
     // The same font in the weights and generations a system software version may carry; the
     // first one found is used.
     const char *files[3];
@@ -1845,8 +1845,8 @@ constexpr Group kThai{Script::thai, {"SSTThai-Medium.otf", "SSTThai-Roman.otf", 
 constexpr Group kArabic{Script::arabic, {"SSTArabic-Medium.otf", "SSTArabic-Roman.otf", nullptr}};
 
 // A character only one of the fonts should draw, whatever their order.
-Script own_script(char32_t c)""),
-        (""    const std::string_view prefix = language.substr(0, 2);
+Script own_script(char32_t c)"""),
+        ("""    const std::string_view prefix = language.substr(0, 2);
     std::vector<const Group *> order;
     if (prefix == "ja")
         order = {&kNotoJapanese, &kJapanese, &kLatin, &kChinese, &kKorean, &kThai, &kArabic};
@@ -1864,8 +1864,8 @@ Script own_script(char32_t c)""),
         order = {&kNotoGreek, &kLatin, &kJapanese, &kChinese, &kKorean, &kThai, &kArabic};
     else
         order = {&kLatin, &kJapanese, &kChinese, &kKorean, &kThai, &kArabic};
-    std::vector<std::string> files;"",
-         ""    const std::string_view prefix = language.substr(0, 2);
+    std::vector<std::string> files;""",
+         """    const std::string_view prefix = language.substr(0, 2);
     std::vector<const Group *> order;
     if (prefix == "ja")
         order = {&kJapanese, &kLatin, &kChinese, &kKorean, &kThai, &kArabic};
@@ -1879,8 +1879,8 @@ Script own_script(char32_t c)""),
         order = {&kArabic, &kLatin, &kJapanese, &kChinese, &kKorean, &kThai};
     else
         order = {&kLatin, &kJapanese, &kChinese, &kKorean, &kThai, &kArabic};
-    std::vector<std::string> files;""),
-        (""            break;
+    std::vector<std::string> files;"""),
+        ("""            break;
         auto face = std::make_unique<Face>();
         const std::string name = path.substr(path.find_last_of('/') + 1);
         for (const Group *group : {&kNotoJapanese, &kJapanese, &kNotoKorean, &kKorean,
@@ -1888,14 +1888,14 @@ Script own_script(char32_t c)""),
                                    &kNotoThai, &kThai, &kNotoArabic, &kArabic})
             for (const char *file : group->files)
                 if (file != nullptr && name == file)
-                    face->script = group->script;"",
-         ""            break;
+                    face->script = group->script;""",
+         """            break;
         auto face = std::make_unique<Face>();
         const std::string name = path.substr(path.find_last_of('/') + 1);
         for (const Group *group : {&kJapanese, &kKorean, &kChinese, &kThai, &kArabic})
             for (const char *file : group->files)
                 if (file != nullptr && name == file)
-                    face->script = group->script;""),
+                    face->script = group->script;"""),
     ]
     for current_hunk, previous_hunk in font_hunks:
         assert replay.count(current_hunk) == 1
@@ -1919,7 +1919,7 @@ typography_frontend_predecessor = "c199a16ae2d894baca14ea2373273e09c38e872a"
 if (typography_frontend_path in drift_index and
         drift_index[typography_frontend_path]["actual"] == typography_frontend_blob):
     frontend_source = (ROOT/typography_frontend_path).read_text()
-    typography_block = ""    std::vector<std::string> fallback_files;
+    typography_block = """    std::vector<std::string> fallback_files;
     std::vector<std::string> font_folders;
     font_folders.push_back(Eden::AppFile("ui/fonts/fallback"));
     for (const std::string& candidate : pe::gfx::system_font_folders())
@@ -1936,8 +1936,8 @@ if (typography_frontend_path in drift_index and
     const std::size_t files = fallback_files.size();
     if (!fallback_files.empty())
         font.use_system_fonts(std::move(fallback_files), tag);
-""
-    predecessor_block = ""    std::size_t files = 0;
+"""
+    predecessor_block = """    std::size_t files = 0;
     for (const std::string& candidate : pe::gfx::system_font_folders()) {
         std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
         if (found.empty()) continue;
@@ -1946,7 +1946,7 @@ if (typography_frontend_path in drift_index and
         font.use_system_fonts(std::move(found), tag);
         break;
     }
-""
+"""
     assert frontend_source.count(typography_block) == 1
     replay = frontend_source.replace(typography_block, predecessor_block, 1)
     replay_raw = replay.encode("utf-8")
@@ -2001,15 +2001,15 @@ for changed_path, (predecessor_blob, successor_blob, markers) in nov16_diagnosti
         # Library provenance replayers below do not accidentally re-read the
         # diagnostics branch source and mix unrelated deltas.
         replay = current_source
-        replay = replay.replace('#include "diagnostics_native_client.h"\n', ", 1)
+        replay = replay.replace('#include "diagnostics_native_client.h"\n', "", 1)
         replay = replay.replace(
             "    // Consent remains fail-closed until the native client has a verified HTTPS collector.\n",
             "    // No native collector yet. A stale or hand-edited preference cannot turn sharing on.\n",
             1)
         replay = replay.replace(
             "    if (saved) Eden::DiagnosticsClient::SetConsent(value.share_standard_logs, value.share_advanced_logs);\n",
-            ", 1)
-        method = ""bool EdenServices::log_sharing_available() const {
+            "", 1)
+        method = """bool EdenServices::log_sharing_available() const {
 #ifdef PS5_NATIVE
     return Eden::DiagnosticsClient::Available();
 #else
@@ -2017,9 +2017,9 @@ for changed_path, (predecessor_blob, successor_blob, markers) in nov16_diagnosti
 #endif
 }
 
-""
+"""
         assert replay.count(method) == 1
-        replay = replay.replace(method, ", 1)
+        replay = replay.replace(method, "", 1)
         raw = replay.encode("utf-8")
         replay_blob = hashlib.sha1(
             b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -2040,7 +2040,7 @@ if drift_index[service_path]["actual"] == nov16_no_duplicate_addon_blob:
     current_service = (nov16_diagnostics_service_replay_source
                        if nov16_diagnostics_service_replay_source is not None
                        else (ROOT / service_path).read_text())
-    new_block = ""    if (cancel && cancel->load(std::memory_order_acquire)) return games;
+    new_block = """    if (cancel && cancel->load(std::memory_order_acquire)) return games;
     // Initial Library enumeration starts only after finish_home_scan() has
     // applied EdenServices::home(), whose worker already published the
     // complete add-on snapshot. Repeating eden_scan_addons() here walked the
@@ -2048,12 +2048,12 @@ if drift_index[service_path]["actual"] == nov16_no_duplicate_addon_blob:
     // Later storage refreshes queue read_home() before start_scan() as well.
     // Keep games() local/cache-only; selected media reads the atomically
     // published snapshot and reports Unknown if that snapshot is incomplete.
-    const int language_choice = Eden::LoadPreferences().language;""
-    old_block = ""    if (cancel && cancel->load(std::memory_order_acquire)) return games;
+    const int language_choice = Eden::LoadPreferences().language;"""
+    old_block = """    if (cancel && cancel->load(std::memory_order_acquire)) return games;
     eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str(),
                          Eden::AssetsPath("roms").c_str());
     if (cancel && cancel->load(std::memory_order_acquire)) return {};
-    const int language_choice = Eden::LoadPreferences().language;""
+    const int language_choice = Eden::LoadPreferences().language;"""
     assert current_service.count(new_block) == 1
     reconstructed = current_service.replace(new_block, old_block, 1).encode("utf-8")
     reconstructed_blob = hashlib.sha1(
@@ -2138,11 +2138,11 @@ nov16_home_square_replay_source = None
 if drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] == nov16_addon_summary_blob:
     current_service = (stable_home_replay_source if stable_home_replay_source is not None
                        else (ROOT / "headless/prosperoeden/eden_services.cpp").read_text())
-    new_summary = ""    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
+    new_summary = """    const int status = eden_game_addons(title_id, update, sizeof(update), &dlc);
     if (status < 0) return tr("Unknown");
-    std::string text;""
-    old_summary = ""    eden_game_addons(title_id, update, sizeof(update), &dlc);
-    std::string text;""
+    std::string text;"""
+    old_summary = """    eden_game_addons(title_id, update, sizeof(update), &dlc);
+    std::string text;"""
     assert current_service.count(new_summary) == 1
     nov16_home_square_replay_source = current_service.replace(new_summary, old_summary, 1)
     reconstructed = nov16_home_square_replay_source.encode("utf-8")
@@ -2217,22 +2217,22 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
         # selection, not a directory. Normalize only the reviewed root fix
         # and require that every remaining byte is the immutable #208 blob.
         if drift_index[changed_path]["actual"] == "689e53fc25b3f9544ab1e6a6c4ef448c38a677bd":
-            fixed_root = ""    const std::filesystem::path roms_root = Eden::AssetsPath("roms");
+            fixed_root = """    const std::filesystem::path roms_root = Eden::AssetsPath("roms");
     // The Library row persists the executable selection, not the directory.
     // Revalidate every directory component and measure the top-level title.
     if (!Eden::IsSafeDeconstructedGamePath(roms_root, file))
         return {};
     const std::filesystem::path extracted = roms_root / file.substr(0, file.find('/'));
-""
-            old_root = ""    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
+"""
+            old_root = """    const std::filesystem::path extracted = Eden::AssetsPath("roms/" + file);
     if (!Eden::IsSafeExtractedDirectory(extracted))
         return {};
-""
+"""
             assert current_service.count(fixed_root) == 1, changed_path
             current_service = current_service.replace(fixed_root, old_root, 1)
             old_raw = current_service.encode("utf-8")
             assert hashlib.sha1(b"blob " + str(len(old_raw)).encode() + bytes([0]) + old_raw).hexdigest() == "54a37cf740f25c68aa0d5f93adf300144c5280d1", changed_path
-        size_worker_method = ""std::string EdenServices::exact_game_size(const std::string& file,
+        size_worker_method = """std::string EdenServices::exact_game_size(const std::string& file,
                                                const std::atomic<bool>* cancel) {
     if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
         return {};
@@ -2254,8 +2254,8 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
     return exact_size;
 }
 
-""
-        prior_size_block = ""    // Exact extracted-title size is useful in Library details, but it is not
+"""
+        prior_size_block = """    // Exact extracted-title size is useful in Library details, but it is not
     // required to display or navigate the Library. Only Game objects coming
     // from the Library scan carry the explicit unknown marker; Home media
     // requests leave size empty and therefore never trigger this walk.
@@ -2276,11 +2276,11 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
             }
         }
     }
-""
+"""
         retail_marker = "    // Prioritize the requested ORIGINAL retail scans before any optional\n"
         assert current_service.count(size_worker_method) == 1, changed_path
         assert current_service.count(retail_marker) == 1, changed_path
-        reconstructed = current_service.replace(size_worker_method, ", 1)
+        reconstructed = current_service.replace(size_worker_method, "", 1)
         reconstructed = reconstructed.replace(retail_marker, prior_size_block + retail_marker, 1)
         raw = reconstructed.encode("utf-8")
         historical_square = hashlib.sha1(
@@ -2350,7 +2350,7 @@ assert sparse_drift["expected"] == sparse_receipt["historical_f07_git_blob"]
 assert sparse_receipt["research_source_git_blob"] == (
     "4f109a0286a13afc93dcacd3b287b26b256d13f4")
 assert sparse_drift["actual"] == "b9349360b3f615784247133026ac7aaf8d71eb9e"
-dense_fallback_guard = ""#ifdef PS5_NATIVE
+dense_fallback_guard = """#ifdef PS5_NATIVE
         // NS2 must never request 12 GiB of physical RAM because a
         // compile-flag mismatch silently disabled the sparse owner.
         // Fail clearly instead of reproducing the PS5 launch ENOMEM.
@@ -2359,10 +2359,10 @@ dense_fallback_guard = ""#ifdef PS5_NATIVE
                                     "NS2 sparse backing not active; refusing 12 GiB dense allocation");
         }
 #endif
-""
+"""
 current_sparse_source = (ROOT/sparse_path).read_text()
 assert current_sparse_source.count(dense_fallback_guard) == 1
-pre_guard = current_sparse_source.replace(dense_fallback_guard, ", 1)
+pre_guard = current_sparse_source.replace(dense_fallback_guard, "", 1)
 pre_guard_bytes = pre_guard.encode("utf-8")
 pre_guard_blob = hashlib.sha1(
     b"blob " + str(len(pre_guard_bytes)).encode() + bytes([0]) +
@@ -2498,7 +2498,7 @@ pipe_drift = drift_index.pop(pipe_path)
 assert pipe_drift["expected"] == "275a75da7baadbcb95be91996adb5cbdf35c59c2"
 assert pipe_drift["actual"] == "fd3f0cdbe0e9f1d6440275b177e7dad4a027e52f"
 pipe_source = (ROOT / pipe_path).read_text()
-new_toggle = ""        // Disabling collection must not delete already recorded evidence.
+new_toggle = """        // Disabling collection must not delete already recorded evidence.
         // Re-enabling within the same process appends to the bounded current
         // segment instead of truncating the earlier game/fault diagnostics.
         const int next = want_enabled ?
@@ -2510,8 +2510,8 @@ new_toggle = ""        // Disabling collection must not delete already recorded 
         // Keep bytes and rotated across OFF/ON. The draining thread still
         // accounts for the existing segment, so an append cannot bypass the
         // 8 MiB per-segment limit or remove the preserved first segment.
-        enabled = want_enabled;""
-old_toggle = ""        const int next = want_enabled ?
+        enabled = want_enabled;"""
+old_toggle = """        const int next = want_enabled ?
             open(log_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666) :
             open("/dev/null", O_WRONLY);
         if (next < 0) return false;
@@ -2525,7 +2525,7 @@ old_toggle = ""        const int next = want_enabled ?
             (void)std::remove(first_log_path.c_str());
         } else {
             (void)std::remove(first_log_path.c_str());
-        }""
+        }"""
 assert pipe_source.count(new_toggle) == 1, "Unreviewed R457 log sink delta"
 prior_pipe = pipe_source.replace(new_toggle, old_toggle, 1).encode("utf-8")
 assert hashlib.sha1(b"blob " + str(len(prior_pipe)).encode() + bytes([0]) +
@@ -2555,26 +2555,26 @@ assert direct_text.count(export_start) == direct_text.count(export_end) == 1
 first = direct_text.index(export_start)
 last = direct_text.index(export_end, first)
 direct_text = direct_text[:first] + direct_text[last:]
-expanded_invalid = ""    if (!total) {
+expanded_invalid = """    if (!total) {
 #ifdef PS5_NATIVE
         NoteDirectAllocationFailure(3, EINVAL, size, 0);
 #endif
         errno = EINVAL;
         return nullptr;
-    }""
+    }"""
 assert direct_text.count(expanded_invalid) == 1
 direct_text = direct_text.replace(
     expanded_invalid, "    if (!total) { errno = EINVAL; return nullptr; }", 1)
 for recorded in (
-    ""        NoteDirectAllocationFailure(1, static_cast<std::uint32_t>(rc), total,
+    """        NoteDirectAllocationFailure(1, static_cast<std::uint32_t>(rc), total,
                                     static_cast<std::uint64_t>(limit));
-"",
-    ""        NoteDirectAllocationFailure(2, static_cast<std::uint32_t>(rc), total,
+""",
+    """        NoteDirectAllocationFailure(2, static_cast<std::uint32_t>(rc), total,
                                     static_cast<std::uint64_t>(limit));
-"",
+""",
 ):
     assert direct_text.count(recorded) == 1
-    direct_text = direct_text.replace(recorded, ", 1)
+    direct_text = direct_text.replace(recorded, "", 1)
 direct_bytes = direct_text.encode("utf-8")
 direct_reconstructed = hashlib.sha1(
     b"blob " + str(len(direct_bytes)).encode() + bytes([0]) + direct_bytes).hexdigest()
@@ -2603,16 +2603,16 @@ start = header_text.index(incident_begin)
 stop = header_text.index(incident_end)
 assert start < stop
 header_pre = header_text[:start] + header_text[stop:]
-added_includes = ""#include <cstdint>
+added_includes = """#include <cstdint>
 #include <cstddef>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
-""
+"""
 assert header_pre.count(added_includes) == 1
-header_pre = header_pre.replace(added_includes, ", 1).encode("utf-8")
+header_pre = header_pre.replace(added_includes, "", 1).encode("utf-8")
 header_pre_sha = hashlib.sha1(
     b"blob " + str(len(header_pre)).encode() + bytes([0]) + header_pre).hexdigest()
 assert header_pre_sha == incident_header_original, (

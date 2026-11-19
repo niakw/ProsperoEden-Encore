@@ -70,7 +70,8 @@ assert "fast_dispatch_table_size = 0x10000;" not in orig_h
 
 # Verify split compile ownership. Never change core PS5_NATIVE globally merely
 # to mask this ABI mismatch; its other uses are intentionally source-scoped.
-assert "a64_interface.cpp" in cm and "a64_emit_x64.cpp" in cm
+assert 'target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/a64_interface.cpp")' in cm
+assert 'target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/a${bits}_emit_x64.cpp")' in cm
 assert 'TARGET_DIRECTORY dynarmic APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1"' in cm
 dispatch_begin = normal_h.index(dispatch_old, normal_h.index(
     "static_assert(sizeof(FastDispatchEntry) == 0x10);"))

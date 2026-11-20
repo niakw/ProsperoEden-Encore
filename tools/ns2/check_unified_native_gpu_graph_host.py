@@ -40,6 +40,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
  files=['hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp',
         'hle/service/nvdrv/devices/nvhost_as_gpu.cpp',
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
+        'hle/service/nvdrv/nvdrv_interface.cpp',
         'hle/service/am/service/self_controller.cpp',
         'hle/service/ns/platform_service_manager.cpp',
         'hle/service/friend/friend.cpp',
@@ -67,6 +68,7 @@ add_library(core STATIC dummy.cpp
     hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp
     hle/service/nvdrv/devices/nvhost_as_gpu.cpp
     hle/service/nvdrv/devices/nvhost_gpu.cpp
+    hle/service/nvdrv/nvdrv_interface.cpp
     hle/service/am/service/self_controller.cpp
     hle/service/ns/platform_service_manager.cpp
     hle/service/friend/friend.cpp)

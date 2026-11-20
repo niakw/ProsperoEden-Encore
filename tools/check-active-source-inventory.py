@@ -446,7 +446,8 @@ r437_vendor_pin = subprocess.check_output(
 # FC27 P1 added PS5-only shared TickFrame budget and typed CPU-write claims.
 # Reverse only these exact source hunks on this audit COPY, retaining the
 # historical R437/NS2 source replay and never editing the shipping header.
-fc27_p1_vendor = r437_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"}
+fc27_p1_applet_macro_fix = r437_vendor_pin == "b65d8d9673475433f0b6eac72eb304bf23141666"
+fc27_p1_vendor = r437_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 if fc27_p1_vendor:
     raw = r437_body.encode("utf-8")
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -797,7 +798,7 @@ native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else native_gpfifo_vendor_pin
 if native_gpfifo_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a",
-                              "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"}:
+                              "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
     # Retain the exact production NS2 GPFIFO M2MF owner across the merged
     # FC27 P1 and GetInfo receipt-only vendor commits.
     current = (active / native_m2mf_channel_state).read_bytes()
@@ -1508,7 +1509,7 @@ if fc27_p1_vendor:
     ns2_early_hle_receipts.update({
         "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp": "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c",
         "ns2-runtime/hle/core/hle/service/am/service/application_proxy.h": "03cf286dd642a3e517c7fa4950850603038c6d6b",
-        native_applet_proxy_path: "849baf7bfe243734ee49c9e7617462665746d5f1",
+        native_applet_proxy_path: ("b1acd90a74bceb03c900a505e217f484f6ecd18f" if fc27_p1_applet_macro_fix else "849baf7bfe243734ee49c9e7617462665746d5f1"),
         "ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
         "ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
     })

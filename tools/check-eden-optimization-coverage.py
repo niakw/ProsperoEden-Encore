@@ -783,7 +783,7 @@ if native_gpfifo_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c3
     native_gpfifo_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 if native_gpfifo_vendor_pin in {"697159fd0c183f8a164d0493929ae3b4bcb391d1", "b1bb49abea63b6664e0945df8431e10aac128c2f", "89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6", "edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6", "125f00e8143edff14a8787fa8594ad72df3d550e"}:
     post_f07_native_gpfifo_owners.add(native_m2mf_owner)
-if native_gpfifo_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"}:
+if native_gpfifo_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
     # Same reviewed shipping GPFIFO channel-state owner as the NS2 parent.
     # Seal it before admitting the merged P1 pin to the existing ownership set.
     current_owner = (ROOT / native_m2mf_owner).read_bytes()
@@ -1198,9 +1198,11 @@ current_fc27_nov20_tree = gpu_table_vendor_pin in {
     "03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433",
     "eadc6e798def18417e50db6a03a291440429d795",
 }
+merged_applet_macro_fix = gpu_table_vendor_pin == "b65d8d9673475433f0b6eac72eb304bf23141666"
 merged_fc27_p1_pair = gpu_table_vendor_pin in {
     "01c942171fea39c1f7cf31d13ab36895aebb593a",
     "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109",
+    "b65d8d9673475433f0b6eac72eb304bf23141666",
 }
 if gpu_table_vendor_pin in {"03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433", "eadc6e798def18417e50db6a03a291440429d795"}:
     vendor_tree = subprocess.check_output(
@@ -1215,7 +1217,7 @@ gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_v
 # GPU page-table owners. Seal the unchanged blobs before invoking the frozen
 # F07 source-ownership profile, rather than interpreting new Git SHAs as a
 # new/unknown ABI with no FC27 SSA/SSBO owners.
-if gpu_table_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"}:
+if gpu_table_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
     for path, blob in {
         "vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/basic_block.h": "0a23d1ce0f43524e6195bd8219349ef632cfb719",
         "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp": "26c42a9900256e5573735394753c1d5264611664",
@@ -1559,7 +1561,7 @@ if merged_fc27_p1_pair:
     ns2_early_hle_receipts.update({
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp": "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c",
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.h": "03cf286dd642a3e517c7fa4950850603038c6d6b",
-        native_applet_proxy_owner: "849baf7bfe243734ee49c9e7617462665746d5f1",
+        native_applet_proxy_owner: ("b1acd90a74bceb03c900a505e217f484f6ecd18f" if merged_applet_macro_fix else "849baf7bfe243734ee49c9e7617462665746d5f1"),
     })
 # Selected NS2 appletOE support headers are real shipping owners of the
 # merged P1/NS2 graph. Verify both exact blobs with their active .cpp peers.

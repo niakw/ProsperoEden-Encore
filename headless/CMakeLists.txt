@@ -3769,6 +3769,40 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_supervisor_sources}")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
+
+    # GSV 1402 creates an initialized process-bound NVDRV child. The pinned
+    # Eden snapshot predates NVDRV::InitializeForProcess; the tested vendor
+    # source/header pair adds exactly this method without changing class layout
+    # or the NS1 NVDRV initialization path. Select BOTH owners in the single
+    # native PS5 binary, never just the GSV caller.
+    set(EDEN_NS2_NVDRV_SESSION_ROOT
+        "${PORT_ROOT}/vendor/sources/eden/src/core/hle/service/nvdrv")
+    set(EDEN_NS2_NVDRV_SESSION_HEADER
+        "${EDEN_NS2_NVDRV_SESSION_ROOT}/nvdrv_interface.h")
+    set(EDEN_NS2_NVDRV_SESSION_SOURCE
+        "${EDEN_NS2_NVDRV_SESSION_ROOT}/nvdrv_interface.cpp")
+    if(NOT EXISTS "${EDEN_NS2_NVDRV_SESSION_HEADER}" OR
+       NOT EXISTS "${EDEN_NS2_NVDRV_SESSION_SOURCE}")
+        message(FATAL_ERROR "Missing matching NS2 NVDRV process-session owners")
+    endif()
+    set(EDEN_NS2_NVDRV_SESSION_INCLUDE
+        "${PORT_BUILD_DIR}/nvdrv-session/include")
+    configure_file("${EDEN_NS2_NVDRV_SESSION_HEADER}"
+        "${EDEN_NS2_NVDRV_SESSION_INCLUDE}/core/hle/service/nvdrv/nvdrv_interface.h" COPYONLY)
+    get_target_property(eden_ns2_nvdrv_session_sources core SOURCES)
+    list(FIND eden_ns2_nvdrv_session_sources
+        "hle/service/nvdrv/nvdrv_interface.cpp" eden_ns2_nvdrv_session_original)
+    if(eden_ns2_nvdrv_session_original EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV process-session source changed: re-audit GSV 1402")
+    endif()
+    list(REMOVE_ITEM eden_ns2_nvdrv_session_sources
+        "hle/service/nvdrv/nvdrv_interface.cpp")
+    list(APPEND eden_ns2_nvdrv_session_sources
+        "${EDEN_NS2_NVDRV_SESSION_SOURCE}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_session_sources}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_SESSION_INCLUDE}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${EDEN_NS2_NVDRV_SESSION_HEADER}" "${EDEN_NS2_NVDRV_SESSION_SOURCE}")
 endif()
 
 # MKW 1.8.0 / update ExeFS 917504: nn::chat::Initialize blocks in SM

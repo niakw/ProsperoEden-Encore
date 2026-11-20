@@ -46,6 +46,22 @@ assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING
 assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")' in cmake
 assert 'EDEN_NS2_GPU_SESSION_SOURCE' in cmake and 'EDEN_NS2_NVDRV_GPU_SOURCE' in cmake
 assert 'EDEN_NS2_RASTERIZER_INTERFACE' in cmake
+# The actual PS5 target must use the same paired NVDRV declaration and
+# implementation as this host syntax probe. Otherwise GSV 1402 compiles here
+# but fails in the native build against the older pinned Eden class.
+native_nvdrv_dir=r/'vendor/sources/eden/src/core/hle/service/nvdrv'
+for file in ('nvdrv_interface.h', 'nvdrv_interface.cpp'):
+    assert 'InitializeForProcess' in (native_nvdrv_dir/file).read_text(), file
+for selected_owner in (
+    'set(EDEN_NS2_NVDRV_SESSION_ROOT',
+    'configure_file("${EDEN_NS2_NVDRV_SESSION_HEADER}"',
+    'list(REMOVE_ITEM eden_ns2_nvdrv_session_sources',
+    '"hle/service/nvdrv/nvdrv_interface.cpp")',
+    'list(APPEND eden_ns2_nvdrv_session_sources',
+    '"${EDEN_NS2_NVDRV_SESSION_SOURCE}")',
+    'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_SESSION_INCLUDE}")',
+):
+    assert selected_owner in cmake, ('Native NVDRV process-session selection missing', selected_owner)
 for forbidden in ('EDEN_NS2_GPU_SESSION_EXPERIMENTAL','EDEN_NS2_NVDRV_EXPERIMENTAL',
                   'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL',
                   'EDEN_FINAL_RELEASE_PROFILE'):

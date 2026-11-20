@@ -140,6 +140,18 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    # FC27 P1: reverse ONLY reviewed PS5 budget sampling / typed CPU write
+    # declarations on the audit copy. Do not alter shipping C++ or defer
+    # GPU-page protection. Exact two-sided blob identity is mandatory.
+    if actual == "41239f19b9e16741d49e31145c504e0086b1095e":
+        reviewed_p1 = [["\n\ntemplate <class P>\n#ifdef PS5_NATIVE\nvoid BufferCache<P>::TickFrame(std::optional<u64> externally_sampled_usage) {\n#else\nvoid BufferCache<P>::TickFrame() {\n#endif","\ntemplate <class P>\nvoid BufferCache<P>::TickFrame() {"],["            // The native Vulkan caller already sampled outside the cache\n            // mutex. Other backends and changed frame conditions retain the\n            // original in-lock fallback, so eviction thresholds stay exact.\n            if (externally_sampled_usage) {\n                total_used_memory = *externally_sampled_usage;\n            } else {\n                total_used_memory = runtime.GetDeviceMemoryUsage();\n            }","            total_used_memory = runtime.GetDeviceMemoryUsage();"],["template <class P>\ntemplate <typename RangeSize>\nvoid BufferCache<P>::ClaimCpuWrites(std::span<const std::pair<DAddr, RangeSize>> ranges) {","template <class P>\nvoid BufferCache<P>::ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges) {"]]
+        assert len(reviewed_p1) == 3
+        for revised, historical in reviewed_p1:
+            assert source.count(revised) == 1, "FC27 P1 native BufferCache source hunk drift"
+            source = source.replace(revised, historical, 1)
+        data = source.encode("utf-8")
+        actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert actual == _NOV20_BUFFER_BLOB, "FC27 P1 BufferCache exact predecessor drift"
     if actual == _NOV20_BUFFER_BLOB:
         # Restore the complete previous R2+FC27 RangeSet owner byte-for-byte.
         # Reverse in source order from the end, preserving adjacent anchors.

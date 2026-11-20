@@ -51,6 +51,35 @@ original_pitch_loop="        if (is_src_pitch && is_dst_pitch) {\n            fo
 folded_pitch_loop="        if (is_src_pitch && is_dst_pitch) {\n            u64 contiguous_bytes = 0;\n            if (CanCoalescePitchDma(regs.offset_in, regs.offset_out, regs.line_length_in,\n                                    regs.line_count, regs.pitch_in, regs.pitch_out,\n                                    contiguous_bytes)) {\n                // A single mapped copy/flush avoids a row-wise GPU memory walk.\n                memory_manager.CopyBlock(regs.offset_out, regs.offset_in,\n                                         static_cast<size_t>(contiguous_bytes));\n            } else {\n                // Retain exact row-by-row semantics for overlapping, gapped,\n                // negative-pitch or large transfers.\n                for (u32 line = 0; line < regs.line_count; ++line) {\n                    const GPUVAddr source_line =\n                        regs.offset_in + static_cast<size_t>(line) * regs.pitch_in;\n                    const GPUVAddr dest_line =\n                        regs.offset_out + static_cast<size_t>(line) * regs.pitch_out;\n                    memory_manager.CopyBlock(dest_line, source_line, regs.line_length_in);\n                }\n            }\n        } else {"
 assert expected.count(original_pitch_loop)==1
 expected=expected.replace(original_pitch_loop,folded_pitch_loop)
+# Correct the shipping CONST_A layout for B0B5 component sizes 1/2/3/4.
+# Compare the reviewed whole-source replacement, not a disabled test-only helper.
+old_remap = """            ASSERT(component_size == 1 || component_size == 2 || component_size == 4);
+            if (component_size == 4) {
+                accelerate.BufferClear(regs.offset_out, regs.line_length_in, regs.remap_const.remap_consta_value);
+            }
+            read_buffer.resize_destructive(regs.line_length_in * sizeof(u32));
+            std::ranges::fill(std::span<u32>(reinterpret_cast<u32*>(read_buffer.data()), regs.line_length_in), regs.remap_const.remap_consta_value);
+            memory_manager.WriteBlockUnsafe(regs.offset_out, reinterpret_cast<u8*>(read_buffer.data()), static_cast<size_t>(regs.line_length_in) * component_size);"""
+new_remap = """            // NVIDIA B0B5 SET_REMAP_COMPONENTS allows 1..4 bytes per component.
+            // The old u32 fill followed by a shorter 1/2-byte copy produced
+            // 00-padded words instead of contiguous CONST_A components.
+            ASSERT(component_size >= 1 && component_size <= 4);
+            if (component_size == 4) {
+                accelerate.BufferClear(regs.offset_out, regs.line_length_in, regs.remap_const.remap_consta_value);
+            }
+            const size_t byte_count = static_cast<size_t>(regs.line_length_in) * component_size;
+            read_buffer.resize_destructive(byte_count);
+            const u32 value = regs.remap_const.remap_consta_value;
+            u8* const bytes = read_buffer.data();
+            for (u32 element = 0; element < regs.line_length_in; ++element) {
+                const size_t base = static_cast<size_t>(element) * component_size;
+                for (u32 byte = 0; byte < component_size; ++byte) {
+                    bytes[base + byte] = static_cast<u8>(value >> (byte * 8));
+                }
+            }
+            memory_manager.WriteBlockUnsafe(regs.offset_out, bytes, byte_count);"""
+assert expected.count(old_remap)==1
+expected=expected.replace(old_remap,new_remap)
 assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
 assert 'list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)' in cm

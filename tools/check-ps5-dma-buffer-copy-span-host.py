@@ -7,7 +7,8 @@ root=Path(__file__).resolve().parents[1]
 core=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
 active=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 bridge=(root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
-core_start="bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {"
+core_start=("bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,\n"
+            "                             bool* gpu_written) {")
 end="    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);"
 block=core[core.index(core_start):core.index(end,core.index(core_start))]
 assert "if (amount == 0 || amount > static_cast<u64>(~u32{0}))" in block
@@ -43,6 +44,9 @@ using DAddr = std::uint64_t;
 using GPUVAddr = std::uint64_t;
 struct Memory {
     unsigned translations=0;
+    unsigned contiguous_checks=0;
+    bool IsGranularRange(GPUVAddr, u64) { ++contiguous_checks; return true; }
+    bool IsContinuousRange(GPUVAddr, u64) { ++contiguous_checks; return false; }
     std::optional<DAddr> GpuToCpuAddress(GPUVAddr a) {
         ++translations;
         return a;
@@ -52,7 +56,7 @@ template<class P>
 struct BufferCache {
     Memory owner;
     Memory* gpu_memory=&owner;
-    bool DMACopy(GPUVAddr,GPUVAddr,u64);
+    bool DMACopy(GPUVAddr,GPUVAddr,u64,bool* gpu_written = nullptr);
 };
 """
 source=preamble+ "template<class P>\n"+block+ r"""
@@ -84,6 +88,7 @@ int main() {
         assert(!inner.DMACopy(0x1000,0x2000,size));
         assert(!outer.BufferCopy(0x1000,0x2000,size));
         assert(inner.owner.translations==0);
+        assert(inner.owner.contiguous_checks==0);
         assert(outer.buffer_cache.mutex.locks==0);
         assert(outer.buffer_cache.copy_calls==0);
     }
@@ -92,6 +97,7 @@ int main() {
         assert(outer.BufferCopy(0x1000,0x2000,size));
     }
     assert(inner.owner.translations==4);
+    assert(inner.owner.contiguous_checks==4);
     assert(outer.buffer_cache.mutex.locks==2);
     assert(outer.buffer_cache.copy_calls==2);
 }

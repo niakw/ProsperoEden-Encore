@@ -53,8 +53,19 @@ struct CountMutex {
 };
 struct Cache {
   CountMutex mutex;
+  bool requires_claim = false;
+  unsigned claim_calls = 0;
+  std::vector<std::pair<DAddr, std::size_t>> claimed;
   std::vector<std::pair<DAddr, std::size_t>> written;
-  void WriteMemory(DAddr address, std::size_t size) { written.emplace_back(address, size); }
+  void ClaimCpuWrites(std::span<const std::pair<DAddr, std::size_t>> ranges) {
+    assert(requires_claim && mutex.locks > 0);
+    ++claim_calls;
+    claimed.assign(ranges.begin(), ranges.end());
+  }
+  void WriteMemory(DAddr address, std::size_t size) {
+    assert(!requires_claim || (claim_calls > 0 && !claimed.empty()));
+    written.emplace_back(address, size);
+  }
 };
 struct Owner {
   unsigned calls = 0;
@@ -62,6 +73,7 @@ struct Owner {
 };
 struct RasterizerVulkan {
   Cache texture_cache, buffer_cache;
+  RasterizerVulkan() { buffer_cache.requires_claim = true; }
   Owner query_cache, pipeline_cache;
   void InnerInvalidation(std::span<const std::pair<DAddr, std::size_t>>);
 };
@@ -82,6 +94,7 @@ int main() {
   std::array<Pair, 2> two{Pair{0x200000, 4096}, Pair{0x210000, 4096}};
   mixed.InnerInvalidation(two);
   assert(mixed.buffer_cache.mutex.locks == 1);
+  assert(mixed.buffer_cache.claim_calls == 1 && mixed.buffer_cache.claimed.size() == two.size());
   assert(mixed.buffer_cache.written.size() == 1);
   assert(mixed.buffer_cache.written[0].first == 0x200000);
   assert(mixed.query_cache.calls == 2 && mixed.pipeline_cache.calls == 2);
@@ -135,6 +148,7 @@ int main() {
   assert(many.texture_cache.mutex.locks == 0);
   assert(many.buffer_cache.mutex.locks == 1);
   assert(many.query_cache.calls == batch.size() && many.pipeline_cache.calls == batch.size());
+  assert(many.buffer_cache.claim_calls == 1 && many.buffer_cache.claimed.size() == batch.size());
   assert(many.buffer_cache.written.size() == expected.size());
   for (unsigned i = 0; i < expected.size(); ++i)
     assert(many.buffer_cache.written[i] == Pair(expected[i], 4096));

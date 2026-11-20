@@ -103,6 +103,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
+    # The fail-closed FC27 draw fix is a single reviewed predicate change.
+    # Reverse it only on the audit COPY, then replay the unchanged five-owner
+    # attribute-source receipt and historical Vulkan oracle.
+    if exact_vendor_pin in {
+        '0c1bd95c896f6ddc7870a245ffca51b2ac7e2932',
+        'eadc6e798def18417e50db6a03a291440429d795',
+    }:
+        assert raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060', raster_sha
+        source_before = ("    if (!source && !attribute_handle_source) {\n"
+                         "        // Only legacy shaders without an explicit source may use the old lookup")
+        source_after = ("    if (!source) {\n"
+                        "        // Legacy cached shader metadata (offset=0) retains its old lookup")
+        assert raster_source.count(source_before) == 1
+        raster_source = raster_source.replace(source_before, source_after, 1)
+        assert raster_blob(raster_source) == '046269f8484776e22c8aee308b75c7b98f8bf5c6'
+        reviewed_raster = temp/'fc27-failclosed-historical'/raster_owner
+        reviewed_raster.parent.mkdir(parents=True, exist_ok=True)
+        reviewed_raster.write_text(raster_source)
+        expected[raster_owner] = reviewed_raster
+        exact_vendor_pin = '917ccdc1cf772b9312b19888eea181b8e114334b'
+        print('ENCORE_FC27_INVALID_ATTRIBUTE_FAILCLOSED_EXACT_REVERSE_PASS')
     # FC27 shader attribute-source fix: reverse only the exact reviewed
     # vendor successor on an audit COPY. The compiled native code stays
     # untouched; every full source blob and its exact historic preimage are

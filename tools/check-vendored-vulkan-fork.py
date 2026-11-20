@@ -114,8 +114,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
              "69723ef7bd1d47af5086052882d0749cc817f64a"),
         ):
             raw = (root / "vendor" / relative).read_bytes()
-            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected_blob, ("GSV COPY session source drift", relative, actual)
+            found_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert found_blob == expected_blob, ("GSV COPY session source drift", relative, found_blob)
         exact_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
     # This revert commit has the same complete vendor Git tree as the
     # reviewed pre-rollback pin. Reject any different source tree, including

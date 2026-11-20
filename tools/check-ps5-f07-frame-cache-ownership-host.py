@@ -147,8 +147,8 @@ public:
     SmallManager descriptor_buffer_ring{&sequence, 3};
     SmallManager fence_manager{&sequence, 4};
     SmallManager staging_pool{&sequence, 5};
-    Cache texture_cache{{}, &sequence, 6};
-    Cache buffer_cache{{}, &sequence, 7};
+    Cache texture_cache{{}, &sequence, 6, std::nullopt};
+    Cache buffer_cache{{}, &sequence, 7, std::nullopt};
     RuntimeStub texture_cache_runtime{&texture_cache, &buffer_cache};
     void TickFrame();
 };

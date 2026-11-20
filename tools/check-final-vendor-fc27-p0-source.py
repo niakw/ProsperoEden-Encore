@@ -26,6 +26,7 @@ REVIEWED_PINS.add("01c942171fea39c1f7cf31d13ab36895aebb593a")
 REVIEWED_PINS.add("dcf7116dd2c536e05c80d83ff9dbf30caa5cc109")
 REVIEWED_PINS.add("b65d8d9673475433f0b6eac72eb304bf23141666")
 REVIEWED_PINS.add("266080b4df8f56bb5a9b52c8c3ec253254c1578b")
+REVIEWED_PINS.add("ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
@@ -37,7 +38,8 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # compare b65d8d9...266080b4). Seal both new blobs before replaying all
 # the unchanged FC27/NS2 source receipts of the reviewed parent. Do not add
 # a blanket allowlist exception: a drifted runtime source remains fatal.
-if selected == "266080b4df8f56bb5a9b52c8c3ec253254c1578b":
+gsv_syncpt_201_revision = selected == "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7"
+if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp",
          "dcceb2051105866bb6f9a702ccdd7271969e0763"),
@@ -47,6 +49,19 @@ if selected == "266080b4df8f56bb5a9b52c8c3ec253254c1578b":
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("Reviewed NS2 HID source drift", relative, actual)
+    if gsv_syncpt_201_revision:
+        # GSV cmd201 is admitted only because the real per-KProcess
+        # NativeSyncptState is already allocated by the active constructor.
+        # Verify the EXACT GSV owner pair, then reuse unchanged source seals.
+        for relative, expected in (
+            ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
+             "5e621a6cff708c5a2e2ab1b856990d0b5afc96f7"),
+            ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h",
+             "d0837e45e672ee8043c01f1593af2a4d33658453"),
+        ):
+            raw = (V / relative).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == expected, ("Reviewed NS2 GSV syncpoint context drift", relative, actual)
     selected = "b65d8d9673475433f0b6eac72eb304bf23141666"
     original_vendor_pin = selected
     ns2_gsv_497_dual = True
@@ -57,7 +72,8 @@ if selected == "266080b4df8f56bb5a9b52c8c3ec253254c1578b":
 if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-         "747c9a0b5461fc1975fa373997064e3dc401a9a3"),
+         ("5e621a6cff708c5a2e2ab1b856990d0b5afc96f7"
+           if gsv_syncpt_201_revision else "747c9a0b5461fc1975fa373997064e3dc401a9a3")),
         ("tests/ns2_syncpt_bootstrap_source.py",
          "69723ef7bd1d47af5086052882d0749cc817f64a"),
     ):

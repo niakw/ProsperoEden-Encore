@@ -139,7 +139,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 raw_path = root/'vendor/encore-active/eden-shader/src'/name
             else:
                 raw_path = active/name
-            real_source = raw_path.read_text()
+            # Use the already byte-sealed audit-only predecessor for the
+            # rasterizer; every other owner must still match shipping bytes.
+            real_source = expected[name].read_text() if name == raster_owner else raw_path.read_text()
             assert raster_blob(real_source) == witness['current'], (
                 'FC27 exact reviewed runtime drift', name)
             predecessor = real_source

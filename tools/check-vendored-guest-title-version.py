@@ -25,8 +25,13 @@ print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded runtime-quiet=1")
 import hashlib
 selected = root/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp"
 raw = selected.read_bytes()
-assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "b8787c322258fcccd7c5d53a74097a5619e2211c"
+assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "9719348d36515464724ce82f62aafac1d5182647"
 source = raw.decode()
+# The merged native AM owner also exposes NS2 command 321 with one byte,
+# without changing the previously reviewed language response path.
+assert '{321, D<&IApplicationFunctions::Unknown321>, "Unknown321"}' in source
+assert 'Result IApplicationFunctions::Unknown321(Out<u8> out)' in source
+assert '*out = 0;' in source.split('Result IApplicationFunctions::Unknown321(Out<u8> out)', 1)[1].split('}', 1)[0]
 assert source.index("R_TRY(app_man->ConvertApplicationLanguageToLanguageCode(out_language_code, desired_language));") < source.index("const GuestLanguageReply reply{")
 assert "EDEN_GUEST_LANGUAGE_REPLY title=" in source
 assert "emitted >= 32" in source

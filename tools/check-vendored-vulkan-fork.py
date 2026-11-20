@@ -1573,10 +1573,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         # exact merged source SHA and runtime semantic invariants. The
         # 2026-10 P24 reverse-hunk recipe is not applicable to those files.
         # Reconstruct original exact R23 baseline before applying P24 proof.
-        reverse_p24(name, reverse_r23(name, expected[name].read_text()))
+        reverse_p24(name, reverse_r23(
+            name, reverse_reviewed_fc27_batch_header(name, expected[name].read_text())))
         baseline=reverse_p24(
             name,
-            reverse_r23(name, normalized_expected.get(name, expected[name]).read_text(),
+            reverse_r23(name, reverse_reviewed_fc27_batch_header(
+                name, normalized_expected.get(name, expected[name]).read_text()),
                 verify_hash=False),
             verify_hash=False)
         path=temp/'normalized-vendor-p24'/name

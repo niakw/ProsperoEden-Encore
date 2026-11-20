@@ -78,6 +78,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     subprocess.run([sys.executable,'-B',str(root/'tools/prepare-vulkan-port.py'),str(patched),str(temp/'generated')],check=True,timeout=150,env=env)
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
+    # Per-pipeline successor memo is a hint, never an owner. Reverse the
+    # bounded PS5-native hot-edge ring on an audit COPY before historical
+    # generated Vulkan oracles, sealing both complete active C++ blobs.
+    if subprocess.check_output(['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True).strip() == '0409c9a6b842ec50973d343cb628e21232382e41':
+        transitions = {
+            'vk_graphics_pipeline_cost.cpp': ('bae8f3c36fc4e595e9b630ca55cc50496468e173', '2834a18fe7638749ec83cc8f5feb1fcde6c71a9a', "void GraphicsPipeline::AddTransition(GraphicsPipeline* transition) {\n#ifdef PS5_NATIVE\n    // Only a fast-path hint: the canonical graphics_cache still owns ALL\n    // pipelines. A pipeline with hundreds of different successors must not\n    // accumulate unbounded state or scan every former successor on each miss.\n    // The two HUD/overlay hot indices remain pinned across ring replacement.\n    if (transition_keys.size() >= kNativeTransitionHintLimit) {\n        size_t slot = next_transition_replacement;\n        for (size_t skipped = 0; skipped < 2; ++skipped) {\n            if (slot != hot_transition_indices[0] &&\n                slot != hot_transition_indices[1]) break;\n            slot = (slot + 1) % kNativeTransitionHintLimit;\n        }\n        // Both vectors are already fully allocated here. Replacing a hint\n        // cannot invalidate a live shader pipeline or allocate GPU objects.\n        transition_keys[slot] = transition->key;\n        transitions[slot] = transition;\n        next_transition_replacement = (slot + 1) % kNativeTransitionHintLimit;\n        return;\n    }\n    // Before the hint ring is full, preserve the exception-safe pairing\n    // of keys and pointers on the GPU owner.\n    try {\n        transition_keys.push_back(transition->key);\n    } catch (...) {\n        return;\n    }\n#else\n    transition_keys.push_back(transition->key);\n#endif\n#ifdef PS5_NATIVE\n    try {\n        transitions.push_back(transition);\n    } catch (...) {\n        transition_keys.pop_back();\n        return;\n    }\n#else\n    transitions.push_back(transition);\n#endif\n}", "void GraphicsPipeline::AddTransition(GraphicsPipeline* transition) {\n#ifdef PS5_NATIVE\n    // Both appends are optional memoization. The canonical graphics cache\n    // already owns the target and will resolve a missing edge on demand.\n    try {\n        transition_keys.push_back(transition->key);\n    } catch (...) {\n        return;\n    }\n#else\n    transition_keys.push_back(transition->key);\n#endif\n#ifdef PS5_NATIVE\n    // Both arrays must describe the same transition index. An allocation\n    // failure while appending the pointer must not leave an orphaned key:\n    // Next() would later index past transitions and corrupt a guest draw.\n    try {\n        transitions.push_back(transition);\n    } catch (...) {\n        // Transition memoization is optional. The primary graphics cache\n        // already owns the pipeline; a later lookup can use its slow path.\n        // Do not abort a guest draw solely because this edge could not fit.\n        transition_keys.pop_back();\n        return;\n    }\n#else\n    transitions.push_back(transition);\n#endif\n}"),
+            'include/video_core/renderer_vulkan/vk_graphics_pipeline.h': ('cc53133dd516e2d1d245326866ab3ce0c852b36b', '515a766a6cc4d6fcba7692ad396f45396b746d28', "    // Transition hints are not the pipeline owners. Limit their memory\n    // growth and the O(N) unsuccessful Next() search on shader-heavy titles.\n    // The canonical graphics_cache remains complete and handles all misses.\n    static constexpr size_t kNativeTransitionHintLimit = 64;\n    // GPU owner only: the two hot indices stay valid across vector growth\n    // and are never replaced when the bounded ring rolls over.\n    std::array<size_t, 2> hot_transition_indices{};\n    size_t next_transition_replacement{};\n", "    // GPU owner only. Two valid indices remain stable across vector growth.\n    std::array<size_t, 2> hot_transition_indices{};\n"),
+        }
+        for name, (new_blob, old_blob, new_hunk, old_hunk) in transitions.items():
+            active_blob = subprocess.check_output(['git', 'hash-object', str(expected[name])], text=True).strip()
+            assert active_blob == new_blob, ('bounded transition source changed', name, active_blob)
+            active_text = expected[name].read_text()
+            assert active_text.count(new_hunk) == 1, ('bounded transition hunk changed', name)
+            restored = active_text.replace(new_hunk, old_hunk, 1)
+            oracle_path = temp/'fc27-bounded-graphics-transition-oracle'/name
+            oracle_path.parent.mkdir(parents=True, exist_ok=True)
+            oracle_path.write_text(restored)
+            reconstructed = subprocess.check_output(['git', 'hash-object', str(oracle_path)], text=True).strip()
+            assert reconstructed == old_blob, ('bounded transition historical mismatch', name, reconstructed)
+            expected[name] = oracle_path
+        print('ENCORE_FC27_BOUNDED_GRAPHICS_TRANSITION_REVERSE_PASS')
     # A reviewed, startup-only vendor diagnostic may add seven tiny source
     # blocks. Check its EXACT raw Git blob and reverse ONLY those blocks
     # before the immutable R23/P24 and generated-Vulkan source oracles.
@@ -722,14 +743,16 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                                   '3b73e72d434fdd328c71ab37971f025f3ad8263b',
                                   '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d',
                                   '3b824f1ced1148a3f12eb3727fbcba9309a160f8',
-                                  'b8568c8c1e79f7c3775f5a6393463e4bb1385b88'}:
+                                  'b8568c8c1e79f7c3775f5a6393463e4bb1385b88',
+                                  '0409c9a6b842ec50973d343cb628e21232382e41'}:
             pinned_revision = subprocess.check_output(
                 ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
             base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
             base_blob = subprocess.check_output(
                 ['git', 'hash-object', str(base_owner)], text=True).strip()
             if pinned_revision in {'3b824f1ced1148a3f12eb3727fbcba9309a160f8',
-                                   'b8568c8c1e79f7c3775f5a6393463e4bb1385b88'}:
+                                   'b8568c8c1e79f7c3775f5a6393463e4bb1385b88',
+                                   '0409c9a6b842ec50973d343cb628e21232382e41'}:
                 # CMake-selected PS5 source: one budget sample feeds two
                 # independently locked cache GC passes without a driver query
                 # in either critical section. Original fallback remains.

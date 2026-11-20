@@ -111,6 +111,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     if exact_vendor_pin in {
         'ce1c02b1ce14697003798e3f9872015035984719',
         'c47770d49dc8ed5f09838004f5bd08d9b1d5abc8',
+        '917ccdc1cf772b9312b19888eea181b8e114334b',
     }:
         for name, witness in reviewed_fc27_hunks.items():
             if name.startswith('shader_recompiler/'):

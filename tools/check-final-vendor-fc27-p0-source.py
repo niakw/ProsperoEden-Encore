@@ -27,6 +27,7 @@ REVIEWED_PINS.add("dcf7116dd2c536e05c80d83ff9dbf30caa5cc109")
 REVIEWED_PINS.add("b65d8d9673475433f0b6eac72eb304bf23141666")
 REVIEWED_PINS.add("266080b4df8f56bb5a9b52c8c3ec253254c1578b")
 REVIEWED_PINS.add("ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7")
+REVIEWED_PINS.add("dfbba1e690128a44da755494c422ed1e6bdeb3c3")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
@@ -38,13 +39,15 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # compare b65d8d9...266080b4). Seal both new blobs before replaying all
 # the unchanged FC27/NS2 source receipts of the reviewed parent. Do not add
 # a blanket allowlist exception: a drifted runtime source remains fatal.
-gsv_syncpt_201_revision = selected == "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7"
-if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7"}:
+gsv_syncpt_201_revision = selected in {"ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3"}
+if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp",
-         "dcceb2051105866bb6f9a702ccdd7271969e0763"),
+         ("b83f519fef3905eabb0bef65cab4d989033b5287"
+           if selected == "dfbba1e690128a44da755494c422ed1e6bdeb3c3" else "dcceb2051105866bb6f9a702ccdd7271969e0763")),
         ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.h",
-         "e82f2486c79ac6aa2da5549619fb555c628d7afb"),
+         ("1f3b144324b9014d4e5db64f796019f0e9f4c9a6"
+           if selected == "dfbba1e690128a44da755494c422ed1e6bdeb3c3" else "e82f2486c79ac6aa2da5549619fb555c628d7afb")),
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()

@@ -699,6 +699,19 @@ native_gpfifo_vendor_pin = subprocess.check_output(
 native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_gpfifo_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else native_gpfifo_vendor_pin
+# Current vendor GPU/FC27 successors retain byte-identical native M2MF.
+if native_gpfifo_vendor_pin in {
+    "917ccdc1cf772b9312b19888eea181b8e114334b",
+    "0c1bd95c896f6ddc7870a245ffca51b2ac7e2932",
+    "eadc6e798def18417e50db6a03a291440429d795",
+}:
+    actual = subprocess.check_output(
+        ["git", "-C", str(ROOT / "vendor"), "hash-object",
+         "encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"],
+        text=True).strip()
+    assert actual == "dd30183f72a9a9dfc2a17700db263f85e4d77596", actual
+    native_gpfifo_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
+    print("ENCORE_NS2_M2MF_REVIEWED_SUCCESSOR_PASS")
 # The new NS2 IPC pin still selects the byte-identical reviewed M2MF
 # channel owner. Keep this owner covered by the F07 inventory.
 if native_gpfifo_vendor_pin in {

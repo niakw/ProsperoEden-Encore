@@ -438,6 +438,48 @@ assert post_f07_r437_buffer_base_owners <= set(physical_all)
 assert not post_f07_r437_buffer_base_owners.intersection(research_paths)
 r437_path = next(iter(post_f07_r437_buffer_base_owners))
 r437_body = (active / r437_path).read_text()
+# Current BufferCacheBase adds two reviewed runtime changes after the
+# 32-slot successor: GPU-owned DMA reporting and absolute bit iteration.
+# Reverse only in the audit copy, with exact source seals at both ends.
+if r437_vendor_pin in {
+    "917ccdc1cf772b9312b19888eea181b8e114334b",
+    "0c1bd95c896f6ddc7870a245ffca51b2ac7e2932",
+    "eadc6e798def18417e50db6a03a291440429d795",
+}:
+    raw = r437_body.encode("utf-8")
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "7e1e2fb6a1a54571f3094d809e934312fbbd83b6", actual
+    new_dma = """    /// Optionally report whether the copied source contains GPU-owned buffer bytes.
+    /// A caller must not re-upload the destination texture from stale guest memory.
+    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,
+                 bool* gpu_written = nullptr);
+"""
+    old_dma = "    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount);\n"
+    new_bits = """    static void ForEachEnabledBit(u32 enabled_mask, Func&& func) {
+        // Iterate occupied binding slots directly; preserve the original
+        // ascending indices without shifting a second time per enabled slot.
+        while (enabled_mask != 0) {
+            const u32 index = static_cast<u32>(std::countr_zero(enabled_mask));
+            func(index);
+            enabled_mask &= enabled_mask - 1;
+        }
+    }"""
+    old_bits = """    static void ForEachEnabledBit(u32 enabled_mask, Func&& func) {
+        for (u32 index = 0; enabled_mask != 0; ++index, enabled_mask >>= 1) {
+            const int disabled_bits = std::countr_zero(enabled_mask);
+            index += disabled_bits;
+            enabled_mask >>= disabled_bits;
+            func(index);
+        }
+    }"""
+    assert r437_body.count(new_dma) == r437_body.count(new_bits) == 1
+    r437_body = r437_body.replace(new_dma, old_dma, 1).replace(new_bits, old_bits, 1)
+    raw = r437_body.encode("utf-8")
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "63ef9b07b37bdc4bc9588dd77639358010e545dc", actual
+    r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776"
+    print("ENCORE_R437_DMA_AND_MASK_EXACT_REVERSE_PASS")
+
 # Vendor #156 adds a reviewed successor to the R437 native header. Verify
 # its raw blob and reverse only the three exact added declaration blocks
 # before applying the original R437 byte-for-byte proof.

@@ -103,6 +103,20 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
+    # The GSV response ABI correction only changes its selected C++ owner
+    # and paired source test. Verify both exact blobs before replaying the
+    # unchanged FC27 Vulkan/BufferCache historical source proofs.
+    if exact_vendor_pin == "ac55a39658c8029a0ec900475234012ae6bf6289":
+        for relative, expected_blob in (
+            ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
+             "747c9a0b5461fc1975fa373997064e3dc401a9a3"),
+            ("tests/ns2_syncpt_bootstrap_source.py",
+             "69723ef7bd1d47af5086052882d0749cc817f64a"),
+        ):
+            raw = (root / "vendor" / relative).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == expected_blob, ("GSV COPY session source drift", relative, actual)
+        exact_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
     # This revert commit has the same complete vendor Git tree as the
     # reviewed pre-rollback pin. Reject any different source tree, including
     # newly added or removed files, before reusing its byte-exact source gates.

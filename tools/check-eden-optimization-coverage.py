@@ -699,6 +699,15 @@ native_gpfifo_vendor_pin = subprocess.check_output(
 native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_gpfifo_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else native_gpfifo_vendor_pin
+# The new NS2 IPC pin still selects the byte-identical reviewed M2MF
+# channel owner. Keep this owner covered by the F07 inventory.
+if native_gpfifo_vendor_pin == '5351dd5c6bc9253ee742b589bc5c144bc70d0860':
+    actual = subprocess.check_output(
+        ['git', '-C', str(ROOT / 'vendor'), 'hash-object',
+         'encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp'],
+        text=True).strip()
+    assert actual == 'dd30183f72a9a9dfc2a17700db263f85e4d77596', actual
+    native_gpfifo_vendor_pin = 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc'
 # This SHA is a GitHub-reviewed single parent commit of 8e564f61,
 # changing precisely the maintained RomFSFactory + an isolated host test.
 # Shallow submodule checkouts may not contain the parent object: pin the

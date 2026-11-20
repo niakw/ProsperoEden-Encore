@@ -103,6 +103,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
+    # The reviewed intervening vendor DMA/image invalidation changes are
+    # removed on this audit COPY only, to compare with the old frozen R23 tree.
+    # Exact source before and normalized SHA1 were separately verified.
+    if exact_vendor_pin == '5351dd5c6bc9253ee742b589bc5c144bc70d0860':
+        assert raster_sha == '9da620ea3f4a4e0ab22e9747bf4e1058c09ce20b'
+        new_batch = "    // No registered buffer page in this CPU-write batch means no buffer can\n    // own GPU bytes to claim. Avoid the buffer mutex entirely in that case.\n    // NeverRegistered is monotonic and fails closed on unknown address spans.\n    bool may_claim_buffer = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::BufferPages::NeverRegistered(addr, size)) {\n            may_claim_buffer = true;\n            break;\n        }\n    }\n    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }"
+        old_batch = "    {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }"
+        new_dma = "    // A buffer DMA updates guest memory without invoking the texture-cache\n    // CPU-write callback. Hold both cache locks over the ownership decision\n    // and copy so another thread cannot publish a newer image in between.\n    // Lichii c84935f / 47d2368 / 36bfb77: only invalidate destination images\n    // whose latest bytes are already in guest memory. Skip the unsafe case\n    // rather than uploading stale CPU bytes over GPU-owned image contents.\n    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n    bool copied_gpu_bytes = false;\n    if (!buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes)) {\n        return false;\n    }\n    if (!copied_gpu_bytes &&\n        !texture_cache.IsGpuMemoryGpuModified(src_address, amount) &&\n        !texture_cache.IsGpuMemoryGpuModified(dest_address, amount)) {\n        texture_cache.WriteGpuMemory(dest_address, amount);\n    }\n    return true;"
+        old_dma = "    std::scoped_lock lock{buffer_cache.mutex};\n    return buffer_cache.DMACopy(src_address, dest_address, amount);"
+        assert raster_source.count(new_batch) == raster_source.count(new_dma) == 1
+        raster_source = raster_source.replace(new_batch, old_batch, 1)
+        raster_source = raster_source.replace(new_dma, old_dma, 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == '01c6880e5a8836da45601b0a3cb7c0fd6c46cf35'
+        print('ENCORE_NS2_VENDOR_EXACT_RASTERIZER_REVERSE_PASS')
     if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200'}:
         assert raster_sha == '38d5630570675088a0620ef533112bb314a40ae8', 'Unexpected new PS5 FC27 rasterizer blob'
         receipt_path = root/'vendor/tests/native_msaa_handle_receipt.py'

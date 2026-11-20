@@ -3497,6 +3497,7 @@ if(EDEN_SHARED_NS2_AM)
         "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
     foreach(eden_ns2_early_hle_relative IN ITEMS
             "hle/service/am/service/application_proxy.cpp"
+            "hle/service/am/service/application_proxy_service.cpp"
             "hle/service/hid/hid_server.cpp")
         set(eden_ns2_early_hle_owner
             "${EDEN_NS2_EARLY_HLE_ROOT}/core/${eden_ns2_early_hle_relative}")

@@ -136,9 +136,10 @@ jobs:
           python3 -B tools/ns2/check_native_sysmix_pcm_ring_host.py
           python3 -B tools/ns2/check_native_sysmix_registry_host.py
           python3 -B tools/ns2/check_native_sysmix_owner_syntax_host.py
-          # Compile the real MKW 1.8.0 GameChat owners selected by native CMake.
-          # This is the same source pair used at runtime, not an extracted mock.
+          # Compile the PS5-selected appletOE, GameChat and GSV owners.
+          # These are runtime C++ units, not extracted or generated mocks.
           for source in \
+            vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp \
             vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp \
             vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp; do
             clang++-18 -std=c++20 -fsyntax-only -Wno-unused-parameter \

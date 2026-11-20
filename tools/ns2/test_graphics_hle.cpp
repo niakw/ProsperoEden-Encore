@@ -362,6 +362,22 @@ int main(){
             "valid graphics supervisor bootstrap negotiates sm87 profile");
     require(state.Initialize(gsBootstrap,true)==GS::Status::InvalidState,
             "duplicate bootstrap must not reinitialize GPU profile");
+    // Actual NS2 SDK order: GSV 4, 101, 1402 before the GPU session.
+    // Optional GSV 11 must not be required after cmd 4 already verified
+    // the copied KProcess and matching applet resource user id.
+    GS::State noBind{0xabc};
+    require(noBind.Complete(completeBootstrap)==GS::Status::InvalidState &&
+            noBind.Initialize(gsBootstrap,false)==GS::Status::InvalidHandle &&
+            noBind.Complete(completeBootstrap)==GS::Status::InvalidState,
+            "GSV 101 cannot bypass missing process authentication");
+    require(noBind.Initialize(gsBootstrap,true)==GS::Status::Success &&
+            noBind.CurrentPhase()==GS::Phase::Initialized &&
+            noBind.Complete(completeBootstrap)==GS::Status::Success &&
+            noBind.CurrentPhase()==GS::Phase::Ready &&
+            noBind.CanOpenGpuSession(openGpu,true)==GS::Status::Success,
+            "GSV 4 -> 101 -> 1402 permits a verified native NVDRV session");
+    require(noBind.BindProcess(bindProcess,true)==GS::Status::InvalidState,
+            "late optional process binding cannot mutate the ready session");
     require(state.BindProcess(bindProcess,false)==GS::Status::InvalidHandle &&
             state.CurrentPhase()==GS::Phase::Initialized,
             "reject invalid process bind identity");

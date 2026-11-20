@@ -1207,6 +1207,19 @@ if gpu_table_vendor_pin in {"03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433", "eadc6e7
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else gpu_table_vendor_pin
+# The merged P1 tree preserves the exact FC27 shader compiler and native
+# GPU page-table owners. Seal the unchanged blobs before invoking the frozen
+# F07 source-ownership profile, rather than interpreting new Git SHAs as a
+# new/unknown ABI with no FC27 SSA/SSBO owners.
+if gpu_table_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"}:
+    for path, blob in {
+        "vendor/encore-active/eden-shader/include/shader_recompiler/frontend/ir/basic_block.h": "0a23d1ce0f43524e6195bd8219349ef632cfb719",
+        "vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/ssa_rewrite_pass.cpp": "26c42a9900256e5573735394753c1d5264611664",
+        "vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp": "c55a55498fe300458800b646bfc295db11283b4a",
+    }.items():
+        actual = subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip()
+        assert actual == blob, ("Merged FC27 source owner drift",path,actual)
+    gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_ns2_ipc_selected = gpu_table_vendor_pin == "ab417b59c5f7f4613ff27386be05c0644d0ed776"

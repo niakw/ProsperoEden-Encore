@@ -112,6 +112,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         "565f143c27443553b60ca1b21cc1094caa23ceb5",
         "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce",
         "3460d10e60bff7dd8b057f592eb671cc35eddd25",
+        "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb",
     }:
         for relative, expected_blob in (
             ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
@@ -132,13 +133,14 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 "565f143c27443553b60ca1b21cc1094caa23ceb5": "11e7c9d0569a175567083367e485cbf75cbc2207",
                 "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce": "11d548eb338a5b75bf3a87a6adb6aa6aa302e017",
                 "3460d10e60bff7dd8b057f592eb671cc35eddd25": "11d548eb338a5b75bf3a87a6adb6aa6aa302e017",
+                "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb": "11d548eb338a5b75bf3a87a6adb6aa6aa302e017",
             }[exact_vendor_pin]
             assert found == expected, ("GSV 497 ABI owner drift", found)
-            if exact_vendor_pin in {"565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25"}:
+            if exact_vendor_pin in {"565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb"}:
                 owner = root / "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h"
                 source = owner.read_bytes()
                 found = hashlib.sha1(b"blob " + str(len(source)).encode() + bytes([0]) + source).hexdigest()
-                expected = "4a35519c4f01cc4c1b604787bfbb139161f64a05" if exact_vendor_pin == "3460d10e60bff7dd8b057f592eb671cc35eddd25" else "6ce5ba02c2032237f81d9684da9e56cfbfb831c0"
+                expected = "4a35519c4f01cc4c1b604787bfbb139161f64a05" if exact_vendor_pin in {"3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb"} else "6ce5ba02c2032237f81d9684da9e56cfbfb831c0"
                 assert found == expected, ("GSV bootstrap hint ABI owner drift", found)
         exact_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
     # This revert commit has the same complete vendor Git tree as the

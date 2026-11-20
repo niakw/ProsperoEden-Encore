@@ -32,6 +32,14 @@ assert 'GpuAccessible = (1 << 5)' in svc_enum
 # header lacks them). Only the GPU 0x20 bit may differ from the selected
 # baseline header.
 installed_svc = (vendor / "eden-backports/src/core/hle/kernel/svc_types.h").read_text()
+# Six-core Switch 2 processes may query thread ticks on physical cores 4/5.
+# Preserve the legacy four-core range for non-extended processes.
+info_source = (vendor / "eden-backports/src/core/hle/kernel/svc/svc_info.cpp").read_text()
+cpu6_header = (vendor / "ns2-runtime/cpu6/core/hardware_properties.h").read_text()
+assert "constexpr u32 NUM_CPU_CORES = 6;" in cpu6_header
+assert "GetPhysicalCoreMask();" in info_source
+assert "const u64 num_cpus = (physical_core_mask & (u64{3} << 4)) != 0" in info_source
+assert "? Core::Hardware::NUM_CPU_CORES : 4;" in info_source
 baseline_attribute = '    PermissionLocked = (1 << 4),'
 assert installed_svc.count(baseline_attribute) == 1
 expected_svc = installed_svc.replace(

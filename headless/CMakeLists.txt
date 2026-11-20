@@ -7,6 +7,28 @@ endif()
 set(PORT_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
 
+# P0: GSV 1402 opens a Switch 2 TIPC NVDRV user. Eden's original NVDRV
+# registers CMIF only; select the reviewed dual-protocol source at native
+# build time while preserving the pinned original and NS1 CMIF semantics.
+if(PS5_NATIVE)
+    set(EDEN_MAINTAINED_NS2_NVDRV_TIPC
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/service/nvdrv/nvdrv_interface.cpp")
+    if(NOT EXISTS "${EDEN_MAINTAINED_NS2_NVDRV_TIPC}")
+        message(FATAL_ERROR "Missing native NS2 NVDRV TIPC owner")
+    endif()
+    get_target_property(eden_nvdrv_core_sources core SOURCES)
+    list(FIND eden_nvdrv_core_sources "hle/service/nvdrv/nvdrv_interface.cpp" eden_nvdrv_original_idx)
+    if(eden_nvdrv_original_idx EQUAL -1)
+        message(FATAL_ERROR "Pinned NVDRV TU moved: recheck native TIPC source selection")
+    endif()
+    list(REMOVE_ITEM eden_nvdrv_core_sources "hle/service/nvdrv/nvdrv_interface.cpp")
+    list(APPEND eden_nvdrv_core_sources "${EDEN_MAINTAINED_NS2_NVDRV_TIPC}")
+    set_property(TARGET core PROPERTY SOURCES "${eden_nvdrv_core_sources}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${EDEN_MAINTAINED_NS2_NVDRV_TIPC}")
+    message(STATUS "NS2 NVDRV: native TIPC/CMIF dual-dispatch source selected")
+endif()
+
 # N1: one reviewed NPDM owner is shared by ALL native PS5 configurations.
 # 2048-bit (NS1) and 3072-bit (NS2) ACID detection is based on guest input,
 # not a user-visible emulator mode; never activate GPU/HOS research branches

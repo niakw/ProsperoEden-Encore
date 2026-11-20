@@ -109,6 +109,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     if exact_vendor_pin in {
         '0c1bd95c896f6ddc7870a245ffca51b2ac7e2932',
         'eadc6e798def18417e50db6a03a291440429d795',
+        '82af45de3b3e3c5444f97a4bd79236ebd9fa0db4',
     }:
         assert raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060', raster_sha
         source_before = ("    if (!source && !attribute_handle_source) {\n"

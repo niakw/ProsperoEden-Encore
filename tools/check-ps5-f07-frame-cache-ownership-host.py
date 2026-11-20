@@ -100,15 +100,20 @@ __PHASE_SOURCE__
 struct Tracker {
     std::mutex inner;
     std::atomic_bool held{false};
+    static thread_local unsigned held_by_this_thread;
     void lock() {
         inner.lock();
+        ++held_by_this_thread;
         held.store(true, std::memory_order_release);
     }
     void unlock() {
         held.store(false, std::memory_order_release);
+        assert(held_by_this_thread > 0);
+        --held_by_this_thread;
         inner.unlock();
     }
 };
+thread_local unsigned Tracker::held_by_this_thread = 0;
 struct SmallManager {
     std::vector<int>* sequence{};
     int number{};
@@ -132,8 +137,10 @@ struct RuntimeStub {
     unsigned queries{};
     bool CanReportMemoryUsage() const { return true; }
     u64 GetDeviceMemoryUsage() {
-        assert(!texture->mutex.held.load(std::memory_order_acquire));
-        assert(!buffer->mutex.held.load(std::memory_order_acquire));
+        // A second thread intentionally holds texture_cache during the
+        // contention test. Only the querying GPU thread must own no lock.
+        assert(texture && buffer);
+        assert(Tracker::held_by_this_thread == 0);
         ++queries;
         return 0x12345678u;
     }

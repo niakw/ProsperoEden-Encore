@@ -1630,6 +1630,24 @@ assert len(r23_fw23_successors)==6
 vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
+# MKW 1.8.0 GameChat successor changes only the three reviewed NS2
+# service owners below. Seal their exact bytes before replaying the older
+# shipping-backport applicability matrix from its ab417b59 parent.
+if vendor_head == "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268":
+    for relative, expected in {
+        "encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp":
+            "bda5d57124daff308574edd9a986ce07f1949dd9",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+            "64b34b1028a3c0b6683db1a179fb31f1cd868bfd",
+        "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h":
+            "be4d6eaaa43ee247b61d835a7b280fe26aa8eb63",
+    }.items():
+        actual = subprocess.check_output(
+            ["git", "-C", str(ROOT / "vendor"), "hash-object", relative],
+            text=True,
+        ).strip()
+        assert actual == expected, ("NS2 GameChat source drift", relative, actual)
+    vendor_head = "ab417b59c5f7f4613ff27386be05c0644d0ed776"
 # Historical backport records are immutable. The new vendor changes only
 # the exact reviewed FC27 rasterizer and device-memory owners already
 # byte-checked above; eden-backports are unchanged from the preceding pin.

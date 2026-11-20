@@ -29,18 +29,22 @@ inline constexpr std::array<std::uint32_t, 4> kA32Baseline{
     512u*kMiB, 64u*kMiB, 64u*kMiB, 16u*kMiB
 };
 
-// The application can expose six physical cores on NS2. The first four
-// retain their exact NS1 baselines; cores 4/5 use a bounded default instead
-// of indexing a four-entry array in the retry path. No guest/title switch.
+// NS2 alone creates A64 guest cores 4/5. EglantinePS5 #18 reproduced
+// full-cache evacuations from their 16 MiB code arenas on PS5; 128 MiB
+// eliminated those evacuations in the tested title. In Encore's native
+// sparse JIT this enlarges virtual capacity only: 2 MiB physical pages
+// are committed on demand. Retain all four NS1 baselines unchanged and
+// preserve the bounded fallback for invalid core indices.
 inline constexpr std::uint32_t A64BaselineBytes(std::size_t core) noexcept {
-    return core < kA64Baseline.size() ? kA64Baseline[core] : 16u*kMiB;
+    return core < kA64Baseline.size() ? kA64Baseline[core]
+         : core < 6 ? 128u*kMiB : 16u*kMiB;
 }
 inline constexpr std::uint32_t A32BaselineBytes(std::size_t core) noexcept {
     return core < kA32Baseline.size() ? kA32Baseline[core] : 16u*kMiB;
 }
 static_assert(A64BaselineBytes(0) == 256u*kMiB && A64BaselineBytes(1) == 192u*kMiB &&
               A64BaselineBytes(2) == 192u*kMiB && A64BaselineBytes(3) == 16u*kMiB &&
-              A64BaselineBytes(4) == 16u*kMiB && A64BaselineBytes(5) == 16u*kMiB);
+              A64BaselineBytes(4) == 128u*kMiB && A64BaselineBytes(5) == 128u*kMiB);
 static_assert(A32BaselineBytes(0) == 512u*kMiB && A32BaselineBytes(1) == 64u*kMiB &&
               A32BaselineBytes(2) == 64u*kMiB && A32BaselineBytes(3) == 16u*kMiB &&
               A32BaselineBytes(4) == 16u*kMiB && A32BaselineBytes(5) == 16u*kMiB);

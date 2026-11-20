@@ -28,7 +28,7 @@ fixture=r'''
 int main() {
     using namespace Eden::JitMemory;
     constexpr std::array<std::uint32_t,6> a64{
-        256u*kMiB,192u*kMiB,192u*kMiB,16u*kMiB,16u*kMiB,16u*kMiB};
+        256u*kMiB,192u*kMiB,192u*kMiB,16u*kMiB,128u*kMiB,128u*kMiB};
     constexpr std::array<std::uint32_t,6> a32{
         512u*kMiB,64u*kMiB,64u*kMiB,16u*kMiB,16u*kMiB,16u*kMiB};
     for (std::size_t i=0;i<64;++i) {
@@ -42,9 +42,12 @@ int main() {
     auto plan=ChooseJitMemoryPlan(false,true,8ull*1024*kMiB);
     ApplyJitMemoryPlan(plan);
     for (std::size_t i=4;i<6;++i) {
-        assert(A64CacheBytes(i,A64BaselineBytes(i))==16u*kMiB);
+        assert(A64CacheBytes(i,A64BaselineBytes(i))==128u*kMiB);
         assert(A32CacheBytes(i,A32BaselineBytes(i))==16u*kMiB);
     }
+    // Guest cores outside the six-core domain must remain bounded.
+    assert(A64BaselineBytes(6)==16u*kMiB);
+    assert(A64BaselineBytes(63)==16u*kMiB);
     for (std::size_t i=0;i<4;++i) {
         assert(A64CacheBytes(i,A64BaselineBytes(i))==plan.a64[i]);
         assert(A32CacheBytes(i,A32BaselineBytes(i))==plan.a32[i]);

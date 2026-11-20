@@ -224,6 +224,23 @@ def main()->int:
     assert 'm_video_mappings.erase(staged);' in video_map
     assert 'catch (const std::bad_alloc&)' in video_map
 
+    # Native GameChat pools and decoder pools intentionally use different
+    # 426/428 reply ABIs. Keep both contracts explicit.
+    layout_h = (ROOT / 'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h').read_text()
+    for snippet in ('native_gpu_layout{}', 'gpu_layout_code{}',
+                    'block_height_log2{}', 'pitch_gobs{}'):
+        assert snippet in layout_h, 'Missing GameChat native-image layout ABI: ' + snippet
+    query_gpu = text.split(
+        'void IGraphicsSupervisor::QueryVideoGpuImage(', 1
+    )[1].split('void IGraphicsSupervisor::MapVideoGpuImage(', 1)[0]
+    assert 'if (image->native_gpu_layout)' in query_gpu
+    assert 'rb.Push(image_offset);' in query_gpu
+    assert 'descriptor[2] = u64{image->block_height_log2}' in query_gpu
+    assert 'if (image->native_gpu_layout)' in video_map
+    assert 'second_reply = image->offset;' in video_map
+    assert 'second_reply = address + size - 1;' in video_map
+    assert 'descriptor[5] &= 0xffffffff00000000ULL;' in video_map
+
     assert '{423, &IGraphicsSupervisor::BindNativeGpuMemory' in text
     for snippet in (
         'GraphicsSupervisorProtocol::DecodeNativeParentBind(packet)',

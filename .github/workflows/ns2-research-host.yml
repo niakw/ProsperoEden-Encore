@@ -360,6 +360,7 @@ jobs:
         run: |
           set -euo pipefail
           for source in \
+            vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp \
             vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp \
             vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp \
             vendor/encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp; do

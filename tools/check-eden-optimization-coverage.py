@@ -52,7 +52,7 @@ print("ENCORE_PINNED_UPSTREAM_F07_ISOLATION_PASS",
 # Do not silently count new research source code as already optimized.
 research = json.loads((ROOT/"docs/NS2_RESEARCH_ADDED_SOURCE_OWNERS.json").read_text())
 research_owners={"vendor/encore-active/"+p for p in research["paths"]}
-assert research["schema_version"] == 1 and len(research_owners) == 120
+assert research["schema_version"] == 1 and len(research_owners) == 121
 retired_am = {
     "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_proxy.cpp",
     "vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_proxy.h",
@@ -696,6 +696,9 @@ post_f07_native_gpfifo_owners = {
 native_m2mf_owner = "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_gpfifo_vendor_pin in {
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+} else native_gpfifo_vendor_pin
 # This SHA is a GitHub-reviewed single parent commit of 8e564f61,
 # changing precisely the maintained RomFSFactory + an isolated host test.
 # Shallow submodule checkouts may not contain the parent object: pin the
@@ -1145,6 +1148,9 @@ if post_f07_jxr_adapter_owners:
 post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
+gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+} else gpu_table_vendor_pin
 shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_ns2_ipc_selected = gpu_table_vendor_pin == "ab417b59c5f7f4613ff27386be05c0644d0ed776"

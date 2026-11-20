@@ -2,7 +2,7 @@
   "schema_version": 1,
   "base_vendor_commit": "2281ef2780179febb927662c3ce4a83b09f252a6",
   "research_vendor_commit": "209052223111a27fc1c93a07f6af96e61221bb2c",
-  "review_state": "NS2 research source additions including two opt-in Vulkan sparse ABI headers; never historical F07 optimization proofs or NS2 gameplay qualification; native 4K GMMU VA bounds helper added with O0/O2 UBSan preflight, not F07 shipping; three P2.3 opt-in QMD3 CBUF owners added as unqualified NS2 research, not shipping F07 proofs; 4 retired NS2 AM graphics scale/proxy research owners removed 04/11/2026 (P0.2 false-success stub); 3 newer real NS2 research owners added (BRX, graphics CBUF, NVDRV allocation bounds); 120 research owners, unchanged F07 shipping baseline",
+  "review_state": "NS2 research source additions including two opt-in Vulkan sparse ABI headers; never historical F07 optimization proofs or NS2 gameplay qualification; native 4K GMMU VA bounds helper added with O0/O2 UBSan preflight, not F07 shipping; three P2.3 opt-in QMD3 CBUF owners added as unqualified NS2 research, not shipping F07 proofs; 4 retired NS2 AM graphics scale/proxy research owners removed 04/11/2026 (P0.2 false-success stub); 3 newer real NS2 research owners added (BRX, graphics CBUF, NVDRV allocation bounds); 121 research owners, unchanged F07 shipping baseline",
   "paths": [
     "eden-core/include/common/cpu_features.h",
     "eden-core/include/encore/guest_counter_policy.h",
@@ -79,6 +79,7 @@
     "ns2-runtime/ampere/video_core/ns2_shader_spirv_compile.h",
     "ns2-runtime/cpu6/core/hardware_properties.h",
     "ns2-runtime/cpu6/dynarmic/interface/exclusive_monitor.h",
+    "ns2-runtime/gamechat/core/hle/service/friend/friend.cpp",
     "ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp",
     "ns2-runtime/gpu_dispatch/video_core/engines/puller.h",
     "ns2-runtime/gpu_dispatch/video_core/macro_turing.h",

@@ -192,6 +192,20 @@ constexpr size_t MaxOpenFiles = 8192;
             'EDEN_NS2_GPU_SESSION_SOURCE' in CMAKE and
             'EDEN_NS2_SUPERVISOR_ROOT' in CMAKE,
             'IPC native session/VI2 owners missing')
+    gamechat=read('vendor/encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp')
+    require('RegisterNamedService("chat:u"' in gamechat and
+            'class IChatSession final' in gamechat and 'class IChatService final' in gamechat and
+            'EDEN_NS2_GAMECHAT_SOURCE' in CMAKE and
+            'list(REMOVE_ITEM eden_ns2_gamechat_sources "hle/service/friend/friend.cpp")' in CMAKE,
+            'MKW 1.8.0 GameChat friend service is not selected')
+    for command in (601,602,1201,1202,1211,1212,1291):
+        require(('{'+str(command)+', &IGraphicsSupervisor::') in supervisor,
+                'MKW GameChat/camera GSV command missing: '+str(command))
+    require('class INativeChatGsvSession final' in supervisor and
+            'class INativeCameraSession final' in supervisor and
+            'CalculateChatCameraImageLayout' in supervisor and
+            'preference[6] != 0x38' in supervisor and 'ctx.AddMoveObject(client)' in supervisor,
+            'MKW GameChat session/image-pool contract incomplete')
     font=read('vendor/encore-active/ns2-runtime/font_service/core/hle/service/ns/platform_service_manager.cpp')
     font_merge=read('vendor/encore-active/ns2-runtime/font_service/core/hle/service/ns/font_merge.cpp')
     for legacy in (

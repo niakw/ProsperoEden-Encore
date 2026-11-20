@@ -154,6 +154,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
         print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = exact_vendor_pin
+    if pair_vendor_pin in {"ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"}:
+        pair_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776"
     if pair_vendor_pin in {
         "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
         "729f7e5a734b5a890a7bbf3ab60ce1100492af13",

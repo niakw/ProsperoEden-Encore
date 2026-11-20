@@ -50,7 +50,7 @@ research_manifest = json.loads(
 )
 research_paths = research_manifest["paths"]
 assert research_manifest["schema_version"] == 1
-assert len(research_paths) == len(set(research_paths)) == 120
+assert len(research_paths) == len(set(research_paths)) == 121
 assert research_paths == sorted(research_paths)
 retired_am = {
     "ns2-runtime/am/core/hle/service/am/service/application_proxy.cpp",
@@ -443,6 +443,9 @@ r437_body = (active / r437_path).read_text()
 # before applying the original R437 byte-for-byte proof.
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if r437_vendor_pin in {
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+} else r437_vendor_pin
 fc27_deferred_selected = r437_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owner = "eden-core/overrides/core/deferred_cached_updates.h"
 fc27_deferred_present = {fc27_deferred_owner} & set(physical_all)
@@ -704,6 +707,9 @@ post_f07_native_gpfifo_owners = {
 native_m2mf_channel_state = "ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp"
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_gpfifo_vendor_pin in {
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+} else native_gpfifo_vendor_pin
 if native_gpfifo_vendor_pin in {
     "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
     "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776",
@@ -1081,6 +1087,9 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
+gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+} else gpu_table_vendor_pin
 shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_ns2_ipc_selected = gpu_table_vendor_pin == "ab417b59c5f7f4613ff27386be05c0644d0ed776"

@@ -552,7 +552,9 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
         "eden-core/overrides/core/device_memory_manager.inc":
             "daf493ce6e863397ec44bfae467c4f7533570477",
         "eden-vulkan/vulkan_rasterizer.cpp":
-            "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35",
+            ("f23ad861761d53b59b8c83ae6003c089ae688060"
+             if r437_vendor_pin == "eadc6e798def18417e50db6a03a291440429d795"
+             else "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35"),
         "eden-core/src/core/file_sys/romfs_factory.cpp":
             "4775cf98c3bfbc587402928bad424dcb471047a0",
     }.items():

@@ -94,6 +94,7 @@ struct FakeBuffer {
     bool IsRegionRegistered(DAddr page, u64 bytes) { return page != 0 && bytes == 4096; }
     bool OnCPUWrite(DAddr address,u64) { ++writes; return hazard || (gpu_modified_page && gpu_modified_page == address); }
     void ClaimCpuWrites(std::span<const std::pair<DAddr,u64>>) {}
+    void WriteMemory(DAddr,u64) { ++writes; }
 };
 struct FakeTexture {
     std::mutex mutex;

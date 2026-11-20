@@ -766,6 +766,7 @@ endif()
 # Lichii #947: preserve pinned archive, select one maintained VFS/PFS/NCA/RomFS TU each.
 foreach(eden_vfs_relative IN ITEMS
         "file_sys/vfs/vfs.cpp"
+        "file_sys/vfs/vfs_real.cpp"
         "file_sys/vfs/vfs_vector.cpp"
         "file_sys/partition_filesystem.cpp"
         "file_sys/fssystem/fssystem_integrity_verification_storage.cpp"

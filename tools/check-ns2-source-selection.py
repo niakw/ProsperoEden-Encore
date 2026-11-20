@@ -25,6 +25,33 @@ def read(path: str) -> str:
     return p.read_text()
 
 def check() -> None:
+    # One real PS5 VFS owner, shared by NS1 and NS2. The 128-entry LRU
+    # budget and Mesa's four database parts must ship together.
+    active_vfs = read('vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs_real.cpp')
+    pinned_vfs = read('vendor/sources/eden/src/core/file_sys/vfs/vfs_real.cpp')
+    old_cap = 'constexpr size_t MaxOpenFiles = 8192;'
+    ps5_cap = '''// PS5 has a substantially lower *effective* descriptor budget than
+// RLIMIT_NOFILE reports. EglantinePS5's MKW/loose RomFS failure (267 real
+// handles) was addressed by a 128-reference VFS cache budget together with
+// limiting Mesa's multipart cache to four parts. Keep the existing locked
+// LRU eviction/reopen machinery and the normal desktop limit.
+#if defined(__PROSPERO__)
+constexpr size_t MaxOpenFiles = 128;
+#else
+constexpr size_t MaxOpenFiles = 8192;
+#endif'''
+    require(pinned_vfs.count(old_cap) == 1 and active_vfs.count(ps5_cap) == 1
+            and active_vfs.replace(ps5_cap, old_cap) == pinned_vfs,
+            'selected PS5 VFS differs outside the reviewed descriptor-cap hunk')
+    require('"file_sys/vfs/vfs_real.cpp"' in CMAKE and
+            'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in CMAKE and
+            'list(APPEND core_sources "${eden_vfs_maintained}")' in CMAKE,
+            'native build does not select reviewed VFS file budget')
+    startup = read('headless/main.cpp')
+    parts = 'setenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS", "4", 0)'
+    require(startup.count(parts) == 1 and
+            startup.index(parts) < startup.index('setenv("MESA_SHADER_CACHE_DIR"'),
+            'Mesa multipart FD limit must precede RADV initialization')
     # No second runtime, switch by TitleID or release/DEV build selector.
     for forbidden in ('EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL',
                       'EDEN_NS2_NVDRV_EXPERIMENTAL',

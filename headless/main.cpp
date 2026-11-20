@@ -746,6 +746,13 @@ int main(int argc, char** argv) {
                         unsigned(cache_uid_match), unsigned(cache_gid_match),
                         unsigned(Eden::DirectoryExists(cache)),
                         unsigned(std::getenv("MESA_SHADER_CACHE_DISABLE") != nullptr));
+            // EglantinePS5 47b54bb: on real PS5 a process can exhaust its
+            // ~267 effective descriptors long before RLIMIT_NOFILE (~14k).
+            // Mesa's default 50 multipart database parts can hold 200 FDs.
+            // Together with the selected 128-entry VFS LRU, four parts
+            // leave headroom for game RomFS, saves and other services.
+            // Respect an explicit user override.
+            (void)setenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS", "4", 0);
             setenv("MESA_SHADER_CACHE_DIR", cache.c_str(), 1);
             // The PS5 has writable game-data storage, not a desktop temp dir.
             // Keep compiled Vulkan/RADV shaders while space exists. The cache

@@ -15,12 +15,14 @@ jobs:
       - name: Verify exact selected graph and focused host contracts
         run: |
           set -euo pipefail
-          expected=a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9
+          expected=ab417b59c5f7f4613ff27386be05c0644d0ed776
           selected="$(git rev-parse HEAD:vendor)"
           checked="$(git -C vendor rev-parse HEAD)"
           test "$selected" = "$expected"
           test "$checked" = "$expected"
           test "$(git -C vendor hash-object encore-active/eden-core/src/core/file_sys/vfs/vfs_real.cpp)" = 097335e42a0f569a51f58417f0cfd6239f474136
+          test "$(git -C vendor hash-object encore-active/eden-threading/src/core/hle/kernel/k_server_session.cpp)" = 5bd8cd81c2bf8d32f0d65406881b8286a06ca771
+          test "$(git -C vendor hash-object encore-active/eden-threading/native-hle-overrides.cmake)" = 0ed9f8520019c07874c157c97ded3864c07a8a32
           test "$(git -C vendor hash-object encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h)" = c7cb95ecaf388b925fc29582499bbd4b54a77f75
           test "$(git -C vendor hash-object tests/ns1_r23_18_tir_host.py)" = 753df3ca146cba983057801df36dcf9db0b5fc6b
           test "$(git -C vendor hash-object tests/fc27_deferred_page_protection_host.py)" = ae967badcfef7e098ac2620b789a1138fad79058

@@ -84,6 +84,7 @@ KNOWN_VENDOR_GRAPH = {
     "0d75406e36a3676b45184670093f0ecf652aab2f": "same NS1 FC27 GPU runtime owners plus NS2 VI2 real display-capacity contract",
     "372a83d95622f152211fe91afa05d1e60ce84bea": "same NS1 audio/FC27 owners plus reviewed shared 32-slot BufferCache capacity",
     "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9": "same FC27 audio/cache and NS2 BufferCache owners plus reviewed PS5 VFS128 source",
+    "ab417b59c5f7f4613ff27386be05c0644d0ed776": "same FC27 audio/cache plus PS5 NS2-only HLE IPC wake and VFS128 owners",
 }
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"

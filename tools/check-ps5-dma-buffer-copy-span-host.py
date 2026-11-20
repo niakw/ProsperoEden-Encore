@@ -24,8 +24,14 @@ def grab(s):
     a=s.index(wrap_begin)
     return s[a:s.index(wrap_end,a)].rstrip()
 wrapper=grab(active)
-assert wrapper==grab(bridge)
-assert wrapper.index("if (amount == 0") < wrapper.index("std::scoped_lock lock{buffer_cache.mutex};")
+# Native P1 copies track GPU-owned image bytes and lock both cache domains.
+# The immutable guest-bridge fallback intentionally does neither.
+assert wrapper != grab(bridge)
+assert "return buffer_cache.DMACopy(src_address, dest_address, amount);" in grab(bridge)
+assert "buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes)" in wrapper
+assert "texture_cache.IsGpuMemoryGpuModified(src_address, amount)" in wrapper
+assert "texture_cache.WriteGpuMemory(dest_address, amount)" in wrapper
+assert wrapper.index("if (amount == 0") < wrapper.index("std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};")
 oracle=(root/"tools/prepare-vulkan-port.py").read_text()
 assert "empty/oversized copy before the guest buffer-cache mutex" in oracle
 contract=(root/"tools/check-ps5-buffer-pages-r437.py").read_text()
@@ -45,7 +51,8 @@ using GPUVAddr = std::uint64_t;
 struct Memory {
     unsigned translations=0;
     unsigned contiguous_checks=0;
-    bool IsGranularRange(GPUVAddr, u64) { ++contiguous_checks; return true; }
+    bool mapped=true;
+    bool IsGranularRange(GPUVAddr, u64) { ++contiguous_checks; return mapped; }
     bool IsContinuousRange(GPUVAddr, u64) { ++contiguous_checks; return false; }
     std::optional<DAddr> GpuToCpuAddress(GPUVAddr a) {
         ++translations;
@@ -60,6 +67,7 @@ struct BufferCache {
 };
 """
 source=preamble+ "template<class P>\n"+block+ r"""
+    (void)gpu_written;
     // The core's range tracking begins after this point. The proof checks
     // that invalid lengths cannot reach it.
     return true;
@@ -68,15 +76,28 @@ struct CountingMutex {
     std::mutex inner;
     unsigned locks=0;
     void lock(){inner.lock();++locks;}
+    bool try_lock(){if(inner.try_lock()){++locks;return true;}return false;}
     void unlock(){inner.unlock();}
 };
 struct RasterBuffer {
     CountingMutex mutex;
     unsigned copy_calls=0;
-    bool DMACopy(GPUVAddr,GPUVAddr,u64){++copy_calls;return true;}
+    bool DMACopy(GPUVAddr,GPUVAddr,u64,bool* gpu_written) {
+        ++copy_calls;
+        *gpu_written=false;
+        return true;
+    }
+};
+struct RasterTexture {
+    CountingMutex mutex;
+    bool gpu_modified=false;
+    unsigned writes=0;
+    bool IsGpuMemoryGpuModified(GPUVAddr,u64) const{return gpu_modified;}
+    void WriteGpuMemory(GPUVAddr,u64){++writes;}
 };
 struct AccelerateDMA {
     RasterBuffer buffer_cache;
+    RasterTexture texture_cache;
     bool BufferCopy(GPUVAddr,GPUVAddr,u64);
 };
 """ + wrapper + r"""
@@ -90,6 +111,7 @@ int main() {
         assert(inner.owner.translations==0);
         assert(inner.owner.contiguous_checks==0);
         assert(outer.buffer_cache.mutex.locks==0);
+        assert(outer.texture_cache.mutex.locks==0);
         assert(outer.buffer_cache.copy_calls==0);
     }
     for(const u64 size : {u64{1}, max}) {
@@ -99,7 +121,19 @@ int main() {
     assert(inner.owner.translations==4);
     assert(inner.owner.contiguous_checks==4);
     assert(outer.buffer_cache.mutex.locks==2);
+    assert(outer.texture_cache.mutex.locks==2);
     assert(outer.buffer_cache.copy_calls==2);
+    assert(outer.texture_cache.writes==2);
+    // GPU-owned texture bytes must never be overwritten with stale CPU data.
+    outer.texture_cache.gpu_modified=true;
+    assert(outer.BufferCopy(0x1000,0x2000,4096));
+    assert(outer.buffer_cache.copy_calls==3);
+    assert(outer.texture_cache.writes==2);
+    // Sparse GMMU spans leave the fast path before CPU address translation.
+    inner.owner.mapped=false;
+    const auto before=inner.owner.translations;
+    assert(!inner.DMACopy(0x1000,0x2000,4096));
+    assert(inner.owner.translations==before);
 }
 """
 with tempfile.TemporaryDirectory(prefix="encore-dma-copy-span-") as tmp:

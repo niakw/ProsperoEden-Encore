@@ -55,7 +55,6 @@ assert ctor.count("RunBuild();") >= 2
 
 # The exact real guard, including its destructor lambda, is compiled. Only
 # descriptor preparation and worker queue ownership are stand-ins.
-host = r"""
 # A ready build may release cache-owner lifetime before the builder worker
 # returns. The active native C++ and generated counterpart must drop their
 # member-held callable before invoking the completion-publishing callback.
@@ -66,6 +65,8 @@ for owner in ("vk_graphics_pipeline_cost.cpp", "vk_compute_pipeline_cost.cpp"):
     assert "build_task = nullptr;\n    task();" in callback, owner
     assert "build_task();\n    build_task = nullptr;" not in callback, owner
 
+
+host = r"""
 #include <cassert>
 #include <cstdio>
 #include <functional>

@@ -20,19 +20,28 @@ end="\nvoid PipelineCache::QueueVulkanPipelineCacheFlush()"
 method=begin+shader.split(begin,1)[1].split(end,1)[0]
 assert shader.count(begin)==1 and shader.count(end)==1
 assert method.count("++state.total;")==2
-# Counter writes must synchronize with progress reads in both worker callbacks.
-assert method.count("std::scoped_lock count_lock{state.mutex};") == 2
-assert method.count("++state.total;") == 2
-assert method.count("        }\n#ifdef PS5_NATIVE\n        if (state.total == kStartupPrewarmPipelines)") == 2
+# The common scheduling policy publishes the large-cache quota under its
+# state mutex. Recent-cache mode publishes the final 32 jobs after parsing.
+assert method.count("std::scoped_lock count_lock{state.mutex};") == 0
+assert "std::scoped_lock lock{state.mutex};\n            ++state.total;" in method
+assert "std::scoped_lock lock{state.mutex};\n                ++state.total;" in method
+assert "std::deque<Common::UniqueFunction<void>> recent_cache_builds;" in method
+assert "recent_cache_builds.pop_front();" in method
+assert "recent_cache_builds.emplace_back(std::move(build));" in method
+assert method.count("schedule_prewarm([this, key,") == 2
+assert "kRecentShaderCacheScanLimit = 64ULL << 20;" in method
+assert "env_before.bytes <= kRecentShaderCacheScanLimit" in method
 assert 'shader_source.count(f07_prewarm_total_old) != 2' in gen
 assert 'shader_source = shader_source.replace(f07_prewarm_total_old, f07_prewarm_total_new)' in gen
 
-assert method.count("if (state.total == kStartupPrewarmPipelines)")==2
-assert method.count("startup_reader.request_stop();")==2
+assert method.count("if (state.total == kStartupPrewarmPipelines)")==1
+assert method.count("startup_reader.request_stop();")==1
 assert "constexpr size_t kStartupPrewarmPipelines = 32;" in method
 assert "kFc27TitleId" not in method and "kFc27PrewarmPipelines" not in method
 assert "std::stop_source startup_reader;" in method
-assert "const std::stop_token reader_token{startup_reader.get_token()};" in method
+assert "prefer_recent_cache ? stop_loading : startup_reader.get_token()" in method
+assert "if (prefer_recent_cache && !stop_loading.stop_requested())" in method
+assert "workers.QueueWork(std::move(build));" in method
 assert "VideoCommon::LoadPipelines(reader_token" in method
 assert "#ifdef PS5_NATIVE\n    // A cancelled title-cache load" in method
 assert "    workers.WaitForRequests();\n    prewarm_drain.joined = true;\n#else\n    workers.WaitForRequests(stop_loading);\n#endif" in method
@@ -190,6 +199,11 @@ void RunReader(bool fail, bool progress_failure) {
     constexpr int CACHE_VERSION=1;
     auto load_compute=[&] { workers.QueueWork([&] {assert(state_alive); ++built;}); };
     auto load_graphics=[&] { workers.QueueWork([&] {assert(state_alive); ++built;}); };
+    // The source-extracted loading guard can enqueue a bounded recent
+    // backlog, but the legacy reader-failure mock exercises prefix mode.
+    bool prefer_recent_cache=false;
+    std::stop_token stop_loading{};
+    std::vector<std::function<void()>> recent_cache_builds;
     bool caught=false;
     try {
     {

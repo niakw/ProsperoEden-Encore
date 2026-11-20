@@ -7,7 +7,7 @@ DEPS=ROOT/"vendor/sources/eden-cpm"
 V=ROOT/"vendor"
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert selected==checked and selected in {"ffa519db0f68fb0d5d2acf791e381c898a34a175","9e38066a508716fd959477eccf32c7fb2fde3356","e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb","ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0"},(selected,checked)
+assert selected==checked and selected in {"ffa519db0f68fb0d5d2acf791e381c898a34a175","9e38066a508716fd959477eccf32c7fb2fde3356","e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb","ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0","01c942171fea39c1f7cf31d13ab36895aebb593a"},(selected,checked)
 subprocess.run(["python3","-B",str(V/"tests/ns2_early_hle_services_source.py")],
                cwd=ROOT,check=True,timeout=60)
 subprocess.run(["python3","-B",str(V/"tests/ns2_getinfo_page_size_source.py")],

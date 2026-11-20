@@ -682,7 +682,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         # Never rewrite the shipping vendor; this is an audit-only mapping.
         if subprocess.check_output(
                 ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'],
-                text=True).strip() == 'fd43897f59dafe34ff110259c9f872bfc1c474cb':
+                text=True).strip() in {'fd43897f59dafe34ff110259c9f872bfc1c474cb',
+                                  'ffb78672112a00a8df1da033ff462baf7d3c4d31'}:
             assert core_blob == '1cf7484e07c1f6f86b4980a7489ab2d4784f9409', core_blob
             assert ('template <typename RangeSize>\n'
                     'void BufferCache<P>::ClaimCpuWrites(') in core_owner.read_text()

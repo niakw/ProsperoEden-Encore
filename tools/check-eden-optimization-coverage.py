@@ -705,7 +705,7 @@ if native_gpfifo_vendor_pin in {
     '2a450d43d1d23d3e8b1667e396613f62c69c26d7',
     '17c95ef233a9a0e508e50ada4ae9dc53a300c46c',
     '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4',
-    'e0fced3a091495e70362d8c4ca072942f027af24', '491fa7e2388d46e23827b1459360a5d7f4a2814b', 'b177deb8282b14e1521485f5ac63bd7ccc9ca7ef', '06fc7dc2e0a00e00f831dfd78ae78087736276a3',
+    'e0fced3a091495e70362d8c4ca072942f027af24', '491fa7e2388d46e23827b1459360a5d7f4a2814b', 'b177deb8282b14e1521485f5ac63bd7ccc9ca7ef', '06fc7dc2e0a00e00f831dfd78ae78087736276a3', '850086c79ec40838663989a81f33ba8ea2f15f6a',
 }:
     actual = subprocess.check_output(
         ['git', '-C', str(ROOT / 'vendor'), 'hash-object',

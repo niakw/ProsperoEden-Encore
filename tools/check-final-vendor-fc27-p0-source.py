@@ -13,14 +13,14 @@ ROOT=Path(__file__).resolve().parents[1]
 V=ROOT/"vendor"
 # Vendor #192/#193 touch only reviewed NS2 A64/kernel owners and their tests.
 # The FC27 GPU owners remain byte-sealed by the focused tests below.
-REVIEWED_PINS={"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285", "2a450d43d1d23d3e8b1667e396613f62c69c26d7", "17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"}
+REVIEWED_PINS={"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc", "8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285", "2a450d43d1d23d3e8b1667e396613f62c69c26d7", "17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # The 2nd merge preserves the newer NS1 DMA/cache owner from main
 # together with the NS2 IPC/ExeFS owners. Seal *both* the real GPU owner and
 # new service files before accepting the merged gitlink. No fallback hashes.
-if selected in {"17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"}:
+if selected in {"17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp", "9719348d36515464724ce82f62aafac1d5182647"),
         ("encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.h", "76f1283f30304f1c4b9d7db2ad0e7c833a0da487"),
@@ -43,14 +43,16 @@ if selected in {"17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc42
 # The follow-up vendor change affects only the compiled NS2 GSV control
 # plane and its pre-existing test; GPU/BufferCache and AM still pass the exact
 # source seals above. A failed TIPC 305/497 must never move a null handle.
-if selected in {"082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"}:
+if selected in {"082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-         ("c9193e7ce505353c87f57e8a063cbdbf5b072f43" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
+         ("90be32737f454554125156cf468f58154dde40d4" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
+          "c9193e7ce505353c87f57e8a063cbdbf5b072f43" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
           "8457d9a9a53725e6c1f15575c1151038f2457643")),
         ("tests/ns2_syncpt_bootstrap_source.py",
-         ("41d6f0514f281bfb65cad052c2fb61cfa9d749b2" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
-          "51beddbe0454039c23728f39f7c84d05325fd8cf" if selected in {"e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"} else
+         ("21fb7c886286a39eaec5ca4495bfba1bb55584b1" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
+          "41d6f0514f281bfb65cad052c2fb61cfa9d749b2" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
+          "51beddbe0454039c23728f39f7c84d05325fd8cf" if selected in {"e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"} else
           "eb150745a18068366885299f82eacf42045cb50e")),
     ):
         body = (V / relative).read_bytes()
@@ -60,14 +62,14 @@ if selected in {"082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e7036
 
 # Active GPU session and worker must roll back incomplete native VA
 # identity transactions before a failed handle can be retried.
-if selected in {"491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"}:
+if selected in {"491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp",
          "fc9f0c7b99b6905876143975ecc16e8d2c580141"),
         ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp",
          "c65544f3a337b8ef5673041da07cafc7c1133ff5"),
         ("tests/ns2_gpu_identity_mapping_source.py",
-         ("955c5cbc1171d2d594d4bed1935280ca418365ce" if selected in {"b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"} else
+         ("955c5cbc1171d2d594d4bed1935280ca418365ce" if selected in {"b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"} else
           "4f942ba7f8f75ac9d7501cecf5be17fa70903a52")),
     ):
         body = (V / relative).read_bytes()
@@ -77,7 +79,7 @@ if selected in {"491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521
 
 # A native Switch 2 GPU session may only be published after process
 # generation registration succeeds; channel Bind and shader tickets require it.
-if selected in {"b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"}:
+if selected in {"b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}:
     path = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp"
     body = (V / path).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
@@ -88,10 +90,11 @@ if selected in {"b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f83
 # NS2 GSV 1402: the native graphics SDK requires a process-bound
 # nvsrv INvDrvServices child. Seal all compiled C++ owners: both GSV service
 # and the unchanged NS1 NVDRV protocol with a new explicit NS2 init helper.
-if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3":
+if selected in {"06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h",
-         "8950a03e698f65b5682849d19baf038c5756145c"),
+         ("55e82ad0667cd925fd72b4c5b45c150f3d743708" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
+          "8950a03e698f65b5682849d19baf038c5756145c")),
         ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.h",
          "b32fe29a11b0ffee941eb32043043553e67a28b5"),
         ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp",

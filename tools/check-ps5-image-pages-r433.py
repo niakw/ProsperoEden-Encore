@@ -20,7 +20,16 @@ ast.parse(generator)
 assert 'vendor/encore-active/ns2-astc/include' in cmake
 assert 'EDEN_R4_ACTIVE_TEXTURE_CACHE' in cmake
 assert '"video_core/texture_cache/texture_cache.h"' in cmake
-assert raster.count("::Eden::ImagePages::NeverHeld(addr, size)") == 9
+# The maintained rasterizer now covers two additional grouped invalidation
+# checks. Both obey the same conservative monotonic page bitmap as single
+# writes; the old fixed count (9) predates the FC27 grouped-write owner.
+assert raster.count("::Eden::ImagePages::NeverHeld(addr, size)") == 11
+group_start = raster.index("void RasterizerVulkan::OnCacheInvalidations(")
+group_end = raster.index("void RasterizerVulkan::OnCacheInvalidation(", group_start)
+group = raster[group_start:group_end]
+assert group.count("::Eden::ImagePages::NeverHeld(addr, size)") == 2
+assert "buffer_cache.ClaimCpuWrites(ranges);" in group
+assert group.index("buffer_cache.ClaimCpuWrites(ranges);") < group.index("texture_cache.WriteMemory(addr, size)")
 write_start = raster.index("bool RasterizerVulkan::OnCPUWrite")
 write_end = raster.index("void RasterizerVulkan::OnCacheInvalidation", write_start)
 write_method = raster[write_start:write_end]

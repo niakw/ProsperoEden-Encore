@@ -3767,6 +3767,14 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${EDEN_NS2_SELF_ROOT}/core/hle/service/am/service/self_controller.cpp"
         "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_supervisor_sources}")
+    # The native core target does not define PS5_NATIVE for every source.
+    # This exact compiled GSV/VI2/syncpoint TU already contains bounded
+    # PS5-only IPC command/rejection witnesses; without this local define
+    # they are silently absent even when Detailed Logging is enabled.
+    # No handler, session, GPU queue or reply semantics are changed.
+    set_property(SOURCE
+        "${EDEN_NS2_SUPERVISOR_ROOT}/core/hle/service/am/service/graphics_supervisor.cpp"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     target_include_directories(core BEFORE PRIVATE
         "${EDEN_NS2_SELF_ROOT}" "${EDEN_NS2_SUPERVISOR_ROOT}")
 

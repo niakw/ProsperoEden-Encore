@@ -18,15 +18,17 @@ REVIEWED_PINS.add("03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433")
 REVIEWED_PINS.add("ac55a39658c8029a0ec900475234012ae6bf6289")
 REVIEWED_PINS.add("a7b9008340ccf03e4f63c180d820631858fe935e")
 REVIEWED_PINS.add("565f143c27443553b60ca1b21cc1094caa23ceb5")
+REVIEWED_PINS.add("010d5c61cefd62cbb5d27102cd9a2350fa0e69ce")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
+ns2_gsv_497_dual = selected == "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce"
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # The NS2 GSV COPY-descriptor correction is two commits beyond the
 # previously sealed vendor tree. Only graphics_supervisor.cpp and its source
 # contract changed; check both exact blobs, then replay all unchanged FC27,
 # BufferCache, NVDRV and kernel source receipts under their reviewed baseline.
-if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}:
+if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
          "747c9a0b5461fc1975fa373997064e3dc401a9a3"),
@@ -36,7 +38,7 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("Selected NS2 GSV COPY descriptor source drift", relative, actual)
-    if selected == "565f143c27443553b60ca1b21cc1094caa23ceb5":
+    if selected in {"565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce"}:
         protocol = (V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h").read_bytes()
         protocol_blob = hashlib.sha1(b"blob " + str(len(protocol)).encode() + bytes([0]) + protocol).hexdigest()
         assert protocol_blob == "6ce5ba02c2032237f81d9684da9e56cfbfb831c0", ("NS2 GSV 305 version source drift", protocol_blob)
@@ -56,7 +58,9 @@ if selected in {"917ccdc1cf772b9312b19888eea181b8e114334b", "0c1bd95c896f6ddc787
     owner = V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_bootstrap.h"
     raw = owner.read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    expected = "11e7c9d0569a175567083367e485cbf75cbc2207" if ns2_gsv_497_v2 else "0f6b6960687501ef88b65ae0f3f4d0fd0693826a"
+    expected = ("11d548eb338a5b75bf3a87a6adb6aa6aa302e017" if ns2_gsv_497_dual else
+                "11e7c9d0569a175567083367e485cbf75cbc2207" if ns2_gsv_497_v2 else
+                "0f6b6960687501ef88b65ae0f3f4d0fd0693826a")
     assert actual == expected, (
         "NS2 GSV optional-bind bootstrap source drift", actual)
 

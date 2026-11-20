@@ -408,8 +408,11 @@ int main(){
             "GPU session requires completed bootstrap and real NVDRV module");
     auto badOpen=openGpu;
     badOpen[2]=4;
+    require(state.CanOpenGpuSession(badOpen,true)==GS::Status::Success,
+            "GSV 497 admits newer observed SDK version 4");
+    badOpen[2]=3;
     require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
-            "GSV 497 rejects the old, incorrect version 4");
+            "GSV 497 rejects unknown intermediate version 3");
     badOpen[2]=8;
     require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
             "GPU session opening rejects unsupported flags");

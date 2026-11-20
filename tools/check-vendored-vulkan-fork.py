@@ -106,7 +106,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # The GSV response ABI correction only changes its selected C++ owner
     # and paired source test. Verify both exact blobs before replaying the
     # unchanged FC27 Vulkan/BufferCache historical source proofs.
-    if exact_vendor_pin == "ac55a39658c8029a0ec900475234012ae6bf6289":
+    if exact_vendor_pin in {
+        "ac55a39658c8029a0ec900475234012ae6bf6289",
+        "a7b9008340ccf03e4f63c180d820631858fe935e",
+        "565f143c27443553b60ca1b21cc1094caa23ceb5",
+        "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce",
+    }:
         for relative, expected_blob in (
             ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
              "747c9a0b5461fc1975fa373997064e3dc401a9a3"),
@@ -116,6 +121,22 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             raw = (root / "vendor" / relative).read_bytes()
             found_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
             assert found_blob == expected_blob, ("GSV COPY session source drift", relative, found_blob)
+        if exact_vendor_pin != "ac55a39658c8029a0ec900475234012ae6bf6289":
+            # Keep native GSV ABI revisions tied to their reviewed bytes.
+            owner = root / "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_bootstrap.h"
+            source = owner.read_bytes()
+            found = hashlib.sha1(b"blob " + str(len(source)).encode() + bytes([0]) + source).hexdigest()
+            expected = {
+                "a7b9008340ccf03e4f63c180d820631858fe935e": "11e7c9d0569a175567083367e485cbf75cbc2207",
+                "565f143c27443553b60ca1b21cc1094caa23ceb5": "11e7c9d0569a175567083367e485cbf75cbc2207",
+                "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce": "11d548eb338a5b75bf3a87a6adb6aa6aa302e017",
+            }[exact_vendor_pin]
+            assert found == expected, ("GSV 497 ABI owner drift", found)
+            if exact_vendor_pin in {"565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce"}:
+                owner = root / "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h"
+                source = owner.read_bytes()
+                found = hashlib.sha1(b"blob " + str(len(source)).encode() + bytes([0]) + source).hexdigest()
+                assert found == "6ce5ba02c2032237f81d9684da9e56cfbfb831c0", ("GSV 305 ABI owner drift", found)
         exact_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
     # This revert commit has the same complete vendor Git tree as the
     # reviewed pre-rollback pin. Reject any different source tree, including

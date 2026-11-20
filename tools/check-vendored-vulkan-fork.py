@@ -563,7 +563,20 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 'c6bab56cbd4e58458d010e423d74df9f933a8f8d'
             ), ('reviewed native BufferCache DMA source drift', core_blob)
             selected_buffer = core_owner.read_text()
-            assert '!IsRegionGpuModified(page_begin, page_end - page_begin)' in selected_buffer
+            if pair_vendor_pin in {'17c95ef233a9a0e508e50ada4ae9dc53a300c46c',
+                                   '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4',
+                                   'e0fced3a091495e70362d8c4ca072942f027af24'}:
+                # The latest NS1 DMA release avoids duplicate GPU page queries
+                # while preserving sibling bytes. The exact d40082a0 owner
+                # above remains mandatory; this checks its active semantics.
+                assert 'const bool page_has_gpu_writes = keep_page_gpu_data && page_end > page_begin &&' in selected_buffer
+                assert 'IsRegionGpuModified(page_begin, page_end - page_begin)' in selected_buffer
+                assert 'if (keep_page_gpu_data && !page_has_gpu_writes)' in selected_buffer
+                assert 'const bool overlaps_cpu_write = IsRegionGpuModified(device_addr, size);' in selected_buffer
+                assert 'if (page_has_gpu_writes &&' in selected_buffer
+                assert '(!overlaps_cpu_write || IsRegionGpuModified(page_begin, page_end - page_begin))' in selected_buffer
+            else:
+                assert '!IsRegionGpuModified(page_begin, page_end - page_begin)' in selected_buffer
             assert '!gpu_modified_ranges.Intersects(' not in selected_buffer
         elif pair_vendor_pin in {'945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654','c92ce9a8b90808869be76d02e73d35636857a0d4','1e51d1f3383f149a599e36052aba7d887d4b1f77', 'b79c774d5d976b7d374b7f851354a652f6aa69c4', '9d324ca5ca2cdd84053f2d3dfadde5b86084c13d', 'cd476e6e93e8a786bef6260006baec134f5df71f', '2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c', '9a83a6ba1cb464c9e5d14457cab18ad511c1104b', 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc'}:
             assert core_blob == '505ee80a37d5991b7925019282e71926c1648e02'

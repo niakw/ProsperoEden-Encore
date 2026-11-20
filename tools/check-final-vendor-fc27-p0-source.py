@@ -17,15 +17,16 @@ REVIEWED_PINS={"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2
 REVIEWED_PINS.add("03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433")
 REVIEWED_PINS.add("ac55a39658c8029a0ec900475234012ae6bf6289")
 REVIEWED_PINS.add("a7b9008340ccf03e4f63c180d820631858fe935e")
+REVIEWED_PINS.add("565f143c27443553b60ca1b21cc1094caa23ceb5")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
-ns2_gsv_497_v2 = selected == "a7b9008340ccf03e4f63c180d820631858fe935e"
+ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # The NS2 GSV COPY-descriptor correction is two commits beyond the
 # previously sealed vendor tree. Only graphics_supervisor.cpp and its source
 # contract changed; check both exact blobs, then replay all unchanged FC27,
 # BufferCache, NVDRV and kernel source receipts under their reviewed baseline.
-if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e"}:
+if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
          "747c9a0b5461fc1975fa373997064e3dc401a9a3"),
@@ -35,6 +36,10 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("Selected NS2 GSV COPY descriptor source drift", relative, actual)
+    if selected == "565f143c27443553b60ca1b21cc1094caa23ceb5":
+        protocol = (V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h").read_bytes()
+        protocol_blob = hashlib.sha1(b"blob " + str(len(protocol)).encode() + bytes([0]) + protocol).hexdigest()
+        assert protocol_blob == "6ce5ba02c2032237f81d9684da9e56cfbfb831c0", ("NS2 GSV 305 version source drift", protocol_blob)
     selected = "eadc6e798def18417e50db6a03a291440429d795"
 # This revert commit has the same complete vendor Git tree as the
 # reviewed pre-rollback pin. Reject any different source tree, including

@@ -25,6 +25,14 @@ int main(){
     using namespace Service::AM;
     namespace P=Service::AM::GraphicsSupervisorProtocol;
     namespace N=Service::Nvidia::Devices;
+    for (u64 display_version : {0x300010000ULL, 0x300020000ULL,
+                                0x300030000ULL, 0x300040000ULL}) {
+        require(P::IsSupportedDisplaySession(display_version),
+                "GSV 305 admits documented firmware and later SDK display versions");
+    }
+    require(!P::IsSupportedDisplaySession(0) &&
+            !P::IsSupportedDisplaySession(0x300050000ULL),
+            "GSV 305 rejects unknown display session versions");
     // VI2 103-106 are device capability queries, not TitleID exceptions:
     // enforce packet words and the real default display name before reply.
     constexpr u64 default_display = 0x00746c7561666564ULL;

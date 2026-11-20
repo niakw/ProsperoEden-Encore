@@ -443,6 +443,35 @@ r437_body = (active / r437_path).read_text()
 # before applying the original R437 byte-for-byte proof.
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+# FC27 P1 added PS5-only shared TickFrame budget and typed CPU-write claims.
+# Reverse only these exact source hunks on this audit COPY, retaining the
+# historical R437/NS2 source replay and never editing the shipping header.
+fc27_p1_vendor = r437_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"}
+if fc27_p1_vendor:
+    raw = r437_body.encode("utf-8")
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "716634290574ed4dfc8fd3be0d0ea0ad582980f8", actual
+    prewarm_tick = ("#ifdef PS5_NATIVE\n"
+                    "    // Consume one native GPU-memory sample shared with TextureCache.\n"
+                    "    // Other backends retain the original budget query fallback.\n"
+                    "    void TickFrame(std::optional<u64> externally_sampled_usage = std::nullopt);\n"
+                    "#else\n    void TickFrame();\n#endif")
+    old_claim = "    void ClaimCpuWrites(std::span<const std::pair<DAddr, u64>> ranges);"
+    new_claim = ("    // Both GPU-collected writes (size_t) and normal guest batches (u64)\n"
+                 "    // must be claimed together before any stale GPU page readback begins.\n"
+                 "    template <typename RangeSize>\n"
+                 "    void ClaimCpuWrites(std::span<const std::pair<DAddr, RangeSize>> ranges);")
+    assert r437_body.count(prewarm_tick) == r437_body.count(new_claim) == 1
+    assert r437_body.count("#include <optional>\n") == 1
+    r437_body = (r437_body.replace("#include <optional>\n", "", 1)
+                 .replace(prewarm_tick, "    void TickFrame();", 1)
+                 .replace(new_claim, old_claim, 1))
+    old = r437_body.encode("utf-8")
+    previous = hashlib.sha1(b"blob " + str(len(old)).encode() + bytes([0]) + old).hexdigest()
+    assert previous == "7e1e2fb6a1a54571f3094d809e934312fbbd83b6", previous
+    r437_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
+    print("ENCORE_FC27_P1_BUFFER_BASE_EXACT_REVERSE_PASS")
+
 # This revert commit has the same complete vendor Git tree as the
 # reviewed pre-rollback pin. Reject any different source tree, including
 # newly added or removed files, before reusing its byte-exact source gates.
@@ -554,7 +583,8 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
         "eden-core/overrides/core/device_memory_manager.inc":
             "daf493ce6e863397ec44bfae467c4f7533570477",
         "eden-vulkan/vulkan_rasterizer.cpp":
-            ("f23ad861761d53b59b8c83ae6003c089ae688060"
+            ("71d097b9a83028dfad9370792c905bb3bfccfd5a" if fc27_p1_vendor else
+             "f23ad861761d53b59b8c83ae6003c089ae688060"
              if current_fc27_raster_source
              else "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35"),
         "eden-core/src/core/file_sys/romfs_factory.cpp":

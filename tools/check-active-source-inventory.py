@@ -444,7 +444,7 @@ r437_body = (active / r437_path).read_text()
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
 r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if r437_vendor_pin in {
-    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "2558d69f4668cdf150dcde42a940848ccf342e0a"
 } else r437_vendor_pin
 fc27_deferred_selected = r437_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owner = "eden-core/overrides/core/deferred_cached_updates.h"
@@ -708,7 +708,7 @@ native_m2mf_channel_state = "ns2-runtime/gpu_dispatch/video_core/control/channel
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
 native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_gpfifo_vendor_pin in {
-    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "2558d69f4668cdf150dcde42a940848ccf342e0a"
 } else native_gpfifo_vendor_pin
 if native_gpfifo_vendor_pin in {
     "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
@@ -1088,7 +1088,7 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
-    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "d2fca6bbb4fcf0d249818ad3d6b55c269e8a2268"
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "2558d69f4668cdf150dcde42a940848ccf342e0a"
 } else gpu_table_vendor_pin
 shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}

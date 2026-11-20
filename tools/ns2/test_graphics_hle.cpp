@@ -118,7 +118,23 @@ int main(){
     bootstrap[8]=1;
     br=P::DecodeBootstrap(bootstrap);
     require(br && !P::IsLocalBootstrap(*br),"nonzero remote memory rejected");
-    bootstrap[8]=0;bootstrap[2]=1;
+    // The last 64-bit GSV BootWithRemoteMemory argument is the kernel
+    // GetInfo(31/32) value, not a reserved zero word.
+    bootstrap[8]=0;
+    bootstrap[14]=0x12345678; bootstrap[15]=0x10203040;
+    br=P::DecodeBootstrap(bootstrap);
+    require(br && br->parameters[3]==0x1020304012345678ULL &&
+            P::IsLocalBootstrap(*br),
+            "GSV 4 admits a nonzero kernel GetInfo hint");
+    bootstrap[14]=0; bootstrap[15]=0;
+    for (u32 word : {8U, 10U, 12U}) {
+        bootstrap[word]=1;
+        br=P::DecodeBootstrap(bootstrap);
+        require(br && !P::IsLocalBootstrap(*br),
+                "GSV 4 rejects nonzero reserved input");
+        bootstrap[word]=0;
+    }
+    bootstrap[2]=1;
     require(!P::DecodeBootstrap(bootstrap),"bootstrap handle mode rejected");
     bootstrap[2]=2;bootstrap[1]=0;
     require(!P::DecodeBootstrap(bootstrap),"bootstrap malformed header rejected");

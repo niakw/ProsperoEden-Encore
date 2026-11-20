@@ -342,4 +342,3 @@ Les ressources du catalogue se répartissent en **référence d'architecture**, 
 - Ne pas lancer de build/CI manuel, modifier C++ ou ouvrir de branche en réponse à ce document seul.
 
 **État de ce livrable :** analyse de sources et de preuves historiques sur `582973574aa0` / `082cd1b77c7d`, sans exécution PS5 nouvelle. **Ce que les sources ne permettent pas d'affirmer** : un inventaire parfait de tous les IPC NS2 par firmware; un correctif absolu des textures FC27; la cause unique des saccades ou de l'écran noir NS2; un gain FPS apporté par l'étude.
-

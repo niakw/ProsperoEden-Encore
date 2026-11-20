@@ -443,6 +443,15 @@ r437_body = (active / r437_path).read_text()
 # before applying the original R437 byte-for-byte proof.
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+# This revert commit has the same complete vendor Git tree as the
+# reviewed pre-rollback pin. Reject any different source tree, including
+# newly added or removed files, before reusing its byte-exact source gates.
+if r437_vendor_pin == "03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433":
+    actual_tree = subprocess.check_output(
+        ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+        text=True).strip()
+    assert actual_tree == "301f91c2ee0eb4e5d86baba9b1036c57f6d5aa04", ("Vendor revert tree drift", actual_tree)
+    r437_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
 r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if r437_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else r437_vendor_pin

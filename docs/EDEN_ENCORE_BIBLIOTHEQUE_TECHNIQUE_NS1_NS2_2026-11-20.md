@@ -1,7 +1,7 @@
 # EDEN ENCORE — Bibliothèque technique NS1 / NS2
 
-**Catalogue de référence pour le portage sur PS5 (firmware 13.60)**  
-**Édition : 20 novembre 2026 · Langue : français · Format : Markdown autonome**  
+**Catalogue de référence pour le portage sur PS5 (firmware 13.60)**
+**Édition : 20 novembre 2026 · Langue : français · Format : Markdown autonome**
 **Statut : catalogue documentaire publié sur `main` ; aucun correctif C++ ni build PS5 n'est requis par ce document.**
 
 > **But.** Disposer d'un point d'entrée pérenne vers les connaissances publiques sur Nintendo Switch 1 (NS1), Nintendo Switch 2 (NS2), Horizon OS, les services IPC, les SVC, les fichiers de jeux, les GPU NVIDIA, les shaders, Vulkan/RADV et les implémentations de référence. Ce document **n'est pas** un audit du code d'Eden Encore et ne doit pas remplacer les registres d'incidents ni les preuves console.

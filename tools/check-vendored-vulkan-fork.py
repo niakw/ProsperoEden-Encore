@@ -103,6 +103,15 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
+    # This revert commit has the same complete vendor Git tree as the
+    # reviewed pre-rollback pin. Reject any different source tree, including
+    # newly added or removed files, before reusing its byte-exact source gates.
+    if exact_vendor_pin == "03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433":
+        actual_tree = subprocess.check_output(
+            ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"],
+            text=True).strip()
+        assert actual_tree == "301f91c2ee0eb4e5d86baba9b1036c57f6d5aa04", ("Vendor revert tree drift", actual_tree)
+        exact_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
     # The fail-closed FC27 draw fix is a single reviewed predicate change.
     # Reverse it only on the audit COPY, then replay the unchanged five-owner
     # attribute-source receipt and historical Vulkan oracle.

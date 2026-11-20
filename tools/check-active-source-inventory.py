@@ -438,6 +438,14 @@ assert post_f07_r437_buffer_base_owners <= set(physical_all)
 assert not post_f07_r437_buffer_base_owners.intersection(research_paths)
 r437_path = next(iter(post_f07_r437_buffer_base_owners))
 r437_body = (active / r437_path).read_text()
+# Vendor #156 adds a reviewed successor to the R437 native header. Verify
+# its raw blob and reverse only the three exact added declaration blocks
+# before applying the original R437 byte-for-byte proof.
+r437_vendor_pin = subprocess.check_output(
+    ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if r437_vendor_pin in {
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
+} else r437_vendor_pin
 # Current BufferCacheBase adds two reviewed runtime changes after the
 # 32-slot successor: GPU-owned DMA reporting and absolute bit iteration.
 # Reverse only in the audit copy, with exact source seals at both ends.
@@ -480,14 +488,6 @@ if r437_vendor_pin in {
     r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776"
     print("ENCORE_R437_DMA_AND_MASK_EXACT_REVERSE_PASS")
 
-# Vendor #156 adds a reviewed successor to the R437 native header. Verify
-# its raw blob and reverse only the three exact added declaration blocks
-# before applying the original R437 byte-for-byte proof.
-r437_vendor_pin = subprocess.check_output(
-    ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
-r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if r437_vendor_pin in {
-    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
-} else r437_vendor_pin
 fc27_deferred_selected = r437_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owner = "eden-core/overrides/core/deferred_cached_updates.h"
 fc27_deferred_present = {fc27_deferred_owner} & set(physical_all)

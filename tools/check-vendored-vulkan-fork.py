@@ -1309,6 +1309,23 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             assert git_blob_sha(text) == receipt['pinned_blob_sha'], (
                 'Task/Mesh source reverse parity failed', name)
         return text
+    # FC27's reviewed Lichii #397 batch-invalidation hook postdates the
+    # frozen R23 Vulkan receipt. Reverse precisely that single declaration
+    # only for the fully qualified vendor blob; keep the old SHA immutable.
+    def reverse_reviewed_fc27_batch_header(name, text):
+        if name != 'include/video_core/renderer_vulkan/vk_rasterizer.h':
+            return text
+        baseline = 'cb35d183c8a9c2ea05f5eb8949a167ea295f8ce7'
+        if git_blob_sha(text) == baseline:
+            return text
+        assert git_blob_sha(text) == '7c754c82c12c4f4c934abd3d7f2cdb25222e8d2a', (
+            'Unreviewed post-R23 FC27 Vulkan header bytes', name)
+        reviewed = '    void OnCacheInvalidations(std::span<const std::pair<DAddr, u64>> ranges) override;\\n'.replace('\\n', '\n')
+        assert text.count(reviewed) == 1, ('FC27 batch-invalidation header drift', name)
+        text = text.replace(reviewed, '', 1)
+        assert git_blob_sha(text) == baseline, ('FC27 R23 header reversal drift', name)
+        return text
+
     # Verify EVERY owner and show precise refusals without weakening the
     # historical SHA or accepting a changed vendor submodule by coincidence.
     # The merged vendor graph contains reviewed R23 full-source integrations
@@ -1349,7 +1366,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert set(r23_combined_owners) <= set(p24_by_path)
     for name, receipt_sha in r23_combined_owners.items():
         combined = reverse_static_pipeline_cache_2100(
-            name, expected[name].read_text())
+            name, reverse_reviewed_fc27_batch_header(name, expected[name].read_text()))
         assert git_blob_sha(combined) == receipt_sha, (
             'Unreviewed merged R23 Vulkan source bytes', name)
         assert all(token in combined for token in r23_required_semantics[name]), (
@@ -1370,7 +1387,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert name in expected and name in actual, (
             'missing Task/Mesh Vulkan source', name)
         try:
-            reverse_p24(name, reverse_r23(name, expected[name].read_text()))
+            reverse_p24(name, reverse_r23(
+                name, reverse_reviewed_fc27_batch_header(name, expected[name].read_text())))
         except AssertionError as exc:
             maintained_errors.append({'path': name, 'error': str(exc)})
     if maintained_errors:

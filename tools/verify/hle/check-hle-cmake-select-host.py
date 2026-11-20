@@ -17,6 +17,7 @@ assert cmake, "CMake must be installed on the host CI runner"
 
 pinned = (
     "hle/kernel/k_thread.cpp",
+    "hle/kernel/k_server_session.cpp",
     "hle/kernel/k_scheduler.cpp",
     "hle/kernel/k_condition_variable.cpp",
     "hle/kernel/k_address_arbiter.cpp",
@@ -52,13 +53,17 @@ else()
     endif()
 endif()
 
-foreach(file IN ITEMS k_thread.cpp k_scheduler.cpp k_condition_variable.cpp
+foreach(file IN ITEMS k_thread.cpp k_server_session.cpp k_scheduler.cpp k_condition_variable.cpp
                      k_address_arbiter.cpp svc_condition_variable.cpp
                      svc_address_arbiter.cpp svc_synchronization.cpp svc_thread.cpp)
     if(file STREQUAL "k_thread.cpp")
         set(rel "hle/kernel/${file}")
         set(relative "core/hle/kernel/${file}")
         set(native_file ON)
+    elseif(file STREQUAL "k_server_session.cpp")
+        set(rel "hle/kernel/${file}")
+        set(relative "core/hle/kernel/${file}")
+        set(native_file ${PS5_NATIVE})
     elseif(file STREQUAL "k_scheduler.cpp")
         set(rel "hle/kernel/${file}")
         set(relative "core/hle/kernel/${file}")

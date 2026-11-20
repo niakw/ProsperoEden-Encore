@@ -25,12 +25,31 @@ REVIEWED_PINS.add("ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0")
 REVIEWED_PINS.add("01c942171fea39c1f7cf31d13ab36895aebb593a")
 REVIEWED_PINS.add("dcf7116dd2c536e05c80d83ff9dbf30caa5cc109")
 REVIEWED_PINS.add("b65d8d9673475433f0b6eac72eb304bf23141666")
+REVIEWED_PINS.add("266080b4df8f56bb5a9b52c8c3ec253254c1578b")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# The reviewed NS2 HID successor is exactly two fast-forward commits after
+# b65d8d9 and changes only the live hid_server.cpp/.h (verified by GitHub
+# compare b65d8d9...266080b4). Seal both new blobs before replaying all
+# the unchanged FC27/NS2 source receipts of the reviewed parent. Do not add
+# a blanket allowlist exception: a drifted runtime source remains fatal.
+if selected == "266080b4df8f56bb5a9b52c8c3ec253254c1578b":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp",
+         "dcceb2051105866bb6f9a702ccdd7271969e0763"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.h",
+         "e82f2486c79ac6aa2da5549619fb555c628d7afb"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Reviewed NS2 HID source drift", relative, actual)
+    selected = "b65d8d9673475433f0b6eac72eb304bf23141666"
+    original_vendor_pin = selected
+    ns2_gsv_497_dual = True
 # The NS2 GSV COPY-descriptor correction is two commits beyond the
 # previously sealed vendor tree. Only graphics_supervisor.cpp and its source
 # contract changed; check both exact blobs, then replay all unchanged FC27,

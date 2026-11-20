@@ -3801,8 +3801,10 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
         "${EDEN_NS2_NVDRV_SESSION_SOURCE}")
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_nvdrv_session_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NVDRV_SESSION_INCLUDE}")
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-        "${EDEN_NS2_NVDRV_SESSION_HEADER}" "${EDEN_NS2_NVDRV_SESSION_SOURCE}")
+    # configure_file() already registers its input header for CMake reruns;
+    # core SOURCES tracks the paired .cpp. Do not also append these same
+    # paths to CMAKE_CONFIGURE_DEPENDS: the native Ninja regeneration edge
+    # otherwise declares nvdrv_interface.h twice as one phony output.
 endif()
 
 # MKW 1.8.0 / update ExeFS 917504: nn::chat::Initialize blocks in SM

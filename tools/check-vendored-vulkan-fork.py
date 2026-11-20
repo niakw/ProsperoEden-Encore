@@ -660,6 +660,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         core_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h'
         core_blob = subprocess.check_output(
             ['git', 'hash-object', str(core_owner)], text=True).strip()
+        # Lichii #1328: verify the only C++ template-signature delta before
+        # replaying the unchanged native BufferCache historical source seal.
+        # Never rewrite the shipping vendor; this is an audit-only mapping.
+        if subprocess.check_output(
+                ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'],
+                text=True).strip() == 'fd43897f59dafe34ff110259c9f872bfc1c474cb':
+            assert core_blob == '1cf7484e07c1f6f86b4980a7489ab2d4784f9409', core_blob
+            assert ('template <typename RangeSize>\n'
+                    'void BufferCache<P>::ClaimCpuWrites(') in core_owner.read_text()
+            base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
+            assert subprocess.check_output(
+                ['git', 'hash-object', str(base_owner)], text=True).strip() == (
+                    '64be0018b1ff977fc744529d9882d6a264b45f1a')
+            core_blob = 'd40082a0c849790d25a4d1d28e003087eefd84a1'
+            print('ENCORE_FC27_BATCH_CLAIM_BUFFER_SIGNATURE_SOURCE_PASS')
         if pair_vendor_pin in {'2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c', '9a83a6ba1cb464c9e5d14457cab18ad511c1104b', 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc', '2a450d43d1d23d3e8b1667e396613f62c69c26d7', '17c95ef233a9a0e508e50ada4ae9dc53a300c46c', '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4', 'e0fced3a091495e70362d8c4ca072942f027af24', '491fa7e2388d46e23827b1459360a5d7f4a2814b', 'b177deb8282b14e1521485f5ac63bd7ccc9ca7ef', '06fc7dc2e0a00e00f831dfd78ae78087736276a3', '850086c79ec40838663989a81f33ba8ea2f15f6a'}:
             # Vendor #189 fixes a real native build ABI mismatch. The reviewed
             # BufferCache header uses the pinned ForEachInRange-backed query;

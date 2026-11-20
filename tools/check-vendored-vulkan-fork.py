@@ -103,6 +103,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
+    # FC27 same-page CPU-write fix: reverse only its verified four-line hunk
+    # on the historical audit COPY. The compiled vendor remains untouched.
+    if exact_vendor_pin == 'fd43897f59dafe34ff110259c9f872bfc1c474cb':
+        assert raster_sha == '1921bf328af024a9ca001b9691e278a16fdf03ce', raster_sha
+        claim_hunk = (
+            '        // Claim the ENTIRE CPU-write batch before WriteMemory on any range.\n'
+            '        // Otherwise its GPU sibling download may overwrite a later write\n'
+            '        // within the same page (Lichii #1328). The lock and draw order stay.\n'
+            '        buffer_cache.ClaimCpuWrites(sequences);\n'
+        )
+        claim_hunk = ''.join(claim_hunk)
+        assert raster_source.count(claim_hunk) == 1
+        raster_source = raster_source.replace(claim_hunk, '', 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060', raster_sha
+        previous_raster = temp/'fc27-claim-batch-historical'/raster_owner
+        previous_raster.parent.mkdir(parents=True, exist_ok=True)
+        previous_raster.write_text(raster_source)
+        expected[raster_owner] = previous_raster
+        exact_vendor_pin = 'ac55a39658c8029a0ec900475234012ae6bf6289'
+        print('ENCORE_FC27_CPU_BATCH_CLAIM_EXACT_REVERSE_PASS')
     # The GSV response ABI correction only changes its selected C++ owner
     # and paired source test. Verify both exact blobs before replaying the
     # unchanged FC27 Vulkan/BufferCache historical source proofs.

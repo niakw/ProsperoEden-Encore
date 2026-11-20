@@ -14,6 +14,23 @@ _FC27_BUFFER_BLOB = "c4ed79a1fe6aec09da8040b7af3901f6184f910b"
 _FC27_SIBLING_BUFFER_BLOB = "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972"
 _FC27_FAST_WRITE_BUFFER_BLOB = "505ee80a37d5991b7925019282e71926c1648e02"
 _PS5_RANGE_API_BUFFER_BLOB = "c6bab56cbd4e58458d010e423d74df9f933a8f8d"
+# Reviewed post-range-ABI production deltas: preservation of GPU-owned
+# sibling bytes and page-aware DMA copy/clear. The reverse applies ONLY to
+# the audit text, not the native PS5 source. Diff against the exact pinned
+# predecessor and retain all nine source changes as a closed contract.
+_NOV20_BUFFER_BLOB = "d40082a0c849790d25a4d1d28e003087eefd84a1"
+nov20_buffer_reversal = [
+    ("    // single-query clean CPU-write fast path and b13c4c1 sibling preservation.\n    // Only one page-wide GPU-ownership query is needed before the write.\n    // Keep its result for GPU-written sibling bytes: a second page query is\n    // necessary only after we actually removed an overlapping GPU-owned span.\n    const bool page_has_gpu_writes = keep_page_gpu_data && page_end > page_begin &&\n                                     IsRegionGpuModified(page_begin, page_end - page_begin);\n    if (keep_page_gpu_data && !page_has_gpu_writes) {", "    // single-query clean CPU-write fast path and b13c4c1 sibling preservation.\n    if (keep_page_gpu_data && page_end > page_begin &&\n        !IsRegionGpuModified(page_begin, page_end - page_begin)) {"),
+    ("\n    const bool overlaps_cpu_write = IsRegionGpuModified(device_addr, size);\n    if (overlaps_cpu_write) {", "\n    if (IsRegionGpuModified(device_addr, size)) {"),
+    ("    // upload can overwrite correct host-buffer data with the stale guest copy.\n    if (page_has_gpu_writes &&\n        (!overlaps_cpu_write || IsRegionGpuModified(page_begin, page_end - page_begin))) {", "    // upload can overwrite correct host-buffer data with the stale guest copy.\n    if (keep_page_gpu_data && page_end > page_begin &&\n        IsRegionGpuModified(page_begin, page_end - page_begin)) {"),
+    ("template <class P>\nbool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,\n                             bool* gpu_written) {", "template <class P>\nbool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {"),
+    ("    }\n    // Both buffers are subsequently addressed as single CPU intervals.\n    // Sparse or aliased GMMU pages can map adjacent GPU addresses to\n    // disjoint physical memory: their DMA must use MaxwellDMA's page-aware\n    // guest-memory fallback instead of this contiguous Vulkan copy.\n    // The cheap one-page case avoids a full PTE walk in the common path.\n    const bool source_contiguous =\n        gpu_memory->IsGranularRange(src_address, amount) ||\n        gpu_memory->IsContinuousRange(src_address, amount);\n    const bool dest_contiguous =\n        gpu_memory->IsGranularRange(dest_address, amount) ||\n        gpu_memory->IsContinuousRange(dest_address, amount);\n    if (!source_contiguous || !dest_contiguous) {\n        return false;\n    }", "    }"),
+    ("    const bool has_new_downloads = tmp_intervals.size() != 0;\n    if (gpu_written) {\n        *gpu_written = has_new_downloads;\n    }", "    const bool has_new_downloads = tmp_intervals.size() != 0;"),
+    ("bool BufferCache<P>::DMAClear(GPUVAddr dst_address, u64 amount, u32 value) {", "bool BufferCache<P>::DMAClear(GPUVAddr dst_address, u64 amount, u32 value) {\n    const std::optional<DAddr> cpu_dst_address = gpu_memory->GpuToCpuAddress(dst_address);\n    if (!cpu_dst_address) {\n        return false;\n    }"),
+    ("    const size_t size = amount * sizeof(u32);\n    // As with DMACopy, a GPU-virtual clear cannot be represented by one\n    // physically contiguous cached buffer across noncontiguous guest pages.\n    // MaxwellDMA always writes the CPU guest bytes after this acceleration.\n    if (!gpu_memory->IsGranularRange(dst_address, size) &&\n        !gpu_memory->IsContinuousRange(dst_address, size)) {\n        return false;\n    }\n    const std::optional<DAddr> cpu_dst_address = gpu_memory->GpuToCpuAddress(dst_address);\n    if (!cpu_dst_address) {\n        return false;\n    }", "    const size_t size = amount * sizeof(u32);"),
+    ("    Buffer& dest_buffer = slot_buffers[buffer];\n    // Lichii maintained DMAClear: land any pending CPU data before a\n    // partial GPU fill, so its neighbouring bytes survive the next read.\n    SynchronizeBuffer(dest_buffer, *cpu_dst_address, static_cast<u32>(size));", "    Buffer& dest_buffer = slot_buffers[buffer];"),
+]
+
 # Vendor #189 ported the reviewed Lichii 44bf47d clean-write guard to
 # Encore's pinned RangeSet API. Restore its exact predecessor ONLY in the
 # historical verifier; the compiled vendor owner is never rewritten.
@@ -123,6 +140,17 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    if actual == _NOV20_BUFFER_BLOB:
+        # Restore the complete previous R2+FC27 RangeSet owner byte-for-byte.
+        # Reverse in source order from the end, preserving adjacent anchors.
+        assert len(nov20_buffer_reversal) == 9
+        for revised, historical in reversed(nov20_buffer_reversal):
+            assert source.count(revised) == 1, "Nov20 BufferCache successor hunk drift"
+            source = source.replace(revised, historical, 1)
+        data = source.encode("utf-8")
+        actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert actual == _PS5_RANGE_API_BUFFER_BLOB, (
+            "Nov20 BufferCache exact predecessor reconstruction drift")
     if actual == _PS5_RANGE_API_BUFFER_BLOB:
         for revised, historical in ps5_range_api_reversal:
             assert source.count(revised) == 1, "Reviewed RangeSet ABI adaptation drift"

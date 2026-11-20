@@ -1873,7 +1873,7 @@ for e in entries:
     assert active.stat().st_size==record["bytes"]
     assert e["shipping_upstream_sha256"]==record["upstream"]
     if (vendor_head in {"01c942171fea39c1f7cf31d13ab36895aebb593a",
-                        "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"} and
+                        "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"} and
             e["shipping_relpath"] in merged_p1_backport_successors):
         old_sha, old_size, new_sha, new_size = merged_p1_backport_successors[e["shipping_relpath"]]
         assert (e["shipping_active_sha256"], e["shipping_bytes"]) == (old_sha, old_size)

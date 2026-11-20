@@ -701,7 +701,7 @@ native_gpfifo_vendor_pin = subprocess.check_output(
 # Shallow submodule checkouts may not contain the parent object: pin the
 # entire vendor SHA and the exact new RomFS, host-test, and GPFIFO blobs
 # instead of requiring an unavailable historical git-diff base.
-if native_gpfifo_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+if native_gpfifo_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
     # Selected vendor rollback is byte-exact to its pre-#194 cached-page ABI.
     # The independent RomFS successor is checked in the final source gate.
     for path,blob in {
@@ -715,7 +715,7 @@ if native_gpfifo_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729
         actual=subprocess.check_output(["git","-C",str(ROOT/"vendor"),"hash-object",path],
                                        text=True).strip()
         assert actual == blob, ("Reviewed sync-rollback owner drift",path,actual)
-    if native_gpfifo_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+    if native_gpfifo_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
         for path, blob in {
             "encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h":
                 "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
@@ -1145,8 +1145,9 @@ if post_f07_jxr_adapter_owners:
 post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
-shared_storage32_selected = gpu_table_vendor_pin == "372a83d95622f152211fe91afa05d1e60ce84bea"
-if gpu_table_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}
+ps5_vfs128_selected = gpu_table_vendor_pin == "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"
+if gpu_table_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
     gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 fc27_deferred_selected = gpu_table_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}
 fc27_deferred_owners = {"vendor/encore-active/eden-core/overrides/core/deferred_cached_updates.h"} & all_owners
@@ -1498,7 +1499,23 @@ assert '::Eden::NS2::LoadingSvcSnapshot::Report(10);' in (ROOT / "headless/graph
 assert '::Eden::NS2::LoadingSvcSnapshot::Report(30);' in (ROOT / "headless/graphics.cpp").read_text()
 print("ENCORE_NS2_LOADING_SVC_F07_ISOLATION_PASS owner=1 old=518")
 
-owners=all_owners-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
+# PS5-specific VFS open-reference budget and Mesa multipart FD cap are one
+# reviewed runtime resource fix. Keep the 518-source audit immutable.
+ps5_vfs128_owner = "vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs_real.cpp"
+ps5_vfs128_present = {ps5_vfs128_owner} & all_owners
+if ps5_vfs128_selected:
+    assert ps5_vfs128_present == {ps5_vfs128_owner}
+    raw = (ROOT / ps5_vfs128_owner).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "097335e42a0f569a51f58417f0cfd6239f474136", ("Selected PS5 VFS descriptor budget drift", actual)
+    assert '"file_sys/vfs/vfs_real.cpp"' in release_cmake
+    assert 'setenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS", "4", 0)' in (
+        ROOT / "headless/main.cpp").read_text()
+else:
+    assert not ps5_vfs128_present
+print("PS5_VFS128_FD_BUDGET_F07_ISOLATION_PASS", f"owners={len(ps5_vfs128_present)}")
+
+owners=all_owners-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1604,7 +1621,7 @@ if vendor_head in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de7
 # Rollback #194: the old shipping-backport applicability profile stays
 # valid only because the exact synchronous Vulkan/guest-memory owners
 # and independent NS2 RomFS successor were already checked in this run.
-if vendor_head in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+if vendor_head in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
     assert not fc27_deferred_selected
     for relative, expected in {
         "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35",
@@ -1613,7 +1630,7 @@ if vendor_head in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a89
     }.items():
         actual = subprocess.check_output(["git", "-C", str(ROOT/"vendor"), "hash-object", relative], text=True).strip()
         assert actual == expected, ("new rollback source drift", relative, actual)
-    if vendor_head in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+    if vendor_head in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
         for relative, expected in {
             "encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h":
                 "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
@@ -2513,7 +2530,7 @@ ns2_production_blobs = {
     "vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp": "1877d43aa8facfabf193dac16b8beea3ff7e188e",
     "vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp": "70bc538c71ba1327a0c2a51a6bcb57d1835db2e0",
     "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h":
-        ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if selected_texture_vendor in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"} else
+        ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if selected_texture_vendor in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"} else
          "859a9e46fb63a97fee82c8ea6b1566317264f98f" if selected_texture_vendor == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else
          "0d99f9a861c645562519f71d62f4f49bfedd8101" if selected_texture_vendor == "1a09972eea6f473fda1b714efe84cd52219bf681" else
          "744bf30e1421dcce212146f7e26e9d90558676a8")

@@ -465,7 +465,7 @@ if fc27_deferred_selected:
 # Lichii 15dd980 / vendor 372a83d9 changes only the selected shared
 # storage-buffer capacity in this class header. Seal that exact successor, then
 # reverse only this reviewed hunk before replaying the historical R437 oracle.
-if r437_vendor_pin == "372a83d95622f152211fe91afa05d1e60ce84bea":
+if r437_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
     raw = r437_body.encode("utf-8")
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
     assert actual == "63ef9b07b37bdc4bc9588dd77639358010e545dc", ("Shared 32-slot BufferCacheBase drift", actual)
@@ -493,7 +493,7 @@ static_assert(NUM_GRAPHICS_UNIFORM_BUFFERS <= 32, "fast bitmask must fit u32");"
 
 # Reconstructed reviewed successor: same R437 GPU owners as d024,
 # plus preserved RomFS index-0 source and full synchronous page protection.
-if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
     for relative, blob in {
         "eden-core/overrides/core/device_memory_manager.inc":
             "daf493ce6e863397ec44bfae467c4f7533570477",
@@ -505,7 +505,7 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
         source=(active/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(source)).encode()+bytes([0])+source).hexdigest()
         assert actual==blob, ("FC27 sync rollback owner drift",relative,actual)
-    if r437_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+    if r437_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
         for relative, blob in {
             "ns2-helpers/include/core/loader/ns2_svc_trace.h":
                 "86e8e7e96b5eda5b6b98ccd3c7e6ce76d4275c86",
@@ -515,10 +515,10 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
             raw = (active / relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
             assert actual == blob, ("NS2 reviewed SVC boundary source drift", relative, actual)
-    if r437_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"}:
+    if r437_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}:
         raw = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if r437_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "372a83d95622f152211fe91afa05d1e60ce84bea"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if r437_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 TextureCache drift", actual)
+        assert actual == ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if r437_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if r437_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 TextureCache drift", actual)
     assert fc27_deferred_present == set()
     r437_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 
@@ -706,7 +706,7 @@ native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
 if native_gpfifo_vendor_pin in {
     "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
-    "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea",
+    "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9",
 }:
     # The selected channel-state owner is unchanged by the SVC-only successor.
     raw = (active / native_m2mf_channel_state).read_bytes()
@@ -1081,10 +1081,11 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
-shared_storage32_selected = gpu_table_vendor_pin == "372a83d95622f152211fe91afa05d1e60ce84bea"
+shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"}
+ps5_vfs128_selected = gpu_table_vendor_pin == "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9"
 if gpu_table_vendor_pin in {
     "c15cdfe96a3d836bf32ba21b8070088add81cdc9",
-    "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea",
+    "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9",
 }:
     # Current vendor's production FC27/Vulkan/ROMFS source blobs and the
     # new SVC owners were already verified above; only replay historical
@@ -1118,6 +1119,22 @@ else:
         assert hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest() == blob
     assert 'list(REMOVE_ITEM core_sources "${eden_vfs_relative}")' in nov13_cmake
     assert 'list(APPEND core_sources "${eden_vfs_maintained}")' in nov13_cmake
+# Native PS5 PS5 VFS descriptor-budget owner (EglantinePS5 47b54bb)
+# remains outside the 337-file frozen historical F07 audit.
+ps5_vfs128_owner = "eden-core/src/core/file_sys/vfs/vfs_real.cpp"
+ps5_vfs128_present = {ps5_vfs128_owner} & set(physical_all)
+if ps5_vfs128_selected:
+    assert ps5_vfs128_present == {ps5_vfs128_owner}
+    raw = (active / ps5_vfs128_owner).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "097335e42a0f569a51f58417f0cfd6239f474136", ("Selected PS5 VFS descriptor owner drift", actual)
+    assert '"file_sys/vfs/vfs_real.cpp"' in nov13_cmake
+    assert 'setenv("MESA_DISK_CACHE_DATABASE_NUM_PARTS", "4", 0)' in (
+        root / "headless/main.cpp").read_text()
+else:
+    assert not ps5_vfs128_present
+print("ENCORE_PS5_VFS128_FD_BUDGET_OWNER_PASS", f"owners={len(ps5_vfs128_present)}")
+
 print("ENCORE_POST_F07_VFS_BOUNDS_OWNER_PASS", f"owners={len(post_f07_vfs_present)}")
 # NCA #119: two additional exact post-F07 source owners.
 post_f07_nca_receipts = {
@@ -1413,7 +1430,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | post_f07_thread_worker_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

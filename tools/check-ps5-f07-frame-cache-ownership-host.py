@@ -21,9 +21,37 @@ workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 start = raster.index("void RasterizerVulkan::TickFrame() {")
 end = raster.index("\n}\n", start) + 2
 body = raster[start:end]
-assert json.dumps(body, ensure_ascii=False) in generator, (
-    "Pinned generator must reproduce the exact active body"
+# Historical F07 generator is frozen. The selected P1 C++ extends it
+# with a single pre-lock GPU-budget sample. Reverse only that P1 delta
+# on an audit copy while compiling the actual runtime body below.
+budget = """#ifdef PS5_NATIVE
+    // Both native caches share the same RADV/PS5 GPU-memory budget.
+    // Query ONCE before either guest cache mutex, retaining original
+    // texture and buffer GC thresholds and retirement ordering.
+    const std::optional<u64> frame_memory_usage =
+        texture_cache_runtime.CanReportMemoryUsage()
+            ? std::optional<u64>{texture_cache_runtime.GetDeviceMemoryUsage()}
+            : std::nullopt;
+#endif
+"""
+assert body.count(budget) == 1
+historical = body.replace(budget, "", 1)
+for cache in ("texture_cache", "buffer_cache"):
+    newer = ("#ifdef PS5_NATIVE\n"
+             f"        {cache}.TickFrame(frame_memory_usage);\n"
+             "#else\n"
+             f"        {cache}.TickFrame();\n"
+             "#endif")
+    assert historical.count(newer) == 1, cache
+    historical = historical.replace(newer, f"        {cache}.TickFrame();", 1)
+historical = historical.replace(
+    "\n\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer buffer_wait",
+    "\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer buffer_wait", 1)
+assert json.dumps(historical, ensure_ascii=False) in generator, (
+    "Pinned F07 generator must reproduce exact P1-reversed active body"
 )
+assert body.count("TickFrame(frame_memory_usage);") == 2
+assert body.index("GetDeviceMemoryUsage()") < body.index("std::scoped_lock lock{texture_cache.mutex};")
 assert generator.count("F07 frame GC texture and buffer lock ownership instrumentation") == 1
 assert "python3 -B tools/check-ps5-f07-frame-cache-ownership-host.py" in workflow
 assert report.count('"frame_texture_wait"') == 1
@@ -52,6 +80,7 @@ cpp = r"""
 #include <cstdint>
 #include <cstdio>
 #include <mutex>
+#include <optional>
 #include <thread>
 #include <vector>
 namespace Common {
@@ -63,6 +92,7 @@ struct Clock {
 };
 inline Clock g_wall_clock;
 }
+using u64 = std::uint64_t;
 namespace Eden::Performance {
 inline std::atomic<bool> detailed_gpu_profile{false};
 __PHASE_SOURCE__
@@ -88,10 +118,24 @@ struct Cache {
     Tracker mutex;
     std::vector<int>* sequence{};
     int number{};
-    void TickFrame() {
+    std::optional<u64> last_budget;
+    void TickFrame(std::optional<u64> budget = std::nullopt) {
         assert(mutex.held.load(std::memory_order_acquire));
+        last_budget = budget;
         sequence->push_back(number);
         std::this_thread::sleep_for(std::chrono::microseconds(150));
+    }
+};
+struct RuntimeStub {
+    Cache* texture;
+    Cache* buffer;
+    unsigned queries{};
+    bool CanReportMemoryUsage() const { return true; }
+    u64 GetDeviceMemoryUsage() {
+        assert(!texture->mutex.held.load(std::memory_order_acquire));
+        assert(!buffer->mutex.held.load(std::memory_order_acquire));
+        ++queries;
+        return 0x12345678u;
     }
 };
 class RasterizerVulkan {
@@ -105,6 +149,7 @@ public:
     SmallManager staging_pool{&sequence, 5};
     Cache texture_cache{{}, &sequence, 6};
     Cache buffer_cache{{}, &sequence, 7};
+    RuntimeStub texture_cache_runtime{&texture_cache, &buffer_cache};
     void TickFrame();
 };
 __REAL_TICK__
@@ -117,6 +162,13 @@ int main() {
     for (int i = 0; i < 16; ++i) raster.TickFrame();
     assert(raster.draw_counter == 0);
     assert(raster.sequence.size() == 16 * 7);
+#ifdef PS5_NATIVE
+    assert(raster.texture_cache_runtime.queries == 16);
+    assert(raster.texture_cache.last_budget == std::optional<u64>{0x12345678u});
+    assert(raster.buffer_cache.last_budget == raster.texture_cache.last_budget);
+#else
+    assert(raster.texture_cache_runtime.queries == 0);
+#endif
     for (int i = 0; i < 16; ++i) {
         for (int j = 0; j < 7; ++j) assert(raster.sequence[7*i+j] == j+1);
     }

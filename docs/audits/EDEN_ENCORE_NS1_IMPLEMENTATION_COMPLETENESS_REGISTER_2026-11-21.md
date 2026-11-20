@@ -2,6 +2,8 @@
 
 > **Nature** : enquête de **couverture statique bornée** et de validation console, **pas** une certification exhaustive du firmware Horizon NS1. Les lignes ci-dessous décrivent des conditions concrètes, pas autant de bugs de jeux démontrés. Fichier créé à la demande pour regrouper la découverte et les actions ; ne remplace pas les 96 points datés du 20/11 ni le suivi FC27.
 
+**Issue opérationnelle maîtresse de cet inventaire : [#298 — complétude des implémentations NS1](https://github.com/niakw/ProsperoEden-Encore/issues/298).**
+
 ## 0. Revisions et règle de provenance
 
 | Élément | Révision/vérification |
@@ -199,3 +201,26 @@ La [bibliothèque technique NS1/NS2 du 20/11](https://github.com/niakw/ProsperoE
 - Les revues de versions de firmware, ABI service/commande, API graphique et couverture des titres NS1 restent à effectuer **sur appels réels**. Aucun badge « NS1 complet » ne serait défendable.
 - Aucun build natif, test PS5, nouveau instrument, nouveau pipeline parallèle ou modification du vendor `main` n'a été déclenché pour établir ce registre. L'objectif reste **un correctif C++ causal puis une scène console validée**.
 - Ne jamais convertir un statut **Q** en **D** simplement parce qu'un fichier n'est pas trouvé ou qu'une bibliothèque cite une API.
+
+## 9. Annexe d'exhaustivité locale — les 59 appels de rejet Maxwell de la TU native
+
+Provenance : [`not_implemented.cpp` actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/908ba2928b8b7aca75b2baeaedeebc9fb21ad282/encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp), retenu par [`gpu_native_observability.cmake`](https://github.com/niakw/ProsperoEden-Encore/blob/5d4455301211e9016e51244963760c3c9c1f3b97/headless/gpu_native_observability.cmake). Extraction des appels explicites `ThrowNotImplemented(Opcode::...)` : **59 occurrences, 59 noms distincts** dans la source actuelle. Ce n'est **pas** le nombre d'instructions SASS Maxwell absentes dans l'ensemble du compilateur : les visiteurs peuvent être atteints uniquement après lowering ou sur une variante que le jeu n'utilise pas.
+
+**Contrôle de flot et registres — 24 appels** : `B2R`, `BPT`, `BRA`, `BRK`, `CONT`, `CS2R`, `GETCRSPTR`, `GETLMEMBASE`, `JCAL`, `JMP`, `LD`, `LEPC`, `LONGJMP`, `PEXIT`, `PLONGJMP`, `PRET`, `R2B`, `RET`, `RTT`, `SETCRSPTR`, `SETLMEMBASE`, `ST`, `STP`, `SYNC`.
+
+**Calcul entier/vecteur — 21 appels** : `IDP_reg`, `IDP_imm`, `IMAD_reg`, `IMAD_rc`, `IMAD_cr`, `IMAD_imm`, `IMAD32I`, `IMADSP_reg`, `IMADSP_rc`, `IMADSP_cr`, `IMADSP_imm`, `IMUL_reg`, `IMUL_cbuf`, `IMUL_imm`, `IMUL32I`, `VABSDIFF`, `VABSDIFF4`, `VADD`, `VSET`, `VSHL`, `VSHR`.
+
+**Atomiques, texture et contrôle — 10 appels** : `ATOMS_cas`, `SUATOM_cas`, `CCTL`, `CCTLL`, `CCTLT`, `FCHK_reg`, `FCHK_cbuf`, `FCHK_imm`, `IDE`, `TXA`.
+
+**PRMT — 4 appels conditionnels** : `PRMT_reg`, `PRMT_rc`, `PRMT_cr`, `PRMT_imm`. Pour ces 4 formes, `mode == 0` dispose d'un code C++ réel ; les modes refusés ne doivent pas faire classer PRMT entier comme absent. Les autres appellations ci-dessus ne prouvent **pas** qu'un titre les exécute, que le front-end ne les transforme pas avant, ni que chaque rejet mérite un patch. **N'en tirer ni objectif numérique « finir 59 opcodes » ni promesse de FC27 réparé.**
+
+## 10. Couverture des comportements système : exemple de tests d'existence utiles
+
+- **SVC cache** : quatre méthodes marquées `UNIMPLEMENTED` dans `svc_cache.cpp`; ne pas oublier que `FlushProcessDataCache` est implémenté, avec vérification du handle et de la page table.
+- **SVC IO** : `CreateIoPool`, `CreateIoRegion`, `MapIoRegion`, `UnmapIoRegion` refusés. L'importance jeu dépend de leurs privilèges et de l'appel réel.
+- **Debug SVC** : les fonctions `DebugActiveProcess`, `BreakDebugProcess`, `TerminateDebugProcess`, `GetDebugEvent`, `ContinueDebugEvent`, `GetDebugThreadContext`, `SetDebugThreadContext`, `QueryDebugProcessMemory`, `ReadDebugProcessMemory`, `WriteDebugProcessMemory`, `SetHardwareBreakPoint` et `GetDebugThreadParam` apparaissent dans le module ; ne pas déduire qu'elles sont toutes nécessaires ou toutes absentes, inspecter le corps de chacune et leurs wrappers 64/32.
+- **Macro MME** : seuls les cas de `macro.cpp` aboutissant au `UNIMPLEMENTED_MSG` pour un opcode rencontré sont des lacunes de compatibilité actives ; un `TODO` d'optimisation de delay slot n'en est pas une automatiquement.
+- **Émetteurs SPIR-V** : le nombre de `throw` dans les émetteurs bound/bindless n'est pas le nombre d'échecs réels : la passe d'abaissement des ressources peut déplacer les opérations vers des émetteurs indexés avant émission.
+- **VIC** : source maintenue sélectionnée par CMake ; ne pas se fier aux commentaires du VIC historique si le correctif maintenu a modifié la branche. `TODO Alpha blending` reste vérifié dans la source maintenue.
+
+**Règle d'extension du registre** : une nouvelle ligne doit apporter *titre/version/commande ou instruction + SHA moteur/vendor + chemin de compilation + source primaire/upstream + cause vs hypothèse + critère d'image/latence console*. Sans cela, ajouter au maximum une question au cas existant et **ne pas relancer un audit général**.

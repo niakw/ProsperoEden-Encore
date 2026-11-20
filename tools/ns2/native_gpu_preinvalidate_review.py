@@ -22,6 +22,18 @@ def blob(content: str) -> str:
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 def recover_prior_memory_manager(actual: str) -> str:
+    # FC27 P1 merged physically touching DMA invalidation spans before
+    # BufferCache ownership claims, without changing page protection or the
+    # NVN shim. Peel only its exact 1739-byte audited addition before older
+    # syncpoint, range-cache and PTE historical parity checks.
+    if "A GPU-addressed CB_DATA batch may revisit" in actual:
+        assert blob(actual) == "4fc858082c9528520027cd416ac1a942dbce8bc5", (
+            "unreviewed merged P1 GPU invalidation owner")
+        added = "#ifdef PS5_NATIVE\n        // A GPU-addressed CB_DATA batch may revisit the same physical pages\n        // through separate GPU ranges or aliases. All writes have already\n        // reached guest memory, so combine ONLY overlapping/touching device\n        // intervals before the existing CPU-write ownership claim. This\n        // shortens GPU-held BufferCache/TextureCache work without moving\n        // page protection, skipping invalidation, or changing draw ordering.\n        // Keep disjoint physical ranges separate (including sparse mappings).\n        if (page_stash2.size() > 1) {\n            std::sort(page_stash2.begin(), page_stash2.end(),\n                      [](const auto& lhs, const auto& rhs) {\n                          return lhs.first < rhs.first;\n                      });\n            size_t retained = 0;\n            for (size_t read = 0, count = page_stash2.size(); read < count; ++read) {\n                const auto [addr, size] = page_stash2[read];\n                if (retained != 0 && size != 0) {\n                    auto& previous = page_stash2[retained - 1];\n                    // The GMMU returns valid, bounded device spans. The\n                    // subtraction also avoids comparing overflow-prone ends.\n                    const DAddr offset = addr - previous.first;\n                    if (previous.second != 0 && offset <= previous.second) {\n                        previous.second = std::max(previous.second,\n                                                   static_cast<size_t>(offset) + size);\n                        continue;\n                    }\n                }\n                page_stash2[retained++] = {addr, size};\n            }\n            page_stash2.resize(retained);\n        }\n#endif\n"
+        assert actual.count(added) == 1, "FC27 P1 physical invalidation hunk drift"
+        actual = actual.replace(added, "", 1)
+        assert blob(actual) == "46f0157cc2fd61e63220461261d851b8429ea4fd", (
+            "FC27 P1 GPU source predecessor parity")
     # Lichii 12125bc / vendor 8157c79 adds a read-only NVN syncpoint
     # virtual shim to this same maintained owner after the range-cache review.
     # Peel it first, proving the complete successor and predecessor blobs.

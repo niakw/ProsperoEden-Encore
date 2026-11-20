@@ -67,7 +67,7 @@ if selected in {"491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521
         ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp",
          "c65544f3a337b8ef5673041da07cafc7c1133ff5"),
         ("tests/ns2_gpu_identity_mapping_source.py",
-         ("955c5cbc1171d2d594d4bed1935280ca418365ce" if selected == "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef" else
+         ("955c5cbc1171d2d594d4bed1935280ca418365ce" if selected in {"b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3"} else
           "4f942ba7f8f75ac9d7501cecf5be17fa70903a52")),
     ):
         body = (V / relative).read_bytes()

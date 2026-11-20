@@ -106,7 +106,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # The reviewed intervening vendor DMA/image invalidation changes are
     # removed on this audit COPY only, to compare with the old frozen R23 tree.
     # Exact source before and normalized SHA1 were separately verified.
-    if exact_vendor_pin == '5351dd5c6bc9253ee742b589bc5c144bc70d0860':
+    if exact_vendor_pin == '2a450d43d1d23d3e8b1667e396613f62c69c26d7':
         assert raster_sha == '9da620ea3f4a4e0ab22e9747bf4e1058c09ce20b'
         new_batch = "    // No registered buffer page in this CPU-write batch means no buffer can\n    // own GPU bytes to claim. Avoid the buffer mutex entirely in that case.\n    // NeverRegistered is monotonic and fails closed on unknown address spans.\n    bool may_claim_buffer = false;\n    for (const auto& [addr, size] : ranges) {\n        if (addr != 0 && size != 0 && !::Eden::BufferPages::NeverRegistered(addr, size)) {\n            may_claim_buffer = true;\n            break;\n        }\n    }\n    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }"
         old_batch = "    {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }"

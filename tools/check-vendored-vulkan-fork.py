@@ -154,7 +154,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         assert raster_sha == '1c40cc3b968c76fc505f5cea63218b93e89b4529'
         print('ENCORE_EDEN4559_DRAWTEXTURE_EXACT_REVERSE_PASS')
     pair_vendor_pin = exact_vendor_pin
-    if pair_vendor_pin in {"ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c"}:
+    if pair_vendor_pin == '510f1efde545357fe8095a812df32251ee546285':
+        new_proxy = root / 'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp'
+        assert subprocess.check_output(
+            ['git', 'hash-object', str(new_proxy)], text=True).strip() == '1e6f2592e34845d9b9b3aa3d152c78c4fed66639', (
+            'Native NS2 appletOE cmd10 owner drift')
+    if pair_vendor_pin in {"ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"}:
         pair_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776"
     if pair_vendor_pin in {
         "c15cdfe96a3d836bf32ba21b8070088add81cdc9",

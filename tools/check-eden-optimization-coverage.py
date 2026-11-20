@@ -697,7 +697,7 @@ native_m2mf_owner = "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/co
 native_gpfifo_vendor_pin = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True).strip()
 native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_gpfifo_vendor_pin in {
-    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c"
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else native_gpfifo_vendor_pin
 # This SHA is a GitHub-reviewed single parent commit of 8e564f61,
 # changing precisely the maintained RomFSFactory + an isolated host test.
@@ -1149,7 +1149,7 @@ post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_le
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
-    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c"
+    "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else gpu_table_vendor_pin
 shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
 ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
@@ -1633,7 +1633,7 @@ vendor_head = subprocess.check_output(
 # MKW 1.8.0 GameChat successor changes only the three reviewed NS2
 # service owners below. Seal their exact bytes before replaying the older
 # shipping-backport applicability matrix from its ab417b59 parent.
-if vendor_head == "7fc673495b2ee18d5216023280057a42aa78d46c":
+if vendor_head in {"7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"}:
     for relative, expected in {
         "encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp":
             "ceb8b4afa7c0f19af3fe209fd8ca8d848a66d2cb",

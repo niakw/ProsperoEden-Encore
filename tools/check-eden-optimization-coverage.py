@@ -701,7 +701,12 @@ native_gpfifo_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if native_
 } else native_gpfifo_vendor_pin
 # The new NS2 IPC pin still selects the byte-identical reviewed M2MF
 # channel owner. Keep this owner covered by the F07 inventory.
-if native_gpfifo_vendor_pin == '2a450d43d1d23d3e8b1667e396613f62c69c26d7':
+if native_gpfifo_vendor_pin in {
+    '2a450d43d1d23d3e8b1667e396613f62c69c26d7',
+    '17c95ef233a9a0e508e50ada4ae9dc53a300c46c',
+    '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4',
+    'e0fced3a091495e70362d8c4ca072942f027af24',
+}:
     actual = subprocess.check_output(
         ['git', '-C', str(ROOT / 'vendor'), 'hash-object',
          'encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp'],

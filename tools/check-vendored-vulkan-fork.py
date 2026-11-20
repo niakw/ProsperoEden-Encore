@@ -85,7 +85,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         '0409c9a6b842ec50973d343cb628e21232382e41',
         '94aa8cd5214d17897391ede00534d7961b481171',
         '77df727e484154f3f3463b6eeec2dc6b23abb741',
-        'f836abf99bbd3c6480c35aa8392356f4e1b0bf51'
+        'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
+        '45919027d37145b3f7820a1067a48daf838d2984'
     }:
         transitions = {
             'vk_graphics_pipeline_cost.cpp': ('bae8f3c36fc4e595e9b630ca55cc50496468e173', '2834a18fe7638749ec83cc8f5feb1fcde6c71a9a', "void GraphicsPipeline::AddTransition(GraphicsPipeline* transition) {\n#ifdef PS5_NATIVE\n    // Only a fast-path hint: the canonical graphics_cache still owns ALL\n    // pipelines. A pipeline with hundreds of different successors must not\n    // accumulate unbounded state or scan every former successor on each miss.\n    // The two HUD/overlay hot indices remain pinned across ring replacement.\n    if (transition_keys.size() >= kNativeTransitionHintLimit) {\n        size_t slot = next_transition_replacement;\n        for (size_t skipped = 0; skipped < 2; ++skipped) {\n            if (slot != hot_transition_indices[0] &&\n                slot != hot_transition_indices[1]) break;\n            slot = (slot + 1) % kNativeTransitionHintLimit;\n        }\n        // Both vectors are already fully allocated here. Replacing a hint\n        // cannot invalidate a live shader pipeline or allocate GPU objects.\n        transition_keys[slot] = transition->key;\n        transitions[slot] = transition;\n        next_transition_replacement = (slot + 1) % kNativeTransitionHintLimit;\n        return;\n    }\n    // Before the hint ring is full, preserve the exception-safe pairing\n    // of keys and pointers on the GPU owner.\n    try {\n        transition_keys.push_back(transition->key);\n    } catch (...) {\n        return;\n    }\n#else\n    transition_keys.push_back(transition->key);\n#endif\n#ifdef PS5_NATIVE\n    try {\n        transitions.push_back(transition);\n    } catch (...) {\n        transition_keys.pop_back();\n        return;\n    }\n#else\n    transitions.push_back(transition);\n#endif\n}", "void GraphicsPipeline::AddTransition(GraphicsPipeline* transition) {\n#ifdef PS5_NATIVE\n    // Both appends are optional memoization. The canonical graphics cache\n    // already owns the target and will resolve a missing edge on demand.\n    try {\n        transition_keys.push_back(transition->key);\n    } catch (...) {\n        return;\n    }\n#else\n    transition_keys.push_back(transition->key);\n#endif\n#ifdef PS5_NATIVE\n    // Both arrays must describe the same transition index. An allocation\n    // failure while appending the pointer must not leave an orphaned key:\n    // Next() would later index past transitions and corrupt a guest draw.\n    try {\n        transitions.push_back(transition);\n    } catch (...) {\n        // Transition memoization is optional. The primary graphics cache\n        // already owns the pipeline; a later lookup can use its slow path.\n        // Do not abort a guest draw solely because this edge could not fit.\n        transition_keys.pop_back();\n        return;\n    }\n#else\n    transitions.push_back(transition);\n#endif\n}"),
@@ -115,7 +116,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # C++ blob and reverse only this hunk + include on the audit COPY.
     if subprocess.check_output(
         ['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True
-    ).strip() in {'94aa8cd5214d17897391ede00534d7961b481171', '77df727e484154f3f3463b6eeec2dc6b23abb741', 'f836abf99bbd3c6480c35aa8392356f4e1b0bf51'}:
+    ).strip() in {'94aa8cd5214d17897391ede00534d7961b481171', '77df727e484154f3f3463b6eeec2dc6b23abb741', 'f836abf99bbd3c6480c35aa8392356f4e1b0bf51', '45919027d37145b3f7820a1067a48daf838d2984'}:
         assert subprocess.check_output(
             ['git', 'hash-object', str(expected[native_cache_owner])],
             text=True).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41'
@@ -159,7 +160,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                                '0409c9a6b842ec50973d343cb628e21232382e41',
                                '94aa8cd5214d17897391ede00534d7961b481171',
                                '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                               'f836abf99bbd3c6480c35aa8392356f4e1b0bf51'}:
+                               'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
+                               '45919027d37145b3f7820a1067a48daf838d2984'}:
         assert raster_sha == '71d097b9a83028dfad9370792c905bb3bfccfd5a', raster_sha
         shared_method = "void RasterizerVulkan::TickFrame() {\n    draw_counter = 0;\n    guest_descriptor_queue.TickFrame();\n    compute_pass_descriptor_queue.TickFrame();\n    descriptor_buffer_ring.TickFrame();\n    fence_manager.TickFrame();\n    staging_pool.TickFrame();\n#ifdef PS5_NATIVE\n    // C01/C03: identify who holds the cache lock during frame housekeeping.\n    // One of 16 frames with detailed logging; no clocks or changed locks in\n    // quiet release. Wait and held intervals use disjoint timer scopes.\n    const bool frame_sample = ::Eden::Performance::ShouldSampleCacheFrame();\n#endif\n#ifdef PS5_NATIVE\n    // Both native caches share the same RADV/PS5 GPU-memory budget.\n    // Query ONCE before either guest cache mutex, retaining original\n    // texture and buffer GC thresholds and retirement ordering.\n    const std::optional<u64> frame_memory_usage =\n        texture_cache_runtime.CanReportMemoryUsage()\n            ? std::optional<u64>{texture_cache_runtime.GetDeviceMemoryUsage()}\n            : std::nullopt;\n#endif\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer texture_wait{\n            ::Eden::Performance::CachePhase::FrameTextureWait, frame_sample};\n#endif\n        std::scoped_lock lock{texture_cache.mutex};\n#ifdef PS5_NATIVE\n        texture_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer texture_held{\n            ::Eden::Performance::CachePhase::FrameTextureHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        texture_cache.TickFrame(frame_memory_usage);\n#else\n        texture_cache.TickFrame();\n#endif\n    }\n\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer buffer_wait{\n            ::Eden::Performance::CachePhase::FrameBufferWait, frame_sample};\n#endif\n        std::scoped_lock lock{buffer_cache.mutex};\n#ifdef PS5_NATIVE\n        buffer_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer buffer_held{\n            ::Eden::Performance::CachePhase::FrameBufferHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        buffer_cache.TickFrame(frame_memory_usage);\n#else\n        buffer_cache.TickFrame();\n#endif\n    }\n}\n"
         previous_method = "void RasterizerVulkan::TickFrame() {\n    draw_counter = 0;\n    guest_descriptor_queue.TickFrame();\n    compute_pass_descriptor_queue.TickFrame();\n    descriptor_buffer_ring.TickFrame();\n    fence_manager.TickFrame();\n    staging_pool.TickFrame();\n#ifdef PS5_NATIVE\n    // C01/C03: identify who holds the cache lock during frame housekeeping.\n    // One of 16 frames with detailed logging; no clocks or changed locks in\n    // quiet release. Wait and held intervals use disjoint timer scopes.\n    const bool frame_sample = ::Eden::Performance::ShouldSampleCacheFrame();\n#endif\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer texture_wait{\n            ::Eden::Performance::CachePhase::FrameTextureWait, frame_sample};\n#endif\n        std::scoped_lock lock{texture_cache.mutex};\n#ifdef PS5_NATIVE\n        texture_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer texture_held{\n            ::Eden::Performance::CachePhase::FrameTextureHeld, frame_sample};\n#endif\n        texture_cache.TickFrame();\n    }\n#ifdef PS5_NATIVE\n    // Poll the driver while neither guest cache mutex is held. CPU writes\n    // must not wait for the PS5 memory-budget callback every sampled frame.\n    const std::optional<u64> frame_memory_usage = buffer_cache.PollFrameMemoryUsage();\n#endif\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer buffer_wait{\n            ::Eden::Performance::CachePhase::FrameBufferWait, frame_sample};\n#endif\n        std::scoped_lock lock{buffer_cache.mutex};\n#ifdef PS5_NATIVE\n        buffer_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer buffer_held{\n            ::Eden::Performance::CachePhase::FrameBufferHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        buffer_cache.TickFrame(frame_memory_usage);\n#else\n        buffer_cache.TickFrame();\n#endif\n    }\n}\n"
@@ -302,7 +304,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                     '0409c9a6b842ec50973d343cb628e21232382e41',
                     '94aa8cd5214d17897391ede00534d7961b481171',
                     '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                    'f836abf99bbd3c6480c35aa8392356f4e1b0bf51'
+                    'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
+                    '45919027d37145b3f7820a1067a48daf838d2984'
                 } and name in {
                     'vk_graphics_pipeline_cost.cpp',
                     'include/video_core/renderer_vulkan/vk_graphics_pipeline.h'
@@ -799,7 +802,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                                   '0409c9a6b842ec50973d343cb628e21232382e41',
                                   '94aa8cd5214d17897391ede00534d7961b481171',
                                   '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                                  'f836abf99bbd3c6480c35aa8392356f4e1b0bf51'}:
+                                  'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
+                                  '45919027d37145b3f7820a1067a48daf838d2984'}:
             pinned_revision = subprocess.check_output(
                 ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
             base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
@@ -810,7 +814,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                                    '0409c9a6b842ec50973d343cb628e21232382e41',
                                    '94aa8cd5214d17897391ede00534d7961b481171',
                                    '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                                   'f836abf99bbd3c6480c35aa8392356f4e1b0bf51'}:
+                                   'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
+                                   '45919027d37145b3f7820a1067a48daf838d2984'}:
                 # CMake-selected PS5 source: one budget sample feeds two
                 # independently locked cache GC passes without a driver query
                 # in either critical section. Original fallback remains.

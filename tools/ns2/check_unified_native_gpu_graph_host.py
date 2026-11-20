@@ -42,6 +42,7 @@ with tempfile.TemporaryDirectory(prefix='encore-unified-gpu-') as directory:
         'hle/service/nvdrv/devices/nvhost_gpu.cpp',
         'hle/service/am/service/self_controller.cpp',
         'hle/service/ns/platform_service_manager.cpp',
+        'hle/service/friend/friend.cpp',
         'control/scheduler.cpp',
         'control/channel_state.cpp',
         'backend/spirv/spirv_emit_context.cpp',
@@ -67,7 +68,8 @@ add_library(core STATIC dummy.cpp
     hle/service/nvdrv/devices/nvhost_as_gpu.cpp
     hle/service/nvdrv/devices/nvhost_gpu.cpp
     hle/service/am/service/self_controller.cpp
-    hle/service/ns/platform_service_manager.cpp)
+    hle/service/ns/platform_service_manager.cpp
+    hle/service/friend/friend.cpp)
 add_library(video_core STATIC "{puller}" dummy.cpp control/scheduler.cpp control/channel_state.cpp)
 add_library(shader_recompiler STATIC dummy.cpp
     backend/spirv/spirv_emit_context.cpp

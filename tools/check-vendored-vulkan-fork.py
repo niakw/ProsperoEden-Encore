@@ -103,6 +103,22 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     raster_sha = raster_blob(raster_source)
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
+    # Share one GPU budget sample between native TextureCache and BufferCache.
+    # Reverse the exact reviewed TickFrame only on the historical audit copy.
+    if exact_vendor_pin == '3b824f1ced1148a3f12eb3727fbcba9309a160f8':
+        assert raster_sha == '71d097b9a83028dfad9370792c905bb3bfccfd5a', raster_sha
+        shared_method = "void RasterizerVulkan::TickFrame() {\n    draw_counter = 0;\n    guest_descriptor_queue.TickFrame();\n    compute_pass_descriptor_queue.TickFrame();\n    descriptor_buffer_ring.TickFrame();\n    fence_manager.TickFrame();\n    staging_pool.TickFrame();\n#ifdef PS5_NATIVE\n    // C01/C03: identify who holds the cache lock during frame housekeeping.\n    // One of 16 frames with detailed logging; no clocks or changed locks in\n    // quiet release. Wait and held intervals use disjoint timer scopes.\n    const bool frame_sample = ::Eden::Performance::ShouldSampleCacheFrame();\n#endif\n#ifdef PS5_NATIVE\n    // Both native caches share the same RADV/PS5 GPU-memory budget.\n    // Query ONCE before either guest cache mutex, retaining original\n    // texture and buffer GC thresholds and retirement ordering.\n    const std::optional<u64> frame_memory_usage =\n        texture_cache_runtime.CanReportMemoryUsage()\n            ? std::optional<u64>{texture_cache_runtime.GetDeviceMemoryUsage()}\n            : std::nullopt;\n#endif\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer texture_wait{\n            ::Eden::Performance::CachePhase::FrameTextureWait, frame_sample};\n#endif\n        std::scoped_lock lock{texture_cache.mutex};\n#ifdef PS5_NATIVE\n        texture_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer texture_held{\n            ::Eden::Performance::CachePhase::FrameTextureHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        texture_cache.TickFrame(frame_memory_usage);\n#else\n        texture_cache.TickFrame();\n#endif\n    }\n\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer buffer_wait{\n            ::Eden::Performance::CachePhase::FrameBufferWait, frame_sample};\n#endif\n        std::scoped_lock lock{buffer_cache.mutex};\n#ifdef PS5_NATIVE\n        buffer_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer buffer_held{\n            ::Eden::Performance::CachePhase::FrameBufferHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        buffer_cache.TickFrame(frame_memory_usage);\n#else\n        buffer_cache.TickFrame();\n#endif\n    }\n}\n"
+        previous_method = "void RasterizerVulkan::TickFrame() {\n    draw_counter = 0;\n    guest_descriptor_queue.TickFrame();\n    compute_pass_descriptor_queue.TickFrame();\n    descriptor_buffer_ring.TickFrame();\n    fence_manager.TickFrame();\n    staging_pool.TickFrame();\n#ifdef PS5_NATIVE\n    // C01/C03: identify who holds the cache lock during frame housekeeping.\n    // One of 16 frames with detailed logging; no clocks or changed locks in\n    // quiet release. Wait and held intervals use disjoint timer scopes.\n    const bool frame_sample = ::Eden::Performance::ShouldSampleCacheFrame();\n#endif\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer texture_wait{\n            ::Eden::Performance::CachePhase::FrameTextureWait, frame_sample};\n#endif\n        std::scoped_lock lock{texture_cache.mutex};\n#ifdef PS5_NATIVE\n        texture_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer texture_held{\n            ::Eden::Performance::CachePhase::FrameTextureHeld, frame_sample};\n#endif\n        texture_cache.TickFrame();\n    }\n#ifdef PS5_NATIVE\n    // Poll the driver while neither guest cache mutex is held. CPU writes\n    // must not wait for the PS5 memory-budget callback every sampled frame.\n    const std::optional<u64> frame_memory_usage = buffer_cache.PollFrameMemoryUsage();\n#endif\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer buffer_wait{\n            ::Eden::Performance::CachePhase::FrameBufferWait, frame_sample};\n#endif\n        std::scoped_lock lock{buffer_cache.mutex};\n#ifdef PS5_NATIVE\n        buffer_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer buffer_held{\n            ::Eden::Performance::CachePhase::FrameBufferHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        buffer_cache.TickFrame(frame_memory_usage);\n#else\n        buffer_cache.TickFrame();\n#endif\n    }\n}\n"
+        assert raster_source.count(shared_method) == 1
+        raster_source = raster_source.replace(shared_method, previous_method, 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == '41c1ff0f1b9c9f47e0414cfa77ef8de5c1165b3d', raster_sha
+        auditor = temp/'fc27-shared-graphics-budget-historical'/raster_owner
+        auditor.parent.mkdir(parents=True, exist_ok=True)
+        auditor.write_text(raster_source)
+        expected[raster_owner] = auditor
+        exact_vendor_pin = '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d'
+        print('ENCORE_FC27_SHARED_GPU_BUDGET_EXACT_REVERSE_PASS')
     # Native Vulkan memory-budget query moved outside the guest BufferCache
     # critical section. Reverse ONLY its SHA-sealed TickFrame method on an
     # audit copy before historical Vulkan fork replay.
@@ -703,14 +719,33 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 text=True).strip() in {'fd43897f59dafe34ff110259c9f872bfc1c474cb',
                                   'ffb78672112a00a8df1da033ff462baf7d3c4d31',
                                   '3b73e72d434fdd328c71ab37971f025f3ad8263b',
-                                  '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d'}:
+                                  '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d',
+                                  '3b824f1ced1148a3f12eb3727fbcba9309a160f8'}:
             pinned_revision = subprocess.check_output(
                 ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
             base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
             base_blob = subprocess.check_output(
                 ['git', 'hash-object', str(base_owner)], text=True).strip()
-            if pinned_revision == '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d':
-                # Verify each ACTIVE C++ byte and the exact GC-policy contract.
+            if pinned_revision == '3b824f1ced1148a3f12eb3727fbcba9309a160f8':
+                # CMake-selected PS5 source: one budget sample feeds two
+                # independently locked cache GC passes without a driver query
+                # in either critical section. Original fallback remains.
+                assert core_blob == '41239f19b9e16741d49e31145c504e0086b1095e', core_blob
+                assert base_blob == '716634290574ed4dfc8fd3be0d0ea0ad582980f8', base_blob
+                for relative, expected_blob in (
+                    ('encore-active/ns2-astc/include/video_core/texture_cache/texture_cache_base.h',
+                     'ce3e85dcb8e502b2763fa53689ae3e737cd0e708'),
+                    ('encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h',
+                     'c797eb9e3f4432b6ba19fe8a17a7289b23b75864'),
+                ):
+                    actual = subprocess.check_output(
+                        ['git', 'hash-object', str(root/'vendor'/relative)], text=True).strip()
+                    assert actual == expected_blob, ('native texture budget owner drift', relative, actual)
+                assert 'PollFrameMemoryUsage' not in core_owner.read_text()
+                assert 'total_used_memory = *externally_sampled_usage;' in core_owner.read_text()
+                core_blob = '1cf7484e07c1f6f86b4980a7489ab2d4784f9409'
+            elif pinned_revision == '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d':
+                # Previous independently verified off-lock BufferCache probe.
                 assert core_blob == 'b127ceea4006395e9b9bc9727c059dcfdf4a898d', core_blob
                 assert base_blob == '3da34e11ed76a400a6be6bab622191883610d672', base_blob
                 core_text = core_owner.read_text()
@@ -719,8 +754,6 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 assert 'total_used_memory = *externally_sampled_usage;' in core_text
                 assert 'total_used_memory = runtime.GetDeviceMemoryUsage();' in core_text
                 assert 'void TickFrame(std::optional<u64> externally_sampled_usage' in base_owner.read_text()
-                # Exact raw-source seals establish that only this reviewed
-                # native source delta was added to the previous CPU-claim owner.
                 core_blob = '1cf7484e07c1f6f86b4980a7489ab2d4784f9409'
             else:
                 assert core_blob == '1cf7484e07c1f6f86b4980a7489ab2d4784f9409', core_blob

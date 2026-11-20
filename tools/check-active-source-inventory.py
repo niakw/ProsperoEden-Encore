@@ -452,6 +452,8 @@ if r437_vendor_pin == "03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433":
         text=True).strip()
     assert actual_tree == "301f91c2ee0eb4e5d86baba9b1036c57f6d5aa04", ("Vendor revert tree drift", actual_tree)
     r437_vendor_pin = "eadc6e798def18417e50db6a03a291440429d795"
+# Keep the exact vendor source generation visible after historical R437 reversal.
+current_fc27_raster_source = r437_vendor_pin == "eadc6e798def18417e50db6a03a291440429d795"
 r437_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if r437_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else r437_vendor_pin
@@ -553,7 +555,7 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
             "daf493ce6e863397ec44bfae467c4f7533570477",
         "eden-vulkan/vulkan_rasterizer.cpp":
             ("f23ad861761d53b59b8c83ae6003c089ae688060"
-             if r437_vendor_pin == "eadc6e798def18417e50db6a03a291440429d795"
+             if current_fc27_raster_source
              else "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35"),
         "eden-core/src/core/file_sys/romfs_factory.cpp":
             "4775cf98c3bfbc587402928bad424dcb471047a0",

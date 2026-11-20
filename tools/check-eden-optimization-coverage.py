@@ -1184,6 +1184,13 @@ if post_f07_jxr_adapter_owners:
 post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
+# The selected vendor tree is byte-identical to the already-reviewed
+# FC27/GSV successor. Preserve this classification after historical
+# source-normalization changes gpu_table_vendor_pin to the F07 reference.
+current_fc27_nov20_tree = gpu_table_vendor_pin in {
+    "03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433",
+    "eadc6e798def18417e50db6a03a291440429d795",
+}
 if gpu_table_vendor_pin in {"03b264ee3e5ac7d7bbf89d3a9c51a3aff93a4433", "eadc6e798def18417e50db6a03a291440429d795"}:
     vendor_tree = subprocess.check_output(
         ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
@@ -1381,6 +1388,15 @@ assert pair_receipt["schema_version"] == 1 and pair_receipt["hardware_qualified"
 pair_new_owners = {"vendor/encore-active/" + p for p in pair_receipt["new_owners"]}
 assert len(pair_new_owners) == 2 and len(pair_receipt["files"]) == 14
 pair_present = pair_new_owners & all_owners
+current_fc27_nov20_pair_successor_blobs = dict(pair_receipt["files"])
+current_fc27_nov20_pair_successor_blobs["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = "d40082a0c849790d25a4d1d28e003087eefd84a1"
+current_fc27_nov20_pair_successor_blobs["eden-core/src/video_core/buffer_cache/buffer_cache_base.h"] = "7e1e2fb6a1a54571f3094d809e934312fbbd83b6"
+current_fc27_nov20_pair_successor_blobs["eden-core/src/video_core/gpu_gl_native.cpp"] = "8abd4f3652b4a10f27281a2fd43a3764bd6d5c6e"
+current_fc27_nov20_pair_successor_blobs["eden-core/src/video_core/gpu_gl_native_dev.cpp"] = "091431333f6f05e7e81c691051d64771cab4a5dd"
+current_fc27_nov20_pair_successor_blobs["eden-core/src/video_core/gpu_vulkan.cpp"] = "842a0289f75bc2a0763285173e4616060348ec22"
+current_fc27_nov20_pair_successor_blobs["eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h"] = "6467fd4d704de6b77deb7e6cba4b8e33f70f5a08"
+current_fc27_nov20_pair_successor_blobs["eden-vulkan/vulkan_rasterizer.cpp"] = "f23ad861761d53b59b8c83ae6003c089ae688060"
+current_fc27_nov20_pair_successor_blobs["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "3397cd39a3d35c1255802c4c3862584530f15cfe"
 current_pair_successor_blobs = {
     "eden-core/src/video_core/buffer_cache/buffer_cache.h": "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "bd424e728182500b573a4cc4cf07987ddc4cbdc3",
@@ -1419,6 +1435,15 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
     for path, blob in pair_receipt["files"].items():
         source_path = ROOT / "vendor/encore-active" / path
         raw = source_path.read_bytes()
+        if current_fc27_nov20_tree:
+            # Independent full-tree identity was already checked above.
+            # A complete 14-owner exact-source receipt extends—not erases—
+            # the Nov15 historical source oracle.
+            actual = subprocess.check_output(
+                ["git", "hash-object", str(source_path)], text=True).strip()
+            expected_blob = current_fc27_nov20_pair_successor_blobs[path]
+            assert actual == expected_blob, (path, actual, expected_blob)
+            continue
         if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}:
             # Newer focused fixes (FC27 sibling-page preservation, Duskbloods,
             # dynamic texture bounds and HSETP2 CBUF) are independently host

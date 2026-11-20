@@ -343,7 +343,7 @@ int main(){
     const std::array<GP::U32,2> completeBootstrap{0x75,0};
     const std::array<GP::U32,2> initGpu{417,0};
     const std::array<GP::U32,2> activateGpu{418,0};
-    const std::array<GP::U32,4> openGpu{0x201,2,4,0};
+    const std::array<GP::U32,4> openGpu{0x201,2,2,0};
     require(state.Complete(completeBootstrap)==GS::Status::InvalidState &&
             state.InitializeGpuContext(initGpu,401)==GS::Status::InvalidState &&
             state.CanOpenGpuSession(openGpu,true)==GS::Status::InvalidState,
@@ -399,6 +399,9 @@ int main(){
             state.CanOpenGpuSession(openGpu,true)==GS::Status::Success,
             "GPU session requires completed bootstrap and real NVDRV module");
     auto badOpen=openGpu;
+    badOpen[2]=4;
+    require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
+            "GSV 497 rejects the old, incorrect version 4");
     badOpen[2]=8;
     require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
             "GPU session opening rejects unsupported flags");

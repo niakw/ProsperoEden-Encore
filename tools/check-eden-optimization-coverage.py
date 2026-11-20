@@ -1829,6 +1829,36 @@ assert set(ns2_memory_sources) == {
     "src/core/hle/kernel/svc/svc_info.cpp",
     "src/core/hle/kernel/svc_types.h",
 }
+# Merge cohort: a complete vendor parent tree with eight reviewed
+# shipping-backport successors, including FW23 HLE and NS2 six-core GetInfo.
+# The historical 78-entry F07 register stays immutable. Compare both its
+# preceding source hash/size AND the manifest/active source on this pin.
+merged_p1_backport_successors = {
+    "src/common/net/net.cpp":
+        ("b359ea24cf97759de4e5599334a266190ae19ad480639c2400bdfc72d54bebc2", 9974,
+         "9d3d56b9fa6b4a47097aa32c18b42e8839c547915d3af19aa37830dd75ac5da8", 11862),
+    "src/core/device_memory_manager.h":
+        ("4f762c2d5560c9988c8842a8b461acb42e52c154cb8d4fc69e35248be1c82bc9", 11309,
+         "87ac22b80a44c637d01f031bb26ab573a000baba5b522269c1f6f2cd4e9ba17a", 11442),
+    "src/core/hle/kernel/svc_types.h":
+        ("d7160d1d89405a168a681cf3d261cd4e8089e786f2edb2041d7f932383458ac1", 14184,
+         "fe9c75c0a63cf3b5519de3790230e8828780dcd1988e023bc75dc5760d96cafd", 14838),
+    "src/core/hle/kernel/svc/svc_info.cpp":
+        ("b118f5e32d2dd711e9815bc85c94e0d10f7d0351a678c772b6d3535de3b4a317", 13479,
+         "c93ecde553212fd4b74858fb6e30aa99524b659ef909048f1325ca0cfc6a7849", 15845),
+    "src/core/hle/service/filesystem/fsp/fsp_srv.cpp":
+        ("14a61732f3a2a8092d2abf452e6929b8eb4e61c0cfc64d1dbe2d23e62cbd7740", 28654,
+         "17446c9eb530d62dded19cd174c876be4730a4f845e3fa891d40f45dfd606a60", 28814),
+    "src/core/hle/service/ngc/ngc.cpp":
+        ("b9cf8214632e08bff84017434bebe544b33b9405fea59259037df7775fb9a557", 5938,
+         "afae15d9fc27afccce5f830aae5e7f040ef70d5135a719e210bdadf35af54bc8", 10435),
+    "src/core/hle/service/ns/application_manager_interface.cpp":
+        ("ee52174d4d317d7a2f931ffd4192b1eb49321fc7e266c808e99e5739da694e97", 44323,
+         "763fc78e61b64ef26649a375225dcc395ab971c0b654f8b2e94b3bb0edcd4ff5", 48191),
+    "src/core/hle/service/ns/application_manager_interface.h":
+        ("63db35276eed6a82a2f6bc0ad05dd75e2d481fb947c8ab839587853d45e29a33", 5373,
+         "9e58227eb0aa757c801a9b5fbd46cf6679fe97d2a615aa87e0d6993865eda400", 6279),
+}
 for e in entries:
     if e["disposition"]!="shipping_backport_integrated_previously":
         continue
@@ -1840,7 +1870,13 @@ for e in entries:
     assert hashlib.sha256(active.read_bytes()).hexdigest()==record["active"]
     assert active.stat().st_size==record["bytes"]
     assert e["shipping_upstream_sha256"]==record["upstream"]
-    if e["shipping_relpath"] in r23_fw23_successors:
+    if (vendor_head in {"01c942171fea39c1f7cf31d13ab36895aebb593a",
+                        "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109"} and
+            e["shipping_relpath"] in merged_p1_backport_successors):
+        old_sha, old_size, new_sha, new_size = merged_p1_backport_successors[e["shipping_relpath"]]
+        assert (e["shipping_active_sha256"], e["shipping_bytes"]) == (old_sha, old_size)
+        assert (record["active"], record["bytes"]) == (new_sha, new_size)
+    elif e["shipping_relpath"] in r23_fw23_successors:
         old_sha,old_size,new_sha,new_size = r23_fw23_successors[e["shipping_relpath"]]
         assert (e["shipping_active_sha256"],e["shipping_bytes"]) == (old_sha,old_size)
         expected_active = (new_sha,new_size)

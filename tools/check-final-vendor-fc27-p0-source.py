@@ -67,8 +67,31 @@ REVIEWED_PINS.add("997b4885c045469f09dedf2a5f4e69995a5b1c9a")
 REVIEWED_PINS.add("9eefc8f5131350e8ddfb11e617e2e25007925212")
 REVIEWED_PINS.add("29350dfa0049885d953ad206fd3ce2b163140cdb")
 REVIEWED_PINS.add("bb6285e1998989101adbdc6adecbf9c1e1c17ec0")
+REVIEWED_PINS.add("1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+# Prepared NS2 consolidation, still NOT a published main or console pass.
+# Git's exact pinned commit ID seals its full tree; these seven changed
+# compiled/test blobs are additionally checked before selecting the same
+# native source-profile receipts as the fully recorded predecessor.
+if selected == "1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "284e754886ef59e73120cfa2b8fb691eddc51707"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h", "5f3ebf592001119c9686657600066d62db344524"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "5be598819854a43c929d570d0a0f6234c1a829e8"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "f57925efd8b032f64b7bc979f8fe4f2765fb66bf"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "9d5e1666c015db72c3fa4f8ea501d7c68f826991"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "256ad36db2562e4895842a0c2034a83311bbfcbc"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 prepared source drift", relative, actual)
+    # The prepared commit descends directly from the reviewed public vendor
+    # and changes only these seven owners; all earlier source fingerprints
+    # are encoded in the immutable pinned vendor commit tree.
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
 # Native NVDRV A:0x0D remap / 4K kind-change successor. Verify the
 # exact three current files, then replay inherited immutable source stamps.
 if selected == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
@@ -234,6 +257,18 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if gitlink_vendor_pin == "1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc":
+        prepared = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "284e754886ef59e73120cfa2b8fb691eddc51707",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5be598819854a43c929d570d0a0f6234c1a829e8",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "tests/ns2_gpu_identity_mapping_source.py": "256ad36db2562e4895842a0c2034a83311bbfcbc",
+        }
+        if relative in prepared:
+            return prepared[relative]
     if gitlink_vendor_pin == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
         exact = {
             "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "e120fcee7c85ad7a874c8ffc10f2b3804b707199",

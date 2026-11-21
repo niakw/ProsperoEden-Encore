@@ -49,6 +49,7 @@ REVIEWED_PINS.add("889b142aa5616d3d00733a7cc1db1562eed291f4")
 REVIEWED_PINS.add("201b09121ebbfe0a37a56710b2b7ac118ae5acbb")
 REVIEWED_PINS.add("713e18162cf9a0d629cd39ae00b43fb55f9c2823")
 REVIEWED_PINS.add("35d639ad802910cfabbaf46bdcfd48a0d2f09ab6")
+REVIEWED_PINS.add("f66969397724ab8467c3380ca9c6db1631f79bf3")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 # Preserve the active AS/GMMU owner revision during recursive source-pin
@@ -59,6 +60,18 @@ ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f1
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# GSV's KScopedAutoObject is a mutable scoped handle: its only operator->
+# is non-const. Fix the *compiled* GSV1/1401/496 C++ locals without altering
+# TIPC buffer admission, GPU identity or any NS1 source. Replay the exact
+# prior complete source receipt after validating the one changed TU.
+if selected == "f66969397724ab8467c3380ca9c6db1631f79bf3":
+    relative = "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
+    raw = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "5aced8f423f654a3ed4648a711ee2fe4b95c118c", ("NS2 GSV scoped handle TU drift", actual)
+    selected = "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"
+    original_vendor_pin = selected
+
 # NS2 native channel retirement is now a *GPU-worker* operation.
 # This seal includes the pre-existing GA10F, NVCore session and AS owners
 # plus the exact scheduler, GPU, NVDRV and source regression changed here.

@@ -40,6 +40,8 @@ MAINTAINED_CORE_TARGETS = (
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_add.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_multiply.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_add.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp",
     "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp",
     "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp",
     "vendor/encore-active/eden-threading/src/core/hle/kernel/k_condition_variable.cpp",

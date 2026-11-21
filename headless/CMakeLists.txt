@@ -1011,6 +1011,28 @@ if(PS5_NATIVE)
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_image_atomic_sources}")
 endif()
 
+# NS1 storage image descriptor arrays: the maintained context declares
+# OpTypeArray descriptors and the maintained image emitter enforces bounded
+# constant indices plus feature-gated non-uniform dynamic indexing.
+if(PS5_NATIVE)
+    set(EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp")
+    if(NOT EXISTS "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")
+        message(FATAL_ERROR "Missing maintained NS1 SPIR-V image descriptor emitter")
+    endif()
+    get_target_property(eden_ns1_image_descriptor_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_image_descriptor_sources
+         "backend/spirv/emit_spirv_image.cpp"
+         eden_ns1_image_descriptor_pinned)
+    if(eden_ns1_image_descriptor_pinned LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V image descriptor owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_image_descriptor_sources
+         "backend/spirv/emit_spirv_image.cpp")
+    list(APPEND eden_ns1_image_descriptor_sources "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_image_descriptor_sources}")
+endif()
+
 # NS1 Maxwell numeric FP min/max: select the single maintained SPIR-V emitter.
 # FMin/FMax leave a NaN operand undefined; the NVIDIA guest selects the
 # numeric operand.  The reviewed NMin/NMax translation is also understood by

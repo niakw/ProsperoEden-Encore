@@ -208,4 +208,18 @@ assert "old >= limit ? 0 : old + 1" in image_atomic
 assert "old == 0 || old > limit ? limit : old - 1" in image_atomic
 assert 'throw NotImplementedException("Image indexing")' in image_atomic
 assert "backend/spirv/emit_spirv_image_atomic.cpp" in sample_cmake
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET + PIXLD.CovMask SampleMask + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")
+
+image_descriptor=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp").read_text()
+assert 'DescType(*this, image_type, pointer_type, desc.count)' in sample_spirv_ctx
+assert sample_spirv_ctx.count('DescType(*this, image_type, pointer_type, desc.count)') >= 2
+assert 'CheckedTextureArrayIndex(EmitContext& ctx' in image_descriptor
+assert 'Image descriptor array index out of range' in image_descriptor
+assert 'Dynamic image descriptor requires non-uniform indexing support' in image_descriptor
+assert 'CheckedAtomicImageIndex(EmitContext& ctx' in image_atomic
+assert 'Atomic image descriptor array index out of range' in image_atomic
+assert 'Dynamic atomic image descriptor requires non-uniform indexing support' in image_atomic
+assert 'ctx.OpAccessChain(def.pointer_type, def.id, idx)' in image_atomic
+assert 'ctx.uses_nonuniform_storage_image = true' in image_atomic
+assert 'ctx.uses_nonuniform_storage_texel_buffer = true' in image_atomic
+assert "backend/spirv/emit_spirv_image.cpp" in sample_cmake
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET + PIXLD.CovMask SampleMask + bounded storage image arrays + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")

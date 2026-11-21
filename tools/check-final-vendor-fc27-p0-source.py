@@ -56,18 +56,20 @@ REVIEWED_PINS.add("258914fc564e223274728b409ee48e39465df7f6")
 REVIEWED_PINS.add("932dc1b3c09b172322d65432c26cc017b4922266")
 REVIEWED_PINS.add("5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf")
 REVIEWED_PINS.add("d4508480fc859cb7a6cb97f259caefe1cd18ba54")
+REVIEWED_PINS.add("e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
-native_gpu_alias_guard_revision = selected == "d4508480fc859cb7a6cb97f259caefe1cd18ba54"
-native_sparse_small_4k_revision = selected in {"5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54"}
-native_video_pool_991_revision = selected in {"932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54"}
-native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54"}
+native_rounded_unmap_revision = selected == "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"
+native_gpu_alias_guard_revision = selected in {"d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"}
+native_sparse_small_4k_revision = selected in {"5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"}
+native_video_pool_991_revision = selected in {"932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"}
+native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"}
 # Preserve exact GSV source identity across historical receipt replays. The
 # real 1402 child is NS2-only and can precede GPU session 497; both C++
 # revisions fix the same compiled scoped-handle type.
-native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54"}
-native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54"}
-native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54"}
+native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"}
+native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"}
+native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"}
 native_gsv_active_cpp = "a806f2a6d2c9689a8b1e24f0c292a8d95c0d29a7" if native_video_pool_991_revision else "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
 native_gsv_active_test = "ae41e4bc89b33e455381f25470717af6766cd0b3" if native_video_pool_991_revision else "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
 # Preserve the active AS/GMMU owner revision during recursive source-pin
@@ -80,6 +82,11 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if native_rounded_unmap_revision:
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "d9a041b6d0f203e54942632943337f9e92eea6be"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "ea8899dc76834e8c83eb6527187c32661c5fedfd"
     if native_gpu_alias_guard_revision:
         if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
             return "1b99bac6d3a7831833fa1471523c6714f08c4496"
@@ -98,6 +105,22 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # NvCore session are closed; then revoke its process epoch once. Keep the
 # exact new real owner/test blobs and replay the complete earlier reviewed
 # source graph for all unaffected units.
+# Match Allocate()'s rounded page span at NS2 dynamic UnmapBuffer,
+# preserving the existing Maxwell path and all previous exact receipts.
+if native_rounded_unmap_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "d9a041b6d0f203e54942632943337f9e92eea6be"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "ea8899dc76834e8c83eb6527187c32661c5fedfd"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), (
+            "NS2 dynamic GPU VA unmap rounding source drift", relative, actual)
+    selected = "d4508480fc859cb7a6cb97f259caefe1cd18ba54"
+    original_vendor_pin = selected
+
 # Native NS2 fixed GPU mappings cannot overwrite a live mapping or
 # accept a foreign NVMap owner; stale unmap tokens cannot dereference a
 # freed mapping. Seal the two changed blobs before replaying the 4K gate.

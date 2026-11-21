@@ -2381,9 +2381,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # verified FC27 vendor rewind (not the shipping renderer).
     dma_raster = 'vulkan_rasterizer.cpp'
     current_raster = (active / dma_raster).read_text()
+    # The raw owner now contains reviewed GPU-30 plus GPU-22. Keep the complete
+    # shipping blob SHA strict; the later generator-only reversals establish
+    # byte equivalence with the frozen historic baseline.
     assert git_blob_sha(current_raster) == (
-        '771e922890142b1f0d39f935bbf0be1a478e0f9e'), (
-        'Unreviewed GPU-22 shipping Vulkan rasterizer bytes')
+        'fdd5a73ccf795fd58100469c546b544a86a68e5b'), (
+        'Unreviewed GPU-22/GPU-30 shipping Vulkan rasterizer bytes')
     generated_raster = normalized_generated[dma_raster].read_text()
     gpu22_dma_hunks = (
         ('      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),',

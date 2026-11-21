@@ -76,7 +76,9 @@ jobs:
       - name: Check DMA BufferCache to TextureCache ownership (host UBSan)
         run: python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
       - name: Check maintained Maxwell shader and control-flow source parity
-        run: python3 -B tools/check-maintained-maxwell-prmt.py
+        run: |
+          python3 -B tools/check-maintained-maxwell-prmt.py
+          python3 -B tools/check-fc27-ssbo-engine-selection.py
       - name: Check native Maxwell GPU source contracts and TIC/TSC bounds
         run: |
           python3 -B tools/check-gpu-native-diagnostics.py

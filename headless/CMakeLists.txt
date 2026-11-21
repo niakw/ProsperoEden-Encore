@@ -1722,6 +1722,27 @@ if(PS5_NATIVE)
     message(STATUS "FC27 SSBO: selected reviewed failed-search pruning pass")
 endif()
 
+# NS1 GPU-53 / Lichii #295: large SSBO accesses must not use a vector
+# view when minStorageBufferOffsetAlignment is smaller than the access.
+# Keep vendor/sources/eden immutable and select one reviewed maintained TU.
+if(PS5_NATIVE)
+    set(EDEN_NS1_SSBO_ALIGNMENT_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp")
+    if(NOT EXISTS "${EDEN_NS1_SSBO_ALIGNMENT_SOURCE}")
+        message(FATAL_ERROR "NS1 SSBO alignment emitter missing")
+    endif()
+    get_target_property(eden_ns1_ssbo_emit_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_ssbo_emit_sources
+         "backend/spirv/emit_spirv_memory.cpp" eden_ns1_ssbo_emit_index)
+    if(eden_ns1_ssbo_emit_index LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V memory emitter owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_ssbo_emit_sources "backend/spirv/emit_spirv_memory.cpp")
+    list(APPEND eden_ns1_ssbo_emit_sources "${EDEN_NS1_SSBO_ALIGNMENT_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_ssbo_emit_sources}")
+    message(STATUS "NS1 GPU-53: selected aligned SSBO SPIR-V emitter")
+endif()
+
 # R23 #131 and #109 are ALREADY shipped by versioned Eden backports.
 # Never override those real prepared sources with old headless copies:
 # the latter also concealed the FW23 dynamic library-applet version cap.

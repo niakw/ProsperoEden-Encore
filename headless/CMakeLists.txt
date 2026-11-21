@@ -989,6 +989,28 @@ if(PS5_NATIVE)
     endforeach()
 endif()
 
+# NS1 image atomic Inc32/Dec32: select the maintained SPIR-V emitter with
+# an inline image-pointer CAS loop. Descriptor-array indexing remains a
+# separate fail-closed concern and is not silently folded into this fix.
+if(PS5_NATIVE)
+    set(EDEN_NS1_IMAGE_ATOMIC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp")
+    if(NOT EXISTS "${EDEN_NS1_IMAGE_ATOMIC_SOURCE}")
+        message(FATAL_ERROR "Missing maintained NS1 SPIR-V image atomic emitter")
+    endif()
+    get_target_property(eden_ns1_image_atomic_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_image_atomic_sources
+         "backend/spirv/emit_spirv_image_atomic.cpp"
+         eden_ns1_image_atomic_pinned)
+    if(eden_ns1_image_atomic_pinned LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V image atomic owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_image_atomic_sources
+         "backend/spirv/emit_spirv_image_atomic.cpp")
+    list(APPEND eden_ns1_image_atomic_sources "${EDEN_NS1_IMAGE_ATOMIC_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_image_atomic_sources}")
+endif()
+
 # NS1 Maxwell numeric FP min/max: select the single maintained SPIR-V emitter.
 # FMin/FMax leave a NaN operand undefined; the NVIDIA guest selects the
 # numeric operand.  The reviewed NMin/NMax translation is also understood by

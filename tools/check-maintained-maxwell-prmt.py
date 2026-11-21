@@ -198,4 +198,14 @@ for sample_unit in (
     "frontend/maxwell/translate/impl/pixel_load.cpp",
 ):
     assert sample_unit in sample_cmake
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET + PIXLD.CovMask SampleMask, unsupported forms fail-closed")
+image_atomic=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp").read_text()
+assert "Id ImageAtomicCasU32(" in image_atomic
+assert "OpAtomicLoad(ctx.U32[1], pointer, scope, semantics)" in image_atomic
+assert "OpAtomicCompareExchange(ctx.U32[1], pointer, scope, semantics" in image_atomic
+assert "ImageCasOperation::Increment" in image_atomic
+assert "ImageCasOperation::Decrement" in image_atomic
+assert "old >= limit ? 0 : old + 1" in image_atomic
+assert "old == 0 || old > limit ? limit : old - 1" in image_atomic
+assert 'throw NotImplementedException("Image indexing")' in image_atomic
+assert "backend/spirv/emit_spirv_image_atomic.cpp" in sample_cmake
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET + PIXLD.CovMask SampleMask + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")

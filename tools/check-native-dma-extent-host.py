@@ -112,7 +112,7 @@ for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
     assert token in helper, token
 end_anchor='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert expected.count(end_anchor)==1
-expected=expected.replace(end_anchor,helper+end_anchor,1)
+expected=expected.replace(end_anchor,'\n'+helper+end_anchor,1)
 launch_start='    if (launch.remap_enable != 0 &&'
 launch_end='    if (launch.multi_line_enable) {'
 assert native.count(launch_start)==1

@@ -47,6 +47,9 @@ REVIEWED_PINS.add("9bd8de9081cc5ad431ecfc62696e9a6f8f2d1ffc")
 REVIEWED_PINS.add("2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
+# Preserve the active AS/GMMU owner revision during recursive source-pin
+# replay: the GA10F controller itself is unchanged but binds this new AS TU.
+native_as_lease_revision = selected == "2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f"
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
@@ -105,7 +108,9 @@ if selected in {"788badb79f0566c56f51e64fb9aa727f72fdb065", "0015d90da841622e164
         ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "1db3172a604b9aed2c64765a84786d675029f6eb"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
-        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "ca0574dc36e56ad727c63552231872002465bc99"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "dda472d0cf7277f870540758243d242ee7fe80eb" if native_as_lease_revision else
+         "ca0574dc36e56ad727c63552231872002465bc99"),
         ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
     ):
         raw = (V / relative).read_bytes()

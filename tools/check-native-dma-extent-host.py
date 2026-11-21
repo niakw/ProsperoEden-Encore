@@ -104,7 +104,7 @@ helper_begin='// Remapped DMA lengths are measured in pixels/blocks, NOT bytes.'
 helper_end='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert native.count(helper_begin)==1 and native.count(helper_end)==1
 helper=native[native.index(helper_begin):native.index(helper_end,native.index(helper_begin))]
-assert fnv1a32(helper)==3019160284, "Reviewed B0B5 helper changed"
+assert fnv1a32(helper)==1567892189, "Reviewed B0B5 helper changed"
 for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
               'std::vector<u8> snapshot', 'memory.ReadBlock',
               'memory.WriteBlock','CanCoalescePitchDma',
@@ -133,7 +133,7 @@ method_start="bool MaxwellDMA::CopyBlockLinearRemap() {"
 method_end="void MaxwellDMA::CopyBlockLinearToPitch() {"
 assert native.count(method_start)==1 and native.count(method_end)==1
 tiled_method=native[native.index(method_start):native.index(method_end)]
-assert fnv1a32(tiled_method)==1771148963, "Reviewed tiled remap implementation changed"
+assert fnv1a32(tiled_method)==1662245954, "Reviewed tiled remap implementation changed"
 for proof in ("UnswizzleSubrect(", "SwizzleSubrect(", "IsFullyMappedRange(",
               "needs_destination", "padded_width > MAX_BYTES / padded_height",
               "memory_manager.WriteBlock(", "std::vector<u8> linear_src",

@@ -89,7 +89,7 @@ print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
 assert blob(ORIG_VIC)=="1a89f3de06981f95be9e5dc743a7c36b8ab6c4cf"
 if CAND_VIC.exists():
     assert CAND_SOURCE.is_file() and CAND_HEADER.is_file()
-    assert blob(CAND_VIC)=="0654943759ea879cd538d96edbb36f809fcd0bfe"
+    assert blob(CAND_VIC)=="5d588f50f363160df5c999978ab0f12a1a0a44dd"
     vic_text=CAND_VIC.read_text()
     ff_text=CAND_SOURCE.read_text()
     assert vic_text.count("EDEN_NVDEC_STAGE stage=vic_input")==2

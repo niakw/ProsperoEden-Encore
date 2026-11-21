@@ -115,6 +115,26 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
 
+    # GPU-50 (Lichii #2047): reverse only the reviewed Maxwell DMA cache
+    # notification on an audit COPY; shipping NS1 retains granular coherency.
+    # GPU-49 and older Vulkan receipts must compare against their exact owner.
+    gpu50_owner='vulkan_rasterizer.cpp'
+    gpu50_shipped=expected[gpu50_owner].read_text()
+    def gpu50_blob(data):
+        raw=data.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+    assert gpu50_blob(gpu50_shipped)=="8473aa19cd3cdcf8546dce994ceb69cbee2b1220", 'GPU-50 raster owner drift'
+    gpu50_new_method="bool AccelerateDMA::BufferCopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {\n    // Invalid DMA byte counts have no GPU buffer range; return to the\n    // software path without contending on the guest buffer cache mutex.\n    if (amount == 0 || amount > static_cast<u64>(~u32{0})) {\n        return false;\n    }\n    // A buffer DMA updates guest memory without invoking the texture-cache\n    // CPU-write callback. Hold both cache locks over the ownership decision\n    // and copy so another thread cannot publish a newer image in between.\n    // Lichii c84935f / 47d2368 / 36bfb77: only invalidate destination images\n    // whose latest bytes are already in guest memory. Skip the unsafe case\n    // rather than uploading stale CPU bytes over GPU-owned image contents.\n    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n    bool copied_gpu_bytes = false;\n    boost::container::small_vector<std::pair<DAddr, size_t>, 4> gpu_written_dest;\n    if (!buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes,\n                              &gpu_written_dest)) {\n        return false;\n    }\n    if (gpu_memory && gpu_memory->UsesNativeTiling()) {\n        // GPU-50 is an NS1 Maxwell coherency fix. Keep the separately owned\n        // native-tiling/NS2 policy byte-for-byte equivalent to its old guard.\n        if (!copied_gpu_bytes &&\n            !texture_cache.IsGpuMemoryGpuModified(src_address, amount) &&\n            !texture_cache.IsGpuMemoryGpuModified(dest_address, amount)) {\n            texture_cache.WriteGpuMemory(dest_address, amount);\n        }\n    } else {\n        texture_cache.WriteDmaCopy(src_address, dest_address, static_cast<size_t>(amount),\n                                   gpu_written_dest);\n    }\n    return true;\n}\n"
+    gpu50_old_method="bool AccelerateDMA::BufferCopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {\n    // Invalid DMA byte counts have no GPU buffer range; return to the\n    // software path without contending on the guest buffer cache mutex.\n    if (amount == 0 || amount > static_cast<u64>(~u32{0})) {\n        return false;\n    }\n    // A buffer DMA updates guest memory without invoking the texture-cache\n    // CPU-write callback. Hold both cache locks over the ownership decision\n    // and copy so another thread cannot publish a newer image in between.\n    // Lichii c84935f / 47d2368 / 36bfb77: only invalidate destination images\n    // whose latest bytes are already in guest memory. Skip the unsafe case\n    // rather than uploading stale CPU bytes over GPU-owned image contents.\n    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n    bool copied_gpu_bytes = false;\n    if (!buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes)) {\n        return false;\n    }\n    if (!copied_gpu_bytes &&\n        !texture_cache.IsGpuMemoryGpuModified(src_address, amount) &&\n        !texture_cache.IsGpuMemoryGpuModified(dest_address, amount)) {\n        texture_cache.WriteGpuMemory(dest_address, amount);\n    }\n    return true;\n}\n"
+    assert gpu50_shipped.count(gpu50_new_method)==1, 'GPU-50 method hunk drift'
+    gpu50_predecessor=gpu50_shipped.replace(gpu50_new_method,gpu50_old_method,1)
+    assert gpu50_blob(gpu50_predecessor)=="6cb282532b308478ca0d9237d399fe4259e42fca", 'GPU-50 predecessor mismatch'
+    gpu50_audit=temp/'normalized-vendor-gpu50'/gpu50_owner
+    gpu50_audit.parent.mkdir(parents=True,exist_ok=True)
+    gpu50_audit.write_text(gpu50_predecessor)
+    expected[gpu50_owner]=gpu50_audit
+    print("ENCORE_NS1_GPU50_DMA_TEXTURE_EXACT_REVERSE_PASS")
+
     # GPU-49 (Lichii #353) is newer than the frozen Vulkan generator receipts.
     # Reverse its exact production hunks on audit COPIES, proving every owner
     # reconstructs its immediate GPU-48/GPU-47 predecessor byte-for-byte.

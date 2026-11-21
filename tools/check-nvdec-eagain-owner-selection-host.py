@@ -89,7 +89,7 @@ print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
 assert blob(ORIG_VIC)=="1a89f3de06981f95be9e5dc743a7c36b8ab6c4cf"
 if CAND_VIC.exists():
     assert CAND_SOURCE.is_file() and CAND_HEADER.is_file()
-    assert blob(CAND_VIC)=="0b5ace8ef926afdc273b3af1b9e61ec3ddb4814e"
+    assert blob(CAND_VIC)=="fc13345d573a1ca2c59e0af5c33aa6f59eedbd62"
     vic_text=CAND_VIC.read_text()
     ff_text=CAND_SOURCE.read_text()
     assert vic_text.count("EDEN_NVDEC_STAGE stage=vic_input")==2
@@ -117,6 +117,13 @@ if CAND_VIC.exists():
     assert vic_text.count("const size_t dst = static_cast<size_t>(y) * out_surface_width + rect_left;") == 2
     assert vic_text.count("_mm_loadu_si128(") >= 4
     assert vic_text.count("_mm_storeu_si128(") >= 4
+    # A guest FFmpeg frame's NV12 plane, odd-width decoded Pixel row or
+    # mapped output address is not guaranteed to be 16-byte aligned.
+    # All VIC SIMD byte accesses must use the unaligned SSE intrinsics.
+    assert "_mm_load_si128(" not in vic_text
+    assert "_mm_store_si128(" not in vic_text
+    assert vic_text.count("_mm_loadu_si128(") == 21
+    assert vic_text.count("_mm_storeu_si128(") == 18
     assert vic_text.count("CheckedVicPlane(") == 4
     assert "out_chroma_stride < (static_cast<u64>(surface_width) + 1) / 2 * 2" in vic_text
     assert "out_chroma_height < (static_cast<u64>(surface_height) + 1) / 2" in vic_text
@@ -346,3 +353,71 @@ with tempfile.TemporaryDirectory(prefix="encore-vic-planes-") as folder:
         subprocess.run([str(exe)],check=True,timeout=20)
 print("NS1_VIC_PLANE_HOST_PASS native_geometry=1 oversized_rejected=1 "
       "bad_gob_rejected=1 valid_4k=1 odd_width_UV=1 last_row=1 O0_O2=2 ASan_UBSan=1")
+
+# GPU-34: compile the exact four reviewed intrinsics from the maintained
+# VIC on deliberately 8-byte/1-byte-offset memory, with SSE4.1 + ASan.
+# The previous _mm_load/store_si128 assumed 16-byte alignment not supplied
+# by odd decoded Pixel row strides or guest NV12/luma destinations.
+VIC_SSE=CAND_VIC.read_text()
+tested_statements=(
+    "auto pixel01 = _mm_loadu_si128((__m128i*)&inp[src + x + 0]);",
+    "_mm_storeu_si128((__m128i*)&slot_surface[dst + x + 0], yuv01);",
+    "chroma = _mm_loadu_si128((__m128i*)&chroma_u_buffer[src_chroma + x]);",
+    "_mm_storeu_si128((__m128i*)&out[dst + x * 4 + 0], pixels0_lo);",
+)
+for statement in tested_statements:
+    assert VIC_SSE.count(statement)==1, statement
+sse_cpp=r"""
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <immintrin.h>
+using u8=std::uint8_t;
+using u16=std::uint16_t;
+struct Pixel {u16 r{},g{},b{},a{};};
+int main() {
+    alignas(16) std::array<Pixel,10> input{};
+    for(std::size_t i=0;i<input.size();++i) input[i].r=u16(i+1);
+    const Pixel* inp=input.data();
+    std::size_t src=1,x=0;
+    assert((reinterpret_cast<std::uintptr_t>(&inp[src]) & 15)==8);
+__LOAD__
+    alignas(16) std::array<Pixel,10> slot_surface{};
+    const std::size_t dst=1;
+    const auto yuv01=pixel01;
+    assert((reinterpret_cast<std::uintptr_t>(&slot_surface[dst]) & 15)==8);
+__STORE__
+    assert(slot_surface[dst].r==input[src].r);
+    alignas(16) std::array<u8,32> nv12{};
+    for(std::size_t i=0;i<nv12.size();++i) nv12[i]=u8(i);
+    const u8* chroma_u_buffer=nv12.data();
+    const std::size_t src_chroma=1;
+    __m128i chroma{};
+__NV12__
+    alignas(16) std::array<u8,80> output{};
+    u8* out=output.data();
+    const std::size_t dst_bytes=1;
+    const auto pixels0_lo=chroma;
+    assert((reinterpret_cast<std::uintptr_t>(&out[dst_bytes]) & 15)==1);
+__ABGR__
+    assert(output[dst_bytes]==nv12[src_chroma]);
+}
+""".replace("__LOAD__",tested_statements[0]).replace("__STORE__",tested_statements[1])
+# The scalar source expression uses a dst index shared with the Pixel
+# fixture; the ABGR byte stream uses its own byte-index value.
+sse_cpp=sse_cpp.replace("__NV12__",tested_statements[2])
+sse_cpp=sse_cpp.replace("__ABGR__",tested_statements[3].replace("out[dst + x * 4", "out[dst_bytes + x * 4"))
+compiler=shutil.which("clang++-18") or shutil.which("clang++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-vic-sse-") as folder:
+    source=Path(folder)/"vic-sse.cpp"
+    source.write_text(sse_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(folder)/("sse-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20","-msse4.1",opt,
+                        "-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_VIC_SSE_UNALIGNED_HOST_PASS NV12_unaligned=1 Pixel_stride8=1 "
+      "ABGR_byte_offset=1 ASan_UBSan=1 O0_O2=2")

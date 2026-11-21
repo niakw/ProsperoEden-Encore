@@ -448,15 +448,24 @@ Ces commandes sont documentées par SwitchBrew mais restent **hors P0 boot/gamep
 
 SwitchBrew publie aussi des ioctls S2 `/dev/nvhost-dbg-gpu` dont plusieurs n’ont pas encore de nom (`0x4008441F`, `0x00004420`, `0xC0184421`, `0xC0184429`, `0x4010442A`, `0x4010442B`) ainsi que des variantes S2 nommées pour MMU/SM/HWPM. **Statut initial Encore : M/U** sauf preuve contraire future. Ils ne sont pas prioritaires pour MKW/Bananza et ne doivent pas détourner du chemin GSV→NVDRV→GPFIFO.
 
-## 14. Écarts structurels les plus importants à traiter
+## 14. Arbitrage final de couverture source NS2 (sans faux succès)
 
-1. **P0 GPU submission** : la séquence Ounce observée est couverte au niveau source des handles GSV/VM jusqu’à `SUBMIT_GPFIFO2`. Priorité suivante : qualification PS5 MKW/Bananza et correction du **premier écart runtime réellement observé**, pas USERD/doorbell sans preuve.
-2. **TSG scheduler** : ENABLE/DISABLE partagent maintenant l’état runnable réel avec le channel. Interleave/timeslice sont sûrs avant bind et le getter est complet ; restent reload post-bind, PREEMPT, event TSG, erreur SM et politique L2.
-3. **GSV GPU** : la revue Ounce a confirmé **423**, **434** et **498**. Le seul point encore ambigu ici est **437** : le nom public existe, mais le SDK observé réalise le chemin `CreateNativeMemoryWithGpukMemHandle` via raw `0x1B7` → TIPC 423; ne pas créer un handler 437 sans paquet raw `0x1C5` prouvé.
-4. **Vidéo** : décodeur largement couvert ; `210 remote-memory` manque. **Encodeur** pratiquement absent, et les IDs UserSession `1001/1002` sont raccordés à un chemin qui ressemble encore au décodeur.
-5. **Display** : six IDs publiés sans sémantique suffisante restent U.
-6. **Camera/Adraw/InterModuleImage** : nombreuses commandes connues mais non implémentées ; priorité basse tant qu’elles ne bloquent pas un titre retail.
-7. **Version 19.x worker** : commandes 201–205/207 à implémenter seulement si le firmware invité réellement ciblé les exige ; la présence d’une ancienne numérotation SwitchBrew n’est pas un bug en soi.
+Le critère de sortie **source** est borné au boot, au GPU, à la mémoire, aux IPC et aux services réellement sélectionnés pour les titres NS2 ciblés. Ce classement ne constitue **pas** une promesse de couverture exhaustive du firmware : les 96 observations du 20/11 n'étaient pas 96 bugs démontrés.
+
+| Sous-système | Décision de portée | Condition qui rouvrirait une correction |
+| --- | --- | --- |
+| **P0 GSV → VM → NVDRV → GPFIFO** | Source native sélectionnée couverte jusqu'à SUBMIT_GPFIFO2, y compris ownership, fail-closed, remplacements sparse 214, OOM partielle et sessions ; **non qualifiée sur console** | Log du Title ID montrant le premier IPC ou GPU submit rejeté / bloqué, ou anomalie causale dans le C++ réellement compilé |
+| **GSV cmd 437** | **U : hors implémentation P0** ; aucun paquet TIPC raw 0x1C5 observé. Le client Ounce connu utilise cmd 423 raw 0x1B7 pour la création native requise | Paquet 437 réel et ABI associée, sans inférer à partir du seul nom |
+| **NVGPU CHANNEL_SETUP_BIND** | Noyau/runlist/GPFIFO effectifs côté source ; USERD/doorbell utilisateur explicitement NotImplemented. Ne pas fabriquer de token | Preuve d'un canal utilisateur/doorbell réellement utilisé par MKW/Bananza |
+| **TSG** | ENABLE/DISABLE, interleave et timeslice pré-bind effectifs. Reload post-bind, PREEMPT, EVENT_ID_CTRL, état SM et politique L2 laissés partiels ou fail-closed | IPC/ioctl observé et blocage de scheduler imputable au chemin exact |
+| **GSV vidéo** | Décodeur sélectionné ; remote-memory 210 non implémenté. **Encodeur 1001/1002 correctement aiguillé vers UnavailableVideoEncoder, pas vers le décodeur** : NotImplemented explicite | Utilisation effective d'un encodeur ou du buffer distant 210 par un titre ciblé |
+| **Display** | IDs 13, 53, 107, 113, 301, 302 : **U**, format/effet public insuffisant. Pas de lecture spéculative ni de retour Success | Paquet raw et sémantique reproduits sur jeu réel |
+| **Camera / Adraw / InterModuleImage / debug / profiling** | Non nécessaires au P0 prouvé ; laisser les fonctions absentes ou fail-closed. Aucun stub Success | Preuve d'utilisation indispensable au démarrage/gameplay |
+| **Variantes worker firmware 19.x** | Numérotation/ABI versionnée hors périmètre si le firmware invité ciblé utilise le chemin actuel | Title ID / version et commande raw imposant l'autre variante |
+
+**Mémoire GPU 214/215/216 :** la lecture des propriétaires sélectionnés montre que le remap prépare les tables et les pins avant de modifier les PTE ; une OOM pendant la modification empoisonne l'AS et interdit une nouvelle mutation. Le worker doit alors garder les pages CPU aliasées, le handle NVMap et sa session, car le dernier FreeHandle ou CloseSession pourrait retirer un backing encore pointé par des PTE partielles. En dehors de cette quarantaine exceptionnelle, le rollback normal conserve le comportement de libération. Le test hôte exécutable est dans tools/ns2/check_native_gpu_worker_sparse_ipc_host.py ; **ne pas annoncer ce contrat validé avant son exécution verte sur le couple exact**.
+
+**Règle de clôture :** une limitation U/M/P connue mais sans chemin prouvé n'impose pas une implémentation hypothétique ; une corruption mémoire, un faux succès HLE, une ABI démontrée incorrecte ou un blocage observé sur un chemin actif interdit la clôture. L'issue NS2 #123 et les tests PS5 restent requis pour valider les titres.
 
 ## 15. État console / critère de fermeture
 

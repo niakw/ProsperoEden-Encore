@@ -2360,6 +2360,49 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             normalized.parent.mkdir(parents=True, exist_ok=True)
             normalized.write_text(raw)
             normalized_expected[name] = normalized
+    # The final full-source parity compares a historical R23/P04 audit copy.
+    # GPU-22's actual native rasterizer is SHA-pinned above and STILL contains
+    # the live-channel GMMU continuity guard. Reverse these THREE exact newer
+    # C++ hunks on the generated AUDIT COPY only, matching the previously
+    # verified FC27 vendor rewind (not the shipping renderer).
+    dma_raster = 'vulkan_rasterizer.cpp'
+    current_raster = (active / dma_raster).read_text()
+    assert git_blob_sha(current_raster) == (
+        '771e922890142b1f0d39f935bbf0be1a478e0f9e'), (
+        'Unreviewed GPU-22 shipping Vulkan rasterizer bytes')
+    generated_raster = normalized_generated[dma_raster].read_text()
+    gpu22_dma_hunks = (
+        ('      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),',
+         '      accelerate_dma(buffer_cache, texture_cache, scheduler),'),
+        ('AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n'
+         '                             Scheduler& scheduler_, Tegra::MemoryManager* const& gpu_memory_)\n'
+         '    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_},\n'
+         '      gpu_memory{gpu_memory_} {}',
+         'AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n'
+         '                             Scheduler& scheduler_)\n'
+         '    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_} {}'),
+        ('#ifdef PS5_NATIVE\n'
+         '    // ObtainBuffer translates only the first GPU VA into one CPU interval.\n'
+         '    // A buffer spanning noncontiguous GMMU pages would upload/download\n'
+         '    // unrelated physical memory. The normal MaxwellDMA CPU fallback\n'
+         '    // supports a page-aware transfer for both image-copy directions.\n'
+         '    // Test the channel currently bound to this rasterizer; no stale GMMU.\n'
+         '    if (!gpu_memory ||\n'
+         '        (!gpu_memory->IsGranularRange(buffer_operand.address, checked_bytes) &&\n'
+         '         !gpu_memory->IsContinuousRange(buffer_operand.address, checked_bytes))) {\n'
+         '        return false;\n'
+         '    }\n'
+         '#endif\n', ''),
+    )
+    for modern, old in gpu22_dma_hunks:
+        assert generated_raster.count(modern) == current_raster.count(modern) == 1, (
+            'GPU-22 current/native C++ continuity guard drift')
+        generated_raster = generated_raster.replace(modern, old, 1)
+    historical_raster = temp / 'normalized-generated-gpu22' / dma_raster
+    historical_raster.parent.mkdir(parents=True, exist_ok=True)
+    historical_raster.write_text(generated_raster)
+    normalized_generated[dma_raster] = historical_raster
+    print('ENCORE_NS1_GPU22_GENERATOR_CPP_EXACT_REVERSE_PASS')
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

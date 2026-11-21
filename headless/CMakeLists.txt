@@ -3695,6 +3695,12 @@ if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     endif()
     target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"
         "${EDEN_NS2_GPU_WORKER_SOURCE}" "${EDEN_NS2_GPU_SHARED_SOURCE}")
+    # gpu_session.cpp owns the bounded parent TIPC command admission receipt.
+    # Core is not globally PS5_NATIVE, so without this source-local definition
+    # a native package cannot distinguish GPU-session progress from a generic
+    # SVC 0x21 SendSyncRequest. This changes observability only, not handlers.
+    set_property(SOURCE "${EDEN_NS2_GPU_SESSION_SOURCE}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")
     # The selected worker owns native-only, bounded GPU command/failure
     # receipts. Core is not globally PS5_NATIVE: without a TU-local flag
     # these blocks disappear from the actual PS5 binary (R457 2b0975f7).

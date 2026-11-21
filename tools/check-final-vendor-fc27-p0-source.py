@@ -191,7 +191,8 @@ if selected == NS2_GPFIFO_FLAGS_PIN:
     for relative, expected in NS2_GPFIFO_FLAGS_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 native GPFIFO2 reply-flags source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), (
+            "NS2 native GPFIFO2 reply-flags source drift", relative, actual)
     # Everything else is byte-identical to the reviewed Switch error-state pin.
     shipping_vendor_pin = NS2_CHANNEL_ERROR_PIN
     selected = NS2_CHANNEL_ERROR_PIN

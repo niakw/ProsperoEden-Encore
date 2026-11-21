@@ -425,6 +425,99 @@ Exemples de NULL à ne pas masquer : LaunchApplicationOld (19), TerminateApplica
 
 Le service ERPT n'est pas prioritaire devant un blocage boot/GPU, mais ses trous doivent rester visibles pour la complétude firmware.
 
+
+## A.16 VI / NVDRV — SB-CURRENT
+
+### VI
+
+Les root-service tables inspectées ont leurs variantes `GetDisplayServiceWithProxyNameExchange` NULL (application cmd 1 ; manager/system cmd 3). Les commandes fatal du manager root 100–103 sont également NULL.
+
+**Ne pas conclure « VI absent »** : le vrai display service et Nvnflinger vivent dans d'autres propriétaires déjà actifs. Ces lignes signifient seulement que les variantes root/proxy-name correspondantes ne sont pas raccordées dans ces tables.
+
+### NVDRV
+
+`nvdrv_interface.cpp` principal : **11/14 handlers**.
+
+| Cmd | Fonction | Statut |
+|---:|---|---|
+| 0 | Open | SRC |
+| 1 | Ioctl | SRC |
+| 2 | Close | SRC |
+| 3 | Initialize | SRC |
+| 4 | QueryEvent | SRC |
+| 5 | MapSharedMem | **NULL** |
+| 6 | GetStatus | SRC |
+| 7 | SetAruidForTest | **NULL** |
+| 8 | SetAruid | SRC |
+| 9 | DumpGraphicsMemoryInfo | SRC |
+| 10 | InitializeDevtools | **NULL** |
+| 11/12 | Ioctl2 / Ioctl3 | SRC |
+| 13 | SetGraphicsFirmwareMemoryMarginEnabled | SRC |
+
+Les commandes `Ioctl*` ne prouvent pas la couverture des ioctls device : les tables nvmap/nvhost/as-gpu/gpu restent à qualifier séparément.
+
+## A.17 Time — SB-CURRENT
+
+La StaticService inspectée possède **19/19 handlers** : clocks user/network/steady/local, timezone, shared-memory handle, correction automatique, snapshots et calculs de différence/span.
+
+**Statut : SRC**, pas OK-PS5. La couverture de fonctions ne prouve ni la précision du clock source PS5, ni le comportement de toutes les variantes firmware.
+
+## A.18 NIFM — SB-CURRENT
+
+| Sous-interface inspectée | Handlers / total | Lecture |
+|---|---:|---|
+| ScanRequest | **5/5** | SRC |
+| Request | **9/26** | PARTIEL |
+| profile update/persist table | **0/3** | NULL |
+| GeneralService | **26/49** | PARTIEL |
+| service factory | **2/2** | SRC |
+
+Dans GeneralService, les fonctions courantes profil/interface/IP/Wi-Fi/Ethernet/status sont en grande partie raccordées. Restent notamment sleep/wakeup, telemetry, shutdown, allowed channels, wired availability et network-emulation/debug. **Le réseau PS5 et la politique d'isolation guest restent une couche distincte.**
+
+## A.19 NFP / Mii — SB-CURRENT
+
+### NFP
+
+Les trois services créateurs inspectés (user/system/debug) raccordent leur commande 0 de création d'interface. Les interfaces retournées doivent être suivies séparément : **créateur présent ≠ toutes les opérations Amiibo présentes**.
+
+### Mii
+
+- DatabaseService principal : **25/27 handlers** ; Import(18) et Export(19) NULL.
+- autre table database/image inspectée : **2/14 handlers**, le reste largement NULL.
+
+Les renommages/ajouts HOS 23.x doivent être suivis via SwitchBrew courant, car les noms historiques peuvent diverger.
+
+## A.20 BCAT — SB-CURRENT
+
+`bcat_service.cpp` inspecté : **5/26 handlers**. Raccordés : RequestSyncDeliveryCache (10100), RequestSyncDeliveryCacheWithDirectoryName (10101), SetPassphrase (30100), RegisterSystemApplicationDeliveryTasks (30300), ClearDeliveryCacheStorage (90201). Les autres commandes de tâches/notifiers/listes/log sont majoritairement NULL.
+
+**Statut : PARTIEL**, priorité seulement si un titre/log l'exerce.
+
+## A.21 USB / PTM / PSM / APM — SB-CURRENT
+
+### USB
+
+La plupart des interfaces USB inspectées sont entièrement NULL : device-side endpoints/control, host interface/session, PD/notice/topology et manufacture. Deux petites factories raccordent seulement `OpenSession` / `OpenCradleSession`.
+
+**Statut global : NULL/PARTIEL**. Faible priorité pour les jeux retail sauf preuve d'appel.
+
+### PTM/PSM
+
+- PTM Vdd50 : **0/3 handlers**, OpenSession table **0/1**.
+- PSM state-change session : **5/5 handlers**.
+- PSM service principal : **6/19 handlers** ; charge, charger type, session, voltage state, battery age/info présents ; charging control et plusieurs events restent NULL.
+
+### APM
+
+- session/performance configuration tables de base : **6/6 handlers** au total.
+- autre interface APM inspectée : **3/8 handlers**, cinq commandes de mode/throttling/settings NULL.
+
+## A.22 SM controller
+
+Le contrôleur de domaine/service inspecté possède **5/6 handlers** : ConvertCurrentObjectToDomain, CloneCurrentObject, QueryPointerBufferSize, CloneCurrentObjectEx et SetPointerBufferSize sont raccordés ; CopyFromCurrentDomain (cmd 1) est NULL.
+
+Cela complète la surface du contrôleur IPC, mais **pas encore** la qualification de la table `sm:` elle-même (RegisterClient/GetService/RegisterService/UnregisterService).
+
 ---
 
 # PARTIE B — Inventaire automatisé Eden / baseline SwIPC historique

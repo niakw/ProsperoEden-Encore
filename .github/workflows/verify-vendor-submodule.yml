@@ -16,6 +16,7 @@ on:
       - 'tools/check-nvdec-eagain-owner-selection-host.py'
       - 'tools/check-ps5-active-texture-descriptor-host.py'
       - 'tools/check-texture-convert-volume-host.py'
+      - 'tools/check-fc27-f07-blit-pipeline-state-host.py'
       - 'tools/check-native-host1x-register-reentrant-host.py'
       - 'tools/vendor-eden-cpm.py'
       - 'tools/check-ns2-uuid-abi.py'
@@ -40,6 +41,7 @@ on:
       - 'tools/check-nvdec-eagain-owner-selection-host.py'
       - 'tools/check-ps5-active-texture-descriptor-host.py'
       - 'tools/check-texture-convert-volume-host.py'
+      - 'tools/check-fc27-f07-blit-pipeline-state-host.py'
       - 'tools/check-native-host1x-register-reentrant-host.py'
       - 'tools/vendor-eden-cpm.py'
       - 'tools/check-ns2-uuid-abi.py'
@@ -74,6 +76,7 @@ jobs:
           python3 -B tools/check-gpu-native-diagnostics.py
           python3 -B tools/check-ps5-active-texture-descriptor-host.py
           python3 -B tools/check-texture-convert-volume-host.py
+          python3 -B tools/check-fc27-f07-blit-pipeline-state-host.py
       - name: Verify selected Fermi2D source parity and pitch layer C++ guards (ASan UBSan)
         run: |
           python3 -B tools/check-maintained-fermi2d-variants.py

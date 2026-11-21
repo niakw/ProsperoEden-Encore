@@ -292,3 +292,90 @@ with tempfile.TemporaryDirectory(prefix="fc27-f07-raw-vertex-") as td:
             subprocess.run(args, check=True, capture_output=True, text=True)
             subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 print("FC27_F07_RAW_BLIT_PIPELINE_INVALIDATION_PASS source_extracted=3 raw_blit_avoids_guest_shader=1 alpha_state_avoids_cold_shader=2 desktop_original=1 O0=1 O2=1")
+
+
+# GPU-46: framebuffer layers are bounded by the smallest Vulkan attachment,
+# and clears are clipped to that exact framebuffer layer count. Lichii #38 /
+# Eglantine #293 reproduced the old max-layer policy as a Vulkan validation
+# failure/device loss. Compile the selected policy under sanitizers.
+texture_header=(root/"vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h").read_text()
+texture_cpp=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+clear_source=raster
+assert "[[nodiscard]] u32 Layers() const noexcept" in texture_header
+assert "u32 layers = 1;" in texture_header
+assert "s32 num_layers = (std::numeric_limits<s32>::max)();" in texture_cpp
+assert texture_cpp.count("num_layers = (std::min)(num_layers, color_buffer->range.extent.layers);")==1
+assert texture_cpp.count("num_layers = (std::min)(num_layers, depth_buffer->range.extent.layers);")==1
+assert "layers = static_cast<u32>((std::max)(num_layers, 1));" in texture_cpp
+assert "CreateVkFramebuffer(runtime, attachments, layers);" in texture_cpp
+assert "CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n                                      layers, extent);" in texture_cpp
+for token in (
+    "const u32 framebuffer_layers = framebuffer->Layers();",
+    "const u32 clear_base_layer = regs.clear_surface.layer;",
+    "if (layer_count == 0 || clear_base_layer >= framebuffer_layers)",
+    "(std::min)(layer_count, framebuffer_layers - clear_base_layer)",
+    "clear_base_layer == 0 && clear_layer_count == framebuffer_layers",
+    ".baseArrayLayer = clear_base_layer,",
+    ".layerCount = clear_layer_count,",
+    "clear_covers_all_layers &&",
+):
+    assert token in clear_source, token
+assert "regs.clear_surface.layer == 0 &&" not in fragment(
+    clear_source, "void RasterizerVulkan::Clear(u32 layer_count) {",
+    "\nnamespace {\nconstexpr VkMemoryBarrier COMPUTE_WRITE_BARRIER")
+# The native forced-MSAA candidate must reason about the clipped layer range.
+assert "can_defer_clear && !ds_used && clear_layer_count == 1 &&" in clear_source
+assert "framebuffer_layers == 1 &&" in clear_source
+
+layer_cpp=r"""
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <limits>
+using u32=std::uint32_t; using s32=std::int32_t;
+
+u32 FramebufferLayers(const std::array<s32,8>& colors, s32 depth) {
+    s32 num_layers=(std::numeric_limits<s32>::max)();
+    for(s32 layer:colors) {
+        if(layer>0) num_layers=(std::min)(num_layers,layer);
+    }
+    if(depth>0) num_layers=(std::min)(num_layers,depth);
+    if(num_layers==(std::numeric_limits<s32>::max)()) num_layers=1;
+    return static_cast<u32>((std::max)(num_layers,1));
+}
+struct ClearRange { u32 base{},count{}; bool all{}; };
+ClearRange Clip(u32 base,u32 requested,u32 framebuffer_layers) {
+    if(requested==0 || base>=framebuffer_layers) return {};
+    const u32 count=(std::min)(requested,framebuffer_layers-base);
+    return {base,count,base==0 && count==framebuffer_layers};
+}
+int main() {
+    assert(FramebufferLayers({1,0,0,0,0,0,0,0},4)==1);
+    assert(FramebufferLayers({4,2,0,0,0,0,0,0},8)==2);
+    assert(FramebufferLayers({4,0,0,0,0,0,0,0},0)==4);
+    assert(FramebufferLayers({},0)==1);
+
+    auto a=Clip(0,4,1); assert(a.base==0 && a.count==1 && a.all);
+    auto b=Clip(2,4,4); assert(b.base==2 && b.count==2 && !b.all);
+    auto c=Clip(1,0,4); assert(c.count==0 && !c.all);
+    auto d=Clip(4,1,4); assert(d.count==0 && !d.all);
+    auto e=Clip(0,1,4); assert(e.count==1 && !e.all);
+    auto f=Clip(0,4,4); assert(f.count==4 && f.all);
+    auto g=Clip(1,(std::numeric_limits<u32>::max)(),4);
+    assert(g.base==1 && g.count==3 && !g.all);
+}
+"""
+compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-fb-layers-gpu46-") as td:
+    source=Path(td)/"layers.cpp"; source.write_text(layer_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(td)/("layers-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_VULKAN_FRAMEBUFFER_LAYER_BOUNDS_HOST_PASS active_owner=1 min_attachment=1 "
+      "mixed_samples=1 clear_clip=1 outside_skip=1 overflow_safe=1 "
+      "partial_not_deferred=1 full_deferred=1 O0_O2=2 ASan_UBSan=1")

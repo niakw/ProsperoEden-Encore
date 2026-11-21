@@ -955,6 +955,40 @@ if(PS5_NATIVE)
     endforeach()
 endif()
 
+# NS1 PIXLD.CovMask: select the complete maintained SampleMask chain.
+# SPIR-V is the production guest backend; GLSL is implemented as well.
+# GLASM remains explicit fail-closed, matching the reviewed upstream state.
+if(PS5_NATIVE)
+    set(EDEN_NS1_SAMPLE_MASK_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+    set(eden_ns1_sample_mask_units
+        backend/spirv/emit_spirv_context_get_set.cpp
+        backend/spirv/spirv_emit_context.cpp
+        frontend/maxwell/translate/impl/pixel_load.cpp)
+    if(ENABLE_OPENGL)
+        list(APPEND eden_ns1_sample_mask_units
+            backend/glasm/emit_glasm_context_get_set.cpp
+            backend/glsl/emit_glsl_context_get_set.cpp)
+    endif()
+    foreach(eden_ns1_sample_mask_unit IN LISTS eden_ns1_sample_mask_units)
+        set(eden_ns1_sample_mask_source
+            "${EDEN_NS1_SAMPLE_MASK_ROOT}/${eden_ns1_sample_mask_unit}")
+        if(NOT EXISTS "${eden_ns1_sample_mask_source}")
+            message(FATAL_ERROR "Missing maintained NS1 SampleMask source: ${eden_ns1_sample_mask_unit}")
+        endif()
+        get_target_property(eden_ns1_sample_mask_sources shader_recompiler SOURCES)
+        list(FIND eden_ns1_sample_mask_sources
+             "${eden_ns1_sample_mask_unit}"
+             eden_ns1_sample_mask_pinned)
+        if(eden_ns1_sample_mask_pinned LESS 0)
+            message(FATAL_ERROR "Pinned SampleMask owner changed: ${eden_ns1_sample_mask_unit}")
+        endif()
+        list(REMOVE_ITEM eden_ns1_sample_mask_sources "${eden_ns1_sample_mask_unit}")
+        list(APPEND eden_ns1_sample_mask_sources "${eden_ns1_sample_mask_source}")
+        set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_sample_mask_sources}")
+    endforeach()
+endif()
+
 # NS1 Maxwell numeric FP min/max: select the single maintained SPIR-V emitter.
 # FMin/FMax leave a NaN operand undefined; the NVIDIA guest selects the
 # numeric operand.  The reviewed NMin/NMax translation is also understood by

@@ -170,4 +170,32 @@ assert "EdenGpuBoundedSample" not in fermi_default, "shipping Fermi2D has unused
 assert helper.strip() in fermi_experiment, "experimental Fermi2D lost its bounded sample helper"
 assert "set(gpu_bounded_sample_helper [=[" not in module
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in module
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET, unsupported forms fail-closed")
+# PIXLD.CovMask is a cross-file IR/backend contract. Keep the production
+# SPIR-V chain and its fail-closed GLASM sibling together in the existing
+# maintained-Maxwell gate instead of adding another standalone checker.
+sample_pixel=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp").read_text()
+sample_ir=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/ir/ir_emitter.cpp").read_text()
+sample_opcodes=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/ir/opcodes.inc").read_text()
+sample_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/shader_info.h").read_text()
+sample_collect=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
+sample_spirv=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
+sample_spirv_ctx=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+sample_glsl=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp").read_text()
+sample_glasm=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp").read_text()
+sample_cmake=(root/"headless/CMakeLists.txt").read_text()
+assert "case Mode::CovMask:" in sample_pixel and "ir.SampleMask()" in sample_pixel
+assert "U32 IREmitter::SampleMask()" in sample_ir
+assert "OPCODE(SampleMask," in sample_opcodes
+assert "bool uses_sample_mask{};" in sample_info
+assert "case IR::Opcode::SampleMask:" in sample_collect
+assert "ctx.input_sample_mask" in sample_spirv
+assert "spv::BuiltIn::SampleMask" in sample_spirv_ctx
+assert "gl_SampleMaskIn[0]" in sample_glsl
+assert "// not implemented yet on Encore" in sample_glasm
+for sample_unit in (
+    "backend/spirv/emit_spirv_context_get_set.cpp",
+    "backend/spirv/spirv_emit_context.cpp",
+    "frontend/maxwell/translate/impl/pixel_load.cpp",
+):
+    assert sample_unit in sample_cmake
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET + PIXLD.CovMask SampleMask, unsupported forms fail-closed")

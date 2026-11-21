@@ -40,7 +40,7 @@ unmap=extract(cache,"void TextureCache<P>::UnmapGPUMemory(size_t as_id, GPUVAddr
               "\ntemplate <class P>\nbool TextureCache<P>::BlitImage(")
 alias=extract(cache,"void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",
               "\ntemplate <class P>\nvoid TextureCache<P>::PrepareImage(")
-coalesce=extract(dma,"constexpr bool CanCoalescePitchDma(","\n}\n} // namespace")+"\n}"
+coalesce=extract(dma,"constexpr bool CanCoalescePitchDma(","\n}\n\n// Remapped DMA lengths")+"\n}"
 launch=extract(dma,"void MaxwellDMA::Launch() {","\nvoid MaxwellDMA::CopyBlockLinearToPitch()")
 pitch=extract(launch,"            u64 contiguous_bytes = 0;\n            if (CanCoalescePitchDma(",
              "        } else {\n            if (!is_src_pitch && is_dst_pitch)")

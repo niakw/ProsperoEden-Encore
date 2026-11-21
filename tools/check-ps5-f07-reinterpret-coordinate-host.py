@@ -74,6 +74,10 @@ constexpr VkImageAspectFlags VK_IMAGE_ASPECT_STENCIL_BIT=4;
 struct Offset {std::int32_t x{};};
 struct Extent {std::uint32_t width{},height{1},depth{1};};
 struct ImageCopy {Offset src_offset{};Extent extent{};};
+struct PixelFormat {
+    static constexpr u32 D32_FLOAT=4;
+    static constexpr u32 D32_FLOAT_S8_UINT=8;
+};
 struct ImageInfo {u32 format{};};
 struct Image {ImageInfo info;};
 u32 DefaultBlockWidth(u32 format){return format==99 ? 0 : 1;}
@@ -112,6 +116,18 @@ int main(){
     assert(regular.result[0].src_offset.x==6);
     assert(regular.result[0].extent.width==10);
 #ifdef PS5_NATIVE
+    // D32S8 and D32 have the same depth-plane pixel width, even
+    // though their packed storage sizes differ (8 vs 4 bytes).
+    Probe ds_to_d;
+    ds_to_d.Convert(8,4,{{{3},{5,2,1}}});
+    assert(ds_to_d.transforms==1);
+    assert(ds_to_d.result[0].src_offset.x==3);
+    assert(ds_to_d.result[0].extent.width==5);
+    Probe d_to_ds;
+    d_to_ds.Convert(4,8,{{{3},{5,2,1}}});
+    assert(d_to_ds.transforms==1);
+    assert(d_to_ds.result[0].src_offset.x==3);
+    assert(d_to_ds.result[0].extent.width==5);
     Probe bad_format;
     bad_format.Convert(99,16,{{{2},{5,1,1}}});
     assert(bad_format.transforms==0);
@@ -146,4 +162,4 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-reinterpret-coordinate-") as f
             assert built.returncode==0,(native,opt,built.stderr[-6500:])
             ran=subprocess.run([str(binary)],capture_output=True,text=True,timeout=20)
             assert ran.returncode==0,(native,opt,ran.stderr[-6500:])
-print("F07_REINTERPRET_COORDINATES_PASS native_widened_conversion=1 bad_ratio=1 negative_offset=1 range_overflow=1 zero_width=1 desktop_unchanged=1 O0=1 O2=1")
+print("F07_REINTERPRET_COORDINATES_PASS native_widened_conversion=1 bad_ratio=1 negative_offset=1 range_overflow=1 zero_width=1 mixed_D32_depth=2 desktop_unchanged=1 O0=1 O2=1")

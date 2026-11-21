@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `d31aa01bdfa87165a272473c385040723bf2c1f6` |
+| Vendor gitlink sélectionné | `20cb62f1be572c8063ce4162d3227c8784a1e5ff` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -391,7 +391,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; réponse ABI S2 80 B corrigée (`gpfifo_gpu_va`/`userd_gpu_va`/`usermode_mmio_gpu_va`/`hw_channel_id`); USERD/doorbell explicitement NotImplemented |
 
 
-**P0 actuel** : la voie OunceVK observée ne passe pas par le mode USERD de `0xC0504821` : elle ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure notamment `0xC008481F`, puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le vendor `d31aa01b` accepte désormais la requête réelle `{graphics=0, compute=2}` (CTA NVIDIA) au lieu de l'arrêter en `NotImplemented`. Le mode USERD/doorbell de `0xC0504821` reste **P** et ne doit être développé qu'avec une preuve d'usage. Le prochain écart avéré sur cette séquence est `0xC018480C SET_ERROR_NOTIFIER`, encore acquitté par un stub `Success` et donc à remplacer par un backing réel ou un échec explicite.
+**P0 actuel** : la voie OunceVK observée ne passe pas par le mode USERD de `0xC0504821` : elle ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure notamment `0xC008481F`, puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le runtime vendor `d31aa01b` (pin qualifié `20cb62f1`) accepte désormais la requête réelle `{graphics=0, compute=2}` (CTA NVIDIA) au lieu de l'arrêter en `NotImplemented`. Le mode USERD/doorbell de `0xC0504821` reste **P** et ne doit être développé qu'avec une preuve d'usage. Le prochain écart avéré sur cette séquence est `0xC018480C SET_ERROR_NOTIFIER`, encore acquitté par un stub `Success` et donc à remplacer par un backing réel ou un échec explicite.
 
 ## 11. NVDRV — /dev/nvhost-tsg-gpu
 

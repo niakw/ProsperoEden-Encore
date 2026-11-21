@@ -988,7 +988,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                     'void BufferCache<P>::ClaimCpuWrites(') in core_owner.read_text()
             core_blob = 'd40082a0c849790d25a4d1d28e003087eefd84a1'
             print('ENCORE_FC27_BATCH_CLAIM_BUFFER_SIGNATURE_SOURCE_PASS')
-        if pair_vendor_pin in {'2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c', '9a83a6ba1cb464c9e5d14457cab18ad511c1104b', 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc', '2a450d43d1d23d3e8b1667e396613f62c69c26d7', '17c95ef233a9a0e508e50ada4ae9dc53a300c46c', '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4', 'e0fced3a091495e70362d8c4ca072942f027af24', '491fa7e2388d46e23827b1459360a5d7f4a2814b', 'b177deb8282b14e1521485f5ac63bd7ccc9ca7ef', '06fc7dc2e0a00e00f831dfd78ae78087736276a3', '850086c79ec40838663989a81f33ba8ea2f15f6a'}:
+        # The current NS1 BufferCache includes the reviewed Vulkan/GMMU
+        # physical-overlap guard. Seal the exact C++ blob and check that
+        # rejection precedes cache mutation; historical variants remain below.
+        if core_blob == '96d933edbf271aa17853748905eeb9c5276c41c2':
+            selected_buffer = core_owner.read_text()
+            dma_copy = selected_buffer.split('bool BufferCache<P>::DMACopy(', 1)[1].split('bool BufferCache<P>::DMAClear(', 1)[0]
+            for contract in (
+                'gpu_memory->IsContinuousRange(src_address, amount)',
+                'gpu_memory->IsContinuousRange(dest_address, amount)',
+                'const DAddr source = *cpu_src_address;',
+                'const DAddr destination = *cpu_dest_address;',
+                'destination - source < amount',
+                'source - destination < amount',
+                'ClearDownload(*cpu_dest_address, amount);',
+            ):
+                assert contract in dma_copy, ('NS1 physical DMA guard missing', contract)
+            assert dma_copy.index('destination - source < amount') < dma_copy.index('ClearDownload(*cpu_dest_address, amount);')
+            assert 'const bool page_has_gpu_writes = keep_page_gpu_data && page_end > page_begin &&' in selected_buffer
+            assert '!gpu_modified_ranges.Intersects(' not in selected_buffer
+            print('ENCORE_NS1_PHYSICAL_DMA_BUFFERCACHE_SOURCE_PASS')
+        elif pair_vendor_pin in {'2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c', '9a83a6ba1cb464c9e5d14457cab18ad511c1104b', 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc', '2a450d43d1d23d3e8b1667e396613f62c69c26d7', '17c95ef233a9a0e508e50ada4ae9dc53a300c46c', '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4', 'e0fced3a091495e70362d8c4ca072942f027af24', '491fa7e2388d46e23827b1459360a5d7f4a2814b', 'b177deb8282b14e1521485f5ac63bd7ccc9ca7ef', '06fc7dc2e0a00e00f831dfd78ae78087736276a3', '850086c79ec40838663989a81f33ba8ea2f15f6a'}:
             # Vendor #189 fixes a real native build ABI mismatch. The reviewed
             # BufferCache header uses the pinned ForEachInRange-backed query;
             # every other Vulkan fork receipt below stays byte-for-byte exact.

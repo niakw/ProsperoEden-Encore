@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `7baf9cc07c6aceee185032544d964f04a2fed108` |
+| Vendor gitlink sélectionné | `1f8a3bbaa7fc33118e63ebef829202d825475bfe` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -399,21 +399,23 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | --- | --- | --- | --- | --- |
 | 0xC0045401 | NVGPU_TSG_IOCTL_BIND_CHANNEL | C | BindTsgChannel | owner process vérifié |
 | 0xC0045402 | NVGPU_TSG_IOCTL_UNBIND_CHANNEL | C | Unbind | actif |
-| 0x00005403 | NVGPU_TSG_IOCTL_ENABLE | M | — | connu, pas de scheduling réel; doit rester NotImplemented |
-| 0x00005404 | NVGPU_TSG_IOCTL_DISABLE | M | — | connu, pas de scheduling réel |
-| 0x00005405 | NVGPU_TSG_IOCTL_PREEMPT | M | — | connu, préemption réelle absente |
+| 0x00005403 | NVGPU_TSG_IOCTL_ENABLE | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, scheduling/runlist enable réel absent |
+| 0x00005404 | NVGPU_TSG_IOCTL_DISABLE | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, scheduling/runlist disable réel absent |
+| 0x00005405 | NVGPU_TSG_IOCTL_PREEMPT | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, préemption GPU réelle absente |
 | 0xC0085407 | NVGPU_TSG_IOCTL_SET_RUNLIST_INTERLEAVE | P | ConfigureTsgScheduling | Ounce exact; LOW/MEDIUM/HIGH validés et retenus avant bind; après bind → NotImplemented faute de runlist reload réel |
 | 0xC0045408 | NVGPU_TSG_IOCTL_SET_TIMESLICE | P | ConfigureTsgScheduling | Ounce exact; 1000..50000 µs validés/retenus avant bind; après bind → NotImplemented faute de runlist reload réel |
-| 0xC0105409 | NVGPU_TSG_IOCTL_EVENT_ID_CTRL | M | — | pas de handler/event réel |
+| 0xC0105409 | NVGPU_TSG_IOCTL_EVENT_ID_CTRL | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, livraison d'événement TSG absente |
 | 0x8004540A | NVGPU_TSG_IOCTL_GET_TIMESLICE | C | GetTsgTimeslice | Ounce exact; renvoie l'état u32 retenu avant/après bind |
 | 0xC018540B | NVGPU_TSG_IOCTL_BIND_CHANNEL_EX | C | BindTsgChannel extended | FD + VEID validés |
-| 0xC018540C | NVGPU_TSG_IOCTL_READ_SINGLE_SM_ERROR_STATE | M | — | pas de handler |
-| 0xC008540D | NVGPU_TSG_IOCTL_SET_L2_SECTOR_PROMOTION | M | — | pas de handler |
+| 0xC018540C | NVGPU_TSG_IOCTL_READ_SINGLE_SM_ERROR_STATE | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, état SM matériel par TSG absent |
+| 0xC008540D | NVGPU_TSG_IOCTL_SET_L2_SECTOR_PROMOTION | M | TsgIoctl fail-closed | Ounce exact; cas connu explicite; `// not implemented yet on Encore`, politique cache L2 par TSG absente |
 
 
 Les commandes `ENABLE/DISABLE/PREEMPT` ne doivent surtout pas être converties en `Success` vide : elles modifient l’état du scheduler/runlist et peuvent provoquer un blocage GPU silencieux si elles sont faussement acquittées.
 
 **Preuve Ounce TSG (21/11)** : `libnvrm_gpu` émet réellement `0xC0085407` pour l'interleave, `0xC0045408` pour la timeslice et `0x8004540A` pour le getter. NVIDIA valide interleave 0/1/2 et timeslice 1000..50000 µs; tant que le TSG n'est pas lié à une runlist, son driver ne fait que stocker ces valeurs. Encore reproduit uniquement cette phase sûre. `0xC008540D` touche la politique L2 et reste explicitement non implémenté.
+
+Les six commandes TSG encore classées **M** ci-dessus sont désormais des ABI **connues et explicitement routées** vers `NotImplemented`; elles ne tombent plus dans un défaut générique. Leur statut reste M parce que leur effet runtime (scheduler, préemption, événement, erreur SM ou politique L2) n'est pas encore réellement modélisé.
 
 ## 12. NVDRV — /dev/nvhost-prof-dev-gpu
 

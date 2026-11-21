@@ -83,15 +83,19 @@ assert "rb.Push(Kernel::ResultNotImplemented);" in service
 # Optional services that Eden does not use for gameplay may be explicit no-ops,
 # but only through the exact whitelist in the maintained dispatcher.
 assert "IsSafeOptionalNoOp" in service
-for optional_service in ('"pdm:ntfy"', '"ILogger"', '"erpt:c"'):
+for optional_service in ('"pdm:ntfy"', '"ILogger"', '"erpt:c"', '"eupld:c"'):
     assert optional_service in service
 for optional_command in (
     '"NotifyAppletEvent"', '"NotifyLibraryAppletEvent"',
     '"TransmitHashedLog"', '"DevNotify"',
     '"SetInitialLaunchSettingsCompletionTime"', '"InvalidateForcedShutdownDetection"',
+    '"SetUrl"', '"ImportCrt"', '"ImportPki"', '"SetAutoUpload"',
 ):
     assert optional_command in service
 assert "(STUBBED) optional no-op" in service
+# Queries that require defined output remain fail-closed; do not turn them into
+# fake-success zero-data responses through this narrow whitelist.
+assert '"GetAutoUpload"' not in service.split('if (service_name == "eupld:c")', 1)[1].split('return false;', 1)[0]
 assert service.index("IsSafeOptionalNoOp") < service.index("SaveUnimplementedFunctionReport")
 # The diagnostic filesystem units are now maintained C++ sources,
 # no longer strings embedded in headless/CMakeLists.txt.

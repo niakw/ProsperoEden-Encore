@@ -66,8 +66,38 @@ REVIEWED_PINS.add("0ec5337f26c31e6926bf327411634422c9043369")
 REVIEWED_PINS.add("997b4885c045469f09dedf2a5f4e69995a5b1c9a")
 REVIEWED_PINS.add("9eefc8f5131350e8ddfb11e617e2e25007925212")
 REVIEWED_PINS.add("29350dfa0049885d953ad206fd3ce2b163140cdb")
+REVIEWED_PINS.add("bb6285e1998989101adbdc6adecbf9c1e1c17ec0")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+# Native NVDRV A:0x0D remap / 4K kind-change successor. Verify the
+# exact three current files, then replay inherited immutable source stamps.
+if selected == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "e120fcee7c85ad7a874c8ffc10f2b3804b707199"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "078f5eef7cf2d24670361d6724ebb3497016ceff"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "1c460d3c584914a600e660d141971b99be99f858"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 40-byte remap source drift", relative, actual)
+    selected = "29350dfa0049885d953ad206fd3ce2b163140cdb"
+
+# During archival receipt replay, normalize ONLY the three already sealed
+# successor blobs to their predecessor identities. All other source files
+# retain their real hashes and remain subject to every historical gate.
+def archival_receipt_sha(relative, actual):
+    if gitlink_vendor_pin != "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
+        return actual
+    known = {
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": ("e120fcee7c85ad7a874c8ffc10f2b3804b707199", "f01d11f32d3f17847cb5c91a740eb070da67c118"),
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": ("078f5eef7cf2d24670361d6724ebb3497016ceff", "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d"),
+        "tests/ns2_gpu_identity_mapping_source.py": ("1c460d3c584914a600e660d141971b99be99f858", "59b47cf531c961906de13f29ee5b52b9d361dbc2"),
+    }
+    pair = known.get(relative)
+    if pair is None:
+        return actual
+    assert actual == pair[0], ("NS2 normalized source drift", relative, actual)
+    return pair[1]
 # Source-only assertion correction: the first cursor variable declaration
 # must not be mistaken for the second mapping stage. Check the one new blob
 # and replay every previous source receipt without hiding other differences.
@@ -75,7 +105,8 @@ if selected == "29350dfa0049885d953ad206fd3ce2b163140cdb":
     relative = "tests/ns2_gpu_identity_mapping_source.py"
     raw = (V / relative).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert actual == "59b47cf531c961906de13f29ee5b52b9d361dbc2", ("NS2 mapping-kind host contract drift", actual)
+    assert actual == ("1c460d3c584914a600e660d141971b99be99f858" if gitlink_vendor_pin == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0" else
+                      "59b47cf531c961906de13f29ee5b52b9d361dbc2"), ("NS2 mapping-kind host contract drift", actual)
     selected = "9eefc8f5131350e8ddfb11e617e2e25007925212"
 # Real Switch 2 kind-change ioctl source contract. Verify all mutated
 # vendor blobs, then replay earlier immutable source ownership receipts.
@@ -87,7 +118,8 @@ if selected == "9eefc8f5131350e8ddfb11e617e2e25007925212":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin == "29350dfa0049885d953ad206fd3ce2b163140cdb" and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), ("NS2 mapping-kind ioctl drift", relative, actual)
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), ("NS2 mapping-kind ioctl drift", relative, actual)
     selected = "997b4885c045469f09dedf2a5f4e69995a5b1c9a"
 # Native NS2 big-page sparse-VA reservation successor. Only two blobs
 # changed; pin them, then replay the complete preceding source graph.
@@ -98,9 +130,10 @@ if selected == "997b4885c045469f09dedf2a5f4e69995a5b1c9a":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        actual = archival_receipt_sha(relative, actual)
         assert actual == ("f01d11f32d3f17847cb5c91a740eb070da67c118" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp" else
                           "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h" else
-                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin == "29350dfa0049885d953ad206fd3ce2b163140cdb" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), ("Native big-page sparse VA drift", relative, actual)
     selected = "0ec5337f26c31e6926bf327411634422c9043369"
 # Native big-page ioctl remap ledger and focused source contract.
@@ -113,11 +146,12 @@ if selected == "0ec5337f26c31e6926bf327411634422c9043369":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        actual = archival_receipt_sha(relative, actual)
         assert actual == ("f01d11f32d3f17847cb5c91a740eb070da67c118" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp" else
                           "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h" else
-                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin == "29350dfa0049885d953ad206fd3ce2b163140cdb" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else ("285ea0dda6807ab44f18277e8b5a5be734fb6b1f" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp" else
-                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin == "29350dfa0049885d953ad206fd3ce2b163140cdb" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected)), (
             "NS2 ioctl remap pin source drift", relative, actual)
@@ -129,6 +163,7 @@ if selected == "a9cca6aa9c63722b918b92362c237eed448ff56c":
     relative = "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp"
     raw = (V / relative).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    actual = archival_receipt_sha(relative, actual)
     assert actual == ("f01d11f32d3f17847cb5c91a740eb070da67c118" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} else
                       "285ea0dda6807ab44f18277e8b5a5be734fb6b1f" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" else
                       "e252d390e5c08c933487ca351230636158bc1abe"), ("NS2 MapBufferEx transaction source drift", actual)
@@ -146,7 +181,8 @@ if selected == "21bc63493de105c1eb025f3ce5b67011deee72da":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin == "29350dfa0049885d953ad206fd3ce2b163140cdb" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
@@ -162,7 +198,8 @@ if selected == "b0afacfc891bc75da81be3886e5c40430ccbfe6d":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin == "29350dfa0049885d953ad206fd3ce2b163140cdb" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                           "bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
                            "7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and
@@ -197,7 +234,15 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
-    if gitlink_vendor_pin == "29350dfa0049885d953ad206fd3ce2b163140cdb" and relative == "tests/ns2_gpu_identity_mapping_source.py":
+    if gitlink_vendor_pin == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
+        exact = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "e120fcee7c85ad7a874c8ffc10f2b3804b707199",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "078f5eef7cf2d24670361d6724ebb3497016ceff",
+            "tests/ns2_gpu_identity_mapping_source.py": "1c460d3c584914a600e660d141971b99be99f858",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py":
         return "59b47cf531c961906de13f29ee5b52b9d361dbc2"
     if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"}:
         if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": return "f01d11f32d3f17847cb5c91a740eb070da67c118"
@@ -218,7 +263,7 @@ def reviewed_blob(relative, expected):
             return reviewed[relative]
     if gitlink_vendor_pin == "a9cca6aa9c63722b918b92362c237eed448ff56c" and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
         return "e252d390e5c08c933487ca351230636158bc1abe"
-    if gitlink_vendor_pin in {"21bc63493de105c1eb025f3ce5b67011deee72da", "a9cca6aa9c63722b918b92362c237eed448ff56c", "0ec5337f26c31e6926bf327411634422c9043369", "997b4885c045469f09dedf2a5f4e69995a5b1c9a", "9eefc8f5131350e8ddfb11e617e2e25007925212"}:
+    if gitlink_vendor_pin in {"21bc63493de105c1eb025f3ce5b67011deee72da", "a9cca6aa9c63722b918b92362c237eed448ff56c", "0ec5337f26c31e6926bf327411634422c9043369", "997b4885c045469f09dedf2a5f4e69995a5b1c9a", "9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"}:
         if relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp":
             return "2bd5023b5177cfd89d43fcc759643553fe0c745f"
         if relative == "tests/ns2_gpu_identity_mapping_source.py":

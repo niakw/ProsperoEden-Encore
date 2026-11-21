@@ -45,15 +45,38 @@ REVIEWED_PINS.add("0015d90da841622e1642180b9f9de5e2d0c354c9")
 REVIEWED_PINS.add("bb575bd8396d78187d2bd56713e84c398ebce512")
 REVIEWED_PINS.add("9bd8de9081cc5ad431ecfc62696e9a6f8f2d1ffc")
 REVIEWED_PINS.add("2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f")
+REVIEWED_PINS.add("889b142aa5616d3d00733a7cc1db1562eed291f4")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 # Preserve the active AS/GMMU owner revision during recursive source-pin
 # replay: the GA10F controller itself is unchanged but binds this new AS TU.
-native_as_lease_revision = selected == "2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f"
+native_as_lease_revision = selected in {"2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f", "889b142aa5616d3d00733a7cc1db1562eed291f4"}
+native_as_session_revision = selected == "889b142aa5616d3d00733a7cc1db1562eed291f4"
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# A GPU channel's AS shared_ptr owns the GMMU but cannot keep NVMap
+# backing mapped after its final NvCore session is closed. The PS5-selected
+# Container retains the exact live session; the channel's last owner
+# releases it only after unpinning its mapped memory.
+if selected == "889b142aa5616d3d00733a7cc1db1562eed291f4":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/core/container.h", "14f84ba43cb83451d8b8dc5fc707e894f43ac2c7"),
+        ("encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp", "eec4677538f53cd709f8f6bee9975f3cba0426a0"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "f2ed8c5407974f131fceb6f43a9597334d641477"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "9c4f369d4909a49c69ca58a10d3b141b29214ed7"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "adaddc673e3a36de3e3ff5079871595f21226195"),
+        ("sources/eden/src/video_core/control/channel_state.h", "dfbb776d9b03f68439efa33f02806a15782c2e21"),
+        ("encore-active/ns2-runtime/process/core/core.cpp", "a30c7bbe1bf719b196f1f0805e83b1276ee74472"),
+        ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "842a0289f75bc2a0763285173e4616060348ec22"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Native session/GMMU channel ownership drift", relative, actual)
+    selected = "bb575bd8396d78187d2bd56713e84c398ebce512"
+    original_vendor_pin = selected
 # A GPU channel (including queued work in the scheduler) must retain
 # its actual GMMU address-space owner after NVDRV closes the AS FD.
 # The PS5 teardown order of the prior reviewed pin is unchanged; seal
@@ -109,6 +132,7 @@ if selected in {"788badb79f0566c56f51e64fb9aa727f72fdb065", "0015d90da841622e164
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
         ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "9c4f369d4909a49c69ca58a10d3b141b29214ed7" if native_as_session_revision else
          "dda472d0cf7277f870540758243d242ee7fe80eb" if native_as_lease_revision else
          "ca0574dc36e56ad727c63552231872002465bc99"),
         ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),

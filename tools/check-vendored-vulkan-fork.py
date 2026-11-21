@@ -32,8 +32,7 @@ for relative, reviewed_blob in (
         # GPU-49 is a later fragment-output ownership fix. Rewind only its
         # two graphics-pipeline hunks before checking the older build-task
         # lifetime owner; never restamp that historical receipt.
-        gpu49_ctor = """    fragment_has_color0_output = stage_infos[NUM_STAGES - 1].stores_frag_color[0];
-    // Maxwell leaves render-target components not written by the fragment shader untouched.
+        gpu49_ctor = """    // Maxwell leaves render-target components not written by the fragment shader untouched.
     // Vulkan otherwise permits undefined values there, which is visible on AMD/RADV.
     for (size_t rt = 0; rt < Maxwell::NumRenderTargets; ++rt) {
         color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}
@@ -128,8 +127,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             'df36d210d04411b87e1fdad7fbd0689b1e4d3488',
             'f3c82781675b6979a8be96a333184e048ef57f81',
             (
-                ("""    fragment_has_color0_output = stage_infos[NUM_STAGES - 1].stores_frag_color[0];
-    // Maxwell leaves render-target components not written by the fragment shader untouched.
+                ("""    // Maxwell leaves render-target components not written by the fragment shader untouched.
     // Vulkan otherwise permits undefined values there, which is visible on AMD/RADV.
     for (size_t rt = 0; rt < Maxwell::NumRenderTargets; ++rt) {
         color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}

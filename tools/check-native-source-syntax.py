@@ -36,6 +36,8 @@ TARGETS = (
 # These former generated units are now selected directly from maintained C++.
 # Keep checking the actual sources instead of nonexistent historical outputs.
 MAINTAINED_CORE_TARGETS = (
+    # Real PS5 kernel compilation of the process-aware cache SVC replacement.
+    "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp",
     "vendor/encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_add.cpp",

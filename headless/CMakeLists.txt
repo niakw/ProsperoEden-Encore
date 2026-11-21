@@ -740,6 +740,22 @@ if(NOT EXISTS "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")
 endif()
 list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_ipc.cpp")
 list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")
+# NS1 cache SVC: operate on the validated guest process memory, not a
+# success-only stub or the caller's memory when targeting another process.
+# Preserve the original Eden source for parity and select exactly one TU.
+if(PS5_NATIVE)
+    set(EDEN_NS1_SVC_CACHE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp")
+    if(NOT EXISTS "${EDEN_NS1_SVC_CACHE}")
+        message(FATAL_ERROR "Missing maintained NS1 SVC cache implementation")
+    endif()
+    list(FIND core_sources "hle/kernel/svc/svc_cache.cpp" eden_ns1_svc_cache_index)
+    if(eden_ns1_svc_cache_index LESS 0)
+        message(FATAL_ERROR "Pinned NS1 SVC cache source selection changed")
+    endif()
+    list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_cache.cpp")
+    list(APPEND core_sources "${EDEN_NS1_SVC_CACHE}")
+endif()
 if(EDEN_A32_FASTMEM)
     # The window spans 4 GiB: only 32-bit applications get it as their fastmem arena.
     # The production backport materializes core/memory.cpp before configure.

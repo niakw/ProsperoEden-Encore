@@ -124,6 +124,17 @@ for path, code in (("native build", native_build),
         f"Historical Vulkan source transformation invoked by {path}")
 assert 'shutil.copyfile(maintained, tmp)' in (
     ROOT/"tools/install-active-core-backports.py").read_text()
+# SVC cache coherency is a real core TU replacement, not a no-op IPC stub.
+svc_cache = ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp"
+assert svc_cache.is_file()
+svc_code = svc_cache.read_text(encoding="utf-8")
+assert 'list(FIND core_sources "hle/kernel/svc/svc_cache.cpp" eden_ns1_svc_cache_index)' in root_cmake
+assert 'list(APPEND core_sources "${EDEN_NS1_SVC_CACHE}")' in root_cmake
+assert 'process->GetMemory().InvalidateDataCache(address, size)' in svc_code
+assert 'process->GetMemory().StoreDataCache(address, size)' in svc_code
+assert 'process->GetMemory().FlushDataCache(address, size)' in svc_code
+assert 'GetCurrentMemory(system.Kernel()).FlushDataCache(address, size)' in svc_code
+assert svc_code.count('R_UNLESS(address < address + size, ResultInvalidCurrentMemory);') == 4
 print(f"ENCORE_ACTIVE_CMAKE_SOURCE_BOUNDARY_PASS modules={checked} "
       f"pinned_upstream_modules={excluded_upstream_modules} "
       "cpp_generators=0 resource_generators=1 nup_source_pair_split=1")

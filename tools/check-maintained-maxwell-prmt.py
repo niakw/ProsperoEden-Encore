@@ -128,7 +128,7 @@ def git_blob(text):
 # while exact Git blobs seal the two complete sources actually compared. This
 # avoids coupling byte identity to obsolete intermediate whitespace/order.
 assert git_blob(pristine)=="02553558a826d31e76c20eb53bf729af8de4a6b7"
-assert git_blob(actual)=="f1f91cbc6a58c2a5f8febff783574c587f4b59ea"
+assert git_blob(actual)=="a00d30411112069e54015d527018d2d619efe7c8"
 # IMAD/IMAD32I AvgMode is a 2-bit field, not two independent booleans.
 # Modes 1/2 are reviewed negate-addend/negate-multiplier operations; mode 3
 # remains fail-closed. CC/X/SAT are deliberately still unsupported.
@@ -142,6 +142,20 @@ assert 'throw NotImplementedException("IMAD32I CC modifier")' in actual
 assert "negate_addend" not in actual and "negate_a" not in actual
 assert actual.count("ImadNegation::Multiplier") >= 2
 assert actual.count("ImadNegation::Addend") >= 2
+# IMADSP is intentionally bounded to the qualified Maxwell forms. The .CC
+# flag contract and C width 3 remain fail-closed.
+assert "enum class ImadSpType : u32" in actual
+for imadsp_type in ("U32", "S32", "U24", "S24", "U16Lo", "S16Lo", "U16Hi", "S16Hi"):
+    assert imadsp_type in actual
+assert "BitField<47, 1, u64> cc;" in actual
+assert "BitField<48, 3, u64> a_type;" in actual
+assert "BitField<51, 2, u64> c_width;" in actual
+assert "BitField<53, 2, u64> b_type;" in actual
+assert 'throw NotImplementedException("IMADSP CC modifier")' in actual
+assert 'throw NotImplementedException("IMADSP reserved C width")' in actual
+for imadsp_method in ("IMADSP_reg", "IMADSP_rc", "IMADSP_cr", "IMADSP_imm"):
+    assert f"void TranslatorVisitor::{imadsp_method}(u64 insn)" in actual
+    assert f"ThrowNotImplemented(Opcode::{imadsp_method});" not in actual
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
 # and silently diverges from the actual source-generation oracle.
@@ -235,4 +249,4 @@ assert 'ctx.OpAccessChain(def.pointer_type, def.id, idx)' in image_atomic
 assert 'ctx.uses_nonuniform_storage_image = true' in image_atomic
 assert 'ctx.uses_nonuniform_storage_texel_buffer = true' in image_atomic
 assert "backend/spirv/emit_spirv_image.cpp" in sample_cmake
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + IMAD/IMAD32I NEG + CFG control/PRET + PIXLD.CovMask SampleMask + bounded storage image arrays + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + IMAD/IMAD32I NEG + bounded IMADSP + CFG control/PRET + PIXLD.CovMask SampleMask + bounded storage image arrays + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")

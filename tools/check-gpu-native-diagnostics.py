@@ -83,7 +83,16 @@ assert 'throw NotImplementedException("IMAD32I CC modifier")' in imad32_new
 assert 'throw NotImplementedException("IMAD32I reserved PlusOne mode")' in imad32_new
 assert "IR::U32 addend{X(imad.dest_reg)};" in imad32_new
 assert "X(imad.dest_reg, ir.IAdd(product, addend));" in imad32_new
-assert "ThrowNotImplemented(Opcode::IMADSP_reg);" in prmt
+for imadsp_name in ("IMADSP_reg", "IMADSP_rc", "IMADSP_cr", "IMADSP_imm"):
+    imadsp_old = extract_method(pinned_prmt, imadsp_name)
+    imadsp_new = extract_method(prmt, imadsp_name)
+    assert "ThrowNotImplemented(Opcode::" + imadsp_name + ");" in imadsp_old
+    assert "TranslateIMadSp(*this, insn" in imadsp_new
+assert "enum class ImadSpType : u32" in prmt
+assert "IR::U32 ExtractImadSp(" in prmt
+assert "void TranslateIMadSp(" in prmt
+assert 'throw NotImplementedException("IMADSP CC modifier")' in prmt
+assert 'throw NotImplementedException("IMADSP reserved C width")' in prmt
 
 # CFG-owned control instructions have no remaining data-path work in the
 # visitor. For ordinary branches, Translate() sees them only when the CFG
@@ -504,5 +513,5 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL, IMAD/IMAD32I negate modes and CFG-owned control/PRET translated; unsupported forms fail closed; one fixed observed Fermi2D owner")
+print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL, IMAD/IMAD32I negate modes, bounded IMADSP and CFG-owned control/PRET translated; unsupported forms fail closed; one fixed observed Fermi2D owner")
 print("NOTE graphics correctness and PS5 native CMake build remain to be qualified")

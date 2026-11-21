@@ -125,13 +125,13 @@ helper_begin='// Signed 2D pitch geometry and device-address overlap are shared 
 helper_end='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert native.count(helper_begin)==1 and native.count(helper_end)==1
 helper=native[native.index(helper_begin):native.index(helper_end,native.index(helper_begin))]
-assert fnv1a32(helper)==2828891531 and len(helper)==16811, "Reviewed B0B5 helper changed"
+assert fnv1a32(helper)==2169658669 and len(helper)==16806, "Reviewed B0B5 helper changed"
 for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
               'std::vector<u8> snapshot', 'memory.ReadBlock',
               'memory.WriteBlock','CanCoalescePitchDma',
               'const u64 src_stride', 'const u64 dst_stride',
               'const bool virtual_overlap', 'bool PitchDmaPhysicalOverlap(',
-              'constexpr bool PitchDmaEnvelope(', 'bool CopyPitchDmaPlain(', 'bool DmaTiledSoftwareOverlap(',
+              'constexpr bool PitchDmaEnvelope(', 'bool CopyPitchDmaPlain(', 'bool DmaSoftwareOverlap(',
               'memory.GpuToCpuAddress(src_begin)',
               'memory.GpuToCpuAddress(address)',
               'MAX_PHYSICAL_SEGMENTS = 16384',
@@ -174,20 +174,24 @@ expected=expected.replace(method_end,tiled_method+method_end,1)
 # could overrun short transfers and overwrite unread aliased input.
 legacy_1d_start="            if (!is_src_pitch && is_dst_pitch) {"
 live_1d_start="            if (is_src_pitch != is_dst_pitch) {"
-end_1d="            } else {" + chr(10) + "                if (!accelerate.BufferCopy("
+# Include both the tiled and ordinary 1D branches: the ordinary path now
+# snapshots physical GMMU aliases before choosing Vulkan or cached CPU writes.
+end_1d="\n        }\n    }\n\n    ReleaseSemaphore();"
 def extract_1d(text, start):
     begin=text.index(start, text.index("        // TODO: allow multisized components."))
     return text[begin:text.index(end_1d,begin)]
 old_1d=extract_1d(pinned,legacy_1d_start)
 live_1d=extract_1d(native,live_1d_start)
-assert fnv1a32(old_1d)==2401188561 and len(old_1d)==1612
-assert fnv1a32(live_1d)==3903482050 and len(live_1d)==9211
+assert fnv1a32(old_1d)==3343909125 and len(old_1d)==2147
+assert fnv1a32(live_1d)==2930490592 and len(live_1d)==11220
 assert "mapped_ranges_overlap(tiled_begin" in live_1d
 assert "GpuToCpuAddress(address)" in live_1d
 assert "IsContinuousRange(first," in live_1d
 assert "memory_manager.WriteBlockCached(destination," in live_1d
 assert "memory_manager.IsFullyMappedRange(source, count)" in live_1d
 assert "MAX_ALIAS_SNAPSHOT" in live_1d
+assert "DmaSoftwareOverlap(memory_manager, regs.offset_in, count" in live_1d
+assert "memory_manager.WriteBlock(regs.offset_out, snapshot.data(), count)" in live_1d
 assert expected.count(old_1d)==1
 expected=expected.replace(old_1d,live_1d,1)
 assert expected==native

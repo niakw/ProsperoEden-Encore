@@ -80,6 +80,19 @@ assert service.count("EDEN_FS_CALLER command=") == 2
 assert "// not implemented yet on Encore" in service
 assert "else if (info != nullptr)" in service
 assert "rb.Push(Kernel::ResultNotImplemented);" in service
+# Optional services that Eden does not use for gameplay may be explicit no-ops,
+# but only through the exact whitelist in the maintained dispatcher.
+assert "IsSafeOptionalNoOp" in service
+for optional_service in ('"pdm:ntfy"', '"ILogger"', '"erpt:c"'):
+    assert optional_service in service
+for optional_command in (
+    '"NotifyAppletEvent"', '"NotifyLibraryAppletEvent"',
+    '"TransmitHashedLog"', '"DevNotify"',
+    '"SetInitialLaunchSettingsCompletionTime"', '"InvalidateForcedShutdownDetection"',
+):
+    assert optional_command in service
+assert "(STUBBED) optional no-op" in service
+assert service.index("IsSafeOptionalNoOp") < service.index("SaveUnimplementedFunctionReport")
 # The diagnostic filesystem units are now maintained C++ sources,
 # no longer strings embedded in headless/CMakeLists.txt.
 maintained = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/src/core/hle/service/filesystem/fsp"

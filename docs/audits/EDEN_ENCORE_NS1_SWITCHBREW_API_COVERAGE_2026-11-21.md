@@ -254,14 +254,13 @@ Header Eden : **123 identifiants**, table wiki historique : **117 identifiants**
 
 Références de suivi : [registre de complétude NS1](./EDEN_ENCORE_NS1_IMPLEMENTATION_COMPLETENESS_REGISTER_2026-11-21.md) et [issue maîtresse #298](https://github.com/niakw/ProsperoEden-Encore/issues/298).
 
-**Limite de cette première livraison :** tous les IDs SVC du snapshot historique sont listés ; seules six unités kernel ont reçu un contrôle de corps C++ pour leur statut. Les interfaces/commandes IPC détaillées doivent encore être rapprochées du code réel, et les versions HOS actuelles du wiki live peuvent différer. **Aucun build ou test PS5 n'a été réalisé pour ce document.**
+**Limite actuelle :** les 117 entrées SVC du miroir historique et 4 786 lignes IPC extraites de 54 pages de familles sont listées. La plupart des commandes IPC restent Q ; seul un lot ciblé est rapproché des handlers C++ de base. Les 56 familles d'index comprennent deux pages non extraites depuis cet index. Les versions HOS et noms de commande du wiki live peuvent différer. **Aucun build ni test PS5 n'a été réalisé pour ce document.**
 
 ## 7. Catalogue des commandes IPC documentées par SwitchBrew
 
 **Statut de toutes les entrées de cette section : Q** (commande référencée, mais chemin C++ exécuté et résultat PS5 non qualifiés). La date décrit une comparaison documentaire, pas un test du jeu. Les ID sont propres à leur interface et à la version HOS.
 
-### Account services   
-  u0: System, u1: User, su: Admin, aa: Baas
+### Account services
 
 [Wiki SwitchBrew](https://switchbrew.org/wiki/Account_services___
 __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Account%20services.md)
@@ -861,28 +860,28 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `1155` | `SetForceHandheldStyleVibration` | 9.0.0+ | Q | 2026-11-21 |
 | hid:sys | `1156` | `SendConnectionTriggerWithoutTimeoutEvent` | 9.0.0+ | Q | 2026-11-21 |
 | hid:tmp | `0` | `GetConsoleSixAxisSensorCalibrationValues` | — | Q | 2026-11-21 |
-| irs | `302` | `ActivateIrsensor` | — | Q | 2026-11-21 |
-| irs | `303` | `DeactivateIrsensor` | — | Q | 2026-11-21 |
+| irs | `302` | `ActivateIrsensor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L64) ; stub explicite en corps) | 2026-11-21 |
+| irs | `303` | `DeactivateIrsensor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L69) ; stub explicite en corps) | 2026-11-21 |
 | irs | `304` | `GetIrsensorSharedMemoryHandle` | — | Q | 2026-11-21 |
-| irs | `305` | `StopImageProcessor` | — | Q | 2026-11-21 |
-| irs | `306` | `RunMomentProcessor` | — | Q | 2026-11-21 |
-| irs | `307` | `RunClusteringProcessor` | — | Q | 2026-11-21 |
+| irs | `305` | `StopImageProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L82) ; stub explicite en corps) | 2026-11-21 |
+| irs | `306` | `RunMomentProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L96) ; stub explicite en corps) | 2026-11-21 |
+| irs | `307` | `RunClusteringProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L115) ; stub explicite en corps) | 2026-11-21 |
 | irs | `308` | `RunImageTransferProcessor` | — | Q | 2026-11-21 |
-| irs | `309` | `GetImageTransferProcessorState` | — | Q | 2026-11-21 |
-| irs | `310` | `RunTeraPluginProcessor` | — | Q | 2026-11-21 |
+| irs | `309` | `GetImageTransferProcessorState` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L160) ; stub explicite en corps) | 2026-11-21 |
+| irs | `310` | `RunTeraPluginProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L180) ; stub explicite en corps) | 2026-11-21 |
 | irs | `311` | `GetNpadIrCameraHandle` | — | Q | 2026-11-21 |
-| irs | `312` | `RunPointingProcessor` | — | Q | 2026-11-21 |
-| irs | `313` | `SuspendImageProcessor` | — | Q | 2026-11-21 |
-| irs | `314` | `CheckFirmwareVersion` | 3.0.0+ | Q | 2026-11-21 |
-| irs | `315` | `SetFunctionLevel` | 4.0.0+ | Q | 2026-11-21 |
+| irs | `312` | `RunPointingProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L217) ; stub explicite en corps) | 2026-11-21 |
+| irs | `313` | `SuspendImageProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L239) ; stub explicite en corps) | 2026-11-21 |
+| irs | `314` | `CheckFirmwareVersion` | 3.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L252) ; stub explicite en corps) | 2026-11-21 |
+| irs | `315` | `SetFunctionLevel` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L268) ; stub explicite en corps) | 2026-11-21 |
 | irs | `316` | `RunImageTransferExProcessor` | 4.0.0+ | Q | 2026-11-21 |
-| irs | `317` | `RunIrLedProcessor` | 4.0.0+ | Q | 2026-11-21 |
-| irs | `318` | `StopImageProcessorAsync` | 4.0.0+ | Q | 2026-11-21 |
-| irs | `319` | `ActivateIrsensorWithFunctionLevel` | 4.0.0+ | Q | 2026-11-21 |
-| irs:sys | `500` | `SetAppletResourceUserId` | — | Q | 2026-11-21 |
-| irs:sys | `501` | `RegisterAppletResourceUserId` | — | Q | 2026-11-21 |
-| irs:sys | `502` | `UnregisterAppletResourceUserId` | — | Q | 2026-11-21 |
-| irs:sys | `503` | `EnableAppletToGetInput` | — | Q | 2026-11-21 |
+| irs | `317` | `RunIrLedProcessor` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L309) ; stub explicite en corps) | 2026-11-21 |
+| irs | `318` | `StopImageProcessorAsync` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L331) ; stub explicite en corps) | 2026-11-21 |
+| irs | `319` | `ActivateIrsensorWithFunctionLevel` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L346) ; stub explicite en corps) | 2026-11-21 |
+| irs:sys | `500` | `SetAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L374) ; handler nullptr) | 2026-11-21 |
+| irs:sys | `501` | `RegisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L375) ; handler nullptr) | 2026-11-21 |
+| irs:sys | `502` | `UnregisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L376) ; handler nullptr) | 2026-11-21 |
+| irs:sys | `503` | `EnableAppletToGetInput` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L377) ; handler nullptr) | 2026-11-21 |
 | ahid:cd | `0` | `AcquireDevice` | — | Q | 2026-11-21 |
 | ahid:cd | `1` | `ReleaseDevice` | — | Q | 2026-11-21 |
 | ahid:cd | `2` | `GetCtrlSession` | — | Q | 2026-11-21 |
@@ -1360,8 +1359,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | caps:su | `205` | `SaveScreenShotEx1` | 8.0.0+ | Q | 2026-11-21 |
 | caps:su | `210` | `SaveScreenShotEx2` | — | Q | 2026-11-21 |
 
-### NS Services   
-  am: Application Manager, su: System Update
+### NS Services
 
 [Wiki SwitchBrew](https://switchbrew.org/wiki/NS_Services___
 __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NS%20Services.md)
@@ -1842,8 +1840,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:dev | `13` | `CreateApplicationResourceForDevelop` | 9.0.0+ | Q | 2026-11-21 |
 | ns:dev | `14` | `IsPreomiaForDevelop` | 9.0.0+ | Q | 2026-11-21 |
 
-### PPC services   
-  fgm:1, fgm:2, fgm:3, fgm:4, fgm:5, fgm:6 and fgm:7 used to exist, but are now deprecated.
+### PPC services
 
 [Wiki SwitchBrew](https://switchbrew.org/wiki/PPC_services___
 __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_deprecated.) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/PPC%20services.md)
@@ -2144,8 +2141,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | auddebug | `2` | `StartCpuProfiler` | — | Q | 2026-11-21 |
 | auddebug | `3` | `StopCpuProfiler` | — | Q | 2026-11-21 |
 
-### Profiler services   
-  Not currently available on retail units.
+### Profiler services
 
 [Wiki SwitchBrew](https://switchbrew.org/wiki/Profiler_services___
 __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Profiler%20services.md)
@@ -2775,19 +2771,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:c | `2431` | `GetAlbumMovieWriteStreamBrokenReason` | — | Q | 2026-11-21 |
 | caps:c | `2433` | `GetAlbumMovieWriteStreamDataSize` | — | Q | 2026-11-21 |
 | caps:c | `2434` | `SetAlbumMovieWriteStreamDataSize` | — | Q | 2026-11-21 |
-| caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | Q | 2026-11-21 |
-| caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | Q | 2026-11-21 |
-| caps:u | `103` | `DeleteAlbumFileByAruid` | — | Q | 2026-11-21 |
-| caps:u | `104` | `GetAlbumFileSizeByAruid` | — | Q | 2026-11-21 |
-| caps:u | `105` | `DeleteAlbumFileByAruidForDebug` | — | Q | 2026-11-21 |
-| caps:u | `110` | `LoadAlbumScreenShotImageByAruid` | — | Q | 2026-11-21 |
-| caps:u | `120` | `LoadAlbumScreenShotThumbnailImageByAruid` | — | Q | 2026-11-21 |
-| caps:u | `130` | `PrecheckToCreateContentsByAruid` | — | Q | 2026-11-21 |
-| caps:u | `140` | `GetAlbumFileList1AafeAruidDeprecated` | 6.0.0+ | Q | 2026-11-21 |
-| caps:u | `141` | `GetAlbumFileList2AafeUidAruidDeprecated` | 6.0.0+ | Q | 2026-11-21 |
-| caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | Q | 2026-11-21 |
-| caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | Q | 2026-11-21 |
-| caps:u | `60002` | `OpenAccessorSessionForApplication` | — | Q | 2026-11-21 |
+| caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L43) ; stub explicite en corps) | 2026-11-21 |
+| caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L50) ; stub explicite en corps) | 2026-11-21 |
+| caps:u | `103` | `DeleteAlbumFileByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L23) ; handler nullptr) | 2026-11-21 |
+| caps:u | `104` | `GetAlbumFileSizeByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L24) ; handler nullptr) | 2026-11-21 |
+| caps:u | `105` | `DeleteAlbumFileByAruidForDebug` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L25) ; handler nullptr) | 2026-11-21 |
+| caps:u | `110` | `LoadAlbumScreenShotImageByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L26) ; handler nullptr) | 2026-11-21 |
+| caps:u | `120` | `LoadAlbumScreenShotThumbnailImageByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L27) ; handler nullptr) | 2026-11-21 |
+| caps:u | `130` | `PrecheckToCreateContentsByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L28) ; handler nullptr) | 2026-11-21 |
+| caps:u | `140` | `GetAlbumFileList1AafeAruidDeprecated` | 6.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L29) ; handler nullptr) | 2026-11-21 |
+| caps:u | `141` | `GetAlbumFileList2AafeUidAruidDeprecated` | 6.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L30) ; handler nullptr) | 2026-11-21 |
+| caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L64) ; stub explicite en corps) | 2026-11-21 |
+| caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L32) ; handler nullptr) | 2026-11-21 |
+| caps:u | `60002` | `OpenAccessorSessionForApplication` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L34) ; handler nullptr) | 2026-11-21 |
 | caps:u | `2001` | `OpenAlbumMovieReadStream` | — | Q | 2026-11-21 |
 | caps:u | `2002` | `CloseAlbumMovieReadStream` | — | Q | 2026-11-21 |
 | caps:u | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | Q | 2026-11-21 |
@@ -4498,64 +4494,64 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| npns:u | `1` | `ListenAll` | — | Q | 2026-11-21 |
-| npns:u | `2` | `ListenTo` | — | Q | 2026-11-21 |
-| npns:u | `3` | `Receive` | — | Q | 2026-11-21 |
-| npns:u | `4` | `ReceiveRaw` | — | Q | 2026-11-21 |
+| npns:u | `1` | `ListenAll` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L154) ; handler nullptr) | 2026-11-21 |
+| npns:u | `2` | `ListenTo` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L155) ; handler nullptr) | 2026-11-21 |
+| npns:u | `3` | `Receive` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L156) ; handler nullptr) | 2026-11-21 |
+| npns:u | `4` | `ReceiveRaw` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L157) ; handler nullptr) | 2026-11-21 |
 | npns:u | `5` | `GetReceiveEvent` | — | Q | 2026-11-21 |
-| npns:u | `7` | `GetStateChangeEvent` | — | Q | 2026-11-21 |
-| npns:u | `21` | `CreateToken` | — | Q | 2026-11-21 |
-| npns:u | `23` | `DestroyToken` | — | Q | 2026-11-21 |
-| npns:u | `25` | `QueryIsTokenValid` | — | Q | 2026-11-21 |
-| npns:u | `26` | `ListenToMyApplicationId` | 5.0.0+ | Q | 2026-11-21 |
-| npns:u | `101` | `Suspend` | — | Q | 2026-11-21 |
-| npns:u | `102` | `Resume` | — | Q | 2026-11-21 |
-| npns:u | `103` | `GetState` | — | Q | 2026-11-21 |
-| npns:u | `104` | `GetStatistics` | 3.0.0+ | Q | 2026-11-21 |
-| npns:u | `111` | `GetJid` | — | Q | 2026-11-21 |
-| npns:u | `120` | `CreateNotificationReceiver` | 7.0.0+ | Q | 2026-11-21 |
-| npns:u | `151` | `GetStateWithHandover` | 8.0.0+ | Q | 2026-11-21 |
-| npns:u | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
-| npns:u | `153` | `GetDropEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
+| npns:u | `7` | `GetStateChangeEvent` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L159) ; handler nullptr) | 2026-11-21 |
+| npns:u | `21` | `CreateToken` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L161) ; handler nullptr) | 2026-11-21 |
+| npns:u | `23` | `DestroyToken` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L162) ; handler nullptr) | 2026-11-21 |
+| npns:u | `25` | `QueryIsTokenValid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L163) ; handler nullptr) | 2026-11-21 |
+| npns:u | `26` | `ListenToMyApplicationId` | 5.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L164) ; handler nullptr) | 2026-11-21 |
+| npns:u | `101` | `Suspend` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L165) ; handler nullptr) | 2026-11-21 |
+| npns:u | `102` | `Resume` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L166) ; handler nullptr) | 2026-11-21 |
+| npns:u | `103` | `GetState` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L167) ; handler nullptr) | 2026-11-21 |
+| npns:u | `104` | `GetStatistics` | 3.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L168) ; handler nullptr) | 2026-11-21 |
+| npns:u | `111` | `GetJid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L169) ; handler nullptr) | 2026-11-21 |
+| npns:u | `120` | `CreateNotificationReceiver` | 7.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L170) ; handler nullptr) | 2026-11-21 |
+| npns:u | `151` | `GetStateWithHandover` | 8.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L171) ; handler nullptr) | 2026-11-21 |
+| npns:u | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L172) ; handler nullptr) | 2026-11-21 |
+| npns:u | `153` | `GetDropEventWithHandover` | 8.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L173) ; handler nullptr) | 2026-11-21 |
 | npns:u | `1` | `ListenTo` | — | Q | 2026-11-21 |
 | npns:u | `2` | `ListenToMyApplicationId` | — | Q | 2026-11-21 |
 | npns:u | `4` | `GetReceiveEvent` | — | Q | 2026-11-21 |
-| npns:s | `1` | `ListenAll` | — | Q | 2026-11-21 |
+| npns:s | `1` | `ListenAll` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L25) ; handler nullptr) | 2026-11-21 |
 | npns:s | `2` | `ListenTo` | — | Q | 2026-11-21 |
-| npns:s | `3` | `Receive` | — | Q | 2026-11-21 |
-| npns:s | `4` | `ReceiveRaw` | — | Q | 2026-11-21 |
+| npns:s | `3` | `Receive` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L27) ; handler nullptr) | 2026-11-21 |
+| npns:s | `4` | `ReceiveRaw` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L28) ; handler nullptr) | 2026-11-21 |
 | npns:s | `5` | `GetReceiveEvent` | — | Q | 2026-11-21 |
-| npns:s | `6` | `ListenUndelivered` | — | Q | 2026-11-21 |
-| npns:s | `7` | `GetStateChangeEvent` | — | Q | 2026-11-21 |
-| npns:s | `11` | `SubscribeTopic` | — | Q | 2026-11-21 |
-| npns:s | `12` | `UnsubscribeTopic` | — | Q | 2026-11-21 |
-| npns:s | `13` | `QueryIsTopicExist` | — | Q | 2026-11-21 |
-| npns:s | `21` | `CreateToken` | — | Q | 2026-11-21 |
-| npns:s | `22` | `CreateTokenWithApplicationId` | — | Q | 2026-11-21 |
-| npns:s | `23` | `DestroyToken` | — | Q | 2026-11-21 |
-| npns:s | `24` | `DestroyTokenWithApplicationId` | — | Q | 2026-11-21 |
-| npns:s | `25` | `QueryIsTokenValid` | — | Q | 2026-11-21 |
-| npns:s | `26` | `ListenToMyApplicationId` | 5.0.0+ | Q | 2026-11-21 |
-| npns:s | `31` | `UploadTokenToBaaS` | — | Q | 2026-11-21 |
-| npns:s | `32` | `DestroyTokenForBaaS` | — | Q | 2026-11-21 |
+| npns:s | `6` | `ListenUndelivered` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L30) ; handler nullptr) | 2026-11-21 |
+| npns:s | `7` | `GetStateChangeEvent` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L31) ; handler nullptr) | 2026-11-21 |
+| npns:s | `11` | `SubscribeTopic` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L33) ; handler nullptr) | 2026-11-21 |
+| npns:s | `12` | `UnsubscribeTopic` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L34) ; handler nullptr) | 2026-11-21 |
+| npns:s | `13` | `QueryIsTopicExist` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L35) ; handler nullptr) | 2026-11-21 |
+| npns:s | `21` | `CreateToken` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L39) ; handler nullptr) | 2026-11-21 |
+| npns:s | `22` | `CreateTokenWithApplicationId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L40) ; handler nullptr) | 2026-11-21 |
+| npns:s | `23` | `DestroyToken` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L41) ; handler nullptr) | 2026-11-21 |
+| npns:s | `24` | `DestroyTokenWithApplicationId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L42) ; handler nullptr) | 2026-11-21 |
+| npns:s | `25` | `QueryIsTokenValid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L43) ; handler nullptr) | 2026-11-21 |
+| npns:s | `26` | `ListenToMyApplicationId` | 5.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L44) ; handler nullptr) | 2026-11-21 |
+| npns:s | `31` | `UploadTokenToBaaS` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L48) ; handler nullptr) | 2026-11-21 |
+| npns:s | `32` | `DestroyTokenForBaaS` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L49) ; handler nullptr) | 2026-11-21 |
 | npns:s | `33` | `CreateTokenForBaas` | 7.0.0+ | Q | 2026-11-21 |
 | npns:s | `34` | `SetBaasDeviceAccountIdList` | 7.0.0+ | Q | 2026-11-21 |
-| npns:s | `101` | `Suspend` | — | Q | 2026-11-21 |
-| npns:s | `102` | `Resume` | — | Q | 2026-11-21 |
+| npns:s | `101` | `Suspend` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L62) ; handler nullptr) | 2026-11-21 |
+| npns:s | `102` | `Resume` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L63) ; handler nullptr) | 2026-11-21 |
 | npns:s | `103` | `GetState` | — | Q | 2026-11-21 |
-| npns:s | `104` | `GetStatistics` | 3.0.0+ | Q | 2026-11-21 |
-| npns:s | `105` | `GetPlayReportRequestEvent` | 3.0.0+ | Q | 2026-11-21 |
-| npns:s | `111` | `GetJid` | — | Q | 2026-11-21 |
-| npns:s | `112` | `CreateJid` | — | Q | 2026-11-21 |
-| npns:s | `113` | `DestroyJid` | — | Q | 2026-11-21 |
-| npns:s | `114` | `AttachJid` | — | Q | 2026-11-21 |
-| npns:s | `115` | `DetachJid` | — | Q | 2026-11-21 |
-| npns:s | `120` | `CreateNotificationReceiver` | 7.0.0+ | Q | 2026-11-21 |
-| npns:s | `151` | `GetStateWithHandover` | 8.0.0+ | Q | 2026-11-21 |
-| npns:s | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
-| npns:s | `153` | `GetDropEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
-| npns:s | `201` | `RequestChangeStateForceTimed` | 3.0.0+ | Q | 2026-11-21 |
-| npns:s | `202` | `RequestChangeStateForceAsync` | 3.0.0+ | Q | 2026-11-21 |
+| npns:s | `104` | `GetStatistics` | 3.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L65) ; handler nullptr) | 2026-11-21 |
+| npns:s | `105` | `GetPlayReportRequestEvent` | 3.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L66) ; handler nullptr) | 2026-11-21 |
+| npns:s | `111` | `GetJid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L69) ; handler nullptr) | 2026-11-21 |
+| npns:s | `112` | `CreateJid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L70) ; handler nullptr) | 2026-11-21 |
+| npns:s | `113` | `DestroyJid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L71) ; handler nullptr) | 2026-11-21 |
+| npns:s | `114` | `AttachJid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L72) ; handler nullptr) | 2026-11-21 |
+| npns:s | `115` | `DetachJid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L73) ; handler nullptr) | 2026-11-21 |
+| npns:s | `120` | `CreateNotificationReceiver` | 7.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L74) ; handler nullptr) | 2026-11-21 |
+| npns:s | `151` | `GetStateWithHandover` | 8.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L75) ; handler nullptr) | 2026-11-21 |
+| npns:s | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L76) ; handler nullptr) | 2026-11-21 |
+| npns:s | `153` | `GetDropEventWithHandover` | 8.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L77) ; handler nullptr) | 2026-11-21 |
+| npns:s | `201` | `RequestChangeStateForceTimed` | 3.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L83) ; handler nullptr) | 2026-11-21 |
+| npns:s | `202` | `RequestChangeStateForceAsync` | 3.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/npns/npns.cpp#L84) ; handler nullptr) | 2026-11-21 |
 
 ### NV services
 
@@ -4579,7 +4575,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `11` | `Ioctl2` | 3.0.0+ | Q | 2026-11-21 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `12` | `Ioctl3` | 3.0.0+ | Q | 2026-11-21 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `13` | `FinishInitialize` | 3.0.0+ | Q | 2026-11-21 |
-| nvmemp | `0` | `Open` | — | Q | 2026-11-21 |
+| nvmemp | `0` | `Open` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/nvdrv/nvmemp.cpp#L23) ; UNIMPLEMENTED en corps) | 2026-11-21 |
 | nvmemp | `1` | `GetPid` | — | Q | 2026-11-21 |
 | nvdrvdbg | `0` | `OpenLog` | — | Q | 2026-11-21 |
 | nvdrvdbg | `1` | `CloseLog` | — | Q | 2026-11-21 |
@@ -5288,14 +5284,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | csrng | `0` | `GenerateRandomBytes` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L61) ; stub explicite en corps) | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `3` | `LoadAesKey` | — | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `5` | `SetConfig` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L77) ; stub explicite en corps) | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `5` | `SetConfig` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L91) ; UNIMPLEMENTED en corps) | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `7` | `GenerateRandomBytes` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `9` | `ImportLotusKey` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `10` | `DecryptLotusMessage` | — | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `11` | `IsDevelopment` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `11` | `IsDevelopment` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L113) ; UNIMPLEMENTED en corps) | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `12` | `GenerateSpecificAesKey` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `13` | `DecryptRsaPrivateKey` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `14` | `DecryptAesKey` | — | Q | 2026-11-21 |
@@ -5308,8 +5304,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `21` | `AllocateAesKeyslot` | 2.0.0+ | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `22` | `FreeAesKeyslot` | 2.0.0+ | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `23` | `GetAesKeyslotAvailableEvent` | 2.0.0+ | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `24` | `SetBootReason` | 3.0.0+ | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `25` | `GetBootReason` | 3.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `24` | `SetBootReason` | 3.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L120) ; UNIMPLEMENTED en corps) | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `25` | `GetBootReason` | 3.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L127) ; UNIMPLEMENTED en corps) | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `26` | `ImportSslKey` | 5.0.0+ | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `27` | `SslExpMod` | 5.0.0+ | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `28` | `ImportDrmKey` | 5.0.0+ | Q | 2026-11-21 |
@@ -5540,4 +5536,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 
-<!-- NS1_IPC_APPEND -->
+
+## 8. Qualification ciblée des handlers IPC (snapshot C++ de base)
+
+Le premier croisement **service + ID + nom** avec les unités `spl`, `irs`, `caps:u`, `npns` et `nvmemp` classe **68** commandes avec un handler nul/rejet explicite (D) et **19** commandes signalées comme stubbed (P). Les références C++ ont été ajoutées à chaque ligne concernée. **Ce classement ne prouve pas le propriétaire binaire PS5**, dont la sélection CMake/overlay, les versions HOS et les tests restent à confirmer. Les autres commandes conservent Q ; ne jamais compter tous les Q comme fonctions manquantes.
+
+**Raisons d'échec documentées** : `nullptr` dans `RegisterHandlers` = commande non raccordée dans le service de base ; `UNIMPLEMENTED` = rejet/logique absente ; `(STUBBED)` = commande répondant parfois `ResultSuccess` sans effet matériel complet (IRS/CAPS). Dans SPL, certaines opérations renvoient `ResultSecureMonitorNotImplemented` plutôt que succès ; conserver cette distinction.
+
+**Exemples hors table wiki historique** : `ModularExponentiate` apparaît explicitement dans le module SPL de base mais pas dans le catalogue des commandes extrait sous ce nom ; `nvmemp::GetAruid` et plusieurs commandes `ngct:s` demandent un rapprochement avec la page SwitchBrew actuelle et leurs interfaces précises. Ne pas leur attribuer d'ID par déduction.
+
+

@@ -183,7 +183,7 @@ def extract_1d(text, start):
 old_1d=extract_1d(pinned,legacy_1d_start)
 live_1d=extract_1d(native,live_1d_start)
 assert fnv1a32(old_1d)==3343909125 and len(old_1d)==2147
-assert fnv1a32(live_1d)==2930490592 and len(live_1d)==11220
+assert fnv1a32(live_1d)==1224266116 and len(live_1d)==11555
 assert "mapped_ranges_overlap(tiled_begin" in live_1d
 assert "GpuToCpuAddress(address)" in live_1d
 assert "IsContinuousRange(first," in live_1d

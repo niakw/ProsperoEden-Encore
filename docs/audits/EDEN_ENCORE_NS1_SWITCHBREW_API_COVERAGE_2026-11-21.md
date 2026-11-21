@@ -4747,4 +4747,637 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `2015` | `FinishSynchronizeParentalControlSettingsWithLastUpdated` | — | Q | 2026-11-21 |
 | pctl:s, pctl:r, pctl:a, pctl | `2016` | `RequestUpdateExemptionListAsync` | 5.0.0+ | Q | 2026-11-21 |
 
+### Process Manager services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Process_Manager_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Process%20Manager%20services.md)
+
+**10 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| pm:bm | `0` | `GetBootMode` | — | Q | 2026-11-21 |
+| pm:bm | `1` | `SetMaintenanceBoot` | — | Q | 2026-11-21 |
+| pm:info | `0` | `GetProgramId` | — | Q | 2026-11-21 |
+| pm:shell | `0` | `LaunchProgram` | — | Q | 2026-11-21 |
+| pm:shell | `1` | `TerminateProcess` | — | Q | 2026-11-21 |
+| pm:shell | `2` | `TerminateProgram` | — | Q | 2026-11-21 |
+| pm:shell | `3` | `GetProcessEventHandle` | — | Q | 2026-11-21 |
+| pm:shell | `4` | `GetProcessEventInfo` | — | Q | 2026-11-21 |
+| pm:shell | `8` | `BoostApplicationThreadResourceLimit` | 7.0.0+ | Q | 2026-11-21 |
+| pm:shell | `9` | `GetBootFinishedEventHandle` | 8.0.0+ | Q | 2026-11-21 |
+
+### PSC services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/PSC_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/PSC%20services.md)
+
+**88 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| psc:c | `0` | `Initialize` | — | Q | 2026-11-21 |
+| psc:c | `1` | `DispatchRequest` | — | Q | 2026-11-21 |
+| psc:c | `2` | `GetResult` | — | Q | 2026-11-21 |
+| psc:c | `3` | `GetState` | — | Q | 2026-11-21 |
+| psc:c | `4` | `Cancel` | — | Q | 2026-11-21 |
+| psc:c | `5` | `PrintModuleInformation` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| psc:c | `6` | `GetModuleInformation` | — | Q | 2026-11-21 |
+| psc:m | `0` | `GetPmModule` | — | Q | 2026-11-21 |
+| psc:m | `0` | `Initialize` | — | Q | 2026-11-21 |
+| psc:m | `1` | `GetRequest` | — | Q | 2026-11-21 |
+| psc:m | `2` | `Acknowledge` | — | Q | 2026-11-21 |
+| psc:m | `3` | `Finalize` | — | Q | 2026-11-21 |
+| psc:m | `4` | `AcknowledgeEx` | 5.1.0+ | Q | 2026-11-21 |
+| ovln:rcv | `0` | `OpenReceiver` | — | Q | 2026-11-21 |
+| ovln:rcv | `0` | `AddSource` | — | Q | 2026-11-21 |
+| ovln:rcv | `1` | `RemoveSource` | — | Q | 2026-11-21 |
+| ovln:rcv | `2` | `GetReceiveEventHandle` | — | Q | 2026-11-21 |
+| ovln:rcv | `3` | `Receive` | — | Q | 2026-11-21 |
+| ovln:rcv | `4` | `ReceiveWithTick` | — | Q | 2026-11-21 |
+| ovln:snd | `0` | `OpenSender` | — | Q | 2026-11-21 |
+| ovln:snd | `0` | `Send` | — | Q | 2026-11-21 |
+| ovln:snd | `1` | `GetUnreceivedMessageCount` | — | Q | 2026-11-21 |
+| time:m | `0` | `GetUserStaticService` | — | Q | 2026-11-21 |
+| time:m | `5` | `GetAdminStaticService` | — | Q | 2026-11-21 |
+| time:m | `6` | `GetRepairStaticService` | — | Q | 2026-11-21 |
+| time:m | `9` | `GetManufactureStaticService` | — | Q | 2026-11-21 |
+| time:m | `10` | `SetupStandardSteadyClock` | — | Q | 2026-11-21 |
+| time:m | `11` | `SetupStandardLocalSystemClock` | — | Q | 2026-11-21 |
+| time:m | `12` | `SetupStandardNetworkSystemClock` | — | Q | 2026-11-21 |
+| time:m | `13` | `SetupStandardUserSystemClock` | — | Q | 2026-11-21 |
+| time:m | `14` | `SetupTimeZoneManager` | — | Q | 2026-11-21 |
+| time:m | `15` | `SetupEphemeralNetworkSystemClock` | — | Q | 2026-11-21 |
+| time:m | `60` | `GetStandardUserSystemClockAutomaticCorrectionEvent` | — | Q | 2026-11-21 |
+| time:m | `100` | `SetStandardSteadyClockRtcOffset` | — | Q | 2026-11-21 |
+| time:m | `200` | `GetAlarmRegistrationEvent` | — | Q | 2026-11-21 |
+| time:m | `201` | `UpdateSteadyAlarms` | — | Q | 2026-11-21 |
+| time:al | `0` | `GetWakeUpEvent` | — | Q | 2026-11-21 |
+| time:al | `1` | `Enable` | — | Q | 2026-11-21 |
+| time:al | `2` | `Disable` | — | Q | 2026-11-21 |
+| time:al | `3` | `IsEnabled` | — | Q | 2026-11-21 |
+| time:su, time:s | `0` | `GetStandardUserSystemClock` | — | Q | 2026-11-21 |
+| time:su, time:s | `1` | `GetStandardNetworkSystemClock` | — | Q | 2026-11-21 |
+| time:su, time:s | `2` | `GetStandardSteadyClock` | — | Q | 2026-11-21 |
+| time:su, time:s | `3` | `GetTimeZoneService` | — | Q | 2026-11-21 |
+| time:su, time:s | `4` | `GetStandardLocalSystemClock` | — | Q | 2026-11-21 |
+| time:su, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
+| time:su, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
+| time:su, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
+| time:su, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
+| time:su, time:s | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `400` | `GetClockSnapshot` | 4.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `501` | `CalculateSpanBetween` | 4.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `0` | `GetCurrentTimePoint` | — | Q | 2026-11-21 |
+| time:su, time:s | `2` | `GetTestOffset` | — | Q | 2026-11-21 |
+| time:su, time:s | `3` | `SetTestOffset` | — | Q | 2026-11-21 |
+| time:su, time:s | `100` | `GetRtcValue` | 2.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `200` | `GetInternalOffset` | 3.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
+| time:su, time:s | `0` | `GetCurrentTime` | — | Q | 2026-11-21 |
+| time:su, time:s | `1` | `SetCurrentTime` | — | Q | 2026-11-21 |
+| time:su, time:s | `2` | `GetSystemClockContext` | — | Q | 2026-11-21 |
+| time:su, time:s | `3` | `SetSystemClockContext` | — | Q | 2026-11-21 |
+| time:su, time:s | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `0` | `GetDeviceLocationName` | — | Q | 2026-11-21 |
+| time:su, time:s | `1` | `SetDeviceLocationName` | — | Q | 2026-11-21 |
+| time:su, time:s | `2` | `GetTotalLocationNameCount` | — | Q | 2026-11-21 |
+| time:su, time:s | `3` | `LoadLocationNameList` | — | Q | 2026-11-21 |
+| time:su, time:s | `4` | `LoadTimeZoneRule` | — | Q | 2026-11-21 |
+| time:su, time:s | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `7` | `SetDeviceLocationNameWithTimeZoneRule` | 9.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `8` | `ParseTimeZoneBinary` | 9.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `20` | `GetDeviceLocationNameOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `100` | `ToCalendarTime` | — | Q | 2026-11-21 |
+| time:su, time:s | `101` | `ToCalendarTimeWithMyRule` | — | Q | 2026-11-21 |
+| time:su, time:s | `201` | `ToPosixTime` | — | Q | 2026-11-21 |
+| time:su, time:s | `202` | `ToPosixTimeWithMyRule` | — | Q | 2026-11-21 |
+
+### RO services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/RO_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/RO%20services.md)
+
+**6 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| ldr:ro, ro:1 | `0` | `LoadNro` | — | Q | 2026-11-21 |
+| ldr:ro, ro:1 | `1` | `UnloadNro` | — | Q | 2026-11-21 |
+| ldr:ro, ro:1 | `2` | `LoadNrr` | — | Q | 2026-11-21 |
+| ldr:ro, ro:1 | `3` | `UnloadNrr` | — | Q | 2026-11-21 |
+| ldr:ro, ro:1 | `4` | `Initialize` | — | Q | 2026-11-21 |
+| ldr:ro, ro:1 | `10` | `LoadNrrEx` | 7.0.0+ | Q | 2026-11-21 |
+
+### Settings services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Settings_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Settings%20services.md)
+
+**250 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| set | `0` | `GetLanguageCode` | — | Q | 2026-11-21 |
+| set | `1` | `GetAvailableLanguageCodes` | — | Q | 2026-11-21 |
+| set | `2` | `MakeLanguageCode` | 4.0.0+ | Q | 2026-11-21 |
+| set | `3` | `GetAvailableLanguageCodeCount` | — | Q | 2026-11-21 |
+| set | `4` | `GetRegionCode` | — | Q | 2026-11-21 |
+| set | `5` | `GetAvailableLanguageCodes2` | 4.0.0+ | Q | 2026-11-21 |
+| set | `6` | `GetAvailableLanguageCodeCount2` | 4.0.0+ | Q | 2026-11-21 |
+| set | `7` | `GetKeyCodeMap` | 4.0.0+ | Q | 2026-11-21 |
+| set | `8` | `GetQuestFlag` | 5.0.0+ | Q | 2026-11-21 |
+| set | `9` | `GetKeyCodeMap2` | 6.0.0+ | Q | 2026-11-21 |
+| set | `10` | `GetFirmwareVersionForDebug` | 9.0.0+ | Q | 2026-11-21 |
+| set:fd | `2` | `SetSettingsItemValue` | — | Q | 2026-11-21 |
+| set:fd | `3` | `ResetSettingsItemValue` | — | Q | 2026-11-21 |
+| set:fd | `4` | `[CreateSettingsItemKeyIterator](#ISettingsItemKeyIterator "wikilink")` | — | Q | 2026-11-21 |
+| set:fd | `10` | `ReadSettings` | 4.0.0+ | Q | 2026-11-21 |
+| set:fd | `11` | `ResetSettings` | 4.0.0+ | Q | 2026-11-21 |
+| set:fd | `20` | `SetWebInspectorFlag` | 4.0.0+ | Q | 2026-11-21 |
+| set:fd | `21` | `SetAllowedSslHosts` | 4.0.0+ | Q | 2026-11-21 |
+| set:fd | `22` | `SetHostFsMountPoint` | 4.0.0+ | Q | 2026-11-21 |
+| set:fd | `23` | `SetMemoryUsageRateFlag` | 9.0.0+ | Q | 2026-11-21 |
+| set:fd | `0` | `GoNext` | — | Q | 2026-11-21 |
+| set:fd | `1` | `GetKeySize` | — | Q | 2026-11-21 |
+| set:fd | `2` | `GetKey` | — | Q | 2026-11-21 |
+| set:cal | `0` | `GetBluetoothBdAddress` | — | Q | 2026-11-21 |
+| set:cal | `1` | `GetConfigurationId1` | — | Q | 2026-11-21 |
+| set:cal | `2` | `GetAccelerometerOffset` | — | Q | 2026-11-21 |
+| set:cal | `3` | `GetAccelerometerScale` | — | Q | 2026-11-21 |
+| set:cal | `4` | `GetGyroscopeOffset` | — | Q | 2026-11-21 |
+| set:cal | `5` | `GetGyroscopeScale` | — | Q | 2026-11-21 |
+| set:cal | `6` | `GetWirelessLanMacAddress` | — | Q | 2026-11-21 |
+| set:cal | `7` | `GetWirelessLanCountryCodeCount` | — | Q | 2026-11-21 |
+| set:cal | `8` | `GetWirelessLanCountryCodes` | — | Q | 2026-11-21 |
+| set:cal | `9` | `GetSerialNumber` | — | Q | 2026-11-21 |
+| set:cal | `10` | `SetInitialSystemAppletProgramId` | — | Q | 2026-11-21 |
+| set:cal | `11` | `SetOverlayDispProgramId` | — | Q | 2026-11-21 |
+| set:cal | `12` | `GetBatteryLot` | — | Q | 2026-11-21 |
+| set:cal | `14` | `GetEciDeviceCertificate` | — | Q | 2026-11-21 |
+| set:cal | `15` | `GetEticketDeviceCertificate` | — | Q | 2026-11-21 |
+| set:cal | `16` | `GetSslKey` | — | Q | 2026-11-21 |
+| set:cal | `17` | `GetSslCertificate` | — | Q | 2026-11-21 |
+| set:cal | `18` | `GetGameCardKey` | — | Q | 2026-11-21 |
+| set:cal | `19` | `GetGameCardCertificate` | — | Q | 2026-11-21 |
+| set:cal | `20` | `GetEciDeviceKey` | — | Q | 2026-11-21 |
+| set:cal | `21` | `GetEticketDeviceKey` | — | Q | 2026-11-21 |
+| set:cal | `22` | `GetSpeakerParameter` | — | Q | 2026-11-21 |
+| set:cal | `23` | `GetLcdVendorId` | 4.0.0+ | Q | 2026-11-21 |
+| set:cal | `24` | `GetEciDeviceCertificate2` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `25` | `GetEciDeviceKey2` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `26` | `GetAmiiboKey` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `27` | `GetAmiiboEcqvCertificate` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `28` | `GetAmiiboEcdsaCertificate` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `29` | `GetAmiiboEcqvBlsKey` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `30` | `GetAmiiboEcqvBlsCertificate` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `31` | `GetAmiiboEcqvBlsRootCertificate` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `32` | `GetUsbTypeCPowerSourceCircuitVersion` | 5.0.0+ | Q | 2026-11-21 |
+| set:cal | `33` | `GetAnalogStickModuleTypeL` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `34` | `GetAnalogStickModelParameterL` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `35` | `GetAnalogStickFactoryCalibrationL` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `36` | `GetAnalogStickModuleTypeR` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `37` | `GetAnalogStickModelParameterR` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `38` | `GetAnalogStickFactoryCalibrationR` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `39` | `GetConsoleSixAxisSensorModuleType` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `40` | `GetConsoleSixAxisSensorHorizontalOffset` | 9.0.0+ | Q | 2026-11-21 |
+| set:cal | `41` | `GetBatteryVersion` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `0` | `SetLanguageCode` | — | Q | 2026-11-21 |
+| set:sys | `1` | `SetNetworkSettings` | — | Q | 2026-11-21 |
+| set:sys | `2` | `GetNetworkSettings` | — | Q | 2026-11-21 |
+| set:sys | `3` | `GetFirmwareVersion` | — | Q | 2026-11-21 |
+| set:sys | `4` | `GetFirmwareVersion2` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `5` | `GetFirmwareVersionDigest` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `7` | `GetLockScreenFlag` | — | Q | 2026-11-21 |
+| set:sys | `8` | `SetLockScreenFlag` | — | Q | 2026-11-21 |
+| set:sys | `9` | `GetBacklightSettings` | — | Q | 2026-11-21 |
+| set:sys | `10` | `SetBacklightSettings` | — | Q | 2026-11-21 |
+| set:sys | `11` | `SetBluetoothDevicesSettings` | — | Q | 2026-11-21 |
+| set:sys | `12` | `GetBluetoothDevicesSettings` | — | Q | 2026-11-21 |
+| set:sys | `13` | `GetExternalSteadyClockSourceId` | — | Q | 2026-11-21 |
+| set:sys | `14` | `SetExternalSteadyClockSourceId` | — | Q | 2026-11-21 |
+| set:sys | `15` | `GetUserSystemClockContext` | — | Q | 2026-11-21 |
+| set:sys | `16` | `SetUserSystemClockContext` | — | Q | 2026-11-21 |
+| set:sys | `17` | `GetAccountSettings` | — | Q | 2026-11-21 |
+| set:sys | `18` | `SetAccountSettings` | — | Q | 2026-11-21 |
+| set:sys | `19` | `GetAudioVolume` | — | Q | 2026-11-21 |
+| set:sys | `20` | `SetAudioVolume` | — | Q | 2026-11-21 |
+| set:sys | `21` | `GetEulaVersions` | — | Q | 2026-11-21 |
+| set:sys | `22` | `SetEulaVersions` | — | Q | 2026-11-21 |
+| set:sys | `23` | `GetColorSetId` | — | Q | 2026-11-21 |
+| set:sys | `24` | `SetColorSetId` | — | Q | 2026-11-21 |
+| set:sys | `25` | `GetConsoleInformationUploadFlag` | — | Q | 2026-11-21 |
+| set:sys | `26` | `SetConsoleInformationUploadFlag` | — | Q | 2026-11-21 |
+| set:sys | `27` | `GetAutomaticApplicationDownloadFlag` | — | Q | 2026-11-21 |
+| set:sys | `28` | `SetAutomaticApplicationDownloadFlag` | — | Q | 2026-11-21 |
+| set:sys | `29` | `GetNotificationSettings` | — | Q | 2026-11-21 |
+| set:sys | `30` | `SetNotificationSettings` | — | Q | 2026-11-21 |
+| set:sys | `31` | `GetAccountNotificationSettings` | — | Q | 2026-11-21 |
+| set:sys | `32` | `SetAccountNotificationSettings` | — | Q | 2026-11-21 |
+| set:sys | `35` | `GetVibrationMasterVolume` | — | Q | 2026-11-21 |
+| set:sys | `36` | `SetVibrationMasterVolume` | — | Q | 2026-11-21 |
+| set:sys | `37` | `GetSettingsItemValueSize` | — | Q | 2026-11-21 |
+| set:sys | `38` | `GetSettingsItemValue` | — | Q | 2026-11-21 |
+| set:sys | `39` | `GetTvSettings` | — | Q | 2026-11-21 |
+| set:sys | `40` | `SetTvSettings` | — | Q | 2026-11-21 |
+| set:sys | `41` | `GetEdid` | — | Q | 2026-11-21 |
+| set:sys | `42` | `SetEdid` | — | Q | 2026-11-21 |
+| set:sys | `43` | `GetAudioOutputMode` | — | Q | 2026-11-21 |
+| set:sys | `44` | `SetAudioOutputMode` | — | Q | 2026-11-21 |
+| set:sys | `45` | `IsForceMuteOnHeadphoneRemoved` | — | Q | 2026-11-21 |
+| set:sys | `46` | `SetForceMuteOnHeadphoneRemoved` | — | Q | 2026-11-21 |
+| set:sys | `47` | `GetQuestFlag` | — | Q | 2026-11-21 |
+| set:sys | `48` | `SetQuestFlag` | — | Q | 2026-11-21 |
+| set:sys | `49` | `GetDataDeletionSettings` | — | Q | 2026-11-21 |
+| set:sys | `50` | `SetDataDeletionSettings` | — | Q | 2026-11-21 |
+| set:sys | `51` | `GetInitialSystemAppletProgramId` | — | Q | 2026-11-21 |
+| set:sys | `52` | `GetOverlayDispProgramId` | — | Q | 2026-11-21 |
+| set:sys | `53` | `GetDeviceTimeZoneLocationName` | — | Q | 2026-11-21 |
+| set:sys | `54` | `SetDeviceTimeZoneLocationName` | — | Q | 2026-11-21 |
+| set:sys | `55` | `GetWirelessCertificationFileSize` | — | Q | 2026-11-21 |
+| set:sys | `56` | `[GetWirelessCertificationFile](Flash%20Filesystem#PRODINFOF.md##PRODINFOF "wikilink")` | — | Q | 2026-11-21 |
+| set:sys | `57` | `SetRegionCode` | — | Q | 2026-11-21 |
+| set:sys | `58` | `GetNetworkSystemClockContext` | — | Q | 2026-11-21 |
+| set:sys | `59` | `SetNetworkSystemClockContext` | — | Q | 2026-11-21 |
+| set:sys | `60` | `IsUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
+| set:sys | `61` | `SetUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
+| set:sys | `62` | `GetDebugModeFlag` | — | Q | 2026-11-21 |
+| set:sys | `63` | `GetPrimaryAlbumStorage` | — | Q | 2026-11-21 |
+| set:sys | `64` | `SetPrimaryAlbumStorage` | — | Q | 2026-11-21 |
+| set:sys | `65` | `GetUsb30EnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `66` | `SetUsb30EnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `67` | `GetBatteryLot` | — | Q | 2026-11-21 |
+| set:sys | `68` | `GetSerialNumber` | — | Q | 2026-11-21 |
+| set:sys | `69` | `GetNfcEnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `70` | `SetNfcEnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `71` | `GetSleepSettings` | — | Q | 2026-11-21 |
+| set:sys | `72` | `SetSleepSettings` | — | Q | 2026-11-21 |
+| set:sys | `73` | `GetWirelessLanEnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `74` | `SetWirelessLanEnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `75` | `GetInitialLaunchSettings` | — | Q | 2026-11-21 |
+| set:sys | `76` | `SetInitialLaunchSettings` | — | Q | 2026-11-21 |
+| set:sys | `77` | `GetDeviceNickName` | — | Q | 2026-11-21 |
+| set:sys | `78` | `SetDeviceNickName` | — | Q | 2026-11-21 |
+| set:sys | `79` | `GetProductModel` | — | Q | 2026-11-21 |
+| set:sys | `80` | `GetLdnChannel` | — | Q | 2026-11-21 |
+| set:sys | `81` | `SetLdnChannel` | — | Q | 2026-11-21 |
+| set:sys | `82` | `AcquireTelemetryDirtyFlagEventHandle` | — | Q | 2026-11-21 |
+| set:sys | `83` | `GetTelemetryDirtyFlags` | — | Q | 2026-11-21 |
+| set:sys | `84` | `GetPtmBatteryLot` | — | Q | 2026-11-21 |
+| set:sys | `85` | `SetPtmBatteryLot` | — | Q | 2026-11-21 |
+| set:sys | `86` | `GetPtmFuelGaugeParameter` | — | Q | 2026-11-21 |
+| set:sys | `87` | `SetPtmFuelGaugeParameter` | — | Q | 2026-11-21 |
+| set:sys | `88` | `GetBluetoothEnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `89` | `SetBluetoothEnableFlag` | — | Q | 2026-11-21 |
+| set:sys | `90` | `GetMiiAuthorId` | — | Q | 2026-11-21 |
+| set:sys | `91` | `SetShutdownRtcValue` | — | Q | 2026-11-21 |
+| set:sys | `92` | `GetShutdownRtcValue` | — | Q | 2026-11-21 |
+| set:sys | `93` | `AcquireFatalDirtyFlagEventHandle` | — | Q | 2026-11-21 |
+| set:sys | `94` | `GetFatalDirtyFlags` | — | Q | 2026-11-21 |
+| set:sys | `95` | `GetAutoUpdateEnableFlag` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `96` | `SetAutoUpdateEnableFlag` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `97` | `GetNxControllerSettings` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `98` | `SetNxControllerSettings` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `99` | `GetBatteryPercentageFlag` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `100` | `SetBatteryPercentageFlag` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `101` | `GetExternalRtcResetFlag` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `102` | `SetExternalRtcResetFlag` | 2.0.0+ | Q | 2026-11-21 |
+| set:sys | `103` | `GetUsbFullKeyEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `104` | `SetUsbFullKeyEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `105` | `SetExternalSteadyClockInternalOffset` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `106` | `GetExternalSteadyClockInternalOffset` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `107` | `GetBacklightSettingsEx` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `108` | `SetBacklightSettingsEx` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `109` | `GetHeadphoneVolumeWarningCount` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `110` | `SetHeadphoneVolumeWarningCount` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `111` | `GetBluetoothAfhEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `112` | `SetBluetoothAfhEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `113` | `GetBluetoothBoostEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `114` | `SetBluetoothBoostEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `115` | `GetInRepairProcessEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `116` | `SetInRepairProcessEnableFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `117` | `GetHeadphoneVolumeUpdateFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `118` | `SetHeadphoneVolumeUpdateFlag` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `119` | `NeedsToUpdateHeadphoneVolume` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `120` | `GetPushNotificationActivityModeOnSleep` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `121` | `SetPushNotificationActivityModeOnSleep` | 3.0.0+ | Q | 2026-11-21 |
+| set:sys | `122` | `GetServiceDiscoveryControlSettings` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `123` | `SetServiceDiscoveryControlSettings` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `124` | `GetErrorReportSharePermission` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `125` | `SetErrorReportSharePermission` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `126` | `GetAppletLaunchFlags` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `127` | `SetAppletLaunchFlags` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `128` | `GetConsoleSixAxisSensorAccelerationBias` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `129` | `SetConsoleSixAxisSensorAccelerationBias` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `130` | `GetConsoleSixAxisSensorAngularVelocityBias` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `131` | `SetConsoleSixAxisSensorAngularVelocityBias` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `132` | `GetConsoleSixAxisSensorAccelerationGain` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `133` | `SetConsoleSixAxisSensorAccelerationGain` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `134` | `GetConsoleSixAxisSensorAngularVelocityGain` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `135` | `SetConsoleSixAxisSensorAngularVelocityGain` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `136` | `GetKeyboardLayout` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `137` | `SetKeyboardLayout` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `138` | `GetWebInspectorFlag` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `139` | `GetAllowedSslHosts` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `140` | `GetHostFsMountPoint` | 4.0.0+ | Q | 2026-11-21 |
+| set:sys | `141` | `GetRequiresRunRepairTimeReviser` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `142` | `SetRequiresRunRepairTimeReviser` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `143` | `SetBlePairingSettings` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `144` | `GetBlePairingSettings` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `145` | `GetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `146` | `SetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `147` | `GetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `148` | `SetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `149` | `GetRebootlessSystemUpdateVersion` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `150` | `GetDeviceTimeZoneLocationUpdatedTime` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `151` | `SetDeviceTimeZoneLocationUpdatedTime` | 5.0.0+ | Q | 2026-11-21 |
+| set:sys | `152` | `GetUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `153` | `SetUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `154` | `GetAccountOnlineStorageSettings` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `155` | `SetAccountOnlineStorageSettings` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `156` | `GetPctlReadyFlag` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `157` | `SetPctlReadyFlag` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `158` | `GetAnalogStickUserCalibrationL` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `159` | `SetAnalogStickUserCalibrationL` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `160` | `GetAnalogStickUserCalibrationR` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `161` | `SetAnalogStickUserCalibrationR` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `162` | `GetPtmBatteryVersion` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `163` | `SetPtmBatteryVersion` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `164` | `GetUsb30HostEnableFlag` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `165` | `SetUsb30HostEnableFlag` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `166` | `GetUsb30DeviceEnableFlag` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `167` | `SetUsb30DeviceEnableFlag` | 6.0.0+ | Q | 2026-11-21 |
+| set:sys | `168` | `GetThemeId` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `169` | `SetThemeId` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `170` | `GetChineseTraditionalInputMethod` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `171` | `SetChineseTraditionalInputMethod` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `172` | `GetPtmCycleCountReliability` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `173` | `SetPtmCycleCountReliability` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `174` | `GetHomeMenuScheme` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `175` | `GetThemeSettings` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `176` | `SetThemeSettings` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `177` | `GetThemeKey` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `178` | `SetThemeKey` | 7.0.0+ | Q | 2026-11-21 |
+| set:sys | `179` | `GetZoomFlag` | 8.0.0+ | Q | 2026-11-21 |
+| set:sys | `180` | `SetZoomFlag` | 8.0.0+ | Q | 2026-11-21 |
+| set:sys | `181` | `GetT` | 8.0.0+ | Q | 2026-11-21 |
+| set:sys | `182` | `SetT` | 8.0.0+ | Q | 2026-11-21 |
+| set:sys | `183` | `GetPlatformRegion` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `184` | `SetPlatformRegion` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `185` | `GetHomeMenuSchemeModel` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `186` | `GetMemoryUsageRateFlag` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `187` | `GetTouchScreenMode` | 9.0.0+ | Q | 2026-11-21 |
+| set:sys | `188` | `SetTouchScreenMode` | 9.0.0+ | Q | 2026-11-21 |
+
+### Shared Database services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Shared_Database_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Shared%20Database%20services.md)
+
+**73 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| pl:u, pl:s | `0` | `RequestSharedFontLoad` | — | Q | 2026-11-21 |
+| pl:u, pl:s | `1` | `GetSharedFontLoadState` | — | Q | 2026-11-21 |
+| pl:u, pl:s | `2` | `GetSharedFontSize` | — | Q | 2026-11-21 |
+| pl:u, pl:s | `3` | `GetSharedFontAddress` | — | Q | 2026-11-21 |
+| pl:u, pl:s | `4` | `GetSharedFontSharedMemoryHandle` | — | Q | 2026-11-21 |
+| pl:u, pl:s | `5` | `GetSharedFontInOrderOfPriority` | — | Q | 2026-11-21 |
+| pl:u, pl:s | `6` | `GetSharedFontInOrderOfPriorityForSystem` | 4.0.0+ | Q | 2026-11-21 |
+| pl:u, pl:s | `100` | `RequestApplicationFunctionAuthorization` | 8.0.0+ | Q | 2026-11-21 |
+| pl:u, pl:s | `101` | `RequestApplicationFunctionAuthorizationForSystem` | 8.0.0+ | Q | 2026-11-21 |
+| pl:u, pl:s | `1000` | `LoadNgWordDataForPlatformRegionChina` | 9.0.0+ | Q | 2026-11-21 |
+| pl:u, pl:s | `1001` | `GetNgWordDataSizeForPlatformRegionChina` | 9.0.0+ | Q | 2026-11-21 |
+| mii:u, mii:e | `0` | `GetDatabaseService` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `0` | `IsUpdated` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `1` | `IsFullDatabase` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `2` | `GetCount` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `3` | `Get` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `4` | `Get1` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `5` | `UpdateLatest` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `6` | `BuildRandom` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `7` | `BuildDefault` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `8` | `Get2` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `9` | `Get3` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `10` | `UpdateLatest1` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `11` | `FindIndex` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `12` | `Move` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `13` | `AddOrReplace` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `14` | `Delete` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `15` | `DestroyFile` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `16` | `DeleteFile` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `17` | `Format` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `18` | `Import` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `19` | `Export` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `20` | `IsBrokenDatabaseWithClearFlag` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `21` | `GetIndex` | — | Q | 2026-11-21 |
+| mii:u, mii:e | `22` | `SetInterfaceVersion` | 5.0.0+ | Q | 2026-11-21 |
+| mii:u, mii:e | `23` | `Convert` | 5.0.0+ | Q | 2026-11-21 |
+| mii:u, mii:e | `24` | `ConvertCoreDataToCharInfo` | 7.0.0+ | Q | 2026-11-21 |
+| mii:u, mii:e | `25` | `ConvertCharInfoToCoreData` | 7.0.0+ | Q | 2026-11-21 |
+| miiimg | `0` | `Initialize` | — | Q | 2026-11-21 |
+| miiimg | `10` | `Reload` | — | Q | 2026-11-21 |
+| miiimg | `11` | `GetCount` | — | Q | 2026-11-21 |
+| miiimg | `12` | `IsEmpty` | — | Q | 2026-11-21 |
+| miiimg | `13` | `IsFull` | — | Q | 2026-11-21 |
+| miiimg | `14` | `GetAttribute` | — | Q | 2026-11-21 |
+| miiimg | `15` | `LoadImage` | — | Q | 2026-11-21 |
+| miiimg | `16` | `AddOrUpdateImage` | — | Q | 2026-11-21 |
+| miiimg | `17` | `DeleteImages` | — | Q | 2026-11-21 |
+| miiimg | `100` | `DeleteFile` | — | Q | 2026-11-21 |
+| miiimg | `101` | `DestroyFile` | — | Q | 2026-11-21 |
+| miiimg | `102` | `ImportFile` | — | Q | 2026-11-21 |
+| miiimg | `103` | `ExportFile` | — | Q | 2026-11-21 |
+| miiimg | `104` | `ForceInitialize` | — | Q | 2026-11-21 |
+| pdm:ntfy | `0` | `NotifyAppletEvent` | — | Q | 2026-11-21 |
+| pdm:ntfy | `2` | `NotifyOperationModeChangeEvent` | — | Q | 2026-11-21 |
+| pdm:ntfy | `3` | `NotifyPowerStateChangeEvent` | — | Q | 2026-11-21 |
+| pdm:ntfy | `4` | `NotifyClearAllEvent` | — | Q | 2026-11-21 |
+| pdm:ntfy | `5` | `NotifyEventForDebug` | — | Q | 2026-11-21 |
+| pdm:ntfy | `6` | `SuspendUserAccountEventService` | 4.0.0+ | Q | 2026-11-21 |
+| pdm:ntfy | `7` | `ResumeUserAccountEventService` | 4.0.0+ | Q | 2026-11-21 |
+| pdm:qry | `0` | `QueryApplicationEvent` | — | Q | 2026-11-21 |
+| pdm:qry | `4` | `QueryPlayStatisticsByApplicationId` | — | Q | 2026-11-21 |
+| pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | Q | 2026-11-21 |
+| pdm:qry | `7` | `QueryLastPlayTime` | — | Q | 2026-11-21 |
+| pdm:qry | `8` | `QueryPlayEvent` | — | Q | 2026-11-21 |
+| pdm:qry | `9` | `GetAvailablePlayEventRange` | — | Q | 2026-11-21 |
+| pdm:qry | `10` | `QueryAccountEvent` | — | Q | 2026-11-21 |
+| pdm:qry | `11` | `QueryAccountPlayEvent` | 4.0.0+ | Q | 2026-11-21 |
+| pdm:qry | `12` | `GetAvailableAccountPlayEventRange` | 4.0.0+ | Q | 2026-11-21 |
+| pdm:qry | `13` | `QueryApplicationPlayStatisticsForSystem` | 5.0.0+ | Q | 2026-11-21 |
+| pdm:qry | `14` | `QueryRecentlyPlayedApplication` | 6.0.0+ | Q | 2026-11-21 |
+| pdm:qry | `15` | `GetRecentlyPlayedApplicationUpdateEvent` | 6.0.0+ | Q | 2026-11-21 |
+| pdm:qry | `16` | `QueryApplicationPlayStatisticsByUserAccountIdForSystem` | 6.0.0+ | Q | 2026-11-21 |
+| avm | `103` | `No input, returns an IVersionListImporter.` | — | Q | 2026-11-21 |
+
+### SSL services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/SSL_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/SSL%20services.md)
+
+**49 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| ssl | `0` | `CreateContext` | — | Q | 2026-11-21 |
+| ssl | `1` | `GetContextCount` | — | Q | 2026-11-21 |
+| ssl | `2` | `GetCertificates` | — | Q | 2026-11-21 |
+| ssl | `3` | `GetCertificateBufSize` | — | Q | 2026-11-21 |
+| ssl | `4` | `DebugIoctl` | 3.0.0+ | Q | 2026-11-21 |
+| ssl | `5` | `SetInterfaceVersion` | 3.0.0+ | Q | 2026-11-21 |
+| ssl | `6` | `FlushSessionCache` | 5.0.0+ | Q | 2026-11-21 |
+| ssl | `7` | `SetDebugOption` | 6.0.0+ | Q | 2026-11-21 |
+| ssl | `8` | `GetDebugOption` | 6.0.0+ | Q | 2026-11-21 |
+| ssl | `0` | `SetOption` | — | Q | 2026-11-21 |
+| ssl | `1` | `GetOption` | — | Q | 2026-11-21 |
+| ssl | `2` | `CreateConnection` | — | Q | 2026-11-21 |
+| ssl | `3` | `GetConnectionCount` | — | Q | 2026-11-21 |
+| ssl | `4` | `ImportServerPki` | — | Q | 2026-11-21 |
+| ssl | `5` | `ImportClientPki` | — | Q | 2026-11-21 |
+| ssl | `6` | `RemoveServerPki` | — | Q | 2026-11-21 |
+| ssl | `7` | `RemoveClientPki` | — | Q | 2026-11-21 |
+| ssl | `8` | `RegisterInternalPki` | — | Q | 2026-11-21 |
+| ssl | `9` | `AddPolicyOid` | — | Q | 2026-11-21 |
+| ssl | `10` | `ImportCrl` | 3.0.0+ | Q | 2026-11-21 |
+| ssl | `11` | `RemoveCrl` | 3.0.0+ | Q | 2026-11-21 |
+| ssl | `0` | `SetSocketDescriptor` | — | Q | 2026-11-21 |
+| ssl | `1` | `SetHostName` | — | Q | 2026-11-21 |
+| ssl | `2` | `SetVerifyOption` | — | Q | 2026-11-21 |
+| ssl | `3` | `SetIoMode` | — | Q | 2026-11-21 |
+| ssl | `4` | `GetSocketDescriptor` | — | Q | 2026-11-21 |
+| ssl | `5` | `GetHostName` | — | Q | 2026-11-21 |
+| ssl | `6` | `GetVerifyOption` | — | Q | 2026-11-21 |
+| ssl | `7` | `GetIoMode` | — | Q | 2026-11-21 |
+| ssl | `8` | `DoHandshake` | — | Q | 2026-11-21 |
+| ssl | `9` | `DoHandshakeGetServerCert` | — | Q | 2026-11-21 |
+| ssl | `10` | `Read` | — | Q | 2026-11-21 |
+| ssl | `11` | `Write` | — | Q | 2026-11-21 |
+| ssl | `12` | `Pending` | — | Q | 2026-11-21 |
+| ssl | `13` | `Peek` | — | Q | 2026-11-21 |
+| ssl | `14` | `Poll` | — | Q | 2026-11-21 |
+| ssl | `15` | `GetVerifyCertError` | — | Q | 2026-11-21 |
+| ssl | `16` | `GetNeededServerCertBufferSize` | — | Q | 2026-11-21 |
+| ssl | `17` | `SetSessionCacheMode` | — | Q | 2026-11-21 |
+| ssl | `18` | `GetSessionCacheMode` | — | Q | 2026-11-21 |
+| ssl | `19` | `FlushSessionCache` | — | Q | 2026-11-21 |
+| ssl | `20` | `SetRenegotiationMode` | — | Q | 2026-11-21 |
+| ssl | `21` | `GetRenegotiationMode` | — | Q | 2026-11-21 |
+| ssl | `22` | `SetOption` | — | Q | 2026-11-21 |
+| ssl | `23` | `GetOption` | — | Q | 2026-11-21 |
+| ssl | `24` | `GetVerifyCertErrors` | — | Q | 2026-11-21 |
+| ssl | `25` | `GetCipherInfo` | 4.0.0+ | Q | 2026-11-21 |
+| ssl | `26` | `SetNextAlpnProto` | 9.0.0+ | Q | 2026-11-21 |
+| ssl | `27` | `GetNextAlpnProto` | 9.0.0+ | Q | 2026-11-21 |
+
+### SPL services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/SPL_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/SPL%20services.md)
+
+**33 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| csrng | `0` | `GenerateRandomBytes` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `3` | `LoadAesKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `5` | `SetConfig` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `7` | `GenerateRandomBytes` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `9` | `ImportLotusKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `10` | `DecryptLotusMessage` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `11` | `IsDevelopment` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `12` | `GenerateSpecificAesKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `13` | `DecryptRsaPrivateKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `14` | `DecryptAesKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `15` | `CryptAesCtr` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `16` | `ComputeCmac` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `17` | `ImportEsKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `18` | `UnwrapTitleKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `19` | `LoadTitleKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `20` | `UnwrapCommonTitleKey` | 2.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `21` | `AllocateAesKeyslot` | 2.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `22` | `FreeAesKeyslot` | 2.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `23` | `GetAesKeyslotAvailableEvent` | 2.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `24` | `SetBootReason` | 3.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `25` | `GetBootReason` | 3.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `26` | `ImportSslKey` | 5.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `27` | `SslExpMod` | 5.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `28` | `ImportDrmKey` | 5.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `29` | `DrmExpMod` | 5.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `30` | `ReEncryptRsaPrivateKey` | 5.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `31` | `GetPackage2Hash` | 5.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `31` | `UnwrapElicenseKey` | 6.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `32` | `LoadElicenseKey` | 6.0.0+ | Q | 2026-11-21 |
+
+### USB services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/USB_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/USB%20services.md)
+
+**52 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| usb:ds | `0` | `BindDevice` | — | Q | 2026-11-21 |
+| usb:ds | `1` | `BindClientProcess` | — | Q | 2026-11-21 |
+| usb:ds | `2` | `GetDsInterface` | — | Q | 2026-11-21 |
+| usb:ds | `3` | `GetStateChangeEvent` | — | Q | 2026-11-21 |
+| usb:ds | `4` | `GetState` | — | Q | 2026-11-21 |
+| usb:ds | `6` | `AddUsbStringDescriptor` | 5.0.0+ | Q | 2026-11-21 |
+| usb:ds | `7` | `DeleteUsbStringDescriptor` | 5.0.0+ | Q | 2026-11-21 |
+| usb:ds | `8` | `SetUsbDeviceDescriptor` | 5.0.0+ | Q | 2026-11-21 |
+| usb:ds | `9` | `SetBinaryObjectStore` | 5.0.0+ | Q | 2026-11-21 |
+| usb:ds | `10` | `Enable` | 5.0.0+ | Q | 2026-11-21 |
+| usb:ds | `11` | `Disable` | 5.0.0+ | Q | 2026-11-21 |
+| usb:ds | `0` | `GetDsEndpoint` | — | Q | 2026-11-21 |
+| usb:ds | `1` | `GetSetupEvent` | — | Q | 2026-11-21 |
+| usb:ds | `3` | `EnableInterface` | — | Q | 2026-11-21 |
+| usb:ds | `4` | `DisableInterface` | — | Q | 2026-11-21 |
+| usb:ds | `5` | `CtrlInPostBufferAsync` | — | Q | 2026-11-21 |
+| usb:ds | `6` | `CtrlOutPostBufferAsync` | — | Q | 2026-11-21 |
+| usb:ds | `7` | `GetCtrlInCompletionEvent` | — | Q | 2026-11-21 |
+| usb:ds | `8` | `GetCtrlInReportData` | — | Q | 2026-11-21 |
+| usb:ds | `9` | `GetCtrlOutCompletionEvent` | — | Q | 2026-11-21 |
+| usb:ds | `10` | `GetCtrlOutReportData` | — | Q | 2026-11-21 |
+| usb:ds | `11` | `StallCtrl` | — | Q | 2026-11-21 |
+| usb:ds | `12` | `AppendConfigurationData` | 5.0.0+ | Q | 2026-11-21 |
+| usb:ds | `0` | `PostBufferAsync` | — | Q | 2026-11-21 |
+| usb:ds | `2` | `GetCompletionEvent` | — | Q | 2026-11-21 |
+| usb:ds | `3` | `GetReportData` | — | Q | 2026-11-21 |
+| usb:ds | `4` | `Stall` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `1` | `SetInterface` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `2` | `GetInterface` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `3` | `GetAlternateInterface` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `6` | `([1.0.0] SubmitControlInRequest)` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `7` | `GetCtrlXferReport ([1.0.0] SubmitControlOutRequest)` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `8` | `ResetDevice` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `0` | `Open ([1.0.0] SubmitOutRequest)` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `1` | `Close ([1.0.0] SubmitInRequest)` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `3` | `Populate ([1.0.0] Close)` | — | Q | 2026-11-21 |
+| usb:pd | `0` | `GetPdSession` | — | Q | 2026-11-21 |
+| usb:pd | `0` | `BindNoticeEvent` | — | Q | 2026-11-21 |
+| usb:pd | `1` | `UnbindNoticeEvent` | — | Q | 2026-11-21 |
+| usb:pd | `2` | `GetStatus` | — | Q | 2026-11-21 |
+| usb:pd | `3` | `GetNotice` | — | Q | 2026-11-21 |
+| usb:pd | `4` | `EnablePowerRequestNotice` | — | Q | 2026-11-21 |
+| usb:pd | `5` | `DisablePowerRequestNotice` | — | Q | 2026-11-21 |
+| usb:pd | `6` | `ReplyPowerRequest` | — | Q | 2026-11-21 |
+| usb:pd:c | `0` | `GetPdCradleSession` | — | Q | 2026-11-21 |
+| usb:pd:c | `0` | `VdmUserWrite` | — | Q | 2026-11-21 |
+| usb:pd:c | `1` | `VdmUserRead` | — | Q | 2026-11-21 |
+| usb:pd:c | `2` | `Vdm20Init` | — | Q | 2026-11-21 |
+| usb:pd:c | `3` | `GetFwType` | 2.0.0+ | Q | 2026-11-21 |
+| usb:pd:c | `4` | `GetFwRevision` | 2.0.0+ | Q | 2026-11-21 |
+| usb:pd:c | `5` | `GetManufacturerId` | 2.0.0+ | Q | 2026-11-21 |
+| usb:pd:c | `6` | `GetDeviceId` | 2.0.0+ | Q | 2026-11-21 |
+
 <!-- NS1_IPC_APPEND -->

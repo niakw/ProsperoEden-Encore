@@ -2293,6 +2293,15 @@ if(PS5_NATIVE)
     if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_DMA}")
         message(FATAL_ERROR "Missing maintained native Maxwell DMA")
     endif()
+    # B0B5 register decoding must come from the same maintained GPU owner.
+    # Leave immutable vendor/sources/eden headers untouched. Make the full
+    # reviewed header visible to this target and its native consumers.
+    set(EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include")
+    if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}/video_core/engines/maxwell_dma.h")
+        message(FATAL_ERROR "Missing maintained B0B5 Maxwell DMA ABI header")
+    endif()
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")
     list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)
     list(APPEND video_sources "${EDEN_MAINTAINED_MAXWELL_DMA}")
 endif()

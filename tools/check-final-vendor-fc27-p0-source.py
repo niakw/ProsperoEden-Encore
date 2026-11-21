@@ -60,8 +60,24 @@ REVIEWED_PINS.add("e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb")
 REVIEWED_PINS.add("3a0cf78a9b2c98bed100d817537b4375a48bf72f")
 REVIEWED_PINS.add("eb62d96583999c5d159b837dfb9b1b02e8173a9c")
 REVIEWED_PINS.add("b0afacfc891bc75da81be3886e5c40430ccbfe6d")
+REVIEWED_PINS.add("21bc63493de105c1eb025f3ce5b67011deee72da")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+# Shared native GPU VA source is corrected for FIFO fragmentation via Lichii
+# #1896/#1911. Verify every changed blob (including C++ Catch2 cases) before
+# replaying the earlier NS2 native ioctl/FC27 provenance. Shared NS1 source
+# uses the same strictly nonoverlapping allocation invariant.
+if selected == "21bc63493de105c1eb025f3ce5b67011deee72da":
+    for relative, expected in (
+        ("sources/eden/src/common/address_space.inc", "9722012ed1aa6eb243232c64f97cd293202e0694"),
+        ("sources/eden/src/tests/CMakeLists.txt", "11115237edcfc91e1837659b9b7910d9d9b7857f"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "9091197c985c247aaee998319b64b5e637f2c799"),
+        ("sources/eden/src/tests/common/flat_allocator.cpp", "ecf6f8fd66f4000fc9b76fd49522169c626da811"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("GPU VA allocator upstream successor drift", relative, actual)
+    selected = "b0afacfc891bc75da81be3886e5c40430ccbfe6d"
 # Native NS2 controller: only a real GA10F process may query runlists and
 # virtual SM topology. Verify both changed blobs before replaying all older
 # immutable vendor/FC27 graph receipts without changing NS1 owners.
@@ -72,7 +88,9 @@ if selected == "b0afacfc891bc75da81be3886e5c40430ccbfe6d":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 native NVDRV ABI isolation drift", relative, actual)
+        assert actual == ("9091197c985c247aaee998319b64b5e637f2c799" if gitlink_vendor_pin == "21bc63493de105c1eb025f3ce5b67011deee72da" and
+                           relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
+            "NS2 native NVDRV ABI isolation drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 original_vendor_pin = selected
 native_self_controller_rollback_revision = selected == "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
@@ -100,6 +118,11 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if gitlink_vendor_pin == "21bc63493de105c1eb025f3ce5b67011deee72da":
+        if relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp":
+            return "2bd5023b5177cfd89d43fcc759643553fe0c745f"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "9091197c985c247aaee998319b64b5e637f2c799"
     # The current vendor successor changes exactly two already sealed files:
     # native NVDRV ioctl3 topology ABI and its focused static host contract.
     # Historical receipts compare against the selected successor rather

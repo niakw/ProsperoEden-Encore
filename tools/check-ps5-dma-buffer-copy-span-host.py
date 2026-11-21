@@ -67,7 +67,10 @@ preamble=r"""
 #include <limits>
 #include <span>
 #include <utility>
-#include <boost/container/small_vector.hpp>
+#include <vector>
+namespace boost::container {
+template<class T, std::size_t N> using small_vector = std::vector<T>;
+}
 using u64 = std::uint64_t;
 using u32 = std::uint32_t;
 using DAddr = std::uint64_t;

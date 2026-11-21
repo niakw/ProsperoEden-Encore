@@ -113,7 +113,12 @@ if selected == "4411fc172eef84080ab7de23158349bbe7d08f88":
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("NS2 GraphicsFrame source drift", relative, actual)
-    selected = "3de91cf284c8ef234c757c046998c4f48165c59a"
+    # The 172/173 successor already sealed the changed worker 171/172/173
+    # owner. For that pin, continue directly with the earlier GPU-session
+    # receipt instead of requiring byte-identical pre-label worker sources.
+    selected = ("3a97e47a0cfe94ec55227af363d8c289de59d4f8"
+                if shipping_vendor_pin == "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d"
+                else "3de91cf284c8ef234c757c046998c4f48165c59a")
 
 # GSV TIPC 113 successor: authenticate the exact supervisor/protocol/header
 # and existing syncpt/bootstrap receipt, then replay the reviewed 3de graph.

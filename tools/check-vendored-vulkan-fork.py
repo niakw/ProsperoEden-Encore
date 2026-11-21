@@ -905,36 +905,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             ['git', 'hash-object', str(core_owner)], text=True).strip()
         # Lichii #1328: verify the only C++ template-signature delta before
         # replaying the unchanged native BufferCache historical source seal.
-        # Never rewrite the shipping vendor; this is an audit-only mapping.
-        if subprocess.check_output(
-                ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'],
-                text=True).strip() in {'fd43897f59dafe34ff110259c9f872bfc1c474cb',
-                                  'ffb78672112a00a8df1da033ff462baf7d3c4d31',
-                                  '3b73e72d434fdd328c71ab37971f025f3ad8263b',
-                                  '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d',
-                                  '3b824f1ced1148a3f12eb3727fbcba9309a160f8',
-                                  'b8568c8c1e79f7c3775f5a6393463e4bb1385b88',
-                                  '0409c9a6b842ec50973d343cb628e21232382e41',
-                                  '94aa8cd5214d17897391ede00534d7961b481171',
-                                  '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                                  'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                                  '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'}:
-            pinned_revision = subprocess.check_output(
-                ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
-            base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
-            base_blob = subprocess.check_output(
-                ['git', 'hash-object', str(base_owner)], text=True).strip()
-            if pinned_revision in {'3b824f1ced1148a3f12eb3727fbcba9309a160f8',
-                                   'b8568c8c1e79f7c3775f5a6393463e4bb1385b88',
-                                   '0409c9a6b842ec50973d343cb628e21232382e41',
-                                   '94aa8cd5214d17897391ede00534d7961b481171',
-                                   '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                                   'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                                   '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'}:
+        # Applicability follows exact source-owner blobs, never a moving vendor
+        # gitlink. This keeps old reviewed variants valid while newer NS1/NS2
+        # commits that do not edit these owners cannot break the audit chain.
+        base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
+        base_blob = subprocess.check_output(
+            ['git', 'hash-object', str(base_owner)], text=True).strip()
+        if core_blob in {
+            '41239f19b9e16741d49e31145c504e0086b1095e',
+            'b127ceea4006395e9b9bc9727c059dcfdf4a898d',
+            '1cf7484e07c1f6f86b4980a7489ab2d4784f9409',
+        }:
+            if core_blob == '41239f19b9e16741d49e31145c504e0086b1095e':
                 # CMake-selected PS5 source: one budget sample feeds two
                 # independently locked cache GC passes without a driver query
                 # in either critical section. Original fallback remains.
-                assert core_blob == '41239f19b9e16741d49e31145c504e0086b1095e', core_blob
                 assert base_blob == '716634290574ed4dfc8fd3be0d0ea0ad582980f8', base_blob
                 for relative, expected_blob in (
                     ('encore-active/ns2-astc/include/video_core/texture_cache/texture_cache_base.h',
@@ -948,9 +933,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 assert 'PollFrameMemoryUsage' not in core_owner.read_text()
                 assert 'total_used_memory = *externally_sampled_usage;' in core_owner.read_text()
                 core_blob = '1cf7484e07c1f6f86b4980a7489ab2d4784f9409'
-            elif pinned_revision == '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d':
+                print('ENCORE_SHARED_GPU_BUDGET_BUFFER_SOURCE_PASS')
+            elif core_blob == 'b127ceea4006395e9b9bc9727c059dcfdf4a898d':
                 # Previous independently verified off-lock BufferCache probe.
-                assert core_blob == 'b127ceea4006395e9b9bc9727c059dcfdf4a898d', core_blob
                 assert base_blob == '3da34e11ed76a400a6be6bab622191883610d672', base_blob
                 core_text = core_owner.read_text()
                 assert 'PollFrameMemoryUsage() {' in core_text
@@ -960,7 +945,6 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 assert 'void TickFrame(std::optional<u64> externally_sampled_usage' in base_owner.read_text()
                 core_blob = '1cf7484e07c1f6f86b4980a7489ab2d4784f9409'
             else:
-                assert core_blob == '1cf7484e07c1f6f86b4980a7489ab2d4784f9409', core_blob
                 assert base_blob == '64be0018b1ff977fc744529d9882d6a264b45f1a', base_blob
             assert ('template <typename RangeSize>\n'
                     'void BufferCache<P>::ClaimCpuWrites(') in core_owner.read_text()

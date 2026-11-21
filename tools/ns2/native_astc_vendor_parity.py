@@ -72,6 +72,48 @@ def strip_p22_runtime_cpp(text: str) -> str:
     return text
 
 
+def strip_gpu18_d32_depth_plane(text: str) -> str:
+    """Reverse the exact newer NS1 D32S8/D32 depth-plane changes in audit copies.
+
+    The active PS5 vendor and the Vulkan generator MUST retain GPU-18.
+    P2.5/N57 historical SHA receipts predate these three reviewed hunks;
+    undo only them before replaying that frozen source witness.
+    """
+    if "mixed_d32_depth_plane" not in text:
+        return text
+    text = once(text,
+        "    // D32_FLOAT_S8_UINT and D32_FLOAT have the SAME 32-bit depth plane.\n"
+        "    // A whole-image byte ratio would halve/double the width and corrupt\n"
+        "    // Frostbite's depth-only copies. Copy only the depth plane via the\n"
+        "    // existing Vulkan image -> buffer -> image transfer, never raw DS texels.\n"
+        "    const bool mixed_d32_depth_plane =\n"
+        "        (src.info.format == PixelFormat::D32_FLOAT_S8_UINT &&\n"
+        "         dst.info.format == PixelFormat::D32_FLOAT) ||\n"
+        "        (src.info.format == PixelFormat::D32_FLOAT &&\n"
+        "         dst.info.format == PixelFormat::D32_FLOAT_S8_UINT);\n"
+        "    const auto bpp_in = mixed_d32_depth_plane\n"
+        "                            ? u32{4} : BytesPerBlock(src.info.format) / src_block_width;\n"
+        "    const auto bpp_out = mixed_d32_depth_plane\n"
+        "                             ? u32{4} : BytesPerBlock(dst.info.format) / dst_block_width;",
+        "    const auto bpp_in = BytesPerBlock(src.info.format) / src_block_width;\n"
+        "    const auto bpp_out = BytesPerBlock(dst.info.format) / dst_block_width;")
+    text = once(text,
+        "    if ((src_both || dst_both) && !mixed_d32_depth_plane &&\n"
+        "        (!src_both || !dst_both || src.info.format != dst.info.format)) {",
+        "    if ((src_both || dst_both) &&\n"
+        "        (!src_both || !dst_both || src.info.format != dst.info.format)) {")
+    text = once(text,
+        "        // Mixed D32S8/D32 transfers stage 32-bit depth only. Padding the\n"
+        "        // plane to the packed 64-bit depth+stencil allocation doubles PS5\n"
+        "        // scratch VRAM for a 1080p depth copy without moving more pixels.\n"
+        "        const size_t plane_bytes = pixels *\n"
+        "                                   (mixed_d32_depth_plane ? size_t{4} : img_bpp);",
+        "        const size_t plane_bytes = pixels * img_bpp;")
+    assert "mixed_d32_depth_plane" not in text, (
+        "Unreviewed GPU-18 depth-plane use after exact historical reversal")
+    return text
+
+
 def strip_p25_reinterpret(text: str) -> str:
     """Undo exactly the post-N57 P2.5 Vulkan reinterpret patches for SHA audit.
 
@@ -319,6 +361,14 @@ def normalized(root: Path) -> dict[str, str]:
     result = {}
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
+        if name == "vk_texture_cache_cost.cpp":
+            # The current vendor C++ is SHA-pinned before removing the newer
+            # GPU-18 depth-plane semantics on this historical AUDIT COPY.
+            if "mixed_d32_depth_plane" in text:
+                assert git_blob(text.encode()) == (
+                    "88c2221eae24b0b3c46e81dfdb27c3a833f77fc6"
+                ), "Unreviewed NS1 GPU-18 shipping Vulkan texture source"
+                text = strip_gpu18_d32_depth_plane(text)
         if name == "vk_texture_cache_cost.cpp":
             # R23 #18 adds target-independent mixed MSAA after N57/N73.
             # Reverse exactly six reviewed hunks to recover the immutable

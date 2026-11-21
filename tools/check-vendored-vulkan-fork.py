@@ -1927,13 +1927,25 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # and full generated-source byte parity. No generator files or exemptions.
     from ns2.native_astc_vendor_parity import (
         normalized as normalize_n57, strip_p25_reinterpret,
+        strip_gpu18_d32_depth_plane,
     )
     # N57's historical F07 audit deliberately excludes the independently
     # reviewed later P2.5 aspect/scratch additions. Normalize the *generated*
     # owner by those exact, hash-pinned P2.5 deltas as well: the shipped vendor
     # and generator must both retain those corrections before normalization.
     normalized_generated = dict(actual)
-    generated_p25 = strip_p25_reinterpret(actual['vk_texture_cache_cost.cpp'].read_text())
+    # The GPU-18 D32S8/D32 depth-plane fix is younger than the P2.5
+    # source digest. Verify exact newer clauses in the generator and the
+    # SHA-pinned shipping vendor, then reverse them solely on the audit copy.
+    generated_texture = actual['vk_texture_cache_cost.cpp'].read_text()
+    vendor_texture = (active / 'vk_texture_cache_cost.cpp').read_text()
+    assert 'mixed_d32_depth_plane' in generated_texture
+    assert 'mixed_d32_depth_plane' in vendor_texture
+    assert generated_texture.count('mixed_d32_depth_plane') == 5
+    assert vendor_texture.count('mixed_d32_depth_plane') == 5
+    generated_p25 = strip_p25_reinterpret(
+        strip_gpu18_d32_depth_plane(generated_texture))
+    print('ENCORE_NS1_GPU18_GENERATOR_EXACT_REVERSE_PASS')
     p25_generated = temp/'normalized-generated-p25'/'vk_texture_cache_cost.cpp'
     p25_generated.parent.mkdir(parents=True,exist_ok=True)
     p25_generated.write_text(generated_p25)

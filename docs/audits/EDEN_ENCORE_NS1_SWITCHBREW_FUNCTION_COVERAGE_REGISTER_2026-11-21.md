@@ -287,8 +287,8 @@ Ces NULL sont importants : il faut vérifier si le runtime réel délègue ces f
 | lm | 0 | OpenLogger | SRC | 21/11/2026 |
 | ILogger | 0 | Log | SRC | 21/11/2026 |
 | ILogger | 1 | SetDestination | SRC | 21/11/2026 |
-| ILogger | 2 | TransmitHashedLog | **NULL** | 21/11/2026 |
-| ILogger | 3 | DevNotify | **NULL** | 21/11/2026 |
+| ILogger | 2 | TransmitHashedLog | **STUB_NOOP** (`nullptr` table, dispatcher whitelist) | 21/11/2026 |
+| ILogger | 3 | DevNotify | **STUB_NOOP** (`nullptr` table, dispatcher whitelist) | 21/11/2026 |
 | lm:get | 0 | StartLogging | **NULL** | 21/11/2026 |
 | lm:get | 1 | StopLogging | **NULL** | 21/11/2026 |
 | lm:get | 2 | GetLog | **NULL** | 21/11/2026 |
@@ -297,6 +297,8 @@ Ces NULL sont importants : il faut vérifier si le runtime réel délègue ces f
 | fatal:u | 1 | ThrowFatalWithPolicy | SRC | 21/11/2026 |
 | fatal:u | 2 | ThrowFatalWithCpuContext | SRC | 21/11/2026 |
 | fatal:u | 3 | HOS 21+ commande supplémentaire | **ABSENT/à qualifier** | 21/11/2026 |
+
+> **Politique de stubs NS1 (21/11, runtime `2df83d59` → vendor `ba3377a0`)** : le dispatcher maintenu distingue désormais trois états. Une commande `nullptr` connue reste `ResultNotImplemented` par défaut ; seules des commandes optionnelles sans sortie utile et non nécessaires au gameplay peuvent être `STUB_NOOP` (`pdm:ntfy` notifications, `ILogger` 20.0.0+, bookkeeping `erpt:c`, configuration `eupld:c`, setters applet ciblés). Les getters, handles, mappings mémoire/GPU, SVC, synchronisation et sécurité ne reçoivent jamais un faux succès. Les tables d'origine peuvent donc rester `nullptr` alors que le runtime actif fournit un no-op borné. L'IRS/caméra Joy-Con existante n'est pas supprimée ni remplacée par un stub.
 
 
 ## A.7 HID / HIDBUS — SB-CURRENT + owner R23

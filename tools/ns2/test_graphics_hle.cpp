@@ -25,6 +25,42 @@ int main(){
     using namespace Service::AM;
     namespace P=Service::AM::GraphicsSupervisorProtocol;
     namespace N=Service::Nvidia::Devices;
+    // Execute the selected NS2 GSV GraphicsFrame TIPC decoders, not merely
+    // source-grep receipts. Unknown policy values must fail closed.
+    const std::array<u32, 2> graphicsFrameCreate{16 + 1101, 0};
+    const std::array<u32, 2> graphicsFrameInitialize{16 + 1102, 0};
+    require(P::IsGraphicsFrameContextCommand(graphicsFrameCreate, 1101) &&
+            P::IsGraphicsFrameContextCommand(graphicsFrameInitialize, 1102),
+            "GSV GraphicsFrame create/initialize command envelopes");
+    require(!P::IsGraphicsFrameContextCommand(graphicsFrameCreate, 1102) &&
+            !P::IsGraphicsFrameContextCommand(
+                std::span<const u32>{graphicsFrameInitialize.data(), 1}, 1102),
+            "GSV GraphicsFrame wrong command and truncated packets rejected");
+    for (const u32 length : {0u, 286u, 316u, 376u}) {
+        const std::array<u32, 3> packet{16 + 1111, 1, length};
+        const auto mode = P::DecodeGraphicsFrameSetting(packet, 1111);
+        require(mode && mode->command == 1111 && mode->value == length,
+                "GSV frame length modes use documented values");
+    }
+    for (const u32 mode : {0u, 1u, 2u}) {
+        const std::array<u32, 3> packet{16 + 1112, 1, mode};
+        require(P::DecodeGraphicsFrameSetting(packet, 1112).has_value(),
+                "GSV frame restart policy accepts valid modes");
+    }
+    for (const u32 mode : {0u, 1u}) {
+        const std::array<u32, 3> packet{16 + 1113, 1, mode};
+        require(P::DecodeGraphicsFrameSetting(packet, 1113).has_value(),
+                "GSV frame timeslice accepts valid modes");
+    }
+    for (const std::array<u32, 3> malformed : {
+             std::array<u32, 3>{16 + 1111, 1, 1},
+             std::array<u32, 3>{16 + 1112, 1, 3},
+             std::array<u32, 3>{16 + 1113, 1, 2},
+             std::array<u32, 3>{16 + 1111, 2, 286}}) {
+        const u32 id = malformed[0] - 16;
+        require(!P::DecodeGraphicsFrameSetting(malformed, id),
+                "GSV GraphicsFrame policy rejects invalid ABI or value");
+    }
     for (u64 display_version : {0x300010000ULL, 0x300020000ULL,
                                 0x300030000ULL, 0x300040000ULL}) {
         require(P::IsSupportedDisplaySession(display_version),

@@ -1856,8 +1856,23 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.
     generated_n3m = actual[n56_name].read_text()
-    assert generated_n3m.count(n3m_flag) == n3m.count(n3m_flag), (
-        'Native PS5 GPU generator lost source guard parity')
+    if generated_n3m.count(n3m_flag) != n3m.count(n3m_flag):
+        # A total-count-only failure cannot identify whether the generated
+        # or maintained shipping owner omitted a guarded C++ block. Show
+        # bounded, exact neighboring source contexts before any repair.
+        from collections import Counter
+        def guard_contexts(data):
+            return Counter(tuple(piece.splitlines()[:3])
+                           for piece in data.split(n3m_flag)[1:])
+        generated_guards = guard_contexts(generated_n3m)
+        maintained_guards = guard_contexts(n3m)
+        missing = list((maintained_guards - generated_guards).elements())[:16]
+        extra = list((generated_guards - maintained_guards).elements())[:16]
+        raise AssertionError('Native PS5 GPU generator lost source guard parity: ' +
+            json.dumps({'generator_count': generated_n3m.count(n3m_flag),
+                        'owner_count': n3m.count(n3m_flag),
+                        'missing_in_generator': missing,
+                        'extra_in_generator': extra}, separators=(',', ':')))
     assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in generated_n3m, (
         'Removed NS2 research compile profile returned in generator')
     native_compute_guard = "ComputePipeline* PipelineCache::CurrentComputePipeline() {\n#ifdef PS5_NATIVE\n    // An authenticated Ampere compute engine must never enter the legacy\n    // Maxwell ShaderCache::ComputeShader() path: those 128-bit instructions\n    // need the new QMD-scoped native SPIR-V pipeline and resource binding.\n    // Until the renderer owns that real pipeline and submits the dispatch,\n    // reject instead of compiling native bytes as Switch 1 Maxwell.\n    if (Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n            .CaptureComputeTicket(kepler_compute))\n        return nullptr;\n#endif\n\n"

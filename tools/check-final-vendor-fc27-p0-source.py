@@ -127,6 +127,20 @@ if selected == "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        # The 225/226 successor was sealed above and contains the full prior
+        # 171/172/173 worker semantics. Replay the predecessor contract using
+        # only the exact authenticated successor identities for this pin.
+        if shipping_vendor_pin == "b523231fb390046a10592b107ebc7cc09767cc49":
+            expected = {
+                "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+                    "c67086a4f4baf4966ad700d804f4348687aae95f",
+                "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h":
+                    "2aa6d526e7c876d11adc180f546935503be54a4a",
+                "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h":
+                    "db3651d768f1f12c818ef9a1d41a0a69b3f2b632",
+                "tests/ns2_gpu_identity_mapping_source.py":
+                    "96e38427eda9f9e84ffb2f02cd2330acf9bcc5f2",
+            }[relative]
         assert actual == expected, ("NS2 GPU worker label source drift", relative, actual)
     selected = "4411fc172eef84080ab7de23158349bbe7d08f88"
 

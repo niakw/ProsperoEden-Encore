@@ -42,6 +42,7 @@ REVIEWED_PINS.add("019e810c5c6c489eab8541f282de6b6379833015")
 REVIEWED_PINS.add("de4a6c24d1f118152c849fc87af2783c96348735")
 REVIEWED_PINS.add("788badb79f0566c56f51e64fb9aa727f72fdb065")
 REVIEWED_PINS.add("0015d90da841622e1642180b9f9de5e2d0c354c9")
+REVIEWED_PINS.add("bb575bd8396d78187d2bd56713e84c398ebce512")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
@@ -51,11 +52,12 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # The PS5/native control reply retains the original host C++ constructor
 # and TPC mask member signatures. Seal both native owners and the unchanged
 # common/AS/GPU parents before accepting this ABI compatibility revision.
-if selected in {"788badb79f0566c56f51e64fb9aa727f72fdb065", "0015d90da841622e1642180b9f9de5e2d0c354c9"}:
+if selected in {"788badb79f0566c56f51e64fb9aa727f72fdb065", "0015d90da841622e1642180b9f9de5e2d0c354c9", "bb575bd8396d78187d2bd56713e84c398ebce512"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h", "ba96b6a240b31519afc89a15e7d683d0c2f32f32"),
         ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp",
-         ("cfea80650d97206ad2a9c8b9ef968366ba844285" if selected == "0015d90da841622e1642180b9f9de5e2d0c354c9" else
+         ("8c90a441fc50e656be3d39c582e85241aabcfb75" if selected == "bb575bd8396d78187d2bd56713e84c398ebce512" else
+          "cfea80650d97206ad2a9c8b9ef968366ba844285" if selected == "0015d90da841622e1642180b9f9de5e2d0c354c9" else
           "384457a096e6f460915436a2bd6a873fd7f6efb9")),
         ("sources/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h", "eaccce6e08fc9fbe2b19ad621682e638fb019ba4"),
         ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "ee1eab4c6417bdeda24de75e36f86fe68d9802b2"),

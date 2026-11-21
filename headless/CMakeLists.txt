@@ -856,6 +856,28 @@ list(REMOVE_ITEM eden_shader_sources "frontend/maxwell/translate/impl/load_store
 list(APPEND eden_shader_sources "${EDEN_MAINTAINED_SHADER_LOCAL}")
 set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_shader_sources}")
 
+# NS1 Maxwell ATOM.CAS: select the maintained translator that rejects R254 as
+# the first register of the compare/replacement pair. Keep the pinned Eden
+# source immutable and replace exactly one TU in the native PS5 target.
+if(PS5_NATIVE)
+    set(EDEN_NS1_MAXWELL_ATOMIC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp")
+    if(NOT EXISTS "${EDEN_NS1_MAXWELL_ATOMIC_SOURCE}")
+        message(FATAL_ERROR "Missing maintained NS1 Maxwell atomic translator")
+    endif()
+    get_target_property(eden_ns1_atomic_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_atomic_sources
+         "frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp"
+         eden_ns1_atomic_pinned)
+    if(eden_ns1_atomic_pinned LESS 0)
+        message(FATAL_ERROR "Pinned Maxwell atomic translator owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_atomic_sources
+         "frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp")
+    list(APPEND eden_ns1_atomic_sources "${EDEN_NS1_MAXWELL_ATOMIC_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_atomic_sources}")
+endif()
+
 # NS1 Maxwell numeric FP min/max: select the single maintained SPIR-V emitter.
 # FMin/FMax leave a NaN operand undefined; the NVIDIA guest selects the
 # numeric operand.  The reviewed NMin/NMax translation is also understood by

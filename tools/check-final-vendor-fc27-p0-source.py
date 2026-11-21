@@ -82,6 +82,7 @@ REVIEWED_PINS.add("3a97e47a0cfe94ec55227af363d8c289de59d4f8")
 REVIEWED_PINS.add("3de91cf284c8ef234c757c046998c4f48165c59a")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+shipping_vendor_pin = gitlink_vendor_pin
 # Worker TIPC 171 successor: seal only the comptag decoder/handler/header and
 # its focused ownership receipt, then replay the reviewed 3a97 graph.
 if selected == "3de91cf284c8ef234c757c046998c4f48165c59a":
@@ -410,6 +411,29 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    # Successor blobs have already been individually sealed above. Historical
+    # receipt replay may revisit them after normalizing gitlink_vendor_pin to
+    # c74; return only those exact authenticated successor identities.
+    successor_exact = {}
+    if shipping_vendor_pin in {
+        "3a97e47a0cfe94ec55227af363d8c289de59d4f8",
+        "3de91cf284c8ef234c757c046998c4f48165c59a",
+    }:
+        successor_exact.update({
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "be33e5fa3a6f7f2ed4eb4aeac6c7650b204cfa17",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.h": "be6f4f16c9407876ff0f8259cc1c777d05e8056f",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h": "b4298a1231aee0f3b675861211bbcf30260dd033",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "e41711b1822cadffd3b699befb55aa4e9e2f1433",
+        })
+    if shipping_vendor_pin == "3de91cf284c8ef234c757c046998c4f48165c59a":
+        successor_exact.update({
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "1042668b48e71020ee777e0ec0aef6b1606edaf0",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "0a4ded1cba3fc0ed8163bda05cc32956f6216aa4",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "c104301566467d973ebf0634580a0fbc4a44daf9",
+            "tests/ns2_gpu_identity_mapping_source.py": "599f766e76fab45314a77c2fa573b8229cf83de1",
+        })
+    if relative in successor_exact:
+        return successor_exact[relative]
     if gitlink_vendor_pin in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f403369827a432f3503fb5"}:
         exact = {
             "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "a0f73ad8a4a156e41896264038f96e5e0e893fbb",

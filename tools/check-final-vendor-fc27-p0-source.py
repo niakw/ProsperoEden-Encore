@@ -33,12 +33,24 @@ REVIEWED_PINS.add("f007f3d539a523607fbef8b8895c2833e5b7af8c")
 REVIEWED_PINS.add("b3e6f9943bd46fda050ecb8151c4bb06e5251117")
 REVIEWED_PINS.add("7535dc9e5e7f0060b8e448da843f96882a2ce320")
 REVIEWED_PINS.add("f69176d429723da5d79251f6b858afc72c5d99e2")
+REVIEWED_PINS.add("4795f0a884c06f029c9d06a0a3d09cc0b9cfb791")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# The only difference from the last reviewed vendor pin is the real GPU
+# worker TIPC 22 reply descriptor. Seal its exact new source before replaying
+# every unchanged FC27/NS2 source receipt from the previously approved pin.
+if selected == "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791":
+    relative = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp"
+    data = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    assert actual == "37236a90479c1913cec33ad95d768a3fc80a1504", (
+        "GPU worker TIPC 22 COPY owner drift", actual)
+    selected = "f69176d429723da5d79251f6b858afc72c5d99e2"
+    original_vendor_pin = selected
 # The reviewed NS2 HID successor is exactly two fast-forward commits after
 # b65d8d9 and changes only the live hid_server.cpp/.h (verified by GitHub
 # compare b65d8d9...266080b4). Seal both new blobs before replaying all

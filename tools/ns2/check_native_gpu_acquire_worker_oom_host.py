@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""H06: execute the actual native AcquireWorker move-handle IPC owner.
+"""H06: execute actual GPU TIPC 22 COPY-handle owner and OOM reply.
 
-Inject outgoing-descriptor std::bad_alloc AFTER a real KClientSession
-reference was opened. Validate error reply without moved handles, exact
-ref-count rollback, subsequent successful retry and legacy invalid packets.
-This is an extracted production method under a kernel lifecycle harness.
+A copied client-session handle must keep the retained worker reference stable.
+An outgoing COPY descriptor allocation failure must publish no guest handle.
 """
 from pathlib import Path
 import os
@@ -19,11 +17,12 @@ begin="void IGpuSession::AcquireWorker("
 end="void IGpuSession::GetNotificationRange("
 assert source.count(begin)==source.count(end)==1
 owner=begin+source.split(begin,1)[1].split(end,1)[0]
-assert "client->Open(kernel);" in owner
-assert "ctx.AddMoveObject(client);" in owner
-assert "client->Close(kernel);" in owner
-assert owner.index("ctx.AddMoveObject(client);") < owner.index("result = ResultSuccess;")
-assert owner.index("ctx.AddMoveObject(client);") < owner.index("IPC::ResponseBuilder rb{ctx, 2, 0, 1};")
+assert "ctx.AddCopyObject(m_worker);" in owner
+assert "ctx.AddMoveObject(" not in owner
+assert "client->Open(kernel);" not in owner
+assert "client->Close(kernel);" not in owner
+assert owner.index("ctx.AddCopyObject(m_worker);") < owner.index("result = ResultSuccess;")
+assert owner.index("ctx.AddCopyObject(m_worker);") < owner.index("IPC::ResponseBuilder rb{ctx, 2, 1, 0};")
 assert 'catch (const std::bad_alloc&)' in owner
 assert "IPC::ResponseBuilder rb{ctx, 2};" in owner
 
@@ -38,56 +37,53 @@ harness=r"""
 using u32=std::uint32_t;
 struct Result {
     u32 raw{};
-    constexpr bool IsSuccess() const noexcept { return raw==0; }
+    constexpr bool IsSuccess() const noexcept {return raw==0;}
 };
 inline constexpr Result ResultSuccess{0};
 namespace Kernel {
 inline constexpr Result ResultInvalidCombination{1},
-    ResultInvalidState{2},ResultOutOfResource{3};
-struct KernelCore {};
+    ResultInvalidState{2}, ResultOutOfResource{3};
 struct KClientSession {
-    int refs{1},opens{},closes{};
-    void Open(KernelCore&) { ++refs;++opens; }
-    void Close(KernelCore&) { assert(refs>0);--refs;++closes; }
+    unsigned owned_refs{1};
 };
 }
 struct HLERequestContext {
     std::array<u32,2> command{};
-    bool fail_move{};
-    Kernel::KClientSession* transferred{};
-    unsigned transfer_count{},response_words{},response_moves{};
+    bool fail_copy{};
+    Kernel::KClientSession* copied{};
+    unsigned copies{}, reply_copies{}, reply_moves{}, reply_words{};
     u32 reply_code{~u32{0}};
-    const u32* CommandBuffer() const { return command.data(); }
-    void AddMoveObject(Kernel::KClientSession* client) {
-        assert(client);
-        if(fail_move)throw std::bad_alloc{};
-        transferred=client;
-        ++transfer_count;
+    const u32* CommandBuffer() const {return command.data();}
+    void AddCopyObject(Kernel::KClientSession* object) {
+        assert(object);
+        if (fail_copy) throw std::bad_alloc{};
+        copied=object;
+        ++copies;
     }
 };
 namespace IPC {
 struct ResponseBuilder {
     HLERequestContext& ctx;
-    ResponseBuilder(HLERequestContext& context,unsigned words,
-                    unsigned copies=0,unsigned moves=0):ctx{context} {
-        assert(!copies && words==2);
-        ctx.response_words=words;
-        ctx.response_moves=moves;
+    ResponseBuilder(HLERequestContext& c,unsigned words,
+                    unsigned ncopy=0,unsigned nmove=0):ctx{c} {
+        assert(words==2 && ncopy<=1 && nmove==0);
+        ctx.reply_words=words;
+        ctx.reply_copies=ncopy;
+        ctx.reply_moves=nmove;
     }
-    void Push(u32 value) { ctx.reply_code=value; }
+    void Push(u32 value) {ctx.reply_code=value;}
 };
 }
 namespace Service::AM {
 namespace GP=GpuSessionProtocol;
 struct IGpuSession {
     std::mutex m_lock{};
-    Kernel::KernelCore kernel{};
     Kernel::KClientSession* m_worker{};
     void AcquireWorker(HLERequestContext&);
 };
 __OWNER__
 }
-int main(){
+int main() {
     using Service::AM::IGpuSession;
     IGpuSession owner;
     Kernel::KClientSession client;
@@ -95,41 +91,39 @@ int main(){
         HLERequestContext ctx{{0x25,0}};
         owner.AcquireWorker(ctx);
         assert(ctx.reply_code==Kernel::ResultInvalidCombination.raw);
-        assert(ctx.response_words==2 && ctx.response_moves==0);
-        assert(ctx.transfer_count==0 && client.refs==1);
+        assert(ctx.reply_words==2 && ctx.reply_copies==0 && ctx.reply_moves==0);
+        assert(ctx.copies==0 && client.owned_refs==1);
     }
     {
         HLERequestContext ctx{{0x26,0}};
         owner.AcquireWorker(ctx);
         assert(ctx.reply_code==Kernel::ResultInvalidState.raw);
-        assert(ctx.response_words==2 && ctx.response_moves==0);
-        assert(ctx.transfer_count==0 && client.refs==1);
+        assert(ctx.reply_copies==0 && ctx.copies==0);
     }
     owner.m_worker=&client;
     {
         HLERequestContext ctx{{0x26,0},true};
         owner.AcquireWorker(ctx);
         assert(ctx.reply_code==Kernel::ResultOutOfResource.raw);
-        assert(ctx.response_words==2 && ctx.response_moves==0);
-        assert(ctx.transferred==nullptr && ctx.transfer_count==0);
-        assert(client.refs==1 && client.opens==1 && client.closes==1);
+        assert(ctx.reply_copies==0 && ctx.reply_moves==0);
+        assert(ctx.copied==nullptr && ctx.copies==0 && client.owned_refs==1);
     }
-    {
+    for (unsigned iteration=0;iteration<2;++iteration) {
         HLERequestContext ctx{{0x26,0}};
         owner.AcquireWorker(ctx);
         assert(ctx.reply_code==ResultSuccess.raw);
-        assert(ctx.response_words==2 && ctx.response_moves==1);
-        assert(ctx.transferred==&client && ctx.transfer_count==1);
-        assert(client.refs==2 && client.opens==2 && client.closes==1);
-        client.Close(owner.kernel); // guest consumes transferred move handle
-        assert(client.refs==1 && client.opens==2 && client.closes==2);
+        assert(ctx.reply_words==2 && ctx.reply_copies==1 && ctx.reply_moves==0);
+        assert(ctx.copied==&client && ctx.copies==1);
+        // The retained worker owns the reference. The IPC writer adds the
+        // independent guest handle later, with no extra owner Open().
+        assert(client.owned_refs==1);
     }
     {
         HLERequestContext ctx{{0x26,1}};
         owner.AcquireWorker(ctx);
         assert(ctx.reply_code==Kernel::ResultInvalidCombination.raw);
-        assert(ctx.response_moves==0 && ctx.transfer_count==0);
-        assert(client.refs==1 && client.opens==2);
+        assert(ctx.reply_copies==0 && ctx.copies==0);
+        assert(client.owned_refs==1);
     }
 }
 """.replace("__OWNER__",owner)
@@ -148,6 +142,6 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-acquire-worker-") as d:
             assert built.returncode==0,built.stderr[-5500:]
             done=subprocess.run([str(exe)],text=True,capture_output=True,timeout=20)
             assert done.returncode==0,done.stderr[-5500:]
-            print("H06_GPU_ACQUIRE_WORKER_MOVE_OOM_PASS",Path(cc).name,opt,
-                  "invalid=refused no_worker=refused oom=rolled_back"
-                  " success=exact_move_refcount invalid_packet=refused",flush=True)
+            print("H06_GPU_ACQUIRE_WORKER_COPY_OOM_PASS",Path(cc).name,opt,
+                  "invalid=refused no_worker=refused oom=no_copy"
+                  " success=stable_copy_owner invalid_packet=refused",flush=True)

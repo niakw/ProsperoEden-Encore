@@ -99,6 +99,9 @@ shipping_vendor_pin = gitlink_vendor_pin
 # decoder aliases must not issue Success or create a decoder session.
 # This successor changes only these three source/test blobs.
 NS2_ENCODER_FAIL_CLOSED_PIN = "1e513ae001669127538a346c7f390af55edd6712"
+# Preserve the authentic pinned identity; later historical replay rewrites
+# gitlink_vendor_pin to c74, but must not drop these verified successor blobs.
+NS2_ENCODER_FAIL_CLOSED_ACTIVE = gitlink_vendor_pin == NS2_ENCODER_FAIL_CLOSED_PIN
 NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "6934cd5d46c172d029c65123b5d7f19ddafc4853",
     "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "985cab1d56306096f7630da7f4d6a5b34c859431",
@@ -106,7 +109,7 @@ NS2_ENCODER_FAIL_CLOSED_BLOBS = {
 }
 def ns2_encoder_receipt(relative, previous):
     return (NS2_ENCODER_FAIL_CLOSED_BLOBS.get(relative, previous)
-            if gitlink_vendor_pin == NS2_ENCODER_FAIL_CLOSED_PIN else previous)
+            if NS2_ENCODER_FAIL_CLOSED_ACTIVE else previous)
 
 if selected == NS2_ENCODER_FAIL_CLOSED_PIN:
     for relative, expected in NS2_ENCODER_FAIL_CLOSED_BLOBS.items():
@@ -653,7 +656,7 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
-    if gitlink_vendor_pin == NS2_ENCODER_FAIL_CLOSED_PIN and relative in NS2_ENCODER_FAIL_CLOSED_BLOBS:
+    if NS2_ENCODER_FAIL_CLOSED_ACTIVE and relative in NS2_ENCODER_FAIL_CLOSED_BLOBS:
         # Current blob was verified above against the exact pinned tree.
         return NS2_ENCODER_FAIL_CLOSED_BLOBS[relative]
     # Successor blobs have already been individually sealed above. Historical

@@ -13,6 +13,18 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 source = (root / "vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
 cmake = (root / "headless/CMakeLists.txt").read_text()
+maintained_header = (root / "vendor/encore-active/eden-core/include/video_core/engines/maxwell_dma.h").read_text()
+original_header = (root / "vendor/sources/eden/src/video_core/engines/maxwell_dma.h").read_text()
+assert "BitField<0, 16, u32> dst_components_raw" in maintained_header
+assert "BitField<0, 12, u32> dst_components_raw" in original_header
+assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")' in cmake
+method_start = "[[nodiscard]] Swizzle GetComponent(size_t i) const {"
+assert maintained_header.count(method_start) == 1
+method = maintained_header[
+    maintained_header.index(method_start):
+    maintained_header.index("\n        }\n    };", maintained_header.index(method_start)) + len("\n        }")
+]
+assert "(i * 4)" in method and "i >= 4" in method
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cmake
 assert 'list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)' in cmake
 def extract(start, end):
@@ -23,7 +35,7 @@ def extract(start, end):
 coalesce = extract("constexpr bool CanCoalescePitchDma(", "\n}\n\n// Remapped DMA lengths")
 remap = extract("bool CopyPitchRemap(", "\n}\n} // namespace")
 for evidence in (
-    "remap.dst_x.Value()", "remap.dst_w.Value()", "Swizzle::NO_WRITE",
+    "remap.GetComponent(0)", "remap.GetComponent(3)", "Swizzle::NO_WRITE",
     "Swizzle::CONST_A", "Swizzle::CONST_B", "num_src_components_minus_one",
     "num_dst_components_minus_one", "memory.ReadBlock", "memory.WriteBlock",
     "memory.CopyBlock", "std::vector<u8> snapshot", "src_row_bytes",
@@ -62,19 +74,16 @@ struct MaxwellDMA {
             SRC_X=0, SRC_Y=1, SRC_Z=2, SRC_W=3,
             CONST_A=4, CONST_B=5, NO_WRITE=6
         };
-        struct Selector {
-            Swizzle selected{Swizzle::NO_WRITE};
-            constexpr Swizzle Value() const { return selected; }
-        };
         struct Num {
             u32 value{};
             constexpr operator u32() const { return value; }
         };
         u32 remap_consta_value{};
         u32 remap_constb_value{};
-        Selector dst_x{}, dst_y{}, dst_z{}, dst_w{};
+        u32 dst_components_raw{};
         Num component_size_minus_one{}, num_src_components_minus_one{},
             num_dst_components_minus_one{};
+        __METHOD__
     };
 };
 class MemoryManager {
@@ -113,12 +122,31 @@ int main() {
         r.num_dst_components_minus_one.value = dst_count - 1;
         return r;
     };
+    const auto set = [](R& remap, u32 slot, S selector) {
+        assert(slot < 4);
+        const u32 shift = slot * 4;
+        remap.dst_components_raw &= ~(0xfu << shift);
+        remap.dst_components_raw |= static_cast<u32>(selector) << shift;
+    };
+    // The fourth destination selector lives at bit 12, not bit 9.
+    {
+        R check{};
+        set(check, 0, S::SRC_X);
+        set(check, 1, S::SRC_Z);
+        set(check, 2, S::NO_WRITE);
+        set(check, 3, S::CONST_B);
+        assert(check.GetComponent(0) == S::SRC_X);
+        assert(check.GetComponent(1) == S::SRC_Z);
+        assert(check.GetComponent(2) == S::NO_WRITE);
+        assert(check.GetComponent(3) == S::CONST_B);
+        assert(static_cast<u32>(check.GetComponent(4)) == 7);
+    }
     // Identity remap uses LINE_LENGTH_IN blocks, not raw bytes.
     auto r = cfg(1, 4, 4);
-    r.dst_x.selected = S::SRC_X;
-    r.dst_y.selected = S::SRC_Y;
-    r.dst_z.selected = S::SRC_Z;
-    r.dst_w.selected = S::SRC_W;
+    set(r, 0, S::SRC_X);
+    set(r, 1, S::SRC_Y);
+    set(r, 2, S::SRC_Z);
+    set(r, 3, S::SRC_W);
     for (u32 i=0;i<8;i++) mem.bytes[0x100+i] = 20+i;
     assert(apply(r, 0x100, 0x200, 8, 8, 2, 1));
     for (u32 i=0;i<8;i++) assert(mem.bytes[0x200+i]==20+i);
@@ -126,10 +154,10 @@ int main() {
     // Reorder + CONST_B + NO_WRITE means preserve destination Y.
     r = cfg(1, 4, 4);
     r.remap_constb_value = 0x7b;
-    r.dst_x.selected = S::SRC_W;
-    r.dst_y.selected = S::NO_WRITE;
-    r.dst_z.selected = S::CONST_B;
-    r.dst_w.selected = S::SRC_X;
+    set(r, 0, S::SRC_W);
+    set(r, 1, S::NO_WRITE);
+    set(r, 2, S::CONST_B);
+    set(r, 3, S::SRC_X);
     for (u32 i=0;i<8;i++) {
         mem.bytes[0x300+i] = 10+i;
         mem.bytes[0x400+i] = 80+i;
@@ -141,7 +169,7 @@ int main() {
     // A three-byte CONST_A should not read the unused (even invalid) source.
     r = cfg(3, 1, 1);
     r.remap_consta_value=0x123456;
-    r.dst_x.selected=S::CONST_A;
+    set(r, 0, S::CONST_A);
     assert(apply(r, (std::numeric_limits<u64>::max)(), 0x500, 0, 0, 2, 1));
     const std::array<u8,6> expected_three{0x56,0x34,0x12,0x56,0x34,0x12};
     for (u32 i=0;i<6;i++) assert(mem.bytes[0x500+i]==expected_three[i]);
@@ -150,8 +178,8 @@ int main() {
     r=cfg(2,1,2);
     r.remap_consta_value=0x1020;
     r.remap_constb_value=0x3040;
-    r.dst_x.selected=S::CONST_A;
-    r.dst_y.selected=S::CONST_B;
+    set(r, 0, S::CONST_A);
+    set(r, 1, S::CONST_B);
     assert(apply(r, 0, 0x600, 4, 10, 2, 2));
     for(u32 row=0;row<2;row++) {
         const u32 a=0x600+10*row;
@@ -163,7 +191,7 @@ int main() {
 
     // Negative input pitch maps row 1 before row 0, without unsigned wrap.
     r=cfg(1,1,1);
-    r.dst_x.selected=S::SRC_X;
+    set(r, 0, S::SRC_X);
     for(u32 i=0;i<3;i++) {mem.bytes[0x70c+i]=11+i;mem.bytes[0x708+i]=21+i;}
     assert(apply(r,0x70c,0x800,-4,4,3,2));
     for(u32 i=0;i<3;i++) {
@@ -178,23 +206,23 @@ int main() {
 
     // An unavailable SRC_W on a one-component source is not a valid read.
     r=cfg(1,1,1);
-    r.dst_x.selected=S::SRC_W;
+    set(r, 0, S::SRC_W);
     mem.bytes[0xa00]=77;
     assert(!apply(r,0x900,0xa00,0,0,1,1));
     assert(mem.bytes[0xa00]==77);
 
     // Signed negative pitch below guest address zero is rejected.
-    r.dst_x.selected=S::SRC_X;
+    set(r, 0, S::SRC_X);
     mem.bytes[0xa00]=77;
     assert(!apply(r,0x900,0x5,8,-16,1,2));
     assert(mem.bytes[0xa00]==77);
 
     // An all-NO_WRITE command never touches an unneeded source/destination.
-    r.dst_x.selected=S::NO_WRITE;
+    set(r, 0, S::NO_WRITE);
     assert(apply(r, (std::numeric_limits<u64>::max)(),
                  (std::numeric_limits<u64>::max)(),0,0,1,1));
 }
-""".replace("__COALESCE__", coalesce).replace("__REMAP__", remap)
+""".replace("__COALESCE__", coalesce).replace("__REMAP__", remap).replace("__METHOD__", method)
 compilers = [c for c in ("clang++", "g++") if shutil.which(c)]
 assert compilers, "No C++ compiler available for the native remap contract"
 with tempfile.TemporaryDirectory(prefix="eden-b0b5-remap-") as temp:

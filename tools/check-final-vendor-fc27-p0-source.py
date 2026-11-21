@@ -51,12 +51,14 @@ REVIEWED_PINS.add("713e18162cf9a0d629cd39ae00b43fb55f9c2823")
 REVIEWED_PINS.add("35d639ad802910cfabbaf46bdcfd48a0d2f09ab6")
 REVIEWED_PINS.add("f66969397724ab8467c3380ca9c6db1631f79bf3")
 REVIEWED_PINS.add("b6e3ecc6943118ba9d321ef5baca9f79b241961f")
+REVIEWED_PINS.add("99832a312b1281401c187f381f4826191387eb73")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 # Preserve exact GSV source identity across historical receipt replays. The
 # real 1402 child is NS2-only and can precede GPU session 497; both C++
 # revisions fix the same compiled scoped-handle type.
-native_gsv_registration = selected == "b6e3ecc6943118ba9d321ef5baca9f79b241961f"
+native_worker_teardown_epoch = selected == "99832a312b1281401c187f381f4826191387eb73"
+native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73"}
 native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f"}
 native_gsv_active_cpp = "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
 native_gsv_active_test = "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
@@ -68,6 +70,20 @@ ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f1
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# GPU 497 must remain authenticated while its final native AS FDs and
+# NvCore session are closed; then revoke its process epoch once. Keep the
+# exact new real owner/test blobs and replay the complete earlier reviewed
+# source graph for all unaffected units.
+if selected == "99832a312b1281401c187f381f4826191387eb73":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp", "b613ba93b07003570f206d66ace34d7a488e603d"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "8deadd56ec6f12ae2f1da491337d694631f8e19f"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 GPU 497 teardown process-ticket lifetime drift", relative, actual)
+    selected = "b6e3ecc6943118ba9d321ef5baca9f79b241961f"
+    original_vendor_pin = selected
 # GSV's KScopedAutoObject is a mutable scoped handle: its only operator->
 # is non-const. Fix the *compiled* GSV1/1401/496 C++ locals without altering
 # TIPC buffer admission, GPU identity or any NS1 source. Replay the exact
@@ -81,7 +97,9 @@ if selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d3
         for relative, expected in (
             ("tests/ns2_syncpt_bootstrap_source.py", "6d04679a771a3919434351b377fbc0f23ead4b82"),
             ("encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h", "09cb1ca6494b6d6866239eba0bb45801a237536c"),
-            ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp", "34142613b8ee0389509406da540811ba35eae9d6"),
+            ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp",
+             "b613ba93b07003570f206d66ace34d7a488e603d" if native_worker_teardown_epoch else
+             "34142613b8ee0389509406da540811ba35eae9d6"),
             ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp", "a47b4a447c74e2710678c4e881b6b2f949a373cf"),
             ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.h", "b32fe29a11b0ffee941eb32043043553e67a28b5"),
         ):
@@ -104,6 +122,7 @@ if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629c
         ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "fc921425b67b634b4aaeb2363dcabdf9b53b6be8"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "c0cc9b26f6af13d6e1a3b60d92a0dfabd93c51d1"),
         ("tests/ns2_gpu_identity_mapping_source.py",
+         "8deadd56ec6f12ae2f1da491337d694631f8e19f" if native_worker_teardown_epoch else
          "d9ac33e7d4f83e7198b23f6ab48a0f57bf76a8c5" if worker_shutdown_guard else
          "fa8389fe2513f09133c5cdb14d662e65e83c79d4" if process_scoped_lease else
          "027fee436eea6292e59caa852d76282473d41688"),

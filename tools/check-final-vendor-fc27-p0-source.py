@@ -201,7 +201,7 @@ def reviewed_blob(relative, expected):
             return reviewed[relative]
     if gitlink_vendor_pin == "a9cca6aa9c63722b918b92362c237eed448ff56c" and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
         return "e252d390e5c08c933487ca351230636158bc1abe"
-    if gitlink_vendor_pin in {"21bc63493de105c1eb025f3ce5b67011deee72da", "a9cca6aa9c63722b918b92362c237eed448ff56c", "0ec5337f26c31e6926bf327411634422c9043369"}:
+    if gitlink_vendor_pin in {"21bc63493de105c1eb025f3ce5b67011deee72da", "a9cca6aa9c63722b918b92362c237eed448ff56c", "0ec5337f26c31e6926bf327411634422c9043369", "997b4885c045469f09dedf2a5f4e69995a5b1c9a", "9eefc8f5131350e8ddfb11e617e2e25007925212"}:
         if relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp":
             return "2bd5023b5177cfd89d43fcc759643553fe0c745f"
         if relative == "tests/ns2_gpu_identity_mapping_source.py":

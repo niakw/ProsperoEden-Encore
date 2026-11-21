@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Validate the shipping NS1 X8_D24 <-> ABGR8 Vulkan conversion path."""
+from pathlib import Path
+import argparse, shutil, subprocess, tempfile
+
+ROOT = Path(__file__).resolve().parents[1]
+VENDOR = ROOT / "vendor"
+CPP = VENDOR / "encore-active/eden-vulkan/blit_image.cpp"
+HDR = VENDOR / "encore-active/eden-vulkan/include/video_core/renderer_vulkan/blit_image.h"
+TEX = VENDOR / "encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
+CMAKE = ROOT / "headless/vulkan.cmake"
+COMMON = ROOT / "headless/x8d24_conversion.glsl"
+SHADERS = (
+    (ROOT / "headless/convert_abgr8_to_x8d24.frag", "CONVERT_ABGR8_TO_X8D24_FRAG_SPV"),
+    (ROOT / "headless/convert_x8d24_to_abgr8.frag", "CONVERT_X8D24_TO_ABGR8_FRAG_SPV"),
+)
+
+def git_blob(path: Path) -> str:
+    return subprocess.check_output(["git", "hash-object", str(path)], text=True).strip()
+
+assert git_blob(CPP) == "4ba93afb6594213d5bde82be2693f0e08cb1cd63"
+assert git_blob(HDR) == "a38cfcf655adcb8ceebfce955b39a2312a239768"
+assert git_blob(TEX) == "e9191238ccddd94aa22570eba501fb05fff5b207"
+
+cpp = CPP.read_text()
+hdr = HDR.read_text()
+tex = TEX.read_text()
+cmake = CMAKE.read_text()
+common = COMMON.read_text()
+assert "DecodeX8D24" in common and "EncodeX8D24" in common
+assert "16777216.0f" in common and "16777215.0f" in common
+for token in (
+    "CONVERT_ABGR8_TO_X8D24_FRAG_SPV",
+    "CONVERT_X8D24_TO_ABGR8_FRAG_SPV",
+    "ConvertABGR8ToX8D24",
+    "ConvertX8D24ToABGR8",
+):
+    assert token in cpp or token in hdr or token in tex, token
+assert "case PixelFormat::X8_D24_UNORM:" in tex
+assert "return blit_image_helper.ConvertX8D24ToABGR8(dst, src_view);" in tex
+assert "return blit_image_helper.ConvertABGR8ToX8D24(dst, src_view);" in tex
+assert "eden-ns1-x8d24-spv" in cmake
+assert "--target-env spirv1.3" in cmake
+assert "EDEN_NS1_ABGR8_TO_X8D24_HEADER" in cmake
+assert "EDEN_NS1_X8D24_TO_ABGR8_HEADER" in cmake
+# GPU-51 must not mutate the immutable upstream Eden host-shader tree.
+assert not (VENDOR / "sources/eden/src/video_core/host_shaders/convert_abgr8_to_x8d24.frag").exists()
+assert not (VENDOR / "sources/eden/src/video_core/host_shaders/convert_x8d24_to_abgr8.frag").exists()
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--compile", action="store_true")
+args = parser.parse_args()
+if args.compile:
+    glslang = shutil.which("glslangValidator")
+    spirv_val = shutil.which("spirv-val")
+    assert glslang and spirv_val, "glslangValidator and spirv-val are required"
+    with tempfile.TemporaryDirectory(prefix="encore-x8d24-") as td:
+        out = Path(td)
+        for source, variable in SHADERS:
+            spv = out / (source.stem + ".spv")
+            header = out / (source.stem + "_spv.h")
+            common_args = [glslang, "-V", "--target-env", "spirv1.3", f"-I{COMMON.parent}",
+                           "-DUseUniformBlock=1"]
+            subprocess.run(common_args + ["-o", str(spv), str(source)], check=True)
+            subprocess.run([spirv_val, "--target-env", "spv1.3", str(spv)], check=True)
+            subprocess.run(common_args + ["--variable-name", variable,
+                                           "-o", str(header), str(source)], check=True)
+            assert variable in header.read_text(), variable
+print("NS1_X8D24_CONVERSION_HOST_PASS owners=3 shaders=2 pinned_eden_immutable=1")

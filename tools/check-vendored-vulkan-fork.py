@@ -115,6 +115,100 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
 
+    # GPU-51 (Lichii #7): X8_D24 <-> ABGR8 conversion support changes only
+    # three maintained Vulkan owners. Reverse those exact hunks on audit copies
+    # before GPU-50 and the frozen historical generator receipts.
+    def _gpu51_blob(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()
+
+    gpu51_edits={
+        'blit_image.cpp': (
+            '4ba93afb6594213d5bde82be2693f0e08cb1cd63',
+            'bbde031a184b93745fa0449aef74f351355fb70d',
+            (
+                ('''#include "video_core/host_shaders/convert_abgr8_to_d24s8_frag_spv.h"
+#include "video_core/host_shaders/convert_abgr8_to_x8d24_frag_spv.h"
+#include "video_core/host_shaders/convert_x8d24_to_abgr8_frag_spv.h"
+#include "video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h"''',
+                 '''#include "video_core/host_shaders/convert_abgr8_to_d24s8_frag_spv.h"
+#include "video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h"'''),
+                ('''      convert_abgr8_to_d24s8_frag(device.IsExtShaderStencilExportSupported()
+                                 ? BuildShader(device, CONVERT_ABGR8_TO_D24S8_FRAG_SPV)
+                                 : vk::ShaderModule{}),
+      convert_abgr8_to_x8d24_frag(BuildShader(device, CONVERT_ABGR8_TO_X8D24_FRAG_SPV)),
+      convert_x8d24_to_abgr8_frag(BuildShader(device, CONVERT_X8D24_TO_ABGR8_FRAG_SPV)),
+      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),''',
+                 '''      convert_abgr8_to_d24s8_frag(device.IsExtShaderStencilExportSupported()
+                                 ? BuildShader(device, CONVERT_ABGR8_TO_D24S8_FRAG_SPV)
+                                 : vk::ShaderModule{}),
+      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),'''),
+                ('''void BlitImageHelper::ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer,
+                                          const ImageView& src_image_view) {
+    ConvertPipelineDepthTargetEx(convert_abgr8_to_x8d24_pipeline, dst_framebuffer->RenderPass(),
+                                 convert_abgr8_to_x8d24_frag);
+    Convert(*convert_abgr8_to_x8d24_pipeline, dst_framebuffer, src_image_view);
+}
+
+void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
+                                          const ImageView& src_image_view) {
+    ConvertPipelineEx(convert_x8d24_to_abgr8_pipeline, dst_framebuffer->RenderPass(),
+                      convert_x8d24_to_abgr8_frag, true, false);
+    Convert(*convert_x8d24_to_abgr8_pipeline, dst_framebuffer, src_image_view);
+}
+
+''', ''),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/blit_image.h': (
+            'a38cfcf655adcb8ceebfce955b39a2312a239768',
+            '81eda086f50e04d3e1537aebff404a6097a07069',
+            (
+                ('''    void ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);
+
+    void ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);
+
+''', ''),
+                ('''    vk::ShaderModule convert_abgr8_to_x8d24_frag;
+    vk::ShaderModule convert_x8d24_to_abgr8_frag;
+''', ''),
+                ('''    vk::Pipeline convert_abgr8_to_x8d24_pipeline;
+    vk::Pipeline convert_x8d24_to_abgr8_pipeline;
+''', ''),
+            ),
+        ),
+        'vk_texture_cache_cost.cpp': (
+            'e9191238ccddd94aa22570eba501fb05fff5b207',
+            '16a8ad80677d992b557ec90283a8f3b483b97440',
+            (
+                ('''        if (src_view.format == PixelFormat::X8_D24_UNORM) {
+            return blit_image_helper.ConvertX8D24ToABGR8(dst, src_view);
+        }
+''', ''),
+                ('''    case PixelFormat::X8_D24_UNORM:
+        if (src_view.format == PixelFormat::A8B8G8R8_UNORM) {
+            return blit_image_helper.ConvertABGR8ToX8D24(dst, src_view);
+        }
+        break;
+''', ''),
+            ),
+        ),
+    }
+    for gpu51_name,(current_blob,predecessor_blob,edits) in gpu51_edits.items():
+        raw=expected[gpu51_name].read_text()
+        assert _gpu51_blob(raw)==current_blob, ("GPU-51 owner drift",gpu51_name,_gpu51_blob(raw))
+        normalized=raw
+        for newer,older in edits:
+            assert normalized.count(newer)==1, ("GPU-51 audit hunk drift",gpu51_name,newer[:100])
+            normalized=normalized.replace(newer,older,1)
+        assert _gpu51_blob(normalized)==predecessor_blob, (
+            "GPU-51 predecessor reconstruction failed",gpu51_name,_gpu51_blob(normalized))
+        out=temp/'normalized-vendor-gpu51'/gpu51_name
+        out.parent.mkdir(parents=True,exist_ok=True)
+        out.write_text(normalized)
+        expected[gpu51_name]=out
+    print("ENCORE_NS1_GPU51_X8D24_CONVERSION_EXACT_REVERSE_PASS owners=3")
+
     # GPU-50 (Lichii #2047): reverse only the reviewed Maxwell DMA cache
     # notification on an audit COPY; shipping NS1 retains granular coherency.
     # GPU-49 and older Vulkan receipts must compare against their exact owner.

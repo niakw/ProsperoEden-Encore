@@ -54,16 +54,18 @@ REVIEWED_PINS.add("b6e3ecc6943118ba9d321ef5baca9f79b241961f")
 REVIEWED_PINS.add("99832a312b1281401c187f381f4826191387eb73")
 REVIEWED_PINS.add("258914fc564e223274728b409ee48e39465df7f6")
 REVIEWED_PINS.add("932dc1b3c09b172322d65432c26cc017b4922266")
+REVIEWED_PINS.add("5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
-native_video_pool_991_revision = selected == "932dc1b3c09b172322d65432c26cc017b4922266"
-native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
+native_sparse_small_4k_revision = selected == "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf"
+native_video_pool_991_revision = selected in {"932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf"}
+native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf"}
 # Preserve exact GSV source identity across historical receipt replays. The
 # real 1402 child is NS2-only and can precede GPU session 497; both C++
 # revisions fix the same compiled scoped-handle type.
-native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
-native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
-native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
+native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf"}
+native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf"}
+native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf"}
 native_gsv_active_cpp = "a806f2a6d2c9689a8b1e24f0c292a8d95c0d29a7" if native_video_pool_991_revision else "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
 native_gsv_active_test = "ae41e4bc89b33e455381f25470717af6766cd0b3" if native_video_pool_991_revision else "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
 # Preserve the active AS/GMMU owner revision during recursive source-pin
@@ -72,12 +74,38 @@ native_as_lease_revision = selected in {"2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547
 native_as_session_revision = selected == "889b142aa5616d3d00733a7cc1db1562eed291f4"
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
+# NS2 native 4-KiB sparse VA is an additive change to the exact
+# selected NVDRV AS TU and its focused source test. Every older receipt
+# remains strict for every other file and every older vendor revision.
+def reviewed_blob(relative, expected):
+    if native_sparse_small_4k_revision:
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "35bef222790b19521059aa6dd2c1acef198ff625"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "90b1d4e0fec9379c99c717eac54e3fdc0fb9cc54"
+    return expected
+
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # GPU 497 must remain authenticated while its final native AS FDs and
 # NvCore session are closed; then revoke its process epoch once. Keep the
 # exact new real owner/test blobs and replay the complete earlier reviewed
 # source graph for all unaffected units.
+# Verify the new native sparse VA owner/test, then replay the unchanged
+# GSV, WFI, GA10F, memory lifetime and FC27 source contracts below.
+if native_sparse_small_4k_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "35bef222790b19521059aa6dd2c1acef198ff625"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "90b1d4e0fec9379c99c717eac54e3fdc0fb9cc54"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("NS2 native 4K sparse VA source drift", relative, actual)
+    selected = "932dc1b3c09b172322d65432c26cc017b4922266"
+    original_vendor_pin = selected
+
 # Real native GSV 991 decoder backing and corrected NVGPU WFI bit0.
 # Validate exactly the five changed blobs; all earlier source receipts
 # remain active for unchanged files, including FC27 and NS1 owners.
@@ -91,7 +119,7 @@ if native_video_pool_991_revision:
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 native GSV991/WFI selected source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 native GSV991/WFI selected source drift", relative, actual)
     selected = "258914fc564e223274728b409ee48e39465df7f6"
     original_vendor_pin = selected
 
@@ -110,7 +138,7 @@ if native_preemption_wfi_revision:
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 channel preemption WFI owner drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 channel preemption WFI owner drift", relative, actual)
     selected = "99832a312b1281401c187f381f4826191387eb73"
     original_vendor_pin = selected
 if selected == "99832a312b1281401c187f381f4826191387eb73":
@@ -123,7 +151,7 @@ if selected == "99832a312b1281401c187f381f4826191387eb73":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GPU 497 teardown process-ticket lifetime drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GPU 497 teardown process-ticket lifetime drift", relative, actual)
     selected = "b6e3ecc6943118ba9d321ef5baca9f79b241961f"
     original_vendor_pin = selected
 # GSV's KScopedAutoObject is a mutable scoped handle: its only operator->
@@ -147,7 +175,7 @@ if selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d3
         ):
             raw = (V / relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("Native GSV 1402/497 process ticket source drift", relative, actual)
+            assert actual == reviewed_blob(relative, expected), ("Native GSV 1402/497 process ticket source drift", relative, actual)
     selected = "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"
     original_vendor_pin = selected
 
@@ -190,7 +218,7 @@ if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629c
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native channel retirement/AS session source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native channel retirement/AS session source drift", relative, actual)
     if worker_shutdown_guard:
         relative = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp"
         raw = (V / relative).read_bytes()
@@ -216,7 +244,7 @@ if selected == "889b142aa5616d3d00733a7cc1db1562eed291f4":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native session/GMMU channel ownership drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native session/GMMU channel ownership drift", relative, actual)
     selected = "bb575bd8396d78187d2bd56713e84c398ebce512"
     original_vendor_pin = selected
 # A GPU channel (including queued work in the scheduler) must retain
@@ -237,7 +265,7 @@ if selected == "2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native AS/GMMU channel-lifetime drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native AS/GMMU channel-lifetime drift", relative, actual)
     selected = "bb575bd8396d78187d2bd56713e84c398ebce512"
     original_vendor_pin = selected
 # NS2 runtime exit: retire the actual PS5 Vulkan worker/renderer before
@@ -255,7 +283,7 @@ if selected == "9bd8de9081cc5ad431ecfc62696e9a6f8f2d1ffc":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native GPU worker/AS teardown owner drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native GPU worker/AS teardown owner drift", relative, actual)
     selected = "bb575bd8396d78187d2bd56713e84c398ebce512"
     original_vendor_pin = selected
 # The PS5/native control reply retains the original host C++ constructor
@@ -281,7 +309,7 @@ if selected in {"788badb79f0566c56f51e64fb9aa727f72fdb065", "0015d90da841622e164
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native/legacy NVDRV controller ABI drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native/legacy NVDRV controller ABI drift", relative, actual)
     selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # Native GA10F topology is coherent only if characteristics, TPC mask,
@@ -302,7 +330,7 @@ if selected == "de4a6c24d1f118152c849fc87af2783c96348735":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native GA10F topology/FD owner drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native GA10F topology/FD owner drift", relative, actual)
     selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # The AS BindChannel owner previously performed an unchecked nvhost_gpu
@@ -322,7 +350,7 @@ if selected in {"e95c1dea796b209b8561c253b82fa69e75fb72b6", "019e810c5c6c489eab8
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native channel FD type-check owner drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native channel FD type-check owner drift", relative, actual)
     selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # Native NS2 GPU controller and channel handlers: match all reviewed
@@ -342,7 +370,7 @@ if selected == "a93bc45a1a5858fe1e4bc718a84a2a5a8841ab38":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native GPU runlist owner drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native GPU runlist owner drift", relative, actual)
     selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # NS2 native VSMS mapping: one selected Ampere controller source changed.
@@ -369,7 +397,7 @@ if selected == "fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Native TSG GPU owner drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Native TSG GPU owner drift", relative, actual)
     selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # The only difference from the last reviewed vendor pin is the real GPU
@@ -405,7 +433,7 @@ if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Reviewed NS2 HID source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Reviewed NS2 HID source drift", relative, actual)
     if gsv_syncpt_201_revision:
         # GSV cmd201 is admitted only because the real per-KProcess
         # NativeSyncptState is already allocated by the active constructor.
@@ -427,7 +455,7 @@ if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df
         ):
             raw = (V / relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("Reviewed NS2 GSV syncpoint context drift", relative, actual)
+            assert actual == reviewed_blob(relative, expected), ("Reviewed NS2 GSV syncpoint context drift", relative, actual)
     selected = "b65d8d9673475433f0b6eac72eb304bf23141666"
     original_vendor_pin = selected
     ns2_gsv_497_dual = True
@@ -451,7 +479,7 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Selected NS2 GSV COPY descriptor source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Selected NS2 GSV COPY descriptor source drift", relative, actual)
     if selected in {"565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
         protocol = (V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h").read_bytes()
         protocol_blob = hashlib.sha1(b"blob " + str(len(protocol)).encode() + bytes([0]) + protocol).hexdigest()
@@ -468,7 +496,7 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
         ):
             raw = (V / relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("NS2 appletOE retry ABI source drift", relative, actual)
+            assert actual == reviewed_blob(relative, expected), ("NS2 appletOE retry ABI source drift", relative, actual)
     selected = "eadc6e798def18417e50db6a03a291440429d795"
 # This revert commit has the same complete vendor Git tree as the
 # reviewed pre-rollback pin. Reject any different source tree, including
@@ -491,7 +519,7 @@ if selected in {"917ccdc1cf772b9312b19888eea181b8e114334b", "0c1bd95c896f6ddc787
                 "11d548eb338a5b75bf3a87a6adb6aa6aa302e017" if ns2_gsv_497_dual else
                 "11e7c9d0569a175567083367e485cbf75cbc2207" if ns2_gsv_497_v2 else
                 "0f6b6960687501ef88b65ae0f3f4d0fd0693826a")
-    assert actual == expected, (
+    assert actual == reviewed_blob(relative, expected), (
         "NS2 GSV optional-bind bootstrap source drift", actual)
 
 # The FC27 corrected rasterizer is the exact reviewed fail-closed successor.
@@ -527,7 +555,7 @@ if selected in {"17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc42
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("Merged engine/vendor source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Merged engine/vendor source drift", relative, actual)
     print("ENCORE_MERGED_NS1_DMA_NS2_BOOT_SOURCE_PASS owners=12")
 
 # The follow-up vendor change affects only the compiled NS2 GSV control
@@ -549,7 +577,7 @@ if selected in {"082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e7036
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("NS2 GPU/VI2 session source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GPU/VI2 session source drift", relative, actual)
     print("ENCORE_NS2_GSV_NO_NULL_SESSION_SOURCE_PASS owners=2")
 
 # Active GPU session and worker must roll back incomplete native VA
@@ -566,7 +594,7 @@ if selected in {"491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("NS2 GPU VA identity rollback drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GPU VA identity rollback drift", relative, actual)
     print("ENCORE_NS2_GPU_VA_ROLLBACK_SOURCE_PASS owners=3")
 
 # A native Switch 2 GPU session may only be published after process
@@ -594,7 +622,7 @@ if selected in {"06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("NS2 GSV nvsrv CMIF source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GSV nvsrv CMIF source drift", relative, actual)
     print("ENCORE_NS2_GSV_REAL_NVSRV_SOURCE_PASS owners=3")
 
 if selected == "2a450d43d1d23d3e8b1667e396613f62c69c26d7":
@@ -611,7 +639,7 @@ if selected == "2a450d43d1d23d3e8b1667e396613f62c69c26d7":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Selected NS2 IPC source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Selected NS2 IPC source drift", relative, actual)
     print("ENCORE_NS2_TYPED_PROXY_SOURCE_PASS owners=7")
 
 if selected == "510f1efde545357fe8095a812df32251ee546285":
@@ -626,7 +654,7 @@ if selected == "510f1efde545357fe8095a812df32251ee546285":
     ):
         raw = (V/path).read_bytes()
         actual = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == expected, ("NS2 appletOE selected owner drift", path, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 appletOE selected owner drift", path, actual)
     selected = "7fc673495b2ee18d5216023280057a42aa78d46c"
 if selected == "7fc673495b2ee18d5216023280057a42aa78d46c":
     for path, expected in (
@@ -637,7 +665,7 @@ if selected == "7fc673495b2ee18d5216023280057a42aa78d46c":
     ):
         raw=(V/path).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == expected, ("NS2 GameChat owner drift", path, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GameChat owner drift", path, actual)
     selected = "ab417b59c5f7f4613ff27386be05c0644d0ed776"
 if selected in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
     raw=(V/"encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_bytes()
@@ -652,7 +680,7 @@ if selected == "ab417b59c5f7f4613ff27386be05c0644d0ed776":
                            ("encore-active/eden-threading/native-hle-overrides.cmake", "0ed9f8520019c07874c157c97ded3864c07a8a32")):
         raw=(V/path).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == expected, ("NS2 IPC peer owner drift", path, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 IPC peer owner drift", path, actual)
 if selected == "67759611edc13414c112ea9d2b6664d54827a200":
     # Confirm the new release modifies only its reviewed RomFS owner/test;
     # actual GitHub commit comparison is documented in the incident register.
@@ -666,7 +694,7 @@ if selected == "67759611edc13414c112ea9d2b6664d54827a200":
     }.items():
         raw = (V/relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("RomFS-only successor drift",relative,actual)
+        assert actual == reviewed_blob(relative, expected), ("RomFS-only successor drift",relative,actual)
 
 if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
                 "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
@@ -684,7 +712,7 @@ if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
     }.items():
         raw = (V/relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Sync rollback source drift",relative,actual)
+        assert actual == reviewed_blob(relative, expected), ("Sync rollback source drift",relative,actual)
     if selected in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         for relative, expected in {
             "encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h":
@@ -696,7 +724,7 @@ if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
         }.items():
             raw = (V/relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("Quiet NS2 SVC witness drift",relative,actual)
+            assert actual == reviewed_blob(relative, expected), ("Quiet NS2 SVC witness drift",relative,actual)
     if selected in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         for relative, expected in {
             "encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if selected in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if selected == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"),
@@ -705,7 +733,7 @@ if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
         }.items():
             raw = (V/relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("Selected PS5 F07 TextureCache source drift", relative, actual)
+            assert actual == reviewed_blob(relative, expected), ("Selected PS5 F07 TextureCache source drift", relative, actual)
     assert not (V/"encore-active/eden-core/overrides/core/deferred_cached_updates.h").exists()
     subprocess.run(["python3", "-B", str(V/"tests/fc27_deferred_page_protection_host.py")],
                    check=True, timeout=240)

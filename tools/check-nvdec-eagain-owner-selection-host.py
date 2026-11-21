@@ -436,7 +436,8 @@ HS=H1_CPP.read_text();HH=H1_HDR.read_text()
 OS=H1_ORIG_CPP.read_text();OH=H1_ORIG_HDR.read_text()
 guard="fd < 0 || static_cast<std::size_t>(fd) >= devices.size()"
 assert HS.count(guard)==2 and HH.count(guard)==1
-assert HS.count("devices[fd]")==2 and "devices[fd]" not in HH
+assert HS.count("devices[fd]")==4 and "devices[fd]" not in HH
+# Two dispatches and two guarded re-open probes; both happen after the FD preflight.
 # The two StartDevice dispatches are reached only after the signed range guard.
 start="void Host1x::StartDevice("
 stop="void Host1x::StopDevice("

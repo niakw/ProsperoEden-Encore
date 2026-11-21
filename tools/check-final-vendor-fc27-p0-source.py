@@ -1160,7 +1160,9 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
         protocol = (V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h").read_bytes()
         protocol_blob = hashlib.sha1(b"blob " + str(len(protocol)).encode() + bytes([0]) + protocol).hexdigest()
         expected_protocol = "182467544d693433015e27e87d03fb62a43ec10b" if gsv_transfer_bootstrap_revision else "e416a9d4a9611c501e1349c7cbcfa83e2640712e" if vi2_indexed_event_revision else "2ab3a49da7843d2b1b0aa7b0d66c702cdbc9326d" if gsv_transfer_memory_revision else "661ff841efe8ea16fe0da557bb791596f334c6b5" if gsv_native_115_revision else "54f295b1ef7a0482a851a93579e66952b335ba9b" if gsv_gpu_403_revision else "4a35519c4f01cc4c1b604787bfbb139161f64a05" if selected in {"3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"} else "6ce5ba02c2032237f81d9684da9e56cfbfb831c0"
-        assert protocol_blob == expected_protocol, ("NS2 GSV bootstrap hint source drift", protocol_blob)
+        assert protocol_blob == reviewed_blob(
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h",
+            expected_protocol), ("NS2 GSV bootstrap hint source drift", protocol_blob)
     if selected in {"ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
         # appletOE retry ABI: only the reviewed NS2 owner and its existing source
         # regression changed after the last pinned vendor revision.

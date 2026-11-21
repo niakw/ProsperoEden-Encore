@@ -537,3 +537,99 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-device-fd-") as tmp:
 print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 "
       "negative_fd=1 above_1023=1 NVDEC_VIC_dispatch=1 teardown=1 "
       "ASan_UBSan=1 O0_O2=2")
+
+
+# GPU-36: actual native NVDEC submit preflight code, compiled in a focused
+# Clang sanitizer harness to reject untrusted ioctl sizes before allocation.
+NVD_PATH=V/"encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp"
+assert blob(NVD_PATH)=="65b17c011ac48c7f042a2e1da46feb116072a152"
+NVD=NVD_PATH.read_text()
+assert "core.GetSession(sessions[fd])" not in NVD
+assert "params.syncpoint_count > params.fence_count" in NVD
+assert "cmd.word_count < 0" in NVD
+assert 'list(REMOVE_ITEM core_sources "hle/service/nvdrv/devices/nvhost_nvdec_common.cpp")' in CMAKE
+S=NVD[NVD.index("NvResult nvhost_nvdec_common::Submit("):
+      NVD.index("NvResult nvhost_nvdec_common::GetSyncpoint(")]
+packet=S[S.index("    constexpr std::size_t MAX_NVDEC_SUBMIT_BYTES"):
+         S.index("    // Instantiate param buffers")]
+commands=S[S.index("    constexpr u64 MAX_NVDEC_CMD_BYTES"):
+           S.index("    for (std::size_t i = 0; i < syncpt_increments.size(); i++)")]
+assert "sessions.find(fd)" in packet
+assert "nvmap.GetHandle(cmd.memory_id)" in commands
+fixture=r"""
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <span>
+#include <unordered_map>
+#include <vector>
+using u8=std::uint8_t;using u32=std::uint32_t;
+using u64=std::uint64_t;using s32=std::int32_t;
+using DeviceFD=s32;
+enum class NvResult{InvalidState,Success};
+struct IoctlSubmit{u32 cmd_buffer_count{},relocation_count{},syncpoint_count{},fence_count{};};
+struct CommandBuffer{s32 memory_id{};u32 offset{};s32 word_count{};};
+struct Reloc{s32 a{},b{},c{},d{};};
+struct SyncptIncr{u32 a{},b{},c{},d{},e{};};
+namespace Tegra{struct ChCommandHeader{u32 value;};}
+struct Session{int* process{};};
+struct CoreMock{Session* current{};Session* GetSession(int){return current;}};
+struct Handle{u64 size{},address{};};
+struct NvmapMock{
+ std::shared_ptr<Handle> handle{};
+ std::shared_ptr<Handle> GetHandle(s32 id){return id==1?handle:nullptr;}
+};
+struct Owner{
+ CoreMock core;
+ NvmapMock nvmap;
+ std::unordered_map<DeviceFD,int> sessions;
+ NvResult Packet(IoctlSubmit params,std::span<u8> data,DeviceFD fd){
+__PACKET__
+ return NvResult::Success;
+ }
+ NvResult Commands(std::vector<CommandBuffer> command_buffers){
+__COMMANDS__
+ return NvResult::Success;
+ }
+};
+int main(){
+ int process=3; Session session{&process};
+ Owner owner{};owner.core.current=&session;owner.sessions[10]=1;
+ std::vector<u8> bytes(56);IoctlSubmit good{1,1,1,1};
+ assert(owner.Packet(good,bytes,10)==NvResult::Success);
+ assert(owner.Packet(good,std::span<u8>(bytes).first(55),10)==NvResult::InvalidState);
+ assert(owner.Packet(IoctlSubmit{0,0,2,1},bytes,10)==NvResult::InvalidState);
+ assert(owner.Packet(IoctlSubmit{0xffffffffu,0,0,0},bytes,10)==NvResult::InvalidState);
+ assert(owner.Packet(good,bytes,-1)==NvResult::InvalidState);
+ assert(owner.sessions.size()==1);
+ owner.core.current=nullptr;
+ assert(owner.Packet(good,bytes,10)==NvResult::InvalidState);
+ Session invalid{};owner.core.current=&invalid;
+ assert(owner.Packet(good,bytes,10)==NvResult::InvalidState);
+ owner.nvmap.handle=std::make_shared<Handle>(Handle{4096,0x10000});
+ assert(owner.Commands({CommandBuffer{1,128,4}})==NvResult::Success);
+ assert(owner.Commands({CommandBuffer{1,128,-1}})==NvResult::InvalidState);
+ assert(owner.Commands({CommandBuffer{1,128,0x7fffffff}})==NvResult::InvalidState);
+ assert(owner.Commands({CommandBuffer{99,128,4}})==NvResult::InvalidState);
+ assert(owner.Commands({CommandBuffer{1,4095,4}})==NvResult::InvalidState);
+ assert(owner.Commands({CommandBuffer{1,4097,1}})==NvResult::InvalidState);
+ owner.nvmap.handle->address=std::numeric_limits<u64>::max()-1;
+ assert(owner.Commands({CommandBuffer{1,0,4}})==NvResult::InvalidState);
+}
+""".replace("__PACKET__",packet).replace("__COMMANDS__",commands)
+compiler=shutil.which("clang++-18") or shutil.which("clang++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-nvdec-submit-") as temp:
+    path=Path(temp)/"nvdec-submit.cpp"
+    path.write_text(fixture)
+    for opt in ("-O0","-O2"):
+        exe=Path(temp)/("nvdec-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(path),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_NVDEC_SUBMIT_PREFLIGHT_HOST_PASS packet=1 command=1 truncated=1 "
+      "huge_counts=1 session=1 signed_words=1 handle_bounds=1 "
+      "ASan_UBSan=1 O0_O2=2")

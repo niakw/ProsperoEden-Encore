@@ -140,6 +140,20 @@ if selected == "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        # Current setup-bind successors were authenticated above. Replay this
+        # predecessor contract with their exact current blob identities rather
+        # than comparing a live checkout against the historical bc6 blobs.
+        if shipping_vendor_pin == "4e6a966508e718d02526d4d220e112591536f28c":
+            expected = {
+                "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h":
+                    "9aa4b802c2245cad7b251fff3bc708a906db533d",
+                "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+                    "8b22d4e16ba0e3d0e73cc3af9faace2447d3fd9b",
+                "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+                    "81bac0bb0c1be0be6ed0aca81931fc593b948044",
+                "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+                    "d78aaea83009616131bcaf68bfb67fd12fe2e575",
+            }[relative]
         assert actual == expected, ("NS2 ChannelSetupBind source drift", relative, actual)
     selected = "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d"
 

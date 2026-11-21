@@ -2,7 +2,7 @@
 
 > **Nature** : registre vivant de couverture **statique et hôte** pour Nintendo Switch 2. Il reprend les commandes publiées par SwitchBrew et les compare au C++ réellement sélectionné par Eden Encore. Une ligne manquante n’est **pas** automatiquement un bug de Mario Kart World ou Donkey Kong Bananza ; une ligne implémentée n’est **pas** une preuve console.
 
-**Issue maîtresse NS2 : [#123](https://github.com/niakw/ProsperoEden-Encore/issues/123).**  
+**Issue maîtresse NS2 : [#123](https://github.com/niakw/ProsperoEden-Encore/issues/123).**
 **Référence historique complémentaire : [analyse des écarts NS2 puis NS1 du 20/11](./EDEN_ENCORE_GAP_ANALYSIS_NS2_THEN_NS1_2026-11-20.md).**
 
 ## 0. Provenance et règle de mise à jour
@@ -17,7 +17,7 @@
 | Client SDK recroisé | https://github.com/vexcited/fefw — notamment `src/nn/gpu/gpu_sdk_*.cpp` |
 | Validation console du présent couple | **Aucune** : pas de build PS5, pas de première soumission/frame revendiquée |
 
-**Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = commande connue mais pas de handler actif ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.  
+**Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = commande connue mais pas de handler actif ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
 ### Politique des fonctions connues mais non implémentées

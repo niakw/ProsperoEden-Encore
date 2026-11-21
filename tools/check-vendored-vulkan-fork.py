@@ -25,8 +25,30 @@ for relative, reviewed_blob in (
 ):
     owner = active / relative
     raw = owner.read_text()
-    assert subprocess.check_output(
-        ['git', 'hash-object', str(owner)], text=True).strip() == reviewed_blob, relative
+    raw_blob = subprocess.check_output(
+        ['git', 'hash-object', str(owner)], text=True).strip()
+    if relative == 'vk_graphics_pipeline_cost.cpp' and raw_blob == (
+            'df36d210d04411b87e1fdad7fbd0689b1e4d3488'):
+        # GPU-49 is a later fragment-output ownership fix. Rewind only its
+        # two graphics-pipeline hunks before checking the older build-task
+        # lifetime owner; never restamp that historical receipt.
+        gpu49_ctor = """    fragment_has_color0_output = stage_infos[NUM_STAGES - 1].stores_frag_color[0];
+    // Maxwell leaves render-target components not written by the fragment shader untouched.
+    // Vulkan otherwise permits undefined values there, which is visible on AMD/RADV.
+    for (size_t rt = 0; rt < Maxwell::NumRenderTargets; ++rt) {
+        color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}
+                             << (rt * 4);
+    }
+
+"""
+        gpu49_mask = "        write_mask &= ColorOutputMask(index);\n"
+        assert raw.count(gpu49_ctor) == raw.count(gpu49_mask) == 1
+        raw = raw.replace(gpu49_ctor, "", 1).replace(gpu49_mask, "", 1)
+        data = raw.encode()
+        assert hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest() == reviewed_blob
+        print('ENCORE_NS1_GPU49_GRAPHICS_BUILD_OWNER_EXACT_REVERSE_PASS')
+    else:
+        assert raw_blob == reviewed_blob, relative
     assert raw.count('    auto task = std::move(build_task);\n'
                      '    build_task = nullptr;\n'
                      '    task();\n}') == 1, relative
@@ -93,6 +115,115 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     subprocess.run([sys.executable,'-B',str(root/'tools/prepare-vulkan-port.py'),str(patched),str(temp/'generated')],check=True,timeout=150,env=env)
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
+
+    # GPU-49 (Lichii #353) is newer than the frozen Vulkan generator receipts.
+    # Reverse its exact production hunks on audit COPIES, proving every owner
+    # reconstructs its immediate GPU-48/GPU-47 predecessor byte-for-byte.
+    def _gpu49_blob(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()
+
+    gpu49_edits={
+        'vk_graphics_pipeline_cost.cpp': (
+            'df36d210d04411b87e1fdad7fbd0689b1e4d3488',
+            'f3c82781675b6979a8be96a333184e048ef57f81',
+            (
+                ("""    fragment_has_color0_output = stage_infos[NUM_STAGES - 1].stores_frag_color[0];
+    // Maxwell leaves render-target components not written by the fragment shader untouched.
+    // Vulkan otherwise permits undefined values there, which is visible on AMD/RADV.
+    for (size_t rt = 0; rt < Maxwell::NumRenderTargets; ++rt) {
+        color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}
+                             << (rt * 4);
+    }
+
+""", ""),
+                ("        write_mask &= ColorOutputMask(index);\n", ""),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h': (
+            'c1ed0200afd3666056dfe0ef60705015a923dac7',
+            'cc53133dd516e2d1d245326866ab3ce0c852b36b',
+            (
+                ("""    [[nodiscard]] VkColorComponentFlags ColorOutputMask(size_t render_target) const noexcept {
+        return (color_output_mask >> (render_target * 4)) & 0xF;
+    }
+
+    [[nodiscard]] u32 ColorOutputMask() const noexcept {
+        return color_output_mask;
+    }
+
+""", ""),
+                ("    bool fragment_has_color0_output{};\n    u32 color_output_mask{};\n",
+                 "    bool fragment_has_color0_output{};\n"),
+            ),
+        ),
+        'vulkan_rasterizer.cpp': (
+            '6cb282532b308478ca0d9237d399fe4259e42fca',
+            '891343dabc62855110ac1139ac2b817022eb97b5',
+            (
+                ("""    if (device.IsExtExtendedDynamicState3BlendingSupported()) {
+        // prepared_pipeline is set only for a real guest draw. DrawTexture leaves it null,
+        // so its raw blit keeps the full write mask and avoids a cold pipeline lookup.
+        UpdateBlending(regs, prepared_pipeline);
+    } else if (device.IsExtColorWriteEnableSupported()) {
+""",
+                 """    if (device.IsExtExtendedDynamicState3BlendingSupported()) {
+        UpdateBlending(regs);
+    } else if (device.IsExtColorWriteEnableSupported()) {
+"""),
+                ("""void RasterizerVulkan::UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,
+                                      const GraphicsPipeline* pipeline) {
+    const u32 color_output_mask = pipeline ? pipeline->ColorOutputMask() : ~0U;
+    const bool color_output_changed = color_output_mask != last_color_output_mask;
+    if (!state_tracker.TouchBlending() && !color_output_changed) {
+        return;
+    }
+
+    if (state_tracker.TouchColorMask() || color_output_changed) {
+        last_color_output_mask = color_output_mask;
+        std::array<VkColorComponentFlags, Maxwell::NumRenderTargets> setup_masks{};
+""",
+                 """void RasterizerVulkan::UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs) {
+    if (!state_tracker.TouchBlending()) {
+        return;
+    }
+
+    if (state_tracker.TouchColorMask()) {
+        std::array<VkColorComponentFlags, Maxwell::NumRenderTargets> setup_masks{};
+"""),
+                ("            current &= (color_output_mask >> (index * 4)) & 0xF;\n", ""),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/vk_rasterizer.h': (
+            'f18e79dfece6eba3e4984b3ec0645abbfe1760e1',
+            'db60043206cc66a284bd3e9327a9fed7b011b25a',
+            (
+                ("""    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,
+                        const GraphicsPipeline* pipeline);
+""",
+                 "    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs);\n"),
+                ("    u32 draw_counter = 0;\n    u32 last_color_output_mask{};\n",
+                 "    u32 draw_counter = 0;\n"),
+            ),
+        ),
+    }
+    for gpu49_name,(current_blob,predecessor_blob,edits) in gpu49_edits.items():
+        raw=expected[gpu49_name].read_text()
+        actual_blob=_gpu49_blob(raw)
+        if actual_blob == current_blob:
+            normalized=raw
+            for newer,older in edits:
+                assert normalized.count(newer)==1, ("GPU-49 audit hunk drift",gpu49_name,newer[:90])
+                normalized=normalized.replace(newer,older,1)
+            assert _gpu49_blob(normalized)==predecessor_blob, (
+                "GPU-49 predecessor reconstruction failed",gpu49_name,_gpu49_blob(normalized))
+            out=temp/'normalized-vendor-gpu49'/gpu49_name
+            out.parent.mkdir(parents=True,exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu49_name]=out
+        else:
+            assert actual_blob == predecessor_blob, ("Unexpected GPU-49 owner",gpu49_name,actual_blob)
+    print("ENCORE_NS1_GPU49_FRAGMENT_OUTPUT_EXACT_REVERSE_PASS owners=4")
 
     # GPU-47 is the framebuffer-limit subset of Lichii #427 only. Reverse its
     # exact texture-cache hunk before GPU-46; StreamBuffer is intentionally

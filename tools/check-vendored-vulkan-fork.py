@@ -93,6 +93,102 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     subprocess.run([sys.executable,'-B',str(root/'tools/prepare-vulkan-port.py'),str(patched),str(temp/'generated')],check=True,timeout=150,env=env)
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
+
+    # GPU-46 is a reviewed production successor to the historical Vulkan
+    # generator: Vulkan framebuffer layers are bounded by the smallest
+    # attachment and clear ranges are clipped to that exact count. Reverse
+    # ONLY these exact hunks on audit copies; shipping owners stay untouched.
+    def _blob_text(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()
+
+    gpu46_edits={
+        'include/video_core/renderer_vulkan/vk_texture_cache.h': (
+            '6623a5d5164d4b09f1ea9089b62b7c5fdfdfaa05',
+            '1b725abab76168d9787d9b062d7406df733cf49d',
+            (
+                ("    [[nodiscard]] u32 Layers() const noexcept {\n"
+                 "        return layers;\n"
+                 "    }\n\n", ""),
+                ("    u32 num_images = 0;\n"
+                 "    u32 layers = 1;\n",
+                 "    u32 num_images = 0;\n"),
+            ),
+        ),
+        'vk_texture_cache_cost.cpp': (
+            'a12ef3892565ce80f17c30b3cb54fa337718ccff',
+            '88c2221eae24b0b3c46e81dfdb27c3a833f77fc6',
+            (
+                ("    s32 num_layers = (std::numeric_limits<s32>::max)();",
+                 "    s32 num_layers = 1;"),
+                ("        num_layers = (std::min)(num_layers, color_buffer->range.extent.layers);",
+                 "        num_layers = (std::max)(num_layers, color_buffer->range.extent.layers);"),
+                ("        num_layers = (std::min)(num_layers, depth_buffer->range.extent.layers);",
+                 "        num_layers = (std::max)(num_layers, depth_buffer->range.extent.layers);"),
+                ("    if (num_layers == (std::numeric_limits<s32>::max)()) {\n"
+                 "        num_layers = 1;\n"
+                 "    }\n"
+                 "    layers = static_cast<u32>((std::max)(num_layers, 1));\n", ""),
+                ("        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+                 "                                      layers, extent);",
+                 "        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+                 "                                      static_cast<u32>((std::max)(num_layers, 1)), extent);"),
+                ("    if (do_resolve_color) {\n"
+                 "        for (size_t index = 0; index < NUM_RT; ++index) {",
+                 "    if (do_resolve_color) {\n"
+                 "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+                 "        for (size_t index = 0; index < NUM_RT; ++index) {"),
+                ("    if (do_resolve_depth_stencil) {\n"
+                 "        const VkFormat vk_format =",
+                 "    if (do_resolve_depth_stencil) {\n"
+                 "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+                 "        const VkFormat vk_format ="),
+                ("    CreateVkFramebuffer(runtime, attachments, layers);",
+                 "    CreateVkFramebuffer(runtime, attachments, static_cast<u32>((std::max)(num_layers, 1)));"),
+            ),
+        ),
+        'vulkan_rasterizer.cpp': (
+            '891343dabc62855110ac1139ac2b817022eb97b5',
+            'fdd5a73ccf795fd58100469c546b544a86a68e5b',
+            (
+                ("    const u32 framebuffer_layers = framebuffer->Layers();\n"
+                 "    const u32 clear_base_layer = regs.clear_surface.layer;\n"
+                 "    if (layer_count == 0 || clear_base_layer >= framebuffer_layers) {\n"
+                 "        return;\n"
+                 "    }\n"
+                 "    const u32 clear_layer_count =\n"
+                 "        (std::min)(layer_count, framebuffer_layers - clear_base_layer);\n"
+                 "    const bool clear_covers_all_layers =\n"
+                 "        clear_base_layer == 0 && clear_layer_count == framebuffer_layers;\n\n", ""),
+                ("        .baseArrayLayer = clear_base_layer,\n"
+                 "        .layerCount = clear_layer_count,",
+                 "        .baseArrayLayer = regs.clear_surface.layer,\n"
+                 "        .layerCount = layer_count,"),
+                ("                                 clear_covers_all_layers &&\n",
+                 "                                 regs.clear_surface.layer == 0 &&\n"),
+                ("                can_defer_clear && !ds_used && clear_layer_count == 1 &&\n"
+                 "                framebuffer_layers == 1 &&\n",
+                 "                can_defer_clear && !ds_used && layer_count == 1 &&\n"),
+            ),
+        ),
+    }
+    for gpu46_name,(current_blob,predecessor_blob,edits) in gpu46_edits.items():
+        raw=expected[gpu46_name].read_text()
+        actual_blob=_blob_text(raw)
+        if actual_blob == current_blob:
+            normalized=raw
+            for newer,older in edits:
+                assert normalized.count(newer)==1, ("GPU-46 audit hunk drift",gpu46_name,newer[:80])
+                normalized=normalized.replace(newer,older,1)
+            assert _blob_text(normalized)==predecessor_blob, (
+                "GPU-46 predecessor reconstruction failed",gpu46_name,_blob_text(normalized))
+            out=temp/'normalized-vendor-gpu46'/gpu46_name
+            out.parent.mkdir(parents=True,exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu46_name]=out
+        else:
+            assert actual_blob == predecessor_blob, ("Unexpected GPU-46 owner",gpu46_name,actual_blob)
+    print("ENCORE_NS1_GPU46_VULKAN_LAYER_EXACT_REVERSE_PASS owners=3")
     # c30f46 publishes build completion from the task and can let cache
     # teardown destroy the pipeline before RunBuild returns. Shipping code
     # moves the callback out before invocation. Reverse that exact one-method

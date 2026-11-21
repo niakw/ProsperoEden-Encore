@@ -65,7 +65,17 @@ assert "BitField<50, 1, u64> saturate;" in prmt
 assert "BitField<53, 1, u64> is_b_signed;" in prmt
 assert "BitField<54, 1, u64> high;" in prmt
 assert 'throw NotImplementedException("IMAD X/SAT/CC modifiers")' in prmt
-assert "ThrowNotImplemented(Opcode::IMAD32I);" in prmt
+imad32_old = extract_method(pinned_prmt, "IMAD32I")
+imad32_new = extract_method(prmt, "IMAD32I")
+assert "ThrowNotImplemented(Opcode::IMAD32I);" in imad32_old
+assert "BitField<52, 1, u64> cc;" in imad32_new
+assert "BitField<53, 1, u64> high;" in imad32_new
+assert "BitField<54, 1, u64> is_a_signed;" in imad32_new
+assert "BitField<55, 1, u64> negate_addend;" in imad32_new
+assert "BitField<56, 1, u64> negate_a;" in imad32_new
+assert "BitField<57, 1, u64> is_b_signed;" in imad32_new
+assert 'throw NotImplementedException("IMAD32I CC/NEG modifiers")' in imad32_new
+assert "X(imad.dest_reg, ir.IAdd(product, X(imad.dest_reg)));" in imad32_new
 assert "ThrowNotImplemented(Opcode::IMADSP_reg);" in prmt
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
@@ -389,5 +399,5 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL and bounded IMAD LOW/HI translated; reserved/modifier forms fail closed; one fixed observed Fermi2D owner")
+print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL and bounded IMAD/IMAD32I LOW/HI translated; reserved/modifier forms fail closed; one fixed observed Fermi2D owner")
 print("NOTE graphics correctness and PS5 native CMake build remain to be qualified")

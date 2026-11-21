@@ -4015,4 +4015,736 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | manu | `5` | `Raw\_Read` | — | Q | 2026-11-21 |
 | manu | `6` | `Raw\_Write` | — | Q | 2026-11-21 |
 
+### NCM services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/NCM_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NCM%20services.md)
+
+**101 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| Location Resolver services | `0` | `OpenLocationResolver` | — | Q | 2026-11-21 |
+| Location Resolver services | `1` | `OpenRegisteredLocationResolver` | — | Q | 2026-11-21 |
+| Location Resolver services | `2` | `RefreshLocationResolver` | — | Q | 2026-11-21 |
+| Location Resolver services | `3` | `OpenAddOnContentLocationResolver` | 2.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `0` | `ResolveProgramPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `1` | `RedirectProgramPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `2` | `ResolveApplicationControlPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `3` | `ResolveApplicationHtmlDocumentPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `4` | `ResolveDataPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `5` | `RedirectApplicationControlPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `6` | `RedirectApplicationHtmlDocumentPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `7` | `ResolveApplicationLegalInformationPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `8` | `RedirectApplicationLegalInformationPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `9` | `Refresh` | — | Q | 2026-11-21 |
+| Location Resolver services | `10` | `RedirectApplicationProgramPath` | 5.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `11` | `ClearApplicationRedirection` | 5.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `12` | `EraseProgramRedirection` | 5.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `13` | `EraseApplicationControlRedirection` | 5.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `14` | `EraseApplicationHtmlDocumentRedirection` | 5.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `15` | `EraseApplicationLegalInformationRedirection` | 5.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `16` | `ResolveProgramPathForDebug` | 7.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `17` | `RedirectProgramPathForDebug` | 7.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `18` | `RedirectApplicationProgramPathForDebug` | 7.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `19` | `EraseProgramRedirectionForDebug` | 7.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `1` | `RegisterProgramPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `2` | `UnregisterProgramPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `3` | `RedirectProgramPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `4` | `ResolveHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `5` | `RegisterHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `6` | `UnregisterHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `7` | `RedirectHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `8` | `Refresh` | 7.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `9` | `RefreshExcluding` | 9.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `0` | `ResolveAddOnContentPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `1` | `RegisterAddOnContentStorage` | — | Q | 2026-11-21 |
+| Location Resolver services | `2` | `UnregisterAllAddOnContentPath` | — | Q | 2026-11-21 |
+| Location Resolver services | `3` | `RefreshApplicationAddOnContent` | 9.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `4` | `UnregisterApplicationAddOnContent` | 9.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `0` | `CreateContentStorage` | — | Q | 2026-11-21 |
+| Content Manager services | `1` | `CreateContentMetaDatabase` | — | Q | 2026-11-21 |
+| Content Manager services | `2` | `VerifyContentStorage` | — | Q | 2026-11-21 |
+| Content Manager services | `3` | `VerifyContentMetaDatabase` | — | Q | 2026-11-21 |
+| Content Manager services | `4` | `OpenContentStorage` | — | Q | 2026-11-21 |
+| Content Manager services | `5` | `OpenContentMetaDatabase` | — | Q | 2026-11-21 |
+| Content Manager services | `6` | `CloseContentStorageForcibly` | 1.0.0 | Q | 2026-11-21 |
+| Content Manager services | `7` | `CloseContentMetaDatabaseForcibly` | 1.0.0 | Q | 2026-11-21 |
+| Content Manager services | `8` | `CleanupContentMetaDatabase` | — | Q | 2026-11-21 |
+| Content Manager services | `9` | `ActivateContentStorage` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `10` | `InactivateContentStorage` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `11` | `ActivateContentMetaDatabase` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `12` | `InactivateContentMetaDatabase` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `13` | `InvalidateRightsIdCache` | 9.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `0` | `GeneratePlaceHolderId` | — | Q | 2026-11-21 |
+| Content Manager services | `1` | `CreatePlaceHolder` | — | Q | 2026-11-21 |
+| Content Manager services | `2` | `DeletePlaceHolder` | — | Q | 2026-11-21 |
+| Content Manager services | `3` | `HasPlaceHolder` | — | Q | 2026-11-21 |
+| Content Manager services | `4` | `WritePlaceHolder` | — | Q | 2026-11-21 |
+| Content Manager services | `5` | `Register` | — | Q | 2026-11-21 |
+| Content Manager services | `6` | `Delete` | — | Q | 2026-11-21 |
+| Content Manager services | `7` | `Has` | — | Q | 2026-11-21 |
+| Content Manager services | `8` | `GetPath` | — | Q | 2026-11-21 |
+| Content Manager services | `9` | `GetPlaceHolderPath` | — | Q | 2026-11-21 |
+| Content Manager services | `10` | `CleanupAllPlaceHolder` | — | Q | 2026-11-21 |
+| Content Manager services | `11` | `ListPlaceHolder` | — | Q | 2026-11-21 |
+| Content Manager services | `12` | `GetContentCount` | — | Q | 2026-11-21 |
+| Content Manager services | `13` | `ListContentId` | — | Q | 2026-11-21 |
+| Content Manager services | `14` | `GetSizeFromContentId` | — | Q | 2026-11-21 |
+| Content Manager services | `15` | `DisableForcibly` | — | Q | 2026-11-21 |
+| Content Manager services | `16` | `RevertToPlaceHolder` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `17` | `SetPlaceHolderSize` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `18` | `ReadContentIdFile` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `19` | `GetRightsIdFromPlaceHolderId` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `20` | `GetRightsIdFromContentId` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `21` | `WriteContentForDebug` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `22` | `GetFreeSpaceSize` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `23` | `GetTotalSpaceSize` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `24` | `FlushPlaceHolder` | 3.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `25` | `GetSizeFromPlaceHolderId` | 4.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `26` | `RepairInvalidFileAttribute` | 4.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `27` | `GetRightsIdFromPlaceHolderIdWithCache` | 8.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `0` | `Set` | — | Q | 2026-11-21 |
+| Content Manager services | `1` | `Get` | — | Q | 2026-11-21 |
+| Content Manager services | `2` | `Remove` | — | Q | 2026-11-21 |
+| Content Manager services | `3` | `GetContentIdByType` | — | Q | 2026-11-21 |
+| Content Manager services | `4` | `ListContentInfo` | — | Q | 2026-11-21 |
+| Content Manager services | `5` | `List` | — | Q | 2026-11-21 |
+| Content Manager services | `6` | `GetLatestContentMetaKey` | — | Q | 2026-11-21 |
+| Content Manager services | `7` | `ListApplication` | — | Q | 2026-11-21 |
+| Content Manager services | `8` | `Has` | — | Q | 2026-11-21 |
+| Content Manager services | `9` | `HasAll` | — | Q | 2026-11-21 |
+| Content Manager services | `10` | `GetSize` | — | Q | 2026-11-21 |
+| Content Manager services | `11` | `GetRequiredSystemVersion` | — | Q | 2026-11-21 |
+| Content Manager services | `12` | `GetPatchId` | — | Q | 2026-11-21 |
+| Content Manager services | `13` | `DisableForcibly` | — | Q | 2026-11-21 |
+| Content Manager services | `14` | `LookupOrphanContent` | — | Q | 2026-11-21 |
+| Content Manager services | `15` | `Commit` | — | Q | 2026-11-21 |
+| Content Manager services | `16` | `HasContent` | — | Q | 2026-11-21 |
+| Content Manager services | `17` | `ListContentMetaInfo` | — | Q | 2026-11-21 |
+| Content Manager services | `18` | `GetAttributes` | — | Q | 2026-11-21 |
+| Content Manager services | `19` | `GetRequiredApplicationVersion` | 2.0.0+ | Q | 2026-11-21 |
+| Content Manager services | `20` | `GetContentIdByTypeAndIdOffset` | 5.0.0+ | Q | 2026-11-21 |
+
+### NFC services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/NFC_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NFC%20services.md)
+
+**161 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| nfc:am | `0` | `CreateAmInterface` | — | Q | 2026-11-21 |
+| nfc:am | `0` | `Initialize` | — | Q | 2026-11-21 |
+| nfc:am | `1` | `Finalize` | — | Q | 2026-11-21 |
+| nfc:am | `2` | `NotifyForegroundApplet` | — | Q | 2026-11-21 |
+| nfc:mf:u | `0` | `CreateUserInterface` | — | Q | 2026-11-21 |
+| nfc:mf:u | `0` | `Initialize` | — | Q | 2026-11-21 |
+| nfc:mf:u | `1` | `Finalize` | — | Q | 2026-11-21 |
+| nfc:mf:u | `2` | `ListDevices` | — | Q | 2026-11-21 |
+| nfc:mf:u | `3` | `StartDetection` | — | Q | 2026-11-21 |
+| nfc:mf:u | `4` | `StopDetection` | — | Q | 2026-11-21 |
+| nfc:mf:u | `5` | `Read` | — | Q | 2026-11-21 |
+| nfc:mf:u | `6` | `Write` | — | Q | 2026-11-21 |
+| nfc:mf:u | `7` | `GetTagInfo` | — | Q | 2026-11-21 |
+| nfc:mf:u | `8` | `GetActivateEventHandle` | — | Q | 2026-11-21 |
+| nfc:mf:u | `9` | `GetDeactivateEventHandle` | — | Q | 2026-11-21 |
+| nfc:mf:u | `10` | `GetState` | — | Q | 2026-11-21 |
+| nfc:mf:u | `11` | `GetDeviceState` | — | Q | 2026-11-21 |
+| nfc:mf:u | `12` | `GetNpadId` | — | Q | 2026-11-21 |
+| nfc:mf:u | `13` | `GetAvailabilityChangeEventHandle` | 3.0.0+ | Q | 2026-11-21 |
+| nfc:user | `0` | `CreateUserInterface` | — | Q | 2026-11-21 |
+| nfc:user | `0` | `InitializeOld` | — | Q | 2026-11-21 |
+| nfc:user | `1` | `FinalizeOld` | — | Q | 2026-11-21 |
+| nfc:user | `2` | `GetStateOld` | — | Q | 2026-11-21 |
+| nfc:user | `3` | `IsNfcEnabledOld` | — | Q | 2026-11-21 |
+| nfc:user | `400` | `Initialize` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `401` | `Finalize` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `402` | `GetState` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `403` | `IsNfcEnabled` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `404` | `ListDevices` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `405` | `GetDeviceState` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `406` | `GetNpadId` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `407` | `AttachAvailabilityChangeEvent` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `408` | `StartDetection` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `409` | `StopDetection` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `410` | `GetTagInfo` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `411` | `AttachActivateEvent` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `412` | `AttachDeactivateEvent` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `1000` | `ReadMifare` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `1001` | `WriteMifare` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `1300` | `SendCommandByPassThrough` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `1301` | `KeepPassThroughSession` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:user | `1302` | `ReleasePassThroughSession` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `0` | `CreateSystemInterface` | — | Q | 2026-11-21 |
+| nfc:sys | `0` | `Initialize` | — | Q | 2026-11-21 |
+| nfc:sys | `1` | `Finalize` | — | Q | 2026-11-21 |
+| nfc:sys | `2` | `GetStateOld` | — | Q | 2026-11-21 |
+| nfc:sys | `3` | `IsNfcEnabledOld` | — | Q | 2026-11-21 |
+| nfc:sys | `100` | `SetNfcEnabledOld` | — | Q | 2026-11-21 |
+| nfc:sys | `400` | `InitializeSystem` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `401` | `FinalizeSystem` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `402` | `GetState` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `403` | `IsNfcEnabled` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `404` | `ListDevices` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `405` | `GetDeviceState` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `406` | `GetNpadId` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `407` | `AttachAvailabilityChangeEvent` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `408` | `StartDetection` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `409` | `StopDetection` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `410` | `GetTagInfo` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `411` | `AttachActivateEvent` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `412` | `AttachDeactivateEvent` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `500` | `SetNfcEnabled` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `510` | `OutputTestWave` | 7.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `1000` | `ReadMifare` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `1001` | `WriteMifare` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `1300` | `SendCommandByPassThrough` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `1301` | `KeepPassThroughSession` | 4.0.0+ | Q | 2026-11-21 |
+| nfc:sys | `1302` | `ReleasePassThroughSession` | 4.0.0+ | Q | 2026-11-21 |
+| nfp:user | `0` | `CreateUserInterface` | — | Q | 2026-11-21 |
+| nfp:user | `0` | `Initialize` | — | Q | 2026-11-21 |
+| nfp:user | `1` | `Finalize` | — | Q | 2026-11-21 |
+| nfp:user | `2` | `ListDevices` | — | Q | 2026-11-21 |
+| nfp:user | `3` | `StartDetection` | — | Q | 2026-11-21 |
+| nfp:user | `4` | `StopDetection` | — | Q | 2026-11-21 |
+| nfp:user | `5` | `Mount` | — | Q | 2026-11-21 |
+| nfp:user | `6` | `Unmount` | — | Q | 2026-11-21 |
+| nfp:user | `7` | `OpenApplicationArea` | — | Q | 2026-11-21 |
+| nfp:user | `8` | `GetApplicationArea` | — | Q | 2026-11-21 |
+| nfp:user | `9` | `SetApplicationArea` | — | Q | 2026-11-21 |
+| nfp:user | `10` | `Flush` | — | Q | 2026-11-21 |
+| nfp:user | `11` | `Restore` | — | Q | 2026-11-21 |
+| nfp:user | `12` | `CreateApplicationArea` | — | Q | 2026-11-21 |
+| nfp:user | `13` | `GetTagInfo` | — | Q | 2026-11-21 |
+| nfp:user | `14` | `GetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:user | `15` | `GetCommonInfo` | — | Q | 2026-11-21 |
+| nfp:user | `16` | `GetModelInfo` | — | Q | 2026-11-21 |
+| nfp:user | `17` | `AttachActivateEvent` | — | Q | 2026-11-21 |
+| nfp:user | `18` | `AttachDeactivateEvent` | — | Q | 2026-11-21 |
+| nfp:user | `19` | `GetState` | — | Q | 2026-11-21 |
+| nfp:user | `20` | `GetDeviceState` | — | Q | 2026-11-21 |
+| nfp:user | `21` | `GetNpadId` | — | Q | 2026-11-21 |
+| nfp:user | `22` | `GetApplicationArea2` | — | Q | 2026-11-21 |
+| nfp:user | `23` | `AttachAvailabilityChangeEvent` | 3.0.0+ | Q | 2026-11-21 |
+| nfp:user | `24` | `RecreateApplicationArea` | 3.0.0+ | Q | 2026-11-21 |
+| nfp:dbg | `0` | `CreateDebugInterface` | — | Q | 2026-11-21 |
+| nfp:dbg | `0` | `InitializeDebug` | — | Q | 2026-11-21 |
+| nfp:dbg | `1` | `FinalizeDebug` | — | Q | 2026-11-21 |
+| nfp:dbg | `2` | `ListDevices` | — | Q | 2026-11-21 |
+| nfp:dbg | `3` | `StartDetection` | — | Q | 2026-11-21 |
+| nfp:dbg | `4` | `StopDetection` | — | Q | 2026-11-21 |
+| nfp:dbg | `5` | `Mount` | — | Q | 2026-11-21 |
+| nfp:dbg | `6` | `Unmount` | — | Q | 2026-11-21 |
+| nfp:dbg | `7` | `OpenApplicationArea` | — | Q | 2026-11-21 |
+| nfp:dbg | `8` | `GetApplicationArea` | — | Q | 2026-11-21 |
+| nfp:dbg | `9` | `SetApplicationArea` | — | Q | 2026-11-21 |
+| nfp:dbg | `10` | `Flush` | — | Q | 2026-11-21 |
+| nfp:dbg | `11` | `Restore` | — | Q | 2026-11-21 |
+| nfp:dbg | `12` | `CreateApplicationArea` | — | Q | 2026-11-21 |
+| nfp:dbg | `13` | `GetTagInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `14` | `GetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `15` | `GetCommonInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `16` | `GetModelInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `17` | `AttachActivateEvent` | — | Q | 2026-11-21 |
+| nfp:dbg | `18` | `AttachDeactivateEvent` | — | Q | 2026-11-21 |
+| nfp:dbg | `19` | `GetState` | — | Q | 2026-11-21 |
+| nfp:dbg | `20` | `GetDeviceState` | — | Q | 2026-11-21 |
+| nfp:dbg | `21` | `GetNpadId` | — | Q | 2026-11-21 |
+| nfp:dbg | `22` | `GetApplicationArea2` | — | Q | 2026-11-21 |
+| nfp:dbg | `23` | `AttachAvailabilityChangeEvent` | 3.0.0+ | Q | 2026-11-21 |
+| nfp:dbg | `24` | `RecreateApplicationArea` | 3.0.0+ | Q | 2026-11-21 |
+| nfp:dbg | `100` | `Format` | — | Q | 2026-11-21 |
+| nfp:dbg | `101` | `GetAdminInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `102` | `GetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `103` | `SetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `104` | `DeleteRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `105` | `DeleteApplicationArea` | — | Q | 2026-11-21 |
+| nfp:dbg | `106` | `ExistsApplicationArea` | — | Q | 2026-11-21 |
+| nfp:dbg | `200` | `GetAll` | — | Q | 2026-11-21 |
+| nfp:dbg | `201` | `SetAll` | — | Q | 2026-11-21 |
+| nfp:dbg | `202` | `FlushDebug` | — | Q | 2026-11-21 |
+| nfp:dbg | `203` | `BreakTag` | — | Q | 2026-11-21 |
+| nfp:dbg | `204` | `ReadBackupData` | — | Q | 2026-11-21 |
+| nfp:dbg | `205` | `WriteBackupData` | — | Q | 2026-11-21 |
+| nfp:dbg | `206` | `WriteNtf` | — | Q | 2026-11-21 |
+| nfp:sys | `0` | `CreateSystemInterface` | — | Q | 2026-11-21 |
+| nfp:sys | `0` | `InitializeSystem` | — | Q | 2026-11-21 |
+| nfp:sys | `1` | `FinalizeSystem` | — | Q | 2026-11-21 |
+| nfp:sys | `2` | `ListDevices` | — | Q | 2026-11-21 |
+| nfp:sys | `3` | `StartDetection` | — | Q | 2026-11-21 |
+| nfp:sys | `4` | `StopDetection` | — | Q | 2026-11-21 |
+| nfp:sys | `5` | `Mount` | — | Q | 2026-11-21 |
+| nfp:sys | `6` | `Unmount` | — | Q | 2026-11-21 |
+| nfp:sys | `10` | `Flush` | — | Q | 2026-11-21 |
+| nfp:sys | `11` | `Restore` | — | Q | 2026-11-21 |
+| nfp:sys | `13` | `GetTagInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `14` | `GetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `15` | `GetCommonInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `16` | `GetModelInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `17` | `AttachActivateEvent` | — | Q | 2026-11-21 |
+| nfp:sys | `18` | `AttachDeactivateEvent` | — | Q | 2026-11-21 |
+| nfp:sys | `19` | `GetState` | — | Q | 2026-11-21 |
+| nfp:sys | `20` | `GetDeviceState` | — | Q | 2026-11-21 |
+| nfp:sys | `21` | `GetNpadId` | — | Q | 2026-11-21 |
+| nfp:sys | `23` | `AttachAvailabilityChangeEvent` | 3.0.0+ | Q | 2026-11-21 |
+| nfp:sys | `100` | `Format` | — | Q | 2026-11-21 |
+| nfp:sys | `101` | `GetAdminInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `102` | `GetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `103` | `SetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `104` | `DeleteRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `105` | `DeleteApplicationArea` | — | Q | 2026-11-21 |
+| nfp:sys | `106` | `ExistsApplicationArea` | — | Q | 2026-11-21 |
+
+### Network Interface services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Network_Interface_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Network%20Interface%20services.md)
+
+**77 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| nifm:a, nifm:s, nifm:u | `4` | `CreateGeneralServiceOld ([1.0.0-2.3.0] CreateGeneralService)` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `5` | `CreateGeneralService` | 3.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `1` | `GetClientId` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `2` | `CreateScanRequest` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `4` | `CreateRequest` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `5` | `GetCurrentNetworkProfile` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `6` | `EnumerateNetworkInterfaces` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `7` | `EnumerateNetworkProfiles` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `8` | `GetNetworkProfile` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `9` | `SetNetworkProfile` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `10` | `RemoveNetworkProfile` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `11` | `GetScanDataOld ([1.0.0-3.0.2] GetScanData)` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `12` | `GetCurrentIpAddress` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `13` | `GetCurrentAccessPointOld ([1.0.0-3.0.2] GetCurrentAccessPoint)` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `14` | `CreateTemporaryNetworkProfile` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `15` | `GetCurrentIpConfigInfo` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `16` | `SetWirelessCommunicationEnabled` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `17` | `IsWirelessCommunicationEnabled` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `18` | `GetInternetConnectionStatus` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `19` | `SetEthernetCommunicationEnabled` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `20` | `IsEthernetCommunicationEnabled` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `21` | `IsAnyInternetRequestAccepted` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `22` | `IsAnyForegroundRequestAccepted` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `23` | `PutToSleep` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `24` | `WakeUp` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `25` | `GetSsidListVersion` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `26` | `SetExclusiveClient` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `27` | `GetDefaultIpSetting` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `28` | `SetDefaultIpSetting` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `29` | `SetWirelessCommunicationEnabledForTest` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `30` | `SetEthernetCommunicationEnabledForTest` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `31` | `GetTelemetorySystemEventReadableHandle` | 2.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `32` | `GetTelemetryInfo` | 2.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `33` | `ConfirmSystemAvailability` | 2.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `34` | `SetBackgroundRequestEnabled` | 4.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `35` | `GetScanData` | 4.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `36` | `GetCurrentAccessPoint` | 4.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `37` | `Shutdown` | 4.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `38` | `GetAllowedChannels` | 6.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `39` | `NotifyApplicationSuspended` | 8.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `40` | `SetAcceptableNetworkTypeFlag` | 8.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `41` | `GetAcceptableNetworkTypeFlag` | 8.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `42` | `NotifyConnectionStateChanged` | 8.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `43` | `SetWowlDelayedWakeTime` | 9.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `0` | `Submit` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `1` | `IsProcessing` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `2` | `GetResult` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `3` | `GetSystemEventReadableHandle` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `4` | `SetChannels` | 6.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `0` | `GetRequestState` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `1` | `GetResult` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `2` | `GetSystemEventReadableHandles` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `3` | `Cancel` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `4` | `Submit` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `5` | `SetRequirement` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `6` | `SetRequirementPreset` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `8` | `SetPriority` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `9` | `SetNetworkProfileId` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `10` | `SetRejectable` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `11` | `SetConnectionConfirmationOption` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `12` | `SetPersistent` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `13` | `SetInstant` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `14` | `SetSustainable` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `15` | `SetRawPriority` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `16` | `SetGreedy` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `17` | `SetSharable` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `18` | `SetRequirementByRevision` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `19` | `GetRequirement` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `20` | `GetRevision` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `21` | `GetAppletInfo` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `22` | `GetAdditionalInfo` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `23` | `SetKeptInSleep` | 3.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `24` | `RegisterSocketDescriptor` | 3.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `25` | `UnregisterSocketDescriptor` | 3.0.0+ | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `0` | `Update` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `1` | `PersistOld ([1.0.0-2.3.0] Persist)` | — | Q | 2026-11-21 |
+| nifm:a, nifm:s, nifm:u | `2` | `Persist` | 3.0.0+ | Q | 2026-11-21 |
+
+### NIM services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/NIM_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NIM%20services.md)
+
+**100 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| nim | `0` | `CreateSystemUpdateTask` | — | Q | 2026-11-21 |
+| nim | `1` | `DestroySystemUpdateTask` | — | Q | 2026-11-21 |
+| nim | `2` | `ListSystemUpdateTask` | — | Q | 2026-11-21 |
+| nim | `3` | `RequestSystemUpdateTaskRun` | — | Q | 2026-11-21 |
+| nim | `4` | `GetSystemUpdateTaskInfo` | — | Q | 2026-11-21 |
+| nim | `5` | `CommitSystemUpdateTask` | — | Q | 2026-11-21 |
+| nim | `6` | `CreateNetworkInstallTask` | — | Q | 2026-11-21 |
+| nim | `7` | `DestroyNetworkInstallTask` | — | Q | 2026-11-21 |
+| nim | `8` | `ListNetworkInstallTask` | — | Q | 2026-11-21 |
+| nim | `9` | `RequestNetworkInstallTaskRun` | — | Q | 2026-11-21 |
+| nim | `10` | `GetNetworkInstallTaskInfo` | — | Q | 2026-11-21 |
+| nim | `11` | `CommitNetworkInstallTask` | — | Q | 2026-11-21 |
+| nim | `12` | `RequestLatestSystemUpdateMeta` | — | Q | 2026-11-21 |
+| nim | `14` | `ListApplicationNetworkInstallTask` | — | Q | 2026-11-21 |
+| nim | `15` | `ListNetworkInstallTaskContentMeta` | — | Q | 2026-11-21 |
+| nim | `16` | `RequestLatestVersion` | — | Q | 2026-11-21 |
+| nim | `17` | `SetNetworkInstallTaskAttribute` | — | Q | 2026-11-21 |
+| nim | `18` | `AddNetworkInstallTaskContentMeta` | — | Q | 2026-11-21 |
+| nim | `19` | `GetDownloadedSystemDataPath` | — | Q | 2026-11-21 |
+| nim | `20` | `CalculateNetworkInstallTaskRequiredSize` | — | Q | 2026-11-21 |
+| nim | `21` | `IsExFatDriverIncluded` | — | Q | 2026-11-21 |
+| nim | `22` | `GetBackgroundDownloadStressTaskInfo` | — | Q | 2026-11-21 |
+| nim | `23` | `RequestDeviceAuthenticationToken` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `24` | `RequestGameCardRegistrationStatus` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `25` | `RequestRegisterGameCard` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `26` | `RequestRegisterNotificationToken` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `27` | `RequestDownloadTaskList` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `28` | `RequestApplicationControl` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `29` | `RequestLatestApplicationControl` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `30` | `RequestVersionList` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `31` | `CreateApplyDeltaTask` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `32` | `DestroyApplyDeltaTask` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `33` | `ListApplicationApplyDeltaTask` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `34` | `RequestApplyDeltaTaskRun` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `35` | `GetApplyDeltaTaskInfo` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `36` | `ListApplyDeltaTask` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `37` | `CommitApplyDeltaTask` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `38` | `CalculateApplyDeltaTaskRequiredSize` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `39` | `PrepareShutdown` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `40` | `ListApplyDeltaTask2` | 2.0.0+ | Q | 2026-11-21 |
+| nim | `41` | `ClearNotEnoughSpaceStateOfApplyDeltaTask` | 2.0.0+ | Q | 2026-11-21 |
+| nim:shp | `0` | `RequestDeviceAuthenticationToken` | — | Q | 2026-11-21 |
+| nim:shp | `1` | `RequestCachedDeviceAuthenticationToken` | 3.0.0+ | Q | 2026-11-21 |
+| nim:shp | `100` | `RequestRegisterDeviceAccount` | — | Q | 2026-11-21 |
+| nim:shp | `101` | `RequestUnregisterDeviceAccount` | — | Q | 2026-11-21 |
+| nim:shp | `102` | `RequestDeviceAccountStatus` | — | Q | 2026-11-21 |
+| nim:shp | `103` | `GetDeviceAccountInfo` | — | Q | 2026-11-21 |
+| nim:shp | `104` | `RequestDeviceRegistrationInfo` | — | Q | 2026-11-21 |
+| nim:shp | `105` | `RequestTransferDeviceAccount` | — | Q | 2026-11-21 |
+| nim:shp | `106` | `RequestSyncRegistration` | 3.0.0+ | Q | 2026-11-21 |
+| nim:shp | `107` | `IsOwnDeviceId` | 3.0.0+ | Q | 2026-11-21 |
+| nim:shp | `200` | `RequestRegisterNotificationToken` | — | Q | 2026-11-21 |
+| nim:shp | `300` | `RequestUnlinkDevice` | — | Q | 2026-11-21 |
+| nim:shp | `301` | `RequestUnlinkDeviceIntegrated` | — | Q | 2026-11-21 |
+| nim:shp | `302` | `RequestLinkDevice` | — | Q | 2026-11-21 |
+| nim:shp | `303` | `HasDeviceLink` | — | Q | 2026-11-21 |
+| nim:shp | `304` | `RequestUnlinkDeviceAll` | 4.0.0+ | Q | 2026-11-21 |
+| nim:shp | `305` | `RequestCreateVirtualAccount` | 4.0.0+ | Q | 2026-11-21 |
+| nim:shp | `306` | `RequestDeviceLinkStatus` | 4.0.0+ | Q | 2026-11-21 |
+| nim:shp | `400` | `GetAccountByVirtualAccount` | — | Q | 2026-11-21 |
+| nim:shp | `401` | `GetVirtualAccount` | 6.0.0+ | Q | 2026-11-21 |
+| nim:shp | `500` | `RequestSyncTicketLegacy ([1.0.0-8.1.0] RequestSyncTicket)` | — | Q | 2026-11-21 |
+| nim:shp | `501` | `RequestDownloadTicket` | — | Q | 2026-11-21 |
+| nim:shp | `502` | `RequestDownloadTicketForPrepurchasedContents` | 4.0.0+ | Q | 2026-11-21 |
+| nim:shp | `503` | `RequestSyncTicket` | 9.0.0+ | Q | 2026-11-21 |
+| nim:shp | `504` | `RequestDownloadTicketForPrepurchasedContents2` | 9.0.0+ | Q | 2026-11-21 |
+| nim:eca | `0` | `CreateServerInterface` | — | Q | 2026-11-21 |
+| nim:eca | `1` | `RefreshDebugAvailability` | 6.0.0+ | Q | 2026-11-21 |
+| nim:eca | `2` | `ClearDebugResponse` | 6.0.0+ | Q | 2026-11-21 |
+| nim:eca | `3` | `RegisterDebugResponse` | 6.0.0+ | Q | 2026-11-21 |
+| nim:eca | `0` | `CreateAccessorInterface` | — | Q | 2026-11-21 |
+| nim:eca | `0` | `CreateAsyncInterface` | — | Q | 2026-11-21 |
+| nim:eca | `0` | `Cancel` | — | Q | 2026-11-21 |
+| nim:eca | `1` | `GetSize` | — | Q | 2026-11-21 |
+| nim:eca | `2` | `Read` | — | Q | 2026-11-21 |
+| nim:eca | `3` | `GetErrorCode` | — | Q | 2026-11-21 |
+| nim:eca | `4` | `Request` | — | Q | 2026-11-21 |
+| nim:eca | `5` | `Prepare` | — | Q | 2026-11-21 |
+| nim:ecas | `0` | `RegisterSpecialClient` | — | Q | 2026-11-21 |
+| nim:ecas | `1` | `UnregisterSpecialClient` | — | Q | 2026-11-21 |
+| ntc | `0` | `OpenEnsureNetworkClockAvailabilityService` | — | Q | 2026-11-21 |
+| ntc | `100` | `SuspendAutonomicTimeCorrection` | 3.0.0+ | Q | 2026-11-21 |
+| ntc | `101` | `ResumeAutonomicTimeCorrection` | 3.0.0+ | Q | 2026-11-21 |
+| ntc | `0` | `StartTask` | — | Q | 2026-11-21 |
+| ntc | `1` | `GetFinishNotificationEvent` | — | Q | 2026-11-21 |
+| ntc | `2` | `GetResult` | — | Q | 2026-11-21 |
+| ntc | `3` | `Cancel` | — | Q | 2026-11-21 |
+| ntc | `4` | `IsProcessing` | — | Q | 2026-11-21 |
+| ntc | `5` | `GetServerTime` | 3.0.0+ | Q | 2026-11-21 |
+| IAsyncValue | `0` | `GetSize` | — | Q | 2026-11-21 |
+| IAsyncValue | `1` | `Get` | — | Q | 2026-11-21 |
+| IAsyncValue | `2` | `Cancel` | — | Q | 2026-11-21 |
+| IAsyncValue | `3` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
+| IAsyncResult | `0` | `Get` | — | Q | 2026-11-21 |
+| IAsyncResult | `1` | `Cancel` | — | Q | 2026-11-21 |
+| IAsyncResult | `2` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
+| IAsyncProgressResult | `0` | `Get` | — | Q | 2026-11-21 |
+| IAsyncProgressResult | `1` | `Cancel` | — | Q | 2026-11-21 |
+| IAsyncProgressResult | `2` | `GetProgress` | — | Q | 2026-11-21 |
+| IAsyncProgressResult | `3` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
+
+### NPNS services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/NPNS_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NPNS%20services.md)
+
+**58 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| npns:u | `1` | `ListenAll` | — | Q | 2026-11-21 |
+| npns:u | `2` | `ListenTo` | — | Q | 2026-11-21 |
+| npns:u | `3` | `Receive` | — | Q | 2026-11-21 |
+| npns:u | `4` | `ReceiveRaw` | — | Q | 2026-11-21 |
+| npns:u | `5` | `GetReceiveEvent` | — | Q | 2026-11-21 |
+| npns:u | `7` | `GetStateChangeEvent` | — | Q | 2026-11-21 |
+| npns:u | `21` | `CreateToken` | — | Q | 2026-11-21 |
+| npns:u | `23` | `DestroyToken` | — | Q | 2026-11-21 |
+| npns:u | `25` | `QueryIsTokenValid` | — | Q | 2026-11-21 |
+| npns:u | `26` | `ListenToMyApplicationId` | 5.0.0+ | Q | 2026-11-21 |
+| npns:u | `101` | `Suspend` | — | Q | 2026-11-21 |
+| npns:u | `102` | `Resume` | — | Q | 2026-11-21 |
+| npns:u | `103` | `GetState` | — | Q | 2026-11-21 |
+| npns:u | `104` | `GetStatistics` | 3.0.0+ | Q | 2026-11-21 |
+| npns:u | `111` | `GetJid` | — | Q | 2026-11-21 |
+| npns:u | `120` | `CreateNotificationReceiver` | 7.0.0+ | Q | 2026-11-21 |
+| npns:u | `151` | `GetStateWithHandover` | 8.0.0+ | Q | 2026-11-21 |
+| npns:u | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
+| npns:u | `153` | `GetDropEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
+| npns:u | `1` | `ListenTo` | — | Q | 2026-11-21 |
+| npns:u | `2` | `ListenToMyApplicationId` | — | Q | 2026-11-21 |
+| npns:u | `4` | `GetReceiveEvent` | — | Q | 2026-11-21 |
+| npns:s | `1` | `ListenAll` | — | Q | 2026-11-21 |
+| npns:s | `2` | `ListenTo` | — | Q | 2026-11-21 |
+| npns:s | `3` | `Receive` | — | Q | 2026-11-21 |
+| npns:s | `4` | `ReceiveRaw` | — | Q | 2026-11-21 |
+| npns:s | `5` | `GetReceiveEvent` | — | Q | 2026-11-21 |
+| npns:s | `6` | `ListenUndelivered` | — | Q | 2026-11-21 |
+| npns:s | `7` | `GetStateChangeEvent` | — | Q | 2026-11-21 |
+| npns:s | `11` | `SubscribeTopic` | — | Q | 2026-11-21 |
+| npns:s | `12` | `UnsubscribeTopic` | — | Q | 2026-11-21 |
+| npns:s | `13` | `QueryIsTopicExist` | — | Q | 2026-11-21 |
+| npns:s | `21` | `CreateToken` | — | Q | 2026-11-21 |
+| npns:s | `22` | `CreateTokenWithApplicationId` | — | Q | 2026-11-21 |
+| npns:s | `23` | `DestroyToken` | — | Q | 2026-11-21 |
+| npns:s | `24` | `DestroyTokenWithApplicationId` | — | Q | 2026-11-21 |
+| npns:s | `25` | `QueryIsTokenValid` | — | Q | 2026-11-21 |
+| npns:s | `26` | `ListenToMyApplicationId` | 5.0.0+ | Q | 2026-11-21 |
+| npns:s | `31` | `UploadTokenToBaaS` | — | Q | 2026-11-21 |
+| npns:s | `32` | `DestroyTokenForBaaS` | — | Q | 2026-11-21 |
+| npns:s | `33` | `CreateTokenForBaas` | 7.0.0+ | Q | 2026-11-21 |
+| npns:s | `34` | `SetBaasDeviceAccountIdList` | 7.0.0+ | Q | 2026-11-21 |
+| npns:s | `101` | `Suspend` | — | Q | 2026-11-21 |
+| npns:s | `102` | `Resume` | — | Q | 2026-11-21 |
+| npns:s | `103` | `GetState` | — | Q | 2026-11-21 |
+| npns:s | `104` | `GetStatistics` | 3.0.0+ | Q | 2026-11-21 |
+| npns:s | `105` | `GetPlayReportRequestEvent` | 3.0.0+ | Q | 2026-11-21 |
+| npns:s | `111` | `GetJid` | — | Q | 2026-11-21 |
+| npns:s | `112` | `CreateJid` | — | Q | 2026-11-21 |
+| npns:s | `113` | `DestroyJid` | — | Q | 2026-11-21 |
+| npns:s | `114` | `AttachJid` | — | Q | 2026-11-21 |
+| npns:s | `115` | `DetachJid` | — | Q | 2026-11-21 |
+| npns:s | `120` | `CreateNotificationReceiver` | 7.0.0+ | Q | 2026-11-21 |
+| npns:s | `151` | `GetStateWithHandover` | 8.0.0+ | Q | 2026-11-21 |
+| npns:s | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
+| npns:s | `153` | `GetDropEventWithHandover` | 8.0.0+ | Q | 2026-11-21 |
+| npns:s | `201` | `RequestChangeStateForceTimed` | 3.0.0+ | Q | 2026-11-21 |
+| npns:s | `202` | `RequestChangeStateForceAsync` | 3.0.0+ | Q | 2026-11-21 |
+
+### NV services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/NV_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NV%20services.md)
+
+**42 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `0` | `Open` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `1` | `Ioctl` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `2` | `Close` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `3` | `Initialize` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `4` | `QueryEvent` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `5` | `MapSharedMem` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `6` | `GetStatus` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `7` | `SetAruid` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `8` | `SetAruidByPID` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `9` | `DumpGraphicsMemoryInfo` | — | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `10` | `InitializeDevtools` | 3.0.0+ | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `11` | `Ioctl2` | 3.0.0+ | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `12` | `Ioctl3` | 3.0.0+ | Q | 2026-11-21 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `13` | `FinishInitialize` | 3.0.0+ | Q | 2026-11-21 |
+| nvmemp | `0` | `Open` | — | Q | 2026-11-21 |
+| nvmemp | `1` | `GetPid` | — | Q | 2026-11-21 |
+| nvdrvdbg | `0` | `OpenLog` | — | Q | 2026-11-21 |
+| nvdrvdbg | `1` | `CloseLog` | — | Q | 2026-11-21 |
+| nvdrvdbg | `2` | `ReadLog` | — | Q | 2026-11-21 |
+| Errors | `0` | `Success` | — | Q | 2026-11-21 |
+| Errors | `1` | `NotImplemented` | — | Q | 2026-11-21 |
+| Errors | `2` | `NotSupported` | — | Q | 2026-11-21 |
+| Errors | `3` | `NotInitialized` | — | Q | 2026-11-21 |
+| Errors | `4` | `BadParameter` | — | Q | 2026-11-21 |
+| Errors | `5` | `Timeout` | — | Q | 2026-11-21 |
+| Errors | `6` | `InsufficientMemory` | — | Q | 2026-11-21 |
+| Errors | `7` | `ReadOnlyAttribute` | — | Q | 2026-11-21 |
+| Errors | `8` | `InvalidState` | — | Q | 2026-11-21 |
+| Errors | `9` | `InvalidAddress` | — | Q | 2026-11-21 |
+| Errors | `0xA` | `InvalidSize` | — | Q | 2026-11-21 |
+| Errors | `0xB` | `BadValue` | — | Q | 2026-11-21 |
+| Errors | `0xD` | `AlreadyAllocated` | — | Q | 2026-11-21 |
+| Errors | `0xE` | `Busy` | — | Q | 2026-11-21 |
+| Errors | `0xF` | `ResourceError` | — | Q | 2026-11-21 |
+| Errors | `0x10` | `CountMismatch` | — | Q | 2026-11-21 |
+| Errors | `0x1000` | `SharedMemoryTooSmall` | — | Q | 2026-11-21 |
+| Errors | `0x30003` | `FileOperationFailed` | — | Q | 2026-11-21 |
+| Errors | `0x30004` | `DirOperationFailed` | — | Q | 2026-11-21 |
+| Errors | `0x3000F` | `IoctlFailed` | — | Q | 2026-11-21 |
+| Errors | `0x30010` | `AccessDenied` | — | Q | 2026-11-21 |
+| Errors | `0x30013` | `FileNotFound` | — | Q | 2026-11-21 |
+| Errors | `0xA000E` | `ModuleNotPresent` | — | Q | 2026-11-21 |
+
+### PCIe services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/PCIe_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/PCIe%20services.md)
+
+**23 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| pcie | `0` | `RegisterClassDriver` | — | Q | 2026-11-21 |
+| pcie | `1` | `QueryFunctionsUnregistered` | — | Q | 2026-11-21 |
+| pcie | `0` | `QueryFunctions` | — | Q | 2026-11-21 |
+| pcie | `1` | `AcquireFunction` | — | Q | 2026-11-21 |
+| pcie | `2` | `ReleaseFunction` | — | Q | 2026-11-21 |
+| pcie | `3` | `GetFunctionState` | — | Q | 2026-11-21 |
+| pcie | `4` | `GetBarProfile` | — | Q | 2026-11-21 |
+| pcie | `5` | `ReadConfig` | — | Q | 2026-11-21 |
+| pcie | `6` | `WriteConfig` | — | Q | 2026-11-21 |
+| pcie | `7` | `ReadBarRegion` | — | Q | 2026-11-21 |
+| pcie | `8` | `WriteBarRegion` | — | Q | 2026-11-21 |
+| pcie | `9` | `FindCapability` | — | Q | 2026-11-21 |
+| pcie | `10` | `FindExtendedCapability` | — | Q | 2026-11-21 |
+| pcie | `11` | `MapDma` | — | Q | 2026-11-21 |
+| pcie | `12` | `UnmapDma` | — | Q | 2026-11-21 |
+| pcie | `13` | `UnmapDmaBusAddress` | — | Q | 2026-11-21 |
+| pcie | `14` | `GetDmaBusAddress` | — | Q | 2026-11-21 |
+| pcie | `15` | `GetDmaBusAddressRange` | — | Q | 2026-11-21 |
+| pcie | `16` | `SetDmaEnable` | — | Q | 2026-11-21 |
+| pcie | `17` | `AcquireIrq` | — | Q | 2026-11-21 |
+| pcie | `18` | `ReleaseIrq` | — | Q | 2026-11-21 |
+| pcie | `19` | `SetIrqEnable` | — | Q | 2026-11-21 |
+| pcie | `20` | `SetAspmEnable` | — | Q | 2026-11-21 |
+
+### Parental Control services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Parental_Control_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Parental%20Control%20services.md)
+
+**98 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| pctl:s, pctl:r, pctl:a, pctl | `0` | `CreateService` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1` | `CreateServiceWithoutInitialize` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1` | `Initialize` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1001` | `CheckFreeCommunicationPermission` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1002` | `ConfirmLaunchApplicationPermission` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1003` | `ConfirmResumeApplicationPermission` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1004` | `ConfirmSnsPostPermission` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1005` | `ConfirmSystemSettingsPermission` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1006` | `IsRestrictionTemporaryUnlocked` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1007` | `RevertRestrictionTemporaryUnlocked` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1008` | `EnterRestrictedSystemSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1009` | `LeaveRestrictedSystemSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1010` | `IsRestrictedSystemSettingsEntered` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1011` | `RevertRestrictedSystemSettingsEntered` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1012` | `GetRestrictedFeatures` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1013` | `ConfirmStereoVisionPermission` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1014` | `ConfirmPlayableApplicationVideoOld` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1015` | `ConfirmPlayableApplicationVideo` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1016` | `ConfirmShowNewsPermission` | 6.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1031` | `IsRestrictionEnabled` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1032` | `GetSafetyLevel` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1033` | `SetSafetyLevel` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1034` | `GetSafetyLevelSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1035` | `GetCurrentSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1036` | `SetCustomSafetyLevelSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1037` | `GetDefaultRatingOrganization` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1038` | `SetDefaultRatingOrganization` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1039` | `GetFreeCommunicationApplicationListCount` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1042` | `AddToFreeCommunicationApplicationList` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1043` | `DeleteSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1044` | `GetFreeCommunicationApplicationList` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1045` | `UpdateFreeCommunicationApplicationList` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1046` | `DisableFeaturesForReset` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1047` | `NotifyApplicationDownloadStarted` | 3.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1048` | `NotifyNetworkProfileCreated` | 6.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1061` | `ConfirmStereoVisionRestrictionConfigurable` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1062` | `GetStereoVisionRestriction` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1063` | `SetStereoVisionRestriction` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1064` | `ResetConfirmedStereoVisionPermission` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1065` | `IsStereoVisionPermitted` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1201` | `UnlockRestrictionTemporarily` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1202` | `UnlockSystemSettingsRestriction` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1203` | `SetPinCode` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1204` | `GenerateInquiryCode` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1205` | `CheckMasterKey` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1206` | `GetPinCodeLength` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1207` | `GetPinCodeChangedEvent` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1208` | `GetPinCode` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1403` | `IsPairingActive` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1406` | `GetSettingsLastUpdated` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1411` | `GetPairingAccountInfo` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1421` | `GetAccountNickname` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1424` | `GetAccountState` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1425` | `RequestPostEvents` | 6.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1432` | `GetSynchronizationEvent` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1451` | `StartPlayTimer` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1452` | `StopPlayTimer` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1453` | `IsPlayTimerEnabled` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1454` | `GetPlayTimerRemainingTime` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1455` | `IsRestrictedByPlayTimer` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1456` | `GetPlayTimerSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1457` | `GetPlayTimerEventToRequestSuspension` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1458` | `IsPlayTimerAlarmDisabled` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1471` | `NotifyWrongPinCodeInputManyTimes` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1472` | `CancelNetworkRequest` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1473` | `GetUnlinkedEvent` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1474` | `ClearUnlinkedEvent` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1601` | `DisableAllFeatures` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1602` | `PostEnableAllFeatures` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1603` | `IsAllFeaturesDisabled` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1901` | `DeleteFromFreeCommunicationApplicationListForDebug` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1902` | `ClearFreeCommunicationApplicationListForDebug` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1903` | `GetExemptApplicationListCountForDebug` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1904` | `GetExemptApplicationListForDebug` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1905` | `UpdateExemptApplicationListForDebug` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1906` | `AddToExemptApplicationListForDebug` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1907` | `DeleteFromExemptApplicationListForDebug` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1908` | `ClearExemptApplicationListForDebug` | 5.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1941` | `DeletePairing` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1951` | `SetPlayTimerSettingsForDebug` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1952` | `GetPlayTimerSpentTimeForTest` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `1953` | `SetPlayTimerAlarmDisabledForDebug` | 4.0.0+ | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2001` | `RequestPairingAsync` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2002` | `FinishRequestPairing` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2003` | `AuthorizePairingAsync` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2004` | `FinishAuthorizePairing` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2005` | `RetrievePairingInfoAsync` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2006` | `FinishRetrievePairingInfo` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2007` | `UnlinkPairingAsync` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2008` | `FinishUnlinkPairing` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2009` | `GetAccountMiiImageAsync` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2010` | `FinishGetAccountMiiImage` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2011` | `GetAccountMiiImageContentTypeAsync` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2012` | `FinishGetAccountMiiImageContentType` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2013` | `SynchronizeParentalControlSettingsAsync` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2014` | `FinishSynchronizeParentalControlSettings` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2015` | `FinishSynchronizeParentalControlSettingsWithLastUpdated` | — | Q | 2026-11-21 |
+| pctl:s, pctl:r, pctl:a, pctl | `2016` | `RequestUpdateExemptionListAsync` | 5.0.0+ | Q | 2026-11-21 |
+
 <!-- NS1_IPC_APPEND -->

@@ -2326,6 +2326,41 @@ if(PS5_NATIVE)
     list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)
     list(APPEND video_sources "${EDEN_MAINTAINED_MAXWELL_DMA}")
 endif()
+# Native NS1 Host1x GPU-37/38: one CDMA worker and NVDEC method owner.
+# A base-class jthread must finish before NVDEC/VIC derived state dies.
+# Keep immutable Eden inputs and select exact source/header peers for PS5.
+if(PS5_NATIVE)
+    set(EDEN_HOST1X_CDMA_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/cdma_pusher.cpp")
+    set(EDEN_HOST1X_CDMA_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/cdma_pusher.h")
+    set(EDEN_HOST1X_NVDEC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/nvdec.cpp")
+    foreach(eden_host1x_required IN ITEMS
+        "${EDEN_HOST1X_CDMA_SOURCE}"
+        "${EDEN_HOST1X_CDMA_HEADER}"
+        "${EDEN_HOST1X_NVDEC_SOURCE}")
+        if(NOT EXISTS "${eden_host1x_required}")
+            message(FATAL_ERROR "Missing maintained Host1x CDMA worker owner: ${eden_host1x_required}")
+        endif()
+    endforeach()
+    set(EDEN_HOST1X_CDMA_ABI_ROOT "${PORT_BUILD_DIR}/host1x-cdma-abi")
+    file(MAKE_DIRECTORY "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core")
+    configure_file("${EDEN_HOST1X_CDMA_HEADER}"
+        "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core/cdma_pusher.h" COPYONLY)
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_CDMA_ABI_ROOT}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_CDMA_ABI_ROOT}")
+    foreach(eden_host1x_original IN ITEMS cdma_pusher.cpp host1x/nvdec.cpp)
+        list(FIND video_sources "${eden_host1x_original}" eden_host1x_original_index)
+        if(eden_host1x_original_index EQUAL -1)
+            message(FATAL_ERROR "Original Host1x source moved: ${eden_host1x_original}")
+        endif()
+        list(REMOVE_ITEM video_sources "${eden_host1x_original}")
+    endforeach()
+    list(APPEND video_sources
+        "${EDEN_HOST1X_CDMA_SOURCE}" "${EDEN_HOST1X_NVDEC_SOURCE}")
+    message(STATUS "Host1x: quiescent CDMA worker and bounded NVDEC owner selected")
+endif()
 # Native N04: avoid invoking an already-ready Host1x callback under guard.
 # Select a complete maintained TU; never edit the pinned vendor checkout.
 set(EDEN_MAINTAINED_HOST1X_SYNCPOINT

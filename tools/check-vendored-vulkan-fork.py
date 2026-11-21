@@ -2477,12 +2477,28 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # verified FC27 vendor rewind (not the shipping renderer).
     dma_raster = 'vulkan_rasterizer.cpp'
     current_raster = (active / dma_raster).read_text()
-    # The raw owner now contains reviewed GPU-30 plus GPU-22. Keep the complete
-    # shipping blob SHA strict; the later generator-only reversals establish
+    # GPU-46 is already exact-reversed above from its three shipping owners.
+    # Reuse that SAME pinned edit table before this older GPU-22/GPU-30
+    # checkpoint; never accept a new raster hash directly here.
+    gpu46_current, gpu46_predecessor, gpu46_raster_edits = gpu46_edits[dma_raster]
+    current_raster_blob = git_blob_sha(current_raster)
+    if current_raster_blob == gpu46_current:
+        for newer, older in gpu46_raster_edits:
+            assert current_raster.count(newer) == 1, (
+                'GPU-46 direct raster checkpoint hunk drift', newer[:80])
+            current_raster = current_raster.replace(newer, older, 1)
+        assert git_blob_sha(current_raster) == gpu46_predecessor, (
+            'GPU-46 direct raster checkpoint failed to restore predecessor')
+        print('ENCORE_NS1_GPU46_DIRECT_RASTER_EXACT_REVERSE_PASS', flush=True)
+    else:
+        assert current_raster_blob == gpu46_predecessor, (
+            'Unreviewed GPU-46 direct raster checkpoint', current_raster_blob)
+    # The normalized owner contains reviewed GPU-30 plus GPU-22. Keep the
+    # complete predecessor blob strict; later generator-only reversals establish
     # byte equivalence with the frozen historic baseline.
     assert git_blob_sha(current_raster) == (
         'fdd5a73ccf795fd58100469c546b544a86a68e5b'), (
-        'Unreviewed GPU-22/GPU-30 shipping Vulkan rasterizer bytes')
+        'Unreviewed GPU-22/GPU-30 normalized Vulkan rasterizer bytes')
     generated_raster = normalized_generated[dma_raster].read_text()
     gpu22_dma_hunks = (
         ('      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),',

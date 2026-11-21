@@ -63,6 +63,7 @@ fixture = r"""
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <numeric>
 #include <optional>
 #include <ranges>

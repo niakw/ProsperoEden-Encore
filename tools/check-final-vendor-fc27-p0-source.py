@@ -32,6 +32,7 @@ REVIEWED_PINS.add("47e9735a63c94ca42ec80412c6fcfd84a4910a53")
 REVIEWED_PINS.add("f007f3d539a523607fbef8b8895c2833e5b7af8c")
 REVIEWED_PINS.add("b3e6f9943bd46fda050ecb8151c4bb06e5251117")
 REVIEWED_PINS.add("7535dc9e5e7f0060b8e448da843f96882a2ce320")
+REVIEWED_PINS.add("f69176d429723da5d79251f6b858afc72c5d99e2")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
@@ -43,19 +44,20 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # compare b65d8d9...266080b4). Seal both new blobs before replaying all
 # the unchanged FC27/NS2 source receipts of the reviewed parent. Do not add
 # a blanket allowlist exception: a drifted runtime source remains fatal.
-gsv_syncpt_201_revision = selected in {"ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320"}
-gsv_gpu_403_revision = selected in {"47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320"}
-gsv_native_115_revision = selected in {"f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320"}
-gsv_transfer_memory_revision = selected in {"b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320"}
-vi2_indexed_event_revision = selected == "7535dc9e5e7f0060b8e448da843f96882a2ce320"
-if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320"}:
+gsv_syncpt_201_revision = selected in {"ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_gpu_403_revision = selected in {"47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_native_115_revision = selected in {"f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_transfer_memory_revision = selected in {"b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+vi2_indexed_event_revision = selected in {"7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_transfer_bootstrap_revision = selected == "f69176d429723da5d79251f6b858afc72c5d99e2"
+if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp",
          ("b83f519fef3905eabb0bef65cab4d989033b5287"
-           if selected in {"dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320"} else "dcceb2051105866bb6f9a702ccdd7271969e0763")),
+           if selected in {"dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"} else "dcceb2051105866bb6f9a702ccdd7271969e0763")),
         ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.h",
          ("1f3b144324b9014d4e5db64f796019f0e9f4c9a6"
-           if selected in {"dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320"} else "e82f2486c79ac6aa2da5549619fb555c628d7afb")),
+           if selected in {"dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"} else "e82f2486c79ac6aa2da5549619fb555c628d7afb")),
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -66,7 +68,8 @@ if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df
         # Verify the EXACT GSV owner pair, then reuse unchanged source seals.
         for relative, expected in (
             ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-             ("15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
+             ("54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
+               "15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
                "91cdef4f7f28f5600ecd668904cf7d47ee0e9180" if gsv_transfer_memory_revision else
                "085e934b85fe6289988641b8ea2d64bf1a9a6d91" if gsv_native_115_revision else
                "38b2aed6deeec62ed82e173e6362ab1ba3e46737" if gsv_gpu_403_revision else
@@ -89,7 +92,8 @@ if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df
 if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-         ("15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
+         ("54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
+               "15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
                "91cdef4f7f28f5600ecd668904cf7d47ee0e9180" if gsv_transfer_memory_revision else
                "085e934b85fe6289988641b8ea2d64bf1a9a6d91" if gsv_native_115_revision else
            "38b2aed6deeec62ed82e173e6362ab1ba3e46737" if gsv_gpu_403_revision else
@@ -104,7 +108,7 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
     if selected in {"565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
         protocol = (V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h").read_bytes()
         protocol_blob = hashlib.sha1(b"blob " + str(len(protocol)).encode() + bytes([0]) + protocol).hexdigest()
-        expected_protocol = "e416a9d4a9611c501e1349c7cbcfa83e2640712e" if vi2_indexed_event_revision else "2ab3a49da7843d2b1b0aa7b0d66c702cdbc9326d" if gsv_transfer_memory_revision else "661ff841efe8ea16fe0da557bb791596f334c6b5" if gsv_native_115_revision else "54f295b1ef7a0482a851a93579e66952b335ba9b" if gsv_gpu_403_revision else "4a35519c4f01cc4c1b604787bfbb139161f64a05" if selected in {"3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"} else "6ce5ba02c2032237f81d9684da9e56cfbfb831c0"
+        expected_protocol = "182467544d693433015e27e87d03fb62a43ec10b" if gsv_transfer_bootstrap_revision else "e416a9d4a9611c501e1349c7cbcfa83e2640712e" if vi2_indexed_event_revision else "2ab3a49da7843d2b1b0aa7b0d66c702cdbc9326d" if gsv_transfer_memory_revision else "661ff841efe8ea16fe0da557bb791596f334c6b5" if gsv_native_115_revision else "54f295b1ef7a0482a851a93579e66952b335ba9b" if gsv_gpu_403_revision else "4a35519c4f01cc4c1b604787bfbb139161f64a05" if selected in {"3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"} else "6ce5ba02c2032237f81d9684da9e56cfbfb831c0"
         assert protocol_blob == expected_protocol, ("NS2 GSV bootstrap hint source drift", protocol_blob)
     if selected in {"ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
         # appletOE retry ABI: only the reviewed NS2 owner and its existing source
@@ -134,7 +138,8 @@ if selected in {"917ccdc1cf772b9312b19888eea181b8e114334b", "0c1bd95c896f6ddc787
     owner = V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_bootstrap.h"
     raw = owner.read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    expected = ("024d652f5fbcbd9043507de6b6518c5b86d1e212" if gsv_transfer_memory_revision else
+    expected = ("20dceafdc02e9436a81ac20b71b97ef7cf30d789" if gsv_transfer_bootstrap_revision else
+                "024d652f5fbcbd9043507de6b6518c5b86d1e212" if gsv_transfer_memory_revision else
                 "703eae24222c4d19d635fc4aa9a24d69f9520275" if gsv_gpu_403_revision else
                 "11d548eb338a5b75bf3a87a6adb6aa6aa302e017" if ns2_gsv_497_dual else
                 "11e7c9d0569a175567083367e485cbf75cbc2207" if ns2_gsv_497_v2 else

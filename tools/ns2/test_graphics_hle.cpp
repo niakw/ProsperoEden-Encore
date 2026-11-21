@@ -404,6 +404,28 @@ int main(){
     gsBootstrap[7]=0x80000000;
     const std::array<GP::U32,3> bindProcess{0x1b,0x80000000,2};
     const std::array<GP::U32,2> completeBootstrap{0x75,0};
+    // Older Switch 2 SDKs boot GSV with one COPY TransferMemory and two
+    // u64 values (ARUID, size), then bind the verified process with 11.
+    const std::array<GP::U32,8> gsv1Packet{
+        16+1,0x80000004U,2,0x4455,0xabc,0,0x4000,0};
+    const auto gsv1=P::DecodeBootstrapTransferMemory(gsv1Packet);
+    require(gsv1 && gsv1->copied_handle==0x4455 &&
+            gsv1->applet_resource_user_id==0xabc && gsv1->size==0x4000,
+            "GSV 1 firmware 19 COPY TransferMemory boot ABI");
+    auto invalidGsv1=gsv1Packet;
+    invalidGsv1[6]=0x1001;
+    require(!P::DecodeBootstrapTransferMemory(invalidGsv1),
+            "GSV 1 rejects unaligned or malformed work buffers");
+    GS::State transferBoot{0xabc};
+    require(transferBoot.InitializeTransferMemory(gsv1Packet,false)==GS::Status::InvalidHandle &&
+            transferBoot.CurrentPhase()==GS::Phase::Created,
+            "GSV 1 rejects TransferMemory from unrelated processes");
+    require(transferBoot.InitializeTransferMemory(gsv1Packet,true)==GS::Status::Success &&
+            transferBoot.NativeProfile()==0 &&
+            transferBoot.BindProcess(bindProcess,true)==GS::Status::Success &&
+            transferBoot.Complete(completeBootstrap)==GS::Status::Success &&
+            transferBoot.CurrentPhase()==GS::Phase::Ready,
+            "GSV 1/11/101 authenticates a transfer-memory boot with no invented GPU profile");
     const std::array<GP::U32,2> initGpu{417,0};
     const std::array<GP::U32,2> activateGpu{418,0};
     const std::array<GP::U32,4> openGpu{0x201,2,2,0};

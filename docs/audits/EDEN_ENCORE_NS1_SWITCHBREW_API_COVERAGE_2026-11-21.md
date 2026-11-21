@@ -2999,4 +2999,661 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | dispdrv | `2` | `GetNativeHandle` | — | Q | 2026-11-21 |
 | dispdrv | `3` | `TransactParcelAuto` | 3.0.0+ | Q | 2026-11-21 |
 
+### Debug Monitor services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Debug_Monitor_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Debug%20Monitor%20services.md)
+
+**51 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| dmnt:- | `0` | `BreakDebugProcess` | — | Q | 2026-11-21 |
+| dmnt:- | `1` | `TerminateDebugProcess` | — | Q | 2026-11-21 |
+| dmnt:- | `2` | `CloseHandle` | — | Q | 2026-11-21 |
+| dmnt:- | `3` | `LoadImage` | — | Q | 2026-11-21 |
+| dmnt:- | `4` | `GetProcessId` | — | Q | 2026-11-21 |
+| dmnt:- | `5` | `GetProcessHandle` | — | Q | 2026-11-21 |
+| dmnt:- | `6` | `WaitSynchronization` | — | Q | 2026-11-21 |
+| dmnt:- | `7` | `GetDebugEvent` | — | Q | 2026-11-21 |
+| dmnt:- | `8` | `GetProcessModuleInfo` | — | Q | 2026-11-21 |
+| dmnt:- | `9` | `GetProcessList` | — | Q | 2026-11-21 |
+| dmnt:- | `10` | `GetThreadList` | — | Q | 2026-11-21 |
+| dmnt:- | `11` | `GetDebugThreadContext` | — | Q | 2026-11-21 |
+| dmnt:- | `12` | `ContinueDebugEvent` | — | Q | 2026-11-21 |
+| dmnt:- | `13` | `ReadDebugProcessMemory` | — | Q | 2026-11-21 |
+| dmnt:- | `14` | `WriteDebugProcessMemory` | — | Q | 2026-11-21 |
+| dmnt:- | `15` | `SetDebugThreadContext` | — | Q | 2026-11-21 |
+| dmnt:- | `16` | `GetDebugThreadParam` | — | Q | 2026-11-21 |
+| dmnt:- | `17` | `InitializeThreadInfo` | — | Q | 2026-11-21 |
+| dmnt:- | `18` | `SetHardwareBreakPoint` | — | Q | 2026-11-21 |
+| dmnt:- | `19` | `QueryDebugProcessMemory` | — | Q | 2026-11-21 |
+| dmnt:- | `20` | `GetProcessMemoryDetails` | — | Q | 2026-11-21 |
+| dmnt:- | `21` | `AttachByProgramId` | — | Q | 2026-11-21 |
+| dmnt:- | `22` | `AttachOnLaunch` | — | Q | 2026-11-21 |
+| dmnt:- | `23` | `GetDebugMonitorProcessId` | — | Q | 2026-11-21 |
+| dmnt:- | `25` | `GetJitDebugProcessList` | — | Q | 2026-11-21 |
+| dmnt:- | `26` | `CreateCoreDump` | — | Q | 2026-11-21 |
+| dmnt:- | `27` | `GetAllDebugThreadInfo` | — | Q | 2026-11-21 |
+| dmnt:- | `29` | `TargetIO\_FileOpen` | — | Q | 2026-11-21 |
+| dmnt:- | `30` | `TargetIO\_FileClose` | — | Q | 2026-11-21 |
+| dmnt:- | `31` | `TargetIO\_FileRead` | — | Q | 2026-11-21 |
+| dmnt:- | `32` | `TargetIO\_FileWrite` | — | Q | 2026-11-21 |
+| dmnt:- | `33` | `TargetIO\_FileSetAttributes` | — | Q | 2026-11-21 |
+| dmnt:- | `34` | `TargetIO\_FileGetInformation` | — | Q | 2026-11-21 |
+| dmnt:- | `35` | `TargetIO\_FileSetTime` | — | Q | 2026-11-21 |
+| dmnt:- | `36` | `TargetIO\_FileSetSize` | — | Q | 2026-11-21 |
+| dmnt:- | `37` | `TargetIO\_FileDelete` | — | Q | 2026-11-21 |
+| dmnt:- | `38` | `TargetIO\_FileMove` | — | Q | 2026-11-21 |
+| dmnt:- | `39` | `TargetIO\_DirectoryCreate` | — | Q | 2026-11-21 |
+| dmnt:- | `40` | `TargetIO\_DirectoryDelete` | — | Q | 2026-11-21 |
+| dmnt:- | `41` | `TargetIO\_DirectoryRename` | — | Q | 2026-11-21 |
+| dmnt:- | `42` | `TargetIO\_DirectoryGetCount` | — | Q | 2026-11-21 |
+| dmnt:- | `43` | `TargetIO\_DirectoryOpen` | — | Q | 2026-11-21 |
+| dmnt:- | `44` | `TargetIO\_DirectoryGetNext` | — | Q | 2026-11-21 |
+| dmnt:- | `45` | `TargetIO\_DirectoryClose` | — | Q | 2026-11-21 |
+| dmnt:- | `46` | `TargetIO\_GetFreeSpace` | — | Q | 2026-11-21 |
+| dmnt:- | `47` | `TargetIO\_GetVolumeInformation` | — | Q | 2026-11-21 |
+| dmnt:- | `48` | `InitiateCoreDump` | — | Q | 2026-11-21 |
+| dmnt:- | `49` | `ContinueCoreDump` | — | Q | 2026-11-21 |
+| dmnt:- | `50` | `AddTTYToCoreDump` | — | Q | 2026-11-21 |
+| dmnt:- | `51` | `AddImageToCoreDump` | — | Q | 2026-11-21 |
+| dmnt:- | `52` | `CloseCoreDump` | — | Q | 2026-11-21 |
+
+### Error Report services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Error_Report_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Error%20Report%20services.md)
+
+**26 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| erpt:c | `0` | `SubmitContext` | — | Q | 2026-11-21 |
+| erpt:c | `1` | `CreateReport` | — | Q | 2026-11-21 |
+| erpt:c | `2` | `SetInitialLaunchSettingsCompletionTime` | 3.0.0+ | Q | 2026-11-21 |
+| erpt:c | `3` | `ClearInitialLaunchSettingsCompletionTime` | 3.0.0+ | Q | 2026-11-21 |
+| erpt:c | `4` | `UpdatePowerOnTime` | 3.0.0+ | Q | 2026-11-21 |
+| erpt:c | `5` | `UpdateAwakeTime` | 3.0.0+ | Q | 2026-11-21 |
+| erpt:c | `6` | `SubmitMultipleCategoryContext` | 5.0.0+ | Q | 2026-11-21 |
+| erpt:c | `7` | `UpdateApplicationLaunchTime` | 6.0.0+ | Q | 2026-11-21 |
+| erpt:c | `8` | `ClearApplicationLaunchTime` | 6.0.0+ | Q | 2026-11-21 |
+| erpt:c | `9` | `SubmitAttachment` | 8.0.0+ | Q | 2026-11-21 |
+| erpt:c | `10` | `CreateReportWithAttachments` | 8.0.0+ | Q | 2026-11-21 |
+| erpt:r | `0` | `OpenReport` | — | Q | 2026-11-21 |
+| erpt:r | `1` | `OpenManager` | — | Q | 2026-11-21 |
+| erpt:r | `2` | `OpenAttachment` | 8.0.0+ | Q | 2026-11-21 |
+| erpt:r | `0` | `Open` | — | Q | 2026-11-21 |
+| erpt:r | `1` | `Read` | — | Q | 2026-11-21 |
+| erpt:r | `2` | `SetFlags` | — | Q | 2026-11-21 |
+| erpt:r | `3` | `GetFlags` | — | Q | 2026-11-21 |
+| erpt:r | `4` | `Close` | — | Q | 2026-11-21 |
+| erpt:r | `5` | `GetSize` | — | Q | 2026-11-21 |
+| erpt:r | `0` | `GetReportList` | — | Q | 2026-11-21 |
+| erpt:r | `1` | `GetEvent` | — | Q | 2026-11-21 |
+| erpt:r | `2` | `CleanupReports` | 4.0.0+ | Q | 2026-11-21 |
+| erpt:r | `3` | `DeleteReport` | 5.0.0+ | Q | 2026-11-21 |
+| erpt:r | `4` | `GetStorageUsageStatistics` | 5.0.0+ | Q | 2026-11-21 |
+| erpt:r | `5` | `GetAttachmentList` | 8.0.0+ | Q | 2026-11-21 |
+
+### Error Upload services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Error_Upload_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Error%20Upload%20services.md)
+
+**11 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| eupld:c | `0` | `SetUrl` | — | Q | 2026-11-21 |
+| eupld:c | `1` | `ImportCrt` | — | Q | 2026-11-21 |
+| eupld:c | `2` | `ImportPki` | — | Q | 2026-11-21 |
+| eupld:c | `3` | `SetAutoUpload` | — | Q | 2026-11-21 |
+| eupld:c | `4` | `GetAutoUpload` | 6.0.0+ | Q | 2026-11-21 |
+| eupld:r | `0` | `Initialize` | — | Q | 2026-11-21 |
+| eupld:r | `1` | `UploadAll` | — | Q | 2026-11-21 |
+| eupld:r | `2` | `UploadSelected` | — | Q | 2026-11-21 |
+| eupld:r | `3` | `GetUploadStatus` | — | Q | 2026-11-21 |
+| eupld:r | `4` | `CancelUpload` | — | Q | 2026-11-21 |
+| eupld:r | `5` | `GetResult` | — | Q | 2026-11-21 |
+
+### ETicket services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/ETicket_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/ETicket%20services.md)
+
+**42 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| es | `1` | `ImportTicket` | — | Q | 2026-11-21 |
+| es | `2` | `ImportTicketCertificateSet` | — | Q | 2026-11-21 |
+| es | `3` | `DeleteTicket` | — | Q | 2026-11-21 |
+| es | `4` | `DeletePersonalizedTicket` | — | Q | 2026-11-21 |
+| es | `5` | `DeleteAllCommonTicket` | — | Q | 2026-11-21 |
+| es | `6` | `DeleteAllPersonalizedTicket` | — | Q | 2026-11-21 |
+| es | `7` | `DeleteAllPersonalizedTicketEx` | — | Q | 2026-11-21 |
+| es | `8` | `GetTitleKey` | 2.0.0-5.1.0 | Q | 2026-11-21 |
+| es | `9` | `CountCommonTicket` | — | Q | 2026-11-21 |
+| es | `10` | `CountPersonalizedTicket` | — | Q | 2026-11-21 |
+| es | `11` | `ListCommonTicketRightsIds ([2.0.0-5.1.0] ListCommonTicket)` | 6.0.0+ | Q | 2026-11-21 |
+| es | `12` | `ListPersonalizedTicketRightsIds ([2.0.0-5.1.0] ListPersonalizedTicket)` | 6.0.0+ | Q | 2026-11-21 |
+| es | `13` | `ListMissingPersonalizedTicket` | — | Q | 2026-11-21 |
+| es | `14` | `GetCommonTicketSize` | — | Q | 2026-11-21 |
+| es | `15` | `GetPersonalizedTicketSize` | 2.0.0-4.1.0 | Q | 2026-11-21 |
+| es | `16` | `GetCommonTicketData` | — | Q | 2026-11-21 |
+| es | `17` | `GetPersonalizedTicketData` | 2.0.0-4.1.0 | Q | 2026-11-21 |
+| es | `18` | `OwnTicket` | — | Q | 2026-11-21 |
+| es | `19` | `GetTicketInfo` | — | Q | 2026-11-21 |
+| es | `20` | `ListLightTicketInfo` | — | Q | 2026-11-21 |
+| es | `21` | `SignData` | 2.0.0-6.2.0 | Q | 2026-11-21 |
+| es | `22` | `GetCommonTicketAndCertificateSize` | 4.0.0+ | Q | 2026-11-21 |
+| es | `23` | `GetCommonTicketAndCertificateData` | 4.0.0+ | Q | 2026-11-21 |
+| es | `24` | `ImportPrepurchaseRecord` | 4.0.0+ | Q | 2026-11-21 |
+| es | `25` | `DeletePrepurchaseRecord` | 4.0.0+ | Q | 2026-11-21 |
+| es | `26` | `DeleteAllPrepurchaseRecord` | 4.0.0+ | Q | 2026-11-21 |
+| es | `27` | `CountPrepurchaseRecord` | 4.0.0+ | Q | 2026-11-21 |
+| es | `28` | `ListPrepurchaseRecordRightsIds ([4.0.0-5.1.0] ListPrepurchaseRecord)` | 6.0.0+ | Q | 2026-11-21 |
+| es | `29` | `ListPrepurchaseRecordInfo` | 4.0.0+ | Q | 2026-11-21 |
+| es | `30` | `CountTicket` | 5.0.0+ | Q | 2026-11-21 |
+| es | `31` | `ListTicketRightsIds` | 5.0.0+ | Q | 2026-11-21 |
+| es | `32` | `CountPrepurchaseRecordEx` | 5.0.0+ | Q | 2026-11-21 |
+| es | `33` | `ListPrepurchaseRecordRightsIdsEx` | 5.0.0-6.2.0 | Q | 2026-11-21 |
+| es | `34` | `GetEncryptedTicketSize` | 5.0.0+ | Q | 2026-11-21 |
+| es | `35` | `GetEncryptedTicketData` | 5.0.0+ | Q | 2026-11-21 |
+| es | `36` | `DeleteAllInactiveELicenseRequiredPersonalizedTicket` | 6.0.0+ | Q | 2026-11-21 |
+| es | `37` | `OwnTicket2` | 9.0.0+ | Q | 2026-11-21 |
+| es | `38` | `OwnTicket3` | 9.0.0+ | Q | 2026-11-21 |
+| es | `503` | `GetTitleKey` | 6.0.0+ | Q | 2026-11-21 |
+| es | `1003` | `Returns an EsAsyncValue.` | 6.0.0+ | Q | 2026-11-21 |
+| es | `2000` | `No input, returns an EsSubinterface2000.` | 6.0.0+ | Q | 2026-11-21 |
+| es | `2001` | `No input, returns an EsSubinterface2000.` | 9.0.0+ | Q | 2026-11-21 |
+
+### PTM services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/PTM_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/PTM%20services.md)
+
+**71 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| fan | `0` | `OpenController` | — | Q | 2026-11-21 |
+| fan | `0` | `SetRotationSpeedLevel` | — | Q | 2026-11-21 |
+| fan | `1` | `SetRotationSpeedLevelByDiff` | — | Q | 2026-11-21 |
+| fan | `2` | `GetRotationSpeedLevel` | — | Q | 2026-11-21 |
+| fan | `3` | `SetRotationRate` | — | Q | 2026-11-21 |
+| fan | `4` | `GetRotationRate` | — | Q | 2026-11-21 |
+| fan | `5` | `EnableFan` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| fan | `6` | `DisableFan` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| fan | `7` | `GetActualRotationSpeedLevel` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| psm | `0` | `GetBatteryChargePercentage` | — | Q | 2026-11-21 |
+| psm | `1` | `GetChargerType` | — | Q | 2026-11-21 |
+| psm | `2` | `EnableBatteryCharging` | — | Q | 2026-11-21 |
+| psm | `3` | `DisableBatteryCharging` | — | Q | 2026-11-21 |
+| psm | `4` | `IsBatteryChargingEnabled` | — | Q | 2026-11-21 |
+| psm | `5` | `AcquireControllerPowerSupply` | — | Q | 2026-11-21 |
+| psm | `6` | `ReleaseControllerPowerSupply` | — | Q | 2026-11-21 |
+| psm | `7` | `OpenSession` | — | Q | 2026-11-21 |
+| psm | `8` | `EnableEnoughPowerChargeEmulation` | — | Q | 2026-11-21 |
+| psm | `9` | `DisableEnoughPowerChargeEmulation` | — | Q | 2026-11-21 |
+| psm | `10` | `EnableFastBatteryCharging` | — | Q | 2026-11-21 |
+| psm | `11` | `DisableFastBatteryCharging` | — | Q | 2026-11-21 |
+| psm | `12` | `GetBatteryVoltageState` | — | Q | 2026-11-21 |
+| psm | `13` | `GetRawBatteryChargePercentage` | — | Q | 2026-11-21 |
+| psm | `14` | `IsEnoughPowerSupplied` | — | Q | 2026-11-21 |
+| psm | `15` | `GetBatteryAgePercentage` | — | Q | 2026-11-21 |
+| psm | `16` | `GetBatteryChargeInfoEvent` | — | Q | 2026-11-21 |
+| psm | `17` | `GetBatteryChargeInfoFields` | — | Q | 2026-11-21 |
+| psm | `18` | `GetBatteryChargeCalibratedEvent` | 3.0.0+ | Q | 2026-11-21 |
+| psm | `0` | `BindStateChangeEvent` | — | Q | 2026-11-21 |
+| psm | `1` | `UnbindStateChangeEvent` | — | Q | 2026-11-21 |
+| psm | `2` | `SetChargerTypeChangeEventEnabled` | — | Q | 2026-11-21 |
+| psm | `3` | `SetPowerSupplyChangeEventEnabled` | — | Q | 2026-11-21 |
+| psm | `4` | `SetBatteryVoltageStateChangeEventEnabled` | — | Q | 2026-11-21 |
+| tc | `0` | `SetOperatingMode` | — | Q | 2026-11-21 |
+| tc | `1` | `GetThermalEvent` | — | Q | 2026-11-21 |
+| tc | `2` | `IsActionAllowed` | — | Q | 2026-11-21 |
+| tc | `3` | `EnableVirtualTemperature` | — | Q | 2026-11-21 |
+| tc | `4` | `DisableVirtualTemperature` | — | Q | 2026-11-21 |
+| tc | `5` | `SetVirtualTemperature` | — | Q | 2026-11-21 |
+| tc | `6` | `EnableFanControl` | — | Q | 2026-11-21 |
+| tc | `7` | `DisableFanControl` | — | Q | 2026-11-21 |
+| tc | `8` | `IsFanControlEnabled` | — | Q | 2026-11-21 |
+| tc | `9` | `GetSkinTemperatureMilliC` | 5.0.0+ | Q | 2026-11-21 |
+| ts | `0` | `GetTemperatureRange` | — | Q | 2026-11-21 |
+| ts | `1` | `GetTemperature` | — | Q | 2026-11-21 |
+| ts | `2` | `SetMeasurementMode` | — | Q | 2026-11-21 |
+| ts | `3` | `GetTemperatureMilliC` | — | Q | 2026-11-21 |
+| ts | `4` | `? (Takes a total of 4-bytes of input, returns an IUnknown0)` | 8.0.0+ | Q | 2026-11-21 |
+| pcm | `0` | `IsSupported` | — | Q | 2026-11-21 |
+| pcm | `1` | `ReadCurrentPower` | — | Q | 2026-11-21 |
+| apm:am | `0` | `OpenSession` | — | Q | 2026-11-21 |
+| apm:am | `1` | `GetPerformanceMode` | — | Q | 2026-11-21 |
+| apm:am | `6` | `IsCpuOverclockEnabled` | 7.0.0+ | Q | 2026-11-21 |
+| apm:sys | `0` | `RequestPerformanceMode` | — | Q | 2026-11-21 |
+| apm:sys | `1` | `GetPerformanceEvent` | — | Q | 2026-11-21 |
+| apm:sys | `2` | `GetThrottlingState` | — | Q | 2026-11-21 |
+| apm:sys | `3` | `GetLastThrottlingState` | — | Q | 2026-11-21 |
+| apm:sys | `4` | `ClearLastThrottlingState` | — | Q | 2026-11-21 |
+| apm:sys | `5` | `LoadAndApplySettings` | 5.0.0+ | Q | 2026-11-21 |
+| apm:sys | `6` | `SetCpuBoostMode` | 7.0.0+ | Q | 2026-11-21 |
+| apm:sys | `7` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | Q | 2026-11-21 |
+| ISession | `0` | `SetPerformanceConfiguration` | — | Q | 2026-11-21 |
+| ISession | `1` | `GetPerformanceConfiguration` | — | Q | 2026-11-21 |
+| ISession | `2` | `SetCpuOverclockEnabled` | 8.0.0+ | Q | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `0` | `Initialize` | — | Q | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `1` | `Set` | — | Q | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `2` | `Get` | — | Q | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `3` | `Cancel` | — | Q | 2026-11-21 |
+| fgm:dbg | `0` | `Initialize` | — | Q | 2026-11-21 |
+| fgm:dbg | `1` | `Read` | — | Q | 2026-11-21 |
+| fgm:dbg | `2` | `Cancel` | — | Q | 2026-11-21 |
+
+### Fatal services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Fatal_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Fatal%20services.md)
+
+**4 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| fatal:u | `0` | `ThrowFatal` | — | Q | 2026-11-21 |
+| fatal:u | `1` | `ThrowFatalWithPolicy` | — | Q | 2026-11-21 |
+| fatal:u | `2` | `ThrowFatalWithCpuContext` | — | Q | 2026-11-21 |
+| fatal:p | `0` | `GetFatalEvent` | — | Q | 2026-11-21 |
+
+### Friend services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Friend_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Friend%20services.md)
+
+**123 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `CreateFriendService` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `CreateNotificationService` | 2.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `CreateDaemonSuspendSessionService` | 4.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetCompletionEvent` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Cancel` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10100` | `GetFriendListIds` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10101` | `GetFriendList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10102` | `UpdateFriendInfo` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10110` | `GetFriendProfileImage` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10200` | `SendFriendRequestForApplication` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10211` | `AddFacedFriendRequestForApplication` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10400` | `GetBlockedUserListIds` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10500` | `GetProfileList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10600` | `DeclareOpenOnlinePlaySession` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10601` | `DeclareCloseOnlinePlaySession` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10610` | `UpdateUserPresence` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10700` | `GetPlayHistoryRegistrationKey` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10701` | `GetPlayHistoryRegistrationKeyWithNetworkServiceAccountId` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10702` | `AddPlayHistory` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `11000` | `GetProfileImageUrl` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20100` | `GetFriendCount` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20101` | `GetNewlyFriendCount` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20102` | `GetFriendDetailedInfo` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20103` | `SyncFriendList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20104` | `RequestSyncFriendList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20110` | `LoadFriendSetting` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20200` | `GetReceivedFriendRequestCount` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20201` | `GetFriendRequestList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20300` | `GetFriendCandidateList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20301` | `GetNintendoNetworkIdInfo` | 3.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20302` | `GetSnsAccountLinkage` | 5.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20303` | `GetSnsAccountProfile` | 5.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20304` | `GetSnsAccountFriendList` | 5.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20400` | `GetBlockedUserList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20401` | `SyncBlockedUserList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20500` | `GetProfileExtraList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20501` | `GetRelationship` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20600` | `GetUserPresenceView` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20700` | `GetPlayHistoryList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20701` | `GetPlayHistoryStatistics` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20800` | `LoadUserSetting` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20801` | `SyncUserSetting` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20900` | `RequestListSummaryOverlayNotification` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `21000` | `GetExternalApplicationCatalog` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `22000` | `GetReceivedFriendInvitationList` | 9.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `22001` | `GetReceivedFriendInvitationDetailedInfo` | 9.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `22010` | `GetReceivedFriendInvitationCountCache` | 9.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30100` | `DropFriendNewlyFlags` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30101` | `DeleteFriend` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30110` | `DropFriendNewlyFlag` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30120` | `ChangeFriendFavoriteFlag` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30121` | `ChangeFriendOnlineNotificationFlag` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30200` | `SendFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30201` | `SendFriendRequestWithApplicationInfo` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30202` | `CancelFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30203` | `AcceptFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30204` | `RejectFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30205` | `ReadFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30210` | `GetFacedFriendRequestRegistrationKey` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30211` | `AddFacedFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30212` | `CancelFacedFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30213` | `GetFacedFriendRequestProfileImage` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30214` | `GetFacedFriendRequestProfileImageFromPath` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30215` | `SendFriendRequestWithExternalApplicationCatalogId` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30216` | `ResendFacedFriendRequest` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30217` | `SendFriendRequestWithNintendoNetworkIdInfo` | 3.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30300` | `GetSnsAccountLinkPageUrl` | 5.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30301` | `UnlinkSnsAccount` | 5.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30400` | `BlockUser` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30401` | `BlockUserWithApplicationInfo` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30402` | `UnblockUser` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30500` | `GetProfileExtraFromFriendCode` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30700` | `DeletePlayHistory` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30810` | `ChangePresencePermission` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30811` | `ChangeFriendRequestReception` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30812` | `ChangePlayLogPermission` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30820` | `IssueFriendCode` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30830` | `ClearPlayLog` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30900` | `SendFriendInvitation` | 9.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30910` | `ReadFriendInvitation` | 9.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `49900` | `DeleteNetworkServiceAccountCache` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetEvent` | 2.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Clear` | 2.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `Pop` | 2.0.0+ | Q | 2026-11-21 |
+| nd:app | `0` | `GetReceivableNeighborInfoCountMax` | — | Q | 2026-11-21 |
+| nd:app | `10` | `IsNeighborDetectionEnabled` | — | Q | 2026-11-21 |
+| nd:sys | `0` | `GetReceivableNeighborInfoCountMax` | — | Q | 2026-11-21 |
+| nd:sys | `10` | `IsNeighborDetectionEnabled` | — | Q | 2026-11-21 |
+| nd:sys | `200` | `SetSystemData` | — | Q | 2026-11-21 |
+| nd:sys | `201` | `ClearSystemData` | — | Q | 2026-11-21 |
+| nd:sys | `203` | `GetReceivableNeighborInfoCountForSystem` | — | Q | 2026-11-21 |
+| nd:sys | `204` | `ReceiveNeighborInfoForSystem` | — | Q | 2026-11-21 |
+| nd:sys | `205` | `SetSender` | — | Q | 2026-11-21 |
+| nd:sys | `206` | `GetSender` | — | Q | 2026-11-21 |
+| nd:sys | `207` | `CreateScannerForSystem` | — | Q | 2026-11-21 |
+| nd:sys | `208` | `CreateReceiveEventHolderForSystem` | — | Q | 2026-11-21 |
+| nd:sys | `223` | `EnableNeighborDetection` | — | Q | 2026-11-21 |
+| nd:sys | `224` | `DisableNeighborDetection` | — | Q | 2026-11-21 |
+| nd:sys | `226` | `EnablePowerSave` | — | Q | 2026-11-21 |
+| nd:sys | `227` | `DisablePowerSave` | — | Q | 2026-11-21 |
+| nd:sys | `228` | `IsPowerSaveEnabled` | — | Q | 2026-11-21 |
+| nd:sys | `232` | `ClearBlockedUsers` | — | Q | 2026-11-21 |
+| nd:sys | `233` | `GetBlockedUserCount` | — | Q | 2026-11-21 |
+| nd:sys | `234` | `BlockUserByLocalUserId` | — | Q | 2026-11-21 |
+| nd:sys | `235` | `BlockUserByNetworkUserId` | — | Q | 2026-11-21 |
+| nd:sys | `236` | `UnblockUserByLocalUserId` | — | Q | 2026-11-21 |
+| nd:sys | `237` | `UnblockUserByNetworkUserId` | — | Q | 2026-11-21 |
+| nd:sys | `240` | `DeleteApplication` | — | Q | 2026-11-21 |
+| nd:sys | `250` | `InitializeApplicationInfo` | — | Q | 2026-11-21 |
+| nd:sys | `260` | `CreateAccountSystemSaveDataAccessSuppressor` | — | Q | 2026-11-21 |
+| nd:sys | `300` | `AddReceivedNeighborInfoForSystemForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `301` | `GetSendDataForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `302` | `ClearReceiveCounterForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `303` | `GetNextReceiveCounterForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `304` | `ListBlockedUsersForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `305` | `RefreshSendDataIdForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `306` | `ReloadFwdbgSettingsForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `307` | `EnableApplicationForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `308` | `GetNextReceiveCountersForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `309` | `ListApplicationInfoForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `310` | `SetApplicationDataForDebug` | — | Q | 2026-11-21 |
+| nd:sys | `400` | `GetNetworkUserId` | — | Q | 2026-11-21 |
+| nd:sys | `401` | `DeleteNetworkUserId` | — | Q | 2026-11-21 |
+
+### Filesystem services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Filesystem_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Filesystem%20services.md)
+
+**257 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| fsp-ldr | `0` | `OpenCodeFileSystem` | — | Q | 2026-11-21 |
+| fsp-ldr | `1` | `IsArchivedProgram` | — | Q | 2026-11-21 |
+| fsp-ldr | `2` | `SetCurrentProcess` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-pr | `0` | `RegisterProgram` | — | Q | 2026-11-21 |
+| fsp-pr | `1` | `UnregisterProgram` | — | Q | 2026-11-21 |
+| fsp-pr | `2` | `SetCurrentProcess` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-pr | `256` | `SetEnabledProgramVerification` | — | Q | 2026-11-21 |
+| fsp-srv | `0` | `OpenFileSystem` | 1.0.0 | Q | 2026-11-21 |
+| fsp-srv | `1` | `SetCurrentProcess` | — | Q | 2026-11-21 |
+| fsp-srv | `2` | `OpenDataFileSystemByCurrentProcess` | — | Q | 2026-11-21 |
+| fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `8` | `OpenFileSystemWithId` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `11` | `OpenBisFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `12` | `OpenBisStorage` | — | Q | 2026-11-21 |
+| fsp-srv | `13` | `InvalidateBisCache` | — | Q | 2026-11-21 |
+| fsp-srv | `17` | `OpenHostFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `18` | `OpenSdCardFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `19` | `FormatSdCardFileSystem` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `21` | `DeleteSaveDataFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `22` | `CreateSaveDataFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `23` | `CreateSaveDataFileSystemBySystemSaveDataId` | — | Q | 2026-11-21 |
+| fsp-srv | `24` | `RegisterSaveDataFileSystemAtomicDeletion` | — | Q | 2026-11-21 |
+| fsp-srv | `25` | `DeleteSaveDataFileSystemBySaveDataSpaceId` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `26` | `FormatSdCardDryRun` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `27` | `IsExFatSupported` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `28` | `DeleteSaveDataFileSystemBySaveDataAttribute` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `30` | `OpenGameCardStorage` | — | Q | 2026-11-21 |
+| fsp-srv | `31` | `OpenGameCardFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `34` | `GetCacheStorageSize` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `35` | `CreateSaveDataFileSystemWithHashSalt` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `36` | `OpenHostFileSystemWithOption` | 9.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `51` | `OpenSaveDataFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `52` | `OpenSaveDataFileSystemBySystemSaveDataId` | — | Q | 2026-11-21 |
+| fsp-srv | `53` | `OpenReadOnlySaveDataFileSystem` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `57` | `ReadSaveDataFileSystemExtraDataBySaveDataSpaceId` | 3.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `58` | `ReadSaveDataFileSystemExtraData` | — | Q | 2026-11-21 |
+| fsp-srv | `59` | `WriteSaveDataFileSystemExtraData` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `60` | `OpenSaveDataInfoReader` | — | Q | 2026-11-21 |
+| fsp-srv | `61` | `OpenSaveDataInfoReaderBySaveDataSpaceId` | — | Q | 2026-11-21 |
+| fsp-srv | `62` | `OpenSaveDataInfoReaderOnlyCacheStorage` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `64` | `OpenSaveDataInternalStorageFileSystem` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `65` | `UpdateSaveDataMacForDebug` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `67` | `FindSaveDataWithFilter` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `68` | `OpenSaveDataInfoReaderWithFilter` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `69` | `ReadSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `70` | `WriteSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `80` | `OpenSaveDataMetaFile` | — | Q | 2026-11-21 |
+| fsp-srv | `81` | `OpenSaveDataTransferManager` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `82` | `OpenSaveDataTransferManagerVersion2` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `83` | `OpenSaveDataTransferProhibiter` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `84` | `ListAccessibleSaveDataOwnerId` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `85` | `OpenSaveDataTransferManagerForSaveDataRepair` | 9.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `100` | `OpenImageDirectoryFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `110` | `OpenContentStorageFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `120` | `OpenCloudBackupWorkStorageFileSystem` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `130` | `OpenCustomStorageFileSystem` | 7.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `200` | `OpenDataStorageByCurrentProcess` | — | Q | 2026-11-21 |
+| fsp-srv | `201` | `OpenDataStorageByProgramId` | 3.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `202` | `OpenDataStorageByDataId` | — | Q | 2026-11-21 |
+| fsp-srv | `203` | `OpenPatchDataStorageByCurrentProcess` | — | Q | 2026-11-21 |
+| fsp-srv | `204` | `OpenDataFileSystemWithProgramIndex` | 7.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `205` | `OpenDataStorageWithProgramIndex` | 7.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `400` | `OpenDeviceOperator` | — | Q | 2026-11-21 |
+| fsp-srv | `500` | `OpenSdCardDetectionEventNotifier` | — | Q | 2026-11-21 |
+| fsp-srv | `501` | `OpenGameCardDetectionEventNotifier` | — | Q | 2026-11-21 |
+| fsp-srv | `510` | `OpenSystemDataUpdateEventNotifier` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `511` | `NotifySystemDataUpdateEvent` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `520` | `SimulateDeviceDetectionEvent` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `600` | `SetCurrentPosixTime` | 1.0.0-3.0.2 | Q | 2026-11-21 |
+| fsp-srv | `601` | `QuerySaveDataTotalSize` | — | Q | 2026-11-21 |
+| fsp-srv | `602` | `VerifySaveDataFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `603` | `CorruptSaveDataFileSystem` | — | Q | 2026-11-21 |
+| fsp-srv | `604` | `CreatePaddingFile` | — | Q | 2026-11-21 |
+| fsp-srv | `605` | `DeleteAllPaddingFiles` | — | Q | 2026-11-21 |
+| fsp-srv | `606` | `GetRightsId` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `607` | `RegisterExternalKey` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `608` | `UnregisterAllExternalKey` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `609` | `GetRightsIdByPath` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `610` | `GetRightsIdAndKeyGenerationByPath` | 3.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `611` | `SetCurrentPosixTimeWithTimeDifference` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `612` | `GetFreeSpaceSizeForSaveData` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `613` | `VerifySaveDataFileSystemBySaveDataSpaceId` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `614` | `CorruptSaveDataFileSystemBySaveDataSpaceId` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `615` | `QuerySaveDataInternalStorageTotalSize` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `616` | `GetSaveDataCommitId` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `617` | `UnregisterExternalKey` | 7.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `620` | `SetSdCardEncryptionSeed` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `630` | `SetSdCardAccessibility` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `631` | `IsSdCardAccessible` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `640` | `IsSignedSystemPartitionOnSdCardValid` | 4.0.0-7.0.1 | Q | 2026-11-21 |
+| fsp-srv | `700` | `OpenAccessFailureDetectionEventNotifier` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `701` | `GetAccessFailureDetectionEvent` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `702` | `IsAccessFailureDetected` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `710` | `ResolveAccessFailure` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `720` | `AbandonAccessFailure` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `800` | `GetAndClearErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `810` | `RegisterProgramIndexMapInfo` | 7.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1000` | `SetBisRootForHost` | — | Q | 2026-11-21 |
+| fsp-srv | `1001` | `SetSaveDataSize` | — | Q | 2026-11-21 |
+| fsp-srv | `1002` | `SetSaveDataRootPath` | — | Q | 2026-11-21 |
+| fsp-srv | `1003` | `DisableAutoSaveDataCreation` | — | Q | 2026-11-21 |
+| fsp-srv | `1004` | `SetGlobalAccessLogMode` | — | Q | 2026-11-21 |
+| fsp-srv | `1005` | `GetGlobalAccessLogMode` | — | Q | 2026-11-21 |
+| fsp-srv | `1006` | `OutputAccessLogToSdCard` | — | Q | 2026-11-21 |
+| fsp-srv | `1007` | `RegisterUpdatePartition` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1008` | `OpenRegisteredUpdatePartition` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1009` | `GetAndClearMemoryReportInfo` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1010` | `SetDataStorageRedirectTarget` | 5.1.0-6.2.0 | Q | 2026-11-21 |
+| fsp-srv | `1011` | `GetProgramIndexForAccessLog` | 7.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1012` | `GetFsStackUsage` | 9.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1013` | `UnsetSaveDataRootPath` | 9.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1100` | `OverrideSaveDataTransferTokenSignVerificationKey` | 4.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1110` | `CorruptSaveDataFileSystemByOffset` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1200` | `OpenMultiCommitManager` | 6.0.0+ | Q | 2026-11-21 |
+| IStorage | `0` | `Read` | — | Q | 2026-11-21 |
+| IStorage | `1` | `Write` | — | Q | 2026-11-21 |
+| IStorage | `2` | `Flush` | — | Q | 2026-11-21 |
+| IStorage | `3` | `SetSize` | — | Q | 2026-11-21 |
+| IStorage | `4` | `GetSize` | — | Q | 2026-11-21 |
+| IStorage | `5` | `OperateRange` | 4.0.0+ | Q | 2026-11-21 |
+| IFileSystem | `0` | `CreateFile` | — | Q | 2026-11-21 |
+| IFileSystem | `1` | `DeleteFile` | — | Q | 2026-11-21 |
+| IFileSystem | `2` | `CreateDirectory` | — | Q | 2026-11-21 |
+| IFileSystem | `3` | `DeleteDirectory` | — | Q | 2026-11-21 |
+| IFileSystem | `4` | `DeleteDirectoryRecursively` | — | Q | 2026-11-21 |
+| IFileSystem | `5` | `RenameFile` | — | Q | 2026-11-21 |
+| IFileSystem | `6` | `RenameDirectory` | — | Q | 2026-11-21 |
+| IFileSystem | `7` | `GetEntryType` | — | Q | 2026-11-21 |
+| IFileSystem | `8` | `OpenFile` | — | Q | 2026-11-21 |
+| IFileSystem | `9` | `OpenDirectory` | — | Q | 2026-11-21 |
+| IFileSystem | `10` | `Commit` | — | Q | 2026-11-21 |
+| IFileSystem | `11` | `GetFreeSpaceSize` | — | Q | 2026-11-21 |
+| IFileSystem | `12` | `GetTotalSpaceSize` | — | Q | 2026-11-21 |
+| IFileSystem | `13` | `CleanDirectoryRecursively` | 3.0.0+ | Q | 2026-11-21 |
+| IFileSystem | `14` | `GetFileTimeStampRaw` | 3.0.0+ | Q | 2026-11-21 |
+| IFileSystem | `15` | `QueryEntry` | 4.0.0+ | Q | 2026-11-21 |
+| IDirectory | `0` | `Read` | — | Q | 2026-11-21 |
+| IDirectory | `1` | `GetEntryCount` | — | Q | 2026-11-21 |
+| IFile | `0` | `Read` | — | Q | 2026-11-21 |
+| IFile | `1` | `Write` | — | Q | 2026-11-21 |
+| IFile | `2` | `Flush` | — | Q | 2026-11-21 |
+| IFile | `3` | `SetSize` | — | Q | 2026-11-21 |
+| IFile | `4` | `GetSize` | — | Q | 2026-11-21 |
+| IFile | `5` | `OperateRange` | 4.0.0+ | Q | 2026-11-21 |
+| ISaveDataInfoReader | `0` | `ReadSaveDataInfo` | — | Q | 2026-11-21 |
+| IDeviceOperator | `0` | `IsSdCardInserted` | — | Q | 2026-11-21 |
+| IDeviceOperator | `1` | `GetSdCardSpeedMode` | — | Q | 2026-11-21 |
+| IDeviceOperator | `2` | `GetSdCardCid` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `3` | `GetSdCardUserAreaSize` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `4` | `GetSdCardProtectedAreaSize` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `5` | `GetAndClearSdCardErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `100` | `GetMmcCid` | — | Q | 2026-11-21 |
+| IDeviceOperator | `101` | `GetMmcSpeedMode` | — | Q | 2026-11-21 |
+| IDeviceOperator | `110` | `EraseMmc` | — | Q | 2026-11-21 |
+| IDeviceOperator | `111` | `GetMmcPartitionSize` | — | Q | 2026-11-21 |
+| IDeviceOperator | `112` | `GetMmcPatrolCount` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `113` | `GetAndClearMmcErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `114` | `GetMmcExtendedCsd` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `115` | `SuspendMmcPatrol` | 4.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `116` | `ResumeMmcPatrol` | 4.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `200` | `IsGameCardInserted` | — | Q | 2026-11-21 |
+| IDeviceOperator | `201` | `EraseGameCard` | — | Q | 2026-11-21 |
+| IDeviceOperator | `202` | `GetGameCardHandle` | — | Q | 2026-11-21 |
+| IDeviceOperator | `203` | `GetGameCardUpdatePartitionInfo` | — | Q | 2026-11-21 |
+| IDeviceOperator | `204` | `FinalizeGameCardDriver` | — | Q | 2026-11-21 |
+| IDeviceOperator | `205` | `GetGameCardAttribute` | — | Q | 2026-11-21 |
+| IDeviceOperator | `206` | `GetGameCardDeviceCertificate` | — | Q | 2026-11-21 |
+| IDeviceOperator | `207` | `GetGameCardAsicInfo` | — | Q | 2026-11-21 |
+| IDeviceOperator | `208` | `GetGameCardIdSet` | — | Q | 2026-11-21 |
+| IDeviceOperator | `209` | `WriteToGameCardDirectly` | — | Q | 2026-11-21 |
+| IDeviceOperator | `210` | `SetVerifyWriteEnalbleFlag` | — | Q | 2026-11-21 |
+| IDeviceOperator | `211` | `GetGameCardImageHash` | — | Q | 2026-11-21 |
+| IDeviceOperator | `212` | `GetGameCardDeviceIdForProdCard` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `213` | `EraseAndWriteParamDirectly` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `214` | `ReadParamDirectly` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `215` | `ForceEraseGameCard` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `216` | `GetGameCardErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `217` | `GetGameCardErrorReportInfo` | 2.1.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `218` | `GetGameCardDeviceId` | 3.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `219` | `ChallengeCardExistence` | 8.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `220` | `GetGameCardCompatibilityType` | 9.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `300` | `SetSpeedEmulationMode` | — | Q | 2026-11-21 |
+| IDeviceOperator | `301` | `GetSpeedEmulationMode` | — | Q | 2026-11-21 |
+| IDeviceOperator | `400` | `SuspendSdmmcControl` | 5.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `401` | `ResumeSdmmcControl` | 5.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `402` | `GetSdmmcConnectionStatus` | 6.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `500` | `SetDeviceSimulationEvent` | 6.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `501` | `ClearDeviceSimulationEvent` | 6.0.0+ | Q | 2026-11-21 |
+| IEventNotifier | `0` | `GetEventHandle` | — | Q | 2026-11-21 |
+| ISaveDataTransferManager | `0` | `GetChallenge` | — | Q | 2026-11-21 |
+| ISaveDataTransferManager | `16` | `SetToken` | — | Q | 2026-11-21 |
+| ISaveDataTransferManager | `32` | `OpenSaveDataExporter` | — | Q | 2026-11-21 |
+| ISaveDataTransferManager | `64` | `OpenSaveDataImporter` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `0` | `GetChallenge` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `16` | `SetKeyPackage` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `80` | `OpenSaveDataExporterAndGetEncryptedKey` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `81` | `PrepareOpenSaveDataImporter` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `90` | `OpenSaveDataImporter` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `91` | `OpenSaveDataImporter2` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `100` | `OpenSaveDataExporterWithKey` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerForSaveDataRepair | `110` | `OpenSaveDataImporterWithKey` | — | Q | 2026-11-21 |
+| ISaveDataExporter | `0` | `GetSaveDataInfo` | — | Q | 2026-11-21 |
+| ISaveDataExporter | `1` | `GetRestSize` | — | Q | 2026-11-21 |
+| ISaveDataExporter | `16` | `Pull` | — | Q | 2026-11-21 |
+| ISaveDataExporter | `17` | `PullInitialData` | — | Q | 2026-11-21 |
+| ISaveDataImporter | `0` | `GetSaveDataInfo` | — | Q | 2026-11-21 |
+| ISaveDataImporter | `1` | `GetRestSize` | — | Q | 2026-11-21 |
+| ISaveDataImporter | `16` | `Push` | — | Q | 2026-11-21 |
+| ISaveDataImporter | `17` | `Finalize` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `0` | `GetChallenge` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `16` | `SetKeySeedPackage` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `32` | `OpenSaveDataExporter` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `33` | `OpenSaveDataExporterForDiffExport` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `34` | `OpenSaveDataExporterByContext` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `64` | `OpenSaveDataImporter` | 5.0.0-5.1.0 | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `65` | `OpenSaveDataImporterForDiffImport` | — | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `66` | `OpenSaveDataImporterForDuplicateDiffImport` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `67` | `OpenSaveDataImporter` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `68` | `OpenSaveDataImporterByContext` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataTransferManagerWithDivision | `69` | `CancelSuspendingImport` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `0` | `SetDivisionCount` | — | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `1` | `GetSaveDataInfo` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `16` | `OpenSaveDataDiffChunkIterator` | — | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `48` | `OpenSaveDataChunkExporter` | — | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `64` | `FinalizeFullExport` | 6.0.0-8.1.0 | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `65` | `FinalizeDiffExport` | 6.0.0-8.1.0 | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `66` | `CancelExport` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `67` | `SuspendExport` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `70` | `GetKeySeed` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `71` | `GetInitialDataMac` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `72` | `FinalizeExport` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `73` | `GetInitialDataMacKeyGeneration` | 9.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `80` | `GetImportInitialDataAad` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `81` | `SetExportInitialDataAad` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionExporter | `96` | `GetReportInfo` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `0` | `GetSaveDataInfo` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `16` | `OpenSaveDataDiffChunkIterator` | — | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `32` | `InitializeImport` | — | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `33` | `FinalizeImport` | — | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `34` | `CancelImport` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `35` | `GetImportContext` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `36` | `SuspendImport` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `48` | `OpenSaveDataChunkImporter` | — | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `64` | `GetImportInitialDataAad` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataDivisionImporter | `80` | `GetReportInfo` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataChunkIterator | `0` | `Next` | — | Q | 2026-11-21 |
+| ISaveDataChunkIterator | `1` | `IsEnd` | — | Q | 2026-11-21 |
+| ISaveDataChunkIterator | `16` | `GetId` | — | Q | 2026-11-21 |
+| ISaveDataChunkExporter | `0` | `Pull` | — | Q | 2026-11-21 |
+| ISaveDataChunkExporter | `16` | `GetRestRawDataSize` | 6.0.0+ | Q | 2026-11-21 |
+| ISaveDataChunkImporter | `0` | `Push` | — | Q | 2026-11-21 |
+| IMultiCommitManager | `1` | `Add` | — | Q | 2026-11-21 |
+| IMultiCommitManager | `2` | `Commit` | — | Q | 2026-11-21 |
+
 <!-- NS1_IPC_APPEND -->

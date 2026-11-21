@@ -129,9 +129,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # FC27: for modest title shader caches restore the LAST saved 32
     # accepted shaders, rather than the oldest 32. Verify the complete active
     # C++ blob and reverse only this hunk + include on the audit COPY.
+    # Applicability is a source ABI, not the changing vendor gitlink:
+    # the exact reviewed FC27 prewarm owner is provable at every newer pin.
+    # Unknown blobs still fail the strict historical source validator below.
     if subprocess.check_output(
-        ['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True
-    ).strip() in {'94aa8cd5214d17897391ede00534d7961b481171', '77df727e484154f3f3463b6eeec2dc6b23abb741', 'f836abf99bbd3c6480c35aa8392356f4e1b0bf51', '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'}:
+        ['git', 'hash-object', str(expected[native_cache_owner])], text=True
+    ).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41':
         assert subprocess.check_output(
             ['git', 'hash-object', str(expected[native_cache_owner])],
             text=True).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41'

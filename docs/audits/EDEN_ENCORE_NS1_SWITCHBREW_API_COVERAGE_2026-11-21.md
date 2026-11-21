@@ -1,5 +1,7 @@
 # NS1 — Catalogue des fonctions Horizon / SwitchBrew et couverture Eden Encore
 
+> **ANNEXE D'INDEXATION, NON CANONIQUE.** Le [registre fonctionnel NS1 SwitchBrew](./EDEN_ENCORE_NS1_SWITCHBREW_FUNCTION_COVERAGE_REGISTER_2026-11-21.md) reste **l'unique source de vérité** pour les statuts validés, le propriétaire CMake réel, les preuves hôte/PS5 et l'état des tâches. Ce fichier annexe conserve les lignes du miroir SwitchBrew pour faciliter la recherche par numéro/nom. Ses codes D/P/Q sont des **présomptions statiques sur les sources Eden de base**, jamais des preuves que le runtime actif est correct ou manquant.
+
 **Vérification documentaire : 2026-11-21 (Europe/Paris).** Branche `opt/ns1-fc27-runtime-20261121` ; **couple runtime pris comme référence** : moteur `5bef0df2b23f650b470659e928e3682cf2db3916` → vendor/gitlink `b8883667410054db189d00b3a5144088f47d3af9` ; les commits ultérieurs de ce fichier sont uniquement documentaires. Aucun résultat de console PS5 n'est déduit de cette table.
 
 > **Portée** : liste des entrées de la table SVC du miroir SwitchBrew consulté, index des familles IPC et 4 786 lignes de commandes extraites de 54 pages du miroir. Les codes D/P/Q reflètent une **analyse statique limitée** : les commandes doivent encore être rapprochées du C++ réellement sélectionné et du firmware NS1. Une déclaration/registration ne signifie jamais « implémenté ».

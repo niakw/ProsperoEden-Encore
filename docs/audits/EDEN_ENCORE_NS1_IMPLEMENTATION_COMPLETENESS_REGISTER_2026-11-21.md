@@ -332,3 +332,221 @@ Provenance : [`not_implemented.cpp` actif](https://github.com/niakw/Prospero.Ede
 **Garde matériel B0B5** : [vendor `0de8460`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/0de8460fbb05e598cf3be4299b9f5cb994a1bd52) rejette explicitement les valeurs de composantes et largeurs non représentables (1–4 par champ) avant la boucle de sélecteurs, dans les deux chemins pitch et GOB. Ce garde a été motivé par une alerte GCC `-O2 -Werror=array-bounds` sur le C++ réel extrait ; le test hôte a ensuite validé l'ensemble des quatre couples compilateur/optimisation, et vérifie que les valeurs malformées ne provoquent aucune écriture guest.
 
 **Reste ouvert** : rendu 3D/layers `origin_z` et `block_depth`, tailles >16 Mio pour ce fallback CPU, configurations GOB autres que la forme flat prise en charge, copies mono-ligne de pages block-linear, accélération GPU performante, résultats sur GMMU fragmentée/alias caches et conformité PS5 de FC27. Les 74 contrôles du registre sont des contrats, **pas** 74 bugs ni une affirmation NS1 terminée.
+
+
+## Revue croisée exhaustive nxnative NS1 — 21 novembre 2026
+
+**Source figée :** [nxnative `4c278799`](https://github.com/seedds/nxnative/commit/4c278799abb448077bd7b64685c39555e2d61215), [index `dm/games/README.md`](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/README.md). Les **187 fiches NS1** de l'index ont été ouvertes et leurs sections « Found on this game » / « Open » / correctifs relues, ainsi que les **deux sous-programmes NS1** de Super Mario 3D All-Stars : Super Mario 64 `010049900F546001` et Sunshine `010049900F546002`. **189 notes NS1 analysées**, 19 profils NS2 strictement exclus. Référence nxnative = autre architecture (Apple / Metal / réécriture NSO), **aucune preuve de bug PS5 en soi**. L'index n'est pas une exécution de 189 jeux sur notre console.
+
+### Décisions transversales — par mécanisme, pas par jeu
+
+| Famille | Priorité | Titres d'observation nxnative (exemples) | Portée pour Eden Encore | Action justifiée |
+|---|---|---|---|---|
+| **SHD-01 — handles, sampler, CBUF et bindless** | P1 | FC27, Civilization VI, The Witcher 3, DAVE THE DIVER, DRAGON QUEST I/II/VII, Mario Party Superstars, Ghost Trick, Super Mario RPG, Persona. | Les fiches documentent des handles composés de deux mots (texture/sampler), des tables c2 au-delà de 32 entrées, des handles conservés sous une garde/phi, et des slots de samplers distincts. L'erreur FC27 « index de matrice << 4 pris pour un handle » est spécifique à la passe C# nxnative : la passe C++ active `global_memory_to_storage_buffer_pass.cpp` n'emploie pas `TryUnwrapHandle`, ce que couvre déjà `vendor/tests/fc27_storage_offset_current_host.py`. En revanche les cas de phi et tables de samplers des autres jeux ne sont pas tous qualifiés sur PS5. | Comparer les décodeurs des handles Maxwell et `texture_pass.cpp` actif au cas de l'exécution, sans déduire la complétude d'un simple plafonnement de 1024. |
+| **GFX-02 — copies, cache, alias, depth/stencil et GOB** | P1/P0 image noire | FC27, The Great Ace Attorney Chronicles, Link's Awakening, Persona 5 Royal, Xenoblade 2/3, Yoshi's Crafted World, Paper Mario, Bloodstained, Mario Golf. | nxnative a identifié copies du plan D32S8↔D32, images mises à jour sans flush, écriture GPU sur stockage compressé, feedback dans la même passe, vues et transferts de textures sparse/GOB, clears masqués, modifications de textures après binding. Notre branche a déjà D32 et plusieurs familles DMA/GMMU, mais la fidélité de toutes les vues et l'accélération texture→texture restent non validées PS5. | Vérifier la fraîcheur effective des ressources GPU, le contenu stencil, les barrières et l'ordre BufferCache/TextureCache ; ne pas réintroduire de publication différée sans rollback étudié. |
+| **GFX-03 — fragments, couleurs entières, blend dual-source, alpha et profondeur** | P1 | Pokémon Legends Arceus, Kirby Star Allies, Super Mario RPG, Civilization VII, ASTRAL CHAIN, Dark Souls, Bayonetta 3, Xenoblade Chronicles 2. | Les problèmes couvrent des sorties de fragment signées/non signées vers RT entiers, SRC1/second color output, alpha-test et depth mode GL/zero, commandes logiques et NaN. Le runtime actuel possède un état `attachment0_dual_source_blend`, l'information `dual_source_blend` du pipeline et la traduction SPIR-V ; **cela ne prouve pas la fidélité de chaque programme**. Min/max NaN sont abordés séparément sur la même branche par un commit concurrent, ne pas le doubler. | Qualifier les types et index SPIR-V des sorties de fragments contre les formats/règles Vulkan puis comparer avec les images guest ; pas de changement massif sans tests. |
+| **PERF-04 — first-use shaders/pipelines et présentation** | P1 | FC27, Diablo III, Need for Speed: Hot Pursuit, Breath of the Wild, Tears of the Kingdom, Dark Souls, SteamWorld Dig, Hades, Metroid Dread. | Les notes distinguent les longues frames du jeu, les first-use pipelines, les attentes de fences, le temps de soumission et le coût CPU. FC27 chez nxnative n'a **aucune liste de préwarm PSO** ; son cache de shaders extrait n'est pas un cache de pipelines Vulkan prêt à charger. Sur notre ancienne PS5 du 20/11, 700 misses shader et 45 waits pipeline restent la preuve à suivre : une partie seulement des pauses leur est attribuable. | Priorité au même scénario FC27, p50/p95/p99 et pauses >100 ms, CPU traduction, worker wait et GPU submit ; pas d'augmentation au hasard de la queue des workers. |
+| **HLE-05 — SVC, services, audio et événements** | P0/P1 | FC27, FF Tactics, Bloodstained: Curse of the Moon, Fire Emblem Engage, Red Dead Redemption, Mega Man Legacy Collection, Super Mario Odyssey, Hollow Knight Silksong, Well Dweller. | Les fiches couvrent les attentes auto-clear et ordonnancement des threads, profils d'audio 44,1 kHz, plusieurs renderers audio, commandes HLE/SDK anciennes et nouvelles, HID historiques/gestures, couche VI et modules NRO. FC27 requiert `vi::CreateLayer` de SDK 22. Les conditions d'attente observées sur Mac ne constituent pas directement une défaillance du kernel PS5/NS1. | Comparer les IDs de commandes et structures IPC SwIPC/firmware actif et les traces PS5 avant tout correctif HLE global. |
+| **MEM-06 — régions virtuelles, pools et mémoire GPU** | P0 | 13 Sentinels, FC27, Scarlet/Violet, Unicorn Overlord, Dragon Quest XI, Batman Arkham Knight, Pikmin 4, Super Smash Bros, Yoshi's Crafted World. | Beaucoup de correctifs nxnative concernent le remplacement d'allocateurs et les limites d'alias virtuels sur macOS/iOS ; **ne pas transférer** ces coupes de NSO vers l'émulateur PS5, dont l'ABI de mémoire est différente. Les symptômes génériques utiles sont : taille des régions, alignement, allocateurs non initialisés, fragmentation d'adresse, absence de backings et OOM réel. | Vérifier GuestMemory/AddressRegionManager et les mappings effectifs dans les logs/SHAs PS5, sans inventer un budget d'alias propre à Apple. |
+| **MEDIA-07 — vidéo et audio/synchronisation** | P1 | AI: THE SOMNIUM FILES, Advance Wars, Kirby Star Allies, Red Dead Redemption, Mario vs. Donkey Kong, Persona 4 Golden, LEGO Star Wars, FINAL FANTASY CRYSTAL CHRONICLES. | Observations générales : H.264 EOS et flush, formats NV12 et matrice de couleur, VP8/Bink/CRI, stéréos, sorties multiples, événements d'images, cadence de lecture et underruns. Les formats et codecs exacts diffèrent ; chaque résolution doit être remontée vers un décodeur/IPC commun, jamais un Title ID. | Comparer les callbacks/queues AudioOut et Movie/HLE au code actif sur un log console caractéristique. |
+| **API-08 — chemins GL/Vulkan hors NVN** | P1/P0 selon jeu | Balatro, Digimon Cyber Sleuth, DOOM 3, Hades, Minecraft, Re:ZERO, Mario Galaxy 1/2, UnMetal, Slay the Spire et les sous-programmes de 3D All-Stars. | Le corpus comporte 174 profils NVN, 7 OpenGL, 5 Vulkan et un profil mixte ; les problèmes de GLSL, EGL, Vulkan 1.1 et JIT d'anciens systèmes ne sont pas tous des commandes Maxwell/NVN. **Ne pas projeter leur correctif Metal sur le chemin NVN1**. | Ranger la preuve par API réellement initialisée et source CMake correspondante ; no-op code inactif interdit. |
+
+**Compatibilité existante :** sur la branche actuelle, les corrections Maxwell ATOM.CAS, `texture_pass.cpp` (handle dynamique et sampler secondaire), B0B5/DMA/GMMU, D32S8↔D32 et le traitement de plusieurs classes de shaders existent en **source** ; ne pas les recloner depuis nxnative. Les 96 contrôles du document daté du 20/11 ne sont pas 96 anomalies démontrées. **Absence de vérification :** aucun des 189 jeux ci-dessous n'a été exécuté sur la PS5 à l'occasion de cette revue ; les conclusions moteur doivent toujours être rapportées à deux SHAs et à une capture représentative. Ne pas construire un correctif « par jeu » dans Eden.
+
+### Index contrôlé — tous les profils NS1 du corpus
+
+Le lien de chaque cellule renvoie vers la fiche propre au jeu (logs, corrections et limites de validation). Le type graphique est celui de nxnative, **pas** une confirmation d'exécution dans Eden Encore.
+
+| # | Title ID | Profil NS1 / fiche source | API nxnative |
+|---:|---|---|---|
+| 1 | `01003FC01670C000` | [13 Sentinels: Aegis Rim](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01003FC01670C000/README.md) | NVN |
+| 2 | `01008D7016438000` | [13 Sentinels: Aegis Rim, Asian release](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008D7016438000/README.md) | NVN |
+| 3 | `010045C014650000` | [13 Sentinels: Aegis Rim, Japanese release](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010045C014650000/README.md) | NVN |
+| 4 | `0100A83022A22000` | [Absolum](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A83022A22000/README.md) | NVN |
+| 5 | `010005501E68C000` | [Ace Attorney Investigations Collection](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010005501E68C000/README.md) | NVN |
+| 6 | `0100300012F2A000` | [Advance Wars 1+2: Re-Boot Camp](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100300012F2A000/README.md) | NVN |
+| 7 | `010089B00D09C000` | [AI: THE SOMNIUM FILES](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010089B00D09C000/README.md) | NVN |
+| 8 | `01007300020FA000` | [ASTRAL CHAIN](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007300020FA000/README.md) | NVN |
+| 9 | `0100713016CCC000` | [AI: THE SOMNIUM FILES - nirvanA Initiative](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100713016CCC000/README.md) | NVN |
+| 10 | `010020D01AD24000` | [ANIMAL WELL](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010020D01AD24000/README.md) | NVN |
+| 11 | `01006F8002326000` | [Animal Crossing: New Horizons](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01006F8002326000/README.md) | NVN |
+| 12 | `0100199023B2E000` | [Atelier Ryza: Ever Darkness & the Secret Hideout DX](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100199023B2E000/README.md) | NVN |
+| 13 | `01002CD00A51C000` | [Baba Is You](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01002CD00A51C000/README.md) | NVN |
+| 14 | `010086A022444000` | [BALL x PIT](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010086A022444000/README.md) | NVN |
+| 15 | `0100CD801CE5E000` | [Balatro](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100CD801CE5E000/README.md) | OpenGL |
+| 16 | `010038600B27E000` | [Bastion](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010038600B27E000/README.md) | NVN |
+| 17 | `0100ACD0163D0000` | [Batman: Arkham Knight](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100ACD0163D0000/README.md) | NVN |
+| 18 | `010076F0049A2000` | [Bayonetta](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010076F0049A2000/README.md) | NVN |
+| 19 | `01007960049A0000` | [Bayonetta 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007960049A0000/README.md) | NVN |
+| 20 | `01004A4010FEA000` | [Bayonetta 3](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01004A4010FEA000/README.md) | NVN |
+| 21 | `01009BC00C38A000` | [The Binding of Isaac: Rebirth](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01009BC00C38A000/README.md) | NVN |
+| 22 | `0100620012D6E000` | [Big Brain Academy: Brain vs. Brain](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100620012D6E000/README.md) | NVN |
+| 23 | `0100698009C6E000` | [Blasphemous](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100698009C6E000/README.md) | NVN |
+| 24 | `010040801A4C8000` | [Blasphemous 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010040801A4C8000/README.md) | NVN |
+| 25 | `01004B800AF5A000` | [Bloodstained: Curse of the Moon](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01004B800AF5A000/README.md) | NVN |
+| 26 | `01004680124E6000` | [Bloodstained: Curse of the Moon 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01004680124E6000/README.md) | NVN |
+| 27 | `0100BF500207C000` | [Bloodstained: Ritual of the Night](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100BF500207C000/README.md) | NVN |
+| 28 | `010064800F66A000` | [Borderlands: Game of the Year Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010064800F66A000/README.md) | NVN |
+| 29 | `0100F5D01DA3A000` | [Brain Memory Training Academy](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100F5D01DA3A000/README.md) | NVN |
+| 30 | `0100DBF01000A000` | [Burnout Paradise Remastered](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100DBF01000A000/README.md) | NVN |
+| 31 | `01009BF0072D4000` | [Captain Toad: Treasure Tracker](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01009BF0072D4000/README.md) | NVN |
+| 32 | `0100BA4026E94000` | [Castlevania: Belmont's Curse](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100BA4026E94000/README.md) | NVN |
+| 33 | `0100BF00112C0000` | [Catherine: Full Body](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100BF00112C0000/README.md) | NVN |
+| 34 | `01002B30028F6000` | [Celeste](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01002B30028F6000/README.md) | NVN |
+| 35 | `0100C510166F0000` | [Chained Echoes](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100C510166F0000/README.md) | NVN |
+| 36 | `0100777022394000` | [Cozy Land](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100777022394000/README.md) | NVN |
+| 37 | `01002E7016C46000` | [Cult of the Lamb](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01002E7016C46000/README.md) | NVN |
+| 38 | `0100A5C00D162000` | [Cuphead](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A5C00D162000/README.md) | NVN |
+| 39 | `01004AB00A260000` | [DARK SOULS: REMASTERED](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01004AB00A260000/README.md) | NVN |
+| 40 | `010097F018538000` | [DAVE THE DIVER](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010097F018538000/README.md) | NVN |
+| 41 | `0100646009FBE000` | [Dead Cells](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100646009FBE000/README.md) | NVN |
+| 42 | `0100726014352000` | [Diablo II: Resurrected](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100726014352000/README.md) | NVN |
+| 43 | `01001B300B9BE000` | [Diablo III: Eternal Collection](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01001B300B9BE000/README.md) | NVN |
+| 44 | `010014E00DB56000` | [Digimon Story Cyber Sleuth: Complete Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010014E00DB56000/README.md) | OpenGL |
+| 45 | `010027400CDC6000` | [Divinity: Original Sin 2 - Definitive Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010027400CDC6000/README.md) | NVN |
+| 46 | `01009D901BC56000` | [Donkey Kong Country Returns HD](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01009D901BC56000/README.md) | NVN |
+| 47 | `0100C1F0051B6000` | [Donkey Kong Country: Tropical Freeze](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100C1F0051B6000/README.md) | NVN |
+| 48 | `010029D00E740000` | [DOOM 3](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010029D00E740000/README.md) | OpenGL |
+| 49 | `010035F022078000` | [DRAGON BALL: Sparking! ZERO](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010035F022078000/README.md) | NVN |
+| 50 | `010042000A986000` | [DRAGON QUEST BUILDERS 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010042000A986000/README.md) | NVN |
+| 51 | `0100D7C01F254000` | [DRAGON QUEST I & II HD-2D Remake](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D7C01F254000/README.md) | NVN |
+| 52 | `01003E601E324000` | [DRAGON QUEST III HD-2D Remake](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01003E601E324000/README.md) | NVN |
+| 53 | `0100A9D01C446000` | [DRAGON QUEST VII Reimagined](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A9D01C446000/README.md) | NVN |
+| 54 | `01006C300E9F0000` | [DRAGON QUEST XI S: Echoes of an Elusive Age – Definitive Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01006C300E9F0000/README.md) | NVN |
+| 55 | `0100C49025D3E000` | [EA SPORTS FC 27](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100C49025D3E000/README.md) | NVN |
+| 56 | `0100D440269E8000` | [Farming Simulator 26: Nintendo Switch Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D440269E8000/README.md) | NVN |
+| 57 | `0100CE4010AAC000` | [FINAL FANTASY CRYSTAL CHRONICLES Remastered Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100CE4010AAC000/README.md) | NVN |
+| 58 | `0100606026F12000` | [FINAL FANTASY RESONANCE](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100606026F12000/README.md) | NVN |
+| 59 | `0100B8A026F14000` | [FINAL FANTASY RESONANCE, Asian release](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100B8A026F14000/README.md) | NVN |
+| 60 | `010038B015560000` | [FINAL FANTASY TACTICS - The Ivalice Chronicles](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010038B015560000/README.md) | NVN |
+| 61 | `0100AA201415C000` | [FINAL FANTASY V](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100AA201415C000/README.md) | NVN |
+| 62 | `0100AA001415E000` | [FINAL FANTASY VI](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100AA001415E000/README.md) | NVN |
+| 63 | `0100BC300CB48000` | [FINAL FANTASY X/X-2 HD Remaster](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100BC300CB48000/README.md) | NVN |
+| 64 | `0100EB100AB42000` | [FINAL FANTASY XII THE ZODIAC AGE](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100EB100AB42000/README.md) | NVN |
+| 65 | `01001C8016B4E000` | [FIFA 23 Legacy Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01001C8016B4E000/README.md) | NVN |
+| 66 | `0100A6301214E000` | [Fire Emblem Engage](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A6301214E000/README.md) | NVN |
+| 67 | `010055D009F78000` | [Fire Emblem: Three Houses](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010055D009F78000/README.md) | NVN |
+| 68 | `010029B018432000` | [Ghost Trick: Phantom Detective](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010029B018432000/README.md) | NVN |
+| 69 | `0100535012974000` | [Hades](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100535012974000/README.md) | Vulkan |
+| 70 | `0100A00019DE0000` | [Hades II](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A00019DE0000/README.md) | NVN |
+| 71 | `0100633007D48000` | [Hollow Knight](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100633007D48000/README.md) | NVN |
+| 72 | `010013C00E930000` | [Hollow Knight: Silksong](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010013C00E930000/README.md) | NVN |
+| 73 | `01002B00111A2000` | [Hyrule Warriors: Age of Calamity](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01002B00111A2000/README.md) | NVN |
+| 74 | `0100AE00096EA000` | [Hyrule Warriors: Definitive Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100AE00096EA000/README.md) | NVN |
+| 75 | `01004D300C5AE000` | [Kirby and the Forgotten Land](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01004D300C5AE000/README.md) | NVN |
+| 76 | `0100A8E016236000` | [Kirby's Dream Buffet](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A8E016236000/README.md) | NVN |
+| 77 | `01007E3006DDA000` | [Kirby Star Allies](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007E3006DDA000/README.md) | NVN |
+| 78 | `0100830004FB6000` | [L.A. Noire](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100830004FB6000/README.md) | NVN |
+| 79 | `010042D00D900000` | [LEGO Star Wars: The Skywalker Saga](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010042D00D900000/README.md) | NVN |
+| 80 | `0100DCA0064A6000` | [Luigi's Mansion 3](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100DCA0064A6000/README.md) | NVN |
+| 81 | `01006D0017F7A000` | [Mario & Luigi: Brothership](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01006D0017F7A000/README.md) | NVN |
+| 82 | `0100C9C00E25C000` | [Mario Golf: Super Rush](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100C9C00E25C000/README.md) | NVN |
+| 83 | `0100152000022000` | [Mario Kart 8 Deluxe](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100152000022000/README.md) | NVN |
+| 84 | `010067300059A000` | [Mario + Rabbids Kingdom Battle](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010067300059A000/README.md) | NVN |
+| 85 | `0100317013770000` | [Mario + Rabbids Sparks of Hope](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100317013770000/README.md) | NVN |
+| 86 | `01006FE013472000` | [Mario Party Superstars](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01006FE013472000/README.md) | NVN |
+| 87 | `0100B99019412000` | [Mario vs. Donkey Kong](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100B99019412000/README.md) | NVN |
+| 88 | `01002D4007AE0000` | [Mega Man Legacy Collection](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01002D4007AE0000/README.md) | OpenGL |
+| 89 | `0100D4900E82C000` | [Metro 2033 Redux](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D4900E82C000/README.md) | NVN |
+| 90 | `010093801237C000` | [Metroid Dread](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010093801237C000/README.md) | NVN |
+| 91 | `010019A01E2F2000` | [Metroid Prime 4: Beyond](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010019A01E2F2000/README.md) | NVN |
+| 92 | `010012101468C000` | [Metroid Prime Remastered](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010012101468C000/README.md) | NVN |
+| 93 | `0100A7C01B792000` | [Minecraft Dungeons II](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A7C01B792000/README.md) | NVN |
+| 94 | `0100D71004694000` | [Minecraft for Nintendo Switch](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D71004694000/README.md) | Vulkan |
+| 95 | `0100B04011742000` | [Monster Hunter Rise](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100B04011742000/README.md) | NVN |
+| 96 | `010051701FB46000` | [Monster Train 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010051701FB46000/README.md) | NVN |
+| 97 | `010029B0118E8000` | [Need for Speed: Hot Pursuit Remastered](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010029B0118E8000/README.md) | NVN |
+| 98 | `010056B015FE8000` | [NieR:Automata The End of YoRHa Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010056B015FE8000/README.md) | NVN |
+| 99 | `0100B8E016F76000` | [NieR:Automata The End of YoRHa Edition, Asian release](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100B8E016F76000/README.md) | NVN |
+| 100 | `010057D006492000` | [OCTOPATH TRAVELER](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010057D006492000/README.md) | NVN |
+| 101 | `01005270232F2000` | [Octopath Traveler 0](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01005270232F2000/README.md) | NVN |
+| 102 | `0100A3501946E000` | [OCTOPATH TRAVELER II](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A3501946E000/README.md) | NVN |
+| 103 | `0100276009872000` | [ŌKAMI HD](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100276009872000/README.md) | NVN |
+| 104 | `010061D00DB74000` | [Ori and the Blind Forest: Definitive Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010061D00DB74000/README.md) | NVN |
+| 105 | `01008DD013200000` | [Ori and the Will of the Wisps](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008DD013200000/README.md) | NVN |
+| 106 | `0100F28011892000` | [Overcooked! All You Can Eat](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100F28011892000/README.md) | NVN |
+| 107 | `0100A3900C3E2000` | [Paper Mario: The Origami King](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A3900C3E2000/README.md) | NVN |
+| 108 | `0100ECD018EBE000` | [Paper Mario: The Thousand-Year Door](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100ECD018EBE000/README.md) | NVN |
+| 109 | `0100E44016C22000` | [Patrick's Parabox](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100E44016C22000/README.md) | NVN |
+| 110 | `010062B01525C000` | [Persona 4 Golden](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010062B01525C000/README.md) | NVN |
+| 111 | `01005CA01580E000` | [Persona 5 Royal](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01005CA01580E000/README.md) | NVN |
+| 112 | `0100801011C3E000` | [Persona 5 Strikers](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100801011C3E000/README.md) | NVN |
+| 113 | `010087701B092000` | [Persona 5 Tactica](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010087701B092000/README.md) | NVN |
+| 114 | `0100B7C00933A000` | [Pikmin 4](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100B7C00933A000/README.md) | NVN |
+| 115 | `0100000011D90000` | [Pokémon Brilliant Diamond](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100000011D90000/README.md) | NVN |
+| 116 | `01001F5010DFA000` | [Pokémon Legends: Arceus](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01001F5010DFA000/README.md) | NVN |
+| 117 | `0100F43008C44000` | [Pokémon Legends: Z-A](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100F43008C44000/README.md) | NVN |
+| 118 | `0100A3D008C5C000` | [Pokémon Scarlet](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A3D008C5C000/README.md) | NVN |
+| 119 | `01008DB008C2C000` | [Pokémon Shield](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008DB008C2C000/README.md) | NVN |
+| 120 | `0100ABF008968000` | [Pokémon Sword](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100ABF008968000/README.md) | NVN |
+| 121 | `01008F6008C5E000` | [Pokémon Violet](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008F6008C5E000/README.md) | NVN |
+| 122 | `01007BB017812000` | [Portal](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007BB017812000/README.md) | NVN |
+| 123 | `0100ABD01785C000` | [Portal 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100ABD01785C000/README.md) | NVN |
+| 124 | `01007A3009184000` | [Princess Peach: Showtime!](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007A3009184000/README.md) | NVN |
+| 125 | `010020400E1C2000` | [Raging Loop](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010020400E1C2000/README.md) | NVN |
+| 126 | `01005FF002E2A000` | [Rayman Legends: Definitive Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01005FF002E2A000/README.md) | NVN |
+| 127 | `0100D800117F4000` | [Re:ZERO -Starting Life in Another World- The Prophecy of the Throne](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D800117F4000/README.md) | Vulkan |
+| 128 | `01007820196A6000` | [Red Dead Redemption](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007820196A6000/README.md) | NVN |
+| 129 | `010050F00BC1A000` | [Resident Evil](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010050F00BC1A000/README.md) | NVN |
+| 130 | `010032E00E6E2000` | [Return of the Obra Dinn](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010032E00E6E2000/README.md) | NVN |
+| 131 | `0100D9F01D474000` | [Rhythm Heaven Groove](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D9F01D474000/README.md) | NVN |
+| 132 | `0100C2A01A730000` | [ROMANCE OF THE THREE KINGDOMS 8 REMAKE](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100C2A01A730000/README.md) | NVN |
+| 133 | `0100ED7012DB2000` | [ROMANCE OF THE THREE KINGDOMS XIV: Diplomacy and Strategy Expansion Pack](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100ED7012DB2000/README.md) | NVN |
+| 134 | `0100D5501857E000` | [Sam & Max: The Devil's Playhouse](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D5501857E000/README.md) | NVN |
+| 135 | `01008C0016544000` | [Sea of Stars](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008C0016544000/README.md) | NVN |
+| 136 | `010069C01AB82000` | [SHIN MEGAMI TENSEI V: Vengeance](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010069C01AB82000/README.md) | NVN |
+| 137 | `010044500C182000` | [Sid Meier's Civilization VI](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010044500C182000/README.md) | NVN |
+| 138 | `0100C3601518C000` | [Sid Meier's Civilization VII](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100C3601518C000/README.md) | NVN |
+| 139 | `0100D5B026844000` | [Silver Pines](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100D5B026844000/README.md) | NVN |
+| 140 | `010026300BA4A000` | [Slay the Spire](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010026300BA4A000/README.md) | OpenGL |
+| 141 | `01008F701C074000` | [Sonic Superstars](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008F701C074000/README.md) | NVN |
+| 142 | `01008BC024FDE000` | [STEINS;GATE RE:BOOT](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008BC024FDE000/README.md) | NVN |
+| 143 | `0100E65002BB8000` | [Stardew Valley](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100E65002BB8000/README.md) | NVN |
+| 144 | `01009320084A4000` | [SteamWorld Dig](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01009320084A4000/README.md) | NVN |
+| 145 | `0100CA9002322000` | [SteamWorld Dig 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100CA9002322000/README.md) | NVN |
+| 146 | `010089C01E9CA000` | [SteamWorld Heist II](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010089C01E9CA000/README.md) | NVN |
+| 147 | `010016100A186000` | [SteamWorld Heist: Ultimate Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010016100A186000/README.md) | NVN |
+| 148 | `0100EC9010258000` | [Streets of Rage 4](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100EC9010258000/README.md) | NVN |
+| 149 | `0100429011144000` | [Subnautica](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100429011144000/README.md) | NVN |
+| 150 | `010014C011146000` | [Subnautica: Below Zero](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010014C011146000/README.md) | NVN |
+| 151 | `010049900F546000` | [Super Mario 3D All-Stars](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010049900F546000/README.md) | NVN, Vulkan |
+| 152 | `010028600EBDA000` | [Super Mario 3D World + Bowser's Fury](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010028600EBDA000/README.md) | NVN |
+| 153 | `010015100B514000` | [Super Mario Bros. Wonder](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010015100B514000/README.md) | NVN |
+| 154 | `010099C022B96000` | [Super Mario Galaxy](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010099C022B96000/README.md) | Vulkan |
+| 155 | `0100FD8022DAA000` | [Super Mario Galaxy 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100FD8022DAA000/README.md) | Vulkan |
+| 156 | `0100000000010000` | [Super Mario Odyssey](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100000000010000/README.md) | NVN |
+| 157 | `0100965017338000` | [Super Mario Party Jamboree](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100965017338000/README.md) | NVN |
+| 158 | `0100BC0018138000` | [Super Mario RPG](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100BC0018138000/README.md) | NVN |
+| 159 | `010031F019294000` | [Super Monkey Ball Banana Rumble](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010031F019294000/README.md) | NVN |
+| 160 | `01008D300C50C000` | [Super Nintendo Entertainment System – Nintendo Classics](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008D300C50C000/README.md) | NVN |
+| 161 | `010063301BD50000` | [SUPER ROBOT WARS Y](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010063301BD50000/README.md) | NVN |
+| 162 | `01006A800016E000` | [Super Smash Bros. Ultimate](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01006A800016E000/README.md) | NVN |
+| 163 | `0100346017304000` | [Taiko Risshiden V DX](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100346017304000/README.md) | NVN |
+| 164 | `010092B0091D0000` | [Team Sonic Racing](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010092B0091D0000/README.md) | NVN |
+| 165 | `010036E00FB20000` | [The Great Ace Attorney Chronicles](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010036E00FB20000/README.md) | NVN |
+| 166 | `01007EF00011E000` | [The Legend of Zelda: Breath of the Wild](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007EF00011E000/README.md) | NVN |
+| 167 | `01008CF01BAAC000` | [The Legend of Zelda: Echoes of Wisdom](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008CF01BAAC000/README.md) | NVN |
+| 168 | `01006BB00C6F0000` | [The Legend of Zelda: Link's Awakening](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01006BB00C6F0000/README.md) | NVN |
+| 169 | `01002DA013484000` | [The Legend of Zelda: Skyward Sword HD](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01002DA013484000/README.md) | NVN |
+| 170 | `0100F2C0115B6000` | [The Legend of Zelda: Tears of the Kingdom](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100F2C0115B6000/README.md) | NVN |
+| 171 | `01008D9022462000` | [The Rogue Prince of Persia](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008D9022462000/README.md) | NVN |
+| 172 | `0100A0800E9C4000` | [The Witcher 3: Wild Hunt — Complete Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100A0800E9C4000/README.md) | NVN |
+| 173 | `01007A2027548000` | [Trails in the Sky 2nd Chapter](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01007A2027548000/README.md) | NVN |
+| 174 | `0100CC80140F8000` | [TRIANGLE STRATEGY](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100CC80140F8000/README.md) | NVN |
+| 175 | `010057A01E4D4000` | [TSUKIHIME A piece of blue glass moon](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010057A01E4D4000/README.md) | NVN |
+| 176 | `0100DA801624E000` | [TUNIC](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100DA801624E000/README.md) | NVN |
+| 177 | `0100CD701434C000` | [Twelve Minutes](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100CD701434C000/README.md) | NVN |
+| 178 | `010069401ADB8000` | [Unicorn Overlord](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010069401ADB8000/README.md) | NVN |
+| 179 | `010054B01AD92000` | [Unicorn Overlord, Asian release](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010054B01AD92000/README.md) | NVN |
+| 180 | `01008F4014A74000` | [UnMetal](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01008F4014A74000/README.md) | OpenGL |
+| 181 | `0100CAA026246000` | [Warhammer Survivors](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100CAA026246000/README.md) | NVN |
+| 182 | `0100217023F6C000` | [Well Dweller](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100217023F6C000/README.md) | OpenGL |
+| 183 | `0100FF500E34A000` | [Xenoblade Chronicles: Definitive Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100FF500E34A000/README.md) | NVN |
+| 184 | `0100E95004038000` | [Xenoblade Chronicles 2](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100E95004038000/README.md) | NVN |
+| 185 | `010074F013262000` | [Xenoblade Chronicles 3](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010074F013262000/README.md) | NVN |
+| 186 | `0100453019AA8000` | [Xenoblade Chronicles X: Definitive Edition](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/0100453019AA8000/README.md) | NVN |
+| 187 | `01006000040C2000` | [Yoshi's Crafted World](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/01006000040C2000/README.md) | NVN |
+| 188 | `010049900F546001` | [Super Mario 64 (programme 1 de 3D All-Stars)](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010049900F546001/README.md) | Vulkan |
+| 189 | `010049900F546002` | [Super Mario Sunshine (programme 2 de 3D All-Stars)](https://github.com/seedds/nxnative/blob/4c278799abb448077bd7b64685c39555e2d61215/dm/games/010049900F546002/README.md) | Vulkan |
+
+**Périmètre vérifiable :** 187 fiches principales de Title ID commençant par `010`, + deux sous-programmes de 3D All-Stars ; profils `040` exclus, même lorsqu'un jeu NS2 partage un moteur avec NS1. La [bibliothèque technique existante](../EDEN_ENCORE_BIBLIOTHEQUE_TECHNIQUE_NS1_NS2_2026-11-20.md) conserve les études d'architecture ; cette section ne les remplace ni ne les réinvente.

@@ -274,9 +274,13 @@ if selected in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f
         if shipping_vendor_pin in {"bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c"}:
             expected = {
                 "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
-                    "24096d0848b560d5e7befe979ecaebd1dcc730ae",
+                    ("81bac0bb0c1be0be6ed0aca81931fc593b948044"
+                     if shipping_vendor_pin == "4e6a966508e718d02526d4d220e112591536f28c"
+                     else "24096d0848b560d5e7befe979ecaebd1dcc730ae"),
                 "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
-                    "4e7a4fd77cd96ff650edfc74f6a841b266ca2152",
+                    ("d78aaea83009616131bcaf68bfb67fd12fe2e575"
+                     if shipping_vendor_pin == "4e6a966508e718d02526d4d220e112591536f28c"
+                     else "4e7a4fd77cd96ff650edfc74f6a841b266ca2152"),
             }[relative]
         assert actual == expected, ("NS2 GPFIFO wait admission source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
@@ -639,6 +643,15 @@ def reviewed_blob(relative, expected):
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "2aa6d526e7c876d11adc180f546935503be54a4a",
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "e6223aa74605e50aab30e1fd0a0bf8f3b75c4ecf",
             "tests/ns2_gpu_identity_mapping_source.py": "0572833e4e63c5fe7af728c66beea7df53e4219e",
+        })
+    if shipping_vendor_pin == "4e6a966508e718d02526d4d220e112591536f28c":
+        successor_exact.update({
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+                "8b22d4e16ba0e3d0e73cc3af9faace2447d3fd9b",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+                "81bac0bb0c1be0be6ed0aca81931fc593b948044",
+            "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+                "d78aaea83009616131bcaf68bfb67fd12fe2e575",
         })
     if relative in successor_exact:
         return successor_exact[relative]

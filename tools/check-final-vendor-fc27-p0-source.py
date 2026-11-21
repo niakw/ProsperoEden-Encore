@@ -525,7 +525,7 @@ def reviewed_blob(relative, expected):
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h": "8b0cfe00cf9f6f450e69cbf4d55ee84336d4d0b8",
             "tests/ns2_syncpt_bootstrap_source.py": "688f868e999a707557852730996888c8d6234e56",
         })
-    if shipping_vendor_pin in {"4411fc172eef84080ab7de23158349bbe7d08f88", "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d"}:
+    if shipping_vendor_pin in {"4411fc172eef84080ab7de23158349bbe7d08f88", "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0"}:
         successor_exact.update({
             "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "8f2ebf9bbf9c23284a0f9e7b788b571485c1135d",
             "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "2d424fb67dc984c1af3a1ee1a0d46c59f704bddf",

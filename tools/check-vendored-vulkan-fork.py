@@ -255,7 +255,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             '6e0bf7ab2a3a2147f9db0c630070db30d9b35d56',
             'f18e79dfece6eba3e4984b3ec0645abbfe1760e1',
             (
-                ("    FenceManager fence_manager;\n\n#ifdef PS5_NATIVE\n",
+                ("    FenceManager fence_manager;\n\n\n#ifdef PS5_NATIVE\n",
                  "    FenceManager fence_manager;\n\n    vk::Event wfi_event;\n\n#ifdef PS5_NATIVE\n"),
             ),
         ),

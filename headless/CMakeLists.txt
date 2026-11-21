@@ -2336,21 +2336,29 @@ if(PS5_NATIVE)
         "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/cdma_pusher.h")
     set(EDEN_HOST1X_NVDEC_SOURCE
         "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/nvdec.cpp")
+    set(EDEN_HOST1X_CONTROL_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/control.cpp")
+    set(EDEN_HOST1X_CONTROL_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/control.h")
     foreach(eden_host1x_required IN ITEMS
         "${EDEN_HOST1X_CDMA_SOURCE}"
         "${EDEN_HOST1X_CDMA_HEADER}"
-        "${EDEN_HOST1X_NVDEC_SOURCE}")
+        "${EDEN_HOST1X_NVDEC_SOURCE}"
+        "${EDEN_HOST1X_CONTROL_SOURCE}"
+        "${EDEN_HOST1X_CONTROL_HEADER}")
         if(NOT EXISTS "${eden_host1x_required}")
             message(FATAL_ERROR "Missing maintained Host1x CDMA worker owner: ${eden_host1x_required}")
         endif()
     endforeach()
     set(EDEN_HOST1X_CDMA_ABI_ROOT "${PORT_BUILD_DIR}/host1x-cdma-abi")
-    file(MAKE_DIRECTORY "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core")
+    file(MAKE_DIRECTORY "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core/host1x")
     configure_file("${EDEN_HOST1X_CDMA_HEADER}"
         "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core/cdma_pusher.h" COPYONLY)
+    configure_file("${EDEN_HOST1X_CONTROL_HEADER}"
+        "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core/host1x/control.h" COPYONLY)
     target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_CDMA_ABI_ROOT}")
     target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_CDMA_ABI_ROOT}")
-    foreach(eden_host1x_original IN ITEMS cdma_pusher.cpp host1x/nvdec.cpp)
+    foreach(eden_host1x_original IN ITEMS cdma_pusher.cpp host1x/nvdec.cpp host1x/control.cpp)
         list(FIND video_sources "${eden_host1x_original}" eden_host1x_original_index)
         if(eden_host1x_original_index EQUAL -1)
             message(FATAL_ERROR "Original Host1x source moved: ${eden_host1x_original}")
@@ -2358,7 +2366,8 @@ if(PS5_NATIVE)
         list(REMOVE_ITEM video_sources "${eden_host1x_original}")
     endforeach()
     list(APPEND video_sources
-        "${EDEN_HOST1X_CDMA_SOURCE}" "${EDEN_HOST1X_NVDEC_SOURCE}")
+        "${EDEN_HOST1X_CDMA_SOURCE}" "${EDEN_HOST1X_NVDEC_SOURCE}"
+        "${EDEN_HOST1X_CONTROL_SOURCE}")
     message(STATUS "Host1x: quiescent CDMA worker and bounded NVDEC owner selected")
 endif()
 # Native N04: avoid invoking an already-ready Host1x callback under guard.
@@ -2374,7 +2383,7 @@ endif()
 # ABI. Select its matching pinned vendor header for ALL native consumers.
 # Keep this root narrow: only the Host1x syncpoint manager header is copied.
 set(EDEN_MAINTAINED_HOST1X_HEADER
-    "${PORT_ROOT}/vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h")
+    "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h")
 if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_HEADER}")
     message(FATAL_ERROR "Missing reviewed native Host1x syncpoint ABI header")
 endif()

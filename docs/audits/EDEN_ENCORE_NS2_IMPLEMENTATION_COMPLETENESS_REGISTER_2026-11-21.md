@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `205c6a3572955c3d8002f5faca68d6ce1359817c` |
+| Vendor gitlink sélectionné | `bfb9d4da9c0f3811924738311fc2c6056e0e4dcb` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -292,19 +292,20 @@ Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Le
 | Cmd | Nom SwitchBrew | Statut | Handler Encore | Écart / raison |
 | --- | --- | --- | --- | --- |
 | 11 | GetEventIdRange | C | GetNotificationRange | actif |
-| 12 | CreateEvent | C | GetNotificationEvent | actif; nom interne différent |
+| 12 | CreateEvent | C | GetNotificationEvent | libounce réel : handle HIPC MOVE ; référence de transfert distincte, event de service conservé |
 | 21 | RequestKUserWorkerSession | C | RequestWorker | transport worker réel |
-| 22 | GetKUserWorkerSession | C | AcquireWorker | transport worker réel |
+| 22 | GetKUserWorkerSession | C | AcquireWorker | libounce réel : KClientSession HIPC MOVE ; référence de service conservée |
 | 33 | CreateGpuAddressSpace | C | CreateAddressSpace | AS réel |
 | 41 | CreateGraphicsDevice | C | CreateGraphicsDevice | actif |
 | 42 | DestroyGraphicsDevice | C | DestroyGraphicsDevice | actif |
 | 102 | (nom inconnu) | U | — | ID SwitchBrew sans contrat public suffisant |
 | 200 | SynchronizeGpuAddressSpace | C | SynchronizeGpuAddressSpace | ajouté et host qualifié |
 | 201 | GetUserPartitionGpuAddress | C | GetUserPartition | actif |
-| 202 | GetGsvPartitionGpuAddress | C | GetGsvPartition | actif |
+| 202 | GetGsvPartitionGpuAddress | C | GetGsvPartition | ABI libounce 16 B `{first,last}` ; partition GSV vide = `UINT64_MAX,0` |
+| 203 | GetVmUserRanges (libounce/Ounce) | C | GetVaRange | 72 B exacts : `count=1` + 4 ranges ; `[0x08000000,0xBFFFFFFFFF]` inclusif puis trois ranges nuls |
 
 
-**Extension Encore non publiée dans la table SwitchBrew consultée** : commande `203 GetVaRange`. Elle doit rester identifiée comme extension/contrat local jusqu’à recoupement upstream supplémentaire.
+**Recoupement client libounce/OunceVK** : cmd 203 est désormais qualifié par un consommateur réel : `gsvGpuGetVmUserRanges` lit `u64 count + GsvGpuVaRange[4]` (72 B), et OunceVK exige un unique range `[0x08000000,0xBFFFFFFFFF]` avant l’import AS.
 
 ## 7. KUserWorkerSession / nn::gpuk::impl::kuser
 
@@ -374,6 +375,10 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0x40040007 | NVHOST_IOCTL_CHANNEL_SET_SUBMIT_TIMEOUT | M | — | pas de case sélectionné |
 | 0xC0080023 | NVHOST_IOCTL_CHANNEL_GET_CLK_RATE | M | — | pas de case sélectionné |
 | 0xC018480C | NVGPU_IOCTL_CHANNEL_SET_ERROR_NOTIFIER | C | SetErrorNotifier | S2: état interne Switch; mem non nul initialise, mem=0 désinitialise; offset/size ignorés; aucun faux backing NvMap |
+| 0x0000480E | NVGPU_IOCTL_CHANNEL_ENABLE | C | NativeChannelSetEnabled | état runnable natif partagé avec TSG |
+| 0x0000480F | NVGPU_IOCTL_CHANNEL_DISABLE | C | NativeChannelSetEnabled | bloque réellement les submits natifs |
+| 0x00004810 | NVGPU_IOCTL_CHANNEL_PREEMPT | M | fail-closed | préemption GPU réelle absente |
+| 0x00004811 | NVGPU_IOCTL_CHANNEL_FORCE_RESET | M | fail-closed | reset GPU réel absent |
 | 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | P | NativeEventIdControl | Ounce exact: 16 B {cmd,id,u64=0}, appel observé {enable,2,0}; QueryEvent 1/2/3 configurés et clear réel, IDs 4..6 → NotImplemented faute de producteurs |
 | 0xC0104813 | NVGPU_IOCTL_CHANNEL_CYCLE_STATS_SNAPSHOT | M | — | pas de handler |
 | 0x40084714 | NVGPU_IOCTL_CHANNEL_SET_USER_DATA | C | SetClientData | actif |
@@ -392,7 +397,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; réponse ABI S2 80 B corrigée (`gpfifo_gpu_va`/`userd_gpu_va`/`usermode_mmio_gpu_va`/`hw_channel_id`); USERD/doorbell explicitement NotImplemented |
 
 
-**P0 actuel** : la voie observée ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure `0xC008481F`, installe l'état d'erreur Switch, active `0x40104812 EVENT_ID_CONTROL` puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le pin vendor `205c6a35` conserve les `flags` natifs `flags=6` dans la réponse GPFIFO2 et implémente l'appel Ounce réel `{cmd=enable,id=2,reserved=0}` au lieu de tomber en `NotImplemented`. Les IDs 4..6 restent fail-closed faute de producteurs d'événements correspondants. Le mode USERD/doorbell de `0xC0504821` reste **P** faute de preuve d'usage. La prochaine preuve décisive reste console : vérifier si MKW passe enfin de `gpu_submit_sample=0` à la première soumission invitée.
+**P0 actuel** : le bootstrap Ounce est désormais couvert au niveau source depuis les handles GSV/VM jusqu’à `SUBMIT_GPFIFO2` : cmd 12/22 utilisent HIPC MOVE, cmd 203 renvoie le tableau VM 72 B exact, `flags=6` est conservé dans la réponse GPFIFO2 et l’état runnable reflète le bind Ampere réel. NVIDIA `nvgpu_channel_setup_bind → ga10b_channel_bind → nvgpu_channel_enable` confirme qu’Ounce n’a pas besoin d’un ENABLE explicite avant le premier submit ; les ENABLE/DISABLE explicites channel/TSG modifient ensuite ce même état. Pin actif : `bfb9d4da`. USERD/doorbell reste **P** faute de preuve d’usage. La prochaine preuve décisive reste console : première vraie soumission puis `guest_frame_handoff`.
 
 ## 11. NVDRV — /dev/nvhost-tsg-gpu
 
@@ -400,8 +405,8 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | --- | --- | --- | --- | --- |
 | 0xC0045401 | NVGPU_TSG_IOCTL_BIND_CHANNEL | C | BindTsgChannel | owner process vérifié |
 | 0xC0045402 | NVGPU_TSG_IOCTL_UNBIND_CHANNEL | C | Unbind | actif |
-| 0x00005403 | NVGPU_TSG_IOCTL_ENABLE | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, scheduling/runlist enable réel absent |
-| 0x00005404 | NVGPU_TSG_IOCTL_DISABLE | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, scheduling/runlist disable réel absent |
+| 0x00005403 | NVGPU_TSG_IOCTL_ENABLE | C | SetTsgEnabled | propage l’état runnable aux channels authentifiés ; rollback transactionnel |
+| 0x00005404 | NVGPU_TSG_IOCTL_DISABLE | C | SetTsgEnabled | désactive le même état partagé et bloque les submits |
 | 0x00005405 | NVGPU_TSG_IOCTL_PREEMPT | M | TsgIoctl fail-closed | cas connu explicite; `// not implemented yet on Encore`, préemption GPU réelle absente |
 | 0xC0085407 | NVGPU_TSG_IOCTL_SET_RUNLIST_INTERLEAVE | P | ConfigureTsgScheduling | Ounce exact; LOW/MEDIUM/HIGH validés et retenus avant bind; après bind → NotImplemented faute de runlist reload réel |
 | 0xC0045408 | NVGPU_TSG_IOCTL_SET_TIMESLICE | P | ConfigureTsgScheduling | Ounce exact; 1000..50000 µs validés/retenus avant bind; après bind → NotImplemented faute de runlist reload réel |
@@ -412,11 +417,11 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC008540D | NVGPU_TSG_IOCTL_SET_L2_SECTOR_PROMOTION | M | TsgIoctl fail-closed | Ounce exact; cas connu explicite; `// not implemented yet on Encore`, politique cache L2 par TSG absente |
 
 
-Les commandes `ENABLE/DISABLE/PREEMPT` ne doivent surtout pas être converties en `Success` vide : elles modifient l’état du scheduler/runlist et peuvent provoquer un blocage GPU silencieux si elles sont faussement acquittées.
+ENABLE/DISABLE ne sont plus des `Success` vides : ils modifient l’état runnable partagé channel/TSG et conditionnent réellement `SubmitGPFIFOImpl`. PREEMPT reste fail-closed tant qu’une frontière de préemption GPU réelle n’est pas modélisée.
 
 **Preuve Ounce TSG (21/11)** : `libnvrm_gpu` émet réellement `0xC0085407` pour l'interleave, `0xC0045408` pour la timeslice et `0x8004540A` pour le getter. NVIDIA valide interleave 0/1/2 et timeslice 1000..50000 µs; tant que le TSG n'est pas lié à une runlist, son driver ne fait que stocker ces valeurs. Encore reproduit uniquement cette phase sûre. `0xC008540D` touche la politique L2 et reste explicitement non implémenté.
 
-Les six commandes TSG encore classées **M** ci-dessus sont désormais des ABI **connues et explicitement routées** vers `NotImplemented`; elles ne tombent plus dans un défaut générique. Leur statut reste M parce que leur effet runtime (scheduler, préemption, événement, erreur SM ou politique L2) n'est pas encore réellement modélisé.
+Les quatre commandes TSG encore classées **M** sont explicitement fail-closed : PREEMPT, EVENT_ID_CTRL, READ_SINGLE_SM_ERROR_STATE et SET_L2_SECTOR_PROMOTION. Le reload interleave/timeslice après bind reste **P** séparément.
 
 ## 12. NVDRV — /dev/nvhost-prof-dev-gpu
 
@@ -445,8 +450,8 @@ SwitchBrew publie aussi des ioctls S2 `/dev/nvhost-dbg-gpu` dont plusieurs n’o
 
 ## 14. Écarts structurels les plus importants à traiter
 
-1. **P0 GPU submission** : qualifier d'abord la séquence réellement observée OunceVK `CHANNEL_OPEN → AS/TSG bind → ALLOC_GPFIFO_EX2 → GET_USER_SYNCPOINT → objet/notifier/préemption → SUBMIT_GPFIFO2`. Le mode CTA demandé avant le premier submit est maintenant admis. `SET_ERROR_NOTIFIER 0xC018480C` reste un faux succès utilisé à supprimer. USERD/doorbell n'est à compléter que si un client retail le demande réellement.
-2. **TSG scheduler** : Ounce confirme les appels retail `0xC0085407 SET_RUNLIST_INTERLEAVE`, `0xC0045408 SET_TIMESLICE`, `0x8004540A GET_TIMESLICE` et `0xC008540D SET_L2_SECTOR_PROMOTION`. Interleave/timeslice sont maintenant sûrs **avant bind** et le getter est complet; il reste à modéliser le reload de runlist post-bind, puis `ENABLE/DISABLE/PREEMPT`, event control et L2 policy.
+1. **P0 GPU submission** : la séquence Ounce observée est couverte au niveau source des handles GSV/VM jusqu’à `SUBMIT_GPFIFO2`. Priorité suivante : qualification PS5 MKW/Bananza et correction du **premier écart runtime réellement observé**, pas USERD/doorbell sans preuve.
+2. **TSG scheduler** : ENABLE/DISABLE partagent maintenant l’état runnable réel avec le channel. Interleave/timeslice sont sûrs avant bind et le getter est complet ; restent reload post-bind, PREEMPT, event TSG, erreur SM et politique L2.
 3. **GSV GPU** : la revue Ounce a confirmé **423**, **434** et **498**. Le seul point encore ambigu ici est **437** : le nom public existe, mais le SDK observé réalise le chemin `CreateNativeMemoryWithGpukMemHandle` via raw `0x1B7` → TIPC 423; ne pas créer un handler 437 sans paquet raw `0x1C5` prouvé.
 4. **Vidéo** : décodeur largement couvert ; `210 remote-memory` manque. **Encodeur** pratiquement absent, et les IDs UserSession `1001/1002` sont raccordés à un chemin qui ressemble encore au décodeur.
 5. **Display** : six IDs publiés sans sémantique suffisante restent U.

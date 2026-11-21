@@ -96,8 +96,10 @@ REVIEWED_PINS.add("20cb62f1be572c8063ce4162d3227c8784a1e5ff")
 REVIEWED_PINS.add("19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba")
 REVIEWED_PINS.add("76a225552c296686cd1022584d73decd46767f75")
 REVIEWED_PINS.add("205c6a3572955c3d8002f5faca68d6ce1359817c")
+REVIEWED_PINS.add("bfb9d4da9c0f3811924738311fc2c6056e0e4dcb")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
 
 # OunceVK configures native 3D channels with H:0x1F {graphics=0, compute=2}
@@ -156,6 +158,42 @@ NS2_CHANNEL_EVENT_BLOBS = {
     "tests/ns2_gpu_identity_mapping_source.py":
         "fe85d136c6c8f2fbea00c6809ab48241f57b7e38",
 }
+# Current P0 successor over the already-reviewed 205c6a35 graph. It adds
+# libounce HIPC MOVE worker/event replies, the exact 72-byte VM user-range
+# table, real channel/TSG enable-disable state, and Ampere runnable-on-bind.
+NS2_P0_BOOTSTRAP_PIN = "bfb9d4da9c0f3811924738311fc2c6056e0e4dcb"
+NS2_P0_BOOTSTRAP_BLOBS = {
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp":
+        "09cbecdeef852a7e673025ff026881a88a6e490e",
+    "tests/ns2_gpu_partition_new_sdk_source.py":
+        "7306d167dc8f240b2a05818ce0e5fbbc0f91b114",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "a79e3ebd9e7a38f063bc2ab20da82ac5d7577b79",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "b7c8a75f283dcf2dc055e684bdde3e9dbee52303",
+    "sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h":
+        "fcf6d9a473a73d8d620c257c3a34e03729a9e616",
+    "sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h":
+        "ccc0647e3b76a40e8022a6da85d820fdd47820f8",
+    "sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp":
+        "a48e0ba56487374753c679e5637a26e0d3a0ab2a",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "0f158e58fc4a5b1f5e511327059a5e46fbcc77a4",
+    "tests/ns2_nvhost_unknown_node_fallback_source.py":
+        "bbaa5b78612aaae58b682253bb57ddc50f350695",
+}
+NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin == NS2_P0_BOOTSTRAP_PIN
+if selected == NS2_P0_BOOTSTRAP_PIN:
+    for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 current P0 bootstrap source drift", relative, actual)
+    # From here, replay the exact 205c6a35 predecessor graph. Keep
+    # actual_vendor_pin untouched for the final gitlink identity assertion.
+    selected = NS2_CHANNEL_EVENT_PIN
+    gitlink_vendor_pin = NS2_CHANNEL_EVENT_PIN
+    shipping_vendor_pin = NS2_CHANNEL_EVENT_PIN
+
 NS2_CHANNEL_EVENT_ACTIVE = gitlink_vendor_pin == NS2_CHANNEL_EVENT_PIN
 NS2_GPFIFO_FLAGS_ACTIVE = gitlink_vendor_pin in {
     NS2_GPFIFO_FLAGS_PIN, NS2_CHANNEL_EVENT_PIN,
@@ -169,6 +207,8 @@ NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:
+        return NS2_P0_BOOTSTRAP_BLOBS[relative]
     if NS2_CHANNEL_EVENT_ACTIVE:
         return NS2_CHANNEL_EVENT_BLOBS.get(relative, previous)
     if NS2_GPFIFO_FLAGS_ACTIVE:
@@ -184,7 +224,8 @@ if selected == NS2_CHANNEL_EVENT_PIN:
     for relative, expected in NS2_CHANNEL_EVENT_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 native channel event-control source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), (
+            "NS2 native channel event-control source drift", relative, actual)
     selected = NS2_GPFIFO_FLAGS_PIN
 
 if selected == NS2_GPFIFO_FLAGS_PIN:
@@ -784,6 +825,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:
+        return NS2_P0_BOOTSTRAP_BLOBS[relative]
     if NS2_CHANNEL_EVENT_ACTIVE and relative in NS2_CHANNEL_EVENT_BLOBS:
         return NS2_CHANNEL_EVENT_BLOBS[relative]
     if NS2_GPFIFO_FLAGS_ACTIVE and relative in NS2_GPFIFO_FLAGS_BLOBS:
@@ -1136,7 +1179,7 @@ def reviewed_blob(relative, expected):
     return expected
 
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert gitlink_vendor_pin==checked and selected in REVIEWED_PINS,(gitlink_vendor_pin,selected,checked)
+assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point
 # replay the predecessor's exact historical receipt graph for all unaffected
 # owners; otherwise reviewed_blob() sees the successor SHA and misses c74's

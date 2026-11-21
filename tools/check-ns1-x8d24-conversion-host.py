@@ -8,6 +8,7 @@ VENDOR = ROOT / "vendor"
 CPP = VENDOR / "encore-active/eden-vulkan/blit_image.cpp"
 HDR = VENDOR / "encore-active/eden-vulkan/include/video_core/renderer_vulkan/blit_image.h"
 TEX = VENDOR / "encore-active/eden-vulkan/vk_texture_cache_cost.cpp"
+CACHE = VENDOR / "encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
 CMAKE = ROOT / "headless/vulkan.cmake"
 COMMON = ROOT / "headless/x8d24_conversion.glsl"
 SHADERS = (
@@ -21,10 +22,12 @@ def git_blob(path: Path) -> str:
 assert git_blob(CPP) == "4ba93afb6594213d5bde82be2693f0e08cb1cd63"
 assert git_blob(HDR) == "a38cfcf655adcb8ceebfce955b39a2312a239768"
 assert git_blob(TEX) == "e9191238ccddd94aa22570eba501fb05fff5b207"
+assert git_blob(CACHE) == "5b3db278f70b560a098a2a479d3ee98e78b987f2"
 
 cpp = CPP.read_text()
 hdr = HDR.read_text()
 tex = TEX.read_text()
+cache = CACHE.read_text()
 cmake = CMAKE.read_text()
 common = COMMON.read_text()
 assert "DecodeX8D24" in common and "EncodeX8D24" in common
@@ -39,6 +42,10 @@ for token in (
 assert "case PixelFormat::X8_D24_UNORM:" in tex
 assert "return blit_image_helper.ConvertX8D24ToABGR8(dst, src_view);" in tex
 assert "return blit_image_helper.ConvertABGR8ToX8D24(dst, src_view);" in tex
+assert "alias_conversion_format" in cache
+assert "other_format == PixelFormat::X8_D24_UNORM" in cache
+assert "BytesPerBlock(format) == 4" in cache
+assert "const ImageViewInfo src_view_info(ImageViewType::e2D, src_format, src_range);" in cache
 assert "eden-ns1-x8d24-spv" in cmake
 assert "--target-env spirv1.3" in cmake
 assert "EDEN_NS1_ABGR8_TO_X8D24_HEADER" in cmake
@@ -66,4 +73,4 @@ if args.compile:
             subprocess.run(common_args + ["--variable-name", variable,
                                            "-o", str(header), str(source)], check=True)
             assert variable in header.read_text(), variable
-print("NS1_X8D24_CONVERSION_HOST_PASS owners=3 shaders=2 pinned_eden_immutable=1")
+print("NS1_X8D24_CONVERSION_HOST_PASS owners=4 shaders=2 color_alias32=1 pinned_eden_immutable=1")

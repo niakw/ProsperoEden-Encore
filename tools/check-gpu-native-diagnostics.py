@@ -127,6 +127,32 @@ assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 fermi_default = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
+
+# Native register method bounds were hardened after the pinned Eden source.
+# Reverse the two exact hunks only while proving historical source parity.
+fermi_direct_new = """    // Assertions can be soft in release. Reject the guest method before
+    // indexing the register file; an out-of-range write corrupts emulator state.
+    if (method >= Regs::NUM_REGS) {
+        ASSERT_MSG(false, "Invalid Fermi2D register, increase the size of the Regs structure");
+        return;
+    }
+    regs.reg_array[method] = method_argument;"""
+fermi_direct_old = """    ASSERT_MSG(method < Regs::NUM_REGS, "Invalid Fermi2D register, increase the size of the Regs structure");
+    regs.reg_array[method] = method_argument;"""
+fermi_sink_new = """    for (auto [method, value] : method_sink) {
+        if (method >= Regs::NUM_REGS) {
+            ASSERT_MSG(false, "Invalid deferred Fermi2D register");
+            continue;
+        }
+        regs.reg_array[method] = value;
+    }"""
+fermi_sink_old = """    for (auto [method, value] in method_sink) {
+        regs.reg_array[method] = value;
+    }""".replace(" in method_sink)", " : method_sink)")
+for reviewed, original in ((fermi_direct_new, fermi_direct_old),
+                           (fermi_sink_new, fermi_sink_old)):
+    assert fermi_default.count(reviewed) == 1, "Native Fermi register bounds source drift"
+    fermi_default = fermi_default.replace(reviewed, original, 1)
 # A soft assertion alone does not prevent the unsupported blit from
 # changing guest memory. Reverse only the exact reviewed fail-closed hunk
 # in this in-memory historical-source proof, never in the compiled owner.

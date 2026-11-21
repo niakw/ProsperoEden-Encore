@@ -27,7 +27,7 @@ def section(text, begin, end):
     assert end in text[i:], end
     return text[i:text.index(end, i)]
 
-coalesce = section(dma, "constexpr bool CanCoalescePitchDma(", "\n}\n} // namespace") + "\n}"
+coalesce = section(dma, "constexpr bool CanCoalescePitchDma(", "\n}\n\n// Remapped DMA lengths") + "\n}"
 launch = section(dma, "void MaxwellDMA::Launch() {", "\nvoid MaxwellDMA::CopyBlockLinearToPitch()")
 contig_start = "            u64 contiguous_bytes = 0;\n            if (CanCoalescePitchDma("
 contig_end = "        } else {\n            if (!is_src_pitch && is_dst_pitch)"

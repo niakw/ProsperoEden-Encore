@@ -2351,6 +2351,32 @@ target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI
 target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
+# Native Host1x FD safety: the guest-facing signed fd indexes a fixed
+# 1024-entry device array. Select exactly one maintained TU and matching
+# ABI-compatible public header; the pristine Eden sources are untouched.
+if(PS5_NATIVE)
+    set(EDEN_HOST1X_FD_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/host1x.cpp")
+    set(EDEN_HOST1X_FD_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/host1x.h")
+    if(NOT EXISTS "${EDEN_HOST1X_FD_SOURCE}" OR
+       NOT EXISTS "${EDEN_HOST1X_FD_HEADER}")
+        message(FATAL_ERROR "Missing maintained Host1x DeviceFD source/header pair")
+    endif()
+    set(EDEN_HOST1X_FD_ABI_ROOT "${PORT_BUILD_DIR}/host1x-device-abi")
+    file(MAKE_DIRECTORY "${EDEN_HOST1X_FD_ABI_ROOT}/video_core/host1x")
+    configure_file("${EDEN_HOST1X_FD_HEADER}"
+        "${EDEN_HOST1X_FD_ABI_ROOT}/video_core/host1x/host1x.h" COPYONLY)
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_FD_ABI_ROOT}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_FD_ABI_ROOT}")
+    list(FIND video_sources "host1x/host1x.cpp" eden_host1x_fd_old_source)
+    if(eden_host1x_fd_old_source EQUAL -1)
+        message(FATAL_ERROR "Original Host1x TU moved; requalify native source graph")
+    endif()
+    list(REMOVE_ITEM video_sources host1x/host1x.cpp)
+    list(APPEND video_sources "${EDEN_HOST1X_FD_SOURCE}")
+    message(STATUS "Host1x: bounded DeviceFD owner selected")
+endif()
 # N54: shared PS5 texture-cache scratch ownership, both guests. Only
 # transient CPU buffers over 64 MiB are retired on a completed TickFrame;
 # smaller NS1 scratch and resident GPU images retain their previous lifetime.

@@ -631,8 +631,8 @@ __EXACT_DESTRUCTOR_POISON_GUARD__
         // Existing teardown stage guards are separately tied to the
         // extracted selected source. These counters represent the real
         // FreeHandle/CloseSession actions whose guards were reviewed above.
-        if (!m_quarantined_nv_session) ++backing_retires;
-        if (!m_quarantined_nv_session) ++session_closes;
+    if (!m_quarantined_nv_session) ++backing_retires;
+    if (!m_quarantined_nv_session) ++session_closes;
     }
 };
 int main() {

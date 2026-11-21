@@ -229,6 +229,50 @@ def strip_post_r23_active_image_pages(text: str) -> str:
     return text
 
 
+def strip_gpu46_framebuffer_layer_source(text: str) -> str:
+    """Reverse only GPU-46's attachment-min layer policy from the Vulkan cache TU."""
+    current = "a12ef3892565ce80f17c30b3cb54fa337718ccff"
+    predecessor = "88c2221eae24b0b3c46e81dfdb27c3a833f77fc6"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-46 Vulkan texture source", blob)
+    for newer, older in (
+        ("    s32 num_layers = (std::numeric_limits<s32>::max)();",
+         "    s32 num_layers = 1;"),
+        ("        num_layers = (std::min)(num_layers, color_buffer->range.extent.layers);",
+         "        num_layers = (std::max)(num_layers, color_buffer->range.extent.layers);"),
+        ("        num_layers = (std::min)(num_layers, depth_buffer->range.extent.layers);",
+         "        num_layers = (std::max)(num_layers, depth_buffer->range.extent.layers);"),
+        ("    if (num_layers == (std::numeric_limits<s32>::max)()) {\n"
+         "        num_layers = 1;\n"
+         "    }\n"
+         "    layers = static_cast<u32>((std::max)(num_layers, 1));\n", ""),
+        ("        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+         "                                      layers, extent);",
+         "        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+         "                                      static_cast<u32>((std::max)(num_layers, 1)), extent);"),
+        ("    if (do_resolve_color) {\n"
+         "        for (size_t index = 0; index < NUM_RT; ++index) {",
+         "    if (do_resolve_color) {\n"
+         "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+         "        for (size_t index = 0; index < NUM_RT; ++index) {"),
+        ("    if (do_resolve_depth_stencil) {\n"
+         "        const VkFormat vk_format =",
+         "    if (do_resolve_depth_stencil) {\n"
+         "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+         "        const VkFormat vk_format ="),
+        ("    CreateVkFramebuffer(runtime, attachments, layers);",
+         "    CreateVkFramebuffer(runtime, attachments, static_cast<u32>((std::max)(num_layers, 1)));"),
+    ):
+        assert text.count(newer) == 1, ("GPU-46 texture source hunk drift", newer[:80])
+        text = text.replace(newer, older, 1)
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-46 Vulkan texture reversal did not restore exact predecessor")
+    print("ENCORE_NS1_GPU46_ASTC_TEXTURE_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
 def strip_gpu46_framebuffer_layer_header(text: str) -> str:
     """Reverse only GPU-46's private Framebuffer layer accessor/state for old ASTC receipts."""
     current = "6623a5d5164d4b09f1ea9089b62b7c5fdfdfaa05"
@@ -385,6 +429,7 @@ def normalized(root: Path) -> dict[str, str]:
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
         if name == "vk_texture_cache_cost.cpp":
+            text = strip_gpu46_framebuffer_layer_source(text)
             # The current vendor C++ is SHA-pinned before removing the newer
             # GPU-18 depth-plane semantics on this historical AUDIT COPY.
             if "mixed_d32_depth_plane" in text:

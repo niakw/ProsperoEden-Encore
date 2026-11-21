@@ -35,6 +35,14 @@ assert vulkan.count(fixed) == 1 and old not in vulkan
 assert 'set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_vulkan.cpp")' in cmake
 vulkan_body = start + vulkan.split(start, 1)[1].split(end, 1)[0]
 assert vulkan_body.count(fixed) == 1
+wait_body = vulkan.split("    void WaitForSyncOperation(const u64 fence) {", 1)[1].split(
+    "\n    void WaitForIdle()", 1)[0]
+for needle in ("shutting_down.load(std::memory_order_relaxed)",
+               "::Eden::PeekGpuFailure()",
+               "sync_request_cv.wait_for(lck, std::chrono::milliseconds(100))"):
+    assert needle in wait_body, needle
+assert wait_body.count("::Eden::PeekGpuFailure()") == 2
+assert "sync_request_cv.wait(lck, [this, fence]" not in wait_body
 assert "python3 -B tools/check-native-gpu-read-capture-host.py" in workflow
 
 cpp = r"""
@@ -149,4 +157,4 @@ with tempfile.TemporaryDirectory(prefix="encore-read-capture-") as tmp:
             assert broken.returncode != 0, "Original dangling capture was not detected"
             assert ("stack-use-after-return" in broken.stderr or
                     "stack-use-after-scope" in broken.stderr), broken.stderr
-print("NATIVE_GPU_READ_CAPTURE_HOST_PASS original_stack_use_after_return=1 native_callback_owns_range=1 vulkan_real_owner=1 normal_wait=1 preemptive_skip=1 sanitizer=address_undefined")
+print("NATIVE_GPU_READ_CAPTURE_HOST_PASS original_stack_use_after_return=1 native_callback_owns_range=1 vulkan_real_owner=1 failure_aware_wait=1 shutdown_exit=1 normal_wait=1 preemptive_skip=1 sanitizer=address_undefined")

@@ -32,6 +32,7 @@ on:
       - 'tools/check-native-dma-extent-host.py'
       - 'tools/check-native-dma-contiguous-host.py'
       - 'tools/check-native-dma-pitch-remap-host.py'
+      - 'tools/check-native-dma-tiled-remap-host.py'
       - 'vendor/encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h'
       - 'tools/check-native-gpu-dirty-transition-host.py'
       - 'tools/check-native-gpu-dirty-gather-host.py'
@@ -495,6 +496,7 @@ jobs:
           python3 -B tools/check-native-dma-extent-host.py
           python3 -B tools/check-native-dma-contiguous-host.py
           python3 -B tools/check-native-dma-pitch-remap-host.py
+          python3 -B tools/check-native-dma-tiled-remap-host.py
           python3 -B tools/check-native-gpu-dirty-transition-host.py
           python3 -B tools/check-native-gpu-dirty-gather-host.py
           # Compile the pinned PS5-selected vendor header with ASan/UBSan and

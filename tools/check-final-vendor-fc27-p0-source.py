@@ -52,8 +52,10 @@ REVIEWED_PINS.add("35d639ad802910cfabbaf46bdcfd48a0d2f09ab6")
 REVIEWED_PINS.add("f66969397724ab8467c3380ca9c6db1631f79bf3")
 REVIEWED_PINS.add("b6e3ecc6943118ba9d321ef5baca9f79b241961f")
 REVIEWED_PINS.add("99832a312b1281401c187f381f4826191387eb73")
+REVIEWED_PINS.add("258914fc564e223274728b409ee48e39465df7f6")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
+native_preemption_wfi_revision = selected == "258914fc564e223274728b409ee48e39465df7f6"
 # Preserve exact GSV source identity across historical receipt replays. The
 # real 1402 child is NS2-only and can precede GPU session 497; both C++
 # revisions fix the same compiled scoped-handle type.
@@ -74,10 +76,26 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # NvCore session are closed; then revoke its process epoch once. Keep the
 # exact new real owner/test blobs and replay the complete earlier reviewed
 # source graph for all unaffected units.
+# Switch 2 H:0x1F is 0xC008481F (preemption). Only WFI/WFI is
+# implemented by Encore's existing software GPU scheduler. Seal the
+# exact new NVDRV owner and focused regression, then replay all prior
+# receipts; every unrelated C++ file must retain its historical SHA.
+if native_preemption_wfi_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "f1fcf207091c51daca138341f275c700334a57aa"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "e03f39df1b9efceb398d0e34ebf60a5bf67211c3"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 channel preemption WFI owner drift", relative, actual)
+    selected = "99832a312b1281401c187f381f4826191387eb73"
+    original_vendor_pin = selected
 if selected == "99832a312b1281401c187f381f4826191387eb73":
     for relative, expected in (
         ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp", "b613ba93b07003570f206d66ace34d7a488e603d"),
-        ("tests/ns2_gpu_identity_mapping_source.py", "8deadd56ec6f12ae2f1da491337d694631f8e19f"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "e03f39df1b9efceb398d0e34ebf60a5bf67211c3" if native_preemption_wfi_revision else
+         "8deadd56ec6f12ae2f1da491337d694631f8e19f"),
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -120,8 +138,11 @@ if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629c
         ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.h", "fe45aa0e8e9943034cbf61e620ee132d33adf887"),
         ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp", "e74f82cd604ba8e60bc7b1005f60a92d66013563"),
         ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "fc921425b67b634b4aaeb2363dcabdf9b53b6be8"),
-        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "c0cc9b26f6af13d6e1a3b60d92a0dfabd93c51d1"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
+         "f1fcf207091c51daca138341f275c700334a57aa" if native_preemption_wfi_revision else
+         "c0cc9b26f6af13d6e1a3b60d92a0dfabd93c51d1"),
         ("tests/ns2_gpu_identity_mapping_source.py",
+         "e03f39df1b9efceb398d0e34ebf60a5bf67211c3" if native_preemption_wfi_revision else
          "8deadd56ec6f12ae2f1da491337d694631f8e19f" if native_worker_teardown_epoch else
          "d9ac33e7d4f83e7198b23f6ab48a0f57bf76a8c5" if worker_shutdown_guard else
          "fa8389fe2513f09133c5cdb14d662e65e83c79d4" if process_scoped_lease else

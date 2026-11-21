@@ -35,12 +35,22 @@ REVIEWED_PINS.add("7535dc9e5e7f0060b8e448da843f96882a2ce320")
 REVIEWED_PINS.add("f69176d429723da5d79251f6b858afc72c5d99e2")
 REVIEWED_PINS.add("4795f0a884c06f029c9d06a0a3d09cc0b9cfb791")
 REVIEWED_PINS.add("fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531")
+REVIEWED_PINS.add("86cbe7ac73a28dcd1e3cdc3609eafca1c7b5dc37")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# NS2 native VSMS mapping: one selected Ampere controller source changed.
+# Validate its exact compiled blob, then replay the unchanged TSG/FC27 receipts.
+if selected == "86cbe7ac73a28dcd1e3cdc3609eafca1c7b5dc37":
+    relative = "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"
+    raw = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "3124fe780213da7a62251829fb24bf30f1582b1a", ("Native VSMS GPU controller drift", actual)
+    selected = "fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531"
+    original_vendor_pin = selected
 # The revised native TSG driver adds process-checked bind/unbind ioctl
 # semantics and no longer acknowledges unimplemented TSG commands.
 # All five live source blobs must exactly match the reviewed vendor commit.

@@ -89,7 +89,7 @@ print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
 assert blob(ORIG_VIC)=="1a89f3de06981f95be9e5dc743a7c36b8ab6c4cf"
 if CAND_VIC.exists():
     assert CAND_SOURCE.is_file() and CAND_HEADER.is_file()
-    assert blob(CAND_VIC)=="fc13345d573a1ca2c59e0af5c33aa6f59eedbd62"
+    assert blob(CAND_VIC)=="0654943759ea879cd538d96edbb36f809fcd0bfe"
     vic_text=CAND_VIC.read_text()
     ff_text=CAND_SOURCE.read_text()
     assert vic_text.count("EDEN_NVDEC_STAGE stage=vic_input")==2
@@ -428,7 +428,7 @@ H1_CPP=V/"encore-active/eden-core/src/video_core/host1x/host1x.cpp"
 H1_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/host1x.h"
 H1_ORIG_CPP=V/"sources/eden/src/video_core/host1x/host1x.cpp"
 H1_ORIG_HDR=V/"sources/eden/src/video_core/host1x/host1x.h"
-assert blob(H1_CPP)=="cd14d3185352087de3eddb50e87cf5a36123c791"
+assert blob(H1_CPP)=="bc388b411cf0f90f979c62a2e268bebd7f4557c3"
 assert blob(H1_HDR)=="32663394994db47fcca82f3dd7682104dc880447"
 assert blob(H1_ORIG_CPP)=="590b0e0ff2f7d5f9f3771b07659afcbb49814863"
 assert blob(H1_ORIG_HDR)=="3b886a59d59763278d1c44b8b993d25f7260656d"
@@ -440,9 +440,11 @@ assert HS.count("devices[fd]")==2 and "devices[fd]" not in HH
 # The two StartDevice dispatches are reached only after the signed range guard.
 start="void Host1x::StartDevice("
 stop="void Host1x::StopDevice("
+now_dtor=HS[HS.index("Host1x::~Host1x()"):HS.index("\nvoid Host1x::StartDevice(")]
+old_dtor=OS[OS.index("Host1x::~Host1x()"):OS.index("\nvoid Host1x::StartDevice(")]
 now_start=HS[HS.index(start):HS.index("    switch (type) {",HS.index(start))]
 old_start=OS[OS.index(start):OS.index("    switch (type) {",OS.index(start))]
-assert HS.replace(now_start,old_start,1).replace(
+assert HS.replace(now_dtor,old_dtor,1).replace(now_start,old_start,1).replace(
     HS[HS.index(stop):],OS[OS.index(stop):],1)==OS
 push="    void PushEntries(s32 fd,"
 limit="\n    Core::System& system;"
@@ -458,7 +460,7 @@ for item in ("if(PS5_NATIVE)","list(FIND video_sources",
              "target_include_directories(core BEFORE PUBLIC"):
     assert item in cm_fragment,item
 assert cm_fragment.count("list(REMOVE_ITEM video_sources host1x/host1x.cpp)")==1
-source_methods=HS[HS.index(start):HS.index("} // namespace Tegra::Host1x")]
+source_methods=HS[HS.index("Host1x::~Host1x()"):HS.index("} // namespace Tegra::Host1x")]
 cpp=r"""
 #include <array>
 #include <cassert>
@@ -479,15 +481,18 @@ struct Nvdec {
     unsigned submits=0;
     Nvdec(Host1x&,s32 n,u32):fd(n){}
     void PushEntries(ChCommandHeaderList&& a) {submits+=unsigned(a.size());}
+    void Shutdown(){}
 };
 struct Vic {
     s32 fd;
     unsigned submits=0;
     Vic(Host1x&,s32 n,u32):fd(n){}
     void PushEntries(ChCommandHeaderList&& a) {submits+=unsigned(a.size());}
+    void Shutdown(){}
 };
 struct Host1x {
     std::array<std::variant<std::monostate,Nvdec,Vic>,1024> devices{};
+    ~Host1x();
     void StartDevice(s32,ChannelType,u32);
     void StopDevice(s32,ChannelType);
 __PUSH__
@@ -644,3 +649,36 @@ with tempfile.TemporaryDirectory(prefix="encore-nvdec-submit-") as temp:
 print("NS1_NVDEC_SUBMIT_PREFLIGHT_HOST_PASS packet=1 command=1 truncated=1 "
       "huge_counts=1 session=1 signed_words=1 handle_bounds=1 invalid_syncpoints=1 "
       "ASan_UBSan=1 O0_O2=2")
+
+
+# GPU-37/38: source-verified worker teardown and register method bounds.
+CDMA_CPP=V/"encore-active/eden-core/src/video_core/cdma_pusher.cpp"
+CDMA_HDR=V/"encore-active/eden-core/overrides/video_core/cdma_pusher.h"
+NVDEC_CPP=V/"encore-active/eden-core/src/video_core/host1x/nvdec.cpp"
+assert blob(CDMA_CPP)=="e6c17a6acb6949e9ab0d845d9032f9f14d467950"
+assert blob(CDMA_HDR)=="72338d9e2c07f2ebe019450c8b608df802738449"
+assert blob(NVDEC_CPP)=="c83ac98215fcf196ec8b2927ec9a421ddf95c9f7"
+assert blob(V/"sources/eden/src/video_core/cdma_pusher.cpp")=="d04b73877936b207fd5b8bd8b49ce41bbce67b0a"
+assert blob(V/"sources/eden/src/video_core/cdma_pusher.h")=="2ce827cdfec9b6c81f7cd6b91549895a67749d01"
+assert blob(V/"sources/eden/src/video_core/host1x/nvdec.cpp")=="5dbc6a417eaf34623101238d2a7ce014f097aee0"
+CDMA=CDMA_CPP.read_text()
+CDMA_HEADER=CDMA_HDR.read_text()
+NVDEC=NVDEC_CPP.read_text()
+VIC=CAND_VIC.read_text()
+HOST=H1_CPP.read_text()
+graph=CMAKE[CMAKE.index("# Native NS1 Host1x GPU-37/38:"):
+            CMAKE.index("# Native N04: avoid invoking")]
+for fragment in ("if(PS5_NATIVE)", "list(FIND video_sources",
+                 "list(REMOVE_ITEM video_sources", "list(APPEND video_sources",
+                 "configure_file(", "target_include_directories(video_core BEFORE PUBLIC"):
+    assert fragment in graph,fragment
+assert "cdma_pusher.cpp" in graph and "host1x/nvdec.cpp" in graph
+assert "void Shutdown();" in CDMA_HEADER
+assert "thread.get_stop_token().stop_requested()" in CDMA_HEADER
+assert "if (stop_token.stop_requested())" in CDMA
+assert "method >= ThiRegisters::NUM_REGS" in CDMA
+assert "method >= NvdecCommon::NvdecRegisters::NUM_REGS" in NVDEC
+assert "Shutdown();" in NVDEC[NVDEC.index("Nvdec::~Nvdec()"):NVDEC.index("void Nvdec::ProcessMethod")]
+assert "Shutdown();" in VIC[VIC.index("Vic::~Vic()"):VIC.index("void Vic::ProcessMethod")]
+assert HOST.count("->Shutdown();")==6
+assert CDMA.index("thread.request_stop();") < CDMA.index("command_cv.notify_all();") < CDMA.index("thread.join();")

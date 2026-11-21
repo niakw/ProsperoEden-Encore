@@ -7111,6 +7111,32 @@ apply_reviewed_delta(
     '        auto resources = resource_owner->BuildResourcePlan(*compiled.info);\n        if (!resources || !registry.IsComputeCurrent(kepler_compute, *ticket))\n            return false;\n        // The production Vulkan path must enforce the SAME authenticated\n        // atomic byte extents as the captured-QMD compiler. A successful\n        // SPIR-V module alone does not prove a dynamic atomic stays within\n        // its real, writable GMMU-backed SSBO. Reject before any image,\n        // descriptor or pipeline is allocated; never round the offset down.\n        if (!Shader::Ampere::NativeQmdAtomicSpansFitBindings(\n                std::span<const Shader::Ampere::NativeAtomicSpan>{\n                    compiled.native_atomic_spans.data(),\n                    compiled.native_atomic_spans.size()},\n                resources->storage_buffers))\n            return false;\n        // Match the authentic TIC/TSC handle order and write permissions\n',
     "P2.3 production native atomic span gate")
 
+# GPU-22: a DMA buffer-image transfer may resolve a GPU virtual span
+# to discontiguous device pages. The Vulkan cache accepts ONE physical
+# buffer allocation per ObtainBuffer: reject fragmented mappings and use
+# the existing page-aware MaxwellDMA software fallback instead. Unlike a
+# construction-time GMMU pointer, this reference follows channel binds.
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_rasterizer.h",
+    "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler);",
+    "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);",
+    "GPU-22 current-channel DMA image GMMU accessor declaration")
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_rasterizer.h",
+    "    BufferCache& buffer_cache;\n    TextureCache& texture_cache;\n    Scheduler& scheduler;\n};",
+    "    BufferCache& buffer_cache;\n    TextureCache& texture_cache;\n    Scheduler& scheduler;\n    // The GPU address space changes on channel binds. Reference the\n    // rasterizer's active pointer, not a stale construction-time channel.\n    Tegra::MemoryManager* const& gpu_memory;\n};",
+    "GPU-22 current-channel DMA image GMMU accessor owner")
+apply_reviewed_delta("vulkan_rasterizer.cpp",
+    "      accelerate_dma(buffer_cache, texture_cache, scheduler),",
+    "      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),",
+    "GPU-22 bound graphics channel GMMU in DMA constructor")
+apply_reviewed_delta("vulkan_rasterizer.cpp",
+    "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_} {}",
+    "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_, Tegra::MemoryManager* const& gpu_memory_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_},\n      gpu_memory{gpu_memory_} {}",
+    "GPU-22 DMA ctor tracks current channel GMMU")
+apply_reviewed_delta("vulkan_rasterizer.cpp",
+    "    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n    const auto image_id = texture_cache.DmaImageId(image_operand, IS_IMAGE_UPLOAD);",
+    "    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n#ifdef PS5_NATIVE\n    // ObtainBuffer translates only the first GPU VA into one CPU interval.\n    // A buffer spanning noncontiguous GMMU pages would upload/download\n    // unrelated physical memory. The normal MaxwellDMA CPU fallback\n    // supports a page-aware transfer for both image-copy directions.\n    // Test the channel currently bound to this rasterizer; no stale GMMU.\n    if (!gpu_memory ||\n        (!gpu_memory->IsGranularRange(buffer_operand.address, checked_bytes) &&\n         !gpu_memory->IsContinuousRange(buffer_operand.address, checked_bytes))) {\n        return false;\n    }\n#endif\n    const auto image_id = texture_cache.DmaImageId(image_operand, IS_IMAGE_UPLOAD);",
+    "GPU-22 DMA image GMMU continuity before cache mutation")
+
 # FC27/P0 native RunBuild lifetime is maintained in the real
 # encore-active Vulkan C++ owners, NOT in the immutable historical replay.
 # The pinned Eden generator predates RunBuild and cannot apply this delta.

@@ -790,6 +790,17 @@ if native_gpfifo_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf
     current_blob = hashlib.sha1(b"blob " + str(len(current_owner)).encode() + bytes([0]) + current_owner).hexdigest()
     assert current_blob == "dd30183f72a9a9dfc2a17700db263f85e4d77596", current_blob
     post_f07_native_gpfifo_owners.add(native_m2mf_owner)
+# New vendor revisions which change only generic NS2 HLE ABI still ship
+# the byte-identical NVK/M2MF owner. The historical pin table above is not
+# exhaustive: classify a PRESENT source by its exact reviewed Git blob,
+# rather than incorrectly asserting it was removed on every new vendor SHA.
+# Older snapshots without this path remain unchanged; source drift fails.
+if native_m2mf_owner in all_owners and native_m2mf_owner not in post_f07_native_gpfifo_owners:
+    raw = (ROOT / native_m2mf_owner).read_bytes()
+    current = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert current == "dd30183f72a9a9dfc2a17700db263f85e4d77596", (
+        "Unreviewed native M2MF owner", current)
+    post_f07_native_gpfifo_owners.add(native_m2mf_owner)
 assert post_f07_native_gpfifo_owners <= all_owners
 assert not post_f07_native_gpfifo_owners & research_owners
 assert post_f07_native_gpfifo_owners.isdisjoint(post_f07_ampere_semaphore_owners)

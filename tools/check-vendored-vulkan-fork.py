@@ -308,11 +308,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # The fail-closed FC27 draw fix is a single reviewed predicate change.
     # Reverse it only on the audit COPY, then replay the unchanged five-owner
     # attribute-source receipt and historical Vulkan oracle.
-    if exact_vendor_pin in {
-        '0c1bd95c896f6ddc7870a245ffca51b2ac7e2932',
-        'eadc6e798def18417e50db6a03a291440429d795',
-    }:
-        assert raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060', raster_sha
+    # This reversal is safe by complete source identity, not by the moving
+    # vendor gitlink. Later NS1 DMA / NS2 service commits do not edit this
+    # owner; the following five-owner receipt still rejects any real drift.
+    if raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060':
         source_before = ("    if (!source && !attribute_handle_source) {\n"
                          "        // Only legacy shaders without an explicit source may use the old lookup")
         source_after = ("    if (!source) {\n"

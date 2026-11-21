@@ -205,6 +205,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             ),
         ),
     }
+    gpu49_predecessor_paths={}
     for gpu49_name,(current_blob,predecessor_blob,edits) in gpu49_edits.items():
         raw=expected[gpu49_name].read_text()
         actual_blob=_gpu49_blob(raw)
@@ -219,8 +220,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             out.parent.mkdir(parents=True,exist_ok=True)
             out.write_text(normalized)
             expected[gpu49_name]=out
+            gpu49_predecessor_paths[gpu49_name]=out
         else:
             assert actual_blob == predecessor_blob, ("Unexpected GPU-49 owner",gpu49_name,actual_blob)
+            gpu49_predecessor_paths[gpu49_name]=expected[gpu49_name]
     print("ENCORE_NS1_GPU49_FRAGMENT_OUTPUT_EXACT_REVERSE_PASS owners=4")
 
     # GPU-47 is the framebuffer-limit subset of Lichii #427 only. Reverse its
@@ -2491,7 +2494,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # before the historical SHA256 and full-file reconstruction.
     raster_header = 'include/video_core/renderer_vulkan/vk_rasterizer.h'
     generated_header = normalized_generated[raster_header].read_text()
-    shipping_header = (active / raster_header).read_text()
+    shipping_header = gpu49_predecessor_paths[raster_header].read_text()
     assert git_blob_sha(shipping_header) == (
         'db60043206cc66a284bd3e9327a9fed7b011b25a'), (
         'GPU-22 native Vulkan rasterizer header drift')

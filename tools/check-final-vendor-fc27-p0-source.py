@@ -103,6 +103,7 @@ REVIEWED_PINS.add("1e1230f882ac6167ca0e6999875f07971b77985c")
 REVIEWED_PINS.add("dd4127535a60ff1b22700edac24ca5a5f7d4fac2")
 REVIEWED_PINS.add("b1917364f678ba469c4d817f663d10ca5be5c0c3")
 REVIEWED_PINS.add("bc44094d78d0bba088ca0b48f37e9a4c38a9fbc5")
+REVIEWED_PINS.add("ed03e467016f5afbcb722c54af374d6916ccd6a0")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
@@ -264,23 +265,57 @@ NS2_MKW_SPARSE_REPLACE_BLOBS = {
     "tests/ns2_gpu_identity_mapping_source.py":
         "da75b3dcf00abaaf4d014fbe61c4bd62b486d5b6",
 }
-NS2_MKW_SPARSE_REPLACE_ACTIVE = actual_vendor_pin == NS2_MKW_SPARSE_REPLACE_PIN
+# Native NS2 GSV 214: a mid-batch GMMU OOM can retain partial GPU
+# PTEs and poison the address space. Freeing its CPU alias/NvMap owner on
+# this error is a GPU use-after-free; quarantine only the poisoned case.
+NS2_DENSE_GMMU_POISON_PIN = "ed03e467016f5afbcb722c54af374d6916ccd6a0"
+NS2_DENSE_GMMU_POISON_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h":
+        "e921b3d0e98ab6d2a845297e4fadf61e62ca3b70",
+    "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+        "a4925ce958cf38537e3db8f073c60f73e716f772",
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "01a11f01f7c3431bde919b4d70d940d8e184b7fc",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "7cd2e739532af7395fc92c5c7dadf43bf3436bab",
+}
+NS2_DENSE_GMMU_POISON_ACTIVE = actual_vendor_pin == NS2_DENSE_GMMU_POISON_PIN
+if selected == NS2_DENSE_GMMU_POISON_PIN:
+    for relative, expected in NS2_DENSE_GMMU_POISON_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 poisoned GMMU sparse backing source drift", relative, actual)
+    selected = NS2_MKW_SPARSE_REPLACE_PIN
+    gitlink_vendor_pin = NS2_MKW_SPARSE_REPLACE_PIN
+    shipping_vendor_pin = NS2_MKW_SPARSE_REPLACE_PIN
+
+def ns2_dense_gmmu_poison_receipt(relative, previous):
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
+    return previous
+
+NS2_MKW_SPARSE_REPLACE_ACTIVE = actual_vendor_pin in {
+    NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_DENSE_GMMU_POISON_PIN,
+}
 if selected == NS2_MKW_SPARSE_REPLACE_PIN:
     for relative, expected in NS2_MKW_SPARSE_REPLACE_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 MKW sparse generation source drift", relative, actual)
+        assert actual == ns2_dense_gmmu_poison_receipt(relative, expected), (
+            "NS2 MKW sparse generation source drift", relative, actual)
     selected = NS2_GPFIFO_INLINE_PIN
     gitlink_vendor_pin = NS2_GPFIFO_INLINE_PIN
     shipping_vendor_pin = NS2_GPFIFO_INLINE_PIN
 
 def ns2_mkw_sparse_receipt(relative, previous):
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
     if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
         return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     return previous
 
 NS2_GPFIFO_INLINE_ACTIVE = actual_vendor_pin in {
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN,
 }
 if selected == NS2_GPFIFO_INLINE_PIN:
     for relative, expected in NS2_GPFIFO_INLINE_BLOBS.items():
@@ -293,7 +328,7 @@ if selected == NS2_GPFIFO_INLINE_PIN:
     shipping_vendor_pin = NS2_LEGACY_GPFIFO_ALLOC_PIN
 
 NS2_LEGACY_GPFIFO_ALLOC_ACTIVE = actual_vendor_pin in {
-    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN,
 }
 if selected == NS2_LEGACY_GPFIFO_ALLOC_PIN:
     for relative, expected in NS2_LEGACY_GPFIFO_ALLOC_BLOBS.items():
@@ -309,7 +344,7 @@ if selected == NS2_LEGACY_GPFIFO_ALLOC_PIN:
 
 NS2_DECODER_SESSION_MOVE_ACTIVE = actual_vendor_pin in {
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN,
 }
 if selected == NS2_DECODER_SESSION_MOVE_PIN:
     for relative, expected in NS2_DECODER_SESSION_MOVE_BLOBS.items():
@@ -322,7 +357,7 @@ if selected == NS2_DECODER_SESSION_MOVE_PIN:
 
 NS2_GPFIFO_ALLOC_GUARD_ACTIVE = actual_vendor_pin in {
     NS2_GPFIFO_ALLOC_GUARD_PIN, NS2_DECODER_SESSION_MOVE_PIN,
-    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN,
 }
 if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
     for relative, expected in NS2_GPFIFO_ALLOC_GUARD_BLOBS.items():
@@ -343,9 +378,11 @@ if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
 NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin in {
     NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN,
 }
 def ns2_latest_gsv_receipt(relative, previous):
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
     if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
         return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
@@ -371,7 +408,7 @@ if selected == NS2_GSV_MOVE_OWNERS_PIN:
 NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {
     NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN,
 }
 if selected == NS2_P0_BOOTSTRAP_PIN:
     for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
@@ -398,6 +435,8 @@ NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
     if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
         return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
@@ -480,6 +519,8 @@ NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
 }
 def ns2_encoder_receipt(relative, previous):
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
     if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
         return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
@@ -1040,6 +1081,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
     if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
         return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:

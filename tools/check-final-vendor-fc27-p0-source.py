@@ -100,6 +100,15 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    # The current vendor successor changes exactly two already sealed files:
+    # native NVDRV ioctl3 topology ABI and its focused static host contract.
+    # Historical receipts compare against the selected successor rather
+    # than incorrectly expecting byte-identical predecessor blobs.
+    if gitlink_vendor_pin == "b0afacfc891bc75da81be3886e5c40430ccbfe6d":
+        if relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp":
+            return "2bd5023b5177cfd89d43fcc759643553fe0c745f"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "000cdd09038696e3291a30ac6f332c24b2adcecd"
     if native_va_region_widen_revision:
         if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
             return "e7832741b238f4c25858f8309d8ccf9aed7a77d3"
@@ -479,7 +488,7 @@ if selected == "86cbe7ac73a28dcd1e3cdc3609eafca1c7b5dc37":
     relative = "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"
     raw = (V / relative).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert actual == "3124fe780213da7a62251829fb24bf30f1582b1a", ("Native VSMS GPU controller drift", actual)
+    assert actual == reviewed_blob(relative, "3124fe780213da7a62251829fb24bf30f1582b1a"), ("Native VSMS GPU controller drift", actual)
     selected = "fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531"
     original_vendor_pin = selected
 # The revised native TSG driver adds process-checked bind/unbind ioctl

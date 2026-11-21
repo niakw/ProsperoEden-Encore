@@ -115,6 +115,32 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
 
+    # NS1 guest CPU readback: reverse ONLY the new buffer-dirty read decision
+    # on audit copies before replaying all historical Vulkan-source receipts.
+    # This proves the new Vulkan and bridge methods are byte-exact deltas,
+    # without legitimizing arbitrary edits to either maintained source.
+    def _ns1_read_blob(data):
+        encoded=data.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(encoded)).encode()+bytes([0])+encoded).hexdigest()
+    old_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    // A guest read cannot overlap a registered image when no page in this\n    // range has ever appeared in the image slot map. Skip the GPU-held mutex.\n    // Unknown/out-of-range/large ranges retain the original blocking path.\n    if (::Eden::ImagePages::NeverHeld(addr, size)) {\n        return VideoCore::RasterizerDownloadArea{\n            .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n            .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n            .preemtive = true,\n        };\n    }\n    {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        auto area = texture_cache.GetFlushArea(addr, size);\n        if (area) {\n            return *area;\n        }\n    }\n    VideoCore::RasterizerDownloadArea new_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    return new_area;\n}\n"
+    new_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        ::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(\n                clean_area.start_address, clean_area.end_address - clean_area.start_address)) {\n            // GPU::OnCPURead must not return early for buffer-only GPU writes.\n            // Keep any texture-covered extent, including its sibling bytes.\n            return VideoCore::RasterizerDownloadArea{\n                .start_address = texture_area\n                    ? (std::min)(texture_area->start_address, clean_area.start_address)\n                    : clean_area.start_address,\n                .end_address = texture_area\n                    ? (std::max)(texture_area->end_address, clean_area.end_address)\n                    : clean_area.end_address,\n                .preemtive = false,\n            };\n        }\n    }\n    return texture_area.value_or(clean_area);\n}\n"
+    for relative, current, previous in (
+        ('encore-active/eden-vulkan/vulkan_rasterizer.cpp', '0633e3cf41c615f46791d3943ff40ac22399b047', '1544c6aecbc8cac5bede5a3119e551b1f760dee9'),
+        ('encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp', 'edaa82feb71665e4b6fbfd3ff34d80378e3bca73', '802233b8d5eb72439203a699253c3010c2909ae4'),
+    ):
+        source_path=root/'vendor'/relative
+        source=source_path.read_text()
+        assert _ns1_read_blob(source)==current, ('NS1 CPU readback owner drift',relative)
+        assert source.count(new_read_area)==1, ('NS1 CPU readback method moved',relative)
+        restored=source.replace(new_read_area,old_read_area,1)
+        assert _ns1_read_blob(restored)==previous, ('NS1 CPU readback predecessor drift',relative)
+        if relative.endswith('eden-vulkan/vulkan_rasterizer.cpp'):
+            normalized=temp/'normalized-ns1-cpu-read'/'vulkan_rasterizer.cpp'
+            normalized.parent.mkdir(parents=True,exist_ok=True)
+            normalized.write_text(restored)
+            expected['vulkan_rasterizer.cpp']=normalized
+    print('ENCORE_NS1_BUFFER_CPU_READ_EXACT_REVERSE_PASS owners=2')
+
     # GPU-51 (Lichii #7): X8_D24 <-> ABGR8 conversion support changes only
     # three maintained Vulkan owners. Reverse those exact hunks on audit copies
     # before GPU-50 and the frozen historical generator receipts.

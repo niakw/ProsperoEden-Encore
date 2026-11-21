@@ -10,11 +10,11 @@ ROOT=Path(__file__).resolve().parents[2]
 OWNER=ROOT/'vendor/encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp'
 source=OWNER.read_text()
 begin='    void VsyncEvent(HLERequestContext& ctx) {'
-end='    void Notifications(HLERequestContext& ctx) {'
+end='    void ConfigureNativeDisplayEvent(HLERequestContext& ctx) {'
 assert source.count(begin)==source.count(end)==1
 method=source[source.index(begin):source.index(end)]
-assert method.index('m_vsync_events.reserve(32);') < method.index('m_context.CreateEvent("NativeVi2Vsync")')
-assert method.index('m_vsync->events.reserve(32);') < method.index('m_context.CreateEvent("NativeVi2Vsync")')
+assert method.index('m_vsync_events.reserve(GraphicsSupervisorProtocol::RequestGroupCount);') < method.index('m_context.CreateEvent("NativeVi2Vsync")')
+assert method.index('m_vsync->events.reserve(GraphicsSupervisorProtocol::RequestGroupCount);') < method.index('m_context.CreateEvent("NativeVi2Vsync")')
 assert method.index('m_vsync->events.pop_back();') < method.index('m_context.CloseEvent(event);')
 assert 'm_vsync_timer = std::move(new_timer);' in method
 assert 'catch (const std::bad_alloc&)' in method
@@ -23,6 +23,7 @@ cpp=r'''
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <span>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -45,8 +46,13 @@ void* operator new(std::size_t bytes) {
 void operator delete(void* p) noexcept {std::free(p);}
 void operator delete(void* p,std::size_t) noexcept {std::free(p);}
 namespace Kernel {
-struct Result {u32 raw;};
+struct Result {
+    u32 raw;
+    bool IsError() const {return raw!=0;}
+};
 constexpr Result ResultOutOfResource{0xfeed};
+constexpr Result ResultInvalidCombination{0xf001};
+constexpr Result ResultInvalidHandle{0xf002};
 
 struct Kernel {};
 struct KEvent {
@@ -56,12 +62,29 @@ struct KEvent {
     void Signal(Kernel&) {assert(!closed);++signals;}
 };
 }
-constexpr Kernel::Result ResultSuccess{0};
+using Result=Kernel::Result;
+constexpr Result ResultSuccess{0};
 struct HLERequestContext {
+    std::array<u32,8> words{47,1,0,0,0,0,0,0};
+    u32 command{31};
     u32 status{0xffffffff};
     unsigned copies{};
-    int GetCommand() const {return 31;}
+    u32 GetCommand() const {return command;}
+    const u32* CommandBuffer() const {return words.data();}
+    u32 GetCopyHandle(int) const {return words[3];}
 };
+namespace GraphicsSupervisorProtocol {
+constexpr std::size_t RequestGroupCount=8;
+std::optional<u32> DecodeVi2NativeEventSlot(std::span<const u32> p,u32 cmd) {
+    if (cmd==31 && p.size()>=3 && p[0]==47 && p[1]==1 &&
+        p[2]<RequestGroupCount) return p[2];
+    if (cmd==32 && p.size()>=5 && p[0]==48 &&
+        p[1]==0x80000001U && p[2]==2 && p[3] &&
+        p[4]<RequestGroupCount) return p[4];
+    return {};
+}
+}
+namespace IPC { constexpr std::size_t COMMAND_BUFFER_LENGTH=8; }
 namespace IPC {
 struct ResponseBuilder {
     HLERequestContext& ctx;
@@ -123,6 +146,8 @@ struct IVi2Session {
     Context m_context;
     std::shared_ptr<VsyncState> m_vsync=std::make_shared<VsyncState>();
     std::vector<Kernel::KEvent*> m_vsync_events;
+    std::array<Kernel::KEvent*,GraphicsSupervisorProtocol::RequestGroupCount>
+        m_native_events{};
     std::shared_ptr<Core::Timing::EventType> m_vsync_timer;
 __METHOD__
 };
@@ -187,21 +212,29 @@ int main() {
     }
     {
         IVi2Session s;
-        for (unsigned i=0;i<32;++i) {
+        for (unsigned i=0;i<8;++i) {
             HLERequestContext request;
+            request.words[2]=i;
             s.VsyncEvent(request);
             assert(request.status==0 && request.copies==1);
         }
-        assert(s.m_context.created==32 && s.system.timing.count==1);
-        assert(s.m_vsync_events.size()==32 && s.m_vsync->events.size()==32);
+        assert(s.m_context.created==8 && s.system.timing.count==1);
+        assert(s.m_vsync_events.size()==8 && s.m_vsync->events.size()==8);
+        HLERequestContext duplicate;
+        duplicate.command=32;
+        duplicate.words={48,0x80000001U,2,0x4455,3,0,0,0};
+        s.VsyncEvent(duplicate);
+        assert(duplicate.status==0 && duplicate.copies==1);
+        assert(s.m_context.created==8 && s.m_native_events[3]==s.m_vsync_events[3]);
         s.system.timing.Tick();
         for(auto* event:s.m_vsync_events) assert(event->signals==1 && !event->closed);
         HLERequestContext extra;
+        extra.words[2]=8;
         s.VsyncEvent(extra);
-        assert(extra.status==Kernel::ResultOutOfResource.raw);
-        assert(s.m_context.created==32 && s.m_vsync_events.size()==32);
+        assert(extra.status==Kernel::ResultInvalidCombination.raw);
+        assert(s.m_context.created==8 && s.m_vsync_events.size()==8);
     }
-    std::puts("P1_3_VI2_VSYNC_OOM_PASS both_reserves timer_create schedule retry 32_events");
+    std::puts("P1_3_VI2_VSYNC_OOM_PASS reserves timer_retry 8_slots stable_duplicate");
 }
 '''.replace('__METHOD__',method)
 env=dict(os.environ)

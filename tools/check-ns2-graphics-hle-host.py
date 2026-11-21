@@ -314,9 +314,9 @@ def main()->int:
     assert (ROOT / 'tools/ns2/check_native_dense_ledger_oom_host.py').is_file()
     vsync_owner = text.split('void VsyncEvent(HLERequestContext& ctx) {', 1)[1].split(
         'void Notifications(HLERequestContext& ctx) {', 1)[0]
-    assert vsync_owner.index('m_vsync_events.reserve(32);') < vsync_owner.index(
+    assert vsync_owner.index('m_vsync_events.reserve(GraphicsSupervisorProtocol::RequestGroupCount);') < vsync_owner.index(
         'm_context.CreateEvent("NativeVi2Vsync")')
-    assert vsync_owner.index('m_vsync->events.reserve(32);') < vsync_owner.index(
+    assert vsync_owner.index('m_vsync->events.reserve(GraphicsSupervisorProtocol::RequestGroupCount);') < vsync_owner.index(
         'm_context.CreateEvent("NativeVi2Vsync")')
     assert vsync_owner.index('m_vsync->events.pop_back();') < vsync_owner.index(
         'm_context.CloseEvent(event);')

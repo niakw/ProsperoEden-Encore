@@ -1474,6 +1474,39 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
         base_blob = subprocess.check_output(
             ['git', 'hash-object', str(base_owner)], text=True).strip()
+        if core_blob == '6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b':
+            # NS1: the selected stream-overlap owner clamps low-address
+            # backward expansion without moving the existing buffer start
+            # forwards. Reverse ONLY that proven guard, then apply the
+            # historical GPU-50 receipt on the unmodified old owner.
+            new_guard = """        // A stream near the start of physical memory may begin before
+        // min_page. Subtraction in the original test then wraps around and
+        // turns an ordinary backward leap into a huge invalid GPU buffer.
+        // Never move begin forwards past the range we already own.
+        if (begin <= min_page || add_value > begin - min_page) {
+            begin = (std::min)(begin, min_page);
+            device_addr = Core::DEVICE_PAGESIZE;
+            return;
+        }"""
+            old_guard = """        if (add_value > begin - min_page) {
+            begin = min_page;
+            device_addr = Core::DEVICE_PAGESIZE;
+            return;
+        }"""
+            source = core_owner.read_text()
+            assert source.count(new_guard) == 1
+            previous = source.replace(new_guard, old_guard, 1)
+            raw = previous.encode('utf-8')
+            original_blob = hashlib.sha1(
+                b'blob ' + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert original_blob == '764cc03616d89cda91f902aabac85d10f309d9f3'
+            restored = temp/'normalized-ns1-stream'/'buffer_cache.h'
+            restored.parent.mkdir(parents=True, exist_ok=True)
+            restored.write_text(previous)
+            core_owner = restored
+            core_blob = original_blob
+            print('ENCORE_NS1_BUFFERCACHE_STREAM_BOUNDARY_EXACT_REVERSE_PASS')
+
         if core_blob == '764cc03616d89cda91f902aabac85d10f309d9f3':
             # GPU-50 changes only DMACopy's range report and its matching
             # declaration. Reconstruct the previous audited C++ owners exactly,

@@ -573,3 +573,108 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-dense-poison-") as directory:
                   "poison_retains=pages,handle,session",
                   "normal_oom=cleaned", "alias_unmap_fail=retained",
                   "success=untouched",flush=True)
+
+
+# A guest GMMU can become poisoned by 215/216 AFTER a successful dense 214.
+# Execute the ACTUAL selected destructor's address-space poison preflight so
+# the kernel cannot silently retire a live NVMap backing on worker close.
+worker_destructor=source.split("IGpuWorker::~IGpuWorker() {",1)[1].split(
+    "Result IGpuWorker::BackGpuOnlyRegion(",1)[0]
+teardown_begin=worker_destructor.index("    if (!m_quarantined_nv_session) {")
+teardown_end=worker_destructor.index(
+    "    if (!m_quarantined_nv_session)\n    for (const auto& [key, mapping]",
+    teardown_begin)
+teardown_guard=worker_destructor[teardown_begin:teardown_end]
+assert "m_shared->address_spaces.OwnedIds()" in teardown_guard
+assert "m_shared->FindOwnedAddressSpace(*id)" in teardown_guard
+assert "as->IsNativeSparsePoisoned()" in teardown_guard
+for condition in (
+    "if (!m_quarantined_nv_session)\n    for (const auto& [key, mapping]",
+    "if (!m_quarantined_nv_session)\n    for (const u32 memory_id",
+    "if (!m_quarantined_nv_session)\n    while (!m_dense_regions.empty())",
+    "if (!m_quarantined_nv_session)\n    for (const u32 id : m_memory)",
+    "if (m_nv_session && !m_quarantined_nv_session)",
+):
+    assert condition in worker_destructor,condition
+teardown_fixture=r"""
+#include <cassert>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <vector>
+#define LOG_ERROR(...) ((void)0)
+namespace Nvidia::Devices {
+struct nvhost_as_gpu {
+    bool poisoned{};
+    [[nodiscard]] bool IsNativeSparsePoisoned() const {return poisoned;}
+};
+}
+struct SpaceSlots {
+    std::vector<std::optional<unsigned>> slots{std::optional<unsigned>{7}};
+    auto OwnedIds() const {return slots;}
+};
+struct Shared {
+    std::mutex mutex{};
+    SpaceSlots address_spaces{};
+    std::shared_ptr<Nvidia::Devices::nvhost_as_gpu> active=
+        std::make_shared<Nvidia::Devices::nvhost_as_gpu>();
+    auto FindOwnedAddressSpace(unsigned id) {
+        return id==7 ? active : std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>{};
+    }
+};
+struct Worker {
+    bool m_quarantined_nv_session{};
+    std::shared_ptr<Shared> m_shared=std::make_shared<Shared>();
+    unsigned backing_retires{},session_closes{};
+    void Close() {
+__EXACT_DESTRUCTOR_POISON_GUARD__
+        // Existing teardown stage guards are separately tied to the
+        // extracted selected source. These counters represent the real
+        // FreeHandle/CloseSession actions whose guards were reviewed above.
+        if (!m_quarantined_nv_session) ++backing_retires;
+        if (!m_quarantined_nv_session) ++session_closes;
+    }
+};
+int main() {
+    Worker unpoisoned{};
+    unpoisoned.Close();
+    assert(!unpoisoned.m_quarantined_nv_session);
+    assert(unpoisoned.backing_retires==1 && unpoisoned.session_closes==1);
+
+    Worker poisoned{};
+    poisoned.m_shared->active->poisoned=true;
+    poisoned.Close();
+    assert(poisoned.m_quarantined_nv_session);
+    assert(poisoned.backing_retires==0 && poisoned.session_closes==0);
+
+    Worker retained{};
+    retained.m_quarantined_nv_session=true;
+    retained.Close();
+    assert(retained.backing_retires==0 && retained.session_closes==0);
+
+    Worker no_as{};
+    no_as.m_shared->address_spaces.slots.clear();
+    no_as.Close();
+    assert(no_as.backing_retires==1 && no_as.session_closes==1);
+
+    Worker missing_fd{};
+    missing_fd.m_shared->address_spaces.slots={std::nullopt};
+    missing_fd.Close();
+    assert(missing_fd.backing_retires==1 && missing_fd.session_closes==1);
+}
+""".replace("__EXACT_DESTRUCTOR_POISON_GUARD__",teardown_guard)
+with tempfile.TemporaryDirectory(prefix="eden-h06-poisoned-teardown-") as directory:
+    cpp=Path(directory)/"poisoned_worker_close.cpp";cpp.write_text(teardown_fixture)
+    for cc in compilers:
+        for opt in ("-O0","-O2"):
+            exe=Path(directory)/(Path(cc).name+opt)
+            built=subprocess.run(
+                [cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                 "-fsanitize=undefined","-fno-sanitize-recover=all",str(cpp),"-o",str(exe)],
+                capture_output=True,text=True,timeout=45,env=os.environ.copy())
+            assert built.returncode==0,built.stderr[-6500:]
+            done=subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
+            assert done.returncode==0,done.stderr[-6500:]
+            print("H06_REAL_POISONED_215_216_TEARDOWN_PASS",Path(cc).name,opt,
+                  "preflight=real_cpp", "poison=quarantine",
+                  "normal=cleanup", "stale_fd=skipped",flush=True)

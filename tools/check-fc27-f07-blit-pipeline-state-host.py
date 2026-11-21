@@ -440,3 +440,107 @@ with tempfile.TemporaryDirectory(prefix="encore-fb-device-limits-gpu47-") as td:
 print("NS1_VULKAN_FRAMEBUFFER_DEVICE_LIMIT_HOST_PASS upstream_427=1 active_owner=1 "
       "width=1 height=1 layers=1 attachmentless_clip=1 zero_to_one=1 "
       "valid_unchanged=1 O0_O2=2 ASan_UBSan=1")
+
+
+# GPU-49: Lichii #353 fragment-output component ownership. The guest's
+# color mask is necessary but not sufficient: Vulkan must also mask out
+# components the fragment shader never writes.
+shader_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/shader_info.h").read_text()
+collect_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
+gp_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+gp_source=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+rast_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
+assert "std::array<u8, 8> frag_color_components{};" in shader_info
+for token in (
+    "const u32 render_target{inst.Arg(0).U32()};",
+    "info.stores_frag_color[render_target] = true;",
+    "info.frag_color_components[render_target] |=",
+    "static_cast<u8>(1U << inst.Arg(1).U32());",
+):
+    assert token in collect_info, token
+for token in (
+    "VkColorComponentFlags ColorOutputMask(size_t render_target) const noexcept",
+    "u32 ColorOutputMask() const noexcept",
+    "u32 color_output_mask{};",
+):
+    assert token in gp_header, token
+for token in (
+    "color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}",
+    "write_mask &= ColorOutputMask(index);",
+):
+    assert token in gp_source, token
+for token in (
+    "UpdateBlending(regs, prepared_pipeline);",
+    "const u32 color_output_mask = pipeline ? pipeline->ColorOutputMask() : ~0U;",
+    "const bool color_output_changed = color_output_mask != last_color_output_mask;",
+    "current &= (color_output_mask >> (index * 4)) & 0xF;",
+):
+    assert token in raster, token
+assert "const GraphicsPipeline* pipeline" in rast_header
+assert "u32 last_color_output_mask{};" in rast_header
+# Keep the PS5 hot path: no CurrentGraphicsPipeline lookup is introduced
+# around the dynamic color-output mask.
+blend_method=fragment(raster,
+    "void RasterizerVulkan::UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,",
+    "\nvoid RasterizerVulkan::UpdateColorWriteEnable(")
+assert "pipeline_cache.CurrentGraphicsPipeline()" not in blend_method
+dynamic_method=fragment(raster,"void RasterizerVulkan::UpdateDynamicStates() {",
+                        "\nvoid RasterizerVulkan::HandleTransformFeedback(")
+assert "UpdateBlending(regs, prepared_pipeline);" in dynamic_method
+
+mask_cpp=r"""
+#include <array>
+#include <cassert>
+#include <cstdint>
+using u32=std::uint32_t; using u8=std::uint8_t;
+u32 Pack(const std::array<u8,8>& components) {
+    u32 mask=0;
+    for(std::size_t rt=0;rt<components.size();++rt)
+        mask |= u32{components[rt]} << (rt*4);
+    return mask;
+}
+u32 StaticMask(u32 guest,u32 packed,std::size_t rt) {
+    return guest & ((packed >> (rt*4)) & 0xF);
+}
+struct Dynamic {
+    u32 last{};
+    unsigned records{};
+    u32 Apply(bool guest_dirty,u32 guest_mask,const u32* pipeline_mask,std::size_t rt) {
+        const u32 output=pipeline_mask?*pipeline_mask:~0U;
+        const bool changed=output!=last;
+        if(!guest_dirty && !changed) return 0xffffffffU;
+        if(guest_dirty||changed) { last=output; ++records; }
+        return guest_mask & ((output>>(rt*4))&0xF);
+    }
+};
+int main() {
+    std::array<u8,8> c{}; c[0]=0b0101; c[1]=0b1010;
+    const u32 packed=Pack(c);
+    assert(StaticMask(0xF,packed,0)==0x5);
+    assert(StaticMask(0x7,packed,0)==0x5);
+    assert(StaticMask(0xF,packed,1)==0xA);
+    Dynamic d{};
+    assert(d.Apply(true,0xF,&packed,0)==0x5);
+    const unsigned first=d.records;
+    assert(d.Apply(false,0xF,&packed,0)==0xffffffffU);
+    assert(d.records==first);
+    u32 other=0x3;
+    assert(d.Apply(false,0xF,&other,0)==0x3);
+    assert(d.records==first+1);
+    // Raw DrawTexture/blit: no guest graphics pipeline => all components allowed.
+    assert(d.Apply(false,0xB,nullptr,0)==0xB);
+}
+"""
+compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-frag-mask-gpu49-") as td:
+    source=Path(td)/"mask.cpp"; source.write_text(mask_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(td)/("mask-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_FRAGMENT_COLOR_OUTPUT_MASK_HOST_PASS upstream_353=1 active_shader_info=1 "
+      "static_mask=1 dynamic_mask=1 pipeline_change_rebind=1 raw_blit_full_mask=1 "
+      "no_cold_lookup=1 O0_O2=2 ASan_UBSan=1")

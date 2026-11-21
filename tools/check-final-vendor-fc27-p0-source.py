@@ -79,8 +79,23 @@ REVIEWED_PINS.add("457f9501c52fcf6ce2aaca967757c0eb9e452f58")
 REVIEWED_PINS.add("08972732d0402fa455a4982ed5ffd5d9f2c7e83c")
 REVIEWED_PINS.add("c74fb345ac3d8fa752f403369827a432f3503fb5")
 REVIEWED_PINS.add("3a97e47a0cfe94ec55227af363d8c289de59d4f8")
+REVIEWED_PINS.add("3de91cf284c8ef234c757c046998c4f48165c59a")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+# Worker TIPC 171 successor: seal only the comptag decoder/handler/header and
+# its focused ownership receipt, then replay the reviewed 3a97 graph.
+if selected == "3de91cf284c8ef234c757c046998c4f48165c59a":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp", "1042668b48e71020ee777e0ec0aef6b1606edaf0"),
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h", "0a4ded1cba3fc0ed8163bda05cc32956f6216aa4"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h", "c104301566467d973ebf0634580a0fbc4a44daf9"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "599f766e76fab45314a77c2fa573b8229cf83de1"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 worker TIPC 171 source drift", relative, actual)
+    selected = "3a97e47a0cfe94ec55227af363d8c289de59d4f8"
+
 # TIPC 200 successor: only the selected GPU-session owner/protocol/header and
 # its focused source receipt changed. Seal those exact blobs, then replay the
 # already reviewed c74 graph for every unaffected FC27/P0 owner.
@@ -629,7 +644,10 @@ assert gitlink_vendor_pin==checked and selected in REVIEWED_PINS,(gitlink_vendor
 # replay the predecessor's exact historical receipt graph for all unaffected
 # owners; otherwise reviewed_blob() sees the successor SHA and misses c74's
 # already-qualified per-file revisions.
-if gitlink_vendor_pin == "3a97e47a0cfe94ec55227af363d8c289de59d4f8":
+if gitlink_vendor_pin in {
+    "3a97e47a0cfe94ec55227af363d8c289de59d4f8",
+    "3de91cf284c8ef234c757c046998c4f48165c59a",
+}:
     gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and
 # NvCore session are closed; then revoke its process epoch once. Keep the

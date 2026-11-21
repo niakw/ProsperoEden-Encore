@@ -114,6 +114,18 @@ int main(){
     malformedMemory=gpuMemoryValid;malformedMemory[7]=0;
     require(!IsValidGpuMemoryRegistrationRange(*DecodeGpuMemoryRegistration(malformedMemory)),
             "reject reserved zero device ID");
+    const std::array<u32,3> ensureComptags{0xbb,1,4};
+    require(DecodeEnsureGpuMemoryComptags(ensureComptags)==std::optional<u32>{4},
+            "GPU comptag ensure accepts one live nonzero memory handle");
+    auto invalidEnsure=ensureComptags; invalidEnsure[2]=0;
+    require(!DecodeEnsureGpuMemoryComptags(invalidEnsure),
+            "GPU comptag ensure rejects reserved zero handle");
+    invalidEnsure=ensureComptags; invalidEnsure[1]=2;
+    require(!DecodeEnsureGpuMemoryComptags(invalidEnsure),
+            "GPU comptag ensure rejects incorrect TIPC word count");
+    require(!DecodeEnsureGpuMemoryComptags(
+                std::span<const u32>{ensureComptags.data(),2}),
+            "GPU comptag ensure rejects truncated packet");
     const std::array<u32,4> gpuMemoryRelease{0x76,2,4,63};
     const auto release=DecodeGpuMemoryRelease(gpuMemoryRelease);
     require(release && release->id==4 && release->notification==63,

@@ -696,7 +696,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             # If an earlier exact-source reversal already reconstructed this
             # transition owner to the FC27 witness blob, consume that audit
             # copy. Applicability is proven by bytes, never by a stale vendor SHA.
-            exact_restored = raster_blob(expected[name].read_text()) == witness['current']
+            exact_restored = (
+                name in expected and
+                raster_blob(expected[name].read_text()) == witness['current']
+            )
             real_source = (expected[name].read_text()
                            if name == raster_owner or exact_restored
                            else raw_path.read_text())

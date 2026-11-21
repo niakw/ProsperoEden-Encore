@@ -93,6 +93,37 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     subprocess.run([sys.executable,'-B',str(root/'tools/prepare-vulkan-port.py'),str(patched),str(temp/'generated')],check=True,timeout=150,env=env)
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
+    # c30f46 publishes build completion from the task and can let cache
+    # teardown destroy the pipeline before RunBuild returns. Shipping code
+    # moves the callback out before invocation. Reverse that exact one-method
+    # lifetime fix ONLY on the audit copy so the older transition receipt can
+    # be replayed in chronological order: f3c827 -> bae8f3 -> 2834a1.
+    transition_cpp = 'vk_graphics_pipeline_cost.cpp'
+    transition_source = expected[transition_cpp].read_text()
+    if subprocess.check_output(
+        ['git', 'hash-object', str(expected[transition_cpp])], text=True
+    ).strip() == 'f3c82781675b6979a8be96a333184e048ef57f81':
+        release_after = """    // The build callback publishes is_built before it returns. Cache teardown
+    // may then destroy this pipeline; never access its members afterward.
+    // Transfer ownership while this instance is still guaranteed alive.
+    auto task = std::move(build_task);
+    build_task = nullptr;
+    task();
+"""
+        release_before = """    build_task();
+    build_task = nullptr;
+"""
+        assert transition_source.count(release_after) == 1
+        transition_source = transition_source.replace(release_after, release_before, 1)
+        transition_path = temp/'normalized-vendor-graphics-build-task-lifetime'/transition_cpp
+        transition_path.parent.mkdir(parents=True, exist_ok=True)
+        transition_path.write_text(transition_source)
+        assert subprocess.check_output(
+            ['git', 'hash-object', str(transition_path)], text=True
+        ).strip() == 'bae8f3c36fc4e595e9b630ca55cc50496468e173'
+        expected[transition_cpp] = transition_path
+        print('ENCORE_GRAPHICS_BUILD_TASK_LIFETIME_EXACT_REVERSE_PASS')
+
     # Per-pipeline successor memo is a hint, never an owner. Reverse the
     # bounded PS5-native hot-edge ring on an audit COPY before historical
     # generated Vulkan oracles, sealing both complete active C++ blobs.

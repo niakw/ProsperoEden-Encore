@@ -105,6 +105,7 @@ REVIEWED_PINS.add("b1917364f678ba469c4d817f663d10ca5be5c0c3")
 REVIEWED_PINS.add("bc44094d78d0bba088ca0b48f37e9a4c38a9fbc5")
 REVIEWED_PINS.add("ed03e467016f5afbcb722c54af374d6916ccd6a0")
 REVIEWED_PINS.add("b8396c6483aa8278bd75b6757aed3bb5a9206e52")
+REVIEWED_PINS.add("a8c9170802811e7bb19345a461c3ae8dc72c27be")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
@@ -292,23 +293,52 @@ NS2_POISONED_DENSE_SESSION_BLOBS = {
     "tests/ns2_gpu_identity_mapping_source.py":
         "b37b3f0329e3e5b0cadf3bdde1578bfbc6375f2c",
 }
-NS2_POISONED_DENSE_SESSION_ACTIVE = actual_vendor_pin == NS2_POISONED_DENSE_SESSION_PIN
+# Reviewed NS2 GSV 215/216 error: prevent destructor FreeHandle/CloseSession
+# on a GMMU with partial PTE writes. Keep every older receipt unchanged.
+NS2_POISONED_TEARDOWN_PIN = "a8c9170802811e7bb19345a461c3ae8dc72c27be"
+NS2_POISONED_TEARDOWN_BLOBS = {
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "15f06d05601458769dfe17124068edca59835793",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "a446b8f18209f54e551302521cfcc6c4fe372ff0",
+}
+NS2_POISONED_TEARDOWN_ACTIVE = actual_vendor_pin == NS2_POISONED_TEARDOWN_PIN
+if selected == NS2_POISONED_TEARDOWN_PIN:
+    for relative, expected in NS2_POISONED_TEARDOWN_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 GSV 215/216 teardown source drift", relative, actual)
+    selected = NS2_POISONED_DENSE_SESSION_PIN
+    gitlink_vendor_pin = NS2_POISONED_DENSE_SESSION_PIN
+    shipping_vendor_pin = NS2_POISONED_DENSE_SESSION_PIN
+
+def ns2_poisoned_teardown_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    return previous
+
+NS2_POISONED_DENSE_SESSION_ACTIVE = actual_vendor_pin in {
+    NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
 if selected == NS2_POISONED_DENSE_SESSION_PIN:
     for relative, expected in NS2_POISONED_DENSE_SESSION_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 poisoned dense NVDRV session source drift", relative, actual)
+        assert actual == ns2_poisoned_teardown_receipt(relative, expected), (
+            "NS2 poisoned dense NVDRV session source drift", relative, actual)
     selected = NS2_DENSE_GMMU_POISON_PIN
     gitlink_vendor_pin = NS2_DENSE_GMMU_POISON_PIN
     shipping_vendor_pin = NS2_DENSE_GMMU_POISON_PIN
 
 def ns2_poisoned_dense_session_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
         return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
     return previous
 
 NS2_DENSE_GMMU_POISON_ACTIVE = actual_vendor_pin in {
-    NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 if selected == NS2_DENSE_GMMU_POISON_PIN:
     for relative, expected in NS2_DENSE_GMMU_POISON_BLOBS.items():
@@ -321,6 +351,8 @@ if selected == NS2_DENSE_GMMU_POISON_PIN:
     shipping_vendor_pin = NS2_MKW_SPARSE_REPLACE_PIN
 
 def ns2_dense_gmmu_poison_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
         return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
     if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
@@ -328,7 +360,7 @@ def ns2_dense_gmmu_poison_receipt(relative, previous):
     return previous
 
 NS2_MKW_SPARSE_REPLACE_ACTIVE = actual_vendor_pin in {
-    NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 if selected == NS2_MKW_SPARSE_REPLACE_PIN:
     for relative, expected in NS2_MKW_SPARSE_REPLACE_BLOBS.items():
@@ -341,6 +373,8 @@ if selected == NS2_MKW_SPARSE_REPLACE_PIN:
     shipping_vendor_pin = NS2_GPFIFO_INLINE_PIN
 
 def ns2_mkw_sparse_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
         return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
     if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
@@ -350,7 +384,7 @@ def ns2_mkw_sparse_receipt(relative, previous):
     return previous
 
 NS2_GPFIFO_INLINE_ACTIVE = actual_vendor_pin in {
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 if selected == NS2_GPFIFO_INLINE_PIN:
     for relative, expected in NS2_GPFIFO_INLINE_BLOBS.items():
@@ -363,7 +397,7 @@ if selected == NS2_GPFIFO_INLINE_PIN:
     shipping_vendor_pin = NS2_LEGACY_GPFIFO_ALLOC_PIN
 
 NS2_LEGACY_GPFIFO_ALLOC_ACTIVE = actual_vendor_pin in {
-    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 if selected == NS2_LEGACY_GPFIFO_ALLOC_PIN:
     for relative, expected in NS2_LEGACY_GPFIFO_ALLOC_BLOBS.items():
@@ -379,7 +413,7 @@ if selected == NS2_LEGACY_GPFIFO_ALLOC_PIN:
 
 NS2_DECODER_SESSION_MOVE_ACTIVE = actual_vendor_pin in {
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 if selected == NS2_DECODER_SESSION_MOVE_PIN:
     for relative, expected in NS2_DECODER_SESSION_MOVE_BLOBS.items():
@@ -392,7 +426,7 @@ if selected == NS2_DECODER_SESSION_MOVE_PIN:
 
 NS2_GPFIFO_ALLOC_GUARD_ACTIVE = actual_vendor_pin in {
     NS2_GPFIFO_ALLOC_GUARD_PIN, NS2_DECODER_SESSION_MOVE_PIN,
-    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
     for relative, expected in NS2_GPFIFO_ALLOC_GUARD_BLOBS.items():
@@ -413,9 +447,11 @@ if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
 NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin in {
     NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 def ns2_latest_gsv_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
         return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
     if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
@@ -445,7 +481,7 @@ if selected == NS2_GSV_MOVE_OWNERS_PIN:
 NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {
     NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
 }
 if selected == NS2_P0_BOOTSTRAP_PIN:
     for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
@@ -472,6 +508,8 @@ NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
         return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
     if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
@@ -558,6 +596,8 @@ NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
 }
 def ns2_encoder_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
         return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
     if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
@@ -1122,6 +1162,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
     if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
         return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
     if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:

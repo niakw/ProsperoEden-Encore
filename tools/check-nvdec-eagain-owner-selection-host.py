@@ -428,7 +428,7 @@ H1_CPP=V/"encore-active/eden-core/src/video_core/host1x/host1x.cpp"
 H1_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/host1x.h"
 H1_ORIG_CPP=V/"sources/eden/src/video_core/host1x/host1x.cpp"
 H1_ORIG_HDR=V/"sources/eden/src/video_core/host1x/host1x.h"
-assert blob(H1_CPP)=="9b88ca7a45a45bb537a6faa58f48db893d45ef24"
+assert blob(H1_CPP)=="1815363b19282be07bb4217dd01f369a38e53272"
 assert blob(H1_HDR)=="d716ee97dd8be807d2f29219c4b0c7072ed6b028"
 assert blob(H1_ORIG_CPP)=="590b0e0ff2f7d5f9f3771b07659afcbb49814863"
 assert blob(H1_ORIG_HDR)=="3b886a59d59763278d1c44b8b993d25f7260656d"
@@ -437,11 +437,11 @@ OS=H1_ORIG_CPP.read_text();OH=H1_ORIG_HDR.read_text()
 guard="fd < 0 || static_cast<std::size_t>(fd) >= devices.size()"
 assert HS.count(guard)==3 and HH.count(guard)==0
 assert HS.count("devices[fd]")==4 and "devices[fd]" not in HH
-assert "std::mutex device_dispatch_mutex;" in HS
-assert HS.count("std::scoped_lock lk{device_dispatch_mutex};")==3
+assert "std::array<std::mutex, 1024> device_dispatch_mutexes;" in HS
+assert HS.count("std::scoped_lock lk{device_dispatch_mutexes[static_cast<std::size_t>(fd)]};")==3
 assert "void Host1x::PushEntries(" in HS
 assert "void PushEntries(s32 fd, ChCommandHeaderList&& entries);" in HH
-assert "std::mutex device_dispatch_mutex" not in HH # no Host1x class size / ABI change
+assert "std::array<std::mutex, 1024> device_dispatch_mutexes" not in HH # no Host1x class size / ABI change
 # Two dispatches and two guarded re-open probes; both happen after the FD preflight.
 # The two StartDevice dispatches are reached only after the signed range guard.
 start="void Host1x::StartDevice("
@@ -450,8 +450,8 @@ stop="void Host1x::StopDevice("
 # The separate synchronization is intentionally in the TU, preserving the
 # existing C++ type layout. The historical Eden source remains immutable.
 assert "void Host1x::PushEntries(s32 fd, ChCommandHeaderList&& entries)" in HS
-assert "std::mutex device_dispatch_mutex;" not in OS
-assert "std::scoped_lock lk{device_dispatch_mutex};" not in OS
+assert "std::array<std::mutex, 1024> device_dispatch_mutexes;" not in OS
+assert "std::scoped_lock lk{device_dispatch_mutexes[static_cast<std::size_t>(fd)]};" not in OS
 push="    void PushEntries(s32 fd,"
 limit="\n    Core::System& system;"
 new_push=HH[HH.index(push):HH.index(limit)]
@@ -485,7 +485,7 @@ using s32=std::int32_t;
 using u32=std::uint32_t;
 #define LOG_ERROR(...) ((void)0)
 namespace Tegra::Host1x {
-std::mutex device_dispatch_mutex;
+std::array<std::mutex, 1024> device_dispatch_mutexes;
 std::atomic<bool> submit_entered{false};
 std::atomic<bool> submit_release{false};
 std::atomic<bool> close_finished{false};
@@ -561,8 +561,20 @@ int main() {
     });
     for(int i=0;i<20000;++i)std::this_thread::yield();
     assert(!close_finished.load(std::memory_order_acquire));
+    // GPU-41: closing FD 7 must not hold up unrelated VIC traffic on FD 8.
+    // The same-FD close still waits for the in-progress enqueue above.
+    std::atomic<bool> unrelated_done{false};
+    std::thread unrelated([&] {
+        h.StartDevice(8,ChannelType::VIC,0);
+        h.PushEntries(8,{6,7});
+        unrelated_done.store(true,std::memory_order_release);
+    });
+    for(int i=0;i<200000&&!unrelated_done.load(std::memory_order_acquire);++i)
+        std::this_thread::yield();
+    const bool separate_fd_progress = unrelated_done.load(std::memory_order_acquire);
     submit_release.store(true,std::memory_order_release);
-    submitter.join();closer.join();
+    submitter.join();closer.join();unrelated.join();
+    assert(separate_fd_progress);
     assert(close_finished.load(std::memory_order_acquire));
     assert(std::holds_alternative<std::monostate>(h.devices[7]));
 }
@@ -579,7 +591,7 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-device-fd-") as tmp:
                         "-fsanitize=address,undefined","-fno-sanitize-recover=all",
                         str(source),"-o",str(exe)],check=True,timeout=45)
         subprocess.run([str(exe)],check=True,timeout=20)
-print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 concurrent_close=1 "
+print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 concurrent_close=1 independent_fd_progress=1 "
       "negative_fd=1 above_1023=1 NVDEC_VIC_dispatch=1 teardown=1 "
       "ASan_UBSan=1 O0_O2=2")
 

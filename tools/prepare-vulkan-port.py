@@ -4053,6 +4053,16 @@ apply_reviewed_delta("vulkan_rasterizer.cpp",
     "    // P0.3: an unregistered page has no buffer-backed GPU dirty bytes.\n    // Unknown, large and previously owned spans retain the original lock.\n    if (!::Eden::BufferPages::NeverRegistered(*cpu_addr, copy_size)) {\n        std::unique_lock<std::recursive_mutex> lock{buffer_cache.mutex};\n        if (!buffer_cache.InlineMemory(*cpu_addr, copy_size, memory)) {\n            buffer_cache.WriteMemory(*cpu_addr, copy_size);\n        }\n    }",
     "F07 elide never-owned inline DMA buffer cache mutex")
 
+# GPU-30 NS1 cross-game: InlineMemory and GPU cache invalidation accept ONE
+# physical CPU span. Across discontinuous GMMU mappings, preserve each
+# translated physical segment and the existing normal per-page invalidator.
+apply_reviewed_delta(
+    "vulkan_rasterizer.cpp",
+    "    gpu_memory->WriteBlockUnsafe(address, memory.data(), copy_size);",
+    "#ifdef PS5_NATIVE\n    // One GPU VA range can cross discontiguous device-memory pages. InlineMemory,\n    // texture invalidation and shader/query invalidation accept ONE CPU span:\n    // their first translated DAddr must never stand in for later GMMU pages.\n    // Single device-page writes keep the existing O(1) hot path. For fragmented\n    // but fully mapped spans, WriteBlock invalidates EACH translated physical\n    // segment before writing; it owns the same normal cache notifications.\n    if (!gpu_memory->IsGranularRange(address, copy_size) &&\n        !gpu_memory->IsContinuousRange(address, copy_size)) {\n        if (!gpu_memory->IsFullyMappedRange(address, copy_size)) {\n            return; // No partial writes into an invalid guest DMA mapping.\n        }\n        gpu_memory->WriteBlock(address, memory.data(), copy_size);\n        return;\n    }\n#endif\n    gpu_memory->WriteBlockUnsafe(address, memory.data(), copy_size);",
+    "GPU-30 native inline DMA physical GMMU cache invalidation"
+)
+
 # F07 P0.3: the shipping Eden backport already contains consecutive-TIC
 # reuse. Extend THAT reviewed source to a bounded nonadjacent draw-local memo.
 # Deletion, NULL results and blacklist passes retain the full lookup.

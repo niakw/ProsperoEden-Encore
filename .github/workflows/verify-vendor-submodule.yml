@@ -8,6 +8,7 @@ on:
       - 'tools/check-vendored-vulkan-fork.py'
       - 'tools/check-native-dma-tiled-remap-host.py'
       - 'tools/check-maintained-sw-blitter.py'
+      - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-gpu-native-diagnostics.py'
       - 'tools/vendor-eden-cpm.py'
@@ -25,6 +26,7 @@ on:
       - 'tools/check-vendored-vulkan-fork.py'
       - 'tools/check-native-dma-tiled-remap-host.py'
       - 'tools/check-maintained-sw-blitter.py'
+      - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-gpu-native-diagnostics.py'
       - 'tools/vendor-eden-cpm.py'
@@ -51,6 +53,8 @@ jobs:
         run: python3 -B tools/check-native-dma-tiled-remap-host.py
       - name: Check selected Fermi2D blitter padded GOB extents (host UBSan)
         run: python3 -B tools/check-maintained-sw-blitter.py
+      - name: Test inline DMA fragmented GMMU invalidation (host UBSan)
+        run: python3 -B tools/check-ps5-f07-inline-dma-buffer-elision-host.py
       - name: Check maintained Maxwell shader and control-flow source parity
         run: python3 -B tools/check-maintained-maxwell-prmt.py
       - name: Check native Maxwell GPU source contracts

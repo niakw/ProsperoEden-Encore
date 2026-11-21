@@ -208,6 +208,20 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
     actual_vendor_pin = exact_vendor_pin
+    # GPU-30 is compiled from this pinned C++ owner, but the frozen R23/P24
+    # receipts predate its segmented-GMMU inline DMA guard. Verify the complete
+    # native blob and reverse only this one block on the historical audit copy.
+    if raster_sha == 'fdd5a73ccf795fd58100469c546b544a86a68e5b':
+        reviewed = "#ifdef PS5_NATIVE\n    // One GPU VA range can cross discontiguous device-memory pages. InlineMemory,\n    // texture invalidation and shader/query invalidation accept ONE CPU span:\n    // their first translated DAddr must never stand in for later GMMU pages.\n    // Single device-page writes keep the existing O(1) hot path. For fragmented\n    // but fully mapped spans, WriteBlock invalidates EACH translated physical\n    // segment before writing; it owns the same normal cache notifications.\n    if (!gpu_memory->IsGranularRange(address, copy_size) &&\n        !gpu_memory->IsContinuousRange(address, copy_size)) {\n        if (!gpu_memory->IsFullyMappedRange(address, copy_size)) {\n            return; // No partial writes into an invalid guest DMA mapping.\n        }\n        gpu_memory->WriteBlock(address, memory.data(), copy_size);\n        return;\n    }\n#endif\n"
+        assert raster_source.count(reviewed) == 1, 'GPU-30 inline DMA owner changed'
+        raster_source = raster_source.replace(reviewed, '', 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == '771e922890142b1f0d39f935bbf0be1a478e0f9e', 'GPU-30 predecessor not exact'
+        snapshot = temp/'ns1-gpu30-inline-dma-audit'/raster_owner
+        snapshot.parent.mkdir(parents=True, exist_ok=True)
+        snapshot.write_text(raster_source)
+        expected[raster_owner] = snapshot
+        print('ENCORE_NS1_GPU30_EXACT_REVERSE_PASS')
     # GPU-22: keep the current-channel GMMU contiguous buffer-image DMA fix
     # compiled; reverse only its complete, exact source delta for historical
     # Vulkan/R23 byte proofs. The predecessor is independently pinned.
@@ -2403,6 +2417,23 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     historical_raster.write_text(generated_raster)
     normalized_generated[dma_raster] = historical_raster
     print('ENCORE_NS1_GPU22_GENERATOR_CPP_EXACT_REVERSE_PASS')
+    # The final byte-parity oracle also compares its generated historical
+    # copy after the frozen R23/P04 reconstructions. Require GPU-30's EXACT
+    # production block in BOTH the generator and active pinned renderer,
+    # then reverse it on the temporary generated audit copy only.
+    generated_raster = normalized_generated[dma_raster].read_text()
+    native_raster = (active / dma_raster).read_text()
+    reviewed_inline = "#ifdef PS5_NATIVE\n    // One GPU VA range can cross discontiguous device-memory pages. InlineMemory,\n    // texture invalidation and shader/query invalidation accept ONE CPU span:\n    // their first translated DAddr must never stand in for later GMMU pages.\n    // Single device-page writes keep the existing O(1) hot path. For fragmented\n    // but fully mapped spans, WriteBlock invalidates EACH translated physical\n    // segment before writing; it owns the same normal cache notifications.\n    if (!gpu_memory->IsGranularRange(address, copy_size) &&\n        !gpu_memory->IsContinuousRange(address, copy_size)) {\n        if (!gpu_memory->IsFullyMappedRange(address, copy_size)) {\n            return; // No partial writes into an invalid guest DMA mapping.\n        }\n        gpu_memory->WriteBlock(address, memory.data(), copy_size);\n        return;\n    }\n#endif\n"
+    assert git_blob_sha(native_raster) == 'fdd5a73ccf795fd58100469c546b544a86a68e5b', (
+        'GPU-30 active Vulkan owner changed')
+    assert generated_raster.count(reviewed_inline) == 1
+    assert native_raster.count(reviewed_inline) == 1
+    generated_raster = generated_raster.replace(reviewed_inline, '', 1)
+    audit_raster = temp/'normalized-generated-gpu30'/dma_raster
+    audit_raster.parent.mkdir(parents=True, exist_ok=True)
+    audit_raster.write_text(generated_raster)
+    normalized_generated[dma_raster] = audit_raster
+    print('ENCORE_NS1_GPU30_GENERATOR_EXACT_REVERSE_PASS')
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

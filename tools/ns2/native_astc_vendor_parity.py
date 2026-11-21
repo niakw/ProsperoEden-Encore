@@ -229,6 +229,32 @@ def strip_post_r23_active_image_pages(text: str) -> str:
     return text
 
 
+def strip_gpu51_x8d24_conversion(text: str) -> str:
+    """Reverse only GPU-51's X8_D24 conversion dispatch from the Vulkan cache TU."""
+    current = "e9191238ccddd94aa22570eba501fb05fff5b207"
+    predecessor = "16a8ad80677d992b557ec90283a8f3b483b97440"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-51 Vulkan texture source", blob)
+    text = once(text,
+        "        if (src_view.format == PixelFormat::X8_D24_UNORM) {\n"
+        "            return blit_image_helper.ConvertX8D24ToABGR8(dst, src_view);\n"
+        "        }\n",
+        "")
+    text = once(text,
+        "    case PixelFormat::X8_D24_UNORM:\n"
+        "        if (src_view.format == PixelFormat::A8B8G8R8_UNORM) {\n"
+        "            return blit_image_helper.ConvertABGR8ToX8D24(dst, src_view);\n"
+        "        }\n"
+        "        break;\n",
+        "")
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-51 Vulkan texture reversal did not restore GPU-47 owner")
+    print("ENCORE_NS1_GPU51_ASTC_TEXTURE_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
 def strip_gpu47_framebuffer_device_limits(text: str) -> str:
     """Reverse only GPU-47's framebuffer-limit clamp from the Vulkan cache TU."""
     current = "16a8ad80677d992b557ec90283a8f3b483b97440"
@@ -463,6 +489,7 @@ def normalized(root: Path) -> dict[str, str]:
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
         if name == "vk_texture_cache_cost.cpp":
+            text = strip_gpu51_x8d24_conversion(text)
             text = strip_gpu47_framebuffer_device_limits(text)
             text = strip_gpu46_framebuffer_layer_source(text)
             # The current vendor C++ is SHA-pinned before removing the newer

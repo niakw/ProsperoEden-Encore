@@ -32,7 +32,11 @@ def extract(start, end):
     begin = source.index(start)
     assert end in source[begin:], end
     return source[begin:source.index(end, begin) + 2]
-coalesce = extract("constexpr bool CanCoalescePitchDma(", "\n}\n\n// Remapped DMA lengths")
+coalesce = extract("constexpr bool CanCoalescePitchDma(", "\n}\n\n// Signed 2D pitch geometry")
+shared_begin = "// Signed 2D pitch geometry and device-address overlap are shared by"
+shared_end = "// Remapped DMA lengths are measured in pixels/blocks, NOT bytes."
+assert source.count(shared_begin) == source.count(shared_end) == 1
+shared = source[source.index(shared_begin):source.index(shared_end)]
 remap = extract("bool CopyPitchRemap(", "\n}\n} // namespace")
 for evidence in (
     "remap.GetComponent(0)", "remap.GetComponent(3)", "Swizzle::NO_WRITE",
@@ -40,7 +44,9 @@ for evidence in (
     "num_dst_components_minus_one", "memory.ReadBlock", "memory.WriteBlock",
     "memory.CopyBlock", "std::vector<u8> snapshot", "src_row_bytes",
     "dst_row_bytes", "MAX_CPU_REMAP_BYTES", "CHUNK_BYTES",
+    "PitchDmaPhysicalOverlap(", "PitchDmaRowAddress(",
 ):
+
     assert evidence in remap, evidence
 assert source.count("if (launch.remap_enable != 0 &&") == 1
 assert source.count("CopyPitchRemap(memory_manager, regs.remap_const") == 1
@@ -53,6 +59,7 @@ cpp = r"""
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <vector>
 using u8 = std::uint8_t;
 using u32 = std::uint32_t;
@@ -88,22 +95,56 @@ struct MaxwellDMA {
 };
 class MemoryManager {
 public:
-    std::array<u8, 8192> bytes{};
+    std::array<u8, 32768> bytes{};
+    // GMMU pages 0x4000 and 0x5000 point to physical pages 0x2000
+    // and 0x3000 respectively. 0x6000 is deliberately unmapped.
+    std::optional<u64> GpuToCpuAddress(GPUVAddr address) const {
+        if (address >= 0x4000 && address < 0x6000) return address - 0x2000;
+        if (address >= 0x6000 && address < 0x7000) return std::nullopt;
+        if (address < bytes.size()) return address;
+        return std::nullopt;
+    }
+    bool IsFullyMappedRange(GPUVAddr address, std::size_t n) const {
+        if (n == 0 || address > std::numeric_limits<u64>::max() - n)
+            return false;
+        for (std::size_t i=0; i<n; ++i) {
+            if (!GpuToCpuAddress(address+i)) return false;
+        }
+        return true;
+    }
+    bool IsContinuousRange(GPUVAddr address, std::size_t n) const {
+        if (!IsFullyMappedRange(address,n)) return false;
+        const auto first=GpuToCpuAddress(address);
+        for(std::size_t i=0;i<n;++i) {
+            if (GpuToCpuAddress(address+i) !=
+                std::optional<u64>{*first+i}) return false;
+        }
+        return true;
+    }
     void ReadBlock(GPUVAddr a, void* dst, std::size_t n) {
-        assert(a <= bytes.size() && n <= bytes.size() - a);
-        std::memcpy(dst, bytes.data() + a, n);
+        auto* ptr=static_cast<u8*>(dst);
+        for(std::size_t i=0;i<n;++i) {
+            const auto address=GpuToCpuAddress(a+i);
+            assert(address && *address<bytes.size());
+            ptr[i]=bytes[*address];
+        }
     }
     void WriteBlock(GPUVAddr a, const void* src, std::size_t n) {
-        assert(a <= bytes.size() && n <= bytes.size() - a);
-        std::memcpy(bytes.data() + a, src, n);
+        const auto* ptr=static_cast<const u8*>(src);
+        for(std::size_t i=0;i<n;++i) {
+            const auto address=GpuToCpuAddress(a+i);
+            assert(address && *address<bytes.size());
+            bytes[*address]=ptr[i];
+        }
     }
     void CopyBlock(GPUVAddr dst, GPUVAddr src, std::size_t n) {
-        assert(src <= bytes.size() && n <= bytes.size() - src);
-        assert(dst <= bytes.size() && n <= bytes.size() - dst);
-        std::memmove(bytes.data() + dst, bytes.data() + src, n);
+        std::vector<u8> temporary(n);
+        ReadBlock(src,temporary.data(),n);
+        WriteBlock(dst,temporary.data(),n);
     }
 };
 __COALESCE__
+__SHARED__
 __REMAP__
 int main() {
     using R = MaxwellDMA::RemapConst;
@@ -204,6 +245,45 @@ int main() {
     assert(apply(r,0x900,0x902,8,8,8,1));
     for(u32 i=0;i<8;i++)assert(mem.bytes[0x902+i]==40+i);
 
+    // Two distinct virtual pages alias a later source row physically.
+    // The old raw row-by-row CopyBlock would overwrite its unread row 1.
+    for (u32 i=0;i<16;i++) {
+        mem.bytes[0x1000+i]=static_cast<u8>(60+i);
+        mem.bytes[0x2000+i]=static_cast<u8>(120+i);
+    }
+    assert(CopyPitchDmaPlain(mem,0x1000,0x4000,4096,4096,16,2));
+    for (u32 i=0;i<16;i++) {
+        assert(mem.bytes[0x2000+i]==60+i);
+        assert(mem.bytes[0x3000+i]==120+i);
+    }
+    // Component-remapped DMA shares the same physical-VA detection.
+    r=cfg(1,1,1);
+    set(r,0,S::SRC_X);
+    for (u32 i=0;i<16;i++) {
+        mem.bytes[0x1000+i]=static_cast<u8>(30+i);
+        mem.bytes[0x2000+i]=static_cast<u8>(90+i);
+    }
+    assert(apply(r,0x1000,0x4000,4096,4096,16,2));
+    for (u32 i=0;i<16;i++) {
+        assert(mem.bytes[0x2000+i]==30+i);
+        assert(mem.bytes[0x3000+i]==90+i);
+    }
+    // Negative pitch is checked in widened arithmetic, not size_t wrap.
+    for (u32 i=0;i<16;i++) {
+        mem.bytes[0x1000+i]=static_cast<u8>(10+i);
+        mem.bytes[0x2000+i]=static_cast<u8>(20+i);
+    }
+    assert(CopyPitchDmaPlain(mem,0x2000,0x5000,-4096,-4096,16,2));
+    for (u32 i=0;i<16;i++) {
+        assert(mem.bytes[0x3000+i]==20+i);
+        assert(mem.bytes[0x2000+i]==10+i);
+    }
+    // When the second destination row is unmapped, fail before writing
+    // the FIRST destination row, not halfway through a DMA.
+    for (u32 i=0;i<16;i++) mem.bytes[0x3000+i]=static_cast<u8>(0xa0+i);
+    assert(!CopyPitchDmaPlain(mem,0x1000,0x5000,4096,4096,16,2));
+    for (u32 i=0;i<16;i++) assert(mem.bytes[0x3000+i]==0xa0+i);
+
     // An unavailable SRC_W on a one-component source is not a valid read.
     r=cfg(1,1,1);
     set(r, 0, S::SRC_W);
@@ -222,7 +302,7 @@ int main() {
     assert(apply(r, (std::numeric_limits<u64>::max)(),
                  (std::numeric_limits<u64>::max)(),0,0,1,1));
 }
-""".replace("__COALESCE__", coalesce).replace("__REMAP__", remap).replace("__METHOD__", method)
+""".replace("__COALESCE__", coalesce).replace("__SHARED__", shared).replace("__REMAP__", remap).replace("__METHOD__", method)
 compilers = [c for c in ("clang++", "g++") if shutil.which(c)]
 assert compilers, "No C++ compiler available for the native remap contract"
 with tempfile.TemporaryDirectory(prefix="eden-b0b5-remap-") as temp:

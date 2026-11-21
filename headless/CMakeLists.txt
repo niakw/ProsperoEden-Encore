@@ -878,6 +878,31 @@ if(PS5_NATIVE)
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_atomic_sources}")
 endif()
 
+# NS1 Maxwell FP64 condition codes: select the reviewed DADD/DMUL translators.
+# The maintained sources update only Z/N for .CC and preserve C/O, matching
+# the measured Maxwell/Tesla floating condition-code relation to zero.
+if(PS5_NATIVE)
+    set(EDEN_NS1_FP64_CC_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl")
+    foreach(eden_ns1_fp64_cc_unit IN ITEMS double_add.cpp double_multiply.cpp)
+        set(eden_ns1_fp64_cc_source "${EDEN_NS1_FP64_CC_ROOT}/${eden_ns1_fp64_cc_unit}")
+        if(NOT EXISTS "${eden_ns1_fp64_cc_source}")
+            message(FATAL_ERROR "Missing maintained NS1 FP64 CC translator: ${eden_ns1_fp64_cc_unit}")
+        endif()
+        get_target_property(eden_ns1_fp64_cc_sources shader_recompiler SOURCES)
+        list(FIND eden_ns1_fp64_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_fp64_cc_unit}"
+             eden_ns1_fp64_cc_pinned)
+        if(eden_ns1_fp64_cc_pinned LESS 0)
+            message(FATAL_ERROR "Pinned FP64 CC translator owner changed: ${eden_ns1_fp64_cc_unit}")
+        endif()
+        list(REMOVE_ITEM eden_ns1_fp64_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_fp64_cc_unit}")
+        list(APPEND eden_ns1_fp64_cc_sources "${eden_ns1_fp64_cc_source}")
+        set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_fp64_cc_sources}")
+    endforeach()
+endif()
+
 # NS1 Maxwell numeric FP min/max: select the single maintained SPIR-V emitter.
 # FMin/FMax leave a NaN operand undefined; the NVIDIA guest selects the
 # numeric operand.  The reviewed NMin/NMax translation is also understood by

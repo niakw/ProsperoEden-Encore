@@ -682,3 +682,128 @@ assert "Shutdown();" in NVDEC[NVDEC.index("Nvdec::~Nvdec()"):NVDEC.index("void N
 assert "Shutdown();" in VIC[VIC.index("Vic::~Vic()"):VIC.index("void Vic::ProcessMethod")]
 assert HOST.count("->Shutdown();")==6
 assert CDMA.index("thread.request_stop();") < CDMA.index("command_cv.notify_all();") < CDMA.index("thread.join();")
+
+
+# Execute the native Shutdown and the two authentic derived destructors
+# with a live stop-token worker. FrameQueue::Close asserts the worker was
+# joined before decoder resources were touched. Also compile the exact
+# guard branches of CDMAPusher and NVDEC into independently bounded arrays.
+native_shutdown=CDMA[CDMA.index("CDmaPusher::~CDmaPusher() {"):
+                     CDMA.index("void CDmaPusher::ExecuteCommand(")]
+nvdec_dtor=NVDEC[NVDEC.index("Nvdec::~Nvdec() {"):
+                 NVDEC.index("void Nvdec::ProcessMethod(")]
+vic_dtor=VIC[VIC.index("Vic::~Vic() noexcept {"):
+            VIC.index("void Vic::ProcessMethod(")]
+thi_guard=CDMA[CDMA.index("        if (method >= ThiRegisters::NUM_REGS) {"):
+               CDMA.index("        thi_regs.reg_array[method] = arg;")]
+nvdec_guard=NVDEC[NVDEC.index("    if (method >= NvdecCommon::NvdecRegisters::NUM_REGS) {"):
+                   NVDEC.index("    regs.reg_array[method] = argument;")]
+cpp=r"""
+#include <array>
+#include <atomic>
+#include <cassert>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
+#include <thread>
+#define LOG_INFO(...) ((void)0)
+#define LOG_WARNING(...) ((void)0)
+using u32=std::uint32_t;
+struct FrameQueue {
+    std::atomic<bool> worker_stopped{false};
+    unsigned closes=0;
+    void Close(int) {
+        assert(worker_stopped.load(std::memory_order_acquire));
+        ++closes;
+    }
+};
+struct Host1x{ FrameQueue frame_queue; };
+class CDmaPusher {
+public:
+    explicit CDmaPusher(Host1x& h) {
+        thread=std::jthread([this,&h](std::stop_token tok) {
+            std::unique_lock lock{mutex};
+            command_cv.wait(lock,tok,[]{return false;});
+            h.frame_queue.worker_stopped.store(true,std::memory_order_release);
+        });
+    }
+    virtual ~CDmaPusher();
+    void Shutdown();
+protected:
+    std::mutex mutex{};
+    std::condition_variable_any command_cv{};
+    std::jthread thread{};
+};
+__BASE_DTOR_SHUTDOWN__
+struct Nvdec:CDmaPusher {
+    Host1x& host1x;
+    int id;
+    explicit Nvdec(Host1x& h):CDmaPusher(h),host1x(h),id(3){}
+    ~Nvdec();
+};
+__NVDEC_DTOR__
+struct Vic:CDmaPusher {
+    Host1x& host1x;
+    int id;
+    explicit Vic(Host1x& h):CDmaPusher(h),host1x(h),id(4){}
+    ~Vic() noexcept;
+};
+__VIC_DTOR__
+struct ThiRegisters {
+    static constexpr std::size_t NUM_REGS=0x20;
+    std::array<u32,NUM_REGS> reg_array{};
+};
+struct NvdecCommon {
+    struct NvdecRegisters {
+        static constexpr std::size_t NUM_REGS=0x178;
+        std::array<u32,NUM_REGS> reg_array{};
+    };
+};
+struct MethodWitness {
+    ThiRegisters thi_regs{};
+    NvdecCommon::NvdecRegisters regs{};
+    void THI(u32 method,u32 arg) {
+__THI_GUARD__
+        thi_regs.reg_array[method]=arg;
+    }
+    void NVDEC(u32 method,u32 argument) {
+__NVDEC_GUARD__
+        regs.reg_array[method]=argument;
+    }
+};
+int main() {
+    for(int i=0;i<40;++i) {
+        Host1x n{};
+        { Nvdec decoder(n); decoder.Shutdown(); decoder.Shutdown(); }
+        assert(n.frame_queue.closes==1);
+        Host1x v{};
+        { Vic vic(v); }
+        assert(v.frame_queue.closes==1);
+    }
+    MethodWitness m{};
+    m.THI(0,17);m.THI(0x1f,41);m.THI(0x20,42);m.THI(0xfff,43);
+    assert(m.thi_regs.reg_array[0]==17);
+    assert(m.thi_regs.reg_array[0x1f]==41);
+    m.NVDEC(0,17);m.NVDEC(0x177,52);m.NVDEC(0x178,53);m.NVDEC(0xfff,54);
+    assert(m.regs.reg_array[0]==17);
+    assert(m.regs.reg_array[0x177]==52);
+}
+""".replace("__BASE_DTOR_SHUTDOWN__",native_shutdown)
+cpp=cpp.replace("__NVDEC_DTOR__",nvdec_dtor).replace("__VIC_DTOR__",vic_dtor)
+cpp=cpp.replace("__THI_GUARD__",thi_guard).replace("__NVDEC_GUARD__",nvdec_guard)
+compiler=shutil.which("clang++-18") or shutil.which("clang++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-host1x-worker-") as temp:
+    source=Path(temp)/"host1x-worker.cpp"
+    source.write_text(cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(temp)/("worker-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-pthread","-fsanitize=address,undefined",
+                        "-fno-sanitize-recover=all",str(source),"-o",str(exe)],
+                       check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=30)
+print("NS1_HOST1X_CDMA_WORKER_HOST_PASS authentic_stop=1 derived_dtor=2 "
+      "join_before_frameclose=1 repeated_shutdown=1 threads=80 "
+      "THI_bounds_0x20=1 NVDEC_bounds_0x178=1 ASan_UBSan_O0_O2=1")

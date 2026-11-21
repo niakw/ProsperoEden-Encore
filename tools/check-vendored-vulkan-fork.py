@@ -209,6 +209,88 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         expected[gpu51_name]=out
     print("ENCORE_NS1_GPU51_X8D24_CONVERSION_EXACT_REVERSE_PASS owners=3")
 
+    # GPU-54 (Lichii #295 / 73bcdc059d): WFI must be repeatable and memory-visible.
+    # Reverse the exact production changes only on audit copies before GPU-50/49 and
+    # frozen R23 receipts. Shipping source keeps the barrier and no reusable event.
+    gpu54_edits={
+        'vulkan_rasterizer.cpp': (
+            '1544c6aecbc8cac5bede5a3119e551b1f760dee9',
+            '8473aa19cd3cdcf8546dce994ceb69cbee2b1220',
+            (
+                (
+"""      fence_manager(*this, gpu, texture_cache, buffer_cache, query_cache, device, scheduler) {
+""",
+"""      fence_manager(*this, gpu, texture_cache, buffer_cache, query_cache, device, scheduler),
+      wfi_event(device.GetLogical().CreateEvent()) {
+"""
+                ),
+                (
+"""    scheduler.RequestOutsideRenderPassOperationContext();
+    scheduler.Record([flags](vk::CommandBuffer cmdbuf) {
+        // A reusable event that is never reset only orders its first signal and, without a
+        // memory barrier, does not make earlier GPU writes visible to subsequent commands.
+        // A pipeline barrier expresses both the execution dependency and the guest WFI memory
+        // visibility on every invocation. Adapted from Lichii #295 / 73bcdc059d.
+        static constexpr VkMemoryBarrier WFI_BARRIER{
+            .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
+        };
+        cmdbuf.PipelineBarrier(flags, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, WFI_BARRIER);
+    });
+    fence_manager.SignalOrdering();
+""",
+"""    scheduler.RequestOutsideRenderPassOperationContext();
+    scheduler.Record([event = *wfi_event, flags](vk::CommandBuffer cmdbuf) {
+        cmdbuf.SetEvent(event, flags);
+        cmdbuf.WaitEvents(event, flags, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, {}, {}, {});
+    });
+    fence_manager.SignalOrdering();
+"""
+                ),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/vk_rasterizer.h': (
+            '6e0bf7ab2a3a2147f9db0c630070db30d9b35d56',
+            'f18e79dfece6eba3e4984b3ec0645abbfe1760e1',
+            (
+                ("    FenceManager fence_manager;\n\n#ifdef PS5_NATIVE\n",
+                 "    FenceManager fence_manager;\n\n    vk::Event wfi_event;\n\n#ifdef PS5_NATIVE\n"),
+            ),
+        ),
+    }
+    def gpu54_blob(text):
+        raw=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+    for gpu54_name,(current_blob,predecessor_blob,edits) in gpu54_edits.items():
+        raw=expected[gpu54_name].read_text()
+        actual=gpu54_blob(raw)
+        if actual == current_blob:
+            if gpu54_name == 'vulkan_rasterizer.cpp':
+                wfi=raw.split('void RasterizerVulkan::WaitForIdle() {',1)[1].split(
+                    '\nvoid RasterizerVulkan::FragmentBarrier()',1)[0]
+                assert 'VK_ACCESS_MEMORY_WRITE_BIT' in wfi
+                assert 'VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT' in wfi
+                assert 'VK_PIPELINE_STAGE_ALL_COMMANDS_BIT' in wfi
+                assert 'cmdbuf.PipelineBarrier(' in wfi
+                assert 'cmdbuf.SetEvent(' not in wfi and 'cmdbuf.WaitEvents(' not in wfi
+            else:
+                assert 'wfi_event' not in raw
+            normalized=raw
+            for newer,older in edits:
+                assert normalized.count(newer)==1, ('GPU-54 audit hunk drift',gpu54_name)
+                normalized=normalized.replace(newer,older,1)
+            assert gpu54_blob(normalized)==predecessor_blob, (
+                'GPU-54 predecessor reconstruction failed',gpu54_name,gpu54_blob(normalized))
+            out=temp/'normalized-vendor-gpu54'/gpu54_name
+            out.parent.mkdir(parents=True,exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu54_name]=out
+        else:
+            assert actual == predecessor_blob, ('Unexpected GPU-54 owner',gpu54_name,actual)
+    print("ENCORE_NS1_GPU54_WFI_BARRIER_EXACT_REVERSE_PASS owners=2 repeatable=1 memory_visible=1")
+
     # GPU-50 (Lichii #2047): reverse only the reviewed Maxwell DMA cache
     # notification on an audit COPY; shipping NS1 retains granular coherency.
     # GPU-49 and older Vulkan receipts must compare against their exact owner.

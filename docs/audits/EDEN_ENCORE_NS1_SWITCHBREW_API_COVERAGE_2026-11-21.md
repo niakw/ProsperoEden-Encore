@@ -5380,4 +5380,164 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | usb:pd:c | `5` | `GetManufacturerId` | 2.0.0+ | Q | 2026-11-21 |
 | usb:pd:c | `6` | `GetDeviceId` | 2.0.0+ | Q | 2026-11-21 |
 
+### WLAN services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/WLAN_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/WLAN%20services.md)
+
+**42 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| wlan:inf | `2` | `GetMacAddress` | — | Q | 2026-11-21 |
+| wlan:inf | `3` | `StartScan` | — | Q | 2026-11-21 |
+| wlan:inf | `4` | `StopScan` | — | Q | 2026-11-21 |
+| wlan:inf | `5` | `Connect` | — | Q | 2026-11-21 |
+| wlan:inf | `6` | `CancelConnect` | — | Q | 2026-11-21 |
+| wlan:inf | `7` | `Disconnect` | — | Q | 2026-11-21 |
+| wlan:inf | `10` | `GetState` | — | Q | 2026-11-21 |
+| wlan:inf | `11` | `GetScanResult` | — | Q | 2026-11-21 |
+| wlan:inf | `12` | `GetRssi` | — | Q | 2026-11-21 |
+| wlan:inf | `13` | `ChangeRxAntenna` | — | Q | 2026-11-21 |
+| wlan:inf | `16` | `RequestWakeUp` | — | Q | 2026-11-21 |
+| wlan:inf | `17` | `RequestIfUpDown` | — | Q | 2026-11-21 |
+| wlan:lcl | `6` | `GetMacAddress` | — | Q | 2026-11-21 |
+| wlan:lcl | `7` | `CreateBss` | — | Q | 2026-11-21 |
+| wlan:lcl | `8` | `DestroyBss` | — | Q | 2026-11-21 |
+| wlan:lcl | `9` | `StartScan` | — | Q | 2026-11-21 |
+| wlan:lcl | `10` | `StopScan` | — | Q | 2026-11-21 |
+| wlan:lcl | `11` | `Connect` | — | Q | 2026-11-21 |
+| wlan:lcl | `12` | `CancelConnect` | — | Q | 2026-11-21 |
+| wlan:lcl | `13` | `Join` | — | Q | 2026-11-21 |
+| wlan:lcl | `14` | `CancelJoin` | — | Q | 2026-11-21 |
+| wlan:lcl | `15` | `Disconnect` | — | Q | 2026-11-21 |
+| wlan:lcl | `16` | `SetBeaconLostCount` | — | Q | 2026-11-21 |
+| wlan:lcl | `20` | `GetBssIndicationEvent` | — | Q | 2026-11-21 |
+| wlan:lcl | `21` | `GetBssIndicationInfo` | — | Q | 2026-11-21 |
+| wlan:lcl | `22` | `GetState` | — | Q | 2026-11-21 |
+| wlan:lcl | `23` | `GetAllowedChannels` | — | Q | 2026-11-21 |
+| wlan:lcl | `24` | `AddIe` | — | Q | 2026-11-21 |
+| wlan:lcl | `25` | `DeleteIe` | — | Q | 2026-11-21 |
+| wlan:lcl | `28` | `CreateRxEntry` | — | Q | 2026-11-21 |
+| wlan:lcl | `29` | `DeleteRxEntry` | — | Q | 2026-11-21 |
+| wlan:lcl | `32` | `AddMatchingDataToRxEntry` | — | Q | 2026-11-21 |
+| wlan:lcl | `33` | `RemoveMatchingDataFromRxEntry` | — | Q | 2026-11-21 |
+| wlan:lcl | `34` | `GetScanResult` | — | Q | 2026-11-21 |
+| wlan:lcl | `36` | `SetActionFrameWithBeacon` | — | Q | 2026-11-21 |
+| wlan:lcl | `37` | `CancelActionFrameWithBeacon` | — | Q | 2026-11-21 |
+| wlan:lcl | `38` | `CreateRxEntryForActionFrame` | — | Q | 2026-11-21 |
+| wlan:lcl | `39` | `DeleteRxEntryForActionFrame` | — | Q | 2026-11-21 |
+| wlan:lcl | `42` | `CancelGetActionFrame` | — | Q | 2026-11-21 |
+| wlan:lcl | `43` | `GetRssi` | — | Q | 2026-11-21 |
+| wlan:soc | `6` | `GetMacAddress` | — | Q | 2026-11-21 |
+| wlan:soc | `7` | `SwitchTsfTimerFunction` | — | Q | 2026-11-21 |
+
+### GRC services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/GRC_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/GRC%20services.md)
+
+**21 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| grc:c | `1` | `OpenContinuousRecorder` | — | Q | 2026-11-21 |
+| grc:c | `2` | `OpenGameMovieTrimmer` | — | Q | 2026-11-21 |
+| grc:c | `1` | `BeginTrim` | — | Q | 2026-11-21 |
+| grc:c | `2` | `EndTrim` | — | Q | 2026-11-21 |
+| grc:c | `10` | `GetNotTrimmingEvent` | — | Q | 2026-11-21 |
+| grc:c | `20` | `SetThumbnailRgba` | — | Q | 2026-11-21 |
+| IMovieMaker | `2` | `CreateVideoProxy` | — | Q | 2026-11-21 |
+| IMovieMaker | `9` | `SetAlbumShimLibraryVersion` | 7.0.0+ | Q | 2026-11-21 |
+| IMovieMaker | `10` | `OpenOffscreenLayer` | — | Q | 2026-11-21 |
+| IMovieMaker | `11` | `CloseOffscreenLayer` | — | Q | 2026-11-21 |
+| IMovieMaker | `20` | `StartOffscreenRecording` | — | Q | 2026-11-21 |
+| IMovieMaker | `21` | `AbortOffscreenRecording` | — | Q | 2026-11-21 |
+| IMovieMaker | `22` | `RequestOffscreenRecordingFinishReady` | — | Q | 2026-11-21 |
+| IMovieMaker | `23` | `CompleteOffscreenRecordingFinish` | — | Q | 2026-11-21 |
+| IMovieMaker | `24` | `StartOffscreenRecordingEx` | — | Q | 2026-11-21 |
+| IMovieMaker | `25` | `CompleteOffscreenRecordingFinishEx0` | — | Q | 2026-11-21 |
+| IMovieMaker | `26` | `CompleteOffscreenRecordingFinishEx1` | 7.0.0+ | Q | 2026-11-21 |
+| IMovieMaker | `30` | `GetOffscreenLayerError` | — | Q | 2026-11-21 |
+| IMovieMaker | `41` | `EncodeOffscreenLayerAudioSample` | — | Q | 2026-11-21 |
+| IMovieMaker | `50` | `GetOffscreenLayerRecordingFinishReadyEvent` | — | Q | 2026-11-21 |
+| IMovieMaker | `52` | `GetOffscreenLayerAudioEncodeReadyEvent` | — | Q | 2026-11-21 |
+
+### Migration services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Migration_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Migration%20services.md)
+
+**37 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| mig:usr | `10` | `TryGetLastMigrationInfo` | — | Q | 2026-11-21 |
+| mig:usr | `100` | `CreateServer` | — | Q | 2026-11-21 |
+| mig:usr | `101` | `ResumeServer` | — | Q | 2026-11-21 |
+| mig:usr | `200` | `CreateClient` | — | Q | 2026-11-21 |
+| mig:usr | `201` | `ResumeClient` | — | Q | 2026-11-21 |
+| mig:usr | `1001` | `? (Takes a total of 8-bytes of input, returns an [IAsyncNetworkServiceLicenseKindContext](Account%20services.md "wikilink"))` | 8.0.0+ | Q | 2026-11-21 |
+| mig:usr | `0` | `GetUid` | — | Q | 2026-11-21 |
+| mig:usr | `1` | `GetServerProfile` | — | Q | 2026-11-21 |
+| mig:usr | `100` | `PrepareAsync` | — | Q | 2026-11-21 |
+| mig:usr | `101` | `GetConnectionRequirement` | — | Q | 2026-11-21 |
+| mig:usr | `200` | `WaitConnectionAsync` | — | Q | 2026-11-21 |
+| mig:usr | `201` | `GetClientProfile` | — | Q | 2026-11-21 |
+| mig:usr | `202` | `AcceptConnectionAsync` | — | Q | 2026-11-21 |
+| mig:usr | `203` | `DeclineConnectionAsync` | — | Q | 2026-11-21 |
+| mig:usr | `300` | `ProcessTransferAsync` | — | Q | 2026-11-21 |
+| mig:usr | `400` | `CompleteAsync` | — | Q | 2026-11-21 |
+| mig:usr | `500` | `Abort` | — | Q | 2026-11-21 |
+| mig:usr | `0` | `GetClientProfile` | — | Q | 2026-11-21 |
+| mig:usr | `10` | `CreateLoginSession` | — | Q | 2026-11-21 |
+| mig:usr | `11` | `GetNetworkServiceAccountId` | — | Q | 2026-11-21 |
+| mig:usr | `12` | `GetUserNickname` | — | Q | 2026-11-21 |
+| mig:usr | `13` | `GetUserProfileImage` | — | Q | 2026-11-21 |
+| mig:usr | `200` | `ScanServersAsync` | — | Q | 2026-11-21 |
+| mig:usr | `201` | `ListServers` | — | Q | 2026-11-21 |
+| mig:usr | `210` | `ConnectByServerIdAsync` | — | Q | 2026-11-21 |
+| mig:usr | `300` | `GetStorageShortfall` | — | Q | 2026-11-21 |
+| mig:usr | `301` | `GetTotalTransferInfo` | — | Q | 2026-11-21 |
+| mig:usr | `302` | `GetImmigrantUid` | — | Q | 2026-11-21 |
+| mig:usr | `310` | `GetCurrentTransferInfo` | — | Q | 2026-11-21 |
+| mig:usr | `311` | `GetCurrentRelatedApplications` | — | Q | 2026-11-21 |
+| mig:usr | `320` | `TransferNextAsync` | — | Q | 2026-11-21 |
+| mig:usr | `350` | `SuspendAsync` | — | Q | 2026-11-21 |
+| mig:usr | `999` | `DebugSynchronizeStateInFinalizationAsync` | — | Q | 2026-11-21 |
+| mig:usr | `0` | `GetSystemEvent` | — | Q | 2026-11-21 |
+| mig:usr | `1` | `Cancel` | — | Q | 2026-11-21 |
+| mig:usr | `2` | `HasDone` | — | Q | 2026-11-21 |
+| mig:usr | `3` | `GetResult` | — | Q | 2026-11-21 |
+
+### Jpegdec services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Jpegdec_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Jpegdec%20services.md)
+
+**0 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+
+### OLSC services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/OLSC_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/OLSC%20services.md)
+
+**6 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| olsc:s | `0` | `GetNativeHandle` | — | Q | 2026-11-21 |
+| olsc:s | `0` | `GetResult` | — | Q | 2026-11-21 |
+| olsc:s | `1` | `Cancel` | — | Q | 2026-11-21 |
+| olsc:s | `2` | `IsAvailable` | — | Q | 2026-11-21 |
+| olsc:s | `3` | `GetSystemEvent` | — | Q | 2026-11-21 |
+| olsc:s | `0` | `Update` | — | Q | 2026-11-21 |
+
+### NGCT services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/NGCT_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NGCT%20services.md)
+
+**0 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+
 <!-- NS1_IPC_APPEND -->

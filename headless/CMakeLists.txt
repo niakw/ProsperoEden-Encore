@@ -4655,13 +4655,12 @@ if(PS5_NATIVE)
     message(STATUS "R23 native BCAT, F2I, audren:d and initialized channel-state selected once")
 endif()
 
-# P5 link parity: native shader atomic CAS owners
-# The cached original source builds successfully but does not define all
-# CAS symbols referenced by the pinned Task/Mesh opcode/dispatch headers.
-# NS1 CAS owners. Keep the already-audited global-memory translator pinned,
-# while selecting maintained backend atomics + shared-memory CAS frontend.
-# The PS5 production path uses the maintained SPIR-V OpAtomicCompareExchange;
-# OpenGL owners remain coherent when that backend is enabled.
+# P5 link parity: native shader atomic CAS owners.
+# Earlier NS1 selection already replaces the original global-memory translator
+# with the reviewed owner. Preserve it here (including its bounded CAS modes);
+# do not silently restore the pinned version or fail to recognize the absolute
+# maintained source. Other atomics and optional OpenGL owners are maintained too.
+# The PS5 production path uses the maintained SPIR-V OpAtomicCompareExchange.
 if(PS5_NATIVE)
     set(EDEN_PINNED_SHADER_CAS_ROOT
         "${PORT_ROOT}/vendor/sources/eden/src/shader_recompiler")
@@ -4678,21 +4677,21 @@ if(PS5_NATIVE)
     endif()
     get_target_property(eden_native_cas_sources shader_recompiler SOURCES)
     foreach(eden_cas_path IN LISTS eden_native_cas_paths)
-        if(eden_cas_path STREQUAL "frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp")
-            set(eden_cas_impl "${EDEN_PINNED_SHADER_CAS_ROOT}/${eden_cas_path}")
-        else()
-            set(eden_cas_impl "${EDEN_MAINTAINED_SHADER_CAS_ROOT}/${eden_cas_path}")
-        endif()
+        set(eden_cas_impl "${EDEN_MAINTAINED_SHADER_CAS_ROOT}/${eden_cas_path}")
         if(NOT EXISTS "${eden_cas_impl}")
             message(FATAL_ERROR "Missing selected shader CAS owner: ${eden_cas_path}")
         endif()
         list(FIND eden_native_cas_sources "${eden_cas_path}" eden_cas_relative)
         set(eden_cas_pinned "${EDEN_PINNED_SHADER_CAS_ROOT}/${eden_cas_path}")
         list(FIND eden_native_cas_sources "${eden_cas_pinned}" eden_cas_absolute)
-        if(eden_cas_relative LESS 0 AND eden_cas_absolute LESS 0)
+        list(FIND eden_native_cas_sources "${eden_cas_impl}" eden_cas_maintained)
+        if(eden_cas_relative LESS 0 AND eden_cas_absolute LESS 0 AND eden_cas_maintained LESS 0)
             message(FATAL_ERROR "Missing native shader CAS source: ${eden_cas_path}")
         endif()
-        list(REMOVE_ITEM eden_native_cas_sources "${eden_cas_path}" "${eden_cas_pinned}")
+        # The earlier Maxwell replacement already owns this TU. Accept either
+        # original form, but retain exactly one reviewed owner in the final list.
+        list(REMOVE_ITEM eden_native_cas_sources
+            "${eden_cas_path}" "${eden_cas_pinned}" "${eden_cas_impl}")
         list(APPEND eden_native_cas_sources "${eden_cas_impl}")
     endforeach()
     set_property(TARGET shader_recompiler PROPERTY SOURCES

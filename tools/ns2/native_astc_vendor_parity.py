@@ -229,6 +229,29 @@ def strip_post_r23_active_image_pages(text: str) -> str:
     return text
 
 
+def strip_gpu46_framebuffer_layer_header(text: str) -> str:
+    """Reverse only GPU-46's private Framebuffer layer accessor/state for old ASTC receipts."""
+    current = "6623a5d5164d4b09f1ea9089b62b7c5fdfdfaa05"
+    predecessor = "1b725abab76168d9787d9b062d7406df733cf49d"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-46 framebuffer header source", blob)
+    text = once(text, (
+        "    [[nodiscard]] u32 Layers() const noexcept {\n"
+        "        return layers;\n"
+        "    }\n\n"
+    ), "")
+    text = once(text, (
+        "    u32 num_images = 0;\n"
+        "    u32 layers = 1;\n"
+    ), "    u32 num_images = 0;\n")
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-46 ASTC header reversal did not restore exact predecessor")
+    print("ENCORE_NS1_GPU46_ASTC_HEADER_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
 def reverse_r23_checked_astc(root: Path, name: str, text: str) -> str:
     """Restore the exact historic ASTC owner from the new TIR/retirement ABI."""
     receipts = {
@@ -328,7 +351,7 @@ def normalized(root: Path) -> dict[str, str]:
     for name, expected in AUXILIARY.items():
         path = root / ASTC / name
         if name == "vk_texture_cache.h":
-            selected = path.read_text()
+            selected = strip_gpu46_framebuffer_layer_header(path.read_text())
             if git_blob(selected.encode()) in {"7c2ceac388905a883abbcf8354d1b61e66ec2f77", "744bf30e1421dcce212146f7e26e9d90558676a8"}:
                 selected = strip_post_r23_active_image_pages(selected)
             n73 = strip_post_n73_msaa_attachment_header(

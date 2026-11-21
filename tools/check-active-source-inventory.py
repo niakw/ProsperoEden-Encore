@@ -447,7 +447,15 @@ r437_vendor_pin = subprocess.check_output(
 # Reverse only these exact source hunks on this audit COPY, retaining the
 # historical R437/NS2 source replay and never editing the shipping header.
 fc27_p1_applet_macro_fix = r437_vendor_pin == "b65d8d9673475433f0b6eac72eb304bf23141666"
-fc27_p1_vendor = r437_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
+# Selected BufferCacheBase did not change through later NS2-only vendor
+# commits. Reverse the FC27 P1 additions only for the byte-exact active
+# successor, then require its historical SHA before replaying the R437 gate.
+fc27_p1_vendor = (
+    hashlib.sha1(
+        b"blob " + str(len(r437_body.encode("utf-8"))).encode() +
+        bytes([0]) + r437_body.encode("utf-8")
+    ).hexdigest() == "716634290574ed4dfc8fd3be0d0ea0ad582980f8"
+)
 if fc27_p1_vendor:
     raw = r437_body.encode("utf-8")
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()

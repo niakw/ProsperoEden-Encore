@@ -34,6 +34,14 @@ assert baseline.count(lock_anchor)==1
 assert prefix==baseline.replace(lock_anchor,lock_anchor+fragment_guard)
 assert prefix.index(fragment_guard) > prefix.index(lock_anchor)
 assert prefix.index(fragment_guard) < prefix.index("texture_cache.DmaImageId(")
+# Channel switch proof: the accelerator stores a reference to the rasterizer's
+# active GMMU pointer, not the GMMU captured during object construction.
+owner=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
+assert owner.count("Tegra::MemoryManager* const& gpu_memory;")==1
+assert owner.count("Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);")==1
+assert "accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory)" in source
+assert "gpu_memory{gpu_memory_}" in source
+assert "GPU-22 DMA image GMMU continuity before cache mutation" in gen
 assert "F07 native DMA image byte guard before paired cache mutex" in gen
 guard=prefix.index("if (checked_bytes == 0 ||")
 lock=prefix.index("std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};")

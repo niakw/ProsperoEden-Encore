@@ -310,6 +310,8 @@ NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
 }
 def ns2_encoder_receipt(relative, previous):
+    if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
+        return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
     return (NS2_ENCODER_FAIL_CLOSED_BLOBS.get(relative, previous)
             if NS2_ENCODER_FAIL_CLOSED_ACTIVE else previous)
 

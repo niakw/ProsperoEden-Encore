@@ -542,16 +542,18 @@ print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 "
 # GPU-36: actual native NVDEC submit preflight code, compiled in a focused
 # Clang sanitizer harness to reject untrusted ioctl sizes before allocation.
 NVD_PATH=V/"encore-active/eden-core/src/core/hle/service/nvdrv/devices/nvhost_nvdec_common.cpp"
-assert blob(NVD_PATH)=="65b17c011ac48c7f042a2e1da46feb116072a152"
+assert blob(NVD_PATH)=="3e726b66f49a0ce0b91039ce1f1f73baeb0f573b"
 NVD=NVD_PATH.read_text()
 assert "core.GetSession(sessions[fd])" not in NVD
 assert "params.syncpoint_count > params.fence_count" in NVD
 assert "cmd.word_count < 0" in NVD
+assert "syncpoint_manager.IsSyncpointAllocated(increment.id)" in NVD
 assert 'list(REMOVE_ITEM core_sources "hle/service/nvdrv/devices/nvhost_nvdec_common.cpp")' in CMAKE
 S=NVD[NVD.index("NvResult nvhost_nvdec_common::Submit("):
       NVD.index("NvResult nvhost_nvdec_common::GetSyncpoint(")]
 packet=S[S.index("    constexpr std::size_t MAX_NVDEC_SUBMIT_BYTES"):
          S.index("    // Instantiate param buffers")]
+sync_guard=S[S.index("    // The NVDRV syncpoint table has 192 entries."):S.index("    // Preflight command handles and word counts")]
 commands=S[S.index("    constexpr u64 MAX_NVDEC_CMD_BYTES"):
            S.index("    for (std::size_t i = 0; i < syncpt_increments.size(); i++)")]
 assert "sessions.find(fd)" in packet
@@ -572,7 +574,7 @@ enum class NvResult{InvalidState,Success};
 struct IoctlSubmit{u32 cmd_buffer_count{},relocation_count{},syncpoint_count{},fence_count{};};
 struct CommandBuffer{s32 memory_id{};u32 offset{};s32 word_count{};};
 struct Reloc{s32 a{},b{},c{},d{};};
-struct SyncptIncr{u32 a{},b{},c{},d{},e{};};
+struct SyncptIncr{u32 id{},b{},c{},d{},e{};};
 namespace Tegra{struct ChCommandHeader{u32 value;};}
 struct Session{int* process{};};
 struct CoreMock{Session* current{};Session* GetSession(int){return current;}};
@@ -581,9 +583,11 @@ struct NvmapMock{
  std::shared_ptr<Handle> handle{};
  std::shared_ptr<Handle> GetHandle(s32 id){return id==1?handle:nullptr;}
 };
+struct SyncpointMock{bool IsSyncpointAllocated(u32 id) const{return id==1;}};
 struct Owner{
  CoreMock core;
  NvmapMock nvmap;
+ SyncpointMock syncpoint_manager;
  std::unordered_map<DeviceFD,int> sessions;
  NvResult Packet(IoctlSubmit params,std::span<u8> data,DeviceFD fd){
 __PACKET__
@@ -591,6 +595,10 @@ __PACKET__
  }
  NvResult Commands(std::vector<CommandBuffer> command_buffers){
 __COMMANDS__
+ return NvResult::Success;
+ }
+ NvResult Syncpoints(std::vector<SyncptIncr> syncpt_increments){
+__SYNCPOINT__
  return NvResult::Success;
  }
 };
@@ -610,6 +618,9 @@ int main(){
  assert(owner.Packet(good,bytes,10)==NvResult::InvalidState);
  owner.nvmap.handle=std::make_shared<Handle>(Handle{4096,0x10000});
  assert(owner.Commands({CommandBuffer{1,128,4}})==NvResult::Success);
+ assert(owner.Syncpoints({SyncptIncr{1,1,0,0,0}})==NvResult::Success);
+ assert(owner.Syncpoints({SyncptIncr{0,1,0,0,0}})==NvResult::InvalidState);
+ assert(owner.Syncpoints({SyncptIncr{192,1,0,0,0}})==NvResult::InvalidState);
  assert(owner.Commands({CommandBuffer{1,128,-1}})==NvResult::InvalidState);
  assert(owner.Commands({CommandBuffer{1,128,0x7fffffff}})==NvResult::InvalidState);
  assert(owner.Commands({CommandBuffer{99,128,4}})==NvResult::InvalidState);
@@ -618,7 +629,7 @@ int main(){
  owner.nvmap.handle->address=std::numeric_limits<u64>::max()-1;
  assert(owner.Commands({CommandBuffer{1,0,4}})==NvResult::InvalidState);
 }
-""".replace("__PACKET__",packet).replace("__COMMANDS__",commands)
+""".replace("__PACKET__",packet).replace("__COMMANDS__",commands).replace("__SYNCPOINT__",sync_guard)
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
 assert compiler
 with tempfile.TemporaryDirectory(prefix="encore-nvdec-submit-") as temp:
@@ -631,5 +642,5 @@ with tempfile.TemporaryDirectory(prefix="encore-nvdec-submit-") as temp:
                         str(path),"-o",str(exe)],check=True,timeout=45)
         subprocess.run([str(exe)],check=True,timeout=20)
 print("NS1_NVDEC_SUBMIT_PREFLIGHT_HOST_PASS packet=1 command=1 truncated=1 "
-      "huge_counts=1 session=1 signed_words=1 handle_bounds=1 "
+      "huge_counts=1 session=1 signed_words=1 handle_bounds=1 invalid_syncpoints=1 "
       "ASan_UBSan=1 O0_O2=2")

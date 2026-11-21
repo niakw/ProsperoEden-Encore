@@ -94,6 +94,7 @@ REVIEWED_PINS.add("1e513ae001669127538a346c7f390af55edd6712")
 REVIEWED_PINS.add("d31aa01bdfa87165a272473c385040723bf2c1f6")
 REVIEWED_PINS.add("20cb62f1be572c8063ce4162d3227c8784a1e5ff")
 REVIEWED_PINS.add("19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba")
+REVIEWED_PINS.add("76a225552c296686cd1022584d73decd46767f75")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 shipping_vendor_pin = gitlink_vendor_pin
@@ -121,7 +122,6 @@ NS2_PREEMPTION_CTA_TEST_FIX_BLOBS = {
 # H:0x16 exposes no_error/current details, and H:0x17 returns the 16-byte
 # notification with status 0xffff.
 NS2_CHANNEL_ERROR_PIN = "19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba"
-NS2_CHANNEL_ERROR_ACTIVE = gitlink_vendor_pin == NS2_CHANNEL_ERROR_PIN
 NS2_CHANNEL_ERROR_BLOBS = {
     "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
         "4810a41d584fb74612c8160c3f06a4c717f7d5f8",
@@ -130,23 +130,52 @@ NS2_CHANNEL_ERROR_BLOBS = {
     "tests/ns2_gpu_identity_mapping_source.py":
         "d2e7e0341957a5ce830afe665bf074083977c956",
 }
+# Native H:0x1B reply successor. Switch documents submit flags as input;
+# preserve the accepted native value while Maxwell keeps zero-on-return.
+NS2_GPFIFO_FLAGS_PIN = "76a225552c296686cd1022584d73decd46767f75"
+NS2_GPFIFO_FLAGS_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "d5693b7377db357fbca342fe4c1276bb9a2375f5",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "b0f57cbab6c801a201ac389a16beb9bdb59c4e54",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "d2e7e0341957a5ce830afe665bf074083977c956",
+    "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+        "dd4055ab815a9f5ab8d81e3d14608890dbd4d7a1",
+}
+NS2_GPFIFO_FLAGS_ACTIVE = gitlink_vendor_pin == NS2_GPFIFO_FLAGS_PIN
+NS2_CHANNEL_ERROR_ACTIVE = gitlink_vendor_pin in {
+    NS2_CHANNEL_ERROR_PIN, NS2_GPFIFO_FLAGS_PIN,
+}
 NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
-    NS2_PREEMPTION_CTA_PIN, NS2_PREEMPTION_CTA_TEST_FIX_PIN, NS2_CHANNEL_ERROR_PIN,
+    NS2_PREEMPTION_CTA_PIN, NS2_PREEMPTION_CTA_TEST_FIX_PIN,
+    NS2_CHANNEL_ERROR_PIN, NS2_GPFIFO_FLAGS_PIN,
 }
 
 def ns2_preemption_receipt(relative, previous):
-    if gitlink_vendor_pin == NS2_CHANNEL_ERROR_PIN:
+    if NS2_GPFIFO_FLAGS_ACTIVE:
+        return NS2_GPFIFO_FLAGS_BLOBS.get(relative, previous)
+    if NS2_CHANNEL_ERROR_ACTIVE:
         return NS2_CHANNEL_ERROR_BLOBS.get(relative, previous)
     if gitlink_vendor_pin == NS2_PREEMPTION_CTA_TEST_FIX_PIN:
         return NS2_PREEMPTION_CTA_TEST_FIX_BLOBS.get(relative, previous)
     return (NS2_PREEMPTION_CTA_BLOBS.get(relative, previous)
             if NS2_PREEMPTION_CTA_ACTIVE else previous)
 
+if selected == NS2_GPFIFO_FLAGS_PIN:
+    for relative, expected in NS2_GPFIFO_FLAGS_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 native GPFIFO2 reply-flags source drift", relative, actual)
+    # Everything else is byte-identical to the reviewed Switch error-state pin.
+    shipping_vendor_pin = NS2_CHANNEL_ERROR_PIN
+    selected = NS2_CHANNEL_ERROR_PIN
+
 if selected == NS2_CHANNEL_ERROR_PIN:
     for relative, expected in NS2_CHANNEL_ERROR_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 channel error-notifier source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 channel error-notifier source drift", relative, actual)
     selected = NS2_PREEMPTION_CTA_TEST_FIX_PIN
 
 if selected == NS2_PREEMPTION_CTA_TEST_FIX_PIN:
@@ -172,7 +201,7 @@ NS2_ENCODER_FAIL_CLOSED_PIN = "1e513ae001669127538a346c7f390af55edd6712"
 # gitlink_vendor_pin to c74, but must not drop these verified successor blobs.
 NS2_ENCODER_FAIL_CLOSED_ACTIVE = gitlink_vendor_pin in {
     NS2_ENCODER_FAIL_CLOSED_PIN, NS2_PREEMPTION_CTA_PIN,
-    NS2_PREEMPTION_CTA_TEST_FIX_PIN, NS2_CHANNEL_ERROR_PIN,
+    NS2_PREEMPTION_CTA_TEST_FIX_PIN, NS2_CHANNEL_ERROR_PIN, NS2_GPFIFO_FLAGS_PIN,
 }
 NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "6934cd5d46c172d029c65123b5d7f19ddafc4853",
@@ -728,6 +757,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_GPFIFO_FLAGS_ACTIVE and relative in NS2_GPFIFO_FLAGS_BLOBS:
+        return NS2_GPFIFO_FLAGS_BLOBS[relative]
     if NS2_CHANNEL_ERROR_ACTIVE and relative in NS2_CHANNEL_ERROR_BLOBS:
         return NS2_CHANNEL_ERROR_BLOBS[relative]
     if NS2_PREEMPTION_CTA_ACTIVE and relative in NS2_PREEMPTION_CTA_BLOBS:
@@ -1098,6 +1129,7 @@ if gitlink_vendor_pin in {
     "d31aa01bdfa87165a272473c385040723bf2c1f6",
     "20cb62f1be572c8063ce4162d3227c8784a1e5ff",
     "19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba",
+    "76a225552c296686cd1022584d73decd46767f75",
 }:
     gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and

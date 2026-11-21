@@ -48,6 +48,7 @@ REVIEWED_PINS.add("2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f")
 REVIEWED_PINS.add("889b142aa5616d3d00733a7cc1db1562eed291f4")
 REVIEWED_PINS.add("201b09121ebbfe0a37a56710b2b7ac118ae5acbb")
 REVIEWED_PINS.add("713e18162cf9a0d629cd39ae00b43fb55f9c2823")
+REVIEWED_PINS.add("35d639ad802910cfabbaf46bdcfd48a0d2f09ab6")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 # Preserve the active AS/GMMU owner revision during recursive source-pin
@@ -62,14 +63,16 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # This seal includes the pre-existing GA10F, NVCore session and AS owners
 # plus the exact scheduler, GPU, NVDRV and source regression changed here.
 # Host/non-PS5 GPU::ReleaseChannel retains its legacy implementation.
-if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629cd39ae00b43fb55f9c2823"}:
-    process_scoped_lease = selected == "713e18162cf9a0d629cd39ae00b43fb55f9c2823"
+if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629cd39ae00b43fb55f9c2823", "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"}:
+    worker_shutdown_guard = selected == "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"
+    process_scoped_lease = selected in {"713e18162cf9a0d629cd39ae00b43fb55f9c2823", "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"}
     for relative, expected in (
         ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.h", "fe45aa0e8e9943034cbf61e620ee132d33adf887"),
         ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp", "e74f82cd604ba8e60bc7b1005f60a92d66013563"),
         ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "fc921425b67b634b4aaeb2363dcabdf9b53b6be8"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "c0cc9b26f6af13d6e1a3b60d92a0dfabd93c51d1"),
         ("tests/ns2_gpu_identity_mapping_source.py",
+         "d9ac33e7d4f83e7198b23f6ab48a0f57bf76a8c5" if worker_shutdown_guard else
          "fa8389fe2513f09133c5cdb14d662e65e83c79d4" if process_scoped_lease else
          "027fee436eea6292e59caa852d76282473d41688"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h", "8ca13a81c05c272347f7dfd0f8189b5c2b2fd946"),
@@ -90,6 +93,11 @@ if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629c
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("Native channel retirement/AS session source drift", relative, actual)
+    if worker_shutdown_guard:
+        relative = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp"
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == "5ff69e424b4b77d16732df37dbb5ecd56f3d4964", ("GPU worker shutdown-guard drift", relative, actual)
     selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # A GPU channel's AS shared_ptr owns the GMMU but cannot keep NVMap

@@ -97,6 +97,7 @@ REVIEWED_PINS.add("19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba")
 REVIEWED_PINS.add("76a225552c296686cd1022584d73decd46767f75")
 REVIEWED_PINS.add("205c6a3572955c3d8002f5faca68d6ce1359817c")
 REVIEWED_PINS.add("bfb9d4da9c0f3811924738311fc2c6056e0e4dcb")
+REVIEWED_PINS.add("265609006ea8d76d971cc49af37bac23890ca4f5")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
@@ -182,12 +183,42 @@ NS2_P0_BOOTSTRAP_BLOBS = {
     "tests/ns2_nvhost_unknown_node_fallback_source.py":
         "bbaa5b78612aaae58b682253bb57ddc50f350695",
 }
-NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin == NS2_P0_BOOTSTRAP_PIN
+# P0 successor over bfb9d4da9c0f3811924738311fc2c6056e0e4dcb: exact native deferred GPFIFO state,
+# GSV child MOVE descriptors and host-OOM rollback for owned transfer refs.
+# Only six files changed. Replay all prior receipts for unchanged owners.
+NS2_GSV_MOVE_OWNERS_PIN = "265609006ea8d76d971cc49af37bac23890ca4f5"
+NS2_GSV_MOVE_OWNERS_BLOBS = {
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp":
+        "2b8c0f499e714bb684e33f336eac45ae21f55bd7",
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+        "909f5cf912fdcce09c5b8f67274db36b7f65b07b",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "34431bff90d835fe5de7f647526e8354746eb4e3",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "ec6682c0131634ba10e48a201a47768b9437e41a",
+    "tests/ns2_gpu_partition_new_sdk_source.py":
+        "6d47278bfc205f0aaed5c3d916ad2f2dc29b0481",
+    "tests/ns2_syncpt_bootstrap_source.py":
+        "366b0a6bd75c2fde26bcc58c3a22f986fb7a99f3",
+}
+NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin == NS2_GSV_MOVE_OWNERS_PIN
+if selected == NS2_GSV_MOVE_OWNERS_PIN:
+    for relative, expected in NS2_GSV_MOVE_OWNERS_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 GSV/GPFIFO MOVE lifetime source drift", relative, actual)
+    selected = NS2_P0_BOOTSTRAP_PIN
+    gitlink_vendor_pin = NS2_P0_BOOTSTRAP_PIN
+    shipping_vendor_pin = NS2_P0_BOOTSTRAP_PIN
+
+NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN}
 if selected == NS2_P0_BOOTSTRAP_PIN:
     for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 current P0 bootstrap source drift", relative, actual)
+        assert actual == (NS2_GSV_MOVE_OWNERS_BLOBS.get(relative, expected)
+                          if NS2_GSV_MOVE_OWNERS_ACTIVE else expected), (
+            "NS2 current P0 bootstrap source drift", relative, actual)
     # From here, replay the exact 205c6a35 predecessor graph. Keep
     # actual_vendor_pin untouched for the final gitlink identity assertion.
     selected = NS2_CHANNEL_EVENT_PIN
@@ -207,6 +238,8 @@ NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
+        return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
     if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:
         return NS2_P0_BOOTSTRAP_BLOBS[relative]
     if NS2_CHANNEL_EVENT_ACTIVE:
@@ -825,6 +858,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
+        return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
     if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:
         return NS2_P0_BOOTSTRAP_BLOBS[relative]
     if NS2_CHANNEL_EVENT_ACTIVE and relative in NS2_CHANNEL_EVENT_BLOBS:

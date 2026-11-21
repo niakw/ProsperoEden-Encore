@@ -17,8 +17,11 @@ supervisor=(vroot/'graphics_supervisor/core/hle/service/am/service/graphics_supe
 sh=(vroot/'graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h').read_text()
 backend=(vroot/'video_decoder/video_core/host1x/nx2_video_decoder.cpp').read_text()
 recipe=(root/'headless/CMakeLists.txt').read_text()
-for cmd in (902,905,906,1002):
+for cmd in (902,905,906):
     assert f'{{{cmd}, &IGraphicsSupervisor::OpenVideoDecoderSession' in supervisor
+for cmd in (1001,1002):
+    assert f'{{{cmd}, &IGraphicsSupervisor::UnavailableVideoEncoder' in supervisor
+assert 'void IGraphicsSupervisor::UnavailableVideoEncoder(' in supervisor
 for cmd, method in ((1,'CreateDecoderService'),(3,'GetEvent'),(6,'Start'),
                    (8,'Stop'),(101,'Configure'),(109,'SubmitInput'),
                    (115,'Finalize'),(200,'Initialize'),(201,'Initialize'),
@@ -61,7 +64,8 @@ assert '!m_decoder->IsOpen()' in submit
 assert 'm_syncpoint = id;' in source
 assert 'GetGuestSyncpointValue(id)' in source
 assert 'm_bootstrap.GpuContextReady()' in supervisor
-assert 'const bool shape = (cmd == 902 || cmd == 1002)' in supervisor
+assert 'const bool shape = cmd == 902 ? w[1] == 0 :' in supervisor
+assert 'cmd == 905 ? w[1] == 1 : cmd == 906 && w[1] == 3;' in supervisor
 assert 'GetObjectFromHandle' in supervisor
 assert 'IsValidVirtualAddressRange(' in supervisor
 assert 'record->guest_address + view->offset != expected.address' in supervisor

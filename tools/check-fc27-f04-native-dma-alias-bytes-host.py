@@ -28,7 +28,7 @@ def section(text, begin, end):
     return text[i:text.index(end, i)]
 
 coalesce = section(dma, "constexpr bool CanCoalescePitchDma(", "\n}\n\n// Remapped DMA lengths") + "\n}"
-launch = section(dma, "void MaxwellDMA::Launch() {", "\nvoid MaxwellDMA::CopyBlockLinearToPitch()")
+launch = section(dma, "void MaxwellDMA::Launch() {", "\nbool MaxwellDMA::CopyBlockLinearRemap()")
 contig_start = "            u64 contiguous_bytes = 0;\n            if (CanCoalescePitchDma("
 contig_end = "        } else {\n            if (!is_src_pitch && is_dst_pitch)"
 pitch_body = section(launch, contig_start, contig_end)

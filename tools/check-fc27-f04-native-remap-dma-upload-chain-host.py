@@ -62,7 +62,7 @@ def replace_once(old,new,label):
     assert n==1,(label,n)
     cpp=cpp.replace(old,new)
 
-replace_once('#include <memory>\n','#include <memory>\n#include <optional>\n#include <ranges>\n',"headers")
+replace_once('#include <memory>\n','#include <memory>\n#include <limits>\n#include <optional>\n#include <ranges>\n',"headers")
 replace_once('using u8 = std::uint8_t;\nusing u64 = std::uint64_t;',
              'using u8 = std::uint8_t;\nusing u32 = std::uint32_t;\nusing u64 = std::uint64_t;\nusing s32 = std::int32_t;\nusing s64 = std::int64_t;\nusing DAddr = u64;\nusing ImageViewId = std::size_t;\nconstexpr ImageViewId NULL_IMAGE_VIEW_ID = 0;\nconstexpr std::size_t NUM_RT = 4;\nnamespace Dirty {constexpr std::size_t ZetaBuffer=0,ColorBuffer0=1,RenderTargets=10;}\nnamespace boost::container {template<class T,std::size_t N> using small_vector=std::vector<T>;}',
              "types")

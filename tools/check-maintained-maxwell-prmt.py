@@ -113,9 +113,13 @@ for old_method,new_method in control_flow_rewrites:
     expected=expected.replace(old_method,new_method,1)
 for name in ("BRA","BRK","CONT","JMP","LONGJMP","RET","SYNC","PEXIT","PLONGJMP"):
     assert f"ThrowNotImplemented(Opcode::{name});" not in expected
-assert "ThrowNotImplemented(Opcode::PRET);" in expected
+pret_visitor_old="void TranslatorVisitor::PRET(u64) {\n    ThrowNotImplemented(Opcode::PRET);\n}\n"
+pret_visitor_new="void TranslatorVisitor::PRET(u64) {\n    // CFG already records the supported direct PRET return token.\n}\n"
+assert expected.count(pret_visitor_old)==1
+expected=expected.replace(pret_visitor_old,pret_visitor_new,1)
+assert "ThrowNotImplemented(Opcode::PRET);" not in expected
 assert "ThrowNotImplemented(Opcode::JCAL);" in expected
-assert actual==expected, "PRMT/IMUL/IMAD/control-flow maintained shader is not the reviewed single native source"
+assert actual==expected, "PRMT/IMUL/IMAD/control-flow/PRET maintained shader is not the reviewed single native source"
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
 # and silently diverges from the actual source-generation oracle.
@@ -125,7 +129,29 @@ assert "void TranslatorVisitor::ATOM_cas(u64)" not in actual
 assert "EdenGpuBoundedSample" not in actual and "EdenPrmtIndexReference" in actual
 assert "static_assert(EdenPrmtIndexReference" in actual
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in module
+assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW}")' in module
+assert 'list(FILTER shader_cfg_sources EXCLUDE REGEX "frontend/maxwell/control_flow[.]cpp$")' in module
 assert 'write_derived("${PORT_BUILD_DIR}/maxwell_prmt_observed.cpp"' not in module
+
+control_pristine=(root/"vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
+control_actual=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
+pret_flow_old='    case Opcode::PRET:\n        throw NotImplementedException("PRET flow analysis");\n'
+pret_flow_new='''    case Opcode::PRET:
+        // GM107 PRET stores a return target in the PRET stack. Support the
+        // ordinary direct form used by Nouveau; cbuf targets and NOINC have
+        // separate semantics and remain fail-closed until explicitly modeled.
+        if (inst.branch.is_cbuf) {
+            throw NotImplementedException("PRET with constant buffer target");
+        }
+        if ((inst.raw & (u64{1} << 6)) != 0) {
+            throw NotImplementedException("PRET noinc");
+        }
+        block->stack.Push(Token::PRET, BranchOffset(pc, inst));
+        return AnalysisState::Continue;
+'''
+assert control_pristine.count(pret_flow_old)==1
+assert control_actual.count(pret_flow_new)==1
+assert control_actual.replace(pret_flow_new,pret_flow_old,1)==control_pristine
 # The shipping Fermi2D owner never samples diagnostics. Reintroducing
 # the helper there produces -Wunused-function on native Clang; only the
 # optional experiment needs the bounded logging helper.
@@ -135,4 +161,4 @@ assert "EdenGpuBoundedSample" not in fermi_default, "shipping Fermi2D has unused
 assert helper.strip() in fermi_experiment, "experimental Fermi2D lost its bounded sample helper"
 assert "set(gpu_bounded_sample_helper [=[" not in module
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in module
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG-owned control no-ops, unsupported forms fail-closed")
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET, unsupported forms fail-closed")

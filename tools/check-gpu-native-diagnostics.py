@@ -19,6 +19,8 @@ assert cmake.count('"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp"') == 1
 assert 'fermi_2d_experimental.cpp' not in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
+assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW}")' in cmake
+assert 'list(FILTER shader_cfg_sources EXCLUDE REGEX "frontend/maxwell/control_flow[.]cpp$")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'write_derived(' not in cmake and 'string(REPLACE' not in cmake
 # PRMT is now compiled from a full maintained shader unit, while Fermi
@@ -91,17 +93,36 @@ for name in control_noops:
 assert "ThrowNotImplemented(Opcode::PRET);" in prmt
 assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 
-for control_path in (
-    ROOT / "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp",
-    ROOT / "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp",
-):
-    control = control_path.read_text()
+pinned_control=(ROOT / "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
+native_control=(ROOT / "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()
+for control in (pinned_control,native_control):
     assert "if (pred == Predicate{false}) {\n        return false;\n    }" in control
     assert "case Opcode::BRA:\n    case Opcode::JMP:\n    case Opcode::RET:" in control
     assert "case Opcode::BRK:\n    case Opcode::CONT:\n    case Opcode::LONGJMP:\n    case Opcode::SYNC:" in control
     assert "case Opcode::PEXIT:\n    case Opcode::PLONGJMP:\n    case Opcode::SSY:" in control
     assert "block->stack.Push(OpcodeToken(opcode), BranchOffset(pc, inst));" in control
-    assert 'throw NotImplementedException("PRET flow analysis")' in control
+pret_flow_old='    case Opcode::PRET:\n        throw NotImplementedException("PRET flow analysis");\n'
+pret_flow_new='''    case Opcode::PRET:
+        // GM107 PRET stores a return target in the PRET stack. Support the
+        // ordinary direct form used by Nouveau; cbuf targets and NOINC have
+        // separate semantics and remain fail-closed until explicitly modeled.
+        if (inst.branch.is_cbuf) {
+            throw NotImplementedException("PRET with constant buffer target");
+        }
+        if ((inst.raw & (u64{1} << 6)) != 0) {
+            throw NotImplementedException("PRET noinc");
+        }
+        block->stack.Push(Token::PRET, BranchOffset(pc, inst));
+        return AnalysisState::Continue;
+'''
+assert pinned_control.count(pret_flow_old)==1
+assert native_control.count(pret_flow_new)==1
+assert native_control.replace(pret_flow_new,pret_flow_old,1)==pinned_control
+pret_old=extract_method(pinned_prmt,"PRET")
+pret_new=extract_method(prmt,"PRET")
+assert "ThrowNotImplemented(Opcode::PRET);" in pret_old
+assert "ThrowNotImplemented" not in pret_new
+assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 fermi_default = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
@@ -424,5 +445,5 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL, bounded IMAD/IMAD32I and CFG-owned control no-ops translated; unsupported forms fail closed; one fixed observed Fermi2D owner")
+print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL, bounded IMAD/IMAD32I and CFG-owned control/PRET translated; unsupported forms fail closed; one fixed observed Fermi2D owner")
 print("NOTE graphics correctness and PS5 native CMake build remain to be qualified")

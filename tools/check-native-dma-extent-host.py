@@ -121,6 +121,25 @@ assert fnv1a32(insert)==933595590, "Selected B0B5 launch guard changed"
 assert 'CopyPitchRemap(memory_manager, regs.remap_const' in insert
 assert expected.count(launch_end)==1
 expected=expected.replace(launch_end,insert+launch_end,1)
+# The reviewed GOB-tiled 2D remap handler lives in the same selected TU;
+# do not misclassify the old raw-byte fallback as a second implementation.
+tiled_start='    if (launch.multi_line_enable != 0 && launch.remap_enable != 0 &&'
+assert native.count(tiled_start)==1
+tiled_launch=native[native.index(tiled_start):native.index(launch_end,native.index(tiled_start))]
+assert fnv1a32(tiled_launch)==695814491, "Reviewed tiled remap dispatch changed"
+assert 'if (!CopyBlockLinearRemap())' in tiled_launch
+expected=expected.replace(launch_end,tiled_launch+launch_end,1)
+method_start="bool MaxwellDMA::CopyBlockLinearRemap() {"
+method_end="void MaxwellDMA::CopyBlockLinearToPitch() {"
+assert native.count(method_start)==1 and native.count(method_end)==1
+tiled_method=native[native.index(method_start):native.index(method_end)]
+assert fnv1a32(tiled_method)==466258931, "Reviewed tiled remap implementation changed"
+for proof in ("UnswizzleSubrect(", "SwizzleSubrect(", "IsFullyMappedRange(",
+              "needs_destination", "padded_width > MAX_BYTES / padded_height",
+              "memory_manager.WriteBlock(", "std::vector<u8> linear_src",
+              "std::vector<u8> linear_dst"):
+    assert proof in tiled_method, proof
+expected=expected.replace(method_end,tiled_method+method_end,1)
 assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
 assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")' in cm

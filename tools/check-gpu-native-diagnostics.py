@@ -77,6 +77,31 @@ assert "BitField<57, 1, u64> is_b_signed;" in imad32_new
 assert 'throw NotImplementedException("IMAD32I CC/NEG modifiers")' in imad32_new
 assert "X(imad.dest_reg, ir.IAdd(product, X(imad.dest_reg)));" in imad32_new
 assert "ThrowNotImplemented(Opcode::IMADSP_reg);" in prmt
+
+# CFG-owned control instructions have no remaining data-path work in the
+# visitor. For ordinary branches, Translate() sees them only when the CFG
+# proved the branch statically false; PEXIT/PLONGJMP are reconvergence tokens
+# already pushed by CFG::AnalyzeInst before translation continues.
+control_noops=("BRA","BRK","CONT","JMP","LONGJMP","RET","SYNC","PEXIT","PLONGJMP")
+for name in control_noops:
+    old = extract_method(pinned_prmt, name)
+    new = extract_method(prmt, name)
+    assert "ThrowNotImplemented(Opcode::" + name + ");" in old
+    assert "ThrowNotImplemented" not in new
+assert "ThrowNotImplemented(Opcode::PRET);" in prmt
+assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
+
+for control_path in (
+    ROOT / "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp",
+    ROOT / "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp",
+):
+    control = control_path.read_text()
+    assert "if (pred == Predicate{false}) {\n        return false;\n    }" in control
+    assert "case Opcode::BRA:\n    case Opcode::JMP:\n    case Opcode::RET:" in control
+    assert "case Opcode::BRK:\n    case Opcode::CONT:\n    case Opcode::LONGJMP:\n    case Opcode::SYNC:" in control
+    assert "case Opcode::PEXIT:\n    case Opcode::PLONGJMP:\n    case Opcode::SSY:" in control
+    assert "block->stack.Push(OpcodeToken(opcode), BranchOffset(pc, inst));" in control
+    assert 'throw NotImplementedException("PRET flow analysis")' in control
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 fermi_default = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
@@ -399,5 +424,5 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL and bounded IMAD/IMAD32I LOW/HI translated; reserved/modifier forms fail closed; one fixed observed Fermi2D owner")
+print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL, bounded IMAD/IMAD32I and CFG-owned control no-ops translated; unsupported forms fail closed; one fixed observed Fermi2D owner")
 print("NOTE graphics correctness and PS5 native CMake build remain to be qualified")

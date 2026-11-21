@@ -700,8 +700,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 name in expected and
                 raster_blob(expected[name].read_text()) == witness['current']
             )
+            gpu49_restored = name in gpu49_edits
             real_source = (expected[name].read_text()
-                           if name == raster_owner or exact_restored
+                           if name == raster_owner or exact_restored or gpu49_restored
                            else raw_path.read_text())
             # GPU-22 current-channel GMMU owner also changes this header's
             # constructor/reference. Rewind only its two SHA-sealed hunks on

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check Maxwell PRMT/IMUL translation and bounded Fermi2D software slice support.
 
-Other PRMT modes and unsupported block-linear layers remain unimplemented.
+Reserved PRMT encodings and unsupported block-linear layers remain unimplemented.
 This is a source contract, not a native graphics correctness test.
 """
 import re
@@ -121,30 +121,55 @@ fermi_new = extract_range(fermi_experimental,
 fermi_copy_new = extract_range(fermi_experimental,
     "    if (base_layer_3d_copy || pitch_layer_copy) {",
     "\n}\n\n} // namespace")
-assert prmt_old.count("ThrowNotImplemented(Opcode::PRMT_imm);") == 1
-assert prmt_new.count("ThrowNotImplemented(Opcode::PRMT_imm);") == 1
-assert "u64 insn" in prmt_new
-assert "EDEN_GPU_PRMT_IMM raw=%016llx mode=%u sample=%u" in prmt_new
-assert "EDEN_GPU_PRMT_IMM_INDEX raw=%016llx selector=%04x sample=%u" in prmt_new
-assert "const unsigned mode = static_cast<unsigned>((insn >> 48) & 7ULL);" in prmt_new
-assert "if (mode != 0)" in prmt_new
-assert "const unsigned selector = static_cast<unsigned>((insn >> 20) & 0xffffULL);" in prmt_new
-assert "const IR::U32 a{GetReg8(insn)};" in prmt_new
-assert "const IR::U32 b{GetReg39(insn)};" in prmt_new
-assert "const unsigned nibble = (selector >> (output_byte * 4)) & 15u;" in prmt_new
-assert "const IR::U32 source = (nibble & 4u) ? b : a;" in prmt_new
-assert "ir.BitFieldExtract(source, ir.Imm32(src_offset + 7u), ir.Imm32(1), true)" in prmt_new
-assert "ir.BitwiseAnd(extracted, ir.Imm32(255))" in prmt_new
-assert "ir.ShiftLeftLogical(value, ir.Imm32(output_byte * 8u))" in prmt_new
-# ShiftLeftLogical returns the union U32|U64 IR type; a ternary against U32
-# is ambiguous in Clang 18 unless the shifted arm is normalized explicitly.
-assert "IR::U32{ir.ShiftLeftLogical(value, ir.Imm32(output_byte * 8u))}" in prmt_new
-assert "IR::U32{ir.ShiftLeftLogical(byte, ir.Imm32(i * 8u))}" in prmt_reg_new
-assert "X(static_cast<IR::Reg>(insn & 255ULL), result);" in prmt_new
-assert prmt_new.index("if (mode != 0)") < prmt_new.index("ThrowNotImplemented(Opcode::PRMT_imm);")
-assert prmt_new.index("ThrowNotImplemented(Opcode::PRMT_imm);") < prmt_new.index("const unsigned selector")
-# Independently model the NVIDIA SM50 Index-mode nibble semantics from Nouveau.
-# This model guards sign replication, not merely byte extraction/reordering.
+# Pristine Eden rejects all four PRMT operand forms; the native owner routes
+# each decoded form through one implementation covering index + NVIDIA modes 1..6.
+for name in ("PRMT_reg", "PRMT_rc", "PRMT_cr", "PRMT_imm"):
+    old_method = extract_method(pinned_prmt, name)
+    new_method = extract_method(prmt, name)
+    assert "ThrowNotImplemented(Opcode::" + name + ");" in old_method
+    assert "TranslatePrmt(*this, insn" in new_method
+assert "enum class PrmtMode : u32" in prmt
+for token in (
+    "Forward4Extract = 1", "Backward4Extract = 2", "Replicate8 = 3",
+    "EdgeClampLeft = 4", "EdgeClampRight = 5", "Replicate16 = 6",
+):
+    assert token in prmt, token
+# GM107 uses the complete four-bit mode field. Values above RC16 are reserved
+# and must never alias a documented operation.
+assert "BitField<48, 4, u64> mode;" in prmt
+assert 'if (raw_mode > static_cast<u32>(PrmtMode::Replicate16))' in prmt
+assert 'throw NotImplementedException("PRMT reserved mode {}", raw_mode)' in prmt
+assert "BitField<48, 3" not in prmt
+
+# Independent NVIDIA PTX table model. output byte numbering is little-endian:
+# byte 0 is d.b0; source bytes 0..3 are A and 4..7 are B.
+def prmt_table_index(mode: int, selector: int, byte: int) -> int:
+    if mode == 1:  # f4e
+        return (selector + byte) & 7
+    if mode == 2:  # b4e
+        return (selector - byte) & 7
+    if mode == 3:  # rc8
+        return selector
+    if mode == 4:  # ecl
+        return max(byte, selector)
+    if mode == 5:  # ecr
+        return min(byte, selector)
+    if mode == 6:  # rc16
+        return (byte & 1) + 2 * (selector & 1)
+    raise ValueError(mode)
+
+expected_tables = {
+    1: ((0,1,2,3),(1,2,3,4),(2,3,4,5),(3,4,5,6)),
+    2: ((0,7,6,5),(1,0,7,6),(2,1,0,7),(3,2,1,0)),
+    3: ((0,0,0,0),(1,1,1,1),(2,2,2,2),(3,3,3,3)),
+    4: ((0,1,2,3),(1,1,2,3),(2,2,2,3),(3,3,3,3)),
+    5: ((0,0,0,0),(0,1,1,1),(0,1,2,2),(0,1,2,3)),
+    6: ((0,1,0,1),(2,3,2,3),(0,1,0,1),(2,3,2,3)),
+}
+for mode, rows in expected_tables.items():
+    for selector, row in enumerate(rows):
+        assert tuple(prmt_table_index(mode, selector, byte) for byte in range(4)) == row
+
 def prmt_index(a: int, b: int, selector: int) -> int:
     result = 0
     for out in range(4):
@@ -156,47 +181,40 @@ def prmt_index(a: int, b: int, selector: int) -> int:
         result |= value << (out * 8)
     return result
 
+def prmt_special(a: int, b: int, selector: int, mode: int) -> int:
+    source64 = (b << 32) | a
+    n = selector & 3
+    result = 0
+    for out in range(4):
+        index = prmt_table_index(mode, n, out)
+        result |= ((source64 >> (index * 8)) & 0xff) << (out * 8)
+    return result
+
 assert prmt_index(0x11223344, 0x55667788, 0x3210) == 0x11223344
 assert prmt_index(0x11223344, 0x55667788, 0x7654) == 0x55667788
 assert prmt_index(0x80abcdef, 0, 0xbbbb) == 0xffffffff
 assert prmt_index(0x11223344, 0x55667788, 0xffff) == 0
-assert prmt_index(0xff000000, 0, 0x000b) == 0xff
+for mode in range(1, 7):
+    for selector in range(4):
+        value = prmt_special(0x11223344, 0x55667788, selector, mode)
+        assert 0 <= value <= 0xffffffff
+
+assert "constexpr u32 PrmtTableIndex(" in prmt
+assert prmt.count("static_assert(PrmtTableIndex(") >= 6
 assert "constexpr unsigned EdenPrmtIndexReference(" in prmt_reference
 assert prmt_reference.count("static_assert(EdenPrmtIndexReference(") >= 4
-assert "EdenPrmtIndexReference" in prmt
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'write_derived("${PORT_BUILD_DIR}/maxwell_prmt_observed.cpp"' not in cmake
-# A register selector uses identical nibble semantics, but is evaluated
-# dynamically in the shader IR rather than once at translation time.
-assert prmt_reg_old.count("ThrowNotImplemented(Opcode::PRMT_reg);") == 1
-assert prmt_reg_new.count("ThrowNotImplemented(Opcode::PRMT_reg);") == 1
-assert "const unsigned mode = static_cast<unsigned>((insn >> 48) & 7ULL);" in prmt_reg_new
-assert "if (mode != 0)" in prmt_reg_new
-assert "const IR::U32 selector{GetReg20(insn)};" in prmt_reg_new
-assert "const IR::U32 a{GetReg8(insn)};" in prmt_reg_new
-assert "const IR::U32 b{GetReg39(insn)};" in prmt_reg_new
-assert "ir.ShiftRightLogical(selector, ir.Imm32(i * 4u))" in prmt_reg_new
-assert "ir.ShiftRightLogical(source, byte_shift)" in prmt_reg_new
-assert "ir.BitwiseAnd(selected_byte, ir.Imm32(128))" in prmt_reg_new
-assert "ir.Select(signed_replication, replicated, selected_byte)" in prmt_reg_new
-assert "X(static_cast<IR::Reg>(insn & 255ULL), result);" in prmt_reg_new
-assert "EDEN_GPU_PRMT_REG_INDEX raw=%016llx sample=%u" in prmt_reg_new
-assert "EDEN_GPU_PRMT_REG_UNSUPPORTED raw=%016llx mode=%u sample=%u" in prmt_reg_new
-assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
-assert prmt_index(0x01234567, 0x89abcdef, 0x1111) == 0x45454545
 
-assert "if (index < 8)" in prmt_new
-# Diagnostic counters must saturate at eight instead of performing atomic
-# read-modify-write on every repeated shader translation or Fermi blit.
-# The shipping Fermi2D owner has no bounded sample call; retaining an
-# unused local helper produced a native -Wunused-function warning. Only the
-# shader PRMT and optional software-blit experimental owner need this helper.
+# All documented PRMT modes now execute without runtime sampling. The helper
+# would otherwise be an unused static function in native Clang. Fermi's
+# optional experiment retains its own bounded helper; shipping Fermi does not.
+assert "EdenGpuBoundedSample" not in prmt
 assert "EdenGpuBoundedSample" not in fermi_default
-for source in (prmt, fermi_experimental):
-    assert "unsigned EdenGpuBoundedSample(std::atomic<unsigned>& samples) noexcept" in source
-    assert "compare_exchange_weak(current, current + 1u," in source
-    assert "while (current < 8u)" in source
-    assert "return 8u;" in source
+assert "unsigned EdenGpuBoundedSample(std::atomic<unsigned>& samples) noexcept" in fermi_experimental
+assert "compare_exchange_weak(current, current + 1u," in fermi_experimental
+assert "while (current < 8u)" in fermi_experimental
+assert "return 8u;" in fermi_experimental
 assert "${gpu_bounded_sample_helper}" not in cmake
 assert "EdenGpuBoundedSample" in prmt
 for part in (prmt_new, prmt_reg_new, fermi_new, fermi_layer_new, fermi_copy_new):
@@ -355,5 +373,5 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-print("GPU SOURCE CONTRACT: PRMT immediate/register Index implemented; one fixed observed Fermi2D owner; unqualified copy removed from native selection")
+print("GPU SOURCE CONTRACT: PRMT operand forms + documented modes 0-6 and IMUL translated; reserved modes/IMUL.CC fail closed; one fixed observed Fermi2D owner")
 print("NOTE graphics correctness and PS5 native CMake build remain to be qualified")

@@ -109,3 +109,86 @@ with tempfile.TemporaryDirectory(prefix="encore-region-multipage-") as folder:
                        check=True, timeout=45)
         subprocess.run([str(exe)], check=True, timeout=20)
         print("BUFFER_REGION_MULTIPAGE_HOST_PASS", opt)
+
+
+# Compile the ACTUAL maintained ResolveOverlaps method as well as the
+# ownership scanner. A high stream score at the first 64 KiB cache page
+# previously wrapped the unsigned begin-min_page subtraction.
+overlap_marker = "typename BufferCache<P>::OverlapResult BufferCache<P>::ResolveOverlaps("
+assert active.count(overlap_marker) == 1
+start = active.rfind("template <class P>", 0, active.index(overlap_marker))
+finish = active.index("\ntemplate <class P>\nvoid BufferCache<P>::JoinOverlap(", start)
+overlap = active[start:finish]
+assert "begin <= min_page || add_value > begin - min_page" in overlap
+assert "begin = (std::min)(begin, min_page);" in overlap
+overlap_fixture = r"""
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+#include <vector>
+using DAddr=std::uint64_t; using u64=std::uint64_t; using u32=std::uint32_t;
+namespace Common { template<class T> T DivCeil(T a,T b) {
+    return a / b + (a % b != 0);
+} }
+namespace Core { constexpr DAddr DEVICE_PAGESIZE=4096; }
+namespace Tegra { struct MaxwellDeviceMemoryManager {
+    static constexpr unsigned AS_BITS=34;
+}; }
+namespace boost::container {
+template<class T,std::size_t N> using small_vector=std::vector<T>;
+}
+struct BufferId {
+    std::size_t id{};
+    operator std::size_t() const {return id;}
+};
+struct Buffer {
+    DAddr address{}; u32 size{}; int score{}; bool picked{};
+    DAddr CpuAddr() const{return address;}
+    u32 SizeBytes() const{return size;}
+    int StreamScore() const{return score;}
+    bool IsPicked() const{return picked;}
+    void Pick(){picked=true;}
+};
+template<class P> class BufferCache {
+public:
+    static constexpr unsigned CACHING_PAGEBITS=16;
+    static constexpr DAddr CACHING_PAGESIZE=DAddr{1}<<CACHING_PAGEBITS;
+    struct OverlapResult {
+        std::vector<BufferId> ids; DAddr begin{},end{}; bool has_stream_leap{};
+    };
+    std::vector<BufferId> page_table=std::vector<BufferId>(8192);
+    std::vector<Buffer> slot_buffers=std::vector<Buffer>(1);
+    OverlapResult ResolveOverlaps(DAddr,u32);
+};
+""" + overlap + r"""
+int main() {
+    constexpr DAddr page=0x10000;
+    auto check=[&](DAddr start,DAddr wanted_begin) {
+        BufferCache<void> cache;
+        cache.slot_buffers.push_back(Buffer{start,2*u32(page),17,false});
+        cache.page_table[start>>16]=BufferId{1};
+        cache.page_table[(start>>16)+1]=BufferId{1};
+        const auto result=cache.ResolveOverlaps(start,u32(page));
+        assert(result.has_stream_leap && result.begin==wanted_begin);
+        assert(result.end==start+2*page && result.ids.size()==1);
+    };
+    // Preserve the already-owned range; never move it forward or wrap.
+    check(page,page);
+    // Clamp an actual left expansion to the lowest safe device address.
+    check(2*page,page+Core::DEVICE_PAGESIZE);
+    // The usual 8 MiB stream enlargement must remain unchanged.
+    check(0x2000000,0x2000000-page*128);
+}
+"""
+with tempfile.TemporaryDirectory(prefix="encore-buffer-stream-") as folder:
+    source = Path(folder) / "stream.cpp"
+    source.write_text(overlap_fixture)
+    for opt in ("-O0","-O2"):
+        exe = Path(folder) / ("stream"+opt)
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=undefined",str(source),"-o",str(exe)],
+                       check=True,timeout=60)
+        subprocess.run([str(exe)],check=True,timeout=20)
+        print("BUFFER_OVERLAP_STREAM_BOUNDARY_PASS",opt)

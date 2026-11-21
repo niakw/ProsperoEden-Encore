@@ -58,20 +58,22 @@ REVIEWED_PINS.add("5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf")
 REVIEWED_PINS.add("d4508480fc859cb7a6cb97f259caefe1cd18ba54")
 REVIEWED_PINS.add("e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb")
 REVIEWED_PINS.add("3a0cf78a9b2c98bed100d817537b4375a48bf72f")
+REVIEWED_PINS.add("eb62d96583999c5d159b837dfb9b1b02e8173a9c")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
-native_va_region_widen_revision = selected == "3a0cf78a9b2c98bed100d817537b4375a48bf72f"
-native_rounded_unmap_revision = selected in {"e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
-native_gpu_alias_guard_revision = selected in {"d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
-native_sparse_small_4k_revision = selected in {"5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
-native_video_pool_991_revision = selected in {"932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
-native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
+native_self_controller_rollback_revision = selected == "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+native_va_region_widen_revision = selected in {"3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_rounded_unmap_revision = selected in {"e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_gpu_alias_guard_revision = selected in {"d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_sparse_small_4k_revision = selected in {"5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_video_pool_991_revision = selected in {"932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
 # Preserve exact GSV source identity across historical receipt replays. The
 # real 1402 child is NS2-only and can precede GPU session 497; both C++
 # revisions fix the same compiled scoped-handle type.
-native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
-native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
-native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f"}
+native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
 native_gsv_active_cpp = "a806f2a6d2c9689a8b1e24f0c292a8d95c0d29a7" if native_video_pool_991_revision else "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
 native_gsv_active_test = "ae41e4bc89b33e455381f25470717af6766cd0b3" if native_video_pool_991_revision else "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
 # Preserve the active AS/GMMU owner revision during recursive source-pin
@@ -116,6 +118,22 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # preserving the existing Maxwell path and all previous exact receipts.
 # NS2 NVDRV returns 64-bit byte offsets, not truncated 32-bit shifts.
 # Requalify the exact two changed blobs before replaying unmap and aliases.
+# NS2 SelfController cmd2000 now reserves and rolls back the real GSV
+# kernel session exactly as the existing GPU 497 child creation does. Seal
+# only these two changed blobs; all older vendor owner receipts still apply.
+if native_self_controller_rollback_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp",
+         "45e02dc11f49bf66b736b31786931de5b20ce9cd"),
+        ("tests/r23_fw23_selfcontroller_240.py",
+         "1f92b520eeb1700cd84f25aa88694955bc9541cf"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 GSV parent session rollback source drift", relative, actual)
+    selected = "3a0cf78a9b2c98bed100d817537b4375a48bf72f"
+    original_vendor_pin = selected
+
 if native_va_region_widen_revision:
     for relative, expected in (
         ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "e7832741b238f4c25858f8309d8ccf9aed7a77d3"),

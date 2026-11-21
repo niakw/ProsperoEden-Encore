@@ -38,6 +38,7 @@ REVIEWED_PINS.add("fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531")
 REVIEWED_PINS.add("86cbe7ac73a28dcd1e3cdc3609eafca1c7b5dc37")
 REVIEWED_PINS.add("a93bc45a1a5858fe1e4bc718a84a2a5a8841ab38")
 REVIEWED_PINS.add("e95c1dea796b209b8561c253b82fa69e75fb72b6")
+REVIEWED_PINS.add("019e810c5c6c489eab8541f282de6b6379833015")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
@@ -47,11 +48,13 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # The AS BindChannel owner previously performed an unchecked nvhost_gpu
 # downcast after verifying only that the FD existed. Seal the real C++ owners
 # for the device-family check and leave every other runtime blob unchanged.
-if selected == "e95c1dea796b209b8561c253b82fa69e75fb72b6":
+if selected in {"e95c1dea796b209b8561c253b82fa69e75fb72b6", "019e810c5c6c489eab8541f282de6b6379833015"}:
     for relative, expected in (
         ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "1db3172a604b9aed2c64765a84786d675029f6eb"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
-        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "99133d3000fb0c3b43a0a653221c1453072fd6dd"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         ("ca0574dc36e56ad727c63552231872002465bc99" if selected == "019e810c5c6c489eab8541f282de6b6379833015" else
+          "99133d3000fb0c3b43a0a653221c1453072fd6dd")),
         ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "6d59efa437c5415267e5db0a2c86174d785fb2c2"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
         ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),

@@ -103,6 +103,7 @@ std::vector<u32> Compile(const CompileCase& test) {
     Program program{};
     program.stage = Shader::Stage::Compute;
     program.workgroup_size = {1, 1, 1};
+    program.shared_memory_size = 64;
     program.blocks.push_back(&block);
     auto& node = program.syntax_list.emplace_back();
     node.type = AbstractSyntaxNode::Type::Block;
@@ -134,6 +135,10 @@ std::vector<u32> Compile(const CompileCase& test) {
     block.AppendNewInst(Opcode::ImageAtomicDec32,
                         {index, Value{u32{8}}, Value{u32{7}}});
     block.back().SetFlags(info);
+    // Exercise the maintained shared-memory CAS backend in the same genuine
+    // EmitSPIRV module. The Maxwell frontend owns register decoding separately.
+    block.AppendNewInst(Opcode::SharedAtomicCompareExchange32,
+                        {Value{u32{0}}, Value{u32{0x11}}, Value{u32{0x22}}});
 
     Shader::Profile profile{};
     profile.supported_spirv = 0x00010500;
@@ -150,8 +155,8 @@ std::vector<u32> Compile(const CompileCase& test) {
                 "expected two OpImageTexelPointer instructions");
         Require(CountOp(words, spv::Op::OpAtomicLoad) == 2,
                 "expected two OpAtomicLoad instructions");
-        Require(CountOp(words, spv::Op::OpAtomicCompareExchange) == 2,
-                "expected two OpAtomicCompareExchange instructions");
+        Require(CountOp(words, spv::Op::OpAtomicCompareExchange) == 3,
+                "expected two image CAS operations plus one shared-memory CAS");
         Require(CountOp(words, spv::Op::OpLoopMerge) == 2,
                 "expected two structured CAS loops");
         if (test.descriptor_count > 1) {
@@ -217,7 +222,7 @@ int main(int argc, char** argv) {
         .output_path = nullptr,
     });
 
-    std::puts("NS1_IMAGE_ATOMIC_REAL_SPIRV_EMITTED scalar=1 array=1 inc=1 dec=1 "
+    std::puts("NS1_IMAGE_ATOMIC_REAL_SPIRV_EMITTED scalar=1 array=1 inc=1 dec=1 shared_cas=1 "
               "nonuniform_refused=1 out_of_range_refused=1");
     return 0;
 }

@@ -49,6 +49,8 @@ MAINTAINED_CORE_TARGETS = (
     "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
+    "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
     "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp",
     "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp",

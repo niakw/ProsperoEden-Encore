@@ -513,5 +513,11 @@ assert "write_derived(" not in cmake
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in cmake
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in cmake
-print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL, IMAD/IMAD32I negate modes, bounded IMADSP and CFG-owned control/PRET translated; unsupported forms fail closed; one fixed observed Fermi2D owner")
+shared_atomic=(ROOT/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
+assert "void TranslatorVisitor::ATOMS_cas(u64 insn)" in shared_atomic
+assert "SharedAtomicCompareExchange" in shared_atomic
+assert "BitField<28, 2, AtomsCasBcRz> bc_rz;" in shared_atomic
+assert "BitField<52, 4, u64> operation;" in shared_atomic
+assert "void TranslatorVisitor::ATOMS_cas" not in prmt
+print("GPU SOURCE CONTRACT: PRMT modes 0-6, IMUL, IMAD/IMAD32I negate modes, bounded IMADSP, ATOMS.CAS.B32 and CFG-owned control/PRET translated; unsupported forms fail closed; one fixed observed Fermi2D owner")
 print("NOTE graphics correctness and PS5 native CMake build remain to be qualified")

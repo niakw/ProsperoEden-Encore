@@ -128,7 +128,7 @@ def git_blob(text):
 # while exact Git blobs seal the two complete sources actually compared. This
 # avoids coupling byte identity to obsolete intermediate whitespace/order.
 assert git_blob(pristine)=="02553558a826d31e76c20eb53bf729af8de4a6b7"
-assert git_blob(actual)=="a00d30411112069e54015d527018d2d619efe7c8"
+assert git_blob(actual)=="a22e8c635831d970fced9a5b2afaf9c6851b7460"
 # IMAD/IMAD32I AvgMode is a 2-bit field, not two independent booleans.
 # Modes 1/2 are reviewed negate-addend/negate-multiplier operations; mode 3
 # remains fail-closed. CC/X/SAT are deliberately still unsupported.
@@ -249,4 +249,13 @@ assert 'ctx.OpAccessChain(def.pointer_type, def.id, idx)' in image_atomic
 assert 'ctx.uses_nonuniform_storage_image = true' in image_atomic
 assert 'ctx.uses_nonuniform_storage_texel_buffer = true' in image_atomic
 assert "backend/spirv/emit_spirv_image.cpp" in sample_cmake
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + IMAD/IMAD32I NEG + bounded IMADSP + CFG control/PRET + PIXLD.CovMask SampleMask + bounded storage image arrays + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")
+shared_cas=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp").read_text()
+assert "void TranslatorVisitor::ATOMS_cas(u64 insn)" in shared_cas
+assert "AtomsCasBcRz::Pair" in shared_cas
+assert "AtomsCasBcRz::ReplacementRz" in shared_cas
+assert "AtomsCasBcRz::CompareRz" in shared_cas
+assert 'throw NotImplementedException("ATOMS.CAS reserved BcRz mode")' in shared_cas
+assert 'throw NotImplementedException("ATOMS.CAS sub-operation {}"' in shared_cas
+assert "ir.SharedAtomicCompareExchange(offset, comparator, replacement)" in shared_cas
+assert "void TranslatorVisitor::ATOMS_cas" not in actual
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + IMAD/IMAD32I NEG + bounded IMADSP + ATOMS.CAS.B32 + CFG control/PRET + PIXLD.CovMask SampleMask + bounded storage image arrays + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")

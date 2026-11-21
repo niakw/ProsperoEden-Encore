@@ -89,6 +89,8 @@ def main():
             ACTIVE / "shader_recompiler/backend/spirv/emit_spirv_special.cpp",
         "backend/spirv/emit_spirv_context_get_set.cpp":
             ACTIVE / "shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+        "backend/spirv/emit_spirv_atomic.cpp":
+            ACTIVE / "shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
         "backend/spirv/emit_spirv_floating_point.cpp":
             ACTIVE / "shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp",
         "backend/spirv/emit_spirv_image.cpp":
@@ -114,8 +116,10 @@ def main():
     cmake = (ROOT / "headless/CMakeLists.txt").read_text()
     for path in (
         "backend/spirv/spirv_emit_context.cpp",
+        "backend/spirv/emit_spirv_atomic.cpp",
         "backend/spirv/emit_spirv_image.cpp",
         "backend/spirv/emit_spirv_image_atomic.cpp",
+        "frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
     ):
         if path not in cmake:
             raise RuntimeError("production NS1 CMake owner missing: " + path)
@@ -187,7 +191,7 @@ def main():
             print(f"NS1_IMAGE_ATOMIC_REAL_SPIRV_VALIDATED {module} {env}", flush=True)
 
     print("NS1_IMAGE_ATOMIC_REAL_SPIRV_PASS "
-          "real_emit=1 scalar=1 descriptor_array=1 inc_dec_cas=1 "
+          "real_emit=1 scalar=1 descriptor_array=1 inc_dec_cas=1 shared_cas=1 "
           "nonuniform_guard=1 bounds_guard=1", flush=True)
 
 if __name__ == "__main__":

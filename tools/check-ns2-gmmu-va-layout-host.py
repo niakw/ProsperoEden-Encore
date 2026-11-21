@@ -36,8 +36,38 @@ def main():
     if owner.count('NativePinnedPhysicalSpan(pinned, source, size)') != 2:
         print("Native 4K/image pin paths are not both checked", file=sys.stderr)
         return 2
-    if owner.index('if (!NativePinnedPhysicalSpan(pinned, range.source_offset, range.size))') > owner.index('gmmu->MapSparse(range.address, range.size, false);'):
-        print("Native sparse pin check runs after GPU publication", file=sys.stderr)
+    # A:0x0D/A:0x14 and GSV216 use the selected RemapNativeSparse owner:
+    # preflight EVERY physical pin/span before publishing pins or any PTE.
+    # The historical single 4K MapSparse(..., false) call no longer exists;
+    # accepting its absence would silently drop the safety check.
+    remap_marker = (
+        'NvResult nvhost_as_gpu::RemapNativeSparse('
+        'std::span<const NativeSparseRemapEntry> entries) {'
+    )
+    if owner.count(remap_marker) != 1:
+        print("Native sparse remap owner missing or duplicated", file=sys.stderr)
+        return 2
+    remap = owner.split(remap_marker, 1)[1].split('\n}', 1)[0]
+    ordered = (
+        'for (std::size_t i = 0; i < ranges.size(); ++i) {',
+        'if (!NativePinnedPhysicalSpan(pinned, range.source_offset, range.size)',
+        'native_sparse_pins.merge(newly_pinned);',
+        'gmmu->MapSparse(range.address, range.size, big_page_ranges[i]);',
+        'gmmu->Map(range.address, pinned->second + range.source_offset, range.size,',
+    )
+    if any(remap.count(token) < 1 for token in ordered):
+        print("Native sparse preflight or GPU mutation missing", file=sys.stderr)
+        return 2
+    preflight = remap.index(ordered[1])
+    pin_publish = remap.index(ordered[2])
+    first_sparse_map = remap.index(ordered[3])
+    first_physical_map = remap.index(ordered[4])
+    if not (remap.index(ordered[0]) < preflight < pin_publish <
+            min(first_sparse_map, first_physical_map)):
+        print("Native sparse preflight runs after pin/PTE publication", file=sys.stderr)
+        return 2
+    if remap.count(ordered[0]) < 2:
+        print("Native sparse preflight and map passes are not both present", file=sys.stderr)
         return 2
     if '(vm.va_range_end - vm.va_range_split) >> vm.big_page_size_bits' in owner:
         print("Relative GPU VA allocator bound reintroduced", file=sys.stderr)

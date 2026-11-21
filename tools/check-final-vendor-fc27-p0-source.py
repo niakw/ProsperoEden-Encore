@@ -37,12 +37,31 @@ REVIEWED_PINS.add("4795f0a884c06f029c9d06a0a3d09cc0b9cfb791")
 REVIEWED_PINS.add("fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531")
 REVIEWED_PINS.add("86cbe7ac73a28dcd1e3cdc3609eafca1c7b5dc37")
 REVIEWED_PINS.add("a93bc45a1a5858fe1e4bc718a84a2a5a8841ab38")
+REVIEWED_PINS.add("e95c1dea796b209b8561c253b82fa69e75fb72b6")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# The AS BindChannel owner previously performed an unchecked nvhost_gpu
+# downcast after verifying only that the FD existed. Seal the real C++ owners
+# for the device-family check and leave every other runtime blob unchanged.
+if selected == "e95c1dea796b209b8561c253b82fa69e75fb72b6":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "1db3172a604b9aed2c64765a84786d675029f6eb"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "99133d3000fb0c3b43a0a653221c1453072fd6dd"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "6d59efa437c5415267e5db0a2c86174d785fb2c2"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "6d72ba1851e21227ad196bbdd7db5226f77c9500"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Native channel FD type-check owner drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
 # Native NS2 GPU controller and channel handlers: match all reviewed
 # C++ owners before replaying the previous TSG/FC27 provenance receipts.
 # The new GET_ENGINE_INFO is read-only; CHANNEL_OPEN authenticates the

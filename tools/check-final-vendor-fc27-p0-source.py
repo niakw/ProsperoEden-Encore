@@ -90,9 +90,33 @@ REVIEWED_PINS.add("4e6a966508e718d02526d4d220e112591536f28c")
 REVIEWED_PINS.add("2d07b5e65baf35c82d0b0e557617aefe730a10b1")
 REVIEWED_PINS.add("7baf9cc07c6aceee185032544d964f04a2fed108")
 REVIEWED_PINS.add("1f8a3bbaa7fc33118e63ebef829202d825475bfe")
+REVIEWED_PINS.add("1e513ae001669127538a346c7f390af55edd6712")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 shipping_vendor_pin = gitlink_vendor_pin
+
+# SwitchBrew GSV 1001/1002 are video ENCODER commands. The earlier
+# decoder aliases must not issue Success or create a decoder session.
+# This successor changes only these three source/test blobs.
+NS2_ENCODER_FAIL_CLOSED_PIN = "1e513ae001669127538a346c7f390af55edd6712"
+NS2_ENCODER_FAIL_CLOSED_BLOBS = {
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "6934cd5d46c172d029c65123b5d7f19ddafc4853",
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "985cab1d56306096f7630da7f4d6a5b34c859431",
+    "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
+}
+def ns2_encoder_receipt(relative, previous):
+    return (NS2_ENCODER_FAIL_CLOSED_BLOBS.get(relative, previous)
+            if gitlink_vendor_pin == NS2_ENCODER_FAIL_CLOSED_PIN else previous)
+
+if selected == NS2_ENCODER_FAIL_CLOSED_PIN:
+    for relative, expected in NS2_ENCODER_FAIL_CLOSED_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 encoder fail-closed source drift", relative, actual)
+    # The TSG owner is unchanged from the immediately preceding pin.
+    shipping_vendor_pin = "1f8a3bbaa7fc33118e63ebef829202d825475bfe"
+    selected = shipping_vendor_pin
+
 # Final known-TSG fail-closed successor. The final nx2 owner includes the
 # validated pre-bind scheduling state/getter plus explicit NotImplemented
 # routes for six known stateful/event/cache ioctls. Seal it, then replay 2d07.
@@ -129,7 +153,7 @@ if selected == "2d07b5e65baf35c82d0b0e557617aefe730a10b1":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GSV 498 donated-memory source drift", relative, actual)
+        assert actual == ns2_encoder_receipt(relative, expected), ("NS2 GSV 498 donated-memory source drift", relative, actual)
     selected = "4e6a966508e718d02526d4d220e112591536f28c"
 
 # Switch 2 C0504821 response-ABI successor. Seal the active channel owner,
@@ -254,7 +278,7 @@ if selected == "4411fc172eef84080ab7de23158349bbe7d08f88":
                 "tests/ns2_syncpt_bootstrap_source.py":
                     "08894a7985e96f4478501dd69aceb56b214b0306",
             }[relative]
-        assert actual == expected, ("NS2 GraphicsFrame source drift", relative, actual)
+        assert actual == ns2_encoder_receipt(relative, expected), ("NS2 GraphicsFrame source drift", relative, actual)
     # The 172/173 successor already sealed the changed worker 171/172/173
     # owner. For that pin, continue directly with the earlier GPU-session
     # receipt instead of requiring byte-identical pre-label worker sources.
@@ -629,6 +653,9 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if gitlink_vendor_pin == NS2_ENCODER_FAIL_CLOSED_PIN and relative in NS2_ENCODER_FAIL_CLOSED_BLOBS:
+        # Current blob was verified above against the exact pinned tree.
+        return NS2_ENCODER_FAIL_CLOSED_BLOBS[relative]
     # Successor blobs have already been individually sealed above. Historical
     # receipt replay may revisit them after normalizing gitlink_vendor_pin to
     # c74; return only those exact authenticated successor identities.
@@ -988,6 +1015,7 @@ if gitlink_vendor_pin in {
     "2d07b5e65baf35c82d0b0e557617aefe730a10b1",
     "7baf9cc07c6aceee185032544d964f04a2fed108",
     "1f8a3bbaa7fc33118e63ebef829202d825475bfe",
+    "1e513ae001669127538a346c7f390af55edd6712",
 }:
     gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and

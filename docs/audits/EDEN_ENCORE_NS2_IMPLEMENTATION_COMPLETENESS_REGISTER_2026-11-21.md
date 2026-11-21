@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `1f8a3bbaa7fc33118e63ebef829202d825475bfe` |
+| Vendor gitlink sélectionné | `1e513ae001669127538a346c7f390af55edd6712` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -139,8 +139,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 922 | VideoDecoderForSystem | FinalizeDecoderAliasImagePool | M | — | pas de handler |
 | 961 | VideoDecoder | (nom inconnu) | P | GetCpuUserImageDescriptor | handler actif; contrat SwitchBrew incomplet |
 | 991 | VideoDecoder | (nom inconnu) | P | CalculateDecoderImagePoolBuffer | handler actif; contrat SwitchBrew incomplet |
-| 1001 | VideoEncoder | CreateVideoEncoderContext | P | InitializeVideoCodecContext2 | ID actif mais implémentation Encore est decoder-oriented; divergence à résoudre |
-| 1002 | VideoEncoder | InitializeVideoEncoderContext | P | OpenVideoDecoderSession2 | ID actif mais retourne actuellement chemin decoder; divergence forte |
+| 1001 | VideoEncoder | CreateVideoEncoderContext | M | UnavailableVideoEncoder | stub nommé, commentaire not implemented yet on Encore, retourne NotImplemented ; encodeur non fourni |
+| 1002 | VideoEncoder | InitializeVideoEncoderContext | M | UnavailableVideoEncoder | stub nommé, commentaire not implemented yet on Encore, retourne NotImplemented ; aucune session décodeur créée |
 | 1003 | VideoEncoder | DestroyVideoEncoderContext | M | — | pas de handler |
 | 1004 | VideoEncoderForSystem | InitializeVideoEncoderContextForSystem | M | — | pas de handler |
 | 1011 | VideoEncoder | InitializeEncoderImagePool | M | — | pas de handler |
@@ -270,7 +270,7 @@ Le runtime sélectionne `encore-active/ns2-runtime/video_decoder/.../graphics_vi
 
 ## 5. VideoEncoderCreatorSession / VideoEncoderSession
 
-Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Les IDs présents dans le **UserSession 1001/1002** sont actuellement raccordés à des chemins decoder-oriented et restent donc **P**, pas une implémentation encodeur.
+Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Les IDs **UserSession 1001/1002** étaient dirigés vers le décodeur. Le vendor `1e513ae0` les sépare : handler minimal `UnavailableVideoEncoder`, résultat `NotImplemented`, aucune session décodeur créée. **M** reste la classification fonctionnelle (encodeur non fourni, hors P0).
 
 | Cmd | Nom SwitchBrew | Statut | Handler Encore | Écart / raison |
 | --- | --- | --- | --- | --- |

@@ -6,6 +6,31 @@ import json
 root=Path(__file__).resolve().parents[1]
 pinned=(root/"vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 standard=(root/"vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
+
+# Restore the reviewed bounds-safe direct/deferred register writes in the
+# historical comparison COPY only, never in the selected PS5 C++ owner.
+reg_direct_new = """    // Assertions can be soft in release. Reject the guest method before
+    // indexing the register file; an out-of-range write corrupts emulator state.
+    if (method >= Regs::NUM_REGS) {
+        ASSERT_MSG(false, "Invalid Fermi2D register, increase the size of the Regs structure");
+        return;
+    }
+    regs.reg_array[method] = method_argument;"""
+reg_direct_old = """    ASSERT_MSG(method < Regs::NUM_REGS, "Invalid Fermi2D register, increase the size of the Regs structure");
+    regs.reg_array[method] = method_argument;"""
+reg_sink_new = """    for (auto [method, value] : method_sink) {
+        if (method >= Regs::NUM_REGS) {
+            ASSERT_MSG(false, "Invalid deferred Fermi2D register");
+            continue;
+        }
+        regs.reg_array[method] = value;
+    }"""
+reg_sink_old = """    for (auto [method, value] : method_sink) {
+        regs.reg_array[method] = value;
+    }"""
+for reviewed, original in ((reg_direct_new, reg_direct_old), (reg_sink_new, reg_sink_old)):
+    assert standard.count(reviewed) == 1, "Reviewed Fermi register dispatch drift"
+    standard = standard.replace(reviewed, original, 1)
 # A soft assertion alone does not prevent the unsupported blit from
 # changing guest memory. Reverse only the exact reviewed fail-closed hunk
 # in this in-memory historical-source proof, never in the compiled owner.

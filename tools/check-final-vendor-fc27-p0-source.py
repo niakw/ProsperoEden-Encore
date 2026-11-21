@@ -121,6 +121,7 @@ NS2_PREEMPTION_CTA_TEST_FIX_BLOBS = {
 # H:0x16 exposes no_error/current details, and H:0x17 returns the 16-byte
 # notification with status 0xffff.
 NS2_CHANNEL_ERROR_PIN = "19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba"
+NS2_CHANNEL_ERROR_ACTIVE = gitlink_vendor_pin == NS2_CHANNEL_ERROR_PIN
 NS2_CHANNEL_ERROR_BLOBS = {
     "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
         "4810a41d584fb74612c8160c3f06a4c717f7d5f8",
@@ -727,7 +728,7 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
-    if shipping_vendor_pin == NS2_CHANNEL_ERROR_PIN and relative in NS2_CHANNEL_ERROR_BLOBS:
+    if NS2_CHANNEL_ERROR_ACTIVE and relative in NS2_CHANNEL_ERROR_BLOBS:
         return NS2_CHANNEL_ERROR_BLOBS[relative]
     if NS2_PREEMPTION_CTA_ACTIVE and relative in NS2_PREEMPTION_CTA_BLOBS:
         return NS2_PREEMPTION_CTA_BLOBS[relative]

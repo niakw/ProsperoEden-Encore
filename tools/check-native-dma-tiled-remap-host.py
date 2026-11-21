@@ -26,7 +26,11 @@ gob=cut(decoder,"template <bool TO_LINEAR, u32 BYTES_PER_PIXEL>\nvoid SwizzleSub
 api=cut(decoder,"void SwizzleSubrect(","std::size_t CalculateSize(")
 assert "i * 4" in method
 assert all(s in live for s in ["UnswizzleSubrect(", "SwizzleSubrect(",
-                              "needs_destination", "MAX_BYTES", "IsFullyMappedRange"])
+                              "needs_destination", "MAX_BYTES", "IsFullyMappedRange",
+                              "padded_width > MAX_BYTES / padded_height"])
+assert "UnswizzleSubrect(linear_src, tiled_src, 1," in live
+assert "UnswizzleSubrect(linear_dst, tiled_dst, 1," in live
+assert "SwizzleSubrect(tiled_dst, linear_dst, 1," in live
 cpp=r"""
 #include <algorithm>
 #include <array>
@@ -115,12 +119,12 @@ int main(){
  };
  auto encode=[&](u32 base,u32 bpp,const std::vector<u8>& x){
    std::span<u8> raw(d.memory_manager.mem.data()+base,512);
-   SwizzleSubrect(raw,x,bpp,4,4,1,0,0,4,4,0,0,4*bpp);
+   SwizzleSubrect(raw,x,1,4*bpp,4,1,0,0,4*bpp,4,0,0,4*bpp);
  };
  auto decode=[&](u32 base,u32 bpp){
    std::span<const u8> raw(d.memory_manager.mem.data()+base,512);
    std::vector<u8> x(16*bpp);
-   UnswizzleSubrect(x,raw,bpp,4,4,1,0,0,4,4,0,0,4*bpp);
+   UnswizzleSubrect(x,raw,1,4*bpp,4,1,0,0,4*bpp,4,0,0,4*bpp);
    return x;
  };
  reset(1,1,1);
@@ -160,6 +164,35 @@ int main(){
    const bool inside=x>=1&&x<3&&y>=1&&y<3;
    assert(output[(y*4+x)*2]==(inside?xs[y*4+x]:0xee));
    assert(output[(y*4+x)*2+1]==0xcd);
+ }
+ // 9->12 B/px: three-byte components must cross GOB microtiles
+ // without confusing the next row. Source Z, source X, CONST_A, NO_WRITE.
+ reset(3,3,4);
+ d.regs.src_params.origin.x.v=d.regs.dst_params.origin.x.v=1;
+ d.regs.src_params.origin.y.v=d.regs.dst_params.origin.y.v=1;
+ set(0,S::SRC_Z);
+ set(1,S::SRC_X);
+ set(2,S::CONST_A);
+ set(3,S::NO_WRITE);
+ d.regs.remap_const.remap_consta_value=0x00a1b2c3;
+ std::vector<u8> src9(16*9),dst12(16*12);
+ for(u32 pix=0;pix<16;pix++){
+   for(u32 byte=0;byte<9;byte++)src9[pix*9+byte]=static_cast<u8>(pix*9+byte);
+   for(u32 byte=0;byte<12;byte++)dst12[pix*12+byte]=static_cast<u8>(0x80+byte);
+ }
+ encode(0x1000,9,src9);encode(0x3000,12,dst12);
+ assert(d.CopyBlockLinearRemap());
+ output=decode(0x3000,12);
+ for(u32 y=0;y<4;y++)for(u32 x=0;x<4;x++){
+   const u32 pix=y*4+x;
+   const bool hit=x>=1&&x<3&&y>=1&&y<3;
+   for(u32 byte=0;byte<12;byte++){
+     u8 value=dst12[pix*12+byte];
+     if(hit && byte<3)value=src9[pix*9+6+byte];
+     else if(hit && byte<6)value=src9[pix*9+byte-3];
+     else if(hit && byte<9)value=(byte==6?0xc3:(byte==7?0xb2:0xa1));
+     assert(output[pix*12+byte]==value);
+   }
  }
  const auto writes=d.memory_manager.writes;
  d.regs.dst_params.depth=2;

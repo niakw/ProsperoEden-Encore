@@ -221,7 +221,30 @@ for old, reviewed in MAXWELL_METHOD_BOUNDS_RECEIPT:
     assert expected.count(old) == 1, "Pinned DMA register sink drift"
     assert native.count(reviewed) == 1, "Reviewed native DMA guard drift"
     expected = expected.replace(old, reviewed, 1)
-# GPU-24: the genuine 2D tiled-to-tiled DMA owner must bound ALL three
+# GPU-28: neither tiled-pitch conversion may calculate u32 GOB allocation
+# sizes on unbounded guest surface metadata. Verify reviewed C++ exactly.
+for begin, end, old_hash, old_size, new_hash, new_size in (
+    ("void MaxwellDMA::CopyBlockLinearToPitch() {",
+     "void MaxwellDMA::CopyPitchToBlockLinear() {",
+     3167428731, 4881, 1037823203, 6448),
+    ("void MaxwellDMA::CopyPitchToBlockLinear() {",
+     "void MaxwellDMA::CopyBlockLinearToBlockLinear() {",
+     516317152, 4460, 2414643095, 6186),
+):
+    assert expected.count(begin) == native.count(begin) == 1
+    old_section = begin + expected.split(begin, 1)[1].split(end, 1)[0]
+    new_section = begin + native.split(begin, 1)[1].split(end, 1)[0]
+    assert fnv1a32(old_section) == old_hash and len(old_section) == old_size
+    assert fnv1a32(new_section) == new_hash and len(new_section) == new_size
+    for required in (
+        "MAX_SOFTWARE_TILED_DMA_BYTES",
+        "aligned_width > MAX_SOFTWARE_TILED_DMA_BYTES / aligned_height",
+        "memory_manager.IsFullyMappedRange(regs.offset_in, src_size)",
+        "memory_manager.IsFullyMappedRange(regs.offset_out, dst_size)",
+    ):
+        assert required in new_section, ("Missing tiled conversion preflight", required)
+    expected = expected.replace(old_section, new_section, 1)
+# GPU-27: the genuine 2D tiled-to-tiled DMA owner must bound ALL three
 # intermediate allocations and the decoder's u32 padded-image extents
 # before any guest memory access. Keep whole-source parity byte-for-byte.
 tiled_begin = "void MaxwellDMA::CopyBlockLinearToBlockLinear() {"

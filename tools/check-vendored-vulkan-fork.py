@@ -42,7 +42,7 @@ for relative, reviewed_blob in (
 """
         gpu49_mask = "        write_mask &= ColorOutputMask(index);\n"
         assert raw.count(gpu49_ctor) == raw.count(gpu49_mask) == 1
-        raw = raw.replace(gpu49_ctor, "", 1).replace(gpu49_mask, "", 1)
+        raw = raw.replace(gpu49_ctor, "\n", 1).replace(gpu49_mask, "", 1)
         data = raw.encode()
         assert hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest() == reviewed_blob
         print('ENCORE_NS1_GPU49_GRAPHICS_BUILD_OWNER_EXACT_REVERSE_PASS')
@@ -134,7 +134,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                              << (rt * 4);
     }
 
-""", ""),
+""", "\n"),
                 ("        write_mask &= ColorOutputMask(index);\n", ""),
             ),
         ),

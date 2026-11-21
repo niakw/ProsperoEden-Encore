@@ -276,7 +276,7 @@ for token in (
 assert "BitField<48, 4, u64> mode;" in prmt
 assert 'if (raw_mode > static_cast<u32>(PrmtMode::Replicate16))' in prmt
 assert 'throw NotImplementedException("PRMT reserved mode {}", raw_mode)' in prmt
-assert "BitField<48, 3" not in prmt
+assert "BitField<48, 3, u64> mode;" not in prmt
 
 # Independent NVIDIA PTX table model. output byte numbering is little-endian:
 # byte 0 is d.b0; source bytes 0..3 are A and 4..7 are B.

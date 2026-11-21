@@ -4,6 +4,8 @@
 
 **Issue opérationnelle maîtresse de cet inventaire : [#298 — complétude des implémentations NS1](https://github.com/niakw/ProsperoEden-Encore/issues/298).**
 
+**Registre fonctionnel HLE/SVC associé : [EDEN_ENCORE_NS1_SWITCHBREW_FUNCTION_COVERAGE_REGISTER_2026-11-21.md](./EDEN_ENCORE_NS1_SWITCHBREW_FUNCTION_COVERAGE_REGISTER_2026-11-21.md)** — inventaire façon SwitchBrew des interfaces/commandes, handlers réels, `nullptr`, partiels, firmware et dates de revalidation. Ce registre fonctionnel complète le présent audit sans convertir chaque commande absente en bug démontré.
+
 ## 0. Revisions et règle de provenance
 
 | Élément | Révision/vérification |

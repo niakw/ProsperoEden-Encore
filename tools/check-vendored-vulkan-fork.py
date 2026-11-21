@@ -918,6 +918,26 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                 real_source = real_source.replace(reviewed, original, 1)
                 assert raster_blob(real_source) == '6467fd4d704de6b77deb7e6cba4b8e33f70f5a08'
                 print('ENCORE_NS1_GPU22_HEADER_EXACT_REVERSE_PASS')
+            # GPU-56 / Lichii #273: depth-compare sampled images must remain
+            # floating-point even when the TIC format is integer/unknown. Reverse
+            # only this exact one-line semantic delta on the audit copy before
+            # the earlier FC27 TexturePass receipts.
+            if name == 'shader_recompiler/ir_opt/texture_pass.cpp' and \
+                    raster_blob(real_source) == '4301e9dbc19c4e07e7c24af23177cf5fa2142f1a':
+                current_depth_compare = (
+                    "                // Depth-compare sampling returns floating-point values in Vulkan even when the\n"
+                    "                // TIC format itself is integer or unknown. Never build an integer sampled image.\n"
+                    "                const bool is_integer{flags.is_depth == 0 && is_texture_pixel_format_integer(cbuf)};\n"
+                )
+                historical_depth_compare = (
+                    "                const bool is_integer{is_texture_pixel_format_integer(cbuf)};\n"
+                )
+                assert real_source.count(current_depth_compare) == 1
+                real_source = real_source.replace(current_depth_compare,
+                                                  historical_depth_compare, 1)
+                assert raster_blob(real_source) == '30c9a612a88fa6cd832a40ad0f717b4944db45a1'
+                print('ENCORE_NS1_GPU56_DEPTH_COMPARE_FLOAT_EXACT_REVERSE_PASS')
+
             # NS1 f710080 changes only descriptor-array budget accounting.
             # Reverse that SHA-sealed owner on the audit COPY so the older
             # five-owner FC27 attribute-source receipt remains comparable.

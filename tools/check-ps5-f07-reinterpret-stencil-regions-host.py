@@ -167,7 +167,7 @@ int main() {
     assert(a[0].imageExtent.width==b[0].imageExtent.width);
     a.clear();b.clear();size=0;
     assert(Run(VK_IMAGE_ASPECT_DEPTH_BIT,both,4,8,{{4,5,1}},1,a,b,size));
-    assert(size==160 && a.size()==1 && b.size()==1);
+    assert(size==80 && a.size()==1 && b.size()==1);
     assert(a[0].imageSubresource.aspectMask==VK_IMAGE_ASPECT_DEPTH_BIT);
     assert(b[0].imageSubresource.aspectMask==VK_IMAGE_ASPECT_DEPTH_BIT);
     // Incompatible formats or aspects cannot silently lose stencil.

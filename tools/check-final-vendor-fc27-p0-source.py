@@ -50,8 +50,16 @@ REVIEWED_PINS.add("201b09121ebbfe0a37a56710b2b7ac118ae5acbb")
 REVIEWED_PINS.add("713e18162cf9a0d629cd39ae00b43fb55f9c2823")
 REVIEWED_PINS.add("35d639ad802910cfabbaf46bdcfd48a0d2f09ab6")
 REVIEWED_PINS.add("f66969397724ab8467c3380ca9c6db1631f79bf3")
+REVIEWED_PINS.add("b6e3ecc6943118ba9d321ef5baca9f79b241961f")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
+# Preserve exact GSV source identity across historical receipt replays. The
+# real 1402 child is NS2-only and can precede GPU session 497; both C++
+# revisions fix the same compiled scoped-handle type.
+native_gsv_registration = selected == "b6e3ecc6943118ba9d321ef5baca9f79b241961f"
+native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f"}
+native_gsv_active_cpp = "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
+native_gsv_active_test = "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
 # Preserve the active AS/GMMU owner revision during recursive source-pin
 # replay: the GA10F controller itself is unchanged but binds this new AS TU.
 native_as_lease_revision = selected in {"2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f", "889b142aa5616d3d00733a7cc1db1562eed291f4"}
@@ -64,11 +72,22 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # is non-const. Fix the *compiled* GSV1/1401/496 C++ locals without altering
 # TIPC buffer admission, GPU identity or any NS1 source. Replay the exact
 # prior complete source receipt after validating the one changed TU.
-if selected == "f66969397724ab8467c3380ca9c6db1631f79bf3":
+if selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f"}:
     relative = "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
     raw = (V / relative).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert actual == "5aced8f423f654a3ed4648a711ee2fe4b95c118c", ("NS2 GSV scoped handle TU drift", actual)
+    assert actual == native_gsv_active_cpp, ("NS2 native GSV compiled source drift", actual)
+    if native_gsv_registration:
+        for relative, expected in (
+            ("tests/ns2_syncpt_bootstrap_source.py", "6d04679a771a3919434351b377fbc0f23ead4b82"),
+            ("encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h", "09cb1ca6494b6d6866239eba0bb45801a237536c"),
+            ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp", "34142613b8ee0389509406da540811ba35eae9d6"),
+            ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp", "a47b4a447c74e2710678c4e881b6b2f949a373cf"),
+            ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.h", "b32fe29a11b0ffee941eb32043043553e67a28b5"),
+        ):
+            raw = (V / relative).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == expected, ("Native GSV 1402/497 process ticket source drift", relative, actual)
     selected = "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"
     original_vendor_pin = selected
 
@@ -327,7 +346,8 @@ if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df
         # Verify the EXACT GSV owner pair, then reuse unchanged source seals.
         for relative, expected in (
             ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-             ("54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
+             (native_gsv_active_cpp if native_gsv_compiled_handle_fix else
+              "54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
                "15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
                "91cdef4f7f28f5600ecd668904cf7d47ee0e9180" if gsv_transfer_memory_revision else
                "085e934b85fe6289988641b8ea2d64bf1a9a6d91" if gsv_native_115_revision else
@@ -351,7 +371,8 @@ if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df
 if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-         ("54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
+         (native_gsv_active_cpp if native_gsv_compiled_handle_fix else
+              "54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
                "15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
                "91cdef4f7f28f5600ecd668904cf7d47ee0e9180" if gsv_transfer_memory_revision else
                "085e934b85fe6289988641b8ea2d64bf1a9a6d91" if gsv_native_115_revision else
@@ -359,7 +380,7 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
            "5e621a6cff708c5a2e2ab1b856990d0b5afc96f7" if gsv_syncpt_201_revision else
            "747c9a0b5461fc1975fa373997064e3dc401a9a3")),
         ("tests/ns2_syncpt_bootstrap_source.py",
-         "69723ef7bd1d47af5086052882d0749cc817f64a"),
+         native_gsv_active_test if native_gsv_compiled_handle_fix else "69723ef7bd1d47af5086052882d0749cc817f64a"),
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -448,11 +469,13 @@ if selected in {"17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc42
 if selected in {"082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-         ("90be32737f454554125156cf468f58154dde40d4" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
+         (native_gsv_active_cpp if native_gsv_compiled_handle_fix else
+           "90be32737f454554125156cf468f58154dde40d4" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
           "c9193e7ce505353c87f57e8a063cbdbf5b072f43" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
           "8457d9a9a53725e6c1f15575c1151038f2457643")),
         ("tests/ns2_syncpt_bootstrap_source.py",
-         ("21fb7c886286a39eaec5ca4495bfba1bb55584b1" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
+         (native_gsv_active_test if native_gsv_compiled_handle_fix else
+           "21fb7c886286a39eaec5ca4495bfba1bb55584b1" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
           "41d6f0514f281bfb65cad052c2fb61cfa9d749b2" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
           "51beddbe0454039c23728f39f7c84d05325fd8cf" if selected in {"e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"} else
           "eb150745a18068366885299f82eacf42045cb50e")),
@@ -541,7 +564,7 @@ if selected == "510f1efde545357fe8095a812df32251ee546285":
 if selected == "7fc673495b2ee18d5216023280057a42aa78d46c":
     for path, expected in (
         ("encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp", "ceb8b4afa7c0f19af3fe209fd8ca8d848a66d2cb"),
-        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "5d83ac9f7e7c3df2201b1ddf5e9458a7d802bcc4"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", native_gsv_active_cpp if native_gsv_compiled_handle_fix else "5d83ac9f7e7c3df2201b1ddf5e9458a7d802bcc4"),
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "be4d6eaaa43ee247b61d835a7b280fe26aa8eb63"),
         ("encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h", "978b0a162c0fa6043942e96e57c7c464dd167c53"),
     ):

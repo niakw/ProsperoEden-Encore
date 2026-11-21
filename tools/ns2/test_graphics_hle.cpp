@@ -51,6 +51,35 @@ int main(){
     require(!P::IsDefaultVi2DisplayQuery(0x77, 2, default_display, 102) &&
             !P::IsDefaultVi2DisplayQuery(0x7b, 2, default_display, 107),
             "VI2 unknown request IDs stay closed");
+    // Native event 31 and duplicate 32 share an indexed VSync source.
+    // 32 carries one copied kernel handle before the slot word.
+    const std::array<u32,3> vi2Event31{16+31,1,3};
+    const std::array<u32,5> vi2Event32{16+32,0x80000001U,2,0x4455,3};
+    require(P::DecodeVi2NativeEventSlot(vi2Event31,31)==3 &&
+            P::DecodeVi2NativeEventSlot(vi2Event32,32)==3,
+            "VI2 31/32 resolve the SAME native event slot");
+    auto badVi2Event32=vi2Event32;
+    badVi2Event32[3]=0;
+    require(!P::DecodeVi2NativeEventSlot(badVi2Event32,32),
+            "VI2 32 requires a real copied event handle");
+    badVi2Event32=vi2Event32;badVi2Event32[2]=1;
+    require(!P::DecodeVi2NativeEventSlot(badVi2Event32,32),
+            "VI2 32 rejects malformed TIPC handle descriptors");
+    const std::array<u32,3> vi2InvalidSlot{16+31,1,8};
+    require(!P::DecodeVi2NativeEventSlot(vi2InvalidSlot,31),
+            "VI2 native event slot remains bounded to 0..7");
+    for (u32 command=261;command<=272;++command) {
+        const std::array<u32,5> nativeBind{
+            command+16,3,static_cast<u32>(default_display),
+            static_cast<u32>(default_display>>32),3};
+        const auto decoded=P::DecodeVi2DisplayEventBinding(nativeBind,command);
+        require(decoded && decoded->display_name==default_display &&
+                decoded->value==3, "VI2 display notification bind/unbind ABI");
+    }
+    const std::array<u32,5> badDisplayBind{16+263,2,0,0,1};
+    require(!P::DecodeVi2DisplayEventBinding(badDisplayBind,263) &&
+            !P::DecodeVi2DisplayEventBinding(badDisplayBind,260),
+            "VI2 native display binding rejects malformed and unknown requests");
     require(P::Vi2MaxResolutionMode(true) == 4 &&
             P::Vi2MaxResolutionMode(false) == 2 &&
             P::Vi2NominalRefreshRateHz == 60 &&

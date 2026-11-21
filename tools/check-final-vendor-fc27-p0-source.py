@@ -187,6 +187,16 @@ if selected in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        # The selected H:0x21 successor sealed exactly these two changed
+        # GPFIFO-owner/test blobs above. Do not require the old bytes again
+        # after independently proving the new source graph.
+        if shipping_vendor_pin == "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0":
+            expected = {
+                "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+                    "24096d0848b560d5e7befe979ecaebd1dcc730ae",
+                "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+                    "4e7a4fd77cd96ff650edfc74f6a841b266ca2152",
+            }[relative]
         assert actual == expected, ("NS2 GPFIFO wait admission source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 

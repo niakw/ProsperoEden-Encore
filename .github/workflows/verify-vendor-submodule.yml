@@ -123,6 +123,7 @@ jobs:
         run: |
           python3 -B tools/check-nvdec-eagain-owner-selection-host.py
           python3 -B tools/check-native-host1x-register-reentrant-host.py
+          python3 -B vendor/tests/ps5_host1x_wait_notification_host.py
           python3 -B tools/check-native-gpu-read-capture-host.py
           python3 -B vendor/tests/ns2_gpu_identity_mapping_source.py
       - name: Check exact vendored Vulkan source fork

@@ -52,11 +52,16 @@ if selected == "a93bc45a1a5858fe1e4bc718a84a2a5a8841ab38":
         ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "6d59efa437c5415267e5db0a2c86174d785fb2c2"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "7d486218f7d1667ed9e38ab75d4c1421fa09c814"),
+        # The other three TSG predecessors are unchanged and must still be sealed
+        # because skipping the earlier full receipt also skips their old checks.
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "5a3ce8871ff52ed917969e2935f6837f5f1537ad"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "6d72ba1851e21227ad196bbdd7db5226f77c9500"),
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("Native GPU runlist owner drift", relative, actual)
-    selected = "fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531"
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # NS2 native VSMS mapping: one selected Ampere controller source changed.
 # Validate its exact compiled blob, then replay the unchanged TSG/FC27 receipts.

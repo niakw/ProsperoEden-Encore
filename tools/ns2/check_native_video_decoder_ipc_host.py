@@ -32,6 +32,23 @@ for cmd, method in ((1,'CreateDecoderService'),(3,'GetEvent'),(6,'Start'),
 assert 'GetObjectFromHandle<Kernel::KTransferMemory>' in source
 assert 'CreateMetadataSession(system, ctx, std::move(handler), &client)' in supervisor
 assert 'm_owner->OpenVideoDecoderChildSession(ctx)' in source
+# The creator (GSV 902/905/906) and its child (decoder command 1)
+# must agree with the HIPC MOVE payload actually queued by AddMoveObject.
+# A failed outgoing allocation must close the creator ref, not emit success.
+for method in ("OpenVideoDecoderSession", "OpenVideoDecoderChildSession"):
+    body=supervisor.split(
+        f"void IGraphicsSupervisor::{method}(HLERequestContext& ctx) {{",1
+    )[1].split("\n}",1)[0]
+    for token in ("ctx.AddMoveObject(client);",
+                  "catch (const std::bad_alloc&)",
+                  "client->Close(system.Kernel());",
+                  "result = Kernel::ResultOutOfResource;",
+                  "IPC::ResponseBuilder rb{ctx, 2, 0, 1};"):
+        assert token in body,(method,"decoder-session-MOVE",token)
+    assert "IPC::ResponseBuilder rb{ctx, 2, 1, 0};" not in body
+    assert body.index("ctx.AddMoveObject(client);") < body.index(
+        "client->Close(system.Kernel());") < body.index(
+        "IPC::ResponseBuilder rb{ctx, 2, 0, 1};")
 assert 'm_context.CreateEvent("NS2VideoInputReady")' in source
 assert 'm_ready_timer = Core::Timing::CreateEvent(' in source
 assert 'ScheduleLoopingEvent(Interval, Interval, m_ready_timer)' in source

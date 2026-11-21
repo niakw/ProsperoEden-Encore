@@ -99,6 +99,7 @@ REVIEWED_PINS.add("205c6a3572955c3d8002f5faca68d6ce1359817c")
 REVIEWED_PINS.add("bfb9d4da9c0f3811924738311fc2c6056e0e4dcb")
 REVIEWED_PINS.add("265609006ea8d76d971cc49af37bac23890ca4f5")
 REVIEWED_PINS.add("d32b4280fe6737e1da3b56ed47409422500c756f")
+REVIEWED_PINS.add("1e1230f882ac6167ca0e6999875f07971b77985c")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
@@ -214,7 +215,29 @@ NS2_GPFIFO_ALLOC_GUARD_BLOBS = {
     "tests/ns2_gpu_identity_mapping_source.py":
         "8a17814bcf4da34b2cbc32383b1b52bcf15d1c9f",
 }
-NS2_GPFIFO_ALLOC_GUARD_ACTIVE = actual_vendor_pin == NS2_GPFIFO_ALLOC_GUARD_PIN
+# TIPC session handles for real NS2 video decoding must be MOVE. This
+# successor changes only the selected graphics supervisor owner and its
+# existing source contract; preserve all earlier NVDRV/FC27 receipts.
+NS2_DECODER_SESSION_MOVE_PIN = "1e1230f882ac6167ca0e6999875f07971b77985c"
+NS2_DECODER_SESSION_MOVE_BLOBS = {
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+        "fcf5bad66857cb10f528acddca9453db93079c65",
+    "tests/ns2_syncpt_bootstrap_source.py":
+        "af90eaec03e8f86c0519b9665983f7d400f33101",
+}
+NS2_DECODER_SESSION_MOVE_ACTIVE = actual_vendor_pin == NS2_DECODER_SESSION_MOVE_PIN
+if selected == NS2_DECODER_SESSION_MOVE_PIN:
+    for relative, expected in NS2_DECODER_SESSION_MOVE_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 video decoder MOVE session source drift", relative, actual)
+    selected = NS2_GPFIFO_ALLOC_GUARD_PIN
+    gitlink_vendor_pin = NS2_GPFIFO_ALLOC_GUARD_PIN
+    shipping_vendor_pin = NS2_GPFIFO_ALLOC_GUARD_PIN
+
+NS2_GPFIFO_ALLOC_GUARD_ACTIVE = actual_vendor_pin in {
+    NS2_GPFIFO_ALLOC_GUARD_PIN, NS2_DECODER_SESSION_MOVE_PIN,
+}
 if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
     for relative, expected in NS2_GPFIFO_ALLOC_GUARD_BLOBS.items():
         raw = (V / relative).read_bytes()
@@ -224,8 +247,13 @@ if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
     gitlink_vendor_pin = NS2_GSV_MOVE_OWNERS_PIN
     shipping_vendor_pin = NS2_GSV_MOVE_OWNERS_PIN
 
-NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin in {NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN}
+NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin in {
+    NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
+    NS2_DECODER_SESSION_MOVE_PIN,
+}
 def ns2_latest_gsv_receipt(relative, previous):
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
     if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
         return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
     return (NS2_GSV_MOVE_OWNERS_BLOBS.get(relative, previous)
@@ -242,6 +270,7 @@ if selected == NS2_GSV_MOVE_OWNERS_PIN:
 
 NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {
     NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
+    NS2_DECODER_SESSION_MOVE_PIN,
 }
 if selected == NS2_P0_BOOTSTRAP_PIN:
     for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
@@ -268,6 +297,8 @@ NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
     if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
         return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
     if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
@@ -342,6 +373,8 @@ NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
 }
 def ns2_encoder_receipt(relative, previous):
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
     if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
         return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
     if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
@@ -894,6 +927,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
     if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
         return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
     if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:

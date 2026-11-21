@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `76a225552c296686cd1022584d73decd46767f75` |
+| Vendor gitlink sélectionné | `205c6a3572955c3d8002f5faca68d6ce1359817c` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -374,7 +374,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0x40040007 | NVHOST_IOCTL_CHANNEL_SET_SUBMIT_TIMEOUT | M | — | pas de case sélectionné |
 | 0xC0080023 | NVHOST_IOCTL_CHANNEL_GET_CLK_RATE | M | — | pas de case sélectionné |
 | 0xC018480C | NVGPU_IOCTL_CHANNEL_SET_ERROR_NOTIFIER | C | SetErrorNotifier | S2: état interne Switch; mem non nul initialise, mem=0 désinitialise; offset/size ignorés; aucun faux backing NvMap |
-| 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | M | — | pas de handler S2; forme 16 B à qualifier sans inventer les 8 octets supplémentaires |
+| 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | P | NativeEventIdControl | Ounce exact: 16 B {cmd,id,u64=0}, appel observé {enable,2,0}; QueryEvent 1/2/3 configurés et clear réel, IDs 4..6 → NotImplemented faute de producteurs |
 | 0xC0104813 | NVGPU_IOCTL_CHANNEL_CYCLE_STATS_SNAPSHOT | M | — | pas de handler |
 | 0x40084714 | NVGPU_IOCTL_CHANNEL_SET_USER_DATA | C | SetClientData | actif |
 | 0x80084715 | NVGPU_IOCTL_CHANNEL_GET_USER_DATA | C | GetClientData | actif |
@@ -392,7 +392,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; réponse ABI S2 80 B corrigée (`gpfifo_gpu_va`/`userd_gpu_va`/`usermode_mmio_gpu_va`/`hw_channel_id`); USERD/doorbell explicitement NotImplemented |
 
 
-**P0 actuel** : la voie observée ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure `0xC008481F`, installe l'état d'erreur Switch puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le pin vendor `76a22555` conserve maintenant les `flags` natifs d'entrée dans la réponse Ioctl2 au lieu de les écraser à zéro après avoir mis le travail en queue; Ounce envoie actuellement `flags=6` et vérifie cette conservation. SwitchBrew documente par ailleurs `GET_ERROR_NOTIFICATION.status = 0xFFFF`; Encore garde cette ABI même si l'implémentation Ounce actuelle traite ce champ comme un booléen zéro/non-zéro. Le mode USERD/doorbell de `0xC0504821` reste **P** faute de preuve d'usage. `0x40104812 EVENT_ID_CONTROL` reste connu mais sans preuve de consommation par Ounce/fefw/nxnative, donc aucune implémentation spéculative n'est ajoutée.
+**P0 actuel** : la voie observée ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure `0xC008481F`, installe l'état d'erreur Switch, active `0x40104812 EVENT_ID_CONTROL` puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le pin vendor `205c6a35` conserve les `flags` natifs `flags=6` dans la réponse GPFIFO2 et implémente l'appel Ounce réel `{cmd=enable,id=2,reserved=0}` au lieu de tomber en `NotImplemented`. Les IDs 4..6 restent fail-closed faute de producteurs d'événements correspondants. Le mode USERD/doorbell de `0xC0504821` reste **P** faute de preuve d'usage. La prochaine preuve décisive reste console : vérifier si MKW passe enfin de `gpu_submit_sample=0` à la première soumission invitée.
 
 ## 11. NVDRV — /dev/nvhost-tsg-gpu
 

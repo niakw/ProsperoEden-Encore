@@ -113,7 +113,8 @@ assert '"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_experimental.cpp"' not in select
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in selector
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in selector
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in selector
-assert selector.count("target_sources(") == 3
+assert selector.count("target_sources(") == 4
+assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW}")' in selector
 assert 'write_derived(' not in selector and 'string(REPLACE' not in selector
 assert 'EDEN_GPU_FERMI2D_SOFTWARE_BOUNDS_INVALID' in experimental
 assert 'EDEN_GPU_FERMI2D_SOFTWARE_BOUNDS_INVALID' not in standard

@@ -83,7 +83,12 @@ new_remap = """            // NVIDIA B0B5 SET_REMAP_COMPONENTS allows 1..4 bytes
                     }
                 }
             }
-            memory_manager.WriteBlockUnsafe(regs.offset_out, bytes, byte_count);"""
+            // CONST_A also modifies textures and shader-visible CPU pages.
+            // WriteBlockUnsafe bypasses RasterizerVulkan::InvalidateRegion,
+            // leaving TextureCache/BufferCache with old pixels after the clear.
+            // BufferClear above may accelerate u32 fills, but guest memory
+            // must still publish its CPU copy through normal cache ownership.
+            memory_manager.WriteBlock(regs.offset_out, bytes, byte_count);"""
 assert expected.count(old_remap)==1
 expected=expected.replace(old_remap,new_remap)
 # The native copy engine now supports all pitch-linear B0B5 component

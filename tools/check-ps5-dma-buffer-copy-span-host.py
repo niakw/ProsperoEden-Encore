@@ -52,11 +52,12 @@ struct Memory {
     unsigned translations=0;
     unsigned contiguous_checks=0;
     bool mapped=true;
+    bool aliased_gpu_pages=false;
     bool IsGranularRange(GPUVAddr, u64) { ++contiguous_checks; return mapped; }
     bool IsContinuousRange(GPUVAddr, u64) { ++contiguous_checks; return false; }
     std::optional<DAddr> GpuToCpuAddress(GPUVAddr a) {
         ++translations;
-        return a;
+        return aliased_gpu_pages && a==0x4000 ? DAddr{0x1000} : a;
     }
 };
 template<class P>
@@ -115,8 +116,11 @@ int main() {
         assert(outer.buffer_cache.copy_calls==0);
     }
     for(const u64 size : {u64{1}, max}) {
-        assert(inner.DMACopy(0x1000,0x2000,size));
-        assert(outer.BufferCopy(0x1000,0x2000,size));
+        // A valid 4-GiB transfer must not be mistaken for overlapping
+        // memory merely because its small test addresses were adjacent.
+        const u64 dst = size == max ? 0x200000000ULL : 0x2000ULL;
+        assert(inner.DMACopy(0x1000,dst,size));
+        assert(outer.BufferCopy(0x1000,dst,size));
     }
     assert(inner.owner.translations==4);
     assert(inner.owner.contiguous_checks==4);
@@ -129,6 +133,15 @@ int main() {
     assert(outer.BufferCopy(0x1000,0x2000,4096));
     assert(outer.buffer_cache.copy_calls==3);
     assert(outer.texture_cache.writes==2);
+    // Both ordinary overlapping ranges and distinct GPU virtual addresses
+    // mapped to one physical page must be refused before dirty bookkeeping.
+    const auto before_alias_translations=inner.owner.translations;
+    assert(!inner.DMACopy(0x1000,0x1004,16));
+    inner.owner.aliased_gpu_pages=true;
+    assert(!inner.DMACopy(0x1000,0x4000,16));
+    assert(inner.owner.translations==before_alias_translations+4);
+    assert(inner.DMACopy(0x1000,0x5000,16));
+    inner.owner.aliased_gpu_pages=false;
     // Sparse GMMU spans leave the fast path before CPU address translation.
     inner.owner.mapped=false;
     const auto before=inner.owner.translations;

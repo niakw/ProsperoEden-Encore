@@ -417,6 +417,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             real_source = (expected[name].read_text()
                            if name == raster_owner or transition_restored
                            else raw_path.read_text())
+            # GPU-22 current-channel GMMU owner also changes this header's
+            # constructor/reference. Rewind only its two SHA-sealed hunks on
+            # the historical audit copy; PS5 still compiles the new header.
+            if name == 'include/video_core/renderer_vulkan/vk_rasterizer.h' and \
+                    raster_blob(real_source) == 'db60043206cc66a284bd3e9327a9fed7b011b25a':
+                reviewed = "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);"
+                original = "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler);"
+                assert real_source.count(reviewed) == 1, 'GPU-22 header hunk drift'
+                real_source = real_source.replace(reviewed, original, 1)
+                reviewed = "    // The GPU address space changes on channel binds. Reference the\n    // rasterizer's active pointer, not a stale construction-time channel.\n    Tegra::MemoryManager* const& gpu_memory;\n"
+                original = ""
+                assert real_source.count(reviewed) == 1, 'GPU-22 header hunk drift'
+                real_source = real_source.replace(reviewed, original, 1)
+                assert raster_blob(real_source) == '6467fd4d704de6b77deb7e6cba4b8e33f70f5a08'
+                print('ENCORE_NS1_GPU22_HEADER_EXACT_REVERSE_PASS')
             # NS1 f710080 changes only descriptor-array budget accounting.
             # Reverse that SHA-sealed owner on the audit COPY so the older
             # five-owner FC27 attribute-source receipt remains comparable.

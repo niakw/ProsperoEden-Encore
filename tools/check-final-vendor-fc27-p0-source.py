@@ -59,7 +59,21 @@ REVIEWED_PINS.add("d4508480fc859cb7a6cb97f259caefe1cd18ba54")
 REVIEWED_PINS.add("e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb")
 REVIEWED_PINS.add("3a0cf78a9b2c98bed100d817537b4375a48bf72f")
 REVIEWED_PINS.add("eb62d96583999c5d159b837dfb9b1b02e8173a9c")
+REVIEWED_PINS.add("b0afacfc891bc75da81be3886e5c40430ccbfe6d")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
+gitlink_vendor_pin = selected
+# Native NS2 controller: only a real GA10F process may query runlists and
+# virtual SM topology. Verify both changed blobs before replaying all older
+# immutable vendor/FC27 graph receipts without changing NS1 owners.
+if selected == "b0afacfc891bc75da81be3886e5c40430ccbfe6d":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "2bd5023b5177cfd89d43fcc759643553fe0c745f"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "000cdd09038696e3291a30ac6f332c24b2adcecd"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 native NVDRV ABI isolation drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 original_vendor_pin = selected
 native_self_controller_rollback_revision = selected == "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 native_va_region_widen_revision = selected in {"3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
@@ -109,7 +123,7 @@ def reviewed_blob(relative, expected):
     return expected
 
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+assert gitlink_vendor_pin==checked and selected in REVIEWED_PINS,(gitlink_vendor_pin,selected,checked)
 # GPU 497 must remain authenticated while its final native AS FDs and
 # NvCore session are closed; then revoke its process epoch once. Keep the
 # exact new real owner/test blobs and replay the complete earlier reviewed

@@ -40,12 +40,33 @@ REVIEWED_PINS.add("a93bc45a1a5858fe1e4bc718a84a2a5a8841ab38")
 REVIEWED_PINS.add("e95c1dea796b209b8561c253b82fa69e75fb72b6")
 REVIEWED_PINS.add("019e810c5c6c489eab8541f282de6b6379833015")
 REVIEWED_PINS.add("de4a6c24d1f118152c849fc87af2783c96348735")
+REVIEWED_PINS.add("788badb79f0566c56f51e64fb9aa727f72fdb065")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# The PS5/native control reply retains the original host C++ constructor
+# and TPC mask member signatures. Seal both native owners and the unchanged
+# common/AS/GPU parents before accepting this ABI compatibility revision.
+if selected == "788badb79f0566c56f51e64fb9aa727f72fdb065":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h", "ba96b6a240b31519afc89a15e7d683d0c2f32f32"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "384457a096e6f460915436a2bd6a873fd7f6efb9"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h", "eaccce6e08fc9fbe2b19ad621682e638fb019ba4"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "ee1eab4c6417bdeda24de75e36f86fe68d9802b2"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "1db3172a604b9aed2c64765a84786d675029f6eb"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "ca0574dc36e56ad727c63552231872002465bc99"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Native/legacy NVDRV controller ABI drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
 # Native GA10F topology is coherent only if characteristics, TPC mask,
 # VSMS_MAPPING and the per-FD controller constructor all compile together.
 # Verify their exact blobs plus the unchanged FD/TSG/AS owner group before

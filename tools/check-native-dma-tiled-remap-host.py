@@ -203,6 +203,12 @@ int main(){
  d.regs.dst_params.depth=1;
  d.regs.dst_params.origin.x.v=4;
  assert(!d.CopyBlockLinearRemap()&&d.memory_manager.writes==writes);
+ // Even a malformed host-produced register view must fail before indexing
+ // beyond the four NVIDIA destination selectors or shifting past 32 bits.
+ reset(1,1,5);
+ assert(!d.CopyBlockLinearRemap()&&d.memory_manager.writes==writes);
+ reset(5,1,1);
+ assert(!d.CopyBlockLinearRemap()&&d.memory_manager.writes==writes);
  reset(1,1,1);
  d.regs.offset_in=(std::numeric_limits<u64>::max)();
  set(0,S::CONST_A);

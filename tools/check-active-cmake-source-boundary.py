@@ -144,7 +144,7 @@ assert svc_code.count('R_UNLESS(address < address + size, ResultInvalidCurrentMe
 # compilation is triggered; the original vendor sources remain untouched.
 def cmake_block(start: str, end: str) -> str:
     assert root_cmake.count(start) == root_cmake.count(end) == 1
-    return root_cmake.split(start, 1)[1].split(end, 1)[0]
+    return start + root_cmake.split(start, 1)[1].split(end, 1)[0]
 
 ns1_cas_block = cmake_block("# NS1 Maxwell ATOM.CAS:", "# NS1 Maxwell FP64")
 p5_cas_block = cmake_block("# P5 link parity:", "# R457 NS2 sparse")

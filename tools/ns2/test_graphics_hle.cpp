@@ -676,6 +676,23 @@ int main(){
     require(notifications.RequestWorker(badWorker)==GP::Status::InvalidPacket &&
             notifications.MarkEvent(64)==GP::Status::InvalidPacket,
             "out of range event index rejected");
+    const std::array<GP::U32,4> syncAddressSpace{0xd8,2,17,63};
+    const auto sync=GP::DecodeSynchronizeAddressSpace(syncAddressSpace);
+    require(sync && sync->address_space==17 && sync->notification==63,
+            "GPU address-space synchronization decodes owned AS and event");
+    auto badSyncAddressSpace=syncAddressSpace;
+    badSyncAddressSpace[2]=0;
+    require(!GP::DecodeSynchronizeAddressSpace(badSyncAddressSpace),
+            "GPU address-space synchronization rejects null AS");
+    badSyncAddressSpace=syncAddressSpace; badSyncAddressSpace[3]=64;
+    require(!GP::DecodeSynchronizeAddressSpace(badSyncAddressSpace),
+            "GPU address-space synchronization rejects out-of-range event");
+    badSyncAddressSpace=syncAddressSpace; badSyncAddressSpace[1]=1;
+    require(!GP::DecodeSynchronizeAddressSpace(badSyncAddressSpace),
+            "GPU address-space synchronization rejects wrong TIPC word count");
+    require(!GP::DecodeSynchronizeAddressSpace(
+                std::span<const GP::U32>{syncAddressSpace.data(),3}),
+            "GPU address-space synchronization rejects truncated packet");
     const std::array<GP::U32,2> acquireWorker{0x26,0};
     require(GP::IsAcquireWorker(acquireWorker),
             "worker acquisition TIPC envelope validated");

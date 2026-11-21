@@ -70,7 +70,26 @@ retired_prmt_diagnostics='#include <atomic>\n#include <cstdio>\n'+helper+'\n'
 assert expected.count(retired_prmt_diagnostics)==1
 expected=expected.replace(retired_prmt_diagnostics,'',1)
 assert "EdenGpuBoundedSample" not in expected
-assert actual==expected, "PRMT/IMUL maintained shader is not the reviewed single native source"
+
+# Regular Maxwell IMAD uses the already-reviewed IMUL high-word helper.
+# Only LOW/HI reg/rc/cr/imm are admitted; X/SAT/CC remain fail-closed.
+imad_helper="// Maxwell GM107 IMAD: low multiplication is sign-independent modulo 2^32;\n// HI uses the same signed/unsigned high-word product as IMUL, then adds C.\n// X/SAT/CC have independent carry/saturation/flag semantics and remain\n// deliberately fail-closed until those contracts are implemented.\nvoid TranslateIMad(TranslatorVisitor& v, u64 insn, const IR::U32& src_b,\n                   const IR::U32& src_c) {\n    union {\n        u64 raw;\n        BitField<0, 8, IR::Reg> dest_reg;\n        BitField<8, 8, IR::Reg> src_reg_a;\n        BitField<47, 1, u64> cc;\n        BitField<48, 1, u64> is_a_signed;\n        BitField<49, 1, u64> extended;\n        BitField<50, 1, u64> saturate;\n        BitField<53, 1, u64> is_b_signed;\n        BitField<54, 1, u64> high;\n    } const imad{insn};\n\n    if (imad.extended != 0 || imad.saturate != 0 || imad.cc != 0) {\n        throw NotImplementedException(\"IMAD X/SAT/CC modifiers\");\n    }\n    const IR::U32 src_a{v.X(imad.src_reg_a)};\n    const IR::U32 product{\n        imad.high != 0\n            ? MultiplyHigh(v, src_a, src_b, imad.is_a_signed != 0, imad.is_b_signed != 0)\n            : v.ir.IMul(src_a, src_b)};\n    v.X(imad.dest_reg, v.ir.IAdd(product, src_c));\n}\n\n"
+imad_prmt_anchor="// NVIDIA PTX prmt.b32 specialized controls"
+assert expected.count(imad_prmt_anchor)==1
+expected=expected.replace(imad_prmt_anchor,imad_helper+imad_prmt_anchor,1)
+imad_rewrites=[["void TranslatorVisitor::IMAD_reg(u64) {\n    ThrowNotImplemented(Opcode::IMAD_reg);\n}\n","void TranslatorVisitor::IMAD_reg(u64 insn) {\n    TranslateIMad(*this, insn, GetReg20(insn), GetReg39(insn));\n}\n"],["void TranslatorVisitor::IMAD_rc(u64) {\n    ThrowNotImplemented(Opcode::IMAD_rc);\n}\n","void TranslatorVisitor::IMAD_rc(u64 insn) {\n    TranslateIMad(*this, insn, GetReg39(insn), GetCbuf(insn));\n}\n"],["void TranslatorVisitor::IMAD_cr(u64) {\n    ThrowNotImplemented(Opcode::IMAD_cr);\n}\n","void TranslatorVisitor::IMAD_cr(u64 insn) {\n    TranslateIMad(*this, insn, GetCbuf(insn), GetReg39(insn));\n}\n"],["void TranslatorVisitor::IMAD_imm(u64) {\n    ThrowNotImplemented(Opcode::IMAD_imm);\n}\n","void TranslatorVisitor::IMAD_imm(u64 insn) {\n    TranslateIMad(*this, insn, GetImm20(insn), GetReg39(insn));\n}\n"]]
+for old,new in imad_rewrites:
+    assert expected.count(old)==1
+    expected=expected.replace(old,new,1)
+assert 'throw NotImplementedException("IMAD X/SAT/CC modifiers")' in expected
+assert 'BitField<48, 1, u64> is_a_signed;' in expected
+assert 'BitField<49, 1, u64> extended;' in expected
+assert 'BitField<50, 1, u64> saturate;' in expected
+assert 'BitField<53, 1, u64> is_b_signed;' in expected
+assert 'BitField<54, 1, u64> high;' in expected
+assert 'ThrowNotImplemented(Opcode::IMAD32I);' in expected
+assert 'ThrowNotImplemented(Opcode::IMADSP_reg);' in expected
+assert actual==expected, "PRMT/IMUL/IMAD maintained shader is not the reviewed single native source"
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
 # and silently diverges from the actual source-generation oracle.
@@ -90,4 +109,4 @@ assert "EdenGpuBoundedSample" not in fermi_default, "shipping Fermi2D has unused
 assert helper.strip() in fermi_experiment, "experimental Fermi2D lost its bounded sample helper"
 assert "set(gpu_bounded_sample_helper [=[" not in module
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in module
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL reg/cbuf/imm/32I, reserved PRMT/IMUL.CC fail-closed")
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD LOW/HI, unsupported modifiers fail-closed")

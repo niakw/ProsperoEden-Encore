@@ -48,7 +48,7 @@ for a,b in pairs:
 assert expected.count("using namespace Texture;" + chr(10)*2)==1
 expected=expected.replace("using namespace Texture;" + chr(10)*2, "using namespace Texture;" + chr(10)*2 + "namespace {\n// Fold a row-wise DMA into one guest-memory copy only when every row is\n// contiguous, both byte ranges are representable and do not overlap.\nconstexpr bool CanCoalescePitchDma(u64 source, u64 dest, u32 width, u32 rows,\n                                   s64 pitch_in, s64 pitch_out, u64& total) noexcept {\n    total = 0;\n    if (width == 0 || rows == 0 || pitch_in != static_cast<s64>(width) ||\n        pitch_out != static_cast<s64>(width) ||\n        width > (~u32{0}) / rows) {\n        return false;\n    }\n    const u64 bytes = static_cast<u64>(width) * rows;\n    if (source > ~u64{0} - bytes || dest > ~u64{0} - bytes) {\n        return false;\n    }\n    if (!(source + bytes <= dest || dest + bytes <= source)) {\n        return false;\n    }\n    total = bytes;\n    return true;\n}\n} // namespace\n\n")
 original_pitch_loop="        if (is_src_pitch && is_dst_pitch) {\n            for (u32 line = 0; line < regs.line_count; ++line) {\n                const GPUVAddr source_line =\n                    regs.offset_in + static_cast<size_t>(line) * regs.pitch_in;\n                const GPUVAddr dest_line =\n                    regs.offset_out + static_cast<size_t>(line) * regs.pitch_out;\n                memory_manager.CopyBlock(dest_line, source_line, regs.line_length_in);\n            }\n        } else {"
-folded_pitch_loop="        if (is_src_pitch && is_dst_pitch) {\n            u64 contiguous_bytes = 0;\n            if (CanCoalescePitchDma(regs.offset_in, regs.offset_out, regs.line_length_in,\n                                    regs.line_count, regs.pitch_in, regs.pitch_out,\n                                    contiguous_bytes)) {\n                // A single mapped copy/flush avoids a row-wise GPU memory walk.\n                memory_manager.CopyBlock(regs.offset_out, regs.offset_in,\n                                         static_cast<size_t>(contiguous_bytes));\n            } else {\n                // Retain exact row-by-row semantics for overlapping, gapped,\n                // negative-pitch or large transfers.\n                for (u32 line = 0; line < regs.line_count; ++line) {\n                    const GPUVAddr source_line =\n                        regs.offset_in + static_cast<size_t>(line) * regs.pitch_in;\n                    const GPUVAddr dest_line =\n                        regs.offset_out + static_cast<size_t>(line) * regs.pitch_out;\n                    memory_manager.CopyBlock(dest_line, source_line, regs.line_length_in);\n                }\n            }\n        } else {"
+folded_pitch_loop="        if (is_src_pitch && is_dst_pitch) {\n            if (!CopyPitchDmaPlain(memory_manager, regs.offset_in, regs.offset_out,\n                                   regs.pitch_in, regs.pitch_out, regs.line_length_in,\n                                   regs.line_count)) {\n                LOG_WARNING(Render_OpenGL, \"Unmapped or oversized aliasing pitch DMA\");\n                AssertFailSoftImpl();\n            }\n        } else {"
 assert expected.count(original_pitch_loop)==1
 expected=expected.replace(original_pitch_loop,folded_pitch_loop)
 # Correct the shipping CONST_A layout for B0B5 component sizes 1/2/3/4.
@@ -121,22 +121,23 @@ extra_includes='#include <algorithm>\\n#include <array>\\n#include <limits>\\n#i
 extra_includes=extra_includes.replace('\\n','\n')
 assert expected.count(include_anchor)==1
 expected=expected.replace(include_anchor,extra_includes+include_anchor,1)
-helper_begin='// Remapped DMA lengths are measured in pixels/blocks, NOT bytes.'
+helper_begin='// Signed 2D pitch geometry and device-address overlap are shared by'
 helper_end='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert native.count(helper_begin)==1 and native.count(helper_end)==1
 helper=native[native.index(helper_begin):native.index(helper_end,native.index(helper_begin))]
-assert fnv1a32(helper)==2759270895 and len(helper)==13664, "Reviewed B0B5 helper changed"
+assert fnv1a32(helper)==998797921 and len(helper)==15985, "Reviewed B0B5 helper changed"
 for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
               'std::vector<u8> snapshot', 'memory.ReadBlock',
               'memory.WriteBlock','CanCoalescePitchDma',
               'const u64 src_stride', 'const u64 dst_stride',
-              'const bool virtual_overlap', 'const auto physical_overlap',
+              'const bool virtual_overlap', 'bool PitchDmaPhysicalOverlap(',
+              'constexpr bool PitchDmaEnvelope(', 'bool CopyPitchDmaPlain(',
               'memory.GpuToCpuAddress(src_begin)',
               'memory.GpuToCpuAddress(address)',
               'MAX_PHYSICAL_SEGMENTS = 16384',
-              'const bool overlap = virtual_overlap || physical_overlap',
-              'memory.IsFullyMappedRange(row_address(source',
-              'memory.IsFullyMappedRange(row_address(destination'):
+              'const bool overlap = virtual_overlap ||',
+              'memory.IsFullyMappedRange(PitchDmaRowAddress(source',
+              'memory.IsFullyMappedRange(PitchDmaRowAddress(destination'):
     assert token in helper, token
 end_anchor='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert expected.count(end_anchor)==1

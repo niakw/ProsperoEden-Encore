@@ -7111,6 +7111,15 @@ apply_reviewed_delta(
     '        auto resources = resource_owner->BuildResourcePlan(*compiled.info);\n        if (!resources || !registry.IsComputeCurrent(kepler_compute, *ticket))\n            return false;\n        // The production Vulkan path must enforce the SAME authenticated\n        // atomic byte extents as the captured-QMD compiler. A successful\n        // SPIR-V module alone does not prove a dynamic atomic stays within\n        // its real, writable GMMU-backed SSBO. Reject before any image,\n        // descriptor or pipeline is allocated; never round the offset down.\n        if (!Shader::Ampere::NativeQmdAtomicSpansFitBindings(\n                std::span<const Shader::Ampere::NativeAtomicSpan>{\n                    compiled.native_atomic_spans.data(),\n                    compiled.native_atomic_spans.size()},\n                resources->storage_buffers))\n            return false;\n        // Match the authentic TIC/TSC handle order and write permissions\n',
     "P2.3 production native atomic span gate")
 
+# GPU-23 (NS1 cross-game): unlike MoltenVK, native RADV formerly left
+# integer color attachments with float SPIR-V fragment outputs. Vulkan
+# fragment-output numeric type must match attachment format on all drivers.
+# Preserve the desktop policy, require typed outputs for PS5_NATIVE.
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "        if (device.IsMoltenVK()) {\n            for (size_t i = 0; i < 8; ++i) {\n                const auto format = static_cast<Tegra::RenderTargetFormat>(key.state.color_formats[i]);",
+    "        // Vulkan requires signed/unsigned fragment outputs to match the\n        // attachment's numeric class. Previously this was enabled only on\n        // MoltenVK: native PS5 RADV would emit floats for integer targets,\n        // making color writes poison/undefined (Vulkan shader interfaces).\n        // Keep the existing desktop policy; fix the PS5 renderer's ABI.\n        const bool require_typed_fragment_outputs =\n#ifdef PS5_NATIVE\n            true;\n#else\n            device.IsMoltenVK();\n#endif\n        if (require_typed_fragment_outputs) {\n            for (size_t i = 0; i < 8; ++i) {\n                const auto format = static_cast<Tegra::RenderTargetFormat>(key.state.color_formats[i]);",
+    "GPU-23 PS5 integer framebuffer fragment output numeric type")
+
 # GPU-22: a DMA buffer-image transfer may resolve a GPU virtual span
 # to discontiguous device pages. The Vulkan cache accepts ONE physical
 # buffer allocation per ObtainBuffer: reject fragmented mappings and use

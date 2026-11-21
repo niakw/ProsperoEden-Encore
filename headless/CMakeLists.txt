@@ -2303,6 +2303,15 @@ if(NOT EXISTS "${EDEN_MAINTAINED_TEXTURE_UTIL}")
 endif()
 list(REMOVE_ITEM video_sources texture_cache/util.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_TEXTURE_UTIL}")
+# GPU-48: keep the pinned Eden format table immutable and select the
+# maintained NS1 successor with Lichii #7's X8Z24 component tuple.
+set(EDEN_MAINTAINED_FORMAT_LOOKUP
+    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/texture_cache/format_lookup_table.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_FORMAT_LOOKUP}")
+    message(FATAL_ERROR "Missing maintained texture format lookup")
+endif()
+list(REMOVE_ITEM video_sources texture_cache/format_lookup_table.cpp)
+list(APPEND video_sources "${EDEN_MAINTAINED_FORMAT_LOOKUP}")
 list(REMOVE_ITEM video_sources shader_environment.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_SHADER_ENVIRONMENT}")
 # Eden #4473/#4477 are already applied once to the pinned source by

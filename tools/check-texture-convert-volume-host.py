@@ -234,3 +234,26 @@ with tempfile.TemporaryDirectory(prefix="encore-layered-cross-format-") as tmp:
 print("NS1_LAYERED_CROSS_FORMAT_COPY_HOST_PASS active_owner=1 exact_helper=1 "
       "single_unchanged=1 three_layers=1 order=1 offsets_preserved=1 "
       "mismatch_failclosed=1 zero_failclosed=1 O0_O2=2 ASan_UBSan=1")
+
+
+# GPU-48: the active format lookup is a one-hunk successor of pinned Eden.
+format_original=(ROOT/"vendor/sources/eden/src/video_core/texture_cache/format_lookup_table.cpp").read_text()
+format_active=(ROOT/"vendor/encore-active/eden-core/src/video_core/texture_cache/format_lookup_table.cpp").read_text()
+format_old="""    case Hash(TextureFormat::X8Z24, UNORM, UINT, UINT, UINT, LINEAR):
+        return PixelFormat::X8_D24_UNORM;
+"""
+format_new="""    case Hash(TextureFormat::X8Z24, UNORM, UINT, UINT, UINT, LINEAR):
+    case Hash(TextureFormat::X8Z24, UNORM, UINT, UNORM, UNORM, LINEAR):
+        return PixelFormat::X8_D24_UNORM;
+"""
+assert format_original.count(format_old)==1
+assert format_active==format_original.replace(format_old,format_new,1)
+assert format_active.count("case Hash(TextureFormat::X8Z24, UNORM, UINT, UNORM, UNORM, LINEAR):")==1
+cmake=(ROOT/"headless/CMakeLists.txt").read_text()
+assert 'set(EDEN_MAINTAINED_FORMAT_LOOKUP' in cmake
+assert 'list(REMOVE_ITEM video_sources texture_cache/format_lookup_table.cpp)' in cmake
+assert 'list(APPEND video_sources "\${EDEN_MAINTAINED_FORMAT_LOOKUP}")' in cmake
+assert cmake.index('list(APPEND video_sources "\${EDEN_MAINTAINED_FORMAT_LOOKUP}")') < cmake.index(
+    'set_property(TARGET video_core PROPERTY SOURCES "\${video_sources}")')
+print("NS1_X8Z24_FORMAT_LOOKUP_PASS active_owner=1 exact_delta=1 "
+      "x8z24_unorm_uint_unorm_unorm=1 pinned_eden_immutable=1")

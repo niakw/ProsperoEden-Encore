@@ -1057,6 +1057,34 @@ int main(){
             native_memory.OwnedIds().empty(),
             "GSV 114/112 track externally owned physical GPU backing");
 
+    // GSV 113: COPY KTransferMemory descriptor + an existing NativeMemory
+    // handle, exact source size and owner address.
+    std::array<u32,9> native_transfer{
+        0x81, 0x80000005, 2, 0x55, 16, 0x6000, 0, 0x100000, 0};
+    const auto transfer_bind=P::DecodeNativeTransferMemoryBind(native_transfer);
+    require(transfer_bind && transfer_bind->copied_handle==0x55 &&
+            transfer_bind->memory==16 && transfer_bind->size==0x6000 &&
+            transfer_bind->address==0x100000,
+            "GSV 113 decodes COPY TransferMemory and existing native handle");
+    auto bad_transfer=native_transfer; bad_transfer[2]=1;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects incorrect COPY descriptor shape");
+    bad_transfer=native_transfer; bad_transfer[3]=0;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects null TransferMemory handle");
+    bad_transfer=native_transfer; bad_transfer[4]=0;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects null NativeMemory handle");
+    bad_transfer=native_transfer; bad_transfer[5]=0x6001;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects non-page-sized TransferMemory backing");
+    bad_transfer=native_transfer; bad_transfer[7]=0x100001;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects unaligned TransferMemory source address");
+    require(!P::DecodeNativeTransferMemoryBind(
+                std::span<const u32>{native_transfer.data(),8}),
+            "GSV 113 rejects truncated TransferMemory packet");
+
     // Native parent binding command 423 has 12 words after its TIPC header.
     std::array<u32,14> parent_packet{
         0x1b7, 12, 16, 0x8000, 0, 0x4000, 0, 20, 0x2000, 0, 0, 0, 0, 0};

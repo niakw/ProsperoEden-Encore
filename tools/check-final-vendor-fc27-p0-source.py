@@ -80,9 +80,24 @@ REVIEWED_PINS.add("08972732d0402fa455a4982ed5ffd5d9f2c7e83c")
 REVIEWED_PINS.add("c74fb345ac3d8fa752f403369827a432f3503fb5")
 REVIEWED_PINS.add("3a97e47a0cfe94ec55227af363d8c289de59d4f8")
 REVIEWED_PINS.add("3de91cf284c8ef234c757c046998c4f48165c59a")
+REVIEWED_PINS.add("2fd07582db57fdddc67e6fd56cec16624a902c6a")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 shipping_vendor_pin = gitlink_vendor_pin
+# GSV TIPC 113 successor: authenticate the exact supervisor/protocol/header
+# and existing syncpt/bootstrap receipt, then replay the reviewed 3de graph.
+if selected == "2fd07582db57fdddc67e6fd56cec16624a902c6a":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "fbbb41f8e281d276bad2174d3d6fe43c05c66b92"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "2701836cbc4448bb6c934c53db49f051de76988c"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h", "8b0cfe00cf9f6f450e69cbf4d55ee84336d4d0b8"),
+        ("tests/ns2_syncpt_bootstrap_source.py", "688f868e999a707557852730996888c8d6234e56"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 GSV TIPC 113 source drift", relative, actual)
+    selected = "3de91cf284c8ef234c757c046998c4f48165c59a"
+
 # Worker TIPC 171 successor: seal only the comptag decoder/handler/header and
 # its focused ownership receipt, then replay the reviewed 3a97 graph.
 if selected == "3de91cf284c8ef234c757c046998c4f48165c59a":
@@ -418,6 +433,7 @@ def reviewed_blob(relative, expected):
     if shipping_vendor_pin in {
         "3a97e47a0cfe94ec55227af363d8c289de59d4f8",
         "3de91cf284c8ef234c757c046998c4f48165c59a",
+        "2fd07582db57fdddc67e6fd56cec16624a902c6a",
     }:
         successor_exact.update({
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "be33e5fa3a6f7f2ed4eb4aeac6c7650b204cfa17",
@@ -425,12 +441,22 @@ def reviewed_blob(relative, expected):
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h": "b4298a1231aee0f3b675861211bbcf30260dd033",
             "tests/ns2_gpu_partition_new_sdk_source.py": "e41711b1822cadffd3b699befb55aa4e9e2f1433",
         })
-    if shipping_vendor_pin == "3de91cf284c8ef234c757c046998c4f48165c59a":
+    if shipping_vendor_pin in {
+        "3de91cf284c8ef234c757c046998c4f48165c59a",
+        "2fd07582db57fdddc67e6fd56cec16624a902c6a",
+    }:
         successor_exact.update({
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "1042668b48e71020ee777e0ec0aef6b1606edaf0",
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "0a4ded1cba3fc0ed8163bda05cc32956f6216aa4",
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "c104301566467d973ebf0634580a0fbc4a44daf9",
             "tests/ns2_gpu_identity_mapping_source.py": "599f766e76fab45314a77c2fa573b8229cf83de1",
+        })
+    if shipping_vendor_pin == "2fd07582db57fdddc67e6fd56cec16624a902c6a":
+        successor_exact.update({
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "fbbb41f8e281d276bad2174d3d6fe43c05c66b92",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "2701836cbc4448bb6c934c53db49f051de76988c",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h": "8b0cfe00cf9f6f450e69cbf4d55ee84336d4d0b8",
+            "tests/ns2_syncpt_bootstrap_source.py": "688f868e999a707557852730996888c8d6234e56",
         })
     if relative in successor_exact:
         return successor_exact[relative]
@@ -671,6 +697,7 @@ assert gitlink_vendor_pin==checked and selected in REVIEWED_PINS,(gitlink_vendor
 if gitlink_vendor_pin in {
     "3a97e47a0cfe94ec55227af363d8c289de59d4f8",
     "3de91cf284c8ef234c757c046998c4f48165c59a",
+    "2fd07582db57fdddc67e6fd56cec16624a902c6a",
 }:
     gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and

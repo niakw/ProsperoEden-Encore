@@ -58,9 +58,12 @@ struct SubmissionFlags {
         bool Value() const { return set; }
     } fence_wait{};
 };
-struct Fence { u32 value{}; };
+struct Fence { u32 id{}; u32 value{}; };
 struct SyncpointManager {
     bool satisfied{};
+    // Model only the live native channel syncpoint, never trust an arbitrary
+    // guest-provided fence ID. The extracted C++ owner must reject 0/99.
+    bool IsSyncpointAllocated(u32 id) const { return id == 1; }
     bool IsFenceSignalled(const Fence&) const { return satisfied; }
 };
 struct Params { SubmissionFlags flags{}; Fence fence{}; };
@@ -98,7 +101,7 @@ int main() {
     gpu.sessions[42]=1;
     gpu.core.entries[1]={&alice};
     auto denied=[&](u32 flags,u32 count,NvResult expected) {
-        Params p{{flags,{(flags&1U)!=0}},{count}};
+        Params p{{flags,{(flags&1U)!=0}},{1,count}};
         assert(gpu.Submit(p,42)==expected);
         assert(gpu.initializations==0 && gpu.binds==0 &&
                gpu.enqueues==0 && gpu.reservations==0);
@@ -118,7 +121,11 @@ int main() {
     // Execute the newly integrated REAL owner wait admission: no fake
     // native queue publication when the input syncpoint is unsatisfied.
     denied(0x1,7,NvResult::NotImplemented);
-    Params valid{{0x102},{64}};
+    Params invalid_syncpoint{{0x1,{true}},{99,7}};
+    assert(gpu.Submit(invalid_syncpoint,42)==NvResult::BadParameter);
+    assert(gpu.initializations==0 && gpu.binds==0 &&
+           gpu.enqueues==0 && gpu.reservations==0);
+    Params valid{{0x102},{1,64}};
     assert(gpu.Submit(valid,42)==NvResult::Success);
     assert(gpu.initializations==1 && gpu.binds==1 &&
            gpu.reservations==1 && gpu.enqueues==1);
@@ -126,18 +133,18 @@ int main() {
     assert(plan && plan->increment_total==66 && plan->completion_count==64);
     // Signalled input fence is admitted without a synthetic wait packet.
     gpu.syncpoint_manager.satisfied=true;
-    Params ready{{0x1,{true}},{7}};
+    Params ready{{0x1,{true}},{1,7}};
     assert(gpu.Submit(ready,42)==NvResult::Success);
     assert(gpu.initializations==2 && gpu.binds==2 &&
            gpu.reservations==2 && gpu.enqueues==2);
     Gpu maxwell;
     maxwell.native=false;
-    Params legacy{{0x400},{65}};
+    Params legacy{{0x400},{1,65}};
     assert(maxwell.Submit(legacy,42)==NvResult::Success);
     assert(maxwell.initializations==1 && maxwell.binds==0 &&
            maxwell.reservations==1 && maxwell.enqueues==1);
     std::puts("P2_7_GPFIFO_PREINIT_NATIVE_REJECTION_PASS flags=4 foreign_fd=1 "
-              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_refused=1 signalled_wait=1");
+              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_refused=1 bad_syncpoint=1 signalled_wait=1");
 }
 '''.replace("__ADMISSION__", admission)
 includes = ROOT / "vendor/encore-active/ns2-runtime/hle"

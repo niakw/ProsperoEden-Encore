@@ -89,7 +89,7 @@ print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
 assert blob(ORIG_VIC)=="1a89f3de06981f95be9e5dc743a7c36b8ab6c4cf"
 if CAND_VIC.exists():
     assert CAND_SOURCE.is_file() and CAND_HEADER.is_file()
-    assert blob(CAND_VIC)=="5d588f50f363160df5c999978ab0f12a1a0a44dd"
+    assert blob(CAND_VIC)=="178d361bc3b5e9a0bf6ca9fa579d49df7ab72935"
     vic_text=CAND_VIC.read_text()
     ff_text=CAND_SOURCE.read_text()
     assert vic_text.count("EDEN_NVDEC_STAGE stage=vic_input")==2
@@ -354,6 +354,17 @@ with tempfile.TemporaryDirectory(prefix="encore-vic-planes-") as folder:
 print("NS1_VIC_PLANE_HOST_PASS native_geometry=1 oversized_rejected=1 "
       "bad_gob_rejected=1 valid_4k=1 odd_width_UV=1 last_row=1 O0_O2=2 ASan_UBSan=1")
 
+# GPU-52: the native VIC scratch buffer is not zero-initialized on reuse.
+# Both partial progressive and partial Bob-decoded surfaces must be scrubbed.
+vic_gpu52=CAND_VIC.read_text()
+vic_gpu52_guard="if (in_luma_width < s32(out_luma_width) || in_luma_height < s32(out_luma_height)) {"
+vic_prog=vic_gpu52[vic_gpu52.index("void Vic::ReadProgressiveY8__V8U8_N420"):vic_gpu52.index("void Vic::ReadInterlacedY8__V8U8_N420")]
+vic_bob=vic_gpu52[vic_gpu52.index("void Vic::ReadInterlacedY8__V8U8_N420"):vic_gpu52.index("void Vic::ReadY8__V8U8_N420")]
+assert vic_prog.count(vic_gpu52_guard)==1
+assert vic_bob.count(vic_gpu52_guard)==1
+for path in (vic_prog,vic_bob):
+    assert "std::fill(slot_surface.begin(), slot_surface.end(), Pixel{});" in path
+
 # GPU-42: compile the exact maintained VIC bob-field loop, not a hand-written
 # proxy. The inherited loop used chroma_height*2 as a luma row limit and
 # read one row past odd-height decoded frames for the bottom field.
@@ -366,6 +377,9 @@ def extract_bob(source):
     return source[start:end]
 native_bob=extract_bob(vic_interlaced_source)
 old_bob=extract_bob(vic_interlaced_old)
+partial_guard_start=vic_bob.index("        "+vic_gpu52_guard)
+partial_guard_end=vic_bob.index("\n        }",partial_guard_start)+len("\n        }")
+partial_guard_code=vic_bob[partial_guard_start:partial_guard_end]
 assert "y < in_chroma_height * 2" in old_bob
 assert "y < in_luma_height" in native_bob
 assert "y < in_chroma_height * 2" not in native_bob
@@ -386,9 +400,10 @@ using s32=std::int32_t; using u16=std::uint16_t;
 struct Pixel { u16 r{},g{},b{},a{}; };
 int main() {
   for(auto [decoded_h,out_h,top_field]:
-      std::array<std::tuple<s32,s32,bool>,5>{{{5,6,false},{5,6,true},
-                                                {4,6,false},{9,6,false},{1,6,false}}}) {
-    s32 in_luma_width=4,out_luma_width=4,out_luma_stride=4;
+      std::array<std::tuple<s32,s32,bool>,6>{{{5,6,false},{5,6,true},
+                                                {4,6,false},{9,6,false},{1,6,false},
+                                                {6,6,false}}}) {
+    s32 in_luma_width=4,out_luma_width=4,out_luma_stride=4,out_luma_height=out_h;
     s32 in_luma_stride=4,in_chroma_stride=4;
     s32 in_luma_height=std::min(decoded_h,out_h);
     std::vector<std::uint8_t> luma(decoded_h*in_luma_stride,77);
@@ -397,7 +412,9 @@ int main() {
     auto const* luma_buffer=luma.data();
     auto const* chroma_u_buffer=chroma_u.data();
     auto const* chroma_v_buffer=chroma_v.data();
-    std::vector<Pixel> slot_surface(out_h*out_luma_width);
+    std::vector<Pixel> slot_surface(out_h*out_luma_width, Pixel{65000,65000,65000,65000});
+ __PARTIAL_CLEAR__
+    assert(slot_surface.back().r == (in_luma_height < out_luma_height ? 0 : 65000));
     bool planar=true;
 __NATIVE_BOB__
     DecodeBobField();
@@ -408,7 +425,7 @@ __NATIVE_BOB__
     }
   }
 }
-""".replace("__NATIVE_BOB__",native_bob)
+""".replace("__NATIVE_BOB__",native_bob).replace("__PARTIAL_CLEAR__",partial_guard_code)
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
 assert compiler, "Clang required for real VIC interlaced ASan/UBSan witness"
 with tempfile.TemporaryDirectory(prefix="encore-vic-bob-gpu42-") as folder:
@@ -421,6 +438,7 @@ with tempfile.TemporaryDirectory(prefix="encore-vic-bob-gpu42-") as folder:
                         "-fno-sanitize-recover=all",str(source),"-o",str(binary)],
                        check=True,timeout=50)
         subprocess.run([str(binary)],check=True,timeout=20)
+print("NS1_VIC_PARTIAL_SLOT_CLEAR_PASS native_guard=1 partial=1 full_unchanged=1 O0_O2=2 ASan_UBSan=1")
 print("NS1_VIC_INTERLACED_BOB_BOUNDS_PASS actual_lambda=1 odd_bottom=1 "
       "odd_top=1 even_bottom=1 slot_clamp=1 empty_bottom=1 ASan_UBSan=1 O0_O2=2")
 

@@ -30,6 +30,20 @@ assert blocks[0] == blocks[1], "default and optional Fermi protections diverged"
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/check-fermi2d-address-widening-host.py" in workflow
 
+fermi_layer_source = (engines / "fermi_2d_observed.cpp").read_text()
+assert "const bool pitch_layer_copy = regs.src.layer != 0 || regs.dst.layer != 0;" in fermi_layer_source
+assert "regs.src.format != regs.dst.format || regs.clip_enable != 0" in fermi_layer_source
+assert fermi_layer_source.count("memory_manager.IsFullyMappedRange(base + offset,") == 1
+assert "sw_blitter->Blit(src, dst, config);" in fermi_layer_source
+layer_validation = fermi_layer_source[
+    fermi_layer_source.index("        const auto valid_pitch_layers = "):
+    fermi_layer_source.index("        if (!valid_pitch_layers", fermi_layer_source.index("        const auto valid_pitch_layers = "))
+]
+layer_selector = fermi_layer_source[
+    fermi_layer_source.index("        const auto select_pitch_layer = "):
+    fermi_layer_source.index("        if (!select_pitch_layer", fermi_layer_source.index("        const auto select_pitch_layer = "))
+]
+
 cpp = r"""
 #include <cassert>
 #include <cstdint>
@@ -120,3 +134,105 @@ with tempfile.TemporaryDirectory(prefix="encore-fermi2d-widening-") as tmp:
     subprocess.run([str(output)], check=True, timeout=20)
 print("FERMI2D_ADDRESS_WIDENING_HOST_PASS variants=2 offset64=1 carry=1 "
       "large_product=1 address_wrap_rejected=1 zero_bpp=1 guards=2 sanitizer=1")
+
+# GPU-31: compile and run the exact two source lambdas on synthetic GPU
+# address-space and pitched-layer descriptors. This is an executable
+# semantics witness, not a full native TU or a PS5 game validation.
+layer_cpp = r"""
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <optional>
+using u32 = std::uint32_t;
+using u64 = std::uint64_t;
+using GPUVAddr = u64;
+enum class MemoryLayout { Pitch, BlockLinear };
+struct Surface {
+    MemoryLayout linear{MemoryLayout::Pitch};
+    u32 depth{1},layer{0},width{32},height{8},pitch{256},format{4};
+    u32 addr_upper{},addr_lower{};
+    GPUVAddr Address() const {
+        return (GPUVAddr{addr_upper} << 32) | addr_lower;
+    }
+    void SetAddress(u64 value) {
+        addr_upper = u32(value >> 32);
+        addr_lower = u32(value);
+    }
+};
+u32 PixelFormatFromRenderTargetFormat(u32 f) {return f;}
+u32 BytesPerBlock(u32 f) {return f == 4 ? 4 : 0;}
+struct MemoryManager {
+    bool mapped=true;
+    unsigned checks{};
+    bool IsFullyMappedRange(u64 a,std::size_t n) {
+        ++checks;
+        return mapped && n>0 && a<0x100000000ULL &&
+               n<=0x100000000ULL-a;
+    }
+};
+struct NativeFermi {
+    MemoryManager& memory_manager;
+    bool Run(Surface src,Surface dst,Surface& resolved_src,Surface& resolved_dst) {
+__VALIDATOR__
+        if (!valid_pitch_layers(src) || !valid_pitch_layers(dst) ||
+            src.format != dst.format) return false;
+__SELECTOR__
+        if (!select_pitch_layer(src) || !select_pitch_layer(dst)) return false;
+        resolved_src=src;
+        resolved_dst=dst;
+        return true;
+    }
+};
+int main() {
+    MemoryManager memory{};
+    NativeFermi f{memory};
+    Surface src{},dst{},a{},b{};
+    src.depth=3;src.layer=1;src.SetAddress(0x10000);
+    dst.depth=4;dst.layer=2;dst.SetAddress(0x30000);
+    assert(f.Run(src,dst,a,b));
+    assert(a.Address()==0x10800 && b.Address()==0x31000);
+    assert(a.layer==0 && b.layer==0 && a.depth==1 && b.depth==1);
+    assert(src.Address()==0x10000 && dst.Address()==0x30000);
+    assert(src.layer==1 && dst.layer==2);
+    assert(memory.checks==2);
+    memory.mapped=false;
+    assert(!f.Run(src,dst,a,b));
+    memory.mapped=true;
+    src.layer=3;
+    assert(!f.Run(src,dst,a,b));
+    src.layer=1;src.linear=MemoryLayout::BlockLinear;
+    assert(!f.Run(src,dst,a,b));
+    src.linear=MemoryLayout::Pitch;
+    src.pitch=100; // 32 pixels * 4 bytes cannot fit in a row.
+    assert(!f.Run(src,dst,a,b));
+    src.pitch=256;src.format=999;
+    assert(!f.Run(src,dst,a,b));
+    src.format=4;
+    src.SetAddress(std::numeric_limits<u64>::max()-100);
+    assert(!f.Run(src,dst,a,b));
+    src.SetAddress(0x10000);
+    dst.depth=0;
+    assert(!f.Run(src,dst,a,b));
+    dst.depth=4;
+    src.pitch=std::numeric_limits<u32>::max();
+    assert(!f.Run(src,dst,a,b));
+    src.pitch=256;
+    // A valid base layer to a selected nonzero destination is supported.
+    src.depth=1;src.layer=0;
+    assert(f.Run(src,dst,a,b) && a.Address()==0x10000 && b.Address()==0x31000);
+}
+""".replace("__VALIDATOR__", layer_validation).replace("__SELECTOR__",layer_selector)
+with tempfile.TemporaryDirectory(prefix="encore-fermi2d-layered-") as tmp:
+    source = Path(tmp) / "pitch-layer.cpp"
+    source.write_text(layer_cpp)
+    for opt in ("-O0", "-O2"):
+        exe = Path(tmp) / ("pitch-layer"+opt[1:])
+        subprocess.run([clang, "-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("FERMI2D_PITCH_LAYER_HOST_PASS source_lambdas=2 complete_layers=1 "
+      "mapping_guard=1 bad_stride=1 bad_depth=1 overflow=1 blocklinear_rejected=1 "
+      "O0_O2=2 asan_ubsan=1")

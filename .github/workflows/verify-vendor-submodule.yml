@@ -11,6 +11,8 @@ on:
       - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-gpu-native-diagnostics.py'
+      - 'tools/check-maintained-fermi2d-variants.py'
+      - 'tools/check-fermi2d-address-widening-host.py'
       - 'tools/vendor-eden-cpm.py'
       - 'tools/check-ns2-uuid-abi.py'
       - '.github/workflows/verify-vendor-submodule.yml'
@@ -29,6 +31,8 @@ on:
       - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-gpu-native-diagnostics.py'
+      - 'tools/check-maintained-fermi2d-variants.py'
+      - 'tools/check-fermi2d-address-widening-host.py'
       - 'tools/vendor-eden-cpm.py'
       - 'tools/check-ns2-uuid-abi.py'
       - '.github/workflows/verify-vendor-submodule.yml'
@@ -59,6 +63,10 @@ jobs:
         run: python3 -B tools/check-maintained-maxwell-prmt.py
       - name: Check native Maxwell GPU source contracts
         run: python3 -B tools/check-gpu-native-diagnostics.py
+      - name: Verify selected Fermi2D source parity and pitch layer C++ guards (ASan UBSan)
+        run: |
+          python3 -B tools/check-maintained-fermi2d-variants.py
+          python3 -B tools/check-fermi2d-address-widening-host.py
       - name: Check exact vendored Vulkan source fork
         run: python3 -B tools/check-vendored-vulkan-fork.py
       - name: Check exact vendored native RADV fork

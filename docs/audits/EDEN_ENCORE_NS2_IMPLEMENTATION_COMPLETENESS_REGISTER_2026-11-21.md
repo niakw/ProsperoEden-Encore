@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `4e6a966508e718d02526d4d220e112591536f28c` |
+| Vendor gitlink sélectionné | `2d07b5e65baf35c82d0b0e557617aefe730a10b1` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -64,7 +64,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 401 | Gpu | CreateGpuContext | C | InitializeGpuContext | actif; création état GPU |
 | 402 | Gpu | InitializeGpuContext | C | ActivateGpuContext | actif |
 | 403 | Gpu | DestroyGpuContext | C | DestroyGpuContext | actif |
-| 423 | Gpu | (nom inconnu) | P | BindNativeGpuMemory | handler actif; contrat public incomplet |
+| 423 | Gpu | (nom public incomplet) | C | BindNativeGpuMemory | Ounce/fefw envoie raw `0x1B7` (TIPC 423) pour le bind enfant NativeMemory → parent GPU/NVMap; ownership, adresse, taille et offset sont validés |
 | 424 | Gpu | (nom inconnu) | U | — | pas de handler / contrat public incomplet |
 | 425 | Gpu | (nom inconnu) | U | — | pas de handler / contrat public incomplet |
 | 426 | Gpu | MapNativeImage | C | MapNativeGpuImage | actif |
@@ -72,14 +72,16 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 428 | Gpu | QueryNativeImage | C | QueryNativeGpuImage | actif |
 | 429 | Gpu | CreateNativeImage | C | CreateNativeImage | actif |
 | 430 | Gpu | DestroyNativeImage | C | DestroyNativeImage | actif |
-| 434 | Gpu | ExistsAddressSpace | P | RegisterGpuAddressSpace | ID actif mais sémantique apparente divergente; audit ABI requis |
+| 434 | Gpu | ExistsAddressSpace (nom public) | C | RegisterGpuAddressSpace | Ounce/fefw envoie raw `0x1C2` avec un seul AS fd et attend un résultat; Encore enregistre exactement l'AS possédé par le process |
 | 435 | Gpu | CalculateNativeImageSize | C | CalculateNativeImageSize | actif |
-| 437 | Gpu | CreateNativeMemoryWithGpukMemHandle | M | — | pas de handler; ABI connue partiellement, ownership à établir |
+| 437 | Gpu | CreateNativeMemoryWithGpukMemHandle | U | — | nom/ID public connu, mais l'implémentation Ounce observée utilise raw `0x1B7` → TIPC 423; aucun contrat raw `0x1C5` prouvé, donc pas de doublon inventé |
 | 493 | Gpu | CreateUserlandDebuggerSession | M | — | pas de handler; debug non P0 |
 | 494 | Gpu | (nom inconnu) | U | — | pas de handler / contrat insuffisant |
 | 496 | Gpu | CreateGpuSessionWithTransferMemory | C | OpenGpuSessionWithTransferMemory | session GPU réelle |
 | 497 | Gpu | CreateGpuSessionWithRemoteMemory | C | OpenGpuSession | session GPU réelle |
-| 498 | Gpu | TryQueryDonatedTransferMemoryUsage | M | — | pas de handler UserSession |
+| 498 | Gpu | TryQueryDonatedTransferMemoryUsage | C | QueryDonatedTransferMemoryUsage | ABI Ounce exacte: aucune entrée, trois u64 total/used/peak; le cmd 1 conserve le vrai KTransferMemory donné, remote-memory échoue fermé |
+
+**Réconciliation Ounce 21/11** : le SDK reconstruit par fefw appelle `CreateNativeMemoryWithGpukMemHandle` via `Invoke(0x1B7)`, soit TIPC **423** après retrait de `0x10`, et appelle l'enregistrement d'address-space via raw `0x1C2`, soit **434**. Pour **498**, il appelle raw `0x202` sans entrée et lit trois `u64`. Ces observations priment pour le runtime actif sur une simple attribution de nom non documentée; elles ne constituent pas une validation console PS5.
 | 601 | Camera | CreateCameraContext | P | InitializeFeatureContext | ID actif mais create/init fusionné |
 | 602 | Camera | InitializeCameraContext | P | OpenCameraContext | session partielle; contrat à aligner |
 | 603 | Camera | DestroyCameraContext | M | — | pas de handler |
@@ -440,7 +442,7 @@ SwitchBrew publie aussi des ioctls S2 `/dev/nvhost-dbg-gpu` dont plusieurs n’o
 
 1. **P0 GPU submission** : compléter/valider le mode USERD de `CHANNEL_SETUP_BIND` seulement avec une vraie propriété des buffers et un mécanisme de doorbell ; ne pas le simuler.
 2. **TSG scheduler** : `ENABLE/DISABLE/PREEMPT`, runlist interleave, timeslice/event control sont connus mais pas implémentés. Vérifier d’abord lesquels sont réellement appelés par le runtime retail avant de développer.
-3. **GSV GPU** : `437 CreateNativeMemoryWithGpukMemHandle`, `498 TryQueryDonatedTransferMemoryUsage` et la divergence `434 ExistsAddressSpace` / `RegisterGpuAddressSpace` méritent une revue ABI.
+3. **GSV GPU** : la revue Ounce a confirmé **423**, **434** et **498**. Le seul point encore ambigu ici est **437** : le nom public existe, mais le SDK observé réalise le chemin `CreateNativeMemoryWithGpukMemHandle` via raw `0x1B7` → TIPC 423; ne pas créer un handler 437 sans paquet raw `0x1C5` prouvé.
 4. **Vidéo** : décodeur largement couvert ; `210 remote-memory` manque. **Encodeur** pratiquement absent, et les IDs UserSession `1001/1002` sont raccordés à un chemin qui ressemble encore au décodeur.
 5. **Display** : six IDs publiés sans sémantique suffisante restent U.
 6. **Camera/Adraw/InterModuleImage** : nombreuses commandes connues mais non implémentées ; priorité basse tant qu’elles ne bloquent pas un titre retail.

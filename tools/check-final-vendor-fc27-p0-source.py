@@ -625,6 +625,12 @@ def reviewed_blob(relative, expected):
 
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert gitlink_vendor_pin==checked and selected in REVIEWED_PINS,(gitlink_vendor_pin,selected,checked)
+# The 3a97 successor's four changed blobs were sealed above. From this point
+# replay the predecessor's exact historical receipt graph for all unaffected
+# owners; otherwise reviewed_blob() sees the successor SHA and misses c74's
+# already-qualified per-file revisions.
+if gitlink_vendor_pin == "3a97e47a0cfe94ec55227af363d8c289de59d4f8":
+    gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and
 # NvCore session are closed; then revoke its process epoch once. Keep the
 # exact new real owner/test blobs and replay the complete earlier reviewed

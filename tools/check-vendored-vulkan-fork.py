@@ -227,6 +227,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         raster_sha = raster_blob(raster_source)
         assert raster_sha == '71d097b9a83028dfad9370792c905bb3bfccfd5a', raster_sha
         snapshot = temp/'ns1-gpu22-gmmu-rasterizer-audit'/raster_owner
+        snapshot.parent.mkdir(parents=True, exist_ok=True)
         snapshot.write_text(raster_source)
         expected[raster_owner] = snapshot
         print('ENCORE_NS1_GPU22_EXACT_REVERSE_PASS')

@@ -53,17 +53,19 @@ REVIEWED_PINS.add("f66969397724ab8467c3380ca9c6db1631f79bf3")
 REVIEWED_PINS.add("b6e3ecc6943118ba9d321ef5baca9f79b241961f")
 REVIEWED_PINS.add("99832a312b1281401c187f381f4826191387eb73")
 REVIEWED_PINS.add("258914fc564e223274728b409ee48e39465df7f6")
+REVIEWED_PINS.add("932dc1b3c09b172322d65432c26cc017b4922266")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
-native_preemption_wfi_revision = selected == "258914fc564e223274728b409ee48e39465df7f6"
+native_video_pool_991_revision = selected == "932dc1b3c09b172322d65432c26cc017b4922266"
+native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
 # Preserve exact GSV source identity across historical receipt replays. The
 # real 1402 child is NS2-only and can precede GPU session 497; both C++
 # revisions fix the same compiled scoped-handle type.
-native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6"}
-native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6"}
-native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6"}
-native_gsv_active_cpp = "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
-native_gsv_active_test = "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
+native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
+native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
+native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266"}
+native_gsv_active_cpp = "a806f2a6d2c9689a8b1e24f0c292a8d95c0d29a7" if native_video_pool_991_revision else "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
+native_gsv_active_test = "ae41e4bc89b33e455381f25470717af6766cd0b3" if native_video_pool_991_revision else "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
 # Preserve the active AS/GMMU owner revision during recursive source-pin
 # replay: the GA10F controller itself is unchanged but binds this new AS TU.
 native_as_lease_revision = selected in {"2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f", "889b142aa5616d3d00733a7cc1db1562eed291f4"}
@@ -76,14 +78,35 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 # NvCore session are closed; then revoke its process epoch once. Keep the
 # exact new real owner/test blobs and replay the complete earlier reviewed
 # source graph for all unaffected units.
+# Real native GSV 991 decoder backing and corrected NVGPU WFI bit0.
+# Validate exactly the five changed blobs; all earlier source receipts
+# remain active for unchanged files, including FC27 and NS1 owners.
+if native_video_pool_991_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "941873af1123ef764a35e9712ce054e5a1c90b53"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "a806f2a6d2c9689a8b1e24f0c292a8d95c0d29a7"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "4ae0674d5ed96a363f66df7eb788fa42f6bbd8e3"),
+        ("tests/ns2_syncpt_bootstrap_source.py", "ae41e4bc89b33e455381f25470717af6766cd0b3"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "bd0ad8fd91cf67c57936ed65df2c29b55f839250"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 native GSV991/WFI selected source drift", relative, actual)
+    selected = "258914fc564e223274728b409ee48e39465df7f6"
+    original_vendor_pin = selected
+
 # Switch 2 H:0x1F is 0xC008481F (preemption). Only WFI/WFI is
 # implemented by Encore's existing software GPU scheduler. Seal the
 # exact new NVDRV owner and focused regression, then replay all prior
 # receipts; every unrelated C++ file must retain its historical SHA.
 if native_preemption_wfi_revision:
     for relative, expected in (
-        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "f1fcf207091c51daca138341f275c700334a57aa"),
-        ("tests/ns2_gpu_identity_mapping_source.py", "e03f39df1b9efceb398d0e34ebf60a5bf67211c3"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
+         "941873af1123ef764a35e9712ce054e5a1c90b53" if native_video_pool_991_revision else
+         "f1fcf207091c51daca138341f275c700334a57aa"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "bd0ad8fd91cf67c57936ed65df2c29b55f839250" if native_video_pool_991_revision else
+         "e03f39df1b9efceb398d0e34ebf60a5bf67211c3"),
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -94,6 +117,7 @@ if selected == "99832a312b1281401c187f381f4826191387eb73":
     for relative, expected in (
         ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp", "b613ba93b07003570f206d66ace34d7a488e603d"),
         ("tests/ns2_gpu_identity_mapping_source.py",
+         "bd0ad8fd91cf67c57936ed65df2c29b55f839250" if native_video_pool_991_revision else
          "e03f39df1b9efceb398d0e34ebf60a5bf67211c3" if native_preemption_wfi_revision else
          "8deadd56ec6f12ae2f1da491337d694631f8e19f"),
     ):
@@ -113,7 +137,7 @@ if selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d3
     assert actual == native_gsv_active_cpp, ("NS2 native GSV compiled source drift", actual)
     if native_gsv_registration:
         for relative, expected in (
-            ("tests/ns2_syncpt_bootstrap_source.py", "6d04679a771a3919434351b377fbc0f23ead4b82"),
+            ("tests/ns2_syncpt_bootstrap_source.py", native_gsv_active_test),
             ("encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h", "09cb1ca6494b6d6866239eba0bb45801a237536c"),
             ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp",
              "b613ba93b07003570f206d66ace34d7a488e603d" if native_worker_teardown_epoch else
@@ -139,9 +163,11 @@ if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629c
         ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp", "e74f82cd604ba8e60bc7b1005f60a92d66013563"),
         ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "fc921425b67b634b4aaeb2363dcabdf9b53b6be8"),
         ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
+         "941873af1123ef764a35e9712ce054e5a1c90b53" if native_video_pool_991_revision else
          "f1fcf207091c51daca138341f275c700334a57aa" if native_preemption_wfi_revision else
          "c0cc9b26f6af13d6e1a3b60d92a0dfabd93c51d1"),
         ("tests/ns2_gpu_identity_mapping_source.py",
+         "bd0ad8fd91cf67c57936ed65df2c29b55f839250" if native_video_pool_991_revision else
          "e03f39df1b9efceb398d0e34ebf60a5bf67211c3" if native_preemption_wfi_revision else
          "8deadd56ec6f12ae2f1da491337d694631f8e19f" if native_worker_teardown_epoch else
          "d9ac33e7d4f83e7198b23f6ab48a0f57bf76a8c5" if worker_shutdown_guard else
@@ -394,7 +420,8 @@ if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df
                "38b2aed6deeec62ed82e173e6362ab1ba3e46737" if gsv_gpu_403_revision else
                "5e621a6cff708c5a2e2ab1b856990d0b5afc96f7")),
             ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h",
-             ("dad20285d5e14e28c268d9616b2662cc0be3a68a" if gsv_native_115_revision else
+             ("4ae0674d5ed96a363f66df7eb788fa42f6bbd8e3" if native_video_pool_991_revision else
+              "dad20285d5e14e28c268d9616b2662cc0be3a68a" if gsv_native_115_revision else
                "20bcdf77ac18db399d064a22da4a4cdf8cddcd9d" if gsv_gpu_403_revision else
                "d0837e45e672ee8043c01f1593af2a4d33658453")),
         ):

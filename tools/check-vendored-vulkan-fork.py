@@ -87,7 +87,17 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         '77df727e484154f3f3463b6eeec2dc6b23abb741',
         'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
         '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'
-    }:
+    } or (
+        # NS2-only vendor commits preserve these exact selected Vulkan blobs;
+        # perform the same strictly sealed historical normalization.
+        subprocess.check_output(
+            ['git','hash-object',str(expected['vk_graphics_pipeline_cost.cpp'])],
+            text=True).strip() == 'bae8f3c36fc4e595e9b630ca55cc50496468e173'
+        and subprocess.check_output(
+            ['git','hash-object',
+             str(expected['include/video_core/renderer_vulkan/vk_graphics_pipeline.h'])],
+            text=True).strip() == 'cc53133dd516e2d1d245326866ab3ce0c852b36b'
+    ):
         transitions = {
             'vk_graphics_pipeline_cost.cpp': ('bae8f3c36fc4e595e9b630ca55cc50496468e173', '2834a18fe7638749ec83cc8f5feb1fcde6c71a9a', "void GraphicsPipeline::AddTransition(GraphicsPipeline* transition) {\n#ifdef PS5_NATIVE\n    // Only a fast-path hint: the canonical graphics_cache still owns ALL\n    // pipelines. A pipeline with hundreds of different successors must not\n    // accumulate unbounded state or scan every former successor on each miss.\n    // The two HUD/overlay hot indices remain pinned across ring replacement.\n    if (transition_keys.size() >= kNativeTransitionHintLimit) {\n        size_t slot = next_transition_replacement;\n        for (size_t skipped = 0; skipped < 2; ++skipped) {\n            if (slot != hot_transition_indices[0] &&\n                slot != hot_transition_indices[1]) break;\n            slot = (slot + 1) % kNativeTransitionHintLimit;\n        }\n        // Both vectors are already fully allocated here. Replacing a hint\n        // cannot invalidate a live shader pipeline or allocate GPU objects.\n        transition_keys[slot] = transition->key;\n        transitions[slot] = transition;\n        next_transition_replacement = (slot + 1) % kNativeTransitionHintLimit;\n        return;\n    }\n    // Before the hint ring is full, preserve the exception-safe pairing\n    // of keys and pointers on the GPU owner.\n    try {\n        transition_keys.push_back(transition->key);\n    } catch (...) {\n        return;\n    }\n#else\n    transition_keys.push_back(transition->key);\n#endif\n#ifdef PS5_NATIVE\n    try {\n        transitions.push_back(transition);\n    } catch (...) {\n        transition_keys.pop_back();\n        return;\n    }\n#else\n    transitions.push_back(transition);\n#endif\n}", "void GraphicsPipeline::AddTransition(GraphicsPipeline* transition) {\n#ifdef PS5_NATIVE\n    // Both appends are optional memoization. The canonical graphics cache\n    // already owns the target and will resolve a missing edge on demand.\n    try {\n        transition_keys.push_back(transition->key);\n    } catch (...) {\n        return;\n    }\n#else\n    transition_keys.push_back(transition->key);\n#endif\n#ifdef PS5_NATIVE\n    // Both arrays must describe the same transition index. An allocation\n    // failure while appending the pointer must not leave an orphaned key:\n    // Next() would later index past transitions and corrupt a guest draw.\n    try {\n        transitions.push_back(transition);\n    } catch (...) {\n        // Transition memoization is optional. The primary graphics cache\n        // already owns the pipeline; a later lookup can use its slow path.\n        // Do not abort a guest draw solely because this edge could not fit.\n        transition_keys.pop_back();\n        return;\n    }\n#else\n    transitions.push_back(transition);\n#endif\n}"),
             'include/video_core/renderer_vulkan/vk_graphics_pipeline.h': ('cc53133dd516e2d1d245326866ab3ce0c852b36b', '515a766a6cc4d6fcba7692ad396f45396b746d28', "    // Transition hints are not the pipeline owners. Limit their memory\n    // growth and the O(N) unsuccessful Next() search on shader-heavy titles.\n    // The canonical graphics_cache remains complete and handles all misses.\n    static constexpr size_t kNativeTransitionHintLimit = 64;\n    // GPU owner only: the two hot indices stay valid across vector growth\n    // and are never replaced when the bounded ring rolls over.\n    std::array<size_t, 2> hot_transition_indices{};\n    size_t next_transition_replacement{};\n", "    // GPU owner only. Two valid indices remain stable across vector growth.\n    std::array<size_t, 2> hot_transition_indices{};\n"),
@@ -116,7 +126,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # C++ blob and reverse only this hunk + include on the audit COPY.
     if subprocess.check_output(
         ['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True
-    ).strip() in {'94aa8cd5214d17897391ede00534d7961b481171', '77df727e484154f3f3463b6eeec2dc6b23abb741', 'f836abf99bbd3c6480c35aa8392356f4e1b0bf51', '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'}:
+    ).strip() in {'94aa8cd5214d17897391ede00534d7961b481171', '77df727e484154f3f3463b6eeec2dc6b23abb741', 'f836abf99bbd3c6480c35aa8392356f4e1b0bf51', '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'} or subprocess.check_output(
+        ['git','hash-object',str(expected[native_cache_owner])],
+        text=True).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41':
         assert subprocess.check_output(
             ['git', 'hash-object', str(expected[native_cache_owner])],
             text=True).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41'
@@ -292,7 +304,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     if exact_vendor_pin in {
         '0c1bd95c896f6ddc7870a245ffca51b2ac7e2932',
         'eadc6e798def18417e50db6a03a291440429d795',
-    }:
+    } or raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060':
         assert raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060', raster_sha
         source_before = ("    if (!source && !attribute_handle_source) {\n"
                          "        // Only legacy shaders without an explicit source may use the old lookup")
@@ -316,7 +328,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'ce1c02b1ce14697003798e3f9872015035984719',
         'c47770d49dc8ed5f09838004f5bd08d9b1d5abc8',
         '917ccdc1cf772b9312b19888eea181b8e114334b',
-    }:
+    } or raster_sha == '046269f8484776e22c8aee308b75c7b98f8bf5c6':
         for name, witness in reviewed_fc27_hunks.items():
             if name.startswith('shader_recompiler/'):
                 raw_path = root/'vendor/encore-active/eden-shader/src'/name
@@ -331,17 +343,13 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             vendor_now = subprocess.check_output(
                 ['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True
             ).strip()
+            # The audit copy above already verified both source blobs and
+            # their exact predecessor, independent of the NS2 vendor gitlink.
             transition_restored = (
-                vendor_now in {
-                    '0409c9a6b842ec50973d343cb628e21232382e41',
-                    '94aa8cd5214d17897391ede00534d7961b481171',
-                    '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                    'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                    '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'
-                } and name in {
+                name in {
                     'vk_graphics_pipeline_cost.cpp',
                     'include/video_core/renderer_vulkan/vk_graphics_pipeline.h'
-                }
+                } and raster_blob(expected[name].read_text()) == witness['current']
             )
             real_source = (expected[name].read_text()
                            if name == raster_owner or transition_restored

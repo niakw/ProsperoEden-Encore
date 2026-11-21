@@ -7052,6 +7052,21 @@ apply_reviewed_delta(
 apply_reviewed_delta("vk_texture_cache_cost.cpp", '        if (scaled_offset > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.src_offset.x)>::max)()) ||\n            scaled_width == 0 || scaled_width > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.extent.width)>::max)())) {\n', '        if ((static_cast<u64>(bpp_out) * static_cast<u64>(copy.src_offset.x)) % bpp_in ||\n            (static_cast<u64>(bpp_out) * copy.extent.width) % bpp_in ||\n            scaled_offset > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.src_offset.x)>::max)()) ||\n            scaled_width == 0 || scaled_width > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.extent.width)>::max)())) {\n',
     "P2.5 Vulkan reinterpret exact source byte-scale ratio")
 
+# NVN D32S8 <-> D32 transfers copy the DEPTH plane only. The existing
+# Vulkan buffer staging path already preserves copy order and image barriers;
+# do not treat the 64-bit packed depth+stencil allocation as 64-bit depth.
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "    const auto bpp_in = BytesPerBlock(src.info.format) / src_block_width;\n    const auto bpp_out = BytesPerBlock(dst.info.format) / dst_block_width;",
+    "    // D32_FLOAT_S8_UINT and D32_FLOAT have the SAME 32-bit depth plane.\n    // A whole-image byte ratio would halve/double the width and corrupt\n    // Frostbite's depth-only copies. Copy only the depth plane via the\n    // existing Vulkan image -> buffer -> image transfer, never raw DS texels.\n    const bool mixed_d32_depth_plane =\n        (src.info.format == PixelFormat::D32_FLOAT_S8_UINT &&\n         dst.info.format == PixelFormat::D32_FLOAT) ||\n        (src.info.format == PixelFormat::D32_FLOAT &&\n         dst.info.format == PixelFormat::D32_FLOAT_S8_UINT);\n    const auto bpp_in = mixed_d32_depth_plane\n                            ? u32{4} : BytesPerBlock(src.info.format) / src_block_width;\n    const auto bpp_out = mixed_d32_depth_plane\n                             ? u32{4} : BytesPerBlock(dst.info.format) / dst_block_width;",
+    "P2.5 Vulkan reinterpret mixed D32 depth plane ratio")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "    if ((src_both || dst_both) &&\n        (!src_both || !dst_both || src.info.format != dst.info.format)) {\n        return;\n    }",
+    "    if ((src_both || dst_both) && !mixed_d32_depth_plane &&\n        (!src_both || !dst_both || src.info.format != dst.info.format)) {\n        return;\n    }",
+    "P2.5 Vulkan reinterpret mixed D32 depth plane admission")
+
+
 # P0 unified native rasterizer vtable: the pin from the native vendor
 # backports still uses the old experimental macro. Select the *same*
 # PS5-native ABI under the one platform guard as all other renderer owners.

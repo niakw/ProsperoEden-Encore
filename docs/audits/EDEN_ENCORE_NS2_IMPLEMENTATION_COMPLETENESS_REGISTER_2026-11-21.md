@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `1e513ae001669127538a346c7f390af55edd6712` |
+| Vendor gitlink sélectionné | `d31aa01bdfa87165a272473c385040723bf2c1f6` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -386,12 +386,12 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC018481C | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2_RETRY | M | — | pas de handler dédié |
 | 0xC004481D | NVGPU_IOCTL_CHANNEL_SET_TIMESLICE | C | SetChannelTimeslice | actif |
 | 0xC010481E | [S2] NVGPU_IOCTL_CHANNEL_GET_USER_SYNCPOINT | C | GetUserSyncpoint | actif, valeur courante + shim GMMU |
-| 0xC008481F | [S2] NVGPU_IOCTL_CHANNEL_SET_PREEMPTION_MODE | C | SetPreemptionMode | actif |
+| 0xC008481F | [S2] NVGPU_IOCTL_CHANNEL_SET_PREEMPTION_MODE | C | SetPreemptionMode | Ounce réel envoie {graphics=0, compute=2}; CTA bit1 NVIDIA accepté et retenu, autres modes non modélisés → NotImplemented |
 | 0x40044820 | [S2] NVGPU_IOCTL_CHANNEL_OPEN | C | ChannelOpen | runlist authentifié |
 | 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; réponse ABI S2 80 B corrigée (`gpfifo_gpu_va`/`userd_gpu_va`/`usermode_mmio_gpu_va`/`hw_channel_id`); USERD/doorbell explicitement NotImplemented |
 
 
-**P0 actuel** : `0xC0504821 CHANNEL_SETUP_BIND` est volontairement **P**. Le mode kernel-submit initialise un vrai `ChannelState` après validation propriétaire/GMMU/runlist et renvoie désormais le layout Switch 2 documenté : `hw_channel_id` correspond au `bind_id` réel du scheduler émulé, tandis que token et VA USERD/GPFIFO/MMIO restent nuls en mode kernel. Le mode userland `USERD/GPFIFO + doorbell` reste `NotImplemented` tant que les buffers invités, leur durée de vie et le mécanisme de notification GPU ne sont pas réellement modélisés.
+**P0 actuel** : la voie OunceVK observée ne passe pas par le mode USERD de `0xC0504821` : elle ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure notamment `0xC008481F`, puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le vendor `d31aa01b` accepte désormais la requête réelle `{graphics=0, compute=2}` (CTA NVIDIA) au lieu de l'arrêter en `NotImplemented`. Le mode USERD/doorbell de `0xC0504821` reste **P** et ne doit être développé qu'avec une preuve d'usage. Le prochain écart avéré sur cette séquence est `0xC018480C SET_ERROR_NOTIFIER`, encore acquitté par un stub `Success` et donc à remplacer par un backing réel ou un échec explicite.
 
 ## 11. NVDRV — /dev/nvhost-tsg-gpu
 
@@ -444,7 +444,7 @@ SwitchBrew publie aussi des ioctls S2 `/dev/nvhost-dbg-gpu` dont plusieurs n’o
 
 ## 14. Écarts structurels les plus importants à traiter
 
-1. **P0 GPU submission** : compléter/valider le mode USERD de `CHANNEL_SETUP_BIND` seulement avec une vraie propriété des buffers et un mécanisme de doorbell ; ne pas le simuler.
+1. **P0 GPU submission** : qualifier d'abord la séquence réellement observée OunceVK `CHANNEL_OPEN → AS/TSG bind → ALLOC_GPFIFO_EX2 → GET_USER_SYNCPOINT → objet/notifier/préemption → SUBMIT_GPFIFO2`. Le mode CTA demandé avant le premier submit est maintenant admis. `SET_ERROR_NOTIFIER 0xC018480C` reste un faux succès utilisé à supprimer. USERD/doorbell n'est à compléter que si un client retail le demande réellement.
 2. **TSG scheduler** : Ounce confirme les appels retail `0xC0085407 SET_RUNLIST_INTERLEAVE`, `0xC0045408 SET_TIMESLICE`, `0x8004540A GET_TIMESLICE` et `0xC008540D SET_L2_SECTOR_PROMOTION`. Interleave/timeslice sont maintenant sûrs **avant bind** et le getter est complet; il reste à modéliser le reload de runlist post-bind, puis `ENABLE/DISABLE/PREEMPT`, event control et L2 policy.
 3. **GSV GPU** : la revue Ounce a confirmé **423**, **434** et **498**. Le seul point encore ambigu ici est **437** : le nom public existe, mais le SDK observé réalise le chemin `CreateNativeMemoryWithGpukMemHandle` via raw `0x1B7` → TIPC 423; ne pas créer un handler 437 sans paquet raw `0x1C5` prouvé.
 4. **Vidéo** : décodeur largement couvert ; `210 remote-memory` manque. **Encodeur** pratiquement absent, et les IDs UserSession `1001/1002` sont raccordés à un chemin qui ressemble encore au décodeur.

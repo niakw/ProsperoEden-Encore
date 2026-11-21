@@ -91,9 +91,35 @@ REVIEWED_PINS.add("2d07b5e65baf35c82d0b0e557617aefe730a10b1")
 REVIEWED_PINS.add("7baf9cc07c6aceee185032544d964f04a2fed108")
 REVIEWED_PINS.add("1f8a3bbaa7fc33118e63ebef829202d825475bfe")
 REVIEWED_PINS.add("1e513ae001669127538a346c7f390af55edd6712")
+REVIEWED_PINS.add("d31aa01bdfa87165a272473c385040723bf2c1f6")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 shipping_vendor_pin = gitlink_vendor_pin
+
+# OunceVK configures native 3D channels with H:0x1F {graphics=0, compute=2}
+# before the first H:0x1B submit. NVIDIA defines compute bit1 as CTA.
+# Seal exactly the active NVGPU owner/header and focused source contract.
+NS2_PREEMPTION_CTA_PIN = "d31aa01bdfa87165a272473c385040723bf2c1f6"
+NS2_PREEMPTION_CTA_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "8a8ff1fe64b46bad3280abaa25405cb78346195f",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "da7e7347162d4ff86abebb2c4d8aca9db7d1be37",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "427b5fb7994ef320ba082ba6555b150f216f6f75",
+}
+NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin == NS2_PREEMPTION_CTA_PIN
+
+def ns2_preemption_receipt(relative, previous):
+    return (NS2_PREEMPTION_CTA_BLOBS.get(relative, previous)
+            if NS2_PREEMPTION_CTA_ACTIVE else previous)
+
+if selected == NS2_PREEMPTION_CTA_PIN:
+    for relative, expected in NS2_PREEMPTION_CTA_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 native CTA preemption-policy source drift", relative, actual)
+    selected = "1e513ae001669127538a346c7f390af55edd6712"
 
 # SwitchBrew GSV 1001/1002 are video ENCODER commands. The earlier
 # decoder aliases must not issue Success or create a decoder session.
@@ -101,7 +127,7 @@ shipping_vendor_pin = gitlink_vendor_pin
 NS2_ENCODER_FAIL_CLOSED_PIN = "1e513ae001669127538a346c7f390af55edd6712"
 # Preserve the authentic pinned identity; later historical replay rewrites
 # gitlink_vendor_pin to c74, but must not drop these verified successor blobs.
-NS2_ENCODER_FAIL_CLOSED_ACTIVE = gitlink_vendor_pin == NS2_ENCODER_FAIL_CLOSED_PIN
+NS2_ENCODER_FAIL_CLOSED_ACTIVE = gitlink_vendor_pin in {NS2_ENCODER_FAIL_CLOSED_PIN, NS2_PREEMPTION_CTA_PIN}
 NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "6934cd5d46c172d029c65123b5d7f19ddafc4853",
     "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "985cab1d56306096f7630da7f4d6a5b34c859431",
@@ -115,7 +141,7 @@ if selected == NS2_ENCODER_FAIL_CLOSED_PIN:
     for relative, expected in NS2_ENCODER_FAIL_CLOSED_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 encoder fail-closed source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 encoder fail-closed source drift", relative, actual)
     # The TSG owner is unchanged from the immediately preceding pin.
     shipping_vendor_pin = "1f8a3bbaa7fc33118e63ebef829202d825475bfe"
     selected = shipping_vendor_pin
@@ -130,7 +156,7 @@ if selected == "1f8a3bbaa7fc33118e63ebef829202d825475bfe":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 known TSG fail-closed source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 known TSG fail-closed source drift", relative, actual)
     selected = "2d07b5e65baf35c82d0b0e557617aefe730a10b1"
 
 # Ounce TSG scheduling-state successor. Seal the final nx2 stub owner and
@@ -142,7 +168,7 @@ if selected == "7baf9cc07c6aceee185032544d964f04a2fed108":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 Ounce TSG scheduling source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 Ounce TSG scheduling source drift", relative, actual)
     selected = "2d07b5e65baf35c82d0b0e557617aefe730a10b1"
 
 # GSV TIPC 498 donated TransferMemory usage successor. The only changed
@@ -169,7 +195,7 @@ if selected == "4e6a966508e718d02526d4d220e112591536f28c":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 ChannelSetupBind response ABI source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 ChannelSetupBind response ABI source drift", relative, actual)
     selected = ("546e1aa34d2ff183dd4c737f9da8fbf4a62be24e"
                 if shipping_vendor_pin in {"7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}
                 else "f65ccc439534ffd9ce0a307b23bd511b4e32857a")
@@ -183,7 +209,7 @@ if selected == "f65ccc439534ffd9ce0a307b23bd511b4e32857a":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 unknown nvhost fail-closed source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 unknown nvhost fail-closed source drift", relative, actual)
     selected = "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e"
 
 # Worker 209/210 successor: exact owned GPU address-space segment
@@ -197,7 +223,7 @@ if selected == "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GPU segment label source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU segment label source drift", relative, actual)
     selected = "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0"
 
 # Native ChannelSetupBind H:0x21 successor. The 80-byte ABI and
@@ -225,7 +251,7 @@ if selected == "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0":
                 "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
                     "d78aaea83009616131bcaf68bfb67fd12fe2e575",
             }[relative]
-        assert actual == expected, ("NS2 ChannelSetupBind source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 ChannelSetupBind source drift", relative, actual)
     selected = "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d"
 
 # Worker 172/173 successor: exact owned NVMap label metadata and its
@@ -253,7 +279,7 @@ if selected == "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d":
                 "tests/ns2_gpu_identity_mapping_source.py":
                     "0572833e4e63c5fe7af728c66beea7df53e4219e",
             }[relative]
-        assert actual == expected, ("NS2 GPU worker label source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU worker label source drift", relative, actual)
     selected = "4411fc172eef84080ab7de23158349bbe7d08f88"
 
 # GSV GraphicsFrame 1101/1102/1111-1113 successor. Seal the *selected*
@@ -300,7 +326,7 @@ if selected == "2fd07582db57fdddc67e6fd56cec16624a902c6a":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GSV TIPC 113 source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GSV TIPC 113 source drift", relative, actual)
     selected = "3de91cf284c8ef234c757c046998c4f48165c59a"
 
 # Worker TIPC 171 successor: seal only the comptag decoder/handler/header and
@@ -325,7 +351,7 @@ if selected == "3de91cf284c8ef234c757c046998c4f48165c59a":
                 "tests/ns2_gpu_identity_mapping_source.py":
                     "0572833e4e63c5fe7af728c66beea7df53e4219e",
             }[relative]
-        assert actual == expected, ("NS2 worker TIPC 171 source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 worker TIPC 171 source drift", relative, actual)
     selected = "3a97e47a0cfe94ec55227af363d8c289de59d4f8"
 
 # TIPC 200 successor: only the selected GPU-session owner/protocol/header and
@@ -340,7 +366,7 @@ if selected == "3a97e47a0cfe94ec55227af363d8c289de59d4f8":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GPU session TIPC 200 source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU session TIPC 200 source drift", relative, actual)
     selected = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 
 # Native GPFIFO fence-wait admission: invalid ID returns a guest error
@@ -366,7 +392,7 @@ if selected in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f
                      if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}
                      else "4e7a4fd77cd96ff650edfc74f6a841b266ca2152"),
             }[relative]
-        assert actual == expected, ("NS2 GPFIFO wait admission source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPFIFO wait admission source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # NS2 read-current user syncpoint: NVIDIA UAPI read_ext_check must
@@ -378,7 +404,7 @@ if selected == "457f9501c52fcf6ce2aaca967757c0eb9e452f58":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 user syncpoint source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 user syncpoint source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # Native A:2 sparse rollback quarantine and remove duplicate A:3/A:5
@@ -390,7 +416,7 @@ if selected == "95ed29da0eb91af4561154ec3688968959185b9b":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 native sparse rollback source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 native sparse rollback source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # P0 native VA allocator page-class guard plus preserved owner tests.
@@ -401,7 +427,7 @@ if selected == "615ec1b7a73bb26dcff8525cf543aafff04ecbf0":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GPU VA page-class source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU VA page-class source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # NS2 native VA/pin retirement WFI: exact selected source seal.
@@ -412,7 +438,7 @@ if selected == "a773cfa1a5cd95285eab7e8dd4d21ceef848a0a0":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GPU retirement source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU retirement source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # Native NVN 768-GiB user VA partition: exact two changed blobs,
@@ -424,7 +450,7 @@ if selected == "754dc4110ad1e13ea0237e5826599f97d0ccd2f9":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 NVN VA partition drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 NVN VA partition drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # Source-exact native channel user syncpoint ABI (16-byte UAPI).
@@ -440,7 +466,7 @@ if selected == "d8c1595f187b24b434533c02fe4085a2905f34aa":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 channel syncpoint source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 channel syncpoint source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # Restore native A:0x0C kind changes on BOTH direct and sparse pinned
@@ -452,7 +478,7 @@ if selected == "9edb09cf0a720c6b22fe092efd21cc9891225a48":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 sparse kind-map source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 sparse kind-map source drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # Native-only duplicate ALLOC_AS guard: only the selected AS C++ and
@@ -466,7 +492,7 @@ if selected == "7a4ddd589b7a20d75a1a6019a67a16c5f2d39bc5":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 duplicate AS guard drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 duplicate AS guard drift", relative, actual)
     selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 
 # Prepared NS2 consolidation, still NOT a published main or console pass.
@@ -485,7 +511,7 @@ if selected == "1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 prepared source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 prepared source drift", relative, actual)
     # The prepared commit descends directly from the reviewed public vendor
     # and changes only these seven owners; all earlier source fingerprints
     # are encoded in the immutable pinned vendor commit tree.
@@ -501,7 +527,7 @@ if selected == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 40-byte remap source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 40-byte remap source drift", relative, actual)
     selected = "29350dfa0049885d953ad206fd3ce2b163140cdb"
 
 # During archival receipt replay, normalize ONLY the three already sealed
@@ -656,6 +682,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_PREEMPTION_CTA_ACTIVE and relative in NS2_PREEMPTION_CTA_BLOBS:
+        return NS2_PREEMPTION_CTA_BLOBS[relative]
     if NS2_ENCODER_FAIL_CLOSED_ACTIVE and relative in NS2_ENCODER_FAIL_CLOSED_BLOBS:
         # Current blob was verified above against the exact pinned tree.
         return NS2_ENCODER_FAIL_CLOSED_BLOBS[relative]
@@ -1019,6 +1047,7 @@ if gitlink_vendor_pin in {
     "7baf9cc07c6aceee185032544d964f04a2fed108",
     "1f8a3bbaa7fc33118e63ebef829202d825475bfe",
     "1e513ae001669127538a346c7f390af55edd6712",
+    "d31aa01bdfa87165a272473c385040723bf2c1f6",
 }:
     gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and
@@ -1041,7 +1070,7 @@ if native_self_controller_rollback_revision:
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GSV parent session rollback source drift", relative, actual)
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GSV parent session rollback source drift", relative, actual)
     selected = "3a0cf78a9b2c98bed100d817537b4375a48bf72f"
     original_vendor_pin = selected
 

@@ -104,7 +104,18 @@ assert 'BitField<56, 1, u64> negate_a;' in expected
 assert 'BitField<57, 1, u64> is_b_signed;' in expected
 assert 'throw NotImplementedException("IMAD32I CC/NEG modifiers")' in expected
 assert 'ThrowNotImplemented(Opcode::IMADSP_reg);' in expected
-assert actual==expected, "PRMT/IMUL/IMAD maintained shader is not the reviewed single native source"
+# CFG-owned Maxwell control instructions: the CFG consumes all actual
+# branch/reconvergence semantics. The visitor sees only statically false
+# branches or stack markers with no remaining data-path IR side effect.
+control_flow_rewrites=[["void TranslatorVisitor::BRA(u64) {\n    ThrowNotImplemented(Opcode::BRA);\n}\n","void TranslatorVisitor::BRA(u64) {\n    // CFG owns the branch. This visitor is reached only when the predicate is statically false.\n}\n"],["void TranslatorVisitor::BRK(u64) {\n    ThrowNotImplemented(Opcode::BRK);\n}\n","void TranslatorVisitor::BRK(u64) {\n    // CFG owns the break token/branch. A statically false branch is a no-op here.\n}\n"],["void TranslatorVisitor::CONT(u64) {\n    ThrowNotImplemented(Opcode::CONT);\n}\n","void TranslatorVisitor::CONT(u64) {\n    // CFG owns the continue token/branch. A statically false branch is a no-op here.\n}\n"],["void TranslatorVisitor::JMP(u64) {\n    ThrowNotImplemented(Opcode::JMP);\n}\n","void TranslatorVisitor::JMP(u64) {\n    // CFG owns the jump. This visitor is reached only when the predicate is statically false.\n}\n"],["void TranslatorVisitor::LONGJMP(u64) {\n    ThrowNotImplemented(Opcode::LONGJMP);\n}\n","void TranslatorVisitor::LONGJMP(u64) {\n    // CFG owns the token pop/branch. A statically false branch is a no-op here.\n}\n"],["void TranslatorVisitor::RET(u64) {\n    ThrowNotImplemented(Opcode::RET);\n}\n","void TranslatorVisitor::RET(u64) {\n    // CFG owns function return. A statically false return is a no-op here.\n}\n"],["void TranslatorVisitor::SYNC(u64) {\n    ThrowNotImplemented(Opcode::SYNC);\n}\n","void TranslatorVisitor::SYNC(u64) {\n    // CFG owns the SSY token pop/branch. A statically false sync is a no-op here.\n}\n"],["void TranslatorVisitor::PEXIT(u64) {\n    ThrowNotImplemented(Opcode::PEXIT);\n}\n","void TranslatorVisitor::PEXIT(u64) {\n    // CFG records the PEXIT reconvergence token; there is no data-path IR side effect.\n}\n"],["void TranslatorVisitor::PLONGJMP(u64) {\n    ThrowNotImplemented(Opcode::PLONGJMP);\n}\n","void TranslatorVisitor::PLONGJMP(u64) {\n    // CFG records the PLONGJMP reconvergence token; there is no data-path IR side effect.\n}\n"]]
+for old_method,new_method in control_flow_rewrites:
+    assert expected.count(old_method)==1
+    expected=expected.replace(old_method,new_method,1)
+for name in ("BRA","BRK","CONT","JMP","LONGJMP","RET","SYNC","PEXIT","PLONGJMP"):
+    assert f"ThrowNotImplemented(Opcode::{name});" not in expected
+assert "ThrowNotImplemented(Opcode::PRET);" in expected
+assert "ThrowNotImplemented(Opcode::JCAL);" in expected
+assert actual==expected, "PRMT/IMUL/IMAD/control-flow maintained shader is not the reviewed single native source"
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
 # and silently diverges from the actual source-generation oracle.
@@ -124,4 +135,4 @@ assert "EdenGpuBoundedSample" not in fermi_default, "shipping Fermi2D has unused
 assert helper.strip() in fermi_experiment, "experimental Fermi2D lost its bounded sample helper"
 assert "set(gpu_bounded_sample_helper [=[" not in module
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in module
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I LOW/HI, unsupported modifiers fail-closed")
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG-owned control no-ops, unsupported forms fail-closed")

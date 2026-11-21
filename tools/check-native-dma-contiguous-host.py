@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[1]
 source=(root/"vendor/encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
 start="constexpr bool CanCoalescePitchDma("
 assert source.count(start)==1
-body=start+source.split(start,1)[1].split("\n}\n} // namespace",1)[0]+"\n}"
+body=start+source.split(start,1)[1].split("\n}\n\n// Remapped DMA lengths",1)[0]+"\n}"
 assert "width > (~u32{0}) / rows" in body
 assert "source + bytes <= dest || dest + bytes <= source" in body
 assert source.count("if (CanCoalescePitchDma(")==1

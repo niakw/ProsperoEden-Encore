@@ -19,7 +19,7 @@ module = (root / "headless/gpu_native_observability.cmake").read_text()
 
 def git_blob(data: str) -> str:
     payload = data.encode("utf-8")
-    return hashlib.sha1(b"blob " + str(len(payload)).encode() + b"\\0" + payload).hexdigest()
+    return hashlib.sha1(b"blob " + str(len(payload)).encode() + b"\0" + payload).hexdigest()
 
 assert upstream != backport
 assert git_blob(backport) == "f014de1b85eb1667024a7b5a7162d7c6307d80f6"

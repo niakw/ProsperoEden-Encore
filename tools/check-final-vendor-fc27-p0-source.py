@@ -68,8 +68,23 @@ REVIEWED_PINS.add("9eefc8f5131350e8ddfb11e617e2e25007925212")
 REVIEWED_PINS.add("29350dfa0049885d953ad206fd3ce2b163140cdb")
 REVIEWED_PINS.add("bb6285e1998989101adbdc6adecbf9c1e1c17ec0")
 REVIEWED_PINS.add("1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc")
+REVIEWED_PINS.add("7a4ddd589b7a20d75a1a6019a67a16c5f2d39bc5")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+# Native-only duplicate ALLOC_AS guard: only the selected AS C++ and
+# focused source-contract file differ from the fully reviewed predecessor.
+# Compare the exact new blobs BEFORE replaying its source graph; no branch
+# publication, host test, CI or PS5 console validation is implied here.
+if selected == "7a4ddd589b7a20d75a1a6019a67a16c5f2d39bc5":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "85b765ca5871f56a7f9f1f883841775d260e121b"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "0cf04759ddff657d4a9892e0932bbac789655cc5"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 duplicate AS guard drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
 # Prepared NS2 consolidation, still NOT a published main or console pass.
 # Git's exact pinned commit ID seals its full tree; these seven changed
 # compiled/test blobs are additionally checked before selecting the same
@@ -257,6 +272,18 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if gitlink_vendor_pin == "7a4ddd589b7a20d75a1a6019a67a16c5f2d39bc5":
+        latest = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "85b765ca5871f56a7f9f1f883841775d260e121b",
+            "tests/ns2_gpu_identity_mapping_source.py": "0cf04759ddff657d4a9892e0932bbac789655cc5",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5be598819854a43c929d570d0a0f6234c1a829e8",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+        }
+        if relative in latest:
+            return latest[relative]
     if gitlink_vendor_pin == "1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc":
         prepared = {
             "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "284e754886ef59e73120cfa2b8fb691eddc51707",

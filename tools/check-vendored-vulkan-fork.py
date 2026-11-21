@@ -657,6 +657,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     compute_owner = 'vk_compute_pipeline_cost.cpp'
     compute_source = expected[compute_owner].read_text()
     compute_sha = raster_blob(compute_source)
+    # 63208f3 mirrors the graphics lifetime repair: move build_task out before
+    # invoking it because the callback may publish readiness and let teardown
+    # destroy this pipeline. Reverse ONLY this SHA-sealed method on the audit
+    # copy before replaying the older first-use/static-sampler receipts.
+    if compute_sha == 'bb9552866e26e502839eed646be9af6ea0a0db0a':
+        compute_release_after = """    // The build callback publishes is_built before it returns. Cache teardown
+    // may then destroy this pipeline; never access its members afterward.
+    // Transfer ownership while this instance is still guaranteed alive.
+    auto task = std::move(build_task);
+    build_task = nullptr;
+    task();
+"""
+        compute_release_before = """    build_task();
+    build_task = nullptr;
+"""
+        assert compute_source.count(compute_release_after) == 1
+        compute_source = compute_source.replace(
+            compute_release_after, compute_release_before, 1)
+        compute_sha = raster_blob(compute_source)
+        assert compute_sha == '7122e9ad2d0d5e8af812223c85d0d9cdb6ae5600'
+        print("ENCORE_COMPUTE_BUILD_TASK_LIFETIME_EXACT_REVERSE_PASS")
     if compute_sha == '7122e9ad2d0d5e8af812223c85d0d9cdb6ae5600':
         runbuild_after = "    build_task = std::move(func);\n    if (thread_worker) {\n#ifdef PS5_NATIVE\n        pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);\n        try {\n            thread_worker->QueueWork([this] {\n                SCOPE_EXIT {\n                    pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n                };\n                RunBuild();\n            });\n        } catch (...) {\n            pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n            throw;\n        }\n        build_handed_off = true;\n#else\n        thread_worker->QueueWork([this] { RunBuild(); });\n#endif\n    } else {\n#ifdef PS5_NATIVE\n        build_handed_off = true;\n#endif\n        RunBuild();\n    }\n}\n\nvoid ComputePipeline::RunBuild() {\n    if (build_claimed.exchange(true, std::memory_order_acq_rel)) {\n        return;\n    }\n    build_task();\n    build_task = nullptr;\n}\n\n"
         runbuild_before = "    if (thread_worker) {\n#ifdef PS5_NATIVE\n        // Reserve a slot BEFORE QueueWork: a pending compute shader has\n        // priority over a speculative optimized graphics rebuild.\n        pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);\n        try {\n            thread_worker->QueueWork([build = std::move(func)]() mutable {\n                SCOPE_EXIT {\n                    pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n                };\n                build();\n            });\n        } catch (...) {\n            pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n            throw;\n        }\n        build_handed_off = true;\n#else\n        thread_worker->QueueWork(std::move(func));\n#endif\n    } else {\n#ifdef PS5_NATIVE\n        // Inline func() has its own completion guard.\n        build_handed_off = true;\n#endif\n        func();\n    }\n}\n\n"

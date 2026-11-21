@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check Maxwell PRMT Index and bounded Fermi2D software slice support.
+"""Check Maxwell PRMT/IMUL translation and bounded Fermi2D software slice support.
 
 Other PRMT modes and unsupported block-linear layers remain unimplemented.
 This is a source contract, not a native graphics correctness test.
@@ -33,6 +33,24 @@ prmt_old = extract_method(pinned_prmt, "PRMT_imm")
 prmt_reg_old = extract_method(pinned_prmt, "PRMT_reg")
 prmt_new = extract_method(prmt, "PRMT_imm")
 prmt_reg_new = extract_method(prmt, "PRMT_reg")
+# The same complete native source now owns generic Maxwell IMUL forms.
+# Verify all four decoded forms are translated while condition-code variants
+# remain deliberately fail-closed until their flag semantics are implemented.
+for imul_name in ("IMUL_reg", "IMUL_cbuf", "IMUL_imm", "IMUL32I"):
+    old = extract_method(pinned_prmt, imul_name)
+    new = extract_method(prmt, imul_name)
+    assert "ThrowNotImplemented(Opcode::" + imul_name + ");" in old
+    assert "TranslateIMul(*this, insn" in new
+assert "IR::U32 MultiplyHigh(" in prmt
+assert "BitField<39, 1, u64> high;" in prmt
+assert "BitField<40, 1, u64> is_a_signed;" in prmt
+assert "BitField<41, 1, u64> is_b_signed;" in prmt
+assert "BitField<47, 1, u64> cc;" in prmt
+assert "BitField<52, 1, u64> cc;" in prmt
+assert "BitField<53, 1, u64> high;" in prmt
+assert "BitField<54, 1, u64> is_a_signed;" in prmt
+assert "BitField<55, 1, u64> is_b_signed;" in prmt
+assert 'throw NotImplementedException("IMUL.CC")' in prmt
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 fermi_default = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()

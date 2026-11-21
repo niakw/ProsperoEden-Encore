@@ -88,9 +88,22 @@ REVIEWED_PINS.add("546e1aa34d2ff183dd4c737f9da8fbf4a62be24e")
 REVIEWED_PINS.add("f65ccc439534ffd9ce0a307b23bd511b4e32857a")
 REVIEWED_PINS.add("4e6a966508e718d02526d4d220e112591536f28c")
 REVIEWED_PINS.add("2d07b5e65baf35c82d0b0e557617aefe730a10b1")
+REVIEWED_PINS.add("7baf9cc07c6aceee185032544d964f04a2fed108")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 shipping_vendor_pin = gitlink_vendor_pin
+# Ounce TSG scheduling-state successor. Seal the final nx2 stub owner and
+# its focused source receipt; all GSV/GPU owners are unchanged from 2d07.
+if selected == "7baf9cc07c6aceee185032544d964f04a2fed108":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "f287b62c0e001af3d3262a6a253c076a0941b2f8"),
+        ("tests/ns2_nvhost_unknown_node_fallback_source.py", "3094b555b32840f613c7567e10787c4f73c668e5"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 Ounce TSG scheduling source drift", relative, actual)
+    selected = "2d07b5e65baf35c82d0b0e557617aefe730a10b1"
+
 # GSV TIPC 498 donated TransferMemory usage successor. The only changed
 # live owners are the supervisor implementation/header and its existing
 # focused bootstrap source receipt. Seal them before replaying 4e unchanged.
@@ -116,7 +129,9 @@ if selected == "4e6a966508e718d02526d4d220e112591536f28c":
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("NS2 ChannelSetupBind response ABI source drift", relative, actual)
-    selected = "f65ccc439534ffd9ce0a307b23bd511b4e32857a"
+    selected = ("546e1aa34d2ff183dd4c737f9da8fbf4a62be24e"
+                if shipping_vendor_pin == "7baf9cc07c6aceee185032544d964f04a2fed108"
+                else "f65ccc439534ffd9ce0a307b23bd511b4e32857a")
 
 # Unknown Switch 2 nvhost-node fail-closed successor. Keep device discovery
 # compatible, but authenticate that generic ioctls no longer fabricate Success.
@@ -158,7 +173,7 @@ if selected == "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0":
         # Current setup-bind successors were authenticated above. Replay this
         # predecessor contract with their exact current blob identities rather
         # than comparing a live checkout against the historical bc6 blobs.
-        if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+        if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
             expected = {
                 "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h":
                     "9aa4b802c2245cad7b251fff3bc708a906db533d",
@@ -186,7 +201,7 @@ if selected == "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d":
         # The 225/226 successor was sealed above and contains the full prior
         # 171/172/173 worker semantics. Replay the predecessor contract using
         # only the exact authenticated successor identities for this pin.
-        if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+        if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
             expected = {
                 "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
                     "ccccfb99af3ffd03ae1a3119b89c7121cc73ac91",
@@ -212,7 +227,7 @@ if selected == "4411fc172eef84080ab7de23158349bbe7d08f88":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        if shipping_vendor_pin == "2d07b5e65baf35c82d0b0e557617aefe730a10b1" and relative in {
+        if shipping_vendor_pin in {"2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"} and relative in {
             "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
             "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h",
             "tests/ns2_syncpt_bootstrap_source.py",
@@ -258,7 +273,7 @@ if selected == "3de91cf284c8ef234c757c046998c4f48165c59a":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+        if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
             expected = {
                 "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
                     "ccccfb99af3ffd03ae1a3119b89c7121cc73ac91",
@@ -299,15 +314,15 @@ if selected in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f
         # The selected H:0x21 successor sealed exactly these two changed
         # GPFIFO-owner/test blobs above. Do not require the old bytes again
         # after independently proving the new source graph.
-        if shipping_vendor_pin in {"bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+        if shipping_vendor_pin in {"bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
             expected = {
                 "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
                     ("81bac0bb0c1be0be6ed0aca81931fc593b948044"
-                     if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}
+                     if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}
                      else "24096d0848b560d5e7befe979ecaebd1dcc730ae"),
                 "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
                     ("d78aaea83009616131bcaf68bfb67fd12fe2e575"
-                     if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}
+                     if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}
                      else "4e7a4fd77cd96ff650edfc74f6a841b266ca2152"),
             }[relative]
         assert actual == expected, ("NS2 GPFIFO wait admission source drift", relative, actual)
@@ -615,6 +630,7 @@ def reviewed_blob(relative, expected):
         "f65ccc439534ffd9ce0a307b23bd511b4e32857a",
         "4e6a966508e718d02526d4d220e112591536f28c",
         "2d07b5e65baf35c82d0b0e557617aefe730a10b1",
+        "7baf9cc07c6aceee185032544d964f04a2fed108",
     }:
         successor_exact.update({
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "be33e5fa3a6f7f2ed4eb4aeac6c7650b204cfa17",
@@ -632,6 +648,7 @@ def reviewed_blob(relative, expected):
         "f65ccc439534ffd9ce0a307b23bd511b4e32857a",
         "4e6a966508e718d02526d4d220e112591536f28c",
         "2d07b5e65baf35c82d0b0e557617aefe730a10b1",
+        "7baf9cc07c6aceee185032544d964f04a2fed108",
     }:
         successor_exact.update({
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "1042668b48e71020ee777e0ec0aef6b1606edaf0",
@@ -646,35 +663,35 @@ def reviewed_blob(relative, expected):
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h": "8b0cfe00cf9f6f450e69cbf4d55ee84336d4d0b8",
             "tests/ns2_syncpt_bootstrap_source.py": "688f868e999a707557852730996888c8d6234e56",
         })
-    if shipping_vendor_pin in {"4411fc172eef84080ab7de23158349bbe7d08f88", "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+    if shipping_vendor_pin in {"4411fc172eef84080ab7de23158349bbe7d08f88", "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
         successor_exact.update({
             "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "8f2ebf9bbf9c23284a0f9e7b788b571485c1135d",
             "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "2d424fb67dc984c1af3a1ee1a0d46c59f704bddf",
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h": "221173de57178d5408f3c8116fbf4202d26c86f7",
             "tests/ns2_syncpt_bootstrap_source.py": "56ab0b57f677683de33dbf6365efa5a1fdfc3875",
         })
-    if shipping_vendor_pin in {"0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+    if shipping_vendor_pin in {"0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
         successor_exact.update({
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "0a6c1b39483d8efcff0690f4f677d594863bf09e",
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "676f9f0391e73147f241fc0ece20e9f0560d4e33",
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "47e133e9bec766bbd2d840b215e8e447b70e93f8",
             "tests/ns2_gpu_identity_mapping_source.py": "eca64dbb3bd0ac01b62d7229612a8efcf45d567d",
         })
-    if shipping_vendor_pin in {"bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+    if shipping_vendor_pin in {"bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
         successor_exact.update({
             "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h": "9aa4b802c2245cad7b251fff3bc708a906db533d",
             "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "af7df2ba70bbf16d3715257c8c3a2b471ed26227",
             "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "24096d0848b560d5e7befe979ecaebd1dcc730ae",
             "tests/p0_ns2_gpfifo_preimpl_trace_source.py": "4e7a4fd77cd96ff650edfc74f6a841b266ca2152",
         })
-    if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+    if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
         successor_exact.update({
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "ccccfb99af3ffd03ae1a3119b89c7121cc73ac91",
             "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "2aa6d526e7c876d11adc180f546935503be54a4a",
             "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "e6223aa74605e50aab30e1fd0a0bf8f3b75c4ecf",
             "tests/ns2_gpu_identity_mapping_source.py": "0572833e4e63c5fe7af728c66beea7df53e4219e",
         })
-    if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1"}:
+    if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
         successor_exact.update({
             "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
                 "8b22d4e16ba0e3d0e73cc3af9faace2447d3fd9b",
@@ -683,7 +700,7 @@ def reviewed_blob(relative, expected):
             "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
                 "d78aaea83009616131bcaf68bfb67fd12fe2e575",
         })
-    if shipping_vendor_pin == "2d07b5e65baf35c82d0b0e557617aefe730a10b1":
+    if shipping_vendor_pin in {"2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108"}:
         successor_exact.update({
             "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
                 "66b5bc32c9286ec2462edd09804a670691ac91d8",
@@ -691,6 +708,13 @@ def reviewed_blob(relative, expected):
                 "56e9ddf8b73d4db22559e73fe8d3506bdaa84a1c",
             "tests/ns2_syncpt_bootstrap_source.py":
                 "08894a7985e96f4478501dd69aceb56b214b0306",
+        })
+    if shipping_vendor_pin == "7baf9cc07c6aceee185032544d964f04a2fed108":
+        successor_exact.update({
+            "sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h":
+                "f287b62c0e001af3d3262a6a253c076a0941b2f8",
+            "tests/ns2_nvhost_unknown_node_fallback_source.py":
+                "3094b555b32840f613c7567e10787c4f73c668e5",
         })
     if relative in successor_exact:
         return successor_exact[relative]
@@ -939,6 +963,7 @@ if gitlink_vendor_pin in {
     "f65ccc439534ffd9ce0a307b23bd511b4e32857a",
     "4e6a966508e718d02526d4d220e112591536f28c",
     "2d07b5e65baf35c82d0b0e557617aefe730a10b1",
+    "7baf9cc07c6aceee185032544d964f04a2fed108",
 }:
     gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and

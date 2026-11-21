@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `2d07b5e65baf35c82d0b0e557617aefe730a10b1` |
+| Vendor gitlink sélectionné | `7baf9cc07c6aceee185032544d964f04a2fed108` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -402,16 +402,18 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0x00005403 | NVGPU_TSG_IOCTL_ENABLE | M | — | connu, pas de scheduling réel; doit rester NotImplemented |
 | 0x00005404 | NVGPU_TSG_IOCTL_DISABLE | M | — | connu, pas de scheduling réel |
 | 0x00005405 | NVGPU_TSG_IOCTL_PREEMPT | M | — | connu, préemption réelle absente |
-| 0xC0085407 | NVGPU_TSG_IOCTL_SET_RUNLIST_INTERLEAVE | M | — | pas de handler |
-| 0xC0045408 | NVGPU_TSG_IOCTL_SET_TIMESLICE | M | — | pas de handler TSG |
+| 0xC0085407 | NVGPU_TSG_IOCTL_SET_RUNLIST_INTERLEAVE | P | ConfigureTsgScheduling | Ounce exact; LOW/MEDIUM/HIGH validés et retenus avant bind; après bind → NotImplemented faute de runlist reload réel |
+| 0xC0045408 | NVGPU_TSG_IOCTL_SET_TIMESLICE | P | ConfigureTsgScheduling | Ounce exact; 1000..50000 µs validés/retenus avant bind; après bind → NotImplemented faute de runlist reload réel |
 | 0xC0105409 | NVGPU_TSG_IOCTL_EVENT_ID_CTRL | M | — | pas de handler/event réel |
-| 0x8004540A | NVGPU_TSG_IOCTL_GET_TIMESLICE | M | — | pas de handler |
+| 0x8004540A | NVGPU_TSG_IOCTL_GET_TIMESLICE | C | GetTsgTimeslice | Ounce exact; renvoie l'état u32 retenu avant/après bind |
 | 0xC018540B | NVGPU_TSG_IOCTL_BIND_CHANNEL_EX | C | BindTsgChannel extended | FD + VEID validés |
 | 0xC018540C | NVGPU_TSG_IOCTL_READ_SINGLE_SM_ERROR_STATE | M | — | pas de handler |
 | 0xC008540D | NVGPU_TSG_IOCTL_SET_L2_SECTOR_PROMOTION | M | — | pas de handler |
 
 
 Les commandes `ENABLE/DISABLE/PREEMPT` ne doivent surtout pas être converties en `Success` vide : elles modifient l’état du scheduler/runlist et peuvent provoquer un blocage GPU silencieux si elles sont faussement acquittées.
+
+**Preuve Ounce TSG (21/11)** : `libnvrm_gpu` émet réellement `0xC0085407` pour l'interleave, `0xC0045408` pour la timeslice et `0x8004540A` pour le getter. NVIDIA valide interleave 0/1/2 et timeslice 1000..50000 µs; tant que le TSG n'est pas lié à une runlist, son driver ne fait que stocker ces valeurs. Encore reproduit uniquement cette phase sûre. `0xC008540D` touche la politique L2 et reste explicitement non implémenté.
 
 ## 12. NVDRV — /dev/nvhost-prof-dev-gpu
 
@@ -441,7 +443,7 @@ SwitchBrew publie aussi des ioctls S2 `/dev/nvhost-dbg-gpu` dont plusieurs n’o
 ## 14. Écarts structurels les plus importants à traiter
 
 1. **P0 GPU submission** : compléter/valider le mode USERD de `CHANNEL_SETUP_BIND` seulement avec une vraie propriété des buffers et un mécanisme de doorbell ; ne pas le simuler.
-2. **TSG scheduler** : `ENABLE/DISABLE/PREEMPT`, runlist interleave, timeslice/event control sont connus mais pas implémentés. Vérifier d’abord lesquels sont réellement appelés par le runtime retail avant de développer.
+2. **TSG scheduler** : Ounce confirme les appels retail `0xC0085407 SET_RUNLIST_INTERLEAVE`, `0xC0045408 SET_TIMESLICE`, `0x8004540A GET_TIMESLICE` et `0xC008540D SET_L2_SECTOR_PROMOTION`. Interleave/timeslice sont maintenant sûrs **avant bind** et le getter est complet; il reste à modéliser le reload de runlist post-bind, puis `ENABLE/DISABLE/PREEMPT`, event control et L2 policy.
 3. **GSV GPU** : la revue Ounce a confirmé **423**, **434** et **498**. Le seul point encore ambigu ici est **437** : le nom public existe, mais le SDK observé réalise le chemin `CreateNativeMemoryWithGpukMemHandle` via raw `0x1B7` → TIPC 423; ne pas créer un handler 437 sans paquet raw `0x1C5` prouvé.
 4. **Vidéo** : décodeur largement couvert ; `210 remote-memory` manque. **Encodeur** pratiquement absent, et les IDs UserSession `1001/1002` sont raccordés à un chemin qui ressemble encore au décodeur.
 5. **Display** : six IDs publiés sans sémantique suffisante restent U.

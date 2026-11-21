@@ -689,8 +689,9 @@ int main(){
             notifications.MarkEvent(64)==GP::Status::InvalidPacket,
             "out of range event index rejected");
     const std::array<GP::U32,4> syncAddressSpace{0xd8,2,17,63};
-    const auto sync=GP::DecodeSynchronizeAddressSpace(syncAddressSpace);
-    require(sync && sync->address_space==17 && sync->notification==63,
+    const auto syncAddressSpaceRequest=GP::DecodeSynchronizeAddressSpace(syncAddressSpace);
+    require(syncAddressSpaceRequest && syncAddressSpaceRequest->address_space==17 &&
+            syncAddressSpaceRequest->notification==63,
             "GPU address-space synchronization decodes owned AS and event");
     auto badSyncAddressSpace=syncAddressSpace;
     badSyncAddressSpace[2]=0;

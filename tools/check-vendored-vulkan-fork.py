@@ -843,7 +843,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                                   '94aa8cd5214d17897391ede00534d7961b481171',
                                   '77df727e484154f3f3463b6eeec2dc6b23abb741',
                                   'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                                  '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'}:
+                                  '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'} or core_blob == '41239f19b9e16741d49e31145c504e0086b1095e':
             pinned_revision = subprocess.check_output(
                 ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
             base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
@@ -855,7 +855,8 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                                    '94aa8cd5214d17897391ede00534d7961b481171',
                                    '77df727e484154f3f3463b6eeec2dc6b23abb741',
                                    'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                                   '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'}:
+                                   '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666' or (core_blob == '41239f19b9e16741d49e31145c504e0086b1095e' and base_blob == '716634290574ed4dfc8fd3be0d0ea0ad582980f8'):
+
                 # CMake-selected PS5 source: one budget sample feeds two
                 # independently locked cache GC passes without a driver query
                 # in either critical section. Original fallback remains.

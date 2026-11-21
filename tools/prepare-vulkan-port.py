@@ -7091,16 +7091,11 @@ apply_reviewed_delta(
     '        auto resources = resource_owner->BuildResourcePlan(*compiled.info);\n        if (!resources || !registry.IsComputeCurrent(kepler_compute, *ticket))\n            return false;\n        // The production Vulkan path must enforce the SAME authenticated\n        // atomic byte extents as the captured-QMD compiler. A successful\n        // SPIR-V module alone does not prove a dynamic atomic stays within\n        // its real, writable GMMU-backed SSBO. Reject before any image,\n        // descriptor or pipeline is allocated; never round the offset down.\n        if (!Shader::Ampere::NativeQmdAtomicSpansFitBindings(\n                std::span<const Shader::Ampere::NativeAtomicSpan>{\n                    compiled.native_atomic_spans.data(),\n                    compiled.native_atomic_spans.size()},\n                resources->storage_buffers))\n            return false;\n        // Match the authentic TIC/TSC handle order and write permissions\n',
     "P2.3 production native atomic span gate")
 
-# FC27/P0 same-process teardown: the build completion callback can publish
-# is_built before RunBuild returns. A post-publication write to build_task
-# races pipeline destruction. Move the callable out before executing it;
-# the compiler worker and Vulkan FIFO wait remain unchanged.
-for native_owner in ('vk_graphics_pipeline_cost.cpp', 'vk_compute_pipeline_cost.cpp'):
-    apply_reviewed_delta(
-        native_owner,
-        "    build_task();\n    build_task = nullptr;\n}",
-        "    // The build callback publishes is_built before it returns. Cache teardown\n    // may then destroy this pipeline; never access its members afterward.\n    // Transfer ownership while this instance is still guaranteed alive.\n    auto task = std::move(build_task);\n    build_task = nullptr;\n    task();\n}",
-        'FC27 first-use builder completion lifetime')
+# FC27/P0 native RunBuild lifetime is maintained in the real
+# encore-active Vulkan C++ owners, NOT in the immutable historical replay.
+# The pinned Eden generator predates RunBuild and cannot apply this delta.
+# check-vendored-vulkan-fork.py seals/reverses the exact reviewed native
+# owner on its audit copy before comparing the historical generator output.
 
 # P5: Keep the reproducible, byte-for-byte Vulkan texture cache in parity
 # with the pinned ASTC source owner. The template also instantiates on OpenGL

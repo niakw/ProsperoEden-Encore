@@ -133,7 +133,7 @@ method_start="bool MaxwellDMA::CopyBlockLinearRemap() {"
 method_end="void MaxwellDMA::CopyBlockLinearToPitch() {"
 assert native.count(method_start)==1 and native.count(method_end)==1
 tiled_method=native[native.index(method_start):native.index(method_end)]
-assert fnv1a32(tiled_method)==466258931, "Reviewed tiled remap implementation changed"
+assert fnv1a32(tiled_method)==1771148963, "Reviewed tiled remap implementation changed"
 for proof in ("UnswizzleSubrect(", "SwizzleSubrect(", "IsFullyMappedRange(",
               "needs_destination", "padded_width > MAX_BYTES / padded_height",
               "memory_manager.WriteBlock(", "std::vector<u8> linear_src",

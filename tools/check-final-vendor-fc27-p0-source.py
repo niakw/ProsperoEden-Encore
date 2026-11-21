@@ -78,8 +78,24 @@ REVIEWED_PINS.add("95ed29da0eb91af4561154ec3688968959185b9b")
 REVIEWED_PINS.add("457f9501c52fcf6ce2aaca967757c0eb9e452f58")
 REVIEWED_PINS.add("08972732d0402fa455a4982ed5ffd5d9f2c7e83c")
 REVIEWED_PINS.add("c74fb345ac3d8fa752f403369827a432f3503fb5")
+REVIEWED_PINS.add("3a97e47a0cfe94ec55227af363d8c289de59d4f8")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+# TIPC 200 successor: only the selected GPU-session owner/protocol/header and
+# its focused source receipt changed. Seal those exact blobs, then replay the
+# already reviewed c74 graph for every unaffected FC27/P0 owner.
+if selected == "3a97e47a0cfe94ec55227af363d8c289de59d4f8":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp", "be33e5fa3a6f7f2ed4eb4aeac6c7650b204cfa17"),
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.h", "be6f4f16c9407876ff0f8259cc1c777d05e8056f"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h", "b4298a1231aee0f3b675861211bbcf30260dd033"),
+        ("tests/ns2_gpu_partition_new_sdk_source.py", "e41711b1822cadffd3b699befb55aa4e9e2f1433"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 GPU session TIPC 200 source drift", relative, actual)
+    selected = "c74fb345ac3d8fa752f403369827a432f3503fb5"
+
 # Native GPFIFO fence-wait admission: invalid ID returns a guest error
 # before the inherited SyncpointManager asserts or throws on unreserved IDs.
 if selected in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f403369827a432f3503fb5"}:

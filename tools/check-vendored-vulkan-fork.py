@@ -265,8 +265,8 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
     for gpu54_name,(current_blob,predecessor_blob,edits) in gpu54_edits.items():
         raw=expected[gpu54_name].read_text()
-        actual=gpu54_blob(raw)
-        if actual == current_blob:
+        actual_blob=gpu54_blob(raw)
+        if actual_blob == current_blob:
             if gpu54_name == 'vulkan_rasterizer.cpp':
                 wfi=raw.split('void RasterizerVulkan::WaitForIdle() {',1)[1].split(
                     '\nvoid RasterizerVulkan::FragmentBarrier()',1)[0]
@@ -288,7 +288,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             out.write_text(normalized)
             expected[gpu54_name]=out
         else:
-            assert actual == predecessor_blob, ('Unexpected GPU-54 owner',gpu54_name,actual)
+            assert actual_blob == predecessor_blob, ('Unexpected GPU-54 owner',gpu54_name,actual_blob)
     print("ENCORE_NS1_GPU54_WFI_BARRIER_EXACT_REVERSE_PASS owners=2 repeatable=1 memory_visible=1")
 
     # GPU-50 (Lichii #2047): reverse only the reviewed Maxwell DMA cache

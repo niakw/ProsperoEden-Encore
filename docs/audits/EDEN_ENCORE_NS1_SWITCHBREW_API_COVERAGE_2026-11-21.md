@@ -3656,4 +3656,363 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IMultiCommitManager | `1` | `Add` | — | Q | 2026-11-21 |
 | IMultiCommitManager | `2` | `Commit` | — | Q | 2026-11-21 |
 
+### Bus services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Bus_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Bus%20services.md)
+
+**66 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| gpio | `0` | `OpenSessionForDev` | — | Q | 2026-11-21 |
+| gpio | `1` | `OpenSession` | — | Q | 2026-11-21 |
+| gpio | `2` | `OpenSessionForTest` | — | Q | 2026-11-21 |
+| gpio | `3` | `IsWakeEventActive` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| gpio | `4` | `GetWakeEventActiveFlagSet` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| gpio | `5` | `SetWakeEventActiveFlagSetForDebug` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| gpio | `6` | `SetWakePinDebugMode` | — | Q | 2026-11-21 |
+| gpio | `7` | `OpenSession2` | 5.0.0+ | Q | 2026-11-21 |
+| gpio | `8` | `IsWakeEventActive2` | 5.0.0+ | Q | 2026-11-21 |
+| gpio | `9` | `SetWakeEventActiveFlagSetForDebug2` | 5.0.0+ | Q | 2026-11-21 |
+| gpio | `0` | `SetDirection` | — | Q | 2026-11-21 |
+| gpio | `1` | `GetDirection` | — | Q | 2026-11-21 |
+| gpio | `2` | `SetInterruptMode` | — | Q | 2026-11-21 |
+| gpio | `3` | `GetInterruptMode` | — | Q | 2026-11-21 |
+| gpio | `4` | `SetInterruptEnable` | — | Q | 2026-11-21 |
+| gpio | `5` | `GetInterruptEnable` | — | Q | 2026-11-21 |
+| gpio | `6` | `GetInterruptStatus` | — | Q | 2026-11-21 |
+| gpio | `7` | `ClearInterruptStatus` | — | Q | 2026-11-21 |
+| gpio | `8` | `SetValue` | — | Q | 2026-11-21 |
+| gpio | `9` | `GetValue` | — | Q | 2026-11-21 |
+| gpio | `10` | `BindInterrupt` | — | Q | 2026-11-21 |
+| gpio | `11` | `UnbindInterrupt` | — | Q | 2026-11-21 |
+| gpio | `12` | `SetDebounceEnabled` | — | Q | 2026-11-21 |
+| gpio | `13` | `GetDebounceEnabled` | — | Q | 2026-11-21 |
+| gpio | `14` | `SetDebounceTime` | — | Q | 2026-11-21 |
+| gpio | `15` | `GetDebounceTime` | — | Q | 2026-11-21 |
+| gpio | `16` | `SetValueForSleepState` | 4.0.0+ | Q | 2026-11-21 |
+| gpio | `17` | `GetValueForSleepState` | 6.0.0+ | Q | 2026-11-21 |
+| i2c, i2c:pcv | `0` | `[OpenSessionForDev](#OpenSessionForDev_2 "wikilink")` | — | Q | 2026-11-21 |
+| i2c, i2c:pcv | `1` | `[OpenSession](#OpenSession_2 "wikilink")` | — | Q | 2026-11-21 |
+| i2c, i2c:pcv | `4` | `[OpenSession2](#OpenSession2_2 "wikilink")` | 6.0.0+ | Q | 2026-11-21 |
+| i2c, i2c:pcv | `10` | `SendAuto` | — | Q | 2026-11-21 |
+| i2c, i2c:pcv | `11` | `ReceiveAuto` | — | Q | 2026-11-21 |
+| i2c, i2c:pcv | `12` | `ExecuteCommandListAuto` | — | Q | 2026-11-21 |
+| uart | `0` | `DoesUartExist` | — | Q | 2026-11-21 |
+| uart | `1` | `DoesUartExistForTest` | — | Q | 2026-11-21 |
+| uart | `2` | `IsUartBaudrateValid` | — | Q | 2026-11-21 |
+| uart | `3` | `IsUartBaudrateValidForTest` | — | Q | 2026-11-21 |
+| uart | `4` | `IsSomethingUartValid` | — | Q | 2026-11-21 |
+| uart | `5` | `IsSomethingUartValidForTest` | — | Q | 2026-11-21 |
+| uart | `6` | `GetSession` | — | Q | 2026-11-21 |
+| uart | `7` | `IsSomethingUartValid2` | — | Q | 2026-11-21 |
+| uart | `8` | `IsSomethingUartValid2ForTest` | — | Q | 2026-11-21 |
+| uart | `9` | `IsSomethingUartValid3` | 7.0.0+ | Q | 2026-11-21 |
+| uart | `10` | `IsSomethingUartValid3ForTest` | 7.0.0+ | Q | 2026-11-21 |
+| uart | `0` | `OpenSession` | — | Q | 2026-11-21 |
+| uart | `1` | `OpenSessionForTest` | — | Q | 2026-11-21 |
+| pwm | `0` | `OpenSessionForDev` | — | Q | 2026-11-21 |
+| pwm | `1` | `OpenSession` | — | Q | 2026-11-21 |
+| pwm | `2` | `OpenSession2` | 6.0.0+ | Q | 2026-11-21 |
+| pwm | `0` | `SetPeriod` | — | Q | 2026-11-21 |
+| pwm | `1` | `GetPeriod` | — | Q | 2026-11-21 |
+| pwm | `2` | `SetDuty` | — | Q | 2026-11-21 |
+| pwm | `3` | `GetDuty` | — | Q | 2026-11-21 |
+| pwm | `4` | `SetEnabled` | — | Q | 2026-11-21 |
+| pwm | `5` | `GetEnabled` | — | Q | 2026-11-21 |
+| pinmux | `0` | `OpenSession` | — | Q | 2026-11-21 |
+| pinmux | `0` | `SetPinAssignment` | — | Q | 2026-11-21 |
+| pinmux | `1` | `GetPinAssignment` | — | Q | 2026-11-21 |
+| pinmux | `2` | `SetPinAssignmentForHardwareTest` | — | Q | 2026-11-21 |
+| sasbus | `0` | `OpenSession` | — | Q | 2026-11-21 |
+| sasbus | `0` | `Write` | — | Q | 2026-11-21 |
+| sasbus | `1` | `Read` | — | Q | 2026-11-21 |
+| sasbus | `2` | `StartPeriodicReceiveMode` | — | Q | 2026-11-21 |
+| sasbus | `3` | `StopPeriodicReceiveMode` | — | Q | 2026-11-21 |
+| led | `0` | `OpenController` | — | Q | 2026-11-21 |
+
+### TMA services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/TMA_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/TMA%20services.md)
+
+**68 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| htc | `0` | `GetEnvironmentVariable` | — | Q | 2026-11-21 |
+| htc | `1` | `GetEnvironmentVariableLength` | — | Q | 2026-11-21 |
+| htc | `2` | `BindHostConnectionEvent` | — | Q | 2026-11-21 |
+| htc | `3` | `BindHostDisconnectionEvent` | — | Q | 2026-11-21 |
+| htc | `4` | `BindHostConnectionEventForSystem` | — | Q | 2026-11-21 |
+| htc | `5` | `BindHostDisconnectionEventForSystem` | — | Q | 2026-11-21 |
+| htc | `6` | `GetBridgeIpAddress` | 3.0.0+ | Q | 2026-11-21 |
+| htc | `7` | `GetBridgePort` | 3.0.0+ | Q | 2026-11-21 |
+| htc | `8` | `SetCradleAttached` | 3.0.0+ | Q | 2026-11-21 |
+| htc | `9` | `GetBridgeSubnetMask` | 4.0.0+ | Q | 2026-11-21 |
+| htc | `10` | `GetBridgeMacAddress` | 4.0.0+ | Q | 2026-11-21 |
+| htc | `11` | `GetWorkingDirectoryPath` | 6.0.0+ | Q | 2026-11-21 |
+| htc | `12` | `GetWorkingDirectoryPathSize` | 6.0.0+ | Q | 2026-11-21 |
+| htc | `13` | `RunOnHostStart` | 6.0.0+ | Q | 2026-11-21 |
+| htc | `14` | `RunOnHostResults` | 9.0.0+ | Q | 2026-11-21 |
+| htcs | `0` | `Socket` | — | Q | 2026-11-21 |
+| htcs | `1` | `Close` | — | Q | 2026-11-21 |
+| htcs | `2` | `Connect` | — | Q | 2026-11-21 |
+| htcs | `3` | `Bind` | — | Q | 2026-11-21 |
+| htcs | `4` | `Listen` | — | Q | 2026-11-21 |
+| htcs | `5` | `Accept` | — | Q | 2026-11-21 |
+| htcs | `6` | `Recv` | — | Q | 2026-11-21 |
+| htcs | `7` | `Send` | — | Q | 2026-11-21 |
+| htcs | `8` | `Shutdown` | — | Q | 2026-11-21 |
+| htcs | `9` | `Fcntl` | — | Q | 2026-11-21 |
+| htcs | `10` | `GetPeerNameAny` | — | Q | 2026-11-21 |
+| htcs | `11` | `GetDefaultHostName` | — | Q | 2026-11-21 |
+| htcs | `12` | `CreateSocketOld` | — | Q | 2026-11-21 |
+| htcs | `13` | `CreateSocket` | — | Q | 2026-11-21 |
+| htcs | `100` | `RegisterProcessId` | — | Q | 2026-11-21 |
+| htcs | `101` | `MonitorManager` | — | Q | 2026-11-21 |
+| htcs | `0` | `Close` | — | Q | 2026-11-21 |
+| htcs | `1` | `Connect` | — | Q | 2026-11-21 |
+| htcs | `2` | `Bind` | — | Q | 2026-11-21 |
+| htcs | `3` | `Listen` | — | Q | 2026-11-21 |
+| htcs | `4` | `Accept` | — | Q | 2026-11-21 |
+| htcs | `5` | `Recv` | — | Q | 2026-11-21 |
+| htcs | `6` | `Send` | — | Q | 2026-11-21 |
+| htcs | `7` | `Shutdown` | — | Q | 2026-11-21 |
+| htcs | `8` | `Fcntl` | — | Q | 2026-11-21 |
+| htc:tenv | `0` | `GetServiceInterface` | — | Q | 2026-11-21 |
+| htc:tenv | `0` | `GetVariable` | — | Q | 2026-11-21 |
+| htc:tenv | `1` | `GetVariableLength` | — | Q | 2026-11-21 |
+| htc:tenv | `2` | `WaitUntilVariableAvailable` | — | Q | 2026-11-21 |
+| file\_io | `0` | `OpenFile` | — | Q | 2026-11-21 |
+| file\_io | `1` | `FileExists` | — | Q | 2026-11-21 |
+| file\_io | `2` | `DeleteFile` | — | Q | 2026-11-21 |
+| file\_io | `3` | `RenameFile` | — | Q | 2026-11-21 |
+| file\_io | `4` | `GetIOType` | — | Q | 2026-11-21 |
+| file\_io | `5` | `OpenDirectory` | — | Q | 2026-11-21 |
+| file\_io | `6` | `DirectoryExists` | — | Q | 2026-11-21 |
+| file\_io | `7` | `CreateDirectory` | — | Q | 2026-11-21 |
+| file\_io | `8` | `DeleteDirectory` | — | Q | 2026-11-21 |
+| file\_io | `9` | `RenameDirectory` | — | Q | 2026-11-21 |
+| file\_io | `10` | `CreateFile` | — | Q | 2026-11-21 |
+| file\_io | `11` | `GetFileTimeStamp` | — | Q | 2026-11-21 |
+| file\_io | `12` | `GetCaseSensitivePath` | — | Q | 2026-11-21 |
+| file\_io | `0` | `ReadFile` | — | Q | 2026-11-21 |
+| file\_io | `1` | `WriteFile` | — | Q | 2026-11-21 |
+| file\_io | `2` | `GetFileSize` | — | Q | 2026-11-21 |
+| file\_io | `3` | `SetFileSize` | — | Q | 2026-11-21 |
+| file\_io | `4` | `FlushFile` | — | Q | 2026-11-21 |
+| file\_io | `5` | `SetPriorityForFile` | — | Q | 2026-11-21 |
+| file\_io | `6` | `GetPriorityForFile` | — | Q | 2026-11-21 |
+| file\_io | `0` | `GetEntryCount` | — | Q | 2026-11-21 |
+| file\_io | `1` | `ReadDirectory` | — | Q | 2026-11-21 |
+| file\_io | `2` | `SetPriorityForDirectory` | — | Q | 2026-11-21 |
+| file\_io | `3` | `GetPriorityForDirectory` | — | Q | 2026-11-21 |
+
+### JIT services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/JIT_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/JIT%20services.md)
+
+**5 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| jit:u | `0` | `CreateJitEnvironment` | — | Q | 2026-11-21 |
+| IJitEnvironment | `0` | `GenerateCode` | — | Q | 2026-11-21 |
+| IJitEnvironment | `1` | `Control` | — | Q | 2026-11-21 |
+| IJitEnvironment | `1000` | `LoadPlugin` | — | Q | 2026-11-21 |
+| IJitEnvironment | `1001` | `GetCodeAddress` | — | Q | 2026-11-21 |
+
+### Backlight services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Backlight_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Backlight%20services.md)
+
+**29 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| lbl | `0` | `SaveCurrentSetting` | — | Q | 2026-11-21 |
+| lbl | `1` | `LoadCurrentSetting` | — | Q | 2026-11-21 |
+| lbl | `2` | `SetCurrentBrightnessSetting` | — | Q | 2026-11-21 |
+| lbl | `3` | `GetCurrentBrightnessSetting` | — | Q | 2026-11-21 |
+| lbl | `4` | `ApplyCurrentBrightnessSettingToBacklight` | — | Q | 2026-11-21 |
+| lbl | `5` | `GetBrightnessSettingAppliedToBacklight` | — | Q | 2026-11-21 |
+| lbl | `6` | `SwitchBacklightOn` | — | Q | 2026-11-21 |
+| lbl | `7` | `SwitchBacklightOff` | — | Q | 2026-11-21 |
+| lbl | `8` | `GetBacklightSwitchStatus` | — | Q | 2026-11-21 |
+| lbl | `9` | `EnableDimming` | — | Q | 2026-11-21 |
+| lbl | `10` | `DisableDimming` | — | Q | 2026-11-21 |
+| lbl | `11` | `IsDimmingEnabled` | — | Q | 2026-11-21 |
+| lbl | `12` | `EnableAutoBrightnessControl` | — | Q | 2026-11-21 |
+| lbl | `13` | `DisableAutoBrightnessControl` | — | Q | 2026-11-21 |
+| lbl | `14` | `IsAutoBrightnessControlEnabled` | — | Q | 2026-11-21 |
+| lbl | `15` | `SetAmbientLightSensorValue` | — | Q | 2026-11-21 |
+| lbl | `16` | `GetAmbientLightSensorValue` | — | Q | 2026-11-21 |
+| lbl | `17` | `SetBrightnessReflectionDelayLevel` | — | Q | 2026-11-21 |
+| lbl | `18` | `GetBrightnessReflectionDelayLevel` | — | Q | 2026-11-21 |
+| lbl | `19` | `SetCurrentBrightnessMapping` | — | Q | 2026-11-21 |
+| lbl | `20` | `GetCurrentBrightnessMapping` | — | Q | 2026-11-21 |
+| lbl | `21` | `SetCurrentAmbientLightSensorMapping` | — | Q | 2026-11-21 |
+| lbl | `22` | `GetCurrentAmbientLightSensorMapping` | — | Q | 2026-11-21 |
+| lbl | `23` | `IsAmbientLightSensorAvailable` | 3.0.0+ | Q | 2026-11-21 |
+| lbl | `24` | `SetCurrentBrightnessSettingForVrMode` | 3.0.0+ | Q | 2026-11-21 |
+| lbl | `25` | `GetCurrentBrightnessSettingForVrMode` | 3.0.0+ | Q | 2026-11-21 |
+| lbl | `26` | `EnableVrMode` | 3.0.0+ | Q | 2026-11-21 |
+| lbl | `27` | `DisableVrMode` | 3.0.0+ | Q | 2026-11-21 |
+| lbl | `28` | `IsVrModeEnabled` | 3.0.0+ | Q | 2026-11-21 |
+
+### LDN services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/LDN_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/LDN%20services.md)
+
+**97 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| ldn:m | `0` | `CreateMonitorService` | — | Q | 2026-11-21 |
+| ldn:m | `0` | `GetStateForMonitor` | — | Q | 2026-11-21 |
+| ldn:m | `1` | `GetNetworkInfoForMonitor` | — | Q | 2026-11-21 |
+| ldn:m | `2` | `GetIpv4AddressForMonitor` | — | Q | 2026-11-21 |
+| ldn:m | `3` | `GetDisconnectReasonForMonitor` | — | Q | 2026-11-21 |
+| ldn:m | `4` | `GetSecurityParameterForMonitor` | — | Q | 2026-11-21 |
+| ldn:m | `5` | `GetNetworkConfigForMonitor` | — | Q | 2026-11-21 |
+| ldn:m | `100` | `InitializeMonitor` | — | Q | 2026-11-21 |
+| ldn:m | `101` | `FinalizeMonitor` | — | Q | 2026-11-21 |
+| ldn:s | `0` | `CreateSystemLocalCommunicationService` | — | Q | 2026-11-21 |
+| ldn:s | `0` | `GetState` | — | Q | 2026-11-21 |
+| ldn:s | `1` | `GetNetworkInfo` | — | Q | 2026-11-21 |
+| ldn:s | `2` | `GetIpv4Address` | — | Q | 2026-11-21 |
+| ldn:s | `3` | `GetDisconnectReason` | — | Q | 2026-11-21 |
+| ldn:s | `4` | `GetSecurityParameter` | — | Q | 2026-11-21 |
+| ldn:s | `5` | `GetNetworkConfig` | — | Q | 2026-11-21 |
+| ldn:s | `100` | `AttachStateChangeEvent` | — | Q | 2026-11-21 |
+| ldn:s | `101` | `GetNetworkInfoLatestUpdate` | — | Q | 2026-11-21 |
+| ldn:s | `102` | `Scan` | — | Q | 2026-11-21 |
+| ldn:s | `103` | `ScanPrivate` | — | Q | 2026-11-21 |
+| ldn:s | `104` | `SetWirelessControllerRestriction` | 5.0.0+ | Q | 2026-11-21 |
+| ldn:s | `200` | `OpenAccessPoint` | — | Q | 2026-11-21 |
+| ldn:s | `201` | `CloseAccessPoint` | — | Q | 2026-11-21 |
+| ldn:s | `202` | `CreateNetwork` | — | Q | 2026-11-21 |
+| ldn:s | `203` | `CreateNetworkPrivate` | — | Q | 2026-11-21 |
+| ldn:s | `204` | `DestroyNetwork` | — | Q | 2026-11-21 |
+| ldn:s | `205` | `Reject` | — | Q | 2026-11-21 |
+| ldn:s | `206` | `SetAdvertiseData` | — | Q | 2026-11-21 |
+| ldn:s | `207` | `SetStationAcceptPolicy` | — | Q | 2026-11-21 |
+| ldn:s | `208` | `AddAcceptFilterEntry` | — | Q | 2026-11-21 |
+| ldn:s | `209` | `ClearAcceptFilter` | — | Q | 2026-11-21 |
+| ldn:s | `300` | `OpenStation` | — | Q | 2026-11-21 |
+| ldn:s | `301` | `CloseStation` | — | Q | 2026-11-21 |
+| ldn:s | `302` | `Connect` | — | Q | 2026-11-21 |
+| ldn:s | `303` | `ConnectPrivate` | — | Q | 2026-11-21 |
+| ldn:s | `304` | `Disconnect` | — | Q | 2026-11-21 |
+| ldn:s | `400` | `InitializeSystem` | — | Q | 2026-11-21 |
+| ldn:s | `401` | `FinalizeSystem` | — | Q | 2026-11-21 |
+| ldn:s | `402` | `SetOperationMode` | 4.0.0+ | Q | 2026-11-21 |
+| ldn:s | `403` | `InitializeSystem2` | 7.0.0+ | Q | 2026-11-21 |
+| ldn:u | `0` | `CreateUserLocalCommunicationService` | — | Q | 2026-11-21 |
+| ldn:u | `0` | `GetState` | — | Q | 2026-11-21 |
+| ldn:u | `1` | `GetNetworkInfo` | — | Q | 2026-11-21 |
+| ldn:u | `2` | `GetIpv4Address` | — | Q | 2026-11-21 |
+| ldn:u | `3` | `GetDisconnectReason` | — | Q | 2026-11-21 |
+| ldn:u | `4` | `GetSecurityParameter` | — | Q | 2026-11-21 |
+| ldn:u | `5` | `GetNetworkConfig` | — | Q | 2026-11-21 |
+| ldn:u | `100` | `AttachStateChangeEvent` | — | Q | 2026-11-21 |
+| ldn:u | `101` | `GetNetworkInfoLatestUpdate` | — | Q | 2026-11-21 |
+| ldn:u | `102` | `Scan` | — | Q | 2026-11-21 |
+| ldn:u | `103` | `ScanPrivate` | — | Q | 2026-11-21 |
+| ldn:u | `104` | `SetWirelessControllerRestriction` | 5.0.0+ | Q | 2026-11-21 |
+| ldn:u | `200` | `OpenAccessPoint` | — | Q | 2026-11-21 |
+| ldn:u | `201` | `CloseAccessPoint` | — | Q | 2026-11-21 |
+| ldn:u | `202` | `CreateNetwork` | — | Q | 2026-11-21 |
+| ldn:u | `203` | `CreateNetworkPrivate` | — | Q | 2026-11-21 |
+| ldn:u | `204` | `DestroyNetwork` | — | Q | 2026-11-21 |
+| ldn:u | `205` | `Reject` | — | Q | 2026-11-21 |
+| ldn:u | `206` | `SetAdvertiseData` | — | Q | 2026-11-21 |
+| ldn:u | `207` | `SetStationAcceptPolicy` | — | Q | 2026-11-21 |
+| ldn:u | `208` | `AddAcceptFilterEntry` | — | Q | 2026-11-21 |
+| ldn:u | `209` | `ClearAcceptFilter` | — | Q | 2026-11-21 |
+| ldn:u | `300` | `OpenStation` | — | Q | 2026-11-21 |
+| ldn:u | `301` | `CloseStation` | — | Q | 2026-11-21 |
+| ldn:u | `302` | `Connect` | — | Q | 2026-11-21 |
+| ldn:u | `303` | `ConnectPrivate` | — | Q | 2026-11-21 |
+| ldn:u | `304` | `Disconnect` | — | Q | 2026-11-21 |
+| ldn:u | `400` | `Initialize` | — | Q | 2026-11-21 |
+| ldn:u | `401` | `Finalize` | — | Q | 2026-11-21 |
+| ldn:u | `402` | `Initialize2` | 7.0.0+ | Q | 2026-11-21 |
+| ndd | `0` | `EnableAutoCommunication` | — | Q | 2026-11-21 |
+| ndd | `1` | `DisableAutoCommunication` | — | Q | 2026-11-21 |
+| ndd | `2` | `IsAutoCommunicationEnabled` | — | Q | 2026-11-21 |
+| ndd | `3` | `EnablePowerSave` | — | Q | 2026-11-21 |
+| ndd | `4` | `DisablePowerSave` | — | Q | 2026-11-21 |
+| ndd | `5` | `IsPowerSaveEnabled` | — | Q | 2026-11-21 |
+| ndd | `6` | `IsNetworkActive` | — | Q | 2026-11-21 |
+| ndd | `7` | `AcquireSendDataUpdateEvent` | — | Q | 2026-11-21 |
+| ndd | `8` | `AddSendData` | — | Q | 2026-11-21 |
+| ndd | `9` | `ClearSendData` | — | Q | 2026-11-21 |
+| ndd | `10` | `GetSendData` | — | Q | 2026-11-21 |
+| ndd | `11` | `AcquireReceiveDataEvent` | — | Q | 2026-11-21 |
+| ndd | `12` | `GetCurrentReceiveDataCounter` | — | Q | 2026-11-21 |
+| ndd | `13` | `GetOldestReceiveDataCounter` | — | Q | 2026-11-21 |
+| ndd | `14` | `GetNextReceiveDataCounter` | — | Q | 2026-11-21 |
+| ndd | `15` | `GetAvailableReceiveDataCount` | — | Q | 2026-11-21 |
+| ndd | `16` | `GetRecentReceiveDataCounter` | — | Q | 2026-11-21 |
+| ndd | `17` | `GetReceiveData` | — | Q | 2026-11-21 |
+| ndd | `18` | `AddReceiveData` | — | Q | 2026-11-21 |
+| ndd | `19` | `ClearReceiveData` | — | Q | 2026-11-21 |
+| ndd | `20` | `ClearDataIdFilter` | — | Q | 2026-11-21 |
+| ndd | `21` | `AcquireDeviceScanEvent` | — | Q | 2026-11-21 |
+| ndd | `22` | `StartDeviceScan` | — | Q | 2026-11-21 |
+| ndd | `23` | `CancelDeviceScan` | — | Q | 2026-11-21 |
+| ndd | `24` | `GetDeviceScanResult` | — | Q | 2026-11-21 |
+| lp2p:app, lp2p:sys | `0` | `CreateNetworkService` | — | Q | 2026-11-21 |
+| lp2p:app, lp2p:sys | `8` | `CreateNetworkServiceMonitor` | — | Q | 2026-11-21 |
+
+### Loader services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Loader_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Loader%20services.md)
+
+**9 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| ldr:dmnt | `0` | `[AddProcessToDebugLaunchQueue](Loader%20services#AddProcessToDebugLaunchQueue.md##AddProcessToDebugLaunchQueue "wikilink")` | — | Q | 2026-11-21 |
+| ldr:dmnt | `1` | `[ClearDebugLaunchQueue](Loader%20services#ClearDebugLaunchQueue.md##ClearDebugLaunchQueue "wikilink")` | — | Q | 2026-11-21 |
+| ldr:dmnt | `2` | `[GetNsoInfos](Loader%20services#GetNsoInfos.md##GetNsoInfos "wikilink")` | — | Q | 2026-11-21 |
+| ldr:pm | `0` | `CreateProcess` | — | Q | 2026-11-21 |
+| ldr:pm | `1` | `GetProgramInfo` | — | Q | 2026-11-21 |
+| ldr:pm | `2` | `RegisterTitle` | — | Q | 2026-11-21 |
+| ldr:pm | `3` | `UnregisterTitle` | — | Q | 2026-11-21 |
+| ldr:shel | `0` | `AddProcessToLaunchQueue` | — | Q | 2026-11-21 |
+| ldr:shel | `1` | `ClearLaunchQueue` | — | Q | 2026-11-21 |
+
+### Log services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Log_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Log%20services.md)
+
+**6 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| lm | `0` | `OpenLogger` | — | Q | 2026-11-21 |
+| lm | `0` | `Log` | — | Q | 2026-11-21 |
+| lm | `1` | `SetDestination` | 3.0.0+ | Q | 2026-11-21 |
+| lm:get | `0` | `StartLogging` | — | Q | 2026-11-21 |
+| lm:get | `1` | `StopLogging` | — | Q | 2026-11-21 |
+| lm:get | `2` | `GetLog` | — | Q | 2026-11-21 |
+
+### Manu Services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Manu_Services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Manu%20Services.md)
+
+**7 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| manu | `0` | `InitUsbTransferPipeFsFile` | — | Q | 2026-11-21 |
+| manu | `1` | `FsFile\_Exists` | — | Q | 2026-11-21 |
+| manu | `2` | `FsFile\_Read` | — | Q | 2026-11-21 |
+| manu | `3` | `FsFile\_Write` | — | Q | 2026-11-21 |
+| manu | `4` | `InitUsbTransferPipeRaw` | — | Q | 2026-11-21 |
+| manu | `5` | `Raw\_Read` | — | Q | 2026-11-21 |
+| manu | `6` | `Raw\_Write` | — | Q | 2026-11-21 |
+
 <!-- NS1_IPC_APPEND -->

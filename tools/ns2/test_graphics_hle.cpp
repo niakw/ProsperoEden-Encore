@@ -11,6 +11,7 @@
 #include "core/hle/service/am/service/native_image_layout.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_kind.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_context.h"
+#include "core/hle/service/nvdrv/devices/native_gpu_submission.h"
 #include "core/hle/service/am/service/graphics_syncpoint_cache.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
 #include "core/hle/service/am/service/graphics_supervisor_bootstrap.h"
@@ -25,6 +26,48 @@ int main(){
     using namespace Service::AM;
     namespace P=Service::AM::GraphicsSupervisorProtocol;
     namespace N=Service::Nvidia::Devices;
+    // Native H:0x21 admission: kernel-mode GPU submission only, with an
+    // authenticated runlist/GMMU checked separately by the actual handler.
+    N::NativeKernelChannelSetupRequest kernelBind{1024,0,0,-1,-1,0,0};
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Valid,
+            "NVGPU CHANNEL_SETUP_BIND admits a kernel-mode ring");
+    kernelBind.num_entries=4;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Valid,
+            "NVGPU kernel ring minimum is four entries");
+    kernelBind.num_entries=3;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Invalid,
+            "NVGPU rejects too few kernel ring entries");
+    kernelBind.num_entries=6;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Invalid,
+            "NVGPU rejects non-power-of-two kernel rings");
+    kernelBind.num_entries=(1U<<29);
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Invalid,
+            "NVGPU rejects oversized kernel rings");
+    kernelBind.num_entries=1024;
+    kernelBind.flags=8;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU usermode/doorbell cannot be acknowledged without USERD");
+    kernelBind.flags=0;
+    kernelBind.num_inflight_jobs=1;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU rejects unsupported kernel inflight tracking");
+    kernelBind.num_inflight_jobs=0;
+    kernelBind.userd_fd=9;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU rejects unowned USERD buffer");
+    kernelBind.userd_fd=-1;
+    kernelBind.gpfifo_offset=0x1000;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU refuses unmapped GPFIFO offset");
     // Execute the selected NS2 GSV GraphicsFrame TIPC decoders, not merely
     // source-grep receipts. Unknown policy values must fail closed.
     const std::array<u32, 2> graphicsFrameCreate{16 + 1101, 0};

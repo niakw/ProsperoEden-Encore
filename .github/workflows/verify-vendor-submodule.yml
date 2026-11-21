@@ -11,6 +11,7 @@ on:
       - 'tools/check-maintained-sw-blitter.py'
       - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
       - 'tools/check-ps5-dma-buffer-copy-span-host.py'
+      - 'tools/check-ps5-buffer-region-multipage-host.py'
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-fc27-ssbo-engine-selection.py'
       - 'tools/check-active-cmake-source-boundary.py'
@@ -44,6 +45,7 @@ on:
       - 'tools/check-maintained-sw-blitter.py'
       - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
       - 'tools/check-ps5-dma-buffer-copy-span-host.py'
+      - 'tools/check-ps5-buffer-region-multipage-host.py'
       - 'tools/check-maintained-maxwell-prmt.py'
       - 'tools/check-fc27-ssbo-engine-selection.py'
       - 'tools/check-active-cmake-source-boundary.py'
@@ -88,7 +90,9 @@ jobs:
       - name: Test inline DMA fragmented GMMU invalidation (host UBSan)
         run: python3 -B tools/check-ps5-f07-inline-dma-buffer-elision-host.py
       - name: Check DMA BufferCache to TextureCache ownership (host UBSan)
-        run: python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
+        run: |
+          python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
+          python3 -B tools/check-ps5-buffer-region-multipage-host.py
       - name: Check maintained Maxwell shader and control-flow source parity
         run: |
           python3 -B tools/check-maintained-maxwell-prmt.py

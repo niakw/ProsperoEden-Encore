@@ -289,7 +289,6 @@ assert "compare_exchange_weak(current, current + 1u," in fermi_experimental
 assert "while (current < 8u)" in fermi_experimental
 assert "return 8u;" in fermi_experimental
 assert "${gpu_bounded_sample_helper}" not in cmake
-assert "EdenGpuBoundedSample" in prmt
 for part in (prmt_new, prmt_reg_new, fermi_new, fermi_layer_new, fermi_copy_new):
     assert ".fetch_add(1, std::memory_order_relaxed)" not in part
 assert prmt_new.count("EdenGpuBoundedSample(") == 2

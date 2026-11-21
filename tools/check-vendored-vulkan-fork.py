@@ -2675,7 +2675,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # C++ hunks on the generated AUDIT COPY only, matching the previously
     # verified FC27 vendor rewind (not the shipping renderer).
     dma_raster = 'vulkan_rasterizer.cpp'
-    current_raster = (active / dma_raster).read_text()
+    # GPU-49 is newer than this GPU-46/GPU-22 checkpoint. Consume the
+    # exact pre-GPU49 audit owner already SHA-reconstructed above rather than
+    # accepting or restamping the shipping rasterizer.
+    current_raster = gpu49_predecessor_paths[dma_raster].read_text()
     # GPU-46 is already exact-reversed above from its three shipping owners.
     # Reuse that SAME pinned edit table before this older GPU-22/GPU-30
     # checkpoint; never accept a new raster hash directly here.

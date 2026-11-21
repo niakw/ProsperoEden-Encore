@@ -145,7 +145,7 @@ expected=expected.replace(method_end,tiled_method+method_end,1)
 # could overrun short transfers and overwrite unread aliased input.
 legacy_1d_start="            if (!is_src_pitch && is_dst_pitch) {"
 live_1d_start="            if (is_src_pitch != is_dst_pitch) {"
-end_1d="            } else {\\n                if (!accelerate.BufferCopy(".replace("\\n","\\n")
+end_1d="            } else {" + chr(10) + "                if (!accelerate.BufferCopy("
 def extract_1d(text, start):
     begin=text.index(start, text.index("        // TODO: allow multisized components."))
     return text[begin:text.index(end_1d,begin)]

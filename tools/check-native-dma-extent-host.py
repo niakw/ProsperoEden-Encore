@@ -221,6 +221,31 @@ for old, reviewed in MAXWELL_METHOD_BOUNDS_RECEIPT:
     assert expected.count(old) == 1, "Pinned DMA register sink drift"
     assert native.count(reviewed) == 1, "Reviewed native DMA guard drift"
     expected = expected.replace(old, reviewed, 1)
+# GPU-24: the genuine 2D tiled-to-tiled DMA owner must bound ALL three
+# intermediate allocations and the decoder's u32 padded-image extents
+# before any guest memory access. Keep whole-source parity byte-for-byte.
+tiled_begin = "void MaxwellDMA::CopyBlockLinearToBlockLinear() {"
+tiled_end = "void MaxwellDMA::ReleaseSemaphore() {"
+assert expected.count(tiled_begin) == native.count(tiled_begin) == 1
+assert expected.count(tiled_end) == native.count(tiled_end) == 1
+old_tiled = expected.split(tiled_begin, 1)[1].split(tiled_end, 1)[0]
+new_tiled = native.split(tiled_begin, 1)[1].split(tiled_end, 1)[0]
+assert fnv1a32(tiled_begin + old_tiled) == 2645167551 and len(tiled_begin + old_tiled) == 3217
+assert fnv1a32(tiled_begin + new_tiled) == 316318506 and len(tiled_begin + new_tiled) == 5713
+for required in (
+    "src.block_size.width != 0 || dst.block_size.width != 0",
+    "src.layer != 0 || dst.layer != 0",
+    "src.depth != 1 || dst.depth != 1",
+    "x_elements > src_width - src_x_offset",
+    "x_elements > dst_width - dst_x_offset",
+    "MAX_SOFTWARE_TILED_DMA_BYTES",
+    "aligned_width > MAX_SOFTWARE_TILED_DMA_BYTES / aligned_height",
+    "pitch_wide > MAX_SOFTWARE_TILED_DMA_BYTES / regs.line_count",
+    "memory_manager.IsFullyMappedRange(regs.offset_in, src_size)",
+    "memory_manager.IsFullyMappedRange(regs.offset_out, dst_size)",
+):
+    assert required in new_tiled, ("Missing bounded tiled DMA owner", required)
+expected = expected.replace(tiled_begin + old_tiled, tiled_begin + new_tiled, 1)
 assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
 assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")' in cm

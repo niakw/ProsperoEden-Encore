@@ -382,20 +382,14 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             # SHA-sealed audit copies. The older FC27 attribute-source
             # witness must inspect those restored owners, NOT the shipping
             # successor with its added optional transition-hint cap.
-            vendor_now = subprocess.check_output(
-                ['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True
-            ).strip()
+            # If an earlier exact-source reversal already reconstructed this
+            # transition owner to the FC27 witness blob, consume that audit
+            # copy. Applicability is proven by bytes, never by a stale vendor SHA.
             transition_restored = (
-                vendor_now in {
-                    '0409c9a6b842ec50973d343cb628e21232382e41',
-                    '94aa8cd5214d17897391ede00534d7961b481171',
-                    '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                    'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                    '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'
-                } and name in {
+                name in {
                     'vk_graphics_pipeline_cost.cpp',
                     'include/video_core/renderer_vulkan/vk_graphics_pipeline.h'
-                }
+                } and raster_blob(expected[name].read_text()) == witness['current']
             )
             real_source = (expected[name].read_text()
                            if name == raster_owner or transition_restored

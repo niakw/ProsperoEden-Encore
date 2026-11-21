@@ -450,7 +450,11 @@ assert "regs.dst.depth = 1;" not in fermi_copy_new
 blitter = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 for token in (
     "src.depth, config.src_x0", "dst.depth, config.dst_x0",
-    "static_cast<size_t>(surface.pitch) * surface.height",
+    # The selected Fermi2D blitter now admits the entire GOB extent in u64,
+    # including the simpler pitch case, before any guest-memory read/write.
+    "const u64 bytes = static_cast<u64>(surface.pitch) * surface.height;",
+    "const auto src_size = checked_surface_size(src, src_bytes_per_pixel);",
+    "const auto dst_size = checked_surface_size(dst, dst_bytes_per_pixel);",
     "const size_t src_copy_size = static_cast<size_t>(src_extent_x) * src_extent_y * src_bytes_per_pixel;",
     "const size_t dst_copy_size = static_cast<size_t>(dst_extent_x) * dst_extent_y * dst_bytes_per_pixel;",
 ):

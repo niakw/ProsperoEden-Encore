@@ -56,6 +56,17 @@ depth_line = '    UNIMPLEMENTED_IF_MSG(regs.src.depth != 1, "Source depth is not
 assert fermi_default.count(depth_line + "\n") == 1
 fermi_default = fermi_default.replace(depth_line + "\n", depth_line +
     '    UNIMPLEMENTED_IF_MSG(regs.clip_enable != 0, "Clipped blit enabled");\n\n', 1)
+# Rewind the signed corner offset + safe clipped initialization on the COPY
+# to preserve the historical pinned-translation-unit comparison.
+assert "__builtin_sub_overflow(srcX" not in fermi_pinned
+origin_start = "    if (args.sample_mode.origin == Origin::Corner) {"
+origin_end = "    const auto need_align_to_pitch ="
+assert fermi_default.count(origin_start) == fermi_pinned.count(origin_start) == 1
+a = fermi_default.index(origin_start)
+z = fermi_default.index(origin_end, a)
+p = fermi_pinned.index(origin_start)
+q = fermi_pinned.index(origin_end, p)
+fermi_default = fermi_default[:a] + fermi_pinned[p:q] + fermi_default[z:]
 fermi_experimental = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_experimental.cpp").read_text()
 # The shipping variant adds an audited CodeQL #55 security-only
 # replacement of the pitch-alignment address block. Reverse that one

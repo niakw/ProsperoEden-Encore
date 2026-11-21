@@ -86,6 +86,41 @@ new_remap = """            // NVIDIA B0B5 SET_REMAP_COMPONENTS allows 1..4 bytes
             memory_manager.WriteBlockUnsafe(regs.offset_out, bytes, byte_count);"""
 assert expected.count(old_remap)==1
 expected=expected.replace(old_remap,new_remap)
+# The native copy engine now supports all pitch-linear B0B5 component
+# selectors. Rebuild from the immutable Eden baseline plus prior reviewed
+# deltas, then insert the exact selected CPU-remap owner with a locked
+# checksum and semantic anchors. Everything else remains byte-identical.
+def fnv1a32(text):
+    h=2166136261
+    for char in text:
+        h=((h ^ ord(char)) * 16777619) & 0xffffffff
+    return h
+include_anchor='#include "common/algorithm.h"'
+extra_includes='#include <algorithm>\\n#include <array>\\n#include <limits>\\n#include <vector>\\n\\n'
+extra_includes=extra_includes.replace('\\n','\n')
+assert expected.count(include_anchor)==1
+expected=expected.replace(include_anchor,extra_includes+include_anchor,1)
+helper_begin='// Remapped DMA lengths are measured in pixels/blocks, NOT bytes.'
+helper_end='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
+assert native.count(helper_begin)==1 and native.count(helper_end)==1
+helper=native[native.index(helper_begin):native.index(helper_end,native.index(helper_begin))]
+assert fnv1a32(helper)==2868677532, "Reviewed B0B5 helper changed"
+for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
+              'std::vector<u8> snapshot', 'memory.ReadBlock',
+              'memory.WriteBlock','CanCoalescePitchDma',
+              'const u64 src_stride', 'const u64 dst_stride'):
+    assert token in helper, token
+end_anchor='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
+assert expected.count(end_anchor)==1
+expected=expected.replace(end_anchor,helper+end_anchor,1)
+launch_start='    if (launch.remap_enable != 0 &&'
+launch_end='    if (launch.multi_line_enable) {'
+assert native.count(launch_start)==1
+insert=native[native.index(launch_start):native.index(launch_end,native.index(launch_start))]
+assert fnv1a32(insert)==933595590, "Selected B0B5 launch guard changed"
+assert 'CopyPitchRemap(memory_manager, regs.remap_const' in insert
+assert expected.count(launch_end)==1
+expected=expected.replace(launch_end,insert+launch_end,1)
 assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
 assert 'list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)' in cm

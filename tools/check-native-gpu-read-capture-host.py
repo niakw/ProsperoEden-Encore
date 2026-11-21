@@ -31,7 +31,10 @@ for filename in ("gpu_gl_host.cpp", "gpu_gl_host_dev.cpp",
     assert maintained.count(fixed) == 1, filename
     assert old not in maintained, filename
 vulkan = (root/"vendor/encore-active/eden-core/src/video_core/gpu_vulkan.cpp").read_text()
-assert vulkan.count(old) == 1 and fixed not in vulkan
+assert vulkan.count(fixed) == 1 and old not in vulkan
+assert 'set(EDEN_MAINTAINED_G21_GPU "${EDEN_G21_GPU_ROOT}/gpu_vulkan.cpp")' in cmake
+vulkan_body = start + vulkan.split(start, 1)[1].split(end, 1)[0]
+assert vulkan_body.count(fixed) == 1
 assert "python3 -B tools/check-native-gpu-read-capture-host.py" in workflow
 
 cpp = r"""
@@ -120,6 +123,7 @@ with tempfile.TemporaryDirectory(prefix="encore-read-capture-") as tmp:
     for label, source_body, is_native in (
         ("pinned", body, False),
         ("native", body.replace(old,fixed), True),
+        ("native-vulkan", vulkan_body, True),
     ):
         unit = work / (label + ".cpp")
         binary = work / label
@@ -145,4 +149,4 @@ with tempfile.TemporaryDirectory(prefix="encore-read-capture-") as tmp:
             assert broken.returncode != 0, "Original dangling capture was not detected"
             assert ("stack-use-after-return" in broken.stderr or
                     "stack-use-after-scope" in broken.stderr), broken.stderr
-print("NATIVE_GPU_READ_CAPTURE_HOST_PASS original_stack_use_after_return=1 native_callback_owns_range=1 normal_wait=1 preemptive_skip=1 sanitizer=address_undefined")
+print("NATIVE_GPU_READ_CAPTURE_HOST_PASS original_stack_use_after_return=1 native_callback_owns_range=1 vulkan_real_owner=1 normal_wait=1 preemptive_skip=1 sanitizer=address_undefined")

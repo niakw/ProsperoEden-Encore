@@ -63,6 +63,13 @@ assert 'PrmtMode::EdgeClampLeft' in expected
 assert 'PrmtMode::EdgeClampRight' in expected
 assert 'PrmtMode::Replicate16' in expected
 assert 'throw NotImplementedException("PRMT reserved mode {}", raw_mode)' in expected
+# PRMT no longer samples runtime diagnostics: all documented modes are handled,
+# while reserved modes fail directly. Remove the now-unused helper/includes
+# exactly so native Clang cannot warn on a dormant static function.
+retired_prmt_diagnostics='#include <atomic>\n#include <cstdio>\n'+helper+'\n'
+assert expected.count(retired_prmt_diagnostics)==1
+expected=expected.replace(retired_prmt_diagnostics,'',1)
+assert "EdenGpuBoundedSample" not in expected
 assert actual==expected, "PRMT/IMUL maintained shader is not the reviewed single native source"
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
@@ -70,7 +77,7 @@ assert actual==expected, "PRMT/IMUL maintained shader is not the reviewed single
 cas_owner=(root/"vendor/sources/eden/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp").read_text()
 assert "void TranslatorVisitor::ATOM_cas(u64 insn)" in cas_owner
 assert "void TranslatorVisitor::ATOM_cas(u64)" not in actual
-assert "EdenGpuBoundedSample" in actual and "EdenPrmtIndexReference" in actual
+assert "EdenGpuBoundedSample" not in actual and "EdenPrmtIndexReference" in actual
 assert "static_assert(EdenPrmtIndexReference" in actual
 assert 'target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")' in module
 assert 'write_derived("${PORT_BUILD_DIR}/maxwell_prmt_observed.cpp"' not in module

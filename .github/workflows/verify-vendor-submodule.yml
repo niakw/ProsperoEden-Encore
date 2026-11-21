@@ -43,6 +43,10 @@ jobs:
       # decoder; validate those exact compiled functions before a PS5 build.
       - name: Compile selected B0B5 tiled DMA remap (host UBSan)
         run: python3 -B tools/check-native-dma-tiled-remap-host.py
+      - name: Check maintained Maxwell shader and control-flow source parity
+        run: python3 -B tools/check-maintained-maxwell-prmt.py
+      - name: Check native Maxwell GPU source contracts
+        run: python3 -B tools/check-gpu-native-diagnostics.py
       - name: Check exact vendored Vulkan source fork
         run: python3 -B tools/check-vendored-vulkan-fork.py
       - name: Check exact vendored native RADV fork

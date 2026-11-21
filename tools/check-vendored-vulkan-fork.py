@@ -208,6 +208,28 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
     actual_vendor_pin = exact_vendor_pin
+    # GPU-22: keep the current-channel GMMU contiguous buffer-image DMA fix
+    # compiled; reverse only its complete, exact source delta for historical
+    # Vulkan/R23 byte proofs. The predecessor is independently pinned.
+    if raster_sha == '771e922890142b1f0d39f935bbf0be1a478e0f9e':
+        native = "      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),\n"
+        historical = "      accelerate_dma(buffer_cache, texture_cache, scheduler),\n"
+        assert raster_source.count(native) == 1, 'GPU-22 rasterizer receipt drift'
+        raster_source = raster_source.replace(native, historical, 1)
+        native = "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_, Tegra::MemoryManager* const& gpu_memory_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_},\n      gpu_memory{gpu_memory_} {}\n"
+        historical = "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_} {}\n"
+        assert raster_source.count(native) == 1, 'GPU-22 rasterizer receipt drift'
+        raster_source = raster_source.replace(native, historical, 1)
+        native = "#ifdef PS5_NATIVE\n    // ObtainBuffer translates only the first GPU VA into one CPU interval.\n    // A buffer spanning noncontiguous GMMU pages would upload/download\n    // unrelated physical memory. The normal MaxwellDMA CPU fallback\n    // supports a page-aware transfer for both image-copy directions.\n    // Test the channel currently bound to this rasterizer; no stale GMMU.\n    if (!gpu_memory ||\n        (!gpu_memory->IsGranularRange(buffer_operand.address, checked_bytes) &&\n         !gpu_memory->IsContinuousRange(buffer_operand.address, checked_bytes))) {\n        return false;\n    }\n#endif\n"
+        historical = ""
+        assert raster_source.count(native) == 1, 'GPU-22 rasterizer receipt drift'
+        raster_source = raster_source.replace(native, historical, 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == '71d097b9a83028dfad9370792c905bb3bfccfd5a', raster_sha
+        snapshot = temp/'ns1-gpu22-gmmu-rasterizer-audit'/raster_owner
+        snapshot.write_text(raster_source)
+        expected[raster_owner] = snapshot
+        print('ENCORE_NS1_GPU22_EXACT_REVERSE_PASS')
     # Share one GPU budget sample between native TextureCache and BufferCache.
     # Reverse the exact reviewed TickFrame only on the historical audit copy.
     # Reverse this exact shipping TickFrame on the historical audit copy.

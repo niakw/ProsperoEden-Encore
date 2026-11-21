@@ -656,7 +656,7 @@ print("NS1_NVDEC_SUBMIT_PREFLIGHT_HOST_PASS packet=1 command=1 truncated=1 "
 CDMA_CPP=V/"encore-active/eden-core/src/video_core/cdma_pusher.cpp"
 CDMA_HDR=V/"encore-active/eden-core/overrides/video_core/cdma_pusher.h"
 NVDEC_CPP=V/"encore-active/eden-core/src/video_core/host1x/nvdec.cpp"
-assert blob(CDMA_CPP)=="e6c17a6acb6949e9ab0d845d9032f9f14d467950"
+assert blob(CDMA_CPP)=="91ace41154430a718cd163ceacd45b9607b63d43"
 assert blob(CDMA_HDR)=="72338d9e2c07f2ebe019450c8b608df802738449"
 assert blob(NVDEC_CPP)=="c83ac98215fcf196ec8b2927ec9a421ddf95c9f7"
 assert blob(V/"sources/eden/src/video_core/cdma_pusher.cpp")=="d04b73877936b207fd5b8bd8b49ce41bbce67b0a"
@@ -808,3 +808,134 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-worker-") as temp:
 print("NS1_HOST1X_CDMA_WORKER_HOST_PASS authentic_stop=1 derived_dtor=2 "
       "join_before_frameclose=1 repeated_shutdown=1 threads=80 "
       "THI_bounds_0x20=1 NVDEC_bounds_0x178=1 ASan_UBSan_O0_O2=1")
+
+
+# GPU-39: the Host1x join-before-release patch must interrupt an
+# unsignalled Control syncpoint wait when its device closes. Execute
+# the selected SyncpointManager/Control methods with std::stop_token.
+SYNC_CPP=V/"encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
+SYNC_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h"
+CTRL_CPP=V/"encore-active/eden-core/src/video_core/host1x/control.cpp"
+CTRL_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/control.h"
+assert blob(SYNC_CPP)=="103ed91c68bae0238f2a2ce181e3e292845c19c1"
+assert blob(SYNC_HDR)=="4f45e7ca10bef7fadf94b4d08a310dea953e7315"
+assert blob(CTRL_CPP)=="fcbf4e092f054724b9fd4731c8dfec9917cea27a"
+assert blob(CTRL_HDR)=="fc1c4e3d47bdcf8ef282da02410940432051fcca"
+SYNC_SOURCE=SYNC_CPP.read_text()
+SYNC_HEADER=SYNC_HDR.read_text()
+CTRL_SOURCE=CTRL_CPP.read_text()
+CTRL_HEADER=CTRL_HDR.read_text()
+assert "void WaitHost(u32 syncpoint_id, u32 expected_value, std::stop_token stop);" in SYNC_HEADER
+assert "void WaitHost(u32 syncpoint_id, u32 expected_value);" in SYNC_HEADER
+assert "void ProcessMethod(Host1x& host1x, Method method, u32 argument," in CTRL_HEADER
+assert "thread.get_stop_token()" in CDMA
+assert "EDEN_HOST1X_CONTROL_HEADER" in CMAKE and "host1x/control.cpp" in CMAKE
+assert 'list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)' in CMAKE
+assert 'list(REMOVE_ITEM video_sources "' in CMAKE
+assert 'encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h' in CMAKE
+start=SYNC_SOURCE.index("void SyncpointManager::WaitHost(u32 id, u32 expected, std::stop_token stop) {")
+end=SYNC_SOURCE.index("\nvoid SyncpointManager::Increment(",start)
+native_wait=SYNC_SOURCE[start:end]
+ctrl_start=CTRL_SOURCE.index("void Control::ProcessMethod(")
+ctrl_end=CTRL_SOURCE.index("\n} // namespace Tegra::Host1x",ctrl_start)
+native_control=CTRL_SOURCE[ctrl_start:ctrl_end]
+assert "std::stop_callback on_stop(stop," in native_wait
+assert "std::scoped_lock lock(guard)" in native_wait
+assert "stop.stop_requested() ||" in native_wait
+assert "WaitHost(data, syncpoint_value, stop)" in native_control
+fixture=r"""
+#include <array>
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
+#include <stop_token>
+#include <thread>
+#define LOG_TRACE(...) ((void)0)
+#define UNIMPLEMENTED_MSG(...) ((void)0)
+using u32=std::uint32_t;
+namespace Tegra::Host1x {
+struct SyncpointManager {
+    static constexpr std::size_t NUM_MAX_SYNCPOINTS=192;
+    std::array<std::atomic<u32>,NUM_MAX_SYNCPOINTS> syncpoints_host{};
+    std::condition_variable wait_host_cv{};
+    std::mutex guard{};
+    void WaitHost(u32,u32,std::stop_token);
+    void IncrementHost(u32 id) {
+        std::scoped_lock lock(guard);
+        syncpoints_host[id].fetch_add(1,std::memory_order_release);
+        wait_host_cv.notify_all();
+    }
+};
+struct Host1x {
+    SyncpointManager syncpoint{};
+    SyncpointManager& GetSyncpointManager(){return syncpoint;}
+};
+struct Control {
+    enum class Method:u32{WaitSyncpt=0x8,LoadSyncptPayload32=0x4e,WaitSyncpt32=0x50};
+    u32 syncpoint_value{};
+    void ProcessMethod(Host1x&,Method,u32,std::stop_token);
+    void Execute(Host1x&,u32,std::stop_token);
+};
+__WAIT__
+__CONTROL__
+}
+int main() {
+    using namespace Tegra::Host1x;
+    for(int i=0;i<50;++i) {
+        Host1x host{};
+        Control control{};
+        control.ProcessMethod(host,Control::Method::LoadSyncptPayload32,100000,{});
+        std::atomic<bool> exited{false};
+        std::jthread worker([&](std::stop_token stop) {
+            control.ProcessMethod(host,Control::Method::WaitSyncpt32,1,stop);
+            exited.store(true,std::memory_order_release);
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        assert(!exited.load(std::memory_order_acquire));
+        worker.request_stop();
+        worker.join();
+        assert(exited.load(std::memory_order_acquire));
+        assert(host.syncpoint.syncpoints_host[1].load()==0);
+    }
+    for(int i=0;i<50;++i) {
+        Host1x host{};
+        Control control{};
+        control.ProcessMethod(host,Control::Method::LoadSyncptPayload32,1,{});
+        std::atomic<bool> exited{false};
+        std::jthread worker([&](std::stop_token stop) {
+            control.ProcessMethod(host,Control::Method::WaitSyncpt,1,stop);
+            exited.store(true,std::memory_order_release);
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        assert(!exited.load(std::memory_order_acquire));
+        host.syncpoint.IncrementHost(1);
+        worker.join();
+        assert(exited.load(std::memory_order_acquire));
+        assert(host.syncpoint.syncpoints_host[1].load()==1);
+    }
+    Host1x immediate{};
+    Control c{};
+    c.ProcessMethod(immediate,Control::Method::LoadSyncptPayload32,1,{});
+    immediate.syncpoint.IncrementHost(1);
+    c.ProcessMethod(immediate,Control::Method::WaitSyncpt,1,{});
+}
+""".replace("__WAIT__",native_wait).replace("__CONTROL__",native_control)
+compiler=shutil.which("clang++-18") or shutil.which("clang++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-host1x-stopwait-") as temp:
+    source=Path(temp)/"stopwait.cpp"
+    source.write_text(fixture)
+    for opt in ("-O0","-O2"):
+        exe=Path(temp)/("stopwait-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-pthread","-fsanitize=address,undefined",
+                        "-fno-sanitize-recover=all",str(source),"-o",str(exe)],
+                       check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_HOST1X_STOP_AWARE_WAIT_HOST_PASS native_syncpoint=1 native_control=1 "
+      "stop_while_waiting=1 valid_fence_signal=1 immediate_ready=1 "
+      "threads=200 O0_O2=2 ASan_UBSan=1")

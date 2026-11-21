@@ -125,13 +125,13 @@ helper_begin='// Signed 2D pitch geometry and device-address overlap are shared 
 helper_end='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert native.count(helper_begin)==1 and native.count(helper_end)==1
 helper=native[native.index(helper_begin):native.index(helper_end,native.index(helper_begin))]
-assert fnv1a32(helper)==998797921 and len(helper)==15985, "Reviewed B0B5 helper changed"
+assert fnv1a32(helper)==2828891531 and len(helper)==16811, "Reviewed B0B5 helper changed"
 for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
               'std::vector<u8> snapshot', 'memory.ReadBlock',
               'memory.WriteBlock','CanCoalescePitchDma',
               'const u64 src_stride', 'const u64 dst_stride',
               'const bool virtual_overlap', 'bool PitchDmaPhysicalOverlap(',
-              'constexpr bool PitchDmaEnvelope(', 'bool CopyPitchDmaPlain(',
+              'constexpr bool PitchDmaEnvelope(', 'bool CopyPitchDmaPlain(', 'bool DmaTiledSoftwareOverlap(',
               'memory.GpuToCpuAddress(src_begin)',
               'memory.GpuToCpuAddress(address)',
               'MAX_PHYSICAL_SEGMENTS = 16384',

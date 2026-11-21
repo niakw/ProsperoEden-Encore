@@ -36,6 +36,26 @@ prmt_reg_new = extract_method(prmt, "PRMT_reg")
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 fermi_default = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
+# Verify the current native clipping implementation, then rewind that ONE
+# feature in-memory for the old pinned/experimental parity contract below.
+assert "NVIDIA 2D CLIP_X/Y/W/H is a destination scissor" in fermi_default
+assert "__builtin_mul_overflow" in fermi_default
+assert "left - args.dst_x0, config.src_x0" in fermi_default
+assert "right - args.dst_x0, config.src_x1" in fermi_default
+assert "top - args.dst_y0, config.src_y0" in fermi_default
+assert "bottom - args.dst_y0, config.src_y1" in fermi_default
+assert 'UNIMPLEMENTED_IF_MSG(regs.clip_enable != 0, "Clipped blit enabled");' not in fermi_default
+fermi_default = fermi_default.replace("#include <algorithm>\n#include <limits>\n\n", "", 1)
+clip_start = "    // NVIDIA 2D CLIP_X/Y/W/H is a destination scissor"
+clip_end = "\n    const auto need_align_to_pitch ="
+assert fermi_default.count(clip_start) == 1
+clip_start_pos = fermi_default.index(clip_start)
+clip_end_pos = fermi_default.index(clip_end, clip_start_pos)
+fermi_default = fermi_default[:clip_start_pos] + fermi_default[clip_end_pos + 1:]
+depth_line = '    UNIMPLEMENTED_IF_MSG(regs.src.depth != 1, "Source depth is not one");\n'
+assert fermi_default.count(depth_line + "\n") == 1
+fermi_default = fermi_default.replace(depth_line + "\n", depth_line +
+    '    UNIMPLEMENTED_IF_MSG(regs.clip_enable != 0, "Clipped blit enabled");\n\n', 1)
 fermi_experimental = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_experimental.cpp").read_text()
 # The shipping variant adds an audited CodeQL #55 security-only
 # replacement of the pitch-alignment address block. Reverse that one

@@ -2178,6 +2178,35 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'include/video_core/renderer_vulkan/vk_scheduler.h',
         'vulkan_scheduler.cpp',
     }
+    # GPU-22 updated the generator's AccelerateDMA header AFTER this
+    # frozen P04 resolution receipt was taken. The shipping vendor was
+    # already SHA-checked and reversed in the FC27 header witness above;
+    # reverse the SAME two exact hunks on the generator's AUDIT COPY
+    # before the historical SHA256 and full-file reconstruction.
+    raster_header = 'include/video_core/renderer_vulkan/vk_rasterizer.h'
+    generated_header = normalized_generated[raster_header].read_text()
+    shipping_header = (active / raster_header).read_text()
+    assert git_blob_sha(shipping_header) == (
+        'db60043206cc66a284bd3e9327a9fed7b011b25a'), (
+        'GPU-22 native Vulkan rasterizer header drift')
+    gpu22_header_hunks = (
+        ('    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n'
+         '                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);',
+         '    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n'
+         '                           Scheduler& scheduler);'),
+        ('    // The GPU address space changes on channel binds. Reference the\n'
+         '    // rasterizer\'s active pointer, not a stale construction-time channel.\n'
+         '    Tegra::MemoryManager* const& gpu_memory;\n', ''),
+    )
+    for modern, historic in gpu22_header_hunks:
+        assert generated_header.count(modern) == shipping_header.count(modern) == 1, (
+            'GPU-22 exact generated header method drift')
+        generated_header = generated_header.replace(modern, historic, 1)
+    p04_header = temp / 'normalized-generated-gpu22' / raster_header
+    p04_header.parent.mkdir(parents=True, exist_ok=True)
+    p04_header.write_text(generated_header)
+    normalized_generated[raster_header] = p04_header
+    print('ENCORE_NS1_GPU22_GENERATOR_HEADER_EXACT_REVERSE_PASS')
     resolve_hunks = 0
     for entry in resolve_receipt['files']:
         name = entry['path']

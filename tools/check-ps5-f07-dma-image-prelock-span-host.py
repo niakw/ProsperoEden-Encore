@@ -87,7 +87,8 @@ struct AccelerateDMA {
     BufferCacheMock buffer_cache;
     TextureCacheMock texture_cache;
     Tegra::MemoryManager current{};
-    Tegra::MemoryManager* gpu_memory=&current;
+    Tegra::MemoryManager* bound_channel=&current;
+    Tegra::MemoryManager* const& gpu_memory=bound_channel;
     template<bool IS_IMAGE_UPLOAD>
     bool DmaBufferImageCopy(const Tegra::DMA::ImageCopy&,
        const Tegra::DMA::BufferOperand&,
@@ -136,7 +137,9 @@ int main(){
         // A valid byte count but fragmented GMMU must be rejected before
         // DmaImageId mutates cache ownership. This tests both directions.
         AccelerateDMA fragmented;
-        fragmented.current.fragmented=true;
+        Tegra::MemoryManager next_channel;
+        next_channel.fragmented=true;
+        fragmented.bound_channel=&next_channel;
         Tegra::DMA::BufferOperand image_buffer{64,32,0x1000};
         Tegra::DMA::ImageCopy copy{};
         Tegra::DMA::ImageOperand image{};
@@ -144,7 +147,8 @@ int main(){
             ? fragmented.DmaBufferImageCopy<true>(copy,image_buffer,image)
             : fragmented.DmaBufferImageCopy<false>(copy,image_buffer,image);
         assert(!admitted);
-        assert(fragmented.current.checks==2);
+        assert(next_channel.checks==2);
+        assert(fragmented.current.checks==0);
         assert(fragmented.texture_cache.looked_up==0);
         assert(fragmented.buffer_cache.mutex.requests>0);
 #endif

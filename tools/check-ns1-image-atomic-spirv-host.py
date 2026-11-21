@@ -146,8 +146,10 @@ def main():
         "-ffunction-sections", "-fdata-sections", "-Wno-unused-parameter",
         "-pthread",
         "-I" + str(FMT),
-        "-I" + str(ACTIVE_INCLUDE),
+        # Match target_include_directories(shader_recompiler BEFORE ...):
+        # the maintained source ABI must shadow the legacy include snapshot.
         "-I" + str(ACTIVE),
+        "-I" + str(ACTIVE_INCLUDE),
         "-I" + str(SRC),
         "-I" + str(SRC / "dynarmic/src"),
         "-I" + str(SIRIT / "include"),

@@ -83,13 +83,18 @@ assert "rb.Push(Kernel::ResultNotImplemented);" in service
 # Optional services that Eden does not use for gameplay may be explicit no-ops,
 # but only through the exact whitelist in the maintained dispatcher.
 assert "IsSafeOptionalNoOp" in service
-for optional_service in ('"pdm:ntfy"', '"ILogger"', '"erpt:c"', '"eupld:c"'):
+for optional_service in (
+    '"pdm:ntfy"', '"ILogger"', '"erpt:c"', '"eupld:c"',
+    '"ICommonStateGetter"', '"ISelfController"',
+):
     assert optional_service in service
 for optional_command in (
     '"NotifyAppletEvent"', '"NotifyLibraryAppletEvent"',
     '"TransmitHashedLog"', '"DevNotify"',
     '"SetInitialLaunchSettingsCompletionTime"', '"InvalidateForcedShutdownDetection"',
     '"SetUrl"', '"ImportCrt"', '"ImportPki"', '"SetAutoUpload"',
+    '"AllowToEnterSleep"', '"DisallowToEnterSleep"',
+    '"SetDesirableKeyboardLayout"', '"ReportMultimediaError"',
 ):
     assert optional_command in service
 assert "(STUBBED) optional no-op" in service

@@ -1,17 +1,26 @@
 # NS1 — Catalogue des fonctions Horizon / SwitchBrew et couverture Eden Encore
 
-**Vérification : 2026-11-21 (Europe/Paris).** Branche `opt/ns1-fc27-runtime-20261121` ; moteur `5bef0df2b23f650b470659e928e3682cf2db3916` ; vendor `b8883667410054db189d00b3a5144088f47d3af9`. Aucun résultat de console PS5 n'est déduit de cette table.
+**Vérification documentaire : 2026-11-21 (Europe/Paris).** Branche `opt/ns1-fc27-runtime-20261121` ; **couple runtime pris comme référence** : moteur `5bef0df2b23f650b470659e928e3682cf2db3916` → vendor/gitlink `b8883667410054db189d00b3a5144088f47d3af9` ; les commits ultérieurs de ce fichier sont uniquement documentaires. Aucun résultat de console PS5 n'est déduit de cette table.
 
-> **Portée** : liste de référence exhaustive des entrées de la table SVC du miroir SwitchBrew consulté, index de familles de services IPC, et inventaire des lacunes déjà identifiées. Les commandes IPC seront classées une à une lors du croisement des interfaces C++ actives. Une déclaration/registration ne signifie jamais « implémenté ».
+> **Portée** : liste des entrées de la table SVC du miroir SwitchBrew consulté, index des familles IPC et 4 786 lignes de commandes extraites de 54 pages du miroir. Les codes D/P/Q reflètent une **analyse statique limitée** : les commandes doivent encore être rapprochées du C++ réellement sélectionné et du firmware NS1. Une déclaration/registration ne signifie jamais « implémenté ».
 
 ## Sources et version du référentiel
 
 - [SwitchBrew SVC](https://switchbrew.org/wiki/SVC), [miroir technique](https://github.com/backupbrew/switchbrew/blob/master/SVC.md) (blob `74ea4faf68e8a59bf4c2243a110f3a695e794bd8`).
 - [SwitchBrew Services API](https://switchbrew.org/wiki/Services_API), [miroir technique](https://github.com/backupbrew/switchbrew/blob/master/Services%20API.md) (blob `cd6490d27b0e383a6fac90273611d791f6926320`).
 - [Énumération SVC Eden `svc.h`](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc.h) (blob `d1e02ec0bc83b538a7f372624958f7ed63bf1c37`).
-- Répertoire `sources/eden/src/core/hle/kernel/svc` : **37 unités C++** ; **6 unités prioritaires** inspectées pour le premier classement, les autres **non qualifiées**.
+- Répertoire `sources/eden/src/core/hle/kernel/svc` : **37 unités C++ de base examinées** ; chaque corps SVC correspondant à une ligne SwitchBrew a reçu un lien source lorsque localisé. La sélection des TU natives reste à confirmer par CMake/ELF.
 
 Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions HOS ; les évolutions récentes de la page live, notamment **S1/S2**, devront être rapprochées séparément. **Aucune commande exclusive Switch 2 ne doit être comptée NS1.**
+
+## Bilan de classification documentaire (21/11/2026)
+
+| Inventaire | D — rejet explicite | P — partiel/stub | Q — à qualifier | E — ID absent de l'énumération |
+|---|---:|---:|---:|---:|
+| **117 SVC SwitchBrew** | **33** | **3** | **80** | **1** |
+| **4 786 lignes de commandes IPC extraites** | **68** | **19** | **4 699** | — |
+
+**Attention :** ce sont des **lignes documentaires**, pas des jeux testés ni un inventaire certifié de bugs. Les 68 IPC D désignent des handlers nuls ou rejets dans les sources de base inspectées ; les 80 SVC Q ne sont pas 80 implémentations réussies. Deux familles de l'index historique n'ont pas de page de commandes extraite dans ce catalogue. Les versions actuelles des interfaces S1/S2 exigent une comparaison séparée avec SwitchBrew live.
 
 ## Statuts (ne pas confondre source et gameplay)
 
@@ -254,7 +263,7 @@ Header Eden : **123 identifiants**, table wiki historique : **117 identifiants**
 
 Références de suivi : [registre de complétude NS1](./EDEN_ENCORE_NS1_IMPLEMENTATION_COMPLETENESS_REGISTER_2026-11-21.md) et [issue maîtresse #298](https://github.com/niakw/ProsperoEden-Encore/issues/298).
 
-**Limite actuelle :** les 117 entrées SVC du miroir historique et 4 786 lignes IPC extraites de 54 pages de familles sont listées. La plupart des commandes IPC restent Q ; seul un lot ciblé est rapproché des handlers C++ de base. Les 56 familles d'index comprennent deux pages non extraites depuis cet index. Les versions HOS et noms de commande du wiki live peuvent différer. **Aucun build ni test PS5 n'a été réalisé pour ce document.**
+**Limite actuelle :** les 117 entrées SVC du miroir historique et 4 786 lignes IPC extraites de 54 pages de familles sont listées. Les 37 TU SVC de base ont été passées en revue. La plupart des commandes IPC restent Q ; seul un lot ciblé a été rapproché des handlers C++ de base. Les 56 familles d'index comprennent deux entrées sans page de commandes extraite depuis cet index. Les versions HOS et noms de commande du wiki live peuvent différer. **Aucun build ni test PS5 n'a été réalisé pour ce document.**
 
 ## 7. Catalogue des commandes IPC documentées par SwitchBrew
 
@@ -5507,7 +5516,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 [Wiki SwitchBrew](https://switchbrew.org/wiki/Jpegdec_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Jpegdec%20services.md)
 
-**0 commandes documentées**.
+**0 ligne de commande extraite du tableau au format attendu** ; la documentation ou le service peut néanmoins contenir des commandes.
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
@@ -5531,7 +5540,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 [Wiki SwitchBrew](https://switchbrew.org/wiki/NGCT_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/NGCT%20services.md)
 
-**0 commandes documentées**.
+**0 ligne de commande extraite du tableau au format attendu** ; la documentation ou le service peut néanmoins contenir des commandes.
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|

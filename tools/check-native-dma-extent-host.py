@@ -140,6 +140,24 @@ for proof in ("UnswizzleSubrect(", "SwizzleSubrect(", "IsFullyMappedRange(",
               "std::vector<u8> linear_dst"):
     assert proof in tiled_method, proof
 expected=expected.replace(method_end,tiled_method+method_end,1)
+# Restore the complete historical 1D tiled branch from the immutable vendor,
+# then apply the byte-exact corrected native owner. The older two 16-byte loops
+# could overrun short transfers and overwrite unread aliased input.
+legacy_1d_start="            if (!is_src_pitch && is_dst_pitch) {"
+live_1d_start="            if (is_src_pitch != is_dst_pitch) {"
+end_1d="            } else {\\n                if (!accelerate.BufferCopy(".replace("\\n","\\n")
+def extract_1d(text, start):
+    begin=text.index(start, text.index("        // TODO: allow multisized components."))
+    return text[begin:text.index(end_1d,begin)]
+old_1d=extract_1d(pinned,legacy_1d_start)
+live_1d=extract_1d(native,live_1d_start)
+assert fnv1a32(old_1d)==2401188561 and len(old_1d)==1612
+assert fnv1a32(live_1d)==573919754 and len(live_1d)==5118
+assert "memory_manager.WriteBlockCached(destination," in live_1d
+assert "memory_manager.IsFullyMappedRange(source, count)" in live_1d
+assert "MAX_ALIAS_SNAPSHOT" in live_1d
+assert expected.count(old_1d)==1
+expected=expected.replace(old_1d,live_1d,1)
 assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
 assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")' in cm

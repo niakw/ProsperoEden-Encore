@@ -128,7 +128,20 @@ def git_blob(text):
 # while exact Git blobs seal the two complete sources actually compared. This
 # avoids coupling byte identity to obsolete intermediate whitespace/order.
 assert git_blob(pristine)=="02553558a826d31e76c20eb53bf729af8de4a6b7"
-assert git_blob(actual)=="e2655bff9b25bad1ab27e28f1f41f15ee904ddf1"
+assert git_blob(actual)=="f1f91cbc6a58c2a5f8febff783574c587f4b59ea"
+# IMAD/IMAD32I AvgMode is a 2-bit field, not two independent booleans.
+# Modes 1/2 are reviewed negate-addend/negate-multiplier operations; mode 3
+# remains fail-closed. CC/X/SAT are deliberately still unsupported.
+assert "enum class ImadNegation : u32" in actual
+assert "BitField<51, 2, u64> negation;" in actual
+assert "BitField<55, 2, u64> negation;" in actual
+assert 'throw NotImplementedException("IMAD reserved PlusOne mode")' in actual
+assert 'throw NotImplementedException("IMAD32I reserved PlusOne mode")' in actual
+assert 'throw NotImplementedException("IMAD X/SAT/CC modifiers")' in actual
+assert 'throw NotImplementedException("IMAD32I CC modifier")' in actual
+assert "negate_addend" not in actual and "negate_a" not in actual
+assert actual.count("ImadNegation::Multiplier") >= 2
+assert actual.count("ImadNegation::Addend") >= 2
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
 # and silently diverges from the actual source-generation oracle.
@@ -222,4 +235,4 @@ assert 'ctx.OpAccessChain(def.pointer_type, def.id, idx)' in image_atomic
 assert 'ctx.uses_nonuniform_storage_image = true' in image_atomic
 assert 'ctx.uses_nonuniform_storage_texel_buffer = true' in image_atomic
 assert "backend/spirv/emit_spirv_image.cpp" in sample_cmake
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I + CFG control/PRET + PIXLD.CovMask SampleMask + bounded storage image arrays + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + IMAD/IMAD32I NEG + CFG control/PRET + PIXLD.CovMask SampleMask + bounded storage image arrays + image atomic Inc32/Dec32 CAS, unsupported forms fail-closed")

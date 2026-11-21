@@ -428,30 +428,38 @@ H1_CPP=V/"encore-active/eden-core/src/video_core/host1x/host1x.cpp"
 H1_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/host1x.h"
 H1_ORIG_CPP=V/"sources/eden/src/video_core/host1x/host1x.cpp"
 H1_ORIG_HDR=V/"sources/eden/src/video_core/host1x/host1x.h"
-assert blob(H1_CPP)=="bc388b411cf0f90f979c62a2e268bebd7f4557c3"
-assert blob(H1_HDR)=="32663394994db47fcca82f3dd7682104dc880447"
+assert blob(H1_CPP)=="9b88ca7a45a45bb537a6faa58f48db893d45ef24"
+assert blob(H1_HDR)=="d716ee97dd8be807d2f29219c4b0c7072ed6b028"
 assert blob(H1_ORIG_CPP)=="590b0e0ff2f7d5f9f3771b07659afcbb49814863"
 assert blob(H1_ORIG_HDR)=="3b886a59d59763278d1c44b8b993d25f7260656d"
 HS=H1_CPP.read_text();HH=H1_HDR.read_text()
 OS=H1_ORIG_CPP.read_text();OH=H1_ORIG_HDR.read_text()
 guard="fd < 0 || static_cast<std::size_t>(fd) >= devices.size()"
-assert HS.count(guard)==2 and HH.count(guard)==1
+assert HS.count(guard)==3 and HH.count(guard)==0
 assert HS.count("devices[fd]")==4 and "devices[fd]" not in HH
+assert "std::mutex device_dispatch_mutex;" in HS
+assert HS.count("std::scoped_lock lk{device_dispatch_mutex};")==3
+assert "void Host1x::PushEntries(" in HS
+assert "void PushEntries(s32 fd, ChCommandHeaderList&& entries);" in HH
+assert "std::mutex device_dispatch_mutex" not in HH # no Host1x class size / ABI change
 # Two dispatches and two guarded re-open probes; both happen after the FD preflight.
 # The two StartDevice dispatches are reached only after the signed range guard.
 start="void Host1x::StartDevice("
 stop="void Host1x::StopDevice("
-now_dtor=HS[HS.index("Host1x::~Host1x()"):HS.index("\nvoid Host1x::StartDevice(")]
-old_dtor=OS[OS.index("Host1x::~Host1x()"):OS.index("\nvoid Host1x::StartDevice(")]
-now_start=HS[HS.index(start):HS.index("    switch (type) {",HS.index(start))]
-old_start=OS[OS.index(start):OS.index("    switch (type) {",OS.index(start))]
-assert HS.replace(now_dtor,old_dtor,1).replace(now_start,old_start,1).replace(
-    HS[HS.index(stop):],OS[OS.index(stop):],1)==OS
+# All five reviewed Host1x methods are pinned by the whole source blob.
+# The separate synchronization is intentionally in the TU, preserving the
+# existing C++ type layout. The historical Eden source remains immutable.
+assert "void Host1x::PushEntries(s32 fd, ChCommandHeaderList&& entries)" in HS
+assert "std::mutex device_dispatch_mutex;" not in OS
+assert "std::scoped_lock lk{device_dispatch_mutex};" not in OS
 push="    void PushEntries(s32 fd,"
 limit="\n    Core::System& system;"
 new_push=HH[HH.index(push):HH.index(limit)]
 old_push=OH[OH.index(push):OH.index(limit)]
-assert HH.replace(new_push,old_push,1).replace(
+assert HH.replace(
+    "    // Submission and FD close/reopen can originate from different NVDRV\n"
+    "    // service threads. Dispatch must not race with device variant teardown.\n",""
+).replace(new_push,old_push,1).replace(
     "#include <variant>\n#include <cstddef>","#include <variant>")==OH
 cm_fragment=CMAKE[CMAKE.index("# Native Host1x FD safety:"):CMAKE.index("# N54: shared PS5 texture-cache")]
 for item in ("if(PS5_NATIVE)","list(FIND video_sources",
@@ -467,6 +475,9 @@ cpp=r"""
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <atomic>
+#include <mutex>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -474,6 +485,10 @@ using s32=std::int32_t;
 using u32=std::uint32_t;
 #define LOG_ERROR(...) ((void)0)
 namespace Tegra::Host1x {
+std::mutex device_dispatch_mutex;
+std::atomic<bool> submit_entered{false};
+std::atomic<bool> submit_release{false};
+std::atomic<bool> close_finished{false};
 using ChCommandHeaderList=std::vector<int>;
 enum class ChannelType:u32 {MsEnc=0,VIC=1,GPU=2,NvDec=3};
 struct Host1x;
@@ -481,8 +496,14 @@ struct Nvdec {
     s32 fd;
     unsigned submits=0;
     Nvdec(Host1x&,s32 n,u32):fd(n){}
-    void PushEntries(ChCommandHeaderList&& a) {submits+=unsigned(a.size());}
-    void Shutdown(){}
+    void PushEntries(ChCommandHeaderList&& a) {
+        if(fd==7){
+            submit_entered.store(true,std::memory_order_release);
+            while(!submit_release.load(std::memory_order_acquire)) std::this_thread::yield();
+        }
+        submits+=unsigned(a.size());
+    }
+    void Shutdown(){if(fd==7)assert(submit_release.load(std::memory_order_acquire));}
 };
 struct Vic {
     s32 fd;
@@ -526,6 +547,24 @@ int main() {
     h.StopDevice(1023,ChannelType::VIC);
     assert(std::holds_alternative<std::monostate>(h.devices[0]));
     assert(std::holds_alternative<std::monostate>(h.devices[1023]));
+    // Deterministic race witness: PushEntries is paused INSIDE the device
+    // method while StopDevice attempts to replace that same variant.
+    // Without the shared dispatch lock, Shutdown occurs before release.
+    h.StartDevice(7,ChannelType::NvDec,0);
+    std::thread submitter([&]{h.PushEntries(7,{1,2,3});});
+    for(int i=0;i<200000&&!submit_entered.load(std::memory_order_acquire);++i)
+        std::this_thread::yield();
+    assert(submit_entered.load(std::memory_order_acquire));
+    std::thread closer([&]{
+        h.StopDevice(7,ChannelType::NvDec);
+        close_finished.store(true,std::memory_order_release);
+    });
+    for(int i=0;i<20000;++i)std::this_thread::yield();
+    assert(!close_finished.load(std::memory_order_acquire));
+    submit_release.store(true,std::memory_order_release);
+    submitter.join();closer.join();
+    assert(close_finished.load(std::memory_order_acquire));
+    assert(std::holds_alternative<std::monostate>(h.devices[7]));
 }
 """.replace("__PUSH__",new_push).replace("__METHODS__",source_methods)
 compiler=shutil.which("clang++-18") or shutil.which("clang++")
@@ -536,11 +575,11 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-device-fd-") as tmp:
     for opt in ("-O0","-O2"):
         exe=Path(tmp)/("fd-"+opt[1:])
         subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
-                        "-Wno-unused-parameter", # StopDevice preserves original ABI argument.
+                        "-Wno-unused-parameter","-pthread", # Real close/submit interleaving.
                         "-fsanitize=address,undefined","-fno-sanitize-recover=all",
                         str(source),"-o",str(exe)],check=True,timeout=45)
         subprocess.run([str(exe)],check=True,timeout=20)
-print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 "
+print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 concurrent_close=1 "
       "negative_fd=1 above_1023=1 NVDEC_VIC_dispatch=1 teardown=1 "
       "ASan_UBSan=1 O0_O2=2")
 

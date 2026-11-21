@@ -297,8 +297,12 @@ if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
     for relative, expected in NS2_GPFIFO_ALLOC_GUARD_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == (NS2_LEGACY_GPFIFO_ALLOC_BLOBS.get(relative, expected)
-                          if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE else expected), (
+        expected_current = (
+            NS2_LEGACY_GPFIFO_ALLOC_BLOBS.get(relative, expected)
+            if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE else expected)
+        if NS2_GPFIFO_INLINE_ACTIVE:
+            expected_current = NS2_GPFIFO_INLINE_BLOBS.get(relative, expected_current)
+        assert actual == expected_current, (
             "NS2 native GPFIFO allocation gate source drift", relative, actual)
     selected = NS2_GSV_MOVE_OWNERS_PIN
     gitlink_vendor_pin = NS2_GSV_MOVE_OWNERS_PIN

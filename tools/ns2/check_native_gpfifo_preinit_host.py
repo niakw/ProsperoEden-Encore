@@ -26,6 +26,12 @@ native_plan_guard = admission.split("if (native && !native_plan)", 1)[1].split(
 assert "return NvResult::BadParameter;" in native_plan_guard
 assert "EDEN_NS2_GPFIFO_REJECT" in native_plan_guard
 assert "if (!opened || opened->process != native_owner)" in admission
+assert "if (!native_channel_enabled)" in admission
+assert admission.index("if (!native_channel_enabled)") < admission.index(
+    "for (const auto& [other_fd, session_id] : sessions)")
+assert "return NvResult::InvalidState;" in admission.split(
+    "if (!native_channel_enabled)",1)[1].split(
+    "for (const auto& [other_fd, session_id] : sessions)",1)[0]
 assert "NativeGpuChannelRegistry::Instance().Bind(" not in admission
 assert "system.GPU().InitChannel(" not in admission
 assert "IncrementSyncpointMaxExt(" not in admission
@@ -77,6 +83,7 @@ struct SessionRegistry {
 };
 struct Gpu {
     bool native{};
+    bool native_channel_enabled{};
     std::map<int,int> sessions;
     SessionRegistry core;
     SyncpointManager syncpoint_manager;
@@ -98,6 +105,7 @@ int main() {
     Kernel::KProcess alice{1},bob{2};
     Gpu gpu;
     gpu.native=true;
+    gpu.native_channel_enabled=true; // successful GPFIFO allocation / setup-bind
     gpu.sessions[42]=1;
     gpu.core.entries[1]={&alice};
     auto denied=[&](u32 flags,u32 count,NvResult expected) {
@@ -118,6 +126,9 @@ int main() {
     gpu.core.entries.erase(1);
     denied(0x102,3,NvResult::InvalidState); // retired session
     gpu.core.entries[1]={&alice};
+    gpu.native_channel_enabled=false;
+    denied(0x102,3,NvResult::InvalidState); // disabled native channel fails closed
+    gpu.native_channel_enabled=true;
     // Execute the newly integrated REAL owner wait admission: no fake
     // native queue publication when the input syncpoint is unsatisfied.
     denied(0x1,7,NvResult::NotImplemented);
@@ -144,7 +155,7 @@ int main() {
     assert(maxwell.initializations==1 && maxwell.binds==0 &&
            maxwell.reservations==1 && maxwell.enqueues==1);
     std::puts("P2_7_GPFIFO_PREINIT_NATIVE_REJECTION_PASS flags=4 foreign_fd=1 "
-              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_refused=1 bad_syncpoint=1 signalled_wait=1");
+              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_refused=1 bad_syncpoint=1 signalled_wait=1 channel_disable=1");
 }
 '''.replace("__ADMISSION__", admission)
 includes = ROOT / "vendor/encore-active/ns2-runtime/hle"

@@ -111,6 +111,12 @@ int main(){
     require(br && br->flags==0x8000000000000005ULL && P::IsLocalBootstrap(*br),
             "bootstrap native profile 0x807");
     require(P::NativeGpuProfileForBootstrap(br->flags)==0x807,"GPU profile 0x807");
+    bootstrap[6]=1;
+    br=P::DecodeBootstrap(bootstrap);
+    require(br && P::IsLocalBootstrap(*br) &&
+            P::NativeGpuProfileForBootstrap(br->flags)==0,
+            "GSV 4 firmware 19 version accepted without invented GPU profile");
+    bootstrap[6]=5;
     bootstrap[6]=6;
     br=P::DecodeBootstrap(bootstrap);
     require(br && P::NativeGpuProfileForBootstrap(br->flags)==0x808,
@@ -435,12 +441,32 @@ int main(){
     badOpen=openGpu;badOpen[0]=0x202;
     require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
             "GPU session opening rejects wrong TIPC command");
+    const std::array<GP::U32,2> destroyGpu{419,0};
+    auto malformedDestroy=destroyGpu;malformedDestroy[1]=1;
+    require(state.DestroyGpuContext(malformedDestroy,true)==GS::Status::InvalidPacket &&
+            state.GpuContextReady(), "reject malformed GSV 403 without changing GPU state");
+    require(state.DestroyGpuContext(destroyGpu,false)==GS::Status::InvalidState &&
+            state.GpuContextReady(), "GSV 403 cannot retire live native GPU owners");
+    require(state.DestroyGpuContext(destroyGpu,true)==GS::Status::Success &&
+            !state.GpuContextReady(), "GSV 403 retires only the quiescent GPU context");
+    require(state.DestroyGpuContext(destroyGpu,true)==GS::Status::InvalidState,
+            "GSV 403 cannot destroy an already retired context");
+    require(state.InitializeGpuContext(initGpu,401)==GS::Status::Success &&
+            state.InitializeGpuContext(activateGpu,402)==GS::Status::Success &&
+            state.GpuContextReady(), "GSV 401/402 may recreate the retired GPU context");
     GS::State unsupported{0xabc};
     auto remoteBootstrap=gsBootstrap;
     remoteBootstrap[8]=1;
     require(unsupported.Initialize(remoteBootstrap,true)==GS::Status::Unsupported &&
             unsupported.CurrentPhase()==GS::Phase::Created,
             "remote graphics bootstrap cannot falsely report success");
+    GS::State firmware19{0xabc};
+    auto firmware19Bootstrap=gsBootstrap;
+    firmware19Bootstrap[6]=1;
+    require(firmware19.Initialize(firmware19Bootstrap,true)==GS::Status::Success &&
+            firmware19.NativeProfile()==0 &&
+            firmware19.Complete(completeBootstrap)==GS::Status::Success,
+            "firmware 19 GSV 4 admits the documented ABI without guessing GPU capabilities");
     GS::State newer{0xabc};
     auto sm88Bootstrap=gsBootstrap;
     sm88Bootstrap[6]=6;

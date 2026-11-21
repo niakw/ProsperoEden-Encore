@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `265609006ea8d76d971cc49af37bac23890ca4f5` |
+| Vendor gitlink sélectionné | `d32b4280fe6737e1da3b56ed47409422500c756f` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -397,7 +397,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; réponse ABI S2 80 B corrigée (`gpfifo_gpu_va`/`userd_gpu_va`/`usermode_mmio_gpu_va`/`hw_channel_id`); USERD/doorbell explicitement NotImplemented |
 
 
-**P0 actuel** : le bootstrap Ounce est désormais couvert au niveau source depuis les handles GSV/VM jusqu’à `SUBMIT_GPFIFO2` : cmd 12/22 utilisent HIPC MOVE, cmd 203 renvoie le tableau VM 72 B exact, `flags=6` est conservé dans la réponse GPFIFO2 et l’état runnable reflète le bind Ampere réel. NVIDIA `nvgpu_channel_setup_bind → ga10b_channel_bind → nvgpu_channel_enable` confirme qu’Ounce n’a pas besoin d’un ENABLE explicite avant le premier submit ; les ENABLE/DISABLE explicites channel/TSG modifient ensuite ce même état. Pin actif : `26560900`. ALLOC_GPFIFO_EX/EX2 accepte désormais l'allocation avant liaison GMMU sans perdre l'état runnable logique, mais la première soumission reste bloquée jusqu'au véritable bind. Les sessions GSV 202/305/497/1402 et les handles GPU 12/22 annulent leurs références MOVE si la mise en file IPC échoue par OOM. Contrôles hôtes vendor ciblés réussis ; console et build natif non vérifiés. USERD/doorbell reste **P** faute de preuve d’usage. La prochaine preuve décisive reste console : première vraie soumission puis `guest_frame_handoff`.
+**P0 actuel** : le bootstrap Ounce est désormais couvert au niveau source depuis les handles GSV/VM jusqu’à `SUBMIT_GPFIFO2` : cmd 12/22 utilisent HIPC MOVE, cmd 203 renvoie le tableau VM 72 B exact, `flags=6` est conservé dans la réponse GPFIFO2 et l’état runnable reflète le bind Ampere réel. NVIDIA `nvgpu_channel_setup_bind → ga10b_channel_bind → nvgpu_channel_enable` confirme qu’Ounce n’a pas besoin d’un ENABLE explicite avant le premier submit ; les ENABLE/DISABLE explicites channel/TSG modifient ensuite ce même état. Pin actif : `d32b4280`. L'état d'activation channel/TSG est désormais distinct de la configuration GPFIFO : un ENABLE seul ne peut plus soumettre sans allocation réelle, et l'initialisation immédiate doit valider le scheduler avant publication du canal. ALLOC_GPFIFO_EX/EX2 accepte désormais l'allocation avant liaison GMMU sans perdre l'état runnable logique, mais la première soumission reste bloquée jusqu'au véritable bind. Les sessions GSV 202/305/497/1402 et les handles GPU 12/22 annulent leurs références MOVE si la mise en file IPC échoue par OOM. Contrôles hôtes vendor ciblés réussis ; console et build natif non vérifiés. USERD/doorbell reste **P** faute de preuve d’usage. La prochaine preuve décisive reste console : première vraie soumission puis `guest_frame_handoff`.
 
 ## 11. NVDRV — /dev/nvhost-tsg-gpu
 

@@ -98,6 +98,7 @@ REVIEWED_PINS.add("76a225552c296686cd1022584d73decd46767f75")
 REVIEWED_PINS.add("205c6a3572955c3d8002f5faca68d6ce1359817c")
 REVIEWED_PINS.add("bfb9d4da9c0f3811924738311fc2c6056e0e4dcb")
 REVIEWED_PINS.add("265609006ea8d76d971cc49af37bac23890ca4f5")
+REVIEWED_PINS.add("d32b4280fe6737e1da3b56ed47409422500c756f")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
@@ -201,23 +202,52 @@ NS2_GSV_MOVE_OWNERS_BLOBS = {
     "tests/ns2_syncpt_bootstrap_source.py":
         "366b0a6bd75c2fde26bcc58c3a22f986fb7a99f3",
 }
-NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin == NS2_GSV_MOVE_OWNERS_PIN
+# Native NVGPU ENABLE and TSG ENABLE may precede allocation but cannot
+# create a runnable GPFIFO by themselves. This successor only changes three
+# active NVDRV owner/host-contract blobs and leaves all GSV/FC27 owners intact.
+NS2_GPFIFO_ALLOC_GUARD_PIN = "d32b4280fe6737e1da3b56ed47409422500c756f"
+NS2_GPFIFO_ALLOC_GUARD_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "0e45617307506f0171d058944a3bbc32327e6132",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "7b941c9d63b5c89efed6181eea380f36ffc12e38",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "8a17814bcf4da34b2cbc32383b1b52bcf15d1c9f",
+}
+NS2_GPFIFO_ALLOC_GUARD_ACTIVE = actual_vendor_pin == NS2_GPFIFO_ALLOC_GUARD_PIN
+if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
+    for relative, expected in NS2_GPFIFO_ALLOC_GUARD_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 native GPFIFO allocation gate source drift", relative, actual)
+    selected = NS2_GSV_MOVE_OWNERS_PIN
+    gitlink_vendor_pin = NS2_GSV_MOVE_OWNERS_PIN
+    shipping_vendor_pin = NS2_GSV_MOVE_OWNERS_PIN
+
+NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin in {NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN}
+def ns2_latest_gsv_receipt(relative, previous):
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
+    return (NS2_GSV_MOVE_OWNERS_BLOBS.get(relative, previous)
+            if NS2_GSV_MOVE_OWNERS_ACTIVE else previous)
 if selected == NS2_GSV_MOVE_OWNERS_PIN:
     for relative, expected in NS2_GSV_MOVE_OWNERS_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GSV/GPFIFO MOVE lifetime source drift", relative, actual)
+        assert actual == ns2_latest_gsv_receipt(relative, expected), (
+            "NS2 GSV/GPFIFO MOVE lifetime source drift", relative, actual)
     selected = NS2_P0_BOOTSTRAP_PIN
     gitlink_vendor_pin = NS2_P0_BOOTSTRAP_PIN
     shipping_vendor_pin = NS2_P0_BOOTSTRAP_PIN
 
-NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN}
+NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {
+    NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
+}
 if selected == NS2_P0_BOOTSTRAP_PIN:
     for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == (NS2_GSV_MOVE_OWNERS_BLOBS.get(relative, expected)
-                          if NS2_GSV_MOVE_OWNERS_ACTIVE else expected), (
+        assert actual == ns2_latest_gsv_receipt(relative, expected), (
             "NS2 current P0 bootstrap source drift", relative, actual)
     # From here, replay the exact 205c6a35 predecessor graph. Keep
     # actual_vendor_pin untouched for the final gitlink identity assertion.
@@ -238,6 +268,8 @@ NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
     if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
         return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
     if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:
@@ -310,6 +342,8 @@ NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
 }
 def ns2_encoder_receipt(relative, previous):
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
     if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
         return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
     return (NS2_ENCODER_FAIL_CLOSED_BLOBS.get(relative, previous)
@@ -860,6 +894,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
     if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
         return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
     if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:

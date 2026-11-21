@@ -27,6 +27,10 @@ assert "return NvResult::BadParameter;" in native_plan_guard
 assert "EDEN_NS2_GPFIFO_REJECT" in native_plan_guard
 assert "if (!opened || opened->process != native_owner)" in admission
 assert "if (!native_channel_enabled)" in admission
+assert "if (!native_gpfifo_configured)" in admission
+assert admission.index("if (!native_channel_enabled)") < admission.index(
+    "if (!native_gpfifo_configured)") < admission.index(
+    "for (const auto& [other_fd, session_id] : sessions)")
 assert admission.index("if (!native_channel_enabled)") < admission.index(
     "for (const auto& [other_fd, session_id] : sessions)")
 assert "return NvResult::InvalidState;" in admission.split(
@@ -84,6 +88,7 @@ struct SessionRegistry {
 struct Gpu {
     bool native{};
     bool native_channel_enabled{};
+    bool native_gpfifo_configured{};
     std::map<int,int> sessions;
     SessionRegistry core;
     SyncpointManager syncpoint_manager;
@@ -118,6 +123,10 @@ int main() {
     denied(0x100,65,NvResult::BadParameter); // too many completions
     denied(0x101,1,NvResult::BadParameter);  // waiting while completing
     denied(0xFFFF'FFFFU,0,NvResult::BadParameter);
+    // CHANNEL_ENABLE without ALLOC_GPFIFO/SETUP_BIND must not publish a
+    // native GPU command or reserve even a zero-entry completion fence.
+    denied(0x102,3,NvResult::InvalidState);
+    gpu.native_gpfifo_configured=true; // actual successful allocation
     gpu.sessions[77]=2;
     gpu.core.entries[2]={&bob};
     denied(0x102,3,NvResult::InvalidState); // other FD foreign process
@@ -155,7 +164,7 @@ int main() {
     assert(maxwell.initializations==1 && maxwell.binds==0 &&
            maxwell.reservations==1 && maxwell.enqueues==1);
     std::puts("P2_7_GPFIFO_PREINIT_NATIVE_REJECTION_PASS flags=4 foreign_fd=1 "
-              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_refused=1 bad_syncpoint=1 signalled_wait=1 channel_disable=1");
+              "retired_fd=1 max_completion=64 ns1_unchanged=1 native_wait_refused=1 bad_syncpoint=1 signalled_wait=1 channel_disable=1 unallocated_submit=1");
 }
 '''.replace("__ADMISSION__", admission)
 includes = ROOT / "vendor/encore-active/ns2-runtime/hle"

@@ -404,3 +404,172 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-worker214-216-") as directory:
             print("H06_REAL_WORKER_214_216_PASS",Path(cc).name,opt,
                   "reserve=real ledger remap=real owner fail_closed=1 oom=rollback sparse_zero=1 dense_restore=1 output=exact",
                   flush=True)
+
+
+# Execute the ACTUAL selected worker's failed dense-214 cleanup and NVDRV
+# CloseSession guard; source-token checks alone cannot detect a GPU UAF.
+# The fake AS models an OOM after a prefix of PTEs was installed. A poisoned
+# guest GMMU must retain its NVMap owner, CPU page alias and session, whereas
+# an ordinary pre-mutation OOM must release all resources on the same path.
+dense_begin=source.index("Result IGpuWorker::BackGpuOnlyRegion(")
+cleanup_begin=source.index("    if (!committed) {",dense_begin)
+cleanup_end=source.index("    // Do not retain the preflight shared_ptr:",cleanup_begin)
+selected_cleanup=source[cleanup_begin:cleanup_end]
+destructor_begin=source.index("IGpuWorker::~IGpuWorker()")
+close_begin=source.index("    if (m_nv_session && !m_quarantined_nv_session)",destructor_begin)
+close_end=source.index("    // GpuWorkerSharedState owns",close_begin)
+selected_close=source[close_begin:close_end]
+assert "mapping_as->IsNativeSparsePoisoned()" in selected_cleanup
+assert "m_quarantined_nv_session = true;" in selected_cleanup
+assert "nvmap.FreeHandle(id, false);" in selected_cleanup
+assert selected_cleanup.index("mapping_as->IsNativeSparsePoisoned()") < selected_cleanup.index(
+    "nvmap.FreeHandle(id, false)")
+fixture_poison=r"""
+#include <cassert>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <utility>
+#define LOG_ERROR(...) ((void)0)
+using u32=std::uint32_t;
+using u64=std::uint64_t;
+struct Result { u32 raw{}; constexpr bool IsError() const { return raw!=0; } };
+inline constexpr Result ResultSuccess{};
+namespace Kernel {
+inline constexpr Result ResultInvalidState{4}, ResultOutOfResource{5};
+enum class KMemoryState { IoMemory };
+struct KernelCore {};
+}
+namespace Nvidia::NvCore { struct SessionId { std::size_t id{}; }; }
+struct NativeAS {
+    bool poisoned{};
+    [[nodiscard]] bool IsNativeSparsePoisoned() const { return poisoned; }
+};
+struct Handle { u32 id{91}; };
+struct Pages {
+    int* destroyed{};
+    int* closed{};
+    explicit Pages(int* d,int* c):destroyed(d),closed(c){}
+    ~Pages(){++*destroyed;}
+    void Close(Kernel::KernelCore&){++*closed;}
+};
+struct NvMap {
+    unsigned frees{};
+    void FreeHandle(u32 id,bool internal) {
+        assert(id==91 && !internal); ++frees;
+    }
+};
+struct Table {
+    bool unmap_fails{};
+    unsigned unmaps{};
+    Result UnmapPageGroup(u64 alias,Pages&,Kernel::KMemoryState) {
+        assert(alias==0x4000); ++unmaps;
+        return unmap_fails ? Result{9} : ResultSuccess;
+    }
+};
+struct Container {
+    unsigned closes{};
+    void CloseSession(Nvidia::NvCore::SessionId id) {
+        assert(id.id==33); ++closes;
+    }
+};
+struct Module {
+    Container c{};
+    Container& GetContainer(){return c;}
+};
+struct Fixture {
+    bool m_quarantined_nv_session{};
+    std::optional<std::size_t> m_nv_session{33};
+    std::shared_ptr<Module> m_module{std::make_shared<Module>()};
+    std::shared_ptr<NativeAS> mapping_as{std::make_shared<NativeAS>()};
+    std::shared_ptr<Handle> handle{std::make_shared<Handle>()};
+    NvMap nvmap{};
+    bool nvmap_oom{},committed{};
+    int destroyed{},closed{};
+    std::unique_ptr<Pages> pages{std::make_unique<Pages>(&destroyed,&closed)};
+    Table table{};
+    u64 alias{0x4000},address{0x20000},size{0x2000};
+    u32 address_space{7};
+    Kernel::KernelCore kernel{};
+    Result ApplyCleanup() {
+__SELECTED_CLEANUP__
+        return ResultSuccess;
+    }
+    void CloseIfSafe() {
+__SELECTED_CLOSE__
+    }
+};
+int main() {
+    // Emulate a partial GMMU write followed by page-table OOM. No physical
+    // owner, CPU alias or final NvCore session may be released.
+    {
+        Fixture f{};
+        f.mapping_as->poisoned=true;
+        Pages* pending=f.pages.get();
+        const Result result=f.ApplyCleanup();
+        assert(result.raw==Kernel::ResultOutOfResource.raw && f.m_quarantined_nv_session);
+        assert(f.nvmap.frees==0 && f.table.unmaps==0 && f.closed==0 && f.destroyed==0);
+        assert(f.handle && !f.pages);
+        f.CloseIfSafe();
+        assert(f.m_module->GetContainer().closes==0);
+        delete pending; // stand-in for later process and GMMU teardown
+        assert(f.destroyed==1);
+    }
+    // Pre-mutation failure: do not quarantine or leak ordinary backing.
+    {
+        Fixture f{};
+        assert(f.ApplyCleanup().raw==Kernel::ResultInvalidState.raw);
+        assert(!f.handle && f.nvmap.frees==1 && f.table.unmaps==1 && f.closed==1);
+        assert(!f.m_quarantined_nv_session && f.pages);
+        f.CloseIfSafe();
+        assert(f.m_module->GetContainer().closes==1);
+    }
+    // Native NvMap allocation OOM: guest sees out-of-resource and cleans up.
+    {
+        Fixture f{};
+        f.nvmap_oom=true;
+        assert(f.ApplyCleanup().raw==Kernel::ResultOutOfResource.raw);
+        assert(f.nvmap.frees==1 && f.table.unmaps==1 && f.closed==1);
+        f.CloseIfSafe();
+        assert(f.m_module->GetContainer().closes==1);
+    }
+    // Failed CPU alias unmap must retain its KPageGroup, not close live pages.
+    {
+        Fixture f{};
+        f.table.unmap_fails=true;
+        Pages* pending=f.pages.get();
+        assert(f.ApplyCleanup().raw==Kernel::ResultInvalidState.raw);
+        assert(f.nvmap.frees==1 && f.table.unmaps==1 && f.closed==0 && !f.pages);
+        f.CloseIfSafe();
+        assert(f.m_module->GetContainer().closes==1);
+        delete pending;
+    }
+    // Successful remap bypasses failure cleanup; normal session closes.
+    {
+        Fixture f{};
+        f.committed=true;
+        assert(f.ApplyCleanup().raw==0 && f.nvmap.frees==0 && f.table.unmaps==0);
+        f.CloseIfSafe();
+        assert(f.m_module->GetContainer().closes==1);
+    }
+}
+"""
+fixture_poison=fixture_poison.replace("__SELECTED_CLEANUP__",selected_cleanup).replace(
+    "__SELECTED_CLOSE__",selected_close)
+with tempfile.TemporaryDirectory(prefix="eden-h06-dense-poison-") as directory:
+    cpp=Path(directory)/"selected_dense_cleanup.cpp"
+    cpp.write_text(fixture_poison)
+    for cc in compilers:
+        for opt in ("-O0","-O2"):
+            exe=Path(directory)/(Path(cc).name+opt)
+            args=[cc,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                  "-fsanitize=undefined","-fno-sanitize-recover=all",
+                  str(cpp),"-o",str(exe)]
+            built=subprocess.run(args,capture_output=True,text=True,timeout=45,env=os.environ.copy())
+            assert built.returncode==0,built.stderr[-6500:]
+            done=subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
+            assert done.returncode==0,done.stderr[-6500:]
+            print("H06_REAL_DENSE_POISON_CLEANUP_PASS",Path(cc).name,opt,
+                  "poison_retains=pages,handle,session",
+                  "normal_oom=cleaned", "alias_unmap_fail=retained",
+                  "success=untouched",flush=True)

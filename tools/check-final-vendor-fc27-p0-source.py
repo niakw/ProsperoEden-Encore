@@ -63,8 +63,20 @@ REVIEWED_PINS.add("b0afacfc891bc75da81be3886e5c40430ccbfe6d")
 REVIEWED_PINS.add("21bc63493de105c1eb025f3ce5b67011deee72da")
 REVIEWED_PINS.add("a9cca6aa9c63722b918b92362c237eed448ff56c")
 REVIEWED_PINS.add("0ec5337f26c31e6926bf327411634422c9043369")
+REVIEWED_PINS.add("997b4885c045469f09dedf2a5f4e69995a5b1c9a")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
+# Native NS2 big-page sparse-VA reservation successor. Only two blobs
+# changed; pin them, then replay the complete preceding source graph.
+if selected == "997b4885c045469f09dedf2a5f4e69995a5b1c9a":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "285ea0dda6807ab44f18277e8b5a5be734fb6b1f"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "bd5f668076d9b9b522ee407dad8d60760da2411b"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Native big-page sparse VA drift", relative, actual)
+    selected = "0ec5337f26c31e6926bf327411634422c9043369"
 # Native big-page ioctl remap ledger and focused source contract.
 # Check only the new blobs before replaying strict predecessor receipts.
 if selected == "0ec5337f26c31e6926bf327411634422c9043369":
@@ -75,7 +87,9 @@ if selected == "0ec5337f26c31e6926bf327411634422c9043369":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 ioctl remap pin source drift", relative, actual)
+        assert actual == ("285ea0dda6807ab44f18277e8b5a5be734fb6b1f" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp" else
+                          "bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
+            "NS2 ioctl remap pin source drift", relative, actual)
     selected = "a9cca6aa9c63722b918b92362c237eed448ff56c"
 # This successor contains only the reviewed NS2 transactional GPU AS
 # mapping owner. The legacy Maxwell branch is unchanged. Verify exact blob
@@ -84,7 +98,8 @@ if selected == "a9cca6aa9c63722b918b92362c237eed448ff56c":
     relative = "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp"
     raw = (V / relative).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert actual == "e252d390e5c08c933487ca351230636158bc1abe", ("NS2 MapBufferEx transaction source drift", actual)
+    assert actual == ("285ea0dda6807ab44f18277e8b5a5be734fb6b1f" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" else
+                      "e252d390e5c08c933487ca351230636158bc1abe"), ("NS2 MapBufferEx transaction source drift", actual)
     selected = "21bc63493de105c1eb025f3ce5b67011deee72da"
 # Shared native GPU VA source is corrected for FIFO fragmentation via Lichii
 # #1896/#1911. Verify every changed blob (including C++ Catch2 cases) before
@@ -99,8 +114,8 @@ if selected == "21bc63493de105c1eb025f3ce5b67011deee72da":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == ("7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and
-                          relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
+        assert actual == ("bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
             "GPU VA allocator upstream successor drift", relative, actual)
     selected = "b0afacfc891bc75da81be3886e5c40430ccbfe6d"
 # Native NS2 controller: only a real GA10F process may query runlists and
@@ -113,7 +128,8 @@ if selected == "b0afacfc891bc75da81be3886e5c40430ccbfe6d":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == ("7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and
+        assert actual == ("bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                           "7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and
                            relative == "tests/ns2_gpu_identity_mapping_source.py" else
                            "9091197c985c247aaee998319b64b5e637f2c799" if gitlink_vendor_pin in {"21bc63493de105c1eb025f3ce5b67011deee72da", "a9cca6aa9c63722b918b92362c237eed448ff56c"} and
                            relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
@@ -145,6 +161,11 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a":
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "285ea0dda6807ab44f18277e8b5a5be734fb6b1f"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "bd5f668076d9b9b522ee407dad8d60760da2411b"
     if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369":
         reviewed = {
             "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "c1cdea91a84e7e9e1654a3b86c3be66d1c607393",

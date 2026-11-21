@@ -432,6 +432,35 @@ int main(){
     require(state.CanOpenGpuSession(openGpu,false)==GS::Status::InvalidState &&
             state.CanOpenGpuSession(openGpu,true)==GS::Status::Success,
             "GPU session requires completed bootstrap and real NVDRV module");
+    const std::array<GP::U32,7> nvdrvTmem{
+        16+1401,0x80000003U,2,0x4455,0x4000,0,1};
+    const auto nvsrvRequest = P::DecodeNvDrvTransferSession(nvdrvTmem);
+    require(nvsrvRequest && nvsrvRequest->copied_handle==0x4455 &&
+            nvsrvRequest->size==0x4000 && nvsrvRequest->mode==1,
+            "GSV 1401 parses a TransferMemory work-buffer request");
+    auto malformedNvsrv = nvdrvTmem;
+    malformedNvsrv[2]=0;
+    require(!P::DecodeNvDrvTransferSession(malformedNvsrv),
+            "GSV 1401 rejects missing COPY handle descriptors");
+    malformedNvsrv=nvdrvTmem;malformedNvsrv[4]=0x2001;
+    require(!P::DecodeNvDrvTransferSession(malformedNvsrv),
+            "GSV 1401 rejects an unaligned TransferMemory size");
+    std::array<GP::U32,8> gpuTmem{
+        16+496,0x80000004U,2,0x4455,2,0,0x4000,0};
+    const auto gpuRequest = P::DecodeGpuTransferSession(gpuTmem);
+    require(gpuRequest && gpuRequest->copied_handle==0x4455 &&
+            gpuRequest->version==2 && gpuRequest->size==0x4000 &&
+            state.CanOpenGpuSession(gpuTmem,true)==GS::Status::Success,
+            "GSV 496 admits the firmware 19 TransferMemory GPU ABI");
+    require(state.CanOpenGpuSession(gpuTmem,false)==GS::Status::InvalidState,
+            "GSV 496 requires the real NVDRV backend");
+    gpuTmem[3]=0;
+    require(!P::DecodeGpuTransferSession(gpuTmem) &&
+            state.CanOpenGpuSession(gpuTmem,true)==GS::Status::InvalidPacket,
+            "GSV 496 rejects absent COPY handles");
+    gpuTmem[3]=0x4455;gpuTmem[4]=3;
+    require(state.CanOpenGpuSession(gpuTmem,true)==GS::Status::InvalidPacket,
+            "GSV 496 rejects unsupported version values");
     auto badOpen=openGpu;
     badOpen[2]=4;
     require(state.CanOpenGpuSession(badOpen,true)==GS::Status::Success,

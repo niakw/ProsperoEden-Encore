@@ -60,6 +60,7 @@ cpp = r"""
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <utility>
 #include <vector>
 using u8 = std::uint8_t;
 using u32 = std::uint32_t;

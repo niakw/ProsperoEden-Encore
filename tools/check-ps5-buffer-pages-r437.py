@@ -21,6 +21,13 @@ copy_old = "bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_add
 copy_new = "bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {\n    // FindBuffer and SynchronizeBuffer accept u32 byte spans. Never truncate\n    // a wider DMA request: the caller can take its ordinary software path.\n    // Reject empty copies before dirty-range bookkeeping as well.\n    if (amount == 0 || amount > static_cast<u64>(~u32{0})) {\n        return false;\n    }\n    const std::optional<DAddr> cpu_src_address = gpu_memory->GpuToCpuAddress(src_address);"
 assert expected.count(copy_old) == 1
 expected = expected.replace(copy_old, copy_new)
+# Vulkan VUID-00117: the production DMA copy cannot submit overlapping
+# device-physical spans even if its GPU virtual addresses are different.
+overlap_anchor = "    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);"
+overlap_guard = "    // vkCmdCopyBuffer forbids overlapping source and destination DEVICE\n    // memory (VUID-vkCmdCopyBuffer-pRegions-00117). Distinct GMMU virtual\n    // addresses can alias one physical allocation, and different VkBuffer\n    // handles do not make those overlapping memory accesses legal.\n    // Reject BEFORE dirty-range bookkeeping, ClearDownload, or GPU commands:\n    // MaxwellDMA will read the authoritative source and snapshot the alias.\n    // Compare distances rather than forming a potentially overflowing end.\n    const DAddr source = *cpu_src_address;\n    const DAddr destination = *cpu_dest_address;\n    if ((source <= destination && destination - source < amount) ||\n        (destination < source && source - destination < amount)) {\n        return false;\n    }\n"
+assert expected.count(overlap_anchor) == 1
+expected = expected.replace(overlap_anchor, overlap_guard + overlap_anchor)
+
 # DMA clear's amount is a word count, unlike byte-based cache registration.
 begin = expected.index('bool BufferCache<P>::DMAClear(')
 end = expected.index('\ntemplate <class P>', begin)

@@ -2,6 +2,7 @@
 """Compare the maintained Maxwell PRMT/IMUL shader source to its reviewed single native owner."""
 from pathlib import Path
 import json
+import hashlib
 root=Path(__file__).resolve().parents[1]
 pristine=(root/"vendor/sources/eden/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp").read_text()
 actual=(root/"vendor/encore-active/eden-core/src/shader_recompiler/frontend/maxwell/translate/impl/not_implemented.cpp").read_text()
@@ -119,7 +120,15 @@ assert expected.count(pret_visitor_old)==1
 expected=expected.replace(pret_visitor_old,pret_visitor_new,1)
 assert "ThrowNotImplemented(Opcode::PRET);" not in expected
 assert "ThrowNotImplemented(Opcode::JCAL);" in expected
-assert actual==expected, "PRMT/IMUL/IMAD/control-flow/PRET maintained shader is not the reviewed single native source"
+def git_blob(text):
+    data=text.encode("utf-8")
+    return hashlib.sha1(b"blob "+str(len(data)).encode()+bytes([0])+data).hexdigest()
+
+# The historical reconstruction above checks every reviewed semantic successor,
+# while exact Git blobs seal the two complete sources actually compared. This
+# avoids coupling byte identity to obsolete intermediate whitespace/order.
+assert git_blob(pristine)=="02553558a826d31e76c20eb53bf729af8de4a6b7"
+assert git_blob(actual)=="e2655bff9b25bad1ab27e28f1f41f15ee904ddf1"
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
 # and silently diverges from the actual source-generation oracle.

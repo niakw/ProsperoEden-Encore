@@ -34,12 +34,31 @@ REVIEWED_PINS.add("b3e6f9943bd46fda050ecb8151c4bb06e5251117")
 REVIEWED_PINS.add("7535dc9e5e7f0060b8e448da843f96882a2ce320")
 REVIEWED_PINS.add("f69176d429723da5d79251f6b858afc72c5d99e2")
 REVIEWED_PINS.add("4795f0a884c06f029c9d06a0a3d09cc0b9cfb791")
+REVIEWED_PINS.add("fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# The revised native TSG driver adds process-checked bind/unbind ioctl
+# semantics and no longer acknowledges unimplemented TSG commands.
+# All five live source blobs must exactly match the reviewed vendor commit.
+# Replay previous FC27/NS2 receipts only after proving that the other
+# compiled owners did not change.
+if selected == "fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "5a3ce8871ff52ed917969e2935f6837f5f1537ad"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "6d72ba1851e21227ad196bbdd7db5226f77c9500"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "a899fd5fabffef8e98b030381d8d894356c67a80"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "10fc74076686e0c9c27c7c74b6363ecec9361d7b"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Native TSG GPU owner drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
 # The only difference from the last reviewed vendor pin is the real GPU
 # worker TIPC 22 reply descriptor. Seal its exact new source before replaying
 # every unchanged FC27/NS2 source receipt from the previously approved pin.

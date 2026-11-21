@@ -16,6 +16,21 @@ active=root/'vendor/encore-active/eden-vulkan'
 upstream=root/'vendor/sources/eden'
 assert (upstream/'VENDOR-ORIGIN.json').exists()
 assert (active/'vulkan_renderer.cpp').exists()
+# FC27 first-use pipeline completion is owned by the maintained C++,
+# never by the historical Eden generator. Seal both complete source blobs
+# and the move-before-publication ordering before replaying old oracles.
+for relative, reviewed_blob in (
+    ('vk_graphics_pipeline_cost.cpp', 'f3c82781675b6979a8be96a333184e048ef57f81'),
+    ('vk_compute_pipeline_cost.cpp', 'bb9552866e26e502839eed646be9af6ea0a0db0a'),
+):
+    owner = active / relative
+    raw = owner.read_text()
+    assert subprocess.check_output(
+        ['git', 'hash-object', str(owner)], text=True).strip() == reviewed_blob, relative
+    assert raw.count('    auto task = std::move(build_task);\n'
+                     '    build_task = nullptr;\n'
+                     '    task();\n}') == 1, relative
+    assert '    build_task();\n    build_task = nullptr;\n}' not in raw, relative
 with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     temp=Path(d)
     # The *production* renderer has always consumed Eden AFTER the ordered

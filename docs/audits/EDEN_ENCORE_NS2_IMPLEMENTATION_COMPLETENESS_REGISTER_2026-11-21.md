@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `20cb62f1be572c8063ce4162d3227c8784a1e5ff` |
+| Vendor gitlink sélectionné | `19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -373,12 +373,13 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0080004 | NVHOST_IOCTL_CHANNEL_GET_MODMUTEX | M | — | pas de case sélectionné |
 | 0x40040007 | NVHOST_IOCTL_CHANNEL_SET_SUBMIT_TIMEOUT | M | — | pas de case sélectionné |
 | 0xC0080023 | NVHOST_IOCTL_CHANNEL_GET_CLK_RATE | M | — | pas de case sélectionné |
-| 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | M | — | pas de handler S2 |
+| 0xC018480C | NVGPU_IOCTL_CHANNEL_SET_ERROR_NOTIFIER | C | SetErrorNotifier | S2: état interne Switch; mem non nul initialise, mem=0 désinitialise; offset/size ignorés; aucun faux backing NvMap |
+| 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | M | — | pas de handler S2; forme 16 B à qualifier sans inventer les 8 octets supplémentaires |
 | 0xC0104813 | NVGPU_IOCTL_CHANNEL_CYCLE_STATS_SNAPSHOT | M | — | pas de handler |
 | 0x40084714 | NVGPU_IOCTL_CHANNEL_SET_USER_DATA | C | SetClientData | actif |
 | 0x80084715 | NVGPU_IOCTL_CHANNEL_GET_USER_DATA | C | GetClientData | actif |
-| 0x80804816 | NVGPU_IOCTL_CHANNEL_GET_ERROR_INFO | M | — | pas de handler |
-| 0xC0104817 | NVGPU_IOCTL_CHANNEL_GET_ERROR_NOTIFICATION | M | — | pas de handler |
+| 0x80804816 | NVGPU_IOCTL_CHANNEL_GET_ERROR_INFO | P | GetErrorInfo | ABI 128 B actif; état no_error courant renvoyé; publication d'une faute GPU réelle pas encore reliée |
+| 0xC0104817 | NVGPU_IOCTL_CHANNEL_GET_ERROR_NOTIFICATION | P | GetErrorNotification | ABI 16 B actif; status Switch 0xFFFF et état interne courant; publication d'une faute GPU réelle pas encore reliée |
 | 0x40204818 | NVGPU_IOCTL_CHANNEL_ALLOC_GPFIFO_EX | C | AllocGPFIFOEx | actif |
 | 0xC0??4819 | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY | M | — | pas de handler dédié |
 | 0xC020481A | NVGPU_IOCTL_CHANNEL_ALLOC_GPFIFO_EX2 | C | AllocGPFIFOEx2 | actif |
@@ -391,7 +392,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; réponse ABI S2 80 B corrigée (`gpfifo_gpu_va`/`userd_gpu_va`/`usermode_mmio_gpu_va`/`hw_channel_id`); USERD/doorbell explicitement NotImplemented |
 
 
-**P0 actuel** : la voie OunceVK observée ne passe pas par le mode USERD de `0xC0504821` : elle ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure notamment `0xC008481F`, puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le runtime vendor `d31aa01b` (pin qualifié `20cb62f1`) accepte désormais la requête réelle `{graphics=0, compute=2}` (CTA NVIDIA) au lieu de l'arrêter en `NotImplemented`. Le mode USERD/doorbell de `0xC0504821` reste **P** et ne doit être développé qu'avec une preuve d'usage. Le prochain écart avéré sur cette séquence est `0xC018480C SET_ERROR_NOTIFIER`, encore acquitté par un stub `Success` et donc à remplacer par un backing réel ou un échec explicite.
+**P0 actuel** : la voie OunceVK observée ne passe pas par le mode USERD de `0xC0504821` : elle ouvre le channel/AS/TSG puis utilise `0xC020481A ALLOC_GPFIFO_EX2`, `0xC010481E GET_USER_SYNCPOINT`, configure `0xC008481F`, installe le notifier puis soumet par `0xC018481B SUBMIT_GPFIFO2`. Le pin vendor `19a62450` accepte la requête réelle `{graphics=0, compute=2}` (CTA NVIDIA) et remplace le faux `SET_ERROR_NOTIFIER Success` par l'état interne Switch, avec `GET_ERROR_INFO` / `GET_ERROR_NOTIFICATION` no-error actifs. Le mode USERD/doorbell de `0xC0504821` reste **P** faute de preuve d'usage. La prochaine preuve décisive est console : vérifier si MKW passe enfin de `gpu_submit_sample=0` à une première soumission invitée; sinon `0x40104812 EVENT_ID_CONTROL` reste le prochain écart channel connu à qualifier.
 
 ## 11. NVDRV — /dev/nvhost-tsg-gpu
 

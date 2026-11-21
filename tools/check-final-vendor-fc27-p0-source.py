@@ -93,6 +93,7 @@ REVIEWED_PINS.add("1f8a3bbaa7fc33118e63ebef829202d825475bfe")
 REVIEWED_PINS.add("1e513ae001669127538a346c7f390af55edd6712")
 REVIEWED_PINS.add("d31aa01bdfa87165a272473c385040723bf2c1f6")
 REVIEWED_PINS.add("20cb62f1be572c8063ce4162d3227c8784a1e5ff")
+REVIEWED_PINS.add("19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 shipping_vendor_pin = gitlink_vendor_pin
@@ -115,15 +116,37 @@ NS2_PREEMPTION_CTA_TEST_FIX_BLOBS = {
     "tests/ns2_gpu_identity_mapping_source.py":
         "069778748d4be07c72859cd28e280cecbcc36ef4",
 }
+# Nintendo/Switch channel error notifier successor. The final active owner
+# follows Switch semantics: H:0x0C stores internal state (no Linux dma-buf),
+# H:0x16 exposes no_error/current details, and H:0x17 returns the 16-byte
+# notification with status 0xffff.
+NS2_CHANNEL_ERROR_PIN = "19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba"
+NS2_CHANNEL_ERROR_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "4810a41d584fb74612c8160c3f06a4c717f7d5f8",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "b0f57cbab6c801a201ac389a16beb9bdb59c4e54",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "d2e7e0341957a5ce830afe665bf074083977c956",
+}
 NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
-    NS2_PREEMPTION_CTA_PIN, NS2_PREEMPTION_CTA_TEST_FIX_PIN,
+    NS2_PREEMPTION_CTA_PIN, NS2_PREEMPTION_CTA_TEST_FIX_PIN, NS2_CHANNEL_ERROR_PIN,
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if gitlink_vendor_pin == NS2_CHANNEL_ERROR_PIN:
+        return NS2_CHANNEL_ERROR_BLOBS.get(relative, previous)
     if gitlink_vendor_pin == NS2_PREEMPTION_CTA_TEST_FIX_PIN:
         return NS2_PREEMPTION_CTA_TEST_FIX_BLOBS.get(relative, previous)
     return (NS2_PREEMPTION_CTA_BLOBS.get(relative, previous)
             if NS2_PREEMPTION_CTA_ACTIVE else previous)
+
+if selected == NS2_CHANNEL_ERROR_PIN:
+    for relative, expected in NS2_CHANNEL_ERROR_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 channel error-notifier source drift", relative, actual)
+    selected = NS2_PREEMPTION_CTA_TEST_FIX_PIN
 
 if selected == NS2_PREEMPTION_CTA_TEST_FIX_PIN:
     for relative, expected in NS2_PREEMPTION_CTA_TEST_FIX_BLOBS.items():
@@ -147,7 +170,8 @@ NS2_ENCODER_FAIL_CLOSED_PIN = "1e513ae001669127538a346c7f390af55edd6712"
 # Preserve the authentic pinned identity; later historical replay rewrites
 # gitlink_vendor_pin to c74, but must not drop these verified successor blobs.
 NS2_ENCODER_FAIL_CLOSED_ACTIVE = gitlink_vendor_pin in {
-    NS2_ENCODER_FAIL_CLOSED_PIN, NS2_PREEMPTION_CTA_PIN, NS2_PREEMPTION_CTA_TEST_FIX_PIN,
+    NS2_ENCODER_FAIL_CLOSED_PIN, NS2_PREEMPTION_CTA_PIN,
+    NS2_PREEMPTION_CTA_TEST_FIX_PIN, NS2_CHANNEL_ERROR_PIN,
 }
 NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "6934cd5d46c172d029c65123b5d7f19ddafc4853",
@@ -703,6 +727,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if shipping_vendor_pin == NS2_CHANNEL_ERROR_PIN and relative in NS2_CHANNEL_ERROR_BLOBS:
+        return NS2_CHANNEL_ERROR_BLOBS[relative]
     if NS2_PREEMPTION_CTA_ACTIVE and relative in NS2_PREEMPTION_CTA_BLOBS:
         return NS2_PREEMPTION_CTA_BLOBS[relative]
     if NS2_ENCODER_FAIL_CLOSED_ACTIVE and relative in NS2_ENCODER_FAIL_CLOSED_BLOBS:
@@ -1070,6 +1096,7 @@ if gitlink_vendor_pin in {
     "1e513ae001669127538a346c7f390af55edd6712",
     "d31aa01bdfa87165a272473c385040723bf2c1f6",
     "20cb62f1be572c8063ce4162d3227c8784a1e5ff",
+    "19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba",
 }:
     gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
 # GPU 497 must remain authenticated while its final native AS FDs and

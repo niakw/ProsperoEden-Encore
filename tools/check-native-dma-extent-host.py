@@ -104,7 +104,7 @@ helper_begin='// Remapped DMA lengths are measured in pixels/blocks, NOT bytes.'
 helper_end='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert native.count(helper_begin)==1 and native.count(helper_end)==1
 helper=native[native.index(helper_begin):native.index(helper_end,native.index(helper_begin))]
-assert fnv1a32(helper)==2868677532, "Reviewed B0B5 helper changed"
+assert fnv1a32(helper)==3019160284, "Reviewed B0B5 helper changed"
 for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
               'std::vector<u8> snapshot', 'memory.ReadBlock',
               'memory.WriteBlock','CanCoalescePitchDma',
@@ -123,6 +123,11 @@ assert expected.count(launch_end)==1
 expected=expected.replace(launch_end,insert+launch_end,1)
 assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
+assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")' in cm
+header=(root/"vendor/encore-active/eden-core/include/video_core/engines/maxwell_dma.h").read_text()
+assert "BitField<0, 16, u32> dst_components_raw" in header
+assert "i * 4" in header
+assert "remap.GetComponent(3)" in helper
 assert 'list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)' in cm
 assert 'python3 -B tools/check-native-dma-extent-host.py' in wf
 gpu="""    // Widen before multiplying, then respect the u32 buffer-cache span.

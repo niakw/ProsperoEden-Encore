@@ -291,8 +291,8 @@ assert "return 8u;" in fermi_experimental
 assert "${gpu_bounded_sample_helper}" not in cmake
 for part in (prmt_new, prmt_reg_new, fermi_new, fermi_layer_new, fermi_copy_new):
     assert ".fetch_add(1, std::memory_order_relaxed)" not in part
-assert prmt_new.count("EdenGpuBoundedSample(") == 2
-assert prmt_reg_new.count("EdenGpuBoundedSample(") == 2
+assert "EdenGpuBoundedSample(" not in prmt_new
+assert "EdenGpuBoundedSample(" not in prmt_reg_new
 assert fermi_new.count("EdenGpuBoundedSample(") == 1
 assert fermi_layer_new.count("EdenGpuBoundedSample(") == 1
 assert fermi_copy_new.count("EdenGpuBoundedSample(") == 2

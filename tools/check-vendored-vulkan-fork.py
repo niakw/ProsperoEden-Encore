@@ -159,7 +159,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                  "    const u32 clear_layer_count =\n"
                  "        (std::min)(layer_count, framebuffer_layers - clear_base_layer);\n"
                  "    const bool clear_covers_all_layers =\n"
-                 "        clear_base_layer == 0 && clear_layer_count == framebuffer_layers;\n\n", ""),
+                 "        clear_base_layer == 0 && clear_layer_count == framebuffer_layers;\n\n", "\n"),
                 ("        .baseArrayLayer = clear_base_layer,\n"
                  "        .layerCount = clear_layer_count,",
                  "        .baseArrayLayer = regs.clear_surface.layer,\n"

@@ -7065,6 +7065,11 @@ apply_reviewed_delta(
     "    if ((src_both || dst_both) &&\n        (!src_both || !dst_both || src.info.format != dst.info.format)) {\n        return;\n    }",
     "    if ((src_both || dst_both) && !mixed_d32_depth_plane &&\n        (!src_both || !dst_both || src.info.format != dst.info.format)) {\n        return;\n    }",
     "P2.5 Vulkan reinterpret mixed D32 depth plane admission")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "        const size_t plane_bytes = pixels * img_bpp;",
+    "        // Mixed D32S8/D32 transfers stage 32-bit depth only. Padding the\n        // plane to the packed 64-bit depth+stencil allocation doubles PS5\n        // scratch VRAM for a 1080p depth copy without moving more pixels.\n        const size_t plane_bytes = pixels *\n                                   (mixed_d32_depth_plane ? size_t{4} : img_bpp);",
+    "P2.5 Vulkan reinterpret mixed D32 scratch plane bytes")
 
 
 # P0 unified native rasterizer vtable: the pin from the native vendor

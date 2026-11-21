@@ -89,7 +89,7 @@ print("NVDEC_EAGAIN_NATIVE_SELECTED_SOURCE_RECEIPT_PASS",
 assert blob(ORIG_VIC)=="1a89f3de06981f95be9e5dc743a7c36b8ab6c4cf"
 if CAND_VIC.exists():
     assert CAND_SOURCE.is_file() and CAND_HEADER.is_file()
-    assert blob(CAND_VIC)=="d1ff5e88ad4fb20426393255a6bdd640c50f9d7c"
+    assert blob(CAND_VIC)=="0b5ace8ef926afdc273b3af1b9e61ec3ddb4814e"
     vic_text=CAND_VIC.read_text()
     ff_text=CAND_SOURCE.read_text()
     assert vic_text.count("EDEN_NVDEC_STAGE stage=vic_input")==2
@@ -117,6 +117,15 @@ if CAND_VIC.exists():
     assert vic_text.count("const size_t dst = static_cast<size_t>(y) * out_surface_width + rect_left;") == 2
     assert vic_text.count("_mm_loadu_si128(") >= 4
     assert vic_text.count("_mm_storeu_si128(") >= 4
+    assert vic_text.count("CheckedVicPlane(") == 4
+    assert "out_chroma_stride < (static_cast<u64>(surface_width) + 1) / 2 * 2" in vic_text
+    assert "out_chroma_height < (static_cast<u64>(surface_height) + 1) / 2" in vic_text
+    assert "for (; x + 1 < surface_width; x += 2)" in vic_text
+    assert "if (x < surface_width) {" in vic_text
+    assert "out_chroma_width, out_chroma_height, 1, block_height, 0, 3" in vic_text
+    assert "out_luma_width, out_luma_height, 1, block_height, 0, 4" in vic_text
+    assert "out_luma_width, out_luma_height, 1, block_height, 0, 2" in vic_text
+    assert "block_height == 1 && (out_luma_height & 1) == 0" in vic_text
 
 # Exercise the actual CMake source-list branch in a no-compiler fixture.
 # This tests selection and failure modes, not real native VIC compilation.
@@ -249,3 +258,91 @@ with tempfile.TemporaryDirectory(prefix="encore-vic-blend-") as temp:
         subprocess.run([str(exe)],check=True,timeout=20)
 print("NS1_VIC_BLEND_BOUNDS_HOST_PASS selected_scalar=1 nonzero_origin=1 "
       "empty_clip=1 decoded_bounds=1 source_vs_dest_offsets=1 O0_O2=2 ASan_UBSan=1")
+
+# GPU-33: run the real production VIC's u64 GOB/pitch admission and its
+# exact YUV420 scalar loop. Do not mistake this for a PS5 TU compilation.
+NATIVE_VIC=CAND_VIC.read_text()
+PLANE=NATIVE_VIC[
+    NATIVE_VIC.index("bool CheckedVicPlane("):
+    NATIVE_VIC.index("void SwizzleSurface(")]
+YU=NATIVE_VIC[NATIVE_VIC.index("void Vic::WriteY8__V8U8_N420("):
+              NATIVE_VIC.index("void Vic::WriteABGR(")]
+YBEGIN=YU.index("        } else {"+chr(10)+"            for (size_t y = 0; y < surface_height; ++y) {")
+YEND=YU.index(chr(10)+"        }"+chr(10)+"    };",YBEGIN)
+ODD_LOOP=YU[YBEGIN+len("        } else {"+chr(10)):YEND]
+assert "if (x < surface_width)" in ODD_LOOP
+cpp=r"""
+#include <cassert>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+using u8=std::uint8_t;
+using u16=std::uint16_t;
+using u32=std::uint32_t;
+using u64=std::uint64_t;
+namespace Texture {
+std::size_t CalculateSize(bool tiled,u32 bpp,u32 w,u32 h,u32 depth,u32 bh,u32 bd){
+    if(!tiled) return u32(w*h*depth*bpp);
+    const u32 aw=((u32(w*bpp)+63u)/64u)*64u;
+    const u32 block_h=8u<<bh;
+    const u32 ah=((h+block_h-1u)/block_h)*block_h;
+    const u32 ad=((depth+(1u<<bd)-1u)/(1u<<bd))*(1u<<bd);
+    return u32(aw*ah*ad);
+}
+}
+__PLANE__
+struct Pixel {u16 r{},g{},b{},a{};};
+void Decode(const std::vector<Pixel>& output_surface,std::vector<u8>& luma,
+            std::vector<u8>& chroma,u32 surface_width,u32 surface_height,
+            u32 surface_stride,u32 out_luma_stride,u32 out_chroma_stride) {
+    auto* out_luma=luma.data();
+    auto* out_chroma=chroma.data();
+__ODD_LOOP__
+}
+int main() {
+    assert(CheckedVicPlane(1920,1080,4,true,1));
+    assert(CheckedVicPlane(1920,1080,1,true,1));
+    assert(CheckedVicPlane(960,540,2,true,1));
+    assert(CheckedVicPlane(1,3,2,true,1));
+    assert(CheckedVicPlane(16384,16384,4,false,0)==false);
+    assert(CheckedVicPlane(16384,16384,4,true,5)==false);
+    assert(CheckedVicPlane(16384,16384,2,true,5)==false);
+    assert(!CheckedVicPlane(1920,1080,1,true,6));
+    assert(!CheckedVicPlane(0,1080,1,true,1));
+    assert(!CheckedVicPlane(1080,0,1,true,1));
+    assert(!CheckedVicPlane(1920,1080,0,true,1));
+    assert(CheckedVicPlane(4096,2160,4,true,2));
+    std::vector<Pixel> pixels{{4,40,80,0},{8,44,84,0},
+                              {12,48,88,0},{16,52,92,0},
+                              {20,56,96,0},{24,60,100,0}};
+    // 3x2 pixels, two luma bytes/rows? 16B-strided luma, one UV row.
+    // Host ASan would catch the old x+1 luma pixel on the last row.
+    std::vector<u8> luma(32,0xea), chroma(16,0xe9);
+    Decode(pixels,luma,chroma,3,2,3,16,16);
+    for(u32 y=0;y<2;++y)for(u32 x=0;x<3;++x)
+        assert(luma[y*16+x] == pixels[y*3+x].r / 4);
+    assert(luma[19] == 0xea && luma[3] == 0xea);
+    assert(chroma[0] == pixels[3].g/4 && chroma[1] == pixels[3].b/4);
+    assert(chroma[2] == pixels[5].g/4 && chroma[3] == pixels[5].b/4);
+    assert(chroma[4] == 0xe9);
+    // A one-pixel-wide decoded surface still writes a full UV pair safely.
+    std::vector<Pixel> single{{100,120,140,0}};
+    std::vector<u8> luma1(16,0),uv1(16,0);
+    Decode(single,luma1,uv1,1,1,1,16,16);
+    assert(luma1[0]==25 && uv1[0]==30 && uv1[1]==35);
+}
+""".replace("__PLANE__",PLANE).replace("__ODD_LOOP__",ODD_LOOP)
+compiler=shutil.which("clang++-18") or shutil.which("clang++")
+assert compiler,"Need host Clang for VIC u64 plane witness"
+with tempfile.TemporaryDirectory(prefix="encore-vic-planes-") as folder:
+    source=Path(folder)/"vic-planes.cpp"
+    source.write_text(cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(folder)/("planes-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_VIC_PLANE_HOST_PASS native_geometry=1 oversized_rejected=1 "
+      "bad_gob_rejected=1 valid_4k=1 odd_width_UV=1 last_row=1 O0_O2=2 ASan_UBSan=1")

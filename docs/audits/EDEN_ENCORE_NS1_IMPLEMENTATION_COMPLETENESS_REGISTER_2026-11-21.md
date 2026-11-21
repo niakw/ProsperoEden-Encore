@@ -9,7 +9,7 @@
 | Élément | Révision/vérification |
 |---|---|
 | Moteur branche de travail | `5d4455301211e9016e51244963760c3c9c1f3b97` (`opt/ns1-fc27-runtime-20261121`, avant création de ce document) |
-| Vendor **gitlink de cette branche** | `f3329917c3c43c95a166ec5f7035cd2a16a02beb` — conserve les corrections B0B5/DMA et ajoute IMUL Maxwell + les six modes PRMT documentés ; moteur gitlink `c7d8289110fcc507379d33f47b8cace86f483946`. Le workflow de provenance précédent, sur vendor `df297052`, est vert (`#44850877105`) ; validation du nouveau pin PRMT en cours au moment de cette ligne. |
+| Vendor **gitlink de cette branche** | `f3329917c3c43c95a166ec5f7035cd2a16a02beb` — conserve les corrections B0B5/DMA et ajoute IMUL Maxwell + les six modes PRMT documentés ; moteur gitlink `c7d8289110fcc507379d33f47b8cace86f483946`. Le pin PRMT est validé par le workflow de provenance [`#44851300365`](https://github.com/niakw/ProsperoEden-Encore/actions/runs/44851300365) : gitlink, dépendances, B0B5 hôte/UBSan, oracle Vulkan, RADV, ABI et CPM verts. **Ce n'est pas un build PS5 ni une validation de rendu.** |
 | Audits historiques du 20/11 | moteur `582973574aa0` / vendor `082cd1b77c7d` : ne pas réutiliser leurs verdicts sans comparaison |
 | Audit architecture 19/11 | moteur `15ea79bb23ca` / vendor `c15cdfe96a3d` : photographie antérieure |
 | PS5 deux sessions FC27 du 20/11 23:17 | binaire `98ef8a8ec7329a769cb0598c74dc04cf43b95e1d` — **pas** le build de la présente branche |

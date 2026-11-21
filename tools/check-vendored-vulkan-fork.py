@@ -1855,7 +1855,39 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
 
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.
-    generated_n3m = actual[n56_name].read_text()
+    # GPU-23 is shipped in BOTH the maintained native renderer and the
+    # generator, but this N3m comparison intentionally replays an older
+    # cache-owner snapshot (cache-version 19 / pre-fragment-shuffle). Check
+    # the EXACT production GPU-23 block on both inputs, then reverse ONLY
+    # the generated AUDIT COPY to that historical baseline. Never remove
+    # PS5's typed integer fragment outputs from the shipping C++ source.
+    typed_output_after = """        // Vulkan requires signed/unsigned fragment outputs to match the
+        // attachment's numeric class. Previously this was enabled only on
+        // MoltenVK: native PS5 RADV would emit floats for integer targets,
+        // making color writes poison/undefined (Vulkan shader interfaces).
+        // Keep the existing desktop policy; fix the PS5 renderer's ABI.
+        const bool require_typed_fragment_outputs =
+#ifdef PS5_NATIVE
+            true;
+#else
+            device.IsMoltenVK();
+#endif
+        if (require_typed_fragment_outputs) {"""
+    typed_output_before = '        if (device.IsMoltenVK()) {'
+    generated_raw_n3m = actual[n56_name].read_text()
+    native_raw_n3m = (active / n56_name).read_text()
+    assert generated_raw_n3m.count(typed_output_after) == 1, (
+        'GPU-23 generated integer fragment output gate drift')
+    assert native_raw_n3m.count(typed_output_after) == 1, (
+        'GPU-23 shipping integer fragment output gate drift')
+    assert n3m.count(typed_output_before) == 1 and typed_output_after not in n3m, (
+        'GPU-23 historical cache owner unexpectedly changed')
+    # Later generator-oracle checks operate on the same historical copy,
+    # while GPU-23 remains byte-identical in the original C++ and generator.
+    generated_n3m = generated_raw_n3m.replace(
+        typed_output_after, typed_output_before, 1)
+    actual[n56_name].write_text(generated_n3m)
+    print('ENCORE_NS1_GPU23_GENERATOR_EXACT_REVERSE_PASS')
     if generated_n3m.count(n3m_flag) != n3m.count(n3m_flag):
         # A total-count-only failure cannot identify whether the generated
         # or maintained shipping owner omitted a guarded C++ block. Show

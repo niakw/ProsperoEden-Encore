@@ -364,6 +364,20 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             real_source = (expected[name].read_text()
                            if name == raster_owner or transition_restored
                            else raw_path.read_text())
+            # NS1 f710080 changes only descriptor-array budget accounting.
+            # Reverse that SHA-sealed owner on the audit COPY so the older
+            # five-owner FC27 attribute-source receipt remains comparable.
+            if name == 'shader_recompiler/ir_opt/texture_pass.cpp' and \
+                    raster_blob(real_source) == '30c9a612a88fa6cd832a40ad0f717b4944db45a1':
+                current_texture_budget = "u32 DynamicSampledTextureArrayCount(const TextureInstVector& to_replace) {\n    // Count DISTINCT sampled descriptor arrays, not shader sample instructions.\n    // Descriptors::Add(TextureDescriptor) merges repeated uses of an identical\n    // array. Counting each instruction used to divide the descriptor budget by\n    // the number of samples, then clamp valid dynamic indices to a wrong slot.\n    // Mirror that descriptor identity, excluding the flags Add combines with OR.\n    using ArrayKey = std::array<u32, 11>;\n    boost::container::small_vector<ArrayKey, 16> arrays;\n    for (const TextureInst& inst : to_replace) {\n        const auto flags{inst.inst->Flags<IR::TextureInstInfo>()};\n        if (inst.cbuf.count <= 1 || IsStorageImageOpcode(IndexedInstruction(*inst.inst)) ||\n            flags.type == TextureType::Buffer) {\n            continue;\n        }\n        const auto& cbuf = inst.cbuf;\n        const ArrayKey key{\n            static_cast<u32>(flags.type.Value()), flags.is_depth != 0 ? 1U : 0U,\n            cbuf.has_secondary ? 1U : 0U, cbuf.index, cbuf.offset, cbuf.shift_left,\n            cbuf.secondary_index, cbuf.secondary_offset, cbuf.secondary_shift_left,\n            cbuf.count, DynamicDescriptorSizeShift(cbuf.dynamic_offset),\n        };\n        if (std::ranges::find(arrays, key) == arrays.end()) {\n            arrays.push_back(key);\n        }\n    }\n    return static_cast<u32>(arrays.size());\n}\n"
+                historical_texture_budget = "u32 DynamicSampledTextureArrayCount(const TextureInstVector& to_replace) {\n    u32 count{};\n    for (const TextureInst& inst : to_replace) {\n        const auto flags{inst.inst->Flags<IR::TextureInstInfo>()};\n        if (inst.cbuf.count > 1 && !IsStorageImageOpcode(IndexedInstruction(*inst.inst)) &&\n            flags.type != TextureType::Buffer) {\n            ++count;\n        }\n    }\n    return count;\n}\n"
+                assert real_source.count('#include <array>\n') == 1
+                assert real_source.count(current_texture_budget) == 1
+                real_source = real_source.replace('#include <array>\n', '', 1)
+                real_source = real_source.replace(current_texture_budget,
+                                                  historical_texture_budget, 1)
+                assert raster_blob(real_source) == '0010ffd43e7ac3fb482c46277c854ab9a76b06ab'
+                print('ENCORE_NS1_DYNAMIC_TEXTURE_ARRAY_BUDGET_EXACT_REVERSE_PASS')
             assert raster_blob(real_source) == witness['current'], (
                 'FC27 exact reviewed runtime drift', name)
             predecessor = real_source

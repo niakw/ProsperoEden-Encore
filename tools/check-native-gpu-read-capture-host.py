@@ -246,4 +246,100 @@ with tempfile.TemporaryDirectory(prefix="encore-sync-ownership-") as tmp:
 print("NS1_GPU_SYNC_LOCK_OWNERSHIP_PASS native_tickwork=1 reentrant_queue=1 "
       "failure_unlock=1 recovery=1 sanitizers=address_undefined profiles=O0_O2")
 
+
+# A failed std::list node allocation must not consume a sync fence number.
+# The original pinned Vulkan method incremented last_sync_fence first; its
+# subsequent successful request could therefore wait for a permanently
+# unreachable fence even though no GPU callback itself failed.
+request_start = "    template <typename Func>\n    [[nodiscard]] u64 RequestSyncOperation(Func&& action) {"
+request_end = "    /// Obtains current flush request fence id."
+assert vulkan.count(request_start) == 1 and vulkan.count(request_end) == 1
+request_source = request_start + vulkan.split(request_start, 1)[1].split(request_end, 1)[0]
+pinned_gpu = (root / "vendor/sources/eden/src/video_core/gpu.cpp").read_text()
+original_request = request_start + pinned_gpu.split(request_start, 1)[1].split(
+    request_end, 1)[0]
+assert original_request.index("++last_sync_fence") < original_request.index(
+    "sync_requests.emplace_back")
+assert request_source.index("sync_requests.emplace_back") < request_source.index(
+    "++last_sync_fence")
+assert request_source.count("sync_requests.emplace_back") == 1
+
+oom_fixture = r"""
+#include <atomic>
+#include <cassert>
+#include <condition_variable>
+#include <cstdint>
+#include <functional>
+#include <list>
+#include <mutex>
+#include <new>
+#include <utility>
+using u64 = std::uint64_t;
+struct FailQueue {
+    std::list<std::function<void()>> callbacks;
+    bool fail_next{};
+    template<class F> void emplace_back(F&& callback) {
+        if (std::exchange(fail_next, false)) throw std::bad_alloc{};
+        callbacks.emplace_back(std::forward<F>(callback));
+    }
+    bool empty() const { return callbacks.empty(); }
+    auto& front() { return callbacks.front(); }
+    void pop_front() { callbacks.pop_front(); }
+};
+struct FakeGpu {
+    std::mutex sync_request_mutex;
+    FailQueue sync_requests;
+    std::atomic<u64> current_sync_fence{};
+    u64 last_sync_fence{};
+    std::condition_variable sync_request_cv;
+@@REQUEST@@
+@@TICK@@
+};
+int main() {
+    FakeGpu gpu;
+    unsigned completed{};
+    gpu.sync_requests.fail_next = true;
+    try {
+        (void)gpu.RequestSyncOperation([&]{ ++completed; });
+        assert(false && "allocation fault was not injected");
+    } catch (const std::bad_alloc&) {}
+    assert(gpu.last_sync_fence == 0 && gpu.current_sync_fence == 0);
+    assert(gpu.sync_requests.empty());
+
+    const auto first = gpu.RequestSyncOperation([&]{ ++completed; });
+    const auto second = gpu.RequestSyncOperation([&]{ ++completed; });
+    assert(first == 1 && second == 2);
+    gpu.TickWork();
+    assert(completed == 2 && gpu.current_sync_fence == second);
+    assert(gpu.sync_requests.empty());
+
+    gpu.sync_requests.fail_next = true;
+    try {
+        (void)gpu.RequestSyncOperation([&]{ ++completed; });
+        assert(false && "second allocation fault was not injected");
+    } catch (const std::bad_alloc&) {}
+    assert(gpu.last_sync_fence == second && gpu.current_sync_fence == second);
+    const auto third = gpu.RequestSyncOperation([&]{ ++completed; });
+    assert(third == second + 1);
+    gpu.TickWork();
+    assert(completed == 3 && gpu.current_sync_fence == third);
+}
+"""
+with tempfile.TemporaryDirectory(prefix="encore-fence-oom-") as tmp:
+    work = Path(tmp)
+    source = work / "gpu_fence_oom.cpp"
+    source.write_text(oom_fixture.replace("@@REQUEST@@", request_source).replace(
+        "@@TICK@@", tick))
+    for opt in ("0", "2"):
+        binary = work / ("gpu_fence_oom_O" + opt)
+        subprocess.run(
+            [clang, "-std=c++20", "-O" + opt, "-g", "-Wall", "-Wextra",
+             "-Werror", "-pthread", "-fsanitize=address,undefined",
+             "-fno-sanitize-recover=all", str(source), "-o", str(binary)],
+            check=True, timeout=45,
+        )
+        subprocess.run([str(binary)], check=True, timeout=45)
+print("NS1_GPU_SYNC_FENCE_OOM_PASS native_request=1 rejected_alloc=2 "
+      "no_fence_gap=1 worker_ack=1 profiles=O0_O2 sanitizers=address_undefined")
+
 print("NATIVE_GPU_READ_CAPTURE_HOST_PASS original_stack_use_after_return=1 native_callback_owns_range=1 vulkan_real_owner=1 failure_aware_wait=1 shutdown_exit=1 normal_wait=1 preemptive_skip=1 sanitizer=address_undefined")

@@ -71,7 +71,7 @@ for node in ast.walk(ast.parse(generator)):
     if args[0]=="vk_texture_cache_cost.cpp" and isinstance(args[3],str) and (
         args[3].startswith("P2.5 Vulkan reinterpret ")):
         patches.append((args[1],args[2],args[3]))
-assert len(patches)==7,[step[2] for step in patches]
+assert len(patches)==9,[step[2] for step in patches]
 original=code
 for old,new,label in reversed(patches):
     assert original.count(new)==1,label

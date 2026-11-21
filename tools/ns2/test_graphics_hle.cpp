@@ -162,6 +162,37 @@ int main(){
     require(!DecodeEnsureGpuMemoryComptags(
                 std::span<const u32>{ensureComptags.data(),2}),
             "GPU comptag ensure rejects truncated packet");
+    // SDK TIPC 172/173 annotate live owned GPU memory, never submit GPU work.
+    const std::array<u32,7> memoryUserLabel{
+        0xbc,5,4,0x11223344,0x55667788,0x99aabbcc,0xddeeff00};
+    const auto userLabel=DecodeGpuMemoryUserDebugLabel(memoryUserLabel);
+    require(userLabel && userLabel->id==4 &&
+            userLabel->value[0]==0x5566778811223344ULL &&
+            userLabel->value[1]==0xddeeff0099aabbccULL,
+            "GPU worker 172 retains both full user label words");
+    auto badUserLabel=memoryUserLabel; badUserLabel[2]=0;
+    require(!DecodeGpuMemoryUserDebugLabel(badUserLabel),
+            "GPU worker 172 rejects unowned null handle");
+    badUserLabel=memoryUserLabel; badUserLabel[1]=4;
+    require(!DecodeGpuMemoryUserDebugLabel(badUserLabel),
+            "GPU worker 172 rejects wrong TIPC payload size");
+    require(!DecodeGpuMemoryUserDebugLabel(
+                std::span<const u32>{memoryUserLabel.data(),6}),
+            "GPU worker 172 rejects truncated packet");
+    const std::array<u32,5> memorySdkLabel{0xbd,3,4,0x12345678,0x9abcdef0};
+    const auto sdkLabel=DecodeGpuMemorySdkDebugLabel(memorySdkLabel);
+    require(sdkLabel && sdkLabel->id==4 &&
+            sdkLabel->value==0x9abcdef012345678ULL,
+            "GPU worker 173 retains full SDK label");
+    auto badSdkLabel=memorySdkLabel; badSdkLabel[2]=0;
+    require(!DecodeGpuMemorySdkDebugLabel(badSdkLabel),
+            "GPU worker 173 rejects null memory ID");
+    badSdkLabel=memorySdkLabel; badSdkLabel[0]=0xbc;
+    require(!DecodeGpuMemorySdkDebugLabel(badSdkLabel),
+            "GPU worker 173 rejects wrong command");
+    require(!DecodeGpuMemorySdkDebugLabel(
+                std::span<const u32>{memorySdkLabel.data(),4}),
+            "GPU worker 173 rejects truncated packet");
     const std::array<u32,4> gpuMemoryRelease{0x76,2,4,63};
     const auto release=DecodeGpuMemoryRelease(gpuMemoryRelease);
     require(release && release->id==4 && release->notification==63,

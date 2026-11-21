@@ -354,6 +354,76 @@ with tempfile.TemporaryDirectory(prefix="encore-vic-planes-") as folder:
 print("NS1_VIC_PLANE_HOST_PASS native_geometry=1 oversized_rejected=1 "
       "bad_gob_rejected=1 valid_4k=1 odd_width_UV=1 last_row=1 O0_O2=2 ASan_UBSan=1")
 
+# GPU-42: compile the exact maintained VIC bob-field loop, not a hand-written
+# proxy. The inherited loop used chroma_height*2 as a luma row limit and
+# read one row past odd-height decoded frames for the bottom field.
+vic_interlaced_source=CAND_VIC.read_text()
+vic_interlaced_old=ORIG_VIC.read_text()
+bob_sig="        auto DecodeBobField = [&]() {"
+def extract_bob(source):
+    start=source.index(bob_sig,source.index("void Vic::ReadInterlacedY8__V8U8_N420"))
+    end=source.index("\n        };",start)+len("\n        };")
+    return source[start:end]
+native_bob=extract_bob(vic_interlaced_source)
+old_bob=extract_bob(vic_interlaced_old)
+assert "y < in_chroma_height * 2" in old_bob
+assert "y < in_luma_height" in native_bob
+assert "y < in_chroma_height * 2" not in native_bob
+assert "auto const in_luma_height = (std::min)(frame->GetHeight(), s32(out_luma_height));" in vic_interlaced_source
+assert native_bob.count("slot.config.planar_alpha.Value()")==1
+# Only adapt the alpha register accessor to a literal in the isolated C++
+# fixture. All actual indexing and memcpy statements stay byte-for-byte.
+native_bob=native_bob.replace("slot.config.planar_alpha.Value()","255")
+bob_fixture=r"""
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <tuple>
+#include <vector>
+using s32=std::int32_t; using u16=std::uint16_t;
+struct Pixel { u16 r{},g{},b{},a{}; };
+int main() {
+  for(auto [decoded_h,out_h,top_field]:
+      std::array<std::tuple<s32,s32,bool>,5>{{{5,6,false},{5,6,true},
+                                                {4,6,false},{9,6,false},{1,6,false}}}) {
+    s32 in_luma_width=4,out_luma_width=4,out_luma_stride=4;
+    s32 in_luma_stride=4,in_chroma_stride=4;
+    s32 in_luma_height=std::min(decoded_h,out_h);
+    std::vector<std::uint8_t> luma(decoded_h*in_luma_stride,77);
+    std::vector<std::uint8_t> chroma_u(((decoded_h+1)/2)*in_chroma_stride,12);
+    std::vector<std::uint8_t> chroma_v(((decoded_h+1)/2)*in_chroma_stride,23);
+    auto const* luma_buffer=luma.data();
+    auto const* chroma_u_buffer=chroma_u.data();
+    auto const* chroma_v_buffer=chroma_v.data();
+    std::vector<Pixel> slot_surface(out_h*out_luma_width);
+    bool planar=true;
+__NATIVE_BOB__
+    DecodeBobField();
+    s32 first=top_field?0:1;
+    if(first<in_luma_height) {
+       assert(slot_surface[first*out_luma_width].r==308);
+       assert(slot_surface[(top_field?first+1:first-1)*out_luma_width].r==308);
+    }
+  }
+}
+""".replace("__NATIVE_BOB__",native_bob)
+compiler=shutil.which("clang++-18") or shutil.which("clang++")
+assert compiler, "Clang required for real VIC interlaced ASan/UBSan witness"
+with tempfile.TemporaryDirectory(prefix="encore-vic-bob-gpu42-") as folder:
+    source=Path(folder)/"vic-bob.cpp"
+    source.write_text(bob_fixture)
+    for opt in ("-O0","-O2"):
+        binary=Path(folder)/("vic-bob-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra",
+                        "-Werror","-fsanitize=address,undefined",
+                        "-fno-sanitize-recover=all",str(source),"-o",str(binary)],
+                       check=True,timeout=50)
+        subprocess.run([str(binary)],check=True,timeout=20)
+print("NS1_VIC_INTERLACED_BOB_BOUNDS_PASS actual_lambda=1 odd_bottom=1 "
+      "odd_top=1 even_bottom=1 slot_clamp=1 empty_bottom=1 ASan_UBSan=1 O0_O2=2")
+
 # GPU-34: compile the exact four reviewed intrinsics from the maintained
 # VIC on deliberately 8-byte/1-byte-offset memory, with SSE4.1 + ASan.
 # The previous _mm_load/store_si128 assumed 16-byte alignment not supplied

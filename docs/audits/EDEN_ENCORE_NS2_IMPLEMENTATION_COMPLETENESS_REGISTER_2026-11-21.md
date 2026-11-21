@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `f65ccc439534ffd9ce0a307b23bd511b4e32857a` |
+| Vendor gitlink sélectionné | `4e6a966508e718d02526d4d220e112591536f28c` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -386,10 +386,10 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC010481E | [S2] NVGPU_IOCTL_CHANNEL_GET_USER_SYNCPOINT | C | GetUserSyncpoint | actif, valeur courante + shim GMMU |
 | 0xC008481F | [S2] NVGPU_IOCTL_CHANNEL_SET_PREEMPTION_MODE | C | SetPreemptionMode | actif |
 | 0x40044820 | [S2] NVGPU_IOCTL_CHANNEL_OPEN | C | ChannelOpen | runlist authentifié |
-| 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; USERD/doorbell explicitement NotImplemented |
+| 0xC0504821 | [S2] NVGPU_IOCTL_CHANNEL_SETUP_BIND | P | ChannelSetupBind | kernel-submit implémenté; réponse ABI S2 80 B corrigée (`gpfifo_gpu_va`/`userd_gpu_va`/`usermode_mmio_gpu_va`/`hw_channel_id`); USERD/doorbell explicitement NotImplemented |
 
 
-**P0 actuel** : `0xC0504821 CHANNEL_SETUP_BIND` est volontairement **P**. Le mode kernel-submit initialise un vrai `ChannelState` après validation propriétaire/GMMU/runlist ; le mode userland `USERD/GPFIFO + doorbell` reste `NotImplemented` tant que les buffers invités, leur durée de vie et le mécanisme de notification GPU ne sont pas réellement modélisés.
+**P0 actuel** : `0xC0504821 CHANNEL_SETUP_BIND` est volontairement **P**. Le mode kernel-submit initialise un vrai `ChannelState` après validation propriétaire/GMMU/runlist et renvoie désormais le layout Switch 2 documenté : `hw_channel_id` correspond au `bind_id` réel du scheduler émulé, tandis que token et VA USERD/GPFIFO/MMIO restent nuls en mode kernel. Le mode userland `USERD/GPFIFO + doorbell` reste `NotImplemented` tant que les buffers invités, leur durée de vie et le mécanisme de notification GPU ne sont pas réellement modélisés.
 
 ## 11. NVDRV — /dev/nvhost-tsg-gpu
 

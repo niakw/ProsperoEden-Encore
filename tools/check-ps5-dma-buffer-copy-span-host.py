@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Compile selected native DMA copy spans before any u64 -> u32 narrowing."""
+"""Compile selected native DMA spans and NS1 DMA->TextureCache ownership policy."""
 from pathlib import Path
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
 core=(root/"vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h").read_text()
+texture=(root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
 active=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
 bridge=(root/"vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
-core_start=("bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,\n"
-            "                             bool* gpu_written) {")
+core_start=("bool BufferCache<P>::DMACopy(\n"
+            "    GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written,\n"
+            "    boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest) {")
 end="    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);"
 block=core[core.index(core_start):core.index(end,core.index(core_start))]
 assert "if (amount == 0 || amount > static_cast<u64>(~u32{0}))" in block
@@ -18,6 +20,8 @@ for pattern in ("FindBuffer(*cpu_src_address, static_cast<u32>(amount), false)",
                 "FindBuffer(*cpu_dest_address, static_cast<u32>(amount), false)",
                 "SynchronizeBuffer(src_buffer, *cpu_src_address, static_cast<u32>(amount))"):
     assert pattern in rest
+assert "*gpu_written_dest = tmp_intervals;" in rest
+assert "gpu_written_dest->clear();" in block
 wrap_begin="bool AccelerateDMA::BufferCopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {"
 wrap_end="\ntemplate <bool IS_IMAGE_UPLOAD>"
 def grab(s):
@@ -28,9 +32,25 @@ wrapper=grab(active)
 # The immutable guest-bridge fallback intentionally does neither.
 assert wrapper != grab(bridge)
 assert "return buffer_cache.DMACopy(src_address, dest_address, amount);" in grab(bridge)
-assert "buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes)" in wrapper
+assert "buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes," in wrapper
+assert "&gpu_written_dest" in wrapper
+assert "gpu_memory->UsesNativeTiling()" in wrapper
 assert "texture_cache.IsGpuMemoryGpuModified(src_address, amount)" in wrapper
 assert "texture_cache.WriteGpuMemory(dest_address, amount)" in wrapper
+assert "texture_cache.WriteDmaCopy(src_address, dest_address" in wrapper
+assert wrapper.index("gpu_memory->UsesNativeTiling()") < wrapper.index("texture_cache.WriteDmaCopy(")
+for token in (
+    "void TextureCache<P>::WriteDmaCopy(",
+    "gpu_written_dest",
+    "image.flags & ImageFlagBits::GpuModified",
+    "const bool keeps_gpu_contents =",
+    "overlaps_unheld(image)",
+    "image.flags |= ImageFlagBits::CpuModified;",
+    "UntrackImage(image, image_id);",
+    "*src > (std::numeric_limits<DAddr>::max)() - size",
+    "*dest > (std::numeric_limits<DAddr>::max)() - size",
+):
+    assert token in texture, token
 assert wrapper.index("if (amount == 0") < wrapper.index("std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};")
 oracle=(root/"tools/prepare-vulkan-port.py").read_text()
 assert "empty/oversized copy before the guest buffer-cache mutex" in oracle
@@ -41,9 +61,13 @@ assert 'configure_file("${EDEN_MAINTAINED_BUFFER_PAGES}"' in cmake
 preamble=r"""
 #include <cassert>
 #include <cstdint>
+#include <cstddef>
 #include <mutex>
 #include <optional>
 #include <limits>
+#include <span>
+#include <utility>
+#include <boost/container/small_vector.hpp>
 using u64 = std::uint64_t;
 using u32 = std::uint32_t;
 using DAddr = std::uint64_t;
@@ -53,7 +77,9 @@ struct Memory {
     unsigned contiguous_checks=0;
     bool mapped=true;
     bool aliased_gpu_pages=false;
+    bool native_tiling=false;
     bool IsGranularRange(GPUVAddr, u64) { ++contiguous_checks; return mapped; }
+    bool UsesNativeTiling() const { return native_tiling; }
     bool IsContinuousRange(GPUVAddr, u64) { ++contiguous_checks; return false; }
     std::optional<DAddr> GpuToCpuAddress(GPUVAddr a) {
         ++translations;
@@ -64,11 +90,14 @@ template<class P>
 struct BufferCache {
     Memory owner;
     Memory* gpu_memory=&owner;
-    bool DMACopy(GPUVAddr,GPUVAddr,u64,bool* gpu_written = nullptr);
+    bool DMACopy(
+        GPUVAddr,GPUVAddr,u64,bool* gpu_written = nullptr,
+        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);
 };
 """
 source=preamble+ "template<class P>\n"+block+ r"""
     (void)gpu_written;
+    (void)gpu_written_dest;
     // The core's range tracking begins after this point. The proof checks
     // that invalid lengths cannot reach it.
     return true;
@@ -83,22 +112,37 @@ struct CountingMutex {
 struct RasterBuffer {
     CountingMutex mutex;
     unsigned copy_calls=0;
-    bool DMACopy(GPUVAddr,GPUVAddr,u64,bool* gpu_written) {
+    bool gpu_owned=false;
+    bool DMACopy(
+        GPUVAddr,GPUVAddr,u64,bool* gpu_written,
+        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest=nullptr) {
         ++copy_calls;
-        *gpu_written=false;
+        *gpu_written=gpu_owned;
+        if (gpu_written_dest) {
+            gpu_written_dest->clear();
+            if (gpu_owned) gpu_written_dest->push_back({0x2800,0x800});
+        }
         return true;
     }
 };
 struct RasterTexture {
     CountingMutex mutex;
     bool gpu_modified=false;
-    unsigned writes=0;
+    unsigned old_writes=0;
+    unsigned dma_writes=0;
+    std::size_t last_unheld=0;
     bool IsGpuMemoryGpuModified(GPUVAddr,u64) const{return gpu_modified;}
-    void WriteGpuMemory(GPUVAddr,u64){++writes;}
+    void WriteGpuMemory(GPUVAddr,u64){++old_writes;}
+    void WriteDmaCopy(GPUVAddr,GPUVAddr,std::size_t,
+                      std::span<const std::pair<DAddr,std::size_t>> ranges) {
+        ++dma_writes; last_unheld=ranges.size();
+    }
 };
 struct AccelerateDMA {
     RasterBuffer buffer_cache;
     RasterTexture texture_cache;
+    Memory native_memory;
+    Memory* gpu_memory=&native_memory;
     bool BufferCopy(GPUVAddr,GPUVAddr,u64);
 };
 """ + wrapper + r"""
@@ -127,12 +171,24 @@ int main() {
     assert(outer.buffer_cache.mutex.locks==2);
     assert(outer.texture_cache.mutex.locks==2);
     assert(outer.buffer_cache.copy_calls==2);
-    assert(outer.texture_cache.writes==2);
-    // GPU-owned texture bytes must never be overwritten with stale CPU data.
-    outer.texture_cache.gpu_modified=true;
+    assert(outer.texture_cache.dma_writes==2);
+    assert(outer.texture_cache.old_writes==0);
+    // NS1 forwards exact GPU-owned BufferCache subranges instead of suppressing
+    // every destination invalidation for the whole copy.
+    outer.buffer_cache.gpu_owned=true;
     assert(outer.BufferCopy(0x1000,0x2000,4096));
     assert(outer.buffer_cache.copy_calls==3);
-    assert(outer.texture_cache.writes==2);
+    assert(outer.texture_cache.dma_writes==3);
+    assert(outer.texture_cache.last_unheld==1);
+    // Native-tiling/NS2 keeps the prior all-or-nothing policy unchanged.
+    outer.native_memory.native_tiling=true;
+    outer.buffer_cache.gpu_owned=false;
+    outer.texture_cache.gpu_modified=false;
+    assert(outer.BufferCopy(0x1000,0x2000,4096));
+    assert(outer.texture_cache.old_writes==1);
+    outer.buffer_cache.gpu_owned=true;
+    assert(outer.BufferCopy(0x1000,0x2000,4096));
+    assert(outer.texture_cache.old_writes==1);
     // Both ordinary overlapping ranges and distinct GPU virtual addresses
     // mapped to one physical page must be refused before dirty bookkeeping.
     const auto before_alias_translations=inner.owner.translations;
@@ -157,3 +213,5 @@ with tempfile.TemporaryDirectory(prefix="encore-dma-copy-span-") as tmp:
                         str(cpp),"-o",str(exe)],check=True,timeout=30)
         subprocess.run([str(exe)],check=True,timeout=10)
         print("ENCORE_DMA_COPY_SPAN_PASS",opt)
+        print("NS1_DMA_TEXTURE_COHERENCE_HOST_PASS",opt,
+              "exact_gpu_ranges=1 ns1_granular=1 ns2_policy_unchanged=1")

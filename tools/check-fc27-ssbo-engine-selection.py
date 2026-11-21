@@ -52,7 +52,7 @@ active_ctx=V/"encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/s
 pinned_ctx=V/"sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
 assert blob(active_mem)=="6e6994343df4a1e3930495f8fd575c4329bfa8c4"
 assert blob(pinned_mem)=="bef4421fedce6d66af1c6ff0c1dcc835e976eb33"
-assert blob(active_ctx)=="8e02b270724904bb307e2efe7d6831399a528f77"
+assert blob(active_ctx)=="a3c36f45fd9b2b89f096258f54dd9189287a82d0"
 assert blob(pinned_ctx)=="ef1f3f2ee83d3d44a571c03f19399dbe0697dd7e"
 
 for needle in (

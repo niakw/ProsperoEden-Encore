@@ -2537,7 +2537,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # production block in BOTH the generator and active pinned renderer,
     # then reverse it on the temporary generated audit copy only.
     generated_raster = normalized_generated[dma_raster].read_text()
-    native_raster = (active / dma_raster).read_text()
+    # Reuse the GPU-46-normalized shipping owner established at the prior
+    # GPU-22 checkpoint. Do not reopen the raw active file and bypass that
+    # exact predecessor proof.
+    native_raster = current_raster
     reviewed_inline = "#ifdef PS5_NATIVE\n    // One GPU VA range can cross discontiguous device-memory pages. InlineMemory,\n    // texture invalidation and shader/query invalidation accept ONE CPU span:\n    // their first translated DAddr must never stand in for later GMMU pages.\n    // Single device-page writes keep the existing O(1) hot path. For fragmented\n    // but fully mapped spans, WriteBlock invalidates EACH translated physical\n    // segment before writing; it owns the same normal cache notifications.\n    if (!gpu_memory->IsGranularRange(address, copy_size) &&\n        !gpu_memory->IsContinuousRange(address, copy_size)) {\n        if (!gpu_memory->IsFullyMappedRange(address, copy_size)) {\n            return; // No partial writes into an invalid guest DMA mapping.\n        }\n        gpu_memory->WriteBlock(address, memory.data(), copy_size);\n        return;\n    }\n#endif\n"
     assert git_blob_sha(native_raster) == 'fdd5a73ccf795fd58100469c546b544a86a68e5b', (
         'GPU-30 active Vulkan owner changed')

@@ -127,6 +127,13 @@ assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 prmt_reference = prmt
 fermi_pinned = (ROOT / "vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 fermi_default = (ROOT / "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
+# A soft assertion alone does not prevent the unsupported blit from
+# changing guest memory. Reverse only the exact reviewed fail-closed hunk
+# in this in-memory historical-source proof, never in the compiled owner.
+fail_closed_fermi_guard = "    // A soft UNIMPLEMENTED_IF_MSG reports a failure but continues execution.\n    // Never turn unsupported Fermi2D operations or nonzero layers into a\n    // normal SrcCopy of layer zero: that silently overwrites guest pixels.\n    if (regs.operation != Operation::SrcCopy) {\n        UNIMPLEMENTED_MSG(\"Operation is not copy\");\n        return;\n    }\n    if (regs.src.layer != 0) {\n        UNIMPLEMENTED_MSG(\"Source layer is not zero\");\n        return;\n    }\n    if (regs.dst.layer != 0) {\n        UNIMPLEMENTED_MSG(\"Destination layer is not zero\");\n        return;\n    }\n    if (regs.src.depth != 1) {\n        UNIMPLEMENTED_MSG(\"Source depth is not one\");\n        return;\n    }\n"
+legacy_soft_fermi_guard = "    UNIMPLEMENTED_IF_MSG(regs.operation != Operation::SrcCopy, \"Operation is not copy\");\n    UNIMPLEMENTED_IF_MSG(regs.src.layer != 0, \"Source layer is not zero\");\n    UNIMPLEMENTED_IF_MSG(regs.dst.layer != 0, \"Destination layer is not zero\");\n    UNIMPLEMENTED_IF_MSG(regs.src.depth != 1, \"Source depth is not one\");\n"
+assert fermi_default.count(fail_closed_fermi_guard) == 1
+fermi_default = fermi_default.replace(fail_closed_fermi_guard, legacy_soft_fermi_guard, 1)
 # Verify the current native clipping implementation, then rewind that ONE
 # feature in-memory for the old pinned/experimental parity contract below.
 assert "NVIDIA 2D CLIP_X/Y/W/H is a destination scissor" in fermi_default

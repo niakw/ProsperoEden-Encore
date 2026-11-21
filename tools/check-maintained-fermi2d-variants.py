@@ -6,6 +6,13 @@ import json
 root=Path(__file__).resolve().parents[1]
 pinned=(root/"vendor/sources/eden/src/video_core/engines/fermi_2d.cpp").read_text()
 standard=(root/"vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp").read_text()
+# A soft assertion alone does not prevent the unsupported blit from
+# changing guest memory. Reverse only the exact reviewed fail-closed hunk
+# in this in-memory historical-source proof, never in the compiled owner.
+fail_closed_fermi_guard = "    // A soft UNIMPLEMENTED_IF_MSG reports a failure but continues execution.\n    // Never turn unsupported Fermi2D operations or nonzero layers into a\n    // normal SrcCopy of layer zero: that silently overwrites guest pixels.\n    if (regs.operation != Operation::SrcCopy) {\n        UNIMPLEMENTED_MSG(\"Operation is not copy\");\n        return;\n    }\n    if (regs.src.layer != 0) {\n        UNIMPLEMENTED_MSG(\"Source layer is not zero\");\n        return;\n    }\n    if (regs.dst.layer != 0) {\n        UNIMPLEMENTED_MSG(\"Destination layer is not zero\");\n        return;\n    }\n    if (regs.src.depth != 1) {\n        UNIMPLEMENTED_MSG(\"Source depth is not one\");\n        return;\n    }\n"
+legacy_soft_fermi_guard = "    UNIMPLEMENTED_IF_MSG(regs.operation != Operation::SrcCopy, \"Operation is not copy\");\n    UNIMPLEMENTED_IF_MSG(regs.src.layer != 0, \"Source layer is not zero\");\n    UNIMPLEMENTED_IF_MSG(regs.dst.layer != 0, \"Destination layer is not zero\");\n    UNIMPLEMENTED_IF_MSG(regs.src.depth != 1, \"Source depth is not one\");\n"
+assert standard.count(fail_closed_fermi_guard) == 1
+standard = standard.replace(fail_closed_fermi_guard, legacy_soft_fermi_guard, 1)
 # Native shipping Fermi now implements the NVIDIA 2D destination clip.
 # Reverse only this added, reviewed hardware feature on the in-memory COPY
 # before comparing the earlier unmodified pinned source / retired generator.

@@ -89,6 +89,21 @@ assert 'BitField<53, 1, u64> is_b_signed;' in expected
 assert 'BitField<54, 1, u64> high;' in expected
 assert 'ThrowNotImplemented(Opcode::IMAD32I);' in expected
 assert 'ThrowNotImplemented(Opcode::IMADSP_reg);' in expected
+
+# IMAD32I is a separate encoding. Admit only LOW/HI with no CC or operand
+# negations; its addend is the pre-instruction destination register.
+imad32_old="void TranslatorVisitor::IMAD32I(u64) {\n    ThrowNotImplemented(Opcode::IMAD32I);\n}\n"
+imad32_new="void TranslatorVisitor::IMAD32I(u64 insn) {\n    // GM107 IMAD32I: D = A * imm32 + old(D). The low word is independent\n    // of signedness; HI uses bits 54/57 as the A/B signed-type selectors.\n    // Negating A or the addend and publishing condition codes remain\n    // fail-closed until their exact arithmetic flag contracts are covered.\n    union {\n        u64 raw;\n        BitField<0, 8, IR::Reg> dest_reg;\n        BitField<8, 8, IR::Reg> src_reg_a;\n        BitField<52, 1, u64> cc;\n        BitField<53, 1, u64> high;\n        BitField<54, 1, u64> is_a_signed;\n        BitField<55, 1, u64> negate_addend;\n        BitField<56, 1, u64> negate_a;\n        BitField<57, 1, u64> is_b_signed;\n    } const imad{insn};\n\n    if (imad.cc != 0 || imad.negate_addend != 0 || imad.negate_a != 0) {\n        throw NotImplementedException(\"IMAD32I CC/NEG modifiers\");\n    }\n    const IR::U32 src_a{X(imad.src_reg_a)};\n    const IR::U32 src_b{GetImm32(insn)};\n    const IR::U32 product{\n        imad.high != 0\n            ? MultiplyHigh(*this, src_a, src_b, imad.is_a_signed != 0, imad.is_b_signed != 0)\n            : ir.IMul(src_a, src_b)};\n    X(imad.dest_reg, ir.IAdd(product, X(imad.dest_reg)));\n}\n"
+assert expected.count(imad32_old)==1
+expected=expected.replace(imad32_old,imad32_new,1)
+assert 'BitField<52, 1, u64> cc;' in expected
+assert 'BitField<53, 1, u64> high;' in expected
+assert 'BitField<54, 1, u64> is_a_signed;' in expected
+assert 'BitField<55, 1, u64> negate_addend;' in expected
+assert 'BitField<56, 1, u64> negate_a;' in expected
+assert 'BitField<57, 1, u64> is_b_signed;' in expected
+assert 'throw NotImplementedException("IMAD32I CC/NEG modifiers")' in expected
+assert 'ThrowNotImplemented(Opcode::IMADSP_reg);' in expected
 assert actual==expected, "PRMT/IMUL/IMAD maintained shader is not the reviewed single native source"
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
@@ -109,4 +124,4 @@ assert "EdenGpuBoundedSample" not in fermi_default, "shipping Fermi2D has unused
 assert helper.strip() in fermi_experiment, "experimental Fermi2D lost its bounded sample helper"
 assert "set(gpu_bounded_sample_helper [=[" not in module
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in module
-print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD LOW/HI, unsupported modifiers fail-closed")
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT modes 0-6 + IMUL + bounded IMAD/IMAD32I LOW/HI, unsupported modifiers fail-closed")

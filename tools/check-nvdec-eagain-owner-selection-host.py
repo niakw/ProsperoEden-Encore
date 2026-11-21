@@ -436,7 +436,8 @@ HS=H1_CPP.read_text();HH=H1_HDR.read_text()
 OS=H1_ORIG_CPP.read_text();OH=H1_ORIG_HDR.read_text()
 guard="fd < 0 || static_cast<std::size_t>(fd) >= devices.size()"
 assert HS.count(guard)==2 and HH.count(guard)==1
-assert "devices[fd]" not in HS and "devices[fd]" not in HH
+assert HS.count("devices[fd]")==2 and "devices[fd]" not in HH
+# The two StartDevice dispatches are reached only after the signed range guard.
 start="void Host1x::StartDevice("
 stop="void Host1x::StopDevice("
 now_start=HS[HS.index(start):HS.index("    switch (type) {",HS.index(start))]
@@ -529,6 +530,7 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-device-fd-") as tmp:
     for opt in ("-O0","-O2"):
         exe=Path(tmp)/("fd-"+opt[1:])
         subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-Wno-unused-parameter", # StopDevice preserves original ABI argument.
                         "-fsanitize=address,undefined","-fno-sanitize-recover=all",
                         str(source),"-o",str(exe)],check=True,timeout=45)
         subprocess.run([str(exe)],check=True,timeout=20)

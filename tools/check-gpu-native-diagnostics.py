@@ -90,7 +90,8 @@ for name in control_noops:
     new = extract_method(prmt, name)
     assert "ThrowNotImplemented(Opcode::" + name + ");" in old
     assert "ThrowNotImplemented" not in new
-assert "ThrowNotImplemented(Opcode::PRET);" in prmt
+assert "ThrowNotImplemented(Opcode::PRET);" in pinned_prmt
+assert "ThrowNotImplemented(Opcode::PRET);" not in prmt
 assert "ThrowNotImplemented(Opcode::JCAL);" in prmt
 
 pinned_control=(ROOT / "vendor/sources/eden/src/shader_recompiler/frontend/maxwell/control_flow.cpp").read_text()

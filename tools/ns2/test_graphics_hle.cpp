@@ -111,12 +111,16 @@ int main(){
     require(br && br->flags==0x8000000000000005ULL && P::IsLocalBootstrap(*br),
             "bootstrap native profile 0x807");
     require(P::NativeGpuProfileForBootstrap(br->flags)==0x807,"GPU profile 0x807");
+    require(P::GrantNativeMemoryFeatures(0x2ULL, true)==0x2ULL &&
+            P::GrantNativeMemoryFeatures(~u64{}, true)==0x2ULL &&
+            P::GrantNativeMemoryFeatures(0x2ULL, false)==0 &&
+            P::GrantNativeMemoryFeatures(0x0ULL, true)==0,
+            "GSV 115 grants only the NVDRV-backed capability");
     bootstrap[6]=1;
     br=P::DecodeBootstrap(bootstrap);
     require(br && P::IsLocalBootstrap(*br) &&
             P::NativeGpuProfileForBootstrap(br->flags)==0,
             "GSV 4 firmware 19 version accepted without invented GPU profile");
-    bootstrap[6]=5;
     bootstrap[6]=6;
     br=P::DecodeBootstrap(bootstrap);
     require(br && P::NativeGpuProfileForBootstrap(br->flags)==0x808,

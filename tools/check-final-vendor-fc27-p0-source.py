@@ -872,7 +872,7 @@ if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629c
         relative = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp"
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == "5ff69e424b4b77d16732df37dbb5ecd56f3d4964", ("GPU worker shutdown-guard drift", relative, actual)
+        assert actual == reviewed_blob(relative, "5ff69e424b4b77d16732df37dbb5ecd56f3d4964"), ("GPU worker shutdown-guard drift", relative, actual)
     selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
     original_vendor_pin = selected
 # A GPU channel's AS shared_ptr owns the GMMU but cannot keep NVMap

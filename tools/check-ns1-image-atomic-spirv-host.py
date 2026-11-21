@@ -61,7 +61,7 @@ def main():
         SHADER / "CMakeLists.txt",
         "shader_recompiler STATIC",
         r"(?:backend/spirv|frontend/ir)/[^\s()]+\.cpp",
-        35,
+        30,
         [
             "backend/spirv/emit_spirv.cpp",
             "backend/spirv/emit_spirv_image.cpp",

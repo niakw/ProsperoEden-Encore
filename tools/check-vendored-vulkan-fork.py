@@ -1278,6 +1278,59 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
         base_blob = subprocess.check_output(
             ['git', 'hash-object', str(base_owner)], text=True).strip()
+        if core_blob == '764cc03616d89cda91f902aabac85d10f309d9f3':
+            # GPU-50 changes only DMACopy's range report and its matching
+            # declaration. Reconstruct the previous audited C++ owners exactly,
+            # on copies; keep the shipping BufferCache/TextureCache untouched.
+            assert base_blob == 'fd9708571ef61c83c399042a5200c87b2e3784d6'
+            before_signature = """bool BufferCache<P>::DMACopy(
+    GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written,
+    boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest) {
+    if (gpu_written_dest) {
+        gpu_written_dest->clear();
+    }
+"""
+            after_signature = """bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,
+                             bool* gpu_written) {
+"""
+            before_report = """    if (gpu_written_dest) {
+        *gpu_written_dest = tmp_intervals;
+    }
+"""
+            corrected_core = core_owner.read_text()
+            assert corrected_core.count(before_signature) == corrected_core.count(before_report) == 1
+            corrected_core = corrected_core.replace(before_signature, after_signature, 1)
+            corrected_core = corrected_core.replace(before_report, '', 1)
+            def _gpu50_hash(contents):
+                raw = contents.encode('utf-8')
+                return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+            assert _gpu50_hash(corrected_core) == '96d933edbf271aa17853748905eeb9c5276c41c2'
+            restored_core = temp/'normalized-vendor-gpu50'/'buffer_cache.h'
+            restored_core.parent.mkdir(parents=True, exist_ok=True)
+            restored_core.write_text(corrected_core)
+            core_owner = restored_core
+            core_blob = _gpu50_hash(corrected_core)
+
+            before_decl = """    /// Optionally report whether the copied source contains GPU-owned buffer bytes.
+    /// gpu_written_dest names the exact destination subranges whose newest bytes stay GPU-owned.
+    bool DMACopy(
+        GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written = nullptr,
+        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);
+"""
+            after_decl = """    /// Optionally report whether the copied source contains GPU-owned buffer bytes.
+    /// A caller must not re-upload the destination texture from stale guest memory.
+    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,
+                 bool* gpu_written = nullptr);
+"""
+            corrected_base = base_owner.read_text()
+            assert corrected_base.count(before_decl) == 1
+            corrected_base = corrected_base.replace(before_decl, after_decl, 1)
+            assert _gpu50_hash(corrected_base) == '716634290574ed4dfc8fd3be0d0ea0ad582980f8'
+            restored_base = temp/'normalized-vendor-gpu50'/'buffer_cache_base.h'
+            restored_base.write_text(corrected_base)
+            base_owner = restored_base
+            base_blob = _gpu50_hash(corrected_base)
+            print('ENCORE_NS1_GPU50_BUFFERCACHE_ABI_EXACT_REVERSE_PASS owners=2')
         if core_blob in {
             '41239f19b9e16741d49e31145c504e0086b1095e',
             'b127ceea4006395e9b9bc9727c059dcfdf4a898d',

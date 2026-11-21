@@ -89,7 +89,40 @@ int main() {
     }
     fail_new=0;
     assert(ledger.ContainsSparse(9,0x9000,0x1000));
-    assert(ledger.RecordReleasedSparse(9,0x8000,0x3000)==Status::Success);
+    const auto exact=ledger.ExactSparse(9,0x8000);
+    assert(exact && exact->size==0x3000 && exact->sparse_page_shift==12);
+    {
+        Pending stage;
+        fail_new=1;
+        assert(ledger.PrepareSparseReplacingExact(
+            9,2,0x8000,0x5000,stage)==Status::OutOfResource);
+        assert(stage.empty() && ledger.Count()==1);
+        assert(ledger.ContainsSparse(9,0x8000,0x3000));
+        fail_new=0;
+    }
+    const GW::Map4K neighbor{9,8,2,0,0xd000,0x1000,0,1,1,0,0};
+    assert(ledger.RecordMapped(neighbor)==Status::Success);
+    {
+        Pending stage;
+        assert(ledger.PrepareSparseReplacingExact(
+            9,2,0x8000,0x6000,stage)==Status::Overlap);
+        assert(stage.empty() && ledger.Count()==2);
+    }
+    const GW::Unmap4K neighbor_unmap{9,0,0xd000,0x1000,0};
+    assert(ledger.RecordUnmapped(neighbor_unmap)==Status::Success);
+    {
+        Pending stage;
+        assert(ledger.PrepareSparseReplacingExact(
+            9,2,0x8000,0x5000,stage)==Status::Success);
+        assert(stage.size()==1 && ledger.Count()==1);
+        assert(ledger.RecordReleasedSparse(9,0x8000,0x3000)==Status::Success);
+        fail_new=1;
+        assert(ledger.CommitPrepared(stage)==Status::Success);
+        assert(fail_new==1 && stage.empty() && ledger.Count()==1);
+        assert(ledger.ContainsSparse(9,0xc000,0x1000));
+        fail_new=0;
+    }
+    assert(ledger.RecordReleasedSparse(9,0x8000,0x5000)==Status::Success);
     fail_new=1;
     assert(ledger.RecordSparse(9,2,0x8000,0x3000)==Status::OutOfResource);
     assert(ledger.Count()==0);

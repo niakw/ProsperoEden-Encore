@@ -107,14 +107,14 @@ struct NativeAS {
     NvResult remap_result{NvResult::Success};
     unsigned reserves{}, releases{}, remaps{};
     u32 last_handle{};
-    u64 last_source_pages{};
+    u64 last_source_pages{}, last_reserve_size{}, last_release_size{};
     NvResult ReserveNativeSparse4K(u64 begin,u64 size,u8 shift) {
-        assert(begin==0x20000 && size==0x2000 && shift==12);
-        ++reserves;return reserve_result;
+        assert(begin==0x20000 && size>=0x1000 && (size&0xfff)==0 && shift==12);
+        ++reserves;last_reserve_size=size;return reserve_result;
     }
     NvResult ReleaseNativeSparse4K(u64 begin,u64 size) {
-        assert(begin==0x20000 && size==0x2000);
-        ++releases;return release_result;
+        assert(begin==0x20000 && size>=0x1000 && (size&0xfff)==0);
+        ++releases;last_release_size=size;return release_result;
     }
     template<class V> NvResult RemapNativeSparse(const V& entries) {
         assert(entries.size()==1);
@@ -191,14 +191,22 @@ struct IGpuWorker {
     System system{};
     Kernel::KernelCore kernel{};
     bool back_fail{};
-    unsigned backs{};
+    unsigned backs{}, dense_retires{};
     Result BackGpuOnlyRegion(u32 as,u64 begin,u64 size,u8 shift) {
-        assert(as==7 && begin==0x20000 && size==0x2000 && shift==12);
+        assert(as==7 && begin==0x20000 && size>=0x1000 &&
+               (size&0xfff)==0 && shift==12);
         ++backs;
         if (back_fail) return Kernel::ResultOutOfResource;
         m_dense_regions.emplace(std::make_pair(as,begin),
                                 Dense{begin,size,0,91,false,false});
         return ResultSuccess;
+    }
+    bool RetireGpuOnlyRegion(u32 as,u64 begin) {
+        auto it=m_dense_regions.find({as,begin});
+        if (it==m_dense_regions.end()) return false;
+        ++dense_retires;
+        m_dense_regions.erase(it);
+        return true;
     }
     void CreateSparseRegion(HLERequestContext&);
     void ExecuteSparseMapRequests(HLERequestContext&);
@@ -207,10 +215,12 @@ __TRANSLATE__
 __SPARSE__
 __REMAP__
 }
-static HLERequestContext region(u32 mode=1,u32 notification=3) {
+static HLERequestContext region(u32 mode=1,u32 notification=3,u64 size=0x2000) {
+    assert(size>=0x1000 && (size&0xfff)==0);
     HLERequestContext c{};
     c.command=214;
-    c.packet={0xe6,10,7,0x20000,0,0x21fff,0,12,mode,1,0,notification};
+    const u64 end=0x20000+size-1;
+    c.packet={0xe6,10,7,0x20000,0,u32(end),u32(end>>32),12,mode,1,0,notification};
     return c;
 }
 static HLERequestContext batch(bool with_handle=true) {
@@ -261,10 +271,52 @@ int main() {
     worker.CreateSparseRegion(accepted);
     assert(accepted.response_words==2 && accepted.reply[0]==0);
     assert(gpu.reserves==2 && worker.m_mappings.Count()==1 && event.signals==1);
-    auto duplicate=region();
-    worker.CreateSparseRegion(duplicate);
-    assert(duplicate.reply[0]==Kernel::ResultInvalidState.raw);
-    assert(gpu.reserves==2 && event.signals==1);
+    Service::AM::IGpuWorker growing;
+    Kernel::KEvent grown_event{};
+    setup(growing,grown_event);
+    auto first_generation=region();
+    growing.CreateSparseRegion(first_generation);
+    assert(first_generation.reply[0]==0);
+    auto second_generation=region(1,3,0x4000);
+    growing.CreateSparseRegion(second_generation);
+    auto& growing_gpu=*growing.m_shared->owner;
+    assert(second_generation.reply[0]==0 && grown_event.signals==2);
+    assert(growing_gpu.reserves==2 && growing_gpu.releases==1);
+    assert(growing_gpu.last_release_size==0x2000 &&
+           growing_gpu.last_reserve_size==0x4000);
+    assert(growing.system.gpu.waits==1 && growing.m_mappings.Count()==1);
+    assert(growing.m_mappings.ContainsSparse(7,0x20000,0x4000));
+
+    Service::AM::IGpuWorker blocked;
+    Kernel::KEvent blocked_event{};
+    setup(blocked,blocked_event);
+    auto blocked_first=region();
+    blocked.CreateSparseRegion(blocked_first);
+    assert(blocked_first.reply[0]==0);
+    assert(blocked.m_mappings.RecordSparse(7,1,0x23000,0x1000)==
+           Service::AM::GW::LedgerStatus::Success);
+    auto blocked_growth=region(1,3,0x4000);
+    blocked.CreateSparseRegion(blocked_growth);
+    auto& blocked_gpu=*blocked.m_shared->owner;
+    assert(blocked_growth.reply[0]==Kernel::ResultInvalidState.raw);
+    assert(blocked_gpu.reserves==1 && blocked_gpu.releases==0);
+    assert(blocked.system.gpu.waits==0 && blocked_event.signals==1);
+    assert(blocked.m_mappings.Count()==2);
+
+    Service::AM::IGpuWorker rejected;
+    Kernel::KEvent rejected_event{};
+    setup(rejected,rejected_event);
+    auto rejected_first=region();
+    rejected.CreateSparseRegion(rejected_first);
+    assert(rejected_first.reply[0]==0);
+    rejected.m_shared->owner->reserve_result=Service::Nvidia::NvResult::InvalidState;
+    auto rejected_growth=region(1,3,0x4000);
+    rejected.CreateSparseRegion(rejected_growth);
+    auto& rejected_gpu=*rejected.m_shared->owner;
+    assert(rejected_growth.reply[0]==Kernel::ResultInvalidState.raw);
+    assert(rejected_gpu.reserves==2 && rejected_gpu.releases==1);
+    assert(rejected.system.gpu.waits==1 && rejected_event.signals==1);
+    assert(rejected.m_mappings.Count()==0);
 
     auto no_output=batch();no_output.output_capacity=0;
     worker.ExecuteSparseMapRequests(no_output);

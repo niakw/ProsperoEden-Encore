@@ -102,6 +102,7 @@ REVIEWED_PINS.add("d32b4280fe6737e1da3b56ed47409422500c756f")
 REVIEWED_PINS.add("1e1230f882ac6167ca0e6999875f07971b77985c")
 REVIEWED_PINS.add("dd4127535a60ff1b22700edac24ca5a5f7d4fac2")
 REVIEWED_PINS.add("b1917364f678ba469c4d817f663d10ca5be5c0c3")
+REVIEWED_PINS.add("bc44094d78d0bba088ca0b48f37e9a4c38a9fbc5")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
@@ -252,25 +253,55 @@ NS2_GPFIFO_INLINE_BLOBS = {
     "tests/ns2_gpu_identity_mapping_source.py":
         "55e08f386f4a1bdf45834072b0c8d3e8dd12d781",
 }
-NS2_GPFIFO_INLINE_ACTIVE = actual_vendor_pin == NS2_GPFIFO_INLINE_PIN
+# Lichii/MKW observed 214 generation replacement: the title can grow a
+# sparse region at the exact same start VA without issuing 215 first.
+NS2_MKW_SPARSE_REPLACE_PIN = "bc44094d78d0bba088ca0b48f37e9a4c38a9fbc5"
+NS2_MKW_SPARSE_REPLACE_BLOBS = {
+    "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_worker_protocol.h":
+        "7d3946559e9535a0451d459caba4434d7ace6c25",
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "978bedba80952994bc7783016085ee860ee93386",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "da75b3dcf00abaaf4d014fbe61c4bd62b486d5b6",
+}
+NS2_MKW_SPARSE_REPLACE_ACTIVE = actual_vendor_pin == NS2_MKW_SPARSE_REPLACE_PIN
+if selected == NS2_MKW_SPARSE_REPLACE_PIN:
+    for relative, expected in NS2_MKW_SPARSE_REPLACE_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 MKW sparse generation source drift", relative, actual)
+    selected = NS2_GPFIFO_INLINE_PIN
+    gitlink_vendor_pin = NS2_GPFIFO_INLINE_PIN
+    shipping_vendor_pin = NS2_GPFIFO_INLINE_PIN
+
+def ns2_mkw_sparse_receipt(relative, previous):
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
+    return previous
+
+NS2_GPFIFO_INLINE_ACTIVE = actual_vendor_pin in {
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
+}
 if selected == NS2_GPFIFO_INLINE_PIN:
     for relative, expected in NS2_GPFIFO_INLINE_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("NS2 GPFIFO inline-storage source drift", relative, actual)
+        assert actual == ns2_mkw_sparse_receipt(relative, expected), (
+            "NS2 GPFIFO inline-storage source drift", relative, actual)
     selected = NS2_LEGACY_GPFIFO_ALLOC_PIN
     gitlink_vendor_pin = NS2_LEGACY_GPFIFO_ALLOC_PIN
     shipping_vendor_pin = NS2_LEGACY_GPFIFO_ALLOC_PIN
 
 NS2_LEGACY_GPFIFO_ALLOC_ACTIVE = actual_vendor_pin in {
-    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN,
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
 }
 if selected == NS2_LEGACY_GPFIFO_ALLOC_PIN:
     for relative, expected in NS2_LEGACY_GPFIFO_ALLOC_BLOBS.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == (NS2_GPFIFO_INLINE_BLOBS.get(relative, expected)
-                          if NS2_GPFIFO_INLINE_ACTIVE else expected), (
+        expected_current = (NS2_GPFIFO_INLINE_BLOBS.get(relative, expected)
+                            if NS2_GPFIFO_INLINE_ACTIVE else expected)
+        assert actual == ns2_mkw_sparse_receipt(relative, expected_current), (
             "NS2 GPFIFO legacy allocation source drift", relative, actual)
     selected = NS2_DECODER_SESSION_MOVE_PIN
     gitlink_vendor_pin = NS2_DECODER_SESSION_MOVE_PIN
@@ -278,7 +309,7 @@ if selected == NS2_LEGACY_GPFIFO_ALLOC_PIN:
 
 NS2_DECODER_SESSION_MOVE_ACTIVE = actual_vendor_pin in {
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
 }
 if selected == NS2_DECODER_SESSION_MOVE_PIN:
     for relative, expected in NS2_DECODER_SESSION_MOVE_BLOBS.items():
@@ -291,7 +322,7 @@ if selected == NS2_DECODER_SESSION_MOVE_PIN:
 
 NS2_GPFIFO_ALLOC_GUARD_ACTIVE = actual_vendor_pin in {
     NS2_GPFIFO_ALLOC_GUARD_PIN, NS2_DECODER_SESSION_MOVE_PIN,
-    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN,
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
 }
 if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
     for relative, expected in NS2_GPFIFO_ALLOC_GUARD_BLOBS.items():
@@ -302,6 +333,7 @@ if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
             if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE else expected)
         if NS2_GPFIFO_INLINE_ACTIVE:
             expected_current = NS2_GPFIFO_INLINE_BLOBS.get(relative, expected_current)
+        expected_current = ns2_mkw_sparse_receipt(relative, expected_current)
         assert actual == expected_current, (
             "NS2 native GPFIFO allocation gate source drift", relative, actual)
     selected = NS2_GSV_MOVE_OWNERS_PIN
@@ -311,9 +343,11 @@ if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
 NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin in {
     NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
 }
 def ns2_latest_gsv_receipt(relative, previous):
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
         return NS2_GPFIFO_INLINE_BLOBS[relative]
     if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:
@@ -337,7 +371,7 @@ if selected == NS2_GSV_MOVE_OWNERS_PIN:
 NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {
     NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
     NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
-    NS2_GPFIFO_INLINE_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN,
 }
 if selected == NS2_P0_BOOTSTRAP_PIN:
     for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
@@ -364,6 +398,8 @@ NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
 }
 
 def ns2_preemption_receipt(relative, previous):
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
         return NS2_GPFIFO_INLINE_BLOBS[relative]
     if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:
@@ -444,6 +480,8 @@ NS2_ENCODER_FAIL_CLOSED_BLOBS = {
     "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
 }
 def ns2_encoder_receipt(relative, previous):
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
         return NS2_GPFIFO_INLINE_BLOBS[relative]
     if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:
@@ -1002,6 +1040,8 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
     if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
         return NS2_GPFIFO_INLINE_BLOBS[relative]
     if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:

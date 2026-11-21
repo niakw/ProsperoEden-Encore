@@ -152,7 +152,10 @@ def extract_1d(text, start):
 old_1d=extract_1d(pinned,legacy_1d_start)
 live_1d=extract_1d(native,live_1d_start)
 assert fnv1a32(old_1d)==2401188561 and len(old_1d)==1612
-assert fnv1a32(live_1d)==573919754 and len(live_1d)==5118
+assert fnv1a32(live_1d)==3903482050 and len(live_1d)==9211
+assert "mapped_ranges_overlap(tiled_begin" in live_1d
+assert "GpuToCpuAddress(address)" in live_1d
+assert "IsContinuousRange(first," in live_1d
 assert "memory_manager.WriteBlockCached(destination," in live_1d
 assert "memory_manager.IsFullyMappedRange(source, count)" in live_1d
 assert "MAX_ALIAS_SNAPSHOT" in live_1d

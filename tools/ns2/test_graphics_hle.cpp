@@ -243,23 +243,23 @@ int main(){
             segmentUser->address==0x1000 && segmentUser->size==0x3000 &&
             segmentUser->value[0]==0x5566778811223344ULL &&
             segmentUser->value[1]==0xddeeff0099aabbccULL,
-            "GPU worker 225 decodes owned segment and full user label");
+            "GPU worker 209 decodes owned segment and full user label");
     auto badSegmentUser=segmentUserLabel; badSegmentUser[2]=0;
     require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
-            "GPU worker 225 rejects null address-space handle");
+            "GPU worker 209 rejects null address-space handle");
     badSegmentUser=segmentUserLabel; badSegmentUser[5]=0; badSegmentUser[6]=0;
     require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
-            "GPU worker 225 rejects empty segment");
+            "GPU worker 209 rejects empty segment");
     badSegmentUser=segmentUserLabel; badSegmentUser[3]=0xfffffff0;
     badSegmentUser[4]=0xffffffff; badSegmentUser[5]=0x1000; badSegmentUser[6]=0;
     require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
-            "GPU worker 225 rejects wrapping segment");
+            "GPU worker 209 rejects wrapping segment");
     badSegmentUser=segmentUserLabel; badSegmentUser[1]=8;
     require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
-            "GPU worker 225 rejects wrong TIPC payload size");
+            "GPU worker 209 rejects wrong TIPC payload size");
     require(!DecodeGpuSegmentUserDebugLabel(
                 std::span<const u32>{segmentUserLabel.data(),10}),
-            "GPU worker 225 rejects truncated packet");
+            "GPU worker 209 rejects truncated packet");
 
     const std::array<u32,9> segmentSdkLabel{
         0xe2,7,17,0x4000,0,0x2000,0,0x12345678,0x9abcdef0};
@@ -267,19 +267,19 @@ int main(){
     require(segmentSdk && segmentSdk->address_space==17 &&
             segmentSdk->address==0x4000 && segmentSdk->size==0x2000 &&
             segmentSdk->value==0x9abcdef012345678ULL,
-            "GPU worker 226 decodes owned segment and full SDK label");
+            "GPU worker 210 decodes owned segment and full SDK label");
     auto badSegmentSdk=segmentSdkLabel; badSegmentSdk[2]=0;
     require(!DecodeGpuSegmentSdkDebugLabel(badSegmentSdk),
-            "GPU worker 226 rejects null address-space handle");
+            "GPU worker 210 rejects null address-space handle");
     badSegmentSdk=segmentSdkLabel; badSegmentSdk[0]=0xe1;
     require(!DecodeGpuSegmentSdkDebugLabel(badSegmentSdk),
-            "GPU worker 226 rejects wrong command");
+            "GPU worker 210 rejects wrong command");
     badSegmentSdk=segmentSdkLabel; badSegmentSdk[5]=0; badSegmentSdk[6]=0;
     require(!DecodeGpuSegmentSdkDebugLabel(badSegmentSdk),
-            "GPU worker 226 rejects empty segment");
+            "GPU worker 210 rejects empty segment");
     require(!DecodeGpuSegmentSdkDebugLabel(
                 std::span<const u32>{segmentSdkLabel.data(),8}),
-            "GPU worker 226 rejects truncated packet");
+            "GPU worker 210 rejects truncated packet");
 
     const std::array<u32,4> gpuMemoryRelease{0x76,2,4,63};
     const auto release=DecodeGpuMemoryRelease(gpuMemoryRelease);

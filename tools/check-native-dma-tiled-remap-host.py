@@ -52,7 +52,7 @@ constexpr u32 AlignUpLog2(u32 n,u32 k) {return DivCeilLog2(n,k)<<k;}
 }
 namespace Tegra {
 namespace Texture {
-constexpr u32 GOB_SIZE_X_SHIFT=6,GOB_SIZE_Y_SHIFT=3,GOB_SIZE_Z_SHIFT=0,GOB_SIZE_SHIFT=9;
+constexpr u32 GOB_SIZE_X_SHIFT=6,GOB_SIZE_Y_SHIFT=3,GOB_SIZE_SHIFT=9;
 constexpr u32 SWIZZLE_X_BITS=0b100101111,SWIZZLE_Y_BITS=0b011010000;
 __PDEP__
 __GOB__

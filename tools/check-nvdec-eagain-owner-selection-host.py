@@ -421,3 +421,117 @@ with tempfile.TemporaryDirectory(prefix="encore-vic-sse-") as folder:
         subprocess.run([str(exe)],check=True,timeout=20)
 print("NS1_VIC_SSE_UNALIGNED_HOST_PASS NV12_unaligned=1 Pixel_stride8=1 "
       "ABGR_byte_offset=1 ASan_UBSan=1 O0_O2=2")
+
+
+# GPU-35: exact C++ Host1x signed FD device-array guard, maintained owner.
+H1_CPP=V/"encore-active/eden-core/src/video_core/host1x/host1x.cpp"
+H1_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/host1x.h"
+H1_ORIG_CPP=V/"sources/eden/src/video_core/host1x/host1x.cpp"
+H1_ORIG_HDR=V/"sources/eden/src/video_core/host1x/host1x.h"
+assert blob(H1_CPP)=="cd14d3185352087de3eddb50e87cf5a36123c791"
+assert blob(H1_HDR)=="32663394994db47fcca82f3dd7682104dc880447"
+assert blob(H1_ORIG_CPP)=="590b0e0ff2f7d5f9f3771b07659afcbb49814863"
+assert blob(H1_ORIG_HDR)=="3b886a59d59763278d1c44b8b993d25f7260656d"
+HS=H1_CPP.read_text();HH=H1_HDR.read_text()
+OS=H1_ORIG_CPP.read_text();OH=H1_ORIG_HDR.read_text()
+guard="fd < 0 || static_cast<std::size_t>(fd) >= devices.size()"
+assert HS.count(guard)==2 and HH.count(guard)==1
+assert "devices[fd]" not in HS and "devices[fd]" not in HH
+start="void Host1x::StartDevice("
+stop="void Host1x::StopDevice("
+now_start=HS[HS.index(start):HS.index("    switch (type) {",HS.index(start))]
+old_start=OS[OS.index(start):OS.index("    switch (type) {",OS.index(start))]
+assert HS.replace(now_start,old_start,1).replace(
+    HS[HS.index(stop):],OS[OS.index(stop):],1)==OS
+push="    void PushEntries(s32 fd,"
+limit="\n    Core::System& system;"
+new_push=HH[HH.index(push):HH.index(limit)]
+old_push=OH[OH.index(push):OH.index(limit)]
+assert HH.replace(new_push,old_push,1).replace(
+    "#include <variant>\n#include <cstddef>","#include <variant>")==OH
+cm_fragment=CMAKE[CMAKE.index("# Native Host1x FD safety:"):CMAKE.index("# N54: shared PS5 texture-cache")]
+for item in ("if(PS5_NATIVE)","list(FIND video_sources",
+             "list(REMOVE_ITEM video_sources host1x/host1x.cpp)",
+             "list(APPEND video_sources","configure_file(",
+             "target_include_directories(video_core BEFORE PUBLIC",
+             "target_include_directories(core BEFORE PUBLIC"):
+    assert item in cm_fragment,item
+assert cm_fragment.count("list(REMOVE_ITEM video_sources host1x/host1x.cpp)")==1
+source_methods=HS[HS.index(start):HS.index("} // namespace Tegra::Host1x")]
+cpp=r"""
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+#include <variant>
+#include <vector>
+using s32=std::int32_t;
+using u32=std::uint32_t;
+#define LOG_ERROR(...) ((void)0)
+namespace Tegra::Host1x {
+using ChCommandHeaderList=std::vector<int>;
+enum class ChannelType:u32 {MsEnc=0,VIC=1,GPU=2,NvDec=3};
+struct Host1x;
+struct Nvdec {
+    s32 fd;
+    unsigned submits=0;
+    Nvdec(Host1x&,s32 n,u32):fd(n){}
+    void PushEntries(ChCommandHeaderList&& a) {submits+=unsigned(a.size());}
+};
+struct Vic {
+    s32 fd;
+    unsigned submits=0;
+    Vic(Host1x&,s32 n,u32):fd(n){}
+    void PushEntries(ChCommandHeaderList&& a) {submits+=unsigned(a.size());}
+};
+struct Host1x {
+    std::array<std::variant<std::monostate,Nvdec,Vic>,1024> devices{};
+    void StartDevice(s32,ChannelType,u32);
+    void StopDevice(s32,ChannelType);
+__PUSH__
+};
+__METHODS__
+}
+int main() {
+    using namespace Tegra::Host1x;
+    Host1x h{};
+    h.StartDevice(-1,ChannelType::NvDec,0);
+    h.StartDevice(1024,ChannelType::VIC,0);
+    assert(std::holds_alternative<std::monostate>(h.devices[0]));
+    h.StartDevice(0,ChannelType::NvDec,7);
+    h.StartDevice(1023,ChannelType::VIC,8);
+    assert(std::get<Nvdec>(h.devices[0]).fd==0);
+    assert(std::get<Vic>(h.devices[1023]).fd==1023);
+    h.PushEntries(-1,{1,2,3});
+    h.PushEntries(1024,{4,5});
+    assert(std::get<Nvdec>(h.devices[0]).submits==0);
+    assert(std::get<Vic>(h.devices[1023]).submits==0);
+    h.PushEntries(0,{1,2,3});
+    h.PushEntries(1023,{4,5});
+    assert(std::get<Nvdec>(h.devices[0]).submits==3);
+    assert(std::get<Vic>(h.devices[1023]).submits==2);
+    h.StopDevice(-1,ChannelType::NvDec);
+    h.StopDevice(1024,ChannelType::VIC);
+    assert(std::holds_alternative<Nvdec>(h.devices[0]));
+    assert(std::holds_alternative<Vic>(h.devices[1023]));
+    h.StopDevice(0,ChannelType::NvDec);
+    h.StopDevice(1023,ChannelType::VIC);
+    assert(std::holds_alternative<std::monostate>(h.devices[0]));
+    assert(std::holds_alternative<std::monostate>(h.devices[1023]));
+}
+""".replace("__PUSH__",new_push).replace("__METHODS__",source_methods)
+compiler=shutil.which("clang++-18") or shutil.which("clang++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-host1x-device-fd-") as tmp:
+    source=Path(tmp)/"host1x-fd.cpp"
+    source.write_text(cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(tmp)/("fd-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_HOST1X_DEVICE_FD_HOST_PASS active_source=1 ABI_unchanged=1 "
+      "negative_fd=1 above_1023=1 NVDEC_VIC_dispatch=1 teardown=1 "
+      "ASan_UBSan=1 O0_O2=2")

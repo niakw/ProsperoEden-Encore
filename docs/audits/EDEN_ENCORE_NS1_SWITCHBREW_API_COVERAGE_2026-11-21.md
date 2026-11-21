@@ -2158,4 +2158,845 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | banana | `1` | `StartSignalingEvent` | — | Q | 2026-11-21 |
 | banana | `2` | `StopSignalingEvent` | — | Q | 2026-11-21 |
 
+### BCAT services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/BCAT_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/BCAT%20services.md)
+
+**83 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| bcat:a, bcat:m, bcat:u, bcat:s | `0` | `CreateBcatService` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `1` | `CreateDeliveryCacheStorageService` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `2` | `CreateDeliveryCacheStorageServiceWithApplicationId` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `10100` | `RequestSyncDeliveryCache` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `10101` | `RequestSyncDeliveryCacheWithDirectoryName` | 5.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `10200` | `CancelSyncDeliveryCacheRequest` | 5.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `20100` | `RequestSyncDeliveryCacheWithApplicationId` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `20101` | `RequestSyncDeliveryCacheWithApplicationIdAndDirectoryName` | 5.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `20300` | `GetDeliveryCacheStorageUpdateNotifier` | 8.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `20301` | `RequestSuspendDeliveryTask` | 8.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `20400` | `RegisterSystemApplicationDeliveryTask` | 9.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `20401` | `UnregisterSystemApplicationDeliveryTask` | 9.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30100` | `SetPassphrase` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30200` | `RegisterDeliveryTask` | 3.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30201` | `UnregisterDeliveryTask` | 3.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30202` | `BlockDeliveryTask` | 3.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30203` | `UnblockDeliveryTask` | 3.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30300` | `RegisterSystemApplicationDeliveryTasks` | 8.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `90100` | `GetDeliveryTaskList` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `90200` | `GetDeliveryList` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `90201` | `ClearDeliveryCacheStorage` | 3.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `90202` | `ClearDeliveryTaskSubscriptionStatus` | 8.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `90300` | `GetPushNotificationLog` | 3.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `0` | `GetEvent` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `1` | `GetImpl` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `0` | `CreateFileService` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `1` | `CreateDirectoryService` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `10` | `EnumerateDeliveryCacheDirectory` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `0` | `Open` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `1` | `Read` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `2` | `GetSize` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `3` | `GetDigest` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `2` | `GetCount` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `0` | `CreateNewsService` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `1` | `CreateNewlyArrivedEventHolder` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `2` | `CreateNewsDataService` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `3` | `CreateNewsDatabaseService` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `4` | `CreateOverwriteEventHolder` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `10100` | `PostLocalNews` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `20100` | `SetPassphrase` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `30100` | `GetSubscriptionStatus` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `30101` | `GetTopicList` | 3.0.0+ | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `30200` | `IsSystemUpdateRequired` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `30300` | `RequestImmediateReception` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `30400` | `DecodeArchiveFile` | 3.0.0+ | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `30500` | `? (Takes a total of 8-bytes of input, a handle, and a type-0x9 input buffer, returns an IUnknown2)` | 8.0.0+ | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `40100` | `SetSubscriptionStatus` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `40101` | `RequestAutoSubscription` | 3.0.0+ | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `40200` | `ClearStorage` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `40201` | `ClearSubscriptionStatusAll` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `90100` | `GetNewsDatabaseDump` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `0` | `Get` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `0` | `Open` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `1` | `OpenWithNewsRecordV1` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `2` | `Read` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `3` | `GetSize` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `1001` | `OpenWithNewsRecord` | 6.0.0+ | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `0` | `GetListV1` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `1` | `Count` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `2` | `CountWithKey` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `3` | `UpdateIntegerValue` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `4` | `UpdateIntegerValueWithAddition` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `5` | `UpdateStringValue` | — | Q | 2026-11-21 |
+| news:a, news:c, news:m, news:p, news:v | `1000` | `GetList` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10100` | `SaveReportOld ([1.0.0-5.1.0] SaveReport)` | — | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10101` | `SaveReportWithUserOld ([1.0.0-5.1.0] SaveReportWithUser)` | — | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10102` | `SaveReport` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10103` | `SaveReportWithUser` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10200` | `RequestImmediateTransmission` | — | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10300` | `GetTransmissionStatus` | — | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10400` | `GetSystemSessionId` | 9.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20100` | `SaveSystemReport` | — | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20101` | `SaveSystemReportWithUser` | — | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20200` | `SetOperationMode` | 4.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30100` | `ClearStorage` | — | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30200` | `ClearStatistics` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30300` | `GetStorageUsage` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30400` | `GetStatistics` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30401` | `GetThroughputHistory` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30500` | `GetLastUploadError` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40100` | `IsUserAgreementCheckEnabled` | 2.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40101` | `SetUserAgreementCheckEnabled` | 2.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `90100` | `ReadAllReportFiles ([1.0.0-5.1.0] GetStorageUsage)` | 6.0.0+ | Q | 2026-11-21 |
+
+### PCV services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/PCV_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/PCV%20services.md)
+
+**101 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| bpc | `0` | `ShutdownSystem` | — | Q | 2026-11-21 |
+| bpc | `1` | `RebootSystem` | — | Q | 2026-11-21 |
+| bpc | `2` | `GetWakeupReason` | — | Q | 2026-11-21 |
+| bpc | `3` | `GetShutdownReason` | — | Q | 2026-11-21 |
+| bpc | `4` | `GetAcOk` | — | Q | 2026-11-21 |
+| bpc | `5` | `GetBoardPowerControlEvent` | — | Q | 2026-11-21 |
+| bpc | `6` | `GetSleepButtonState` | 2.0.0+ | Q | 2026-11-21 |
+| bpc | `7` | `GetPowerEvent` | 2.0.0+ | Q | 2026-11-21 |
+| bpc | `8` | `CreateWakeupTimer` | 2.0.0+ | Q | 2026-11-21 |
+| bpc | `9` | `CancelWakeupTimer` | 2.0.0+ | Q | 2026-11-21 |
+| bpc | `10` | `EnableWakeupTimerOnDevice` | 2.0.0+ | Q | 2026-11-21 |
+| bpc | `11` | `CreateWakeupTimerEx` | 3.0.0+ | Q | 2026-11-21 |
+| bpc | `12` | `GetLastEnabledWakeupTimerType` | 3.0.0+ | Q | 2026-11-21 |
+| bpc | `13` | `CleanAllWakeupTimers` | 3.0.0+ | Q | 2026-11-21 |
+| bpc:r | `0` | `GetRtcTime` | — | Q | 2026-11-21 |
+| bpc:r | `1` | `SetRtcTime` | — | Q | 2026-11-21 |
+| bpc:r | `2` | `GetRtcResetDetected` | — | Q | 2026-11-21 |
+| bpc:r | `3` | `ClearRtcResetDetected` | 2.0.0+ | Q | 2026-11-21 |
+| bpc:r | `4` | `SetUpRtcResetOnShutdown` | 3.0.0+ | Q | 2026-11-21 |
+| pcv | `26` | `GetFuseInfo` | 3.0.0+ | Q | 2026-11-21 |
+| pcv | `27` | `GetDramId` | 5.0.0+ | Q | 2026-11-21 |
+| pcv:arb | `0` | `ReleaseControl` | — | Q | 2026-11-21 |
+| pcv:imm | `0` | `SetClockRate` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `0` | `OpenSession` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `1` | `GetTemperatureThresholds` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `2` | `SetTemperature` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `3` | `GetPossibleClockRates` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `4` | `GetClockInfoEvent` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `5` | `GetClockModuleNumLimit` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `0` | `SetClockEnabled` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `1` | `SetClockDisabled` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `2` | `SetResetAsserted` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `3` | `SetResetDeasserted` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `4` | `SetPowerEnabled` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `5` | `SetPowerDisabled` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `6` | `GetState` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `7` | `SetClockRate` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `8` | `GetClockRate` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `9` | `SetMinVClockRate` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `10` | `GetPossibleClockRates` | — | Q | 2026-11-21 |
+| clkrst, clkrst:i | `11` | `GetDvfsTable` | — | Q | 2026-11-21 |
+| clkrst:a | `0` | `ReleaseControl` | — | Q | 2026-11-21 |
+| rgltr | `0` | `OpenSession` | — | Q | 2026-11-21 |
+| rgltr | `1` | `GetPowerDomainStateTable` | — | Q | 2026-11-21 |
+| rgltr | `2` | `GetPowerInfoEvent` | — | Q | 2026-11-21 |
+| rgltr | `3` | `GetPowerModuleNumLimit` | — | Q | 2026-11-21 |
+| rgltr | `0` | `SetVoltageEnabled` | — | Q | 2026-11-21 |
+| rgltr | `2` | `GetVoltageEnabled` | — | Q | 2026-11-21 |
+| rgltr | `3` | `GetVoltageRange` | — | Q | 2026-11-21 |
+| rgltr | `4` | `GetVoltageValue` | — | Q | 2026-11-21 |
+| rgltr | `5` | `SetVoltageValue` | — | Q | 2026-11-21 |
+| rgltr | `6` | `ChangeVoltage` | — | Q | 2026-11-21 |
+| rtc | `0` | `GetRtcTime` | — | Q | 2026-11-21 |
+| rtc | `1` | `SetRtcTime` | — | Q | 2026-11-21 |
+| rtc | `2` | `SetRtcClientUnknownBool` | — | Q | 2026-11-21 |
+| rtc | `3` | `GetRtcResetDetected` | — | Q | 2026-11-21 |
+| rtc | `4` | `ClearRtcResetDetected` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `0` | `GetStandardUserSystemClock` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `1` | `GetStandardNetworkSystemClock` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `2` | `GetStandardSteadyClock` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `3` | `GetTimeZoneService` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `4` | `GetStandardLocalSystemClock` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `400` | `GetClockSnapshot` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `501` | `CalculateSpanBetween` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `0` | `GetCurrentTimePoint` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `2` | `GetTestOffset` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `3` | `SetTestOffset` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `100` | `GetRtcValue` | 2.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `200` | `GetInternalOffset` | 3.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
+| time:u, time:a, time:s | `0` | `GetCurrentTime` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `1` | `SetCurrentTime` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `2` | `GetSystemClockContext` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `3` | `SetSystemClockContext` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `0` | `GetDeviceLocationName` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `1` | `SetDeviceLocationName` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `2` | `GetTotalLocationNameCount` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `3` | `LoadLocationNameList` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `4` | `LoadTimeZoneRule` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `100` | `ToCalendarTime` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `101` | `ToCalendarTimeWithMyRule` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `201` | `ToPosixTime` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `202` | `ToPosixTimeWithMyRule` | — | Q | 2026-11-21 |
+
+### Sockets services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Sockets_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Sockets%20services.md)
+
+**94 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| bsd:u, bsd:s | `0` | `RegisterClient (Initialize)` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `1` | `StartMonitoring` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `2` | `Socket` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `3` | `SocketExempt` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `4` | `Open` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `5` | `Select` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `6` | `Poll` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `7` | `Sysctl` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `8` | `Recv` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `9` | `RecvFrom` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `10` | `Send` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `11` | `SendTo` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `12` | `Accept` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `13` | `Bind` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `14` | `Connect` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `15` | `GetPeerName` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `16` | `GetSockName` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `17` | `GetSockOpt` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `18` | `Listen` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `19` | `Ioctl` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `20` | `Fcntl` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `21` | `SetSockOpt` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `22` | `Shutdown` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `23` | `ShutdownAllSockets` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `24` | `Write` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `25` | `Read` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `26` | `Close` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `27` | `DuplicateSocket` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `28` | `GetResourceStatistics` | — | Q | 2026-11-21 |
+| bsd:u, bsd:s | `29` | `RecvMMsg` | 3.0.0+ | Q | 2026-11-21 |
+| bsd:u, bsd:s | `30` | `SendMMsg` | 3.0.0+ | Q | 2026-11-21 |
+| bsd:u, bsd:s | `31` | `EventFd` | 7.0.0+ | Q | 2026-11-21 |
+| bsd:u, bsd:s | `32` | `RegisterResourceStatisticsName` | 7.0.0+ | Q | 2026-11-21 |
+| bsdcfg | `0` | `SetIfUp` | — | Q | 2026-11-21 |
+| bsdcfg | `1` | `SetIfUpWithEvent` | — | Q | 2026-11-21 |
+| bsdcfg | `2` | `CancelIf` | — | Q | 2026-11-21 |
+| bsdcfg | `3` | `SetIfDown` | — | Q | 2026-11-21 |
+| bsdcfg | `4` | `GetIfState` | — | Q | 2026-11-21 |
+| bsdcfg | `5` | `DhcpRenew` | — | Q | 2026-11-21 |
+| bsdcfg | `6` | `AddStaticArpEntry` | — | Q | 2026-11-21 |
+| bsdcfg | `7` | `RemoveArpEntry` | — | Q | 2026-11-21 |
+| bsdcfg | `8` | `LookupArpEntry` | — | Q | 2026-11-21 |
+| bsdcfg | `9` | `LookupArpEntry2` | — | Q | 2026-11-21 |
+| bsdcfg | `10` | `ClearArpEntries` | — | Q | 2026-11-21 |
+| bsdcfg | `11` | `ClearArpEntries2` | — | Q | 2026-11-21 |
+| bsdcfg | `12` | `PrintArpEntries` | — | Q | 2026-11-21 |
+| ethc:c | `0` | `Initialize` | — | Q | 2026-11-21 |
+| ethc:c | `1` | `Cancel` | — | Q | 2026-11-21 |
+| ethc:c | `2` | `GetResult` | — | Q | 2026-11-21 |
+| ethc:c | `3` | `GetMediaList` | — | Q | 2026-11-21 |
+| ethc:c | `4` | `SetMediaType` | — | Q | 2026-11-21 |
+| ethc:c | `5` | `GetMediaType` | — | Q | 2026-11-21 |
+| ethc:i | `0` | `GetReadableHandle` | — | Q | 2026-11-21 |
+| ethc:i | `1` | `Cancel` | — | Q | 2026-11-21 |
+| ethc:i | `2` | `GetResult` | — | Q | 2026-11-21 |
+| ethc:i | `3` | `GetInterfaceList` | — | Q | 2026-11-21 |
+| ethc:i | `4` | `GetInterfaceCount` | — | Q | 2026-11-21 |
+| sfdnsres | `0` | `SetDnsAddressesPrivateRequest (stubbed, returns 0x7FE03)` | — | Q | 2026-11-21 |
+| sfdnsres | `1` | `GetDnsAddressPrivateRequest (stubbed, returns 0x7FE03)` | — | Q | 2026-11-21 |
+| sfdnsres | `2` | `GetHostByNameRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `3` | `GetHostByAddrRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `4` | `GetHostStringErrorRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `5` | `GetGaiStringErrorRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `6` | `GetAddrInfoRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `7` | `GetNameInfoRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `8` | `GetCancelHandleRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `9` | `CancelRequest` | — | Q | 2026-11-21 |
+| sfdnsres | `10` | `GetHostByNameRequestWithOptions` | 5.0.0+ | Q | 2026-11-21 |
+| sfdnsres | `11` | `GetHostByAddrRequestWithOptions` | 5.0.0+ | Q | 2026-11-21 |
+| sfdnsres | `12` | `GetAddrInfoRequestWithOptions` | 5.0.0+ | Q | 2026-11-21 |
+| sfdnsres | `13` | `GetNameInfoRequestWithOptions` | 5.0.0+ | Q | 2026-11-21 |
+| sfdnsres | `14` | `ResolverSetOptionRequest` | 5.0.0+ | Q | 2026-11-21 |
+| sfdnsres | `15` | `ResolverGetOptionRequest` | 5.0.0+ | Q | 2026-11-21 |
+| nsd:u, nsd:a | `10` | `GetSettingName` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `11` | `GetEnvironmentIdentifier` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `12` | `GetDeviceId` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `13` | `DeleteSettings` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `14` | `ImportSettings` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `15` | `SetChangeEnvironmentIdentifierDisabled` | 4.0.0+ | Q | 2026-11-21 |
+| nsd:u, nsd:a | `20` | `Resolve` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `21` | `ResolveEx` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `30` | `GetNasServiceSetting` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `31` | `GetNasServiceSettingEx` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `40` | `GetNasRequestFqdn` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `41` | `GetNasRequestFqdnEx` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `42` | `GetNasApiFqdn` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `43` | `GetNasApiFqdnEx` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `50` | `GetCurrentSetting` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `51` | `WriteTestParameter` | 9.0.0+ | Q | 2026-11-21 |
+| nsd:u, nsd:a | `52` | `ReadTestParameter` | 9.0.0+ | Q | 2026-11-21 |
+| nsd:u, nsd:a | `60` | `ReadSaveDataFromFsForTest` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `61` | `WriteSaveDataToFsForTest` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `62` | `DeleteSaveDataOfFsForTest` | — | Q | 2026-11-21 |
+| nsd:u, nsd:a | `63` | `IsChangeEnvironmentIdentifierDisabled` | 4.0.0+ | Q | 2026-11-21 |
+
+### Bluetooth Driver services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Bluetooth_Driver_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Bluetooth%20Driver%20services.md)
+
+**89 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| btdrv | `0` | `InitializeBluetoothDriver` | — | Q | 2026-11-21 |
+| btdrv | `1` | `InitializeBluetooth` | — | Q | 2026-11-21 |
+| btdrv | `2` | `EnableBluetooth` | — | Q | 2026-11-21 |
+| btdrv | `3` | `DisableBluetooth` | — | Q | 2026-11-21 |
+| btdrv | `4` | `CleanupBluetooth` | — | Q | 2026-11-21 |
+| btdrv | `5` | `GetAdapterProperties` | — | Q | 2026-11-21 |
+| btdrv | `6` | `GetAdapterProperty` | — | Q | 2026-11-21 |
+| btdrv | `7` | `SetAdapterProperty` | — | Q | 2026-11-21 |
+| btdrv | `8` | `StartDiscovery` | — | Q | 2026-11-21 |
+| btdrv | `9` | `CancelDiscovery` | — | Q | 2026-11-21 |
+| btdrv | `10` | `CreateBond` | — | Q | 2026-11-21 |
+| btdrv | `11` | `RemoveBond` | — | Q | 2026-11-21 |
+| btdrv | `12` | `CancelBond` | — | Q | 2026-11-21 |
+| btdrv | `13` | `PinReply` | — | Q | 2026-11-21 |
+| btdrv | `14` | `SspReply` | — | Q | 2026-11-21 |
+| btdrv | `15` | `GetEventInfo` | — | Q | 2026-11-21 |
+| btdrv | `16` | `InitializeHid` | — | Q | 2026-11-21 |
+| btdrv | `17` | `HidConnect` | — | Q | 2026-11-21 |
+| btdrv | `18` | `HidDisconnect` | — | Q | 2026-11-21 |
+| btdrv | `19` | `HidSendData` | — | Q | 2026-11-21 |
+| btdrv | `20` | `HidSendData2` | — | Q | 2026-11-21 |
+| btdrv | `21` | `HidSetReport` | — | Q | 2026-11-21 |
+| btdrv | `22` | `HidGetReport` | — | Q | 2026-11-21 |
+| btdrv | `23` | `HidWakeController` | — | Q | 2026-11-21 |
+| btdrv | `24` | `HidAddPairedDevice` | — | Q | 2026-11-21 |
+| btdrv | `25` | `HidGetPairedDevice` | — | Q | 2026-11-21 |
+| btdrv | `26` | `CleanupHid` | — | Q | 2026-11-21 |
+| btdrv | `27` | `HidGetEventInfo` | — | Q | 2026-11-21 |
+| btdrv | `28` | `ExtSetTsi` | — | Q | 2026-11-21 |
+| btdrv | `29` | `ExtSetBurstMode` | — | Q | 2026-11-21 |
+| btdrv | `30` | `ExtSetZeroRetran` | — | Q | 2026-11-21 |
+| btdrv | `31` | `ExtSetMcMode` | — | Q | 2026-11-21 |
+| btdrv | `32` | `ExtStartLlrMode` | — | Q | 2026-11-21 |
+| btdrv | `33` | `ExtExitLlrMode` | — | Q | 2026-11-21 |
+| btdrv | `34` | `ExtSetRadio` | — | Q | 2026-11-21 |
+| btdrv | `35` | `ExtSetVisibility` | — | Q | 2026-11-21 |
+| btdrv | `36` | `ExtSetTbfcScan` | — | Q | 2026-11-21 |
+| btdrv | `37` | `RegisterHidReportEvent` | — | Q | 2026-11-21 |
+| btdrv | `38` | `HidGetReportEventInfo` | — | Q | 2026-11-21 |
+| btdrv | `39` | `GetLatestPlr` | — | Q | 2026-11-21 |
+| btdrv | `40` | `ExtGetPendingConnections` | 3.0.0+ | Q | 2026-11-21 |
+| btdrv | `41` | `GetChannelMap` | 3.0.0+ | Q | 2026-11-21 |
+| btdrv | `42` | `EnableBluetoothBoostSetting` | 3.0.0+ | Q | 2026-11-21 |
+| btdrv | `43` | `IsBluetoothBoostSettingEnabled` | 3.0.0+ | Q | 2026-11-21 |
+| btdrv | `44` | `EnableBluetoothAfhSetting` | 3.0.0+ | Q | 2026-11-21 |
+| btdrv | `45` | `IsBluetoothAfhSettingEnabled` | — | Q | 2026-11-21 |
+| btdrv | `46` | `InitializeBluetoothLe` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `47` | `EnableBluetoothLe` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `48` | `DisableBluetoothLe` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `49` | `CleanupBluetoothLe` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `50` | `SetLeVisibility` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `51` | `SetLeConnectionParameter` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `52` | `SetLeDefaultConnectionParameter` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `53` | `SetLeAdvertiseData` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `54` | `SetLeAdvertiseParameter` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `55` | `StartLeScan` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `56` | `StopLeScan` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `57` | `AddLeScanFilterCondition` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `58` | `DeleteLeScanFilterCondition` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `59` | `DeleteLeScanFilter` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `60` | `ClearLeScanFilters` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `61` | `EnableLeScanFilter` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `62` | `RegisterLeClient` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `63` | `UnregisterLeClient` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `64` | `UnregisterLeClientAll` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `65` | `LeClientConnect` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `75` | `CreateLeService` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `77` | `AddLeCharacteristic` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `84` | `RegisterLeCoreDataPath` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `85` | `UnregisterLeCoreDataPath` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `86` | `RegisterLeHidDataPath` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `87` | `UnregisterLeHidDataPath` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `88` | `RegisterLeDataPath` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `94` | `LeClientRegisterNotification` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `97` | `RegisterBleHidEvent` | 5.0.0-5.0.2 | Q | 2026-11-21 |
+| btdrv | `98` | `SetLeScanParameter` | 5.1.0+ | Q | 2026-11-21 |
+| btdrv | `256` | `GetIsManufacturingMode` | 5.0.0+ | Q | 2026-11-21 |
+| btdrv | `257` | `EmulateBluetoothCrash` | 7.0.0+ | Q | 2026-11-21 |
+| btdrv | `258` | `GetBleChannelMap` | 9.0.0+ | Q | 2026-11-21 |
+| bt | `0` | `LeClientReadCharacteristic` | — | Q | 2026-11-21 |
+| bt | `1` | `LeClientReadDescriptor` | — | Q | 2026-11-21 |
+| bt | `2` | `LeClientWriteCharacteristic` | — | Q | 2026-11-21 |
+| bt | `3` | `LeClientWriteDescriptor` | — | Q | 2026-11-21 |
+| bt | `4` | `LeClientRegisterNotification` | — | Q | 2026-11-21 |
+| bt | `5` | `LeClientDeregisterNotification` | — | Q | 2026-11-21 |
+| bt | `6` | `SetLeResponse` | — | Q | 2026-11-21 |
+| bt | `7` | `LeSendIndication` | — | Q | 2026-11-21 |
+| bt | `8` | `GetLeEventInfo` | — | Q | 2026-11-21 |
+| bt | `9` | `RegisterBleEvent` | — | Q | 2026-11-21 |
+
+### BTM services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/BTM_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/BTM%20services.md)
+
+**117 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| btm | `0` | `GetState` | — | Q | 2026-11-21 |
+| btm | `1` | `GetHostDeviceProperty` | — | Q | 2026-11-21 |
+| btm | `2` | `AcquireDeviceConditionEvent` | — | Q | 2026-11-21 |
+| btm | `3` | `GetDeviceCondition` | — | Q | 2026-11-21 |
+| btm | `4` | `SetBurstMode` | — | Q | 2026-11-21 |
+| btm | `5` | `SetSlotMode` | — | Q | 2026-11-21 |
+| btm | `6` | `SetBluetoothMode` | 1.0.0-8.1.0 | Q | 2026-11-21 |
+| btm | `7` | `SetWlanMode` | — | Q | 2026-11-21 |
+| btm | `8` | `AcquireDeviceInfoEvent` | — | Q | 2026-11-21 |
+| btm | `9` | `GetDeviceInfo` | — | Q | 2026-11-21 |
+| btm | `10` | `AddDeviceInfo` | — | Q | 2026-11-21 |
+| btm | `11` | `RemoveDeviceInfo` | — | Q | 2026-11-21 |
+| btm | `12` | `IncreaseDeviceInfoOrder` | — | Q | 2026-11-21 |
+| btm | `13` | `LlrNotify` | — | Q | 2026-11-21 |
+| btm | `14` | `EnableRadio` | — | Q | 2026-11-21 |
+| btm | `15` | `DisableRadio` | — | Q | 2026-11-21 |
+| btm | `16` | `HidDisconnect` | — | Q | 2026-11-21 |
+| btm | `17` | `HidSetRetransmissionMode` | — | Q | 2026-11-21 |
+| btm | `18` | `AcquireAwakeReqEvent` | 2.0.0+ | Q | 2026-11-21 |
+| btm | `19` | `AcquireLlrStateEvent` | 4.0.0+ | Q | 2026-11-21 |
+| btm | `20` | `IsLlrStarted` | 4.0.0+ | Q | 2026-11-21 |
+| btm | `21` | `EnableSlotSaving` | 4.0.0+ | Q | 2026-11-21 |
+| btm | `22` | `ProtectDeviceInfo` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `23` | `AcquireBleScanEvent` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `24` | `GetBleScanParameterGeneral` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `25` | `GetBleScanParameterSmartDevice` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `26` | `StartBleScanForGeneral` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `27` | `StopBleScanForGeneral` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `28` | `GetBleScanResultsForGeneral` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `29` | `StartBleScanForPairedDevice` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `30` | `StopBleScanForPairedDevice` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `31` | `StartBleScanForSmartDevice` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `32` | `StopBleScanForSmartDevice` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `33` | `GetBleScanResultsForSmartDevice` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `34` | `AcquireBleConnectionEvent` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `35` | `BleConnect` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `36` | `BleOverrideConnection` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `37` | `BleDisconnect` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `38` | `BleGetConnectionState` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `39` | `BleGetGattClientConditionList` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `40` | `AcquireBlePairingEvent` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `41` | `BlePairDevice` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `42` | `BleUnpairDeviceOnBoth` | 5.0.0+ | Q | 2026-11-21 |
+| btm | `43` | `BleUnpairDevice` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `44` | `BleGetPairedAddresses` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `45` | `AcquireBleServiceDiscoveryEvent` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `46` | `GetGattServices` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `47` | `GetGattService` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `48` | `GetGattIncludedServices` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `49` | `GetBelongingService` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `50` | `GetGattCharacteristics` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `51` | `GetGattDescriptors` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `52` | `AcquireBleMtuConfigEvent` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `53` | `ConfigureBleMtu` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `54` | `GetBleMtu` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `55` | `RegisterBleGattDataPath` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `56` | `UnregisterBleGattDataPath` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `57` | `RegisterAppletResourceUserId` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `58` | `UnregisterAppletResourceUserId` | 5.1.0+ | Q | 2026-11-21 |
+| btm | `59` | `SetAppletResourceUserId` | 5.1.0+ | Q | 2026-11-21 |
+| btm:dbg | `0` | `AcquireDiscoveryEvent` | — | Q | 2026-11-21 |
+| btm:dbg | `1` | `StartDiscovery` | — | Q | 2026-11-21 |
+| btm:dbg | `2` | `CancelDiscovery` | — | Q | 2026-11-21 |
+| btm:dbg | `3` | `GetDeviceProperty` | — | Q | 2026-11-21 |
+| btm:dbg | `4` | `CreateBond` | — | Q | 2026-11-21 |
+| btm:dbg | `5` | `CancelBond` | — | Q | 2026-11-21 |
+| btm:dbg | `6` | `SetTsiMode` | — | Q | 2026-11-21 |
+| btm:dbg | `7` | `GeneralTest` | — | Q | 2026-11-21 |
+| btm:dbg | `8` | `HidConnect` | — | Q | 2026-11-21 |
+| btm:dbg | `9` | `GeneralGet` | 5.0.0+ | Q | 2026-11-21 |
+| btm:dbg | `10` | `GetGattClientDisconnectionReason` | 5.1.0+ | Q | 2026-11-21 |
+| btm:dbg | `11` | `GetBleConnectionParameter` | 5.1.0+ | Q | 2026-11-21 |
+| btm:dbg | `12` | `GetBleConnectionParameterRequest` | 5.1.0+ | Q | 2026-11-21 |
+| btm:sys | `0` | `GetCore` | — | Q | 2026-11-21 |
+| btm:sys | `0` | `StartGamepadPairing` | — | Q | 2026-11-21 |
+| btm:sys | `1` | `CancelGamepadPairing` | — | Q | 2026-11-21 |
+| btm:sys | `2` | `ClearGamepadPairingDatabase` | — | Q | 2026-11-21 |
+| btm:sys | `3` | `GetPairedGamepadCount` | — | Q | 2026-11-21 |
+| btm:sys | `4` | `EnableRadio` | — | Q | 2026-11-21 |
+| btm:sys | `5` | `DisableRadio` | — | Q | 2026-11-21 |
+| btm:sys | `6` | `GetRadioOnOff` | — | Q | 2026-11-21 |
+| btm:sys | `7` | `AcquireRadioEvent` | 3.0.0+ | Q | 2026-11-21 |
+| btm:sys | `8` | `AcquireGamepadPairingEvent` | 3.0.0+ | Q | 2026-11-21 |
+| btm:sys | `9` | `IsGamepadPairingStarted` | 3.0.0+ | Q | 2026-11-21 |
+| btm:u | `0` | `GetCore` | — | Q | 2026-11-21 |
+| btm:u | `0` | `AcquireBleScanEvent` | — | Q | 2026-11-21 |
+| btm:u | `1` | `GetBleScanFilterParameter` | — | Q | 2026-11-21 |
+| btm:u | `2` | `GetBleScanFilterParameter2` | — | Q | 2026-11-21 |
+| btm:u | `3` | `StartBleScanForGeneral` | — | Q | 2026-11-21 |
+| btm:u | `4` | `StopBleScanForGeneral` | — | Q | 2026-11-21 |
+| btm:u | `5` | `GetBleScanResultsForGeneral` | — | Q | 2026-11-21 |
+| btm:u | `6` | `StartBleScanForPaired` | — | Q | 2026-11-21 |
+| btm:u | `7` | `StopBleScanForPaired` | — | Q | 2026-11-21 |
+| btm:u | `8` | `StartBleScanForSmartDevice` | — | Q | 2026-11-21 |
+| btm:u | `9` | `StopBleScanForSmartDevice` | — | Q | 2026-11-21 |
+| btm:u | `10` | `GetBleScanResultsForSmartDevice` | — | Q | 2026-11-21 |
+| btm:u | `17` | `AcquireBleConnectionEvent` | — | Q | 2026-11-21 |
+| btm:u | `18` | `BleConnect` | — | Q | 2026-11-21 |
+| btm:u | `19` | `BleDisconnect` | — | Q | 2026-11-21 |
+| btm:u | `20` | `BleGetConnectionState` | — | Q | 2026-11-21 |
+| btm:u | `21` | `AcquireBlePairingEvent` | — | Q | 2026-11-21 |
+| btm:u | `22` | `BlePairDevice` | — | Q | 2026-11-21 |
+| btm:u | `23` | `BleUnPairDevice` | — | Q | 2026-11-21 |
+| btm:u | `24` | `BleUnPairDevice2` | — | Q | 2026-11-21 |
+| btm:u | `25` | `BleGetPairedDevices` | — | Q | 2026-11-21 |
+| btm:u | `26` | `AcquireBleServiceDiscoveryEvent` | — | Q | 2026-11-21 |
+| btm:u | `27` | `GetGattServices` | — | Q | 2026-11-21 |
+| btm:u | `28` | `GetGattService` | — | Q | 2026-11-21 |
+| btm:u | `29` | `GetGattIncludedServices` | — | Q | 2026-11-21 |
+| btm:u | `30` | `GetBelongingGattService` | — | Q | 2026-11-21 |
+| btm:u | `31` | `GetGattCharacteristics` | — | Q | 2026-11-21 |
+| btm:u | `32` | `GetGattDescriptors` | — | Q | 2026-11-21 |
+| btm:u | `33` | `AcquireBleMtuConfigEvent` | — | Q | 2026-11-21 |
+| btm:u | `34` | `ConfigureBleMtu` | — | Q | 2026-11-21 |
+| btm:u | `35` | `GetBleMtu` | — | Q | 2026-11-21 |
+| btm:u | `36` | `RegisterBleGattDataPath` | — | Q | 2026-11-21 |
+| btm:u | `37` | `UnregisterBleGattDataPath` | — | Q | 2026-11-21 |
+
+### Capture services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Capture_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Capture%20services.md)
+
+**98 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| caps:a | `0` | `GetAlbumFileCount` | — | Q | 2026-11-21 |
+| caps:a | `1` | `GetAlbumFileList` | — | Q | 2026-11-21 |
+| caps:a | `2` | `LoadAlbumFile` | — | Q | 2026-11-21 |
+| caps:a | `3` | `DeleteAlbumFile` | — | Q | 2026-11-21 |
+| caps:a | `4` | `StorageCopyAlbumFile` | — | Q | 2026-11-21 |
+| caps:a | `5` | `IsAlbumMounted` | — | Q | 2026-11-21 |
+| caps:a | `6` | `GetAlbumUsage` | — | Q | 2026-11-21 |
+| caps:a | `7` | `GetAlbumFileSize` | — | Q | 2026-11-21 |
+| caps:a | `8` | `LoadAlbumFileThumbnail` | — | Q | 2026-11-21 |
+| caps:a | `9` | `LoadAlbumScreenShotImage` | 2.0.0+ | Q | 2026-11-21 |
+| caps:a | `10` | `LoadAlbumScreenShotThumbnailImage` | 2.0.0+ | Q | 2026-11-21 |
+| caps:a | `11` | `GetAlbumEntryFromApplicationAlbumEntry` | 2.0.0+ | Q | 2026-11-21 |
+| caps:a | `12` | `LoadAlbumScreenShotImageEx` | 3.0.0+ | Q | 2026-11-21 |
+| caps:a | `13` | `LoadAlbumScreenShotThumbnailImageEx` | 3.0.0+ | Q | 2026-11-21 |
+| caps:a | `14` | `LoadAlbumScreenShotImageEx0` | 3.0.0+ | Q | 2026-11-21 |
+| caps:a | `15` | `GetAlbumUsage3` | 4.0.0+ | Q | 2026-11-21 |
+| caps:a | `16` | `GetAlbumMountResult` | 4.0.0+ | Q | 2026-11-21 |
+| caps:a | `17` | `GetAlbumUsage16` | 4.0.0+ | Q | 2026-11-21 |
+| caps:a | `100` | `GetAlbumFileCountEx0` | 5.0.0+ | Q | 2026-11-21 |
+| caps:a | `101` | `GetAlbumFileListEx0` | 5.0.0+ | Q | 2026-11-21 |
+| caps:a | `202` | `SaveEditedScreenShot` | 1.0.0-2.3.0 | Q | 2026-11-21 |
+| caps:a | `301` | `GetLastOverlayScreenShotThumbnail` | — | Q | 2026-11-21 |
+| caps:a | `302` | `GetLastOverlayMovieThumbnail` | 4.0.0+ | Q | 2026-11-21 |
+| caps:a | `401` | `GetAutoSavingStorage` | — | Q | 2026-11-21 |
+| caps:a | `501` | `GetRequiredStorageSpaceSizeToCopyAll` | — | Q | 2026-11-21 |
+| caps:a | `1001` | `LoadAlbumScreenShotThumbnailImageEx0` | 3.0.0+ | Q | 2026-11-21 |
+| caps:a | `1002` | `LoadAlbumScreenShotImageEx1` | 3.0.0+ | Q | 2026-11-21 |
+| caps:a | `1003` | `LoadAlbumScreenShotThumbnailImageEx1` | 4.0.0+ | Q | 2026-11-21 |
+| caps:a | `8001` | `ForceAlbumUnmounted` | — | Q | 2026-11-21 |
+| caps:a | `8002` | `ResetAlbumMountStatus` | — | Q | 2026-11-21 |
+| caps:a | `8011` | `RefreshAlbumCache` | — | Q | 2026-11-21 |
+| caps:a | `8012` | `GetAlbumCache` | — | Q | 2026-11-21 |
+| caps:a | `8013` | `GetAlbumCacheEx` | 4.0.0+ | Q | 2026-11-21 |
+| caps:a | `8021` | `GetAlbumEntryFromApplicationAlbumEntryAruid` | 2.0.0+ | Q | 2026-11-21 |
+| caps:a | `10011` | `SetInternalErrorConversionEnabled` | — | Q | 2026-11-21 |
+| caps:a | `50000` | `LoadMakerNoteInfoForDebug` | 6.0.0+ | Q | 2026-11-21 |
+| caps:a | `60002` | `OpenAccessorSession` | 4.0.0+ | Q | 2026-11-21 |
+| caps:a | `2001` | `OpenAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:a | `2002` | `CloseAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:a | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | Q | 2026-11-21 |
+| caps:a | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:a | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | Q | 2026-11-21 |
+| caps:a | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | Q | 2026-11-21 |
+| caps:a | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:a | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:c | `2001` | `NotifyAlbumStorageIsAvailable` | — | Q | 2026-11-21 |
+| caps:c | `2002` | `NotifyAlbumStorageIsUnavailable` | — | Q | 2026-11-21 |
+| caps:c | `2011` | `RegisterAppletResourceUserId` | 2.0.0+ | Q | 2026-11-21 |
+| caps:c | `2012` | `UnregisterAppletResourceUserId` | 2.0.0+ | Q | 2026-11-21 |
+| caps:c | `2013` | `GetApplicationIdFromAruid` | 2.0.0+ | Q | 2026-11-21 |
+| caps:c | `2014` | `CheckApplicationIdRegistered` | 2.0.0+ | Q | 2026-11-21 |
+| caps:c | `2101` | `GenerateCurrentAlbumFileId` | 2.0.0+ | Q | 2026-11-21 |
+| caps:c | `2102` | `GenerateApplicationAlbumEnrty` | 2.0.0+ | Q | 2026-11-21 |
+| caps:c | `2202` | `SaveAlbumScreenShotFileEx` | 4.0.0+ | Q | 2026-11-21 |
+| caps:c | `2301` | `SetOverlayScreenShotThumbnailData` | 2.0.0+ | Q | 2026-11-21 |
+| caps:c | `2302` | `SetOverlayMovieThumbnailData` | 4.0.0+ | Q | 2026-11-21 |
+| caps:c | `60001` | `OpenControlSession` | 4.0.0+ | Q | 2026-11-21 |
+| caps:c | `2001` | `OpenAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:c | `2002` | `CloseAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:c | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | Q | 2026-11-21 |
+| caps:c | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:c | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | Q | 2026-11-21 |
+| caps:c | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | Q | 2026-11-21 |
+| caps:c | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:c | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:c | `2401` | `OpenAlbumMovieWriteStream` | — | Q | 2026-11-21 |
+| caps:c | `2402` | `FinishAlbumMovieWriteStream` | — | Q | 2026-11-21 |
+| caps:c | `2403` | `CommitAlbumMovieWriteStream` | — | Q | 2026-11-21 |
+| caps:c | `2404` | `DiscardAlbumMovieWriteStream` | — | Q | 2026-11-21 |
+| caps:c | `2405` | `DiscardAlbumMovieWriteStreamNoDelete` | — | Q | 2026-11-21 |
+| caps:c | `2411` | `StartAlbumMovieWriteStreamDataSection` | — | Q | 2026-11-21 |
+| caps:c | `2412` | `EndAlbumMovieWriteStreamDataSection` | — | Q | 2026-11-21 |
+| caps:c | `2413` | `StartAlbumMovieWriteStreamMetaSection` | — | Q | 2026-11-21 |
+| caps:c | `2414` | `EndAlbumMovieWriteStreamMetaSection` | — | Q | 2026-11-21 |
+| caps:c | `2421` | `ReadDataFromAlbumMovieWriteStream` | — | Q | 2026-11-21 |
+| caps:c | `2422` | `WriteDataToAlbumMovieWriteStream` | — | Q | 2026-11-21 |
+| caps:c | `2424` | `WriteMetaToAlbumMovieWriteStream` | — | Q | 2026-11-21 |
+| caps:c | `2431` | `GetAlbumMovieWriteStreamBrokenReason` | — | Q | 2026-11-21 |
+| caps:c | `2433` | `GetAlbumMovieWriteStreamDataSize` | — | Q | 2026-11-21 |
+| caps:c | `2434` | `SetAlbumMovieWriteStreamDataSize` | — | Q | 2026-11-21 |
+| caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | Q | 2026-11-21 |
+| caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | Q | 2026-11-21 |
+| caps:u | `103` | `DeleteAlbumFileByAruid` | — | Q | 2026-11-21 |
+| caps:u | `104` | `GetAlbumFileSizeByAruid` | — | Q | 2026-11-21 |
+| caps:u | `105` | `DeleteAlbumFileByAruidForDebug` | — | Q | 2026-11-21 |
+| caps:u | `110` | `LoadAlbumScreenShotImageByAruid` | — | Q | 2026-11-21 |
+| caps:u | `120` | `LoadAlbumScreenShotThumbnailImageByAruid` | — | Q | 2026-11-21 |
+| caps:u | `130` | `PrecheckToCreateContentsByAruid` | — | Q | 2026-11-21 |
+| caps:u | `140` | `GetAlbumFileList1AafeAruidDeprecated` | 6.0.0+ | Q | 2026-11-21 |
+| caps:u | `141` | `GetAlbumFileList2AafeUidAruidDeprecated` | 6.0.0+ | Q | 2026-11-21 |
+| caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | Q | 2026-11-21 |
+| caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | Q | 2026-11-21 |
+| caps:u | `60002` | `OpenAccessorSessionForApplication` | — | Q | 2026-11-21 |
+| caps:u | `2001` | `OpenAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:u | `2002` | `CloseAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:u | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | Q | 2026-11-21 |
+| caps:u | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:u | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | Q | 2026-11-21 |
+
+### Display services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Display_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Display%20services.md)
+
+**183 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| caps:sc | `1` | `CaptureRawImage` | — | Q | 2026-11-21 |
+| caps:sc | `2` | `CaptureRawImageWithTimeout` | — | Q | 2026-11-21 |
+| caps:sc | `3` | `AttachSharedBuffer` | 5.0.0+ | Q | 2026-11-21 |
+| caps:sc | `5` | `CaptureRawImageToAttachedSharedBuffer` | 5.0.0+ | Q | 2026-11-21 |
+| caps:sc | `210` | `?` | 6.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1004` | `RequestTakingScreenShotEx1` | 5.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1009` | `CancelTakingScreenShot` | 5.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1010` | `SetTakingScreenShotCancelState` | 5.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1011` | `NotifyTakingScreenShotRefused` | — | Q | 2026-11-21 |
+| caps:sc | `1012` | `NotifyTakingScreenShotFailed` | — | Q | 2026-11-21 |
+| caps:sc | `1101` | `SetupOverlayMovieThumbnail` | 4.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1106` | `?` | 4.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1107` | `?` | 4.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1201` | `OpenRawScreenShotReadStream` | 3.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1202` | `CloseRawScreenShotReadStream` | 3.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1203` | `ReadRawScreenShotReadStream` | 3.0.0+ | Q | 2026-11-21 |
+| caps:ss | `201` | `SaveScreenShot` | — | Q | 2026-11-21 |
+| caps:ss | `202` | `SaveEditedScreenShot` | — | Q | 2026-11-21 |
+| caps:ss | `203` | `SaveScreenShotEx0` | 3.0.0+ | Q | 2026-11-21 |
+| caps:ss | `204` | `SaveEditedScreenShotEx0` | 3.0.0+ | Q | 2026-11-21 |
+| caps:ss | `206` | `[?+]` | — | Q | 2026-11-21 |
+| caps:ss | `208` | `SaveScreenShotOfMovieEx1` | 5.0.0+ | Q | 2026-11-21 |
+| caps:su | `201` | `SaveScreenShot` | — | Q | 2026-11-21 |
+| caps:su | `203` | `SaveScreenShotEx0` | — | Q | 2026-11-21 |
+| cec-mgr | `0` | `RegisterCallback` | — | Q | 2026-11-21 |
+| cec-mgr | `1` | `UnregisterCallback` | — | Q | 2026-11-21 |
+| cec-mgr | `2` | `TriggerSystemEvent` | — | Q | 2026-11-21 |
+| cec-mgr | `3` | `PerformAction` | — | Q | 2026-11-21 |
+| cec-mgr | `4` | `QueryState` | — | Q | 2026-11-21 |
+| cec-mgr | `5` | `OnSystemEvent` | — | Q | 2026-11-21 |
+| cec-mgr | `6` | `CancelCurrentCall` | 2.0.0+ | Q | 2026-11-21 |
+| cec-mgr | `100` | `GetHdcpServiceObject` | 4.0.0+ | Q | 2026-11-21 |
+| IHdcpController | `0` | `GetHdcpStateTransitionEvent` | — | Q | 2026-11-21 |
+| IHdcpController | `1` | `GetHdcpAuthenticationState` | — | Q | 2026-11-21 |
+| IHdcpController | `2` | `SetCurrentHdcpMode` | — | Q | 2026-11-21 |
+| IHdcpController | `3` | `GetCurrentHdcpMode` | — | Q | 2026-11-21 |
+| mm:u | `0` | `InitializeOld` | — | Q | 2026-11-21 |
+| mm:u | `1` | `FinalizeOld` | — | Q | 2026-11-21 |
+| mm:u | `2` | `SetAndWaitOld` | — | Q | 2026-11-21 |
+| mm:u | `3` | `GetOld` | — | Q | 2026-11-21 |
+| mm:u | `4` | `Initialize` | — | Q | 2026-11-21 |
+| mm:u | `5` | `Finalize` | — | Q | 2026-11-21 |
+| mm:u | `6` | `SetAndWait` | — | Q | 2026-11-21 |
+| mm:u | `7` | `Get` | — | Q | 2026-11-21 |
+| vi:u | `0` | `[GetDisplayService](#vi:u "wikilink")` | — | Q | 2026-11-21 |
+| vi:u | `1` | `[GetDisplayServiceWithProxyNameExchange](#vi:u "wikilink")` | 9.0.0+ | Q | 2026-11-21 |
+| vi:s | `1` | `[GetDisplayService](#vi:s "wikilink")` | — | Q | 2026-11-21 |
+| vi:s | `3` | `[GetDisplayServiceWithProxyNameExchange](#vi:s "wikilink")` | — | Q | 2026-11-21 |
+| vi:m | `2` | `[GetDisplayService](#vi:m "wikilink")` | — | Q | 2026-11-21 |
+| vi:m | `3` | `[GetDisplayServiceWithProxyNameExchange](#vi:m "wikilink")` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `100` | `GetRelayService` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `101` | `GetSystemDisplayService` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `102` | `GetManagerDisplayService` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `103` | `GetIndirectDisplayTransactionService` | 2.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `1000` | `ListDisplays` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1010` | `OpenDisplay` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1011` | `OpenDefaultDisplay` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1020` | `CloseDisplay` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1101` | `SetDisplayEnabled` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1102` | `GetDisplayResolution` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2020` | `OpenLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2021` | `CloseLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2030` | `CreateStrayLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2031` | `DestroyStrayLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2101` | `SetLayerScalingMode` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2102` | `ConvertScalingMode` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `2450` | `GetIndirectLayerImageMap` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2451` | `GetIndirectLayerImageCropMap` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2460` | `GetIndirectLayerImageRequiredMemoryInfo` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `5202` | `GetDisplayVsyncEvent` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `5203` | `GetDisplayVsyncEventForDebug` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1200` | `GetZOrderCountMin` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1202` | `GetZOrderCountMax` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1203` | `GetDisplayLogicalResolution` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `1204` | `SetDisplayMagnification` | 3.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `2201` | `SetLayerPosition` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2203` | `SetLayerSize` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2204` | `GetLayerZ` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2205` | `SetLayerZ` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2207` | `SetLayerVisibility` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2209` | `SetLayerAlpha` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2312` | `CreateStrayLayer` | 1.0.0-6.2.0 | Q | 2026-11-21 |
+| IApplicationDisplayService | `2400` | `OpenIndirectLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2401` | `CloseIndirectLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2402` | `FlipIndirectLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3000` | `ListDisplayModes` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3001` | `ListDisplayRgbRanges` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3002` | `ListDisplayContentTypes` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3200` | `GetDisplayMode` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3201` | `SetDisplayMode` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3202` | `GetDisplayUnderscan` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3203` | `SetDisplayUnderscan` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3204` | `GetDisplayContentType` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3205` | `SetDisplayContentType` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3206` | `GetDisplayRgbRange` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3207` | `SetDisplayRgbRange` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3208` | `GetDisplayCmuMode` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3209` | `SetDisplayCmuMode` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3210` | `GetDisplayContrastRatio` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3211` | `SetDisplayContrastRatio` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3214` | `GetDisplayGamma` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3215` | `SetDisplayGamma` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3216` | `GetDisplayCmuLuma` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `3217` | `SetDisplayCmuLuma` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `8225` | `GetSharedBufferMemoryHandleId` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8250` | `OpenSharedLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8251` | `CloseSharedLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8252` | `ConnectSharedLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8253` | `DisconnectSharedLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8254` | `AcquireSharedFrameBuffer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8255` | `PresentSharedFrameBuffer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8256` | `GetSharedFrameBufferAcquirableEvent` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8257` | `FillSharedFrameBufferColor` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8258` | `CancelSharedFrameBuffer` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `200` | `AllocateProcessHeapBlock` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `201` | `FreeProcessHeapBlock` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `2010` | `CreateManagedLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2011` | `DestroyManagedLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2012` | `CreateStrayLayer` | 7.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `2050` | `CreateIndirectLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2051` | `DestroyIndirectLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2052` | `CreateIndirectProducerEndPoint` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2053` | `DestroyIndirectProducerEndPoint` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2054` | `CreateIndirectConsumerEndPoint` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2055` | `DestroyIndirectConsumerEndPoint` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2300` | `AcquireLayerTexturePresentingEvent` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2301` | `ReleaseLayerTexturePresentingEvent` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2302` | `GetDisplayHotplugEvent` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2303` | `GetDisplayModeChangedEvent` | 5.1.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `2402` | `GetDisplayHotplugState` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `2501` | `GetCompositorErrorInfo` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `2601` | `GetDisplayErrorEvent` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `4201` | `SetDisplayAlpha` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `4203` | `SetDisplayLayerStack` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `4205` | `SetDisplayPowerState` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `4206` | `SetDefaultDisplay` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6000` | `AddToLayerStack` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `6001` | `RemoveFromLayerStack` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `6002` | `SetLayerVisibility` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `6003` | `SetLayerConfig` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6004` | `AttachLayerPresentationTracer` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6005` | `DetachLayerPresentationTracer` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6006` | `StartLayerPresentationRecording` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6007` | `StopLayerPresentationRecording` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6008` | `StartLayerPresentationFenceWait` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6009` | `StopLayerPresentationFenceWait` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6010` | `GetLayerPresentationAllFencesExpiredEvent` | 5.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6011` | `EnableLayerAutoClearTransitionBuffer` | 7.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `6012` | `DisableLayerAutoClearTransitionBuffer` | 7.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `7000` | `SetContentVisibility` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `8000` | `SetConductorLayer` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `8001` | `SetTimestampTracking` | 8.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8100` | `SetIndirectProducerFlipOffset` | — | Q | 2026-11-21 |
+| IApplicationDisplayService | `8200` | `CreateSharedBufferStaticStorage` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8201` | `CreateSharedBufferTransferMemory` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8202` | `DestroySharedBuffer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8203` | `BindSharedLowLevelLayerToManagedLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8204` | `BindSharedLowLevelLayerToIndirectLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8207` | `UnbindSharedLowLevelLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8208` | `ConnectSharedLowLevelLayerToSharedBuffer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8209` | `DisconnectSharedLowLevelLayerFromSharedBuffer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8210` | `CreateSharedLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8211` | `DestroySharedLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8216` | `AttachSharedLayerToLowLevelLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8217` | `ForceDetachSharedLayerFromLowLevelLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8218` | `StartDetachSharedLayerFromLowLevelLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8219` | `FinishDetachSharedLayerFromLowLevelLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8220` | `GetSharedLayerDetachReadyEvent` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8221` | `GetSharedLowLevelLayerSynchronizedEvent` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8222` | `CheckSharedLowLevelLayerSynchronized` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8223` | `RegisterSharedBufferImporterAruid` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8224` | `UnregisterSharedBufferImporterAruid` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8227` | `CreateSharedBufferProcessHeap` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8228` | `GetSharedLayerLayerStacks` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8229` | `SetSharedLayerLayerStacks` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8291` | `PresentDetachedSharedFrameBufferToLowLevelLayer` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8292` | `FillDetachedSharedFrameBufferColor` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8293` | `GetDetachedSharedFrameBufferImage` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8294` | `SetDetachedSharedFrameBufferImage` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8295` | `CopyDetachedSharedFrameBufferImage` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8296` | `SetDetachedSharedFrameBufferSubImage` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8297` | `GetSharedFrameBufferContentParameter` | 4.0.0+ | Q | 2026-11-21 |
+| IApplicationDisplayService | `8298` | `ExpandStartupLogoOnSharedFrameBuffer` | 5.0.0+ | Q | 2026-11-21 |
+
+### Nvnflinger services
+
+[Wiki SwitchBrew](https://switchbrew.org/wiki/Nvnflinger_services) · [miroir](https://github.com/backupbrew/switchbrew/blob/master/Nvnflinger%20services.md)
+
+**4 commandes documentées**.
+
+| Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
+|---|---|---|---|---|---|
+| dispdrv | `0` | `TransactParcel` | — | Q | 2026-11-21 |
+| dispdrv | `1` | `AdjustRefcount` | — | Q | 2026-11-21 |
+| dispdrv | `2` | `GetNativeHandle` | — | Q | 2026-11-21 |
+| dispdrv | `3` | `TransactParcelAuto` | 3.0.0+ | Q | 2026-11-21 |
+
 <!-- NS1_IPC_APPEND -->

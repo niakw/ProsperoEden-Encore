@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare the maintained PRMT shader source to its retired CMake build product."""
+"""Compare the maintained Maxwell PRMT/IMUL shader source to its reviewed single native owner."""
 from pathlib import Path
 import json
 root=Path(__file__).resolve().parents[1]
@@ -18,7 +18,31 @@ cr_old="void TranslatorVisitor::PRMT_cr(u64) {\n    ThrowNotImplemented(Opcode::
 cr_new="void TranslatorVisitor::PRMT_cr(u64 insn) {\n    // Upstream Lichii f6a8f513: PRMT C/R form reads its selector from\n    // constant memory and the second data source from the register operand.\n    const unsigned mode = static_cast<unsigned>((insn >> 48) & 7ULL);\n    if (mode != 0) {\n        static std::atomic<unsigned> unsupported_samples{0};\n        const unsigned sample = EdenGpuBoundedSample(unsupported_samples);\n        if (sample < 8)\n            std::fprintf(stderr, \"EDEN_GPU_PRMT_CR_UNSUPPORTED raw=%016llx mode=%u sample=%u\\n\",\n                         static_cast<unsigned long long>(insn), mode, sample + 1);\n        ThrowNotImplemented(Opcode::PRMT_cr);\n    }\n\n    const IR::U32 a{GetReg8(insn)};\n    const IR::U32 b{GetReg39(insn)};\n    const IR::U32 selector{GetCbuf(insn)};\n    IR::U32 result{ir.Imm32(0)};\n    for (unsigned i = 0; i < 4; ++i) {\n        const IR::U32 nibble{ir.BitwiseAnd(\n            ir.ShiftRightLogical(selector, ir.Imm32(i * 4u)), ir.Imm32(15))};\n        const IR::U1 from_b{ir.INotEqual(\n            ir.BitwiseAnd(nibble, ir.Imm32(4)), ir.Imm32(0))};\n        const IR::U32 source{ir.Select(from_b, b, a)};\n        const IR::U32 byte_shift{ir.ShiftLeftLogical(\n            ir.BitwiseAnd(nibble, ir.Imm32(3)), ir.Imm32(3))};\n        const IR::U32 selected_byte{ir.BitwiseAnd(\n            ir.ShiftRightLogical(source, byte_shift), ir.Imm32(255))};\n        const IR::U1 signed_replication{ir.INotEqual(\n            ir.BitwiseAnd(nibble, ir.Imm32(8)), ir.Imm32(0))};\n        const IR::U1 negative{ir.INotEqual(\n            ir.BitwiseAnd(selected_byte, ir.Imm32(128)), ir.Imm32(0))};\n        const IR::U32 replicated{ir.Select(negative, ir.Imm32(255), ir.Imm32(0))};\n        const IR::U32 byte{ir.Select(signed_replication, replicated, selected_byte)};\n        const IR::U32 shifted{i == 0 ? byte :\n            IR::U32{ir.ShiftLeftLogical(byte, ir.Imm32(i * 8u))}};\n        result = ir.BitwiseOr(result, shifted);\n    }\n    X(static_cast<IR::Reg>(insn & 255ULL), result);\n\n    static std::atomic<unsigned> successes{0};\n    const unsigned sample = EdenGpuBoundedSample(successes);\n    if (sample < 8)\n        std::fprintf(stderr, \"EDEN_GPU_PRMT_CR_INDEX raw=%016llx sample=%u\\n\",\n                     static_cast<unsigned long long>(insn), sample + 1);\n}\n"
 assert expected.count(rc_old)==1 and expected.count(cr_old)==1
 expected=expected.replace(rc_old,rc_new).replace(cr_old,cr_new)
-assert actual==expected, "PRMT maintained shader is not the retired generated source"
+
+# Generic Maxwell IMUL forms are part of the same exclusively selected native
+# translation unit. Reconstruct them from the pristine stubs rather than adding
+# a second source path. Bit positions match envytools GM107; .CC remains refused.
+imul_include_old="#include \"common/common_types.h\"\n"
+imul_include_new="#include \"common/bit_field.h\"\n#include \"common/common_types.h\"\n"
+imul_throw_anchor="[[noreturn]] static void ThrowNotImplemented(Opcode opcode) {\n    throw NotImplementedException(\"Instruction {} is not implemented\", opcode);\n}\n"
+imul_helper="\nnamespace {\n// Maxwell GM107 IMUL encoding: envytools gm107.c tab5c38_{0,1}/tab1f00_{0,1}.\n// Algorithm adapted from carafe-nx/carafe-lab b1f10cef (GPL-3.0-or-later).\n// Build the high word from 16-bit products so the IR never requires an\n// integer-64 multiply that a host shader backend may not provide.\nIR::U32 MultiplyHigh(TranslatorVisitor& v, const IR::U32& a, const IR::U32& b,\n                     bool is_a_signed, bool is_b_signed) {\n    const IR::U32 mask{v.ir.Imm32(0xffff)};\n    const IR::U32 sixteen{v.ir.Imm32(16)};\n    const IR::U32 a_lo{v.ir.BitwiseAnd(a, mask)};\n    const IR::U32 a_hi{v.ir.ShiftRightLogical(a, sixteen)};\n    const IR::U32 b_lo{v.ir.BitwiseAnd(b, mask)};\n    const IR::U32 b_hi{v.ir.ShiftRightLogical(b, sixteen)};\n    const IR::U32 lo_lo{v.ir.IMul(a_lo, b_lo)};\n    const IR::U32 hi_lo{v.ir.IMul(a_hi, b_lo)};\n    const IR::U32 lo_hi{v.ir.IMul(a_lo, b_hi)};\n    const IR::U32 hi_hi{v.ir.IMul(a_hi, b_hi)};\n    const IR::U32 middle{v.ir.IAdd(v.ir.IAdd(v.ir.ShiftRightLogical(lo_lo, sixteen),\n                                             v.ir.BitwiseAnd(hi_lo, mask)),\n                                   v.ir.BitwiseAnd(lo_hi, mask))};\n    IR::U32 high{v.ir.IAdd(v.ir.IAdd(hi_hi, v.ir.ShiftRightLogical(hi_lo, sixteen)),\n                           v.ir.IAdd(v.ir.ShiftRightLogical(lo_hi, sixteen),\n                                     v.ir.ShiftRightLogical(middle, sixteen)))};\n    if (is_a_signed) {\n        const IR::U1 negative{v.ir.ILessThan(a, v.ir.Imm32(0), true)};\n        high = v.ir.ISub(high, IR::U32{v.ir.Select(negative, b, v.ir.Imm32(0))});\n    }\n    if (is_b_signed) {\n        const IR::U1 negative{v.ir.ILessThan(b, v.ir.Imm32(0), true)};\n        high = v.ir.ISub(high, IR::U32{v.ir.Select(negative, a, v.ir.Imm32(0))});\n    }\n    return high;\n}\n\nvoid TranslateIMul(TranslatorVisitor& v, u64 insn, const IR::U32& src_b,\n                   bool high, bool is_a_signed, bool is_b_signed, bool cc) {\n    union {\n        u64 raw;\n        BitField<0, 8, IR::Reg> dest_reg;\n        BitField<8, 8, IR::Reg> src_reg_a;\n    } const imul{insn};\n\n    // Condition-code publication has separate carry/overflow semantics.\n    // Keep it fail-closed until those flags are implemented and verified.\n    if (cc) {\n        throw NotImplementedException(\"IMUL.CC\");\n    }\n    const IR::U32 src_a{v.X(imul.src_reg_a)};\n    const IR::U32 result{\n        high ? MultiplyHigh(v, src_a, src_b, is_a_signed, is_b_signed)\n             : v.ir.IMul(src_a, src_b)};\n    v.X(imul.dest_reg, result);\n}\n\nvoid TranslateIMul(TranslatorVisitor& v, u64 insn, const IR::U32& src_b) {\n    union {\n        u64 raw;\n        BitField<39, 1, u64> high;\n        BitField<40, 1, u64> is_a_signed;\n        BitField<41, 1, u64> is_b_signed;\n        BitField<47, 1, u64> cc;\n    } const imul{insn};\n    TranslateIMul(v, insn, src_b, imul.high != 0, imul.is_a_signed != 0,\n                  imul.is_b_signed != 0, imul.cc != 0);\n}\n} // namespace\n\n"
+imul_rewrites=[
+    ("void TranslatorVisitor::IMUL_reg(u64) {\n    ThrowNotImplemented(Opcode::IMUL_reg);\n}\n\n", "void TranslatorVisitor::IMUL_reg(u64 insn) {\n    TranslateIMul(*this, insn, GetReg20(insn));\n}\n\n"),
+    ("void TranslatorVisitor::IMUL_cbuf(u64) {\n    ThrowNotImplemented(Opcode::IMUL_cbuf);\n}\n\n", "void TranslatorVisitor::IMUL_cbuf(u64 insn) {\n    TranslateIMul(*this, insn, GetCbuf(insn));\n}\n\n"),
+    ("void TranslatorVisitor::IMUL_imm(u64) {\n    ThrowNotImplemented(Opcode::IMUL_imm);\n}\n\n", "void TranslatorVisitor::IMUL_imm(u64 insn) {\n    TranslateIMul(*this, insn, GetImm20(insn));\n}\n\n"),
+    ("void TranslatorVisitor::IMUL32I(u64) {\n    ThrowNotImplemented(Opcode::IMUL32I);\n}\n\n", "void TranslatorVisitor::IMUL32I(u64 insn) {\n    union {\n        u64 raw;\n        BitField<52, 1, u64> cc;\n        BitField<53, 1, u64> high;\n        BitField<54, 1, u64> is_a_signed;\n        BitField<55, 1, u64> is_b_signed;\n    } const imul{insn};\n    TranslateIMul(*this, insn, GetImm32(insn), imul.high != 0,\n                  imul.is_a_signed != 0, imul.is_b_signed != 0, imul.cc != 0);\n}\n\n"),
+]
+assert expected.count(imul_include_old)==1
+assert expected.count(imul_throw_anchor)==1
+expected=expected.replace(imul_include_old,imul_include_new,1)
+expected=expected.replace(imul_throw_anchor,imul_throw_anchor+imul_helper,1)
+for old,new in imul_rewrites:
+    assert expected.count(old)==1
+    expected=expected.replace(old,new,1)
+assert 'throw NotImplementedException("IMUL.CC")' in expected
+assert 'BitField<39, 1, u64> high;' in expected
+assert 'BitField<53, 1, u64> high;' in expected
+assert actual==expected, "PRMT/IMUL maintained shader is not the reviewed single native source"
 # The reviewed shared CAS translator now owns ATOM_cas. Retaining its
 # retired stub in the active native PRMT owner produces duplicate symbols
 # and silently diverges from the actual source-generation oracle.
@@ -38,4 +62,4 @@ assert "EdenGpuBoundedSample" not in fermi_default, "shipping Fermi2D has unused
 assert helper.strip() in fermi_experiment, "experimental Fermi2D lost its bounded sample helper"
 assert "set(gpu_bounded_sample_helper [=[" not in module
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_FERMI_FILE}")' in module
-print("VENDOR_MAINTAINED_PRMT_PARITY_PASS: both opcode translations, bounded diagnostic and golden vectors")
+print("VENDOR_MAINTAINED_MAXWELL_SHADER_PARITY_PASS: PRMT forms + IMUL reg/cbuf/imm/32I, CC fail-closed")

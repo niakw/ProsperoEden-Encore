@@ -956,11 +956,40 @@ SYNC_CPP=V/"encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"
 SYNC_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h"
 CTRL_CPP=V/"encore-active/eden-core/src/video_core/host1x/control.cpp"
 CTRL_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/control.h"
-assert blob(SYNC_CPP)=="103ed91c68bae0238f2a2ce181e3e292845c19c1"
+assert blob(SYNC_CPP)=="eb5e2ea63652f020b6e14497080ba3339a9c983c"
+SYNC_SOURCE=SYNC_CPP.read_text()
+_sync_new='''        lk.unlock();
+        try {
+            action();
+        } catch (...) {
+            // DeregisterAction may already be waiting for this running handle.
+            // Restore the guarded state before propagating the fatal callback:
+            // otherwise due points to this stack object forever and teardown
+            // can block on action_done_cv after the GPU/Host1x worker failed.
+            lk.lock();
+            due.running = 0;
+            action_done_cv.notify_all();
+            std::erase(due_actions, &due);
+            throw;
+        }
+        action = nullptr;
+        lk.lock();
+        due.running = 0;
+        action_done_cv.notify_all();'''
+_sync_old='''        lk.unlock();
+        action();
+        action = nullptr;
+        lk.lock();
+        due.running = 0;
+        action_done_cv.notify_all();'''
+assert SYNC_SOURCE.count(_sync_new)==1
+_sync_prior=SYNC_SOURCE.replace(_sync_new,_sync_old,1).encode()
+assert hashlib.sha1(b"blob "+str(len(_sync_prior)).encode()+bytes([0])+_sync_prior).hexdigest()==\
+       "103ed91c68bae0238f2a2ce181e3e292845c19c1"
+print("NS1_HOST1X_THROWING_ACTION_EXACT_REVERSE_PASS prior_blob=103ed91c running_cleanup=1")
 assert blob(SYNC_HDR)=="4f45e7ca10bef7fadf94b4d08a310dea953e7315"
 assert blob(CTRL_CPP)=="fcbf4e092f054724b9fd4731c8dfec9917cea27a"
 assert blob(CTRL_HDR)=="fc1c4e3d47bdcf8ef282da02410940432051fcca"
-SYNC_SOURCE=SYNC_CPP.read_text()
 SYNC_HEADER=SYNC_HDR.read_text()
 CTRL_SOURCE=CTRL_CPP.read_text()
 CTRL_HEADER=CTRL_HDR.read_text()

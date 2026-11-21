@@ -194,6 +194,22 @@ assert "DmaSoftwareOverlap(memory_manager, regs.offset_in, count" in live_1d
 assert "memory_manager.WriteBlock(regs.offset_out, snapshot.data(), count)" in live_1d
 assert expected.count(old_1d)==1
 expected=expected.replace(old_1d,live_1d,1)
+# The base CPU swizzlers used soft UNIMPLEMENTED_IF guards that did not
+# stop execution. Accept only the exact reviewed early-return successors.
+REVIEWED_TILED_SOFTWARE_GUARDS = [
+    ("    UNIMPLEMENTED_IF(regs.src_params.block_size.width != 0);\n    UNIMPLEMENTED_IF(regs.src_params.block_size.depth != 0);\n    UNIMPLEMENTED_IF(regs.src_params.block_size.depth == 0 && regs.src_params.depth != 1);\n",
+     "    // Unsupported tile geometry is not a software copy permission. Eden\\'s\n    // soft assertions returned to this decoder and could corrupt guest bytes.\n    if (regs.src_params.block_size.width != 0 ||\n        regs.src_params.block_size.depth != 0 ||\n        (regs.src_params.block_size.depth == 0 && regs.src_params.depth != 1)) {\n        UNIMPLEMENTED_MSG(\"Unsupported source block-linear DMA geometry\");\n        return;\n    }\n"),
+    ("void MaxwellDMA::CopyPitchToBlockLinear() {\n    UNIMPLEMENTED_IF_MSG(regs.dst_params.block_size.width != 0, \"Block width is not one\");\n    UNIMPLEMENTED_IF(regs.dst_params.layer != 0);\n\n",
+     "void MaxwellDMA::CopyPitchToBlockLinear() {\n"),
+    ("    if (accelerate.BufferToImage(copy_info, src_operand, dst_operand)) {\n        return;\n    }\n\n    const auto& dst_params = regs.dst_params;\n",
+     "    if (accelerate.BufferToImage(copy_info, src_operand, dst_operand)) {\n        return;\n    }\n    // Keep an accelerator that explicitly supports this layout; the CPU\n    // swizzler cannot decode a nonzero block width or destination layer.\n    if (regs.dst_params.block_size.width != 0 || regs.dst_params.layer != 0) {\n        UNIMPLEMENTED_MSG(\"Unsupported destination block-linear DMA geometry\");\n        return;\n    }\n\n    const auto& dst_params = regs.dst_params;\n"),
+    ("void MaxwellDMA::CopyBlockLinearToBlockLinear() {\n    UNIMPLEMENTED_IF(regs.src_params.block_size.width != 0);\n\n",
+     "void MaxwellDMA::CopyBlockLinearToBlockLinear() {\n    if (regs.src_params.block_size.width != 0) {\n        UNIMPLEMENTED_MSG(\"Unsupported source block-linear DMA width\");\n        return;\n    }\n\n"),
+]
+for previous, reviewed in REVIEWED_TILED_SOFTWARE_GUARDS:
+    assert expected.count(previous) == 1, "Retired tiled DMA guard anchor drift"
+    assert native.count(reviewed) == 1, "Maintained tiled DMA guard drift"
+    expected = expected.replace(previous, reviewed, 1)
 assert expected==native
 assert "EDEN_MAINTAINED_MAXWELL_DMA" in cm
 assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")' in cm

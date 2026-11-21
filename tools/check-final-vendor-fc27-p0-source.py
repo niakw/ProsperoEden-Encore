@@ -992,7 +992,7 @@ if selected == "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791":
     relative = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp"
     data = (V / relative).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
-    assert actual == "37236a90479c1913cec33ad95d768a3fc80a1504", (
+    assert actual == reviewed_blob(relative, "37236a90479c1913cec33ad95d768a3fc80a1504"), (
         "GPU worker TIPC 22 COPY owner drift", actual)
     selected = "f69176d429723da5d79251f6b858afc72c5d99e2"
     original_vendor_pin = selected

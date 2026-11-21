@@ -108,12 +108,12 @@ static_assert(!PlanNativeSubmission(0x101, 1, true));
 static_assert(PlanNativeSubmission(0x102, 64, true)->increment_total == 66);
 // Exercise native legacy allocation admission with the actual selected
 // constexpr owner. An arbitrary non-power-of-two size remains legal.
-static_assert(!ValidNativeGpfifoLegacyAllocationCount(0));
-static_assert(ValidNativeGpfifoLegacyAllocationCount(1));
-static_assert(ValidNativeGpfifoLegacyAllocationCount(7));
-static_assert(ValidNativeGpfifoLegacyAllocationCount(1U << 28));
-static_assert(!ValidNativeGpfifoLegacyAllocationCount((1U << 28) + 1));
-static_assert(!ValidNativeGpfifoLegacyAllocationCount(0xFFFF'FFFFU));
+static_assert(!Service::Nvidia::Devices::ValidNativeGpfifoLegacyAllocationCount(0));
+static_assert(Service::Nvidia::Devices::ValidNativeGpfifoLegacyAllocationCount(1));
+static_assert(Service::Nvidia::Devices::ValidNativeGpfifoLegacyAllocationCount(7));
+static_assert(Service::Nvidia::Devices::ValidNativeGpfifoLegacyAllocationCount(1U << 28));
+static_assert(!Service::Nvidia::Devices::ValidNativeGpfifoLegacyAllocationCount((1U << 28) + 1));
+static_assert(!Service::Nvidia::Devices::ValidNativeGpfifoLegacyAllocationCount(0xFFFF'FFFFU));
 int main() {
     Kernel::KProcess alice{1},bob{2};
     Gpu gpu;

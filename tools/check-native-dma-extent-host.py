@@ -125,11 +125,18 @@ helper_begin='// Remapped DMA lengths are measured in pixels/blocks, NOT bytes.'
 helper_end='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert native.count(helper_begin)==1 and native.count(helper_end)==1
 helper=native[native.index(helper_begin):native.index(helper_end,native.index(helper_begin))]
-assert fnv1a32(helper)==1567892189, "Reviewed B0B5 helper changed"
+assert fnv1a32(helper)==2759270895 and len(helper)==13664, "Reviewed B0B5 helper changed"
 for token in ('Swizzle::NO_WRITE','Swizzle::CONST_A','Swizzle::CONST_B',
               'std::vector<u8> snapshot', 'memory.ReadBlock',
               'memory.WriteBlock','CanCoalescePitchDma',
-              'const u64 src_stride', 'const u64 dst_stride'):
+              'const u64 src_stride', 'const u64 dst_stride',
+              'const bool virtual_overlap', 'const auto physical_overlap',
+              'memory.GpuToCpuAddress(src_begin)',
+              'memory.GpuToCpuAddress(address)',
+              'MAX_PHYSICAL_SEGMENTS = 16384',
+              'const bool overlap = virtual_overlap || physical_overlap',
+              'memory.IsFullyMappedRange(row_address(source',
+              'memory.IsFullyMappedRange(row_address(destination'):
     assert token in helper, token
 end_anchor='} // namespace\\n\\nMaxwellDMA::MaxwellDMA'.replace('\\n','\n')
 assert expected.count(end_anchor)==1

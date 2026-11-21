@@ -7,6 +7,7 @@ into the maintained BlitColor owner itself. Verify the selected source still
 invalidates guest graphics state after recording the raw blit. HOST ONLY.
 """
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 

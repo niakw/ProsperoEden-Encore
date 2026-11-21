@@ -46,6 +46,7 @@ REVIEWED_PINS.add("bb575bd8396d78187d2bd56713e84c398ebce512")
 REVIEWED_PINS.add("9bd8de9081cc5ad431ecfc62696e9a6f8f2d1ffc")
 REVIEWED_PINS.add("2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f")
 REVIEWED_PINS.add("889b142aa5616d3d00733a7cc1db1562eed291f4")
+REVIEWED_PINS.add("201b09121ebbfe0a37a56710b2b7ac118ae5acbb")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 original_vendor_pin = selected
 # Preserve the active AS/GMMU owner revision during recursive source-pin
@@ -56,6 +57,35 @@ ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f1
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+# NS2 native channel retirement is now a *GPU-worker* operation.
+# This seal includes the pre-existing GA10F, NVCore session and AS owners
+# plus the exact scheduler, GPU, NVDRV and source regression changed here.
+# Host/non-PS5 GPU::ReleaseChannel retains its legacy implementation.
+if selected == "201b09121ebbfe0a37a56710b2b7ac118ae5acbb":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.h", "fe45aa0e8e9943034cbf61e620ee132d33adf887"),
+        ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp", "e74f82cd604ba8e60bc7b1005f60a92d66013563"),
+        ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "fc921425b67b634b4aaeb2363dcabdf9b53b6be8"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "c0cc9b26f6af13d6e1a3b60d92a0dfabd93c51d1"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "027fee436eea6292e59caa852d76282473d41688"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h", "8ca13a81c05c272347f7dfd0f8189b5c2b2fd946"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h", "ba96b6a240b31519afc89a15e7d683d0c2f32f32"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "8c90a441fc50e656be3d39c582e85241aabcfb75"),
+        ("sources/eden/src/video_core/control/channel_state.h", "dfbb776d9b03f68439efa33f02806a15782c2e21"),
+        ("sources/eden/src/core/hle/service/nvdrv/core/container.h", "14f84ba43cb83451d8b8dc5fc707e894f43ac2c7"),
+        ("encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp", "eec4677538f53cd709f8f6bee9975f3cba0426a0"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "f2ed8c5407974f131fceb6f43a9597334d641477"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "9c4f369d4909a49c69ca58a10d3b141b29214ed7"),
+        ("encore-active/ns2-runtime/process/core/core.cpp", "a30c7bbe1bf719b196f1f0805e83b1276ee74472"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "ee1eab4c6417bdeda24de75e36f86fe68d9802b2"),
+        ("tests/shutdown_teardown_lifetime_source.py", "f96f8a58681fd13e46b1a54a49f1ce5f9cdbf3dd"),
+        ("tests/shutdown_general_channel_lifetime_source.py", "d18a8646f71b7285425397b74bf51853de4e4684"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Native channel retirement/AS session source drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
 # A GPU channel's AS shared_ptr owns the GMMU but cannot keep NVMap
 # backing mapped after its final NvCore session is closed. The PS5-selected
 # Container retains the exact live session; the channel's last owner

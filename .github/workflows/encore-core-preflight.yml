@@ -299,6 +299,7 @@ jobs:
           python3 -B tools/check-ps5-remapped-render-target-host.py
           python3 -B tools/check-native-dma-extent-host.py
           python3 -B tools/check-native-dma-contiguous-host.py
+          python3 -B tools/check-native-dma-pitch-remap-host.py
           python3 -B tools/check-ps5-buffer-pages-r437.py
           python3 -B tools/check-native-wide-index-buffer-range-host.py
           python3 -B tools/check-native-index-draw-dirty-span-host.py

@@ -380,3 +380,63 @@ with tempfile.TemporaryDirectory(prefix="encore-fb-layers-gpu46-") as td:
 print("NS1_VULKAN_FRAMEBUFFER_LAYER_BOUNDS_HOST_PASS active_owner=1 min_attachment=1 "
       "mixed_samples=1 clear_clip=1 outside_skip=1 overflow_safe=1 "
       "partial_not_deferred=1 full_deferred=1 O0_O2=2 ASan_UBSan=1")
+
+
+# GPU-47: Lichii #427 framebuffer-limit subset only. Do NOT import its
+# unrelated StreamBuffer padding. Source-seal the active Vulkan device limits
+# and framebuffer clamp, then test the policy under sanitizers.
+device_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/vulkan_common/vulkan_device.h").read_text()
+texture_cpp=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+for limit in ("FramebufferWidth","FramebufferHeight","FramebufferLayers"):
+    assert f"FN_MAX_LIMIT_ELEM({limit})" in device_header
+for token in (
+    "const auto clamp_extent = [&runtime](VkExtent2D extent)",
+    "runtime.device.GetMaxFramebufferWidth()",
+    "runtime.device.GetMaxFramebufferHeight()",
+    "runtime.device.GetMaxFramebufferLayers()",
+    "layers = (std::max)(1U, (std::min)(layers, runtime.device.GetMaxFramebufferLayers()));",
+    "const VkExtent2D extent = clamp_extent(",
+    "render_area = clamp_extent(render_area);",
+):
+    assert token in texture_cpp, token
+assert "32768x32768 surface clip" in texture_cpp
+
+device_limit_cpp=r"""
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+using u32=std::uint32_t;
+struct Size { u32 width,height,layers; };
+constexpr Size Clamp(Size size, Size max) {
+    return {
+      (std::max)(1U,(std::min)(size.width,max.width)),
+      (std::max)(1U,(std::min)(size.height,max.height)),
+      (std::max)(1U,(std::min)(size.layers,max.layers)),
+    };
+}
+int main() {
+    auto a=Clamp({32768,32768,4},{16384,16384,2});
+    assert(a.width==16384 && a.height==16384 && a.layers==2);
+    auto b=Clamp({1280,720,1},{16384,16384,2048});
+    assert(b.width==1280 && b.height==720 && b.layers==1);
+    auto c=Clamp({0,0,0},{16384,16384,2048});
+    assert(c.width==1 && c.height==1 && c.layers==1);
+    auto d=Clamp({16384,16384,2048},{16384,16384,2048});
+    assert(d.width==16384 && d.height==16384 && d.layers==2048);
+    auto e=Clamp({16385,1,2049},{16384,16384,2048});
+    assert(e.width==16384 && e.height==1 && e.layers==2048);
+}
+"""
+compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-fb-device-limits-gpu47-") as td:
+    source=Path(td)/"limits.cpp"; source.write_text(device_limit_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(td)/("limits-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_VULKAN_FRAMEBUFFER_DEVICE_LIMIT_HOST_PASS upstream_427=1 active_owner=1 "
+      "width=1 height=1 layers=1 attachmentless_clip=1 zero_to_one=1 "
+      "valid_unchanged=1 O0_O2=2 ASan_UBSan=1")

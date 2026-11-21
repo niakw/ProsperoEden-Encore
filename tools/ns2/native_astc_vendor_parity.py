@@ -229,6 +229,40 @@ def strip_post_r23_active_image_pages(text: str) -> str:
     return text
 
 
+def strip_gpu47_framebuffer_device_limits(text: str) -> str:
+    """Reverse only GPU-47's framebuffer-limit clamp from the Vulkan cache TU."""
+    current = "16a8ad80677d992b557ec90283a8f3b483b97440"
+    predecessor = "a12ef3892565ce80f17c30b3cb54fa337718ccff"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-47 Vulkan texture source", blob)
+    limit_block = (
+        "    // Vulkan framebuffer dimensions are device limits, not guest clip limits.\n"
+        "    // Attachment-less draws can retain a 32768x32768 surface clip even when\n"
+        "    // the host only exposes 16384. Clamp every framebuffer before creation.\n"
+        "    const auto clamp_extent = [&runtime](VkExtent2D extent) {\n"
+        "        extent.width =\n"
+        "            (std::max)(1U, (std::min)(extent.width, runtime.device.GetMaxFramebufferWidth()));\n"
+        "        extent.height =\n"
+        "            (std::max)(1U, (std::min)(extent.height, runtime.device.GetMaxFramebufferHeight()));\n"
+        "        return extent;\n"
+        "    };\n"
+        "    layers = (std::max)(1U, (std::min)(layers, runtime.device.GetMaxFramebufferLayers()));\n"
+    )
+    text = once(text, limit_block, "")
+    text = once(text,
+        "        const VkExtent2D extent = clamp_extent(\n"
+        "            {(std::min)(render_area.width, width), (std::min)(render_area.height, height)});",
+        "        const VkExtent2D extent{(std::min)(render_area.width, width),\n"
+        "                                (std::min)(render_area.height, height)};")
+    text = once(text, "    render_area = clamp_extent(render_area);\n", "")
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-47 Vulkan texture reversal did not restore GPU-46 owner")
+    print("ENCORE_NS1_GPU47_ASTC_TEXTURE_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
 def strip_gpu46_framebuffer_layer_source(text: str) -> str:
     """Reverse only GPU-46's attachment-min layer policy from the Vulkan cache TU."""
     current = "a12ef3892565ce80f17c30b3cb54fa337718ccff"
@@ -429,6 +463,7 @@ def normalized(root: Path) -> dict[str, str]:
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
         if name == "vk_texture_cache_cost.cpp":
+            text = strip_gpu47_framebuffer_device_limits(text)
             text = strip_gpu46_framebuffer_layer_source(text)
             # The current vendor C++ is SHA-pinned before removing the newer
             # GPU-18 depth-plane semantics on this historical AUDIT COPY.

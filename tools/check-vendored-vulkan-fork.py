@@ -94,6 +94,55 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
 
+    # GPU-47 is the framebuffer-limit subset of Lichii #427 only. Reverse its
+    # exact texture-cache hunk before GPU-46; StreamBuffer is intentionally
+    # untouched because it is a separate upstream change.
+    gpu47_texture_name='vk_texture_cache_cost.cpp'
+    gpu47_current='16a8ad80677d992b557ec90283a8f3b483b97440'
+    gpu47_predecessor='a12ef3892565ce80f17c30b3cb54fa337718ccff'
+    gpu47_text=expected[gpu47_texture_name].read_text()
+    gpu47_blob=hashlib.sha1(
+        b'blob '+str(len(gpu47_text.encode())).encode()+bytes([0])+gpu47_text.encode()
+    ).hexdigest()
+    if gpu47_blob == gpu47_current:
+        gpu47_block=(
+            "    // Vulkan framebuffer dimensions are device limits, not guest clip limits.\n"
+            "    // Attachment-less draws can retain a 32768x32768 surface clip even when\n"
+            "    // the host only exposes 16384. Clamp every framebuffer before creation.\n"
+            "    const auto clamp_extent = [&runtime](VkExtent2D extent) {\n"
+            "        extent.width =\n"
+            "            (std::max)(1U, (std::min)(extent.width, runtime.device.GetMaxFramebufferWidth()));\n"
+            "        extent.height =\n"
+            "            (std::max)(1U, (std::min)(extent.height, runtime.device.GetMaxFramebufferHeight()));\n"
+            "        return extent;\n"
+            "    };\n"
+            "    layers = (std::max)(1U, (std::min)(layers, runtime.device.GetMaxFramebufferLayers()));\n"
+        )
+        assert gpu47_text.count(gpu47_block)==1, "GPU-47 texture limit block drift"
+        gpu47_text=gpu47_text.replace(gpu47_block,"",1)
+        gpu47_new_mixed=(
+            "        const VkExtent2D extent = clamp_extent(\n"
+            "            {(std::min)(render_area.width, width), (std::min)(render_area.height, height)});"
+        )
+        gpu47_old_mixed=(
+            "        const VkExtent2D extent{(std::min)(render_area.width, width),\n"
+            "                                (std::min)(render_area.height, height)};"
+        )
+        assert gpu47_text.count(gpu47_new_mixed)==1, "GPU-47 mixed extent drift"
+        gpu47_text=gpu47_text.replace(gpu47_new_mixed,gpu47_old_mixed,1)
+        assert gpu47_text.count("    render_area = clamp_extent(render_area);\n")==1
+        gpu47_text=gpu47_text.replace("    render_area = clamp_extent(render_area);\n","",1)
+        data=gpu47_text.encode()
+        assert hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()==gpu47_predecessor, (
+            "GPU-47 texture reversal did not restore GPU-46 predecessor")
+        out=temp/'normalized-vendor-gpu47'/gpu47_texture_name
+        out.parent.mkdir(parents=True,exist_ok=True)
+        out.write_text(gpu47_text)
+        expected[gpu47_texture_name]=out
+        print("ENCORE_NS1_GPU47_VULKAN_LIMIT_EXACT_REVERSE_PASS texture=1",flush=True)
+    else:
+        assert gpu47_blob==gpu47_predecessor, ("Unexpected GPU-47 texture owner",gpu47_blob)
+
     # GPU-46 is a reviewed production successor to the historical Vulkan
     # generator: Vulkan framebuffer layers are bounded by the smallest
     # attachment and clear ranges are clipped to that exact count. Reverse
@@ -964,13 +1013,32 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert mesh_device.count(mesh_feature_method) == 1
     assert mesh_device.count(sparse_delta) == 1, (
         "Native Task/Mesh device header lost the sparse residency method")
+    # GPU-47 adds only Vulkan's three framebuffer-limit getters to the
+    # already reviewed combined Device ABI. Reverse those exact lines on the
+    # audit text before applying the frozen R23 combined-blob receipt.
+    gpu47_device_current='e20048f23ab416706ea6bad55bb863022e4d505f'
+    gpu47_device_predecessor='acab7cf039c2be7bcc830ac684be2fff285a3e8a'
+    mesh_device_blob=_blob_text(mesh_device)
+    if mesh_device_blob == gpu47_device_current:
+        old_tail="    FN_MAX_LIMIT_ELEM(DescriptorSetInputAttachments)\n"
+        new_tail=(
+            "    FN_MAX_LIMIT_ELEM(DescriptorSetInputAttachments) \\\n"
+            "    FN_MAX_LIMIT_ELEM(FramebufferWidth) \\\n"
+            "    FN_MAX_LIMIT_ELEM(FramebufferHeight) \\\n"
+            "    FN_MAX_LIMIT_ELEM(FramebufferLayers)\n"
+        )
+        assert mesh_device.count(new_tail)==1, "GPU-47 Device limit-list drift"
+        mesh_device=mesh_device.replace(new_tail,old_tail,1)
+        assert _blob_text(mesh_device)==gpu47_device_predecessor, (
+            "GPU-47 Device reversal did not restore combined predecessor")
+        print("ENCORE_NS1_GPU47_VULKAN_DEVICE_EXACT_REVERSE_PASS",flush=True)
+    else:
+        assert mesh_device_blob==gpu47_device_predecessor, (
+            "Unexpected GPU-47 Device owner",mesh_device_blob)
     # Combined R23 EDS3 + subgroup + mesh + sparse-residency ABI is now a
     # maintained source blob, not only the two-hunk original Task/Mesh delta.
-    # Keep a hard content pin so unrelated header drift remains rejected.
-    combined_device_sha = 'acab7cf039c2be7bcc830ac684be2fff285a3e8a'
-    assert subprocess.check_output(
-        ['git', 'hash-object', str(expected[native_mesh_device_header])],
-        text=True).strip() == combined_device_sha, (
+    combined_device_sha = gpu47_device_predecessor
+    assert _blob_text(mesh_device) == combined_device_sha, (
         'Reviewed R23 combined Vulkan Device ABI blob drift')
     assert mesh_device.count('GetMaxSubgroupSize() const') == 1
     assert mesh_device.count('IsExtDepthClipEnableSupported() const') == 1

@@ -252,8 +252,8 @@ assert format_active.count("case Hash(TextureFormat::X8Z24, UNORM, UINT, UNORM, 
 cmake=(ROOT/"headless/CMakeLists.txt").read_text()
 assert 'set(EDEN_MAINTAINED_FORMAT_LOOKUP' in cmake
 assert 'list(REMOVE_ITEM video_sources texture_cache/format_lookup_table.cpp)' in cmake
-assert 'list(APPEND video_sources "\${EDEN_MAINTAINED_FORMAT_LOOKUP}")' in cmake
-assert cmake.index('list(APPEND video_sources "\${EDEN_MAINTAINED_FORMAT_LOOKUP}")') < cmake.index(
-    'set_property(TARGET video_core PROPERTY SOURCES "\${video_sources}")')
+assert 'list(APPEND video_sources "${EDEN_MAINTAINED_FORMAT_LOOKUP}")' in cmake
+assert cmake.index('list(APPEND video_sources "${EDEN_MAINTAINED_FORMAT_LOOKUP}")') < cmake.index(
+    'set_property(TARGET video_core PROPERTY SOURCES "${video_sources}")')
 print("NS1_X8Z24_FORMAT_LOOKUP_PASS active_owner=1 exact_delta=1 "
       "x8z24_unorm_uint_unorm_unorm=1 pinned_eden_immutable=1")

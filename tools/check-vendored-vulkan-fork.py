@@ -696,14 +696,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             # If an earlier exact-source reversal already reconstructed this
             # transition owner to the FC27 witness blob, consume that audit
             # copy. Applicability is proven by bytes, never by a stale vendor SHA.
-            transition_restored = (
-                name in {
-                    'vk_graphics_pipeline_cost.cpp',
-                    'include/video_core/renderer_vulkan/vk_graphics_pipeline.h'
-                } and raster_blob(expected[name].read_text()) == witness['current']
-            )
+            exact_restored = raster_blob(expected[name].read_text()) == witness['current']
             real_source = (expected[name].read_text()
-                           if name == raster_owner or transition_restored
+                           if name == raster_owner or exact_restored
                            else raw_path.read_text())
             # GPU-22 current-channel GMMU owner also changes this header's
             # constructor/reference. Rewind only its two SHA-sealed hunks on

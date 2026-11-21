@@ -855,6 +855,27 @@ endif()
 list(REMOVE_ITEM eden_shader_sources "frontend/maxwell/translate/impl/load_store_local_shared.cpp")
 list(APPEND eden_shader_sources "${EDEN_MAINTAINED_SHADER_LOCAL}")
 set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_shader_sources}")
+
+# NS1 Maxwell numeric FP min/max: select the single maintained SPIR-V emitter.
+# FMin/FMax leave a NaN operand undefined; the NVIDIA guest selects the
+# numeric operand.  The reviewed NMin/NMax translation is also understood by
+# the PS5 RADV SPIR-V front end. No Title ID or shader-key special casing.
+if(PS5_NATIVE)
+    set(EDEN_NS1_NAN_MINMAX_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp")
+    if(NOT EXISTS "${EDEN_NS1_NAN_MINMAX_SOURCE}")
+        message(FATAL_ERROR "Missing NS1 numeric min/max SPIR-V emitter")
+    endif()
+    get_target_property(eden_ns1_fp_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_fp_sources
+         "backend/spirv/emit_spirv_floating_point.cpp" eden_ns1_fp_pinned)
+    if(eden_ns1_fp_pinned LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V floating-point emitter owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_fp_sources "backend/spirv/emit_spirv_floating_point.cpp")
+    list(APPEND eden_ns1_fp_sources "${EDEN_NS1_NAN_MINMAX_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_fp_sources}")
+endif()
 # PS5_NATIVE is a CMake option, not a transitive preprocessor definition for
 # core or video_core. Only these two pinned TUs own the address guards below.
 # Do NOT enable it broadly for every upstream C++ source.

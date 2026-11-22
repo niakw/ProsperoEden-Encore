@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 348 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 268 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `a7c2afb3`. **Ces 1 348 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 352 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 272 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `ebc5a68a`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 268 | 80 | **1 348** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 272 | 80 | **1 352** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 104 | 3 | **107** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 108 | 0 | **108** |
-| **NULL — Handler NULL** | 2 256 | 0 | **2 256** |
+| **NULL — Handler NULL** | 2 252 | 0 | **2 252** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -359,17 +359,29 @@ Vendor `36100c17` (arbre `c9042596bcfece3250e1574ab44061c182ff54ee`). La baselin
 
 **Pool restant à examiner : 2 810 = 2 256 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — canal ExtraStorage applet réel
+
+Vendor `ebc5a68a` (arbre `7a96cbc2af79a866e194c28fa33e438d9c897712`). La baseline moteur `ce2a1673` → vendor `36100c17` est **verte X8D24 + provenance**.
+
+- `ILibraryAppletAccessor::PushExtraStorage` et `ILibraryAppletSelfAccessor::{PopExtraStorage,GetPopExtraStorageEvent,UnpopExtraStorage}` : **4 NULL → IMPL-SRC**.
+- Le canal n'est pas simulé : `AppletDataBroker` possède désormais un `AppletStorageChannel extra_storage`, avec la même sémantique Push/Pop/Unpop/KEvent que les canaux in/out existants.
+- Aucun changement de statut n'est appliqué aux commandes extra-storage voisines qui restent sans propriétaire ou ABI prouvée.
+
+**Compteur courant : 1 352 IMPL-SRC, 107 PARTIEL, 149 STUB, 108 NOOP, 2 252 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 806 = 2 252 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1348
+    "Implémentation source retrouvée" : 1352
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 107
     "Stub / résultat simulé" : 149
     "No-op documenté" : 108
-    "Handler NULL" : 2256
+    "Handler NULL" : 2252
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1536,10 +1548,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `17` | `GetCallerAppletIdentityInfoStack` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `18` | `GetNextReturnDestinationAppletIdentityInfo` | 4.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `19` | `GetDesirableKeyboardLayout` | 4.0.0+ | **IMPL-SRC** (lit le layout clavier réel de l'applet principale au lieu de retourner 0 constant ; vendor `0d21ded6`) | 2026-11-22 |
-| appletAE | `20` | `PopExtraStorage` | — | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `25` | `GetPopExtraStorageEvent` | — | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `20` | `PopExtraStorage` | — | **IMPL-SRC** (Pop sur le canal `extra_storage` réel du broker ; vendor `ebc5a68a`) | 2026-11-22 |
+| appletAE | `25` | `GetPopExtraStorageEvent` | — | **IMPL-SRC** (retourne le KEvent réel du canal `extra_storage` ; vendor `ebc5a68a`) | 2026-11-22 |
 | appletAE | `30` | `UnpopInData` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `31` | `UnpopExtraStorage` | — | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `31` | `UnpopExtraStorage` | — | **IMPL-SRC** (réinjecte le stockage dans le canal `extra_storage` réel ; vendor `ebc5a68a`) | 2026-11-22 |
 | appletAE | `40` | `GetIndirectLayerProducerHandle` | 2.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `50` | `ReportVisibleError` | 3.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
@@ -1628,7 +1640,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `50` | `SetOutOfFocusApplicationSuspendingEnabled` | — | **IMPL-SRC** (raccordé à `LifecycleManager::SetOutOfFocusSuspendingEnabled`, directement consommé par la logique focus/suspend ; vendor `c8b1acd9`) | 2026-11-22 |
 | appletAE | `100` | `PushInData` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `101` | `PopOutData` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
-| appletAE | `102` | `PushExtraStorage` | — | **NULL** ([source C++][ns1-src-003]) | 2026-11-22 |
+| appletAE | `102` | `PushExtraStorage` | — | **IMPL-SRC** (broker `extra_storage` réel : Push sur le canal et signalement de son événement ; vendor `ebc5a68a`) | 2026-11-22 |
 | appletAE | `103` | `PushInteractiveInData` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `104` | `PopInteractiveOutData` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `105` | `GetPopOutDataEvent` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |

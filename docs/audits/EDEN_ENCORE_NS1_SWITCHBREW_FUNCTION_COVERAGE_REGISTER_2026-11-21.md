@@ -375,6 +375,18 @@ Vendor `36100c1740ad18d53949761846f21ffeb8a0f472` (arbre `c9042596bcfece3250e157
 
 **Pool restant à examiner = 2 810 entrées** : 2 256 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — ExtraStorage applet — 22/11/2026
+
+Vendor `ebc5a68a9b5ac4316aa8c7ba3f6bebeab5817e5c` (arbre `7a96cbc2af79a866e194c28fa33e438d9c897712`).
+
+- `PushExtraStorage`, `PopExtraStorage`, `GetPopExtraStorageEvent`, `UnpopExtraStorage` : **4 NULL → IMPL-SRC**.
+- Implémentation causale : ajout du canal `extra_storage` au `AppletDataBroker`, réutilisant la sémantique réelle `AppletStorageChannel` et son événement kernel.
+- Baseline précédente moteur `ce2a1673` → vendor `36100c17` : X8D24 + provenance verts. Aucun test PS5 revendiqué pour ce nouveau lot.
+
+**Compteur courant : 1 352 IMPL-SRC / 107 PARTIEL / 149 STUB / 108 NOOP / 2 252 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 806 entrées** : 2 252 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

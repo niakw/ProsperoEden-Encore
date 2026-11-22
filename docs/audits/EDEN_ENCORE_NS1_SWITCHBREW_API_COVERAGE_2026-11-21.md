@@ -23,20 +23,21 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**994 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **914 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 986 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 040 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **960 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 986 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — corps C++ identifiable** | **914** | **80** | **994** |
-| **RACCORDÉ — handler sans corps prouvé** | **187** | 0 | **187** |
-| **PARTIEL — lacune/branche inachevée** | **59** | 3 | **62** |
-| **STUB — réponse minimale/no-op** | **262** | 0 | **262** |
-| **NULL — handler nul repéré** | **2 028** | 0 | **2 028** |
+| **IMPL-SRC — corps C++ identifiable** | **960** | **80** | **1 040** |
+| **RACCORDÉ — handler sans corps prouvé** | **117** | 0 | **117** |
+| **PARTIEL — lacune/branche inachevée** | **61** | 3 | **64** |
+| **STUB — réponse minimale/no-op** | **278** | 0 | **278** |
+| **NULL — handler nul repéré** | **2 066** | 0 | **2 066** |
 | **D — rejets explicites ou historiques** | **18** | 33 | **51** |
-| **Q — non vérifié / rapprochement insuffisant** | **1 140** | 0 | **1 140** |
+| **Q — non vérifié / rapprochement insuffisant** | **1 089** | 0 | **1 089** |
 | **ABSENT — commande non inscrite dans la table IPC du propriétaire** | **67** | 0 | **67** |
 | **E — ID absent dans l'énumération initiale** | 0 | 1 | **1** |
-| **ABI-DIFF — même ID mais noms/contrats divergents (non qualifiés)** | **61** | 0 | **61** |
+| **ABI-DIFF — même ID mais noms/contrats divergents (non qualifiés)** | **74** | 0 | **74** |
+| **NOOP — retour constant ou opération sans effet décrite dans le code** | **6** | 0 | **6** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
 ### Graphique — couverture source de l'inventaire NS1
@@ -44,15 +45,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 994
-    "Handler raccordé, corps non prouvé" : 187
-    "Partiel" : 62
-    "Stub" : 262
-    "Handler NULL" : 2028
+    "Implémentation source retrouvée" : 1040
+    "Handler raccordé, corps non prouvé" : 117
+    "Partiel" : 64
+    "Stub" : 278
+    "Handler NULL" : 2066
     "Rejet explicite / historique" : 51
-    "Non vérifié" : 1140
+    "Non vérifié" : 1089
     "Absent de la table propriétaire" : 67
-    "Écart de noms / ABI Bluetooth" : 61
+    "Écart de noms / ABI" : 74
+    "NOOP documentés dans LBL" : 6
     "ID non trouvé" : 1
 ```
 
@@ -83,6 +85,9 @@ pie showData
 
 
 **Lot services système et périphériques (22/11, vendor 224b05e6) :** 164 lignes Q rapprochées de cinq tables C++ présentes dans les CMake de base/backports : `nd:sys` **37 NULL** ; `miiimg` **12 NULL + 2 STUB** (succès minimal / compteur 0) ; `psm` **13 NULL + 8 IMPL-SRC + 2 STUB + 1 PARTIEL** (tension/âge simulés et champs électriques codés en dur) ; `gpio` **28 ABSENT** des tables de commandes publiées (`Cmd0(nullptr)` seul) ; `btdrv` **61 ABI-DIFF** : mêmes ID, noms divergents, 60 slots nuls et un handler raccordé `EnableRadio`. Les écarts ABI n'attestent pas de l'équivalence sémantique et n'entrent pas dans « implémentées ». Aucun besoin console de ces services n'est démontré.
+
+
+**Lot LR / LBL / Mii / Friend** : 121 lignes reclassées à partir des définitions et tables du vendor 224b05e6 : `lr` et ses trois sous-interfaces, **38 NULL** ; `lbl`, **16 IMPL-SRC, 3 STUB, 2 PARTIEL, 6 NOOP** (les no-op commentés « intentional » sont conservés à part) ; `mii:u/e`, **24 IMPL-SRC** avec appel effectif à `MiiManager` ; `friend:*`, **6 IMPL-SRC, 13 STUB, 13 ABI-DIFF** (nom du slot source suffixé `V1`, parfois non nul). Les 13 ABI-DIFF doivent rester hors compteur tant que les versions de l'interface ne sont pas démontrées équivalentes. Pas de test en jeu de ces 121 commandes.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -3365,60 +3370,60 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `CreateFriendService` | — | **RACCORDÉ** ([source C++][ns1-src-081]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `CreateNotificationService` | 2.0.0+ | **RACCORDÉ** ([source C++][ns1-src-081]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `CreateFriendService` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend_interface.cpp) ; handler déclaré dans friend_interface.cpp et constructeur IPC implémenté dans friend.cpp ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `CreateNotificationService` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend_interface.cpp) ; handler déclaré dans friend_interface.cpp et constructeur IPC implémenté dans friend.cpp ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `CreateDaemonSuspendSessionService` | 4.0.0+ | **NULL** ([source C++][ns1-src-081]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetCompletionEvent` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Cancel` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetCompletionEvent` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Cancel` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10100` | `GetFriendListIds` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10101` | `GetFriendList` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10101` | `GetFriendList` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10102` | `UpdateFriendInfo` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10110` | `GetFriendProfileImage` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10200` | `SendFriendRequestForApplication` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10211` | `AddFacedFriendRequestForApplication` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10400` | `GetBlockedUserListIds` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10400` | `GetBlockedUserListIds` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10500` | `GetProfileList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10600` | `DeclareOpenOnlinePlaySession` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10601` | `DeclareCloseOnlinePlaySession` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10610` | `UpdateUserPresence` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10700` | `GetPlayHistoryRegistrationKey` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10601` | `DeclareCloseOnlinePlaySession` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10610` | `UpdateUserPresence` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10700` | `GetPlayHistoryRegistrationKey` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10701` | `GetPlayHistoryRegistrationKeyWithNetworkServiceAccountId` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10702` | `AddPlayHistory` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `11000` | `GetProfileImageUrl` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20100` | `GetFriendCount` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20101` | `GetNewlyFriendCount` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20100` | `GetFriendCount` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20101` | `GetNewlyFriendCount` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20102` | `GetFriendDetailedInfo` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20103` | `SyncFriendList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20104` | `RequestSyncFriendList` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20110` | `LoadFriendSetting` | — | Q | 2026-11-21 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20200` | `GetReceivedFriendRequestCount` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20201` | `GetFriendRequestList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20104` | `RequestSyncFriendList` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20110` | `LoadFriendSetting` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20110 = LoadFriendSettingV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20200` | `GetReceivedFriendRequestCount` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20201` | `GetFriendRequestList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20201 = GetFriendRequestListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20300` | `GetFriendCandidateList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20301` | `GetNintendoNetworkIdInfo` | 3.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20302` | `GetSnsAccountLinkage` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20303` | `GetSnsAccountProfile` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20304` | `GetSnsAccountFriendList` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20400` | `GetBlockedUserList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20400` | `GetBlockedUserList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20400 = GetBlockedUserListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20401` | `SyncBlockedUserList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20500` | `GetProfileExtraList` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20500` | `GetProfileExtraList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20500 = GetProfileExtraListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20501` | `GetRelationship` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20600` | `GetUserPresenceView` | — | Q | 2026-11-21 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20700` | `GetPlayHistoryList` | — | Q | 2026-11-21 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20701` | `GetPlayHistoryStatistics` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20800` | `LoadUserSetting` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20600` | `GetUserPresenceView` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20600 = GetUserPresenceViewV1 (handler raccordé) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20700` | `GetPlayHistoryList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20700 = GetPlayHistoryListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20701` | `GetPlayHistoryStatistics` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20800` | `LoadUserSetting` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20800 = LoadUserSettingV1 (handler raccordé) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20801` | `SyncUserSetting` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20900` | `RequestListSummaryOverlayNotification` | — | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20900` | `RequestListSummaryOverlayNotification` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `21000` | `GetExternalApplicationCatalog` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `22000` | `GetReceivedFriendInvitationList` | 9.0.0+ | Q | 2026-11-21 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `22001` | `GetReceivedFriendInvitationDetailedInfo` | 9.0.0+ | Q | 2026-11-21 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `22010` | `GetReceivedFriendInvitationCountCache` | 9.0.0+ | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `22000` | `GetReceivedFriendInvitationList` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 22000 = GetReceivedFriendInvitationListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `22001` | `GetReceivedFriendInvitationDetailedInfo` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 22001 = GetReceivedFriendInvitationDetailedInfoV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `22010` | `GetReceivedFriendInvitationCountCache` | 9.0.0+ | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30100` | `DropFriendNewlyFlags` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30101` | `DeleteFriend` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30110` | `DropFriendNewlyFlag` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30120` | `ChangeFriendFavoriteFlag` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30121` | `ChangeFriendOnlineNotificationFlag` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30200` | `SendFriendRequest` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30201` | `SendFriendRequestWithApplicationInfo` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30201` | `SendFriendRequestWithApplicationInfo` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30201 = SendFriendRequestWithApplicationInfoV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30202` | `CancelFriendRequest` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30203` | `AcceptFriendRequest` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30204` | `RejectFriendRequest` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
@@ -3434,21 +3439,21 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30300` | `GetSnsAccountLinkPageUrl` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30301` | `UnlinkSnsAccount` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30400` | `BlockUser` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30401` | `BlockUserWithApplicationInfo` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30401` | `BlockUserWithApplicationInfo` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30401 = BlockUserWithApplicationInfoV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30402` | `UnblockUser` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30500` | `GetProfileExtraFromFriendCode` | — | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30500` | `GetProfileExtraFromFriendCode` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30500 = GetProfileExtraFromFriendCodeV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30700` | `DeletePlayHistory` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30810` | `ChangePresencePermission` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30811` | `ChangeFriendRequestReception` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30812` | `ChangePlayLogPermission` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30820` | `IssueFriendCode` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30830` | `ClearPlayLog` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30900` | `SendFriendInvitation` | 9.0.0+ | Q | 2026-11-21 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30900` | `SendFriendInvitation` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30900 = SendFriendInvitationV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30910` | `ReadFriendInvitation` | 9.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `49900` | `DeleteNetworkServiceAccountCache` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetEvent` | 2.0.0+ | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Clear` | 2.0.0+ | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `Pop` | 2.0.0+ | **RACCORDÉ** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetEvent` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Clear` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `Pop` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
 | nd:app | `0` | `GetReceivableNeighborInfoCountMax` | — | Q | 2026-11-21 |
 | nd:app | `10` | `IsNeighborDetectionEnabled` | — | Q | 2026-11-21 |
 | nd:sys | `0` | `GetReceivableNeighborInfoCountMax` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
@@ -3929,35 +3934,35 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| lbl | `0` | `SaveCurrentSetting` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `1` | `LoadCurrentSetting` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `2` | `SetCurrentBrightnessSetting` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `3` | `GetCurrentBrightnessSetting` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
+| lbl | `0` | `SaveCurrentSetting` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; stub explicitement marqué ; qualification statique NS1) | 2026-11-22 |
+| lbl | `1` | `LoadCurrentSetting` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; stub explicitement marqué ; qualification statique NS1) | 2026-11-22 |
+| lbl | `2` | `SetCurrentBrightnessSetting` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `3` | `GetCurrentBrightnessSetting` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
 | lbl | `4` | `ApplyCurrentBrightnessSettingToBacklight` | — | **NULL** ([source C++][ns1-src-088]) | 2026-11-22 |
 | lbl | `5` | `GetBrightnessSettingAppliedToBacklight` | — | **NULL** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `6` | `SwitchBacklightOn` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `7` | `SwitchBacklightOff` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `8` | `GetBacklightSwitchStatus` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `9` | `EnableDimming` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `10` | `DisableDimming` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `11` | `IsDimmingEnabled` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `12` | `EnableAutoBrightnessControl` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `13` | `DisableAutoBrightnessControl` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `14` | `IsAutoBrightnessControlEnabled` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `15` | `SetAmbientLightSensorValue` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `16` | `GetAmbientLightSensorValue` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `17` | `SetBrightnessReflectionDelayLevel` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `18` | `GetBrightnessReflectionDelayLevel` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `19` | `SetCurrentBrightnessMapping` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `20` | `GetCurrentBrightnessMapping` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `21` | `SetCurrentAmbientLightSensorMapping` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `22` | `GetCurrentAmbientLightSensorMapping` | — | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `23` | `IsAmbientLightSensorAvailable` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `24` | `SetCurrentBrightnessSettingForVrMode` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `25` | `GetCurrentBrightnessSettingForVrMode` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `26` | `EnableVrMode` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `27` | `DisableVrMode` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
-| lbl | `28` | `IsVrModeEnabled` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-088]) | 2026-11-22 |
+| lbl | `6` | `SwitchBacklightOn` | — | **PARTIEL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; état émulé sans action rétroéclairage physique ; qualification statique NS1) | 2026-11-22 |
+| lbl | `7` | `SwitchBacklightOff` | — | **PARTIEL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; état émulé sans action rétroéclairage physique ; qualification statique NS1) | 2026-11-22 |
+| lbl | `8` | `GetBacklightSwitchStatus` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `9` | `EnableDimming` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `10` | `DisableDimming` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `11` | `IsDimmingEnabled` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `12` | `EnableAutoBrightnessControl` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `13` | `DisableAutoBrightnessControl` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `14` | `IsAutoBrightnessControlEnabled` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `15` | `SetAmbientLightSensorValue` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `16` | `GetAmbientLightSensorValue` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `17` | `SetBrightnessReflectionDelayLevel` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
+| lbl | `18` | `GetBrightnessReflectionDelayLevel` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
+| lbl | `19` | `SetCurrentBrightnessMapping` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
+| lbl | `20` | `GetCurrentBrightnessMapping` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
+| lbl | `21` | `SetCurrentAmbientLightSensorMapping` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
+| lbl | `22` | `GetCurrentAmbientLightSensorMapping` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
+| lbl | `23` | `IsAmbientLightSensorAvailable` | 3.0.0+ | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; stub explicitement marqué ; qualification statique NS1) | 2026-11-22 |
+| lbl | `24` | `SetCurrentBrightnessSettingForVrMode` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `25` | `GetCurrentBrightnessSettingForVrMode` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `26` | `EnableVrMode` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `27` | `DisableVrMode` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
+| lbl | `28` | `IsVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
 
 ### LDN services
 
@@ -4122,44 +4127,44 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| Location Resolver services | `0` | `OpenLocationResolver` | — | Q | 2026-11-21 |
-| Location Resolver services | `1` | `OpenRegisteredLocationResolver` | — | Q | 2026-11-21 |
-| Location Resolver services | `2` | `RefreshLocationResolver` | — | Q | 2026-11-21 |
-| Location Resolver services | `3` | `OpenAddOnContentLocationResolver` | 2.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `0` | `ResolveProgramPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `1` | `RedirectProgramPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `2` | `ResolveApplicationControlPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `3` | `ResolveApplicationHtmlDocumentPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `4` | `ResolveDataPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `5` | `RedirectApplicationControlPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `6` | `RedirectApplicationHtmlDocumentPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `7` | `ResolveApplicationLegalInformationPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `8` | `RedirectApplicationLegalInformationPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `9` | `Refresh` | — | Q | 2026-11-21 |
-| Location Resolver services | `10` | `RedirectApplicationProgramPath` | 5.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `11` | `ClearApplicationRedirection` | 5.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `12` | `EraseProgramRedirection` | 5.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `13` | `EraseApplicationControlRedirection` | 5.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `14` | `EraseApplicationHtmlDocumentRedirection` | 5.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `15` | `EraseApplicationLegalInformationRedirection` | 5.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `16` | `ResolveProgramPathForDebug` | 7.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `17` | `RedirectProgramPathForDebug` | 7.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `18` | `RedirectApplicationProgramPathForDebug` | 7.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `19` | `EraseProgramRedirectionForDebug` | 7.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `1` | `RegisterProgramPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `2` | `UnregisterProgramPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `3` | `RedirectProgramPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `4` | `ResolveHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `5` | `RegisterHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `6` | `UnregisterHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `7` | `RedirectHtmlDocumentPath` | 2.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `8` | `Refresh` | 7.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `9` | `RefreshExcluding` | 9.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `0` | `ResolveAddOnContentPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `1` | `RegisterAddOnContentStorage` | — | Q | 2026-11-21 |
-| Location Resolver services | `2` | `UnregisterAllAddOnContentPath` | — | Q | 2026-11-21 |
-| Location Resolver services | `3` | `RefreshApplicationAddOnContent` | 9.0.0+ | Q | 2026-11-21 |
-| Location Resolver services | `4` | `UnregisterApplicationAddOnContent` | 9.0.0+ | Q | 2026-11-21 |
+| Location Resolver services | `0` | `OpenLocationResolver` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces LR exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `1` | `OpenRegisteredLocationResolver` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces LR exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `2` | `RefreshLocationResolver` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces LR exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `3` | `OpenAddOnContentLocationResolver` | 2.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces LR exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `0` | `ResolveProgramPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver/IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `1` | `RedirectProgramPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `2` | `ResolveApplicationControlPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `3` | `ResolveApplicationHtmlDocumentPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `4` | `ResolveDataPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `5` | `RedirectApplicationControlPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `6` | `RedirectApplicationHtmlDocumentPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `7` | `ResolveApplicationLegalInformationPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `8` | `RedirectApplicationLegalInformationPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `9` | `Refresh` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `10` | `RedirectApplicationProgramPath` | 5.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `11` | `ClearApplicationRedirection` | 5.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `12` | `EraseProgramRedirection` | 5.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `13` | `EraseApplicationControlRedirection` | 5.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `14` | `EraseApplicationHtmlDocumentRedirection` | 5.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `15` | `EraseApplicationLegalInformationRedirection` | 5.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `16` | `ResolveProgramPathForDebug` | 7.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `17` | `RedirectProgramPathForDebug` | 7.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `18` | `RedirectApplicationProgramPathForDebug` | 7.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `19` | `EraseProgramRedirectionForDebug` | 7.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces ILocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `1` | `RegisterProgramPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `2` | `UnregisterProgramPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `3` | `RedirectProgramPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `4` | `ResolveHtmlDocumentPath` | 2.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `5` | `RegisterHtmlDocumentPath` | 2.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `6` | `UnregisterHtmlDocumentPath` | 2.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `7` | `RedirectHtmlDocumentPath` | 2.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `8` | `Refresh` | 7.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `9` | `RefreshExcluding` | 9.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IRegisteredLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `0` | `ResolveAddOnContentPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `1` | `RegisterAddOnContentStorage` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `2` | `UnregisterAllAddOnContentPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `3` | `RefreshApplicationAddOnContent` | 9.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `4` | `UnregisterApplicationAddOnContent` | 9.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
 | Content Manager services | `0` | `CreateContentStorage` | — | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 0, handler explicitement nul ; source seulement) | 2026-11-22 |
 | Content Manager services | `1` | `CreateContentMetaDatabase` | — | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 1, handler explicitement nul ; source seulement) | 2026-11-22 |
 | Content Manager services | `2` | `VerifyContentStorage` | — | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 2, handler explicitement nul ; source seulement) | 2026-11-22 |
@@ -5256,32 +5261,32 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pl:u, pl:s | `1000` | `LoadNgWordDataForPlatformRegionChina` | 9.0.0+ | Q | 2026-11-21 |
 | pl:u, pl:s | `1001` | `GetNgWordDataSizeForPlatformRegionChina` | 9.0.0+ | Q | 2026-11-21 |
 | mii:u, mii:e | `0` | `GetDatabaseService` | — | **IMPL-SRC** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `0` | `IsUpdated` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `1` | `IsFullDatabase` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `2` | `GetCount` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `3` | `Get` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `4` | `Get1` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `5` | `UpdateLatest` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `6` | `BuildRandom` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `7` | `BuildDefault` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `8` | `Get2` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `9` | `Get3` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `10` | `UpdateLatest1` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `11` | `FindIndex` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `12` | `Move` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `13` | `AddOrReplace` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `14` | `Delete` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `15` | `DestroyFile` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `16` | `DeleteFile` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `17` | `Format` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
+| mii:u, mii:e | `0` | `IsUpdated` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `1` | `IsFullDatabase` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `2` | `GetCount` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `3` | `Get` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `4` | `Get1` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `5` | `UpdateLatest` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `6` | `BuildRandom` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `7` | `BuildDefault` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `8` | `Get2` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `9` | `Get3` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `10` | `UpdateLatest1` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `11` | `FindIndex` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `12` | `Move` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `13` | `AddOrReplace` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `14` | `Delete` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `15` | `DestroyFile` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `16` | `DeleteFile` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `17` | `Format` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
 | mii:u, mii:e | `18` | `Import` | — | **NULL** ([source C++][ns1-src-094]) | 2026-11-22 |
 | mii:u, mii:e | `19` | `Export` | — | **NULL** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `20` | `IsBrokenDatabaseWithClearFlag` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `21` | `GetIndex` | — | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `22` | `SetInterfaceVersion` | 5.0.0+ | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `23` | `Convert` | 5.0.0+ | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `24` | `ConvertCoreDataToCharInfo` | 7.0.0+ | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
-| mii:u, mii:e | `25` | `ConvertCharInfoToCoreData` | 7.0.0+ | **RACCORDÉ** ([source C++][ns1-src-094]) | 2026-11-22 |
+| mii:u, mii:e | `20` | `IsBrokenDatabaseWithClearFlag` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `21` | `GetIndex` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `22` | `SetInterfaceVersion` | 5.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `23` | `Convert` | 5.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `24` | `ConvertCoreDataToCharInfo` | 7.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
+| mii:u, mii:e | `25` | `ConvertCharInfoToCoreData` | 7.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
 | miiimg | `0` | `Initialize` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : retour minimal sans base d'images ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `10` | `Reload` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `11` | `GetCount` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : retour minimal sans base d'images ; ABI et PS5 non validés) | 2026-11-22 |

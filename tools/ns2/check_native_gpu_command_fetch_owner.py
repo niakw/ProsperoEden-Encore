@@ -124,7 +124,7 @@ elif cache_blob in {
     assert "void BufferCache<P>::WriteDownloadedMemory" in buffer_cache
     assert "device_memory.WriteBlockUnsafe(start, data + (start - device_addr), end - start);" in buffer_cache
     if cache_blob in {"09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
-                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b":
+                       "505ee80a37d5991b7925019282e71926c1648e02", "c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b"}:
         assert "Upstream Lichii/Eglantine b13c4c1" in buffer_cache
         assert "keep_page_gpu_data" in buffer_cache
     if cache_blob == "505ee80a37d5991b7925019282e71926c1648e02":
@@ -132,8 +132,9 @@ elif cache_blob in {
         assert "!gpu_modified_ranges.Intersects(page_begin, page_end - page_begin)" in buffer_cache
     if cache_blob in {"c6bab56cbd4e58458d010e423d74df9f933a8f8d", "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b"}:
         assert "Lichii 44bf47d" in buffer_cache
-        assert "!IsRegionGpuModified(page_begin, page_end - page_begin)" in buffer_cache
         assert "gpu_modified_ranges.Intersects(" not in buffer_cache
+        if cache_blob == "c6bab56cbd4e58458d010e423d74df9f933a8f8d":
+            assert "!IsRegionGpuModified(page_begin, page_end - page_begin)" in buffer_cache
         if cache_blob == "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b":
             # Source commit e81e4017 samples the page before subtracting the CPU
             # span; it must still download GPU-owned sibling bytes afterward.

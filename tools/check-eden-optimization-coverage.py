@@ -3190,7 +3190,7 @@ if post_f07_vfs_present:
         assert current_xci.count(added_xci) == 1
         assert current_xci.count('#include "common/string_util.h"\n') == 1
         restored_xci = current_xci.replace(added_xci, original_xci, 1)
-        restored_xci = restored_xci.replace('#include "common/string_util.h"\\n', "", 1)
+        restored_xci = restored_xci.replace('#include "common/string_util.h"\n', "", 1)
         prior_raw = restored_xci.encode("utf-8")
         prior_sha = hashlib.sha1(b"blob "+str(len(prior_raw)).encode()+bytes([0])+prior_raw).hexdigest()
         assert prior_sha == "c3dbb891b10ae2f576566d5a8a5f1a871f94c3d0", prior_sha

@@ -25,7 +25,7 @@ print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded runtime-quiet=1")
 import hashlib
 selected = root/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp"
 raw = selected.read_bytes()
-assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "9719348d36515464724ce82f62aafac1d5182647"
+assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "a26850d9addcd35c483fa1da28d440537896ee13"
 source = raw.decode()
 # The merged native AM owner also exposes NS2 command 321 with one byte,
 # without changing the previously reviewed language response path.

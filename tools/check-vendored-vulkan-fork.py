@@ -786,7 +786,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             raw = (root/'vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.h').read_bytes()
             assert hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == '571793025a886f3878e7b61ec9569faba84647f2'
         if exact_vendor_pin == 'f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0':
-            for relative, expected in {
+            for relative, qualified_blob in {
                 "encore-active/eden-core/include/core/hle/service/service.h": "b871694b3b865465ec8e08e358d6799449092498",
                 "encore-active/eden-core/src/core/hle/service/service.cpp": "e388765fb2cf372adc01c2c3ec174955659ccc2a",
                 "encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp": "a26850d9addcd35c483fa1da28d440537896ee13",
@@ -801,7 +801,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             }.items():
                 raw = (root/'vendor'/relative).read_bytes()
                 digest = hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-                assert digest == expected, ('Lichii structural source drift',relative,digest)
+                assert digest == qualified_blob, ('Lichii structural source drift',relative,digest)
         exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
         actual_vendor_pin = exact_vendor_pin
     # GPU-30 is compiled from this pinned C++ owner, but the frozen R23/P24

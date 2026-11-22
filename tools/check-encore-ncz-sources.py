@@ -26,6 +26,22 @@ for rel,sha,marker in pairs:
     digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()
     assert digest==sha,("Pinned Eden changed",rel)
     text=(active/rel).read_text()
+    if rel == "loader/loader.cpp" and "AppLoader_NX" in text:
+        # Remove only the seven exact reviewed NX loader-factory additions
+        # from an audit copy. The retained predecessor blob is checked below.
+        for previous, successor in (
+            ("#include \"core/loader/nsp.h\"\n", "#include \"core/loader/nsp.h\"\n#include \"core/loader/nx.h\"\n"),
+            ("    if (const auto nsp_type = IdentifyFileLoader<AppLoader_NSP>(file)) {", "    if (const auto nx_type = IdentifyFileLoader<AppLoader_NX>(file)) {\n        return *nx_type;\n    }\n    if (const auto nsp_type = IdentifyFileLoader<AppLoader_NSP>(file)) {"),
+            ("return type == FileType::NSP || type == FileType::XCI;", "return type == FileType::NSP || type == FileType::XCI || type == FileType::NX;"),
+            ("    return HasApplicationProgramContent(OpenContainerAsNsp(file, type, program_id, program_index));", "    if (type == FileType::NX) {\n        return AppLoader_NX::IsBootable(file);\n    }\n    return HasApplicationProgramContent(OpenContainerAsNsp(file, type, program_id, program_index));"),
+            ("    else if (extension == \"kip\")\n        return FileType::KIP;", "    else if (extension == \"kip\")\n        return FileType::KIP;\n    else if (extension == \"nx\")\n        return FileType::NX;"),
+            ("    case FileType::NRO:\n        return \"NRO\";", "    case FileType::NX:\n        return \"NX\";\n    case FileType::NRO:\n        return \"NRO\";"),
+            ("    // NX NSO file format.\n    case FileType::NSO:", "    // NX archive: verified NxFormat container plus NS1/NS2 content snapshots.\n    case FileType::NX:\n        return std::make_unique<AppLoader_NX>(system, std::move(file), program_id, program_index);\n\n    // NX NSO file format.\n    case FileType::NSO:"),
+        ):
+            assert text.count(successor) == 1, ("unexpected native NX source drift", rel)
+            text = text.replace(successor, previous, 1)
+        pre_nx = text.encode()
+        assert hashlib.sha1(b"blob " + str(len(pre_nx)).encode() + b"\0" + pre_nx).hexdigest() == "0b4448bcf4bef93b9d2a54cf96256d5b81d9424e", ("NX source baseline changed", rel)
     if rel == "loader/loader.cpp" and hashlib.sha1(b"blob "+str(len(text.encode())).encode()+b"\0"+text.encode()).hexdigest() == "0b4448bcf4bef93b9d2a54cf96256d5b81d9424e":
         # Normalize exact DNSP/DXCI/XCZ successor on an audit copy only.
         for previous, successor in (

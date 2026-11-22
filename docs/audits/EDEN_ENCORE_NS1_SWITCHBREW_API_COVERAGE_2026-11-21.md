@@ -23,17 +23,17 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**808 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **728 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Il ne s'agit ni de 808 fonctions certifiées conformes à Horizon, ni de 808 fonctions validées sur console.**
+**813 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **733 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Il ne s'agit ni de 808 fonctions certifiées conformes à Horizon, ni de 808 fonctions validées sur console.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — corps C++ identifiable** | **728** | **80** | **808** |
+| **IMPL-SRC — corps C++ identifiable** | **733** | **80** | **813** |
 | **RACCORDÉ — handler sans corps prouvé** | **234** | 0 | **234** |
 | **PARTIEL — lacune/branche inachevée** | **46** | 3 | **49** |
-| **STUB — réponse minimale/no-op** | **241** | 0 | **241** |
-| **NULL — handler nul repéré** | **1 821** | 0 | **1 821** |
+| **STUB — réponse minimale/no-op** | **242** | 0 | **242** |
+| **NULL — handler nul repéré** | **1 835** | 0 | **1 835** |
 | **D — rejets constatés historiquement** | **4** | 33 | **37** |
-| **Q — non vérifié / rapprochement insuffisant** | **1 662** | 0 | **1 662** |
+| **Q — non vérifié / rapprochement insuffisant** | **1 642** | 0 | **1 642** |
 | **E — ID absent dans l'énumération initiale** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -42,19 +42,22 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 808
+    "Implémentation source retrouvée" : 813
     "Handler raccordé, corps non prouvé" : 234
     "Partiel" : 49
-    "Stub" : 241
-    "Handler NULL" : 1821
+    "Stub" : 242
+    "Handler NULL" : 1835
     "Rejet historique" : 37
-    "Non vérifié" : 1662
+    "Non vérifié" : 1642
     "ID non trouvé" : 1
 ```
 
 **Détail du changement de ce lot :** **119** entrées `RACCORDÉ` ont été qualifiées à partir des tables et des méthodes héritées : **114 IMPL-SRC** et **5 PARTIEL** (notamment `IsUserRegistrationRequestPermitted`, dont le corps mentionne une limite fonctionnelle). Sources effectivement inspectées : [Account](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp), [NFP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp), [NFP Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfp/nfp_interface.cpp), [NFC Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp). La classification concerne la présence d'un corps et certains chemins manifestement incomplets, **pas la présence d'un lecteur NFC PS5 ni un comportement garanti**.
 
 **Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 234 `RACCORDÉ` et 1 662 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 1 821 `NULL` sont des trous des tables rapprochées, pas la preuve que 1 821 commandes sont demandées par FC27.
+
+
+**Lot FS de requalification :** 20 commandes précédemment `Q` rapprochées par service et ID dans les sources FS épinglées : **5 implémentations source**, **14 handlers `nullptr`** et **1 stub explicite** (`fsp-srv` ID 70, corps `STUBBED` avec retour succès). Pour les 10 slots `fsp-srv` aux noms différents du catalogue SwitchBrew, seul le **numéro d'ID** et l'état du slot sont confirmés ; l'équivalence des noms/ABI et des variantes firmware reste à vérifier. `IStorage` : Read/GetSize réels, Write/Flush/SetSize/OperateRange nuls. `IFile` : Write/Flush/SetSize réellement raccordés. Sources : [fsp-srv](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp), [IStorage](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp), [IFile](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp).
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -3481,7 +3484,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `2` | `OpenDataFileSystemByCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `8` | `OpenFileSystemWithId` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenDataFileSystemByApplicationId` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `11` | `OpenBisFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `12` | `OpenBisStorage` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `13` | `InvalidateBisCache` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3501,7 +3504,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `34` | `GetCacheStorageSize` | 5.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `35` | `CreateSaveDataFileSystemWithHashSalt` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `35` | `CreateSaveDataFileSystemWithHashSalt` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `CreateSaveDataFileSystemByHashSalt` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `36` | `OpenHostFileSystemWithOption` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `51` | `OpenSaveDataFileSystem` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `52` | `OpenSaveDataFileSystemBySystemSaveDataId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3514,16 +3517,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `62` | `OpenSaveDataInfoReaderOnlyCacheStorage` | 5.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `64` | `OpenSaveDataInternalStorageFileSystem` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `65` | `UpdateSaveDataMacForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `WriteSaveDataFileSystemExtraData2` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `67` | `FindSaveDataWithFilter` | 6.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `68` | `OpenSaveDataInfoReaderWithFilter` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `68` | `OpenSaveDataInfoReaderWithFilter` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenSaveDataInfoReaderBySaveDataFilter` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `69` | `ReadSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | **PARTIEL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `70` | `WriteSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `70` | `WriteSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | **STUB** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `WriteSaveDataFileSystemExtraDataWithMaskBySaveDataAttribute` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `80` | `OpenSaveDataMetaFile` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `81` | `OpenSaveDataTransferManager` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `82` | `OpenSaveDataTransferManagerVersion2` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `83` | `OpenSaveDataTransferProhibiter` | 6.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `84` | `ListAccessibleSaveDataOwnerId` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `84` | `ListAccessibleSaveDataOwnerId` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `ListApplicationAccessibleSaveDataOwnerId` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `85` | `OpenSaveDataTransferManagerForSaveDataRepair` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `100` | `OpenImageDirectoryFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `110` | `OpenContentStorageFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3533,14 +3536,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `201` | `OpenDataStorageByProgramId` | 3.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `202` | `OpenDataStorageByDataId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `203` | `OpenPatchDataStorageByCurrentProcess` | — | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `204` | `OpenDataFileSystemWithProgramIndex` | 7.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `204` | `OpenDataFileSystemWithProgramIndex` | 7.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenDataFileSystemByProgramIndex` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `205` | `OpenDataStorageWithProgramIndex` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `400` | `OpenDeviceOperator` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `500` | `OpenSdCardDetectionEventNotifier` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `501` | `OpenGameCardDetectionEventNotifier` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `510` | `OpenSystemDataUpdateEventNotifier` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `511` | `NotifySystemDataUpdateEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `520` | `SimulateDeviceDetectionEvent` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `520` | `SimulateDeviceDetectionEvent` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `SimulateGameCardDetectionEvent` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `600` | `SetCurrentPosixTime` | 1.0.0-3.0.2 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `601` | `QuerySaveDataTotalSize` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `602` | `VerifySaveDataFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3563,12 +3566,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `630` | `SetSdCardAccessibility` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `631` | `IsSdCardAccessible` | 4.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `640` | `IsSignedSystemPartitionOnSdCardValid` | 4.0.0-7.0.1 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `700` | `OpenAccessFailureDetectionEventNotifier` | 5.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `700` | `OpenAccessFailureDetectionEventNotifier` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenAccessFailureResolver` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `701` | `GetAccessFailureDetectionEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `702` | `IsAccessFailureDetected` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `710` | `ResolveAccessFailure` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `720` | `AbandonAccessFailure` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `800` | `GetAndClearErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `800` | `GetAndClearErrorInfo` | 2.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `GetAndClearFileSystemProxyErrorInfo` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `810` | `RegisterProgramIndexMapInfo` | 7.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1000` | `SetBisRootForHost` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1001` | `SetSaveDataSize` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3585,14 +3588,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `1012` | `GetFsStackUsage` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1013` | `UnsetSaveDataRootPath` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1100` | `OverrideSaveDataTransferTokenSignVerificationKey` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `1110` | `CorruptSaveDataFileSystemByOffset` | 6.0.0+ | Q | 2026-11-21 |
+| fsp-srv | `1110` | `CorruptSaveDataFileSystemByOffset` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `CorruptSaveDataFileSystemBySaveDataSpaceId2` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `1200` | `OpenMultiCommitManager` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
-| IStorage | `0` | `Read` | — | Q | 2026-11-21 |
-| IStorage | `1` | `Write` | — | Q | 2026-11-21 |
-| IStorage | `2` | `Flush` | — | Q | 2026-11-21 |
-| IStorage | `3` | `SetSize` | — | Q | 2026-11-21 |
-| IStorage | `4` | `GetSize` | — | Q | 2026-11-21 |
-| IStorage | `5` | `OperateRange` | 4.0.0+ | Q | 2026-11-21 |
+| IStorage | `0` | `Read` | — | **IMPL-SRC** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
+| IStorage | `1` | `Write` | — | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
+| IStorage | `2` | `Flush` | — | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
+| IStorage | `3` | `SetSize` | — | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
+| IStorage | `4` | `GetSize` | — | **IMPL-SRC** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
+| IStorage | `5` | `OperateRange` | 4.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
 | IFileSystem | `0` | `CreateFile` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
 | IFileSystem | `1` | `DeleteFile` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
 | IFileSystem | `2` | `CreateDirectory` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
@@ -3612,9 +3615,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IDirectory | `0` | `Read` | — | **IMPL-SRC** ([source C++][ns1-src-025]) | 2026-11-22 |
 | IDirectory | `1` | `GetEntryCount` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_directory.cpp)) | 2026-11-22 |
 | IFile | `0` | `Read` | — | **IMPL-SRC** ([source C++][ns1-src-025]) | 2026-11-22 |
-| IFile | `1` | `Write` | — | Q | 2026-11-21 |
-| IFile | `2` | `Flush` | — | Q | 2026-11-21 |
-| IFile | `3` | `SetSize` | — | Q | 2026-11-21 |
+| IFile | `1` | `Write` | — | **IMPL-SRC** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
+| IFile | `2` | `Flush` | — | **IMPL-SRC** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
+| IFile | `3` | `SetSize` | — | **IMPL-SRC** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
 | IFile | `4` | `GetSize` | — | **IMPL-SRC** ([source C++][ns1-src-025]) | 2026-11-22 |
 | IFile | `5` | `OperateRange` | 4.0.0+ | **NULL** ([source C++][ns1-src-025]) | 2026-11-22 |
 | ISaveDataInfoReader | `0` | `ReadSaveDataInfo` | — | Q | 2026-11-21 |

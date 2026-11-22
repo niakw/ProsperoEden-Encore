@@ -10,7 +10,9 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `8428829fa778a006d5adeb3256f2fd3de185a08d` |
+| Vendor gitlink sélectionné sur cette branche | `a6264cb047cd75beff165b1e5e94a84ea37fbf52` |
+| Moteur `main` au contrôle final | `94a4673278726397ecc37a130458c61590d6e754` |
+| Vendor `main` au contrôle final | `ac880cd408116e6eb53ba2400abc52970b81f539` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -47,6 +49,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 **Lecteurs d'erreur qualifiés C** : H:0x16 copie la structure 128 B du snapshot courant ; H:0x17 copie la structure 16 B et force le status Switch `0xFFFF`. Les deux vérifient ABI native, owner et initialisation du notifier. **Ouvert séparément** : aucun producteur GPU ne remplit encore ces snapshots ni ne signale l'événement en cas de faute matérielle/émulée réelle.
 
 **Restent 3 P** : CHANNEL_SETUP_BIND userspace USERD/doorbell, SET_RUNLIST_INTERLEAVE post-bind et SET_TIMESLICE post-bind.
+
+**Statut de clôture de la branche** : le chantier demandé « traiter toute entrée non-C » est **terminé au sens dispatch/runtime borné** : aucune des 316 entrées n'est sans comportement explicite. Les trois P ne sont pas des oublis : leur chemin supporté fonctionne, et leur sous-mode non supporté retourne explicitement `NotImplemented` plutôt qu'un faux succès. Ils ne peuvent passer C complet sans ajouter respectivement (1) USERD + doorbell + mappings utilisateurs réels, (2) rechargement/preemption de runlist après bind pour interleave, (3) application de timeslice au scheduler après bind. Ces trois capacités ne sont pas simulées.
 
 ---
 

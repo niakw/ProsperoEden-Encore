@@ -130,6 +130,25 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     ):
         source_path=root/'vendor'/relative
         source=source_path.read_text()
+        if relative.endswith("eden-vulkan/vulkan_rasterizer.cpp"):
+            # Prove the two corrected call-site deltas on an audit copy,
+            # then reuse the pre-integration readback and Vulkan receipts.
+            assert _ns1_read_blob(source)=="f67815618d25657dcf64a87944b0c0bc5c2d8993"
+            begin="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
+            end="\nvoid RasterizerVulkan::InvalidateRegion("
+            assert source.count(begin)==source.count(end)==1
+            i=source.index(begin)
+            j=source.index(end,i)
+            section=source[i:j]
+            for newer,older in (
+                ("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+                 "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);"),
+                ("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+                 "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);"),
+            ):
+                assert section.count(newer)==1 and older not in section
+                section=section.replace(newer,older,1)
+            source=source[:i]+section+source[j:]
         assert _ns1_read_blob(source)==current, ('NS1 CPU readback owner drift',relative)
         assert source.count(new_read_area)==1, ('NS1 CPU readback method moved',relative)
         restored=source.replace(new_read_area,old_read_area,1)

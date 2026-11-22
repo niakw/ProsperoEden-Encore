@@ -123,7 +123,18 @@ def get_read_method(text):
     a = text.index(area_begin)
     return text[a:text.index(area_end, a)]
 read_method = get_read_method(raster)
-assert read_method == get_read_method(bridge)
+bridge_method = get_read_method(bridge)
+# The bridge is an older oracle; the active owner corrected only two
+# GuestCacheLock function invocations. Replay exactly those predecessors.
+assert read_method.count("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);")==1
+assert read_method.count("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);")==1
+prior_method=read_method.replace(
+    "::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+    "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);",1
+).replace(
+    "::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+    "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);",1)
+assert prior_method == bridge_method
 assert read_method != get_read_method(pinned)
 assert read_method.count("::Eden::BufferPages::NeverRegistered(addr, size)") == 1
 assert read_method.count("::Eden::ImagePages::NeverHeld(addr, size)") == 1
@@ -165,9 +176,7 @@ struct CountMutex {
 namespace Eden::Performance {
 inline int guest_cpu_read=0;
 struct DiagnosticTimer { explicit DiagnosticTimer(int) {} };
-struct GuestCacheLock {
-    explicit GuestCacheLock(CountMutex& m, bool) {m.lock();}
-};
+inline void GuestCacheLock(CountMutex& m, bool) {m.lock();}
 }
 struct BufferCache {
     CountMutex mutex;

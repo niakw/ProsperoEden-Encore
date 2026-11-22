@@ -113,6 +113,21 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
+if selected == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+    # Reconstruct only the two corrected source lines before reusing the
+    # already-qualified FC27/P0 graph; every other owner remains exact.
+    import sys
+    sys.path.insert(0, str(V/"tests"))
+    from native_msaa_handle_receipt import (
+        GUEST_CACHE_LOCK_SUCCESSOR, INTEGRATED_RASTERIZER,
+        restore_guest_cache_lock_successor, blob)
+    raster=(V/"encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    assert blob(raster.encode("utf-8"))==GUEST_CACHE_LOCK_SUCCESSOR
+    predecessor=restore_guest_cache_lock_successor(raster)
+    assert blob(predecessor.encode("utf-8"))==INTEGRATED_RASTERIZER
+    REVIEWED_PINS.add(selected)
+    gitlink_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
+    shipping_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
 
 # OunceVK configures native 3D channels with H:0x1F {graphics=0, compute=2}
 # before the first H:0x1B submit. NVIDIA defines compute bit1 as CTA.

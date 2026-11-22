@@ -441,6 +441,35 @@ r437_body = (active / r437_path).read_text()
 # Vendor #156 adds a reviewed successor to the R437 native header. Verify
 # its raw blob and reverse only the three exact added declaration blocks
 # before applying the original R437 byte-for-byte proof.
+def checked_guest_cache_lock_vendor(pin):
+    if pin != "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+        return pin
+    # Only the two exact new C++ function call sites may differ from the
+    # reviewed integrated renderer. Runtime C++ is never modified here.
+    source=(active/"eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    raw=source.encode("utf-8")
+    digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+    assert digest=="f67815618d25657dcf64a87944b0c0bc5c2d8993"
+    begin="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
+    end="\nvoid RasterizerVulkan::InvalidateRegion("
+    assert source.count(begin)==source.count(end)==1
+    i=source.index(begin)
+    j=source.index(end,i)
+    method=source[i:j]
+    for newer,prior in (
+        ("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+         "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);"),
+        ("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+         "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);"),
+    ):
+        assert method.count(newer)==1 and prior not in method
+        method=method.replace(newer,prior,1)
+    previous=(source[:i]+method+source[j:]).encode("utf-8")
+    old_blob=hashlib.sha1(b"blob "+str(len(previous)).encode()
+                          +bytes([0])+previous).hexdigest()
+    assert old_blob=="0633e3cf41c615f46791d3943ff40ac22399b047"
+    return "4354add020afac574198f63d87167f3022bff9c6"
+
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
 # The NS1/NS2 vendor merge extends only the GPU-owned DMA output ABI in
@@ -464,6 +493,7 @@ if merged_r437_blob == "fd9708571ef61c83c399042a5200c87b2e3784d6":
 # FC27 P1 added PS5-only shared TickFrame budget and typed CPU-write claims.
 # Reverse only these exact source hunks on this audit COPY, retaining the
 # historical R437/NS2 source replay and never editing the shipping header.
+r437_vendor_pin = checked_guest_cache_lock_vendor(r437_vendor_pin)
 fc27_p1_applet_macro_fix = r437_vendor_pin == "b65d8d9673475433f0b6eac72eb304bf23141666"
 # Selected BufferCacheBase did not change through later NS2-only vendor
 # commits. Reverse the FC27 P1 additions only for the byte-exact active
@@ -620,7 +650,7 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
         source=(active/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(source)).encode()+bytes([0])+source).hexdigest()
         if (relative == "eden-vulkan/vulkan_rasterizer.cpp" and
-            actual == "0633e3cf41c615f46791d3943ff40ac22399b047" and
+            actual in {"0633e3cf41c615f46791d3943ff40ac22399b047", "f67815618d25657dcf64a87944b0c0bc5c2d8993"} and
             blob == "71d097b9a83028dfad9370792c905bb3bfccfd5a"):
             # The selected vendor's exact 16 reviewed NS1/NS2 GPU deltas
             # are reconstructed against the original FC27 rasterizer blob.
@@ -1272,7 +1302,7 @@ post_f07_gpu_table_owners = {"eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
-gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
+gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip())
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else gpu_table_vendor_pin
@@ -1609,7 +1639,7 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
                 assert actual == "6467fd4d704de6b77deb7e6cba4b8e33f70f5a08", ("Merged owner predecessor drift", path, actual)
                 print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
             if (path == "eden-vulkan/vulkan_rasterizer.cpp" and
-                actual == "0633e3cf41c615f46791d3943ff40ac22399b047"):
+                actual in {"0633e3cf41c615f46791d3943ff40ac22399b047", "f67815618d25657dcf64a87944b0c0bc5c2d8993"}):
                 import sys
                 sys.path.insert(0, str(root / "vendor" / "tests"))
                 from native_msaa_handle_receipt import restore_integrated_rasterizer

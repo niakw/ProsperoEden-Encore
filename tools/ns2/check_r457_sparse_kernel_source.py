@@ -58,6 +58,16 @@ pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
                                  text=True).strip()
+if pinned == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+    # Admission requires exact C++ predecessor replay, not a SHA alone.
+    sys.path.insert(0,str(root/"vendor/tests"))
+    from native_msaa_handle_receipt import (
+        GUEST_CACHE_LOCK_SUCCESSOR, INTEGRATED_RASTERIZER,
+        restore_guest_cache_lock_successor, blob)
+    raster=(root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    assert blob(raster.encode("utf-8"))==GUEST_CACHE_LOCK_SUCCESSOR
+    assert blob(restore_guest_cache_lock_successor(raster).encode("utf-8"))==INTEGRATED_RASTERIZER
+    reviewed_vendors.add(pinned)
 assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
 def read(path): return (root/path).read_text()
 def gitblob(path):

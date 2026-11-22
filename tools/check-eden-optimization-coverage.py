@@ -1214,6 +1214,34 @@ if post_f07_jxr_adapter_owners:
 post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
+integrated_cache_lock_qualified = False
+if gpu_table_vendor_pin == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+    # This vendor changes exactly the active GuestCacheLock method and
+    # its source tests; the historical F07 source table remains frozen.
+    raster=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    encoded=raster.encode("utf-8")
+    digest=hashlib.sha1(b"blob "+str(len(encoded)).encode()+bytes([0])+encoded).hexdigest()
+    assert digest=="f67815618d25657dcf64a87944b0c0bc5c2d8993"
+    start="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
+    end="\nvoid RasterizerVulkan::InvalidateRegion("
+    assert raster.count(start)==raster.count(end)==1
+    i=raster.index(start)
+    j=raster.index(end,i)
+    method=raster[i:j]
+    for corrected,previous in (
+        ("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+         "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);"),
+        ("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+         "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);"),
+    ):
+        assert method.count(corrected)==1 and previous not in method
+        method=method.replace(corrected,previous,1)
+    prior=(raster[:i]+method+raster[j:]).encode("utf-8")
+    prior_sha=hashlib.sha1(b"blob "+str(len(prior)).encode()+bytes([0])+prior).hexdigest()
+    assert prior_sha=="0633e3cf41c615f46791d3943ff40ac22399b047"
+    integrated_cache_lock_qualified = True
+    gpu_table_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
+    print("ENCORE_GUEST_CACHE_LOCK_RUNTIME_PREDECESSOR_PASS hunks=2")
 # The selected vendor tree is byte-identical to the already-reviewed
 # FC27/GSV successor. Preserve this classification after historical
 # source-normalization changes gpu_table_vendor_pin to the F07 reference.
@@ -1591,6 +1619,9 @@ elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
         source_path = ROOT / "vendor/encore-active" / relative
         actual = subprocess.check_output(["git", "hash-object", str(source_path)],
                                          cwd=ROOT, text=True).strip()
+        if relative == "eden-vulkan/vulkan_rasterizer.cpp" and integrated_cache_lock_qualified:
+            assert actual == "f67815618d25657dcf64a87944b0c0bc5c2d8993"
+            actual = "0633e3cf41c615f46791d3943ff40ac22399b047"
         assert actual == sha, ("Merged NS1/NS2 source pair drift", relative, actual)
 else:
     assert not pair_present
@@ -1941,6 +1972,9 @@ assert len(r23_fw23_successors)==6
 vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
+if integrated_cache_lock_qualified:
+    assert vendor_head == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1"
+    vendor_head = "4354add020afac574198f63d87167f3022bff9c6"
 # MKW 1.8.0 GameChat successor changes only the three reviewed NS2
 # service owners below. Seal their exact bytes before replaying the older
 # shipping-backport applicability matrix from its ab417b59 parent.
@@ -2901,6 +2935,9 @@ print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
 selected_texture_vendor = subprocess.check_output(
     ["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True
 ).strip()
+if integrated_cache_lock_qualified:
+    assert selected_texture_vendor == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1"
+    selected_texture_vendor = "4354add020afac574198f63d87167f3022bff9c6"
 ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU
     # readback; the launcher presents loading_scene.glsl and retains VideoOut

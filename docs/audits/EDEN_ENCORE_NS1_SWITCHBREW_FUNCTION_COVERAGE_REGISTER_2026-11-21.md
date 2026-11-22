@@ -485,6 +485,8 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool restant à examiner = 2 741 entrées** : 2 184 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Les quatre commandes NS1 207–210 déjà raccordées hors du miroir restent une réserve d'exhaustivité, non un gain chiffré supplémentaire.
 
+**Réconciliation de l'index physique (23/11/2026) :** le catalogue Markdown contient actuellement **117 lignes SVC + 4 777 lignes IPC**, dont **23 META** et **27 DUP** ; le total déduplicable physiquement est donc **4 844 références**, alors que le dénominateur historique documenté reste **4 853**. Les **9 références d'écart** se répartissent, par soustraction des statuts, en **3 IMPL-SRC, 1 PARTIEL et 5 NOOP**, sans identification ligne par ligne. Sur les lignes physiquement présentes, le pool de revue est **2 735** (2 182 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 E). Le pool historique conservé est **2 739** en incluant la ligne PARTIEL non matérialisée. **Ne pas annoncer le catalogue exhaustif ni supprimer neuf références arbitrairement** ; réconcilier ces identités avec les sources de l'import avant tout changement du dénominateur.
+
 ## Lot `set:sys` ThemeId typé — 23/11/2026
 
 **Vendor `b84e58810ccd509acfbd00a8dda6ada8c0dcdabc`**, gitlink moteur secondaire aligné sur cet objet Git exact.

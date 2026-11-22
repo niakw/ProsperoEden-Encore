@@ -23,17 +23,17 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 098 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 018 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 986 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 119 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 039 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 986 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC** | 1 018 | 80 | **1 098** |
-| **RACCORDÉ** | 89 | 0 | **89** |
-| **PARTIEL** | 61 | 3 | **64** |
-| **STUB** | 296 | 0 | **296** |
+| **IMPL-SRC** | 1 039 | 80 | **1 119** |
+| **RACCORDÉ** | 57 | 0 | **57** |
+| **PARTIEL** | 63 | 3 | **66** |
+| **STUB** | 301 | 0 | **301** |
 | **NOOP** | 6 | 0 | **6** |
 | **NULL** | 2 091 | 0 | **2 091** |
-| **D** | 18 | 33 | **51** |
+| **D** | 22 | 33 | **55** |
 | **ABSENT** | 105 | 0 | **105** |
 | **ABI-DIFF** | 102 | 0 | **102** |
 | **AMBIGU** | 1 | 0 | **1** |
@@ -46,13 +46,13 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title SwitchBrew NS1 — 4 853 entrées
-    "IMPL-SRC" : 1098
-    "RACCORDÉ" : 89
-    "PARTIEL" : 64
-    "STUB" : 296
+    "IMPL-SRC" : 1119
+    "RACCORDÉ" : 57
+    "PARTIEL" : 66
+    "STUB" : 301
     "NOOP" : 6
     "NULL" : 2091
-    "D" : 51
+    "D" : 55
     "ABSENT" : 105
     "ABI-DIFF" : 102
     "AMBIGU" : 1
@@ -96,6 +96,9 @@ pie showData
 
 
 **Lot handlers hérités NFC / MM / boot PM (22/11)** : 28 entrées raccordées reclassées : 13 implémentations NfcInterface héritées par MFIUser + 1 WriteMifare STUB, 2 NFC IAm NULL, 2 noms ISystem ABI-DIFF, 8 MM_U STUB loggés STUBBED (gestion de session émulateur sans commande de performance native) et 2 BootMode IMPL-SRC. Aucune preuve d'un lecteur NFC PS5, d'un mode performance matériel ou d'une validation console.
+
+
+**Lot NIM/NFP/SPL/PM/LM/LDN :** 32 handlers raccordés reclassés en 21 IMPL-SRC, 5 STUB, 2 PARTIEL, 4 rejets explicites D. NIM/NFP sont des services raccordés mais leur contrat n'est pas entièrement validé ; SPL simulait des clés pour GenerateAesKek/GenerateAesKey et renvoie `ResultSecureMonitorNotImplemented` pour plusieurs commandes SMC. Aucune modification C++ ni preuve console.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -3980,7 +3983,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| ldn:m | `0` | `CreateMonitorService` | — | **RACCORDÉ** ([source C++][ns1-src-089]) | 2026-11-22 |
+| ldn:m | `0` | `CreateMonitorService` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/ldn.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | ldn:m | `0` | `GetStateForMonitor` | — | **STUB** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:m | `1` | `GetNetworkInfoForMonitor` | — | **NULL** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:m | `2` | `GetIpv4AddressForMonitor` | — | **NULL** ([source C++][ns1-src-090]) | 2026-11-22 |
@@ -3989,7 +3992,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:m | `5` | `GetNetworkConfigForMonitor` | — | **NULL** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:m | `100` | `InitializeMonitor` | — | **IMPL-SRC** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:m | `101` | `FinalizeMonitor` | — | **IMPL-SRC** ([source C++][ns1-src-090]) | 2026-11-22 |
-| ldn:s | `0` | `CreateSystemLocalCommunicationService` | — | **RACCORDÉ** ([source C++][ns1-src-089]) | 2026-11-22 |
+| ldn:s | `0` | `CreateSystemLocalCommunicationService` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/ldn.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | ldn:s | `0` | `GetState` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
 | ldn:s | `1` | `GetNetworkInfo` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
 | ldn:s | `2` | `GetIpv4Address` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
@@ -4020,7 +4023,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:s | `401` | `FinalizeSystem` | — | **NULL** ([source C++][ns1-src-091]) | 2026-11-22 |
 | ldn:s | `402` | `SetOperationMode` | 4.0.0+ | **NULL** ([source C++][ns1-src-091]) | 2026-11-22 |
 | ldn:s | `403` | `InitializeSystem2` | 7.0.0+ | **STUB** ([source C++][ns1-src-091]) | 2026-11-22 |
-| ldn:u | `0` | `CreateUserLocalCommunicationService` | — | **RACCORDÉ** ([source C++][ns1-src-089]) | 2026-11-22 |
+| ldn:u | `0` | `CreateUserLocalCommunicationService` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/ldn.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | ldn:u | `0` | `GetState` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `1` | `GetNetworkInfo` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `2` | `GetIpv4Address` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
@@ -4104,9 +4107,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| lm | `0` | `OpenLogger` | — | **RACCORDÉ** ([source C++][ns1-src-093]) | 2026-11-22 |
-| lm | `0` | `Log` | — | **RACCORDÉ** ([source C++][ns1-src-093]) | 2026-11-22 |
-| lm | `1` | `SetDestination` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-093]) | 2026-11-22 |
+| lm | `0` | `OpenLogger` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lm/lm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| lm | `0` | `Log` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lm/lm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| lm | `1` | `SetDestination` | 3.0.0+ | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lm/lm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | lm:get | `0` | `StartLogging` | — | **NULL** ([source C++][ns1-src-093]) | 2026-11-22 |
 | lm:get | `1` | `StopLogging` | — | **NULL** ([source C++][ns1-src-093]) | 2026-11-22 |
 | lm:get | `2` | `GetLog` | — | **NULL** ([source C++][ns1-src-093]) | 2026-11-22 |
@@ -4313,7 +4316,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfc:sys | `1300` | `SendCommandByPassThrough` | 4.0.0+ | **PARTIEL** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `1301` | `KeepPassThroughSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `1302` | `ReleasePassThroughSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfp:user | `0` | `CreateUserInterface` | — | **RACCORDÉ** ([source C++][ns1-src-012]) | 2026-11-22 |
+| nfp:user | `0` | `CreateUserInterface` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nfp:user | `0` | `Initialize` | — | **IMPL-SRC** (méthode héritée `NfcInterface::Initialize`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:user | `1` | `Finalize` | — | **IMPL-SRC** (méthode héritée `NfcInterface::Finalize`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:user | `2` | `ListDevices` | — | **IMPL-SRC** (méthode héritée `NfcInterface::ListDevices`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -4339,9 +4342,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfp:user | `22` | `GetApplicationArea2` | — | Q | 2026-11-21 |
 | nfp:user | `23` | `AttachAvailabilityChangeEvent` | 3.0.0+ | **IMPL-SRC** (méthode héritée `NfcInterface::AttachAvailabilityChangeEvent`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:user | `24` | `RecreateApplicationArea` | 3.0.0+ | **IMPL-SRC** (méthode héritée `Interface::RecreateApplicationArea`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
-| nfp:dbg | `0` | `CreateDebugInterface` | — | **RACCORDÉ** ([source C++][ns1-src-012]) | 2026-11-22 |
-| nfp:dbg | `0` | `InitializeDebug` | — | **RACCORDÉ** ([source C++][ns1-src-012]) | 2026-11-22 |
-| nfp:dbg | `1` | `FinalizeDebug` | — | **RACCORDÉ** ([source C++][ns1-src-012]) | 2026-11-22 |
+| nfp:dbg | `0` | `CreateDebugInterface` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nfp:dbg | `0` | `InitializeDebug` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nfp:dbg | `1` | `FinalizeDebug` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nfp:dbg | `2` | `ListDevices` | — | **IMPL-SRC** (méthode héritée `NfcInterface::ListDevices`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `3` | `StartDetection` | — | **IMPL-SRC** (méthode héritée `NfcInterface::StartDetection`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `4` | `StopDetection` | — | **IMPL-SRC** (méthode héritée `NfcInterface::StopDetection`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -4379,9 +4382,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfp:dbg | `204` | `ReadBackupData` | — | **IMPL-SRC** (méthode héritée `Interface::ReadBackupData`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `205` | `WriteBackupData` | — | **IMPL-SRC** (méthode héritée `Interface::WriteBackupData`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `206` | `WriteNtf` | — | **PARTIEL** (méthode héritée `Interface::WriteNtf`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
-| nfp:sys | `0` | `CreateSystemInterface` | — | **RACCORDÉ** ([source C++][ns1-src-012]) | 2026-11-22 |
-| nfp:sys | `0` | `InitializeSystem` | — | **RACCORDÉ** ([source C++][ns1-src-012]) | 2026-11-22 |
-| nfp:sys | `1` | `FinalizeSystem` | — | **RACCORDÉ** ([source C++][ns1-src-012]) | 2026-11-22 |
+| nfp:sys | `0` | `CreateSystemInterface` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nfp:sys | `0` | `InitializeSystem` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nfp:sys | `1` | `FinalizeSystem` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nfp:sys | `2` | `ListDevices` | — | **IMPL-SRC** (méthode héritée `NfcInterface::ListDevices`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:sys | `3` | `StartDetection` | — | **IMPL-SRC** (méthode héritée `NfcInterface::StartDetection`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:sys | `4` | `StopDetection` | — | **IMPL-SRC** (méthode héritée `NfcInterface::StopDetection`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -4567,18 +4570,18 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nim:shp | `502` | `RequestDownloadTicketForPrepurchasedContents` | 4.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `503` | `RequestSyncTicket` | 9.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `504` | `RequestDownloadTicketForPrepurchasedContents2` | 9.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `0` | `CreateServerInterface` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
+| nim:eca | `0` | `CreateServerInterface` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nim:eca | `1` | `RefreshDebugAvailability` | 6.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:eca | `2` | `ClearDebugResponse` | 6.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:eca | `3` | `RegisterDebugResponse` | 6.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `0` | `CreateAccessorInterface` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `0` | `CreateAsyncInterface` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `0` | `Cancel` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `1` | `GetSize` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `2` | `Read` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `3` | `GetErrorCode` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `4` | `Request` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `5` | `Prepare` | — | **RACCORDÉ** ([source C++][ns1-src-099]) | 2026-11-22 |
+| nim:eca | `0` | `CreateAccessorInterface` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `0` | `CreateAsyncInterface` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `0` | `Cancel` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `1` | `GetSize` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `2` | `Read` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `3` | `GetErrorCode` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `4` | `Request` | — | **PARTIEL** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `5` | `Prepare` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nim:ecas | `0` | `RegisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:ecas | `1` | `UnregisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | ntc | `0` | `OpenEnsureNetworkClockAvailabilityService` | — | Q | 2026-11-21 |
@@ -4869,7 +4872,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 |---|---|---|---|---|---|
 | pm:bm | `0` | `GetBootMode` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; BootMode::GetBootMode lit ou modifie boot_mode ; non certifié PS5) | 2026-11-22 |
 | pm:bm | `1` | `SetMaintenanceBoot` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; BootMode::SetMaintenanceBoot lit ou modifie boot_mode ; non certifié PS5) | 2026-11-22 |
-| pm:info | `0` | `GetProgramId` | — | **RACCORDÉ** ([source C++][ns1-src-018]) | 2026-11-22 |
+| pm:info | `0` | `GetProgramId` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | pm:shell | `0` | `LaunchProgram` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
 | pm:shell | `1` | `TerminateProcess` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
 | pm:shell | `2` | `TerminateProgram` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
@@ -5397,17 +5400,17 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| csrng | `0` | `GenerateRandomBytes` | — | **RACCORDÉ** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp)) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
+| csrng | `0` | `GenerateRandomBytes` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | **PARTIEL** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `3` | `LoadAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `5` | `SetConfig` | — | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `7` | `GenerateRandomBytes` | — | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `5` | `SetConfig` | — | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `7` | `GenerateRandomBytes` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `9` | `ImportLotusKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `10` | `DecryptLotusMessage` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `11` | `IsDevelopment` | — | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `11` | `IsDevelopment` | — | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `12` | `GenerateSpecificAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `13` | `DecryptRsaPrivateKey` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `14` | `DecryptAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
@@ -5420,8 +5423,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `21` | `AllocateAesKeyslot` | 2.0.0+ | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `22` | `FreeAesKeyslot` | 2.0.0+ | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `23` | `GetAesKeyslotAvailableEvent` | 2.0.0+ | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `24` | `SetBootReason` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `25` | `GetBootReason` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-124]) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `24` | `SetBootReason` | 3.0.0+ | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `25` | `GetBootReason` | 3.0.0+ | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `26` | `ImportSslKey` | 5.0.0+ | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `27` | `SslExpMod` | 5.0.0+ | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `28` | `ImportDrmKey` | 5.0.0+ | Q | 2026-11-21 |

@@ -3203,6 +3203,38 @@ assert header_pre_sha == incident_header_original, (
     "P0 session-failure diagnostics predecessor altered", header_pre_sha)
 print("P0_CRASH_ONLY_DIAGNOSTICS_F07_REVERSE_PASS U36=1 historical=unchanged")
 
+# NS2 P0, Nov22: shipping EDEN_DEV_PROFILE=OFF previously made RecordHle
+# a no-op. Pin the four exact engine-only successor blobs for the bounded
+# 10s/30s completed-service witness; historical 518 F07 owners and vendor
+# sources stay immutable. No claim of improved gameplay or GPU submission.
+ns2_boot_hle_receipts = {
+    "headless/performance.h": (
+        "1357052fa927075f006f9fca10e16b3399165664",
+        "6c69d5e8dc4b639ff312ae8b8ac1d6d1a3b5eeb6",
+        "void ReportNs2BootHle(unsigned stage_seconds) noexcept;"),
+    "headless/performance.cpp": (
+        "18ecba614f2c0077bbcc7044d68aa3eb714cb4b4",
+        "9b9c593f3e3629599e1143861a2027d8fcf53096",
+        "EDEN_NS2_LAST_HLE stage=%us"),
+    "headless/graphics.cpp": (
+        "ca3107c8745af36d6faf0196cf9692e628d52540",
+        "b498ee4307ffb0b7f6ae18333177687607a297d7",
+        "::Eden::Performance::ReportNs2BootHle(30);"),
+    "headless/main.cpp": (
+        "de81392f6948fc0257a764bf15daf1c4bf271fdb",
+        "c04f16e3635325b233a8a03c02cb036306cb1c0d",
+        "Eden::Performance::ResetNs2BootHle();"),
+}
+for path, (previous_blob, successor_blob, witness) in ns2_boot_hle_receipts.items():
+    assert path in post_index and path in drift_index, path
+    assert post_index[path]["post_snapshot_git_blob"] == previous_blob, path
+    assert drift_index[path]["actual"] == successor_blob, (
+        "NS2 HLE successor source drift", path)
+    assert witness in (ROOT/path).read_text(), ("NS2 HLE witness dropped", path)
+    post_index[path]["post_snapshot_git_blob"] = successor_blob
+print("NS2_BOOT_HLE_SHIPPING_RECEIPT_PASS owners=4 history=immutable "
+      "console_boot=unvalidated")
+
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

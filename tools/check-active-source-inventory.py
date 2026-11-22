@@ -1536,8 +1536,89 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
         raw = source_path.read_bytes()
         if fc27_p1_vendor:
             # Compare all fourteen merged native owners against immutable blobs.
+            # Known post-merge successors are reversed only on this audit copy,
+            # each behind an exact full-source SHA and byte-identical predecessor.
             data = (active / path).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+            if path == "eden-core/src/video_core/buffer_cache/buffer_cache.h" and actual == "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (294, ["bool BufferCache<P>::DMACopy(","    GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written,","    boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest) {","    if (gpu_written_dest) {","        gpu_written_dest->clear();","    }","    // FindBuffer and SynchronizeBuffer accept u32 byte spans. Never truncate","    // a wider DMA request: the caller can take its ordinary software path.","    // Reject empty copies before dirty-range bookkeeping as well."], ["bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,","                             bool* gpu_written) {","    // FindBuffer and SynchronizeBuffer accept u32 byte spans. Never truncate","    // a wider DMA request: the caller can take its ordinary software path.","    // Reject empty copies before dirty-range bookkeeping as well."]),
+                    (325, ["    // vkCmdCopyBuffer forbids overlapping source and destination DEVICE","    // memory (VUID-vkCmdCopyBuffer-pRegions-00117). Distinct GMMU virtual","    // addresses can alias one physical allocation, and different VkBuffer","    // handles do not make those overlapping memory accesses legal.","    // Reject BEFORE dirty-range bookkeeping, ClearDownload, or GPU commands:","    // MaxwellDMA will read the authoritative source and snapshot the alias.","    // Compare distances rather than forming a potentially overflowing end.","    const DAddr source = *cpu_src_address;","    const DAddr destination = *cpu_dest_address;","    if ((source <= destination && destination - source < amount) ||","        (destination < source && source - destination < amount)) {","        return false;","    }","    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);","    const bool dest_dirty = IsRegionRegistered(*cpu_dest_address, amount);","    if (!source_dirty && !dest_dirty) {"], ["    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);","    const bool dest_dirty = IsRegionRegistered(*cpu_dest_address, amount);","    if (!source_dirty && !dest_dirty) {"]),
+                    (378, ["    if (gpu_written_dest) {","        *gpu_written_dest = tmp_intervals;","    }","    for (const auto& pair : tmp_intervals) {","        gpu_modified_ranges.Add(pair.first, pair.second);","    }"], ["    for (const auto& pair : tmp_intervals) {","        gpu_modified_ranges.Add(pair.first, pair.second);","    }"]),
+                    (1849, ["        // A stream near the start of physical memory may begin before","        // min_page. Subtraction in the original test then wraps around and","        // turns an ordinary backward leap into a huge invalid GPU buffer.","        // Never move begin forwards past the range we already own.","        if (begin <= min_page || add_value > begin - min_page) {","            begin = (std::min)(begin, min_page);","            device_addr = Core::DEVICE_PAGESIZE;","            return;","        }"], ["        if (add_value > begin - min_page) {","            begin = min_page;","            device_addr = Core::DEVICE_PAGESIZE;","            return;","        }"]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "41239f19b9e16741d49e31145c504e0086b1095e", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if path == "eden-core/src/video_core/buffer_cache/buffer_cache_base.h" and actual == "fd9708571ef61c83c399042a5200c87b2e3784d6":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (326, ["    /// gpu_written_dest names the exact destination subranges whose newest bytes stay GPU-owned.","    bool DMACopy(","        GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written = nullptr,","        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);","","    bool DMAClear(GPUVAddr src_address, u64 amount, u32 value);",""], ["    /// A caller must not re-upload the destination texture from stale guest memory.","    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,","                 bool* gpu_written = nullptr);","","    bool DMAClear(GPUVAddr src_address, u64 amount, u32 value);",""]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "716634290574ed4dfc8fd3be0d0ea0ad582980f8", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if path == "eden-core/src/video_core/gpu_vulkan.cpp" and actual == "90b8f8c99878b21558b3996e8b1e95a5fc6ad9a6":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (116, ["#if defined(PS5_NATIVE)","        // Queue retirement on the existing GPU worker. Only the worker","        // reads/mutates the channels map: the NVDRV service thread must not","        // race GPU::BindChannel while looking up a channel on FD close.","        // The caller keeps to_release alive until this synchronous barrier","        // completes. Verify the exact owner epoch on the worker side.","        const s32 channel_id = to_release.bind_id;","        const auto* expected = &to_release;","        const u64 fence = RequestSyncOperation([this, channel_id, expected] {","            const auto it = channels.find(channel_id);","            if (it == channels.end() || it->second.get() != expected)","                return; // An old FD cannot retire a reused channel ID.","            const auto owner = it->second;","            scheduler.RetireChannel(owner.get());","            if (current_channel == owner.get()) {","                current_channel = nullptr;","                bound_channel = -1;","            }","            if (owner->initialized)","                renderer->ReadRasterizer()->ReleaseChannel(owner->bind_id);","            channels.erase(it);","        });","        gpu_thread.TickGPU(is_async);","        WaitForSyncOperation(fence);","#else","        // Host/non-PS5 scheduler has no native epoch-retirement API.","        // Preserve its original behavior; no platform-wide ABI change.","        UNIMPLEMENTED();","#endif","    }",""], ["        UNIMPLEMENTED();","    }",""]),
+                    (182, ["        // Publish a fence only AFTER the queue owns its callback. If","        // allocating this node throws, no fence is skipped: subsequent waits","        // must still be reachable by TickWork's completed-request counter.","        sync_requests.emplace_back(std::forward<Func>(action));","        return ++last_sync_fence;","    }",""], ["        const u64 fence = ++last_sync_fence;","        sync_requests.emplace_back(std::forward<Func>(action));","        return fence;","    }",""]),
+                    (196, ["        while (!shutting_down.load(std::memory_order_relaxed) &&","               CurrentSyncRequestFence() < fence) {","            // A failed GPU worker cannot advance this fence. Preserve the","            // published exception for every waiter instead of hanging the","            // launcher/guest-stop path indefinitely.","            if (auto failure = ::Eden::PeekGpuFailure()) {","                std::rethrow_exception(failure);","            }","            sync_request_cv.wait_for(lck, std::chrono::milliseconds(100));","        }","        if (auto failure = ::Eden::PeekGpuFailure()) {","            std::rethrow_exception(failure);","        }","    }","","    void WaitForIdle() {"], ["        sync_request_cv.wait(lck, [this, fence] { return CurrentSyncRequestFence() >= fence; });","    }","","    void WaitForIdle() {"]),
+                    (223, ["            // Keep the RAII lock's ownership state consistent if a GPU","            // callback throws. Unlocking the raw mutex left lck owning an","            // already-unlocked mutex during exception unwinding.","            lck.unlock();","            request();","            current_sync_fence.fetch_add(1, std::memory_order_release);","            lck.lock();","            sync_request_cv.notify_all();"], ["            sync_request_mutex.unlock();","            request();","            current_sync_fence.fetch_add(1, std::memory_order_release);","            sync_request_mutex.lock();","            sync_request_cv.notify_all();"]),
+                    (298, ["        const u64 fence = RequestSyncOperation([this, raster_area]() {","            renderer->ReadRasterizer()->FlushRegion(raster_area.start_address, raster_area.end_address - raster_area.start_address);","        });","        gpu_thread.TickGPU(is_async);"], ["        const u64 fence = RequestSyncOperation([this, &raster_area]() {","            renderer->ReadRasterizer()->FlushRegion(raster_area.start_address, raster_area.end_address - raster_area.start_address);","        });","        gpu_thread.TickGPU(is_async);"]),
+                    (416, ["    // A guest may close an NVDRV GPU FD before its first successful bind.","    // ReleaseChannel compares this pointer even for an uninitialized owner.","    Tegra::Control::ChannelState* current_channel{};","    s32 bound_channel{-1};","","    std::deque<size_t> free_swap_counters;"], ["    Tegra::Control::ChannelState* current_channel;","    s32 bound_channel{-1};","","    std::deque<size_t> free_swap_counters;"]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "842a0289f75bc2a0763285173e4616060348ec22", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if path == "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h" and actual == "6e0bf7ab2a3a2147f9db0c630070db30d9b35d56":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (65, ["                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);","","    bool BufferCopy(GPUVAddr start_address, GPUVAddr end_address, u64 amount) override;",""], ["                           Scheduler& scheduler);","","    bool BufferCopy(GPUVAddr start_address, GPUVAddr end_address, u64 amount) override;",""]),
+                    (86, ["    // The GPU address space changes on channel binds. Reference the","    // rasterizer's active pointer, not a stale construction-time channel.","    Tegra::MemoryManager* const& gpu_memory;","};","","class RasterizerVulkan final : public VideoCore::RasterizerInterface,"], ["};","","class RasterizerVulkan final : public VideoCore::RasterizerInterface,"]),
+                    (222, ["    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,","                        const GraphicsPipeline* pipeline);","    void UpdateColorWriteEnable(Tegra::Engines::Maxwell3D::Regs& regs);","","    void UpdateVertexInput(Tegra::Engines::Maxwell3D::Regs& regs);"], ["    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs);","    void UpdateColorWriteEnable(Tegra::Engines::Maxwell3D::Regs& regs);","","    void UpdateVertexInput(Tegra::Engines::Maxwell3D::Regs& regs);"]),
+                    (269, ["","#ifdef PS5_NATIVE","    // Cached once per native rasterizer, never queried on each hot-path QMD."], ["    vk::Event wfi_event;","","#ifdef PS5_NATIVE","    // Cached once per native rasterizer, never queried on each hot-path QMD."]),
+                    (280, ["    u32 last_color_output_mask{};","    bool mesh_draw{}; ///< the draw being prepared uses a task/mesh pipeline","};",""], ["    bool mesh_draw{}; ///< the draw being prepared uses a task/mesh pipeline","};",""]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "6467fd4d704de6b77deb7e6cba4b8e33f70f5a08", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if (path == "eden-vulkan/vulkan_rasterizer.cpp" and
+                actual == "0633e3cf41c615f46791d3943ff40ac22399b047"):
+                import sys
+                sys.path.insert(0, str(root / "vendor" / "tests"))
+                from native_msaa_handle_receipt import restore_integrated_rasterizer
+                historical = restore_integrated_rasterizer(data.decode("utf-8")).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "71d097b9a83028dfad9370792c905bb3bfccfd5a"
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, "hunks=16")
             assert actual == merged_fc27_pair_receipts[path], (path, actual)
             continue
         if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}:

@@ -17,7 +17,7 @@
 | Client SDK recroisé | https://github.com/vexcited/fefw — notamment `src/nn/gpu/gpu_sdk_*.cpp` |
 | Validation console du présent couple | **Aucune** : pas de build PS5, pas de première soumission/frame revendiquée |
 
-**Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = commande connue mais pas de handler actif ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
+**Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
 ### Politique des fonctions connues mais non implémentées
@@ -53,7 +53,7 @@ Deux dimensions **indépendantes** doivent être suivies, sans assimiler un stub
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État initial : 142 commandes recensées ; C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11) : 142 commandes recensées ; C=30, P=22, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- |

@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 357 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 277 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `b217369d`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 373 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 293 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `694becfb`. **Ces 1 373 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 277 | 80 | **1 357** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 293 | 80 | **1 373** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 109 | 0 | **109** |
-| **NULL — Handler NULL** | 2 243 | 0 | **2 243** |
+| **NULL — Handler NULL** | 2 227 | 0 | **2 227** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -410,17 +410,27 @@ Vendor `b217369d` (arbre `d788055b10aa228029f24699acd653609c972baa`). Baseline p
 
 **Pool restant à examiner : 2 800 = 2 243 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — huit paires de paramètres système persistants
+
+Vendor `694becfbf6a27cecb907d8be5b0315c269654fa7` (arbre `ba9035d2e9289d05d89a611c19477b91f3243d1f`) : **16 NULL → IMPL-SRC** sur `set:sys`. Sont désormais raccordés et persistés les canaux LDN, drapeaux RTC externe et USB full-key, compteur d'avertissement volume casque, drapeaux Bluetooth AFH/Boost, indicateur de mise à jour volume et drapeau PCTL ready. Chaque getter relit le champ exact du `SystemSettings` existant et chaque setter le modifie puis appelle `SetSaveNeeded()`.
+
+ABI recroisée avec les signatures Get/Set SwitchBrew et les générateurs IPC historiques : booléens sur un octet ; canal LDN et compteur de volume sur quatre octets. Ces commandes implémentent le **stockage Horizon virtuel**, pas un contrôle physique des périphériques Switch/PS5. Source compilée : `sources/eden/src/core/hle/service/set/system_settings_server.cpp`, retenue par les fichiers CMake actifs, sans override de ce TU.
+
+**Compteur courant : 1 373 IMPL-SRC, 110 PARTIEL, 149 STUB, 109 NOOP, 2 227 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 784 = 2 227 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Validation runtime PS5 non effectuée ; checks du nouveau couple encore à vérifier.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1357
+    "Implémentation source retrouvée" : 1373
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 109
-    "Handler NULL" : 2243
+    "Handler NULL" : 2227
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5563,8 +5573,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `77` | `GetDeviceNickName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `78` | `SetDeviceNickName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `79` | `GetProductModel` | — | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |
-| set:sys | `80` | `GetLdnChannel` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `81` | `SetLdnChannel` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `80` | `GetLdnChannel` | — | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `81` | `SetLdnChannel` | — | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `82` | `AcquireTelemetryDirtyFlagEventHandle` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `83` | `GetTelemetryDirtyFlags` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `84` | `GetPtmBatteryLot` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5584,24 +5594,24 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `98` | `SetNxControllerSettings` | 2.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `99` | `GetBatteryPercentageFlag` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `100` | `SetBatteryPercentageFlag` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `101` | `GetExternalRtcResetFlag` | 2.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `102` | `SetExternalRtcResetFlag` | 2.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `103` | `GetUsbFullKeyEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `104` | `SetUsbFullKeyEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `101` | `GetExternalRtcResetFlag` | 2.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `102` | `SetExternalRtcResetFlag` | 2.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `103` | `GetUsbFullKeyEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `104` | `SetUsbFullKeyEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `105` | `SetExternalSteadyClockInternalOffset` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `106` | `GetExternalSteadyClockInternalOffset` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `107` | `GetBacklightSettingsEx` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `108` | `SetBacklightSettingsEx` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `109` | `GetHeadphoneVolumeWarningCount` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `110` | `SetHeadphoneVolumeWarningCount` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `111` | `GetBluetoothAfhEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `112` | `SetBluetoothAfhEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `113` | `GetBluetoothBoostEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `114` | `SetBluetoothBoostEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `109` | `GetHeadphoneVolumeWarningCount` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `110` | `SetHeadphoneVolumeWarningCount` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `111` | `GetBluetoothAfhEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `112` | `SetBluetoothAfhEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `113` | `GetBluetoothBoostEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `114` | `SetBluetoothBoostEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `115` | `GetInRepairProcessEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `116` | `SetInRepairProcessEnableFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `117` | `GetHeadphoneVolumeUpdateFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `118` | `SetHeadphoneVolumeUpdateFlag` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `117` | `GetHeadphoneVolumeUpdateFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `118` | `SetHeadphoneVolumeUpdateFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `119` | `NeedsToUpdateHeadphoneVolume` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `120` | `GetPushNotificationActivityModeOnSleep` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `121` | `SetPushNotificationActivityModeOnSleep` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5639,8 +5649,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `153` | `SetUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `154` | `GetAccountOnlineStorageSettings` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `155` | `SetAccountOnlineStorageSettings` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `156` | `GetPctlReadyFlag` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `157` | `SetPctlReadyFlag` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `156` | `GetPctlReadyFlag` | 6.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
+| set:sys | `157` | `SetPctlReadyFlag` | 6.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `158` | `GetAnalogStickUserCalibrationL` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `159` | `SetAnalogStickUserCalibrationL` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `160` | `GetAnalogStickUserCalibrationR` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |

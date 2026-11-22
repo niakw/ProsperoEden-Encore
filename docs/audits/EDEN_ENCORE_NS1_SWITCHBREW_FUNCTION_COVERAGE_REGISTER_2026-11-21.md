@@ -426,6 +426,19 @@ Vendor `b217369d3f01b2958eae58815f190080a8b77296` (arbre `d788055b10aa228029f246
 
 **Pool restant à examiner = 2 800 entrées** : 2 243 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — huit paires `set:sys` persistantes — 22/11/2026
+
+Vendor `694becfbf6a27cecb907d8be5b0315c269654fa7` (arbre `ba9035d2e9289d05d89a611c19477b91f3243d1f`) ; moteur épinglé par le présent lot.
+
+- **16 NULL → IMPL-SRC** : `Get/SetLdnChannel`, `Get/SetExternalRtcResetFlag`, `Get/SetUsbFullKeyEnableFlag`, `Get/SetHeadphoneVolumeWarningCount`, `Get/SetBluetoothAfhEnableFlag`, `Get/SetBluetoothBoostEnableFlag`, `Get/SetHeadphoneVolumeUpdateFlag`, `Get/SetPctlReadyFlag`.
+- Les champs existent dans `SystemSettings` ; lecture et écriture sont raccordées à son mécanisme de persistance existant `SetSaveNeeded()`. Un flag matériel reste une configuration invitée, non une preuve que le matériel Nintendo est émulé.
+- L'ABI des 7 couples booléens/entiers a été recroisée avec les descriptions IPC historiques, signatures 1 ou 4 octets ; unités source natives et chemin de compilation vérifiés sur CMake, sans build PS5.
+- Les deux checks attendus de ce nouveau couple doivent être vérifiés avant de le déclarer qualifié sur hôte.
+
+**Compteur courant : 1 373 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 227 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 784 entrées** : 2 227 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

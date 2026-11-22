@@ -573,6 +573,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 719** : 2 162 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` NetworkSettings + borne SSL — 23/11/2026
+
+**Vendor `3d97ca836c8825fedfc23de76a0c3295a93469fb`** (arbre `1971dc01df3359a0dc74df18be6ef1e90d60937b`) sur la branche secondaire NS1.
+
+- **2 NULL → IMPL-SRC** : `SetNetworkSettings` (1) et `GetNetworkSettings` (2).
+- Libnx décrit une entrée `SetSysNetworkSettings` de **0x1B0 octets** ; Eden conserve jusqu'à **32 slots de 0x400**. Les handlers n'exposent que les 0x1B0 octets ABI et remettent à zéro le padding réservé lors des écritures.
+- Le compteur `network_setting_count` est borné par la capacité locale et le buffer IPC MapAlias.
+- Correctif sans changement de compteur : `GetAllowedSslHosts` utilise désormais `allowed_ssl_host_count` au lieu de renvoyer automatiquement les 8 slots persistants.
+- Le couple moteur précédent `595e6100` → vendor `131cb582` est **X8D24 + provenance vert**. Le présent couple requiert ses propres contrôles ; aucun build PS5 n'est revendiqué.
+
+**Compteur historique : 1 440 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 160 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 717** : 2 160 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -587,6 +587,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 717** : 2 160 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot Location Resolver manager — 23/11/2026
+
+**Vendor `682f74ead16c33caff0da4d9e89d025a4cb85ea5`** (arbre `51965f0e80d8c18df8c5f829276daed7089ca0e1`) sur la branche secondaire NS1.
+
+- `OpenLocationResolver` (0), `OpenRegisteredLocationResolver` (1) et `OpenAddOnContentLocationResolver` (3) : **3 NULL → IMPL-SRC**, avec retour des vrais objets IPC déjà présents dans `ncm.cpp`.
+- `RefreshLocationResolver` (2) : **NULL → NOOP documenté**. Les resolvers Encore sont actuellement sans cache manager de redirections ; la commande consomme le `StorageId` et réussit sans inventer une mutation de chemin.
+- ABI recroisée avec libnx et Atmosphère : cmd0 prend un `StorageId`, cmd1/cmd3 ouvrent un objet sans entrée, cmd2 prend un `StorageId`.
+- Les sous-commandes de résolution/redirect restent ouvertes : ce lot rend la hiérarchie IPC utilisable mais ne prétend pas résoudre les chemins Horizon.
+
+**Compteur historique : 1 443 IMPL-SRC / 110 PARTIEL / 149 STUB / 110 NOOP / 2 156 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 713** : 2 156 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

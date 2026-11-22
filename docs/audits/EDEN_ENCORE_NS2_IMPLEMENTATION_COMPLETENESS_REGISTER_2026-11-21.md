@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**152**), `HANDLER PARTIEL INDIQUÉ` (**26**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus/stubs restent M. GSV 601/602 sont désormais C au niveau source après correction du vrai contrat 602(u64=1).
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**158**), `HANDLER PARTIEL INDIQUÉ` (**20**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus/stubs restent M. Six P supplémentaires (901/902/911/1201/1202/1402) sont désormais C au niveau source après recoupement SDK/Lichii.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,28 +32,28 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2** des 12 tableaux. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=152**, P=25, C/P=1, M=107, U=25, V=6.
+- **F** : **C=158**, P=19, C/P=1, M=107, U=25, V=6.
 - **R** : **285/316 (90,2 %)** ont un traitement renseigné ; aucune M n'est sans traitement. Les 31 restantes sans implémentation/représentation sont 25 U + 6 V.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **152** | 152 | 0 |
-| P — partielle | **25** | 25 | 0 |
+| C — implémentation source | **158** | 158 | 0 |
+| P — partielle | **19** | 19 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**Correction caméra** : Lichii documente l'appel SDK `601()` puis `602(u64 1)`. Le précédent contrôle zéro-input de 602 était trop strict et a été corrigé : `OpenCameraSession` exige maintenant deux mots d'entrée formant `u64 version == 1`, puis retourne une vraie session MOVE avec rollback OOM. Les commandes 601 et 602 passent de P à C au niveau source. **Aucun succès caméra en jeu n'est revendiqué.**
+**P requalifiées sur preuve de contrat** : vidéo `901/902` (séquence create→session MOVE observée), pool decoder `911` (16 préférences + count + memory id, first image id), GameChat `1201/1202` (admission puis vraie session MOVE) et NVDRV `1402` (vraie session nvsrv/NVDRV liée au process). Les handlers existaient déjà ; le changement est une qualification de conformité source, pas une nouvelle revendication console.
 
-**M déjà fermées déclarativement** : 11 commandes encodeur refusées au parent GSV 1001/1002, 13 profiler via `nx2_stub_device::Stub`, autres stubs/refus explicites conservés. Prochaine cible : P restantes, du contrat le plus simple au plus lourd.
+**Restent 20 P/C-P** : commandes d'image/destruction/ABI plus fines, erreur GPU, USERD/doorbell et scheduling TSG. Elles ne seront pas promues sans contrat ou effet réel suffisamment établi.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=36, P=16, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=42, P=10, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -153,12 +153,12 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 666 | Camera | GetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 667 | Camera | SetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 691 | Camera | CalculateImageArraySize | P | HANDLER PARTIEL INDIQUÉ | CalculateChatImagePoolSize | requête 16 u32 + count vers layout caméra chat borné; seul format prouvé pris en charge; autres refusés; aucun faux succès (Lichii nx2_gsv.h) |
-| 901 | VideoDecoder | CreateVideoDecoderContext | P | HANDLER PARTIEL INDIQUÉ | InitializeVideoDecoderContext | ID actif, nom/séquence create/init divergents |
-| 902 | VideoDecoder | InitializeVideoDecoderContext | P | HANDLER PARTIEL INDIQUÉ | OpenVideoDecoderSession | retour session réel; sémantique proche mais nom différent |
+| 901 | VideoDecoder | CreateVideoDecoderContext | C | HANDLER INDIQUÉ | InitializeVideoCodecContext | Lichii SDK : 901 précède 902 et ne retourne pas d'objet ; Encore valide no-input + GPU context/NVDRV avant succès |
+| 902 | VideoDecoder | InitializeVideoDecoderContext | C | HANDLER INDIQUÉ | OpenVideoDecoderSession | Lichii SDK : 902 retourne la session decoder MOVE ; Encore valide no-input, crée la vraie IGraphicsVideoDecoderSession et rollback OOM |
 | 903 | VideoDecoder | DestroyVideoDecoderContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 904 | VideoDecoderForSystem | InitializeVideoDecoderContextForSystem | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 905 | VideoDecoder | InitializeVideoDecoderContext2 | P | HANDLER PARTIEL INDIQUÉ | OpenVideoDecoderSessionWithFlag | handler actif; ABI à comparer |
-| 911 | VideoDecoder | InitializeDecoderImagePool | P | HANDLER PARTIEL INDIQUÉ | CreateVideoImagePool | pool réel, nomenclature différente |
+| 911 | VideoDecoder | InitializeDecoderImagePool | C | HANDLER INDIQUÉ | CreateVideoImagePool | Lichii : preference[16] + u32 count + u32 memory id, retour first image id ; Encore valide 18 mots, backing owner/size, pin et pool réel |
 | 912 | VideoDecoder | FinalizeDecoderImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyVideoImagePool | pool réel |
 | 921 | VideoDecoderForSystem | InitializeDecoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 922 | VideoDecoderForSystem | FinalizeDecoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
@@ -179,8 +179,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1111 | GraphicsFrame | SetGraphicsFrameLengthMode | C | HANDLER INDIQUÉ | SetGraphicsFrameLengthMode | valeurs bornées, host qualifié |
 | 1112 | GraphicsFrame | SetGraphicsFrameRestartMode | C | HANDLER INDIQUÉ | SetGraphicsFrameRestartMode | valeurs bornées, host qualifié |
 | 1113 | GraphicsFrame | SetGraphicsFrameGpuTimesliceMode | C | HANDLER INDIQUÉ | SetGraphicsFrameGpuTimesliceMode | valeurs bornées, host qualifié |
-| 1201 | Chat | CreateChatContext | P | HANDLER PARTIEL INDIQUÉ | InitializeChatContext | admission GameChat sans état supplémentaire, TIPC zéro validé avant succès; service enfant encore partiel |
-| 1202 | Chat | InitializeChatContext | P | HANDLER PARTIEL INDIQUÉ | OpenChatSession | vraie GameChatSession MOVE, TIPC zéro validé; descriptor COPY incorrect corrigé, rollback OOM sans leak; sous-session Chat partielle |
+| 1201 | Chat | CreateChatContext | C | HANDLER INDIQUÉ | InitializeFeatureContext | Lichii GameChat : 1201 puis 1202 ; 1201 est l'admission sans objet, forme TIPC zéro-input validée |
+| 1202 | Chat | InitializeChatContext | C | HANDLER INDIQUÉ | OpenChatSession | Lichii GameChat : 1202 doit retourner une session ; Encore renvoie une vraie INativeChatGsvSession MOVE avec ownership/OOM correct |
 | 1203 | Chat | DestroyChatContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1211 | Chat | CreateImagePool | P | HANDLER PARTIEL INDIQUÉ | CreateChatImagePool | actif |
 | 1212 | Chat | DestroyImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyChatImagePool | actif |
@@ -190,7 +190,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1325 | Adraw | GetAdrawFrameBufferHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1326 | Adraw | GetAdrawImageHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1401 | NvDrv | CreateNvDrv2UserSessionWithTransferMemory | P | HANDLER PARTIEL INDIQUÉ | OpenNvsrvSessionWithTransferMemory | session NVDRV réelle; nom interne différent |
-| 1402 | NvDrv | CreateNvDrv2UserSessionWithRemoteMemory | P | HANDLER PARTIEL INDIQUÉ | OpenNvsrvSession | session NVDRV réelle |
+| 1402 | NvDrv | CreateNvDrv2UserSessionWithRemoteMemory | C | HANDLER INDIQUÉ | OpenNvsrvSession | Lichii : 1402 retourne une session nvsrv/NVDRV ; Encore crée INvDrv2User réel lié au KProcess et publie un MOVE handle |
 | 1411 | NvDrv | GetNvDrv2UserTransferMemoryUsage | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : allocation de NVDRV 1401 non mesurée ; les chiffres du bootstrap GSV 498 ne sont pas substituables |
 | 1501 | InterModuleImage | CreateInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : inter-module image context sans ownership/backing garanti |
 | 1502 | InterModuleImage | InitializeInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : impossible d'initialiser un contexte image intermodule fictif |

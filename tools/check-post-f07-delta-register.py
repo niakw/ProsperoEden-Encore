@@ -97,9 +97,24 @@ for entry in entries:
             # checking its immutable Git blob; do not widen the source list.
             # Exact additive PS5 boottrace OFF->ON resume after log retention.
             # Audit the two independent successors without changing F07 baselines.
+            # DNSP/DXCI changes only the library format list. Reconstruct
+            # the reviewed R457 owner on an audit copy, preserving the real
+            # shipping extension list and both prior source receipts.
+            service_audit_source = path.read_text(encoding="utf-8")
+            new_formats = '{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",'
+            old_formats = '{".nsp", ".xci", ".nsz", ".xcz",'
+            if actual == "01d025544ac3544ab58779884f6fee10dcbe3209":
+                assert service_audit_source.count(new_formats) == 1
+                service_audit_source = service_audit_source.replace(new_formats, old_formats, 1)
+                prior_raw = service_audit_source.encode("utf-8")
+                recovered = subprocess.run(
+                    ["git", "hash-object", "--stdin"], input=prior_raw,
+                    stdout=subprocess.PIPE, check=True).stdout.decode().strip()
+                assert recovered == "90f1f4fb2d239d71d0a856943cc4328704e2058b", recovered
+                actual = recovered
             assert actual == "90f1f4fb2d239d71d0a856943cc4328704e2058b", (
                 "Unreviewed R457 bootstrap-resume owner", actual)
-            restored = path.read_text(encoding="utf-8")
+            restored = service_audit_source
             resume_block = """        } else if (!Eden::BootTrace::Resume(Eden::LogsDir())) {
             // Normal stderr/stdout and fatal crash reports remain independent.
             // A failed bootstrap reopen must not truncate prior traces or

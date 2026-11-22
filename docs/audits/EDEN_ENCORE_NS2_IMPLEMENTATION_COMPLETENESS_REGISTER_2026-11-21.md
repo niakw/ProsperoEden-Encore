@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (169), `HANDLER PARTIEL INDIQUÉ` (8), `STUB NOMMÉ` (72, dont Syncpt 21 en U), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), **`REFUS GÉNÉRIQUE EXPLICITE` (38 : 13 M + 25 U)**, `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (**0**), `VARIANTE HORS VERSION` (6). Une ABI U reste inconnue : le fallback ne lit aucun payload et ne la transforme jamais en C.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (169), `HANDLER PARTIEL INDIQUÉ` (8), `STUB NOMMÉ` (72, dont Syncpt 21 en U), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), **`REFUS GÉNÉRIQUE EXPLICITE` (44 : 13 M + 25 U + 6 V)**, `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (0). Les V restent hors version fonctionnellement : le fallback les refuse proprement sans prétendre connaître leur ABI 19.x.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,10 +30,10 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
+> Périmètre **316 commandes NS2** des 12 tableaux. **Toutes ont désormais un comportement de dispatch explicite**, mais cela ne signifie pas qu'elles sont toutes implémentées : F et R restent indépendants.
 
-- **F** : C=169, P=7, C/P=1, M=107, U=26, V=6.
-- **R** : **310/316 (98,1 %)** disposent désormais d'un traitement explicite. Les seules entrées sans traitement actif sont les **6 V firmware 19.x**, gardées hors version tant que leur ABI n'est pas prouvée. Les 26 U échouent toutes proprement : 25 via fallback générique et Syncpt 21 via stub nommé.
+- **F (fonctionnel)** : C=169, P=7, C/P=1, M=107, U=26, V=6.
+- **R (représentation/dispatch)** : **316/316 (100 %)** ont soit un handler fonctionnel/partiel, soit un stub/refus explicite ou générique. **0 commande recensée tombe désormais dans un comportement non documenté du registre.**
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
@@ -41,13 +41,13 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | P — partielle | 7 | 7 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
-| U — contrat insuffisant | 26 | **26** | **0** |
-| V — ancienne variante firmware | 6 | 0 | 6 |
-| **Total** | **316** | **310** | **6** |
+| U — contrat insuffisant | 26 | 26 | 0 |
+| V — ancienne variante firmware | 6 | **6 (fallback fail-closed)** | 0 |
+| **Total** | **316** | **316** | **0** |
 
-**25 U sans ABI spécifique fermées déclarativement** : les IDs GSV inconnus passent par `IGraphicsSupervisor::HandleSyncRequest`, les IDs Display par `IVi2Session::HandleSyncRequest`, et GpuSession 102 par `IGpuSession::HandleSyncRequest`. Ces fallbacks TIPC répondent `ResultNotImplemented` sans lire ni inventer une structure de requête. **Ils restent U fonctionnels.**
+**Six variantes FW19** : KUserWorker 201/202/203/204/205/207 restent V parce que seuls les noms/version sont publics ici, pas une preuve suffisante que leur layout est identique aux IDs 20+ 211–216. Elles ne sont donc pas aliasées aveuglément. Leur classe `IGpuWorker` refuse déjà tout ID TIPC absent de sa table par `ResultNotImplemented` sans lecture du payload.
 
-**Restent sans traitement** : uniquement les 6 aliases KUserWorker firmware 19.x. Ils ne seront pas reliés aux handlers 20+ tant que la compatibilité des layouts 19.x n'est pas prouvée.
+**Conséquence** : le chantier « aucune commande recensée sans traitement » est fermé déclarativement. Le travail restant porte uniquement sur **la fonctionnalité réelle** des 7 P + 1 C/P, les 107 M volontairement non supportées, et la découverte d'ABI pour 26 U / compatibilité FW19 pour 6 V.
 
 ---
 
@@ -343,12 +343,12 @@ La numérotation SwitchBrew change entre 19.x et 20.0+. Le runtime actuel suit l
 | 171 | EnsureGpuMemoryComptags | C | HANDLER INDIQUÉ | EnsureGpuMemoryComptags | actif |
 | 172 | SetGpuMemoryUserDebugLabel | C | HANDLER INDIQUÉ | SetGpuMemoryUserDebugLabel | metadata bornée |
 | 173 | SetGpuMemorySdkDebugLabel | C | HANDLER INDIQUÉ | SetGpuMemorySdkDebugLabel | metadata bornée |
-| 201 | [19.0.0–19.1.0] NormalMapGpuMemory4K | V | VARIANTE HORS VERSION | — | ancienne numérotation; non requise pour chemin 20.0+ tant que firmware invité cible confirmé |
-| 202 | [19.0.0–19.1.0] NormalUnmapGpuMemory4K | V | VARIANTE HORS VERSION | — | ancienne numérotation |
-| 203 | [19.0.0–19.1.0] CreateSparseRegion | V | VARIANTE HORS VERSION | — | ancienne numérotation |
-| 204 | [19.0.0–19.1.0] DestroySparseRegion | V | VARIANTE HORS VERSION | — | ancienne numérotation |
-| 205 | [19.0.0–19.1.0] ExecuteSparseMapRequests | V | VARIANTE HORS VERSION | — | ancienne numérotation |
-| 207 | [19.0.0–19.1.0] NormalModifyMemoryKind4K | V | VARIANTE HORS VERSION | — | ancienne numérotation |
+| 201 | [19.0.0–19.1.0] NormalMapGpuMemory4K | V | REFUS GÉNÉRIQUE EXPLICITE | IGpuWorker::HandleSyncRequest fallback | ancienne numérotation; non requise pour chemin 20.0+ tant que firmware invité cible confirmé ; ID 19.x non enregistré dans la table 20+, fallback TIPC actif → ResultNotImplemented sans décoder le layout ancien |
+| 202 | [19.0.0–19.1.0] NormalUnmapGpuMemory4K | V | REFUS GÉNÉRIQUE EXPLICITE | IGpuWorker::HandleSyncRequest fallback | ancienne numérotation ; ID 19.x non enregistré dans la table 20+, fallback TIPC actif → ResultNotImplemented sans décoder le layout ancien |
+| 203 | [19.0.0–19.1.0] CreateSparseRegion | V | REFUS GÉNÉRIQUE EXPLICITE | IGpuWorker::HandleSyncRequest fallback | ancienne numérotation ; ID 19.x non enregistré dans la table 20+, fallback TIPC actif → ResultNotImplemented sans décoder le layout ancien |
+| 204 | [19.0.0–19.1.0] DestroySparseRegion | V | REFUS GÉNÉRIQUE EXPLICITE | IGpuWorker::HandleSyncRequest fallback | ancienne numérotation ; ID 19.x non enregistré dans la table 20+, fallback TIPC actif → ResultNotImplemented sans décoder le layout ancien |
+| 205 | [19.0.0–19.1.0] ExecuteSparseMapRequests | V | REFUS GÉNÉRIQUE EXPLICITE | IGpuWorker::HandleSyncRequest fallback | ancienne numérotation ; ID 19.x non enregistré dans la table 20+, fallback TIPC actif → ResultNotImplemented sans décoder le layout ancien |
+| 207 | [19.0.0–19.1.0] NormalModifyMemoryKind4K | V | REFUS GÉNÉRIQUE EXPLICITE | IGpuWorker::HandleSyncRequest fallback | ancienne numérotation ; ID 19.x non enregistré dans la table 20+, fallback TIPC actif → ResultNotImplemented sans décoder le layout ancien |
 | 209 | [20.0.0+] SetGpuSegmentUserDebugLabel | C | HANDLER INDIQUÉ | SetGpuSegmentUserDebugLabel | actif; ID corrigé après vérification enveloppe TIPC |
 | 210 | [20.0.0+] SetGpuSegmentSdkDebugLabel | C | HANDLER INDIQUÉ | SetGpuSegmentSdkDebugLabel | actif |
 | 211 | [20.0.0+] NormalMapGpuMemory4K | C | HANDLER INDIQUÉ | NormalMapGpuMemory4K | GMMU réel |

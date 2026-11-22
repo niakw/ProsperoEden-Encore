@@ -207,6 +207,14 @@ def main()->int:
     )[1].split('private:', 1)[0]
     assert 'handlers_tipc.contains(ctx.GetCommand())' in vi2_fallback
     assert 'Kernel::ResultNotImplemented.raw' in vi2_fallback
+    gpu_worker = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp').read_text()
+    worker_fallback = gpu_worker.split(
+        'Result IGpuWorker::HandleSyncRequest(Kernel::KServerSession& session,', 1
+    )[1].split('namespace GW = GpuWorkerProtocol;', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in worker_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in worker_fallback
+    for fw19 in (201, 202, 203, 204, 205, 207):
+        assert ('{'+str(fw19)+', &IGpuWorker::') not in gpu_worker
     gpu_session = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp').read_text()
     gpu_fallback = gpu_session.split(
         'Result IGpuSession::HandleSyncRequest(Kernel::KServerSession& session,', 1

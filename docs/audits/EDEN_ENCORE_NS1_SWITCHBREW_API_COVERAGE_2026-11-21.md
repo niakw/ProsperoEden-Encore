@@ -32,14 +32,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 71 | 3 | **74** |
 | **STUB — Stub / résultat simulé** | 334 | 0 | **334** |
 | **NOOP — No-op documenté** | 6 | 0 | **6** |
-| **NULL — Handler NULL** | 2 225 | 0 | **2 225** |
+| **NULL — Handler NULL** | 2 240 | 0 | **2 240** |
 | **D — Rejet explicite / historique** | 22 | 33 | **55** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 150 | 0 | **150** |
 | **SERVICE-NON-EXPOSÉ — Service non exposé sous ce nom** | 152 | 0 | **152** |
 | **ABSENT — Commande absente des tables** | 105 | 0 | **105** |
-| **ABI-DIFF — Noms/ABI divergents** | 198 | 0 | **198** |
+| **ABI-DIFF — Noms/ABI divergents** | 201 | 0 | **201** |
 | **AMBIGU — Interface ambiguë** | 11 | 0 | **11** |
-| **Q — Non vérifié** | 361 | 0 | **361** |
+| **Q — Non vérifié** | 343 | 0 | **343** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -53,14 +53,14 @@ pie showData
     "Implémentation partielle" : 74
     "Stub / résultat simulé" : 334
     "No-op documenté" : 6
-    "Handler NULL" : 2225
+    "Handler NULL" : 2240
     "Rejet explicite / historique" : 55
     "Interface parente non ouvrable" : 150
     "Service non exposé sous ce nom" : 152
     "Commande absente des tables" : 105
-    "Noms/ABI divergents" : 198
+    "Noms/ABI divergents" : 201
     "Interface ambiguë" : 11
-    "Non vérifié" : 361
+    "Non vérifié" : 343
     "ID SVC non trouvé" : 1
 ```
 
@@ -130,6 +130,9 @@ pie showData
 
 
 **Lot services NS/AM/HID/crypto/loader (source vendor 224b05e6)** : **54 entrées Q** reclassées : `hid:sys` 3 ABI-DIFF, 3 IMPL-SRC, 1 NULL; `appletAE` 1 IMPL-SRC, 1 NULL; `ns:am2, ns:ec, ns:rid, ns:rt, ns:web` 11 IMPL-SRC, 6 ABI-DIFF; `prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s` 4 ABI-DIFF, 1 NULL; `es` 2 ABI-DIFF, 1 NULL, 3 AMBIGU; `ldr:ro, ro:1` 6 ABI-DIFF; `spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu` 11 ABI-DIFF. Les commandes de versions anciennes sous le même ID gardent `ABI-DIFF` et les trois descriptions ES/NDRM inconnues gardent `AMBIGU` ; elles ne gonflent pas le total des implémentations. Source seule, pas de tests PS5.
+
+
+**Lot OMM / PCIe / USB-PD :** 18 entrées Q fermées : `idle:sys` 4 NULL ; `spsm` 11 NULL et 1 ABI-DIFF (`GetCurrentState` historique contre `GetState` au slot 0) ; `pcie:SetAspmEnable` ABI-DIFF (slot 20 actuel = `GetIrqEvent`) ; `usb:pd:GetPdSession` ABI-DIFF (slot 0 actuel = `OpenSession`). Aucun de ces écarts n'est compté comme implémentation source.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -1456,10 +1459,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `11` | `Read` | — | **IMPL-SRC** ([source C++][ns1-src-043]) | 2026-11-22 |
 | appletAE | `1` | `GetHandle` | — | **IMPL-SRC** ([source C++][ns1-src-043]) | 2026-11-22 |
 | appletOE | `0` | `OpenApplicationProxy` | — | **PARTIEL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/application_proxy_service.cpp)) | 2026-11-22 |
-| idle:sys | `0` | `GetAutoPowerDownEvent` | — | Q | 2026-11-21 |
-| idle:sys | `3` | `SetHandlingContext` | — | Q | 2026-11-21 |
-| idle:sys | `4` | `LoadAndApplySettings` | — | Q | 2026-11-21 |
-| idle:sys | `5` | `ReportUserIsActive` | — | Q | 2026-11-21 |
+| idle:sys | `0` | `GetAutoPowerDownEvent` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 0/GetAutoPowerDownEvent = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| idle:sys | `3` | `SetHandlingContext` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 3/SetHandlingContext = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| idle:sys | `4` | `LoadAndApplySettings` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 4/LoadAndApplySettings = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| idle:sys | `5` | `ReportUserIsActive` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 5/ReportUserIsActive = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | omm | `0` | `GetOperationMode` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
 | omm | `1` | `GetOperationModeChangeEvent` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
 | omm | `2` | `EnableAudioVisual` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
@@ -1488,18 +1491,18 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | omm | `25` | `SetApplicationCecSettingsAndNotifyChanged` | 5.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
 | omm | `26` | `GetOperationModeSystemInfo` | 7.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
 | omm | `27` | `GetAppletFullAwakingSystemEvent` | 9.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| spsm | `0` | `GetCurrentState` | — | Q | 2026-11-21 |
-| spsm | `1` | `EnterSleep` | — | Q | 2026-11-21 |
-| spsm | `2` | `GetLastWakeReason` | — | Q | 2026-11-21 |
-| spsm | `3` | `Shutdown` | — | Q | 2026-11-21 |
-| spsm | `4` | `GetNotificationMessageEventHandle` | — | Q | 2026-11-21 |
-| spsm | `5` | `ReceiveNotificationMessage` | — | Q | 2026-11-21 |
-| spsm | `6` | `AnalyzeLogForLastSleepWakeSequence` | — | Q | 2026-11-21 |
-| spsm | `7` | `ResetEventLog` | — | Q | 2026-11-21 |
-| spsm | `8` | `AnalyzePerformanceLogForLastSleepWakeSequence` | — | Q | 2026-11-21 |
-| spsm | `9` | `ChangeHomeButtonLongPressingTime` | — | Q | 2026-11-21 |
-| spsm | `10` | `PutErrorState` | — | Q | 2026-11-21 |
-| spsm | `11` | `InvalidateCurrentHomeButtonPressing` | 1.0.0-3.0.2 | Q | 2026-11-21 |
+| spsm | `0` | `GetCurrentState` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; ID 0 porte `GetState` dans la table actuelle, pas `GetCurrentState` ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `1` | `EnterSleep` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 1/EnterSleep = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `2` | `GetLastWakeReason` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 2/GetLastWakeReason = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `3` | `Shutdown` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 3/Shutdown = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `4` | `GetNotificationMessageEventHandle` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 4/GetNotificationMessageEventHandle = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `5` | `ReceiveNotificationMessage` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 5/ReceiveNotificationMessage = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `6` | `AnalyzeLogForLastSleepWakeSequence` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 6/AnalyzeLogForLastSleepWakeSequence = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `7` | `ResetEventLog` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 7/ResetEventLog = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `8` | `AnalyzePerformanceLogForLastSleepWakeSequence` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 8/AnalyzePerformanceLogForLastSleepWakeSequence = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `9` | `ChangeHomeButtonLongPressingTime` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 9/ChangeHomeButtonLongPressingTime = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `10` | `PutErrorState` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 10/PutErrorState = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `11` | `InvalidateCurrentHomeButtonPressing` | 1.0.0-3.0.2 | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 11/InvalidateCurrentHomeButtonPressing = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | tcap | `0` | `GetContinuousHighSkinTemperatureEvent` | — | Q | 2026-11-21 |
 | tcap | `1` | `SetOperationMode` | — | Q | 2026-11-21 |
 | tcap | `2` | `LoadAndApplySettings` | — | Q | 2026-11-21 |
@@ -4784,7 +4787,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pcie | `17` | `AcquireIrq` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
 | pcie | `18` | `ReleaseIrq` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
 | pcie | `19` | `SetIrqEnable` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `20` | `SetAspmEnable` | — | Q | 2026-11-21 |
+| pcie | `20` | `SetAspmEnable` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcie/pcie.cpp) ; ID 20 porte `GetIrqEvent` dans la table actuelle, pas `SetAspmEnable` ; statique, PS5 non validé) | 2026-11-22 |
 
 ### Parental Control services
 
@@ -5509,7 +5512,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | usb:hs, usb:hs:a | `0` | `Open ([1.0.0] SubmitOutRequest)` | — | Q | 2026-11-21 |
 | usb:hs, usb:hs:a | `1` | `Close ([1.0.0] SubmitInRequest)` | — | Q | 2026-11-21 |
 | usb:hs, usb:hs:a | `3` | `Populate ([1.0.0] Close)` | — | Q | 2026-11-21 |
-| usb:pd | `0` | `GetPdSession` | — | Q | 2026-11-21 |
+| usb:pd | `0` | `GetPdSession` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; ID 0 porte `OpenSession` dans la table actuelle, pas `GetPdSession` ; statique, PS5 non validé) | 2026-11-22 |
 | usb:pd | `0` | `BindNoticeEvent` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
 | usb:pd | `1` | `UnbindNoticeEvent` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
 | usb:pd | `2` | `GetStatus` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |

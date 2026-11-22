@@ -35,9 +35,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 32 | 33 | **65** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
-| **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 289 | 0 | **289** |
-| **ABSENT — Commande absente des tables** | 47 | 0 | **47** |
-| **ABI-DIFF — Noms/ABI divergents** | 283 | 0 | **283** |
+| **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 6 | 0 | **6** |
+| **ABSENT — Commande absente des tables** | 23 | 0 | **23** |
+| **ABI-DIFF — Noms/ABI divergents** | 284 | 0 | **284** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
@@ -73,6 +74,12 @@ Ces classements réduisent les **absences non qualifiées**, pas le nombre de fo
 
 **Compteur : 1 220 IMPL-SRC, 77 PARTIEL, 347 STUB, 10 NOOP, 2 311 NULL, 65 D, 191 INACCESSIBLE, 289 SERVICE-NON-EXPOSÉ, 47 ABSENT, 283 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Requalification des faux ABSENT firmware/services
+
+Les **17 entrées `mig:usr`** restantes sont `SERVICE-NON-EXPOSÉ` : Eden construit une table `MIG_USR` mais enregistre le nom `mig:user`, et ne fournit pas le service de migration système Horizon sous le nom attendu. L'ID audio 13 est `ABI-DIFF` : l'ABI Eden actuelle l'emploie pour `GetActiveAudioOutputDeviceName`, tandis que l'ancien `GetAudioSystemMasterVolumeSetting` appartient à une révision antérieure. Enfin, les **6 lignes Time 30/31** sont `HORS-VERSION` pour HOS 23 (SwitchBrew : 6.0.0–8.1.0).
+
+**Il reste donc 23 `ABSENT` réels : 22 NCM et 1 `Attach` NS.** Nouveau total : 1 220 IMPL-SRC, 77 PARTIEL, 347 STUB, 10 NOOP, 2 311 NULL, 65 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 23 ABSENT, 284 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
@@ -86,9 +93,10 @@ pie showData
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 65
     "Interface parente non ouvrable" : 191
-    "Service/interface non exposé sous cette forme" : 289
-    "Commande absente des tables" : 47
-    "Noms/ABI divergents" : 283
+    "Service/interface non exposé sous cette forme" : 306
+    "Hors version firmware cible" : 6
+    "Commande absente des tables" : 23
+    "Noms/ABI divergents" : 284
     "Interface ambiguë" : 12
     "Non vérifié" : 0
     "ID SVC non trouvé" : 1
@@ -2117,8 +2125,8 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | time:a, time:r, time:u | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:a, time:r, time:u | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
-| time:a, time:r, time:u | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:a, time:r, time:u | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **HORS-VERSION** (SwitchBrew Time/PSC/Glue : commande 6.0.0–8.1.0 ; non applicable au runtime NS1 HOS 23) | 2026-11-22 |
+| time:a, time:r, time:u | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **HORS-VERSION** (SwitchBrew Time/PSC/Glue : commande 6.0.0–8.1.0 ; non applicable au runtime NS1 HOS 23) | 2026-11-22 |
 | time:a, time:r, time:u | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -2263,7 +2271,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | audren:u | `10` | `GetActiveAudioDeviceNameAuto` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `11` | `QueryAudioDeviceInputEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `12` | `QueryAudioDeviceOutputEvent` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-049]) | 2026-11-22 |
-| audren:u | `13` | `GetAudioSystemMasterVolumeSetting` | 5.0.0+ | **ABSENT** (source `sources/eden/src/core/hle/service/audio/audio_renderer_manager.cpp` ; IAudioRendererManager n'enregistre que les IDs 0–4 ; ID 13 absent ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| audren:u | `13` | `GetAudioSystemMasterVolumeSetting` | 5.0.0+ | **ABI-DIFF** (l'ABI audio Eden actuelle utilise l'ID 13 pour GetActiveAudioOutputDeviceName ; ancien master-volume retiré des révisions audio ultérieures) | 2026-11-22 |
 | audout:a | `0` | `RequestSuspendAudioOuts` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 0 de audout:a est nullptr sous le nom `RequestSuspend`, pas `RequestSuspendAudioOuts` ; statique, PS5 non validé) | 2026-11-22 |
 | audout:a | `1` | `RequestResumeAudioOuts` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 1 de audout:a est nullptr sous le nom `RequestResume`, pas `RequestResumeAudioOuts` ; statique, PS5 non validé) | 2026-11-22 |
 | audout:a | `2` | `GetAudioOutsProcessMasterVolume` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 2 de audout:a est nullptr sous le nom `GetProcessMasterVolume`, pas `GetAudioOutsProcessMasterVolume` ; statique, PS5 non validé) | 2026-11-22 |
@@ -2520,8 +2528,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:u, time:a, time:s | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:u, time:a, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0+ | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
-| time:u, time:a, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0+ | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:u, time:a, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0+ | **HORS-VERSION** (SwitchBrew Time/PSC/Glue : commande 6.0.0–8.1.0 ; non applicable au runtime NS1 HOS 23) | 2026-11-22 |
+| time:u, time:a, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0+ | **HORS-VERSION** (SwitchBrew Time/PSC/Glue : commande 6.0.0–8.1.0 ; non applicable au runtime NS1 HOS 23) | 2026-11-22 |
 | time:u, time:a, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **PARTIEL** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; Glue effectue l'opération ; PSC renvoie ResultNotImplemented ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:u, time:a, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -5019,8 +5027,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:su, time:s | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:su, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
-| time:su, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:su, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **HORS-VERSION** (SwitchBrew Time/PSC/Glue : commande 6.0.0–8.1.0 ; non applicable au runtime NS1 HOS 23) | 2026-11-22 |
+| time:su, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **HORS-VERSION** (SwitchBrew Time/PSC/Glue : commande 6.0.0–8.1.0 ; non applicable au runtime NS1 HOS 23) | 2026-11-22 |
 | time:su, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **D** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
 | time:su, time:s | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | **D** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
 | time:su, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -5679,31 +5687,31 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | mig:usr | `101` | `GetConnectionRequirement` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 101 connu mais nom SwitchBrew GetConnectionRequirement différent de la table ResumeUserMigrationServer (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | mig:usr | `200` | `WaitConnectionAsync` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 200 connu mais nom SwitchBrew WaitConnectionAsync différent de la table CreateUserMigrationClient (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | mig:usr | `201` | `GetClientProfile` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 201 connu mais nom SwitchBrew GetClientProfile différent de la table ResumeUserMigrationClient (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `202` | `AcceptConnectionAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `203` | `DeclineConnectionAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `300` | `ProcessTransferAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `400` | `CompleteAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `500` | `Abort` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
+| mig:usr | `202` | `AcceptConnectionAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `203` | `DeclineConnectionAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `300` | `ProcessTransferAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `400` | `CompleteAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `500` | `Abort` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
 | mig:usr | `0` | `GetClientProfile` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 0 connu mais nom SwitchBrew GetClientProfile différent de la table Unknown0 (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | mig:usr | `10` | `CreateLoginSession` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 10 connu mais nom SwitchBrew CreateLoginSession différent de la table TryGetLastMigrationInfo (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | mig:usr | `11` | `GetNetworkServiceAccountId` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 11 connu mais nom SwitchBrew GetNetworkServiceAccountId différent de la table Unknown11 (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `12` | `GetUserNickname` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `13` | `GetUserProfileImage` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
+| mig:usr | `12` | `GetUserNickname` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `13` | `GetUserProfileImage` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
 | mig:usr | `200` | `ScanServersAsync` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 200 connu mais nom SwitchBrew ScanServersAsync différent de la table CreateUserMigrationClient (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | mig:usr | `201` | `ListServers` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 201 connu mais nom SwitchBrew ListServers différent de la table ResumeUserMigrationClient (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `210` | `ConnectByServerIdAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `300` | `GetStorageShortfall` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `301` | `GetTotalTransferInfo` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `302` | `GetImmigrantUid` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `310` | `GetCurrentTransferInfo` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `311` | `GetCurrentRelatedApplications` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `320` | `TransferNextAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `350` | `SuspendAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `999` | `DebugSynchronizeStateInFinalizationAsync` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
+| mig:usr | `210` | `ConnectByServerIdAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `300` | `GetStorageShortfall` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `301` | `GetTotalTransferInfo` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `302` | `GetImmigrantUid` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `310` | `GetCurrentTransferInfo` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `311` | `GetCurrentRelatedApplications` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `320` | `TransferNextAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `350` | `SuspendAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
+| mig:usr | `999` | `DebugSynchronizeStateInFinalizationAsync` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
 | mig:usr | `0` | `GetSystemEvent` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 0 connu mais nom SwitchBrew GetSystemEvent différent de la table Unknown0 (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | mig:usr | `1` | `Cancel` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 1 connu mais nom SwitchBrew Cancel différent de la table Unknown1 (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | mig:usr | `2` | `HasDone` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; ID 2 connu mais nom SwitchBrew HasDone différent de la table Unknown2 (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
-| mig:usr | `3` | `GetResult` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mig/mig.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
+| mig:usr | `3` | `GetResult` | — | **SERVICE-NON-EXPOSÉ** (MIG_USR existe mais LoopProcess enregistre mig:user, pas mig:usr ; service de migration Horizon non exposé) | 2026-11-22 |
 
 ### Jpegdec services
 

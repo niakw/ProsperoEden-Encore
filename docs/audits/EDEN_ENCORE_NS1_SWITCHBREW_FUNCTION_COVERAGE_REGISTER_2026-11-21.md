@@ -62,6 +62,12 @@ Vendor `60bd03e6e5ad083ee050887028fa33d514a3050e` : `GetFreeSpaceSize` et `GetTo
 **Compteur courant : 1 220 IMPL-SRC / 77 PARTIEL / 347 STUB / 10 NOOP / 2 311 NULL / 65 D / 191 INACCESSIBLE / 289 SERVICE-NON-EXPOSÉ / 47 ABSENT / 283 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucun résultat PS5 n'est déduit de ces handlers.
 
 
+## Requalification finale des ABSENT non exécutables — 22/11/2026
+
+Les 17 lignes migration passent à **SERVICE-NON-EXPOSÉ** (`mig:user` enregistré, pas `mig:usr`), l'ancien audio ID 13 passe à **ABI-DIFF**, et les 6 événements Time 30/31 passent à **HORS-VERSION** (6.0.0–8.1.0, cible HOS 23).
+
+**Compteur courant : 1 220 IMPL-SRC / 77 PARTIEL / 347 STUB / 10 NOOP / 2 311 NULL / 65 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 23 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853. Les 23 ABSENT réels sont 22 NCM + 1 NS Attach.**
+
 ---
 
 ## 1. Références et règle de vérité

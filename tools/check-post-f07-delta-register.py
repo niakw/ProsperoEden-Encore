@@ -101,8 +101,10 @@ for entry in entries:
             # the reviewed R457 owner on an audit copy, preserving the real
             # shipping extension list and both prior source receipts.
             service_audit_source = path.read_text(encoding="utf-8")
-            new_formats = '{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",'
-            old_formats = '{".nsp", ".xci", ".nsz", ".xcz",'
+            new_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
+                                   ".nro", ".nso", ".nca", ".nax", ".kip", ".nup"}'''
+            old_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".nro", ".nso",
+                                   ".nca", ".nax", ".kip"}'''
             if actual == "01d025544ac3544ab58779884f6fee10dcbe3209":
                 assert service_audit_source.count(new_formats) == 1
                 service_audit_source = service_audit_source.replace(new_formats, old_formats, 1)

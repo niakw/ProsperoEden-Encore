@@ -160,6 +160,7 @@ jobs:
               -Ivendor/encore-active/eden-core/include \
               -Ivendor/encore-active/ns2-runtime/nx \
               -Ivendor/encore-active/ns2-runtime/nx/nxformat \
+              -Ivendor/sources/eden/externals/stb \
               -Ivendor/encore-active/ns2-runtime/gpu_access_svc \
               -Ivendor/sources/eden/src/dynarmic/src \
               -Ivendor/sources/eden/src \

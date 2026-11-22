@@ -24,7 +24,9 @@ guard = re.compile(
 )
 assert len(guard.findall(selected)) == 1, "Native GPU worker TU lacks its own PS5_NATIVE flag"
 assert selected.index('target_sources(core PRIVATE "${EDEN_NS2_GPU_SESSION_SOURCE}"') < selected.index('set_property(SOURCE "${EDEN_NS2_GPU_WORKER_SOURCE}"')
-assert selected.count('COMPILE_DEFINITIONS "PS5_NATIVE=1"') == 1
+assert selected.count('set_property(SOURCE "${EDEN_NS2_GPU_SESSION_SOURCE}"') == 1
+assert selected.count('set_property(SOURCE "${EDEN_NS2_GPU_WORKER_SOURCE}"') == 1
+assert selected.count('COMPILE_DEFINITIONS "PS5_NATIVE=1"') == 2
 assert 'target_compile_definitions(core PRIVATE PS5_NATIVE' not in selected
 
 # The real vendor source is the only source of diagnostic strings. All these

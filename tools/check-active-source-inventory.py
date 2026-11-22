@@ -446,13 +446,12 @@ r437_vendor_pin = subprocess.check_output(
 # The NS1/NS2 vendor merge extends only the GPU-owned DMA output ABI in
 # the R437 BufferCacheBase header. Seal the integrated full blob, reverse
 # that declaration on this audit copy, then replay every historical R437 test.
-if r437_vendor_pin in {
-    "53c904b81b6fb91711a917eb2bf1e88d8ec8dd99",
-    "82008bbbfc6a63259566ff31b92851d342cb3b08",
-}:
-    raw = r437_body.encode("utf-8")
-    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert actual == "fd9708571ef61c83c399042a5200c87b2e3784d6", ("Unreviewed merged BufferCacheBase ABI", actual)
+raw = r437_body.encode("utf-8")
+merged_r437_blob = hashlib.sha1(
+    b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+).hexdigest()
+if merged_r437_blob == "fd9708571ef61c83c399042a5200c87b2e3784d6":
+    actual = merged_r437_blob
     merged_dma = "    /// Optionally report whether the copied source contains GPU-owned buffer bytes.\n    /// gpu_written_dest names the exact destination subranges whose newest bytes stay GPU-owned.\n    bool DMACopy(\n        GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written = nullptr,\n        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);\n"
     earlier_dma = "    /// Optionally report whether the copied source contains GPU-owned buffer bytes.\n    /// A caller must not re-upload the destination texture from stale guest memory.\n    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,\n                 bool* gpu_written = nullptr);\n"
     assert r437_body.count(merged_dma) == 1

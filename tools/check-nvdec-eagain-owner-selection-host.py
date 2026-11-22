@@ -195,6 +195,13 @@ check_vic_graph(True,True,True,original_count=2,failure="Expected exactly one or
 check_vic_graph(True,True,True,duplicate=True,failure="already selected")
 print("NS1_VIC_NATIVE_GRAPH_HOST_PASS fallback=2 host_unchanged=1 selected=1 failure_cases=4 console_unverified=1")
 
+# The historical fallback intentionally has no maintained FFmpeg/VIC pair.
+# Its original hashes, CMake fallback and graph failure cases are already
+# qualified above. Candidate-only GPU/VIC fixtures start below.
+if not CAND_VIC.exists():
+    print("NVDEC_HISTORICAL_FALLBACK_PASS maintained_pair=0 original_pristine=1")
+    raise SystemExit(0)
+
 # GPU-32: compile the scalar color-conversion loop from the REAL selected
 # VIC together with its clipping/decoded-buffer admission. This isolates
 # the source/destination indexing bug without inventing video pixels.

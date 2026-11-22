@@ -113,7 +113,13 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
-if selected == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539"}:
+    if selected == "ac880cd408116e6eb53ba2400abc52970b81f539":
+        # A merge commit, but exactly the reviewed 17253dc9 source tree.
+        reviewed_tree = subprocess.check_output(
+            ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip()
+        assert reviewed_tree == "01c09ec124779e7d976718af09a0e5e94cb4ac20", ("Vendor merger tree drift", reviewed_tree)
     # Reconstruct only the two corrected source lines before reusing the
     # already-qualified FC27/P0 graph; every other owner remains exact.
     import sys

@@ -1215,7 +1215,15 @@ post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_le
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
 integrated_cache_lock_qualified = False
-if gpu_table_vendor_pin == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+integrated_cache_lock_pins = {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539"}
+if gpu_table_vendor_pin in integrated_cache_lock_pins:
+    if gpu_table_vendor_pin == "ac880cd408116e6eb53ba2400abc52970b81f539":
+        # GitHub verified that this merge commit has exactly the reviewed
+        # predecessor tree. Reject future changes even under a reused label.
+        reviewed_tree = subprocess.check_output(
+            ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
+            text=True).strip()
+        assert reviewed_tree == "01c09ec124779e7d976718af09a0e5e94cb4ac20", ("Vendor merger tree drift", reviewed_tree)
     # This vendor changes exactly the active GuestCacheLock method and
     # its source tests; the historical F07 source table remains frozen.
     raster=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
@@ -1973,7 +1981,7 @@ vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
 if integrated_cache_lock_qualified:
-    assert vendor_head == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1"
+    assert vendor_head in integrated_cache_lock_pins
     vendor_head = "4354add020afac574198f63d87167f3022bff9c6"
 # MKW 1.8.0 GameChat successor changes only the three reviewed NS2
 # service owners below. Seal their exact bytes before replaying the older
@@ -2936,7 +2944,7 @@ selected_texture_vendor = subprocess.check_output(
     ["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True
 ).strip()
 if integrated_cache_lock_qualified:
-    assert selected_texture_vendor == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1"
+    assert selected_texture_vendor in integrated_cache_lock_pins
     selected_texture_vendor = "4354add020afac574198f63d87167f3022bff9c6"
 ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU

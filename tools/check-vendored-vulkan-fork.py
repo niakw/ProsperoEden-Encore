@@ -726,6 +726,15 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
     actual_vendor_pin = exact_vendor_pin
+    if exact_vendor_pin == "ac880cd408116e6eb53ba2400abc52970b81f539":
+        # Merge commit retains precisely the source tree of the reviewed
+        # GuestCacheLock predecessor; historical rollback uses its receipts.
+        reviewed_tree = subprocess.check_output(
+            ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD^{tree}'],
+            text=True).strip()
+        assert reviewed_tree == '01c09ec124779e7d976718af09a0e5e94cb4ac20', ('Vendor merger tree drift', reviewed_tree)
+        exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
+        actual_vendor_pin = exact_vendor_pin
     # GPU-30 is compiled from this pinned C++ owner, but the frozen R23/P24
     # receipts predate its segmented-GMMU inline DMA guard. Verify the complete
     # native blob and reverse only this one block on the historical audit copy.

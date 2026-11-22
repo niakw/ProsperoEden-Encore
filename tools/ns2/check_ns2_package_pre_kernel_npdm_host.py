@@ -31,13 +31,15 @@ cpp=r"""
 #include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <utility>
 using u64=std::uint64_t;
+using u8=std::uint8_t;
 namespace Loader {
 enum class ResultStatus { Success, Error };
-enum class FileType { Unknown, NSP, XCI, NCA };
+enum class FileType { Error, Unknown, NSP, XCI, NCA, NX };
 }
 namespace FileSys {
 struct Dir; struct File;
@@ -48,7 +50,8 @@ struct File {
     Loader::FileType kind{Loader::FileType::Unknown};
     VirtualDir directory{},exefs{};
     VirtualFile program{},secure{};
-    bool valid{true},is_second{},throwing{},late_error{},nup{},nup_mounted{true};
+    bool valid{true},is_second{},throwing{},late_error{},nup{},nup_mounted{true},nx{};
+    u8 nx_platform{};
     std::size_t GetSize() const { return 256; }
     u64 title{0x100};
     VirtualDir GetContainingDirectory() const { return directory; }
@@ -108,6 +111,18 @@ FileType IdentifyFile(const FileSys::VirtualFile& file) {
     if (file->throwing) throw std::runtime_error("bad container");
     return file->kind;
 }
+struct AppLoader_NX {
+    struct ProgramPlatform { u64 program_id; u8 platform; };
+    static FileType IdentifyType(const FileSys::VirtualFile& file) {
+        return file && file->nx ? FileType::NX : FileType::Error;
+    }
+    static std::optional<ProgramPlatform> ReadProgramPlatform(
+        const FileSys::VirtualFile& file, u64 program_id) {
+        if (!file || !file->nx || (file->nx_platform != 1 && file->nx_platform != 2))
+            return std::nullopt;
+        return ProgramPlatform{program_id, file->nx_platform};
+    }
+};
 }
 // NUP follows the source-selected native bridge, not an extension heuristic.
 namespace Eden::NupV1::Native {
@@ -158,6 +173,14 @@ int main() {
     nup->exefs=dir1;
     assert(!IsSwitch2LaunchProgram(nup,{},0,0));
     nup->exefs=dir2;
+    auto nx=std::make_shared<File>();nx->nx=true;nx->nx_platform=2;
+    assert(IsSwitch2LaunchProgram(nx,{},0x400,0));
+    nx->nx_platform=1;
+    assert(!IsSwitch2LaunchProgram(nx,{},0x100,0));
+    nx->nx_platform=0;
+    assert(!IsSwitch2LaunchProgram(nx,{},0x400,0));
+    nx->nx=false;
+    assert(!IsSwitch2LaunchProgram(nx,{},0x400,0));
     auto old=std::make_shared<File>();old->directory=dir1;
     assert(!IsSwitch2LaunchProgram(old,{},0,0));
     prog->exefs=dir1;

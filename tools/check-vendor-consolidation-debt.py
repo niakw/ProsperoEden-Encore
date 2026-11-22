@@ -817,11 +817,11 @@ assert "is_i_storage" not in hle_maintained
 # shipping source and the R23/FC27 runtime behaviour stay unchanged.
 _hle_bytes = hle_maintained.encode("utf-8")
 _hle_blob = hashlib.sha1(
-    b"blob " + str(len(_hle_bytes)).encode() + b"\\0" + _hle_bytes
+    b"blob " + str(len(_hle_bytes)).encode() + b"\0" + _hle_bytes
 ).hexdigest()
 if _hle_blob == "be358b0db916b14ab3e92b22a67ec56505b3d86e":
     _h = hle_maintained
-    _include = '#include "core/hle/kernel/svc_results.h"\\n'
+    _include = '#include "core/hle/kernel/svc_results.h"\n'
     assert _h.count(_include) == 1
     _h = _h.replace(_include, "", 1)
     _helper_start = _h.index("[[nodiscard]] static bool IsSafeOptionalNoOp(")
@@ -848,7 +848,7 @@ if _hle_blob == "be358b0db916b14ab3e92b22a67ec56505b3d86e":
     }
 }"""
     assert _h.count(_known_fail_closed) == 1
-    _h = _h.replace(_known_fail_closed, "    }\\n}", 1)
+    _h = _h.replace(_known_fail_closed, "    }\n}", 1)
     hle_maintained = _h
 assert hle_maintained == hle_expected, (
     "R23 per-IStorage pacing changed HLE beyond three reviewed mutations")

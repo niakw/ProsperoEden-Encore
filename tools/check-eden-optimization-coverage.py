@@ -5,6 +5,7 @@ Fast-skip previously maintained sources with a specific historical proof, but
 never confuse code triage with host or console performance validation.
 """
 import json
+import ast
 import hashlib
 import subprocess
 from collections import Counter
@@ -1158,7 +1159,18 @@ post_f07_vic_receipt = "vendor/encore-active/eden-core/src/video_core/host1x/vic
 post_f07_vic_present = {post_f07_vic_receipt} & all_owners
 if post_f07_vic_present:
     assert len(post_f07_nvdec_owners) == 2
-    assert subprocess.check_output(["git","hash-object",post_f07_vic_receipt],cwd=ROOT,text=True).strip() == "48008fc5f3b05c3e95432827c03e20b815cce21c"
+    vic_sha = subprocess.check_output(["git","hash-object",post_f07_vic_receipt],
+                                      cwd=ROOT,text=True).strip()
+    assert vic_sha in {
+        "48008fc5f3b05c3e95432827c03e20b815cce21c",
+        "178d361bc3b5e9a0bf6ca9fa579d49df7ab72935",
+    }, ("Unreviewed VIC source", vic_sha)
+    if vic_sha == "178d361bc3b5e9a0bf6ca9fa579d49df7ab72935":
+        # The full 29-hunk VIC predecessor replay is owned by the vendor
+        # source witness, which is also required by the native inventory gate.
+        witness = (ROOT / "vendor/tests/fc27_nvdec_vic_witness_host.py").read_text()
+        assert "vic_reverse=(" in witness and 'assert blob(VIC)==' in witness
+        assert "digest==" in witness and "CheckedVicPlane(" in witness
     assert subprocess.check_output(["git","hash-object","vendor/encore-active/eden-core/src/video_core/host1x/ffmpeg.cpp"],cwd=ROOT,text=True).strip() == "2eadc437cec5559560e5aaf849dd3b6446782e99"
     assert 'list(REMOVE_ITEM eden_vic_video_sources "host1x/vic.cpp")' in release_cmake
     assert 'list(APPEND eden_vic_video_sources "${EDEN_VIC_MAINTAINED_SOURCE}")' in release_cmake
@@ -1202,6 +1214,45 @@ if post_f07_jxr_adapter_owners:
 post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
+integrated_cache_lock_qualified = False
+integrated_cache_lock_pins = {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}
+if gpu_table_vendor_pin in integrated_cache_lock_pins:
+    if gpu_table_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}:
+        # GitHub verified that this merge commit has exactly the reviewed
+        # predecessor tree. Reject future changes even under a reused label.
+        reviewed_tree = subprocess.check_output(
+            ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
+            text=True).strip()
+        assert reviewed_tree == {
+            "ac880cd408116e6eb53ba2400abc52970b81f539": "01c09ec124779e7d976718af09a0e5e94cb4ac20",
+            "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
+        }[gpu_table_vendor_pin], ("Vendor reviewed source tree drift", gpu_table_vendor_pin, reviewed_tree)
+    # This vendor changes exactly the active GuestCacheLock method and
+    # its source tests; the historical F07 source table remains frozen.
+    raster=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    encoded=raster.encode("utf-8")
+    digest=hashlib.sha1(b"blob "+str(len(encoded)).encode()+bytes([0])+encoded).hexdigest()
+    assert digest=="f67815618d25657dcf64a87944b0c0bc5c2d8993"
+    start="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
+    end="\nvoid RasterizerVulkan::InvalidateRegion("
+    assert raster.count(start)==raster.count(end)==1
+    i=raster.index(start)
+    j=raster.index(end,i)
+    method=raster[i:j]
+    for corrected,previous in (
+        ("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+         "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);"),
+        ("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+         "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);"),
+    ):
+        assert method.count(corrected)==1 and previous not in method
+        method=method.replace(corrected,previous,1)
+    prior=(raster[:i]+method+raster[j:]).encode("utf-8")
+    prior_sha=hashlib.sha1(b"blob "+str(len(prior)).encode()+bytes([0])+prior).hexdigest()
+    assert prior_sha=="0633e3cf41c615f46791d3943ff40ac22399b047"
+    integrated_cache_lock_qualified = True
+    gpu_table_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
+    print("ENCORE_GUEST_CACHE_LOCK_RUNTIME_PREDECESSOR_PASS hunks=2")
 # The selected vendor tree is byte-identical to the already-reviewed
 # FC27/GSV successor. Preserve this classification after historical
 # source-normalization changes gpu_table_vendor_pin to the F07 reference.
@@ -1238,8 +1289,11 @@ if gpu_table_vendor_pin in {"01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116
         assert actual == blob, ("Merged FC27 source owner drift",path,actual)
     gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 shared_storage32_selected = gpu_table_vendor_pin in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}
-ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} or merged_fc27_p1_pair
-ps5_ns2_ipc_selected = gpu_table_vendor_pin == "ab417b59c5f7f4613ff27386be05c0644d0ed776" or merged_fc27_p1_pair
+# This exact integrated vendor retains the previously reviewed PS5 VFS/IPC
+# owners. Their full Git blobs, native CMake selection and main.cpp cache cap
+# are independently asserted below; selection alone is not qualification.
+ps5_vfs128_selected = gpu_table_vendor_pin in {"a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} or merged_fc27_p1_pair or gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6"
+ps5_ns2_ipc_selected = gpu_table_vendor_pin == "ab417b59c5f7f4613ff27386be05c0644d0ed776" or merged_fc27_p1_pair or gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6"
 if gpu_table_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
     gpu_table_vendor_pin = "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"
 fc27_deferred_selected = gpu_table_vendor_pin in {"8153654a2f1fe809fb2caa28dcadca90a7661446", "6c38328fbef33de747f5c31ea30d13541a513a4a", "8e564f61e6c8b86149ce0a0d6d2aa323a268dda6", "67759611edc13414c112ea9d2b6664d54827a200"}
@@ -1336,7 +1390,23 @@ post_f07_fc27_ssbo_present = set(post_f07_fc27_ssbo_receipts) & all_owners
 if 'set(EDEN_FC27_SSBO_SOURCE' in release_cmake:
     assert post_f07_fc27_ssbo_present == set(post_f07_fc27_ssbo_receipts)
     for path, blob in post_f07_fc27_ssbo_receipts.items():
-        assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
+        actual = subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip()
+        if actual == "602d45b4d2ad872b138d62ce05f379b5e1103602":
+            # NS1/NS2 source adds one bounded CAS32 storage-atomic opcode.
+            # Undo only its exact reviewed hunk in an audit copy, and require
+            # the byte-identical frozen post-F07 SSBO predecessor.
+            current = (ROOT / path).read_text()
+            new = ("    case IR::Opcode::GlobalAtomicExchange32:\n"
+                   "    case IR::Opcode::GlobalAtomicCompareExchange32:\n"
+                   "    case IR::Opcode::GlobalAtomicIAdd64:\n")
+            old = ("    case IR::Opcode::GlobalAtomicExchange32:\n"
+                   "    case IR::Opcode::GlobalAtomicIAdd64:\n")
+            assert current.count(new) == 2
+            previous = current.replace(new, old, 1).encode()
+            prior = hashlib.sha1(b"blob " + str(len(previous)).encode() + bytes([0]) + previous).hexdigest()
+            assert prior == blob, ("Unexpected SSBO CAS32 predecessor", prior)
+        else:
+            assert actual == blob, (path, actual)
     assert 'set(EDEN_FC27_SSBO_SOURCE' in release_cmake
 else:
     assert not post_f07_fc27_ssbo_present
@@ -1374,7 +1444,20 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     assert "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h" in scalar_gate
     assert "844a118358c874b0666aebda116c1d6a0c9a8ceb" in scalar_gate
 else:
-    assert not post_f07_fc27_scalar_unselected_present
+    if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+        # The merged vendor still carries this stand-alone scalar header,
+        # but CMake selects the distinct maintained src/ owner. Keep both
+        # exact ABI/provenance assertions rather than treating it as F07.
+        assert post_f07_fc27_scalar_unselected_present == set(post_f07_fc27_scalar_unselected_receipts)
+        for source_path, expected_blob in post_f07_fc27_scalar_unselected_receipts.items():
+            assert subprocess.check_output(["git", "hash-object", source_path],
+                                           cwd=ROOT, text=True).strip() == expected_blob
+        assert "eden-shader/include/shader_recompiler/backend/spirv/spirv_emit_context.h" not in release_cmake
+        scalar_gate = (ROOT/".github/workflows/spirv-scalar-engine-host.yml").read_text()
+        assert "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h" in scalar_gate
+        assert "844a118358c874b0666aebda116c1d6a0c9a8ceb" in scalar_gate
+    else:
+        assert not post_f07_fc27_scalar_unselected_present
 print("ENCORE_FC27_SCALAR_DUPLICATE_F07_ISOLATION_PASS",
       f"owners={len(post_f07_fc27_scalar_unselected_present)}", "selected=0")
 
@@ -1521,6 +1604,36 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             assert actual == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1", path
         else:
             assert actual == blob, path
+elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    # Integrated NS1/NS2 pair: all fourteen actual vendor owners are pinned
+    # to reviewed full Git blobs. This does NOT re-date the November 15
+    # historical receipt or bypass the separate CMake/ABI source gates.
+    assert pair_present == pair_new_owners
+    integrated_pair = {
+        "eden-core/overrides/core/gpu_dirty_memory_manager.h": "d489855e83f53ba703c18ce67d620f8db7b932fc",
+        "eden-core/overrides/video_core/gpu.h": "d3ad5e60e19b30ddbd43cbfc29af98f7f24c8174",
+        "eden-core/overrides/video_core/rasterizer_interface.h": "294452f99eae33d623a85c5e4db18a850c2a84ba",
+        "eden-core/src/video_core/buffer_cache/buffer_cache.h": "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b",
+        "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "fd9708571ef61c83c399042a5200c87b2e3784d6",
+        "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677",
+        "eden-core/src/video_core/gpu_gl_native.cpp": "8abd4f3652b4a10f27281a2fd43a3764bd6d5c6e",
+        "eden-core/src/video_core/gpu_gl_native_dev.cpp": "091431333f6f05e7e81c691051d64771cab4a5dd",
+        "eden-core/src/video_core/gpu_vulkan.cpp": "90b8f8c99878b21558b3996e8b1e95a5fc6ad9a6",
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "6e0bf7ab2a3a2147f9db0c630070db30d9b35d56",
+        "eden-vulkan/vulkan_rasterizer.cpp": "0633e3cf41c615f46791d3943ff40ac22399b047",
+        "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "3397cd39a3d35c1255802c4c3862584530f15cfe",
+        "ns2-runtime/gpu_dispatch/video_core/native_qmd.h": "a1e99602dbee8c4fc49108382b61ee8cd53af847",
+        "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "33b1b5475e68c8459f9666b1ae1a6e446221cb63",
+    }
+    assert set(integrated_pair) == set(pair_receipt["files"])
+    for relative, sha in integrated_pair.items():
+        source_path = ROOT / "vendor/encore-active" / relative
+        actual = subprocess.check_output(["git", "hash-object", str(source_path)],
+                                         cwd=ROOT, text=True).strip()
+        if relative == "eden-vulkan/vulkan_rasterizer.cpp" and integrated_cache_lock_qualified:
+            assert actual == "f67815618d25657dcf64a87944b0c0bc5c2d8993"
+            actual = "0633e3cf41c615f46791d3943ff40ac22399b047"
+        assert actual == sha, ("Merged NS1/NS2 source pair drift", relative, actual)
 else:
     assert not pair_present
 print("ENCORE_NOV15_VENDOR_PAIR_F07_ISOLATION_PASS", f"new_owners={len(pair_present)}")
@@ -1537,6 +1650,17 @@ if gpu_table_vendor_pin in {"42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696
     for path, blob in drawtexture_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
+elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    # Merge selected both DrawTexture owners. Seal the complete active pair
+    # while keeping the older Eden #4559 source receipt untouched.
+    assert drawtexture_present == set(drawtexture_receipts)
+    integrated_drawtexture = {
+        "vendor/encore-active/eden-vulkan/blit_image.cpp": "4ba93afb6594213d5bde82be2693f0e08cb1cd63",
+        "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/blit_image.h": "a38cfcf655adcb8ceebfce955b39a2312a239768",
+    }
+    for source, expected in integrated_drawtexture.items():
+        actual = subprocess.check_output(["git","hash-object",source],cwd=ROOT,text=True).strip()
+        assert actual == expected, ("Merged DrawTexture owner drift",source,actual)
 else:
     assert not drawtexture_present
 print("ENCORE_EDEN4559_F07_ISOLATION_PASS", f"owners={len(drawtexture_present)}")
@@ -1581,12 +1705,43 @@ if merged_fc27_p1_pair:
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
     })
+# The final vendor integration retains both selected NS2 appletOE
+# support headers. The actual cpp/headers are byte-sealed below.
+if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    ns2_early_hle_receipts.update({
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h":
+            "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h":
+            "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
+    })
 ns2_early_hle_present = set(ns2_early_hle_receipts) & all_owners
 if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or gpu_table_vendor_pin in {"d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6"}:
     assert ns2_early_hle_present == set(ns2_early_hle_receipts)
     for path, blob in ns2_early_hle_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
+elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    # NS1/NS2 merge preserves these eight active AM/HID owners. Historical
+    # early-HLE provenance stays frozen; check each real selected Git blob.
+    qualified_early_hle = {
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp": "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.h": "03cf286dd642a3e517c7fa4950850603038c6d6b",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_scaling_parameters_functions.h": "bded1f902ac1a0995d71ffc3f425f33ba781b198",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp": "b83f519fef3905eabb0bef65cab4d989033b5287",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.h": "1f3b144324b9014d4e5db64f796019f0e9f4c9a6",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp": "b1acd90a74bceb03c900a505e217f484f6ecd18f",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
+    }
+    assert set(qualified_early_hle) == (set(ns2_early_hle_receipts) | {
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h",
+    })
+    assert ns2_early_hle_present == set(ns2_early_hle_receipts)
+    for source, expected in qualified_early_hle.items():
+        actual = subprocess.check_output(["git","hash-object",source],cwd=ROOT,text=True).strip()
+        assert actual == expected, ("Merged early HLE source changed",source,actual)
+    assert '"hle/service/am/service/application_proxy_service.cpp"' in release_cmake
 else:
     assert not ns2_early_hle_present
 print("ENCORE_NS2_EARLY_HLE_F07_ISOLATION_PASS",
@@ -1675,7 +1830,54 @@ else:
 print("PS5_NS2_IPC_PEER_F07_ISOLATION_PASS", f"owners={len(ps5_ns2_ipc_present)}")
 print("PS5_VFS128_FD_BUDGET_F07_ISOLATION_PASS", f"owners={len(ps5_vfs128_present)}")
 
-owners=all_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
+# The integrated vendor adds 33 maintained C++ source/header paths after
+# the 518-entry historical F07 optimization receipt. Reuse the explicit,
+# byte-exact path/blob register already verified by the active-source gate:
+# no new lists or opaque count adjustments. Some are headers or only selected
+# through CMake in specific variants, so presence is NOT native execution.
+post_f07_integrated_source_owners = set()
+post_f07_legacy_net_header_owners = set()
+if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    inventory_source = ast.parse((ROOT / "tools/check-active-source-inventory.py").read_text())
+    inventory_assignments = [
+        node.value for node in inventory_source.body if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "merged_ns1_ns2_owner_blobs"
+                for target in node.targets)
+    ]
+    assert len(inventory_assignments) == 1, "Missing exact NS1/NS2 source ledger"
+    integrated_blobs = ast.literal_eval(inventory_assignments[0])
+    assert isinstance(integrated_blobs, dict) and len(integrated_blobs) == 33
+    post_f07_integrated_source_owners = {
+        "vendor/encore-active/" + relative for relative in integrated_blobs
+    }
+    assert post_f07_integrated_source_owners <= all_owners, (
+        "Integrated vendor source missing",
+        sorted(post_f07_integrated_source_owners - all_owners))
+    for relative, expected_blob in integrated_blobs.items():
+        raw = (ROOT / "vendor/encore-active" / relative).read_bytes()
+        digest = hashlib.sha1(b"blob " + str(len(raw)).encode()
+                              + bytes([0]) + raw).hexdigest()
+        assert digest == expected_blob, ("Unreviewed integrated source",relative,digest)
+
+    # This existing Eden network header was already in vendor main. It is
+    # absent from the historical 518-path optimization receipt, but present
+    # in the separate 337-path shipping catalogue. Do NOT label it a new
+    # NS1 runtime source or an F07-optimized file.
+    net_header = "vendor/encore-active/eden-backports/src/common/net/net.h"
+    raw = (ROOT / net_header).read_bytes()
+    digest = hashlib.sha1(b"blob " + str(len(raw)).encode()
+                          + bytes([0]) + raw).hexdigest()
+    assert digest == "f8244b366d591ce10342f110d282c295f835474f"
+    assert net_header in all_owners
+    assert "vendor/encore-active/eden-backports/src/common/net/net.cpp" in all_owners
+    post_f07_legacy_net_header_owners.add(net_header)
+    assert not post_f07_integrated_source_owners & post_f07_legacy_net_header_owners
+print("ENCORE_NS1_NS2_INTEGRATED_F07_SEPARATION_PASS",
+      f"new_maintained={len(post_f07_integrated_source_owners)}",
+      f"existing_unreviewed={len(post_f07_legacy_net_header_owners)}")
+
+owners=all_owners-post_f07_integrated_source_owners-post_f07_legacy_net_header_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.
@@ -1748,7 +1950,17 @@ for e in entries:
 shipping=json.loads((ROOT/"vendor/encore-active/eden-backports/manifest.json").read_text())
 upstream=json.loads((ROOT/"UPSTREAM.json").read_text())
 assert shipping["pinned_eden_commit"]==upstream["eden_commit"]
-assert len(shipping["entries"]) == (84 if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or gpu_table_vendor_pin in {"ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6"} else 83)
+if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    # The merged NS1/NS2 vendor carries the EXACT pre-merge main
+    # eden-backports subtree. Verify all 84 entries without broadening
+    # the old F07 83/84-file source-history branches.
+    tree_sha = subprocess.check_output(
+        ["git", "-C", str(ROOT/"vendor"),
+         "rev-parse", "HEAD:encore-active/eden-backports"], text=True).strip()
+    assert tree_sha == "be5bea1284bfb3c6adeb74eeb611525d3af154b4", ("Backport tree drift", tree_sha)
+    assert len(shipping["entries"]) == 84
+else:
+    assert len(shipping["entries"]) == (84 if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or gpu_table_vendor_pin in {"ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6"} else 83)
 # Post-snapshot maintained backports can legitimately advance after the F07
 # optimization register was frozen. Keep the historical register receipts
 # immutable while pinning each reviewed successor to exact active bytes.
@@ -1771,6 +1983,9 @@ assert len(r23_fw23_successors)==6
 vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
+if integrated_cache_lock_qualified:
+    assert vendor_head in integrated_cache_lock_pins
+    vendor_head = "4354add020afac574198f63d87167f3022bff9c6"
 # MKW 1.8.0 GameChat successor changes only the three reviewed NS2
 # service owners below. Seal their exact bytes before replaying the older
 # shipping-backport applicability matrix from its ab417b59 parent.
@@ -1884,7 +2099,8 @@ for e in entries:
     assert active.stat().st_size==record["bytes"]
     assert e["shipping_upstream_sha256"]==record["upstream"]
     if (vendor_head in {"01c942171fea39c1f7cf31d13ab36895aebb593a",
-                        "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"} and
+                        "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666",
+                        "4354add020afac574198f63d87167f3022bff9c6"} and
             e["shipping_relpath"] in merged_p1_backport_successors):
         old_sha, old_size, new_sha, new_size = merged_p1_backport_successors[e["shipping_relpath"]]
         assert (e["shipping_active_sha256"], e["shipping_bytes"]) == (old_sha, old_size)
@@ -2730,6 +2946,9 @@ print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
 selected_texture_vendor = subprocess.check_output(
     ["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True
 ).strip()
+if integrated_cache_lock_qualified:
+    assert selected_texture_vendor in integrated_cache_lock_pins
+    selected_texture_vendor = "4354add020afac574198f63d87167f3022bff9c6"
 ns2_production_blobs = {
     # Reviewed R457 unified GL -> Vulkan loading owner: no final-frame CPU
     # readback; the launcher presents loading_scene.glsl and retains VideoOut

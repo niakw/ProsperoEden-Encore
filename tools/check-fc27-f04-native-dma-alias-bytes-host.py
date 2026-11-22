@@ -27,13 +27,15 @@ def section(text, begin, end):
     assert end in text[i:], end
     return text[i:text.index(end, i)]
 
-coalesce = section(dma, "constexpr bool CanCoalescePitchDma(", "\n}\n} // namespace") + "\n}"
-launch = section(dma, "void MaxwellDMA::Launch() {", "\nvoid MaxwellDMA::CopyBlockLinearToPitch()")
-contig_start = "            u64 contiguous_bytes = 0;\n            if (CanCoalescePitchDma("
-contig_end = "        } else {\n            if (!is_src_pitch && is_dst_pitch)"
-pitch_body = section(launch, contig_start, contig_end)
-assert "memory_manager.CopyBlock(regs.offset_out, regs.offset_in," in pitch_body
-assert "memory_manager.CopyBlock(dest_line, source_line, regs.line_length_in);" in pitch_body
+coalesce = section(dma, "constexpr bool CanCoalescePitchDma(", "// Remapped DMA lengths")
+assert "bool CopyPitchDmaPlain(" in coalesce
+assert "bool DmaSoftwareOverlap(" in coalesce
+assert "PitchDmaPhysicalOverlap(" in coalesce
+assert "if (!collect(source, src_pitch, src_row_bytes, first)" in coalesce
+assert "return true; // An unknown mapping must not masquerade as disjoint." in coalesce
+launch = section(dma, "void MaxwellDMA::Launch() {", "\nbool MaxwellDMA::CopyBlockLinearRemap()")
+assert "if (!CopyPitchDmaPlain(memory_manager, regs.offset_in, regs.offset_out," in launch
+assert "memory.CopyBlock(destination, source," in coalesce
 assert "width > (~u32{0}) / rows" in coalesce
 alias = section(texture,
     "void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",
@@ -64,13 +66,17 @@ fixture = r"""
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <numeric>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+using u8 = std::uint8_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
+using s32 = std::int32_t;
 using s64 = std::int64_t;
 using DAddr = u64;
 using GPUVAddr = u64;
@@ -161,17 +167,36 @@ template<class P> struct TextureCache {
     void SynchronizeAliases(ImageId);
     void WriteMemory(DAddr,std::size_t);
 };
-__COALESCE__
 struct MemoryManager {
     std::vector<std::uint8_t> bytes = std::vector<std::uint8_t>(4096);
-    unsigned calls{};
+    unsigned calls{},reads{},writes{};
+    std::optional<u64> GpuToCpuAddress(u64 a) const {
+        if(a>=bytes.size()) return std::nullopt;
+        return a;
+    }
+    bool IsFullyMappedRange(u64 a,std::size_t n) const {
+        return n>0 && a<bytes.size() && n<=bytes.size()-a;
+    }
+    bool IsContinuousRange(u64 a,std::size_t n) const {
+        return IsFullyMappedRange(a,n);
+    }
+    void ReadBlock(u64 a,void* dst,std::size_t n) {
+        assert(IsFullyMappedRange(a,n));
+        std::memcpy(dst,bytes.data()+a,n);
+        ++reads;
+    }
+    void WriteBlock(u64 a,const void* src,std::size_t n) {
+        assert(IsFullyMappedRange(a,n));
+        std::memcpy(bytes.data()+a,src,n);
+        ++writes;
+    }
     void CopyBlock(u64 dst,u64 src,std::size_t n) {
-        assert(dst <= bytes.size() && src <= bytes.size());
-        assert(n <= bytes.size()-dst && n <= bytes.size()-src);
+        assert(IsFullyMappedRange(src,n) && IsFullyMappedRange(dst,n));
         std::memmove(bytes.data()+dst,bytes.data()+src,n);
         ++calls;
     }
 };
+__COALESCE__
 struct Regs {
     u64 offset_in{}, offset_out{};
     u32 line_length_in{},line_count{};
@@ -181,7 +206,10 @@ struct MockDma {
     Regs regs;
     MemoryManager memory_manager;
     void PitchCopy() {
-__PITCH__
+        assert(CopyPitchDmaPlain(memory_manager,regs.offset_in,regs.offset_out,
+                                 static_cast<s32>(regs.pitch_in),
+                                 static_cast<s32>(regs.pitch_out),
+                                 regs.line_length_in,regs.line_count));
     }
 };
 template<class P>
@@ -198,7 +226,7 @@ static void TestPitch(u64 src,u64 dst,u32 width,u32 rows,s64 in,s64 out,unsigned
     for(u32 line=0;line<rows;++line) {
         const auto a=static_cast<u64>(static_cast<s64>(src)+line*in);
         const auto b=static_cast<u64>(static_cast<s64>(dst)+line*out);
-        std::memmove(expected.data()+b,expected.data()+a,width);
+        std::memcpy(expected.data()+b,bytes.data()+a,width);
     }
     engine.regs={src,dst,width,rows,in,out};
     engine.PitchCopy();
@@ -212,7 +240,7 @@ int main() {
     assert(!CanCoalescePitchDma(256,1024,64,4,72,72,length));
     TestPitch(256,1024,64,4,64,64,1);
     TestPitch(256,1024,64,4,72,72,4);
-    TestPitch(256,280,64,4,64,64,4);
+    TestPitch(256,280,64,4,64,64,0);
     std::puts("F04_DMA_BYTE_PARITY_PASS contiguous=1 gapped=1 overlapping=1");
 
     MockDma dma;
@@ -311,7 +339,6 @@ int main() {
 }
 """
 fixture=(fixture.replace("__COALESCE__",coalesce)
-        .replace("__PITCH__",pitch_body)
         .replace("__ALIAS__",alias)
         .replace("__WRITE__",write))
 compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")

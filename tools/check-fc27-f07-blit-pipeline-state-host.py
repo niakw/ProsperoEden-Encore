@@ -7,6 +7,7 @@ into the maintained BlitColor owner itself. Verify the selected source still
 invalidates guest graphics state after recording the raw blit. HOST ONLY.
 """
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 
@@ -292,3 +293,254 @@ with tempfile.TemporaryDirectory(prefix="fc27-f07-raw-vertex-") as td:
             subprocess.run(args, check=True, capture_output=True, text=True)
             subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 print("FC27_F07_RAW_BLIT_PIPELINE_INVALIDATION_PASS source_extracted=3 raw_blit_avoids_guest_shader=1 alpha_state_avoids_cold_shader=2 desktop_original=1 O0=1 O2=1")
+
+
+# GPU-46: framebuffer layers are bounded by the smallest Vulkan attachment,
+# and clears are clipped to that exact framebuffer layer count. Lichii #38 /
+# Eglantine #293 reproduced the old max-layer policy as a Vulkan validation
+# failure/device loss. Compile the selected policy under sanitizers.
+texture_header=(root/"vendor/encore-active/ns2-astc/include/video_core/renderer_vulkan/vk_texture_cache.h").read_text()
+texture_cpp=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+clear_source=raster
+assert "[[nodiscard]] u32 Layers() const noexcept" in texture_header
+assert "u32 layers = 1;" in texture_header
+assert "s32 num_layers = (std::numeric_limits<s32>::max)();" in texture_cpp
+assert texture_cpp.count("num_layers = (std::min)(num_layers, color_buffer->range.extent.layers);")==1
+assert texture_cpp.count("num_layers = (std::min)(num_layers, depth_buffer->range.extent.layers);")==1
+assert "layers = static_cast<u32>((std::max)(num_layers, 1));" in texture_cpp
+assert "CreateVkFramebuffer(runtime, attachments, layers);" in texture_cpp
+assert "CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n                                      layers, extent);" in texture_cpp
+for token in (
+    "const u32 framebuffer_layers = framebuffer->Layers();",
+    "const u32 clear_base_layer = regs.clear_surface.layer;",
+    "if (layer_count == 0 || clear_base_layer >= framebuffer_layers)",
+    "(std::min)(layer_count, framebuffer_layers - clear_base_layer)",
+    "clear_base_layer == 0 && clear_layer_count == framebuffer_layers",
+    ".baseArrayLayer = clear_base_layer,",
+    ".layerCount = clear_layer_count,",
+    "clear_covers_all_layers &&",
+):
+    assert token in clear_source, token
+assert "regs.clear_surface.layer == 0 &&" not in fragment(
+    clear_source, "void RasterizerVulkan::Clear(u32 layer_count) {",
+    "\nnamespace {\nconstexpr VkMemoryBarrier COMPUTE_WRITE_BARRIER")
+# The native forced-MSAA candidate must reason about the clipped layer range.
+assert "can_defer_clear && !ds_used && clear_layer_count == 1 &&" in clear_source
+assert "framebuffer_layers == 1 &&" in clear_source
+
+layer_cpp=r"""
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstdint>
+#include <limits>
+using u32=std::uint32_t; using s32=std::int32_t;
+
+u32 FramebufferLayers(const std::array<s32,8>& colors, s32 depth) {
+    s32 num_layers=(std::numeric_limits<s32>::max)();
+    for(s32 layer:colors) {
+        if(layer>0) num_layers=(std::min)(num_layers,layer);
+    }
+    if(depth>0) num_layers=(std::min)(num_layers,depth);
+    if(num_layers==(std::numeric_limits<s32>::max)()) num_layers=1;
+    return static_cast<u32>((std::max)(num_layers,1));
+}
+struct ClearRange { u32 base{},count{}; bool all{}; };
+ClearRange Clip(u32 base,u32 requested,u32 framebuffer_layers) {
+    if(requested==0 || base>=framebuffer_layers) return {};
+    const u32 count=(std::min)(requested,framebuffer_layers-base);
+    return {base,count,base==0 && count==framebuffer_layers};
+}
+int main() {
+    assert(FramebufferLayers({1,0,0,0,0,0,0,0},4)==1);
+    assert(FramebufferLayers({4,2,0,0,0,0,0,0},8)==2);
+    assert(FramebufferLayers({4,0,0,0,0,0,0,0},0)==4);
+    assert(FramebufferLayers({},0)==1);
+
+    auto a=Clip(0,4,1); assert(a.base==0 && a.count==1 && a.all);
+    auto b=Clip(2,4,4); assert(b.base==2 && b.count==2 && !b.all);
+    auto c=Clip(1,0,4); assert(c.count==0 && !c.all);
+    auto d=Clip(4,1,4); assert(d.count==0 && !d.all);
+    auto e=Clip(0,1,4); assert(e.count==1 && !e.all);
+    auto f=Clip(0,4,4); assert(f.count==4 && f.all);
+    auto g=Clip(1,(std::numeric_limits<u32>::max)(),4);
+    assert(g.base==1 && g.count==3 && !g.all);
+}
+"""
+compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-fb-layers-gpu46-") as td:
+    source=Path(td)/"layers.cpp"; source.write_text(layer_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(td)/("layers-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_VULKAN_FRAMEBUFFER_LAYER_BOUNDS_HOST_PASS active_owner=1 min_attachment=1 "
+      "mixed_samples=1 clear_clip=1 outside_skip=1 overflow_safe=1 "
+      "partial_not_deferred=1 full_deferred=1 O0_O2=2 ASan_UBSan=1")
+
+
+# GPU-47: Lichii #427 framebuffer-limit subset only. Do NOT import its
+# unrelated StreamBuffer padding. Source-seal the active Vulkan device limits
+# and framebuffer clamp, then test the policy under sanitizers.
+device_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/vulkan_common/vulkan_device.h").read_text()
+texture_cpp=(root/"vendor/encore-active/eden-vulkan/vk_texture_cache_cost.cpp").read_text()
+for limit in ("FramebufferWidth","FramebufferHeight","FramebufferLayers"):
+    assert f"FN_MAX_LIMIT_ELEM({limit})" in device_header
+for token in (
+    "const auto clamp_extent = [&runtime](VkExtent2D extent)",
+    "runtime.device.GetMaxFramebufferWidth()",
+    "runtime.device.GetMaxFramebufferHeight()",
+    "runtime.device.GetMaxFramebufferLayers()",
+    "layers = (std::max)(1U, (std::min)(layers, runtime.device.GetMaxFramebufferLayers()));",
+    "const VkExtent2D extent = clamp_extent(",
+    "render_area = clamp_extent(render_area);",
+):
+    assert token in texture_cpp, token
+assert "32768x32768 surface clip" in texture_cpp
+
+device_limit_cpp=r"""
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+using u32=std::uint32_t;
+struct Size { u32 width,height,layers; };
+constexpr Size Clamp(Size size, Size max) {
+    return {
+      (std::max)(1U,(std::min)(size.width,max.width)),
+      (std::max)(1U,(std::min)(size.height,max.height)),
+      (std::max)(1U,(std::min)(size.layers,max.layers)),
+    };
+}
+int main() {
+    auto a=Clamp({32768,32768,4},{16384,16384,2});
+    assert(a.width==16384 && a.height==16384 && a.layers==2);
+    auto b=Clamp({1280,720,1},{16384,16384,2048});
+    assert(b.width==1280 && b.height==720 && b.layers==1);
+    auto c=Clamp({0,0,0},{16384,16384,2048});
+    assert(c.width==1 && c.height==1 && c.layers==1);
+    auto d=Clamp({16384,16384,2048},{16384,16384,2048});
+    assert(d.width==16384 && d.height==16384 && d.layers==2048);
+    auto e=Clamp({16385,1,2049},{16384,16384,2048});
+    assert(e.width==16384 && e.height==1 && e.layers==2048);
+}
+"""
+compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-fb-device-limits-gpu47-") as td:
+    source=Path(td)/"limits.cpp"; source.write_text(device_limit_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(td)/("limits-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_VULKAN_FRAMEBUFFER_DEVICE_LIMIT_HOST_PASS upstream_427=1 active_owner=1 "
+      "width=1 height=1 layers=1 attachmentless_clip=1 zero_to_one=1 "
+      "valid_unchanged=1 O0_O2=2 ASan_UBSan=1")
+
+
+# GPU-49: Lichii #353 fragment-output component ownership. The guest's
+# color mask is necessary but not sufficient: Vulkan must also mask out
+# components the fragment shader never writes.
+shader_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/shader_info.h").read_text()
+collect_info=(root/"vendor/encore-active/eden-shader/src/shader_recompiler/ir_opt/collect_shader_info_pass.cpp").read_text()
+gp_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_graphics_pipeline.h").read_text()
+gp_source=(root/"vendor/encore-active/eden-vulkan/vk_graphics_pipeline_cost.cpp").read_text()
+rast_header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
+assert "std::array<u8, 8> frag_color_components{};" in shader_info
+for token in (
+    "const u32 render_target{inst.Arg(0).U32()};",
+    "info.stores_frag_color[render_target] = true;",
+    "info.frag_color_components[render_target] |=",
+    "static_cast<u8>(1U << inst.Arg(1).U32());",
+):
+    assert token in collect_info, token
+for token in (
+    "VkColorComponentFlags ColorOutputMask(size_t render_target) const noexcept",
+    "u32 ColorOutputMask() const noexcept",
+    "u32 color_output_mask{};",
+):
+    assert token in gp_header, token
+for token in (
+    "color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}",
+    "write_mask &= ColorOutputMask(index);",
+):
+    assert token in gp_source, token
+for token in (
+    "UpdateBlending(regs, prepared_pipeline);",
+    "const u32 color_output_mask = pipeline ? pipeline->ColorOutputMask() : ~0U;",
+    "const bool color_output_changed = color_output_mask != last_color_output_mask;",
+    "current &= (color_output_mask >> (index * 4)) & 0xF;",
+):
+    assert token in raster, token
+assert "const GraphicsPipeline* pipeline" in rast_header
+assert "u32 last_color_output_mask{};" in rast_header
+# Keep the PS5 hot path: no CurrentGraphicsPipeline lookup is introduced
+# around the dynamic color-output mask.
+blend_method=fragment(raster,
+    "void RasterizerVulkan::UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,",
+    "\nvoid RasterizerVulkan::UpdateColorWriteEnable(")
+assert "pipeline_cache.CurrentGraphicsPipeline()" not in blend_method
+dynamic_method=fragment(raster,"void RasterizerVulkan::UpdateDynamicStates() {",
+                        "\nvoid RasterizerVulkan::HandleTransformFeedback(")
+assert "UpdateBlending(regs, prepared_pipeline);" in dynamic_method
+
+mask_cpp=r"""
+#include <array>
+#include <cassert>
+#include <cstdint>
+using u32=std::uint32_t; using u8=std::uint8_t;
+u32 Pack(const std::array<u8,8>& components) {
+    u32 mask=0;
+    for(std::size_t rt=0;rt<components.size();++rt)
+        mask |= u32{components[rt]} << (rt*4);
+    return mask;
+}
+u32 StaticMask(u32 guest,u32 packed,std::size_t rt) {
+    return guest & ((packed >> (rt*4)) & 0xF);
+}
+struct Dynamic {
+    u32 last{};
+    unsigned records{};
+    u32 Apply(bool guest_dirty,u32 guest_mask,const u32* pipeline_mask,std::size_t rt) {
+        const u32 output=pipeline_mask?*pipeline_mask:~0U;
+        const bool changed=output!=last;
+        if(!guest_dirty && !changed) return 0xffffffffU;
+        if(guest_dirty||changed) { last=output; ++records; }
+        return guest_mask & ((output>>(rt*4))&0xF);
+    }
+};
+int main() {
+    std::array<u8,8> c{}; c[0]=0b0101; c[1]=0b1010;
+    const u32 packed=Pack(c);
+    assert(StaticMask(0xF,packed,0)==0x5);
+    assert(StaticMask(0x7,packed,0)==0x5);
+    assert(StaticMask(0xF,packed,1)==0xA);
+    Dynamic d{};
+    assert(d.Apply(true,0xF,&packed,0)==0x5);
+    const unsigned first=d.records;
+    assert(d.Apply(false,0xF,&packed,0)==0xffffffffU);
+    assert(d.records==first);
+    u32 other=0x3;
+    assert(d.Apply(false,0xF,&other,0)==0x3);
+    assert(d.records==first+1);
+    // Raw DrawTexture/blit: no guest graphics pipeline => all components allowed.
+    assert(d.Apply(false,0xB,nullptr,0)==0xB);
+}
+"""
+compiler=shutil.which("clang++-18") or shutil.which("clang++") or shutil.which("g++")
+assert compiler
+with tempfile.TemporaryDirectory(prefix="encore-frag-mask-gpu49-") as td:
+    source=Path(td)/"mask.cpp"; source.write_text(mask_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(td)/("mask-"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        str(source),"-o",str(exe)],check=True,timeout=45)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("NS1_FRAGMENT_COLOR_OUTPUT_MASK_HOST_PASS upstream_353=1 active_shader_info=1 "
+      "static_mask=1 dynamic_mask=1 pipeline_change_rebind=1 raw_blit_full_mask=1 "
+      "no_cold_lookup=1 O0_O2=2 ASan_UBSan=1")

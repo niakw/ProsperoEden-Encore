@@ -40,15 +40,16 @@ unmap=extract(cache,"void TextureCache<P>::UnmapGPUMemory(size_t as_id, GPUVAddr
               "\ntemplate <class P>\nbool TextureCache<P>::BlitImage(")
 alias=extract(cache,"void TextureCache<P>::SynchronizeAliases(ImageId image_id) {",
               "\ntemplate <class P>\nvoid TextureCache<P>::PrepareImage(")
-coalesce=extract(dma,"constexpr bool CanCoalescePitchDma(","\n}\n} // namespace")+"\n}"
-launch=extract(dma,"void MaxwellDMA::Launch() {","\nvoid MaxwellDMA::CopyBlockLinearToPitch()")
-pitch=extract(launch,"            u64 contiguous_bytes = 0;\n            if (CanCoalescePitchDma(",
-             "        } else {\n            if (!is_src_pitch && is_dst_pitch)")
+coalesce=extract(dma,"constexpr bool CanCoalescePitchDma(","// Remapped DMA lengths")
+assert "bool CopyPitchDmaPlain(" in coalesce
+launch=extract(dma,"void MaxwellDMA::Launch() {","\nbool MaxwellDMA::CopyBlockLinearRemap()")
+assert "if (!CopyPitchDmaPlain(memory_manager, regs.offset_in, regs.offset_out," in launch
 assert 'image.flags |= ImageFlagBits::Remapped;' in unmap
 assert 'image.flags |= ImageFlagBits::CpuModified;' in write
 assert 'CopyImage(image_id, aliased->id, aliased->copies);' in alias
 assert 'runtime.InsertUploadMemoryBarrier();' in methods
-assert 'memory_manager.CopyBlock(regs.offset_out, regs.offset_in' in pitch
+assert "memory.CopyBlock(destination, source," in coalesce
+assert "PitchDmaPhysicalOverlap(" in coalesce
 
 # This existing fixture has already compiled both selected upload methods at
 # O0 and O2; retain its mocks and assertions to catch fixture drift.
@@ -62,9 +63,9 @@ def replace_once(old,new,label):
     assert n==1,(label,n)
     cpp=cpp.replace(old,new)
 
-replace_once('#include <memory>\n','#include <memory>\n#include <ranges>\n',"headers")
+replace_once('#include <memory>\n','#include <memory>\n#include <limits>\n#include <optional>\n#include <ranges>\n',"headers")
 replace_once('using u8 = std::uint8_t;\nusing u64 = std::uint64_t;',
-             'using u8 = std::uint8_t;\nusing u32 = std::uint32_t;\nusing u64 = std::uint64_t;\nusing s64 = std::int64_t;\nusing DAddr = u64;\nusing ImageViewId = std::size_t;\nconstexpr ImageViewId NULL_IMAGE_VIEW_ID = 0;\nconstexpr std::size_t NUM_RT = 4;\nnamespace Dirty {constexpr std::size_t ZetaBuffer=0,ColorBuffer0=1,RenderTargets=10;}\nnamespace boost::container {template<class T,std::size_t N> using small_vector=std::vector<T>;}',
+             'using u8 = std::uint8_t;\nusing u32 = std::uint32_t;\nusing u64 = std::uint64_t;\nusing s32 = std::int32_t;\nusing s64 = std::int64_t;\nusing DAddr = u64;\nusing ImageViewId = std::size_t;\nconstexpr ImageViewId NULL_IMAGE_VIEW_ID = 0;\nconstexpr std::size_t NUM_RT = 4;\nnamespace Dirty {constexpr std::size_t ZetaBuffer=0,ColorBuffer0=1,RenderTargets=10;}\nnamespace boost::container {template<class T,std::size_t N> using small_vector=std::vector<T>;}',
              "types")
 replace_once('    Converted=16,Tracked=32,IsDecoding=64\n};',
              '    Converted=16,Tracked=32,IsDecoding=64,Rescaled=128,Remapped=256\n};',
@@ -91,6 +92,24 @@ replace_once('    std::array<u8,256> bytes{};\n    unsigned read_calls=0;',
         assert(count<=bytes.size()-dst && count<=bytes.size()-src);
         std::memmove(bytes.data()+dst,bytes.data()+src,count);
         ++dma_calls;
+    }
+    std::optional<u64> GpuToCpuAddress(u64 addr) const {
+        if(addr>=bytes.size()) return std::nullopt;
+        return addr;
+    }
+    bool IsFullyMappedRange(u64 addr,std::size_t size) const {
+        return size>0 && addr<bytes.size() && size<=bytes.size()-addr;
+    }
+    bool IsContinuousRange(u64 addr,std::size_t size) const {
+        return IsFullyMappedRange(addr,size);
+    }
+    void ReadBlock(u64 addr,void* dst,std::size_t size) {
+        assert(IsFullyMappedRange(addr,size));
+        std::memcpy(dst,bytes.data()+addr,size);
+    }
+    void WriteBlock(u64 addr,const void* src,std::size_t size) {
+        assert(IsFullyMappedRange(addr,size));
+        std::memcpy(bytes.data()+addr,src,size);
     }''',"gpu bytes")
 # Reuse the same diagnostics-aware upload fixture as the F04 upload test.
 # TextureCpuRefresh, alias counters and the three new F07 upload stages are
@@ -140,6 +159,8 @@ replace_once('    void RefreshContents(Image&,ImageId);\n',
              '    void RefreshContents(Image&,ImageId);\n    void WriteMemory(DAddr,size_t);\n    void UnmapGPUMemory(size_t,GPUVAddr,size_t);\n    void SynchronizeAliases(ImageId);\n',"declarations")
 replace_once('__METHODS__\n',
              '''__METHODS__
+// Selected Maxwell DMA uses MemoryManager; the host mock calls it Memory.
+using MemoryManager = Memory;
 struct DmaRegs {
     u64 offset_in{},offset_out{};
     u32 line_length_in{},line_count{};
@@ -151,7 +172,10 @@ struct MockDma {
     Memory& memory_manager;
     explicit MockDma(Memory& m):memory_manager(m){}
     void PitchCopy(){
-__PITCH__
+        assert(CopyPitchDmaPlain(memory_manager,regs.offset_in,regs.offset_out,
+                                 static_cast<s32>(regs.pitch_in),
+                                 static_cast<s32>(regs.pitch_out),
+                                 regs.line_length_in,regs.line_count));
     }
 };
 template<class P>
@@ -250,9 +274,9 @@ int main(){
     IntegratedRemapDmaUpload();
     TextureCache<int> cache;''',"call main")
 cpp=cpp.replace("__METHODS__",methods).replace("__COALESCE__",coalesce)
-cpp=cpp.replace("__PITCH__",pitch).replace("__ALIAS__",alias)
+cpp=cpp.replace("__ALIAS__",alias)
 cpp=cpp.replace("__WRITE__",write).replace("__UNMAP__",unmap)
-assert not any(v in cpp for v in ("__METHODS__","__COALESCE__","__PITCH__","__ALIAS__","__WRITE__","__UNMAP__"))
+assert not any(v in cpp for v in ("__METHODS__","__COALESCE__","__ALIAS__","__WRITE__","__UNMAP__"))
 assert cpp.count("void TextureCache<P>::UnmapGPUMemory(")==1
 assert cpp.count("void TextureCache<P>::RefreshContents(")==1
 assert cpp.count("void TextureCache<P>::SynchronizeAliases(")==1

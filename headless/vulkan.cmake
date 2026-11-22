@@ -1052,6 +1052,44 @@ add_custom_command(
 add_custom_target(eden-r24-fxaa-quality-spv DEPENDS "${EDEN_R24_FXAA_HEADER}")
 add_dependencies(video_core eden-r24-fxaa-quality-spv)
 
+# GPU-51 / Lichii #7: X8_D24 <-> ABGR8 conversion shaders stay outside the
+# immutable pinned Eden source tree. Compile them on the host to the same
+# generated include directory consumed by the maintained BlitImageHelper.
+find_program(EDEN_NS1_X8D24_GLSLANG NAMES glslangValidator REQUIRED)
+set(EDEN_NS1_X8D24_COMMON "${EDEN_PORT_DIR}/x8d24_conversion.glsl")
+set(EDEN_NS1_ABGR8_TO_X8D24_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/host_shaders/convert_abgr8_to_x8d24_frag_spv.h")
+set(EDEN_NS1_X8D24_TO_ABGR8_HEADER
+    "${PORT_BUILD_DIR}/include/video_core/host_shaders/convert_x8d24_to_abgr8_frag_spv.h")
+add_custom_command(
+    OUTPUT "${EDEN_NS1_ABGR8_TO_X8D24_HEADER}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "${PORT_BUILD_DIR}/include/video_core/host_shaders"
+    COMMAND "${EDEN_NS1_X8D24_GLSLANG}" -V --target-env spirv1.3
+            "-I${EDEN_PORT_DIR}" -DUseUniformBlock=1
+            --variable-name CONVERT_ABGR8_TO_X8D24_FRAG_SPV
+            -o "${EDEN_NS1_ABGR8_TO_X8D24_HEADER}"
+            "${EDEN_PORT_DIR}/convert_abgr8_to_x8d24.frag"
+    DEPENDS "${EDEN_PORT_DIR}/convert_abgr8_to_x8d24.frag"
+            "${EDEN_NS1_X8D24_COMMON}"
+    VERBATIM)
+add_custom_command(
+    OUTPUT "${EDEN_NS1_X8D24_TO_ABGR8_HEADER}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+            "${PORT_BUILD_DIR}/include/video_core/host_shaders"
+    COMMAND "${EDEN_NS1_X8D24_GLSLANG}" -V --target-env spirv1.3
+            "-I${EDEN_PORT_DIR}" -DUseUniformBlock=1
+            --variable-name CONVERT_X8D24_TO_ABGR8_FRAG_SPV
+            -o "${EDEN_NS1_X8D24_TO_ABGR8_HEADER}"
+            "${EDEN_PORT_DIR}/convert_x8d24_to_abgr8.frag"
+    DEPENDS "${EDEN_PORT_DIR}/convert_x8d24_to_abgr8.frag"
+            "${EDEN_NS1_X8D24_COMMON}"
+    VERBATIM)
+add_custom_target(eden-ns1-x8d24-spv DEPENDS
+    "${EDEN_NS1_ABGR8_TO_X8D24_HEADER}"
+    "${EDEN_NS1_X8D24_TO_ABGR8_HEADER}")
+add_dependencies(video_core eden-ns1-x8d24-spv)
+
 configure_file("${EDEN_PORT_DIR}/vk_blit_screen_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_blit_screen.h" COPYONLY)
 # The native build driver explicitly re-runs CMake before every build,
@@ -1084,6 +1122,9 @@ if(EDEN4559_PINNED_BLIT_INDEX LESS 0)
 endif()
 list(REMOVE_ITEM video_sources renderer_vulkan/blit_image.cpp)
 list(APPEND video_sources "${PORT_BUILD_DIR}/blit_image.cpp")
+set_property(SOURCE "${PORT_BUILD_DIR}/blit_image.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${EDEN_NS1_ABGR8_TO_X8D24_HEADER};${EDEN_NS1_X8D24_TO_ABGR8_HEADER}")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp
     vulkan_common/vulkan_memory_allocator.cpp renderer_vulkan/vk_scheduler.cpp)
 # Spatial FSR1 stock percentage was reversed relative to RCAS stops:

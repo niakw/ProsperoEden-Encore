@@ -21,6 +21,13 @@ copy_old = "bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_add
 copy_new = "bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {\n    // FindBuffer and SynchronizeBuffer accept u32 byte spans. Never truncate\n    // a wider DMA request: the caller can take its ordinary software path.\n    // Reject empty copies before dirty-range bookkeeping as well.\n    if (amount == 0 || amount > static_cast<u64>(~u32{0})) {\n        return false;\n    }\n    const std::optional<DAddr> cpu_src_address = gpu_memory->GpuToCpuAddress(src_address);"
 assert expected.count(copy_old) == 1
 expected = expected.replace(copy_old, copy_new)
+# Vulkan VUID-00117: the production DMA copy cannot submit overlapping
+# device-physical spans even if its GPU virtual addresses are different.
+overlap_anchor = "    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);"
+overlap_guard = "    // vkCmdCopyBuffer forbids overlapping source and destination DEVICE\n    // memory (VUID-vkCmdCopyBuffer-pRegions-00117). Distinct GMMU virtual\n    // addresses can alias one physical allocation, and different VkBuffer\n    // handles do not make those overlapping memory accesses legal.\n    // Reject BEFORE dirty-range bookkeeping, ClearDownload, or GPU commands:\n    // MaxwellDMA will read the authoritative source and snapshot the alias.\n    // Compare distances rather than forming a potentially overflowing end.\n    const DAddr source = *cpu_src_address;\n    const DAddr destination = *cpu_dest_address;\n    if ((source <= destination && destination - source < amount) ||\n        (destination < source && source - destination < amount)) {\n        return false;\n    }\n"
+assert expected.count(overlap_anchor) == 1
+expected = expected.replace(overlap_anchor, overlap_guard + overlap_anchor)
+
 # DMA clear's amount is a word count, unlike byte-based cache registration.
 begin = expected.index('bool BufferCache<P>::DMAClear(')
 end = expected.index('\ntemplate <class P>', begin)
@@ -167,10 +174,27 @@ maintained = restore_r437_without_production_r2(
 assert maintained == expected, "R437 maintained header differs from reviewed transforms"
 assert maintained.count('::Eden::BufferPages::Mark(buffer.CpuAddr(), size);') == 1
 assert 'buffer-pages/video_core/buffer_cache/buffer_cache.h' in cm
-assert r.count('::Eden::BufferPages::NeverRegistered(addr, size)')==8
-# Five newer sites extend the original R437 witnesses: the batched path,
-# two single-range invalidations, and CPU unmap. These optimizations must
-# preserve shader/texture invalidation and unknown-memory fallback.
+# Validate the ownership witness by the runtime methods it protects. Later
+# reviewed work added GetFlushArea and batched invalidation guards, so a global
+# occurrence count is not a stable correctness contract.
+def raster_method(name, next_name):
+    begin = r.index(f"RasterizerVulkan::{name}(")
+    end = r.index(f"RasterizerVulkan::{next_name}(", begin)
+    return r[begin:end]
+
+buffer_witness = '::Eden::BufferPages::NeverRegistered(addr, size)'
+assert raster_method('FlushRegion', 'MustFlushRegion').count(buffer_witness) == 1
+assert raster_method('MustFlushRegion', 'GetFlushArea').count(buffer_witness) == 1
+assert raster_method('GetFlushArea', 'InvalidateRegion').count(buffer_witness) == 1
+assert raster_method('InvalidateRegion', 'InnerInvalidation').count(buffer_witness) == 1
+assert raster_method('InnerInvalidation', 'OnCPUWrite').count(buffer_witness) == 2
+assert raster_method('OnCPUWrite', 'OnCacheInvalidations').count(buffer_witness) == 1
+assert raster_method('OnCacheInvalidations', 'OnCacheInvalidation').count(buffer_witness) == 2
+assert raster_method('OnCacheInvalidation', 'InvalidateGPUCache').count(buffer_witness) == 1
+assert raster_method('UnmapMemory', 'ModifyGPUMemory').count(buffer_witness) == 1
+assert 'CPU page registration proof for buffer-only guest readbacks' in g
+assert 'Preserve buffer first-registration CPU-dirty semantics' in g
+assert 'CPU-addressed unmapping' in g
 assert 'bool buffer_may_overlap = false;' in r
 assert 'if (buffer_may_overlap)' in r
 witness=(root/'headless/buffer_pages.h').read_text()
@@ -179,7 +203,6 @@ assert witness.count('if(size <= (std::uint64_t{1}<<kPageBits)-(address&page_mas
 assert 'registered[page/64].load(std::memory_order_acquire)' in witness
 assert 'return !coverage_unknown.load(std::memory_order_acquire);' in witness
 assert 'registered[word].fetch_or(mask,std::memory_order_release)' in witness
-assert g.count('::Eden::BufferPages::NeverRegistered(addr, size)')==8
 pos=r.index('bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size)')
 body=r[pos:r.index('void RasterizerVulkan::OnCacheInvalidation',pos)]
 assert body.index('::Eden::BufferPages::NeverRegistered') < body.index(

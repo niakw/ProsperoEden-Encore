@@ -13,7 +13,35 @@ needle="bool AccelerateDMA::DmaBufferImageCopy("
 a=source.index(needle)
 b=source.index("    static constexpr auto sync_info",a)
 prefix=source[a:b]
-assert prefix==variant[variant.index(needle):variant.index("    static constexpr auto sync_info",variant.index(needle))]
+# The legacy bridge is a provenance baseline, not the active PS5 source.
+# Only the reviewed current-channel GMMU preflight may differ in this method.
+fragment_guard = """#ifdef PS5_NATIVE
+    // ObtainBuffer translates only the first GPU VA into one CPU interval.
+    // A buffer spanning noncontiguous GMMU pages would upload/download
+    // unrelated physical memory. The normal MaxwellDMA CPU fallback
+    // supports a page-aware transfer for both image-copy directions.
+    // Test the channel currently bound to this rasterizer; no stale GMMU.
+    if (!gpu_memory ||
+        (!gpu_memory->IsGranularRange(buffer_operand.address, checked_bytes) &&
+         !gpu_memory->IsContinuousRange(buffer_operand.address, checked_bytes))) {
+        return false;
+    }
+#endif
+"""
+lock_anchor="    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n"
+baseline=variant[variant.index(needle):variant.index("    static constexpr auto sync_info",variant.index(needle))]
+assert baseline.count(lock_anchor)==1
+assert prefix==baseline.replace(lock_anchor,lock_anchor+fragment_guard)
+assert prefix.index(fragment_guard) > prefix.index(lock_anchor)
+assert prefix.index(fragment_guard) < prefix.index("texture_cache.DmaImageId(")
+# Channel switch proof: the accelerator stores a reference to the rasterizer's
+# active GMMU pointer, not the GMMU captured during object construction.
+owner=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h").read_text()
+assert owner.count("Tegra::MemoryManager* const& gpu_memory;")==1
+assert owner.count("Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);")==1
+assert "accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory)" in source
+assert "gpu_memory{gpu_memory_}" in source
+assert "GPU-22 DMA image GMMU continuity before cache mutation" in gen
 assert "F07 native DMA image byte guard before paired cache mutex" in gen
 guard=prefix.index("if (checked_bytes == 0 ||")
 lock=prefix.index("std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};")
@@ -26,7 +54,14 @@ cpp=r"""
 #include <cstdint>
 #include <mutex>
 using u32=std::uint32_t;using u64=std::uint64_t;
-namespace Tegra { namespace DMA {
+namespace Tegra {
+struct MemoryManager {
+    bool fragmented{};
+    int checks{};
+    bool IsGranularRange(u64, u64) { ++checks; return !fragmented; }
+    bool IsContinuousRange(u64, u64) { ++checks; return !fragmented; }
+};
+namespace DMA {
 struct ImageCopy {};
 struct BufferOperand {u32 pitch{};u32 height{};u64 address{};};
 struct ImageOperand {};
@@ -51,6 +86,9 @@ struct TextureCacheMock {
 struct AccelerateDMA {
     BufferCacheMock buffer_cache;
     TextureCacheMock texture_cache;
+    Tegra::MemoryManager current{};
+    Tegra::MemoryManager* bound_channel=&current;
+    Tegra::MemoryManager* const& gpu_memory=bound_channel;
     template<bool IS_IMAGE_UPLOAD>
     bool DmaBufferImageCopy(const Tegra::DMA::ImageCopy&,
        const Tegra::DMA::BufferOperand&,
@@ -95,6 +133,25 @@ int main(){
 #endif
         check(0xffffffffu,2,false);
         check(64,32,true);
+#ifdef PS5_NATIVE
+        // A valid byte count but fragmented GMMU must be rejected before
+        // DmaImageId mutates cache ownership. This tests both directions.
+        AccelerateDMA fragmented;
+        Tegra::MemoryManager next_channel;
+        next_channel.fragmented=true;
+        fragmented.bound_channel=&next_channel;
+        Tegra::DMA::BufferOperand image_buffer{64,32,0x1000};
+        Tegra::DMA::ImageCopy copy{};
+        Tegra::DMA::ImageOperand image{};
+        const bool admitted = upload
+            ? fragmented.DmaBufferImageCopy<true>(copy,image_buffer,image)
+            : fragmented.DmaBufferImageCopy<false>(copy,image_buffer,image);
+        assert(!admitted);
+        assert(next_channel.checks==2);
+        assert(fragmented.current.checks==0);
+        assert(fragmented.texture_cache.looked_up==0);
+        assert(fragmented.buffer_cache.mutex.requests>0);
+#endif
     }
 }
 """
@@ -102,7 +159,7 @@ int main(){
 # Vulkan-handle guard and its position before image-cache lookup and upload.
 dma_method = source[source.index(needle):source.index("\nbool AccelerateDMA::ImageToBuffer(",source.index(needle))]
 dma_mirror = variant[variant.index(needle):variant.index("\nbool AccelerateDMA::ImageToBuffer(",variant.index(needle))]
-assert dma_method == dma_mirror
+assert dma_method == dma_mirror.replace(lock_anchor,lock_anchor+fragment_guard)
 assert dma_method.count("if (!buffer || buffer->Handle() == VK_NULL_HANDLE)") == 1
 assert dma_method.index("if (!buffer || buffer->Handle() == VK_NULL_HANDLE)") < dma_method.index("texture_cache.DmaBufferImageCopy(")
 assert "F07 DMA image reject null Vulkan handles" in gen

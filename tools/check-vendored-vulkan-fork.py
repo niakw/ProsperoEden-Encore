@@ -16,6 +16,42 @@ active=root/'vendor/encore-active/eden-vulkan'
 upstream=root/'vendor/sources/eden'
 assert (upstream/'VENDOR-ORIGIN.json').exists()
 assert (active/'vulkan_renderer.cpp').exists()
+# FC27 first-use pipeline completion is owned by the maintained C++,
+# never by the historical Eden generator. Seal both complete source blobs
+# and the move-before-publication ordering before replaying old oracles.
+for relative, reviewed_blob in (
+    ('vk_graphics_pipeline_cost.cpp', 'f3c82781675b6979a8be96a333184e048ef57f81'),
+    ('vk_compute_pipeline_cost.cpp', 'bb9552866e26e502839eed646be9af6ea0a0db0a'),
+):
+    owner = active / relative
+    raw = owner.read_text()
+    raw_blob = subprocess.check_output(
+        ['git', 'hash-object', str(owner)], text=True).strip()
+    if relative == 'vk_graphics_pipeline_cost.cpp' and raw_blob == (
+            'df36d210d04411b87e1fdad7fbd0689b1e4d3488'):
+        # GPU-49 is a later fragment-output ownership fix. Rewind only its
+        # two graphics-pipeline hunks before checking the older build-task
+        # lifetime owner; never restamp that historical receipt.
+        gpu49_ctor = """    // Maxwell leaves render-target components not written by the fragment shader untouched.
+    // Vulkan otherwise permits undefined values there, which is visible on AMD/RADV.
+    for (size_t rt = 0; rt < Maxwell::NumRenderTargets; ++rt) {
+        color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}
+                             << (rt * 4);
+    }
+
+"""
+        gpu49_mask = "        write_mask &= ColorOutputMask(index);\n"
+        assert raw.count(gpu49_ctor) == raw.count(gpu49_mask) == 1
+        raw = raw.replace(gpu49_ctor, "\n", 1).replace(gpu49_mask, "", 1)
+        data = raw.encode()
+        assert hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest() == reviewed_blob
+        print('ENCORE_NS1_GPU49_GRAPHICS_BUILD_OWNER_EXACT_REVERSE_PASS')
+    else:
+        assert raw_blob == reviewed_blob, relative
+    assert raw.count('    auto task = std::move(build_task);\n'
+                     '    build_task = nullptr;\n'
+                     '    task();\n}') == 1, relative
+    assert '    build_task();\n    build_task = nullptr;\n}' not in raw, relative
 with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     temp=Path(d)
     # The *production* renderer has always consumed Eden AFTER the ordered
@@ -78,23 +114,561 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     subprocess.run([sys.executable,'-B',str(root/'tools/prepare-vulkan-port.py'),str(patched),str(temp/'generated')],check=True,timeout=150,env=env)
     actual={str(p.relative_to(temp/'generated')):p for p in (temp/'generated').rglob('*') if p.is_file()}
     expected={str(p.relative_to(active)):p for p in active.rglob('*') if p.is_file()}
+
+    # NS1 guest CPU readback: reverse ONLY the new buffer-dirty read decision
+    # on audit copies before replaying all historical Vulkan-source receipts.
+    # This proves the new Vulkan and bridge methods are byte-exact deltas,
+    # without legitimizing arbitrary edits to either maintained source.
+    def _ns1_read_blob(data):
+        encoded=data.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(encoded)).encode()+bytes([0])+encoded).hexdigest()
+    old_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    // A guest read cannot overlap a registered image when no page in this\n    // range has ever appeared in the image slot map. Skip the GPU-held mutex.\n    // Unknown/out-of-range/large ranges retain the original blocking path.\n    if (::Eden::ImagePages::NeverHeld(addr, size)) {\n        return VideoCore::RasterizerDownloadArea{\n            .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n            .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n            .preemtive = true,\n        };\n    }\n    {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        auto area = texture_cache.GetFlushArea(addr, size);\n        if (area) {\n            return *area;\n        }\n    }\n    VideoCore::RasterizerDownloadArea new_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    return new_area;\n}\n"
+    new_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        ::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(\n                clean_area.start_address, clean_area.end_address - clean_area.start_address)) {\n            // GPU::OnCPURead must not return early for buffer-only GPU writes.\n            // Keep any texture-covered extent, including its sibling bytes.\n            return VideoCore::RasterizerDownloadArea{\n                .start_address = texture_area\n                    ? (std::min)(texture_area->start_address, clean_area.start_address)\n                    : clean_area.start_address,\n                .end_address = texture_area\n                    ? (std::max)(texture_area->end_address, clean_area.end_address)\n                    : clean_area.end_address,\n                .preemtive = false,\n            };\n        }\n    }\n    return texture_area.value_or(clean_area);\n}\n"
+    for relative, current, previous in (
+        ('encore-active/eden-vulkan/vulkan_rasterizer.cpp', '0633e3cf41c615f46791d3943ff40ac22399b047', '1544c6aecbc8cac5bede5a3119e551b1f760dee9'),
+        ('encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp', 'edaa82feb71665e4b6fbfd3ff34d80378e3bca73', '802233b8d5eb72439203a699253c3010c2909ae4'),
+    ):
+        source_path=root/'vendor'/relative
+        source=source_path.read_text()
+        if relative.endswith("eden-vulkan/vulkan_rasterizer.cpp"):
+            # Prove the two corrected call-site deltas on an audit copy,
+            # then reuse the pre-integration readback and Vulkan receipts.
+            assert _ns1_read_blob(source)=="f67815618d25657dcf64a87944b0c0bc5c2d8993"
+            begin="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
+            end="\nvoid RasterizerVulkan::InvalidateRegion("
+            assert source.count(begin)==source.count(end)==1
+            i=source.index(begin)
+            j=source.index(end,i)
+            section=source[i:j]
+            for newer,older in (
+                ("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+                 "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);"),
+                ("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+                 "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);"),
+            ):
+                assert section.count(newer)==1 and older not in section
+                section=section.replace(newer,older,1)
+            source=source[:i]+section+source[j:]
+        assert _ns1_read_blob(source)==current, ('NS1 CPU readback owner drift',relative)
+        assert source.count(new_read_area)==1, ('NS1 CPU readback method moved',relative)
+        restored=source.replace(new_read_area,old_read_area,1)
+        assert _ns1_read_blob(restored)==previous, ('NS1 CPU readback predecessor drift',relative)
+        if relative.endswith('eden-vulkan/vulkan_rasterizer.cpp'):
+            normalized=temp/'normalized-ns1-cpu-read'/'vulkan_rasterizer.cpp'
+            normalized.parent.mkdir(parents=True,exist_ok=True)
+            normalized.write_text(restored)
+            expected['vulkan_rasterizer.cpp']=normalized
+    print('ENCORE_NS1_BUFFER_CPU_READ_EXACT_REVERSE_PASS owners=2')
+
+    # GPU-51 (Lichii #7): X8_D24 <-> ABGR8 conversion support changes only
+    # three maintained Vulkan owners. Reverse those exact hunks on audit copies
+    # before GPU-50 and the frozen historical generator receipts.
+    def _gpu51_blob(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()
+
+    gpu51_edits={
+        'blit_image.cpp': (
+            '4ba93afb6594213d5bde82be2693f0e08cb1cd63',
+            'bbde031a184b93745fa0449aef74f351355fb70d',
+            (
+                ('''#include "video_core/host_shaders/convert_abgr8_to_d24s8_frag_spv.h"
+#include "video_core/host_shaders/convert_abgr8_to_x8d24_frag_spv.h"
+#include "video_core/host_shaders/convert_x8d24_to_abgr8_frag_spv.h"
+#include "video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h"''',
+                 '''#include "video_core/host_shaders/convert_abgr8_to_d24s8_frag_spv.h"
+#include "video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h"'''),
+                ('''      convert_abgr8_to_d24s8_frag(device.IsExtShaderStencilExportSupported()
+                                 ? BuildShader(device, CONVERT_ABGR8_TO_D24S8_FRAG_SPV)
+                                 : vk::ShaderModule{}),
+      convert_abgr8_to_x8d24_frag(BuildShader(device, CONVERT_ABGR8_TO_X8D24_FRAG_SPV)),
+      convert_x8d24_to_abgr8_frag(BuildShader(device, CONVERT_X8D24_TO_ABGR8_FRAG_SPV)),
+      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),''',
+                 '''      convert_abgr8_to_d24s8_frag(device.IsExtShaderStencilExportSupported()
+                                 ? BuildShader(device, CONVERT_ABGR8_TO_D24S8_FRAG_SPV)
+                                 : vk::ShaderModule{}),
+      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),'''),
+                ('''void BlitImageHelper::ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer,
+                                          const ImageView& src_image_view) {
+    ConvertPipelineDepthTargetEx(convert_abgr8_to_x8d24_pipeline, dst_framebuffer->RenderPass(),
+                                 convert_abgr8_to_x8d24_frag);
+    Convert(*convert_abgr8_to_x8d24_pipeline, dst_framebuffer, src_image_view);
+}
+
+void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
+                                          const ImageView& src_image_view) {
+    ConvertPipelineEx(convert_x8d24_to_abgr8_pipeline, dst_framebuffer->RenderPass(),
+                      convert_x8d24_to_abgr8_frag, true, false);
+    Convert(*convert_x8d24_to_abgr8_pipeline, dst_framebuffer, src_image_view);
+}
+
+''', ''),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/blit_image.h': (
+            'a38cfcf655adcb8ceebfce955b39a2312a239768',
+            '81eda086f50e04d3e1537aebff404a6097a07069',
+            (
+                ('''    void ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);
+
+    void ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);
+
+''', ''),
+                ('''    vk::ShaderModule convert_abgr8_to_x8d24_frag;
+    vk::ShaderModule convert_x8d24_to_abgr8_frag;
+''', ''),
+                ('''    vk::Pipeline convert_abgr8_to_x8d24_pipeline;
+    vk::Pipeline convert_x8d24_to_abgr8_pipeline;
+''', ''),
+            ),
+        ),
+        'vk_texture_cache_cost.cpp': (
+            'e9191238ccddd94aa22570eba501fb05fff5b207',
+            '16a8ad80677d992b557ec90283a8f3b483b97440',
+            (
+                ('''        if (src_view.format == PixelFormat::X8_D24_UNORM) {
+            return blit_image_helper.ConvertX8D24ToABGR8(dst, src_view);
+        }
+''', ''),
+                ('''    case PixelFormat::X8_D24_UNORM:
+        if (src_view.format == PixelFormat::A8B8G8R8_UNORM) {
+            return blit_image_helper.ConvertABGR8ToX8D24(dst, src_view);
+        }
+        break;
+''', ''),
+            ),
+        ),
+    }
+    for gpu51_name,(current_blob,predecessor_blob,edits) in gpu51_edits.items():
+        raw=expected[gpu51_name].read_text()
+        assert _gpu51_blob(raw)==current_blob, ("GPU-51 owner drift",gpu51_name,_gpu51_blob(raw))
+        normalized=raw
+        for newer,older in edits:
+            assert normalized.count(newer)==1, ("GPU-51 audit hunk drift",gpu51_name,newer[:100])
+            normalized=normalized.replace(newer,older,1)
+        assert _gpu51_blob(normalized)==predecessor_blob, (
+            "GPU-51 predecessor reconstruction failed",gpu51_name,_gpu51_blob(normalized))
+        out=temp/'normalized-vendor-gpu51'/gpu51_name
+        out.parent.mkdir(parents=True,exist_ok=True)
+        out.write_text(normalized)
+        expected[gpu51_name]=out
+    print("ENCORE_NS1_GPU51_X8D24_CONVERSION_EXACT_REVERSE_PASS owners=3")
+
+    # GPU-54 (Lichii #295 / 73bcdc059d): WFI must be repeatable and memory-visible.
+    # Reverse the exact production changes only on audit copies before GPU-50/49 and
+    # frozen R23 receipts. Shipping source keeps the barrier and no reusable event.
+    gpu54_edits={
+        'vulkan_rasterizer.cpp': (
+            '1544c6aecbc8cac5bede5a3119e551b1f760dee9',
+            '8473aa19cd3cdcf8546dce994ceb69cbee2b1220',
+            (
+                (
+"""      fence_manager(*this, gpu, texture_cache, buffer_cache, query_cache, device, scheduler) {
+""",
+"""      fence_manager(*this, gpu, texture_cache, buffer_cache, query_cache, device, scheduler),
+      wfi_event(device.GetLogical().CreateEvent()) {
+"""
+                ),
+                (
+"""    scheduler.RequestOutsideRenderPassOperationContext();
+    scheduler.Record([flags](vk::CommandBuffer cmdbuf) {
+        // A reusable event that is never reset only orders its first signal and, without a
+        // memory barrier, does not make earlier GPU writes visible to subsequent commands.
+        // A pipeline barrier expresses both the execution dependency and the guest WFI memory
+        // visibility on every invocation. Adapted from Lichii #295 / 73bcdc059d.
+        static constexpr VkMemoryBarrier WFI_BARRIER{
+            .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
+        };
+        cmdbuf.PipelineBarrier(flags, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, WFI_BARRIER);
+    });
+    fence_manager.SignalOrdering();
+""",
+"""    scheduler.RequestOutsideRenderPassOperationContext();
+    scheduler.Record([event = *wfi_event, flags](vk::CommandBuffer cmdbuf) {
+        cmdbuf.SetEvent(event, flags);
+        cmdbuf.WaitEvents(event, flags, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, {}, {}, {});
+    });
+    fence_manager.SignalOrdering();
+"""
+                ),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/vk_rasterizer.h': (
+            '6e0bf7ab2a3a2147f9db0c630070db30d9b35d56',
+            'f18e79dfece6eba3e4984b3ec0645abbfe1760e1',
+            (
+                ("    FenceManager fence_manager;\n\n\n#ifdef PS5_NATIVE\n",
+                 "    FenceManager fence_manager;\n\n    vk::Event wfi_event;\n\n#ifdef PS5_NATIVE\n"),
+            ),
+        ),
+    }
+    def gpu54_blob(text):
+        raw=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+    for gpu54_name,(current_blob,predecessor_blob,edits) in gpu54_edits.items():
+        raw=expected[gpu54_name].read_text()
+        actual_blob=gpu54_blob(raw)
+        if actual_blob == current_blob:
+            if gpu54_name == 'vulkan_rasterizer.cpp':
+                wfi=raw.split('void RasterizerVulkan::WaitForIdle() {',1)[1].split(
+                    '\nvoid RasterizerVulkan::FragmentBarrier()',1)[0]
+                assert 'VK_ACCESS_MEMORY_WRITE_BIT' in wfi
+                assert 'VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT' in wfi
+                assert 'VK_PIPELINE_STAGE_ALL_COMMANDS_BIT' in wfi
+                assert 'cmdbuf.PipelineBarrier(' in wfi
+                assert 'cmdbuf.SetEvent(' not in wfi and 'cmdbuf.WaitEvents(' not in wfi
+            else:
+                assert 'wfi_event' not in raw
+            normalized=raw
+            for newer,older in edits:
+                assert normalized.count(newer)==1, ('GPU-54 audit hunk drift',gpu54_name)
+                normalized=normalized.replace(newer,older,1)
+            assert gpu54_blob(normalized)==predecessor_blob, (
+                'GPU-54 predecessor reconstruction failed',gpu54_name,gpu54_blob(normalized))
+            out=temp/'normalized-vendor-gpu54'/gpu54_name
+            out.parent.mkdir(parents=True,exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu54_name]=out
+        else:
+            assert actual_blob == predecessor_blob, ('Unexpected GPU-54 owner',gpu54_name,actual_blob)
+    print("ENCORE_NS1_GPU54_WFI_BARRIER_EXACT_REVERSE_PASS owners=2 repeatable=1 memory_visible=1")
+
+    # GPU-50 (Lichii #2047): reverse only the reviewed Maxwell DMA cache
+    # notification on an audit COPY; shipping NS1 retains granular coherency.
+    # GPU-49 and older Vulkan receipts must compare against their exact owner.
+    gpu50_owner='vulkan_rasterizer.cpp'
+    gpu50_shipped=expected[gpu50_owner].read_text()
+    def gpu50_blob(data):
+        raw=data.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+    assert gpu50_blob(gpu50_shipped)=="8473aa19cd3cdcf8546dce994ceb69cbee2b1220", 'GPU-50 raster owner drift'
+    gpu50_new_method="bool AccelerateDMA::BufferCopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {\n    // Invalid DMA byte counts have no GPU buffer range; return to the\n    // software path without contending on the guest buffer cache mutex.\n    if (amount == 0 || amount > static_cast<u64>(~u32{0})) {\n        return false;\n    }\n    // A buffer DMA updates guest memory without invoking the texture-cache\n    // CPU-write callback. Hold both cache locks over the ownership decision\n    // and copy so another thread cannot publish a newer image in between.\n    // Lichii c84935f / 47d2368 / 36bfb77: only invalidate destination images\n    // whose latest bytes are already in guest memory. Skip the unsafe case\n    // rather than uploading stale CPU bytes over GPU-owned image contents.\n    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n    bool copied_gpu_bytes = false;\n    boost::container::small_vector<std::pair<DAddr, size_t>, 4> gpu_written_dest;\n    if (!buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes,\n                              &gpu_written_dest)) {\n        return false;\n    }\n    if (gpu_memory && gpu_memory->UsesNativeTiling()) {\n        // GPU-50 is an NS1 Maxwell coherency fix. Keep the separately owned\n        // native-tiling/NS2 policy byte-for-byte equivalent to its old guard.\n        if (!copied_gpu_bytes &&\n            !texture_cache.IsGpuMemoryGpuModified(src_address, amount) &&\n            !texture_cache.IsGpuMemoryGpuModified(dest_address, amount)) {\n            texture_cache.WriteGpuMemory(dest_address, amount);\n        }\n    } else {\n        texture_cache.WriteDmaCopy(src_address, dest_address, static_cast<size_t>(amount),\n                                   gpu_written_dest);\n    }\n    return true;\n}\n"
+    gpu50_old_method="bool AccelerateDMA::BufferCopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount) {\n    // Invalid DMA byte counts have no GPU buffer range; return to the\n    // software path without contending on the guest buffer cache mutex.\n    if (amount == 0 || amount > static_cast<u64>(~u32{0})) {\n        return false;\n    }\n    // A buffer DMA updates guest memory without invoking the texture-cache\n    // CPU-write callback. Hold both cache locks over the ownership decision\n    // and copy so another thread cannot publish a newer image in between.\n    // Lichii c84935f / 47d2368 / 36bfb77: only invalidate destination images\n    // whose latest bytes are already in guest memory. Skip the unsafe case\n    // rather than uploading stale CPU bytes over GPU-owned image contents.\n    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n    bool copied_gpu_bytes = false;\n    if (!buffer_cache.DMACopy(src_address, dest_address, amount, &copied_gpu_bytes)) {\n        return false;\n    }\n    if (!copied_gpu_bytes &&\n        !texture_cache.IsGpuMemoryGpuModified(src_address, amount) &&\n        !texture_cache.IsGpuMemoryGpuModified(dest_address, amount)) {\n        texture_cache.WriteGpuMemory(dest_address, amount);\n    }\n    return true;\n}\n"
+    assert gpu50_shipped.count(gpu50_new_method)==1, 'GPU-50 method hunk drift'
+    gpu50_predecessor=gpu50_shipped.replace(gpu50_new_method,gpu50_old_method,1)
+    assert gpu50_blob(gpu50_predecessor)=="6cb282532b308478ca0d9237d399fe4259e42fca", 'GPU-50 predecessor mismatch'
+    gpu50_audit=temp/'normalized-vendor-gpu50'/gpu50_owner
+    gpu50_audit.parent.mkdir(parents=True,exist_ok=True)
+    gpu50_audit.write_text(gpu50_predecessor)
+    expected[gpu50_owner]=gpu50_audit
+    print("ENCORE_NS1_GPU50_DMA_TEXTURE_EXACT_REVERSE_PASS")
+
+    # GPU-49 (Lichii #353) is newer than the frozen Vulkan generator receipts.
+    # Reverse its exact production hunks on audit COPIES, proving every owner
+    # reconstructs its immediate GPU-48/GPU-47 predecessor byte-for-byte.
+    def _gpu49_blob(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()
+
+    gpu49_edits={
+        'vk_graphics_pipeline_cost.cpp': (
+            'df36d210d04411b87e1fdad7fbd0689b1e4d3488',
+            'f3c82781675b6979a8be96a333184e048ef57f81',
+            (
+                ("""    // Maxwell leaves render-target components not written by the fragment shader untouched.
+    // Vulkan otherwise permits undefined values there, which is visible on AMD/RADV.
+    for (size_t rt = 0; rt < Maxwell::NumRenderTargets; ++rt) {
+        color_output_mask |= u32{stage_infos[NUM_STAGES - 1].frag_color_components[rt]}
+                             << (rt * 4);
+    }
+
+""", "\n"),
+                ("        write_mask &= ColorOutputMask(index);\n", ""),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/vk_graphics_pipeline.h': (
+            'c1ed0200afd3666056dfe0ef60705015a923dac7',
+            'cc53133dd516e2d1d245326866ab3ce0c852b36b',
+            (
+                ("""    [[nodiscard]] VkColorComponentFlags ColorOutputMask(size_t render_target) const noexcept {
+        return (color_output_mask >> (render_target * 4)) & 0xF;
+    }
+
+    [[nodiscard]] u32 ColorOutputMask() const noexcept {
+        return color_output_mask;
+    }
+
+""", ""),
+                ("    bool fragment_has_color0_output{};\n    u32 color_output_mask{};\n",
+                 "    bool fragment_has_color0_output{};\n"),
+            ),
+        ),
+        'vulkan_rasterizer.cpp': (
+            '6cb282532b308478ca0d9237d399fe4259e42fca',
+            '891343dabc62855110ac1139ac2b817022eb97b5',
+            (
+                ("""    if (device.IsExtExtendedDynamicState3BlendingSupported()) {
+        // prepared_pipeline is set only for a real guest draw. DrawTexture leaves it null,
+        // so its raw blit keeps the full write mask and avoids a cold pipeline lookup.
+        UpdateBlending(regs, prepared_pipeline);
+    } else if (device.IsExtColorWriteEnableSupported()) {
+""",
+                 """    if (device.IsExtExtendedDynamicState3BlendingSupported()) {
+        UpdateBlending(regs);
+    } else if (device.IsExtColorWriteEnableSupported()) {
+"""),
+                ("""void RasterizerVulkan::UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,
+                                      const GraphicsPipeline* pipeline) {
+    const u32 color_output_mask = pipeline ? pipeline->ColorOutputMask() : ~0U;
+    const bool color_output_changed = color_output_mask != last_color_output_mask;
+    if (!state_tracker.TouchBlending() && !color_output_changed) {
+        return;
+    }
+
+    if (state_tracker.TouchColorMask() || color_output_changed) {
+        last_color_output_mask = color_output_mask;
+        std::array<VkColorComponentFlags, Maxwell::NumRenderTargets> setup_masks{};
+""",
+                 """void RasterizerVulkan::UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs) {
+    if (!state_tracker.TouchBlending()) {
+        return;
+    }
+
+    if (state_tracker.TouchColorMask()) {
+        std::array<VkColorComponentFlags, Maxwell::NumRenderTargets> setup_masks{};
+"""),
+                ("            current &= (color_output_mask >> (index * 4)) & 0xF;\n", ""),
+            ),
+        ),
+        'include/video_core/renderer_vulkan/vk_rasterizer.h': (
+            'f18e79dfece6eba3e4984b3ec0645abbfe1760e1',
+            'db60043206cc66a284bd3e9327a9fed7b011b25a',
+            (
+                ("""    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,
+                        const GraphicsPipeline* pipeline);
+""",
+                 "    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs);\n"),
+                ("    u32 draw_counter = 0;\n    u32 last_color_output_mask{};\n",
+                 "    u32 draw_counter = 0;\n"),
+            ),
+        ),
+    }
+    gpu49_predecessor_paths={}
+    for gpu49_name,(current_blob,predecessor_blob,edits) in gpu49_edits.items():
+        raw=expected[gpu49_name].read_text()
+        actual_blob=_gpu49_blob(raw)
+        if actual_blob == current_blob:
+            normalized=raw
+            for newer,older in edits:
+                assert normalized.count(newer)==1, ("GPU-49 audit hunk drift",gpu49_name,newer[:90])
+                normalized=normalized.replace(newer,older,1)
+            assert _gpu49_blob(normalized)==predecessor_blob, (
+                "GPU-49 predecessor reconstruction failed",gpu49_name,_gpu49_blob(normalized))
+            out=temp/'normalized-vendor-gpu49'/gpu49_name
+            out.parent.mkdir(parents=True,exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu49_name]=out
+            gpu49_predecessor_paths[gpu49_name]=out
+        else:
+            assert actual_blob == predecessor_blob, ("Unexpected GPU-49 owner",gpu49_name,actual_blob)
+            gpu49_predecessor_paths[gpu49_name]=expected[gpu49_name]
+    print("ENCORE_NS1_GPU49_FRAGMENT_OUTPUT_EXACT_REVERSE_PASS owners=4")
+
+    # GPU-47 is the framebuffer-limit subset of Lichii #427 only. Reverse its
+    # exact texture-cache hunk before GPU-46; StreamBuffer is intentionally
+    # untouched because it is a separate upstream change.
+    gpu47_texture_name='vk_texture_cache_cost.cpp'
+    gpu47_current='16a8ad80677d992b557ec90283a8f3b483b97440'
+    gpu47_predecessor='a12ef3892565ce80f17c30b3cb54fa337718ccff'
+    gpu47_text=expected[gpu47_texture_name].read_text()
+    gpu47_blob=hashlib.sha1(
+        b'blob '+str(len(gpu47_text.encode())).encode()+bytes([0])+gpu47_text.encode()
+    ).hexdigest()
+    if gpu47_blob == gpu47_current:
+        gpu47_block=(
+            "    // Vulkan framebuffer dimensions are device limits, not guest clip limits.\n"
+            "    // Attachment-less draws can retain a 32768x32768 surface clip even when\n"
+            "    // the host only exposes 16384. Clamp every framebuffer before creation.\n"
+            "    const auto clamp_extent = [&runtime](VkExtent2D extent) {\n"
+            "        extent.width =\n"
+            "            (std::max)(1U, (std::min)(extent.width, runtime.device.GetMaxFramebufferWidth()));\n"
+            "        extent.height =\n"
+            "            (std::max)(1U, (std::min)(extent.height, runtime.device.GetMaxFramebufferHeight()));\n"
+            "        return extent;\n"
+            "    };\n"
+            "    layers = (std::max)(1U, (std::min)(layers, runtime.device.GetMaxFramebufferLayers()));\n"
+        )
+        assert gpu47_text.count(gpu47_block)==1, "GPU-47 texture limit block drift"
+        gpu47_text=gpu47_text.replace(gpu47_block,"",1)
+        gpu47_new_mixed=(
+            "        const VkExtent2D extent = clamp_extent(\n"
+            "            {(std::min)(render_area.width, width), (std::min)(render_area.height, height)});"
+        )
+        gpu47_old_mixed=(
+            "        const VkExtent2D extent{(std::min)(render_area.width, width),\n"
+            "                                (std::min)(render_area.height, height)};"
+        )
+        assert gpu47_text.count(gpu47_new_mixed)==1, "GPU-47 mixed extent drift"
+        gpu47_text=gpu47_text.replace(gpu47_new_mixed,gpu47_old_mixed,1)
+        assert gpu47_text.count("    render_area = clamp_extent(render_area);\n")==1
+        gpu47_text=gpu47_text.replace("    render_area = clamp_extent(render_area);\n","",1)
+        data=gpu47_text.encode()
+        assert hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()==gpu47_predecessor, (
+            "GPU-47 texture reversal did not restore GPU-46 predecessor")
+        out=temp/'normalized-vendor-gpu47'/gpu47_texture_name
+        out.parent.mkdir(parents=True,exist_ok=True)
+        out.write_text(gpu47_text)
+        expected[gpu47_texture_name]=out
+        print("ENCORE_NS1_GPU47_VULKAN_LIMIT_EXACT_REVERSE_PASS texture=1",flush=True)
+    else:
+        assert gpu47_blob==gpu47_predecessor, ("Unexpected GPU-47 texture owner",gpu47_blob)
+
+    # GPU-46 is a reviewed production successor to the historical Vulkan
+    # generator: Vulkan framebuffer layers are bounded by the smallest
+    # attachment and clear ranges are clipped to that exact count. Reverse
+    # ONLY these exact hunks on audit copies; shipping owners stay untouched.
+    def _blob_text(text):
+        data=text.encode('utf-8')
+        return hashlib.sha1(b'blob '+str(len(data)).encode()+bytes([0])+data).hexdigest()
+
+    gpu46_edits={
+        'include/video_core/renderer_vulkan/vk_texture_cache.h': (
+            '6623a5d5164d4b09f1ea9089b62b7c5fdfdfaa05',
+            '1b725abab76168d9787d9b062d7406df733cf49d',
+            (
+                ("    [[nodiscard]] u32 Layers() const noexcept {\n"
+                 "        return layers;\n"
+                 "    }\n\n", ""),
+                ("    u32 num_images = 0;\n"
+                 "    u32 layers = 1;\n",
+                 "    u32 num_images = 0;\n"),
+            ),
+        ),
+        'vk_texture_cache_cost.cpp': (
+            'a12ef3892565ce80f17c30b3cb54fa337718ccff',
+            '88c2221eae24b0b3c46e81dfdb27c3a833f77fc6',
+            (
+                ("    s32 num_layers = (std::numeric_limits<s32>::max)();",
+                 "    s32 num_layers = 1;"),
+                ("        num_layers = (std::min)(num_layers, color_buffer->range.extent.layers);",
+                 "        num_layers = (std::max)(num_layers, color_buffer->range.extent.layers);"),
+                ("        num_layers = (std::min)(num_layers, depth_buffer->range.extent.layers);",
+                 "        num_layers = (std::max)(num_layers, depth_buffer->range.extent.layers);"),
+                ("    if (num_layers == (std::numeric_limits<s32>::max)()) {\n"
+                 "        num_layers = 1;\n"
+                 "    }\n"
+                 "    layers = static_cast<u32>((std::max)(num_layers, 1));\n", ""),
+                ("        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+                 "                                      layers, extent);",
+                 "        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+                 "                                      static_cast<u32>((std::max)(num_layers, 1)), extent);"),
+                ("    if (do_resolve_color) {\n"
+                 "        for (size_t index = 0; index < NUM_RT; ++index) {",
+                 "    if (do_resolve_color) {\n"
+                 "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+                 "        for (size_t index = 0; index < NUM_RT; ++index) {"),
+                ("    if (do_resolve_depth_stencil) {\n"
+                 "        const VkFormat vk_format =",
+                 "    if (do_resolve_depth_stencil) {\n"
+                 "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+                 "        const VkFormat vk_format ="),
+                ("    CreateVkFramebuffer(runtime, attachments, layers);",
+                 "    CreateVkFramebuffer(runtime, attachments, static_cast<u32>((std::max)(num_layers, 1)));"),
+            ),
+        ),
+        'vulkan_rasterizer.cpp': (
+            '891343dabc62855110ac1139ac2b817022eb97b5',
+            'fdd5a73ccf795fd58100469c546b544a86a68e5b',
+            (
+                ("    const u32 framebuffer_layers = framebuffer->Layers();\n"
+                 "    const u32 clear_base_layer = regs.clear_surface.layer;\n"
+                 "    if (layer_count == 0 || clear_base_layer >= framebuffer_layers) {\n"
+                 "        return;\n"
+                 "    }\n"
+                 "    const u32 clear_layer_count =\n"
+                 "        (std::min)(layer_count, framebuffer_layers - clear_base_layer);\n"
+                 "    const bool clear_covers_all_layers =\n"
+                 "        clear_base_layer == 0 && clear_layer_count == framebuffer_layers;\n\n", "\n"),
+                ("        .baseArrayLayer = clear_base_layer,\n"
+                 "        .layerCount = clear_layer_count,",
+                 "        .baseArrayLayer = regs.clear_surface.layer,\n"
+                 "        .layerCount = layer_count,"),
+                ("                                 clear_covers_all_layers &&\n",
+                 "                                 regs.clear_surface.layer == 0 &&\n"),
+                ("                can_defer_clear && !ds_used && clear_layer_count == 1 &&\n"
+                 "                framebuffer_layers == 1 &&\n",
+                 "                can_defer_clear && !ds_used && layer_count == 1 &&\n"),
+            ),
+        ),
+    }
+    for gpu46_name,(current_blob,predecessor_blob,edits) in gpu46_edits.items():
+        raw=expected[gpu46_name].read_text()
+        actual_blob=_blob_text(raw)
+        if actual_blob == current_blob:
+            normalized=raw
+            for newer,older in edits:
+                assert normalized.count(newer)==1, ("GPU-46 audit hunk drift",gpu46_name,newer[:80])
+                normalized=normalized.replace(newer,older,1)
+            assert _blob_text(normalized)==predecessor_blob, (
+                "GPU-46 predecessor reconstruction failed",gpu46_name,_blob_text(normalized))
+            out=temp/'normalized-vendor-gpu46'/gpu46_name
+            out.parent.mkdir(parents=True,exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu46_name]=out
+        elif (gpu46_name == 'include/video_core/renderer_vulkan/vk_texture_cache.h' and
+              actual_blob == 'ecdadfd6b699d1d4ec58be58f7e37287c1986717'):
+            # The generic Vulkan header now shares GPU-46's layer storage with
+            # the PS5 ASTC header, but intentionally does not expose Layers().
+            # Reverse exactly that one declaration on this audit copy.
+            newer, older = edits[1]
+            assert raw.count(newer) == 1 and edits[0][0] not in raw, (
+                "GPU-46 generic header parity drift", actual_blob)
+            normalized = raw.replace(newer, older, 1)
+            assert _blob_text(normalized) == predecessor_blob, (
+                "GPU-46 generic predecessor reconstruction failed", _blob_text(normalized))
+            out = temp/'normalized-vendor-gpu46'/gpu46_name
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu46_name] = out
+        else:
+            assert actual_blob == predecessor_blob, ("Unexpected GPU-46 owner",gpu46_name,actual_blob)
+    print("ENCORE_NS1_GPU46_VULKAN_LAYER_EXACT_REVERSE_PASS owners=3")
+    # c30f46 publishes build completion from the task and can let cache
+    # teardown destroy the pipeline before RunBuild returns. Shipping code
+    # moves the callback out before invocation. Reverse that exact one-method
+    # lifetime fix ONLY on the audit copy so the older transition receipt can
+    # be replayed in chronological order: f3c827 -> bae8f3 -> 2834a1.
+    transition_cpp = 'vk_graphics_pipeline_cost.cpp'
+    transition_source = expected[transition_cpp].read_text()
+    if subprocess.check_output(
+        ['git', 'hash-object', str(expected[transition_cpp])], text=True
+    ).strip() == 'f3c82781675b6979a8be96a333184e048ef57f81':
+        release_after = """    // The build callback publishes is_built before it returns. Cache teardown
+    // may then destroy this pipeline; never access its members afterward.
+    // Transfer ownership while this instance is still guaranteed alive.
+    auto task = std::move(build_task);
+    build_task = nullptr;
+    task();
+"""
+        release_before = """    build_task();
+    build_task = nullptr;
+"""
+        assert transition_source.count(release_after) == 1
+        transition_source = transition_source.replace(release_after, release_before, 1)
+        transition_path = temp/'normalized-vendor-graphics-build-task-lifetime'/transition_cpp
+        transition_path.parent.mkdir(parents=True, exist_ok=True)
+        transition_path.write_text(transition_source)
+        assert subprocess.check_output(
+            ['git', 'hash-object', str(transition_path)], text=True
+        ).strip() == 'bae8f3c36fc4e595e9b630ca55cc50496468e173'
+        expected[transition_cpp] = transition_path
+        print('ENCORE_GRAPHICS_BUILD_TASK_LIFETIME_EXACT_REVERSE_PASS')
+
     # Per-pipeline successor memo is a hint, never an owner. Reverse the
     # bounded PS5-native hot-edge ring on an audit COPY before historical
     # generated Vulkan oracles, sealing both complete active C++ blobs.
-    if subprocess.check_output(['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True).strip() in {
-        '0409c9a6b842ec50973d343cb628e21232382e41',
-        '94aa8cd5214d17897391ede00534d7961b481171',
-        '77df727e484154f3f3463b6eeec2dc6b23abb741',
-        'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-        '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'
-    } or (
-        # NS2-only vendor commits preserve these exact selected Vulkan blobs;
-        # perform the same strictly sealed historical normalization.
+    # Applicability follows the two complete reviewed source owners, not the
+    # moving vendor gitlink. Later NS1 DMA / NS2-only commits preserve these
+    # bytes; any real transition-owner drift skips reversal and fails below.
+    if (
         subprocess.check_output(
-            ['git','hash-object',str(expected['vk_graphics_pipeline_cost.cpp'])],
+            ['git', 'hash-object', str(expected['vk_graphics_pipeline_cost.cpp'])],
             text=True).strip() == 'bae8f3c36fc4e595e9b630ca55cc50496468e173'
         and subprocess.check_output(
-            ['git','hash-object',
+            ['git', 'hash-object',
              str(expected['include/video_core/renderer_vulkan/vk_graphics_pipeline.h'])],
             text=True).strip() == 'cc53133dd516e2d1d245326866ab3ce0c852b36b'
     ):
@@ -124,11 +698,12 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # FC27: for modest title shader caches restore the LAST saved 32
     # accepted shaders, rather than the oldest 32. Verify the complete active
     # C++ blob and reverse only this hunk + include on the audit COPY.
+    # Applicability is a source ABI, not the changing vendor gitlink:
+    # the exact reviewed FC27 prewarm owner is provable at every newer pin.
+    # Unknown blobs still fail the strict historical source validator below.
     if subprocess.check_output(
-        ['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True
-    ).strip() in {'94aa8cd5214d17897391ede00534d7961b481171', '77df727e484154f3f3463b6eeec2dc6b23abb741', 'f836abf99bbd3c6480c35aa8392356f4e1b0bf51', '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'} or subprocess.check_output(
-        ['git','hash-object',str(expected[native_cache_owner])],
-        text=True).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41':
+        ['git', 'hash-object', str(expected[native_cache_owner])], text=True
+    ).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41':
         assert subprocess.check_output(
             ['git', 'hash-object', str(expected[native_cache_owner])],
             text=True).strip() == 'cfac496d574010b8121611c8616d38bf7cdcbc41'
@@ -166,11 +741,61 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
     actual_vendor_pin = exact_vendor_pin
+    if exact_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}:
+        # Merge commit retains precisely the source tree of the reviewed
+        # GuestCacheLock predecessor; historical rollback uses its receipts.
+        reviewed_tree = subprocess.check_output(
+            ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD^{tree}'],
+            text=True).strip()
+        assert reviewed_tree == {
+            'ac880cd408116e6eb53ba2400abc52970b81f539': '01c09ec124779e7d976718af09a0e5e94cb4ac20',
+            '95343060f948601930f2e62b919da0789f0830bb': 'efa6548c57f7823d4e8b2c975944c6846b765ff3',
+        }[exact_vendor_pin], ('Vendor reviewed source tree drift', exact_vendor_pin, reviewed_tree)
+        exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
+        actual_vendor_pin = exact_vendor_pin
+    # GPU-30 is compiled from this pinned C++ owner, but the frozen R23/P24
+    # receipts predate its segmented-GMMU inline DMA guard. Verify the complete
+    # native blob and reverse only this one block on the historical audit copy.
+    if raster_sha == 'fdd5a73ccf795fd58100469c546b544a86a68e5b':
+        reviewed = "#ifdef PS5_NATIVE\n    // One GPU VA range can cross discontiguous device-memory pages. InlineMemory,\n    // texture invalidation and shader/query invalidation accept ONE CPU span:\n    // their first translated DAddr must never stand in for later GMMU pages.\n    // Single device-page writes keep the existing O(1) hot path. For fragmented\n    // but fully mapped spans, WriteBlock invalidates EACH translated physical\n    // segment before writing; it owns the same normal cache notifications.\n    if (!gpu_memory->IsGranularRange(address, copy_size) &&\n        !gpu_memory->IsContinuousRange(address, copy_size)) {\n        if (!gpu_memory->IsFullyMappedRange(address, copy_size)) {\n            return; // No partial writes into an invalid guest DMA mapping.\n        }\n        gpu_memory->WriteBlock(address, memory.data(), copy_size);\n        return;\n    }\n#endif\n"
+        assert raster_source.count(reviewed) == 1, 'GPU-30 inline DMA owner changed'
+        raster_source = raster_source.replace(reviewed, '', 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == '771e922890142b1f0d39f935bbf0be1a478e0f9e', 'GPU-30 predecessor not exact'
+        snapshot = temp/'ns1-gpu30-inline-dma-audit'/raster_owner
+        snapshot.parent.mkdir(parents=True, exist_ok=True)
+        snapshot.write_text(raster_source)
+        expected[raster_owner] = snapshot
+        print('ENCORE_NS1_GPU30_EXACT_REVERSE_PASS')
+    # GPU-22: keep the current-channel GMMU contiguous buffer-image DMA fix
+    # compiled; reverse only its complete, exact source delta for historical
+    # Vulkan/R23 byte proofs. The predecessor is independently pinned.
+    if raster_sha == '771e922890142b1f0d39f935bbf0be1a478e0f9e':
+        native = "      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),\n"
+        historical = "      accelerate_dma(buffer_cache, texture_cache, scheduler),\n"
+        assert raster_source.count(native) == 1, 'GPU-22 rasterizer receipt drift'
+        raster_source = raster_source.replace(native, historical, 1)
+        native = "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_, Tegra::MemoryManager* const& gpu_memory_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_},\n      gpu_memory{gpu_memory_} {}\n"
+        historical = "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_} {}\n"
+        assert raster_source.count(native) == 1, 'GPU-22 rasterizer receipt drift'
+        raster_source = raster_source.replace(native, historical, 1)
+        native = "#ifdef PS5_NATIVE\n    // ObtainBuffer translates only the first GPU VA into one CPU interval.\n    // A buffer spanning noncontiguous GMMU pages would upload/download\n    // unrelated physical memory. The normal MaxwellDMA CPU fallback\n    // supports a page-aware transfer for both image-copy directions.\n    // Test the channel currently bound to this rasterizer; no stale GMMU.\n    if (!gpu_memory ||\n        (!gpu_memory->IsGranularRange(buffer_operand.address, checked_bytes) &&\n         !gpu_memory->IsContinuousRange(buffer_operand.address, checked_bytes))) {\n        return false;\n    }\n#endif\n"
+        historical = ""
+        assert raster_source.count(native) == 1, 'GPU-22 rasterizer receipt drift'
+        raster_source = raster_source.replace(native, historical, 1)
+        raster_sha = raster_blob(raster_source)
+        assert raster_sha == '71d097b9a83028dfad9370792c905bb3bfccfd5a', raster_sha
+        snapshot = temp/'ns1-gpu22-gmmu-rasterizer-audit'/raster_owner
+        snapshot.parent.mkdir(parents=True, exist_ok=True)
+        snapshot.write_text(raster_source)
+        expected[raster_owner] = snapshot
+        print('ENCORE_NS1_GPU22_EXACT_REVERSE_PASS')
     # Share one GPU budget sample between native TextureCache and BufferCache.
     # Reverse the exact reviewed TickFrame only on the historical audit copy.
-    # Review the exact selected rasterizer bytes, not the unrelated vendor
-    # HEAD: NS2-only commits advance the submodule gitlink without modifying
-    # this shared Vulkan TU. Keep the historical reversal strictly SHA-sealed.
+    # Reverse this exact shipping TickFrame on the historical audit copy.
+    # Gate on the complete, SHA-sealed rasterizer C++ owner, not the moving
+    # vendor commit ID: B0B5/NS1 and NS2-only vendor successors do not edit it.
+    # Unrecognized rasterizer bytes still fail the frozen oracle below.
     if raster_sha == '71d097b9a83028dfad9370792c905bb3bfccfd5a':
         assert raster_sha == '71d097b9a83028dfad9370792c905bb3bfccfd5a', raster_sha
         shared_method = "void RasterizerVulkan::TickFrame() {\n    draw_counter = 0;\n    guest_descriptor_queue.TickFrame();\n    compute_pass_descriptor_queue.TickFrame();\n    descriptor_buffer_ring.TickFrame();\n    fence_manager.TickFrame();\n    staging_pool.TickFrame();\n#ifdef PS5_NATIVE\n    // C01/C03: identify who holds the cache lock during frame housekeeping.\n    // One of 16 frames with detailed logging; no clocks or changed locks in\n    // quiet release. Wait and held intervals use disjoint timer scopes.\n    const bool frame_sample = ::Eden::Performance::ShouldSampleCacheFrame();\n#endif\n#ifdef PS5_NATIVE\n    // Both native caches share the same RADV/PS5 GPU-memory budget.\n    // Query ONCE before either guest cache mutex, retaining original\n    // texture and buffer GC thresholds and retirement ordering.\n    const std::optional<u64> frame_memory_usage =\n        texture_cache_runtime.CanReportMemoryUsage()\n            ? std::optional<u64>{texture_cache_runtime.GetDeviceMemoryUsage()}\n            : std::nullopt;\n#endif\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer texture_wait{\n            ::Eden::Performance::CachePhase::FrameTextureWait, frame_sample};\n#endif\n        std::scoped_lock lock{texture_cache.mutex};\n#ifdef PS5_NATIVE\n        texture_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer texture_held{\n            ::Eden::Performance::CachePhase::FrameTextureHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        texture_cache.TickFrame(frame_memory_usage);\n#else\n        texture_cache.TickFrame();\n#endif\n    }\n\n    {\n#ifdef PS5_NATIVE\n        ::Eden::Performance::CachePhaseTimer buffer_wait{\n            ::Eden::Performance::CachePhase::FrameBufferWait, frame_sample};\n#endif\n        std::scoped_lock lock{buffer_cache.mutex};\n#ifdef PS5_NATIVE\n        buffer_wait.Stop();\n        ::Eden::Performance::CachePhaseTimer buffer_held{\n            ::Eden::Performance::CachePhase::FrameBufferHeld, frame_sample};\n#endif\n#ifdef PS5_NATIVE\n        buffer_cache.TickFrame(frame_memory_usage);\n#else\n        buffer_cache.TickFrame();\n#endif\n    }\n}\n"
@@ -301,11 +926,10 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # The fail-closed FC27 draw fix is a single reviewed predicate change.
     # Reverse it only on the audit COPY, then replay the unchanged five-owner
     # attribute-source receipt and historical Vulkan oracle.
-    if exact_vendor_pin in {
-        '0c1bd95c896f6ddc7870a245ffca51b2ac7e2932',
-        'eadc6e798def18417e50db6a03a291440429d795',
-    } or raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060':
-        assert raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060', raster_sha
+    # This reversal is safe by complete source identity, not by the moving
+    # vendor gitlink. Later NS1 DMA / NS2 service commits do not edit this
+    # owner; the following five-owner receipt still rejects any real drift.
+    if raster_sha == 'f23ad861761d53b59b8c83ae6003c089ae688060':
         source_before = ("    if (!source && !attribute_handle_source) {\n"
                          "        // Only legacy shaders without an explicit source may use the old lookup")
         source_after = ("    if (!source) {\n"
@@ -340,20 +964,66 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             # SHA-sealed audit copies. The older FC27 attribute-source
             # witness must inspect those restored owners, NOT the shipping
             # successor with its added optional transition-hint cap.
-            vendor_now = subprocess.check_output(
-                ['git', '-C', str(root/'vendor'), 'rev-parse', 'HEAD'], text=True
-            ).strip()
-            # The audit copy above already verified both source blobs and
-            # their exact predecessor, independent of the NS2 vendor gitlink.
-            transition_restored = (
-                name in {
-                    'vk_graphics_pipeline_cost.cpp',
-                    'include/video_core/renderer_vulkan/vk_graphics_pipeline.h'
-                } and raster_blob(expected[name].read_text()) == witness['current']
+            # If an earlier exact-source reversal already reconstructed this
+            # transition owner to the FC27 witness blob, consume that audit
+            # copy. Applicability is proven by bytes, never by a stale vendor SHA.
+            exact_restored = (
+                name in expected and
+                raster_blob(expected[name].read_text()) == witness['current']
             )
+            gpu49_restored = name in gpu49_edits
             real_source = (expected[name].read_text()
-                           if name == raster_owner or transition_restored
+                           if name == raster_owner or exact_restored or gpu49_restored
                            else raw_path.read_text())
+            # GPU-22 current-channel GMMU owner also changes this header's
+            # constructor/reference. Rewind only its two SHA-sealed hunks on
+            # the historical audit copy; PS5 still compiles the new header.
+            if name == 'include/video_core/renderer_vulkan/vk_rasterizer.h' and \
+                    raster_blob(real_source) == 'db60043206cc66a284bd3e9327a9fed7b011b25a':
+                reviewed = "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);"
+                original = "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler);"
+                assert real_source.count(reviewed) == 1, 'GPU-22 header hunk drift'
+                real_source = real_source.replace(reviewed, original, 1)
+                reviewed = "    // The GPU address space changes on channel binds. Reference the\n    // rasterizer's active pointer, not a stale construction-time channel.\n    Tegra::MemoryManager* const& gpu_memory;\n"
+                original = ""
+                assert real_source.count(reviewed) == 1, 'GPU-22 header hunk drift'
+                real_source = real_source.replace(reviewed, original, 1)
+                assert raster_blob(real_source) == '6467fd4d704de6b77deb7e6cba4b8e33f70f5a08'
+                print('ENCORE_NS1_GPU22_HEADER_EXACT_REVERSE_PASS')
+            # GPU-56 / Lichii #273: depth-compare sampled images must remain
+            # floating-point even when the TIC format is integer/unknown. Reverse
+            # only this exact one-line semantic delta on the audit copy before
+            # the earlier FC27 TexturePass receipts.
+            if name == 'shader_recompiler/ir_opt/texture_pass.cpp' and \
+                    raster_blob(real_source) == '4301e9dbc19c4e07e7c24af23177cf5fa2142f1a':
+                current_depth_compare = (
+                    "                // Depth-compare sampling returns floating-point values in Vulkan even when the\n"
+                    "                // TIC format itself is integer or unknown. Never build an integer sampled image.\n"
+                    "                const bool is_integer{flags.is_depth == 0 && is_texture_pixel_format_integer(cbuf)};\n"
+                )
+                historical_depth_compare = (
+                    "                const bool is_integer{is_texture_pixel_format_integer(cbuf)};\n"
+                )
+                assert real_source.count(current_depth_compare) == 1
+                real_source = real_source.replace(current_depth_compare,
+                                                  historical_depth_compare, 1)
+                assert raster_blob(real_source) == '30c9a612a88fa6cd832a40ad0f717b4944db45a1'
+                print('ENCORE_NS1_GPU56_DEPTH_COMPARE_FLOAT_EXACT_REVERSE_PASS')
+
+            # NS1 f710080 changes only descriptor-array budget accounting.
+            # Reverse that SHA-sealed owner on the audit COPY so the older
+            # five-owner FC27 attribute-source receipt remains comparable.
+            if name == 'shader_recompiler/ir_opt/texture_pass.cpp' and \
+                    raster_blob(real_source) == '30c9a612a88fa6cd832a40ad0f717b4944db45a1':
+                current_texture_budget = "u32 DynamicSampledTextureArrayCount(const TextureInstVector& to_replace) {\n    // Count DISTINCT sampled descriptor arrays, not shader sample instructions.\n    // Descriptors::Add(TextureDescriptor) merges repeated uses of an identical\n    // array. Counting each instruction used to divide the descriptor budget by\n    // the number of samples, then clamp valid dynamic indices to a wrong slot.\n    // Mirror that descriptor identity, excluding the flags Add combines with OR.\n    using ArrayKey = std::array<u32, 11>;\n    boost::container::small_vector<ArrayKey, 16> arrays;\n    for (const TextureInst& inst : to_replace) {\n        const auto flags{inst.inst->Flags<IR::TextureInstInfo>()};\n        if (inst.cbuf.count <= 1 || IsStorageImageOpcode(IndexedInstruction(*inst.inst)) ||\n            flags.type == TextureType::Buffer) {\n            continue;\n        }\n        const auto& cbuf = inst.cbuf;\n        const ArrayKey key{\n            static_cast<u32>(flags.type.Value()), flags.is_depth != 0 ? 1U : 0U,\n            cbuf.has_secondary ? 1U : 0U, cbuf.index, cbuf.offset, cbuf.shift_left,\n            cbuf.secondary_index, cbuf.secondary_offset, cbuf.secondary_shift_left,\n            cbuf.count, DynamicDescriptorSizeShift(cbuf.dynamic_offset),\n        };\n        if (std::ranges::find(arrays, key) == arrays.end()) {\n            arrays.push_back(key);\n        }\n    }\n    return static_cast<u32>(arrays.size());\n}\n"
+                historical_texture_budget = "u32 DynamicSampledTextureArrayCount(const TextureInstVector& to_replace) {\n    u32 count{};\n    for (const TextureInst& inst : to_replace) {\n        const auto flags{inst.inst->Flags<IR::TextureInstInfo>()};\n        if (inst.cbuf.count > 1 && !IsStorageImageOpcode(IndexedInstruction(*inst.inst)) &&\n            flags.type != TextureType::Buffer) {\n            ++count;\n        }\n    }\n    return count;\n}\n"
+                assert real_source.count('#include <array>\n') == 1
+                assert real_source.count(current_texture_budget) == 1
+                real_source = real_source.replace('#include <array>\n', '', 1)
+                real_source = real_source.replace(current_texture_budget,
+                                                  historical_texture_budget, 1)
+                assert raster_blob(real_source) == '0010ffd43e7ac3fb482c46277c854ab9a76b06ab'
+                print('ENCORE_NS1_DYNAMIC_TEXTURE_ARRAY_BUDGET_EXACT_REVERSE_PASS')
             assert raster_blob(real_source) == witness['current'], (
                 'FC27 exact reviewed runtime drift', name)
             predecessor = real_source
@@ -426,10 +1096,22 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     if raster_sha == 'aa3ff8baf97f075d1adf44a9d19335c89403c8e1':
         receipt_path = root/'vendor/tests/native_msaa_handle_receipt.py'
         receipt_text = receipt_path.read_text()
-        assert raster_blob(receipt_text) == (
-            '236713fa06672b39e2a4b9a84907882bbbb1bbbd'
-            if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200'} else
-            '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2')
+        receipt_sha = raster_blob(receipt_text)
+        assert receipt_sha in {
+            '236713fa06672b39e2a4b9a84907882bbbb1bbbd',
+            '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2',
+            '0175833f4758b6b694e1e4528afee6e5f8fd24a1',
+            # New helper reconstructs exactly the two corrected GuestCacheLock
+            # calls before the 16-hunk immutable rasterizer predecessor.
+            '40bbd965be330cfa024005931be98533232971ac',
+        }, ('Unreviewed native MSAA receipt source', receipt_sha)
+        if receipt_sha == '40bbd965be330cfa024005931be98533232971ac':
+            # exact_vendor_pin has already been rewritten by historical GPU receipts.
+            assert actual_vendor_pin == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1"
+            fixture = runpy.run_path(str(receipt_path))
+            source = (root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+            normalized = fixture['restore_guest_cache_lock_successor'](source)
+            assert raster_blob(normalized) == '0633e3cf41c615f46791d3943ff40ac22399b047'
         receipt = runpy.run_path(str(receipt_path))
         assert receipt['CURRENT_DRAWTEXTURE'] == raster_sha
         draw_after = receipt['DRAW_TEXTURE_AFTER']
@@ -603,6 +1285,27 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     compute_owner = 'vk_compute_pipeline_cost.cpp'
     compute_source = expected[compute_owner].read_text()
     compute_sha = raster_blob(compute_source)
+    # 63208f3 mirrors the graphics lifetime repair: move build_task out before
+    # invoking it because the callback may publish readiness and let teardown
+    # destroy this pipeline. Reverse ONLY this SHA-sealed method on the audit
+    # copy before replaying the older first-use/static-sampler receipts.
+    if compute_sha == 'bb9552866e26e502839eed646be9af6ea0a0db0a':
+        compute_release_after = """    // The build callback publishes is_built before it returns. Cache teardown
+    // may then destroy this pipeline; never access its members afterward.
+    // Transfer ownership while this instance is still guaranteed alive.
+    auto task = std::move(build_task);
+    build_task = nullptr;
+    task();
+"""
+        compute_release_before = """    build_task();
+    build_task = nullptr;
+"""
+        assert compute_source.count(compute_release_after) == 1
+        compute_source = compute_source.replace(
+            compute_release_after, compute_release_before, 1)
+        compute_sha = raster_blob(compute_source)
+        assert compute_sha == '7122e9ad2d0d5e8af812223c85d0d9cdb6ae5600'
+        print("ENCORE_COMPUTE_BUILD_TASK_LIFETIME_EXACT_REVERSE_PASS")
     if compute_sha == '7122e9ad2d0d5e8af812223c85d0d9cdb6ae5600':
         runbuild_after = "    build_task = std::move(func);\n    if (thread_worker) {\n#ifdef PS5_NATIVE\n        pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);\n        try {\n            thread_worker->QueueWork([this] {\n                SCOPE_EXIT {\n                    pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n                };\n                RunBuild();\n            });\n        } catch (...) {\n            pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n            throw;\n        }\n        build_handed_off = true;\n#else\n        thread_worker->QueueWork([this] { RunBuild(); });\n#endif\n    } else {\n#ifdef PS5_NATIVE\n        build_handed_off = true;\n#endif\n        RunBuild();\n    }\n}\n\nvoid ComputePipeline::RunBuild() {\n    if (build_claimed.exchange(true, std::memory_order_acq_rel)) {\n        return;\n    }\n    build_task();\n    build_task = nullptr;\n}\n\n"
         runbuild_before = "    if (thread_worker) {\n#ifdef PS5_NATIVE\n        // Reserve a slot BEFORE QueueWork: a pending compute shader has\n        // priority over a speculative optimized graphics rebuild.\n        pending_first_use_compute_builds.fetch_add(1, std::memory_order_release);\n        try {\n            thread_worker->QueueWork([build = std::move(func)]() mutable {\n                SCOPE_EXIT {\n                    pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n                };\n                build();\n            });\n        } catch (...) {\n            pending_first_use_compute_builds.fetch_sub(1, std::memory_order_release);\n            throw;\n        }\n        build_handed_off = true;\n#else\n        thread_worker->QueueWork(std::move(func));\n#endif\n    } else {\n#ifdef PS5_NATIVE\n        // Inline func() has its own completion guard.\n        build_handed_off = true;\n#endif\n        func();\n    }\n}\n\n"
@@ -741,13 +1444,32 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     assert mesh_device.count(mesh_feature_method) == 1
     assert mesh_device.count(sparse_delta) == 1, (
         "Native Task/Mesh device header lost the sparse residency method")
+    # GPU-47 adds only Vulkan's three framebuffer-limit getters to the
+    # already reviewed combined Device ABI. Reverse those exact lines on the
+    # audit text before applying the frozen R23 combined-blob receipt.
+    gpu47_device_current='e20048f23ab416706ea6bad55bb863022e4d505f'
+    gpu47_device_predecessor='acab7cf039c2be7bcc830ac684be2fff285a3e8a'
+    mesh_device_blob=_blob_text(mesh_device)
+    if mesh_device_blob == gpu47_device_current:
+        old_tail="    FN_MAX_LIMIT_ELEM(DescriptorSetInputAttachments)\n"
+        new_tail=(
+            "    FN_MAX_LIMIT_ELEM(DescriptorSetInputAttachments) \\\n"
+            "    FN_MAX_LIMIT_ELEM(FramebufferWidth) \\\n"
+            "    FN_MAX_LIMIT_ELEM(FramebufferHeight) \\\n"
+            "    FN_MAX_LIMIT_ELEM(FramebufferLayers)\n"
+        )
+        assert mesh_device.count(new_tail)==1, "GPU-47 Device limit-list drift"
+        mesh_device=mesh_device.replace(new_tail,old_tail,1)
+        assert _blob_text(mesh_device)==gpu47_device_predecessor, (
+            "GPU-47 Device reversal did not restore combined predecessor")
+        print("ENCORE_NS1_GPU47_VULKAN_DEVICE_EXACT_REVERSE_PASS",flush=True)
+    else:
+        assert mesh_device_blob==gpu47_device_predecessor, (
+            "Unexpected GPU-47 Device owner",mesh_device_blob)
     # Combined R23 EDS3 + subgroup + mesh + sparse-residency ABI is now a
     # maintained source blob, not only the two-hunk original Task/Mesh delta.
-    # Keep a hard content pin so unrelated header drift remains rejected.
-    combined_device_sha = 'acab7cf039c2be7bcc830ac684be2fff285a3e8a'
-    assert subprocess.check_output(
-        ['git', 'hash-object', str(expected[native_mesh_device_header])],
-        text=True).strip() == combined_device_sha, (
+    combined_device_sha = gpu47_device_predecessor
+    assert _blob_text(mesh_device) == combined_device_sha, (
         'Reviewed R23 combined Vulkan Device ABI blob drift')
     assert mesh_device.count('GetMaxSubgroupSize() const') == 1
     assert mesh_device.count('IsExtDepthClipEnableSupported() const') == 1
@@ -830,37 +1552,107 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             ['git', 'hash-object', str(core_owner)], text=True).strip()
         # Lichii #1328: verify the only C++ template-signature delta before
         # replaying the unchanged native BufferCache historical source seal.
-        # Never rewrite the shipping vendor; this is an audit-only mapping.
-        if subprocess.check_output(
-                ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'],
-                text=True).strip() in {'fd43897f59dafe34ff110259c9f872bfc1c474cb',
-                                  'ffb78672112a00a8df1da033ff462baf7d3c4d31',
-                                  '3b73e72d434fdd328c71ab37971f025f3ad8263b',
-                                  '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d',
-                                  '3b824f1ced1148a3f12eb3727fbcba9309a160f8',
-                                  'b8568c8c1e79f7c3775f5a6393463e4bb1385b88',
-                                  '0409c9a6b842ec50973d343cb628e21232382e41',
-                                  '94aa8cd5214d17897391ede00534d7961b481171',
-                                  '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                                  'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                                  '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'} or core_blob == '41239f19b9e16741d49e31145c504e0086b1095e':
-            pinned_revision = subprocess.check_output(
-                ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
-            base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
-            base_blob = subprocess.check_output(
-                ['git', 'hash-object', str(base_owner)], text=True).strip()
-            if pinned_revision in {'3b824f1ced1148a3f12eb3727fbcba9309a160f8',
-                                   'b8568c8c1e79f7c3775f5a6393463e4bb1385b88',
-                                   '0409c9a6b842ec50973d343cb628e21232382e41',
-                                   '94aa8cd5214d17897391ede00534d7961b481171',
-                                   '77df727e484154f3f3463b6eeec2dc6b23abb741',
-                                   'f836abf99bbd3c6480c35aa8392356f4e1b0bf51',
-                                   '45919027d37145b3f7820a1067a48daf838d2984', '01c942171fea39c1f7cf31d13ab36895aebb593a', 'dcf7116dd2c536e05c80d83ff9dbf30caa5cc109', 'b65d8d9673475433f0b6eac72eb304bf23141666'} or (core_blob == '41239f19b9e16741d49e31145c504e0086b1095e' and base_blob == '716634290574ed4dfc8fd3be0d0ea0ad582980f8'):
+        # Applicability follows exact source-owner blobs, never a moving vendor
+        # gitlink. This keeps old reviewed variants valid while newer NS1/NS2
+        # commits that do not edit these owners cannot break the audit chain.
+        base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
+        base_blob = subprocess.check_output(
+            ['git', 'hash-object', str(base_owner)], text=True).strip()
+        if core_blob == '6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b':
+            # NS1: the selected stream-overlap owner clamps low-address
+            # backward expansion without moving the existing buffer start
+            # forwards. Reverse ONLY that proven guard, then apply the
+            # historical GPU-50 receipt on the unmodified old owner.
+            new_guard = """        // A stream near the start of physical memory may begin before
+        // min_page. Subtraction in the original test then wraps around and
+        // turns an ordinary backward leap into a huge invalid GPU buffer.
+        // Never move begin forwards past the range we already own.
+        if (begin <= min_page || add_value > begin - min_page) {
+            begin = (std::min)(begin, min_page);
+            device_addr = Core::DEVICE_PAGESIZE;
+            return;
+        }"""
+            old_guard = """        if (add_value > begin - min_page) {
+            begin = min_page;
+            device_addr = Core::DEVICE_PAGESIZE;
+            return;
+        }"""
+            source = core_owner.read_text()
+            assert source.count(new_guard) == 1
+            previous = source.replace(new_guard, old_guard, 1)
+            raw = previous.encode('utf-8')
+            original_blob = hashlib.sha1(
+                b'blob ' + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert original_blob == '764cc03616d89cda91f902aabac85d10f309d9f3'
+            restored = temp/'normalized-ns1-stream'/'buffer_cache.h'
+            restored.parent.mkdir(parents=True, exist_ok=True)
+            restored.write_text(previous)
+            core_owner = restored
+            core_blob = original_blob
+            print('ENCORE_NS1_BUFFERCACHE_STREAM_BOUNDARY_EXACT_REVERSE_PASS')
 
+        if core_blob == '764cc03616d89cda91f902aabac85d10f309d9f3':
+            # GPU-50 changes only DMACopy's range report and its matching
+            # declaration. Reconstruct the previous audited C++ owners exactly,
+            # on copies; keep the shipping BufferCache/TextureCache untouched.
+            assert base_blob == 'fd9708571ef61c83c399042a5200c87b2e3784d6'
+            before_signature = """bool BufferCache<P>::DMACopy(
+    GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written,
+    boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest) {
+    if (gpu_written_dest) {
+        gpu_written_dest->clear();
+    }
+"""
+            after_signature = """bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,
+                             bool* gpu_written) {
+"""
+            before_report = """    if (gpu_written_dest) {
+        *gpu_written_dest = tmp_intervals;
+    }
+"""
+            corrected_core = core_owner.read_text()
+            assert corrected_core.count(before_signature) == corrected_core.count(before_report) == 1
+            corrected_core = corrected_core.replace(before_signature, after_signature, 1)
+            corrected_core = corrected_core.replace(before_report, '', 1)
+            def _gpu50_hash(contents):
+                raw = contents.encode('utf-8')
+                return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+            assert _gpu50_hash(corrected_core) == '96d933edbf271aa17853748905eeb9c5276c41c2'
+            restored_core = temp/'normalized-vendor-gpu50'/'buffer_cache.h'
+            restored_core.parent.mkdir(parents=True, exist_ok=True)
+            restored_core.write_text(corrected_core)
+            core_owner = restored_core
+            core_blob = _gpu50_hash(corrected_core)
+
+            before_decl = """    /// Optionally report whether the copied source contains GPU-owned buffer bytes.
+    /// gpu_written_dest names the exact destination subranges whose newest bytes stay GPU-owned.
+    bool DMACopy(
+        GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written = nullptr,
+        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);
+"""
+            after_decl = """    /// Optionally report whether the copied source contains GPU-owned buffer bytes.
+    /// A caller must not re-upload the destination texture from stale guest memory.
+    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,
+                 bool* gpu_written = nullptr);
+"""
+            corrected_base = base_owner.read_text()
+            assert corrected_base.count(before_decl) == 1
+            corrected_base = corrected_base.replace(before_decl, after_decl, 1)
+            assert _gpu50_hash(corrected_base) == '716634290574ed4dfc8fd3be0d0ea0ad582980f8'
+            restored_base = temp/'normalized-vendor-gpu50'/'buffer_cache_base.h'
+            restored_base.write_text(corrected_base)
+            base_owner = restored_base
+            base_blob = _gpu50_hash(corrected_base)
+            print('ENCORE_NS1_GPU50_BUFFERCACHE_ABI_EXACT_REVERSE_PASS owners=2')
+        if core_blob in {
+            '41239f19b9e16741d49e31145c504e0086b1095e',
+            'b127ceea4006395e9b9bc9727c059dcfdf4a898d',
+            '1cf7484e07c1f6f86b4980a7489ab2d4784f9409',
+        }:
+            if core_blob == '41239f19b9e16741d49e31145c504e0086b1095e':
                 # CMake-selected PS5 source: one budget sample feeds two
                 # independently locked cache GC passes without a driver query
                 # in either critical section. Original fallback remains.
-                assert core_blob == '41239f19b9e16741d49e31145c504e0086b1095e', core_blob
                 assert base_blob == '716634290574ed4dfc8fd3be0d0ea0ad582980f8', base_blob
                 for relative, expected_blob in (
                     ('encore-active/ns2-astc/include/video_core/texture_cache/texture_cache_base.h',
@@ -874,9 +1666,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 assert 'PollFrameMemoryUsage' not in core_owner.read_text()
                 assert 'total_used_memory = *externally_sampled_usage;' in core_owner.read_text()
                 core_blob = '1cf7484e07c1f6f86b4980a7489ab2d4784f9409'
-            elif pinned_revision == '62f57caa5f1efd2069ae3b8eaf4f9fc8b501c44d':
+                print('ENCORE_SHARED_GPU_BUDGET_BUFFER_SOURCE_PASS')
+            elif core_blob == 'b127ceea4006395e9b9bc9727c059dcfdf4a898d':
                 # Previous independently verified off-lock BufferCache probe.
-                assert core_blob == 'b127ceea4006395e9b9bc9727c059dcfdf4a898d', core_blob
                 assert base_blob == '3da34e11ed76a400a6be6bab622191883610d672', base_blob
                 core_text = core_owner.read_text()
                 assert 'PollFrameMemoryUsage() {' in core_text
@@ -886,13 +1678,32 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
                 assert 'void TickFrame(std::optional<u64> externally_sampled_usage' in base_owner.read_text()
                 core_blob = '1cf7484e07c1f6f86b4980a7489ab2d4784f9409'
             else:
-                assert core_blob == '1cf7484e07c1f6f86b4980a7489ab2d4784f9409', core_blob
                 assert base_blob == '64be0018b1ff977fc744529d9882d6a264b45f1a', base_blob
             assert ('template <typename RangeSize>\n'
                     'void BufferCache<P>::ClaimCpuWrites(') in core_owner.read_text()
             core_blob = 'd40082a0c849790d25a4d1d28e003087eefd84a1'
             print('ENCORE_FC27_BATCH_CLAIM_BUFFER_SIGNATURE_SOURCE_PASS')
-        if pair_vendor_pin in {'2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c', '9a83a6ba1cb464c9e5d14457cab18ad511c1104b', 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc', '2a450d43d1d23d3e8b1667e396613f62c69c26d7', '17c95ef233a9a0e508e50ada4ae9dc53a300c46c', '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4', 'e0fced3a091495e70362d8c4ca072942f027af24', '491fa7e2388d46e23827b1459360a5d7f4a2814b', 'b177deb8282b14e1521485f5ac63bd7ccc9ca7ef', '06fc7dc2e0a00e00f831dfd78ae78087736276a3', '850086c79ec40838663989a81f33ba8ea2f15f6a'}:
+        # The current NS1 BufferCache includes the reviewed Vulkan/GMMU
+        # physical-overlap guard. Seal the exact C++ blob and check that
+        # rejection precedes cache mutation; historical variants remain below.
+        if core_blob == '96d933edbf271aa17853748905eeb9c5276c41c2':
+            selected_buffer = core_owner.read_text()
+            dma_copy = selected_buffer.split('bool BufferCache<P>::DMACopy(', 1)[1].split('bool BufferCache<P>::DMAClear(', 1)[0]
+            for contract in (
+                'gpu_memory->IsContinuousRange(src_address, amount)',
+                'gpu_memory->IsContinuousRange(dest_address, amount)',
+                'const DAddr source = *cpu_src_address;',
+                'const DAddr destination = *cpu_dest_address;',
+                'destination - source < amount',
+                'source - destination < amount',
+                'ClearDownload(*cpu_dest_address, amount);',
+            ):
+                assert contract in dma_copy, ('NS1 physical DMA guard missing', contract)
+            assert dma_copy.index('destination - source < amount') < dma_copy.index('ClearDownload(*cpu_dest_address, amount);')
+            assert 'const bool page_has_gpu_writes = keep_page_gpu_data && page_end > page_begin &&' in selected_buffer
+            assert '!gpu_modified_ranges.Intersects(' not in selected_buffer
+            print('ENCORE_NS1_PHYSICAL_DMA_BUFFERCACHE_SOURCE_PASS')
+        elif pair_vendor_pin in {'2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c', '9a83a6ba1cb464c9e5d14457cab18ad511c1104b', 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc', '2a450d43d1d23d3e8b1667e396613f62c69c26d7', '17c95ef233a9a0e508e50ada4ae9dc53a300c46c', '082cd1b77c7df80dc422eae5ba59d9cd33e48dc4', 'e0fced3a091495e70362d8c4ca072942f027af24', '491fa7e2388d46e23827b1459360a5d7f4a2814b', 'b177deb8282b14e1521485f5ac63bd7ccc9ca7ef', '06fc7dc2e0a00e00f831dfd78ae78087736276a3', '850086c79ec40838663989a81f33ba8ea2f15f6a'}:
             # Vendor #189 fixes a real native build ABI mismatch. The reviewed
             # BufferCache header uses the pinned ForEachInRange-backed query;
             # every other Vulkan fork receipt below stays byte-for-byte exact.
@@ -1739,9 +2550,56 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
 
     # The generator owns the guarded NS2 blocks as well as NS1; every byte
     # must match the pinned vendor after only the existing N56 normalization.
-    generated_n3m = actual[n56_name].read_text()
-    assert generated_n3m.count(n3m_flag) == n3m.count(n3m_flag), (
-        'Native PS5 GPU generator lost source guard parity')
+    # GPU-23 is shipped in BOTH the maintained native renderer and the
+    # generator, but this N3m comparison intentionally replays an older
+    # cache-owner snapshot (cache-version 19 / pre-fragment-shuffle). Check
+    # the EXACT production GPU-23 block on both inputs, then reverse ONLY
+    # the generated AUDIT COPY to that historical baseline. Never remove
+    # PS5's typed integer fragment outputs from the shipping C++ source.
+    typed_output_after = """        // Vulkan requires signed/unsigned fragment outputs to match the
+        // attachment's numeric class. Previously this was enabled only on
+        // MoltenVK: native PS5 RADV would emit floats for integer targets,
+        // making color writes poison/undefined (Vulkan shader interfaces).
+        // Keep the existing desktop policy; fix the PS5 renderer's ABI.
+        const bool require_typed_fragment_outputs =
+#ifdef PS5_NATIVE
+            true;
+#else
+            device.IsMoltenVK();
+#endif
+        if (require_typed_fragment_outputs) {"""
+    typed_output_before = '        if (device.IsMoltenVK()) {'
+    generated_raw_n3m = actual[n56_name].read_text()
+    native_raw_n3m = (active / n56_name).read_text()
+    assert generated_raw_n3m.count(typed_output_after) == 1, (
+        'GPU-23 generated integer fragment output gate drift')
+    assert native_raw_n3m.count(typed_output_after) == 1, (
+        'GPU-23 shipping integer fragment output gate drift')
+    assert n3m.count(typed_output_before) == 1 and typed_output_after not in n3m, (
+        'GPU-23 historical cache owner unexpectedly changed')
+    # Later generator-oracle checks operate on the same historical copy,
+    # while GPU-23 remains byte-identical in the original C++ and generator.
+    generated_n3m = generated_raw_n3m.replace(
+        typed_output_after, typed_output_before, 1)
+    actual[n56_name].write_text(generated_n3m)
+    print('ENCORE_NS1_GPU23_GENERATOR_EXACT_REVERSE_PASS')
+    if generated_n3m.count(n3m_flag) != n3m.count(n3m_flag):
+        # A total-count-only failure cannot identify whether the generated
+        # or maintained shipping owner omitted a guarded C++ block. Show
+        # bounded, exact neighboring source contexts before any repair.
+        from collections import Counter
+        def guard_contexts(data):
+            return Counter(tuple(piece.splitlines()[:3])
+                           for piece in data.split(n3m_flag)[1:])
+        generated_guards = guard_contexts(generated_n3m)
+        maintained_guards = guard_contexts(n3m)
+        missing = list((maintained_guards - generated_guards).elements())[:16]
+        extra = list((generated_guards - maintained_guards).elements())[:16]
+        raise AssertionError('Native PS5 GPU generator lost source guard parity: ' +
+            json.dumps({'generator_count': generated_n3m.count(n3m_flag),
+                        'owner_count': n3m.count(n3m_flag),
+                        'missing_in_generator': missing,
+                        'extra_in_generator': extra}, separators=(',', ':')))
     assert 'EDEN_NS2_VULKAN_SHADER_BRIDGE_EXPERIMENTAL' not in generated_n3m, (
         'Removed NS2 research compile profile returned in generator')
     native_compute_guard = "ComputePipeline* PipelineCache::CurrentComputePipeline() {\n#ifdef PS5_NATIVE\n    // An authenticated Ampere compute engine must never enter the legacy\n    // Maxwell ShaderCache::ComputeShader() path: those 128-bit instructions\n    // need the new QMD-scoped native SPIR-V pipeline and resource binding.\n    // Until the renderer owns that real pipeline and submits the dispatch,\n    // reject instead of compiling native bytes as Switch 1 Maxwell.\n    if (Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()\n            .CaptureComputeTicket(kepler_compute))\n        return nullptr;\n#endif\n\n"
@@ -1764,13 +2622,25 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     # and full generated-source byte parity. No generator files or exemptions.
     from ns2.native_astc_vendor_parity import (
         normalized as normalize_n57, strip_p25_reinterpret,
+        strip_gpu18_d32_depth_plane,
     )
     # N57's historical F07 audit deliberately excludes the independently
     # reviewed later P2.5 aspect/scratch additions. Normalize the *generated*
     # owner by those exact, hash-pinned P2.5 deltas as well: the shipped vendor
     # and generator must both retain those corrections before normalization.
     normalized_generated = dict(actual)
-    generated_p25 = strip_p25_reinterpret(actual['vk_texture_cache_cost.cpp'].read_text())
+    # The GPU-18 D32S8/D32 depth-plane fix is younger than the P2.5
+    # source digest. Verify exact newer clauses in the generator and the
+    # SHA-pinned shipping vendor, then reverse them solely on the audit copy.
+    generated_texture = actual['vk_texture_cache_cost.cpp'].read_text()
+    vendor_texture = (active / 'vk_texture_cache_cost.cpp').read_text()
+    assert 'mixed_d32_depth_plane' in generated_texture
+    assert 'mixed_d32_depth_plane' in vendor_texture
+    assert generated_texture.count('mixed_d32_depth_plane') == 5
+    assert vendor_texture.count('mixed_d32_depth_plane') == 5
+    generated_p25 = strip_p25_reinterpret(
+        strip_gpu18_d32_depth_plane(generated_texture))
+    print('ENCORE_NS1_GPU18_GENERATOR_EXACT_REVERSE_PASS')
     p25_generated = temp/'normalized-generated-p25'/'vk_texture_cache_cost.cpp'
     p25_generated.parent.mkdir(parents=True,exist_ok=True)
     p25_generated.write_text(generated_p25)
@@ -2003,6 +2873,35 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         'include/video_core/renderer_vulkan/vk_scheduler.h',
         'vulkan_scheduler.cpp',
     }
+    # GPU-22 updated the generator's AccelerateDMA header AFTER this
+    # frozen P04 resolution receipt was taken. The shipping vendor was
+    # already SHA-checked and reversed in the FC27 header witness above;
+    # reverse the SAME two exact hunks on the generator's AUDIT COPY
+    # before the historical SHA256 and full-file reconstruction.
+    raster_header = 'include/video_core/renderer_vulkan/vk_rasterizer.h'
+    generated_header = normalized_generated[raster_header].read_text()
+    shipping_header = gpu49_predecessor_paths[raster_header].read_text()
+    assert git_blob_sha(shipping_header) == (
+        'db60043206cc66a284bd3e9327a9fed7b011b25a'), (
+        'GPU-22 native Vulkan rasterizer header drift')
+    gpu22_header_hunks = (
+        ('    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n'
+         '                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);',
+         '    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n'
+         '                           Scheduler& scheduler);'),
+        ('    // The GPU address space changes on channel binds. Reference the\n'
+         '    // rasterizer\'s active pointer, not a stale construction-time channel.\n'
+         '    Tegra::MemoryManager* const& gpu_memory;\n', ''),
+    )
+    for modern, historic in gpu22_header_hunks:
+        assert generated_header.count(modern) == shipping_header.count(modern) == 1, (
+            'GPU-22 exact generated header method drift')
+        generated_header = generated_header.replace(modern, historic, 1)
+    p04_header = temp / 'normalized-generated-gpu22' / raster_header
+    p04_header.parent.mkdir(parents=True, exist_ok=True)
+    p04_header.write_text(generated_header)
+    normalized_generated[raster_header] = p04_header
+    print('ENCORE_NS1_GPU22_GENERATOR_HEADER_EXACT_REVERSE_PASS')
     resolve_hunks = 0
     for entry in resolve_receipt['files']:
         name = entry['path']
@@ -2156,6 +3055,91 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             normalized.parent.mkdir(parents=True, exist_ok=True)
             normalized.write_text(raw)
             normalized_expected[name] = normalized
+    # The final full-source parity compares a historical R23/P04 audit copy.
+    # GPU-22's actual native rasterizer is SHA-pinned above and STILL contains
+    # the live-channel GMMU continuity guard. Reverse these THREE exact newer
+    # C++ hunks on the generated AUDIT COPY only, matching the previously
+    # verified FC27 vendor rewind (not the shipping renderer).
+    dma_raster = 'vulkan_rasterizer.cpp'
+    # GPU-49 is newer than this GPU-46/GPU-22 checkpoint. Consume the
+    # exact pre-GPU49 audit owner already SHA-reconstructed above rather than
+    # accepting or restamping the shipping rasterizer.
+    current_raster = gpu49_predecessor_paths[dma_raster].read_text()
+    # GPU-46 is already exact-reversed above from its three shipping owners.
+    # Reuse that SAME pinned edit table before this older GPU-22/GPU-30
+    # checkpoint; never accept a new raster hash directly here.
+    gpu46_current, gpu46_predecessor, gpu46_raster_edits = gpu46_edits[dma_raster]
+    current_raster_blob = git_blob_sha(current_raster)
+    if current_raster_blob == gpu46_current:
+        for newer, older in gpu46_raster_edits:
+            assert current_raster.count(newer) == 1, (
+                'GPU-46 direct raster checkpoint hunk drift', newer[:80])
+            current_raster = current_raster.replace(newer, older, 1)
+        assert git_blob_sha(current_raster) == gpu46_predecessor, (
+            'GPU-46 direct raster checkpoint failed to restore predecessor')
+        print('ENCORE_NS1_GPU46_DIRECT_RASTER_EXACT_REVERSE_PASS', flush=True)
+    else:
+        assert current_raster_blob == gpu46_predecessor, (
+            'Unreviewed GPU-46 direct raster checkpoint', current_raster_blob)
+    # The normalized owner contains reviewed GPU-30 plus GPU-22. Keep the
+    # complete predecessor blob strict; later generator-only reversals establish
+    # byte equivalence with the frozen historic baseline.
+    assert git_blob_sha(current_raster) == (
+        'fdd5a73ccf795fd58100469c546b544a86a68e5b'), (
+        'Unreviewed GPU-22/GPU-30 normalized Vulkan rasterizer bytes')
+    generated_raster = normalized_generated[dma_raster].read_text()
+    gpu22_dma_hunks = (
+        ('      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),',
+         '      accelerate_dma(buffer_cache, texture_cache, scheduler),'),
+        ('AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n'
+         '                             Scheduler& scheduler_, Tegra::MemoryManager* const& gpu_memory_)\n'
+         '    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_},\n'
+         '      gpu_memory{gpu_memory_} {}',
+         'AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n'
+         '                             Scheduler& scheduler_)\n'
+         '    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_} {}'),
+        ('#ifdef PS5_NATIVE\n'
+         '    // ObtainBuffer translates only the first GPU VA into one CPU interval.\n'
+         '    // A buffer spanning noncontiguous GMMU pages would upload/download\n'
+         '    // unrelated physical memory. The normal MaxwellDMA CPU fallback\n'
+         '    // supports a page-aware transfer for both image-copy directions.\n'
+         '    // Test the channel currently bound to this rasterizer; no stale GMMU.\n'
+         '    if (!gpu_memory ||\n'
+         '        (!gpu_memory->IsGranularRange(buffer_operand.address, checked_bytes) &&\n'
+         '         !gpu_memory->IsContinuousRange(buffer_operand.address, checked_bytes))) {\n'
+         '        return false;\n'
+         '    }\n'
+         '#endif\n', ''),
+    )
+    for modern, old in gpu22_dma_hunks:
+        assert generated_raster.count(modern) == current_raster.count(modern) == 1, (
+            'GPU-22 current/native C++ continuity guard drift')
+        generated_raster = generated_raster.replace(modern, old, 1)
+    historical_raster = temp / 'normalized-generated-gpu22' / dma_raster
+    historical_raster.parent.mkdir(parents=True, exist_ok=True)
+    historical_raster.write_text(generated_raster)
+    normalized_generated[dma_raster] = historical_raster
+    print('ENCORE_NS1_GPU22_GENERATOR_CPP_EXACT_REVERSE_PASS')
+    # The final byte-parity oracle also compares its generated historical
+    # copy after the frozen R23/P04 reconstructions. Require GPU-30's EXACT
+    # production block in BOTH the generator and active pinned renderer,
+    # then reverse it on the temporary generated audit copy only.
+    generated_raster = normalized_generated[dma_raster].read_text()
+    # Reuse the GPU-46-normalized shipping owner established at the prior
+    # GPU-22 checkpoint. Do not reopen the raw active file and bypass that
+    # exact predecessor proof.
+    native_raster = current_raster
+    reviewed_inline = "#ifdef PS5_NATIVE\n    // One GPU VA range can cross discontiguous device-memory pages. InlineMemory,\n    // texture invalidation and shader/query invalidation accept ONE CPU span:\n    // their first translated DAddr must never stand in for later GMMU pages.\n    // Single device-page writes keep the existing O(1) hot path. For fragmented\n    // but fully mapped spans, WriteBlock invalidates EACH translated physical\n    // segment before writing; it owns the same normal cache notifications.\n    if (!gpu_memory->IsGranularRange(address, copy_size) &&\n        !gpu_memory->IsContinuousRange(address, copy_size)) {\n        if (!gpu_memory->IsFullyMappedRange(address, copy_size)) {\n            return; // No partial writes into an invalid guest DMA mapping.\n        }\n        gpu_memory->WriteBlock(address, memory.data(), copy_size);\n        return;\n    }\n#endif\n"
+    assert git_blob_sha(native_raster) == 'fdd5a73ccf795fd58100469c546b544a86a68e5b', (
+        'GPU-30 active Vulkan owner changed')
+    assert generated_raster.count(reviewed_inline) == 1
+    assert native_raster.count(reviewed_inline) == 1
+    generated_raster = generated_raster.replace(reviewed_inline, '', 1)
+    audit_raster = temp/'normalized-generated-gpu30'/dma_raster
+    audit_raster.parent.mkdir(parents=True, exist_ok=True)
+    audit_raster.write_text(generated_raster)
+    normalized_generated[dma_raster] = audit_raster
+    print('ENCORE_NS1_GPU30_GENERATOR_EXACT_REVERSE_PASS')
     mismatches=[name for name in sorted(actual) if not filecmp.cmp(normalized_generated[name],normalized_expected.get(name, expected[name]),shallow=False)]
     if mismatches:
         # Print a tightly bounded exact diff before failing. The generator and

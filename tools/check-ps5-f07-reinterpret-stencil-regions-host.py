@@ -22,6 +22,11 @@ start = "#ifdef PS5_NATIVE\n    // Every VkBufferImageCopy must occupy"
 stop = "    const VkBuffer copy_buffer = GetTemporaryBuffer(total_size);"
 assert method.count(start) == method.count(stop) == 1
 planner = method[method.index(start):method.index(stop)]
+# Take the exact D32 depth-plane selector from the active Vulkan owner.
+mixed_begin = "    const bool mixed_d32_depth_plane ="
+mixed_end = "    const auto bpp_in = mixed_d32_depth_plane"
+assert method.count(mixed_begin) == method.count(mixed_end) == 1
+mixed_flag = method[method.index(mixed_begin):method.index(mixed_end)]
 assert planner.startswith("#ifdef PS5_NATIVE") and planner.rstrip().endswith("#endif")
 assert "if (src_both || dst_both)" not in planner
 assert "const bool dual_planes = src_both && dst_both;" in planner
@@ -62,6 +67,10 @@ struct VkBufferImageCopy {
     Extent imageExtent{};
 };
 struct Copy {};
+struct PixelFormat {
+    static constexpr u32 D32_FLOAT = 4;
+    static constexpr u32 D32_FLOAT_S8_UINT = 8;
+};
 struct Info {u32 format;};
 struct Image {Info info;};
 u32 BytesPerBlock(u32 format) {return format;}
@@ -74,6 +83,7 @@ bool Plan(const std::vector<Copy>& copies,
           std::vector<VkBufferImageCopy>& vk_out_copies,
           size_t& total_size) {
     constexpr size_t max_size = (std::numeric_limits<size_t>::max)();
+__MIXED_FLAG__
 __PLANNER__
     return true;
 }
@@ -97,8 +107,17 @@ bool Run(VkImageAspectFlags src_aspect, VkImageAspectFlags dst_aspect,
                       extent.height,extent.depth}});
         b.push_back({0,{normalized_dst,layer_count},extent});
     }
+    // Both source and destination Vulkan regions store D32 depth as 4B.
+    const bool mixed_depth =
+        (src_bpp == 8 && dst_bpp == 4 &&
+         src_aspect == (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) &&
+         dst_aspect == VK_IMAGE_ASPECT_DEPTH_BIT) ||
+        (dst_bpp == 8 && src_bpp == 4 &&
+         dst_aspect == (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) &&
+         src_aspect == VK_IMAGE_ASPECT_DEPTH_BIT);
     return Plan(copies,{{src_bpp}},{{dst_bpp}},src_aspect,dst_aspect,
-                src_bpp,dst_bpp,dst_bpp,a,b,budget);
+                mixed_depth ? 4 : src_bpp, mixed_depth ? 4 : dst_bpp,
+                dst_bpp,a,b,budget);
 }
 int main() {
     constexpr u32 color=VK_IMAGE_ASPECT_COLOR_BIT;
@@ -139,6 +158,18 @@ int main() {
     a.clear();b.clear();size=0;
     assert(Run(color,color,8,4,{{8,2,1}},1,a,b,size,4));
     assert(size==64 && a[0].bufferOffset==b[0].bufferOffset);
+    // FC27 D32S8 -> D32 and reverse: only one depth-plane Vulkan region.
+    a.clear();b.clear();size=0;
+    assert(Run(both,VK_IMAGE_ASPECT_DEPTH_BIT,8,4,{{4,5,1}},1,a,b,size));
+    assert(size==80 && a.size()==1 && b.size()==1);
+    assert(a[0].imageSubresource.aspectMask==VK_IMAGE_ASPECT_DEPTH_BIT);
+    assert(b[0].imageSubresource.aspectMask==VK_IMAGE_ASPECT_DEPTH_BIT);
+    assert(a[0].imageExtent.width==b[0].imageExtent.width);
+    a.clear();b.clear();size=0;
+    assert(Run(VK_IMAGE_ASPECT_DEPTH_BIT,both,4,8,{{4,5,1}},1,a,b,size));
+    assert(size==80 && a.size()==1 && b.size()==1);
+    assert(a[0].imageSubresource.aspectMask==VK_IMAGE_ASPECT_DEPTH_BIT);
+    assert(b[0].imageSubresource.aspectMask==VK_IMAGE_ASPECT_DEPTH_BIT);
     // Incompatible formats or aspects cannot silently lose stencil.
     a.clear();b.clear();size=0;
     assert(!Run(both,color,4,4,{{4,5,1}},1,a,b,size));
@@ -155,10 +186,10 @@ int main() {
     a.clear();b.clear();size=0;
     assert(!Run(both,both,8,8,{{0xffffffffU,0xffffffffU,1}},1,a,b,size));
     std::puts("F07_NATIVE_STENCIL_REGIONS_PASS disjoint_regions=1 "
-              "dual_aspects=1 multilayer_budget=1 mixed_format_refused=1 "
+              "dual_aspects=1 multilayer_budget=1 mixed_format_refused=1 mixed_D32_depth_planes=2 "
               "overflow_refused=1 ns1_path_unchanged=1");
 }
-'''.replace("__PLANNER__", planner)
+'''.replace("__MIXED_FLAG__", mixed_flag).replace("__PLANNER__", planner)
 with tempfile.TemporaryDirectory(prefix="eden-stencil-plan-") as t:
     src = Path(t)/"stencil_plan.cpp"
     src.write_text(cpp)

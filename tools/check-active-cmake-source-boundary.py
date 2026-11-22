@@ -7,6 +7,8 @@ allowed in the root; staging maintained full sources is permitted.
 """
 from pathlib import Path
 import re
+import subprocess
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 root_cmake = (ROOT/"headless/CMakeLists.txt").read_text(encoding="utf-8")
@@ -124,6 +126,81 @@ for path, code in (("native build", native_build),
         f"Historical Vulkan source transformation invoked by {path}")
 assert 'shutil.copyfile(maintained, tmp)' in (
     ROOT/"tools/install-active-core-backports.py").read_text()
+# SVC cache coherency is a real core TU replacement, not a no-op IPC stub.
+svc_cache = ROOT / "vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp"
+assert svc_cache.is_file()
+svc_code = svc_cache.read_text(encoding="utf-8")
+assert 'list(FIND core_sources "hle/kernel/svc/svc_cache.cpp" eden_ns1_svc_cache_index)' in root_cmake
+assert 'list(APPEND core_sources "${EDEN_NS1_SVC_CACHE}")' in root_cmake
+assert 'process->GetMemory().InvalidateDataCache(address, size)' in svc_code
+assert 'process->GetMemory().StoreDataCache(address, size)' in svc_code
+assert 'process->GetMemory().FlushDataCache(address, size)' in svc_code
+assert 'GetCurrentMemory(system.Kernel()).FlushDataCache(address, size)' in svc_code
+assert svc_code.count('R_UNLESS(address < address + size, ResultInvalidCurrentMemory);') == 4
+# Native CMake CAS selection is order-sensitive: the early NS1 replacement
+# already holds the maintained absolute global-atomic source when P5 runs.
+# Configure ONLY these two verbatim blocks with a synthetic target to prove
+# that the final target keeps one maintained owner for each CAS TU. No PS5
+# compilation is triggered; the original vendor sources remain untouched.
+def cmake_block(start: str, end: str) -> str:
+    assert root_cmake.count(start) == root_cmake.count(end) == 1
+    return start + root_cmake.split(start, 1)[1].split(end, 1)[0]
+
+ns1_cas_block = cmake_block("# NS1 Maxwell ATOM.CAS:", "# NS1 Maxwell FP64")
+p5_cas_block = cmake_block("# P5 link parity:", "# R457 NS2 sparse")
+for enable_gl in (False, True):
+    sources = [
+        "backend/spirv/emit_spirv_atomic.cpp",
+        "frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
+        "frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp",
+    ]
+    if enable_gl:
+        sources.extend([
+            "backend/glasm/emit_glasm_memory.cpp",
+            "backend/glsl/emit_glsl_atomic.cpp",
+        ])
+    with tempfile.TemporaryDirectory(prefix="encore-ns1-cas-cmake-") as scratch:
+        tmp = Path(scratch)
+        project = f"""cmake_minimum_required(VERSION 3.21)
+project(EncoreNs1CASSelection LANGUAGES CXX)
+set(PORT_ROOT "{ROOT.as_posix()}")
+set(PS5_NATIVE ON)
+set(ENABLE_OPENGL {"ON" if enable_gl else "OFF"})
+add_library(shader_recompiler STATIC
+{chr(10).join("    " + item for item in sources)}
+)
+{ns1_cas_block}
+{p5_cas_block}
+get_target_property(confirmed_sources shader_recompiler SOURCES)
+foreach(relative_path IN LISTS eden_native_cas_paths)
+    set(selected "${{EDEN_MAINTAINED_SHADER_CAS_ROOT}}/${{relative_path}}")
+    set(found 0)
+    foreach(candidate IN LISTS confirmed_sources)
+        if(candidate STREQUAL selected)
+            math(EXPR found "${{found}} + 1")
+        endif()
+    endforeach()
+    if(NOT found EQUAL 1)
+        message(FATAL_ERROR "CAS owner not selected exactly once: ${{relative_path}} => ${{found}}")
+    endif()
+endforeach()
+list(LENGTH confirmed_sources total_sources)
+list(LENGTH eden_native_cas_paths expected_sources)
+if(NOT total_sources EQUAL expected_sources)
+    message(FATAL_ERROR "CAS selection kept stale/duplicate sources")
+endif()
+"""
+        (tmp / "CMakeLists.txt").write_text(project, encoding="utf-8")
+        run = subprocess.run(
+            ["cmake", "-S", str(tmp), "-B", str(tmp / "build")],
+            text=True, capture_output=True, timeout=60, check=False,
+        )
+        assert run.returncode == 0, (
+            f"NS1 CAS native source CMake failed ENABLE_OPENGL={enable_gl}: "
+            f"{run.stdout[-3000:]} {run.stderr[-3000:]}"
+        )
+print("ENCORE_NS1_CAS_SOURCE_SELECTION_PASS native=1 maintained=1 unique=1 profiles=2")
+
 print(f"ENCORE_ACTIVE_CMAKE_SOURCE_BOUNDARY_PASS modules={checked} "
       f"pinned_upstream_modules={excluded_upstream_modules} "
       "cpp_generators=0 resource_generators=1 nup_source_pair_split=1")

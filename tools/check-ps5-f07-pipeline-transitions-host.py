@@ -69,7 +69,10 @@ struct GraphicsPipeline {
     FailPointerAppend<GraphicsPipelineCacheKey> transition_keys;
     FailPointerAppend<GraphicsPipeline*> transitions;
 #ifdef PS5_NATIVE
+    // Match the two additional native hint-ring members in the selected TU.
+    static constexpr size_t kNativeTransitionHintLimit = 64;
     std::array<size_t, 2> hot_transition_indices{};
+    size_t next_transition_replacement{};
 #endif
 """ + selected + r"""
     void AddTransition(GraphicsPipeline* other);
@@ -78,7 +81,7 @@ struct GraphicsPipeline {
 int main() {
     GraphicsPipeline source{};
     source.key.value = -1;
-    std::array<GraphicsPipeline, 64> targets{};
+    std::array<GraphicsPipeline, 65> targets{};
     for (int i = 0; i < 48; ++i) {
         targets[i].key.value = i;
         source.AddTransition(&targets[i]);
@@ -131,6 +134,16 @@ int main() {
     assert(source.Next(targets[46].key) == &targets[46]);
     assert(source.Next(targets[63].key) == &targets[63]);
     assert(source.Next(targets[0].key) == &targets[0]);
+#ifdef PS5_NATIVE
+    // The next unique successor replaces only a bounded hint, never grows
+    // the optional ring or removes the two recent HUD/overlay hits.
+    targets[64].key.value = 64;
+    source.AddTransition(&targets[64]);
+    assert(source.transition_keys.size() == 64 && source.transitions.size() == 64);
+    assert(source.Next(targets[64].key) == &targets[64]);
+    assert(source.Next(targets[0].key) == &targets[0]);
+    assert(source.Next(targets[63].key) == &targets[63]);
+#endif
     GraphicsPipeline small{};
     small.key.value = -10;
     small.AddTransition(&targets[0]);

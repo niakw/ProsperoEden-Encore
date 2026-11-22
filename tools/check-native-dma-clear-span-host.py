@@ -46,6 +46,16 @@ struct Buffer {
 };
 struct Mapping {
     bool present = true;
+    bool contiguous = true;
+    unsigned continuity_checks{};
+    bool IsGranularRange(GPUVAddr, u64) {
+        ++continuity_checks;
+        return contiguous;
+    }
+    bool IsContinuousRange(GPUVAddr, u64) {
+        ++continuity_checks;
+        return contiguous;
+    }
     std::optional<DAddr> GpuToCpuAddress(GPUVAddr address) {
         return present ? std::optional<DAddr>(address) : std::nullopt;
     }
@@ -71,9 +81,16 @@ template <class P> struct BufferCache {
             ++calls;
         }
     } runtime;
-    unsigned downloads{}, finds{};
+    unsigned downloads{}, finds{}, syncs{};
     std::size_t download_size{};
     void ClearDownload(DAddr, std::size_t size) { ++downloads; download_size = size; }
+    // DMA Clear calls the maintained BufferCache upload synchronization.
+    // Count it here without replacing any production cache logic.
+    bool SynchronizeBuffer(Buffer&, DAddr, u32 size) {
+        assert(size != 0);
+        ++syncs;
+        return true;
+    }
     BufferId FindBuffer(DAddr address, u32 size, bool insert) {
         assert(!insert); ++finds;
         slot_buffers[2] = Buffer{address, size, 0}; return 2;
@@ -95,6 +112,7 @@ int main() {
     // as bytes misses that buffer and leaves the registered GPU data stale.
     assert(late.DMAClear(address, words, pattern));
     assert(late.runtime.calls == 1 && late.finds == 1 && late.downloads == 1);
+    assert(late.syncs == 1 && late.mapping.continuity_checks == 1);
     assert(late.download_size == bytes && late.gpu_modified_ranges.bytes == bytes);
     assert(late.slot_buffers[2].marked == bytes);
     for (std::size_t i = 0; i < late.runtime.image.size(); ++i)
@@ -103,7 +121,7 @@ int main() {
     // No registered range: retain the caller's CPU fallback, no GPU work.
     BufferCache<int> absent;
     assert(!absent.DMAClear(address, words, pattern));
-    assert(!absent.runtime.calls && !absent.finds && !absent.downloads);
+    assert(!absent.runtime.calls && !absent.finds && !absent.downloads && !absent.syncs);
     absent.mapping.present = false;
     assert(!absent.DMAClear(address, words, pattern));
     assert(!absent.runtime.calls && !absent.finds && !absent.downloads);
@@ -111,7 +129,15 @@ int main() {
     BufferCache<int> early;
     early.slot_buffers[1] = Buffer{0, 65536, 0}; early.page_table[0] = 1;
     assert(early.DMAClear(address, 8, pattern));
-    assert(early.download_size == 32 && early.runtime.calls == 1);
+    assert(early.download_size == 32 && early.runtime.calls == 1 && early.syncs == 1);
+    // A sparse/discontiguous GMMU mapping must retain the page-aware
+    // software DMA fallback before dirty bookkeeping or Vulkan work.
+    BufferCache<int> sparse;
+    sparse.slot_buffers[1] = Buffer{0, 65536, 0}; sparse.page_table[0] = 1;
+    sparse.mapping.contiguous = false;
+    assert(!sparse.DMAClear(address, 8, pattern));
+    assert(sparse.mapping.continuity_checks == 2);
+    assert(!sparse.runtime.calls && !sparse.finds && !sparse.downloads && !sparse.syncs);
     for (const auto invalid : std::array<u64, 4>{0, (u64{1} << 30),
                                                (u64{1} << 30) + 1, ~u64{0}}) {
         BufferCache<int> bounded;
@@ -119,6 +145,7 @@ int main() {
         assert(!bounded.DMAClear(address, invalid, pattern));
         assert(!bounded.runtime.calls && !bounded.finds && !bounded.downloads);
         assert(!bounded.gpu_modified_ranges.calls);
+        assert(!bounded.mapping.continuity_checks && !bounded.syncs);
     }
     std::puts("DMA_CLEAR_SPAN_PASS late_overlap=1 fallback_preserved=1 byte_range_exact=1");
 }

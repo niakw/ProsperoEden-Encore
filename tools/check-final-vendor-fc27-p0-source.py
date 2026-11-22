@@ -106,10 +106,37 @@ REVIEWED_PINS.add("bc44094d78d0bba088ca0b48f37e9a4c38a9fbc5")
 REVIEWED_PINS.add("ed03e467016f5afbcb722c54af374d6916ccd6a0")
 REVIEWED_PINS.add("b8396c6483aa8278bd75b6757aed3bb5a9206e52")
 REVIEWED_PINS.add("a8c9170802811e7bb19345a461c3ae8dc72c27be")
+REVIEWED_PINS.add("42b34a5dc46b594cb029362e8f130900adf4424e")
+REVIEWED_PINS.add("77b736148129ffa72c9f6c081695b7c7515c3ed9")
+REVIEWED_PINS.add("4354add020afac574198f63d87167f3022bff9c6")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
+if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}:
+    if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}:
+        # A merge commit, but exactly the reviewed 17253dc9 source tree.
+        reviewed_tree = subprocess.check_output(
+            ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip()
+        assert reviewed_tree == {
+            "ac880cd408116e6eb53ba2400abc52970b81f539": "01c09ec124779e7d976718af09a0e5e94cb4ac20",
+            "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
+        }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
+    # Reconstruct only the two corrected source lines before reusing the
+    # already-qualified FC27/P0 graph; every other owner remains exact.
+    import sys
+    sys.path.insert(0, str(V/"tests"))
+    from native_msaa_handle_receipt import (
+        GUEST_CACHE_LOCK_SUCCESSOR, INTEGRATED_RASTERIZER,
+        restore_guest_cache_lock_successor, blob)
+    raster=(V/"encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    assert blob(raster.encode("utf-8"))==GUEST_CACHE_LOCK_SUCCESSOR
+    predecessor=restore_guest_cache_lock_successor(raster)
+    assert blob(predecessor.encode("utf-8"))==INTEGRATED_RASTERIZER
+    REVIEWED_PINS.add(selected)
+    gitlink_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
+    shipping_vendor_pin = "4354add020afac574198f63d87167f3022bff9c6"
 
 # OunceVK configures native 3D channels with H:0x1F {graphics=0, compute=2}
 # before the first H:0x1B submit. NVIDIA defines compute bit1 as CTA.

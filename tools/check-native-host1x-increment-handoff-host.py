@@ -15,6 +15,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PIN=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.cpp").read_text()
 ACT=(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp").read_text()
 HDR=(ROOT/"vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h").read_text()
+SELECTED_HDR=(ROOT/"vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h").read_text()
 CM=(ROOT/"headless/CMakeLists.txt").read_text()
 FAST=(ROOT/".github/workflows/encore-core-fast-gate.yml").read_text()
 FULL=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
@@ -30,6 +31,9 @@ for token in ("due.pending.splice(", "due.running = due.pending.front().id;",
     assert token in ACT, token
 assert ACT.index("wait_cv.notify_all();") < ACT.index("due.pending.splice(")
 assert "DueActions" not in PIN and "using ActionHandle = u64;" not in PIN
+assert "void WaitHost(u32 syncpoint_id, u32 expected_value, std::stop_token stop);" in SELECTED_HDR
+assert "EDEN_HOST1X_SYNCPOINT_ABI_ROOT" in CM
+assert 'target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")' in CM
 
 HARNESS=r"""
 #include <atomic>
@@ -144,7 +148,9 @@ with tempfile.TemporaryDirectory(prefix="encore-host1x-current-") as d:
         exe=t/("run"+opt)
         build=subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
                               "-pthread","-fsanitize=undefined","-fno-sanitize-recover=all",
-                              "-I",str(t),"-I",str(ROOT/"vendor/sources/eden/src"),
+                              "-I",str(t),
+                              "-I",str(ROOT/"vendor/encore-active/eden-core/overrides"),
+                              "-I",str(ROOT/"vendor/sources/eden/src"),
                               str(ROOT/"vendor/encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp"),
                               str(t/"test.cpp"),"-o",str(exe)],
                              capture_output=True,text=True,timeout=60)

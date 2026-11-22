@@ -1,54 +1,122 @@
 #!/usr/bin/env python3
-"""Prove that native software-blitter source preserves the shipping backport."""
+"""Exact selected Fermi2D blitter provenance and host UBSan/ASan geometry witness.
+
+Only the maintained vendor C++ is compiled by the native PS5 CMake path.
+The upstream/backport blobs remain historical baselines, not runtime fallbacks.
+"""
 from pathlib import Path
-import json
+import hashlib
+import shutil
+import subprocess
+import tempfile
 
 root = Path(__file__).resolve().parents[1]
 backport = (root / "vendor/encore-active/eden-backports/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 upstream = (root / "vendor/sources/eden/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
 maintained = (root / "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp").read_text()
-decoder = (root / "vendor/sources/eden/src/video_core/textures/decoders.cpp").read_text()
+decoder = (root / "vendor/encore-active/eden-core/src/video_core/textures/decoders.cpp").read_text()
 module = (root / "headless/gpu_native_observability.cmake").read_text()
 
-assert upstream != backport, "shipping 2D pixel-index backport disappeared"
-assert "floor/ceil yield ordinary pixel coordinates" in backport
-changes = json.loads(r'''[["static_cast<size_t>(surface.pitch * surface.height)","static_cast<size_t>(surface.pitch) * surface.height"],["const size_t src_copy_size = src_extent_x * src_extent_y * src_bytes_per_pixel;","const size_t src_copy_size = static_cast<size_t>(src_extent_x) * src_extent_y * src_bytes_per_pixel;"],["const size_t dst_copy_size = dst_extent_x * dst_extent_y * dst_bytes_per_pixel;","const size_t dst_copy_size = static_cast<size_t>(dst_extent_x) * dst_extent_y * dst_bytes_per_pixel;"]]''')
-for before, after in changes:
-    assert backport.count(before) == 1, ("shipping blitter changed", before)
-    backport = backport.replace(before, after)
+def git_blob(data: str) -> str:
+    payload = data.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(payload)).encode() + b"\0" + payload).hexdigest()
 
-# Lichii #2121 / 23e5a91: Switch 2 block-linear Fermi2D copies must use
-# MemoryManager's native-tiling mode on both source and destination transforms.
-# Keep this composition exact so unrelated maintained-source drift still fails.
-native_tiling_changes = [
-    (
-        "                         src.block_height, src.block_depth, src_extent_x * src_bytes_per_pixel);",
-        "                         src.block_height, src.block_depth, src_extent_x * src_bytes_per_pixel,\n"
-        "                         memory_manager.UsesNativeTiling());",
-    ),
-    (
-        "                       dst.block_height, dst.block_depth, dst_extent_x * dst_bytes_per_pixel);",
-        "                       dst.block_height, dst.block_depth, dst_extent_x * dst_bytes_per_pixel,\n"
-        "                       memory_manager.UsesNativeTiling());",
-    ),
-]
-for before, after in native_tiling_changes:
-    assert backport.count(before) == 1, ("shipping blitter native-tiling anchor changed", before)
-    backport = backport.replace(before, after)
-assert maintained == backport, (
-    "complete maintained source diverges from shipping baseline plus three widened "
-    "arithmetic expressions and Lichii #2121 native-tiling forwarding"
-)
-for token in ("src.depth, config.src_x0", "dst.depth, config.dst_x0",
-              "static_cast<size_t>(surface.pitch) * surface.height",
-              "const size_t src_copy_size = static_cast<size_t>(src_extent_x)",
-              "const size_t dst_copy_size = static_cast<size_t>(dst_extent_x)"):
-    assert token in maintained, token
-assert "static constexpr u32 origin_z = 0;" in decoder
+assert upstream != backport
+assert git_blob(backport) == "f014de1b85eb1667024a7b5a7162d7c6307d80f6"
+assert "floor/ceil yield ordinary pixel coordinates" in backport
+assert git_blob(maintained) == "212648a456594522345b3b7724449006a54b492b", (
+    "Unreviewed shipping PS5 Fermi2D software blitter; historical predecessor was "
+    "2c5aaf8fe19835dc72eee40f3c9eebc17f17350b")
+assert "#include <optional>" in maintained
+begin = "    const auto checked_surface_size = "
+end = "    const u32 src_extent_x = "
+assert maintained.count(begin) == maintained.count(end) == 1
+getter = maintained[maintained.index(begin):maintained.index(end, maintained.index(begin))]
+for required in (
+    "surface.block_height > 5 || surface.block_depth > 5",
+    "static_cast<u64>(surface.width) * bytes_per_pixel",
+    "(width_bytes + 63) & ~u64{63}",
+    "const u64 padded_height",
+    "const u64 padded_depth",
+    "padded_width > MAX_BYTES / padded_height",
+    "slice_bytes > MAX_BYTES / padded_depth",
+    "CalculateSize(true, bytes_per_pixel",
+    "!=\n            checked_bytes",
+):
+    assert required in getter, ("Missing checked GOB backing guard", required)
+assert maintained.count("const auto src_size = checked_surface_size(src, src_bytes_per_pixel);") == 1
+assert maintained.count("const auto dst_size = checked_surface_size(dst, dst_bytes_per_pixel);") == 1
+assert maintained.count("if (!src_size || !dst_size)") == 1
+assert maintained.count("src.Address() > ~u64{0} - *src_size") == 1
+assert maintained.count("dst.Address() > ~u64{0} - *dst_size") == 1
+assert "src.Address(), *src_size" in maintained
+assert "dst.Address(), *dst_size" in maintained
+assert "return aligned_width * aligned_height * aligned_depth;" in decoder
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in module
 assert 'list(FILTER sw_blitter_sources EXCLUDE REGEX "engines/sw_blitter/blitter[.]cpp$")' in module
-assert 'write_derived("${PORT_BUILD_DIR}/sw_blitter_sized.cpp"' not in module
-assert 'file(READ "${PROJECT_SOURCE_DIR}/src/video_core/engines/sw_blitter/blitter.cpp"' not in module
-assert "EDEN_UNQUALIFIED_FERMI2D_COPY" not in module
-assert '"${EDEN_MAINTAINED_FERMI_ROOT}/fermi_2d_observed.cpp"' in module
-print("VENDOR_MAINTAINED_SW_BLITTER_PARITY_PASS: shipping backport plus 3 arithmetic corrections plus Lichii_2121_native_tiling=2")
+
+# Exercise the EXACT size-admission C++ lambda extracted from the versioned
+# production TU; the stub reproduces CalculateSize's existing u32 arithmetic.
+# A 256 MiB linear 2D surface with GOB depth=32 used to return ZERO backing
+# bytes after 8 GiB of padded geometry wrapped modulo 2^32.
+cpp = r"""
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+using u32 = std::uint32_t;
+using u64 = std::uint64_t;
+struct Fermi2D {
+    enum class MemoryLayout { Pitch, BlockLinear };
+    struct Surface {
+        MemoryLayout linear;
+        u32 width, height, depth, block_height, block_depth, pitch;
+    };
+};
+std::size_t CalculateSize(bool tiled, u32 bpp, u32 width, u32 height,
+                          u32 depth, u32 bh, u32 bd) {
+    if (!tiled) return width * height * depth * bpp;
+    const u32 aw = ((width * bpp + 63) / 64) * 64;
+    const u32 ah = ((height + (u32{8} << bh) - 1) / (u32{8} << bh)) * (u32{8} << bh);
+    const u32 ad = ((depth + (u32{1} << bd) - 1) / (u32{1} << bd)) * (u32{1} << bd);
+    return aw * ah * ad;
+}
+int main() {
+__GETTER__
+    using Layout = Fermi2D::MemoryLayout;
+    Fermi2D::Surface valid{Layout::BlockLinear, 1920, 1080, 1, 4, 0, 0};
+    assert(checked_surface_size(valid, 4) == 8847360);
+    Fermi2D::Surface pitch{Layout::Pitch, 1920, 1080, 1, 0, 0, 7680};
+    assert(checked_surface_size(pitch, 4) == 8294400);
+    Fermi2D::Surface volume{Layout::BlockLinear, 64, 64, 32, 0, 5, 0};
+    assert(checked_surface_size(volume, 4) == 524288);
+    Fermi2D::Surface wrapped{Layout::BlockLinear, 8192, 8192, 1, 0, 5, 0};
+    assert(CalculateSize(true, 4, 8192, 8192, 1, 0, 5) == 0);
+    assert(!checked_surface_size(wrapped, 4));
+    wrapped.block_depth = 6;
+    assert(!checked_surface_size(wrapped, 4));
+    wrapped.block_depth = 0;
+    wrapped.block_height = 6;
+    assert(!checked_surface_size(wrapped, 4));
+    wrapped.block_height = 0;
+    wrapped.width = 0;
+    assert(!checked_surface_size(wrapped, 4));
+    wrapped.width = 0xffffffffU;
+    assert(!checked_surface_size(wrapped, 16));
+    pitch.pitch = 0xffffffffU;
+    assert(!checked_surface_size(pitch, 4));
+}
+""".replace("__GETTER__", getter)
+clang = shutil.which("clang++-18") or shutil.which("clang++")
+assert clang, "Host Clang required"
+with tempfile.TemporaryDirectory(prefix="encore-ns1-sw-blitter-") as tmp:
+    source = Path(tmp) / "blitter-gob.cpp"
+    executable = Path(tmp) / "blitter-gob"
+    source.write_text(cpp)
+    subprocess.run([clang, "-std=c++20", "-O1", "-Wall", "-Wextra", "-Werror",
+                    "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
+                    str(source), "-o", str(executable)], check=True, timeout=45)
+    subprocess.run([str(executable)], check=True, timeout=20)
+print("VENDOR_MAINTAINED_SW_BLITTER_PARITY_PASS padded_GOB_64bit=1 "
+      "u32_wrap_rejected=1 pitch_valid=1 volume_valid=1 "
+      "unsupported_geometry_rejected=1 native_tiling_unchanged=1 asan_ubsan=1")

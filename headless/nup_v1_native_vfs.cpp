@@ -31,16 +31,22 @@ bool HasNupV1Header(const FileSys::VirtualFile& source) {
             value |= std::uint64_t(header[off + i]) << (8 * i);
         return value;
     };
+    const auto header_size = le16(4);
+    const auto toc_offset = le64(8);
     const auto toc_size = le64(0x10);
     const auto blob_offset = le64(0x38);
     const auto actual_size = std::uint64_t(source->GetSize());
+    // Lichii NUP v1 accepts extended headers and padded TOC locations.
+    // Keep the full archive checksum and bounds validation in Mount::Open.
     return header[0] == 'N' && header[1] == 'U' &&
            header[2] == 'P' && header[3] == 1 &&
-           le16(4) == 0x80 && le16(6) == 1 &&
-           le64(8) == 0x80 && toc_size > 0 &&
-           toc_size <= 64ULL * 1024 * 1024 &&
-           toc_size <= actual_size - 0x80 &&
-           blob_offset >= 0x80 + toc_size &&
+           le16(6) == 1 &&
+           header_size >= 0x80 && header_size <= actual_size &&
+           toc_offset >= header_size && toc_offset <= actual_size &&
+           toc_size > 0 && toc_size <= 64ULL * 1024 * 1024 &&
+           toc_size <= actual_size - toc_offset &&
+           blob_offset >= toc_offset &&
+           toc_size <= blob_offset - toc_offset &&
            blob_offset <= actual_size &&
            blob_offset % 16 == 0 &&
            le64(0x40) == actual_size;

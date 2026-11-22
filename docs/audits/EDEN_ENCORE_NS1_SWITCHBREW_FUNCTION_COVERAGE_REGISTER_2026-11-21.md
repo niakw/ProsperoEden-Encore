@@ -241,6 +241,17 @@ Vendor `b3afcf993cb72713d24a6287dec9334103021179`, puis `dff1bdb769d9d92738ff424
 
 **Compteur courant : 1 306 IMPL-SRC / 107 PARTIEL / 158 STUB / 106 NOOP / 2 306 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple moteur `422120c8` → vendor `2faf00b1` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour le nouveau lot.
 
+## Lot NIFM IRequest + scan legacy — 22/11/2026
+
+Vendor `084983e07dd79fb0276dad03a342554628cdb7e0`, puis `76de6f60e3a3e3982bac17ca45b34fa646388a89` (arbre `5508124e6fbc16279e5870434b331154cb7f62b6`).
+
+- `IRequest::{GetRequestState,GetResult,GetSystemEventReadableHandles,Cancel,Submit}` : **5 STUB → IMPL-SRC**. `OnHold` devient un état observable mais transitoire ; la disponibilité réseau hôte tranche ensuite `Accepted/Invalid`, avec événement signalé et accès sérialisé par mutex.
+- `GetScanDataOld` ID 11 : **STUB → PARTIEL**. Le buffer historique 0x34 reçoit les SSID/force/connectabilité du vrai cache de scan. Canal/auth/cipher restent à zéro faute de données hôte fiables.
+- Preuve ABI : SwIPC distingue `AccessPointDataOld` pour l'ID 11 à partir du changement 4.0.0, avec une taille de 0x34 ; aucun layout 19+ n'est réutilisé aveuglément.
+- Preuve comportementale : le modèle de résolution après un `OnHold` observable est cohérent avec les implémentations récentes qui évitent les boucles de polling NIFM offline ; l'adaptation locale utilise le backend réseau Encore, pas Nextendo.
+
+**Compteur courant : 1 311 IMPL-SRC / 108 PARTIEL / 152 STUB / 106 NOOP / 2 306 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple moteur `55e6ed38` → vendor `dff1bdb7` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour ce nouveau lot.
+
 ---
 
 ## 1. Références et règle de vérité

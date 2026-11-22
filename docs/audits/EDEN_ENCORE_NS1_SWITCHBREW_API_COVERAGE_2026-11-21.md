@@ -23,14 +23,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 306 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 226 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `dff1bdb7`. **Ces 1 306 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 311 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 231 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `76de6f60`. **Ces 1 311 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 226 | 80 | **1 306** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 231 | 80 | **1 311** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 104 | 3 | **107** |
-| **STUB — Stub / résultat simulé** | 158 | 0 | **158** |
+| **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
+| **STUB — Stub / résultat simulé** | 152 | 0 | **152** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
 | **NULL — Handler NULL** | 2 306 | 0 | **2 306** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
@@ -236,15 +236,23 @@ Le backport ciblé de `zortos293/Lichii@9eab742493ba1fe33f60c0f6762dcfcbdb504e96
 
 **Compteur courant : 1 306 IMPL-SRC, 107 PARTIEL, 158 STUB, 106 NOOP, 2 306 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple moteur `422120c8` → vendor `2faf00b1` est vert X8D24 + provenance ; ce nouveau couple reste à qualifier par ses checks.
 
+### Lot NIFM — résolution IRequest et scan legacy
+
+Vendor `084983e0`, puis `76de6f60` (arbre `5508124e6fbc16279e5870434b331154cb7f62b6`). La machine d'état `IRequest` ne peut plus rester indéfiniment en `OnHold` lorsqu'un jeu ne fait que poller `GetRequestState` : `Submit` publie `OnHold`, le premier poll l'observe puis résout la connexion vers `Accepted` ou `Invalid`, les transitions signalent le vrai événement et `Cancel` revient à `NotSubmitted`. Les cinq commandes IRequest passent **STUB → IMPL-SRC**.
+
+`GetScanDataOld` passe **STUB → PARTIEL**. Le type `AccessPointDataOld` est explicitement modélisé à 0x34 octets, conformément aux définitions SwIPC de l'ABI pré-4.0/commande 11, et le service renvoie le cache de scan réel au lieu d'un count zéro constant. Le scanner hôte ne fournit pas encore canal, mode d'authentification ni cipher : ces champs restent zéro plutôt que d'être inventés.
+
+**Compteur courant : 1 311 IMPL-SRC, 108 PARTIEL, 152 STUB, 106 NOOP, 2 306 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple moteur `55e6ed38` → vendor `dff1bdb7` est vert X8D24 + provenance ; ce nouveau couple reste à qualifier par ses propres checks.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1306
+    "Implémentation source retrouvée" : 1311
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 107
-    "Stub / résultat simulé" : 158
+    "Implémentation partielle" : 108
+    "Stub / résultat simulé" : 152
     "No-op documenté" : 106
     "Handler NULL" : 2306
     "Rejet explicite / historique" : 69
@@ -4676,7 +4684,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `8` | `GetNetworkProfile` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `9` | `SetNetworkProfile` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `10` | `RemoveNetworkProfile` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `11` | `GetScanDataOld ([1.0.0-3.0.2] GetScanData)` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, ancienne variante : résultat vide constant; non validé PS5) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `11` | `GetScanDataOld ([1.0.0-3.0.2] GetScanData)` | — | **PARTIEL** (sérialise le cache de scan réel au layout historique `AccessPointDataOld` 0x34 ; canal/auth/chiffrement restent zéro car le scanner hôte ne les expose pas encore ; vendor `76de6f60`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `12` | `GetCurrentIpAddress` | — | **PARTIEL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `13` | `GetCurrentAccessPointOld ([1.0.0-3.0.2] GetCurrentAccessPoint)` | — | **NULL** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, nullptr; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `14` | `CreateTemporaryNetworkProfile` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
@@ -4714,11 +4722,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `2` | `GetResult` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `3` | `GetSystemEventReadableHandle` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `4` | `SetChannels` | 6.0.0+ | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `0` | `GetRequestState` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `1` | `GetResult` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `2` | `GetSystemEventReadableHandles` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `3` | `Cancel` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `4` | `Submit` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `0` | `GetRequestState` | — | **IMPL-SRC** (machine d'état réelle protégée par mutex ; expose `OnHold` une fois puis résout `Accepted/Invalid` selon le réseau hôte et signale l'événement ; vendor `084983e0`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `1` | `GetResult` | — | **IMPL-SRC** (résultat dérivé de l'état IRequest et de la disponibilité réseau réelle, avec résolution de `OnHold` ; vendor `084983e0`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `2` | `GetSystemEventReadableHandles` | — | **IMPL-SRC** (retourne les deux vrais KEvent de la requête ; les transitions d'état signalent l'événement ; vendor `084983e0`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `3` | `Cancel` | — | **IMPL-SRC** (ramène réellement la requête à `NotSubmitted` et signale le changement d'état ; vendor `084983e0`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `4` | `Submit` | — | **IMPL-SRC** (place réellement IRequest en `OnHold` sous verrou avant résolution observable ; vendor `084983e0`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `5` | `SetRequirement` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `6` | `SetRequirementPreset` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `8` | `SetPriority` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |

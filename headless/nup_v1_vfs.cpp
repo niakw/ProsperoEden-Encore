@@ -193,18 +193,22 @@ void Archive::Parse() {
     const auto head = ReadChunk(source_, 0, 0x80);
     Check(head[0] == 'N' && head[1] == 'U' && head[2] == 'P' && head[3] == 1,
           "wrong NUP magic/version");
-    Check(ReadLe<std::uint16_t>(head, 4) == 0x80 &&
+    const auto header_size = ReadLe<std::uint16_t>(head, 4);
+    Check(header_size >= 0x80 && header_size <= source_.Size() &&
           ReadLe<std::uint16_t>(head, 6) == 1, "unsupported NUP header");
     const auto toc_at = ReadLe<std::uint64_t>(head, 8);
     const auto toc_size = ReadLe<std::uint64_t>(head, 0x10);
     const auto blob_at = ReadLe<std::uint64_t>(head, 0x38);
     const auto file_size = ReadLe<std::uint64_t>(head, 0x40);
     const auto count = ReadLe<std::uint32_t>(head, 0x48);
-    Check(toc_at == 0x80 && toc_size > 0 && toc_size <= MaxToc && toc_size % 16 == 0,
-          "invalid TOC dimensions");
-    Check(file_size == source_.Size() && toc_at + toc_size <= file_size &&
-          blob_at >= toc_at + toc_size && blob_at <= file_size && blob_at % 16 == 0,
-          "invalid NUP blob bounds");
+    // Lichii supports padded/extended NUP v1 headers. Do not impose the
+    // writer's exact 0x80 TOC offset or 16-byte TOC size on other valid
+    // archives; all bounds, the TOC SHA-256 and content UUID stay mandatory.
+    Check(file_size == source_.Size() && toc_at >= header_size &&
+          toc_at <= file_size && toc_size > 0 && toc_size <= MaxToc &&
+          toc_size <= file_size - toc_at, "invalid TOC dimensions");
+    Check(blob_at >= toc_at && toc_size <= blob_at - toc_at &&
+          blob_at <= file_size && blob_at % 16 == 0, "invalid NUP blob bounds");
     Check(count > 0 && count <= 65536 && ReadLe<std::uint32_t>(head, 0x4C) == 0 &&
           AllZero(std::span<const std::uint8_t>(head).subspan(0x60, 0x20)),
           "unsupported superblock fields");

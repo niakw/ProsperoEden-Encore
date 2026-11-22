@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `45b29de426ad94aba61c63bf12ab4440629abb5b` |
+| Vendor gitlink sélectionné sur cette branche | `f1622554541806ffcd31921389b2dcb3a9fa3e59` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (32), `STUB NOMMÉ` (**71**), `REFUS EXPLICITE` (**12**), `AUCUN HANDLER INDIQUÉ` (**26**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus et stubs restent **M** ; ce n'est pas une couverture fonctionnelle.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**148**), `HANDLER PARTIEL INDIQUÉ` (**28**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `AUCUN HANDLER INDIQUÉ` (26), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus et stubs restent **M** ; un handler n'est classé C que si son contrat C++ est réellement vérifié.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,30 +30,30 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> Périmètre de **316 entrées NS2**, 12 tableaux, branche dédiée issue du moteur `7d05c7c7` / vendor `a8c91708`. Sur ce lot, vendor `45b29de4` sélectionné par le gitlink moteur. Le compteur n'est ni l'inventaire intégral SwitchBrew, ni une validation console.
+> Périmètre de **316 entrées NS2**, 12 tableaux, branche dédiée issue du moteur `7d05c7c7` / vendor `a8c91708`. Vendor actif `f1622554`, gitlink mis à jour dans le même commit moteur. Ni inventaire intégral SwitchBrew, ni preuve console.
 
-- **F (fonctionnel)** : C=144, P=31, C/P=1, M=109, U=25, V=6. Les seules progressions fonctionnelles antérieures sur cette branche sont `391` et `691`, classées P (calcul de taille/alignment borné). Aucun nouveau C.
-- **R (traitement renseigné)** : **259/316 (82,0 %)** avec handler, stub ou refus ; **57/316 (18,0 %)** sans traitement indiqué : 26 M, 25 U, 6 V.
+- **F (fonctionnel au niveau source)** : **C=148**, P=27, C/P=1, M=109, U=25, V=6. Après les calculs partiels 391/691, les GSV `101`, `202`, `301`, `305` passent de P à C grâce aux contrats SwitchBrew désormais confirmés dans le C++ sélectionné (bootstrap, vraie session syncpt, display et session VI2). Le 202 vérifie maintenant le TIPC sans entrée avant de publier son handle.
+- **R (traitement renseigné)** : **259/316 (82,0 %)** avec handler, stub ou refus ; **57/316 (18,0 %)** sans handler indiqué : 26 M, 25 U, 6 V. **C ne signifie pas PS5 validée.**
 
 | Statut fonctionnel | Total | Traitement indiqué | Aucun handler indiqué |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | 144 | 144 | 0 |
-| P — partielle | 31 | 31 | 0 |
+| C — implémentation source | **148** | 148 | 0 |
+| P — partielle | 27 | 27 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 109 | **83** (71 stubs, 12 refus) | **26** |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **259** | **57** |
 
-**Lot courant** : commandes GSV `1411`, `1501`, `1502` → `UnavailableDocumentedFeature` (NotImplemented), `1411` ne réutilise pas à tort les compteurs de `498` ; ioctls ctrl-gpu `0xC0084710` et `0xC010471E` → refus explicites `NotImplemented`. Les stubs/refus sont non fonctionnels et n'augmentent pas C. Les lots précédents ont enregistré des stubs GSV supplémentaires, le décodeur 210 et les calculs bornés 391/691 ainsi que quatre refus de channel.
+**Correctifs déjà appliqués sur cette branche** : GSV 1411/1501/1502 et ioctls ctrl-GPU 0xC0084710/0xC010471E échouent explicitement et restent M ; GSV 391/691 calculent réellement taille/alignment pour formats prouvés mais restent P ; GSV 101, 202, 301, 305 ont un comportement compatible avec l'ABI connue, désormais C en source. Les stubs caméra/debug/encodeur, le refus du décodeur 210 et quatre refus channel sont documentés séparément.
 
-**Restants** : 26 M sans handler renseigné (11 encodeur, 13 profiler et 2 retry GPFIFO), 25 U insuffisamment documentés, 6 variantes FW 19.x, 32 P/C/P non qualifiés. Revalider la CI exacte et les propriétaires CMake avant tout merge. Aucun build PS5 ni gameplay attesté.
+**Restants** : 26 M sans traitement (11 encodeur, 13 profiler, 2 retries GPFIFO), 25 U sans contrat suffisant, 6 anciennes variantes FW19 et 28 P/C/P à compléter/qualifier. Aucun build PS5 ni gameplay attesté ; CI hôte à vérifier pour ce couple avant merge.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11) : 142 commandes recensées ; C=30, P=22, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=34, P=18, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -61,7 +61,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 4 | Gsv | BootWithRemoteMemory | C | HANDLER INDIQUÉ | Initialize | handler actif; remote-memory |
 | 11 |  | SetCurrentProcessHandle | C | HANDLER INDIQUÉ | BindProcess | processus natif authentifié |
 | 12 |  | (nom inconnu SwitchBrew) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu, ABI/sémantique insuffisamment documentées |
-| 101 |  | CreateContext | P | HANDLER PARTIEL INDIQUÉ | CompleteBootstrap | ID actif mais sémantique/nomenclature Encore à recroiser |
+| 101 |  | CreateContext | C | HANDLER INDIQUÉ | CompleteBootstrap | Contrat prouvé : TIPC 0x75 sans données, transition de bootstrap vers Ready ; simple différence de nom C++ (graphics_supervisor_bootstrap.h) |
 | 111 | NativeMemory | CreateNativeMemory | C | HANDLER INDIQUÉ | CreateNativeMemory | actif |
 | 112 | NativeMemory | DestroyNativeMemory | C | HANDLER INDIQUÉ | DestroyNativeMemory | actif |
 | 113 | NativeMemory | CreateNativeMemoryBlockByTransferMemory | C | HANDLER INDIQUÉ | CreateNativeMemoryWithTransferMemory | actif |
@@ -69,15 +69,15 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 115 | NativeMemory | BootNativeMemoryManagement | C | HANDLER INDIQUÉ | BootNativeMemoryManagement | actif |
 | 187 | NativeMemory | QueryNativeMemoryNvsNvRmMemIdForDebug | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler sélectionné; debug, non P0 ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 201 | Syncpt | CreateSyncptContext | C | HANDLER INDIQUÉ | CreateSyncptContext | actif |
-| 202 | Syncpt | InitializeSyncptContext | P | HANDLER PARTIEL INDIQUÉ | OpenSyncptSession | session réelle, nom/contrat à aligner |
+| 202 | Syncpt | InitializeSyncptContext | C | HANDLER INDIQUÉ | OpenSyncptSession | Contrat prouvé : TIPC 202 sans entrée, validation de longueur avant allocation et retour d'une vraie session MOVE kernel ; pas seulement un alias |
 | 211 | Syncpt | CreateDebugSyncDevice | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 212 | Syncpt | DestroyDebugSyncDevice | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 213 | Syncpt | CreateDebugSyncCounter | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 214 | Syncpt | DestroyDebugSyncCounter | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 215 | Syncpt | ReportDebugSyncCounterValue | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 301 | Display | CreateDisplayContext | P | HANDLER PARTIEL INDIQUÉ | InitializeDisplayContext | ID actif; cycle create/init fusionné ou nomenclature divergente |
+| 301 | Display | CreateDisplayContext | C | HANDLER INDIQUÉ | InitializeDisplayContext | Contrat prouvé : CreateDisplayContext sans entrée, état display_ready géré après bootstrap Ready ; nom interne différent seulement |
 | 303 | Display | DestroyDisplayContext | C | HANDLER INDIQUÉ | FinalizeDisplayContext | actif |
-| 305 | Display | InitializeDisplayContext | P | HANDLER PARTIEL INDIQUÉ | OpenDisplaySession | retour session réel; vérifier ABI version |
+| 305 | Display | InitializeDisplayContext | C | HANDLER INDIQUÉ | OpenDisplaySession | Contrat prouvé : u64 version contrôlée (19.0 + SDK ultérieurs), vraie IVi2Session et handle MOVE ; pas un stub |
 | 311 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
 | 312 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
 | 314 | Display | (nom inconnu) | P | HANDLER PARTIEL INDIQUÉ | DestroyNativeWindowAliasImagePool | handler actif; nom SwitchBrew absent |

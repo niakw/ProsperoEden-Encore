@@ -211,6 +211,15 @@ def main()->int:
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in explicit_reject
     assert 'ResultSuccess' not in explicit_reject
     assert 'ctx.CommandBuffer()' not in explicit_reject
+    # GSV 202: no input payload and one real MOVE session handle.
+    syncpt_open = text.split('void IGraphicsSupervisor::OpenSyncptSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'packet[0] != 16 + 202 || packet[1] != 0' in syncpt_open
+    assert 'Kernel::ResultInvalidCombination.raw' in syncpt_open
+    assert 'ctx.AddMoveObject(client);' in syncpt_open
+    assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in syncpt_open
+    assert '{101, &IGraphicsSupervisor::CompleteBootstrap' in text
+    assert '{301, &IGraphicsSupervisor::InitializeDisplayContext' in text
+    assert '{305, &IGraphicsSupervisor::OpenDisplaySession' in text
     # S2 control-GPU pause and scheduling options must fail closed exactly.
     ctrl_gpu = (ROOT / 'vendor/encore-active/ns2-runtime/nvdrv/core/hle/'
                 'service/nvdrv/devices/nvhost_ctrl_gpu.cpp').read_text()

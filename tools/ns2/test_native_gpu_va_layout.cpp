@@ -32,7 +32,18 @@ int main() {
     const auto custom = PlanNativeGpuVaLayout(0x1000000, 1ULL << 30, 1ULL << 31, 0x10000);
     assert(custom && custom->big_begin == 16384 && custom->big_end == 32768);
     assert(!PlanNativeGpuVaLayout(0x8000000, 1ULL << 37, 1ULL << 34, 0x20000));
-    assert(!PlanNativeGpuVaLayout(0x8000000, 1ULL << 34, 1ULL << 34, 0x20000));
+    // A negotiated native 4-KiB-only view uses split == end: the full
+    // range is owned by the small-page allocator and the big-page table
+    // is empty. This is valid for NS2 ALLOC_AS_EX flags=5, not an invalid
+    // overlap or an empty address space.
+    const auto only_small = PlanNativeGpuVaLayout(
+        0x8000000, 1ULL << 34, 1ULL << 34, 0x20000);
+    assert(only_small && only_small->small_end > only_small->small_begin &&
+           only_small->big_begin == only_small->big_end);
+    // Still reject a view with no 4-KiB region (start == split) and one
+    // with a reversed split/end, rather than widening the admission rule.
+    assert(!PlanNativeGpuVaLayout(1ULL << 34, 1ULL << 34,
+                                  1ULL << 37, 0x20000));
     assert(!PlanNativeGpuVaLayout(0, 1ULL << 34, 1ULL << 37, 0x20000));
     assert(!PlanNativeGpuVaLayout(0x8000001, 1ULL << 34, 1ULL << 37, 0x20000));
     assert(!PlanNativeGpuVaLayout(0x8000000, (1ULL << 34) + 0x1000, 1ULL << 37, 0x20000));

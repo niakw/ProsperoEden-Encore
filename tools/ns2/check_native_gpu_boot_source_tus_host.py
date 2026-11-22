@@ -45,6 +45,16 @@ assert 'EnqueueDeferredCPUWrite' not in mmh, 'Experimental guest-write bridge is
 assert 'target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")' in cmake
 assert 'target_include_directories(video_core BEFORE PRIVATE "${EDEN_NS2_NATIVE_TILING_ROOT}")' in cmake
 assert 'EDEN_NS2_GPU_SESSION_SOURCE' in cmake and 'EDEN_NS2_NVDRV_GPU_SOURCE' in cmake
+# gpu_session.cpp owns bounded PS5-only command admission telemetry just like
+# gpu_worker.cpp and graphics_supervisor.cpp. The 19-Nov artifact audit proved
+# that a TU-local definition is required: core does not define PS5_NATIVE
+# globally. Keep the real session owner observable in the next native binary.
+session_native_flag = '''set_property(SOURCE "${EDEN_NS2_GPU_SESSION_SOURCE}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")'''
+worker_native_flag = '''set_property(SOURCE "${EDEN_NS2_GPU_WORKER_SOURCE}"
+        TARGET_DIRECTORY core APPEND PROPERTY COMPILE_DEFINITIONS "PS5_NATIVE=1")'''
+assert session_native_flag in cmake, 'Selected GPU session lost PS5_NATIVE command telemetry'
+assert worker_native_flag in cmake, 'Selected GPU worker lost PS5_NATIVE command telemetry'
 assert 'EDEN_NS2_RASTERIZER_INTERFACE' in cmake
 # The actual PS5 target must use the same paired NVDRV declaration and
 # implementation as this host syntax probe. Otherwise GSV 1402 compiles here

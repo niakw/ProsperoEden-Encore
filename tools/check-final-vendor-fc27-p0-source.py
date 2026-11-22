@@ -25,12 +25,1976 @@ REVIEWED_PINS.add("ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0")
 REVIEWED_PINS.add("01c942171fea39c1f7cf31d13ab36895aebb593a")
 REVIEWED_PINS.add("dcf7116dd2c536e05c80d83ff9dbf30caa5cc109")
 REVIEWED_PINS.add("b65d8d9673475433f0b6eac72eb304bf23141666")
+REVIEWED_PINS.add("266080b4df8f56bb5a9b52c8c3ec253254c1578b")
+REVIEWED_PINS.add("ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7")
+REVIEWED_PINS.add("dfbba1e690128a44da755494c422ed1e6bdeb3c3")
+REVIEWED_PINS.add("47e9735a63c94ca42ec80412c6fcfd84a4910a53")
+REVIEWED_PINS.add("f007f3d539a523607fbef8b8895c2833e5b7af8c")
+REVIEWED_PINS.add("b3e6f9943bd46fda050ecb8151c4bb06e5251117")
+REVIEWED_PINS.add("7535dc9e5e7f0060b8e448da843f96882a2ce320")
+REVIEWED_PINS.add("f69176d429723da5d79251f6b858afc72c5d99e2")
+REVIEWED_PINS.add("4795f0a884c06f029c9d06a0a3d09cc0b9cfb791")
+REVIEWED_PINS.add("fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531")
+REVIEWED_PINS.add("86cbe7ac73a28dcd1e3cdc3609eafca1c7b5dc37")
+REVIEWED_PINS.add("a93bc45a1a5858fe1e4bc718a84a2a5a8841ab38")
+REVIEWED_PINS.add("e95c1dea796b209b8561c253b82fa69e75fb72b6")
+REVIEWED_PINS.add("019e810c5c6c489eab8541f282de6b6379833015")
+REVIEWED_PINS.add("de4a6c24d1f118152c849fc87af2783c96348735")
+REVIEWED_PINS.add("788badb79f0566c56f51e64fb9aa727f72fdb065")
+REVIEWED_PINS.add("0015d90da841622e1642180b9f9de5e2d0c354c9")
+REVIEWED_PINS.add("bb575bd8396d78187d2bd56713e84c398ebce512")
+REVIEWED_PINS.add("9bd8de9081cc5ad431ecfc62696e9a6f8f2d1ffc")
+REVIEWED_PINS.add("2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f")
+REVIEWED_PINS.add("889b142aa5616d3d00733a7cc1db1562eed291f4")
+REVIEWED_PINS.add("201b09121ebbfe0a37a56710b2b7ac118ae5acbb")
+REVIEWED_PINS.add("713e18162cf9a0d629cd39ae00b43fb55f9c2823")
+REVIEWED_PINS.add("35d639ad802910cfabbaf46bdcfd48a0d2f09ab6")
+REVIEWED_PINS.add("f66969397724ab8467c3380ca9c6db1631f79bf3")
+REVIEWED_PINS.add("b6e3ecc6943118ba9d321ef5baca9f79b241961f")
+REVIEWED_PINS.add("99832a312b1281401c187f381f4826191387eb73")
+REVIEWED_PINS.add("258914fc564e223274728b409ee48e39465df7f6")
+REVIEWED_PINS.add("932dc1b3c09b172322d65432c26cc017b4922266")
+REVIEWED_PINS.add("5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf")
+REVIEWED_PINS.add("d4508480fc859cb7a6cb97f259caefe1cd18ba54")
+REVIEWED_PINS.add("e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb")
+REVIEWED_PINS.add("3a0cf78a9b2c98bed100d817537b4375a48bf72f")
+REVIEWED_PINS.add("eb62d96583999c5d159b837dfb9b1b02e8173a9c")
+REVIEWED_PINS.add("b0afacfc891bc75da81be3886e5c40430ccbfe6d")
+REVIEWED_PINS.add("21bc63493de105c1eb025f3ce5b67011deee72da")
+REVIEWED_PINS.add("a9cca6aa9c63722b918b92362c237eed448ff56c")
+REVIEWED_PINS.add("0ec5337f26c31e6926bf327411634422c9043369")
+REVIEWED_PINS.add("997b4885c045469f09dedf2a5f4e69995a5b1c9a")
+REVIEWED_PINS.add("9eefc8f5131350e8ddfb11e617e2e25007925212")
+REVIEWED_PINS.add("29350dfa0049885d953ad206fd3ce2b163140cdb")
+REVIEWED_PINS.add("bb6285e1998989101adbdc6adecbf9c1e1c17ec0")
+REVIEWED_PINS.add("1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc")
+REVIEWED_PINS.add("7a4ddd589b7a20d75a1a6019a67a16c5f2d39bc5")
+REVIEWED_PINS.add("9edb09cf0a720c6b22fe092efd21cc9891225a48")
+REVIEWED_PINS.add("d8c1595f187b24b434533c02fe4085a2905f34aa")
+REVIEWED_PINS.add("754dc4110ad1e13ea0237e5826599f97d0ccd2f9")
+REVIEWED_PINS.add("a773cfa1a5cd95285eab7e8dd4d21ceef848a0a0")
+REVIEWED_PINS.add("615ec1b7a73bb26dcff8525cf543aafff04ecbf0")
+REVIEWED_PINS.add("95ed29da0eb91af4561154ec3688968959185b9b")
+REVIEWED_PINS.add("457f9501c52fcf6ce2aaca967757c0eb9e452f58")
+REVIEWED_PINS.add("08972732d0402fa455a4982ed5ffd5d9f2c7e83c")
+REVIEWED_PINS.add("c74fb345ac3d8fa752f403369827a432f3503fb5")
+REVIEWED_PINS.add("3a97e47a0cfe94ec55227af363d8c289de59d4f8")
+REVIEWED_PINS.add("3de91cf284c8ef234c757c046998c4f48165c59a")
+REVIEWED_PINS.add("2fd07582db57fdddc67e6fd56cec16624a902c6a")
+REVIEWED_PINS.add("4411fc172eef84080ab7de23158349bbe7d08f88")
+REVIEWED_PINS.add("0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d")
+REVIEWED_PINS.add("bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0")
+REVIEWED_PINS.add("546e1aa34d2ff183dd4c737f9da8fbf4a62be24e")
+REVIEWED_PINS.add("f65ccc439534ffd9ce0a307b23bd511b4e32857a")
+REVIEWED_PINS.add("4e6a966508e718d02526d4d220e112591536f28c")
+REVIEWED_PINS.add("2d07b5e65baf35c82d0b0e557617aefe730a10b1")
+REVIEWED_PINS.add("7baf9cc07c6aceee185032544d964f04a2fed108")
+REVIEWED_PINS.add("1f8a3bbaa7fc33118e63ebef829202d825475bfe")
+REVIEWED_PINS.add("1e513ae001669127538a346c7f390af55edd6712")
+REVIEWED_PINS.add("d31aa01bdfa87165a272473c385040723bf2c1f6")
+REVIEWED_PINS.add("20cb62f1be572c8063ce4162d3227c8784a1e5ff")
+REVIEWED_PINS.add("19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba")
+REVIEWED_PINS.add("76a225552c296686cd1022584d73decd46767f75")
+REVIEWED_PINS.add("205c6a3572955c3d8002f5faca68d6ce1359817c")
+REVIEWED_PINS.add("bfb9d4da9c0f3811924738311fc2c6056e0e4dcb")
+REVIEWED_PINS.add("265609006ea8d76d971cc49af37bac23890ca4f5")
+REVIEWED_PINS.add("d32b4280fe6737e1da3b56ed47409422500c756f")
+REVIEWED_PINS.add("1e1230f882ac6167ca0e6999875f07971b77985c")
+REVIEWED_PINS.add("dd4127535a60ff1b22700edac24ca5a5f7d4fac2")
+REVIEWED_PINS.add("b1917364f678ba469c4d817f663d10ca5be5c0c3")
+REVIEWED_PINS.add("bc44094d78d0bba088ca0b48f37e9a4c38a9fbc5")
+REVIEWED_PINS.add("ed03e467016f5afbcb722c54af374d6916ccd6a0")
+REVIEWED_PINS.add("b8396c6483aa8278bd75b6757aed3bb5a9206e52")
+REVIEWED_PINS.add("a8c9170802811e7bb19345a461c3ae8dc72c27be")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
+gitlink_vendor_pin = selected
+actual_vendor_pin = gitlink_vendor_pin
+shipping_vendor_pin = gitlink_vendor_pin
+
+# OunceVK configures native 3D channels with H:0x1F {graphics=0, compute=2}
+# before the first H:0x1B submit. NVIDIA defines compute bit1 as CTA.
+# Seal exactly the active NVGPU owner/header and focused source contract.
+NS2_PREEMPTION_CTA_PIN = "d31aa01bdfa87165a272473c385040723bf2c1f6"
+NS2_PREEMPTION_CTA_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "8a8ff1fe64b46bad3280abaa25405cb78346195f",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "da7e7347162d4ff86abebb2c4d8aca9db7d1be37",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "427b5fb7994ef320ba082ba6555b150f216f6f75",
+}
+NS2_PREEMPTION_CTA_TEST_FIX_PIN = "20cb62f1be572c8063ce4162d3227c8784a1e5ff"
+NS2_PREEMPTION_CTA_TEST_FIX_BLOBS = {
+    **NS2_PREEMPTION_CTA_BLOBS,
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "069778748d4be07c72859cd28e280cecbcc36ef4",
+}
+# Nintendo/Switch channel error notifier successor. The final active owner
+# follows Switch semantics: H:0x0C stores internal state (no Linux dma-buf),
+# H:0x16 exposes no_error/current details, and H:0x17 returns the 16-byte
+# notification with status 0xffff.
+NS2_CHANNEL_ERROR_PIN = "19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba"
+NS2_CHANNEL_ERROR_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "4810a41d584fb74612c8160c3f06a4c717f7d5f8",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "b0f57cbab6c801a201ac389a16beb9bdb59c4e54",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "d2e7e0341957a5ce830afe665bf074083977c956",
+}
+# Native H:0x1B reply successor. Switch documents submit flags as input;
+# preserve the accepted native value while Maxwell keeps zero-on-return.
+NS2_GPFIFO_FLAGS_PIN = "76a225552c296686cd1022584d73decd46767f75"
+NS2_GPFIFO_FLAGS_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "d5693b7377db357fbca342fe4c1276bb9a2375f5",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "b0f57cbab6c801a201ac389a16beb9bdb59c4e54",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "d2e7e0341957a5ce830afe665bf074083977c956",
+    "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+        "dd4055ab815a9f5ab8d81e3d14608890dbd4d7a1",
+}
+# Ounce's S2 H:0x12 successor. The 16-byte input is exactly
+# {cmd,event_id,u64 zero}; the observed P0 path enables QueryEvent id 2.
+NS2_CHANNEL_EVENT_PIN = "205c6a3572955c3d8002f5faca68d6ce1359817c"
+NS2_CHANNEL_EVENT_BLOBS = {
+    **NS2_GPFIFO_FLAGS_BLOBS,
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "a96d2ff1637381240fbe83087a9d63842eb4cad3",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "001508fb9b31c91e0388d5c085329ea06ac807ff",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "fe85d136c6c8f2fbea00c6809ab48241f57b7e38",
+}
+# Current P0 successor over the already-reviewed 205c6a35 graph. It adds
+# libounce HIPC MOVE worker/event replies, the exact 72-byte VM user-range
+# table, real channel/TSG enable-disable state, and Ampere runnable-on-bind.
+NS2_P0_BOOTSTRAP_PIN = "bfb9d4da9c0f3811924738311fc2c6056e0e4dcb"
+NS2_P0_BOOTSTRAP_BLOBS = {
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp":
+        "09cbecdeef852a7e673025ff026881a88a6e490e",
+    "tests/ns2_gpu_partition_new_sdk_source.py":
+        "7306d167dc8f240b2a05818ce0e5fbbc0f91b114",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "a79e3ebd9e7a38f063bc2ab20da82ac5d7577b79",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "b7c8a75f283dcf2dc055e684bdde3e9dbee52303",
+    "sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h":
+        "fcf6d9a473a73d8d620c257c3a34e03729a9e616",
+    "sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h":
+        "ccc0647e3b76a40e8022a6da85d820fdd47820f8",
+    "sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp":
+        "a48e0ba56487374753c679e5637a26e0d3a0ab2a",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "0f158e58fc4a5b1f5e511327059a5e46fbcc77a4",
+    "tests/ns2_nvhost_unknown_node_fallback_source.py":
+        "bbaa5b78612aaae58b682253bb57ddc50f350695",
+}
+# P0 successor over bfb9d4da9c0f3811924738311fc2c6056e0e4dcb: exact native deferred GPFIFO state,
+# GSV child MOVE descriptors and host-OOM rollback for owned transfer refs.
+# Only six files changed. Replay all prior receipts for unchanged owners.
+NS2_GSV_MOVE_OWNERS_PIN = "265609006ea8d76d971cc49af37bac23890ca4f5"
+NS2_GSV_MOVE_OWNERS_BLOBS = {
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp":
+        "2b8c0f499e714bb684e33f336eac45ae21f55bd7",
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+        "909f5cf912fdcce09c5b8f67274db36b7f65b07b",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "34431bff90d835fe5de7f647526e8354746eb4e3",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "ec6682c0131634ba10e48a201a47768b9437e41a",
+    "tests/ns2_gpu_partition_new_sdk_source.py":
+        "6d47278bfc205f0aaed5c3d916ad2f2dc29b0481",
+    "tests/ns2_syncpt_bootstrap_source.py":
+        "366b0a6bd75c2fde26bcc58c3a22f986fb7a99f3",
+}
+# Native NVGPU ENABLE and TSG ENABLE may precede allocation but cannot
+# create a runnable GPFIFO by themselves. This successor only changes three
+# active NVDRV owner/host-contract blobs and leaves all GSV/FC27 owners intact.
+NS2_GPFIFO_ALLOC_GUARD_PIN = "d32b4280fe6737e1da3b56ed47409422500c756f"
+NS2_GPFIFO_ALLOC_GUARD_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+        "0e45617307506f0171d058944a3bbc32327e6132",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "7b941c9d63b5c89efed6181eea380f36ffc12e38",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "8a17814bcf4da34b2cbc32383b1b52bcf15d1c9f",
+}
+# TIPC session handles for real NS2 video decoding must be MOVE. This
+# successor changes only the selected graphics supervisor owner and its
+# existing source contract; preserve all earlier NVDRV/FC27 receipts.
+NS2_DECODER_SESSION_MOVE_PIN = "1e1230f882ac6167ca0e6999875f07971b77985c"
+NS2_DECODER_SESSION_MOVE_BLOBS = {
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+        "fcf5bad66857cb10f528acddca9453db93079c65",
+    "tests/ns2_syncpt_bootstrap_source.py":
+        "af90eaec03e8f86c0519b9665983f7d400f33101",
+}
+# The real native ALLOC_GPFIFO_EX[2] owner must not publish an empty
+# or overflowed ring. Legacy input accepts non-power-of-two sizes, unlike
+# CHANNEL_SETUP_BIND. Preserve the exact predecessor receipts.
+NS2_LEGACY_GPFIFO_ALLOC_PIN = "dd4127535a60ff1b22700edac24ca5a5f7d4fac2"
+NS2_LEGACY_GPFIFO_ALLOC_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "5a4c06e22706bde2f6d659287c5a24837e2503df",
+    "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h":
+        "230561aa034822b629eb6da6cb532dc4e58bf29c",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "a37f80b7966585fb0367a422cb2b733125f9d723",
+}
+# Lichii 46c3ee5010 / upstream 8799a851: keep the hot GPFIFO ioctl
+# header lists in bounded inline storage and avoid zero-filling command headers
+# that are immediately overwritten. Only the selected native submit wrappers
+# opt in; all other ioctl wrappers retain InputCapacity=0.
+NS2_GPFIFO_INLINE_PIN = "b1917364f678ba469c4d817f663d10ca5be5c0c3"
+NS2_GPFIFO_INLINE_BLOBS = {
+    "encore-active/eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h":
+        "fb508e19110012589de3032fe257236032f098e4",
+    "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+        "8613ca2a7437b0e1e8f091ae6ca6c45f9dcbf141",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "55e08f386f4a1bdf45834072b0c8d3e8dd12d781",
+}
+# Lichii/MKW observed 214 generation replacement: the title can grow a
+# sparse region at the exact same start VA without issuing 215 first.
+NS2_MKW_SPARSE_REPLACE_PIN = "bc44094d78d0bba088ca0b48f37e9a4c38a9fbc5"
+NS2_MKW_SPARSE_REPLACE_BLOBS = {
+    "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_worker_protocol.h":
+        "7d3946559e9535a0451d459caba4434d7ace6c25",
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "978bedba80952994bc7783016085ee860ee93386",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "da75b3dcf00abaaf4d014fbe61c4bd62b486d5b6",
+}
+# Native NS2 GSV 214: a mid-batch GMMU OOM can retain partial GPU
+# PTEs and poison the address space. Freeing its CPU alias/NvMap owner on
+# this error is a GPU use-after-free; quarantine only the poisoned case.
+NS2_DENSE_GMMU_POISON_PIN = "ed03e467016f5afbcb722c54af374d6916ccd6a0"
+NS2_DENSE_GMMU_POISON_BLOBS = {
+    "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h":
+        "e921b3d0e98ab6d2a845297e4fadf61e62ca3b70",
+    "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+        "a4925ce958cf38537e3db8f073c60f73e716f772",
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "01a11f01f7c3431bde919b4d70d940d8e184b7fc",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "7cd2e739532af7395fc92c5c7dadf43bf3436bab",
+}
+# GPU worker 214 poisoned AS: NvCore CloseSession -> UnmapAllHandles also
+# forcibly drops the final NVMap duplicate. Retain the worker session until
+# process teardown in the rare poisoned path; normal 214 error cleanup stays.
+NS2_POISONED_DENSE_SESSION_PIN = "b8396c6483aa8278bd75b6757aed3bb5a9206e52"
+NS2_POISONED_DENSE_SESSION_BLOBS = {
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h":
+        "933a8c2ff4971420bb7a6160825c5fd0fa4dc9d3",
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "bafd64ee8d5491a4e92b3a37487b74b1bd4a8fe2",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "b37b3f0329e3e5b0cadf3bdde1578bfbc6375f2c",
+}
+# Reviewed NS2 GSV 215/216 error: prevent destructor FreeHandle/CloseSession
+# on a GMMU with partial PTE writes. Keep every older receipt unchanged.
+NS2_POISONED_TEARDOWN_PIN = "a8c9170802811e7bb19345a461c3ae8dc72c27be"
+NS2_POISONED_TEARDOWN_BLOBS = {
+    "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+        "15f06d05601458769dfe17124068edca59835793",
+    "tests/ns2_gpu_identity_mapping_source.py":
+        "a446b8f18209f54e551302521cfcc6c4fe372ff0",
+}
+NS2_POISONED_TEARDOWN_ACTIVE = actual_vendor_pin == NS2_POISONED_TEARDOWN_PIN
+if selected == NS2_POISONED_TEARDOWN_PIN:
+    for relative, expected in NS2_POISONED_TEARDOWN_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 GSV 215/216 teardown source drift", relative, actual)
+    selected = NS2_POISONED_DENSE_SESSION_PIN
+    gitlink_vendor_pin = NS2_POISONED_DENSE_SESSION_PIN
+    shipping_vendor_pin = NS2_POISONED_DENSE_SESSION_PIN
+
+def ns2_poisoned_teardown_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    return previous
+
+NS2_POISONED_DENSE_SESSION_ACTIVE = actual_vendor_pin in {
+    NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_POISONED_DENSE_SESSION_PIN:
+    for relative, expected in NS2_POISONED_DENSE_SESSION_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_poisoned_teardown_receipt(relative, expected), (
+            "NS2 poisoned dense NVDRV session source drift", relative, actual)
+    selected = NS2_DENSE_GMMU_POISON_PIN
+    gitlink_vendor_pin = NS2_DENSE_GMMU_POISON_PIN
+    shipping_vendor_pin = NS2_DENSE_GMMU_POISON_PIN
+
+def ns2_poisoned_dense_session_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
+        return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
+    return previous
+
+NS2_DENSE_GMMU_POISON_ACTIVE = actual_vendor_pin in {
+    NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_DENSE_GMMU_POISON_PIN:
+    for relative, expected in NS2_DENSE_GMMU_POISON_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_poisoned_dense_session_receipt(relative, expected), (
+            "NS2 poisoned GMMU sparse backing source drift", relative, actual)
+    selected = NS2_MKW_SPARSE_REPLACE_PIN
+    gitlink_vendor_pin = NS2_MKW_SPARSE_REPLACE_PIN
+    shipping_vendor_pin = NS2_MKW_SPARSE_REPLACE_PIN
+
+def ns2_dense_gmmu_poison_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
+        return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
+    return previous
+
+NS2_MKW_SPARSE_REPLACE_ACTIVE = actual_vendor_pin in {
+    NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_MKW_SPARSE_REPLACE_PIN:
+    for relative, expected in NS2_MKW_SPARSE_REPLACE_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_dense_gmmu_poison_receipt(relative, expected), (
+            "NS2 MKW sparse generation source drift", relative, actual)
+    selected = NS2_GPFIFO_INLINE_PIN
+    gitlink_vendor_pin = NS2_GPFIFO_INLINE_PIN
+    shipping_vendor_pin = NS2_GPFIFO_INLINE_PIN
+
+def ns2_mkw_sparse_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
+        return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
+    return previous
+
+NS2_GPFIFO_INLINE_ACTIVE = actual_vendor_pin in {
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_GPFIFO_INLINE_PIN:
+    for relative, expected in NS2_GPFIFO_INLINE_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_mkw_sparse_receipt(relative, expected), (
+            "NS2 GPFIFO inline-storage source drift", relative, actual)
+    selected = NS2_LEGACY_GPFIFO_ALLOC_PIN
+    gitlink_vendor_pin = NS2_LEGACY_GPFIFO_ALLOC_PIN
+    shipping_vendor_pin = NS2_LEGACY_GPFIFO_ALLOC_PIN
+
+NS2_LEGACY_GPFIFO_ALLOC_ACTIVE = actual_vendor_pin in {
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_LEGACY_GPFIFO_ALLOC_PIN:
+    for relative, expected in NS2_LEGACY_GPFIFO_ALLOC_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        expected_current = (NS2_GPFIFO_INLINE_BLOBS.get(relative, expected)
+                            if NS2_GPFIFO_INLINE_ACTIVE else expected)
+        assert actual == ns2_mkw_sparse_receipt(relative, expected_current), (
+            "NS2 GPFIFO legacy allocation source drift", relative, actual)
+    selected = NS2_DECODER_SESSION_MOVE_PIN
+    gitlink_vendor_pin = NS2_DECODER_SESSION_MOVE_PIN
+    shipping_vendor_pin = NS2_DECODER_SESSION_MOVE_PIN
+
+NS2_DECODER_SESSION_MOVE_ACTIVE = actual_vendor_pin in {
+    NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_DECODER_SESSION_MOVE_PIN:
+    for relative, expected in NS2_DECODER_SESSION_MOVE_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("NS2 video decoder MOVE session source drift", relative, actual)
+    selected = NS2_GPFIFO_ALLOC_GUARD_PIN
+    gitlink_vendor_pin = NS2_GPFIFO_ALLOC_GUARD_PIN
+    shipping_vendor_pin = NS2_GPFIFO_ALLOC_GUARD_PIN
+
+NS2_GPFIFO_ALLOC_GUARD_ACTIVE = actual_vendor_pin in {
+    NS2_GPFIFO_ALLOC_GUARD_PIN, NS2_DECODER_SESSION_MOVE_PIN,
+    NS2_LEGACY_GPFIFO_ALLOC_PIN, NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_GPFIFO_ALLOC_GUARD_PIN:
+    for relative, expected in NS2_GPFIFO_ALLOC_GUARD_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        expected_current = (
+            NS2_LEGACY_GPFIFO_ALLOC_BLOBS.get(relative, expected)
+            if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE else expected)
+        if NS2_GPFIFO_INLINE_ACTIVE:
+            expected_current = NS2_GPFIFO_INLINE_BLOBS.get(relative, expected_current)
+        expected_current = ns2_mkw_sparse_receipt(relative, expected_current)
+        assert actual == expected_current, (
+            "NS2 native GPFIFO allocation gate source drift", relative, actual)
+    selected = NS2_GSV_MOVE_OWNERS_PIN
+    gitlink_vendor_pin = NS2_GSV_MOVE_OWNERS_PIN
+    shipping_vendor_pin = NS2_GSV_MOVE_OWNERS_PIN
+
+NS2_GSV_MOVE_OWNERS_ACTIVE = actual_vendor_pin in {
+    NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
+    NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+def ns2_latest_gsv_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
+        return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
+    if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
+        return NS2_GPFIFO_INLINE_BLOBS[relative]
+    if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:
+        return NS2_LEGACY_GPFIFO_ALLOC_BLOBS[relative]
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
+    return (NS2_GSV_MOVE_OWNERS_BLOBS.get(relative, previous)
+            if NS2_GSV_MOVE_OWNERS_ACTIVE else previous)
+if selected == NS2_GSV_MOVE_OWNERS_PIN:
+    for relative, expected in NS2_GSV_MOVE_OWNERS_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_latest_gsv_receipt(relative, expected), (
+            "NS2 GSV/GPFIFO MOVE lifetime source drift", relative, actual)
+    selected = NS2_P0_BOOTSTRAP_PIN
+    gitlink_vendor_pin = NS2_P0_BOOTSTRAP_PIN
+    shipping_vendor_pin = NS2_P0_BOOTSTRAP_PIN
+
+NS2_P0_BOOTSTRAP_ACTIVE = actual_vendor_pin in {
+    NS2_P0_BOOTSTRAP_PIN, NS2_GSV_MOVE_OWNERS_PIN, NS2_GPFIFO_ALLOC_GUARD_PIN,
+    NS2_DECODER_SESSION_MOVE_PIN, NS2_LEGACY_GPFIFO_ALLOC_PIN,
+    NS2_GPFIFO_INLINE_PIN, NS2_MKW_SPARSE_REPLACE_PIN, NS2_DENSE_GMMU_POISON_PIN, NS2_POISONED_DENSE_SESSION_PIN, NS2_POISONED_TEARDOWN_PIN,
+}
+if selected == NS2_P0_BOOTSTRAP_PIN:
+    for relative, expected in NS2_P0_BOOTSTRAP_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_latest_gsv_receipt(relative, expected), (
+            "NS2 current P0 bootstrap source drift", relative, actual)
+    # From here, replay the exact 205c6a35 predecessor graph. Keep
+    # actual_vendor_pin untouched for the final gitlink identity assertion.
+    selected = NS2_CHANNEL_EVENT_PIN
+    gitlink_vendor_pin = NS2_CHANNEL_EVENT_PIN
+    shipping_vendor_pin = NS2_CHANNEL_EVENT_PIN
+
+NS2_CHANNEL_EVENT_ACTIVE = gitlink_vendor_pin == NS2_CHANNEL_EVENT_PIN
+NS2_GPFIFO_FLAGS_ACTIVE = gitlink_vendor_pin in {
+    NS2_GPFIFO_FLAGS_PIN, NS2_CHANNEL_EVENT_PIN,
+}
+NS2_CHANNEL_ERROR_ACTIVE = gitlink_vendor_pin in {
+    NS2_CHANNEL_ERROR_PIN, NS2_GPFIFO_FLAGS_PIN, NS2_CHANNEL_EVENT_PIN,
+}
+NS2_PREEMPTION_CTA_ACTIVE = gitlink_vendor_pin in {
+    NS2_PREEMPTION_CTA_PIN, NS2_PREEMPTION_CTA_TEST_FIX_PIN,
+    NS2_CHANNEL_ERROR_PIN, NS2_GPFIFO_FLAGS_PIN, NS2_CHANNEL_EVENT_PIN,
+}
+
+def ns2_preemption_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
+        return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
+    if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
+        return NS2_GPFIFO_INLINE_BLOBS[relative]
+    if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:
+        return NS2_LEGACY_GPFIFO_ALLOC_BLOBS[relative]
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
+    if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
+        return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
+    if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:
+        return NS2_P0_BOOTSTRAP_BLOBS[relative]
+    if NS2_CHANNEL_EVENT_ACTIVE:
+        return NS2_CHANNEL_EVENT_BLOBS.get(relative, previous)
+    if NS2_GPFIFO_FLAGS_ACTIVE:
+        return NS2_GPFIFO_FLAGS_BLOBS.get(relative, previous)
+    if NS2_CHANNEL_ERROR_ACTIVE:
+        return NS2_CHANNEL_ERROR_BLOBS.get(relative, previous)
+    if gitlink_vendor_pin == NS2_PREEMPTION_CTA_TEST_FIX_PIN:
+        return NS2_PREEMPTION_CTA_TEST_FIX_BLOBS.get(relative, previous)
+    return (NS2_PREEMPTION_CTA_BLOBS.get(relative, previous)
+            if NS2_PREEMPTION_CTA_ACTIVE else previous)
+
+if selected == NS2_CHANNEL_EVENT_PIN:
+    for relative, expected in NS2_CHANNEL_EVENT_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), (
+            "NS2 native channel event-control source drift", relative, actual)
+    selected = NS2_GPFIFO_FLAGS_PIN
+
+if selected == NS2_GPFIFO_FLAGS_PIN:
+    for relative, expected in NS2_GPFIFO_FLAGS_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), (
+            "NS2 native GPFIFO2 reply-flags source drift", relative, actual)
+    # Everything else is byte-identical to the reviewed Switch error-state pin.
+    shipping_vendor_pin = NS2_CHANNEL_ERROR_PIN
+    selected = NS2_CHANNEL_ERROR_PIN
+
+if selected == NS2_CHANNEL_ERROR_PIN:
+    for relative, expected in NS2_CHANNEL_ERROR_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 channel error-notifier source drift", relative, actual)
+    selected = NS2_PREEMPTION_CTA_TEST_FIX_PIN
+
+if selected == NS2_PREEMPTION_CTA_TEST_FIX_PIN:
+    for relative, expected in NS2_PREEMPTION_CTA_TEST_FIX_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), (
+            "NS2 CTA source-contract test-fix drift", relative, actual)
+    selected = NS2_PREEMPTION_CTA_PIN
+
+if selected == NS2_PREEMPTION_CTA_PIN:
+    for relative, expected in NS2_PREEMPTION_CTA_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 native CTA preemption-policy source drift", relative, actual)
+    selected = "1e513ae001669127538a346c7f390af55edd6712"
+
+# SwitchBrew GSV 1001/1002 are video ENCODER commands. The earlier
+# decoder aliases must not issue Success or create a decoder session.
+# This successor changes only these three source/test blobs.
+NS2_ENCODER_FAIL_CLOSED_PIN = "1e513ae001669127538a346c7f390af55edd6712"
+# Preserve the authentic pinned identity; later historical replay rewrites
+# gitlink_vendor_pin to c74, but must not drop these verified successor blobs.
+NS2_ENCODER_FAIL_CLOSED_ACTIVE = gitlink_vendor_pin in {
+    NS2_ENCODER_FAIL_CLOSED_PIN, NS2_PREEMPTION_CTA_PIN,
+    NS2_PREEMPTION_CTA_TEST_FIX_PIN, NS2_CHANNEL_ERROR_PIN, NS2_GPFIFO_FLAGS_PIN,
+    NS2_CHANNEL_EVENT_PIN,
+}
+NS2_ENCODER_FAIL_CLOSED_BLOBS = {
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "6934cd5d46c172d029c65123b5d7f19ddafc4853",
+    "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "985cab1d56306096f7630da7f4d6a5b34c859431",
+    "tests/ns2_syncpt_bootstrap_source.py": "0b96a52583af112c816b676fec40fca39d194e45"
+}
+def ns2_encoder_receipt(relative, previous):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
+        return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
+    if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
+        return NS2_GPFIFO_INLINE_BLOBS[relative]
+    if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:
+        return NS2_LEGACY_GPFIFO_ALLOC_BLOBS[relative]
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
+    if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
+        return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
+    return (NS2_ENCODER_FAIL_CLOSED_BLOBS.get(relative, previous)
+            if NS2_ENCODER_FAIL_CLOSED_ACTIVE else previous)
+
+if selected == NS2_ENCODER_FAIL_CLOSED_PIN:
+    for relative, expected in NS2_ENCODER_FAIL_CLOSED_BLOBS.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 encoder fail-closed source drift", relative, actual)
+    # The TSG owner is unchanged from the immediately preceding pin.
+    shipping_vendor_pin = "1f8a3bbaa7fc33118e63ebef829202d825475bfe"
+    selected = shipping_vendor_pin
+
+# Final known-TSG fail-closed successor. The final nx2 owner includes the
+# validated pre-bind scheduling state/getter plus explicit NotImplemented
+# routes for six known stateful/event/cache ioctls. Seal it, then replay 2d07.
+if selected == "1f8a3bbaa7fc33118e63ebef829202d825475bfe":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "587ebbd2a129ab38e3c0ec49e2121eb1768bbaa4"),
+        ("tests/ns2_nvhost_unknown_node_fallback_source.py", "abdf48b2423a0abdd3d2085c2f3ae9b3a93db9ea"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 known TSG fail-closed source drift", relative, actual)
+    selected = "2d07b5e65baf35c82d0b0e557617aefe730a10b1"
+
+# Ounce TSG scheduling-state successor. Seal the final nx2 stub owner and
+# its focused source receipt; all GSV/GPU owners are unchanged from 2d07.
+if selected == "7baf9cc07c6aceee185032544d964f04a2fed108":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "f287b62c0e001af3d3262a6a253c076a0941b2f8"),
+        ("tests/ns2_nvhost_unknown_node_fallback_source.py", "3094b555b32840f613c7567e10787c4f73c668e5"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 Ounce TSG scheduling source drift", relative, actual)
+    selected = "2d07b5e65baf35c82d0b0e557617aefe730a10b1"
+
+# GSV TIPC 498 donated TransferMemory usage successor. The only changed
+# live owners are the supervisor implementation/header and its existing
+# focused bootstrap source receipt. Seal them before replaying 4e unchanged.
+if selected == "2d07b5e65baf35c82d0b0e557617aefe730a10b1":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "66b5bc32c9286ec2462edd09804a670691ac91d8"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "56e9ddf8b73d4db22559e73fe8d3506bdaa84a1c"),
+        ("tests/ns2_syncpt_bootstrap_source.py", "08894a7985e96f4478501dd69aceb56b214b0306"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_encoder_receipt(relative, expected), ("NS2 GSV 498 donated-memory source drift", relative, actual)
+    selected = "4e6a966508e718d02526d4d220e112591536f28c"
+
+# Switch 2 C0504821 response-ABI successor. Seal the active channel owner,
+# header and focused source receipt, then replay the fail-closed nvhost pin.
+if selected == "4e6a966508e718d02526d4d220e112591536f28c":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "8b22d4e16ba0e3d0e73cc3af9faace2447d3fd9b"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "81bac0bb0c1be0be6ed0aca81931fc593b948044"),
+        ("tests/p0_ns2_gpfifo_preimpl_trace_source.py", "d78aaea83009616131bcaf68bfb67fd12fe2e575"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 ChannelSetupBind response ABI source drift", relative, actual)
+    selected = ("546e1aa34d2ff183dd4c737f9da8fbf4a62be24e"
+                if shipping_vendor_pin in {"7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}
+                else "f65ccc439534ffd9ce0a307b23bd511b4e32857a")
+
+# Unknown Switch 2 nvhost-node fail-closed successor. Keep device discovery
+# compatible, but authenticate that generic ioctls no longer fabricate Success.
+if selected == "f65ccc439534ffd9ce0a307b23bd511b4e32857a":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "24b515a59d2f965a8abfab36175cf71b864340fb"),
+        ("tests/ns2_nvhost_unknown_node_fallback_source.py", "9904dd79d295d098ee7431eb31b9cc36e32a3b27"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 unknown nvhost fail-closed source drift", relative, actual)
+    selected = "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e"
+
+# Worker 209/210 successor: exact owned GPU address-space segment
+# debug-label ABI/runtime and focused ownership receipt.
+if selected == "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp", "ccccfb99af3ffd03ae1a3119b89c7121cc73ac91"),
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h", "2aa6d526e7c876d11adc180f546935503be54a4a"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h", "e6223aa74605e50aab30e1fd0a0bf8f3b75c4ecf"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "0572833e4e63c5fe7af728c66beea7df53e4219e"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU segment label source drift", relative, actual)
+    selected = "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0"
+
+# Native ChannelSetupBind H:0x21 successor. The 80-byte ABI and
+# kernel-mode-only admission are selected C++, not a universal success stub.
+if selected == "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h", "9aa4b802c2245cad7b251fff3bc708a906db533d"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "af7df2ba70bbf16d3715257c8c3a2b471ed26227"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "24096d0848b560d5e7befe979ecaebd1dcc730ae"),
+        ("tests/p0_ns2_gpfifo_preimpl_trace_source.py", "4e7a4fd77cd96ff650edfc74f6a841b266ca2152"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        # Current setup-bind successors were authenticated above. Replay this
+        # predecessor contract with their exact current blob identities rather
+        # than comparing a live checkout against the historical bc6 blobs.
+        if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+            expected = {
+                "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h":
+                    "9aa4b802c2245cad7b251fff3bc708a906db533d",
+                "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+                    "8b22d4e16ba0e3d0e73cc3af9faace2447d3fd9b",
+                "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+                    "81bac0bb0c1be0be6ed0aca81931fc593b948044",
+                "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+                    "d78aaea83009616131bcaf68bfb67fd12fe2e575",
+            }[relative]
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 ChannelSetupBind source drift", relative, actual)
+    selected = "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d"
+
+# Worker 172/173 successor: exact owned NVMap label metadata and its
+# registration decoders/test. New labels are discarded on guest release.
+if selected == "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp", "0a6c1b39483d8efcff0690f4f677d594863bf09e"),
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h", "676f9f0391e73147f241fc0ece20e9f0560d4e33"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h", "47e133e9bec766bbd2d840b215e8e447b70e93f8"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "eca64dbb3bd0ac01b62d7229612a8efcf45d567d"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        # The 225/226 successor was sealed above and contains the full prior
+        # 171/172/173 worker semantics. Replay the predecessor contract using
+        # only the exact authenticated successor identities for this pin.
+        if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+            expected = {
+                "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+                    "ccccfb99af3ffd03ae1a3119b89c7121cc73ac91",
+                "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h":
+                    "2aa6d526e7c876d11adc180f546935503be54a4a",
+                "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h":
+                    "e6223aa74605e50aab30e1fd0a0bf8f3b75c4ecf",
+                "tests/ns2_gpu_identity_mapping_source.py":
+                    "0572833e4e63c5fe7af728c66beea7df53e4219e",
+            }[relative]
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU worker label source drift", relative, actual)
+    selected = "4411fc172eef84080ab7de23158349bbe7d08f88"
+
+# GSV GraphicsFrame 1101/1102/1111-1113 successor. Seal the *selected*
+# supervisor/runtime, header, ABI decoder and focused test before replaying
+# the earlier 3de worker and GPU-session source receipts.
+if selected == "4411fc172eef84080ab7de23158349bbe7d08f88":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "8f2ebf9bbf9c23284a0f9e7b788b571485c1135d"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "2d424fb67dc984c1af3a1ee1a0d46c59f704bddf"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h", "221173de57178d5408f3c8116fbf4202d26c86f7"),
+        ("tests/ns2_syncpt_bootstrap_source.py", "56ab0b57f677683de33dbf6365efa5a1fdfc3875"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if shipping_vendor_pin in {"2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"} and relative in {
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h",
+            "tests/ns2_syncpt_bootstrap_source.py",
+        }:
+            expected = {
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+                    "66b5bc32c9286ec2462edd09804a670691ac91d8",
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h":
+                    "56e9ddf8b73d4db22559e73fe8d3506bdaa84a1c",
+                "tests/ns2_syncpt_bootstrap_source.py":
+                    "08894a7985e96f4478501dd69aceb56b214b0306",
+            }[relative]
+        assert actual == ns2_encoder_receipt(relative, expected), ("NS2 GraphicsFrame source drift", relative, actual)
+    # The 172/173 successor already sealed the changed worker 171/172/173
+    # owner. For that pin, continue directly with the earlier GPU-session
+    # receipt instead of requiring byte-identical pre-label worker sources.
+    selected = ("3a97e47a0cfe94ec55227af363d8c289de59d4f8"
+                if shipping_vendor_pin in {"0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e"}
+                else "3de91cf284c8ef234c757c046998c4f48165c59a")
+
+# GSV TIPC 113 successor: authenticate the exact supervisor/protocol/header
+# and existing syncpt/bootstrap receipt, then replay the reviewed 3de graph.
+if selected == "2fd07582db57fdddc67e6fd56cec16624a902c6a":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "fbbb41f8e281d276bad2174d3d6fe43c05c66b92"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "2701836cbc4448bb6c934c53db49f051de76988c"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h", "8b0cfe00cf9f6f450e69cbf4d55ee84336d4d0b8"),
+        ("tests/ns2_syncpt_bootstrap_source.py", "688f868e999a707557852730996888c8d6234e56"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GSV TIPC 113 source drift", relative, actual)
+    selected = "3de91cf284c8ef234c757c046998c4f48165c59a"
+
+# Worker TIPC 171 successor: seal only the comptag decoder/handler/header and
+# its focused ownership receipt, then replay the reviewed 3a97 graph.
+if selected == "3de91cf284c8ef234c757c046998c4f48165c59a":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp", "1042668b48e71020ee777e0ec0aef6b1606edaf0"),
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h", "0a4ded1cba3fc0ed8163bda05cc32956f6216aa4"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h", "c104301566467d973ebf0634580a0fbc4a44daf9"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "599f766e76fab45314a77c2fa573b8229cf83de1"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+            expected = {
+                "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp":
+                    "ccccfb99af3ffd03ae1a3119b89c7121cc73ac91",
+                "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h":
+                    "2aa6d526e7c876d11adc180f546935503be54a4a",
+                "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h":
+                    "e6223aa74605e50aab30e1fd0a0bf8f3b75c4ecf",
+                "tests/ns2_gpu_identity_mapping_source.py":
+                    "0572833e4e63c5fe7af728c66beea7df53e4219e",
+            }[relative]
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 worker TIPC 171 source drift", relative, actual)
+    selected = "3a97e47a0cfe94ec55227af363d8c289de59d4f8"
+
+# TIPC 200 successor: only the selected GPU-session owner/protocol/header and
+# its focused source receipt changed. Seal those exact blobs, then replay the
+# already reviewed c74 graph for every unaffected FC27/P0 owner.
+if selected == "3a97e47a0cfe94ec55227af363d8c289de59d4f8":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp", "be33e5fa3a6f7f2ed4eb4aeac6c7650b204cfa17"),
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.h", "be6f4f16c9407876ff0f8259cc1c777d05e8056f"),
+        ("encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h", "b4298a1231aee0f3b675861211bbcf30260dd033"),
+        ("tests/ns2_gpu_partition_new_sdk_source.py", "e41711b1822cadffd3b699befb55aa4e9e2f1433"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU session TIPC 200 source drift", relative, actual)
+    selected = "c74fb345ac3d8fa752f403369827a432f3503fb5"
+
+# Native GPFIFO fence-wait admission: invalid ID returns a guest error
+# before the inherited SyncpointManager asserts or throws on unreserved IDs.
+if selected in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f403369827a432f3503fb5"}:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "ec99bc8bd379bf51ce4971d1d21d5a0d16d6fed4"),
+        ("tests/p0_ns2_gpfifo_preimpl_trace_source.py", "35d31053361f392f6dd2a70b4afee28f36cbf56b"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        # The selected H:0x21 successor sealed exactly these two changed
+        # GPFIFO-owner/test blobs above. Do not require the old bytes again
+        # after independently proving the new source graph.
+        if shipping_vendor_pin in {"bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+            expected = {
+                "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+                    ("81bac0bb0c1be0be6ed0aca81931fc593b948044"
+                     if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}
+                     else "24096d0848b560d5e7befe979ecaebd1dcc730ae"),
+                "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+                    ("d78aaea83009616131bcaf68bfb67fd12fe2e575"
+                     if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}
+                     else "4e7a4fd77cd96ff650edfc74f6a841b266ca2152"),
+            }[relative]
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPFIFO wait admission source drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# NS2 read-current user syncpoint: NVIDIA UAPI read_ext_check must
+# match the guest syncpoint value shown in the GMMU shim, not future fence max.
+if selected == "457f9501c52fcf6ce2aaca967757c0eb9e452f58":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "176e9501256347d2c8afbe60d225c130c3c67e6e"),
+        ("tests/ns2_syncpoint_shim_source.py", "83636703c71ec50c8e6052f9bc9bec9ed8f54a61"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 user syncpoint source drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# Native A:2 sparse rollback quarantine and remove duplicate A:3/A:5
+# WaitForIdle drains, with exact active source and source-contract blobs.
+if selected == "95ed29da0eb91af4561154ec3688968959185b9b":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "a0f73ad8a4a156e41896264038f96e5e0e893fbb"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "0a598e5a77f7de39091fcc175fc40363e8637d88"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 native sparse rollback source drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# P0 native VA allocator page-class guard plus preserved owner tests.
+if selected == "615ec1b7a73bb26dcff8525cf543aafff04ecbf0":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "0d64b35fdfef15ee0bb8fa8a9b7d59c6ec17fbcb"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "f782842092f5bfc2847cbfbdf18d9efdb368af53"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU VA page-class source drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# NS2 native VA/pin retirement WFI: exact selected source seal.
+if selected == "a773cfa1a5cd95285eab7e8dd4d21ceef848a0a0":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "cbb03b8eed8fb061328b6d86e9d773e015c9cf07"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "4d17e7a7c18c8d6e5f87596da87ce6738336efd5"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GPU retirement source drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# Native NVN 768-GiB user VA partition: exact two changed blobs,
+# preserving 1-TiB GMMU capacity and all earlier sealed owner sources.
+if selected == "754dc4110ad1e13ea0237e5826599f97d0ccd2f9":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp", "2d9d71e81d7f6e1dbbb8ef37e3f601d68abc88d3"),
+        ("tests/ns2_gpu_partition_new_sdk_source.py", "ceaf06587daab525a8229c8186de891e9d3ea9aa"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 NVN VA partition drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# Source-exact native channel user syncpoint ABI (16-byte UAPI).
+# Five source owners changed after the immediately preceding prepared pair;
+# all previous vendor source receipts stay immutable in its parent commit.
+if selected == "d8c1595f187b24b434533c02fe4085a2905f34aa":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "ba1c9923a576e9ddc25ddcbf9df628925be45109"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f"),
+        ("encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h", "c83087f816eb9956a4f7ed565794a2b643512e87"),
+        ("encore-active/eden-core/guest-bridge/memory_manager.h", "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e"),
+        ("tests/ns2_syncpoint_shim_source.py", "0f696fbe1b02e677a74c6c41fee79d4b00f0f682"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 channel syncpoint source drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# Restore native A:0x0C kind changes on BOTH direct and sparse pinned
+# GPU views. Only these two blobs changed after the last sealed successor.
+if selected == "9edb09cf0a720c6b22fe092efd21cc9891225a48":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "604aa850609983b61a3e5033b4fa1740b3d64c70"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "a2afbf6710977594ee27f2abce17446483cc0d59"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 sparse kind-map source drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# Native-only duplicate ALLOC_AS guard: only the selected AS C++ and
+# focused source-contract file differ from the fully reviewed predecessor.
+# Compare the exact new blobs BEFORE replaying its source graph; no branch
+# publication, host test, CI or PS5 console validation is implied here.
+if selected == "7a4ddd589b7a20d75a1a6019a67a16c5f2d39bc5":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "85b765ca5871f56a7f9f1f883841775d260e121b"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "0cf04759ddff657d4a9892e0932bbac789655cc5"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 duplicate AS guard drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# Prepared NS2 consolidation, still NOT a published main or console pass.
+# Git's exact pinned commit ID seals its full tree; these seven changed
+# compiled/test blobs are additionally checked before selecting the same
+# native source-profile receipts as the fully recorded predecessor.
+if selected == "1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "284e754886ef59e73120cfa2b8fb691eddc51707"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h", "5f3ebf592001119c9686657600066d62db344524"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "5be598819854a43c929d570d0a0f6234c1a829e8"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "f57925efd8b032f64b7bc979f8fe4f2765fb66bf"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "9d5e1666c015db72c3fa4f8ea501d7c68f826991"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "256ad36db2562e4895842a0c2034a83311bbfcbc"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 prepared source drift", relative, actual)
+    # The prepared commit descends directly from the reviewed public vendor
+    # and changes only these seven owners; all earlier source fingerprints
+    # are encoded in the immutable pinned vendor commit tree.
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+
+# Native NVDRV A:0x0D remap / 4K kind-change successor. Verify the
+# exact three current files, then replay inherited immutable source stamps.
+if selected == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "e120fcee7c85ad7a874c8ffc10f2b3804b707199"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "078f5eef7cf2d24670361d6724ebb3497016ceff"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "1c460d3c584914a600e660d141971b99be99f858"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 40-byte remap source drift", relative, actual)
+    selected = "29350dfa0049885d953ad206fd3ce2b163140cdb"
+
+# During archival receipt replay, normalize ONLY the three already sealed
+# successor blobs to their predecessor identities. All other source files
+# retain their real hashes and remain subject to every historical gate.
+def archival_receipt_sha(relative, actual):
+    if gitlink_vendor_pin != "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
+        return actual
+    known = {
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": ("e120fcee7c85ad7a874c8ffc10f2b3804b707199", "f01d11f32d3f17847cb5c91a740eb070da67c118"),
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": ("078f5eef7cf2d24670361d6724ebb3497016ceff", "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d"),
+        "tests/ns2_gpu_identity_mapping_source.py": ("1c460d3c584914a600e660d141971b99be99f858", "59b47cf531c961906de13f29ee5b52b9d361dbc2"),
+    }
+    pair = known.get(relative)
+    if pair is None:
+        return actual
+    assert actual == pair[0], ("NS2 normalized source drift", relative, actual)
+    return pair[1]
+# Source-only assertion correction: the first cursor variable declaration
+# must not be mistaken for the second mapping stage. Check the one new blob
+# and replay every previous source receipt without hiding other differences.
+if selected == "29350dfa0049885d953ad206fd3ce2b163140cdb":
+    relative = "tests/ns2_gpu_identity_mapping_source.py"
+    raw = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == ("1c460d3c584914a600e660d141971b99be99f858" if gitlink_vendor_pin == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0" else
+                      "59b47cf531c961906de13f29ee5b52b9d361dbc2"), ("NS2 mapping-kind host contract drift", actual)
+    selected = "9eefc8f5131350e8ddfb11e617e2e25007925212"
+# Real Switch 2 kind-change ioctl source contract. Verify all mutated
+# vendor blobs, then replay earlier immutable source ownership receipts.
+if selected == "9eefc8f5131350e8ddfb11e617e2e25007925212":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "f01d11f32d3f17847cb5c91a740eb070da67c118"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "2b75cb68b569d9746f0c6726af23a78aca57b884"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), ("NS2 mapping-kind ioctl drift", relative, actual)
+    selected = "997b4885c045469f09dedf2a5f4e69995a5b1c9a"
+# Native NS2 big-page sparse-VA reservation successor. Only two blobs
+# changed; pin them, then replay the complete preceding source graph.
+if selected == "997b4885c045469f09dedf2a5f4e69995a5b1c9a":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "285ea0dda6807ab44f18277e8b5a5be734fb6b1f"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "bd5f668076d9b9b522ee407dad8d60760da2411b"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("f01d11f32d3f17847cb5c91a740eb070da67c118" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp" else
+                          "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h" else
+                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), ("Native big-page sparse VA drift", relative, actual)
+    selected = "0ec5337f26c31e6926bf327411634422c9043369"
+# Native big-page ioctl remap ledger and focused source contract.
+# Check only the new blobs before replaying strict predecessor receipts.
+if selected == "0ec5337f26c31e6926bf327411634422c9043369":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "c1cdea91a84e7e9e1654a3b86c3be66d1c607393"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "4d77c6f17c96086627df565acf6d78d2b799824c"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "7910960b9184efb76e6ebb323e04e08043fcb8c5"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("f01d11f32d3f17847cb5c91a740eb070da67c118" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp" else
+                          "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h" else
+                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else ("285ea0dda6807ab44f18277e8b5a5be734fb6b1f" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp" else
+                          "59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected)), (
+            "NS2 ioctl remap pin source drift", relative, actual)
+    selected = "a9cca6aa9c63722b918b92362c237eed448ff56c"
+# This successor contains only the reviewed NS2 transactional GPU AS
+# mapping owner. The legacy Maxwell branch is unchanged. Verify exact blob
+# before replaying all previous strict vendor source and provenance receipts.
+if selected == "a9cca6aa9c63722b918b92362c237eed448ff56c":
+    relative = "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp"
+    raw = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    actual = archival_receipt_sha(relative, actual)
+    assert actual == ("f01d11f32d3f17847cb5c91a740eb070da67c118" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} else
+                      "285ea0dda6807ab44f18277e8b5a5be734fb6b1f" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" else
+                      "e252d390e5c08c933487ca351230636158bc1abe"), ("NS2 MapBufferEx transaction source drift", actual)
+    selected = "21bc63493de105c1eb025f3ce5b67011deee72da"
+# Shared native GPU VA source is corrected for FIFO fragmentation via Lichii
+# #1896/#1911. Verify every changed blob (including C++ Catch2 cases) before
+# replaying the earlier NS2 native ioctl/FC27 provenance. Shared NS1 source
+# uses the same strictly nonoverlapping allocation invariant.
+if selected == "21bc63493de105c1eb025f3ce5b67011deee72da":
+    for relative, expected in (
+        ("sources/eden/src/common/address_space.inc", "9722012ed1aa6eb243232c64f97cd293202e0694"),
+        ("sources/eden/src/tests/CMakeLists.txt", "11115237edcfc91e1837659b9b7910d9d9b7857f"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "9091197c985c247aaee998319b64b5e637f2c799"),
+        ("sources/eden/src/tests/common/flat_allocator.cpp", "ecf6f8fd66f4000fc9b76fd49522169c626da811"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
+            "GPU VA allocator upstream successor drift", relative, actual)
+    selected = "b0afacfc891bc75da81be3886e5c40430ccbfe6d"
+# Native NS2 controller: only a real GA10F process may query runlists and
+# virtual SM topology. Verify both changed blobs before replaying all older
+# immutable vendor/FC27 graph receipts without changing NS1 owners.
+if selected == "b0afacfc891bc75da81be3886e5c40430ccbfe6d":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "2bd5023b5177cfd89d43fcc759643553fe0c745f"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "000cdd09038696e3291a30ac6f332c24b2adcecd"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        actual = archival_receipt_sha(relative, actual)
+        assert actual == ("59b47cf531c961906de13f29ee5b52b9d361dbc2" if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "2b75cb68b569d9746f0c6726af23a78aca57b884" if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"} and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                          "bd5f668076d9b9b522ee407dad8d60760da2411b" if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a" and relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                           "7910960b9184efb76e6ebb323e04e08043fcb8c5" if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369" and
+                           relative == "tests/ns2_gpu_identity_mapping_source.py" else
+                           "9091197c985c247aaee998319b64b5e637f2c799" if gitlink_vendor_pin in {"21bc63493de105c1eb025f3ce5b67011deee72da", "a9cca6aa9c63722b918b92362c237eed448ff56c"} and
+                           relative == "tests/ns2_gpu_identity_mapping_source.py" else expected), (
+            "NS2 native NVDRV ABI isolation drift", relative, actual)
+    selected = "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
 original_vendor_pin = selected
+native_self_controller_rollback_revision = selected == "eb62d96583999c5d159b837dfb9b1b02e8173a9c"
+native_va_region_widen_revision = selected in {"3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_rounded_unmap_revision = selected in {"e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_gpu_alias_guard_revision = selected in {"d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_sparse_small_4k_revision = selected in {"5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_video_pool_991_revision = selected in {"932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_preemption_wfi_revision = selected in {"258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+# Preserve exact GSV source identity across historical receipt replays. The
+# real 1402 child is NS2-only and can precede GPU session 497; both C++
+# revisions fix the same compiled scoped-handle type.
+native_worker_teardown_epoch = selected in {"99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_gsv_registration = selected in {"b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_gsv_compiled_handle_fix = selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f", "99832a312b1281401c187f381f4826191387eb73", "258914fc564e223274728b409ee48e39465df7f6", "932dc1b3c09b172322d65432c26cc017b4922266", "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf", "d4508480fc859cb7a6cb97f259caefe1cd18ba54", "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb", "3a0cf78a9b2c98bed100d817537b4375a48bf72f", "eb62d96583999c5d159b837dfb9b1b02e8173a9c"}
+native_gsv_active_cpp = "a806f2a6d2c9689a8b1e24f0c292a8d95c0d29a7" if native_video_pool_991_revision else "3bbc03df5ef568369667882e9394de6b1120cb03" if native_gsv_registration else "5aced8f423f654a3ed4648a711ee2fe4b95c118c"
+native_gsv_active_test = "ae41e4bc89b33e455381f25470717af6766cd0b3" if native_video_pool_991_revision else "6d04679a771a3919434351b377fbc0f23ead4b82" if native_gsv_registration else "69723ef7bd1d47af5086052882d0749cc817f64a"
+# Preserve the active AS/GMMU owner revision during recursive source-pin
+# replay: the GA10F controller itself is unchanged but binds this new AS TU.
+native_as_lease_revision = selected in {"2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f", "889b142aa5616d3d00733a7cc1db1562eed291f4"}
+native_as_session_revision = selected == "889b142aa5616d3d00733a7cc1db1562eed291f4"
 ns2_gsv_497_v2 = selected in {"a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5"}
 ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}
+# NS2 native 4-KiB sparse VA is an additive change to the exact
+# selected NVDRV AS TU and its focused source test. Every older receipt
+# remains strict for every other file and every older vendor revision.
+def reviewed_blob(relative, expected):
+    if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
+        return NS2_POISONED_TEARDOWN_BLOBS[relative]
+    if NS2_POISONED_DENSE_SESSION_ACTIVE and relative in NS2_POISONED_DENSE_SESSION_BLOBS:
+        return NS2_POISONED_DENSE_SESSION_BLOBS[relative]
+    if NS2_DENSE_GMMU_POISON_ACTIVE and relative in NS2_DENSE_GMMU_POISON_BLOBS:
+        return NS2_DENSE_GMMU_POISON_BLOBS[relative]
+    if NS2_MKW_SPARSE_REPLACE_ACTIVE and relative in NS2_MKW_SPARSE_REPLACE_BLOBS:
+        return NS2_MKW_SPARSE_REPLACE_BLOBS[relative]
+    if NS2_GPFIFO_INLINE_ACTIVE and relative in NS2_GPFIFO_INLINE_BLOBS:
+        return NS2_GPFIFO_INLINE_BLOBS[relative]
+    if NS2_LEGACY_GPFIFO_ALLOC_ACTIVE and relative in NS2_LEGACY_GPFIFO_ALLOC_BLOBS:
+        return NS2_LEGACY_GPFIFO_ALLOC_BLOBS[relative]
+    if NS2_DECODER_SESSION_MOVE_ACTIVE and relative in NS2_DECODER_SESSION_MOVE_BLOBS:
+        return NS2_DECODER_SESSION_MOVE_BLOBS[relative]
+    if NS2_GPFIFO_ALLOC_GUARD_ACTIVE and relative in NS2_GPFIFO_ALLOC_GUARD_BLOBS:
+        return NS2_GPFIFO_ALLOC_GUARD_BLOBS[relative]
+    if NS2_GSV_MOVE_OWNERS_ACTIVE and relative in NS2_GSV_MOVE_OWNERS_BLOBS:
+        return NS2_GSV_MOVE_OWNERS_BLOBS[relative]
+    if NS2_P0_BOOTSTRAP_ACTIVE and relative in NS2_P0_BOOTSTRAP_BLOBS:
+        return NS2_P0_BOOTSTRAP_BLOBS[relative]
+    if NS2_CHANNEL_EVENT_ACTIVE and relative in NS2_CHANNEL_EVENT_BLOBS:
+        return NS2_CHANNEL_EVENT_BLOBS[relative]
+    if NS2_GPFIFO_FLAGS_ACTIVE and relative in NS2_GPFIFO_FLAGS_BLOBS:
+        return NS2_GPFIFO_FLAGS_BLOBS[relative]
+    if NS2_CHANNEL_ERROR_ACTIVE and relative in NS2_CHANNEL_ERROR_BLOBS:
+        return NS2_CHANNEL_ERROR_BLOBS[relative]
+    if NS2_PREEMPTION_CTA_ACTIVE and relative in NS2_PREEMPTION_CTA_BLOBS:
+        return NS2_PREEMPTION_CTA_BLOBS[relative]
+    if NS2_ENCODER_FAIL_CLOSED_ACTIVE and relative in NS2_ENCODER_FAIL_CLOSED_BLOBS:
+        # Current blob was verified above against the exact pinned tree.
+        return NS2_ENCODER_FAIL_CLOSED_BLOBS[relative]
+    # Successor blobs have already been individually sealed above. Historical
+    # receipt replay may revisit them after normalizing gitlink_vendor_pin to
+    # c74; return only those exact authenticated successor identities.
+    successor_exact = {}
+    if shipping_vendor_pin in {
+        "3a97e47a0cfe94ec55227af363d8c289de59d4f8",
+        "3de91cf284c8ef234c757c046998c4f48165c59a",
+        "2fd07582db57fdddc67e6fd56cec16624a902c6a",
+        "4411fc172eef84080ab7de23158349bbe7d08f88",
+        "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d",
+        "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0",
+        "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e",
+        "f65ccc439534ffd9ce0a307b23bd511b4e32857a",
+        "4e6a966508e718d02526d4d220e112591536f28c",
+        "2d07b5e65baf35c82d0b0e557617aefe730a10b1",
+        "7baf9cc07c6aceee185032544d964f04a2fed108",
+        "1f8a3bbaa7fc33118e63ebef829202d825475bfe",
+    }:
+        successor_exact.update({
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "be33e5fa3a6f7f2ed4eb4aeac6c7650b204cfa17",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.h": "be6f4f16c9407876ff0f8259cc1c777d05e8056f",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_session_protocol.h": "b4298a1231aee0f3b675861211bbcf30260dd033",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "e41711b1822cadffd3b699befb55aa4e9e2f1433",
+        })
+    if shipping_vendor_pin in {
+        "3de91cf284c8ef234c757c046998c4f48165c59a",
+        "2fd07582db57fdddc67e6fd56cec16624a902c6a",
+        "4411fc172eef84080ab7de23158349bbe7d08f88",
+        "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d",
+        "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0",
+        "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e",
+        "f65ccc439534ffd9ce0a307b23bd511b4e32857a",
+        "4e6a966508e718d02526d4d220e112591536f28c",
+        "2d07b5e65baf35c82d0b0e557617aefe730a10b1",
+        "7baf9cc07c6aceee185032544d964f04a2fed108",
+        "1f8a3bbaa7fc33118e63ebef829202d825475bfe",
+    }:
+        successor_exact.update({
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "1042668b48e71020ee777e0ec0aef6b1606edaf0",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "0a4ded1cba3fc0ed8163bda05cc32956f6216aa4",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "c104301566467d973ebf0634580a0fbc4a44daf9",
+            "tests/ns2_gpu_identity_mapping_source.py": "599f766e76fab45314a77c2fa573b8229cf83de1",
+        })
+    if shipping_vendor_pin in {"2fd07582db57fdddc67e6fd56cec16624a902c6a", "4411fc172eef84080ab7de23158349bbe7d08f88"}:
+        successor_exact.update({
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "fbbb41f8e281d276bad2174d3d6fe43c05c66b92",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "2701836cbc4448bb6c934c53db49f051de76988c",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h": "8b0cfe00cf9f6f450e69cbf4d55ee84336d4d0b8",
+            "tests/ns2_syncpt_bootstrap_source.py": "688f868e999a707557852730996888c8d6234e56",
+        })
+    if shipping_vendor_pin in {"4411fc172eef84080ab7de23158349bbe7d08f88", "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+        successor_exact.update({
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "8f2ebf9bbf9c23284a0f9e7b788b571485c1135d",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h": "2d424fb67dc984c1af3a1ee1a0d46c59f704bddf",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h": "221173de57178d5408f3c8116fbf4202d26c86f7",
+            "tests/ns2_syncpt_bootstrap_source.py": "56ab0b57f677683de33dbf6365efa5a1fdfc3875",
+        })
+    if shipping_vendor_pin in {"0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d", "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+        successor_exact.update({
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "0a6c1b39483d8efcff0690f4f677d594863bf09e",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "676f9f0391e73147f241fc0ece20e9f0560d4e33",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "47e133e9bec766bbd2d840b215e8e447b70e93f8",
+            "tests/ns2_gpu_identity_mapping_source.py": "eca64dbb3bd0ac01b62d7229612a8efcf45d567d",
+        })
+    if shipping_vendor_pin in {"bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0", "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+        successor_exact.update({
+            "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_submission.h": "9aa4b802c2245cad7b251fff3bc708a906db533d",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "af7df2ba70bbf16d3715257c8c3a2b471ed26227",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "24096d0848b560d5e7befe979ecaebd1dcc730ae",
+            "tests/p0_ns2_gpfifo_preimpl_trace_source.py": "4e7a4fd77cd96ff650edfc74f6a841b266ca2152",
+        })
+    if shipping_vendor_pin in {"546e1aa34d2ff183dd4c737f9da8fbf4a62be24e", "f65ccc439534ffd9ce0a307b23bd511b4e32857a", "4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+        successor_exact.update({
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp": "ccccfb99af3ffd03ae1a3119b89c7121cc73ac91",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.h": "2aa6d526e7c876d11adc180f546935503be54a4a",
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_memory_registration.h": "e6223aa74605e50aab30e1fd0a0bf8f3b75c4ecf",
+            "tests/ns2_gpu_identity_mapping_source.py": "0572833e4e63c5fe7af728c66beea7df53e4219e",
+        })
+    if shipping_vendor_pin in {"4e6a966508e718d02526d4d220e112591536f28c", "2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+        successor_exact.update({
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h":
+                "8b22d4e16ba0e3d0e73cc3af9faace2447d3fd9b",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp":
+                "81bac0bb0c1be0be6ed0aca81931fc593b948044",
+            "tests/p0_ns2_gpfifo_preimpl_trace_source.py":
+                "d78aaea83009616131bcaf68bfb67fd12fe2e575",
+        })
+    if shipping_vendor_pin in {"2d07b5e65baf35c82d0b0e557617aefe730a10b1", "7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+        successor_exact.update({
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp":
+                "66b5bc32c9286ec2462edd09804a670691ac91d8",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h":
+                "56e9ddf8b73d4db22559e73fe8d3506bdaa84a1c",
+            "tests/ns2_syncpt_bootstrap_source.py":
+                "08894a7985e96f4478501dd69aceb56b214b0306",
+        })
+    if shipping_vendor_pin in {"7baf9cc07c6aceee185032544d964f04a2fed108", "1f8a3bbaa7fc33118e63ebef829202d825475bfe"}:
+        successor_exact.update({
+            "sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h":
+                "f287b62c0e001af3d3262a6a253c076a0941b2f8",
+            "tests/ns2_nvhost_unknown_node_fallback_source.py":
+                "3094b555b32840f613c7567e10787c4f73c668e5",
+        })
+    if shipping_vendor_pin == "1f8a3bbaa7fc33118e63ebef829202d825475bfe":
+        successor_exact.update({
+            "sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h":
+                "587ebbd2a129ab38e3c0ec49e2121eb1768bbaa4",
+            "tests/ns2_nvhost_unknown_node_fallback_source.py":
+                "abdf48b2423a0abdd3d2085c2f3ae9b3a93db9ea",
+        })
+    if relative in successor_exact:
+        return successor_exact[relative]
+    if gitlink_vendor_pin in {"08972732d0402fa455a4982ed5ffd5d9f2c7e83c", "c74fb345ac3d8fa752f403369827a432f3503fb5"}:
+        exact = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "a0f73ad8a4a156e41896264038f96e5e0e893fbb",
+            "tests/ns2_gpu_identity_mapping_source.py": (
+                "5803d1c7d5b23d4833f020b6445505e16fcca8f9" if gitlink_vendor_pin == "c74fb345ac3d8fa752f403369827a432f3503fb5"
+                else "0a598e5a77f7de39091fcc175fc40363e8637d88"),
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "2d9d71e81d7f6e1dbbb8ef37e3f601d68abc88d3",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "ceaf06587daab525a8229c8186de891e9d3ea9aa",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f",
+            "encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h": "c83087f816eb9956a4f7ed565794a2b643512e87",
+            "encore-active/eden-core/guest-bridge/memory_manager.h": "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e",
+            "tests/ns2_syncpoint_shim_source.py": "83636703c71ec50c8e6052f9bc9bec9ed8f54a61",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "ec99bc8bd379bf51ce4971d1d21d5a0d16d6fed4",
+            "tests/p0_ns2_gpfifo_preimpl_trace_source.py": "35d31053361f392f6dd2a70b4afee28f36cbf56b",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin == "457f9501c52fcf6ce2aaca967757c0eb9e452f58":
+        exact = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "a0f73ad8a4a156e41896264038f96e5e0e893fbb",
+            "tests/ns2_gpu_identity_mapping_source.py": "0a598e5a77f7de39091fcc175fc40363e8637d88",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "2d9d71e81d7f6e1dbbb8ef37e3f601d68abc88d3",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "ceaf06587daab525a8229c8186de891e9d3ea9aa",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f",
+            "encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h": "c83087f816eb9956a4f7ed565794a2b643512e87",
+            "encore-active/eden-core/guest-bridge/memory_manager.h": "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "176e9501256347d2c8afbe60d225c130c3c67e6e",
+            "tests/ns2_syncpoint_shim_source.py": "83636703c71ec50c8e6052f9bc9bec9ed8f54a61",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin == "95ed29da0eb91af4561154ec3688968959185b9b":
+        exact = {
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "2d9d71e81d7f6e1dbbb8ef37e3f601d68abc88d3",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "ceaf06587daab525a8229c8186de891e9d3ea9aa",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "ba1c9923a576e9ddc25ddcbf9df628925be45109",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f",
+            "encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h": "c83087f816eb9956a4f7ed565794a2b643512e87",
+            "encore-active/eden-core/guest-bridge/memory_manager.h": "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e",
+            "tests/ns2_syncpoint_shim_source.py": "0f696fbe1b02e677a74c6c41fee79d4b00f0f682",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "a0f73ad8a4a156e41896264038f96e5e0e893fbb",
+            "tests/ns2_gpu_identity_mapping_source.py": "0a598e5a77f7de39091fcc175fc40363e8637d88",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin == "615ec1b7a73bb26dcff8525cf543aafff04ecbf0":
+        exact = {
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "2d9d71e81d7f6e1dbbb8ef37e3f601d68abc88d3",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "ceaf06587daab525a8229c8186de891e9d3ea9aa",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "ba1c9923a576e9ddc25ddcbf9df628925be45109",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f",
+            "encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h": "c83087f816eb9956a4f7ed565794a2b643512e87",
+            "encore-active/eden-core/guest-bridge/memory_manager.h": "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e",
+            "tests/ns2_syncpoint_shim_source.py": "0f696fbe1b02e677a74c6c41fee79d4b00f0f682",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "0d64b35fdfef15ee0bb8fa8a9b7d59c6ec17fbcb",
+            "tests/ns2_gpu_identity_mapping_source.py": "f782842092f5bfc2847cbfbdf18d9efdb368af53",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin == "a773cfa1a5cd95285eab7e8dd4d21ceef848a0a0":
+        exact = {
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "2d9d71e81d7f6e1dbbb8ef37e3f601d68abc88d3",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "ceaf06587daab525a8229c8186de891e9d3ea9aa",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "ba1c9923a576e9ddc25ddcbf9df628925be45109",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f",
+            "encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h": "c83087f816eb9956a4f7ed565794a2b643512e87",
+            "encore-active/eden-core/guest-bridge/memory_manager.h": "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e",
+            "tests/ns2_syncpoint_shim_source.py": "0f696fbe1b02e677a74c6c41fee79d4b00f0f682",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "cbb03b8eed8fb061328b6d86e9d773e015c9cf07",
+            "tests/ns2_gpu_identity_mapping_source.py": "4d17e7a7c18c8d6e5f87596da87ce6738336efd5",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin == "754dc4110ad1e13ea0237e5826599f97d0ccd2f9":
+        sealed = {
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "ba1c9923a576e9ddc25ddcbf9df628925be45109",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f",
+            "encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h": "c83087f816eb9956a4f7ed565794a2b643512e87",
+            "encore-active/eden-core/guest-bridge/memory_manager.h": "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e",
+            "tests/ns2_syncpoint_shim_source.py": "0f696fbe1b02e677a74c6c41fee79d4b00f0f682",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "604aa850609983b61a3e5033b4fa1740b3d64c70",
+            "tests/ns2_gpu_identity_mapping_source.py": "a2afbf6710977594ee27f2abce17446483cc0d59",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "2d9d71e81d7f6e1dbbb8ef37e3f601d68abc88d3",
+            "tests/ns2_gpu_partition_new_sdk_source.py": "ceaf06587daab525a8229c8186de891e9d3ea9aa",
+        }
+        if relative in sealed:
+            return sealed[relative]
+    if gitlink_vendor_pin == "d8c1595f187b24b434533c02fe4085a2905f34aa":
+        exact = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "604aa850609983b61a3e5033b4fa1740b3d64c70",
+            "tests/ns2_gpu_identity_mapping_source.py": "a2afbf6710977594ee27f2abce17446483cc0d59",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "ba1c9923a576e9ddc25ddcbf9df628925be45109",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "3dec2b4990d1c8c5cb45d7c5fe87c12a62dff09f",
+            "encore-active/eden-core/overrides/native-tiling/video_core/memory_manager.h": "c83087f816eb9956a4f7ed565794a2b643512e87",
+            "encore-active/eden-core/guest-bridge/memory_manager.h": "c670df3eadf42d9d4a5e1d7d3b2f5c674f83bf7e",
+            "tests/ns2_syncpoint_shim_source.py": "0f696fbe1b02e677a74c6c41fee79d4b00f0f682",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin == "9edb09cf0a720c6b22fe092efd21cc9891225a48":
+        matched = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "604aa850609983b61a3e5033b4fa1740b3d64c70",
+            "tests/ns2_gpu_identity_mapping_source.py": "a2afbf6710977594ee27f2abce17446483cc0d59",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5be598819854a43c929d570d0a0f6234c1a829e8",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+        }
+        if relative in matched:
+            return matched[relative]
+    if gitlink_vendor_pin == "7a4ddd589b7a20d75a1a6019a67a16c5f2d39bc5":
+        latest = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "85b765ca5871f56a7f9f1f883841775d260e121b",
+            "tests/ns2_gpu_identity_mapping_source.py": "0cf04759ddff657d4a9892e0932bbac789655cc5",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5be598819854a43c929d570d0a0f6234c1a829e8",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+        }
+        if relative in latest:
+            return latest[relative]
+    if gitlink_vendor_pin == "1ca2828bfccd0d5c8a903f3c503480f1fc1b6ddc":
+        prepared = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "284e754886ef59e73120cfa2b8fb691eddc51707",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "24a07c5c5e6810d8d100a73d7ad7da83fd698cbe",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/native_gpu_va_layout.h": "5f3ebf592001119c9686657600066d62db344524",
+            "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5be598819854a43c929d570d0a0f6234c1a829e8",
+            "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp": "f57925efd8b032f64b7bc979f8fe4f2765fb66bf",
+            "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp": "9d5e1666c015db72c3fa4f8ea501d7c68f826991",
+            "tests/ns2_gpu_identity_mapping_source.py": "256ad36db2562e4895842a0c2034a83311bbfcbc",
+        }
+        if relative in prepared:
+            return prepared[relative]
+    if gitlink_vendor_pin == "bb6285e1998989101adbdc6adecbf9c1e1c17ec0":
+        exact = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "e120fcee7c85ad7a874c8ffc10f2b3804b707199",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "078f5eef7cf2d24670361d6724ebb3497016ceff",
+            "tests/ns2_gpu_identity_mapping_source.py": "1c460d3c584914a600e660d141971b99be99f858",
+        }
+        if relative in exact:
+            return exact[relative]
+    if gitlink_vendor_pin in {"29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"} and relative == "tests/ns2_gpu_identity_mapping_source.py":
+        return "59b47cf531c961906de13f29ee5b52b9d361dbc2"
+    if gitlink_vendor_pin in {"9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb"}:
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": return "f01d11f32d3f17847cb5c91a740eb070da67c118"
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": return "88fb8a8aec60c98e3b07f1002262c081cd3a3e2d"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py": return "2b75cb68b569d9746f0c6726af23a78aca57b884"
+    if gitlink_vendor_pin == "997b4885c045469f09dedf2a5f4e69995a5b1c9a":
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "285ea0dda6807ab44f18277e8b5a5be734fb6b1f"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "bd5f668076d9b9b522ee407dad8d60760da2411b"
+    if gitlink_vendor_pin == "0ec5337f26c31e6926bf327411634422c9043369":
+        reviewed = {
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "c1cdea91a84e7e9e1654a3b86c3be66d1c607393",
+            "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "4d77c6f17c96086627df565acf6d78d2b799824c",
+            "tests/ns2_gpu_identity_mapping_source.py": "7910960b9184efb76e6ebb323e04e08043fcb8c5",
+        }
+        if relative in reviewed:
+            return reviewed[relative]
+    if gitlink_vendor_pin == "a9cca6aa9c63722b918b92362c237eed448ff56c" and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+        return "e252d390e5c08c933487ca351230636158bc1abe"
+    if gitlink_vendor_pin in {"21bc63493de105c1eb025f3ce5b67011deee72da", "a9cca6aa9c63722b918b92362c237eed448ff56c", "0ec5337f26c31e6926bf327411634422c9043369", "997b4885c045469f09dedf2a5f4e69995a5b1c9a", "9eefc8f5131350e8ddfb11e617e2e25007925212", "29350dfa0049885d953ad206fd3ce2b163140cdb", "bb6285e1998989101adbdc6adecbf9c1e1c17ec0"}:
+        if relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp":
+            return "2bd5023b5177cfd89d43fcc759643553fe0c745f"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "9091197c985c247aaee998319b64b5e637f2c799"
+    # The current vendor successor changes exactly two already sealed files:
+    # native NVDRV ioctl3 topology ABI and its focused static host contract.
+    # Historical receipts compare against the selected successor rather
+    # than incorrectly expecting byte-identical predecessor blobs.
+    if gitlink_vendor_pin == "b0afacfc891bc75da81be3886e5c40430ccbfe6d":
+        if relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp":
+            return "2bd5023b5177cfd89d43fcc759643553fe0c745f"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "000cdd09038696e3291a30ac6f332c24b2adcecd"
+    if native_va_region_widen_revision:
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "e7832741b238f4c25858f8309d8ccf9aed7a77d3"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "678dc58f5efc8c72a1ebad1632d5c276fd983faa"
+    if native_rounded_unmap_revision:
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "d9a041b6d0f203e54942632943337f9e92eea6be"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "ea8899dc76834e8c83eb6527187c32661c5fedfd"
+    if native_gpu_alias_guard_revision:
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "1b99bac6d3a7831833fa1471523c6714f08c4496"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "bddae3ce26cc694c10c93491c28b6a9f47007b01"
+    if native_sparse_small_4k_revision:
+        if relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+            return "35bef222790b19521059aa6dd2c1acef198ff625"
+        if relative == "tests/ns2_gpu_identity_mapping_source.py":
+            return "90b1d4e0fec9379c99c717eac54e3fdc0fb9cc54"
+    return expected
+
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
-assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
+assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
+# The 3a97 successor's four changed blobs were sealed above. From this point
+# replay the predecessor's exact historical receipt graph for all unaffected
+# owners; otherwise reviewed_blob() sees the successor SHA and misses c74's
+# already-qualified per-file revisions.
+if gitlink_vendor_pin in {
+    "3a97e47a0cfe94ec55227af363d8c289de59d4f8",
+    "3de91cf284c8ef234c757c046998c4f48165c59a",
+    "2fd07582db57fdddc67e6fd56cec16624a902c6a",
+    "4411fc172eef84080ab7de23158349bbe7d08f88",
+    "0c4eafeb9f197e76a1f0bb06038ef9bbf2c7565d",
+    "bc6baf037ac3304d4ba81cf7589f7e52e8fa8ae0",
+    "546e1aa34d2ff183dd4c737f9da8fbf4a62be24e",
+    "f65ccc439534ffd9ce0a307b23bd511b4e32857a",
+    "4e6a966508e718d02526d4d220e112591536f28c",
+    "2d07b5e65baf35c82d0b0e557617aefe730a10b1",
+    "7baf9cc07c6aceee185032544d964f04a2fed108",
+    "1f8a3bbaa7fc33118e63ebef829202d825475bfe",
+    "1e513ae001669127538a346c7f390af55edd6712",
+    "d31aa01bdfa87165a272473c385040723bf2c1f6",
+    "20cb62f1be572c8063ce4162d3227c8784a1e5ff",
+    "19a62450fe8eb2fd3c28a4e940ed412beb9dc7ba",
+    "76a225552c296686cd1022584d73decd46767f75",
+    "205c6a3572955c3d8002f5faca68d6ce1359817c",
+}:
+    gitlink_vendor_pin = "c74fb345ac3d8fa752f403369827a432f3503fb5"
+# GPU 497 must remain authenticated while its final native AS FDs and
+# NvCore session are closed; then revoke its process epoch once. Keep the
+# exact new real owner/test blobs and replay the complete earlier reviewed
+# source graph for all unaffected units.
+# Match Allocate()'s rounded page span at NS2 dynamic UnmapBuffer,
+# preserving the existing Maxwell path and all previous exact receipts.
+# NS2 NVDRV returns 64-bit byte offsets, not truncated 32-bit shifts.
+# Requalify the exact two changed blobs before replaying unmap and aliases.
+# NS2 SelfController cmd2000 now reserves and rolls back the real GSV
+# kernel session exactly as the existing GPU 497 child creation does. Seal
+# only these two changed blobs; all older vendor owner receipts still apply.
+if native_self_controller_rollback_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp",
+         "45e02dc11f49bf66b736b31786931de5b20ce9cd"),
+        ("tests/r23_fw23_selfcontroller_240.py",
+         "1f92b520eeb1700cd84f25aa88694955bc9541cf"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == ns2_preemption_receipt(relative, expected), ("NS2 GSV parent session rollback source drift", relative, actual)
+    selected = "3a0cf78a9b2c98bed100d817537b4375a48bf72f"
+    original_vendor_pin = selected
+
+if native_va_region_widen_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "e7832741b238f4c25858f8309d8ccf9aed7a77d3"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "678dc58f5efc8c72a1ebad1632d5c276fd983faa"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), (
+            "NS2 64-bit GPU VA region source drift", relative, actual)
+    selected = "e3ac953ea0fae3bdecb6850a65ec6ec57984aaeb"
+    original_vendor_pin = selected
+
+if native_rounded_unmap_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "d9a041b6d0f203e54942632943337f9e92eea6be"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "ea8899dc76834e8c83eb6527187c32661c5fedfd"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), (
+            "NS2 dynamic GPU VA unmap rounding source drift", relative, actual)
+    selected = "d4508480fc859cb7a6cb97f259caefe1cd18ba54"
+    original_vendor_pin = selected
+
+# Native NS2 fixed GPU mappings cannot overwrite a live mapping or
+# accept a foreign NVMap owner; stale unmap tokens cannot dereference a
+# freed mapping. Seal the two changed blobs before replaying the 4K gate.
+if native_gpu_alias_guard_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "1b99bac6d3a7831833fa1471523c6714f08c4496"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "bddae3ce26cc694c10c93491c28b6a9f47007b01"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), (
+            "NS2 fixed GPU alias/stale-unmap owner drift", relative, actual)
+    selected = "5062767868c17b1ffe59fd6c5b6c2c4326b9a4bf"
+    original_vendor_pin = selected
+
+# Verify the new native sparse VA owner/test, then replay the unchanged
+# GSV, WFI, GA10F, memory lifetime and FC27 source contracts below.
+if native_sparse_small_4k_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "35bef222790b19521059aa6dd2c1acef198ff625"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "90b1d4e0fec9379c99c717eac54e3fdc0fb9cc54"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("NS2 native 4K sparse VA source drift", relative, actual)
+    selected = "932dc1b3c09b172322d65432c26cc017b4922266"
+    original_vendor_pin = selected
+
+# Real native GSV 991 decoder backing and corrected NVGPU WFI bit0.
+# Validate exactly the five changed blobs; all earlier source receipts
+# remain active for unchanged files, including FC27 and NS1 owners.
+if native_video_pool_991_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "941873af1123ef764a35e9712ce054e5a1c90b53"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "a806f2a6d2c9689a8b1e24f0c292a8d95c0d29a7"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "4ae0674d5ed96a363f66df7eb788fa42f6bbd8e3"),
+        ("tests/ns2_syncpt_bootstrap_source.py", "ae41e4bc89b33e455381f25470717af6766cd0b3"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "bd0ad8fd91cf67c57936ed65df2c29b55f839250"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("NS2 native GSV991/WFI selected source drift", relative, actual)
+    selected = "258914fc564e223274728b409ee48e39465df7f6"
+    original_vendor_pin = selected
+
+# Switch 2 H:0x1F is 0xC008481F (preemption). Only WFI/WFI is
+# implemented by Encore's existing software GPU scheduler. Seal the
+# exact new NVDRV owner and focused regression, then replay all prior
+# receipts; every unrelated C++ file must retain its historical SHA.
+if native_preemption_wfi_revision:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
+         "941873af1123ef764a35e9712ce054e5a1c90b53" if native_video_pool_991_revision else
+         "f1fcf207091c51daca138341f275c700334a57aa"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "bd0ad8fd91cf67c57936ed65df2c29b55f839250" if native_video_pool_991_revision else
+         "e03f39df1b9efceb398d0e34ebf60a5bf67211c3"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("NS2 channel preemption WFI owner drift", relative, actual)
+    selected = "99832a312b1281401c187f381f4826191387eb73"
+    original_vendor_pin = selected
+if selected == "99832a312b1281401c187f381f4826191387eb73":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp", "b613ba93b07003570f206d66ace34d7a488e603d"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "bd0ad8fd91cf67c57936ed65df2c29b55f839250" if native_video_pool_991_revision else
+         "e03f39df1b9efceb398d0e34ebf60a5bf67211c3" if native_preemption_wfi_revision else
+         "8deadd56ec6f12ae2f1da491337d694631f8e19f"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("NS2 GPU 497 teardown process-ticket lifetime drift", relative, actual)
+    selected = "b6e3ecc6943118ba9d321ef5baca9f79b241961f"
+    original_vendor_pin = selected
+# GSV's KScopedAutoObject is a mutable scoped handle: its only operator->
+# is non-const. Fix the *compiled* GSV1/1401/496 C++ locals without altering
+# TIPC buffer admission, GPU identity or any NS1 source. Replay the exact
+# prior complete source receipt after validating the one changed TU.
+if selected in {"f66969397724ab8467c3380ca9c6db1631f79bf3", "b6e3ecc6943118ba9d321ef5baca9f79b241961f"}:
+    relative = "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp"
+    raw = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == reviewed_blob(relative, native_gsv_active_cpp), ("NS2 native GSV compiled source drift", actual)
+    if native_gsv_registration:
+        for relative, expected in (
+            ("tests/ns2_syncpt_bootstrap_source.py", native_gsv_active_test),
+            ("encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h", "09cb1ca6494b6d6866239eba0bb45801a237536c"),
+            ("encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp",
+             "b613ba93b07003570f206d66ace34d7a488e603d" if native_worker_teardown_epoch else
+             "34142613b8ee0389509406da540811ba35eae9d6"),
+            ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp", "a47b4a447c74e2710678c4e881b6b2f949a373cf"),
+            ("sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.h", "b32fe29a11b0ffee941eb32043043553e67a28b5"),
+        ):
+            raw = (V / relative).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == reviewed_blob(relative, expected), ("Native GSV 1402/497 process ticket source drift", relative, actual)
+    selected = "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"
+    original_vendor_pin = selected
+
+# NS2 native channel retirement is now a *GPU-worker* operation.
+# This seal includes the pre-existing GA10F, NVCore session and AS owners
+# plus the exact scheduler, GPU, NVDRV and source regression changed here.
+# Host/non-PS5 GPU::ReleaseChannel retains its legacy implementation.
+if selected in {"201b09121ebbfe0a37a56710b2b7ac118ae5acbb", "713e18162cf9a0d629cd39ae00b43fb55f9c2823", "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"}:
+    worker_shutdown_guard = selected == "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"
+    process_scoped_lease = selected in {"713e18162cf9a0d629cd39ae00b43fb55f9c2823", "35d639ad802910cfabbaf46bdcfd48a0d2f09ab6"}
+    for relative, expected in (
+        ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.h", "fe45aa0e8e9943034cbf61e620ee132d33adf887"),
+        ("encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp", "e74f82cd604ba8e60bc7b1005f60a92d66013563"),
+        ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "fc921425b67b634b4aaeb2363dcabdf9b53b6be8"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
+         "941873af1123ef764a35e9712ce054e5a1c90b53" if native_video_pool_991_revision else
+         "f1fcf207091c51daca138341f275c700334a57aa" if native_preemption_wfi_revision else
+         "c0cc9b26f6af13d6e1a3b60d92a0dfabd93c51d1"),
+        ("tests/ns2_gpu_identity_mapping_source.py",
+         "bd0ad8fd91cf67c57936ed65df2c29b55f839250" if native_video_pool_991_revision else
+         "e03f39df1b9efceb398d0e34ebf60a5bf67211c3" if native_preemption_wfi_revision else
+         "8deadd56ec6f12ae2f1da491337d694631f8e19f" if native_worker_teardown_epoch else
+         "d9ac33e7d4f83e7198b23f6ab48a0f57bf76a8c5" if worker_shutdown_guard else
+         "fa8389fe2513f09133c5cdb14d662e65e83c79d4" if process_scoped_lease else
+         "027fee436eea6292e59caa852d76282473d41688"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h", "8ca13a81c05c272347f7dfd0f8189b5c2b2fd946"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h", "ba96b6a240b31519afc89a15e7d683d0c2f32f32"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "8c90a441fc50e656be3d39c582e85241aabcfb75"),
+        ("sources/eden/src/video_core/control/channel_state.h", "dfbb776d9b03f68439efa33f02806a15782c2e21"),
+        ("sources/eden/src/core/hle/service/nvdrv/core/container.h", "14f84ba43cb83451d8b8dc5fc707e894f43ac2c7"),
+        ("encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp", "eec4677538f53cd709f8f6bee9975f3cba0426a0"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "f2ed8c5407974f131fceb6f43a9597334d641477"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "0c32fa40c796706ea4687e8d6e8fa34bc6e7c036" if process_scoped_lease else
+         "9c4f369d4909a49c69ca58a10d3b141b29214ed7"),
+        ("encore-active/ns2-runtime/process/core/core.cpp", "a30c7bbe1bf719b196f1f0805e83b1276ee74472"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "ee1eab4c6417bdeda24de75e36f86fe68d9802b2"),
+        ("tests/shutdown_teardown_lifetime_source.py", "f96f8a58681fd13e46b1a54a49f1ce5f9cdbf3dd"),
+        ("tests/shutdown_general_channel_lifetime_source.py", "d18a8646f71b7285425397b74bf51853de4e4684"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native channel retirement/AS session source drift", relative, actual)
+    if worker_shutdown_guard:
+        relative = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp"
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, "5ff69e424b4b77d16732df37dbb5ecd56f3d4964"), ("GPU worker shutdown-guard drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
+# A GPU channel's AS shared_ptr owns the GMMU but cannot keep NVMap
+# backing mapped after its final NvCore session is closed. The PS5-selected
+# Container retains the exact live session; the channel's last owner
+# releases it only after unpinning its mapped memory.
+if selected == "889b142aa5616d3d00733a7cc1db1562eed291f4":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/core/container.h", "14f84ba43cb83451d8b8dc5fc707e894f43ac2c7"),
+        ("encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp", "eec4677538f53cd709f8f6bee9975f3cba0426a0"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "f2ed8c5407974f131fceb6f43a9597334d641477"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "9c4f369d4909a49c69ca58a10d3b141b29214ed7"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "adaddc673e3a36de3e3ff5079871595f21226195"),
+        ("sources/eden/src/video_core/control/channel_state.h", "dfbb776d9b03f68439efa33f02806a15782c2e21"),
+        ("encore-active/ns2-runtime/process/core/core.cpp", "a30c7bbe1bf719b196f1f0805e83b1276ee74472"),
+        ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "842a0289f75bc2a0763285173e4616060348ec22"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native session/GMMU channel ownership drift", relative, actual)
+    selected = "bb575bd8396d78187d2bd56713e84c398ebce512"
+    original_vendor_pin = selected
+# A GPU channel (including queued work in the scheduler) must retain
+# its actual GMMU address-space owner after NVDRV closes the AS FD.
+# The PS5 teardown order of the prior reviewed pin is unchanged; seal
+# the complete changed channel/AS/test group and the unchanged GPU graph.
+if selected == "2bf3a9a1dab0b8dc6b4157d9084ac66e5e2e547f":
+    for relative, expected in (
+        ("sources/eden/src/video_core/control/channel_state.h", "dfbb776d9b03f68439efa33f02806a15782c2e21"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h", "0fc63bab41e86982a5d2cbeba1b2ebd7675c608a"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "dda472d0cf7277f870540758243d242ee7fe80eb"),
+        ("tests/ns2_gpu_identity_mapping_source.py", "f7f4dcc1c562171a7fe37a7b1a42ef07ab42177e"),
+        ("encore-active/ns2-runtime/process/core/core.cpp", "a30c7bbe1bf719b196f1f0805e83b1276ee74472"),
+        ("tests/shutdown_teardown_lifetime_source.py", "f96f8a58681fd13e46b1a54a49f1ce5f9cdbf3dd"),
+        ("tests/shutdown_general_channel_lifetime_source.py", "d18a8646f71b7285425397b74bf51853de4e4684"),
+        ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "842a0289f75bc2a0763285173e4616060348ec22"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native AS/GMMU channel-lifetime drift", relative, actual)
+    selected = "bb575bd8396d78187d2bd56713e84c398ebce512"
+    original_vendor_pin = selected
+# NS2 runtime exit: retire the actual PS5 Vulkan worker/renderer before
+# kernel.CloseServices can drop NVDRV's pinned NvMap/GMMU address spaces.
+# Preserve existing historical kernel/cheat-teardown receipts by checking
+# the actual core and only the two updated in-place provenance tests.
+if selected == "9bd8de9081cc5ad431ecfc62696e9a6f8f2d1ffc":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/process/core/core.cpp", "a30c7bbe1bf719b196f1f0805e83b1276ee74472"),
+        ("tests/shutdown_teardown_lifetime_source.py", "f96f8a58681fd13e46b1a54a49f1ce5f9cdbf3dd"),
+        ("tests/shutdown_general_channel_lifetime_source.py", "d18a8646f71b7285425397b74bf51853de4e4684"),
+        ("encore-active/eden-core/src/video_core/gpu_vulkan.cpp", "842a0289f75bc2a0763285173e4616060348ec22"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "ca0574dc36e56ad727c63552231872002465bc99"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native GPU worker/AS teardown owner drift", relative, actual)
+    selected = "bb575bd8396d78187d2bd56713e84c398ebce512"
+    original_vendor_pin = selected
+# The PS5/native control reply retains the original host C++ constructor
+# and TPC mask member signatures. Seal both native owners and the unchanged
+# common/AS/GPU parents before accepting this ABI compatibility revision.
+if selected in {"788badb79f0566c56f51e64fb9aa727f72fdb065", "0015d90da841622e1642180b9f9de5e2d0c354c9", "bb575bd8396d78187d2bd56713e84c398ebce512"}:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h", "ba96b6a240b31519afc89a15e7d683d0c2f32f32"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp",
+         ("8c90a441fc50e656be3d39c582e85241aabcfb75" if selected == "bb575bd8396d78187d2bd56713e84c398ebce512" else
+          "cfea80650d97206ad2a9c8b9ef968366ba844285" if selected == "0015d90da841622e1642180b9f9de5e2d0c354c9" else
+          "384457a096e6f460915436a2bd6a873fd7f6efb9")),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h", "eaccce6e08fc9fbe2b19ad621682e638fb019ba4"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "ee1eab4c6417bdeda24de75e36f86fe68d9802b2"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "1db3172a604b9aed2c64765a84786d675029f6eb"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         "9c4f369d4909a49c69ca58a10d3b141b29214ed7" if native_as_session_revision else
+         "dda472d0cf7277f870540758243d242ee7fe80eb" if native_as_lease_revision else
+         "ca0574dc36e56ad727c63552231872002465bc99"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native/legacy NVDRV controller ABI drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
+# Native GA10F topology is coherent only if characteristics, TPC mask,
+# VSMS_MAPPING and the per-FD controller constructor all compile together.
+# Verify their exact blobs plus the unchanged FD/TSG/AS owner group before
+# replaying the original FC27/P0 receipts. NS1 stays on Maxwell (2 TPC).
+if selected == "de4a6c24d1f118152c849fc87af2783c96348735":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h", "ba96b6a240b31519afc89a15e7d683d0c2f32f32"),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "77bcb4907302119e95589b52162ab67ec87c6ac3"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.h", "155bea31994af11ac09e39f5e64033e1868235a6"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "fe60e19fb76eeb3df8921b741290b3dbc18354c6"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "1db3172a604b9aed2c64765a84786d675029f6eb"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp", "ca0574dc36e56ad727c63552231872002465bc99"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native GA10F topology/FD owner drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
+# The AS BindChannel owner previously performed an unchecked nvhost_gpu
+# downcast after verifying only that the FD existed. Seal the real C++ owners
+# for the device-family check and leave every other runtime blob unchanged.
+if selected in {"e95c1dea796b209b8561c253b82fa69e75fb72b6", "019e810c5c6c489eab8541f282de6b6379833015"}:
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "1db3172a604b9aed2c64765a84786d675029f6eb"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "50ff41f87e154b4b534792efe679d721d741eec4"),
+        ("encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
+         ("ca0574dc36e56ad727c63552231872002465bc99" if selected == "019e810c5c6c489eab8541f282de6b6379833015" else
+          "99133d3000fb0c3b43a0a653221c1453072fd6dd")),
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "6d59efa437c5415267e5db0a2c86174d785fb2c2"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "6d72ba1851e21227ad196bbdd7db5226f77c9500"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native channel FD type-check owner drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
+# Native NS2 GPU controller and channel handlers: match all reviewed
+# C++ owners before replaying the previous TSG/FC27 provenance receipts.
+# The new GET_ENGINE_INFO is read-only; CHANNEL_OPEN authenticates the
+# actual process and records an advertised runlist on its live ChannelState.
+if selected == "a93bc45a1a5858fe1e4bc718a84a2a5a8841ab38":
+    for relative, expected in (
+        ("encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp", "6d59efa437c5415267e5db0a2c86174d785fb2c2"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "245942ef561b727546a0897658ce73f04f3ae269"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "7d486218f7d1667ed9e38ab75d4c1421fa09c814"),
+        # The other three TSG predecessors are unchanged and must still be sealed
+        # because skipping the earlier full receipt also skips their old checks.
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "5a3ce8871ff52ed917969e2935f6837f5f1537ad"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "6d72ba1851e21227ad196bbdd7db5226f77c9500"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native GPU runlist owner drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
+# NS2 native VSMS mapping: one selected Ampere controller source changed.
+# Validate its exact compiled blob, then replay the unchanged TSG/FC27 receipts.
+if selected == "86cbe7ac73a28dcd1e3cdc3609eafca1c7b5dc37":
+    relative = "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"
+    raw = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == reviewed_blob(relative, "3124fe780213da7a62251829fb24bf30f1582b1a"), ("Native VSMS GPU controller drift", actual)
+    selected = "fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531"
+    original_vendor_pin = selected
+# The revised native TSG driver adds process-checked bind/unbind ioctl
+# semantics and no longer acknowledges unimplemented TSG commands.
+# All five live source blobs must exactly match the reviewed vendor commit.
+# Replay previous FC27/NS2 receipts only after proving that the other
+# compiled owners did not change.
+if selected == "fcd2e6e38bbfd01ab78f56fe8ba5d8039d120531":
+    for relative, expected in (
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h", "5a3ce8871ff52ed917969e2935f6837f5f1537ad"),
+        ("sources/eden/src/core/hle/service/nvdrv/devices/nx2_stub_device.h", "26798a34076b12d8f3cd32ede81851757f6bb121"),
+        ("sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp", "6d72ba1851e21227ad196bbdd7db5226f77c9500"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h", "a899fd5fabffef8e98b030381d8d894356c67a80"),
+        ("encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp", "10fc74076686e0c9c27c7c74b6363ecec9361d7b"),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Native TSG GPU owner drift", relative, actual)
+    selected = "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791"
+    original_vendor_pin = selected
+# The only difference from the last reviewed vendor pin is the real GPU
+# worker TIPC 22 reply descriptor. Seal its exact new source before replaying
+# every unchanged FC27/NS2 source receipt from the previously approved pin.
+if selected == "4795f0a884c06f029c9d06a0a3d09cc0b9cfb791":
+    relative = "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp"
+    data = (V / relative).read_bytes()
+    actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    assert actual == reviewed_blob(relative, "37236a90479c1913cec33ad95d768a3fc80a1504"), (
+        "GPU worker TIPC 22 COPY owner drift", actual)
+    selected = "f69176d429723da5d79251f6b858afc72c5d99e2"
+    original_vendor_pin = selected
+# The reviewed NS2 HID successor is exactly two fast-forward commits after
+# b65d8d9 and changes only the live hid_server.cpp/.h (verified by GitHub
+# compare b65d8d9...266080b4). Seal both new blobs before replaying all
+# the unchanged FC27/NS2 source receipts of the reviewed parent. Do not add
+# a blanket allowlist exception: a drifted runtime source remains fatal.
+gsv_syncpt_201_revision = selected in {"ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_gpu_403_revision = selected in {"47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_native_115_revision = selected in {"f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_transfer_memory_revision = selected in {"b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+vi2_indexed_event_revision = selected in {"7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}
+gsv_transfer_bootstrap_revision = selected == "f69176d429723da5d79251f6b858afc72c5d99e2"
+if selected in {"266080b4df8f56bb5a9b52c8c3ec253254c1578b", "ac33c63d7c53bfbd6df5f2f164f1fe078fdfddc7", "dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"}:
+    for relative, expected in (
+        ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp",
+         ("b83f519fef3905eabb0bef65cab4d989033b5287"
+           if selected in {"dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"} else "dcceb2051105866bb6f9a702ccdd7271969e0763")),
+        ("encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.h",
+         ("1f3b144324b9014d4e5db64f796019f0e9f4c9a6"
+           if selected in {"dfbba1e690128a44da755494c422ed1e6bdeb3c3", "47e9735a63c94ca42ec80412c6fcfd84a4910a53", "f007f3d539a523607fbef8b8895c2833e5b7af8c", "b3e6f9943bd46fda050ecb8151c4bb06e5251117", "7535dc9e5e7f0060b8e448da843f96882a2ce320", "f69176d429723da5d79251f6b858afc72c5d99e2"} else "e82f2486c79ac6aa2da5549619fb555c628d7afb")),
+    ):
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == reviewed_blob(relative, expected), ("Reviewed NS2 HID source drift", relative, actual)
+    if gsv_syncpt_201_revision:
+        # GSV cmd201 is admitted only because the real per-KProcess
+        # NativeSyncptState is already allocated by the active constructor.
+        # Verify the EXACT GSV owner pair, then reuse unchanged source seals.
+        for relative, expected in (
+            ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
+             (native_gsv_active_cpp if native_gsv_compiled_handle_fix else
+              "54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
+               "15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
+               "91cdef4f7f28f5600ecd668904cf7d47ee0e9180" if gsv_transfer_memory_revision else
+               "085e934b85fe6289988641b8ea2d64bf1a9a6d91" if gsv_native_115_revision else
+               "38b2aed6deeec62ed82e173e6362ab1ba3e46737" if gsv_gpu_403_revision else
+               "5e621a6cff708c5a2e2ab1b856990d0b5afc96f7")),
+            ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h",
+             ("4ae0674d5ed96a363f66df7eb788fa42f6bbd8e3" if native_video_pool_991_revision else
+              "dad20285d5e14e28c268d9616b2662cc0be3a68a" if gsv_native_115_revision else
+               "20bcdf77ac18db399d064a22da4a4cdf8cddcd9d" if gsv_gpu_403_revision else
+               "d0837e45e672ee8043c01f1593af2a4d33658453")),
+        ):
+            raw = (V / relative).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == reviewed_blob(relative, expected), ("Reviewed NS2 GSV syncpoint context drift", relative, actual)
+    selected = "b65d8d9673475433f0b6eac72eb304bf23141666"
+    original_vendor_pin = selected
+    ns2_gsv_497_dual = True
 # The NS2 GSV COPY-descriptor correction is two commits beyond the
 # previously sealed vendor tree. Only graphics_supervisor.cpp and its source
 # contract changed; check both exact blobs, then replay all unchanged FC27,
@@ -38,18 +2002,27 @@ assert selected==checked and selected in REVIEWED_PINS,(selected,checked)
 if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f63c180d820631858fe935e", "565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-         "747c9a0b5461fc1975fa373997064e3dc401a9a3"),
+         (native_gsv_active_cpp if native_gsv_compiled_handle_fix else
+              "54bc84b2602d814312b6291cc104137de33afa53" if gsv_transfer_bootstrap_revision else
+               "15302603f3713b5a80be053d2d58a0f410cffaa7" if vi2_indexed_event_revision else
+               "91cdef4f7f28f5600ecd668904cf7d47ee0e9180" if gsv_transfer_memory_revision else
+               "085e934b85fe6289988641b8ea2d64bf1a9a6d91" if gsv_native_115_revision else
+           "38b2aed6deeec62ed82e173e6362ab1ba3e46737" if gsv_gpu_403_revision else
+           "5e621a6cff708c5a2e2ab1b856990d0b5afc96f7" if gsv_syncpt_201_revision else
+           "747c9a0b5461fc1975fa373997064e3dc401a9a3")),
         ("tests/ns2_syncpt_bootstrap_source.py",
-         "69723ef7bd1d47af5086052882d0749cc817f64a"),
+         native_gsv_active_test if native_gsv_compiled_handle_fix else "69723ef7bd1d47af5086052882d0749cc817f64a"),
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Selected NS2 GSV COPY descriptor source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Selected NS2 GSV COPY descriptor source drift", relative, actual)
     if selected in {"565f143c27443553b60ca1b21cc1094caa23ceb5", "010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
         protocol = (V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h").read_bytes()
         protocol_blob = hashlib.sha1(b"blob " + str(len(protocol)).encode() + bytes([0]) + protocol).hexdigest()
-        expected_protocol = "4a35519c4f01cc4c1b604787bfbb139161f64a05" if selected in {"3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"} else "6ce5ba02c2032237f81d9684da9e56cfbfb831c0"
-        assert protocol_blob == expected_protocol, ("NS2 GSV bootstrap hint source drift", protocol_blob)
+        expected_protocol = "182467544d693433015e27e87d03fb62a43ec10b" if gsv_transfer_bootstrap_revision else "e416a9d4a9611c501e1349c7cbcfa83e2640712e" if vi2_indexed_event_revision else "2ab3a49da7843d2b1b0aa7b0d66c702cdbc9326d" if gsv_transfer_memory_revision else "661ff841efe8ea16fe0da557bb791596f334c6b5" if gsv_native_115_revision else "54f295b1ef7a0482a851a93579e66952b335ba9b" if gsv_gpu_403_revision else "4a35519c4f01cc4c1b604787bfbb139161f64a05" if selected in {"3460d10e60bff7dd8b057f592eb671cc35eddd25", "6f6f7f4cb154aa227eaf4d54330ff9d817b77ecb", "ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"} else "6ce5ba02c2032237f81d9684da9e56cfbfb831c0"
+        assert protocol_blob == reviewed_blob(
+            "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_protocol.h",
+            expected_protocol), ("NS2 GSV bootstrap hint source drift", protocol_blob)
     if selected in {"ce27bdd184c60d1f096ef1495c0ef7e5b7f0cdf0", "01c942171fea39c1f7cf31d13ab36895aebb593a", "dcf7116dd2c536e05c80d83ff9dbf30caa5cc109", "b65d8d9673475433f0b6eac72eb304bf23141666"}:
         # appletOE retry ABI: only the reviewed NS2 owner and its existing source
         # regression changed after the last pinned vendor revision.
@@ -61,7 +2034,7 @@ if selected in {"ac55a39658c8029a0ec900475234012ae6bf6289", "a7b9008340ccf03e4f6
         ):
             raw = (V / relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("NS2 appletOE retry ABI source drift", relative, actual)
+            assert actual == reviewed_blob(relative, expected), ("NS2 appletOE retry ABI source drift", relative, actual)
     selected = "eadc6e798def18417e50db6a03a291440429d795"
 # This revert commit has the same complete vendor Git tree as the
 # reviewed pre-rollback pin. Reject any different source tree, including
@@ -78,10 +2051,13 @@ if selected in {"917ccdc1cf772b9312b19888eea181b8e114334b", "0c1bd95c896f6ddc787
     owner = V / "encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_supervisor_bootstrap.h"
     raw = owner.read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    expected = ("11d548eb338a5b75bf3a87a6adb6aa6aa302e017" if ns2_gsv_497_dual else
+    expected = ("20dceafdc02e9436a81ac20b71b97ef7cf30d789" if gsv_transfer_bootstrap_revision else
+                "024d652f5fbcbd9043507de6b6518c5b86d1e212" if gsv_transfer_memory_revision else
+                "703eae24222c4d19d635fc4aa9a24d69f9520275" if gsv_gpu_403_revision else
+                "11d548eb338a5b75bf3a87a6adb6aa6aa302e017" if ns2_gsv_497_dual else
                 "11e7c9d0569a175567083367e485cbf75cbc2207" if ns2_gsv_497_v2 else
                 "0f6b6960687501ef88b65ae0f3f4d0fd0693826a")
-    assert actual == expected, (
+    assert actual == reviewed_blob(relative, expected), (
         "NS2 GSV optional-bind bootstrap source drift", actual)
 
 # The FC27 corrected rasterizer is the exact reviewed fail-closed successor.
@@ -117,7 +2093,7 @@ if selected in {"17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc42
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("Merged engine/vendor source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Merged engine/vendor source drift", relative, actual)
     print("ENCORE_MERGED_NS1_DMA_NS2_BOOT_SOURCE_PASS owners=12")
 
 # The follow-up vendor change affects only the compiled NS2 GSV control
@@ -126,18 +2102,20 @@ if selected in {"17c95ef233a9a0e508e50ada4ae9dc53a300c46c", "082cd1b77c7df80dc42
 if selected in {"082cd1b77c7df80dc422eae5ba59d9cd33e48dc4", "e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"}:
     for relative, expected in (
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp",
-         ("90be32737f454554125156cf468f58154dde40d4" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
+         (native_gsv_active_cpp if native_gsv_compiled_handle_fix else
+           "90be32737f454554125156cf468f58154dde40d4" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
           "c9193e7ce505353c87f57e8a063cbdbf5b072f43" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
           "8457d9a9a53725e6c1f15575c1151038f2457643")),
         ("tests/ns2_syncpt_bootstrap_source.py",
-         ("21fb7c886286a39eaec5ca4495bfba1bb55584b1" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
+         (native_gsv_active_test if native_gsv_compiled_handle_fix else
+           "21fb7c886286a39eaec5ca4495bfba1bb55584b1" if selected == "850086c79ec40838663989a81f33ba8ea2f15f6a" else
           "41d6f0514f281bfb65cad052c2fb61cfa9d749b2" if selected == "06fc7dc2e0a00e00f831dfd78ae78087736276a3" else
           "51beddbe0454039c23728f39f7c84d05325fd8cf" if selected in {"e0fced3a091495e70362d8c4ca072942f027af24", "491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521485f5ac63bd7ccc9ca7ef", "06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663989a81f33ba8ea2f15f6a"} else
           "eb150745a18068366885299f82eacf42045cb50e")),
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("NS2 GPU/VI2 session source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GPU/VI2 session source drift", relative, actual)
     print("ENCORE_NS2_GSV_NO_NULL_SESSION_SOURCE_PASS owners=2")
 
 # Active GPU session and worker must roll back incomplete native VA
@@ -154,7 +2132,7 @@ if selected in {"491fa7e2388d46e23827b1459360a5d7f4a2814b", "b177deb8282b14e1521
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("NS2 GPU VA identity rollback drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GPU VA identity rollback drift", relative, actual)
     print("ENCORE_NS2_GPU_VA_ROLLBACK_SOURCE_PASS owners=3")
 
 # A native Switch 2 GPU session may only be published after process
@@ -182,7 +2160,7 @@ if selected in {"06fc7dc2e0a00e00f831dfd78ae78087736276a3", "850086c79ec40838663
     ):
         body = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(body)).encode() + bytes([0]) + body).hexdigest()
-        assert actual == expected, ("NS2 GSV nvsrv CMIF source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GSV nvsrv CMIF source drift", relative, actual)
     print("ENCORE_NS2_GSV_REAL_NVSRV_SOURCE_PASS owners=3")
 
 if selected == "2a450d43d1d23d3e8b1667e396613f62c69c26d7":
@@ -199,7 +2177,7 @@ if selected == "2a450d43d1d23d3e8b1667e396613f62c69c26d7":
     ):
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Selected NS2 IPC source drift", relative, actual)
+        assert actual == reviewed_blob(relative, expected), ("Selected NS2 IPC source drift", relative, actual)
     print("ENCORE_NS2_TYPED_PROXY_SOURCE_PASS owners=7")
 
 if selected == "510f1efde545357fe8095a812df32251ee546285":
@@ -214,18 +2192,18 @@ if selected == "510f1efde545357fe8095a812df32251ee546285":
     ):
         raw = (V/path).read_bytes()
         actual = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == expected, ("NS2 appletOE selected owner drift", path, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 appletOE selected owner drift", path, actual)
     selected = "7fc673495b2ee18d5216023280057a42aa78d46c"
 if selected == "7fc673495b2ee18d5216023280057a42aa78d46c":
     for path, expected in (
         ("encore-active/ns2-runtime/gamechat/core/hle/service/friend/friend.cpp", "ceb8b4afa7c0f19af3fe209fd8ca8d848a66d2cb"),
-        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", "5d83ac9f7e7c3df2201b1ddf5e9458a7d802bcc4"),
+        ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.cpp", native_gsv_active_cpp if native_gsv_compiled_handle_fix else "5d83ac9f7e7c3df2201b1ddf5e9458a7d802bcc4"),
         ("encore-active/ns2-runtime/graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h", "be4d6eaaa43ee247b61d835a7b280fe26aa8eb63"),
         ("encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h", "978b0a162c0fa6043942e96e57c7c464dd167c53"),
     ):
         raw=(V/path).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == expected, ("NS2 GameChat owner drift", path, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 GameChat owner drift", path, actual)
     selected = "ab417b59c5f7f4613ff27386be05c0644d0ed776"
 if selected in {"372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
     raw=(V/"encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h").read_bytes()
@@ -240,7 +2218,7 @@ if selected == "ab417b59c5f7f4613ff27386be05c0644d0ed776":
                            ("encore-active/eden-threading/native-hle-overrides.cmake", "0ed9f8520019c07874c157c97ded3864c07a8a32")):
         raw=(V/path).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == expected, ("NS2 IPC peer owner drift", path, actual)
+        assert actual == reviewed_blob(relative, expected), ("NS2 IPC peer owner drift", path, actual)
 if selected == "67759611edc13414c112ea9d2b6664d54827a200":
     # Confirm the new release modifies only its reviewed RomFS owner/test;
     # actual GitHub commit comparison is documented in the incident register.
@@ -254,7 +2232,7 @@ if selected == "67759611edc13414c112ea9d2b6664d54827a200":
     }.items():
         raw = (V/relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("RomFS-only successor drift",relative,actual)
+        assert actual == reviewed_blob(relative, expected), ("RomFS-only successor drift",relative,actual)
 
 if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
                 "729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
@@ -272,7 +2250,7 @@ if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
     }.items():
         raw = (V/relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert actual == expected, ("Sync rollback source drift",relative,actual)
+        assert actual == reviewed_blob(relative, expected), ("Sync rollback source drift",relative,actual)
     if selected in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         for relative, expected in {
             "encore-active/ns2-helpers/include/core/loader/ns2_svc_trace.h":
@@ -284,7 +2262,7 @@ if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
         }.items():
             raw = (V/relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("Quiet NS2 SVC witness drift",relative,actual)
+            assert actual == reviewed_blob(relative, expected), ("Quiet NS2 SVC witness drift",relative,actual)
     if selected in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         for relative, expected in {
             "encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": ("c7cb95ecaf388b925fc29582499bbd4b54a77f75" if selected in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if selected == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"),
@@ -293,7 +2271,7 @@ if selected in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9",
         }.items():
             raw = (V/relative).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-            assert actual == expected, ("Selected PS5 F07 TextureCache source drift", relative, actual)
+            assert actual == reviewed_blob(relative, expected), ("Selected PS5 F07 TextureCache source drift", relative, actual)
     assert not (V/"encore-active/eden-core/overrides/core/deferred_cached_updates.h").exists()
     subprocess.run(["python3", "-B", str(V/"tests/fc27_deferred_page_protection_host.py")],
                    check=True, timeout=240)

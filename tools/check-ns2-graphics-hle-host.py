@@ -56,8 +56,8 @@ def main()->int:
     ):
         assert source in text, "Missing real GSV NVMap lifetime owner: " + source
     assert 'm_native_memory.Create(size)' not in text, "Synthetic GSV native memory ID in runtime"
-    # Protocol 11 (VI2) and 12 (GPU session) must expose an event as
-    # a TIPC COPY handle. Explicit errors carry no phantom null handle.
+    # VI2 Event is a COPY descriptor; GSV GPU slot event (12) is MOVE
+    # per libounce. Both retain the service-owned event and fail closed.
     vi_notify=text.split('void Event(HLERequestContext& ctx) {',1)[1].split('void VsyncEvent(',1)[0]
     assert 'IPC::ResponseBuilder rb{ctx,2,1,0};' in vi_notify
     assert 'rb.PushCopyObjects(ctx,m_event->GetReadableEvent());' in vi_notify
@@ -65,14 +65,16 @@ def main()->int:
     assert 'readable->Open(kernel)' not in vi_notify
     gpu_session=(ROOT/"vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp").read_text()
     gpu_notify=gpu_session.split('void IGpuSession::GetNotificationEvent(HLERequestContext& ctx) {',1)[1].split('IGpuSession::ResolveOpenedAddressSpace',1)[0]
-    assert 'IPC::ResponseBuilder rb{ctx, 2, 1, 0};' in gpu_notify
-    assert 'ctx.AddCopyObject(readable);' in gpu_notify
-    assert gpu_notify.index('ctx.AddCopyObject(readable);') < gpu_notify.index(
-        'IPC::ResponseBuilder rb{ctx, 2, 1, 0};')
+    assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in gpu_notify
+    assert 'ctx.AddMoveObject(readable);' in gpu_notify
+    assert 'ctx.AddCopyObject(readable);' not in gpu_notify
+    assert 'readable->Open(kernel)' in gpu_notify
+    assert 'readable->Close(kernel);' in gpu_notify
     assert 'catch (const std::bad_alloc&)' in gpu_notify
     assert 'result = Kernel::ResultOutOfResource;' in gpu_notify
-    assert 'AddMoveObject' not in gpu_notify
-    assert 'readable->Open(kernel)' not in gpu_notify
+    assert gpu_notify.index('ctx.AddMoveObject(readable);') < gpu_notify.index(
+        'readable->Close(kernel);') < gpu_notify.index(
+        'IPC::ResponseBuilder rb{ctx, 2, 0, 1};')
     # NX2 VI2 has an empty request-group acknowledgement only for 51.
     # Queries 103/104/105 must fill their full SDK payload, not return
     # success with stale input buffer words (HDR 104 can black out graphics).
@@ -176,9 +178,9 @@ def main()->int:
     assert "fence.num_fences < 0" not in fence_guard
 
     for command, method in (
-        (901, "InitializeVideoCodecContext"), (1001, "InitializeVideoCodecContext"),
+        (901, "InitializeVideoCodecContext"),
         (902, "OpenVideoDecoderSession"), (905, "OpenVideoDecoderSession"),
-        (906, "OpenVideoDecoderSession"), (1002, "OpenVideoDecoderSession"),
+        (906, "OpenVideoDecoderSession"),
         (911, "CreateVideoImagePool"), (912, "DestroyVideoImagePool"),
         (961, "GetCpuVideoImageDescriptor"),
         (426, "MapVideoGpuImage"), (427, "UnmapVideoGpuImage"),
@@ -186,7 +188,10 @@ def main()->int:
     ):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
     init_video = text.split('void IGraphicsSupervisor::InitializeVideoCodecContext(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
-    for proof in ('command == 901 || command == 1001',
+    for command in (1001, 1002):
+        assert '{'+str(command)+', &IGraphicsSupervisor::UnavailableVideoEncoder' in text
+    assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in text
+    for proof in ('command == 901',
                   'packet[0] == command + 0x10 && packet[1] == 0',
                   'm_bootstrap.GpuContextReady()',
                   'source ? source->GetModule() : nullptr',
@@ -314,9 +319,9 @@ def main()->int:
     assert (ROOT / 'tools/ns2/check_native_dense_ledger_oom_host.py').is_file()
     vsync_owner = text.split('void VsyncEvent(HLERequestContext& ctx) {', 1)[1].split(
         'void Notifications(HLERequestContext& ctx) {', 1)[0]
-    assert vsync_owner.index('m_vsync_events.reserve(32);') < vsync_owner.index(
+    assert vsync_owner.index('m_vsync_events.reserve(GraphicsSupervisorProtocol::RequestGroupCount);') < vsync_owner.index(
         'm_context.CreateEvent("NativeVi2Vsync")')
-    assert vsync_owner.index('m_vsync->events.reserve(32);') < vsync_owner.index(
+    assert vsync_owner.index('m_vsync->events.reserve(GraphicsSupervisorProtocol::RequestGroupCount);') < vsync_owner.index(
         'm_context.CreateEvent("NativeVi2Vsync")')
     assert vsync_owner.index('m_vsync->events.pop_back();') < vsync_owner.index(
         'm_context.CloseEvent(event);')

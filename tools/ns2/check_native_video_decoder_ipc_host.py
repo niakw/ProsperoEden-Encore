@@ -17,8 +17,11 @@ supervisor=(vroot/'graphics_supervisor/core/hle/service/am/service/graphics_supe
 sh=(vroot/'graphics_supervisor/core/hle/service/am/service/graphics_supervisor.h').read_text()
 backend=(vroot/'video_decoder/video_core/host1x/nx2_video_decoder.cpp').read_text()
 recipe=(root/'headless/CMakeLists.txt').read_text()
-for cmd in (902,905,906,1002):
+for cmd in (902,905,906):
     assert f'{{{cmd}, &IGraphicsSupervisor::OpenVideoDecoderSession' in supervisor
+for cmd in (1001,1002):
+    assert f'{{{cmd}, &IGraphicsSupervisor::UnavailableVideoEncoder' in supervisor
+assert 'void IGraphicsSupervisor::UnavailableVideoEncoder(' in supervisor
 for cmd, method in ((1,'CreateDecoderService'),(3,'GetEvent'),(6,'Start'),
                    (8,'Stop'),(101,'Configure'),(109,'SubmitInput'),
                    (115,'Finalize'),(200,'Initialize'),(201,'Initialize'),
@@ -29,6 +32,23 @@ for cmd, method in ((1,'CreateDecoderService'),(3,'GetEvent'),(6,'Start'),
 assert 'GetObjectFromHandle<Kernel::KTransferMemory>' in source
 assert 'CreateMetadataSession(system, ctx, std::move(handler), &client)' in supervisor
 assert 'm_owner->OpenVideoDecoderChildSession(ctx)' in source
+# The creator (GSV 902/905/906) and its child (decoder command 1)
+# must agree with the HIPC MOVE payload actually queued by AddMoveObject.
+# A failed outgoing allocation must close the creator ref, not emit success.
+for method in ("OpenVideoDecoderSession", "OpenVideoDecoderChildSession"):
+    body=supervisor.split(
+        f"void IGraphicsSupervisor::{method}(HLERequestContext& ctx) {{",1
+    )[1].split("\n}",1)[0]
+    for token in ("ctx.AddMoveObject(client);",
+                  "catch (const std::bad_alloc&)",
+                  "client->Close(system.Kernel());",
+                  "result = Kernel::ResultOutOfResource;",
+                  "IPC::ResponseBuilder rb{ctx, 2, 0, 1};"):
+        assert token in body,(method,"decoder-session-MOVE",token)
+    assert "IPC::ResponseBuilder rb{ctx, 2, 1, 0};" not in body
+    assert body.index("ctx.AddMoveObject(client);") < body.index(
+        "client->Close(system.Kernel());") < body.index(
+        "IPC::ResponseBuilder rb{ctx, 2, 0, 1};")
 assert 'm_context.CreateEvent("NS2VideoInputReady")' in source
 assert 'm_ready_timer = Core::Timing::CreateEvent(' in source
 assert 'ScheduleLoopingEvent(Interval, Interval, m_ready_timer)' in source
@@ -61,7 +81,8 @@ assert '!m_decoder->IsOpen()' in submit
 assert 'm_syncpoint = id;' in source
 assert 'GetGuestSyncpointValue(id)' in source
 assert 'm_bootstrap.GpuContextReady()' in supervisor
-assert 'const bool shape = (cmd == 902 || cmd == 1002)' in supervisor
+assert 'const bool shape = cmd == 902 ? w[1] == 0 :' in supervisor
+assert 'cmd == 905 ? w[1] == 1 : cmd == 906 && w[1] == 3;' in supervisor
 assert 'GetObjectFromHandle' in supervisor
 assert 'IsValidVirtualAddressRange(' in supervisor
 assert 'record->guest_address + view->offset != expected.address' in supervisor

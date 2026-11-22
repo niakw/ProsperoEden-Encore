@@ -12,6 +12,7 @@ HEADER=ROOT/'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gp
 source=OWNER.read_text()
 assert source.count('m_mappings.PrepareMapped(*request, staged_ledger)')==1
 assert source.count('m_mappings.PrepareSparse(')==1
+assert source.count('m_mappings.PrepareSparseReplacingExact(')==1
 assert source.count('m_mappings.CommitPrepared(staged_ledger)')==2
 normal=source.split('void IGpuWorker::NormalMapGpuMemory4K(',1)[1].split(
     'void IGpuWorker::NormalModifyGpuMemory4K(',1)[0]
@@ -23,10 +24,20 @@ for owner in (normal,sparse):
     assert 'm_mappings.RecordSparse(' not in owner
 assert normal.index('m_mappings.PrepareMapped(')<normal.index('as->MapNative4K(')
 assert normal.index('as->MapNative4K(')<normal.index('m_mappings.CommitPrepared(')
-assert sparse.index('m_mappings.PrepareSparse(')<sparse.index('as->ReserveNativeSparse4K(')
-assert sparse.index('as->ReserveNativeSparse4K(')<sparse.index('m_mappings.CommitPrepared(')
-assert 'mappings.merge(pending);' in HEADER.read_text()
-assert 'catch (const std::bad_alloc&)' in HEADER.read_text()
+assert sparse.index('m_mappings.PrepareSparseReplacingExact(')<sparse.index(
+    '"214_replace_wait_idle"')<sparse.index('system.GPU().WaitForIdle();')
+assert sparse.index('system.GPU().WaitForIdle();')<sparse.index(
+    'as->ReleaseNativeSparse4K(')<sparse.index('m_mappings.RecordReleasedSparse(')
+assert sparse.index('m_mappings.RecordReleasedSparse(')<sparse.index(
+    'as->ReserveNativeSparse4K(')<sparse.index('m_mappings.CommitPrepared(')
+header=HEADER.read_text()
+for token in ('std::optional<Mapping> ExactSparse(',
+              'PrepareSparseReplacingExact(',
+              'mappings.find({as, address})',
+              'next->second.address - address < size',
+              'mappings.merge(pending);',
+              'catch (const std::bad_alloc&)'):
+    assert token in header,token
 env=dict(os.environ)
 sdk=Path('/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk')
 if sdk.exists():env['SDKROOT']=str(sdk)

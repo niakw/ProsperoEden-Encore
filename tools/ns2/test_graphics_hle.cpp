@@ -11,6 +11,7 @@
 #include "core/hle/service/am/service/native_image_layout.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_kind.h"
 #include "core/hle/service/nvdrv/devices/native_gpu_context.h"
+#include "core/hle/service/nvdrv/devices/native_gpu_submission.h"
 #include "core/hle/service/am/service/graphics_syncpoint_cache.h"
 #include "core/hle/service/am/service/gpu_session_protocol.h"
 #include "core/hle/service/am/service/graphics_supervisor_bootstrap.h"
@@ -25,6 +26,84 @@ int main(){
     using namespace Service::AM;
     namespace P=Service::AM::GraphicsSupervisorProtocol;
     namespace N=Service::Nvidia::Devices;
+    // Native H:0x21 admission: kernel-mode GPU submission only, with an
+    // authenticated runlist/GMMU checked separately by the actual handler.
+    N::NativeKernelChannelSetupRequest kernelBind{1024,0,0,-1,-1,0,0};
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Valid,
+            "NVGPU CHANNEL_SETUP_BIND admits a kernel-mode ring");
+    kernelBind.num_entries=4;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Valid,
+            "NVGPU kernel ring minimum is four entries");
+    kernelBind.num_entries=3;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Invalid,
+            "NVGPU rejects too few kernel ring entries");
+    kernelBind.num_entries=6;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Invalid,
+            "NVGPU rejects non-power-of-two kernel rings");
+    kernelBind.num_entries=(1U<<29);
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Invalid,
+            "NVGPU rejects oversized kernel rings");
+    kernelBind.num_entries=1024;
+    kernelBind.flags=8;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU usermode/doorbell cannot be acknowledged without USERD");
+    kernelBind.flags=0;
+    kernelBind.num_inflight_jobs=1;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU rejects unsupported kernel inflight tracking");
+    kernelBind.num_inflight_jobs=0;
+    kernelBind.userd_fd=9;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU rejects unowned USERD buffer");
+    kernelBind.userd_fd=-1;
+    kernelBind.gpfifo_offset=0x1000;
+    require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
+            N::NativeKernelChannelSetupStatus::Unsupported,
+            "NVGPU refuses unmapped GPFIFO offset");
+    // Execute the selected NS2 GSV GraphicsFrame TIPC decoders, not merely
+    // source-grep receipts. Unknown policy values must fail closed.
+    const std::array<u32, 2> graphicsFrameCreate{16 + 1101, 0};
+    const std::array<u32, 2> graphicsFrameInitialize{16 + 1102, 0};
+    require(P::IsGraphicsFrameContextCommand(graphicsFrameCreate, 1101) &&
+            P::IsGraphicsFrameContextCommand(graphicsFrameInitialize, 1102),
+            "GSV GraphicsFrame create/initialize command envelopes");
+    require(!P::IsGraphicsFrameContextCommand(graphicsFrameCreate, 1102) &&
+            !P::IsGraphicsFrameContextCommand(
+                std::span<const u32>{graphicsFrameInitialize.data(), 1}, 1102),
+            "GSV GraphicsFrame wrong command and truncated packets rejected");
+    for (const u32 length : {0u, 286u, 316u, 376u}) {
+        const std::array<u32, 3> packet{16 + 1111, 1, length};
+        const auto mode = P::DecodeGraphicsFrameSetting(packet, 1111);
+        require(mode && mode->command == 1111 && mode->value == length,
+                "GSV frame length modes use documented values");
+    }
+    for (const u32 mode : {0u, 1u, 2u}) {
+        const std::array<u32, 3> packet{16 + 1112, 1, mode};
+        require(P::DecodeGraphicsFrameSetting(packet, 1112).has_value(),
+                "GSV frame restart policy accepts valid modes");
+    }
+    for (const u32 mode : {0u, 1u}) {
+        const std::array<u32, 3> packet{16 + 1113, 1, mode};
+        require(P::DecodeGraphicsFrameSetting(packet, 1113).has_value(),
+                "GSV frame timeslice accepts valid modes");
+    }
+    for (const std::array<u32, 3> malformed : {
+             std::array<u32, 3>{16 + 1111, 1, 1},
+             std::array<u32, 3>{16 + 1112, 1, 3},
+             std::array<u32, 3>{16 + 1113, 1, 2},
+             std::array<u32, 3>{16 + 1111, 2, 286}}) {
+        const u32 id = malformed[0] - 16;
+        require(!P::DecodeGraphicsFrameSetting(malformed, id),
+                "GSV GraphicsFrame policy rejects invalid ABI or value");
+    }
     for (u64 display_version : {0x300010000ULL, 0x300020000ULL,
                                 0x300030000ULL, 0x300040000ULL}) {
         require(P::IsSupportedDisplaySession(display_version),
@@ -51,6 +130,35 @@ int main(){
     require(!P::IsDefaultVi2DisplayQuery(0x77, 2, default_display, 102) &&
             !P::IsDefaultVi2DisplayQuery(0x7b, 2, default_display, 107),
             "VI2 unknown request IDs stay closed");
+    // Native event 31 and duplicate 32 share an indexed VSync source.
+    // 32 carries one copied kernel handle before the slot word.
+    const std::array<u32,3> vi2Event31{16+31,1,3};
+    const std::array<u32,5> vi2Event32{16+32,0x80000001U,2,0x4455,3};
+    require(P::DecodeVi2NativeEventSlot(vi2Event31,31)==3 &&
+            P::DecodeVi2NativeEventSlot(vi2Event32,32)==3,
+            "VI2 31/32 resolve the SAME native event slot");
+    auto badVi2Event32=vi2Event32;
+    badVi2Event32[3]=0;
+    require(!P::DecodeVi2NativeEventSlot(badVi2Event32,32),
+            "VI2 32 requires a real copied event handle");
+    badVi2Event32=vi2Event32;badVi2Event32[2]=1;
+    require(!P::DecodeVi2NativeEventSlot(badVi2Event32,32),
+            "VI2 32 rejects malformed TIPC handle descriptors");
+    const std::array<u32,3> vi2InvalidSlot{16+31,1,8};
+    require(!P::DecodeVi2NativeEventSlot(vi2InvalidSlot,31),
+            "VI2 native event slot remains bounded to 0..7");
+    for (u32 command=261;command<=272;++command) {
+        const std::array<u32,5> nativeBind{
+            command+16,3,static_cast<u32>(default_display),
+            static_cast<u32>(default_display>>32),3};
+        const auto decoded=P::DecodeVi2DisplayEventBinding(nativeBind,command);
+        require(decoded && decoded->display_name==default_display &&
+                decoded->value==3, "VI2 display notification bind/unbind ABI");
+    }
+    const std::array<u32,5> badDisplayBind{16+263,2,0,0,1};
+    require(!P::DecodeVi2DisplayEventBinding(badDisplayBind,263) &&
+            !P::DecodeVi2DisplayEventBinding(badDisplayBind,260),
+            "VI2 native display binding rejects malformed and unknown requests");
     require(P::Vi2MaxResolutionMode(true) == 4 &&
             P::Vi2MaxResolutionMode(false) == 2 &&
             P::Vi2NominalRefreshRateHz == 60 &&
@@ -85,6 +193,94 @@ int main(){
     malformedMemory=gpuMemoryValid;malformedMemory[7]=0;
     require(!IsValidGpuMemoryRegistrationRange(*DecodeGpuMemoryRegistration(malformedMemory)),
             "reject reserved zero device ID");
+    const std::array<u32,3> ensureComptags{0xbb,1,4};
+    require(DecodeEnsureGpuMemoryComptags(ensureComptags)==std::optional<u32>{4},
+            "GPU comptag ensure accepts one live nonzero memory handle");
+    auto invalidEnsure=ensureComptags; invalidEnsure[2]=0;
+    require(!DecodeEnsureGpuMemoryComptags(invalidEnsure),
+            "GPU comptag ensure rejects reserved zero handle");
+    invalidEnsure=ensureComptags; invalidEnsure[1]=2;
+    require(!DecodeEnsureGpuMemoryComptags(invalidEnsure),
+            "GPU comptag ensure rejects incorrect TIPC word count");
+    require(!DecodeEnsureGpuMemoryComptags(
+                std::span<const u32>{ensureComptags.data(),2}),
+            "GPU comptag ensure rejects truncated packet");
+    // SDK TIPC 172/173 annotate live owned GPU memory, never submit GPU work.
+    const std::array<u32,7> memoryUserLabel{
+        0xbc,5,4,0x11223344,0x55667788,0x99aabbcc,0xddeeff00};
+    const auto userLabel=DecodeGpuMemoryUserDebugLabel(memoryUserLabel);
+    require(userLabel && userLabel->id==4 &&
+            userLabel->value[0]==0x5566778811223344ULL &&
+            userLabel->value[1]==0xddeeff0099aabbccULL,
+            "GPU worker 172 retains both full user label words");
+    auto badUserLabel=memoryUserLabel; badUserLabel[2]=0;
+    require(!DecodeGpuMemoryUserDebugLabel(badUserLabel),
+            "GPU worker 172 rejects unowned null handle");
+    badUserLabel=memoryUserLabel; badUserLabel[1]=4;
+    require(!DecodeGpuMemoryUserDebugLabel(badUserLabel),
+            "GPU worker 172 rejects wrong TIPC payload size");
+    require(!DecodeGpuMemoryUserDebugLabel(
+                std::span<const u32>{memoryUserLabel.data(),6}),
+            "GPU worker 172 rejects truncated packet");
+    const std::array<u32,5> memorySdkLabel{0xbd,3,4,0x12345678,0x9abcdef0};
+    const auto sdkLabel=DecodeGpuMemorySdkDebugLabel(memorySdkLabel);
+    require(sdkLabel && sdkLabel->id==4 &&
+            sdkLabel->value==0x9abcdef012345678ULL,
+            "GPU worker 173 retains full SDK label");
+    auto badSdkLabel=memorySdkLabel; badSdkLabel[2]=0;
+    require(!DecodeGpuMemorySdkDebugLabel(badSdkLabel),
+            "GPU worker 173 rejects null memory ID");
+    badSdkLabel=memorySdkLabel; badSdkLabel[0]=0xbc;
+    require(!DecodeGpuMemorySdkDebugLabel(badSdkLabel),
+            "GPU worker 173 rejects wrong command");
+    require(!DecodeGpuMemorySdkDebugLabel(
+                std::span<const u32>{memorySdkLabel.data(),4}),
+            "GPU worker 173 rejects truncated packet");
+    const std::array<u32,11> segmentUserLabel{
+        0xe1,9,17,0x1000,0,0x3000,0,0x11223344,0x55667788,0x99aabbcc,0xddeeff00};
+    const auto segmentUser=DecodeGpuSegmentUserDebugLabel(segmentUserLabel);
+    require(segmentUser && segmentUser->address_space==17 &&
+            segmentUser->address==0x1000 && segmentUser->size==0x3000 &&
+            segmentUser->value[0]==0x5566778811223344ULL &&
+            segmentUser->value[1]==0xddeeff0099aabbccULL,
+            "GPU worker 209 decodes owned segment and full user label");
+    auto badSegmentUser=segmentUserLabel; badSegmentUser[2]=0;
+    require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
+            "GPU worker 209 rejects null address-space handle");
+    badSegmentUser=segmentUserLabel; badSegmentUser[5]=0; badSegmentUser[6]=0;
+    require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
+            "GPU worker 209 rejects empty segment");
+    badSegmentUser=segmentUserLabel; badSegmentUser[3]=0xfffffff0;
+    badSegmentUser[4]=0xffffffff; badSegmentUser[5]=0x1000; badSegmentUser[6]=0;
+    require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
+            "GPU worker 209 rejects wrapping segment");
+    badSegmentUser=segmentUserLabel; badSegmentUser[1]=8;
+    require(!DecodeGpuSegmentUserDebugLabel(badSegmentUser),
+            "GPU worker 209 rejects wrong TIPC payload size");
+    require(!DecodeGpuSegmentUserDebugLabel(
+                std::span<const u32>{segmentUserLabel.data(),10}),
+            "GPU worker 209 rejects truncated packet");
+
+    const std::array<u32,9> segmentSdkLabel{
+        0xe2,7,17,0x4000,0,0x2000,0,0x12345678,0x9abcdef0};
+    const auto segmentSdk=DecodeGpuSegmentSdkDebugLabel(segmentSdkLabel);
+    require(segmentSdk && segmentSdk->address_space==17 &&
+            segmentSdk->address==0x4000 && segmentSdk->size==0x2000 &&
+            segmentSdk->value==0x9abcdef012345678ULL,
+            "GPU worker 210 decodes owned segment and full SDK label");
+    auto badSegmentSdk=segmentSdkLabel; badSegmentSdk[2]=0;
+    require(!DecodeGpuSegmentSdkDebugLabel(badSegmentSdk),
+            "GPU worker 210 rejects null address-space handle");
+    badSegmentSdk=segmentSdkLabel; badSegmentSdk[0]=0xe1;
+    require(!DecodeGpuSegmentSdkDebugLabel(badSegmentSdk),
+            "GPU worker 210 rejects wrong command");
+    badSegmentSdk=segmentSdkLabel; badSegmentSdk[5]=0; badSegmentSdk[6]=0;
+    require(!DecodeGpuSegmentSdkDebugLabel(badSegmentSdk),
+            "GPU worker 210 rejects empty segment");
+    require(!DecodeGpuSegmentSdkDebugLabel(
+                std::span<const u32>{segmentSdkLabel.data(),8}),
+            "GPU worker 210 rejects truncated packet");
+
     const std::array<u32,4> gpuMemoryRelease{0x76,2,4,63};
     const auto release=DecodeGpuMemoryRelease(gpuMemoryRelease);
     require(release && release->id==4 && release->notification==63,
@@ -111,6 +307,16 @@ int main(){
     require(br && br->flags==0x8000000000000005ULL && P::IsLocalBootstrap(*br),
             "bootstrap native profile 0x807");
     require(P::NativeGpuProfileForBootstrap(br->flags)==0x807,"GPU profile 0x807");
+    require(P::GrantNativeMemoryFeatures(0x2ULL, true)==0x2ULL &&
+            P::GrantNativeMemoryFeatures(~u64{}, true)==0x2ULL &&
+            P::GrantNativeMemoryFeatures(0x2ULL, false)==0 &&
+            P::GrantNativeMemoryFeatures(0x0ULL, true)==0,
+            "GSV 115 grants only the NVDRV-backed capability");
+    bootstrap[6]=1;
+    br=P::DecodeBootstrap(bootstrap);
+    require(br && P::IsLocalBootstrap(*br) &&
+            P::NativeGpuProfileForBootstrap(br->flags)==0,
+            "GSV 4 firmware 19 version accepted without invented GPU profile");
     bootstrap[6]=6;
     br=P::DecodeBootstrap(bootstrap);
     require(br && P::NativeGpuProfileForBootstrap(br->flags)==0x808,
@@ -365,6 +571,28 @@ int main(){
     gsBootstrap[7]=0x80000000;
     const std::array<GP::U32,3> bindProcess{0x1b,0x80000000,2};
     const std::array<GP::U32,2> completeBootstrap{0x75,0};
+    // Older Switch 2 SDKs boot GSV with one COPY TransferMemory and two
+    // u64 values (ARUID, size), then bind the verified process with 11.
+    const std::array<GP::U32,8> gsv1Packet{
+        16+1,0x80000004U,2,0x4455,0xabc,0,0x4000,0};
+    const auto gsv1=P::DecodeBootstrapTransferMemory(gsv1Packet);
+    require(gsv1 && gsv1->copied_handle==0x4455 &&
+            gsv1->applet_resource_user_id==0xabc && gsv1->size==0x4000,
+            "GSV 1 firmware 19 COPY TransferMemory boot ABI");
+    auto invalidGsv1=gsv1Packet;
+    invalidGsv1[6]=0x1001;
+    require(!P::DecodeBootstrapTransferMemory(invalidGsv1),
+            "GSV 1 rejects unaligned or malformed work buffers");
+    GS::State transferBoot{0xabc};
+    require(transferBoot.InitializeTransferMemory(gsv1Packet,false)==GS::Status::InvalidHandle &&
+            transferBoot.CurrentPhase()==GS::Phase::Created,
+            "GSV 1 rejects TransferMemory from unrelated processes");
+    require(transferBoot.InitializeTransferMemory(gsv1Packet,true)==GS::Status::Success &&
+            transferBoot.NativeProfile()==0 &&
+            transferBoot.BindProcess(bindProcess,true)==GS::Status::Success &&
+            transferBoot.Complete(completeBootstrap)==GS::Status::Success &&
+            transferBoot.CurrentPhase()==GS::Phase::Ready,
+            "GSV 1/11/101 authenticates a transfer-memory boot with no invented GPU profile");
     const std::array<GP::U32,2> initGpu{417,0};
     const std::array<GP::U32,2> activateGpu{418,0};
     const std::array<GP::U32,4> openGpu{0x201,2,2,0};
@@ -422,6 +650,35 @@ int main(){
     require(state.CanOpenGpuSession(openGpu,false)==GS::Status::InvalidState &&
             state.CanOpenGpuSession(openGpu,true)==GS::Status::Success,
             "GPU session requires completed bootstrap and real NVDRV module");
+    const std::array<GP::U32,7> nvdrvTmem{
+        16+1401,0x80000003U,2,0x4455,0x4000,0,1};
+    const auto nvsrvRequest = P::DecodeNvDrvTransferSession(nvdrvTmem);
+    require(nvsrvRequest && nvsrvRequest->copied_handle==0x4455 &&
+            nvsrvRequest->size==0x4000 && nvsrvRequest->mode==1,
+            "GSV 1401 parses a TransferMemory work-buffer request");
+    auto malformedNvsrv = nvdrvTmem;
+    malformedNvsrv[2]=0;
+    require(!P::DecodeNvDrvTransferSession(malformedNvsrv),
+            "GSV 1401 rejects missing COPY handle descriptors");
+    malformedNvsrv=nvdrvTmem;malformedNvsrv[4]=0x2001;
+    require(!P::DecodeNvDrvTransferSession(malformedNvsrv),
+            "GSV 1401 rejects an unaligned TransferMemory size");
+    std::array<GP::U32,8> gpuTmem{
+        16+496,0x80000004U,2,0x4455,2,0,0x4000,0};
+    const auto gpuRequest = P::DecodeGpuTransferSession(gpuTmem);
+    require(gpuRequest && gpuRequest->copied_handle==0x4455 &&
+            gpuRequest->version==2 && gpuRequest->size==0x4000 &&
+            state.CanOpenGpuSession(gpuTmem,true)==GS::Status::Success,
+            "GSV 496 admits the firmware 19 TransferMemory GPU ABI");
+    require(state.CanOpenGpuSession(gpuTmem,false)==GS::Status::InvalidState,
+            "GSV 496 requires the real NVDRV backend");
+    gpuTmem[3]=0;
+    require(!P::DecodeGpuTransferSession(gpuTmem) &&
+            state.CanOpenGpuSession(gpuTmem,true)==GS::Status::InvalidPacket,
+            "GSV 496 rejects absent COPY handles");
+    gpuTmem[3]=0x4455;gpuTmem[4]=3;
+    require(state.CanOpenGpuSession(gpuTmem,true)==GS::Status::InvalidPacket,
+            "GSV 496 rejects unsupported version values");
     auto badOpen=openGpu;
     badOpen[2]=4;
     require(state.CanOpenGpuSession(badOpen,true)==GS::Status::Success,
@@ -435,12 +692,32 @@ int main(){
     badOpen=openGpu;badOpen[0]=0x202;
     require(state.CanOpenGpuSession(badOpen,true)==GS::Status::InvalidPacket,
             "GPU session opening rejects wrong TIPC command");
+    const std::array<GP::U32,2> destroyGpu{419,0};
+    auto malformedDestroy=destroyGpu;malformedDestroy[1]=1;
+    require(state.DestroyGpuContext(malformedDestroy,true)==GS::Status::InvalidPacket &&
+            state.GpuContextReady(), "reject malformed GSV 403 without changing GPU state");
+    require(state.DestroyGpuContext(destroyGpu,false)==GS::Status::InvalidState &&
+            state.GpuContextReady(), "GSV 403 cannot retire live native GPU owners");
+    require(state.DestroyGpuContext(destroyGpu,true)==GS::Status::Success &&
+            !state.GpuContextReady(), "GSV 403 retires only the quiescent GPU context");
+    require(state.DestroyGpuContext(destroyGpu,true)==GS::Status::InvalidState,
+            "GSV 403 cannot destroy an already retired context");
+    require(state.InitializeGpuContext(initGpu,401)==GS::Status::Success &&
+            state.InitializeGpuContext(activateGpu,402)==GS::Status::Success &&
+            state.GpuContextReady(), "GSV 401/402 may recreate the retired GPU context");
     GS::State unsupported{0xabc};
     auto remoteBootstrap=gsBootstrap;
     remoteBootstrap[8]=1;
     require(unsupported.Initialize(remoteBootstrap,true)==GS::Status::Unsupported &&
             unsupported.CurrentPhase()==GS::Phase::Created,
             "remote graphics bootstrap cannot falsely report success");
+    GS::State firmware19{0xabc};
+    auto firmware19Bootstrap=gsBootstrap;
+    firmware19Bootstrap[6]=1;
+    require(firmware19.Initialize(firmware19Bootstrap,true)==GS::Status::Success &&
+            firmware19.NativeProfile()==0 &&
+            firmware19.Complete(completeBootstrap)==GS::Status::Success,
+            "firmware 19 GSV 4 admits the documented ABI without guessing GPU capabilities");
     GS::State newer{0xabc};
     auto sm88Bootstrap=gsBootstrap;
     sm88Bootstrap[6]=6;
@@ -566,6 +843,24 @@ int main(){
     require(notifications.RequestWorker(badWorker)==GP::Status::InvalidPacket &&
             notifications.MarkEvent(64)==GP::Status::InvalidPacket,
             "out of range event index rejected");
+    const std::array<GP::U32,4> syncAddressSpace{0xd8,2,17,63};
+    const auto syncAddressSpaceRequest=GP::DecodeSynchronizeAddressSpace(syncAddressSpace);
+    require(syncAddressSpaceRequest && syncAddressSpaceRequest->address_space==17 &&
+            syncAddressSpaceRequest->notification==63,
+            "GPU address-space synchronization decodes owned AS and event");
+    auto badSyncAddressSpace=syncAddressSpace;
+    badSyncAddressSpace[2]=0;
+    require(!GP::DecodeSynchronizeAddressSpace(badSyncAddressSpace),
+            "GPU address-space synchronization rejects null AS");
+    badSyncAddressSpace=syncAddressSpace; badSyncAddressSpace[3]=64;
+    require(!GP::DecodeSynchronizeAddressSpace(badSyncAddressSpace),
+            "GPU address-space synchronization rejects out-of-range event");
+    badSyncAddressSpace=syncAddressSpace; badSyncAddressSpace[1]=1;
+    require(!GP::DecodeSynchronizeAddressSpace(badSyncAddressSpace),
+            "GPU address-space synchronization rejects wrong TIPC word count");
+    require(!GP::DecodeSynchronizeAddressSpace(
+                std::span<const GP::U32>{syncAddressSpace.data(),3}),
+            "GPU address-space synchronization rejects truncated packet");
     const std::array<GP::U32,2> acquireWorker{0x26,0};
     require(GP::IsAcquireWorker(acquireWorker),
             "worker acquisition TIPC envelope validated");
@@ -917,6 +1212,34 @@ int main(){
             native_memory.Destroy(16) == P::NativeMemoryStatus::Success &&
             native_memory.OwnedIds().empty(),
             "GSV 114/112 track externally owned physical GPU backing");
+
+    // GSV 113: COPY KTransferMemory descriptor + an existing NativeMemory
+    // handle, exact source size and owner address.
+    std::array<u32,9> native_transfer{
+        0x81, 0x80000005, 2, 0x55, 16, 0x6000, 0, 0x100000, 0};
+    const auto transfer_bind=P::DecodeNativeTransferMemoryBind(native_transfer);
+    require(transfer_bind && transfer_bind->copied_handle==0x55 &&
+            transfer_bind->memory==16 && transfer_bind->size==0x6000 &&
+            transfer_bind->address==0x100000,
+            "GSV 113 decodes COPY TransferMemory and existing native handle");
+    auto bad_transfer=native_transfer; bad_transfer[2]=1;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects incorrect COPY descriptor shape");
+    bad_transfer=native_transfer; bad_transfer[3]=0;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects null TransferMemory handle");
+    bad_transfer=native_transfer; bad_transfer[4]=0;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects null NativeMemory handle");
+    bad_transfer=native_transfer; bad_transfer[5]=0x6001;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects non-page-sized TransferMemory backing");
+    bad_transfer=native_transfer; bad_transfer[7]=0x100001;
+    require(!P::DecodeNativeTransferMemoryBind(bad_transfer),
+            "GSV 113 rejects unaligned TransferMemory source address");
+    require(!P::DecodeNativeTransferMemoryBind(
+                std::span<const u32>{native_transfer.data(),8}),
+            "GSV 113 rejects truncated TransferMemory packet");
 
     // Native parent binding command 423 has 12 words after its TIPC header.
     std::array<u32,14> parent_packet{

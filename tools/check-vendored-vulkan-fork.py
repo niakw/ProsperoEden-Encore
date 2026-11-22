@@ -906,7 +906,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         'ce1c02b1ce14697003798e3f9872015035984719',
         'c47770d49dc8ed5f09838004f5bd08d9b1d5abc8',
         '917ccdc1cf772b9312b19888eea181b8e114334b',
-    }:
+    } or raster_sha == '046269f8484776e22c8aee308b75c7b98f8bf5c6':
         for name, witness in reviewed_fc27_hunks.items():
             if name.startswith('shader_recompiler/'):
                 raw_path = root/'vendor/encore-active/eden-shader/src'/name

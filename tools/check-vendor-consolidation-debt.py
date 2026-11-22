@@ -5,6 +5,7 @@ This is a fail-on-regression, NOT a claim that every native source already
 builds without a CMake-generated derived unit.
 """
 from pathlib import Path
+import hashlib
 import json
 
 root = Path(__file__).resolve().parents[1]
@@ -2438,12 +2439,30 @@ for before, after in ioctl_pairs:
     assert ioctl_expected.count(before) == 1, ("ioctl header baseline drift", before)
     ioctl_expected = ioctl_expected.replace(before, after)
 ioctl_active = active / "eden-core/src/core/hle/service/nvdrv/devices/ioctl_serialization.h"
-assert ioctl_active.read_text() == ioctl_expected, "ioctl maintained header differs from former generated source"
+ioctl_active_bytes = ioctl_active.read_bytes()
+ioctl_active_text = ioctl_active_bytes.decode()
+# Preserve all four historical span-conversion semantics, then seal the
+# reviewed Lichii/upstream small-buffer successor byte-for-byte.
+for _before, _after in ioctl_pairs:
+    assert _after in ioctl_active_text, ("maintained ioctl lost span conversion", _after)
+ioctl_blob = hashlib.sha1(
+    b"blob " + str(len(ioctl_active_bytes)).encode() + b"\0" + ioctl_active_bytes
+).hexdigest()
+assert ioctl_blob == "fb508e19110012589de3032fe257236032f098e4", (
+    "maintained ioctl optimized successor drift", ioctl_blob)
+for token in (
+    "using IoctlInputBuffer = std::conditional_t<",
+    "boost::container::small_vector<T, Capacity>",
+    "size_t InputCapacity = 0",
+    "var_args.resize(num_var_args, boost::container::default_init)",
+    "inl_in_var_args.resize(num_inl_in_var_args, boost::container::default_init)",
+):
+    assert token in ioctl_active_text, ("maintained ioctl GPFIFO optimization missing", token)
 assert 'configure_file("${EDEN_MAINTAINED_IOCTL}"' in c
 assert 'target_include_directories(core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/include/${ioctl_header}"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/${ioctl_header}" ioctl_source)' not in c
-print("ENCORE_MAINTAINED_NVDRV_IOCTL_PARITY_PASS replacements=4")
+print("ENCORE_MAINTAINED_NVDRV_IOCTL_PARITY_PASS replacements=4 gpfifo_inline=512")
 
 # Keep the generator inventory synchronized with every future source migration.
 # It catalogs CMake invocations, not physical output files from variable loops.

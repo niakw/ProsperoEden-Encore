@@ -160,7 +160,8 @@ assert (shutdown_core.index('gpu_core->NotifyShutdown()')
         < shutdown_core.index('kernel.SuspendEmulation(true);')
         < shutdown_core.index('gpu_core.reset();')
         < shutdown_core.index('kernel.CloseServices();')
-        < shutdown_core.index('services.reset();'))
+        < shutdown_core.index('services.reset();')
+        < shutdown_core.index('host1x_core.reset();'))
 if sys.platform == 'darwin':
     # The behavioral harness below validates the Linux pthread stack with
     # pthread_getattr_np. All generated native GPU shutdown/stop/join ordering

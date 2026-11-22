@@ -531,6 +531,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 729** : 2 172 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` EDID / SSL hosts / HostFS mount — 23/11/2026
+
+**Vendor `29b1cb6de394dc0ecc168481a8059e8f70a1b92d`** (arbre `449492017d849f1669f327d9ca8dd06b6f78daf0`) sur la branche secondaire NS1.
+
+- **4 NULL → IMPL-SRC** : `Get/SetEdid` (41/42), `GetAllowedSslHosts` (139), `GetHostFsMountPoint` (140).
+- `EDID` utilise le buffer HIPC Pointer fixe de **0x100 octets** attendu par libnx et le champ persistant `SystemSettings::edid`.
+- `AllowedSslHosts` renvoie jusqu'à **8 entrées de 0x100 octets** via MapAlias, bornées par le buffer de sortie ; `HostFsMountPoint` renvoie le bloc persistant fixe de **0x100 octets** via MapAlias.
+- Ce sont des contrats de lecture/écriture de settings ; aucun certificat SSL, montage HostFS ou écran physique PS5 n'est inventé.
+- Le couple précédent doit être qualifié séparément ; aucun build PS5 ni validation gameplay revendiqué.
+
+**Compteur historique : 1 432 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 168 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 725** : 2 168 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

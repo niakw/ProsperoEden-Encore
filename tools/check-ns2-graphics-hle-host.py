@@ -198,10 +198,10 @@ def main()->int:
         616, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 632,
         633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
         654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
-        666, 667, 691, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
+        666, 667, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
         1022, 1203, 1301, 1302, 1325, 1326,
     )
-    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 66
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 65
     for command in known_optional_gsv:
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
             f'optional GSV command {command} missing explicit fail-closed dispatch')
@@ -211,6 +211,12 @@ def main()->int:
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in explicit_reject
     assert 'ResultSuccess' not in explicit_reject
     assert 'ctx.CommandBuffer()' not in explicit_reject
+    # Documented image-size queries must use real bounded layout calculations,
+    # not the generic unsupported-feature stub or fabricated zero-success data.
+    for command, method in ((391, 'CalculateNativeImageRequirements'),
+                            (691, 'CalculateChatImagePoolSize')):
+        assert ('{'+str(command)+', &IGraphicsSupervisor::'+method) in text
+        assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') not in text
     for proof in ('command == 901',
                   'packet[0] == command + 0x10 && packet[1] == 0',
                   'm_bootstrap.GpuContextReady()',

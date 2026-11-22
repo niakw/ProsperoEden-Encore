@@ -35,7 +35,10 @@ expected.add("fcd62408fdbc33af01a4caebc8fd44c8500b628f")
 expected.add("b6b9e98e0dd16c4702f21f2e0b5e322126abeecb")
 # PS5 FC27 cached-pipeline warm admission expands without touching SSBO source.
 expected.add("dbef23055897b1649f83c20cf7a0516e64f3d5cd")
-if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd"}:
+# Exact NS2 SelfController and NUP/IPC successors preserve FC27 shader/SSBO owners.
+expected.add("dc526f06d277dfa0a4afa48b4cf8b3153ebe7267")
+expected.add("87964d15e91b6b6523c88682e5ca017f6e1a808b")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd", "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267", "87964d15e91b6b6523c88682e5ca017f6e1a808b"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -48,6 +51,8 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
             "fcd62408fdbc33af01a4caebc8fd44c8500b628f": "8447712e2cecf661910fd1a32613f0b844ceaeb0",
             "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb": "067c72d30a71a79faefd1ad14876e2a46f02755c",
             "dbef23055897b1649f83c20cf7a0516e64f3d5cd": "9e28e5b83cf9c0f4086a33d6838904353a8fd541",
+            "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267": "e21b2c70c00c50fc7d682150cb62e87fe856306c",
+            "87964d15e91b6b6523c88682e5ca017f6e1a808b": "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

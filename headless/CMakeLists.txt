@@ -4919,3 +4919,43 @@ if(PS5_NATIVE AND EDEN_SHARED_NS2_AM)
     set_property(TARGET core PROPERTY SOURCES "${eden_ns2_service_parity_sources}")
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_SERVICE_PARITY_ROOT}")
 endif()
+
+# NX is an ordinary production NS1/NS2 game container, with Lichii's
+# verified NxFormat reader, real snapshot loader and read-only VFS.
+# The one native core selects a matching loader FileType ABI; no second
+# loader graph, firmware profile or external download.
+if(PS5_NATIVE)
+    set(EDEN_NS2_NX_ARCHIVE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/nx")
+    foreach(eden_nx_required IN ITEMS
+            "core/loader/nx.cpp"
+            "core/loader/nx.h"
+            "core/loader/loader.h"
+            "core/file_sys/nx_content.cpp"
+            "core/file_sys/decrypted_nca.h"
+            "nxformat/nx_reader.hpp"
+            "nxformat/nx_session.hpp"
+            "nxformat/LICENSE")
+        if(NOT EXISTS "${EDEN_NS2_NX_ARCHIVE_ROOT}/${eden_nx_required}")
+            message(FATAL_ERROR "Missing real NX runtime source ${eden_nx_required}")
+        endif()
+    endforeach()
+    if(NOT DEFINED EDEN_R23_STORAGE_HEADERS OR
+       NOT EXISTS "${EDEN_R23_STORAGE_HEADERS}/core/hle/service/service.h")
+        message(FATAL_ERROR "NX needs selected shared PS5 core ABI header root")
+    endif()
+    configure_file(
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/loader/loader.h"
+        "${EDEN_R23_STORAGE_HEADERS}/core/loader/loader.h" COPYONLY)
+    target_include_directories(core BEFORE PUBLIC "${EDEN_R23_STORAGE_HEADERS}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_NX_ARCHIVE_ROOT}")
+    target_include_directories(core SYSTEM BEFORE PRIVATE
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/nxformat")
+    target_sources(core PRIVATE
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/loader/nx.cpp"
+        "${EDEN_NS2_NX_ARCHIVE_ROOT}/core/file_sys/nx_content.cpp")
+    if(NOT TARGET libzstd_static)
+        message(FATAL_ERROR "Native NX archive requires pinned shared zstd")
+    endif()
+    target_link_libraries(core PRIVATE libzstd_static)
+endif()

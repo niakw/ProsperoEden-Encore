@@ -33,6 +33,10 @@ inline bool IsCardImageFile(std::string_view name) {
     return EndsWithNoCase(name, ".xci") || EndsWithNoCase(name, ".xcz") ||
            EndsWithNoCase(name, ".dxci");
 }
+// NX has a full content loader with verified VFS and snapshot dispatch.
+inline bool IsNxFile(std::string_view name) {
+    return EndsWithNoCase(name, ".nx");
+}
 inline bool IsNupFile(std::string_view name) {
 #ifdef EDEN_NUP_V1_RUNTIME
     // Only a P5-qualified runtime may offer NUP to the game picker.
@@ -54,7 +58,7 @@ inline bool IsDirectLoaderFile(std::string_view name) {
 }
 inline bool IsGameFile(std::string_view name) {
     return IsPackageFile(name) || IsCardImageFile(name) ||
-           IsDirectLoaderFile(name) || IsNupFile(name);
+           IsDirectLoaderFile(name) || IsNupFile(name) || IsNxFile(name);
 }
 // Folder classification runs for every ROM scan entry. Match the fixed ASCII
 // tokens directly rather than allocating and lowercasing a temporary string.
@@ -263,7 +267,7 @@ inline bool IsSafeDeconstructedGamePath(const std::filesystem::path& roms_root,
 inline bool IsNestedGameFileSelection(std::string_view selection) {
     if (selection.empty() || selection.size() > 255) return false;
     if (!IsPackageFile(selection) && !IsCardImageFile(selection) &&
-        !IsNupFile(selection)) return false;
+        !IsNupFile(selection) && !IsNxFile(selection)) return false;
     const auto last_slash = selection.find_last_of('/');
     if (last_slash == std::string_view::npos || last_slash == 0 ||
         last_slash == selection.size() - 1) return false;
@@ -348,7 +352,7 @@ inline std::string FindNestedGamePackage(const std::filesystem::path& title) {
             }
             if (!fs::is_regular_file(status) ||
                 (!IsPackageFile(name) && !IsCardImageFile(name) &&
-                 !IsNupFile(name))) continue;
+                 !IsNupFile(name) && !IsNxFile(name))) continue;
             if (IsReservedAddOnPackageStem(path.stem().string())) continue;
             const auto candidate = relative.empty() ? name : relative + "/" + name;
             // The validator consumes a ROM-root-relative persisted selection.

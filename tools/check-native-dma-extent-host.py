@@ -19,7 +19,7 @@ def selected_sha(value):
     import hashlib
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-integrated_dma = selected_sha(native) == "cc9439c3159bdcba091e8040408e462b812d03c0"
+integrated_dma = selected_sha(native) == "0c186d79194135a5d0b300c3a8a6fb0aa503810b"
 if integrated_dma:
     helper_begin = "// Signed 2D pitch geometry and device-address overlap are shared by"
     helper_end = "} // namespace\n\nMaxwellDMA::MaxwellDMA"

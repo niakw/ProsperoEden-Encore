@@ -208,6 +208,16 @@ Vendor `6fc24667f81ce27d07979ad25c0e4743e331f7d0` (arbre `28da2f872d33edf2ad1194
 
 **Compteur courant : 1 294 IMPL-SRC / 103 PARTIEL / 187 STUB / 89 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent moteur `35f52e80` → vendor `4483c6a3` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour `6fc24667`.
 
+## Lot NS update policy + main applet réel — 22/11/2026
+
+Vendor `57081e124b4b7cb6e5ee3226ca3283d94de73021`, puis `1b5b609d3022c5a54a4e3c72613435491c7f9e24` (arbre `a7c6437660846d69a4b049de5641561bd08b96cb`).
+
+- Download task `EnableAutoCommit` / `DisableAutoCommit`, `GetBackgroundNetworkUpdateState` et `GetSystemUpdateNotificationEventForContentDelivery` : **4 STUB → NOOP**, faute de backend Nintendo de téléchargement/update. `OpenSystemUpdateControl` reste STUB car ses commandes enfants sont toutes NULL.
+- `GetMainAppletIdentityInfo`, `GetCurrentApplicationId`, `GetMainAppletStorageId` et `SetAutoSleepTimeAndDimmingTimeEnabled` : **4 STUB → IMPL-SRC**.
+- `GetMainAppletApplicationControlProperty` : **PARTIEL → IMPL-SRC**. L'identité/NACP ne sont plus lus sur le caller, et le StorageId n'est plus forcé à NAND user : GameCard, SD, NAND user/system sont testés sur les caches réels.
+
+**Compteur courant : 1 299 IMPL-SRC / 102 PARTIEL / 179 STUB / 93 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent moteur `0c11653f` → vendor `6fc24667` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

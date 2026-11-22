@@ -23,15 +23,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 294 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 214 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `6fc24667`. **Ces 1 294 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 299 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 219 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `1b5b609d`. **Ces 1 299 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 214 | 80 | **1 294** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 219 | 80 | **1 299** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 100 | 3 | **103** |
-| **STUB — Stub / résultat simulé** | 187 | 0 | **187** |
-| **NOOP — No-op documenté** | 89 | 0 | **89** |
+| **PARTIEL — Implémentation partielle** | 99 | 3 | **102** |
+| **STUB — Stub / résultat simulé** | 179 | 0 | **179** |
+| **NOOP — No-op documenté** | 93 | 0 | **93** |
 | **NULL — Handler NULL** | 2 310 | 0 | **2 310** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -212,16 +212,24 @@ Sept autres lignes ne sont plus des succès vides mais restent **PARTIELLES** : 
 
 **Compteur courant : 1 294 IMPL-SRC, 103 PARTIEL, 187 STUB, 89 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le lot précédent moteur `35f52e80` → vendor `4483c6a3` a passé X8D24 et Verify pinned vendor ; ce nouveau lot reste à qualifier par ses propres checks et n'est pas validé PS5.
 
+### Lot NS update neutre + identité/storage du main applet
+
+Vendor `57081e12`, puis `1b5b609d` (arbre `a7c6437660846d69a4b049de5641561bd08b96cb`). Les deux commandes auto-commit du download-task, l'état background-update et l'événement content-delivery passent **4 STUB → NOOP** : Encore n'implémente aucun transport Nintendo de téléchargement/mise à jour, et aucun succès n'est présenté comme un téléchargement effectif. `OpenSystemUpdateControl` reste volontairement **STUB**, car l'objet retourné ne possède encore aucun handler enfant implémenté.
+
+Côté AM, `GetMainAppletIdentityInfo`, `GetCurrentApplicationId`, `GetMainAppletStorageId` et `SetAutoSleepTimeAndDimmingTimeEnabled` passent **4 STUB → IMPL-SRC**. `GetMainAppletApplicationControlProperty` passe **PARTIEL → IMPL-SRC** : les trois commandes « main applet » utilisent désormais `WindowSystem::GetMainApplet()`, et le stockage est résolu par présence du Program NCA dans GameCard, SD, NAND user ou NAND system au lieu du `NandUser` fixe.
+
+**Compteur courant : 1 299 IMPL-SRC, 102 PARTIEL, 179 STUB, 93 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple moteur `0c11653f` → vendor `6fc24667` est vert X8D24 + provenance ; le présent lot doit passer ses propres checks avant qualification hôte.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1294
+    "Implémentation source retrouvée" : 1299
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 103
-    "Stub / résultat simulé" : 187
-    "No-op documenté" : 89
+    "Implémentation partielle" : 102
+    "Stub / résultat simulé" : 179
+    "No-op documenté" : 93
     "Handler NULL" : 2310
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -1381,11 +1389,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `6` | `GetPopInteractiveInDataEvent` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `10` | `ExitProcessAndReturn` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `11` | `GetLibraryAppletInfo` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `12` | `GetMainAppletIdentityInfo` | — | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `12` | `GetMainAppletIdentityInfo` | — | **IMPL-SRC** (identité dérivée du main applet réel (`applet_id` + `program_id`) via `WindowSystem` ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `13` | `CanUseApplicationCore` | — | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `14` | `GetCallerAppletIdentityInfo` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `15` | `GetMainAppletApplicationControlProperty` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `16` | `GetMainAppletStorageId` | 2.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `15` | `GetMainAppletApplicationControlProperty` | 2.0.0+ | **IMPL-SRC** (NACP demandé à l'ARP pour le ProgramId du main applet réel au lieu du caller ; vendor `1b5b609d`) | 2026-11-22 |
+| appletAE | `16` | `GetMainAppletStorageId` | 2.0.0+ | **IMPL-SRC** (StorageId dérivé de la présence réelle du Program NCA dans GameCard/SD/NAND ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `17` | `GetCallerAppletIdentityInfoStack` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `18` | `GetNextReturnDestinationAppletIdentityInfo` | 4.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `19` | `GetDesirableKeyboardLayout` | 4.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
@@ -1397,7 +1405,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `50` | `ReportVisibleError` | 3.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `60` | `GetMainAppletApplicationDesiredLanguage` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `70` | `GetCurrentApplicationId` | 8.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `70` | `GetCurrentApplicationId` | 8.0.0+ | **IMPL-SRC** (ProgramId lu sur le main applet réel au lieu du caller ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `80` | `RequestExitToSelf` | 6.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `90` | `CreateApplicationAndPushAndRequestToLaunch` | 5.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `100` | `CreateGameMovieTrimmer` | 4.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
@@ -1411,7 +1419,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `1` | `EndToWatchShortHomeButtonMessage` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `2` | `GetApplicationIdForLogo` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `3` | `SetGpuTimeSliceBoost` | — | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
-| appletAE | `4` | `SetAutoSleepTimeAndDimmingTimeEnabled` | 2.0.0+ | **STUB** ([source C++][ns1-src-041]) | 2026-11-22 |
+| appletAE | `4` | `SetAutoSleepTimeAndDimmingTimeEnabled` | 2.0.0+ | **IMPL-SRC** (raccordé au même état `auto_sleep_disabled` que `SetAutoSleepDisabled` / `IsAutoSleepDisabled` ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `5` | `TerminateApplicationAndSetReason` | 2.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `6` | `SetScreenShotPermissionGlobally` | 3.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `10` | `StartShutdownSequenceForOverlay` | 6.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
@@ -2091,8 +2099,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1000` | `PerformAutoUpdate` | — | **NULL** ([source C++][ns1-src-101]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `607` | `IsAnyApplicationRunning` | — | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `706` | `TryCommitCurrentApplicationDownloadTask` | 4.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `707` | `EnableAutoCommit` | 4.0.0+ | **STUB** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `708` | `DisableAutoCommit` | 4.0.0+ | **STUB** ([source C++][ns1-src-105]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `707` | `EnableAutoCommit` | 4.0.0+ | **NOOP** (aucun backend de tâches de téléchargement NS n'existe ; le mode auto-commit n'a aucun état à modifier ; vendor `57081e12`) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `708` | `DisableAutoCommit` | 4.0.0+ | **NOOP** (aucun backend de tâches de téléchargement NS n'existe ; le mode auto-commit n'a aucun état à modifier ; vendor `57081e12`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `709` | `TriggerDynamicCommitEvent` | 4.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `HasApplicationRecord` | — | **IMPL-SRC** (recherche exacte Application/Program dans `ContentProviderUnion`, vendor `256b2abe`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `GetApplicationControlData` | — | **IMPL-SRC** ([source C++][ns1-src-016]) | 2026-11-22 |
@@ -2124,14 +2132,14 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
  | ns:vm | `1200` | `NeedsUpdateVulnerability` | 3.0.0+ |  **NOOP** (aucune base safe-system-version/vulnérabilité Nintendo émulée ; false explicite ; vendor `ad27e09c`)  | 2026-11-22 | 
 | ns:vm | `1201` | `UpdateSafeSystemVersionForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
 | ns:vm | `1202` | `GetSafeSystemVersion` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
-| ns:su | `0` | `GetBackgroundNetworkUpdateState` | — | **STUB** ([source C++][ns1-src-110]) | 2026-11-22 |
+| ns:su | `0` | `GetBackgroundNetworkUpdateState` | — | **NOOP** (retourne explicitement `None` car aucun transport de mise à jour système en arrière-plan n'est modélisé ; vendor `57081e12`) | 2026-11-22 |
 | ns:su | `1` | `OpenSystemUpdateControl` | — | **STUB** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `2` | `NotifyExFatDriverRequired` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `3` | `ClearExFatDriverStatusForDebug` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `4` | `RequestBackgroundNetworkUpdate` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `5` | `NotifyBackgroundNetworkUpdate` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `6` | `NotifyExFatDriverDownloadedForDebug` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
-| ns:su | `9` | `GetSystemUpdateNotificationEventForContentDelivery` | — | **STUB** ([source C++][ns1-src-110]) | 2026-11-22 |
+| ns:su | `9` | `GetSystemUpdateNotificationEventForContentDelivery` | — | **NOOP** (retourne le handle réel mais aucun producteur content-delivery n'est modélisé ; vendor `57081e12`) | 2026-11-22 |
 | ns:su | `10` | `NotifySystemUpdateForContentDelivery` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `11` | `PrepareShutdown` | 3.0.0+ | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `16` | `DestroySystemUpdateTask` | 4.0.0+ | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |

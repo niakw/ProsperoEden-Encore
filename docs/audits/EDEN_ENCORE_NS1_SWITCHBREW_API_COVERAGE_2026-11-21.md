@@ -23,14 +23,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 240 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 241 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 160 | 80 | **1 240** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 161 | 80 | **1 241** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 74 | 3 | **77** |
-| **STUB — Stub / résultat simulé** | 329 | 0 | **329** |
+| **PARTIEL — Implémentation partielle** | 75 | 3 | **78** |
+| **STUB — Stub / résultat simulé** | 327 | 0 | **327** |
 | **NOOP — No-op documenté** | 27 | 0 | **27** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 35 | 33 | **68** |
@@ -118,15 +118,25 @@ Zéro `ABSENT` signifie uniquement qu'aucune ligne du catalogue n'est désormais
 
 **Compteur : 1 240 IMPL-SRC, 77 PARTIEL, 329 STUB, 27 NOOP, 2 311 NULL, 68 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot FSP P0 — patch-data courant et reader cache
+
+**Vendor `8e387b64`.** `fsp-srv` cmd203 `OpenPatchDataStorageByCurrentProcess` n'est plus un stub : sa signature a été corrigée conformément à libnx (aucune entrée IPC), puis le service retourne le RomFS du processus courant réellement patché par `RomFSFactory::OpenCurrentProcess`. Le `TargetNotFound` systématique disparaît.
+
+`OpenSaveDataInfoReaderOnlyCacheStorage` (62) ne pointe plus vers l'espace Temporary. Un overlay actif du reader filtre `/user/save/cache/<program_id>` et publie `SaveDataType::Cache` pour le programme courant. Le statut reste **PARTIEL** : le modèle Eden ne conserve pas encore séparément l'index des cache-storage ni la préférence SD/User de LibHac.
+
+Le manifeste `eden-backports` contient les empreintes SHA-256 exactes des deux nouveaux fichiers reader et des propriétaires FSP modifiés ; les changements concurrents IRS/News/Prepo présents dans le vendor précédent sont conservés.
+
+**Compteur : 1 241 IMPL-SRC, 78 PARTIEL, 327 STUB, 27 NOOP, 2 311 NULL, 68 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1240
+    "Implémentation source retrouvée" : 1241
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 77
-    "Stub / résultat simulé" : 329
+    "Implémentation partielle" : 78
+    "Stub / résultat simulé" : 327
     "No-op documenté" : 27
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 68
@@ -3684,7 +3694,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `59` | `WriteSaveDataFileSystemExtraData` | 2.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `60` | `OpenSaveDataInfoReader` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `61` | `OpenSaveDataInfoReaderBySaveDataSpaceId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `62` | `OpenSaveDataInfoReaderOnlyCacheStorage` | 5.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `62` | `OpenSaveDataInfoReaderOnlyCacheStorage` | 5.0.0+ | **PARTIEL** (reader réel filtré sur `SaveDataType::Cache` du programme courant ; backend Eden ne distingue pas encore index/SD cache) | 2026-11-22 |
 | fsp-srv | `64` | `OpenSaveDataInternalStorageFileSystem` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `65` | `UpdateSaveDataMacForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `WriteSaveDataFileSystemExtraData2` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
@@ -3705,7 +3715,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `200` | `OpenDataStorageByCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `201` | `OpenDataStorageByProgramId` | 3.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `202` | `OpenDataStorageByDataId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `203` | `OpenPatchDataStorageByCurrentProcess` | — | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `203` | `OpenPatchDataStorageByCurrentProcess` | — | **IMPL-SRC** (ABI corrigée sans argument ; retourne le RomFS courant réellement patché via `OpenRomFSCurrentProcess`) | 2026-11-22 |
 | fsp-srv | `204` | `OpenDataFileSystemWithProgramIndex` | 7.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenDataFileSystemByProgramIndex` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `205` | `OpenDataStorageWithProgramIndex` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `400` | `OpenDeviceOperator` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |

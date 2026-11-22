@@ -102,6 +102,14 @@ Couple moteur → vendor final `229ebbc5b25776604c061ebdb93ca31330fa5745` (commi
 
 **Compteur courant : 1 240 IMPL-SRC / 77 PARTIEL / 329 STUB / 27 NOOP / 2 311 NULL / 68 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucun gain console n'est déclaré sans test PS5.
 
+## Lot FSP P0 patch-data / cache reader — 22/11/2026
+
+Vendor `8e387b641aa5c227db2d14d06b0457a91be043fc` (au-dessus des lots concurrents IRS/News/Prepo) : `OpenPatchDataStorageByCurrentProcess` passe **STUB → IMPL-SRC** avec ABI libnx cmd203 sans entrée et storage issu du RomFS courant patché. `OpenSaveDataInfoReaderOnlyCacheStorage` passe **STUB → PARTIEL** : il filtre maintenant le cache du programme courant au lieu d'énumérer le Temporary.
+
+Le reader est matérialisé dans `encore-active/eden-backports` avec son header et ajouté au manifeste d'intégrité ; le build PS5 recevra donc ces sources, pas une modification dormante de `sources/eden`.
+
+**Compteur courant : 1 241 IMPL-SRC / 78 PARTIEL / 327 STUB / 27 NOOP / 2 311 NULL / 68 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le palier précédent `fb52cdf1` était vert sur X8D24 + provenance ; ce nouveau couple n'est pas encore validé PS5.
+
 ---
 
 ## 1. Références et règle de vérité

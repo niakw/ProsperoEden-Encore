@@ -203,9 +203,8 @@ def main()->int:
     )
     assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 66
     for command in known_optional_gsv:
-        assert re.search(
-            r'\\{\\s*'+str(command)+r'\\s*,\\s*&IGraphicsSupervisor::UnavailableDocumentedFeature\\s*,',
-            text), f'optional GSV command {command} missing explicit fail-closed dispatch'
+        assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
+            f'optional GSV command {command} missing explicit fail-closed dispatch')
     explicit_reject = text.split(
         'void IGraphicsSupervisor::UnavailableDocumentedFeature(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'IPC::ResponseBuilder rb{ctx, 2};' in explicit_reject

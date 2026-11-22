@@ -485,6 +485,18 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool restant à examiner = 2 741 entrées** : 2 184 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Les quatre commandes NS1 207–210 déjà raccordées hors du miroir restent une réserve d'exhaustivité, non un gain chiffré supplémentaire.
 
+## Lot `set:sys` ThemeId typé — 23/11/2026
+
+**Vendor `b84e58810ccd509acfbd00a8dda6ada8c0dcdabc`**, gitlink moteur secondaire aligné sur cet objet Git exact.
+
+- `GetThemeId` (168) et `SetThemeId` (169) : **2 NULL → IMPL-SRC**. Le type `s32` 0/1 sélectionne `theme_id_type0` ou `theme_id_type1`, chacun de 0x80 octets, déjà persistés par `SystemSettings`. Les autres types sont rejetés ; `SetThemeId` marque la sauvegarde.
+- ABI recroisée avec libnx (GET type en entrée + `ThemeId[0x80]` en retour ; SET type puis `ThemeId` en entrée) et SwitchBrew pour l'ID firmware 7.0.0+. Aucune ressource de thème Nintendo n'est inventée et ce raccord ne valide pas le rendu de thème sur PS5.
+- CI : la révision moteur précédente `b688366c` a X8D24 vert mais provenance rouge sur la whitelist ancienne ; le suivi exact de SHA/arbre des commits RTC et six axes a été corrigé au moteur `6c030259`. Le présent commit ajoute également l'empreinte Git du nouveau vendor dans la même table stricte.
+
+**Compteur du miroir NS1 : 1 418 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 182 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 739 entrées** : 2 182 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Qualification hôte et console du nouveau couple non encore acquise.
+
 ---
 
 ## 1. Références et règle de vérité

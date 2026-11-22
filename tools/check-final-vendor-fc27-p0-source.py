@@ -113,8 +113,8 @@ selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin
 shipping_vendor_pin = gitlink_vendor_pin
-if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
-    if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
+if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f"}:
+    if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f"}:
         # A merge commit, but exactly the reviewed 17253dc9 source tree.
         reviewed_tree = subprocess.check_output(
             ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
@@ -125,6 +125,7 @@ if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53
             "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
             "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c": "3f7f1523cef730ad153bf658fbb3567222d6e956",
             "150a3a79ca103061f73a9a50ca8f463a3b4712f3": "39fb9a3efe65f67115dfcdebe39a55334a702f2d",
+            "fcd62408fdbc33af01a4caebc8fd44c8500b628f": "8447712e2cecf661910fd1a32613f0b844ceaeb0",
         }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
     # Reconstruct only the two corrected source lines before reusing the
     # already-qualified FC27/P0 graph; every other owner remains exact.
@@ -133,6 +134,18 @@ if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53
     from native_msaa_handle_receipt import (
         GUEST_CACHE_LOCK_SUCCESSOR, INTEGRATED_RASTERIZER,
         restore_guest_cache_lock_successor, blob)
+    if selected == "fcd62408fdbc33af01a4caebc8fd44c8500b628f":
+        # Exact one-owner successor: the 64-bit SIZE_MAX comparison was
+        # tautological. Verify both the replacement and the prior complete
+        # shipping DMA blob; preserve all other vendor owners byte-for-byte.
+        dma=(V/"encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
+        assert blob(dma.encode("utf-8"))=="0c186d79194135a5d0b300c3a8a6fb0aa503810b"
+        a='#include <utility>\\n'.replace('\\n','\\n')
+        guard_new='if (!std::in_range<size_t>(byte_count) ||'
+        guard_old='if (byte_count > (std::numeric_limits<size_t>::max)() ||'
+        assert dma.count(a)==1 and dma.count(guard_new)==1
+        previous=dma.replace(a,'',1).replace(guard_new,guard_old,1)
+        assert blob(previous.encode("utf-8"))=="cc9439c3159bdcba091e8040408e462b812d03c0"
     raster=(V/"encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
     assert blob(raster.encode("utf-8"))==GUEST_CACHE_LOCK_SUCCESSOR
     predecessor=restore_guest_cache_lock_successor(raster)

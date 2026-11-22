@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (172), `HANDLER PARTIEL INDIQUÉ` (5), `STUB NOMMÉ` (72), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (**45**), `AUCUN HANDLER INDIQUÉ` (0). Le submit historique group 0/cmd 1 n'est pas un chemin natif partiel : il tombe explicitement sur `NvResult::NotImplemented`.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = comportement de la commande elle-même ; R = dispatch. Les deux lecteurs d'erreur H:0x16/H:0x17 sont C : ils exposent correctement le snapshot courant. **Le manque d'un producteur de faute GPU réel reste un blocage transversal distinct** et ne doit plus maintenir artificiellement les lecteurs en P.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,21 +32,21 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : C=172, **P=5**, **M=108**, U=25, V=6. Il n'y a plus de statut C/P.
+- **F** : **C=174**, **P=3**, M=108, U=25, V=6.
 - **R** : **316/316** disposent d'un dispatch explicite ou d'un refus/stub identifié.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | 172 | 172 | 0 |
-| P — partielle | **5** | 5 | 0 |
-| M — non implémenté | **108** | 108 | 0 |
+| C — implémentation source | **174** | 174 | 0 |
+| P — partielle | **3** | 3 | 0 |
+| M — non implémenté | 108 | 108 | 0 |
 | U — contrat insuffisant | 25 | 25 | 0 |
 | V — ancienne variante firmware | 6 | 6 | 0 |
 | **Total** | **316** | **316** | **0** |
 
-**Submit historique clarifié** : `NVHOST_IOCTL_CHANNEL_SUBMIT` group 0/cmd 1 n'existe pas dans le dispatch NS2 actif ; `Ioctl1` tombe dans son refus générique `NvResult::NotImplemented`. Les vraies soumissions natives restent H:0x08/0x19/0x1B/0x1C. La ligne passe donc C/P → M.
+**Lecteurs d'erreur qualifiés C** : H:0x16 copie la structure 128 B du snapshot courant ; H:0x17 copie la structure 16 B et force le status Switch `0xFFFF`. Les deux vérifient ABI native, owner et initialisation du notifier. **Ouvert séparément** : aucun producteur GPU ne remplit encore ces snapshots ni ne signale l'événement en cas de faute matérielle/émulée réelle.
 
-**Restent 5 P** : GET_ERROR_INFO/GET_ERROR_NOTIFICATION sans producteur de faute GPU réel, CHANNEL_SETUP_BIND userspace USERD/doorbell, et deux réglages TSG post-bind.
+**Restent 3 P** : CHANNEL_SETUP_BIND userspace USERD/doorbell, SET_RUNLIST_INTERLEAVE post-bind et SET_TIMESLICE post-bind.
 
 ---
 
@@ -407,8 +407,8 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0104813 | NVGPU_IOCTL_CHANNEL_CYCLE_STATS_SNAPSHOT | M | REFUS EXPLICITE | nvhost_gpu::Ioctl1 (fail-closed) | ioctl exact 0xC0104813 : NotImplemented ; pas de cycle stats fictives |
 | 0x40084714 | NVGPU_IOCTL_CHANNEL_SET_USER_DATA | C | HANDLER INDIQUÉ | SetClientData | actif |
 | 0x80084715 | NVGPU_IOCTL_CHANNEL_GET_USER_DATA | C | HANDLER INDIQUÉ | GetClientData | actif |
-| 0x80804816 | NVGPU_IOCTL_CHANNEL_GET_ERROR_INFO | P | HANDLER PARTIEL INDIQUÉ | GetErrorInfo | ABI 128 B actif; état no_error courant renvoyé; publication d'une faute GPU réelle pas encore reliée |
-| 0xC0104817 | NVGPU_IOCTL_CHANNEL_GET_ERROR_NOTIFICATION | P | HANDLER PARTIEL INDIQUÉ | GetErrorNotification | ABI 16 B actif; status Switch 0xFFFF et état interne courant; publication d'une faute GPU réelle pas encore reliée |
+| 0x80804816 | NVGPU_IOCTL_CHANNEL_GET_ERROR_INFO | C | HANDLER INDIQUÉ | GetErrorInfo | ABI 128 B complète : renvoie le snapshot courant (type 0=no_error tant qu'aucune faute n'a été publiée). Le producteur de faute est un blocage GPU transversal, pas une absence de cet ioctl. |
+| 0xC0104817 | NVGPU_IOCTL_CHANNEL_GET_ERROR_NOTIFICATION | C | HANDLER INDIQUÉ | GetErrorNotification | ABI 16 B complète : renvoie timestamp/info/status courant avec status 0xFFFF. Le producteur de faute est suivi séparément du lecteur. |
 | 0x40204818 | NVGPU_IOCTL_CHANNEL_ALLOC_GPFIFO_EX | C | HANDLER INDIQUÉ | AllocGPFIFOEx | actif |
 | 0xC0??4819 | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY | C | HANDLER INDIQUÉ | SubmitGPFIFOBase1 (retry) | SwitchBrew : même ABI/flags/fence que H:0x08 ; direction et identifiant vérifiés, chemin WrapFixedVariable réel, backend SubmitGPFIFOImpl conservé ; console à qualifier |
 | 0xC020481A | NVGPU_IOCTL_CHANNEL_ALLOC_GPFIFO_EX2 | C | HANDLER INDIQUÉ | AllocGPFIFOEx2 | actif |

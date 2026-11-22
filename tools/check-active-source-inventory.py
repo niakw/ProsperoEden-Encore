@@ -1863,6 +1863,25 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
             ).hexdigest()
             assert actual == "c00ec7de86402abdd6693092f3e57917e80ab7ec", ("NS2 HID predecessor drift", path, actual)
             print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if (path == "ns2-runtime/hle/core/hle/service/hid/hid_server.h"
+                and actual == "6c93ae9a04b121903f3ae3211b705b91e3675942"):
+            # Current Lichii NX2 HID vibration extension: immutable
+            # predecessor contract, exact source-only reverse.
+            _hid_header = raw.decode("utf-8")
+            for _current, _previous in (
+                ("    // Switch 2 sends vibration every frame with 214: pointer buffers of device handles and values\n    // like 206, but the aruid is raw data after an unknown u64 instead of a sent process id.\n    Result SendNx2VibrationValues(\n        u64 unknown, AppletResourceUserId aruid,\n        InArray<Core::HID::VibrationDeviceHandle, BufferAttr_HipcPointer> vibration_handles,\n        InArray<Core::HID::VibrationValue, BufferAttr_HipcPointer> vibration_values);\n    // 213: one handle and value with a mode, sent per controller every frame by Kirby Air Riders.\n    // Its layout is only known from guesses, so the raw bytes are decoded in the handler.\n    Result SendVibrationValueInMode(std::array<u8, 0x18> raw, ClientAppletResourceUserId aruid);\n", ""),
+            ):
+                assert _hid_header.count(_current) == 1, (
+                    "NX2 HID header hunk drift", _current[:72])
+                _hid_header = _hid_header.replace(_current, _previous, 1)
+            _hid_header_raw = _hid_header.encode("utf-8")
+            _hid_header_previous = hashlib.sha1(
+                b"blob " + str(len(_hid_header_raw)).encode() + b"\0" + _hid_header_raw
+            ).hexdigest()
+            assert _hid_header_previous == "1f3b144324b9014d4e5db64f796019f0e9f4c9a6", (
+                "NX2 HID header predecessor drift", _hid_header_previous)
+            raw = _hid_header_raw
+            actual = _hid_header_previous
         if path == "ns2-runtime/hle/core/hle/service/hid/hid_server.h" and actual == "1f3b144324b9014d4e5db64f796019f0e9f4c9a6":
             # Switch 2 scene/vibration/Nmouse additions are source-sealed here;
             # the historical early-HLE receipt remains immutable.

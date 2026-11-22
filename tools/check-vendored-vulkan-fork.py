@@ -1183,10 +1183,13 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             '40bbd965be330cfa024005931be98533232971ac',
         }, ('Unreviewed native MSAA receipt source', receipt_sha)
         if receipt_sha == '40bbd965be330cfa024005931be98533232971ac':
-            # exact_vendor_pin has already been rewritten by historical GPU receipts.
-            assert actual_vendor_pin == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1"
+            # The vendor HEAD can advance for HLE/loader-only changes. Keep the
+            # *actual rasterizer* exactly sealed, then replay the immutable
+            # predecessor reconstruction; do not key this GPU proof to an
+            # unrelated old vendor commit ID.
             fixture = runpy.run_path(str(receipt_path))
             source = (root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+            assert raster_blob(source) == 'f67815618d25657dcf64a87944b0c0bc5c2d8993'
             normalized = fixture['restore_guest_cache_lock_successor'](source)
             assert raster_blob(normalized) == '0633e3cf41c615f46791d3943ff40ac22399b047'
         receipt = runpy.run_path(str(receipt_path))

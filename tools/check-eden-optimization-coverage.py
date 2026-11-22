@@ -1521,10 +1521,10 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     assert "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.h" in scalar_gate
     assert "844a118358c874b0666aebda116c1d6a0c9a8ceb" in scalar_gate
 else:
-    if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
-        # The merged vendor still carries this stand-alone scalar header,
-        # but CMake selects the distinct maintained src/ owner. Keep both
-        # exact ABI/provenance assertions rather than treating it as F07.
+    # A reviewed stand-alone include-tree header may exist on any later vendor
+    # revision. Qualification depends on its immutable blob, correct selected
+    # src/ CMake owner and the targeted syntax gate, not one old vendor SHA.
+    if post_f07_fc27_scalar_unselected_present:
         assert post_f07_fc27_scalar_unselected_present == set(post_f07_fc27_scalar_unselected_receipts)
         for source_path, expected_blob in post_f07_fc27_scalar_unselected_receipts.items():
             assert subprocess.check_output(["git", "hash-object", source_path],

@@ -865,7 +865,9 @@ assert post_f07_image_array_owners <= set(physical_all), (
     sorted(post_f07_image_array_owners - set(physical_all)))
 assert not post_f07_image_array_owners.intersection(research_paths)
 image_select = (root / "headless/CMakeLists.txt").read_text()
-assert 'list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_image.cpp")' in image_select
+assert 'set(eden_ns2_prior_eden_ns2_image_source_idx "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")' in image_select
+assert 'list(FIND eden_ns2_shader_sources' in image_select
+assert 'list(REMOVE_ITEM eden_ns2_shader_sources "${eden_ns2_prior_eden_ns2_image_source_idx}")' in image_select
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")' in image_select
 print("ENCORE_P22C_SPIRV_DESCRIPTOR_ARRAY_OWNER_PASS",
       f"owners={len(post_f07_image_array_owners)}")

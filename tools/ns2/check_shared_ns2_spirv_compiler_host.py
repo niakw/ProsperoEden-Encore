@@ -138,7 +138,8 @@ for owner in (pinned,cas_owner):
     assert "GlobalAtomicCompareExchange32" in owner
     assert "OpAtomicCompareExchange(U32[1], pointer" in owner
 assert "NativeSpirvCbufBoundsActive()" in cas_owner
-assert '"backend/spirv/spirv_emit_context.cpp"' in CMAKE
+assert 'set(eden_ns2_prior_eden_ns2_spirv_source_idx "${EDEN_NS1_SAMPLE_MASK_ROOT}/backend/spirv/spirv_emit_context.cpp")' in CMAKE
+assert 'list(REMOVE_ITEM eden_ns2_shader_sources "${eden_ns2_prior_eden_ns2_spirv_source_idx}")' in CMAKE
 assert 'list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")' in CMAKE
 print("P2_3_REAL_SPIRV_CAS_WORD_ABI_PASS f16x2=3 f32x2=3 u32_word=1 atomics=real",flush=True)
 

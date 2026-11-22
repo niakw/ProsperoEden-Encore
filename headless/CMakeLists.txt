@@ -740,6 +740,22 @@ if(NOT EXISTS "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")
 endif()
 list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_ipc.cpp")
 list(APPEND core_sources "${EDEN_MAINTAINED_SVC_IPC_STANDARD}")
+# NS1 cache SVC: operate on the validated guest process memory, not a
+# success-only stub or the caller's memory when targeting another process.
+# Preserve the original Eden source for parity and select exactly one TU.
+if(PS5_NATIVE)
+    set(EDEN_NS1_SVC_CACHE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/hle/kernel/svc/svc_cache.cpp")
+    if(NOT EXISTS "${EDEN_NS1_SVC_CACHE}")
+        message(FATAL_ERROR "Missing maintained NS1 SVC cache implementation")
+    endif()
+    list(FIND core_sources "hle/kernel/svc/svc_cache.cpp" eden_ns1_svc_cache_index)
+    if(eden_ns1_svc_cache_index LESS 0)
+        message(FATAL_ERROR "Pinned NS1 SVC cache source selection changed")
+    endif()
+    list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_cache.cpp")
+    list(APPEND core_sources "${EDEN_NS1_SVC_CACHE}")
+endif()
 if(EDEN_A32_FASTMEM)
     # The window spans 4 GiB: only 32-bit applications get it as their fastmem arena.
     # The production backport materializes core/memory.cpp before configure.
@@ -855,6 +871,204 @@ endif()
 list(REMOVE_ITEM eden_shader_sources "frontend/maxwell/translate/impl/load_store_local_shared.cpp")
 list(APPEND eden_shader_sources "${EDEN_MAINTAINED_SHADER_LOCAL}")
 set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_shader_sources}")
+
+# NS1 Maxwell ATOM.CAS: select the maintained translator that rejects R254 as
+# the first register of the compare/replacement pair. Keep the pinned Eden
+# source immutable and replace exactly one TU in the native PS5 target.
+if(PS5_NATIVE)
+    set(EDEN_NS1_MAXWELL_ATOMIC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp")
+    if(NOT EXISTS "${EDEN_NS1_MAXWELL_ATOMIC_SOURCE}")
+        message(FATAL_ERROR "Missing maintained NS1 Maxwell atomic translator")
+    endif()
+    get_target_property(eden_ns1_atomic_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_atomic_sources
+         "frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp"
+         eden_ns1_atomic_pinned)
+    if(eden_ns1_atomic_pinned LESS 0)
+        message(FATAL_ERROR "Pinned Maxwell atomic translator owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_atomic_sources
+         "frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp")
+    list(APPEND eden_ns1_atomic_sources "${EDEN_NS1_MAXWELL_ATOMIC_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_atomic_sources}")
+endif()
+
+# NS1 Maxwell FP64 condition codes: select the reviewed DADD/DMUL translators.
+# The maintained sources update only Z/N for .CC and preserve C/O, matching
+# the measured Maxwell/Tesla floating condition-code relation to zero.
+if(PS5_NATIVE)
+    set(EDEN_NS1_FP64_CC_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl")
+    foreach(eden_ns1_fp64_cc_unit IN ITEMS double_add.cpp double_multiply.cpp)
+        set(eden_ns1_fp64_cc_source "${EDEN_NS1_FP64_CC_ROOT}/${eden_ns1_fp64_cc_unit}")
+        if(NOT EXISTS "${eden_ns1_fp64_cc_source}")
+            message(FATAL_ERROR "Missing maintained NS1 FP64 CC translator: ${eden_ns1_fp64_cc_unit}")
+        endif()
+        get_target_property(eden_ns1_fp64_cc_sources shader_recompiler SOURCES)
+        list(FIND eden_ns1_fp64_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_fp64_cc_unit}"
+             eden_ns1_fp64_cc_pinned)
+        if(eden_ns1_fp64_cc_pinned LESS 0)
+            message(FATAL_ERROR "Pinned FP64 CC translator owner changed: ${eden_ns1_fp64_cc_unit}")
+        endif()
+        list(REMOVE_ITEM eden_ns1_fp64_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_fp64_cc_unit}")
+        list(APPEND eden_ns1_fp64_cc_sources "${eden_ns1_fp64_cc_source}")
+        set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_fp64_cc_sources}")
+    endforeach()
+endif()
+
+# NS1 Maxwell FP32 condition codes: select the reviewed FADD/FMUL translators.
+# These sources set Z/N from the final post-SAT/FMZ value and preserve C/O.
+if(PS5_NATIVE)
+    set(EDEN_NS1_FP32_CC_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl")
+    foreach(eden_ns1_fp32_cc_unit IN ITEMS floating_point_add.cpp floating_point_multiply.cpp)
+        set(eden_ns1_fp32_cc_source "${EDEN_NS1_FP32_CC_ROOT}/${eden_ns1_fp32_cc_unit}")
+        if(NOT EXISTS "${eden_ns1_fp32_cc_source}")
+            message(FATAL_ERROR "Missing maintained NS1 FP32 CC translator: ${eden_ns1_fp32_cc_unit}")
+        endif()
+        get_target_property(eden_ns1_fp32_cc_sources shader_recompiler SOURCES)
+        list(FIND eden_ns1_fp32_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_fp32_cc_unit}"
+             eden_ns1_fp32_cc_pinned)
+        if(eden_ns1_fp32_cc_pinned LESS 0)
+            message(FATAL_ERROR "Pinned FP32 CC translator owner changed: ${eden_ns1_fp32_cc_unit}")
+        endif()
+        list(REMOVE_ITEM eden_ns1_fp32_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_fp32_cc_unit}")
+        list(APPEND eden_ns1_fp32_cc_sources "${eden_ns1_fp32_cc_source}")
+        set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_fp32_cc_sources}")
+    endforeach()
+endif()
+
+# NS1 Maxwell fused/min-max condition codes: select the reviewed FFMA,
+# DFMA and FMNMX translators. DMNMX.CC intentionally remains fail-closed:
+# current hardware evidence only covers a bounded set of exact words/cubes.
+if(PS5_NATIVE)
+    set(EDEN_NS1_FLOAT_CC_EXTRA_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl")
+    foreach(eden_ns1_float_cc_unit IN ITEMS
+            floating_point_fused_multiply_add.cpp
+            double_fused_multiply_add.cpp
+            floating_point_min_max.cpp)
+        set(eden_ns1_float_cc_source "${EDEN_NS1_FLOAT_CC_EXTRA_ROOT}/${eden_ns1_float_cc_unit}")
+        if(NOT EXISTS "${eden_ns1_float_cc_source}")
+            message(FATAL_ERROR "Missing maintained NS1 floating CC translator: ${eden_ns1_float_cc_unit}")
+        endif()
+        get_target_property(eden_ns1_float_cc_sources shader_recompiler SOURCES)
+        list(FIND eden_ns1_float_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_float_cc_unit}"
+             eden_ns1_float_cc_pinned)
+        if(eden_ns1_float_cc_pinned LESS 0)
+            message(FATAL_ERROR "Pinned floating CC translator owner changed: ${eden_ns1_float_cc_unit}")
+        endif()
+        list(REMOVE_ITEM eden_ns1_float_cc_sources
+             "frontend/maxwell/translate/impl/${eden_ns1_float_cc_unit}")
+        list(APPEND eden_ns1_float_cc_sources "${eden_ns1_float_cc_source}")
+        set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_float_cc_sources}")
+    endforeach()
+endif()
+
+# NS1 PIXLD.CovMask: select the complete maintained SampleMask chain.
+# SPIR-V is the production guest backend; GLSL is implemented as well.
+# GLASM remains explicit fail-closed, matching the reviewed upstream state.
+if(PS5_NATIVE)
+    set(EDEN_NS1_SAMPLE_MASK_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
+    set(eden_ns1_sample_mask_units
+        backend/spirv/emit_spirv_context_get_set.cpp
+        backend/spirv/spirv_emit_context.cpp
+        frontend/maxwell/translate/impl/pixel_load.cpp)
+    if(ENABLE_OPENGL)
+        list(APPEND eden_ns1_sample_mask_units
+            backend/glasm/emit_glasm_context_get_set.cpp
+            backend/glsl/emit_glsl_context_get_set.cpp)
+    endif()
+    foreach(eden_ns1_sample_mask_unit IN LISTS eden_ns1_sample_mask_units)
+        set(eden_ns1_sample_mask_source
+            "${EDEN_NS1_SAMPLE_MASK_ROOT}/${eden_ns1_sample_mask_unit}")
+        if(NOT EXISTS "${eden_ns1_sample_mask_source}")
+            message(FATAL_ERROR "Missing maintained NS1 SampleMask source: ${eden_ns1_sample_mask_unit}")
+        endif()
+        get_target_property(eden_ns1_sample_mask_sources shader_recompiler SOURCES)
+        list(FIND eden_ns1_sample_mask_sources
+             "${eden_ns1_sample_mask_unit}"
+             eden_ns1_sample_mask_pinned)
+        if(eden_ns1_sample_mask_pinned LESS 0)
+            message(FATAL_ERROR "Pinned SampleMask owner changed: ${eden_ns1_sample_mask_unit}")
+        endif()
+        list(REMOVE_ITEM eden_ns1_sample_mask_sources "${eden_ns1_sample_mask_unit}")
+        list(APPEND eden_ns1_sample_mask_sources "${eden_ns1_sample_mask_source}")
+        set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_sample_mask_sources}")
+    endforeach()
+endif()
+
+# NS1 image atomic Inc32/Dec32: select the maintained SPIR-V emitter with
+# an inline image-pointer CAS loop. Descriptor-array indexing remains a
+# separate fail-closed concern and is not silently folded into this fix.
+if(PS5_NATIVE)
+    set(EDEN_NS1_IMAGE_ATOMIC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp")
+    if(NOT EXISTS "${EDEN_NS1_IMAGE_ATOMIC_SOURCE}")
+        message(FATAL_ERROR "Missing maintained NS1 SPIR-V image atomic emitter")
+    endif()
+    get_target_property(eden_ns1_image_atomic_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_image_atomic_sources
+         "backend/spirv/emit_spirv_image_atomic.cpp"
+         eden_ns1_image_atomic_pinned)
+    if(eden_ns1_image_atomic_pinned LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V image atomic owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_image_atomic_sources
+         "backend/spirv/emit_spirv_image_atomic.cpp")
+    list(APPEND eden_ns1_image_atomic_sources "${EDEN_NS1_IMAGE_ATOMIC_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_image_atomic_sources}")
+endif()
+
+# NS1 storage image descriptor arrays: the maintained context declares
+# OpTypeArray descriptors and the maintained image emitter enforces bounded
+# constant indices plus feature-gated non-uniform dynamic indexing.
+if(PS5_NATIVE)
+    set(EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp")
+    if(NOT EXISTS "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")
+        message(FATAL_ERROR "Missing maintained NS1 SPIR-V image descriptor emitter")
+    endif()
+    get_target_property(eden_ns1_image_descriptor_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_image_descriptor_sources
+         "backend/spirv/emit_spirv_image.cpp"
+         eden_ns1_image_descriptor_pinned)
+    if(eden_ns1_image_descriptor_pinned LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V image descriptor owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_image_descriptor_sources
+         "backend/spirv/emit_spirv_image.cpp")
+    list(APPEND eden_ns1_image_descriptor_sources "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_image_descriptor_sources}")
+endif()
+
+# NS1 Maxwell numeric FP min/max: select the single maintained SPIR-V emitter.
+# FMin/FMax leave a NaN operand undefined; the NVIDIA guest selects the
+# numeric operand.  The reviewed NMin/NMax translation is also understood by
+# the PS5 RADV SPIR-V front end. No Title ID or shader-key special casing.
+if(PS5_NATIVE)
+    set(EDEN_NS1_NAN_MINMAX_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp")
+    if(NOT EXISTS "${EDEN_NS1_NAN_MINMAX_SOURCE}")
+        message(FATAL_ERROR "Missing NS1 numeric min/max SPIR-V emitter")
+    endif()
+    get_target_property(eden_ns1_fp_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_fp_sources
+         "backend/spirv/emit_spirv_floating_point.cpp" eden_ns1_fp_pinned)
+    if(eden_ns1_fp_pinned LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V floating-point emitter owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_fp_sources "backend/spirv/emit_spirv_floating_point.cpp")
+    list(APPEND eden_ns1_fp_sources "${EDEN_NS1_NAN_MINMAX_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_fp_sources}")
+endif()
 # PS5_NATIVE is a CMake option, not a transitive preprocessor definition for
 # core or video_core. Only these two pinned TUs own the address guards below.
 # Do NOT enable it broadly for every upstream C++ source.
@@ -1701,6 +1915,27 @@ if(PS5_NATIVE)
     message(STATUS "FC27 SSBO: selected reviewed failed-search pruning pass")
 endif()
 
+# NS1 GPU-53 / Lichii #295: large SSBO accesses must not use a vector
+# view when minStorageBufferOffsetAlignment is smaller than the access.
+# Keep vendor/sources/eden immutable and select one reviewed maintained TU.
+if(PS5_NATIVE)
+    set(EDEN_NS1_SSBO_ALIGNMENT_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp")
+    if(NOT EXISTS "${EDEN_NS1_SSBO_ALIGNMENT_SOURCE}")
+        message(FATAL_ERROR "NS1 SSBO alignment emitter missing")
+    endif()
+    get_target_property(eden_ns1_ssbo_emit_sources shader_recompiler SOURCES)
+    list(FIND eden_ns1_ssbo_emit_sources
+         "backend/spirv/emit_spirv_memory.cpp" eden_ns1_ssbo_emit_index)
+    if(eden_ns1_ssbo_emit_index LESS 0)
+        message(FATAL_ERROR "Pinned SPIR-V memory emitter owner changed")
+    endif()
+    list(REMOVE_ITEM eden_ns1_ssbo_emit_sources "backend/spirv/emit_spirv_memory.cpp")
+    list(APPEND eden_ns1_ssbo_emit_sources "${EDEN_NS1_SSBO_ALIGNMENT_SOURCE}")
+    set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns1_ssbo_emit_sources}")
+    message(STATUS "NS1 GPU-53: selected aligned SSBO SPIR-V emitter")
+endif()
+
 # R23 #131 and #109 are ALREADY shipped by versioned Eden backports.
 # Never override those real prepared sources with old headless copies:
 # the latter also concealed the FW23 dynamic library-applet version cap.
@@ -2282,6 +2517,15 @@ if(NOT EXISTS "${EDEN_MAINTAINED_TEXTURE_UTIL}")
 endif()
 list(REMOVE_ITEM video_sources texture_cache/util.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_TEXTURE_UTIL}")
+# GPU-48: keep the pinned Eden format table immutable and select the
+# maintained NS1 successor with Lichii #7's X8Z24 component tuple.
+set(EDEN_MAINTAINED_FORMAT_LOOKUP
+    "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/texture_cache/format_lookup_table.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_FORMAT_LOOKUP}")
+    message(FATAL_ERROR "Missing maintained texture format lookup")
+endif()
+list(REMOVE_ITEM video_sources texture_cache/format_lookup_table.cpp)
+list(APPEND video_sources "${EDEN_MAINTAINED_FORMAT_LOOKUP}")
 list(REMOVE_ITEM video_sources shader_environment.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_SHADER_ENVIRONMENT}")
 # Eden #4473/#4477 are already applied once to the pinned source by
@@ -2293,8 +2537,61 @@ if(PS5_NATIVE)
     if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_DMA}")
         message(FATAL_ERROR "Missing maintained native Maxwell DMA")
     endif()
+    # B0B5 register decoding must come from the same maintained GPU owner.
+    # Leave immutable vendor/sources/eden headers untouched. Make the full
+    # reviewed header visible to this target and its native consumers.
+    set(EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/include")
+    if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}/video_core/engines/maxwell_dma.h")
+        message(FATAL_ERROR "Missing maintained B0B5 Maxwell DMA ABI header")
+    endif()
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_MAINTAINED_MAXWELL_DMA_INCLUDE}")
     list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)
     list(APPEND video_sources "${EDEN_MAINTAINED_MAXWELL_DMA}")
+endif()
+# Native NS1 Host1x GPU-37/38: one CDMA worker and NVDEC method owner.
+# A base-class jthread must finish before NVDEC/VIC derived state dies.
+# Keep immutable Eden inputs and select exact source/header peers for PS5.
+if(PS5_NATIVE)
+    set(EDEN_HOST1X_CDMA_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/cdma_pusher.cpp")
+    set(EDEN_HOST1X_CDMA_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/cdma_pusher.h")
+    set(EDEN_HOST1X_NVDEC_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/nvdec.cpp")
+    set(EDEN_HOST1X_CONTROL_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/control.cpp")
+    set(EDEN_HOST1X_CONTROL_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/control.h")
+    foreach(eden_host1x_required IN ITEMS
+        "${EDEN_HOST1X_CDMA_SOURCE}"
+        "${EDEN_HOST1X_CDMA_HEADER}"
+        "${EDEN_HOST1X_NVDEC_SOURCE}"
+        "${EDEN_HOST1X_CONTROL_SOURCE}"
+        "${EDEN_HOST1X_CONTROL_HEADER}")
+        if(NOT EXISTS "${eden_host1x_required}")
+            message(FATAL_ERROR "Missing maintained Host1x CDMA worker owner: ${eden_host1x_required}")
+        endif()
+    endforeach()
+    set(EDEN_HOST1X_CDMA_ABI_ROOT "${PORT_BUILD_DIR}/host1x-cdma-abi")
+    file(MAKE_DIRECTORY "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core/host1x")
+    configure_file("${EDEN_HOST1X_CDMA_HEADER}"
+        "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core/cdma_pusher.h" COPYONLY)
+    configure_file("${EDEN_HOST1X_CONTROL_HEADER}"
+        "${EDEN_HOST1X_CDMA_ABI_ROOT}/video_core/host1x/control.h" COPYONLY)
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_CDMA_ABI_ROOT}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_CDMA_ABI_ROOT}")
+    foreach(eden_host1x_original IN ITEMS cdma_pusher.cpp host1x/nvdec.cpp host1x/control.cpp)
+        list(FIND video_sources "${eden_host1x_original}" eden_host1x_original_index)
+        if(eden_host1x_original_index EQUAL -1)
+            message(FATAL_ERROR "Original Host1x source moved: ${eden_host1x_original}")
+        endif()
+        list(REMOVE_ITEM video_sources "${eden_host1x_original}")
+    endforeach()
+    list(APPEND video_sources
+        "${EDEN_HOST1X_CDMA_SOURCE}" "${EDEN_HOST1X_NVDEC_SOURCE}"
+        "${EDEN_HOST1X_CONTROL_SOURCE}")
+    message(STATUS "Host1x: quiescent CDMA worker and bounded NVDEC owner selected")
 endif()
 # Native N04: avoid invoking an already-ready Host1x callback under guard.
 # Select a complete maintained TU; never edit the pinned vendor checkout.
@@ -2309,7 +2606,7 @@ endif()
 # ABI. Select its matching pinned vendor header for ALL native consumers.
 # Keep this root narrow: only the Host1x syncpoint manager header is copied.
 set(EDEN_MAINTAINED_HOST1X_HEADER
-    "${PORT_ROOT}/vendor/sources/eden/src/video_core/host1x/syncpoint_manager.h")
+    "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/syncpoint_manager.h")
 if(NOT EXISTS "${EDEN_MAINTAINED_HOST1X_HEADER}")
     message(FATAL_ERROR "Missing reviewed native Host1x syncpoint ABI header")
 endif()
@@ -2321,6 +2618,32 @@ target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI
 target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_SYNCPOINT_ABI_ROOT}")
 list(REMOVE_ITEM video_sources host1x/syncpoint_manager.cpp)
 list(APPEND video_sources "${EDEN_MAINTAINED_HOST1X_SYNCPOINT}")
+# Native Host1x FD safety: the guest-facing signed fd indexes a fixed
+# 1024-entry device array. Select exactly one maintained TU and matching
+# ABI-compatible public header; the pristine Eden sources are untouched.
+if(PS5_NATIVE)
+    set(EDEN_HOST1X_FD_SOURCE
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/host1x/host1x.cpp")
+    set(EDEN_HOST1X_FD_HEADER
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/video_core/host1x/host1x.h")
+    if(NOT EXISTS "${EDEN_HOST1X_FD_SOURCE}" OR
+       NOT EXISTS "${EDEN_HOST1X_FD_HEADER}")
+        message(FATAL_ERROR "Missing maintained Host1x DeviceFD source/header pair")
+    endif()
+    set(EDEN_HOST1X_FD_ABI_ROOT "${PORT_BUILD_DIR}/host1x-device-abi")
+    file(MAKE_DIRECTORY "${EDEN_HOST1X_FD_ABI_ROOT}/video_core/host1x")
+    configure_file("${EDEN_HOST1X_FD_HEADER}"
+        "${EDEN_HOST1X_FD_ABI_ROOT}/video_core/host1x/host1x.h" COPYONLY)
+    target_include_directories(video_core BEFORE PUBLIC "${EDEN_HOST1X_FD_ABI_ROOT}")
+    target_include_directories(core BEFORE PUBLIC "${EDEN_HOST1X_FD_ABI_ROOT}")
+    list(FIND video_sources "host1x/host1x.cpp" eden_host1x_fd_old_source)
+    if(eden_host1x_fd_old_source EQUAL -1)
+        message(FATAL_ERROR "Original Host1x TU moved; requalify native source graph")
+    endif()
+    list(REMOVE_ITEM video_sources host1x/host1x.cpp)
+    list(APPEND video_sources "${EDEN_HOST1X_FD_SOURCE}")
+    message(STATUS "Host1x: bounded DeviceFD owner selected")
+endif()
 # N54: shared PS5 texture-cache scratch ownership, both guests. Only
 # transient CPU buffers over 64 MiB are retired on a completed TickFrame;
 # smaller NS1 scratch and resident GPU images retain their previous lifetime.
@@ -4338,18 +4661,20 @@ if(PS5_NATIVE)
     message(STATUS "R23 native BCAT, F2I, audren:d and initialized channel-state selected once")
 endif()
 
-# P5 link parity: native shader atomic CAS owners
-# The cached original source builds successfully but does not define all
-# CAS symbols referenced by the pinned Task/Mesh opcode/dispatch headers.
-# Select the COMPLETE audited implementations from the same pinned Eden
-# source snapshot, including real SPIR-V OpAtomicCompareExchange, GLSL,
-# GLASM fail-closed semantics, and the Maxwell ATOM.CAS translator.
-# This is an NS1/NS2 shared compiler fix; no generated stubs or fake symbols.
+# P5 link parity: native shader atomic CAS owners.
+# Earlier NS1 selection already replaces the original global-memory translator
+# with the reviewed owner. Preserve it here (including its bounded CAS modes);
+# do not silently restore the pinned version or fail to recognize the absolute
+# maintained source. Other atomics and optional OpenGL owners are maintained too.
+# The PS5 production path uses the maintained SPIR-V OpAtomicCompareExchange.
 if(PS5_NATIVE)
     set(EDEN_PINNED_SHADER_CAS_ROOT
         "${PORT_ROOT}/vendor/sources/eden/src/shader_recompiler")
+    set(EDEN_MAINTAINED_SHADER_CAS_ROOT
+        "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler")
     set(eden_native_cas_paths
         backend/spirv/emit_spirv_atomic.cpp
+        frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp
         frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp)
     if(ENABLE_OPENGL)
         list(APPEND eden_native_cas_paths
@@ -4358,15 +4683,21 @@ if(PS5_NATIVE)
     endif()
     get_target_property(eden_native_cas_sources shader_recompiler SOURCES)
     foreach(eden_cas_path IN LISTS eden_native_cas_paths)
-        set(eden_cas_impl "${EDEN_PINNED_SHADER_CAS_ROOT}/${eden_cas_path}")
+        set(eden_cas_impl "${EDEN_MAINTAINED_SHADER_CAS_ROOT}/${eden_cas_path}")
         if(NOT EXISTS "${eden_cas_impl}")
-            message(FATAL_ERROR "Missing pinned shader CAS owner: ${eden_cas_path}")
+            message(FATAL_ERROR "Missing selected shader CAS owner: ${eden_cas_path}")
         endif()
-        list(FIND eden_native_cas_sources "${eden_cas_path}" eden_cas_original)
-        if(eden_cas_original LESS 0)
+        list(FIND eden_native_cas_sources "${eden_cas_path}" eden_cas_relative)
+        set(eden_cas_pinned "${EDEN_PINNED_SHADER_CAS_ROOT}/${eden_cas_path}")
+        list(FIND eden_native_cas_sources "${eden_cas_pinned}" eden_cas_absolute)
+        list(FIND eden_native_cas_sources "${eden_cas_impl}" eden_cas_maintained)
+        if(eden_cas_relative LESS 0 AND eden_cas_absolute LESS 0 AND eden_cas_maintained LESS 0)
             message(FATAL_ERROR "Missing native shader CAS source: ${eden_cas_path}")
         endif()
-        list(REMOVE_ITEM eden_native_cas_sources "${eden_cas_path}")
+        # The earlier Maxwell replacement already owns this TU. Accept either
+        # original form, but retain exactly one reviewed owner in the final list.
+        list(REMOVE_ITEM eden_native_cas_sources
+            "${eden_cas_path}" "${eden_cas_pinned}" "${eden_cas_impl}")
         list(APPEND eden_native_cas_sources "${eden_cas_impl}")
     endforeach()
     set_property(TARGET shader_recompiler PROPERTY SOURCES

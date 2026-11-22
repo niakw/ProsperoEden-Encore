@@ -75,6 +75,33 @@ assert service.count("const auto hle_start = profile_hle ? ::Eden::Performance::
 assert service.count("if (profile_hle)\n                ::Eden::Performance::RecordHle(") == 2
 assert service.count("if (::Eden::Performance::trace_fs_callers.load(std::memory_order_relaxed)") == 2
 assert service.count("EDEN_FS_CALLER command=") == 2
+# Known registered commands with a null handler must fail closed. Unknown command IDs remain
+# untouched, and the opt-in auto-stub path is still the only success fallback.
+assert "// not implemented yet on Encore" in service
+assert "else if (info != nullptr)" in service
+assert "rb.Push(Kernel::ResultNotImplemented);" in service
+# Optional services that Eden does not use for gameplay may be explicit no-ops,
+# but only through the exact whitelist in the maintained dispatcher.
+assert "IsSafeOptionalNoOp" in service
+for optional_service in (
+    '"pdm:ntfy"', '"ILogger"', '"erpt:c"', '"eupld:c"',
+    '"ICommonStateGetter"', '"ISelfController"',
+):
+    assert optional_service in service
+for optional_command in (
+    '"NotifyAppletEvent"', '"NotifyLibraryAppletEvent"',
+    '"TransmitHashedLog"', '"DevNotify"',
+    '"SetInitialLaunchSettingsCompletionTime"', '"InvalidateForcedShutdownDetection"',
+    '"SetUrl"', '"ImportCrt"', '"ImportPki"', '"SetAutoUpload"',
+    '"AllowToEnterSleep"', '"DisallowToEnterSleep"',
+    '"SetDesirableKeyboardLayout"', '"ReportMultimediaError"',
+):
+    assert optional_command in service
+assert "(STUBBED) optional no-op" in service
+# Queries that require defined output remain fail-closed; do not turn them into
+# fake-success zero-data responses through this narrow whitelist.
+assert '"GetAutoUpload"' not in service.split('if (service_name == "eupld:c")', 1)[1].split('return false;', 1)[0]
+assert service.index("IsSafeOptionalNoOp") < service.index("SaveUnimplementedFunctionReport")
 # The diagnostic filesystem units are now maintained C++ sources,
 # no longer strings embedded in headless/CMakeLists.txt.
 maintained = Path(__file__).resolve().parents[1] / "vendor/encore-active/eden-core/src/core/hle/service/filesystem/fsp"

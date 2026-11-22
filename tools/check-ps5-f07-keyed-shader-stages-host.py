@@ -14,6 +14,23 @@ perf = (root / "headless/performance.h").read_text()
 pipeline = (root / "vendor/encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_text()
 gen = (root / "tools/prepare-vulkan-port.py").read_text()
 analyzer = (root / "tools/analyze-ps5-cold-shader-misses.py").read_text()
+# GPU-23: a native Vulkan integer color attachment must receive a signed
+# or unsigned integer SPIR-V output. This checks the shipping pipeline
+# selection AND the pre-existing Sirit emitter, never a duplicate shader.
+spirv_output = (root / "vendor/sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp").read_text()
+spirv_store = (root / "vendor/sources/eden/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp").read_text()
+fragment = pipeline.split("case Shader::Stage::Fragment: {", 1)[1].split("\n    default:", 1)[0]
+assert "const bool require_typed_fragment_outputs =" in fragment
+assert "#ifdef PS5_NATIVE\n            true;\n#else\n            device.IsMoltenVK();\n#endif" in fragment
+assert fragment.index("if (require_typed_fragment_outputs)") < fragment.index("IsPixelFormatInteger(pixel_format)")
+assert "Shader::AttributeType::SignedInt" in fragment
+assert "Shader::AttributeType::UnsignedInt" in fragment
+assert "GPU-23 PS5 integer framebuffer fragment output numeric type" in gen
+assert "GetAttributeType(*this, runtime_info.color_output_types[index])" in spirv_output
+assert "ctx.OpBitcast(ctx.U32[1], value)" in spirv_store
+assert "ctx.OpBitcast(ctx.S32[1], value)" in spirv_store
+assert "spv::Decoration::Index, index" in spirv_output # dual-source blend preserved
+
 
 stage_start = perf.index("struct ShaderMissStageCosts {")
 stage_end = perf.index("inline thread_local ShaderMissStageCosts* shader_miss_stage_active{};", stage_start)

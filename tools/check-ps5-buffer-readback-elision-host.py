@@ -111,3 +111,150 @@ with tempfile.TemporaryDirectory(prefix="encore-buffer-readback-") as tmp:
  subprocess.run([str(exe)],check=True,timeout=20)
 print("VULKAN_BUFFER_READBACK_ELISION_HOST_PASS real_methods=2 no_buffer=1 "
       "registered=1 size_limit=1 zero=1 overflow=1 texture_independent=1 asan_ubsan=1")
+
+
+# A CPU read of a GPU-written storage buffer (without any image on its page)
+# must request a GPU sync rather than return a falsely preemptive area. Run the
+# ACTUAL selected Vulkan method against both cache-domain ownership paths.
+area_begin = "VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {"
+area_end = "\nvoid RasterizerVulkan::InvalidateRegion("
+def get_read_method(text):
+    assert text.count(area_begin) == text.count(area_end) == 1
+    a = text.index(area_begin)
+    return text[a:text.index(area_end, a)]
+read_method = get_read_method(raster)
+bridge_method = get_read_method(bridge)
+# The bridge is an older oracle; the active owner corrected only two
+# GuestCacheLock function invocations. Replay exactly those predecessors.
+assert read_method.count("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);")==1
+assert read_method.count("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);")==1
+prior_method=read_method.replace(
+    "::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+    "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);",1
+).replace(
+    "::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+    "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);",1)
+assert prior_method == bridge_method
+assert read_method != get_read_method(pinned)
+assert read_method.count("::Eden::BufferPages::NeverRegistered(addr, size)") == 1
+assert read_method.count("::Eden::ImagePages::NeverHeld(addr, size)") == 1
+assert "buffer_cache.IsRegionGpuModified(" in read_method
+assert "texture_area && !texture_area->preemtive" in read_method
+assert "return texture_area.value_or(clean_area);" in read_method
+assert read_method.index("texture_cache.GetFlushArea") < read_method.index(
+    "buffer_cache.IsRegionGpuModified(")
+
+read_cpp = r"""
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
+#include <optional>
+#include "image_pages.h"
+#include "buffer_pages.h"
+using DAddr=std::uint64_t;
+using u64=std::uint64_t;
+namespace Core { inline constexpr DAddr DEVICE_PAGESIZE=4096; }
+namespace Common {
+template<class T> constexpr T AlignDown(T n, T a) {return n/a*a;}
+template<class T> constexpr T AlignUp(T n, T a) {return n/a*a + (n%a ? a : 0);}
+}
+namespace VideoCore {
+struct RasterizerDownloadArea {
+    DAddr start_address{};
+    DAddr end_address{};
+    bool preemtive{};
+};
+}
+struct CountMutex {
+    std::mutex real;
+    unsigned locks{};
+    void lock(){real.lock();++locks;}
+    void unlock(){real.unlock();}
+};
+namespace Eden::Performance {
+inline int guest_cpu_read=0;
+struct DiagnosticTimer { explicit DiagnosticTimer(int) {} };
+inline void GuestCacheLock(CountMutex& m, bool) {m.lock();}
+}
+struct BufferCache {
+    CountMutex mutex;
+    bool gpu_dirty{};
+    unsigned probes{};
+    bool IsRegionGpuModified(DAddr, u64){++probes;return gpu_dirty;}
+};
+struct TextureCache {
+    CountMutex mutex;
+    unsigned probes{};
+    std::optional<VideoCore::RasterizerDownloadArea> simulated_area;
+    std::optional<VideoCore::RasterizerDownloadArea> GetFlushArea(DAddr, u64){
+        ++probes;
+        return simulated_area;
+    }
+};
+struct RasterizerVulkan {
+    BufferCache buffer_cache;
+    TextureCache texture_cache;
+    VideoCore::RasterizerDownloadArea GetFlushArea(DAddr,u64);
+};
+""" + read_method + r"""
+int main() {
+    using namespace Eden;
+    constexpr DAddr p=4096, unused=48*p, storage=80*p;
+    RasterizerVulkan absent;
+    const auto clean=absent.GetFlushArea(unused+19,13);
+    assert(clean.preemtive && clean.start_address==unused && clean.end_address==unused+p);
+    assert(absent.buffer_cache.mutex.locks==0 && absent.texture_cache.mutex.locks==0);
+
+    BufferPages::Mark(storage,p);
+    RasterizerVulkan gpu_owned;
+    gpu_owned.buffer_cache.gpu_dirty=true;
+    const auto owed=gpu_owned.GetFlushArea(storage+19,13);
+    assert(!owed.preemtive && owed.start_address==storage && owed.end_address==storage+p);
+    assert(gpu_owned.buffer_cache.mutex.locks==1 && gpu_owned.buffer_cache.probes==1);
+    assert(gpu_owned.texture_cache.mutex.locks==0);
+
+    RasterizerVulkan cpu_current;
+    const auto no_wait=cpu_current.GetFlushArea(storage+19,13);
+    assert(no_wait.preemtive);
+    assert(cpu_current.buffer_cache.mutex.locks==1);
+
+    ImagePages::Mark(storage,p);
+    RasterizerVulkan mixed;
+    mixed.buffer_cache.gpu_dirty=true;
+    mixed.texture_cache.simulated_area=VideoCore::RasterizerDownloadArea{
+        storage-p,storage+2*p,true};
+    const auto both=mixed.GetFlushArea(storage+19,13);
+    assert(!both.preemtive && both.start_address==storage-p &&
+           both.end_address==storage+2*p);
+    assert(mixed.texture_cache.mutex.locks==1 && mixed.buffer_cache.mutex.locks==1);
+
+    // A dirty texture already needs the same full-domain FlushRegion; never
+    // acquire an unnecessary BufferCache lock while its texture lock is held.
+    RasterizerVulkan image_dirty;
+    image_dirty.buffer_cache.gpu_dirty=true;
+    image_dirty.texture_cache.simulated_area=VideoCore::RasterizerDownloadArea{
+        storage-2*p,storage+p,false};
+    const auto image_owed=image_dirty.GetFlushArea(storage+19,13);
+    assert(!image_owed.preemtive && image_owed.start_address==storage-2*p);
+    assert(image_dirty.buffer_cache.mutex.locks==0);
+    assert(image_dirty.texture_cache.mutex.locks==1);
+
+    RasterizerVulkan former_image;
+    const auto fallback=former_image.GetFlushArea(storage+19,13);
+    assert(fallback.preemtive && former_image.texture_cache.mutex.locks==1);
+    assert(former_image.buffer_cache.mutex.locks==1);
+}
+"""
+with tempfile.TemporaryDirectory(prefix="encore-ns1-cpu-read-") as td:
+    source=Path(td)/"read.cpp"
+    source.write_text(read_cpp)
+    for opt in ("-O0","-O2"):
+        exe=Path(td)/("read-"+opt)
+        subprocess.run([cxx,"-std=c++20",opt,"-Wall","-Wextra","-Werror",
+                        "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                        "-pthread","-I"+str(root/"headless"),str(source),"-o",str(exe)],
+                       check=True,timeout=55)
+        subprocess.run([str(exe)],check=True,timeout=20)
+        print("NS1_BUFFER_CPU_READ_DIRTY_HOST_PASS",opt)

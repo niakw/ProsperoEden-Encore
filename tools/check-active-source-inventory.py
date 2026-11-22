@@ -441,11 +441,59 @@ r437_body = (active / r437_path).read_text()
 # Vendor #156 adds a reviewed successor to the R437 native header. Verify
 # its raw blob and reverse only the three exact added declaration blocks
 # before applying the original R437 byte-for-byte proof.
+def checked_guest_cache_lock_vendor(pin):
+    if pin != "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+        return pin
+    # Only the two exact new C++ function call sites may differ from the
+    # reviewed integrated renderer. Runtime C++ is never modified here.
+    source=(active/"eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    raw=source.encode("utf-8")
+    digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+    assert digest=="f67815618d25657dcf64a87944b0c0bc5c2d8993"
+    begin="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
+    end="\nvoid RasterizerVulkan::InvalidateRegion("
+    assert source.count(begin)==source.count(end)==1
+    i=source.index(begin)
+    j=source.index(end,i)
+    method=source[i:j]
+    for newer,prior in (
+        ("::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);",
+         "::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);"),
+        ("::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);",
+         "::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);"),
+    ):
+        assert method.count(newer)==1 and prior not in method
+        method=method.replace(newer,prior,1)
+    previous=(source[:i]+method+source[j:]).encode("utf-8")
+    old_blob=hashlib.sha1(b"blob "+str(len(previous)).encode()
+                          +bytes([0])+previous).hexdigest()
+    assert old_blob=="0633e3cf41c615f46791d3943ff40ac22399b047"
+    return "4354add020afac574198f63d87167f3022bff9c6"
+
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+# The NS1/NS2 vendor merge extends only the GPU-owned DMA output ABI in
+# the R437 BufferCacheBase header. Seal the integrated full blob, reverse
+# that declaration on this audit copy, then replay every historical R437 test.
+raw = r437_body.encode("utf-8")
+merged_r437_blob = hashlib.sha1(
+    b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+).hexdigest()
+if merged_r437_blob == "fd9708571ef61c83c399042a5200c87b2e3784d6":
+    actual = merged_r437_blob
+    merged_dma = "    /// Optionally report whether the copied source contains GPU-owned buffer bytes.\n    /// gpu_written_dest names the exact destination subranges whose newest bytes stay GPU-owned.\n    bool DMACopy(\n        GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written = nullptr,\n        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);\n"
+    earlier_dma = "    /// Optionally report whether the copied source contains GPU-owned buffer bytes.\n    /// A caller must not re-upload the destination texture from stale guest memory.\n    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,\n                 bool* gpu_written = nullptr);\n"
+    assert r437_body.count(merged_dma) == 1
+    r437_body = r437_body.replace(merged_dma, earlier_dma, 1)
+    raw = r437_body.encode("utf-8")
+    previous = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert previous == "716634290574ed4dfc8fd3be0d0ea0ad582980f8", ("Merged BufferCacheBase predecessor drift", previous)
+    print("ENCORE_NS1_NS2_DMA_BUFFER_BASE_EXACT_REVERSE_PASS")
+
 # FC27 P1 added PS5-only shared TickFrame budget and typed CPU-write claims.
 # Reverse only these exact source hunks on this audit COPY, retaining the
 # historical R437/NS2 source replay and never editing the shipping header.
+r437_vendor_pin = checked_guest_cache_lock_vendor(r437_vendor_pin)
 fc27_p1_applet_macro_fix = r437_vendor_pin == "b65d8d9673475433f0b6eac72eb304bf23141666"
 # Selected BufferCacheBase did not change through later NS2-only vendor
 # commits. Reverse the FC27 P1 additions only for the byte-exact active
@@ -601,6 +649,20 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
     }.items():
         source=(active/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(source)).encode()+bytes([0])+source).hexdigest()
+        if (relative == "eden-vulkan/vulkan_rasterizer.cpp" and
+            actual in {"0633e3cf41c615f46791d3943ff40ac22399b047", "f67815618d25657dcf64a87944b0c0bc5c2d8993"} and
+            blob == "71d097b9a83028dfad9370792c905bb3bfccfd5a"):
+            # The selected vendor's exact 16 reviewed NS1/NS2 GPU deltas
+            # are reconstructed against the original FC27 rasterizer blob.
+            # Borrow its strict source verifier; neither test alters C++.
+            import sys
+            sys.path.insert(0, str(root / "vendor" / "tests"))
+            from native_msaa_handle_receipt import restore_integrated_rasterizer
+            historical = restore_integrated_rasterizer(source.decode("utf-8")).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            print("NS1_NS2_GPU16_EXACT_REVERSE_PASS")
         assert actual==blob, ("FC27 sync rollback owner drift",relative,actual)
     if r437_vendor_pin in {"729f7e5a734b5a890a7bbf3ab60ce1100492af13", "1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         for relative, blob in {
@@ -615,6 +677,31 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
     if r437_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         raw = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if actual == "5b3db278f70b560a098a2a479d3ee98e78b987f2":
+            # Integrated descriptor/DMA/layered-copy/volume/X8_D24 successor.
+            # Reverse its exact ten reviewed source hunks only in this audit copy.
+            lines = raw.decode("utf-8").split("\n")
+            reverse = (
+                (49, ["","inline std::vector<ImageCopy> SplitLayeredImageCopies(std::span<const ImageCopy> copies) {","    std::vector<ImageCopy> layer_copies;","    layer_copies.reserve(copies.size());","    for (const ImageCopy& copy : copies) {","        const s32 num_layers = copy.dst_subresource.num_layers;","        if (num_layers <= 1 || copy.src_subresource.num_layers != num_layers) {","            layer_copies.push_back(copy);","            continue;","        }","        for (s32 layer = 0; layer < num_layers; ++layer) {","            ImageCopy single = copy;","            single.dst_subresource.base_layer += layer;","            single.src_subresource.base_layer += layer;","            single.dst_subresource.num_layers = 1;","            single.src_subresource.num_layers = 1;","            layer_copies.push_back(single);","        }","    }","    return layer_copies;","}","","","using Tegra::Texture::TICEntry;","using Tegra::Texture::TSCEntry;","using VideoCore::Surface::GetFormatType;"], ["using Tegra::Texture::TICEntry;","using Tegra::Texture::TSCEntry;","using VideoCore::Surface::GetFormatType;"]),
+                (449, ["    if (index > table.current_limit || index >= table.descriptors.size()) {","        LOG_DEBUG(HW_GPU, \"Invalid sampler index={}\", index);","        return NULL_SAMPLER_ID;","    }"], ["    if (index > table.current_limit) {","        LOG_DEBUG(HW_GPU, \"Invalid sampler index={}\", index);","        return NULL_SAMPLER_ID;","    }"]),
+                (475, ["    // A guest-controlled TIC/TSC limit must never allocate an unbounded","    // descriptor array from inside DescriptorTable::Refresh() noexcept.","    // 21-bit table indices are the conservative upstream upper bound.","    constexpr u32 MaxDescriptorTableLimit = (1U << 21) - 1;","    if (compute) {","        const bool linked_tsc = kepler_compute->launch_description.linked_tsc;","        const u32 tic_limit = (std::min)(kepler_compute->regs.tic.limit, MaxDescriptorTableLimit);","        const u32 tsc_limit = linked_tsc ? tic_limit : (std::min)(kepler_compute->regs.tsc.limit, MaxDescriptorTableLimit);","        bool bindings_changed = false;"], ["    if (compute) {","        const bool linked_tsc = kepler_compute->launch_description.linked_tsc;","        const u32 tic_limit = kepler_compute->regs.tic.limit;","        const u32 tsc_limit = linked_tsc ? tic_limit : kepler_compute->regs.tsc.limit;","        bool bindings_changed = false;"]),
+                (493, ["        const u32 tic_limit = (std::min)(maxwell3d->regs.tex_header.limit, MaxDescriptorTableLimit);","        const u32 tsc_limit = linked_tsc ? tic_limit : (std::min)(maxwell3d->regs.tex_sampler.limit, MaxDescriptorTableLimit);","        bool bindings_changed = false;","        if (channel_state->graphics_sampler_table.Synchronize(maxwell3d->regs.tex_sampler.Address(), tsc_limit))","            bindings_changed = true;"], ["        const u32 tic_limit = maxwell3d->regs.tex_header.limit;","        const u32 tsc_limit = linked_tsc ? tic_limit : maxwell3d->regs.tex_sampler.limit;","        bool bindings_changed = false;","        if (channel_state->graphics_sampler_table.Synchronize(maxwell3d->regs.tex_sampler.Address(), tsc_limit))","            bindings_changed = true;"]),
+                (849, ["    if (index > table.current_limit || index >= table.descriptors.size()) {","        LOG_DEBUG(HW_GPU, \"Invalid image view index={}\", index);","        return NULL_IMAGE_VIEW_ID;","    }"], ["    if (index > table.current_limit) {","        LOG_DEBUG(HW_GPU, \"Invalid image view index={}\", index);","        return NULL_IMAGE_VIEW_ID;","    }"]),
+                (985, ["void TextureCache<P>::WriteDmaCopy(","    GPUVAddr src_addr, GPUVAddr dest_addr, size_t size,","    std::span<const std::pair<DAddr, size_t>> gpu_written_dest) {","    if (size == 0) {","        return;","    }","    const std::optional<DAddr> src = gpu_memory->GpuToCpuAddress(src_addr);","    const std::optional<DAddr> dest = gpu_memory->GpuToCpuAddress(dest_addr);","    if (!src || !dest ||","        *src > (std::numeric_limits<DAddr>::max)() - size ||","        *dest > (std::numeric_limits<DAddr>::max)() - size) {","        return;","    }","    const DAddr src_end = *src + size;","    const DAddr dest_end = *dest + size;","","    // BufferCache reports destination bytes whose source was newer on the GPU.","    // Guest memory still contains older bytes there until a later download.","    boost::container::small_vector<std::pair<DAddr, size_t>, 8> unheld;","    unheld.reserve(gpu_written_dest.size() + 4);","    for (const auto& [begin, length] : gpu_written_dest) {","        if (length == 0 || begin < *dest || begin >= dest_end ||","            length > dest_end - begin) {","            return;","        }","        unheld.emplace_back(begin, length);","    }","","    // GPU-written source images have the same property: DMACopy moves their","    // host-GPU bytes, while the guest-memory mirror still holds older data.","    ForEachImageInRegion(*src, size, [&](ImageId, Image& image) {","        if (False(image.flags & ImageFlagBits::GpuModified)) {","            return;","        }","        const DAddr begin = (std::max)(static_cast<DAddr>(image.cpu_addr), *src);","        const DAddr end = (std::min)(static_cast<DAddr>(image.cpu_addr_end), src_end);","        if (begin < end) {","            unheld.emplace_back(*dest + (begin - *src), static_cast<size_t>(end - begin));","        }","    });","","    const auto overlaps_unheld = [&unheld](const Image& image) {","        return std::ranges::any_of(unheld, [&image](const auto& range) {","            const DAddr range_end = range.first + range.second;","            return range.first < image.cpu_addr_end && image.cpu_addr < range_end;","        });","    };","","    ForEachImageInRegion(*dest, size, [&](ImageId image_id, Image& image) {","        // Uploading this image would consume bytes that guest memory does not","        // hold yet, or discard GPU-owned texels outside the copied interval.","        const bool keeps_gpu_contents =","            True(image.flags & ImageFlagBits::GpuModified) &&","            (image.cpu_addr < *dest || image.cpu_addr_end > dest_end);","        if (overlaps_unheld(image) || keeps_gpu_contents) {","            return;","        }","#ifdef EDEN_NS2_ASTC_CACHE_BRIDGE","        if (image.ns2_astc_dirty) {","            if (image.ns2_astc_dirty->MarkWrite(*dest, size)) {","                image.flags |= ImageFlagBits::CpuModified;","                return;","            }","            image.ns2_astc_dirty.reset();","        }","#endif","        if (True(image.flags & ImageFlagBits::CpuModified)) {","            return;","        }","        image.flags |= ImageFlagBits::CpuModified;","        if (True(image.flags & ImageFlagBits::Tracked)) {","            UntrackImage(image, image_id);","        }","    });","}","","template <class P>","bool TextureCache<P>::IsGpuMemoryGpuModified(GPUVAddr gpu_addr, size_t size) {","    // GetSubmappedRange omits unmapped/reserved holes. A partial translation","    // must never make a DMA destination look safe for a guest-memory upload."], ["bool TextureCache<P>::IsGpuMemoryGpuModified(GPUVAddr gpu_addr, size_t size) {","    // GetSubmappedRange omits unmapped/reserved holes. A partial translation","    // must never make a DMA destination look safe for a guest-memory upload."]),
+                (1409, ["#ifdef PS5_NATIVE","    // NS1 / Maxwell production path for Lichii #853 semantics. NS2 address","    // spaces enable native tiling after authenticated channel admission and","    // keep using the separately guarded native-volume path above.","    if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {","        const auto copy_ns1_volume_slice = [&]() -> bool {","            using Fermi2D = Tegra::Engines::Fermi2D;","            if (!gpu_memory || gpu_memory->UsesNativeTiling() || !channel_state ||","                copy.operation != Fermi2D::Operation::SrcCopy ||","                copy.filter != Fermi2D::Filter::Point) {","                return false;","            }","            const auto is_volume = [](const Fermi2D::Surface& surface) {","                return surface.depth > 1 &&","                       surface.linear == Fermi2D::MemoryLayout::BlockLinear &&","                       surface.layer == 0 && surface.width != 0 && surface.height != 0;","            };","            if (src.width > static_cast<u32>(std::numeric_limits<s32>::max()) ||","                dst.width > static_cast<u32>(std::numeric_limits<s32>::max()) ||","                src.height > static_cast<u32>(std::numeric_limits<s32>::max()) ||","                dst.height > static_cast<u32>(std::numeric_limits<s32>::max())) {","                return false;","            }","            const bool whole_slice =","                copy.src_x0 == 0 && copy.src_y0 == 0 &&","                copy.dst_x0 == 0 && copy.dst_y0 == 0 &&","                copy.src_x1 == static_cast<s32>(src.width) &&","                copy.src_y1 == static_cast<s32>(src.height) &&","                copy.dst_x1 == static_cast<s32>(dst.width) &&","                copy.dst_y1 == static_cast<s32>(dst.height);","            if (!is_volume(src) || !is_volume(dst) || !whole_slice ||","                src.format != dst.format || src.width != dst.width ||","                src.height != dst.height) {","                return false;","            }","","            const auto format =","                VideoCore::Surface::PixelFormatFromRenderTargetFormat(src.format);","            struct Slice {","                ImageId id;","                s32 depth;","            };","            const auto find_slice = [&](const Fermi2D::Surface& surface)","                -> std::optional<Slice> {","                std::optional<Slice> found;","                bool ambiguous = false;","                const GPUVAddr address = surface.Address();","                ForEachImageInRegionGPU(channel_state->gpu_memory.GetID(), address, 1,","                                        [&](ImageId id, Image& image) {","                    if (image.info.type != ImageType::e3D ||","                        image.info.format != format ||","                        image.info.num_samples != 1 ||","                        image.info.size.width != surface.width ||","                        image.info.size.height != surface.height ||","                        image.info.size.depth != surface.depth ||","                        !image.aliased_images.empty() || !image.overlapping_images.empty() ||","                        True(image.flags & (ImageFlagBits::Remapped | ImageFlagBits::Sparse |","                                            ImageFlagBits::Rescaled | ImageFlagBits::IsDecoding)) ||","                        address < image.gpu_addr) {","                        return false;","                    }","                    const u64 relative = address - image.gpu_addr;","                    if (relative >= image.guest_size_bytes ||","                        relative > std::numeric_limits<u32>::max() ||","                        image.slice_offsets.size() != image.slice_subresources.size()) {","                        return false;","                    }","                    const auto it =","                        std::ranges::find(image.slice_offsets, static_cast<u32>(relative));","                    if (it == image.slice_offsets.end()) {","                        return false;","                    }","                    const auto index = static_cast<size_t>(","                        std::distance(image.slice_offsets.begin(), it));","                    const SubresourceBase base = image.slice_subresources[index];","                    if (base.level != 0 || base.layer < 0 ||","                        static_cast<u32>(base.layer) >= image.info.size.depth) {","                        return false;","                    }","                    if (found) {","                        ambiguous = true;","                        return false;","                    }","                    found = Slice{id, base.layer};","                    return false;","                });","                return ambiguous ? std::nullopt : found;","            };","","            const auto src_slice = find_slice(src);","            const auto dst_slice = find_slice(dst);","            if (!src_slice || !dst_slice || src_slice->id == dst_slice->id) {","                return false;","            }","","            struct PhysicalSpan {","                u64 address;","                u64 bytes;","            };","            const auto capture_physical = [&](ImageId id) -> std::optional<PhysicalSpan> {","                const Image& image = slot_images[id];","                const u64 bytes = image.guest_size_bytes;","                constexpr u64 MaxVolumeBytes = 256ULL * 1024 * 1024;","                if (!image.gpu_addr || !bytes || bytes > MaxVolumeBytes ||","                    image.gpu_addr > std::numeric_limits<u64>::max() - (bytes - 1) ||","                    !gpu_memory->IsContinuousRange(image.gpu_addr, bytes)) {","                    return std::nullopt;","                }","                const auto start = gpu_memory->GpuToCpuAddress(image.gpu_addr);","                const auto end = gpu_memory->GpuToCpuAddress(image.gpu_addr + bytes - 1);","                if (!start || !end || *start != image.cpu_addr ||","                    *start > std::numeric_limits<u64>::max() - (bytes - 1) ||","                    *end != *start + bytes - 1) {","                    return std::nullopt;","                }","                return PhysicalSpan{*start, bytes};","            };","            const auto overlaps = [](PhysicalSpan lhs, PhysicalSpan rhs) {","                return lhs.address <= rhs.address","                    ? rhs.address - lhs.address < lhs.bytes","                    : lhs.address - rhs.address < rhs.bytes;","            };","            const auto src_physical = capture_physical(src_slice->id);","            const auto dst_physical = capture_physical(dst_slice->id);","            if (!src_physical || !dst_physical ||","                overlaps(*src_physical, *dst_physical)) {","                return false;","            }","","            runtime.FlushDeferredClear();","            PrepareImage(src_slice->id, false, false);","            PrepareImage(dst_slice->id, false, false);","","            // RefreshContents/SynchronizeAliases may replace either cached","            // image. Resolve the exact slices again before publishing a write.","            const auto src_after = find_slice(src);","            const auto dst_after = find_slice(dst);","            if (!src_after || !dst_after ||","                src_after->id != src_slice->id || dst_after->id != dst_slice->id ||","                src_after->depth != src_slice->depth ||","                dst_after->depth != dst_slice->depth) {","                return false;","            }","            const auto src_physical_after = capture_physical(src_slice->id);","            const auto dst_physical_after = capture_physical(dst_slice->id);","            if (!src_physical_after || !dst_physical_after ||","                src_physical_after->address != src_physical->address ||","                dst_physical_after->address != dst_physical->address ||","                src_physical_after->bytes != src_physical->bytes ||","                dst_physical_after->bytes != dst_physical->bytes ||","                overlaps(*src_physical_after, *dst_physical_after)) {","                return false;","            }","","            MarkModification(slot_images[dst_slice->id]);","            const ImageCopy slice_copy{","                .src_subresource = {.base_level = 0, .base_layer = 0, .num_layers = 1},","                .dst_subresource = {.base_level = 0, .base_layer = 0, .num_layers = 1},","                .src_offset = {0, 0, src_slice->depth},","                .dst_offset = {0, 0, dst_slice->depth},","                .extent = {src.width, src.height, 1},","            };","            runtime.CopyImage(slot_images[dst_slice->id], slot_images[src_slice->id],","                              std::span{&slice_copy, 1});","            return true;","        };","        if (copy_ns1_volume_slice()) {","            return true;","        }","    }","#endif","    const auto result = GetBlitImages(dst, src, copy);","    if (!result) {","        return false;"], ["    const auto result = GetBlitImages(dst, src, copy);","    if (!result) {","        return false;"]),
+                (4034, ["    for (const ImageCopy& copy : SplitLayeredImageCopies(copies)) {","        UNIMPLEMENTED_IF(copy.dst_subresource.num_layers != 1);","        UNIMPLEMENTED_IF(copy.src_subresource.num_layers != 1);","        UNIMPLEMENTED_IF(copy.src_offset != Offset3D{});"], ["    for (const ImageCopy& copy : copies) {","        UNIMPLEMENTED_IF(copy.dst_subresource.num_layers != 1);","        UNIMPLEMENTED_IF(copy.src_subresource.num_layers != 1);","        UNIMPLEMENTED_IF(copy.src_offset != Offset3D{});"]),
+                (4052, ["        // X8_D24 aliases preserve raw 32-bit storage. When either side is depth-only","        // X8_D24, view every 4-byte colour alias as ABGR8 so the Vulkan conversion","        // shader sees the original low three depth bytes instead of colour semantics.","        const auto alias_conversion_format = [](PixelFormat format, PixelFormat other_format) {","            if (other_format == PixelFormat::X8_D24_UNORM &&","                GetFormatType(format) == SurfaceType::ColorTexture &&","                BytesPerBlock(format) == 4) {","                return PixelFormat::A8B8G8R8_UNORM;","            }","            return format;","        };","        PixelFormat dst_format = alias_conversion_format(dst.info.format, src.info.format);","        const PixelFormat src_format = alias_conversion_format(src.info.format, dst.info.format);","        if (GetFormatType(src.info.format) == SurfaceType::DepthStencil &&","            GetFormatType(dst_format) == SurfaceType::ColorTexture &&","            BytesPerBlock(dst_format) == 4) {"], ["        PixelFormat dst_format = dst.info.format;","        if (GetFormatType(src.info.format) == SurfaceType::DepthStencil &&","            GetFormatType(dst_format) == SurfaceType::ColorTexture &&","            BytesPerBlock(dst_format) == 4) {"]),
+                (4071, ["        const ImageViewInfo src_view_info(ImageViewType::e2D, src_format, src_range);","        const auto [dst_framebuffer_id, dst_view_id] = RenderTargetFromImage(dst_id, dst_view_info);","        Framebuffer* const dst_framebuffer = &slot_framebuffers[dst_framebuffer_id];","        const ImageViewId src_view_id = FindOrEmplaceImageView(src_id, src_view_info);"], ["        const ImageViewInfo src_view_info(ImageViewType::e2D, src.info.format, src_range);","        const auto [dst_framebuffer_id, dst_view_id] = RenderTargetFromImage(dst_id, dst_view_info);","        Framebuffer* const dst_framebuffer = &slot_framebuffers[dst_framebuffer_id];","        const ImageViewId src_view_id = FindOrEmplaceImageView(src_id, src_view_info);"]),
+            )
+            for index, newer, earlier in reversed(reverse):
+                assert lines[index:index + len(newer)] == newer, "Integrated TextureCache source drift"
+                lines[index:index + len(newer)] = earlier
+            historical = "\n".join(lines).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == "c797eb9e3f4432b6ba19fe8a17a7289b23b75864"
+            print("ENCORE_NS1_NS2_TEXTURECACHE10_EXACT_REVERSE_PASS")
         assert actual == ("c797eb9e3f4432b6ba19fe8a17a7289b23b75864" if fc27_p1_vendor else
                           "c7cb95ecaf388b925fc29582499bbd4b54a77f75" if r437_vendor_pin in {"6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"} else "859a9e46fb63a97fee82c8ea6b1566317264f98f" if r437_vendor_pin == "3e6647827122c34704c2699a6f5e9b20fff3e9a6" else "0d99f9a861c645562519f71d62f4f49bfedd8101"), ("Selected F07 TextureCache drift", actual)
     assert fc27_deferred_present == set()
@@ -1157,7 +1244,20 @@ post_f07_vic_present = {post_f07_vic_receipt} & set(physical_all)
 if post_f07_vic_present:
     assert post_f07_nvdec_present == post_f07_nvdec_owners
     raw_vic = (active / post_f07_vic_receipt).read_bytes()
-    assert hashlib.sha1(b"blob " + str(len(raw_vic)).encode() + bytes([0]) + raw_vic).hexdigest() == "48008fc5f3b05c3e95432827c03e20b815cce21c"
+    vic_sha = hashlib.sha1(
+        b"blob " + str(len(raw_vic)).encode() + bytes([0]) + raw_vic
+    ).hexdigest()
+    if vic_sha == "178d361bc3b5e9a0bf6ca9fa579d49df7ab72935":
+        # The selected VIC adds the reviewed bounds/overflow, unaligned SIMD
+        # and worker-lifetime protections. Reuse its existing exact 29-hunk
+        # source receipt instead of duplicating that reconstruction here.
+        vic_receipt = root / "vendor/tests/fc27_nvdec_vic_witness_host.py"
+        assert vic_receipt.is_file()
+        subprocess.run(["python3", "-B", str(vic_receipt)], check=True, timeout=180)
+        print("ENCORE_POST_F07_VIC29_EXACT_RECEIPT_PASS")
+    else:
+        assert vic_sha == "48008fc5f3b05c3e95432827c03e20b815cce21c", (
+            "Unreviewed VIC source drift", vic_sha)
     raw_ffmpeg = (active / "eden-core/src/video_core/host1x/ffmpeg.cpp").read_bytes()
     assert hashlib.sha1(b"blob " + str(len(raw_ffmpeg)).encode() + bytes([0]) + raw_ffmpeg).hexdigest() == "2eadc437cec5559560e5aaf849dd3b6446782e99"
     vic_cmake = (root / "headless/CMakeLists.txt").read_text()
@@ -1202,7 +1302,7 @@ post_f07_gpu_table_owners = {"eden-core/src/common/multi_level_page_table.cpp"}
 post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
-gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip()
+gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip())
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else gpu_table_vendor_pin
@@ -1344,7 +1444,21 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     assert fc27_ssbo_present == set(fc27_ssbo_receipts)
     for relative, blob in fc27_ssbo_receipts.items():
         raw = (active / relative).read_bytes()
-        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        if (relative.endswith("global_memory_to_storage_buffer_pass.cpp") and
+            actual == "602d45b4d2ad872b138d62ce05f379b5e1103602"):
+            selected = raw.decode("utf-8")
+            newer = "    case IR::Opcode::GlobalAtomicExchange32:\n    case IR::Opcode::GlobalAtomicCompareExchange32:\n    case IR::Opcode::GlobalAtomicIAdd64:\n"
+            earlier = "    case IR::Opcode::GlobalAtomicExchange32:\n    case IR::Opcode::GlobalAtomicIAdd64:\n"
+            assert newer in selected
+            historical = selected.replace(newer, earlier, 1).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            print("ENCORE_FC27_SSBO_CAS32_EXACT_REVERSE_PASS")
+        assert actual == blob, ("FC27 SSBO source drift", relative, actual, blob)
     assert 'set(EDEN_FC27_SSBO_SOURCE' in nov13_cmake
     assert 'list(REMOVE_ITEM eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp")' in nov13_cmake
 else:
@@ -1452,8 +1566,89 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
         raw = source_path.read_bytes()
         if fc27_p1_vendor:
             # Compare all fourteen merged native owners against immutable blobs.
+            # Known post-merge successors are reversed only on this audit copy,
+            # each behind an exact full-source SHA and byte-identical predecessor.
             data = (active / path).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+            if path == "eden-core/src/video_core/buffer_cache/buffer_cache.h" and actual == "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (294, ["bool BufferCache<P>::DMACopy(","    GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written,","    boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest) {","    if (gpu_written_dest) {","        gpu_written_dest->clear();","    }","    // FindBuffer and SynchronizeBuffer accept u32 byte spans. Never truncate","    // a wider DMA request: the caller can take its ordinary software path.","    // Reject empty copies before dirty-range bookkeeping as well."], ["bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,","                             bool* gpu_written) {","    // FindBuffer and SynchronizeBuffer accept u32 byte spans. Never truncate","    // a wider DMA request: the caller can take its ordinary software path.","    // Reject empty copies before dirty-range bookkeeping as well."]),
+                    (325, ["    // vkCmdCopyBuffer forbids overlapping source and destination DEVICE","    // memory (VUID-vkCmdCopyBuffer-pRegions-00117). Distinct GMMU virtual","    // addresses can alias one physical allocation, and different VkBuffer","    // handles do not make those overlapping memory accesses legal.","    // Reject BEFORE dirty-range bookkeeping, ClearDownload, or GPU commands:","    // MaxwellDMA will read the authoritative source and snapshot the alias.","    // Compare distances rather than forming a potentially overflowing end.","    const DAddr source = *cpu_src_address;","    const DAddr destination = *cpu_dest_address;","    if ((source <= destination && destination - source < amount) ||","        (destination < source && source - destination < amount)) {","        return false;","    }","    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);","    const bool dest_dirty = IsRegionRegistered(*cpu_dest_address, amount);","    if (!source_dirty && !dest_dirty) {"], ["    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);","    const bool dest_dirty = IsRegionRegistered(*cpu_dest_address, amount);","    if (!source_dirty && !dest_dirty) {"]),
+                    (378, ["    if (gpu_written_dest) {","        *gpu_written_dest = tmp_intervals;","    }","    for (const auto& pair : tmp_intervals) {","        gpu_modified_ranges.Add(pair.first, pair.second);","    }"], ["    for (const auto& pair : tmp_intervals) {","        gpu_modified_ranges.Add(pair.first, pair.second);","    }"]),
+                    (1849, ["        // A stream near the start of physical memory may begin before","        // min_page. Subtraction in the original test then wraps around and","        // turns an ordinary backward leap into a huge invalid GPU buffer.","        // Never move begin forwards past the range we already own.","        if (begin <= min_page || add_value > begin - min_page) {","            begin = (std::min)(begin, min_page);","            device_addr = Core::DEVICE_PAGESIZE;","            return;","        }"], ["        if (add_value > begin - min_page) {","            begin = min_page;","            device_addr = Core::DEVICE_PAGESIZE;","            return;","        }"]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "41239f19b9e16741d49e31145c504e0086b1095e", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if path == "eden-core/src/video_core/buffer_cache/buffer_cache_base.h" and actual == "fd9708571ef61c83c399042a5200c87b2e3784d6":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (326, ["    /// gpu_written_dest names the exact destination subranges whose newest bytes stay GPU-owned.","    bool DMACopy(","        GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written = nullptr,","        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);","","    bool DMAClear(GPUVAddr src_address, u64 amount, u32 value);",""], ["    /// A caller must not re-upload the destination texture from stale guest memory.","    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,","                 bool* gpu_written = nullptr);","","    bool DMAClear(GPUVAddr src_address, u64 amount, u32 value);",""]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "716634290574ed4dfc8fd3be0d0ea0ad582980f8", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if path == "eden-core/src/video_core/gpu_vulkan.cpp" and actual == "90b8f8c99878b21558b3996e8b1e95a5fc6ad9a6":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (116, ["#if defined(PS5_NATIVE)","        // Queue retirement on the existing GPU worker. Only the worker","        // reads/mutates the channels map: the NVDRV service thread must not","        // race GPU::BindChannel while looking up a channel on FD close.","        // The caller keeps to_release alive until this synchronous barrier","        // completes. Verify the exact owner epoch on the worker side.","        const s32 channel_id = to_release.bind_id;","        const auto* expected = &to_release;","        const u64 fence = RequestSyncOperation([this, channel_id, expected] {","            const auto it = channels.find(channel_id);","            if (it == channels.end() || it->second.get() != expected)","                return; // An old FD cannot retire a reused channel ID.","            const auto owner = it->second;","            scheduler.RetireChannel(owner.get());","            if (current_channel == owner.get()) {","                current_channel = nullptr;","                bound_channel = -1;","            }","            if (owner->initialized)","                renderer->ReadRasterizer()->ReleaseChannel(owner->bind_id);","            channels.erase(it);","        });","        gpu_thread.TickGPU(is_async);","        WaitForSyncOperation(fence);","#else","        // Host/non-PS5 scheduler has no native epoch-retirement API.","        // Preserve its original behavior; no platform-wide ABI change.","        UNIMPLEMENTED();","#endif","    }",""], ["        UNIMPLEMENTED();","    }",""]),
+                    (182, ["        // Publish a fence only AFTER the queue owns its callback. If","        // allocating this node throws, no fence is skipped: subsequent waits","        // must still be reachable by TickWork's completed-request counter.","        sync_requests.emplace_back(std::forward<Func>(action));","        return ++last_sync_fence;","    }",""], ["        const u64 fence = ++last_sync_fence;","        sync_requests.emplace_back(std::forward<Func>(action));","        return fence;","    }",""]),
+                    (196, ["        while (!shutting_down.load(std::memory_order_relaxed) &&","               CurrentSyncRequestFence() < fence) {","            // A failed GPU worker cannot advance this fence. Preserve the","            // published exception for every waiter instead of hanging the","            // launcher/guest-stop path indefinitely.","            if (auto failure = ::Eden::PeekGpuFailure()) {","                std::rethrow_exception(failure);","            }","            sync_request_cv.wait_for(lck, std::chrono::milliseconds(100));","        }","        if (auto failure = ::Eden::PeekGpuFailure()) {","            std::rethrow_exception(failure);","        }","    }","","    void WaitForIdle() {"], ["        sync_request_cv.wait(lck, [this, fence] { return CurrentSyncRequestFence() >= fence; });","    }","","    void WaitForIdle() {"]),
+                    (223, ["            // Keep the RAII lock's ownership state consistent if a GPU","            // callback throws. Unlocking the raw mutex left lck owning an","            // already-unlocked mutex during exception unwinding.","            lck.unlock();","            request();","            current_sync_fence.fetch_add(1, std::memory_order_release);","            lck.lock();","            sync_request_cv.notify_all();"], ["            sync_request_mutex.unlock();","            request();","            current_sync_fence.fetch_add(1, std::memory_order_release);","            sync_request_mutex.lock();","            sync_request_cv.notify_all();"]),
+                    (298, ["        const u64 fence = RequestSyncOperation([this, raster_area]() {","            renderer->ReadRasterizer()->FlushRegion(raster_area.start_address, raster_area.end_address - raster_area.start_address);","        });","        gpu_thread.TickGPU(is_async);"], ["        const u64 fence = RequestSyncOperation([this, &raster_area]() {","            renderer->ReadRasterizer()->FlushRegion(raster_area.start_address, raster_area.end_address - raster_area.start_address);","        });","        gpu_thread.TickGPU(is_async);"]),
+                    (416, ["    // A guest may close an NVDRV GPU FD before its first successful bind.","    // ReleaseChannel compares this pointer even for an uninitialized owner.","    Tegra::Control::ChannelState* current_channel{};","    s32 bound_channel{-1};","","    std::deque<size_t> free_swap_counters;"], ["    Tegra::Control::ChannelState* current_channel;","    s32 bound_channel{-1};","","    std::deque<size_t> free_swap_counters;"]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "842a0289f75bc2a0763285173e4616060348ec22", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if path == "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h" and actual == "6e0bf7ab2a3a2147f9db0c630070db30d9b35d56":
+                lines = data.decode("utf-8").split("\n")
+                reverse = (
+                    (65, ["                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);","","    bool BufferCopy(GPUVAddr start_address, GPUVAddr end_address, u64 amount) override;",""], ["                           Scheduler& scheduler);","","    bool BufferCopy(GPUVAddr start_address, GPUVAddr end_address, u64 amount) override;",""]),
+                    (86, ["    // The GPU address space changes on channel binds. Reference the","    // rasterizer's active pointer, not a stale construction-time channel.","    Tegra::MemoryManager* const& gpu_memory;","};","","class RasterizerVulkan final : public VideoCore::RasterizerInterface,"], ["};","","class RasterizerVulkan final : public VideoCore::RasterizerInterface,"]),
+                    (222, ["    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs,","                        const GraphicsPipeline* pipeline);","    void UpdateColorWriteEnable(Tegra::Engines::Maxwell3D::Regs& regs);","","    void UpdateVertexInput(Tegra::Engines::Maxwell3D::Regs& regs);"], ["    void UpdateBlending(Tegra::Engines::Maxwell3D::Regs& regs);","    void UpdateColorWriteEnable(Tegra::Engines::Maxwell3D::Regs& regs);","","    void UpdateVertexInput(Tegra::Engines::Maxwell3D::Regs& regs);"]),
+                    (269, ["","#ifdef PS5_NATIVE","    // Cached once per native rasterizer, never queried on each hot-path QMD."], ["    vk::Event wfi_event;","","#ifdef PS5_NATIVE","    // Cached once per native rasterizer, never queried on each hot-path QMD."]),
+                    (280, ["    u32 last_color_output_mask{};","    bool mesh_draw{}; ///< the draw being prepared uses a task/mesh pipeline","};",""], ["    bool mesh_draw{}; ///< the draw being prepared uses a task/mesh pipeline","};",""]),
+                )
+                for index, newer, earlier in reversed(reverse):
+                    assert lines[index:index + len(newer)] == newer, ("Merged owner hunk drift", path)
+                    lines[index:index + len(newer)] = earlier
+                historical = "\n".join(lines).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "6467fd4d704de6b77deb7e6cba4b8e33f70f5a08", ("Merged owner predecessor drift", path, actual)
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+            if (path == "eden-vulkan/vulkan_rasterizer.cpp" and
+                actual in {"0633e3cf41c615f46791d3943ff40ac22399b047", "f67815618d25657dcf64a87944b0c0bc5c2d8993"}):
+                import sys
+                sys.path.insert(0, str(root / "vendor" / "tests"))
+                from native_msaa_handle_receipt import restore_integrated_rasterizer
+                historical = restore_integrated_rasterizer(data.decode("utf-8")).encode()
+                actual = hashlib.sha1(
+                    b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+                ).hexdigest()
+                assert actual == "71d097b9a83028dfad9370792c905bb3bfccfd5a"
+                print("ENCORE_MERGED_EXACT_REVERSE_PASS", path, "hunks=16")
             assert actual == merged_fc27_pair_receipts[path], (path, actual)
             continue
         if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}:
@@ -1501,8 +1696,43 @@ drawtexture_present = set(drawtexture_receipts) & set(physical_all)
 if gpu_table_vendor_pin in {"42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6", "edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or fc27_p1_vendor:
     assert drawtexture_present == set(drawtexture_receipts)
     for path, blob in drawtexture_receipts.items():
-        assert subprocess.check_output(
-            ["git", "hash-object", str(active / path)], text=True).strip() == blob, path
+        raw = (active / path).read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        if path == "eden-vulkan/blit_image.cpp" and actual == "4ba93afb6594213d5bde82be2693f0e08cb1cd63":
+            lines = raw.decode("utf-8").split("\n")
+            reverse = (
+                (18, ["#include \"video_core/host_shaders/convert_abgr8_to_x8d24_frag_spv.h\"","#include \"video_core/host_shaders/convert_x8d24_to_abgr8_frag_spv.h\"","#include \"video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h\"","#include \"video_core/host_shaders/convert_d24s8_to_abgr8_frag_spv.h\"","#include \"video_core/host_shaders/convert_d32f_to_abgr8_frag_spv.h\""], ["#include \"video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h\"","#include \"video_core/host_shaders/convert_d24s8_to_abgr8_frag_spv.h\"","#include \"video_core/host_shaders/convert_d32f_to_abgr8_frag_spv.h\""]),
+                (631, ["      convert_abgr8_to_x8d24_frag(BuildShader(device, CONVERT_ABGR8_TO_X8D24_FRAG_SPV)),","      convert_x8d24_to_abgr8_frag(BuildShader(device, CONVERT_X8D24_TO_ABGR8_FRAG_SPV)),","      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),","      convert_d32f_to_abgr8_frag(BuildShader(device, CONVERT_D32F_TO_ABGR8_FRAG_SPV)),","      convert_d24s8_to_abgr8_frag(BuildShader(device, CONVERT_D24S8_TO_ABGR8_FRAG_SPV)),"], ["      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),","      convert_d32f_to_abgr8_frag(BuildShader(device, CONVERT_D32F_TO_ABGR8_FRAG_SPV)),","      convert_d24s8_to_abgr8_frag(BuildShader(device, CONVERT_D24S8_TO_ABGR8_FRAG_SPV)),"]),
+                (871, ["void BlitImageHelper::ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    ConvertPipelineDepthTargetEx(convert_abgr8_to_x8d24_pipeline, dst_framebuffer->RenderPass(),","                                 convert_abgr8_to_x8d24_frag);","    Convert(*convert_abgr8_to_x8d24_pipeline, dst_framebuffer, src_image_view);","}","","void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    ConvertPipelineEx(convert_x8d24_to_abgr8_pipeline, dst_framebuffer->RenderPass(),","                      convert_x8d24_to_abgr8_frag, true, false);","    Convert(*convert_x8d24_to_abgr8_pipeline, dst_framebuffer, src_image_view);","}","","void BlitImageHelper::ConvertABGR8ToD24S8(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    if (!device.IsExtShaderStencilExportSupported()) {"], ["void BlitImageHelper::ConvertABGR8ToD24S8(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    if (!device.IsExtShaderStencilExportSupported()) {"]),
+            )
+            for index, newer, earlier in reversed(reverse):
+                assert lines[index:index + len(newer)] == newer, ("X8D24 receipt hunk drift", path)
+                lines[index:index + len(newer)] = earlier
+            historical = "\n".join(lines).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == "bbde031a184b93745fa0449aef74f351355fb70d", ("X8D24 receipt predecessor drift", path, actual)
+            print("ENCORE_X8D24_DRAW_RECEIPT_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if path == "eden-vulkan/include/video_core/renderer_vulkan/blit_image.h" and actual == "a38cfcf655adcb8ceebfce955b39a2312a239768":
+            lines = raw.decode("utf-8").split("\n")
+            reverse = (
+                (115, ["    void ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertABGR8ToD32F(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertD32FToABGR8(const Framebuffer* dst_framebuffer, ImageView& src_image_view);"], ["    void ConvertABGR8ToD32F(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertD32FToABGR8(const Framebuffer* dst_framebuffer, ImageView& src_image_view);"]),
+                (237, ["    vk::ShaderModule convert_abgr8_to_x8d24_frag;","    vk::ShaderModule convert_x8d24_to_abgr8_frag;","    vk::ShaderModule convert_abgr8_to_d32f_frag;","    vk::ShaderModule convert_d32f_to_abgr8_frag;","    vk::ShaderModule convert_d24s8_to_abgr8_frag;"], ["    vk::ShaderModule convert_abgr8_to_d32f_frag;","    vk::ShaderModule convert_d32f_to_abgr8_frag;","    vk::ShaderModule convert_d24s8_to_abgr8_frag;"]),
+                (294, ["    vk::Pipeline convert_abgr8_to_x8d24_pipeline;","    vk::Pipeline convert_x8d24_to_abgr8_pipeline;","    vk::Pipeline convert_abgr8_to_d32f_pipeline;","    vk::Pipeline convert_d32f_to_abgr8_pipeline;","    vk::Pipeline convert_d24s8_to_abgr8_pipeline;"], ["    vk::Pipeline convert_abgr8_to_d32f_pipeline;","    vk::Pipeline convert_d32f_to_abgr8_pipeline;","    vk::Pipeline convert_d24s8_to_abgr8_pipeline;"]),
+            )
+            for index, newer, earlier in reversed(reverse):
+                assert lines[index:index + len(newer)] == newer, ("X8D24 receipt hunk drift", path)
+                lines[index:index + len(newer)] = earlier
+            historical = "\n".join(lines).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == "81eda086f50e04d3e1537aebff404a6097a07069", ("X8D24 receipt predecessor drift", path, actual)
+            print("ENCORE_X8D24_DRAW_RECEIPT_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        assert actual == blob, (path, actual, blob)
 else:
     assert not drawtexture_present
 print("ENCORE_EDEN4559_POST_F07_OWNER_PASS", f"owners={len(drawtexture_present)}")
@@ -1540,6 +1770,58 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         raw = (active / path).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if path == "ns2-runtime/hle/core/hle/service/hid/hid_server.cpp" and actual == "b83f519fef3905eabb0bef65cab4d989033b5287":
+            # Switch 2 scene/vibration/Nmouse additions are source-sealed here;
+            # the historical early-HLE receipt remains immutable.
+            lines = raw.decode("utf-8").split("\n")
+            reverse = (
+                (14, ["#include \"core/hle/kernel/svc_results.h\"","#include <new>","#include \"core/hle/service/cmif_serialization.h\"","#include \"core/hle/service/hid/active_vibration_device_list.h\"","#include \"core/hle/service/hid/applet_resource.h\""], ["#include \"core/hle/service/cmif_serialization.h\"","#include \"core/hle/service/hid/active_vibration_device_list.h\"","#include \"core/hle/service/hid/applet_resource.h\""]),
+                (123, ["        {138, C<&IHidServer::SetSceneIdForPrivateApp>, \"SetSceneIdForPrivateApp\"},","        {139, C<&IHidServer::GetSceneIdForPrivateApp>, \"GetSceneIdForPrivateApp\"},","        {200, C<&IHidServer::GetVibrationDeviceInfo>, \"GetVibrationDeviceInfo\"},","        {201, C<&IHidServer::SendVibrationValue>, \"SendVibrationValue\"},","        {202, C<&IHidServer::GetActualVibrationValue>, \"GetActualVibrationValue\"},"], ["        {200, C<&IHidServer::GetVibrationDeviceInfo>, \"GetVibrationDeviceInfo\"},","        {201, C<&IHidServer::SendVibrationValue>, \"SendVibrationValue\"},","        {202, C<&IHidServer::GetActualVibrationValue>, \"GetActualVibrationValue\"},"]),
+                (138, ["        {220, C<&IHidServer::IsOunceVibrationDeviceMounted>, \"IsOunceVibrationDeviceMounted\"},","        {300, C<&IHidServer::ActivateConsoleSixAxisSensor>, \"ActivateConsoleSixAxisSensor\"},","        {301, C<&IHidServer::StartConsoleSixAxisSensor>, \"StartConsoleSixAxisSensor\"},","        {302, C<&IHidServer::StopConsoleSixAxisSensor>, \"StopConsoleSixAxisSensor\"},"], ["        {300, C<&IHidServer::ActivateConsoleSixAxisSensor>, \"ActivateConsoleSixAxisSensor\"},","        {301, C<&IHidServer::StartConsoleSixAxisSensor>, \"StartConsoleSixAxisSensor\"},","        {302, C<&IHidServer::StopConsoleSixAxisSensor>, \"StopConsoleSixAxisSensor\"},"]),
+                (248, ["        // Documented Nmouse lifecycle and pointer ABI; do not invent sensor samples.","        {3130, C<&IHidServer::InitializeNmouse>, \"InitializeNmouse\"},","        {3131, C<&IHidServer::FinalizeNmouse>, \"FinalizeNmouse\"},","        {3132, C<&IHidServer::SetNmousePointerRanges>, \"SetNmousePointerRanges\"},","        {3133, C<&IHidServer::GetNmousePointerRanges>, \"GetNmousePointerRanges\"},","        {3138, C<&IHidServer::SetMergedNmouseSourceTypes>, \"SetMergedNmouseSourceTypes\"},","        {3139, C<&IHidServer::InitializeNmouse2>, \"InitializeNmouse2\"},","        {3150, C<&IHidServer::SetMouseLibraryVersion>, \"SetMouseLibraryVersion\"}, //21.0.0+","        // What? -- {12010, nullptr, \"SetButtonConfigLeft\"},","    };"], ["        {3150, C<&IHidServer::SetMouseLibraryVersion>, \"SetMouseLibraryVersion\"}, //21.0.0+","        // What? -- {12010, nullptr, \"SetButtonConfigLeft\"},","    };"]),
+                (1093, ["Result IHidServer::SetSceneIdForPrivateApp(ClientAppletResourceUserId aruid, u64 scene_id) {","    const std::scoped_lock lock{m_ns2_state_mutex};","    try {","        m_ns2_scene_ids[aruid.pid] = scene_id;","    } catch (const std::bad_alloc&) {","        R_THROW(Kernel::ResultOutOfResource);","    }","    R_SUCCEED();","}","","Result IHidServer::GetSceneIdForPrivateApp(Out<u64> out_scene_id,","                                           ClientAppletResourceUserId aruid) {","    const std::scoped_lock lock{m_ns2_state_mutex};","    const auto it = m_ns2_scene_ids.find(aruid.pid);","    *out_scene_id = it != m_ns2_scene_ids.end() ? it->second : 0;","    R_SUCCEED();","}","","Result IHidServer::IsOunceVibrationDeviceMounted(","    Out<bool> out_is_mounted, Core::HID::VibrationDeviceHandle vibration_device_handle,","    ClientAppletResourceUserId aruid) {","    *out_is_mounted = false;","    if (IsVibrationHandleValid(vibration_device_handle).IsSuccess()) {","        const auto* device = GetResourceManager()->GetVibrationDevice(vibration_device_handle);","        if (device != nullptr) {","            *out_is_mounted = device->IsVibrationMounted();","        }","    }","    R_SUCCEED();","}","","Result IHidServer::SendVibrationValueInBool(","    bool is_vibrating, Core::HID::VibrationDeviceHandle vibration_device_handle,","    ClientAppletResourceUserId aruid) {"], ["Result IHidServer::SendVibrationValueInBool(","    bool is_vibrating, Core::HID::VibrationDeviceHandle vibration_device_handle,","    ClientAppletResourceUserId aruid) {"]),
+                (1526, ["Result IHidServer::InitializeNmouse(u8 pointer_type, s32 width, s32 height,","                                     ClientAppletResourceUserId aruid, u64 t_mem_size,","                                     InCopyHandle<Kernel::KTransferMemory> t_mem) {","    // Horizon 20+ Nmouse initialization: a copied, read-only TransferMemory,","    // pointer-type byte, state-range dimensions and the process ARUID.","    // With no emulated Joy-Con 2 sensor, the guest buffer has no samples.","    static_cast<void>(pointer_type);","    static_cast<void>(t_mem_size);","    static_cast<void>(t_mem);","    R_RETURN(SetNmousePointerRanges(width, height, aruid));","}","","Result IHidServer::FinalizeNmouse(ClientAppletResourceUserId aruid) {","    const std::scoped_lock lock{m_ns2_state_mutex};","    m_ns2_nmouse_ranges.erase(aruid.pid);","    m_ns2_merged_mouse_sources.erase(aruid.pid);","    R_SUCCEED();","}","","Result IHidServer::SetMergedNmouseSourceTypes(u32 source_types,","                                               ClientAppletResourceUserId aruid) {","    // Horizon S2 accepts a BitFlagSet of NmouseType. The documented","    // SDK masks this to 0x6; preserve only supported types, per ARUID.","    const std::scoped_lock lock{m_ns2_state_mutex};","    try {","        m_ns2_merged_mouse_sources[aruid.pid] = source_types & 0x6U;","    } catch (const std::bad_alloc&) {","        R_THROW(Kernel::ResultOutOfResource);","    }","    R_SUCCEED();","}","","Result IHidServer::InitializeNmouse2(u32 pointer_type, s32 width, s32 height,","                                      u32 unknown, ClientAppletResourceUserId aruid,","                                      u64 t_mem_size, InCopyHandle<Kernel::KTransferMemory> t_mem) {","    // CMIF decodes the guest COPY TransferMemory descriptor. No Nmouse sensor","    // is exposed: keep its user-space buffer untouched and report no samples.","    static_cast<void>(pointer_type);","    static_cast<void>(unknown);","    static_cast<void>(t_mem_size);","    static_cast<void>(t_mem);","    const std::scoped_lock lock{m_ns2_state_mutex};","    try {","        m_ns2_nmouse_ranges[aruid.pid] = {width, height};","    } catch (const std::bad_alloc&) {","        R_THROW(Kernel::ResultOutOfResource);","    }","    R_SUCCEED();","}","","Result IHidServer::SetNmousePointerRanges(s32 width, s32 height,","                                          ClientAppletResourceUserId aruid) {","    const std::scoped_lock lock{m_ns2_state_mutex};","    try {","        m_ns2_nmouse_ranges[aruid.pid] = {width, height};","    } catch (const std::bad_alloc&) {","        R_THROW(Kernel::ResultOutOfResource);","    }","    R_SUCCEED();","}","","Result IHidServer::GetNmousePointerRanges(Out<s32> out_width, Out<s32> out_height,","                                          ClientAppletResourceUserId aruid) {","    const std::scoped_lock lock{m_ns2_state_mutex};","    const auto it = m_ns2_nmouse_ranges.find(aruid.pid);","    *out_width = it != m_ns2_nmouse_ranges.end() ? it->second.width : 0;","    *out_height = it != m_ns2_nmouse_ranges.end() ? it->second.height : 0;","    R_SUCCEED();","}","","Result IHidServer::SetMouseLibraryVersion(ClientAppletResourceUserId aruid) {","    LOG_INFO(Service_HID, \"(STUBBED) called, applet_resource_user_id={}\", aruid.pid);",""], ["Result IHidServer::SetMouseLibraryVersion(ClientAppletResourceUserId aruid) {","    LOG_INFO(Service_HID, \"(STUBBED) called, applet_resource_user_id={}\", aruid.pid);",""]),
+            )
+            for index, newer, earlier in reversed(reverse):
+                assert lines[index:index + len(newer)] == newer, ("NS2 HID successor drift", path)
+                lines[index:index + len(newer)] = earlier
+            historical = "\n".join(lines).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == "c00ec7de86402abdd6693092f3e57917e80ab7ec", ("NS2 HID predecessor drift", path, actual)
+            print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if path == "ns2-runtime/hle/core/hle/service/hid/hid_server.h" and actual == "1f3b144324b9014d4e5db64f796019f0e9f4c9a6":
+            # Switch 2 scene/vibration/Nmouse additions are source-sealed here;
+            # the historical early-HLE receipt remains immutable.
+            lines = raw.decode("utf-8").split("\n")
+            reverse = (
+                (8, ["#include <mutex>","#include <unordered_map>","","#include \"core/hle/service/cmif_types.h\"","#include \"core/hle/service/service.h\"","#include \"hid_core/hid_types.h\""], ["#include \"core/hle/service/cmif_types.h\"","#include \"core/hle/service/service.h\"","#include \"hid_core/hid_types.h\""]),
+                (41, ["    // Switch 2 HID: process-scoped scene state, vibration and disconnected Nmouse.","    Result SetSceneIdForPrivateApp(ClientAppletResourceUserId aruid, u64 scene_id);","    Result GetSceneIdForPrivateApp(Out<u64> out_scene_id, ClientAppletResourceUserId aruid);","    Result IsOunceVibrationDeviceMounted(Out<bool> out_is_mounted,","                                         Core::HID::VibrationDeviceHandle vibration_device_handle,","                                         ClientAppletResourceUserId aruid);","    Result InitializeNmouse(u8 pointer_type, s32 width, s32 height,","                            ClientAppletResourceUserId aruid, u64 t_mem_size,","                            InCopyHandle<Kernel::KTransferMemory> t_mem);","    Result FinalizeNmouse(ClientAppletResourceUserId aruid);","    Result SetMergedNmouseSourceTypes(u32 source_types, ClientAppletResourceUserId aruid);","    Result InitializeNmouse2(u32 pointer_type, s32 width, s32 height, u32 unknown,","                             ClientAppletResourceUserId aruid, u64 t_mem_size,","                             InCopyHandle<Kernel::KTransferMemory> t_mem);","    Result SetNmousePointerRanges(s32 width, s32 height, ClientAppletResourceUserId aruid);","    Result GetNmousePointerRanges(Out<s32> out_width, Out<s32> out_height,","                                  ClientAppletResourceUserId aruid);","    Result CreateAppletResource(OutInterface<IAppletResource> out_applet_resource,","                                ClientAppletResourceUserId aruid);","    Result ActivateDebugPad(ClientAppletResourceUserId aruid);"], ["    Result CreateAppletResource(OutInterface<IAppletResource> out_applet_resource,","                                ClientAppletResourceUserId aruid);","    Result ActivateDebugPad(ClientAppletResourceUserId aruid);"]),
+                (290, ["    struct NmousePointerRanges {","        s32 width{};","        s32 height{};","    };","    // Per-applet state; guest service sessions may run concurrently.","    std::mutex m_ns2_state_mutex;","    std::unordered_map<u64, u64> m_ns2_scene_ids;","    std::unordered_map<u64, NmousePointerRanges> m_ns2_nmouse_ranges;","    std::unordered_map<u64, u32> m_ns2_merged_mouse_sources;","};","","} // namespace Service::HID"], ["};","","} // namespace Service::HID"]),
+            )
+            for index, newer, earlier in reversed(reverse):
+                assert lines[index:index + len(newer)] == newer, ("NS2 HID successor drift", path)
+                lines[index:index + len(newer)] = earlier
+            historical = "\n".join(lines).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == "cdc83734e27d5478f1981126950dd1f3f7a91227", ("NS2 HID predecessor drift", path, actual)
+            print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if (path == native_applet_proxy_path and
+            actual == "b1acd90a74bceb03c900a505e217f484f6ecd18f" and
+            blob == "849baf7bfe243734ee49c9e7617462665746d5f1"):
+            selected = raw.decode("utf-8")
+            newer = "        R_THROW(Result(ErrorModule::AM, 201));"
+            earlier = "        R_THROW(Result{ErrorModule::AM, 201});"
+            assert selected.count(newer) == 1 and earlier not in selected
+            historical = selected.replace(newer, earlier, 1).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == blob, ("Applet proxy macro predecessor drift", actual, blob)
+            print("ENCORE_NS2_APPLET_RESULT_MACRO_EXACT_REVERSE_PASS")
         assert actual == blob, (path, actual)
 else:
     assert not ns2_early_hle_present
@@ -1594,8 +1876,56 @@ else:
 print("ENCORE_DIAGNOSTICS_NET_POST_F07_OWNER_PASS",
       f"owners={len(post_f07_diagnostics_net_present)}")
 
+# Exact NS1/NS2 integration cohort: these 33 maintained C++/header owners
+# arrived after the historical 337-path F07 ledger. Review each source
+# through its pinned vendor tree; never re-date it as an F07 source.
+merged_ns1_ns2_owner_blobs = {
+    "eden-core/include/video_core/engines/maxwell_dma.h": "457361bc15a68aed231111e66e5617d6f9585d82",
+    "eden-core/overrides/video_core/cdma_pusher.h": "72338d9e2c07f2ebe019450c8b608df802738449",
+    "eden-core/overrides/video_core/host1x/control.h": "fc1c4e3d47bdcf8ef282da02410940432051fcca",
+    "eden-core/overrides/video_core/host1x/host1x.h": "d716ee97dd8be807d2f29219c4b0c7072ed6b028",
+    "eden-core/overrides/video_core/host1x/syncpoint_manager.h": "4f45e7ca10bef7fadf94b4d08a310dea953e7315",
+    "eden-core/src/core/hle/kernel/svc/svc_cache.cpp": "e891c2512eb6b7da9a7493af29f6623fc22adc40",
+    "eden-core/src/video_core/cdma_pusher.cpp": "91ace41154430a718cd163ceacd45b9607b63d43",
+    "eden-core/src/video_core/host1x/control.cpp": "fcbf4e092f054724b9fd4731c8dfec9917cea27a",
+    "eden-core/src/video_core/host1x/host1x.cpp": "1815363b19282be07bb4217dd01f369a38e53272",
+    "eden-core/src/video_core/host1x/nvdec.cpp": "c83ac98215fcf196ec8b2927ec9a421ddf95c9f7",
+    "eden-core/src/video_core/texture_cache/format_lookup_table.cpp": "a3b26a963dddab598610003563fde95d2472058e",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp": "eed2bdd4df5e5512098adfe262339ad8616b6c4c",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp": "86b9c091674da72d085d9b3128827705e6a8de9b",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp": "761a11801d03335d588b9f5758a9728e042a888b",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp": "65bd22b3821acfadddf8b1ac4f1bf31cb399940c",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp": "fc5a7314c680be851c2eb6ae0dee6d27e51c7f38",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp": "98afe1f9f09c0a1da45bfbfa0b0c7646e3067235",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp": "276d7f9f9e26b24b01e7afa3e9ea60dc189740f3",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp": "ce9c143a794294bdfa3db9997a4dd44798cafd49",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp": "a24136b8f088f6c2c2a46661214e420d25423a7a",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp": "6e6994343df4a1e3930495f8fd575c4329bfa8c4",
+    "eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp": "b28be237b6b0b15daa6a0ffdbcabbe2c498c309f",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp": "ea26c7464a02ce95af8709d8388e0899fe2c1425",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp": "ee938cd456ca3f10cdece6eaf93c4024fd587a9b",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp": "5ab0cf6d097436d16f32f71b20fb00cca0305e80",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_add.cpp": "7d4d49dfe8978c659ec3bee04d15ca38b47a2d08",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_fused_multiply_add.cpp": "94c55722641216e5474954b87ca3760b4974ed48",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_multiply.cpp": "4986be75ce991e9758066746a73841b78031c50a",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_add.cpp": "00d0eb71220ed43abc2b8c006a69ed8fd175164f",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_fused_multiply_add.cpp": "f56ece313ee619e02d317b9948ac9f091d13907c",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_min_max.cpp": "903e783f593b3be94e2e6611610f6fe8b11a781c",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp": "315c3c7c821016f23af7d2c6ffc8d7ca3a4ebe09",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp": "e112f14eed85a6ac974a1d81a92d6952dfe57df3",
+}
+merged_owner_present = set(merged_ns1_ns2_owner_blobs) & set(physical_all)
+assert not (merged_owner_present & set(research_paths))
+if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    assert merged_owner_present == set(merged_ns1_ns2_owner_blobs), (
+        'Missing integrated source owner', sorted(set(merged_ns1_ns2_owner_blobs) - merged_owner_present))
+    for relative, expected_blob in merged_ns1_ns2_owner_blobs.items():
+        data = (active / relative).read_bytes()
+        actual_blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert actual_blob == expected_blob, ('Integrated source blob drift', relative, actual_blob)
+
 physical = [p for p in physical_all
-            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | merged_owner_present | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |
@@ -1618,7 +1948,14 @@ warning_hygiene = {
 }
 assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_hygiene, (
     "Warning-hygiene active owner drift")
-assert len(physical) == 337, ("Shipping source catalogue changed", len(physical))
+# Preserve the immutable 337-path F07 receipt. On a failed integration,
+# identify every unclassified path so it can be assigned a real source owner
+# rather than treating an arbitrary new count as historical coverage.
+catalog_paths = set(re.findall(r"^\| `([^`]+)` \|", section, re.MULTILINE))
+assert len(catalog_paths) == 337, ("Historical F07 catalog drift",len(catalog_paths))
+assert len(physical) == 337, ("Shipping source catalogue changed",len(physical),
+    "unclassified=" + repr(sorted(set(physical) - catalog_paths)),
+    "missing=" + repr(sorted(catalog_paths - set(physical))))
 print("NS2_RESEARCH_SOURCE_LEDGER_PASS",
       f"unqualified={len(research_paths)}", f"historical={len(physical)}")
 graph = {}

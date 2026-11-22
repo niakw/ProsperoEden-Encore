@@ -79,14 +79,37 @@ for name in ("f32x2_add_cas", "f32x2_min_cas", "f32x2_max_cas"):
     expression=cas_owner[start:end]
     assert "storage_types.U32.element, F32[2], U32[1], spv::Scope::Device" in expression, name
     assert "storage_types.U32.element, F32[2], F32[2]" not in expression, name
-assert "const Id value{ctx.OpUnpackHalf2x16(ctx.F32[2], u32_value)}" in cas_owner
-assert "const Id u32_new_value{ctx.OpPackHalf2x16(ctx.U32[1], new_value)}" in cas_owner
-assert "ctx.OpAtomicCompareExchange(ctx.U32[1], word_pointer, scope_id, zero," in cas_owner
-assert "ctx.OpReturnValue(ctx.OpUnpackHalf2x16(ctx.F32[2], atomic_res))" in cas_owner
-assert "const Id value{ctx.OpLoad(memory_type, word_pointer)}" in cas_owner
-assert "const Id bitcast_value{matching_type ? value : ctx.OpBitcast(value_type, value)}" in cas_owner
-assert "ctx.OpAtomicCompareExchange(ctx.U32[1], word_pointer" in cas_owner
-assert "ctx.OpReturnValue(ctx.OpBitcast(value_type, atomic_res))" in cas_owner
+cas_loop=cas_owner.split("Id CasLoop(",1)[1].split("template <typename Desc>",1)[0]
+assert "const Id expected_var{ctx.AddLocalVariable(" in cas_loop
+assert "ctx.OpStore(expected_var, ctx.OpLoad(ctx.U32[1], word_pointer));" in cas_loop
+assert "const Id u32_value{ctx.OpLoad(ctx.U32[1], expected_var)}" in cas_loop
+assert "const Id value{ctx.OpLoad(memory_type, expected_var)}" in cas_loop
+assert cas_loop.count("ctx.OpStore(expected_var, atomic_res);")==2
+assert "const Id value{ctx.OpUnpackHalf2x16(ctx.F32[2], u32_value)}" in cas_loop
+assert "const Id u32_new_value{ctx.OpPackHalf2x16(ctx.U32[1], new_value)}" in cas_loop
+assert "ctx.OpAtomicCompareExchange(ctx.U32[1], word_pointer, scope_id, zero," in cas_loop
+assert "ctx.OpReturnValue(ctx.OpUnpackHalf2x16(ctx.F32[2], atomic_res))" in cas_loop
+assert "const Id bitcast_value{matching_type ? value : ctx.OpBitcast(value_type, value)}" in cas_loop
+assert "ctx.OpReturnValue(ctx.OpBitcast(value_type, atomic_res))" in cas_loop
+
+shared_retry=cas_owner.split("const auto make_function{[&](u32 mask, u32 size) {",1)[1].split(
+    "void EmitContext::DefineSharedMemoryFunctions",1)[0]
+assert "const Id expected_var{AddLocalVariable(" in shared_retry
+assert "OpStore(expected_var, OpLoad(U32[1], word_pointer));" in shared_retry
+assert "const Id old_value{OpLoad(U32[1], expected_var)}" in shared_retry
+assert "OpStore(expected_var, atomic_res);" in shared_retry
+
+storage_retry=cas_owner.split("void EmitContext::DefineWriteStorageCasLoopFunction(",1)[1].split(
+    "void EmitContext::DefineGlobalMemoryFunctions",1)[0]
+assert "const bool direct_int8{profile.support_int8 && profile.support_storage_buffer_8bit &&" in storage_retry
+assert "const bool direct_int16{profile.support_int16 && profile.support_storage_buffer_16bit &&" in storage_retry
+assert "profile.support_descriptor_aliasing" in storage_retry
+assert "if ((direct_int8 || !info.uses_int8) && (direct_int16 || !info.uses_int16))" in storage_retry
+assert "OpStore(expected_var, OpLoad(U32[1], pointer));" in storage_retry
+assert "const Id expected_value{OpLoad(U32[1], expected_var)}" in storage_retry
+assert "OpStore(expected_var, actual_value);" in storage_retry
+assert "if (profile.support_int8 && profile.support_int16)" not in storage_retry
+print("NS1_GPU55_SPIRV_CAS_RETRY_PASS cas_loop=1 shared_narrow=1 storage_narrow=1 helper_defined=1",flush=True)
 # CAS's frontend introduces an IR::Program argument. Both maintained
 # SPIR-V owners must have the SAME function signature and preserve their
 # respective Maxwell/49-bit-GMMU semantics.

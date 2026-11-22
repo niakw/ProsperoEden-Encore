@@ -72,6 +72,48 @@ def strip_p22_runtime_cpp(text: str) -> str:
     return text
 
 
+def strip_gpu18_d32_depth_plane(text: str) -> str:
+    """Reverse the exact newer NS1 D32S8/D32 depth-plane changes in audit copies.
+
+    The active PS5 vendor and the Vulkan generator MUST retain GPU-18.
+    P2.5/N57 historical SHA receipts predate these three reviewed hunks;
+    undo only them before replaying that frozen source witness.
+    """
+    if "mixed_d32_depth_plane" not in text:
+        return text
+    text = once(text,
+        "    // D32_FLOAT_S8_UINT and D32_FLOAT have the SAME 32-bit depth plane.\n"
+        "    // A whole-image byte ratio would halve/double the width and corrupt\n"
+        "    // Frostbite's depth-only copies. Copy only the depth plane via the\n"
+        "    // existing Vulkan image -> buffer -> image transfer, never raw DS texels.\n"
+        "    const bool mixed_d32_depth_plane =\n"
+        "        (src.info.format == PixelFormat::D32_FLOAT_S8_UINT &&\n"
+        "         dst.info.format == PixelFormat::D32_FLOAT) ||\n"
+        "        (src.info.format == PixelFormat::D32_FLOAT &&\n"
+        "         dst.info.format == PixelFormat::D32_FLOAT_S8_UINT);\n"
+        "    const auto bpp_in = mixed_d32_depth_plane\n"
+        "                            ? u32{4} : BytesPerBlock(src.info.format) / src_block_width;\n"
+        "    const auto bpp_out = mixed_d32_depth_plane\n"
+        "                             ? u32{4} : BytesPerBlock(dst.info.format) / dst_block_width;",
+        "    const auto bpp_in = BytesPerBlock(src.info.format) / src_block_width;\n"
+        "    const auto bpp_out = BytesPerBlock(dst.info.format) / dst_block_width;")
+    text = once(text,
+        "    if ((src_both || dst_both) && !mixed_d32_depth_plane &&\n"
+        "        (!src_both || !dst_both || src.info.format != dst.info.format)) {",
+        "    if ((src_both || dst_both) &&\n"
+        "        (!src_both || !dst_both || src.info.format != dst.info.format)) {")
+    text = once(text,
+        "        // Mixed D32S8/D32 transfers stage 32-bit depth only. Padding the\n"
+        "        // plane to the packed 64-bit depth+stencil allocation doubles PS5\n"
+        "        // scratch VRAM for a 1080p depth copy without moving more pixels.\n"
+        "        const size_t plane_bytes = pixels *\n"
+        "                                   (mixed_d32_depth_plane ? size_t{4} : img_bpp);",
+        "        const size_t plane_bytes = pixels * img_bpp;")
+    assert "mixed_d32_depth_plane" not in text, (
+        "Unreviewed GPU-18 depth-plane use after exact historical reversal")
+    return text
+
+
 def strip_p25_reinterpret(text: str) -> str:
     """Undo exactly the post-N57 P2.5 Vulkan reinterpret patches for SHA audit.
 
@@ -187,6 +229,133 @@ def strip_post_r23_active_image_pages(text: str) -> str:
     return text
 
 
+def strip_gpu51_x8d24_conversion(text: str) -> str:
+    """Reverse only GPU-51's X8_D24 conversion dispatch from the Vulkan cache TU."""
+    current = "e9191238ccddd94aa22570eba501fb05fff5b207"
+    predecessor = "16a8ad80677d992b557ec90283a8f3b483b97440"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-51 Vulkan texture source", blob)
+    text = once(text,
+        "        if (src_view.format == PixelFormat::X8_D24_UNORM) {\n"
+        "            return blit_image_helper.ConvertX8D24ToABGR8(dst, src_view);\n"
+        "        }\n",
+        "")
+    text = once(text,
+        "    case PixelFormat::X8_D24_UNORM:\n"
+        "        if (src_view.format == PixelFormat::A8B8G8R8_UNORM) {\n"
+        "            return blit_image_helper.ConvertABGR8ToX8D24(dst, src_view);\n"
+        "        }\n"
+        "        break;\n",
+        "")
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-51 Vulkan texture reversal did not restore GPU-47 owner")
+    print("ENCORE_NS1_GPU51_ASTC_TEXTURE_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
+def strip_gpu47_framebuffer_device_limits(text: str) -> str:
+    """Reverse only GPU-47's framebuffer-limit clamp from the Vulkan cache TU."""
+    current = "16a8ad80677d992b557ec90283a8f3b483b97440"
+    predecessor = "a12ef3892565ce80f17c30b3cb54fa337718ccff"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-47 Vulkan texture source", blob)
+    limit_block = (
+        "    // Vulkan framebuffer dimensions are device limits, not guest clip limits.\n"
+        "    // Attachment-less draws can retain a 32768x32768 surface clip even when\n"
+        "    // the host only exposes 16384. Clamp every framebuffer before creation.\n"
+        "    const auto clamp_extent = [&runtime](VkExtent2D extent) {\n"
+        "        extent.width =\n"
+        "            (std::max)(1U, (std::min)(extent.width, runtime.device.GetMaxFramebufferWidth()));\n"
+        "        extent.height =\n"
+        "            (std::max)(1U, (std::min)(extent.height, runtime.device.GetMaxFramebufferHeight()));\n"
+        "        return extent;\n"
+        "    };\n"
+        "    layers = (std::max)(1U, (std::min)(layers, runtime.device.GetMaxFramebufferLayers()));\n"
+    )
+    text = once(text, limit_block, "")
+    text = once(text,
+        "        const VkExtent2D extent = clamp_extent(\n"
+        "            {(std::min)(render_area.width, width), (std::min)(render_area.height, height)});",
+        "        const VkExtent2D extent{(std::min)(render_area.width, width),\n"
+        "                                (std::min)(render_area.height, height)};")
+    text = once(text, "    render_area = clamp_extent(render_area);\n", "")
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-47 Vulkan texture reversal did not restore GPU-46 owner")
+    print("ENCORE_NS1_GPU47_ASTC_TEXTURE_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
+def strip_gpu46_framebuffer_layer_source(text: str) -> str:
+    """Reverse only GPU-46's attachment-min layer policy from the Vulkan cache TU."""
+    current = "a12ef3892565ce80f17c30b3cb54fa337718ccff"
+    predecessor = "88c2221eae24b0b3c46e81dfdb27c3a833f77fc6"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-46 Vulkan texture source", blob)
+    for newer, older in (
+        ("    s32 num_layers = (std::numeric_limits<s32>::max)();",
+         "    s32 num_layers = 1;"),
+        ("        num_layers = (std::min)(num_layers, color_buffer->range.extent.layers);",
+         "        num_layers = (std::max)(num_layers, color_buffer->range.extent.layers);"),
+        ("        num_layers = (std::min)(num_layers, depth_buffer->range.extent.layers);",
+         "        num_layers = (std::max)(num_layers, depth_buffer->range.extent.layers);"),
+        ("    if (num_layers == (std::numeric_limits<s32>::max)()) {\n"
+         "        num_layers = 1;\n"
+         "    }\n"
+         "    layers = static_cast<u32>((std::max)(num_layers, 1));\n", ""),
+        ("        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+         "                                      layers, extent);",
+         "        CreateMixedSamplesFramebuffer(runtime, color_buffers, attachments, renderpass_key,\n"
+         "                                      static_cast<u32>((std::max)(num_layers, 1)), extent);"),
+        ("    if (do_resolve_color) {\n"
+         "        for (size_t index = 0; index < NUM_RT; ++index) {",
+         "    if (do_resolve_color) {\n"
+         "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+         "        for (size_t index = 0; index < NUM_RT; ++index) {"),
+        ("    if (do_resolve_depth_stencil) {\n"
+         "        const VkFormat vk_format =",
+         "    if (do_resolve_depth_stencil) {\n"
+         "        const u32 layers = static_cast<u32>((std::max)(num_layers, 1));\n"
+         "        const VkFormat vk_format ="),
+        ("    CreateVkFramebuffer(runtime, attachments, layers);",
+         "    CreateVkFramebuffer(runtime, attachments, static_cast<u32>((std::max)(num_layers, 1)));"),
+    ):
+        assert text.count(newer) == 1, ("GPU-46 texture source hunk drift", newer[:80])
+        text = text.replace(newer, older, 1)
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-46 Vulkan texture reversal did not restore exact predecessor")
+    print("ENCORE_NS1_GPU46_ASTC_TEXTURE_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
+def strip_gpu46_framebuffer_layer_header(text: str) -> str:
+    """Reverse only GPU-46's private Framebuffer layer accessor/state for old ASTC receipts."""
+    current = "6623a5d5164d4b09f1ea9089b62b7c5fdfdfaa05"
+    predecessor = "1b725abab76168d9787d9b062d7406df733cf49d"
+    blob = git_blob(text.encode())
+    if blob == predecessor:
+        return text
+    assert blob == current, ("Unreviewed GPU-46 framebuffer header source", blob)
+    text = once(text, (
+        "    [[nodiscard]] u32 Layers() const noexcept {\n"
+        "        return layers;\n"
+        "    }\n\n"
+    ), "")
+    text = once(text, (
+        "    u32 num_images = 0;\n"
+        "    u32 layers = 1;\n"
+    ), "    u32 num_images = 0;\n")
+    assert git_blob(text.encode()) == predecessor, (
+        "GPU-46 ASTC header reversal did not restore exact predecessor")
+    print("ENCORE_NS1_GPU46_ASTC_HEADER_EXACT_REVERSE_PASS", flush=True)
+    return text
+
+
 def reverse_r23_checked_astc(root: Path, name: str, text: str) -> str:
     """Restore the exact historic ASTC owner from the new TIR/retirement ABI."""
     receipts = {
@@ -286,7 +455,7 @@ def normalized(root: Path) -> dict[str, str]:
     for name, expected in AUXILIARY.items():
         path = root / ASTC / name
         if name == "vk_texture_cache.h":
-            selected = path.read_text()
+            selected = strip_gpu46_framebuffer_layer_header(path.read_text())
             if git_blob(selected.encode()) in {"7c2ceac388905a883abbcf8354d1b61e66ec2f77", "744bf30e1421dcce212146f7e26e9d90558676a8"}:
                 selected = strip_post_r23_active_image_pages(selected)
             n73 = strip_post_n73_msaa_attachment_header(
@@ -319,6 +488,17 @@ def normalized(root: Path) -> dict[str, str]:
     result = {}
     for name, (current_sha, previous_sha) in BASELINE.items():
         text = (root / OWNER / name).read_text()
+        if name == "vk_texture_cache_cost.cpp":
+            text = strip_gpu51_x8d24_conversion(text)
+            text = strip_gpu47_framebuffer_device_limits(text)
+            text = strip_gpu46_framebuffer_layer_source(text)
+            # The current vendor C++ is SHA-pinned before removing the newer
+            # GPU-18 depth-plane semantics on this historical AUDIT COPY.
+            if "mixed_d32_depth_plane" in text:
+                assert git_blob(text.encode()) == (
+                    "88c2221eae24b0b3c46e81dfdb27c3a833f77fc6"
+                ), "Unreviewed NS1 GPU-18 shipping Vulkan texture source"
+                text = strip_gpu18_d32_depth_plane(text)
         if name == "vk_texture_cache_cost.cpp":
             # R23 #18 adds target-independent mixed MSAA after N57/N73.
             # Reverse exactly six reviewed hunks to recover the immutable

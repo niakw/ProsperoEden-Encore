@@ -22,9 +22,18 @@ assert 'domain.waited_ge10ms.fetch_add' in methods
 assert 'domain.max_wait_ns.compare_exchange_weak' in methods
 assert 'EDEN_GUEST_CACHE_LOCK_TAIL frame=%u domain=%s' in report
 assert 'wait_ge1ms=%llu wait_ge10ms=%llu max_wait_ns=%llu' in report
-for source in (active,oracle):
-    assert source.count('::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);')==2
-    assert source.count('::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);')==1
+# The older generator still has one buffer-domain site. The merged
+# production GetFlushArea additionally checks GPU-dirty buffers independently.
+# Seal both cache domains and the paired lock_guard adopt_lock ownership.
+assert oracle.count('::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);')==2
+assert oracle.count('::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);')==1
+assert active.count('::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);')==2
+assert active.count('::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);')==2
+flush=active.split('VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(',1)[1].split('void RasterizerVulkan::InvalidateRegion(',1)[0]
+assert flush.count('::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);') == 1
+assert flush.count('::Eden::Performance::GuestCacheLock(buffer_cache.mutex, false);') == 1
+assert flush.count('std::lock_guard lock{texture_cache.mutex, std::adopt_lock};') == 1
+assert flush.count('std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};') == 1
 assert 'EDEN_GUEST_CACHE_DOMAIN frame=%u domain=%s' in report
 assert 'window_contended=%llu window_blocked=%llu window_wait_ns=%llu' in report
 assert report.index('if (detailed_gpu_profile.load') < report.index('EDEN_GUEST_CACHE_DOMAIN')

@@ -16,6 +16,19 @@ list(FILTER shader_sources EXCLUDE REGEX "frontend/maxwell/translate/impl/not_im
 set_property(TARGET shader_recompiler PROPERTY SOURCES "${shader_sources}")
 target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_NATIVE_PRMT}")
 
+# Maxwell control-flow: preserve vendor/sources/eden as the immutable oracle.
+# The native PS5 target selects exactly one maintained CFG owner carrying the
+# bounded direct PRET implementation; no second shader CFG is compiled.
+set(EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW
+    "${PORT_ROOT}/vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp")
+if(NOT EXISTS "${EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW}")
+    message(FATAL_ERROR "Missing maintained Maxwell control-flow source")
+endif()
+get_target_property(shader_cfg_sources shader_recompiler SOURCES)
+list(FILTER shader_cfg_sources EXCLUDE REGEX "frontend/maxwell/control_flow[.]cpp$")
+set_property(TARGET shader_recompiler PROPERTY SOURCES "${shader_cfg_sources}")
+target_sources(shader_recompiler PRIVATE "${EDEN_MAINTAINED_MAXWELL_CONTROL_FLOW}")
+
 # Native software blitter: preserve production backport and widened sizes.
 set(EDEN_MAINTAINED_NATIVE_BLITTER
     "${PORT_ROOT}/vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp")

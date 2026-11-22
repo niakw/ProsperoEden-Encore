@@ -6,6 +6,29 @@ on:
       - '.gitmodules'
       - 'tools/check-vendor-submodule.sh'
       - 'tools/check-vendored-vulkan-fork.py'
+      - 'tools/ns2/native_astc_vendor_parity.py'
+      - 'tools/check-native-dma-tiled-remap-host.py'
+      - 'tools/check-maintained-sw-blitter.py'
+      - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
+      - 'tools/check-ps5-dma-buffer-copy-span-host.py'
+      - 'tools/check-ps5-buffer-region-multipage-host.py'
+      - 'tools/check-ps5-buffer-readback-elision-host.py'
+      - 'tools/check-native-gpu-read-capture-host.py'
+      - 'tools/check-maintained-maxwell-prmt.py'
+      - 'tools/check-fc27-ssbo-engine-selection.py'
+      - 'tools/check-active-cmake-source-boundary.py'
+      - 'headless/CMakeLists.txt'
+      - 'tools/check-ns1-image-atomic-spirv-host.py'
+      - 'tools/ns1/test_image_atomic_real_spirv.cpp'
+      - 'tools/ns2/check_shared_ns2_spirv_compiler_host.py'
+      - 'tools/check-gpu-native-diagnostics.py'
+      - 'tools/check-maintained-fermi2d-variants.py'
+      - 'tools/check-fermi2d-address-widening-host.py'
+      - 'tools/check-nvdec-eagain-owner-selection-host.py'
+      - 'tools/check-ps5-active-texture-descriptor-host.py'
+      - 'tools/check-texture-convert-volume-host.py'
+      - 'tools/check-fc27-f07-blit-pipeline-state-host.py'
+      - 'tools/check-native-host1x-register-reentrant-host.py'
       - 'tools/vendor-eden-cpm.py'
       - 'tools/check-ns2-uuid-abi.py'
       - '.github/workflows/verify-vendor-submodule.yml'
@@ -19,6 +42,29 @@ on:
       - '.gitmodules'
       - 'tools/check-vendor-submodule.sh'
       - 'tools/check-vendored-vulkan-fork.py'
+      - 'tools/ns2/native_astc_vendor_parity.py'
+      - 'tools/check-native-dma-tiled-remap-host.py'
+      - 'tools/check-maintained-sw-blitter.py'
+      - 'tools/check-ps5-f07-inline-dma-buffer-elision-host.py'
+      - 'tools/check-ps5-dma-buffer-copy-span-host.py'
+      - 'tools/check-ps5-buffer-region-multipage-host.py'
+      - 'tools/check-ps5-buffer-readback-elision-host.py'
+      - 'tools/check-native-gpu-read-capture-host.py'
+      - 'tools/check-maintained-maxwell-prmt.py'
+      - 'tools/check-fc27-ssbo-engine-selection.py'
+      - 'tools/check-active-cmake-source-boundary.py'
+      - 'headless/CMakeLists.txt'
+      - 'tools/check-ns1-image-atomic-spirv-host.py'
+      - 'tools/ns1/test_image_atomic_real_spirv.cpp'
+      - 'tools/ns2/check_shared_ns2_spirv_compiler_host.py'
+      - 'tools/check-gpu-native-diagnostics.py'
+      - 'tools/check-maintained-fermi2d-variants.py'
+      - 'tools/check-fermi2d-address-widening-host.py'
+      - 'tools/check-nvdec-eagain-owner-selection-host.py'
+      - 'tools/check-ps5-active-texture-descriptor-host.py'
+      - 'tools/check-texture-convert-volume-host.py'
+      - 'tools/check-fc27-f07-blit-pipeline-state-host.py'
+      - 'tools/check-native-host1x-register-reentrant-host.py'
       - 'tools/vendor-eden-cpm.py'
       - 'tools/check-ns2-uuid-abi.py'
       - '.github/workflows/verify-vendor-submodule.yml'
@@ -35,8 +81,51 @@ jobs:
           persist-credentials: false
       - name: Verify exact pinned vendor SHA and original paths
         run: bash tools/check-vendor-submodule.sh
+      - name: Qualify maintained native SVC cache source selection
+        run: python3 -B tools/check-active-cmake-source-boundary.py
       - name: Check vendored dependency source and archive manifests
         run: python3 -B tools/check-vendored-deps.py
+      # The vendor gitlink selects the native Maxwell DMA C++ and Eden GOB
+      # decoder; validate those exact compiled functions before a PS5 build.
+      - name: Compile selected B0B5 tiled DMA remap (host UBSan)
+        run: python3 -B tools/check-native-dma-tiled-remap-host.py
+      - name: Check selected Fermi2D blitter padded GOB extents (host UBSan)
+        run: python3 -B tools/check-maintained-sw-blitter.py
+      - name: Test inline DMA fragmented GMMU invalidation (host UBSan)
+        run: python3 -B tools/check-ps5-f07-inline-dma-buffer-elision-host.py
+      - name: Check DMA BufferCache to TextureCache ownership (host UBSan)
+        run: |
+          python3 -B tools/check-ps5-dma-buffer-copy-span-host.py
+          python3 -B tools/check-ps5-buffer-region-multipage-host.py
+          python3 -B tools/check-ps5-buffer-readback-elision-host.py
+      - name: Check maintained Maxwell shader and control-flow source parity
+        run: |
+          python3 -B tools/check-maintained-maxwell-prmt.py
+          python3 -B tools/check-fc27-ssbo-engine-selection.py
+          python3 -B tools/ns2/check_shared_ns2_spirv_compiler_host.py
+      - name: Install bounded host-only SPIR-V validator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libboost-dev spirv-tools
+      - name: Validate genuine NS1 image atomic SPIR-V
+        run: python3 -B tools/check-ns1-image-atomic-spirv-host.py
+      - name: Check native Maxwell GPU source contracts and TIC/TSC bounds
+        run: |
+          python3 -B tools/check-gpu-native-diagnostics.py
+          python3 -B tools/check-ps5-active-texture-descriptor-host.py
+          python3 -B tools/check-texture-convert-volume-host.py
+          python3 -B tools/check-fc27-f07-blit-pipeline-state-host.py
+      - name: Verify selected Fermi2D source parity and pitch layer C++ guards (ASan UBSan)
+        run: |
+          python3 -B tools/check-maintained-fermi2d-variants.py
+          python3 -B tools/check-fermi2d-address-widening-host.py
+      - name: Verify Host1x CDMA/VIC, NVDEC teardown and stop-aware syncpoint ABI (ASan UBSan)
+        run: |
+          python3 -B tools/check-nvdec-eagain-owner-selection-host.py
+          python3 -B tools/check-native-host1x-register-reentrant-host.py
+          python3 -B vendor/tests/ps5_host1x_wait_notification_host.py
+          python3 -B tools/check-native-gpu-read-capture-host.py
+          python3 -B vendor/tests/ns2_gpu_identity_mapping_source.py
       - name: Check exact vendored Vulkan source fork
         run: python3 -B tools/check-vendored-vulkan-fork.py
       - name: Check exact vendored native RADV fork

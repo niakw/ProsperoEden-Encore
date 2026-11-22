@@ -4053,6 +4053,16 @@ apply_reviewed_delta("vulkan_rasterizer.cpp",
     "    // P0.3: an unregistered page has no buffer-backed GPU dirty bytes.\n    // Unknown, large and previously owned spans retain the original lock.\n    if (!::Eden::BufferPages::NeverRegistered(*cpu_addr, copy_size)) {\n        std::unique_lock<std::recursive_mutex> lock{buffer_cache.mutex};\n        if (!buffer_cache.InlineMemory(*cpu_addr, copy_size, memory)) {\n            buffer_cache.WriteMemory(*cpu_addr, copy_size);\n        }\n    }",
     "F07 elide never-owned inline DMA buffer cache mutex")
 
+# GPU-30 NS1 cross-game: InlineMemory and GPU cache invalidation accept ONE
+# physical CPU span. Across discontinuous GMMU mappings, preserve each
+# translated physical segment and the existing normal per-page invalidator.
+apply_reviewed_delta(
+    "vulkan_rasterizer.cpp",
+    "    gpu_memory->WriteBlockUnsafe(address, memory.data(), copy_size);",
+    "#ifdef PS5_NATIVE\n    // One GPU VA range can cross discontiguous device-memory pages. InlineMemory,\n    // texture invalidation and shader/query invalidation accept ONE CPU span:\n    // their first translated DAddr must never stand in for later GMMU pages.\n    // Single device-page writes keep the existing O(1) hot path. For fragmented\n    // but fully mapped spans, WriteBlock invalidates EACH translated physical\n    // segment before writing; it owns the same normal cache notifications.\n    if (!gpu_memory->IsGranularRange(address, copy_size) &&\n        !gpu_memory->IsContinuousRange(address, copy_size)) {\n        if (!gpu_memory->IsFullyMappedRange(address, copy_size)) {\n            return; // No partial writes into an invalid guest DMA mapping.\n        }\n        gpu_memory->WriteBlock(address, memory.data(), copy_size);\n        return;\n    }\n#endif\n    gpu_memory->WriteBlockUnsafe(address, memory.data(), copy_size);",
+    "GPU-30 native inline DMA physical GMMU cache invalidation"
+)
+
 # F07 P0.3: the shipping Eden backport already contains consecutive-TIC
 # reuse. Extend THAT reviewed source to a bounded nonadjacent draw-local memo.
 # Deletion, NULL results and blacklist passes retain the full lookup.
@@ -7052,6 +7062,26 @@ apply_reviewed_delta(
 apply_reviewed_delta("vk_texture_cache_cost.cpp", '        if (scaled_offset > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.src_offset.x)>::max)()) ||\n            scaled_width == 0 || scaled_width > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.extent.width)>::max)())) {\n', '        if ((static_cast<u64>(bpp_out) * static_cast<u64>(copy.src_offset.x)) % bpp_in ||\n            (static_cast<u64>(bpp_out) * copy.extent.width) % bpp_in ||\n            scaled_offset > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.src_offset.x)>::max)()) ||\n            scaled_width == 0 || scaled_width > static_cast<u64>(\n                (std::numeric_limits<decltype(copy.extent.width)>::max)())) {\n',
     "P2.5 Vulkan reinterpret exact source byte-scale ratio")
 
+# NVN D32S8 <-> D32 transfers copy the DEPTH plane only. The existing
+# Vulkan buffer staging path already preserves copy order and image barriers;
+# do not treat the 64-bit packed depth+stencil allocation as 64-bit depth.
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "    const auto bpp_in = BytesPerBlock(src.info.format) / src_block_width;\n    const auto bpp_out = BytesPerBlock(dst.info.format) / dst_block_width;",
+    "    // D32_FLOAT_S8_UINT and D32_FLOAT have the SAME 32-bit depth plane.\n    // A whole-image byte ratio would halve/double the width and corrupt\n    // Frostbite's depth-only copies. Copy only the depth plane via the\n    // existing Vulkan image -> buffer -> image transfer, never raw DS texels.\n    const bool mixed_d32_depth_plane =\n        (src.info.format == PixelFormat::D32_FLOAT_S8_UINT &&\n         dst.info.format == PixelFormat::D32_FLOAT) ||\n        (src.info.format == PixelFormat::D32_FLOAT &&\n         dst.info.format == PixelFormat::D32_FLOAT_S8_UINT);\n    const auto bpp_in = mixed_d32_depth_plane\n                            ? u32{4} : BytesPerBlock(src.info.format) / src_block_width;\n    const auto bpp_out = mixed_d32_depth_plane\n                             ? u32{4} : BytesPerBlock(dst.info.format) / dst_block_width;",
+    "P2.5 Vulkan reinterpret mixed D32 depth plane ratio")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "    if ((src_both || dst_both) &&\n        (!src_both || !dst_both || src.info.format != dst.info.format)) {\n        return;\n    }",
+    "    if ((src_both || dst_both) && !mixed_d32_depth_plane &&\n        (!src_both || !dst_both || src.info.format != dst.info.format)) {\n        return;\n    }",
+    "P2.5 Vulkan reinterpret mixed D32 depth plane admission")
+apply_reviewed_delta(
+    "vk_texture_cache_cost.cpp",
+    "        const size_t plane_bytes = pixels * img_bpp;",
+    "        // Mixed D32S8/D32 transfers stage 32-bit depth only. Padding the\n        // plane to the packed 64-bit depth+stencil allocation doubles PS5\n        // scratch VRAM for a 1080p depth copy without moving more pixels.\n        const size_t plane_bytes = pixels *\n                                   (mixed_d32_depth_plane ? size_t{4} : img_bpp);",
+    "P2.5 Vulkan reinterpret mixed D32 scratch plane bytes")
+
+
 # P0 unified native rasterizer vtable: the pin from the native vendor
 # backports still uses the old experimental macro. Select the *same*
 # PS5-native ABI under the one platform guard as all other renderer owners.
@@ -7090,6 +7120,47 @@ apply_reviewed_delta(
     '        auto resources = resource_owner->BuildResourcePlan(*compiled.info);\n        if (!resources || !registry.IsComputeCurrent(kepler_compute, *ticket))\n            return false;\n        // Match the authentic TIC/TSC handle order and write permissions\n',
     '        auto resources = resource_owner->BuildResourcePlan(*compiled.info);\n        if (!resources || !registry.IsComputeCurrent(kepler_compute, *ticket))\n            return false;\n        // The production Vulkan path must enforce the SAME authenticated\n        // atomic byte extents as the captured-QMD compiler. A successful\n        // SPIR-V module alone does not prove a dynamic atomic stays within\n        // its real, writable GMMU-backed SSBO. Reject before any image,\n        // descriptor or pipeline is allocated; never round the offset down.\n        if (!Shader::Ampere::NativeQmdAtomicSpansFitBindings(\n                std::span<const Shader::Ampere::NativeAtomicSpan>{\n                    compiled.native_atomic_spans.data(),\n                    compiled.native_atomic_spans.size()},\n                resources->storage_buffers))\n            return false;\n        // Match the authentic TIC/TSC handle order and write permissions\n',
     "P2.3 production native atomic span gate")
+
+# GPU-23 (NS1 cross-game): unlike MoltenVK, native RADV formerly left
+# integer color attachments with float SPIR-V fragment outputs. Vulkan
+# fragment-output numeric type must match attachment format on all drivers.
+# Preserve the desktop policy, require typed outputs for PS5_NATIVE.
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "        if (device.IsMoltenVK()) {\n            for (size_t i = 0; i < 8; ++i) {\n                const auto format = static_cast<Tegra::RenderTargetFormat>(key.state.color_formats[i]);",
+    "        // Vulkan requires signed/unsigned fragment outputs to match the\n        // attachment's numeric class. Previously this was enabled only on\n        // MoltenVK: native PS5 RADV would emit floats for integer targets,\n        // making color writes poison/undefined (Vulkan shader interfaces).\n        // Keep the existing desktop policy; fix the PS5 renderer's ABI.\n        const bool require_typed_fragment_outputs =\n#ifdef PS5_NATIVE\n            true;\n#else\n            device.IsMoltenVK();\n#endif\n        if (require_typed_fragment_outputs) {\n            for (size_t i = 0; i < 8; ++i) {\n                const auto format = static_cast<Tegra::RenderTargetFormat>(key.state.color_formats[i]);",
+    "GPU-23 PS5 integer framebuffer fragment output numeric type")
+
+# GPU-22: a DMA buffer-image transfer may resolve a GPU virtual span
+# to discontiguous device pages. The Vulkan cache accepts ONE physical
+# buffer allocation per ObtainBuffer: reject fragmented mappings and use
+# the existing page-aware MaxwellDMA software fallback instead. Unlike a
+# construction-time GMMU pointer, this reference follows channel binds.
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_rasterizer.h",
+    "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler);",
+    "    explicit AccelerateDMA(BufferCache& buffer_cache, TextureCache& texture_cache,\n                           Scheduler& scheduler, Tegra::MemoryManager* const& gpu_memory);",
+    "GPU-22 current-channel DMA image GMMU accessor declaration")
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_rasterizer.h",
+    "    BufferCache& buffer_cache;\n    TextureCache& texture_cache;\n    Scheduler& scheduler;\n};",
+    "    BufferCache& buffer_cache;\n    TextureCache& texture_cache;\n    Scheduler& scheduler;\n    // The GPU address space changes on channel binds. Reference the\n    // rasterizer's active pointer, not a stale construction-time channel.\n    Tegra::MemoryManager* const& gpu_memory;\n};",
+    "GPU-22 current-channel DMA image GMMU accessor owner")
+apply_reviewed_delta("vulkan_rasterizer.cpp",
+    "      accelerate_dma(buffer_cache, texture_cache, scheduler),",
+    "      accelerate_dma(buffer_cache, texture_cache, scheduler, gpu_memory),",
+    "GPU-22 bound graphics channel GMMU in DMA constructor")
+apply_reviewed_delta("vulkan_rasterizer.cpp",
+    "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_} {}",
+    "AccelerateDMA::AccelerateDMA(BufferCache& buffer_cache_, TextureCache& texture_cache_,\n                             Scheduler& scheduler_, Tegra::MemoryManager* const& gpu_memory_)\n    : buffer_cache{buffer_cache_}, texture_cache{texture_cache_}, scheduler{scheduler_},\n      gpu_memory{gpu_memory_} {}",
+    "GPU-22 DMA ctor tracks current channel GMMU")
+apply_reviewed_delta("vulkan_rasterizer.cpp",
+    "    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n    const auto image_id = texture_cache.DmaImageId(image_operand, IS_IMAGE_UPLOAD);",
+    "    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};\n#ifdef PS5_NATIVE\n    // ObtainBuffer translates only the first GPU VA into one CPU interval.\n    // A buffer spanning noncontiguous GMMU pages would upload/download\n    // unrelated physical memory. The normal MaxwellDMA CPU fallback\n    // supports a page-aware transfer for both image-copy directions.\n    // Test the channel currently bound to this rasterizer; no stale GMMU.\n    if (!gpu_memory ||\n        (!gpu_memory->IsGranularRange(buffer_operand.address, checked_bytes) &&\n         !gpu_memory->IsContinuousRange(buffer_operand.address, checked_bytes))) {\n        return false;\n    }\n#endif\n    const auto image_id = texture_cache.DmaImageId(image_operand, IS_IMAGE_UPLOAD);",
+    "GPU-22 DMA image GMMU continuity before cache mutation")
+
+# FC27/P0 native RunBuild lifetime is maintained in the real
+# encore-active Vulkan C++ owners, NOT in the immutable historical replay.
+# The pinned Eden generator predates RunBuild and cannot apply this delta.
+# check-vendored-vulkan-fork.py seals/reverses the exact reviewed native
+# owner on its audit copy before comparing the historical generator output.
 
 # P5: Keep the reproducible, byte-for-byte Vulkan texture cache in parity
 # with the pinned ASTC source owner. The template also instantiates on OpenGL

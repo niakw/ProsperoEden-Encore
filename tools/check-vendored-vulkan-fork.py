@@ -741,7 +741,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
     actual_vendor_pin = exact_vendor_pin
-    if exact_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd", "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267", "87964d15e91b6b6523c88682e5ca017f6e1a808b"}:
+    if exact_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd", "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267", "87964d15e91b6b6523c88682e5ca017f6e1a808b", "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a"}:
         # Merge commit retains precisely the source tree of the reviewed
         # GuestCacheLock predecessor; historical rollback uses its receipts.
         reviewed_tree = subprocess.check_output(
@@ -758,18 +758,19 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             'dbef23055897b1649f83c20cf7a0516e64f3d5cd': '9e28e5b83cf9c0f4086a33d6838904353a8fd541',
             'dc526f06d277dfa0a4afa48b4cf8b3153ebe7267': 'e21b2c70c00c50fc7d682150cb62e87fe856306c',
             '87964d15e91b6b6523c88682e5ca017f6e1a808b': 'c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab',
+            'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a': 'e125210acec0eaef51c6c038d200cc9c12981ace',
         }[exact_vendor_pin], ('Vendor reviewed source tree drift', exact_vendor_pin, reviewed_tree)
-        if exact_vendor_pin in {'dc526f06d277dfa0a4afa48b4cf8b3153ebe7267', '87964d15e91b6b6523c88682e5ca017f6e1a808b'}:
+        if exact_vendor_pin in {'dc526f06d277dfa0a4afa48b4cf8b3153ebe7267', '87964d15e91b6b6523c88682e5ca017f6e1a808b', 'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a'}:
             for relative, expected_sha in {
                 'encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp':
-                    '743bd9c9a4b9a3550c853ffa8fc06898c01618ff',
+                    ('7783c917d8b2f2e8d26c091d5507964fcf9d44dd' if exact_vendor_pin == 'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a' else '743bd9c9a4b9a3550c853ffa8fc06898c01618ff'),
                 'tests/r23_fw23_selfcontroller_240.py':
-                    'b03d2015ac00a0ce2e52bea002c931b330a55d96',
+                    ('ed80a6d62d5328c394a133b5f28112443e893f36' if exact_vendor_pin == 'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a' else 'b03d2015ac00a0ce2e52bea002c931b330a55d96'),
             }.items():
                 raw = (root / 'vendor' / relative).read_bytes()
                 digest = hashlib.sha1(b'blob ' + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
                 assert digest == expected_sha, ('NS2 SelfController 2400 successor drift', relative)
-        if exact_vendor_pin == '87964d15e91b6b6523c88682e5ca017f6e1a808b':
+        if exact_vendor_pin in {'87964d15e91b6b6523c88682e5ca017f6e1a808b', 'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a'}:
             for relative, expected_sha in {
                     "encore-active/eden-core/src/core/hle/service/service.cpp": "e2d52974d419b9ed4089da8baed104dd1dbd282d",
                     "encore-active/ns2-runtime/process/core/core.cpp": "a2721a630b8b32222ff586ea2db19ee726d4d5b9",
@@ -780,6 +781,9 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                 raw = (root / 'vendor' / relative).read_bytes()
                 digest = hashlib.sha1(b'blob ' + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
                 assert digest == expected_sha, ('NS2 NUP/IPC source drift', relative, digest)
+        if exact_vendor_pin == 'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a':
+            raw = (root/'vendor/encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.h').read_bytes()
+            assert hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == '571793025a886f3878e7b61ec9569faba84647f2'
         exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
         actual_vendor_pin = exact_vendor_pin
     # GPU-30 is compiled from this pinned C++ owner, but the frozen R23/P24

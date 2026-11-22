@@ -165,20 +165,21 @@ if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53
 # then replay the already-qualified FC27 prewarm + NVDRV source lineage.
 PS5_NS2_SELF_CONTROLLER_2400_PIN = "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267"
 PS5_NS2_NUP_IPC_PIN = "87964d15e91b6b6523c88682e5ca017f6e1a808b"
-if actual_vendor_pin in {PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN}:
-    assert selected == (PS5_NS2_NUP_IPC_PIN if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else PS5_NS2_SELF_CONTROLLER_2400_PIN)
+PS5_NS2_LICHII_ZEROED_PIN = "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a"
+if actual_vendor_pin in {PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN}:
+    assert selected == actual_vendor_pin
     tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
-    assert tree == ("c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c"), tree
+    assert tree == ("e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c"), tree
     for relative, expected in {
         "encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp":
-            "743bd9c9a4b9a3550c853ffa8fc06898c01618ff",
+            ("7783c917d8b2f2e8d26c091d5507964fcf9d44dd" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "743bd9c9a4b9a3550c853ffa8fc06898c01618ff"),
         "tests/r23_fw23_selfcontroller_240.py":
-            "b03d2015ac00a0ce2e52bea002c931b330a55d96",
+            ("ed80a6d62d5328c394a133b5f28112443e893f36" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "b03d2015ac00a0ce2e52bea002c931b330a55d96"),
     }.items():
         raw = (V / relative).read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
-    if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN:
+    if actual_vendor_pin in {PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN}:
         for relative, expected in {
                 "encore-active/eden-core/src/core/hle/service/service.cpp": "e2d52974d419b9ed4089da8baed104dd1dbd282d",
                 "encore-active/ns2-runtime/process/core/core.cpp": "a2721a630b8b32222ff586ea2db19ee726d4d5b9",
@@ -190,15 +191,19 @@ if actual_vendor_pin in {PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN}:
             digest = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
             assert digest == expected, ("NS2 NUP/IPC successor drift", relative, digest)
         REVIEWED_PINS.add(PS5_NS2_NUP_IPC_PIN)
+    if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN:
+        raw = (V/"encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.h").read_bytes()
+        assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "571793025a886f3878e7b61ec9569faba84647f2"
+        REVIEWED_PINS.add(PS5_NS2_LICHII_ZEROED_PIN)
     REVIEWED_PINS.add(PS5_NS2_SELF_CONTROLLER_2400_PIN)
     selected = "dbef23055897b1649f83c20cf7a0516e64f3d5cd"
 
 PS5_FC27_RECENT_PREWARM_PIN = "dbef23055897b1649f83c20cf7a0516e64f3d5cd"
-if actual_vendor_pin in {PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN}:
+if actual_vendor_pin in {PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN}:
     assert selected == PS5_FC27_RECENT_PREWARM_PIN
     new_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
-    assert new_tree == ("c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541"), ("FC27 prewarm vendor tree drift", new_tree)
+    assert new_tree == ("e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541"), ("FC27 prewarm vendor tree drift", new_tree)
     source_path = V / "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
     raw = source_path.read_bytes()
     current_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -213,16 +218,16 @@ PS5_FC27_NVDRV_EXIT_BLOBS = {
     "tests/shutdown_teardown_lifetime_source.py": "6f3ff15f43b456ea79ba8f1dc275b690c1e11606",
     "tests/shutdown_general_channel_lifetime_source.py": "4e25852f84f9bc8e73454ef6ac1bac4d9270ac3a",
 }
-if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN}:
+if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN}:
     assert selected == PS5_FC27_NVDRV_EXIT_PIN
     actual_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
-    assert actual_tree == ("c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541" if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN else "067c72d30a71a79faefd1ad14876e2a46f02755c"), actual_tree
+    assert actual_tree == ("e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541" if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN else "067c72d30a71a79faefd1ad14876e2a46f02755c"), actual_tree
     active_nvdrv_blobs = ({**PS5_FC27_NVDRV_EXIT_BLOBS, **{
         "encore-active/ns2-runtime/process/core/core.cpp": "a2721a630b8b32222ff586ea2db19ee726d4d5b9",
         "tests/shutdown_general_channel_lifetime_source.py": "4bb0ef388211b1c9110afce55ef80983e5050782",
         "tests/shutdown_teardown_lifetime_source.py": "e40deaae0b1f3aab6a5a12f7978be470b3ee0463",
-    }} if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else PS5_FC27_NVDRV_EXIT_BLOBS)
+    }} if actual_vendor_pin in {PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN} else PS5_FC27_NVDRV_EXIT_BLOBS)
     for path, expected_blob in active_nvdrv_blobs.items():
         raw = (V / path).read_bytes()
         actual_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()

@@ -394,6 +394,35 @@ int main(){
     preferences[4]=4;preferences[6]=0;
     require(!CalculateNativeImageRequirements(preferences,1),"reject unknown color layout");
 
+    // Common feature-image sizing (GSV 391/691/1291/1691) is requirements-only.
+    // It follows Lichii's 4/4/8-Bpp formats and keeps the observed MKW 0x38
+    // camera format without widening actual image creation/mapping.
+    std::array<u32,16> feature{};
+    feature[2]=(63U<<16)|127U; // 128x64
+    feature[4]=4;feature[5]=8;feature[6]=1;
+    auto feature_req=CalculateFeatureImageRequirements(feature,2);
+    require(feature_req && feature_req->size==65536 && feature_req->alignment==4096,
+            "feature RGBA8 requirements");
+    feature[6]=4;
+    feature_req=CalculateFeatureImageRequirements(feature,2);
+    require(feature_req && feature_req->size==65536,
+            "feature RGB10A2 keeps four-byte geometry");
+    feature[6]=5;feature[5]=16;
+    feature_req=CalculateFeatureImageRequirements(feature,2);
+    require(feature_req && feature_req->size==131072 && feature_req->alignment==4096,
+            "feature RGBA16F uses eight-byte geometry");
+    feature={};feature[2]=(215U<<16)|383U;feature[4]=7;feature[5]=24;feature[6]=0x38;
+    feature_req=CalculateFeatureImageRequirements(feature,3);
+    require(feature_req && feature_req->size==0x120000 && feature_req->alignment==0x2000,
+            "observed MKW 384x216 x3 feature-camera requirements");
+    feature[6]=0x99;
+    require(!CalculateFeatureImageRequirements(feature,3),
+            "unknown feature format fails closed");
+    feature={};feature[2]=(63U<<16)|127U;feature[4]=4;feature[5]=8;feature[6]=1;
+    feature_req=CalculateFeatureImageRequirements(feature,0);
+    require(feature_req && feature_req->size==32768,
+            "feature sizing follows SDK zero-count minimum-one convention");
+
     // Sparse NVGPU MMU ABI and mapping lifetime, sourced from latest pinned NS2.
     N::NativeSparseRemapEntry entry{};
     entry.flags=0x1000;entry.kind=6;entry.fallback_kind=6;
@@ -1291,15 +1320,22 @@ int main(){
             images.Get(*first_image)->preference[1] == 1 &&
             images.Count() == 2,
             "GSV 429 owns distinct image IDs linked to genuine NVMap backing");
-    require(images.ConfigureWindowPool(*first_image, true) &&
+    require(images.ConfigureWindowPool(*first_image, 2, true) &&
             images.Get(*first_image)->window_pool &&
-            !images.ConfigureWindowPool(*first_image, true) &&
-            !images.Destroy(*first_image) &&
-            images.ConfigureWindowPool(*first_image, false) &&
-            !images.Get(*first_image)->window_pool,
-            "GSV 314/315 require explicit window alias retirement");
-    require(!images.ConfigureWindowPool(0xffffffffU, true),
-            "GSV native window alias rejects unowned image IDs");
+            images.Get(*first_image)->window_pool_count == 2 &&
+            images.Get(*second_image)->window_pool &&
+            images.Get(*second_image)->window_pool_count == 0 &&
+            !images.ConfigureWindowPool(*first_image, 1, true) &&
+            !images.Destroy(*first_image) && !images.Destroy(*second_image) &&
+            images.ConfigureWindowPool(*first_image, 0, false) &&
+            !images.Get(*first_image)->window_pool &&
+            !images.Get(*second_image)->window_pool &&
+            images.Get(*first_image)->window_pool_count == 0,
+            "GSV 315 records a two-image alias group and 314 retires it exactly");
+    require(!images.ConfigureWindowPool(0xffffffffU, 1, true) &&
+            !images.ConfigureWindowPool(*first_image, 3, true) &&
+            !images.ConfigureWindowPool(*first_image, 0, false),
+            "GSV native window alias rejects unowned, incomplete and stale groups");
     require(!images.Destroy(0) && !images.Destroy(0xffffffffU) &&
             images.Destroy(*first_image) &&
             !images.Get(*first_image).has_value() &&
@@ -1354,10 +1390,25 @@ int main(){
     }
     video[1] = 5;
     require(!pools.Add(0x80000001u, 2, 20, 131072, video[2], *video_layout) &&
-            !pools.Lookup(0x80000002u) &&
-            pools.Remove(0x80000000u) && pools.ImageCount() == 0 &&
-            !pools.Remove(0x80000000u),
-            "GSV 911/912 reject overlapping and stale image pools");
+            !pools.Lookup(0x80000002u),
+            "GSV 911 rejects overlapping and out-of-range image pools");
+    require(pools.GetByImage(0x80000001u) &&
+            pools.GetByImage(0x80000001u)->remaining == 2 &&
+            pools.RetireImage(0x80000001u) &&
+            pools.ImageCount() == 1 &&
+            !pools.Lookup(0x80000001u) &&
+            pools.Lookup(0x80000000u) &&
+            pools.Get(0x80000000u)->remaining == 1 &&
+            !pools.RetireImage(0x80000001u) &&
+            pools.RetireImage(0x80000000u) &&
+            pools.ImageCount() == 0 &&
+            !pools.Get(0x80000000u),
+            "GSV 912 retires decoder images individually and removes the pool only at the last image");
+    require(pools.Add(0x80000010u, 2, 20, 131072, video[2], *video_layout) &&
+            pools.Remove(0x80000010u) &&
+            pools.ImageCount() == 0 &&
+            !pools.Remove(0x80000010u),
+            "GSV 1212 removes the complete GameChat image pool by its base handle");
     const NativeVideoImageLayout unaddressable{
         0x1fffff000ULL, 0x1000U, 0xfffff000U, 0x100U, false, 0, 9};
     require(!pools.Add(0x80000010u, 3, 20, 0x200000000ULL,

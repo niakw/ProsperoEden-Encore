@@ -82,7 +82,8 @@ assert 'm_syncpoint = id;' in source
 assert 'GetGuestSyncpointValue(id)' in source
 assert 'm_bootstrap.GpuContextReady()' in supervisor
 assert 'const bool shape = cmd == 902 ? w[1] == 0 :' in supervisor
-assert 'cmd == 905 ? w[1] == 1 : cmd == 906 && w[1] == 3;' in supervisor
+assert 'cmd == 905 ? (w[1] == 1 && w[2] <= 0xffU) :' in supervisor
+assert 'cmd == 906 && w[1] == 3;' in supervisor
 assert 'GetObjectFromHandle' in supervisor
 assert 'IsValidVirtualAddressRange(' in supervisor
 assert 'record->guest_address + view->offset != expected.address' in supervisor

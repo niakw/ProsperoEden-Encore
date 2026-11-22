@@ -188,9 +188,127 @@ def main()->int:
     ):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
     init_video = text.split('void IGraphicsSupervisor::InitializeVideoCodecContext(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    open_video = text.split('void IGraphicsSupervisor::OpenVideoDecoderSession(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    assert 'cmd == 905 ? (w[1] == 1 && w[2] <= 0xffU)' in open_video
+    assert 'ctx.AddMoveObject(client);' in open_video
+    assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in open_video
     for command in (1001, 1002):
         assert '{'+str(command)+', &IGraphicsSupervisor::UnavailableVideoEncoder' in text
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in text
+    # ID-known / ABI-unknown commands must use fail-closed generic TIPC fallbacks,
+    # not fabricated payload-aware stubs. Display fallback lives in the same owner.
+    gsv_fallback = text.split(
+        'Result IGraphicsSupervisor::HandleSyncRequest(Kernel::KServerSession& session,', 1
+    )[1].split('void IGraphicsSupervisor::Initialize(', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in gsv_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in gsv_fallback
+    vi2_fallback = text.split(
+        'Result HandleSyncRequest(Kernel::KServerSession& session,HLERequestContext& ctx) override {', 1
+    )[1].split('private:', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in vi2_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in vi2_fallback
+    gpu_worker = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp').read_text()
+    worker_fallback = gpu_worker.split(
+        'Result IGpuWorker::HandleSyncRequest(Kernel::KServerSession& session,', 1
+    )[1].split('namespace GW = GpuWorkerProtocol;', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in worker_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in worker_fallback
+    for fw19 in (201, 202, 203, 204, 205, 207):
+        assert ('{'+str(fw19)+', &IGpuWorker::') not in gpu_worker
+    gpu_session = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp').read_text()
+    gpu_fallback = gpu_session.split(
+        'Result IGpuSession::HandleSyncRequest(Kernel::KServerSession& session,', 1
+    )[1].split('static Result Translate(', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in gpu_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in gpu_fallback
+    # 1691 is no longer ABI-unknown: it shares the reviewed feature-image
+    # requirements-only calculator with 391/691/1291 below.
+    for unknown in (12, 311, 312, 321, 327, 361, 424, 425, 437, 494,
+                    1061, 1091, 1601, 1602, 1603, 1611, 1612):
+        assert ('{'+str(unknown)+', &IGraphicsSupervisor::') not in text
+    for unknown in (13, 53, 107, 113, 301, 302):
+        assert ('{'+str(unknown)+',&IVi2Session::') not in text
+    assert '{102, &IGpuSession::' not in gpu_session
+    # Each known optional GSV command is registered in the selected C++ owner.
+    # These are not implementations: no fabricated success/handles for unsupported features.
+    known_optional_gsv = (
+        187, 211, 212, 213, 214, 215, 493, 603, 612, 613, 614, 615,
+        616, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 632,
+        633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
+        654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
+        666, 667, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
+        1022, 1203, 1301, 1302, 1325, 1326, 1411, 1501, 1502,
+    )
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 68
+    for command in known_optional_gsv:
+        assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
+            f'optional GSV command {command} missing explicit fail-closed dispatch')
+    explicit_reject = text.split(
+        'void IGraphicsSupervisor::UnavailableDocumentedFeature(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'IPC::ResponseBuilder rb{ctx, 2};' in explicit_reject
+    assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in explicit_reject
+    assert 'ResultSuccess' not in explicit_reject
+    assert 'ctx.CommandBuffer()' not in explicit_reject
+    # Syncpt 21 has no public ABI: reject explicitly, never return fabricated zero-success.
+    assert '{21, &INativeSyncptSession::Unknown21, "Unknown21"}' in text
+    syncpt21 = text.split('void Unknown21(HLERequestContext& ctx) {', 1)[1].split(
+        '    void QueryCounter(HLERequestContext& ctx) {', 1)[0]
+    assert 'Kernel::ResultNotImplemented.raw' in syncpt21
+    assert 'NativeTipcReplyWords' not in syncpt21
+    # GSV 202: no input payload and one real MOVE session handle.
+    syncpt_open = text.split('void IGraphicsSupervisor::OpenSyncptSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'packet[0] != 16 + 202 || packet[1] != 0' in syncpt_open
+    assert 'Kernel::ResultInvalidCombination.raw' in syncpt_open
+    assert 'ctx.AddMoveObject(client);' in syncpt_open
+    assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in syncpt_open
+    assert '{101, &IGraphicsSupervisor::CompleteBootstrap' in text
+    assert '{301, &IGraphicsSupervisor::InitializeDisplayContext' in text
+    assert '{305, &IGraphicsSupervisor::OpenDisplaySession' in text
+    # GSV child sessions use true MOVE descriptors and never leak on OOM.
+    camera = text.split(
+        'void IGraphicsSupervisor::OpenCameraSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'const u64 version = u64{packet[2]} | (u64{packet[3]} << 32);' in camera
+    assert 'packet[0] != 16 + 602 || packet[1] != 2 || version != 1' in camera
+    for command, method in ((602, 'OpenCameraSession'), (1202, 'OpenChatSession')):
+        body = text.split(
+            f'void IGraphicsSupervisor::{method}(HLERequestContext& ctx) {{', 1)[1].split('\n}', 1)[0]
+        assert 'IPC::ResponseBuilder rb{ctx, 2, 1, 0};' not in body
+        assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in body
+        assert 'ctx.AddMoveObject(client);' in body
+        assert 'client->Close(system.Kernel());' in body
+        assert body.index('ctx.AddMoveObject(client);') < body.index(
+            'IPC::ResponseBuilder rb{ctx, 2, 0, 1};')
+    chat = text.split(
+        'void IGraphicsSupervisor::OpenChatSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'packet[0] != 16 + 1202 || packet[1] != 0' in chat
+    feature_admission = text.split(
+        'void IGraphicsSupervisor::InitializeFeatureContext(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'command == 601 || command == 1201' in feature_admission
+    assert 'packet[0] == 16 + command && packet[1] == 0' in feature_admission
+    assert 'ResultInvalidCombination.raw' in feature_admission
+    # S2 control-GPU pause and scheduling options must fail closed exactly.
+    ctrl_gpu = (ROOT / 'vendor/encore-active/ns2-runtime/nvdrv/core/hle/'
+                'service/nvdrv/devices/nvhost_ctrl_gpu.cpp').read_text()
+    for num, raw in ((0x10, '0xC0084710U'), (0x1e, '0xC010471EU')):
+        case = ctrl_gpu.split(f'case 0x{num:x}: // Switch 2 ', 1)[1].split('case ', 1)[0]
+        assert f'if (command.raw != {raw}) break;' in case
+        assert 'return NvResult::NotImplemented;' in case
+    # Common feature-image sizing IDs use the same requirements-only layout
+    # calculator. This must not create/map images or fabricate unknown formats.
+    for command in (391, 691, 1291, 1691):
+        assert ('{'+str(command)+', &IGraphicsSupervisor::CalculateFeatureImagePoolRequirements') in text
+        assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') not in text
+    feature_sizer = text.split(
+        'void IGraphicsSupervisor::CalculateFeatureImagePoolRequirements(HLERequestContext& ctx) {', 1
+    )[1].split('static std::optional<NativeImageRequirements> ParseNativeImageRequest', 1)[0]
+    assert 'CalculateFeatureImageRequirements(preference, packet[18])' in feature_sizer
+    assert 'packet[1] == 17' in feature_sizer
+    assert 'CreateNativeImage' not in feature_sizer
+    layout_source = (ROOT / 'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h').read_text()
+    for proof in ('case 1:', 'case 4:', 'case 5:', 'case 0x38:',
+                  'const u64 count = std::max<u64>(requested_count, 1);',
+                  'const u64 alignment = std::max<u64>(4096, 64 * block_rows);'):
+        assert proof in layout_source
     for proof in ('command == 901',
                   'packet[0] == command + 0x10 && packet[1] == 0',
                   'm_bootstrap.GpuContextReady()',
@@ -215,6 +333,9 @@ def main()->int:
         'it->second.address_space == as',
         'const auto as = FindRegisteredGpuAddressSpace(packet[3]);',
         'nvmap.UnpinHandle(pool->backing)',
+        'm_video_pools.GetByImage(packet[2])',
+        'm_video_pools.RetireImage(packet[2])',
+        'pool->remaining > 1',
         'm_video_pools.Remove(pool->first_id)',
         'for (const auto& [key, mapping] : m_video_mappings)',
     ):
@@ -280,10 +401,21 @@ def main()->int:
 
     for command in (314,315):
         assert '{'+str(command)+', &IGraphicsSupervisor::ConfigureNativeWindowImagePool' in text
-    assert 'm_native_images.ConfigureWindowPool(packet[2], create)' in text
+    window_pool = text.split('void IGraphicsSupervisor::ConfigureNativeWindowImagePool(', 1)[1].split(
+        'void IGraphicsSupervisor::DestroyNativeImage(', 1)[0]
+    assert 'const u32 count = create ? packet[3] : 0;' in window_pool
+    assert 'm_native_images.ConfigureWindowPool(packet[2], count, create)' in window_pool
+    assert 'packet[3] == 1' not in window_pool
     assert '!image->window_pool' in text
     for command, method in ((429,"CreateNativeImage"), (430,"DestroyNativeImage")):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
+    video_destroy = text.split('void IGraphicsSupervisor::DestroyVideoImagePool(', 1)[1].split(
+        'void IGraphicsSupervisor::GetCpuVideoImageDescriptor(', 1)[0]
+    assert 'chat_pool ? m_video_pools.Get(packet[2])' in video_destroy
+    assert 'm_video_pools.GetByImage(packet[2])' in video_destroy
+    assert 'if (!chat_pool && pool->remaining > 1)' in video_destroy
+    assert 'm_video_pools.RetireImage(packet[2])' in video_destroy
+    assert 'chat_pool ? m_video_pools.Remove(pool->first_id)' in video_destroy
     # Native present can fail allocations before or after its NVMap dupe.
     # A later shared_ptr control-block OOM must release the duplicate and
     # the service must return a refused image instead of throwing into IPC.

@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**150**), `HANDLER PARTIEL INDIQUÉ` (28), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `AUCUN HANDLER INDIQUÉ` (**24**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un stub ou un refus demeure M ; les deux retries GPFIFO sont maintenant reliés au vrai chemin de soumission, et non à un stub.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (150), `HANDLER PARTIEL INDIQUÉ` (28), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), **`REFUS PARENT EXPLICITE` (11)**, **`REFUS GÉNÉRIQUE EXPLICITE` (13)**, `AUCUN HANDLER INDIQUÉ` (**0**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les 11 commandes encodeur sont bloquées par le parent GSV 1001/1002 `UnavailableVideoEncoder`; les 13 ioctls profiler passent réellement par `nx2_stub_device::Stub`. Aucun de ces 24 refus n'est une implémentation fonctionnelle.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,26 +30,24 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> Périmètre **316 commandes NS2**, 12 tableaux, branche issue du moteur `7d05c7c7` / vendor `a8c91708`. Le vendor actif `c4cd9663` (SHA complet `c4cd96636b6110a606e8aeb5834d93c64edc89b9`) est fixé par le gitlink de ce lot. Aucun résultat PS5 n'est présumé.
+> Périmètre **316 commandes NS2**, 12 tableaux, branche dédiée moteur/vendor. Les statuts fonctionnels restent séparés des stubs/refus ; aucun test PS5 n'est déduit du compteur.
 
-- **F (fonctionnel au niveau source)** : **C=150**, P=27, C/P=1, M=107, U=25, V=6. En plus des 4 GSV qualifiés (101,202,301,305) et des deux calculs partiels (391,691), les deux chemins GPFIFO **retry** sont désormais réels en source, d'après le contrat SwitchBrew « same as » et les méthodes C++ existantes.
-- **R (traitement renseigné)** : **261/316 (82,6 %)** avec handler/stub/refus, **55/316 (17,4 %)** sans traitement renseigné : 24 M (11 encodeur, 13 profiler), 25 U, 6 V.
+- **F (fonctionnel source)** : C=150, P=27, C/P=1, M=107, U=25, V=6.
+- **R (traitement renseigné)** : **285/316 (90,2 %)** ont maintenant un traitement explicite. Il ne reste **aucune commande M sans traitement**. Les **31/316 non représentées** sont uniquement les 25 U à ABI insuffisante et 6 variantes V hors version.
 
-| Statut fonctionnel | Total | Traitement indiqué | Aucun handler indiqué |
+| Statut fonctionnel | Total | Traitement indiqué | Aucun traitement individuel |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **150** | 150 | 0 |
+| C — implémentation source | 150 | 150 | 0 |
 | P — partielle | 27 | 27 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
-| M — non implémenté | **107** | **83** (71 stubs, 12 refus) | **24** |
+| M — non implémenté | 107 | **107** (71 stubs, 12 refus directs, 11 refus parent, 13 refus génériques) | **0** |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
-| **Total** | **316** | **261** | **55** |
+| **Total** | **316** | **285** | **31** |
 
-**Correctif critique de réponse IPC GameChat/caméra** (vendor `c4cd9663`) : `602` et `1202` retournaient une vraie session kernel via `ctx.AddMoveObject` tout en déclarant à tort `ResponseBuilder{ctx,2,1,0}` (COPY). Ils déclarent maintenant `{ctx,2,0,1}` (MOVE), publient le handle avant de construire la réponse, valident la forme TIPC et libèrent la référence créatrice si `AddMoveObject` manque de mémoire. `601`/`1201` refusent un payload invalide au lieu de réussir toujours. **Statut F conservé P** : la fonctionnalité des sessions enfants n'est pas entièrement qualifiée. Les compteurs restent C=150, P=27, C/P=1, M=107, U=25, V=6 et R=261/316. Pas de validation console.
+**Fermeture des 24 dernières M sans handler** : les 11 commandes `VideoEncoderCreatorSession/VideoEncoderSession` sont volontairement inatteignables car GSV `1001/1002` renvoie `ResultNotImplemented` et ne crée aucune session encodeur factice. Les 13 ioctls `/dev/nvhost-prof-dev-gpu` utilisent déjà le fallback NVHOST NS2 : tout node inconnu `/dev/nvhost-*` est ouvert comme `nx2_stub_device`, dont `Ioctl1/2/3` renvoient `NvResult::NotImplemented` sans modifier les sorties. **Ces lignes restent M**.
 
-**Raccordement GPU à forte valeur** : `NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY` H:0x19 reprend `SubmitGPFIFOBase1(..., kickoff=false)` comme H:0x08, avec validation direction/groupe/cmd pour l'ioctl variable ; `NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2_RETRY` H:0x1c reprend `SubmitGPFIFOBase2` comme H:0x1b via Ioctl2 (raw `0xC018481C`). Les deux routes gardent les contrôles réels d'adresse invitée, de droits de l'owner FD, de taille/OOM et de publication des fences. Contrats : [SwitchBrew NV services](https://switchbrew.org/wiki/NV_services). **Ce branchement ne démontre pas un GPU submit réussi sur PS5.**
-
-**Autres travaux sur cette branche** : 71 stubs nommés et 12 refus explicites classés M, GSV 391/691 classés P pour calcul borné, 4 GSV requalifiés C au niveau source. Restent 24 M (encodeur/profiler sans service actif), 25 U à ABI incomplète, 6 variantes FW19, 28 P/C/P à qualifier. Ne pas créer de faux périphérique profiler ou encodeur pour augmenter R.
+**Travaux fonctionnels déjà présents sur cette branche** : C=150 après qualification source de 101/202/301/305 et raccordement réel des deux retries GPFIFO ; 391/691 restent P ; correctif COPY→MOVE sur 602/1202 ; refus explicites GSV/NVDRV sans faux succès. Prochaine étape : réduire les 28 P/C-P, puis seulement traiter U/V avec preuve ABI/version. Aucun build PS5 ni première frame revendiquée.
 
 ---
 
@@ -301,17 +299,17 @@ Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Le
 
 | Cmd | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore | Écart / raison |
 | --- | --- | --- | --- | --- | --- |
-| 1 | CreateVideoEncoderSession | M | AUCUN HANDLER INDIQUÉ | — | aucune session encodeur NS2 sélectionnée |
-| 4 | GetOutputEvent | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 5 | Start | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 100 | InitializeVideoEncoder | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 101 | Configure | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 102 | GetBufferSize | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 108 | Encode | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 110 | GetBuffer | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 111 | SetParameters | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 112 | FinalizeVideoEncoder | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
-| 206 | Stop | M | AUCUN HANDLER INDIQUÉ | — | encodeur non implémenté |
+| 1 | CreateVideoEncoderSession | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 4 | GetOutputEvent | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 5 | Start | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 100 | InitializeVideoEncoder | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 101 | Configure | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 102 | GetBufferSize | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 108 | Encode | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 110 | GetBuffer | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 111 | SetParameters | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 112 | FinalizeVideoEncoder | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
+| 206 | Stop | M | REFUS PARENT EXPLICITE | UnavailableVideoEncoder (GSV 1001/1002) | service encodeur non créé : le parent GSV refuse NotImplemented, donc cette commande de session est volontairement inatteignable sans faux handle |
 
 
 ## 6. GpuSession
@@ -454,19 +452,19 @@ Les quatre commandes TSG encore classées **M** sont explicitement fail-closed :
 
 | Ioctl | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore | Écart / raison |
 | --- | --- | --- | --- | --- | --- |
-| 0x40085001 | NVGPU_PROFILER_IOCTL_BIND_CONTEXT | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x40105002 | NVGPU_PROFILER_IOCTL_RESERVE_PM_RESOURCE | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x40085003 | NVGPU_PROFILER_IOCTL_RELEASE_PM_RESOURCE | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0xC0305004 | NVGPU_PROFILER_IOCTL_ALLOC_PMA_STREAM | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x00005005 | NVGPU_PROFILER_IOCTL_FREE_PMA_STREAM | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x00005006 | NVGPU_PROFILER_IOCTL_BIND_PM_RESOURCES | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x00005007 | NVGPU_PROFILER_IOCTL_UNBIND_PM_RESOURCES | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0xC0285008 | NVGPU_PROFILER_IOCTL_PMA_STREAM_UPDATE_GET_PUT | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0xC0205009 | NVGPU_PROFILER_IOCTL_EXEC_REG_OPS | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x0000500A | NVGPU_PROFILER_IOCTL_UNBIND_CONTEXT | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x4010500B | NVGPU_PROFILER_IOCTL_VAB_RESERVE | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x0000500C | NVGPU_PROFILER_IOCTL_VAB_RELEASE | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
-| 0x4010500D | NVGPU_PROFILER_IOCTL_VAB_FLUSH_STATE | M | AUCUN HANDLER INDIQUÉ | — | device profiler S2 non implémenté dans le runtime actif |
+| 0x40085001 | NVGPU_PROFILER_IOCTL_BIND_CONTEXT | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x40105002 | NVGPU_PROFILER_IOCTL_RESERVE_PM_RESOURCE | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x40085003 | NVGPU_PROFILER_IOCTL_RELEASE_PM_RESOURCE | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0xC0305004 | NVGPU_PROFILER_IOCTL_ALLOC_PMA_STREAM | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x00005005 | NVGPU_PROFILER_IOCTL_FREE_PMA_STREAM | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x00005006 | NVGPU_PROFILER_IOCTL_BIND_PM_RESOURCES | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x00005007 | NVGPU_PROFILER_IOCTL_UNBIND_PM_RESOURCES | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0xC0285008 | NVGPU_PROFILER_IOCTL_PMA_STREAM_UPDATE_GET_PUT | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0xC0205009 | NVGPU_PROFILER_IOCTL_EXEC_REG_OPS | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x0000500A | NVGPU_PROFILER_IOCTL_UNBIND_CONTEXT | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x4010500B | NVGPU_PROFILER_IOCTL_VAB_RESERVE | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x0000500C | NVGPU_PROFILER_IOCTL_VAB_RELEASE | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
+| 0x4010500D | NVGPU_PROFILER_IOCTL_VAB_FLUSH_STATE | M | REFUS GÉNÉRIQUE EXPLICITE | nx2_stub_device::Stub | le node /dev/nvhost-prof-dev-gpu passe par le fallback /dev/nvhost-* actif ; ioctl renvoie NvResult::NotImplemented sans sortie/état fabriqué |
 
 
 Ces commandes sont documentées par SwitchBrew mais restent **hors P0 boot/gameplay** tant qu’aucun titre retail ne prouve leur usage. Elles doivent rester explicitement non implémentées plutôt que recevoir des succès génériques.

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2026 Oliv3rmoon
 // SPDX-License-Identifier: GPL-3.0-or-later
-// File selection for the nine extensions recognized by Encore's game picker:
-// NSP/XCI, their NCZ-compressed NSZ/XCZ variants, and direct NRO/NSO/NCA/NAX/KIP.
+// File selection for base NSP/XCI, compressed NSZ/XCZ and decrypted
+// DNSP/DXCI, plus direct NRO/NSO/NCA/NAX/KIP. NUP is gated separately.
 // Direct inputs can require external program contents and are not guaranteed
 // to boot. Internal .ncz, NSO LZ4 and ZBIC/zstd are not standalone games.
 #pragma once
@@ -25,11 +25,13 @@ inline bool EndsWithNoCase(std::string_view name, std::string_view suffix) {
 }
 // Read as an NSP: a package of NCAs.
 inline bool IsPackageFile(std::string_view name) {
-    return EndsWithNoCase(name, ".nsp") || EndsWithNoCase(name, ".nsz");
+    return EndsWithNoCase(name, ".nsp") || EndsWithNoCase(name, ".nsz") ||
+           EndsWithNoCase(name, ".dnsp");
 }
 // Read as an XCI: a game card's image.
 inline bool IsCardImageFile(std::string_view name) {
-    return EndsWithNoCase(name, ".xci") || EndsWithNoCase(name, ".xcz");
+    return EndsWithNoCase(name, ".xci") || EndsWithNoCase(name, ".xcz") ||
+           EndsWithNoCase(name, ".dxci");
 }
 inline bool IsNupFile(std::string_view name) {
 #ifdef EDEN_NUP_V1_RUNTIME

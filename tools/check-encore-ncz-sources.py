@@ -26,6 +26,26 @@ for rel,sha,marker in pairs:
     digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()
     assert digest==sha,("Pinned Eden changed",rel)
     text=(active/rel).read_text()
+    if rel == "loader/loader.cpp" and hashlib.sha1(b"blob "+str(len(text.encode())).encode()+b"\0"+text.encode()).hexdigest() == "0b4448bcf4bef93b9d2a54cf96256d5b81d9424e":
+        # Normalize exact DNSP/DXCI/XCZ successor on an audit copy only.
+        for previous, successor in (
+            ("    if (type == FileType::XCI) {\n        FileSys::XCI xci{file, program_id, program_index};\n        if (xci.GetStatus() != ResultStatus::Success) {\n            return nullptr;\n        }\n\n        auto secure_nsp = xci.GetSecurePartitionNSP();\n        if (secure_nsp == nullptr || secure_nsp->GetStatus() != ResultStatus::Success) {\n            return nullptr;\n        }\n\n        return secure_nsp;\n    }\n", "    if (type == FileType::XCI) {\n        FileSys::XCI xci{file, program_id, program_index};\n        if (xci.GetStatus() == ResultStatus::Success) {\n            auto secure_nsp = xci.GetSecurePartitionNSP();\n            if (secure_nsp && secure_nsp->GetStatus() == ResultStatus::Success) {\n                return secure_nsp;\n            }\n        }\n        // Lichii: some XCZ dumps are PFS0-shaped compressed packages,\n        // not XCI/HFS0 cards. Try the existing NSP+NCZ parser, only for XCZ.\n        const auto extension = Common::ToLower(\n            std::string(Common::FS::GetExtensionFromFilename(file->GetName())));\n        if (extension == \"xcz\") {\n            auto nsp = std::make_shared<FileSys::NSP>(file, program_id, program_index);\n            if (nsp->GetStatus() == ResultStatus::Success) return nsp;\n        }\n        return nullptr;\n    }\n"),
+            ("    else if (extension == \"xci\" || extension == \"xcz\")\n        return FileType::XCI;\n    else if (extension == \"nsp\" || extension == \"nsz\")\n        return FileType::NSP;", "    else if (extension == \"xci\" || extension == \"xcz\" || extension == \"dxci\")\n        return FileType::XCI;\n    else if (extension == \"nsp\" || extension == \"nsz\" || extension == \"dnsp\")\n        return FileType::NSP;"),
+        ):
+            assert text.count(successor)==1, ("Unexpected format source drift", rel)
+            text=text.replace(successor, previous, 1)
+        raw_before=text.encode()
+        assert hashlib.sha1(b"blob "+str(len(raw_before)).encode()+b"\0"+raw_before).hexdigest() == "7943b817dfa8118b150c4970d6513ec179262af0"
+    if rel == "file_sys/card_image.cpp" and hashlib.sha1(b"blob "+str(len(text.encode())).encode()+b"\0"+text.encode()).hexdigest() == "5d5e6b40099b18768dadd39ba839881989e7ff6f":
+        # Normalize exact DNSP/DXCI/XCZ successor on an audit copy only.
+        for previous, successor in (
+            ("        // Ensure the header magic matches. If it doesn't, this isn't a card image header.\n        if (header.magic != Common::MakeMagic('H', 'E', 'A', 'D')) {\n            return Loader::ResultStatus::ErrorBadXCIHeader;\n        }", "        // Ensure the header magic matches. If it doesn't, this isn't a card image header.\n        // NxEmu DXCI keeps the XCI/HFS0 layout but changes HEAD -> DXCI.\n        // Admit that decrypted variant only with the matching extension; do\n        // not relax ordinary encrypted game-card validation.\n        const auto name = Common::ToLower(file->GetName());\n        const bool decrypted_card = name.ends_with(\".dxci\") &&\n            header.magic == Common::MakeMagic('D', 'X', 'C', 'I');\n        if (header.magic != Common::MakeMagic('H', 'E', 'A', 'D') &&\n            !decrypted_card) {\n            return Loader::ResultStatus::ErrorBadXCIHeader;\n        }"),
+            ("", "#include \"common/string_util.h\"\n"),
+        ):
+            assert text.count(successor)==1, ("Unexpected format source drift", rel)
+            text=text.replace(successor, previous, 1)
+        raw_before=text.encode()
+        assert hashlib.sha1(b"blob "+str(len(raw_before)).encode()+b"\0"+raw_before).hexdigest() == "c3dbb891b10ae2f576566d5a8a5f1a871f94c3d0"
     old, new, header = next((a,b,c) for item,a,b,c in expected_deltas if item==rel)
     assert raw.decode().count(old)==1,("pinned source changed",rel)
     expected=raw.decode().replace(old,new)

@@ -839,6 +839,24 @@ foreach(eden_aoc_relative IN ITEMS
     list(APPEND core_sources "${eden_aoc_maintained}")
 endforeach()
 list(APPEND core_sources "${EDEN_PORT_DIR}/ncz.cpp")
+# DNSP/DXCI reuse the same NSP/XCI/NCA source graph. The decrypted
+# headers and plaintext sections differ; never add a second loader.
+foreach(eden_plaintext_content_relative IN ITEMS
+        "file_sys/content_archive.cpp"
+        "file_sys/fssystem/fssystem_nca_reader.cpp")
+    set(eden_plaintext_content_owner
+        "${PORT_ROOT}/vendor/encore-active/eden-core/src/core/${eden_plaintext_content_relative}")
+    if(NOT EXISTS "${eden_plaintext_content_owner}")
+        message(FATAL_ERROR "Missing maintained plaintext NCA source: ${eden_plaintext_content_owner}")
+    endif()
+    list(FIND core_sources "${eden_plaintext_content_relative}"
+        eden_plaintext_content_pinned)
+    if(eden_plaintext_content_pinned LESS 0)
+        message(FATAL_ERROR "Pinned NCA source moved: ${eden_plaintext_content_relative}")
+    endif()
+    list(REMOVE_ITEM core_sources "${eden_plaintext_content_relative}")
+    list(APPEND core_sources "${eden_plaintext_content_owner}")
+endforeach()
 # Both the adapter and the two NCZ-aware full source owners use this header.
 target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")
 # The decompressor is the same pinned zstd library as the existing native NSO

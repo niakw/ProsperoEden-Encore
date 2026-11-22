@@ -4233,8 +4233,8 @@ pe::ui::FolderInfo EdenServices::folder_info(const std::string& directory) {
     }
     const std::string roms_path = JoinPath(directory, "roms");
     const int regular = CountFiles(roms_path,
-                                  {".nsp", ".xci", ".nsz", ".xcz", ".nro", ".nso",
-                                   ".nca", ".nax", ".kip"});
+                                  {".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
+                                   ".nro", ".nso", ".nca", ".nax", ".kip", ".nup"});
     const int extracted = CountExeFsFolders(roms_path);
     info.games = regular < 0 || extracted < 0 ? -1 : regular + extracted;
     return info;

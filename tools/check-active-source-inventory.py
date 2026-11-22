@@ -1853,6 +1853,31 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
             ).hexdigest()
             assert actual == "cdc83734e27d5478f1981126950dd1f3f7a91227", ("NS2 HID predecessor drift", path, actual)
             print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if (path == "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp" and (
+            actual == "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912"
+            and blob == "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c"
+        ):
+            # Reviewed NX2 extra typed interface getters (50/70/80/90).
+            # Reverse only these exact bytes in the receipt copy.
+            _proxy = raw.decode("utf-8")
+            _proxy_includes = '#include "core/hle/service/nx2_stub_interface.h"\n'
+            assert _proxy.count(_proxy_includes) == 1
+            _proxy = _proxy.replace(_proxy_includes, "", 1)
+            for _cmd in (50, 70, 80, 90):
+                _line = f'        {{{_cmd}, &IApplicationProxy::GetNx2Interface, "Nx2Getter{_cmd}"}},\n'
+                assert _proxy.count(_line) == 1, _cmd
+                _proxy = _proxy.replace(_line, "", 1)
+            _method = ('   \nvoid IApplicationProxy::GetNx2Interface(HLERequestContext& ctx) {\n'
+                       '    ReturnNx2StubInterface(system, ctx, "IApplicationProxy");\n'
+                       '}\n')
+            assert _proxy.count(_method) == 1
+            _proxy = _proxy.replace(_method + "\n", "", 1)
+            _raw = _proxy.encode("utf-8")
+            actual = hashlib.sha1(
+                b"blob " + str(len(_raw)).encode() + b"\0" + _raw
+            ).hexdigest()
+            assert actual == blob, ("NX2 applet proxy reverse drift", actual)
+            print("ENCORE_NS2_APPLET_NX2_INTERFACE_EXACT_REVERSE_PASS")
         if (path == native_applet_proxy_path and
             actual == "b1acd90a74bceb03c900a505e217f484f6ecd18f" and
             blob == "849baf7bfe243734ee49c9e7617462665746d5f1"):

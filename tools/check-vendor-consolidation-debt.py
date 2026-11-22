@@ -819,6 +819,69 @@ _hle_bytes = hle_maintained.encode("utf-8")
 _hle_blob = hashlib.sha1(
     b"blob " + str(len(_hle_bytes)).encode() + b"\0" + _hle_bytes
 ).hexdigest()
+# The shipping HLE predecessor was extended by the reviewed NX2
+# typed-placeholder replies in vendor f5c80c9. Reconstruct exactly the
+# pre-NX2 HLE snapshot on an AUDIT COPY before applying the historical
+# NS1 optional-noop reversal below. Assert both complete Git blob hashes.
+if _hle_blob == "e388765fb2cf372adc01c2c3ec174955659ccc2a":
+    _h = hle_maintained
+    for _include in (
+        "#include <set>\n",
+        "#include <mutex>\n",
+        "#include <string>\n",
+        '#include "core/hle/kernel/k_thread.h"\n',
+        '#include "core/hle/kernel/k_event.h"\n',
+        '#include "core/hle/service/kernel_helpers.h"\n',
+        '#include "core/hle/service/nx2_stub_interface.h"\n',
+    ):
+        assert _h.count(_include) == 1, ("NX2 HLE include drift", _include)
+        _h = _h.replace(_include, "", 1)
+    _new_teardown = """    // Wait for requests and retire the per-service placeholder event.
+    const auto guard = ServiceFrameworkBase::LockService();
+    if (stub_event) {
+        stub_context->CloseEvent(stub_event);
+    }"""
+    _old_teardown = """    // Wait for other threads to release access before destroying
+    const auto guard = ServiceFrameworkBase::LockService();"""
+    assert _h.count(_new_teardown) == 1
+    _h = _h.replace(_new_teardown, _old_teardown, 1)
+    _start = _h.index("namespace {\n\nconstexpr u32 Nx2StubWords")
+    _end = _h.index("void ServiceFrameworkBase::RegisterHandlersBase(", _start)
+    _stub = _h[_start:_end]
+    assert all(item in _stub for item in (
+        "bool IsNx2PlaceholderCaller(", "void ServiceFrameworkBase::StubReplyZeroed(",
+        "void ServiceFrameworkBase::StubReplyEvent(",
+        "void ServiceFrameworkBase::StubReplyInterface("))
+    _h = _h[:_start] + _h[_end:]
+    _start = _h.index(
+        "    if (Settings::values.use_auto_stub ||",
+        _h.index("void ServiceFrameworkBase::ReportUnimplementedFunction("))
+    _end = _h.index(
+        "}\n\nvoid ServiceFrameworkBase::InvokeRequest(", _start)
+    _old_report = """    system.GetReporter().SaveUnimplementedFunctionReport(ctx, ctx.GetCommand(), function_name, service_name);
+    UNIMPLEMENTED_MSG("Unknown / unimplemented {}", fmt::to_string(buf));
+    if (Settings::values.use_auto_stub) {
+        LOG_WARNING(Service, "Using auto stub fallback!");
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(ResultSuccess);
+    } else if (info != nullptr) {
+        // not implemented yet on Encore: this command ID is known, but no handler contract exists.
+        // Fail closed instead of leaving request words in the outgoing IPC buffer or faking success.
+        LOG_WARNING(Service, "Known command has no Encore implementation: {}::{} ({})", service_name,
+                    ctx.GetCommand(), function_name);
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(Kernel::ResultNotImplemented);
+    }
+"""
+    _h = _h[:_start] + _old_report + _h[_end:]
+    _raw = _h.encode("utf-8")
+    _reconstructed = hashlib.sha1(
+        b"blob " + str(len(_raw)).encode() + b"\0" + _raw
+    ).hexdigest()
+    assert _reconstructed == "be358b0db916b14ab3e92b22a67ec56505b3d86e", (
+        "Lichii NX2 HLE predecessor changed", _reconstructed)
+    hle_maintained = _h
+    _hle_blob = _reconstructed
 if _hle_blob == "be358b0db916b14ab3e92b22a67ec56505b3d86e":
     _h = hle_maintained
     _include = '#include "core/hle/kernel/svc_results.h"\n'

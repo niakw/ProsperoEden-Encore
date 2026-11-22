@@ -43,6 +43,26 @@ POST_GPU_DIRTY_COMPLETE_TYPE = {
     "gpu_gl_native_dev.cpp": "091431333f6f05e7e81c691051d64771cab4a5dd",
 }
 GPU_DIRTY_COMPLETE_TYPE_INCLUDE = '#include "core/gpu_dirty_memory_manager.h"\n'
+
+# NS1/NS2 GPU lifetime and channel safety successors in the maintained
+# Vulkan owner. These exact reviewed hunks are reversed ONLY for the G21
+# historical oracle; no shipping GPU source is modified.
+VULKAN_LIFETIME_CURRENT = "90b8f8c99878b21558b3996e8b1e95a5fc6ad9a6"
+VULKAN_LIFETIME_PREVIOUS = "842a0289f75bc2a0763285173e4616060348ec22"
+VULKAN_LIFETIME_REVERSE = (
+    ("\n    void ReleaseChannel(Control::ChannelState& to_release) {\n#if defined(PS5_NATIVE)\n        // Queue retirement on the existing GPU worker. Only the worker\n        // reads/mutates the channels map: the NVDRV service thread must not\n        // race GPU::BindChannel while looking up a channel on FD close.\n        // The caller keeps to_release alive until this synchronous barrier\n        // completes. Verify the exact owner epoch on the worker side.\n        const s32 channel_id = to_release.bind_id;\n        const auto* expected = &to_release;\n        const u64 fence = RequestSyncOperation([this, channel_id, expected] {\n            const auto it = channels.find(channel_id);\n            if (it == channels.end() || it->second.get() != expected)\n                return; // An old FD cannot retire a reused channel ID.\n            const auto owner = it->second;\n            scheduler.RetireChannel(owner.get());\n            if (current_channel == owner.get()) {\n                current_channel = nullptr;\n                bound_channel = -1;\n            }\n            if (owner->initialized)\n                renderer->ReadRasterizer()->ReleaseChannel(owner->bind_id);\n            channels.erase(it);\n        });\n        gpu_thread.TickGPU(is_async);\n        WaitForSyncOperation(fence);\n#else\n        // Host/non-PS5 scheduler has no native epoch-retirement API.\n        // Preserve its original behavior; no platform-wide ABI change.\n        UNIMPLEMENTED();\n#endif\n    }\n",
+     "\n    void ReleaseChannel(Control::ChannelState& to_release) {\n        UNIMPLEMENTED();\n    }\n"),
+    ("    [[nodiscard]] u64 RequestSyncOperation(Func&& action) {\n        std::unique_lock lck{sync_request_mutex};\n        // Publish a fence only AFTER the queue owns its callback. If\n        // allocating this node throws, no fence is skipped: subsequent waits\n        // must still be reachable by TickWork's completed-request counter.\n        sync_requests.emplace_back(std::forward<Func>(action));\n        return ++last_sync_fence;\n    }\n",
+     "    [[nodiscard]] u64 RequestSyncOperation(Func&& action) {\n        std::unique_lock lck{sync_request_mutex};\n        const u64 fence = ++last_sync_fence;\n        sync_requests.emplace_back(std::forward<Func>(action));\n        return fence;\n    }\n"),
+    ("    void WaitForSyncOperation(const u64 fence) {\n        std::unique_lock lck{sync_request_mutex};\n        while (!shutting_down.load(std::memory_order_relaxed) &&\n               CurrentSyncRequestFence() < fence) {\n            // A failed GPU worker cannot advance this fence. Preserve the\n            // published exception for every waiter instead of hanging the\n            // launcher/guest-stop path indefinitely.\n            if (auto failure = ::Eden::PeekGpuFailure()) {\n                std::rethrow_exception(failure);\n            }\n            sync_request_cv.wait_for(lck, std::chrono::milliseconds(100));\n        }\n        if (auto failure = ::Eden::PeekGpuFailure()) {\n            std::rethrow_exception(failure);\n        }\n    }\n",
+     "    void WaitForSyncOperation(const u64 fence) {\n        std::unique_lock lck{sync_request_mutex};\n        sync_request_cv.wait(lck, [this, fence] { return CurrentSyncRequestFence() >= fence; });\n    }\n"),
+    ("            auto request = std::move(sync_requests.front());\n            sync_requests.pop_front();\n            // Keep the RAII lock's ownership state consistent if a GPU\n            // callback throws. Unlocking the raw mutex left lck owning an\n            // already-unlocked mutex during exception unwinding.\n            lck.unlock();\n            request();\n            current_sync_fence.fetch_add(1, std::memory_order_release);\n            lck.lock();\n            sync_request_cv.notify_all();\n        }",
+     "            auto request = std::move(sync_requests.front());\n            sync_requests.pop_front();\n            sync_request_mutex.unlock();\n            request();\n            current_sync_fence.fetch_add(1, std::memory_order_release);\n            sync_request_mutex.lock();\n            sync_request_cv.notify_all();\n        }"),
+    ("        }\n        raster_area.preemtive = true;\n        const u64 fence = RequestSyncOperation([this, raster_area]() {\n            renderer->ReadRasterizer()->FlushRegion(raster_area.start_address, raster_area.end_address - raster_area.start_address);\n        });",
+     "        }\n        raster_area.preemtive = true;\n        const u64 fence = RequestSyncOperation([this, &raster_area]() {\n            renderer->ReadRasterizer()->FlushRegion(raster_area.start_address, raster_area.end_address - raster_area.start_address);\n        });"),
+    ("    Tegra::Control::Scheduler scheduler;\n    ::Common::unordered_map<s32, std::shared_ptr<Tegra::Control::ChannelState>> channels;\n    // A guest may close an NVDRV GPU FD before its first successful bind.\n    // ReleaseChannel compares this pointer even for an uninitialized owner.\n    Tegra::Control::ChannelState* current_channel{};\n    s32 bound_channel{-1};\n",
+     "    Tegra::Control::Scheduler scheduler;\n    ::Common::unordered_map<s32, std::shared_ptr<Tegra::Control::ChannelState>> channels;\n    Tegra::Control::ChannelState* current_channel;\n    s32 bound_channel{-1};\n"),
+)
 CPU_WRITE_OLD = """        std::function<void(PAddr, size_t)> callback_writes([this](PAddr address, size_t size) {
             renderer->ReadRasterizer()->OnCacheInvalidation(address, size);
         });
@@ -71,6 +91,13 @@ def normalize_g21_shutdown_source(filename: str, source: str) -> tuple[str, bool
     if filename not in OLD:
         raise AssertionError(("Unrecognized G21 source owner", filename))
     current = git_blob(source)
+    if filename == "gpu_vulkan.cpp" and current == VULKAN_LIFETIME_CURRENT:
+        for newer, older in VULKAN_LIFETIME_REVERSE:
+            assert source.count(newer) == 1, ("Vulkan lifetime owner drift", newer[:100])
+            source = source.replace(newer, older, 1)
+        current = git_blob(source)
+        assert current == VULKAN_LIFETIME_PREVIOUS, (
+            "Reviewed Vulkan lifetime reconstruction changed unrelated source", current)
     if filename in POST_GPU_DIRTY_COMPLETE_TYPE and current == POST_GPU_DIRTY_COMPLETE_TYPE[filename]:
         assert source.count(GPU_DIRTY_COMPLETE_TYPE_INCLUDE) == 1, filename
         source = source.replace(GPU_DIRTY_COMPLETE_TYPE_INCLUDE, "", 1)

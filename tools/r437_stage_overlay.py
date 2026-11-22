@@ -136,10 +136,31 @@ r437_r2_reversal = [
     ("    Unregister(buffer_id);\n\n#ifdef YUZU_LEGACY\n    if (!do_not_mark || !immediately_free) {\n#endif\n#if defined(PS5_NATIVE) && defined(EDEN_NS2_STAGE_BACKING)\n        // R2 only: do not reclaim a deleted Vulkan owner by frame age.\n        // The runtime owns the moved Buffer until real GPU completion.\n        if constexpr (!P::IS_OPENGL) {\n            runtime.RetainDeletedBuffer(slot_buffers[buffer_id]);\n        } else {\n            delayed_destruction_ring.Push(std::move(slot_buffers[buffer_id]));\n        }\n#else\n        delayed_destruction_ring.Push(std::move(slot_buffers[buffer_id]));\n#endif\n#ifdef YUZU_LEGACY\n    }\n#endif\n\n    slot_buffers.erase(buffer_id);\n", "    Unregister(buffer_id);\n\n#ifdef YUZU_LEGACY\n    if (!do_not_mark || !immediately_free)\n#endif\n        delayed_destruction_ring.Push(std::move(slot_buffers[buffer_id]));\n\n    slot_buffers.erase(buffer_id);\n"),
 ]
 
+# Integrated NS1/NS2 native successor: reverse only the reviewed DMA
+# destination/alias and stream-boundary additions on this historical audit copy.
+_INTEGRATED_BUFFER_BLOB = "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b"
+_integrated_buffer_reversal = [
+    ("bool BufferCache<P>::DMACopy(\n    GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written,\n    boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest) {\n    if (gpu_written_dest) {\n        gpu_written_dest->clear();\n    }\n", "bool BufferCache<P>::DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,\n                             bool* gpu_written) {\n"),
+    ("    // vkCmdCopyBuffer forbids overlapping source and destination DEVICE\n    // memory (VUID-vkCmdCopyBuffer-pRegions-00117). Distinct GMMU virtual\n    // addresses can alias one physical allocation, and different VkBuffer\n    // handles do not make those overlapping memory accesses legal.\n    // Reject BEFORE dirty-range bookkeeping, ClearDownload, or GPU commands:\n    // MaxwellDMA will read the authoritative source and snapshot the alias.\n    // Compare distances rather than forming a potentially overflowing end.\n    const DAddr source = *cpu_src_address;\n    const DAddr destination = *cpu_dest_address;\n    if ((source <= destination && destination - source < amount) ||\n        (destination < source && source - destination < amount)) {\n        return false;\n    }\n", ""),
+    ("    if (gpu_written_dest) {\n        *gpu_written_dest = tmp_intervals;\n    }\n", ""),
+    ("        // A stream near the start of physical memory may begin before\n        // min_page. Subtraction in the original test then wraps around and\n        // turns an ordinary backward leap into a huge invalid GPU buffer.\n        // Never move begin forwards past the range we already own.\n        if (begin <= min_page || add_value > begin - min_page) {\n            begin = (std::min)(begin, min_page);\n", "        if (add_value > begin - min_page) {\n            begin = min_page;\n"),
+]
+
 def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    restore_current_overlap_guard = False
+    if actual == _INTEGRATED_BUFFER_BLOB:
+        restore_current_overlap_guard = True
+        assert len(_integrated_buffer_reversal) == 4
+        for revised, historical in _integrated_buffer_reversal:
+            assert source.count(revised) == 1, "Integrated native BufferCache hunk drift"
+            source = source.replace(revised, historical, 1)
+        raw = source.encode("utf-8")
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == "41239f19b9e16741d49e31145c504e0086b1095e", (
+            "Integrated BufferCache failed exact FC27 predecessor replay")
     # FC27 P1: reverse ONLY reviewed PS5 budget sampling / typed CPU write
     # declarations on the audit copy. Do not alter shipping C++ or defer
     # GPU-page protection. Exact two-sided blob identity is mandatory.
@@ -200,4 +221,10 @@ def restore_r437_without_production_r2(path: Path) -> str:
     for inserted, baseline in reversed(r437_r2_reversal):
         assert source.count(inserted) == 1, "Production R2 hunk drift"
         source = source.replace(inserted, baseline, 1)
+    if restore_current_overlap_guard:
+        overlap_guard = _integrated_buffer_reversal[1][0]
+        overlap_anchor = "    const bool source_dirty = IsRegionRegistered(*cpu_src_address, amount);"
+        assert source.count(overlap_guard) == 0
+        assert source.count(overlap_anchor) == 1
+        source = source.replace(overlap_anchor, overlap_guard + overlap_anchor, 1)
     return source

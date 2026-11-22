@@ -59,6 +59,38 @@ def normalized(root: Path, name: str) -> str:
         raw = content.encode("utf-8")
         sha = hashlib.sha1(
             b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    if name == "vk_buffer_cache_cost.cpp" and sha == (
+        "873b5552b429f42294c8d410070df0572b4ff84c"
+    ):
+        lut_candidates = []
+        for node in ast.walk(oracle):
+            if not isinstance(node, ast.For) or not isinstance(node.target, ast.Tuple):
+                continue
+            if [t.id if isinstance(t, ast.Name) else None for t in node.target.elts] != [
+                "after", "before"
+            ]:
+                continue
+            try:
+                inverses = ast.literal_eval(node.iter)
+            except (ValueError, SyntaxError, TypeError):
+                continue
+            if (isinstance(inverses, list) and len(inverses) == 3 and
+                    all(isinstance(p, list) and len(p) == 2 and
+                        all(isinstance(v, str) for v in p) for p in inverses) and
+                    "Lichii #414" in inverses[1][0] and
+                    "retired_buffers" in inverses[2][0]):
+                lut_candidates.append(inverses)
+        assert len(lut_candidates) == 1, "Quad LUT provenance recipe drift"
+        for revised, historical in lut_candidates[0]:
+            assert content.count(revised) == 1, "Selected quad LUT source hunk drift"
+            content = content.replace(revised, historical, 1)
+        import hashlib
+        raw = content.encode("utf-8")
+        sha = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        assert sha == expected_sha, (
+            "Selected quad LUT predecessor is not frozen R2 owner", sha)
     assert sha == expected_sha, ("unreviewed production R2 owner drift", name, sha)
     for start, terminator in edits:
         start = start.replace("\\n", "\n")

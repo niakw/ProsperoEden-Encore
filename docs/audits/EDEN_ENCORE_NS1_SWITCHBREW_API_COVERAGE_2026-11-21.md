@@ -31,9 +31,9 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — handler sans corps prouvé** | **234** | 0 | **234** |
 | **PARTIEL — lacune/branche inachevée** | **58** | 3 | **61** |
 | **STUB — réponse minimale/no-op** | **243** | 0 | **243** |
-| **NULL — handler nul repéré** | **1 933** | 0 | **1 933** |
+| **NULL — handler nul repéré** | **1 940** | 0 | **1 940** |
 | **D — rejets constatés historiquement** | **4** | 33 | **37** |
-| **Q — non vérifié / rapprochement insuffisant** | **1 510** | 0 | **1 510** |
+| **Q — non vérifié / rapprochement insuffisant** | **1 503** | 0 | **1 503** |
 | **E — ID absent dans l'énumération initiale** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -46,9 +46,9 @@ pie showData
     "Handler raccordé, corps non prouvé" : 234
     "Partiel" : 61
     "Stub" : 243
-    "Handler NULL" : 1933
+    "Handler NULL" : 1940
     "Rejet historique" : 37
-    "Non vérifié" : 1510
+    "Non vérifié" : 1503
     "ID non trouvé" : 1
 ```
 
@@ -61,6 +61,9 @@ pie showData
 
 
 **Lot VI (première frame NS1)** : les 133 lignes du catalogue sous le libellé générique `IApplicationDisplayService` ont été recroisées avec les trois tables sources distinctes `IApplicationDisplayService`, `ISystemDisplayService` et `IManagerDisplayService`. **132** lignes sont qualifiées : **21 corps source**, **12 partiels (marqués `STUBBED` ou `UNIMPLEMENTED`)**, **1 stub**, **98 `nullptr`**. Une ligne, `GetDisplayResolution` ID 1102, reste **Q** : l'interface application la raccorde tandis que l'interface manager la laisse nulle. **Ne pas conclure sans désambiguïsation de l'interface SwitchBrew.** Cela améliore l'inventaire, ne prouve ni première frame invitée ni synchronisation/pacing. Sources : [VI application](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp), [VI système](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp), [VI manager](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp).
+
+
+**Lot Loader/PM de lancement :** sept lignes historiquement Q (`ldr:dmnt` 0–2, `ldr:pm` 2–3, `ldr:shel` 0–1) sont classées **NULL au slot ID** après lecture des classes réelles de [Loader R23](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp). Les noms SwitchBrew anciens ne correspondent pas toujours aux noms de la table actuelle : cette classification atteste que **le slot ID est nul**, pas une équivalence des contrats entre firmwares. Le démarrage des jeux via Eden peut être géré ailleurs ; aucun bug de jeu n'est démontré par ces NULL.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -4051,15 +4054,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| ldr:dmnt | `0` | `[AddProcessToDebugLaunchQueue](Loader%20services#AddProcessToDebugLaunchQueue.md##AddProcessToDebugLaunchQueue "wikilink")` | — | Q | 2026-11-21 |
-| ldr:dmnt | `1` | `[ClearDebugLaunchQueue](Loader%20services#ClearDebugLaunchQueue.md##ClearDebugLaunchQueue "wikilink")` | — | Q | 2026-11-21 |
-| ldr:dmnt | `2` | `[GetNsoInfos](Loader%20services#GetNsoInfos.md##GetNsoInfos "wikilink")` | — | Q | 2026-11-21 |
+| ldr:dmnt | `0` | `[AddProcessToDebugLaunchQueue](Loader%20services#AddProcessToDebugLaunchQueue.md##AddProcessToDebugLaunchQueue "wikilink")` | — | **NULL** ([table Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; slot ID 0, nom owner `SetProgramArgument` (nom SwitchBrew historique : [AddProcessToDebugLaunchQueue](Loader%20services#AddProcessToDebugLaunchQueue.md##AddProcessToDebugLaunchQueue "wikilink"); ABI/version à vérifier)) | 2026-11-22 |
+| ldr:dmnt | `1` | `[ClearDebugLaunchQueue](Loader%20services#ClearDebugLaunchQueue.md##ClearDebugLaunchQueue "wikilink")` | — | **NULL** ([table Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; slot ID 1, nom owner `FlushArguments` (nom SwitchBrew historique : [ClearDebugLaunchQueue](Loader%20services#ClearDebugLaunchQueue.md##ClearDebugLaunchQueue "wikilink"); ABI/version à vérifier)) | 2026-11-22 |
+| ldr:dmnt | `2` | `[GetNsoInfos](Loader%20services#GetNsoInfos.md##GetNsoInfos "wikilink")` | — | **NULL** ([table Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; slot ID 2, nom owner `GetProcessModuleInfo` (nom SwitchBrew historique : [GetNsoInfos](Loader%20services#GetNsoInfos.md##GetNsoInfos "wikilink"); ABI/version à vérifier)) | 2026-11-22 |
 | ldr:pm | `0` | `CreateProcess` | — | **NULL** ([source C++][ns1-src-011]) | 2026-11-22 |
 | ldr:pm | `1` | `GetProgramInfo` | — | **NULL** ([source C++][ns1-src-011]) | 2026-11-22 |
-| ldr:pm | `2` | `RegisterTitle` | — | Q | 2026-11-21 |
-| ldr:pm | `3` | `UnregisterTitle` | — | Q | 2026-11-21 |
-| ldr:shel | `0` | `AddProcessToLaunchQueue` | — | Q | 2026-11-21 |
-| ldr:shel | `1` | `ClearLaunchQueue` | — | Q | 2026-11-21 |
+| ldr:pm | `2` | `RegisterTitle` | — | **NULL** ([table Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; slot ID 2, nom owner `PinProgram` (nom SwitchBrew historique : RegisterTitle; ABI/version à vérifier)) | 2026-11-22 |
+| ldr:pm | `3` | `UnregisterTitle` | — | **NULL** ([table Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; slot ID 3, nom owner `UnpinProgram` (nom SwitchBrew historique : UnregisterTitle; ABI/version à vérifier)) | 2026-11-22 |
+| ldr:shel | `0` | `AddProcessToLaunchQueue` | — | **NULL** ([table Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; slot ID 0, nom owner `SetProgramArgument` (nom SwitchBrew historique : AddProcessToLaunchQueue; ABI/version à vérifier)) | 2026-11-22 |
+| ldr:shel | `1` | `ClearLaunchQueue` | — | **NULL** ([table Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; slot ID 1, nom owner `FlushArguments` (nom SwitchBrew historique : ClearLaunchQueue; ABI/version à vérifier)) | 2026-11-22 |
 
 ### Log services
 

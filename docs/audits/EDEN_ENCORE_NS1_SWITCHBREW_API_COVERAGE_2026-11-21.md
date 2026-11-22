@@ -23,23 +23,23 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 166 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 086 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 166 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 181 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 101 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 181 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 086 | 80 | **1 166** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 101 | 80 | **1 181** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 71 | 3 | **74** |
 | **STUB — Stub / résultat simulé** | 334 | 0 | **334** |
 | **NOOP — No-op documenté** | 6 | 0 | **6** |
-| **NULL — Handler NULL** | 2 221 | 0 | **2 221** |
+| **NULL — Handler NULL** | 2 225 | 0 | **2 225** |
 | **D — Rejet explicite / historique** | 22 | 33 | **55** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 150 | 0 | **150** |
 | **SERVICE-NON-EXPOSÉ — Service non exposé sous ce nom** | 152 | 0 | **152** |
 | **ABSENT — Commande absente des tables** | 105 | 0 | **105** |
-| **ABI-DIFF — Noms ou ABI divergents** | 166 | 0 | **166** |
-| **AMBIGU — Interface ambiguë** | 8 | 0 | **8** |
-| **Q — Non vérifié** | 415 | 0 | **415** |
+| **ABI-DIFF — Noms/ABI divergents** | 198 | 0 | **198** |
+| **AMBIGU — Interface ambiguë** | 11 | 0 | **11** |
+| **Q — Non vérifié** | 361 | 0 | **361** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -48,19 +48,19 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1166
+    "Implémentation source retrouvée" : 1181
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 74
     "Stub / résultat simulé" : 334
     "No-op documenté" : 6
-    "Handler NULL" : 2221
+    "Handler NULL" : 2225
     "Rejet explicite / historique" : 55
     "Interface parente non ouvrable" : 150
     "Service non exposé sous ce nom" : 152
     "Commande absente des tables" : 105
-    "Noms ou ABI divergents" : 166
-    "Interface ambiguë" : 8
-    "Non vérifié" : 415
+    "Noms/ABI divergents" : 198
+    "Interface ambiguë" : 11
+    "Non vérifié" : 361
     "ID SVC non trouvé" : 1
 ```
 
@@ -127,6 +127,9 @@ pie showData
 
 
 **Lot périphériques/réseau NS1 (vendor `224b05e6`)** : **85 commandes Q** reclassées sans ajout de code runtime. `bt` : 9 NULL, 1 STUB. `wlan:lcl` : 9 ABI-DIFF (multi-noms anciens à mêmes ID, tous handlers nuls dans la table examinée) ; `wlan:inf` : 12 SERVICE-NON-EXPOSÉ par le LoopProcess WLAN. `ethc:c/i`, `eupld:c/r`, `pdm:ntfy`, `bgtc:sc` : 34 NULL. `ovln:rcv` : 6 IMPL-SRC, avec sous-interface réellement créée. `i2c` : 3 STUB et 3 ABI-DIFF ; `usb:pd:c` : 8 ABI-DIFF. **Nomenclature divergent ≠ implémentation ou défaut console démontré.**
+
+
+**Lot services NS/AM/HID/crypto/loader (source vendor 224b05e6)** : **54 entrées Q** reclassées : `hid:sys` 3 ABI-DIFF, 3 IMPL-SRC, 1 NULL; `appletAE` 1 IMPL-SRC, 1 NULL; `ns:am2, ns:ec, ns:rid, ns:rt, ns:web` 11 IMPL-SRC, 6 ABI-DIFF; `prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s` 4 ABI-DIFF, 1 NULL; `es` 2 ABI-DIFF, 1 NULL, 3 AMBIGU; `ldr:ro, ro:1` 6 ABI-DIFF; `spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu` 11 ABI-DIFF. Les commandes de versions anciennes sous le même ID gardent `ABI-DIFF` et les trois descriptions ES/NDRM inconnues gardent `AMBIGU` ; elles ne gonflent pas le total des implémentations. Source seule, pas de tests PS5.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -898,7 +901,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `213` | `ActivateNfc` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `214` | `GetXcdHandleForNpadWithNfc` | 4.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `215` | `IsNfcActivated` | 4.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `230` | `AcquireIrSensorEventHandle` | — | Q | 2026-11-21 |
+| hid:sys | `230` | `AcquireIrSensorEventHandle` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer ID 230 : nom historique AcquireIrSensorEventHandle, source AcquireIrSensorEventHndle ; audit statique, pas de validation PS5) | 2026-11-22 |
 | hid:sys | `231` | `ActivateIrSensor` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `301` | `ActivateNpadSystem` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `303` | `ApplyNpadSystemCommonPolicy` | — | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -915,12 +918,12 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `314` | `GetAppletFooterUiType` | 9.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `315` | `GetAppletDetailedUiType` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `321` | `GetUniquePadsFromNpad` | 3.0.0+ | **PARTIEL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `322` | `GetIrSensorState` | — | Q | 2026-11-21 |
-| hid:sys | `323` | `GetXcdHandleForNpadWithIrSensor` | — | Q | 2026-11-21 |
+| hid:sys | `322` | `GetIrSensorState` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer ID 322 : nom historique GetIrSensorState, source SetNpadSystemExtStateEnabled ; audit statique, pas de validation PS5) | 2026-11-22 |
+| hid:sys | `323` | `GetXcdHandleForNpadWithIrSensor` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer ID 323 : nom historique GetXcdHandleForNpadWithIrSensor, source GetLastActiveUniquePad ; audit statique, pas de validation PS5) | 2026-11-22 |
 | hid:sys | `500` | `SetAppletResourceUserId` | — | **NULL** ([source C++][ns1-src-086]) | 2026-11-22 |
-| hid:sys | `501` | `RegisterAppletResourceUserId` | — | Q | 2026-11-21 |
-| hid:sys | `502` | `UnregisterAppletResourceUserId` | — | Q | 2026-11-21 |
-| hid:sys | `503` | `EnableAppletToGetInput` | — | Q | 2026-11-21 |
+| hid:sys | `501` | `RegisterAppletResourceUserId` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer::RegisterAppletResourceUserId affecte l'état de l'applet/manette ; audit statique, pas de validation PS5) | 2026-11-22 |
+| hid:sys | `502` | `UnregisterAppletResourceUserId` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer::UnregisterAppletResourceUserId affecte l'état de l'applet/manette ; audit statique, pas de validation PS5) | 2026-11-22 |
+| hid:sys | `503` | `EnableAppletToGetInput` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer::EnableAppletToGetInput affecte l'état de l'applet/manette ; audit statique, pas de validation PS5) | 2026-11-22 |
 | hid:sys | `504` | `SetAruidValidForVibration` | — | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `505` | `EnableAppletToGetSixAxisSensor` | — | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `510` | `SetVibrationMasterVolume` | — | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -934,7 +937,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `540` | `AcquirePlayReportControllerUsageUpdateEvent` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `541` | `GetPlayReportControllerUsages` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `542` | `AcquirePlayReportRegisteredDeviceUpdateEvent` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `543` | `GetRegisteredDevicesOld ([1.0.0-4.1.0] GetRegisteredDevices)` | — | Q | 2026-11-21 |
+| hid:sys | `543` | `GetRegisteredDevicesOld ([1.0.0-4.1.0] GetRegisteredDevices)` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer exact : nullptr ; audit statique, pas de validation PS5) | 2026-11-22 |
 | hid:sys | `544` | `AcquireConnectionTriggerTimeoutEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `545` | `SendConnectionTrigger` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `546` | `AcquireDeviceRegisteredEventForControllerSupport` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -1096,13 +1099,13 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | appletAE | `100` | `OpenSystemAppletProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
-| appletAE | `200` | `OpenLibraryAppletProxyOld ([1.0.0-2.3.0] OpenLibraryAppletProxy)` | — | Q | 2026-11-21 |
+| appletAE | `200` | `OpenLibraryAppletProxyOld ([1.0.0-2.3.0] OpenLibraryAppletProxy)` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/all_system_applet_proxies_service.cpp) ; OpenLibraryAppletProxyOld crée réellement un proxy library ; ancienne plage firmware annotée ; audit statique, pas de validation PS5) | 2026-11-22 |
 | appletAE | `201` | `OpenLibraryAppletProxy` | 3.0.0+ | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `300` | `OpenOverlayAppletProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `350` | `OpenSystemApplicationProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `400` | `CreateSelfLibraryAppletCreatorForDevelop` | — | **NULL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `410` | `GetSystemAppletControllerForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-029]) | 2026-11-22 |
-| appletAE | `1000` | `GetDebugFunctions` | 6.0.0+ | Q | 2026-11-21 |
+| appletAE | `1000` | `GetDebugFunctions` | 6.0.0+ | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/all_system_applet_proxies_service.cpp) ; GetDebugFunctions de IAllSystemAppletProxiesService = nullptr ; audit statique, pas de validation PS5) | 2026-11-22 |
 | appletAE | `0` | `GetCommonStateGetter` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
 | appletAE | `1` | `GetSelfController` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
 | appletAE | `2` | `GetWindowController` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
@@ -1645,17 +1648,17 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `1800` | `IsNotificationSetupCompleted` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1801` | `GetLastNotificationInfoCount` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1802` | `ListLastNotificationInfo` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7988` | `[GetDynamicRightsInterface](#IDynamicRightsInterface "wikilink").` | 6.0.0+ | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7989` | `[GetReadOnlyApplicationControlDataInterface](#IReadOnlyApplicationControlDataInterface "wikilink").` | 5.1.0+ | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7991` | `[GetReadOnlyApplicationRecordInterface](#IReadOnlyApplicationRecordInterface "wikilink").` | 5.0.0+ | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7992` | `[GetECommerceInterface](#IECommerceInterface "wikilink")` | 4.0.0+ | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7993` | `[GetApplicationVersionInterface](#IApplicationVersionInterface "wikilink")` | 4.0.0+ | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7994` | `[GetFactoryResetInterface](#IFactoryResetInterface "wikilink")` | — | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7995` | `[GetAccountProxyInterface](#IAccountProxyInterface "wikilink")` | — | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7996` | `[GetApplicationManagerInterface](#IApplicationManagerInterface "wikilink")` | — | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7997` | `[GetDownloadTaskInterface](#IDownloadTaskInterface "wikilink")` | — | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7998` | `[GetContentManagementInterface](#IContentManagementInterface "wikilink")` | — | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7999` | `[GetDocumentInterface](#IDocumentInterface "wikilink")` | — | Q | 2026-11-21 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7988` | `[GetDynamicRightsInterface](#IDynamicRightsInterface "wikilink").` | 6.0.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetDynamicRightsInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7989` | `[GetReadOnlyApplicationControlDataInterface](#IReadOnlyApplicationControlDataInterface "wikilink").` | 5.1.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetReadOnlyApplicationControlDataInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7991` | `[GetReadOnlyApplicationRecordInterface](#IReadOnlyApplicationRecordInterface "wikilink").` | 5.0.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetReadOnlyApplicationRecordInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7992` | `[GetECommerceInterface](#IECommerceInterface "wikilink")` | 4.0.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetECommerceInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7993` | `[GetApplicationVersionInterface](#IApplicationVersionInterface "wikilink")` | 4.0.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetApplicationVersionInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7994` | `[GetFactoryResetInterface](#IFactoryResetInterface "wikilink")` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetFactoryResetInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7995` | `[GetAccountProxyInterface](#IAccountProxyInterface "wikilink")` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetAccountProxyInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7996` | `[GetApplicationManagerInterface](#IApplicationManagerInterface "wikilink")` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetApplicationManagerInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7997` | `[GetDownloadTaskInterface](#IDownloadTaskInterface "wikilink")` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetDownloadTaskInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7998` | `[GetContentManagementInterface](#IContentManagementInterface "wikilink")` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetContentManagementInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7999` | `[GetDocumentInterface](#IDocumentInterface "wikilink")` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetDocumentInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `CreateUserAccount` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/account_proxy_interface.cpp)) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `ListApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `GenerateApplicationRecordCount` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1823,7 +1826,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1600` | `GetSystemSeedForPseudoDeviceId` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1601` | `ResetSystemSeedForPseudoDeviceId` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1700` | `ListApplicationDownloadingContentMeta` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1701` | `GetApplicationView` | 3.0.0+ | Q | 2026-11-21 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1701` | `GetApplicationView` | 3.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp) ; ID 1701 du manager NS : catalogue GetApplicationView vs source GetApplicationViewDeprecated, signature/firmware non équivalents prouvés ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1702` | `GetApplicationDownloadTaskStatus` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1703` | `GetApplicationViewDownloadErrorContext` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1704` | `GetApplicationViewWithPromotionInfo` | 8.0.0+ | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1851,7 +1854,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2014` | `GetSendApplicationProgress` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2015` | `CompareSystemDeliveryInfo` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2016` | `ListNotCommittedContentMeta` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2017` | `RecoverDownloadTask` | 4.0.0+ | Q | 2026-11-21 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2017` | `RecoverDownloadTask` | 4.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp) ; ID 2017 du manager NS : catalogue RecoverDownloadTask vs source CreateDownloadTask, signature/firmware non équivalents prouvés ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2018` | `GetApplicationDeliveryInfoHash` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2050` | `GetApplicationRightsOnClient` | 6.0.0+ | **PARTIEL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2051` | `InvalidateRightsIdCache` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1863,13 +1866,13 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2153` | `DeactivateRightsEnvironment` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2154` | `ForceActivateRightsContextForExit` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2155` | `UpdateRightsEnvironmentStatus` | 7.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2156` | `CreateRightsEnvironmentForPreomia` | 9.0.0+ | Q | 2026-11-21 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2156` | `CreateRightsEnvironmentForPreomia` | 9.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp) ; ID 2156 du manager NS : catalogue CreateRightsEnvironmentForPreomia vs source CreateRightsEnvironmentForMicroApplication, signature/firmware non équivalents prouvés ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2160` | `AddTargetApplicationToRightsEnvironment` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2161` | `SetUsersToRightsEnvironment` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2170` | `GetRightsEnvironmentStatus` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2171` | `GetRightsEnvironmentStatusChangedEvent` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2180` | `RequestExtendExpirationInRightsEnvironment` | 6.0.0+ | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2181` | `GetResultOfExtendExpirationInRightsEnvironment` | 6.0.0+ | Q | 2026-11-21 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2180` | `RequestExtendExpirationInRightsEnvironment` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp) ; ID 2180 du manager NS : catalogue RequestExtendExpirationInRightsEnvironment vs source RequestExtendRightsInRightsEnvironment, signature/firmware non équivalents prouvés ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2181` | `GetResultOfExtendExpirationInRightsEnvironment` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp) ; ID 2181 du manager NS : catalogue GetResultOfExtendExpirationInRightsEnvironment vs source GetResultOfExtendRightsInRightsEnvironment, signature/firmware non équivalents prouvés ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2182` | `SetActiveRightsContextUsingStateToRightsEnvironment` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2190` | `GetRightsEnvironmentHandleForApplication` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2199` | `GetRightsEnvironmentCountForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1888,7 +1891,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2500` | `ConfirmAvailableTime` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2510` | `CreateApplicationResource` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2511` | `GetApplicationResource` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2513` | `LaunchPreomia` | 9.0.0+ | Q | 2026-11-21 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2513` | `LaunchPreomia` | 9.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp) ; ID 2513 du manager NS : catalogue LaunchPreomia vs source LaunchMicroApplication, signature/firmware non équivalents prouvés ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2514` | `ClearTaskOfAsyncTaskManager` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2800` | `GetApplicationIdOfPreomia` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `GetLaunchRequiredVersion` | — | **NULL** ([source C++][ns1-src-101]) | 2026-11-22 |
@@ -2373,10 +2376,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | news:a, news:c, news:m, news:p, news:v | `4` | `UpdateIntegerValueWithAddition` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::UpdateIntegerValueWithAddition possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `5` | `UpdateStringValue` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::UpdateStringValue signale STUBBED ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `1000` | `GetList` | 6.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::GetList possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10100` | `SaveReportOld ([1.0.0-5.1.0] SaveReport)` | — | Q | 2026-11-21 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10101` | `SaveReportWithUserOld ([1.0.0-5.1.0] SaveReportWithUser)` | — | Q | 2026-11-21 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10102` | `SaveReport` | 6.0.0+ | Q | 2026-11-21 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10103` | `SaveReportWithUser` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10100` | `SaveReportOld ([1.0.0-5.1.0] SaveReport)` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10100: historique SaveReportOld vs table SaveReportOld, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10101` | `SaveReportWithUserOld ([1.0.0-5.1.0] SaveReportWithUser)` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10101: historique SaveReportWithUserOld vs table SaveReportWithUserOld, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10102` | `SaveReport` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10102: historique SaveReport vs table SaveReportOld2, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10103` | `SaveReportWithUser` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10103: historique SaveReportWithUser vs table SaveReportWithUserOld2, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10200` | `RequestImmediateTransmission` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10300` | `GetTransmissionStatus` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10400` | `GetSystemSessionId` | 9.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
@@ -2391,7 +2394,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30500` | `GetLastUploadError` | 6.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40100` | `IsUserAgreementCheckEnabled` | 2.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40101` | `SetUserAgreementCheckEnabled` | 2.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `90100` | `ReadAllReportFiles ([1.0.0-5.1.0] GetStorageUsage)` | 6.0.0+ | Q | 2026-11-21 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `90100` | `ReadAllReportFiles ([1.0.0-5.1.0] GetStorageUsage)` | 6.0.0+ | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; ReadAllReportFiles ID90100 est nullptr ; audit statique, pas de validation PS5) | 2026-11-22 |
 
 ### PCV services
 
@@ -3275,8 +3278,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | es | `8` | `GetTitleKey` | 2.0.0-5.1.0 | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | es | `9` | `CountCommonTicket` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | es | `10` | `CountPersonalizedTicket` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
-| es | `11` | `ListCommonTicketRightsIds ([2.0.0-5.1.0] ListCommonTicket)` | 6.0.0+ | Q | 2026-11-21 |
-| es | `12` | `ListPersonalizedTicketRightsIds ([2.0.0-5.1.0] ListPersonalizedTicket)` | 6.0.0+ | Q | 2026-11-21 |
+| es | `11` | `ListCommonTicketRightsIds ([2.0.0-5.1.0] ListCommonTicket)` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; variante historique firmware de ListCommonTicketRightsIds, corps présent mais contrat ancien non comparé ; audit statique, pas de validation PS5) | 2026-11-22 |
+| es | `12` | `ListPersonalizedTicketRightsIds ([2.0.0-5.1.0] ListPersonalizedTicket)` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; variante historique firmware de ListPersonalizedTicketRightsIds, corps présent mais contrat ancien non comparé ; audit statique, pas de validation PS5) | 2026-11-22 |
 | es | `13` | `ListMissingPersonalizedTicket` | — | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `14` | `GetCommonTicketSize` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | es | `15` | `GetPersonalizedTicketSize` | 2.0.0-4.1.0 | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
@@ -3292,7 +3295,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | es | `25` | `DeletePrepurchaseRecord` | 4.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `26` | `DeleteAllPrepurchaseRecord` | 4.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `27` | `CountPrepurchaseRecord` | 4.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
-| es | `28` | `ListPrepurchaseRecordRightsIds ([4.0.0-5.1.0] ListPrepurchaseRecord)` | 6.0.0+ | Q | 2026-11-21 |
+| es | `28` | `ListPrepurchaseRecordRightsIds ([4.0.0-5.1.0] ListPrepurchaseRecord)` | 6.0.0+ | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; ListPrepurchaseRecordRightsIds ID 28 : nullptr ; audit statique, pas de validation PS5) | 2026-11-22 |
 | es | `29` | `ListPrepurchaseRecordInfo` | 4.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `30` | `CountTicket` | 5.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `31` | `ListTicketRightsIds` | 5.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
@@ -3304,9 +3307,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | es | `37` | `OwnTicket2` | 9.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `38` | `OwnTicket3` | 9.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `503` | `GetTitleKey` | 6.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
-| es | `1003` | `Returns an EsAsyncValue.` | 6.0.0+ | Q | 2026-11-21 |
-| es | `2000` | `No input, returns an EsSubinterface2000.` | 6.0.0+ | Q | 2026-11-21 |
-| es | `2001` | `No input, returns an EsSubinterface2000.` | 9.0.0+ | Q | 2026-11-21 |
+| es | `1003` | `Returns an EsAsyncValue.` | 6.0.0+ | **AMBIGU** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; ID 1003 enregistré comme Unknown dans une sous-interface ES/NDRM différente, propriétaire/contrat non résolu ; audit statique, pas de validation PS5) | 2026-11-22 |
+| es | `2000` | `No input, returns an EsSubinterface2000.` | 6.0.0+ | **AMBIGU** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; ID 2000 enregistré comme Unknown dans une sous-interface ES/NDRM différente, propriétaire/contrat non résolu ; audit statique, pas de validation PS5) | 2026-11-22 |
+| es | `2001` | `No input, returns an EsSubinterface2000.` | 9.0.0+ | **AMBIGU** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; ID 2001 enregistré comme Unknown dans une sous-interface ES/NDRM différente, propriétaire/contrat non résolu ; audit statique, pas de validation PS5) | 2026-11-22 |
 
 ### PTM services
 
@@ -5014,12 +5017,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| ldr:ro, ro:1 | `0` | `LoadNro` | — | Q | 2026-11-21 |
-| ldr:ro, ro:1 | `1` | `UnloadNro` | — | Q | 2026-11-21 |
-| ldr:ro, ro:1 | `2` | `LoadNrr` | — | Q | 2026-11-21 |
-| ldr:ro, ro:1 | `3` | `UnloadNrr` | — | Q | 2026-11-21 |
-| ldr:ro, ro:1 | `4` | `Initialize` | — | Q | 2026-11-21 |
-| ldr:ro, ro:1 | `10` | `LoadNrrEx` | 7.0.0+ | Q | 2026-11-21 |
+| ldr:ro, ro:1 | `0` | `LoadNro` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ro/ro.cpp) ; RO ID 0 porte MapManualLoadModuleMemory/GetProcessModuleInfo au lieu de LoadNro ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ldr:ro, ro:1 | `1` | `UnloadNro` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ro/ro.cpp) ; RO ID 1 porte UnmapManualLoadModuleMemory au lieu de UnloadNro ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ldr:ro, ro:1 | `2` | `LoadNrr` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ro/ro.cpp) ; RO ID 2 porte RegisterModuleInfo au lieu de LoadNrr ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ldr:ro, ro:1 | `3` | `UnloadNrr` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ro/ro.cpp) ; RO ID 3 porte UnregisterModuleInfo au lieu de UnloadNrr ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ldr:ro, ro:1 | `4` | `Initialize` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ro/ro.cpp) ; RO ID 4 porte RegisterProcessHandle au lieu de Initialize ; audit statique, pas de validation PS5) | 2026-11-22 |
+| ldr:ro, ro:1 | `10` | `LoadNrrEx` | 7.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ro/ro.cpp) ; RO ID 10 porte RegisterProcessModuleInfo au lieu de LoadNrrEx ; audit statique, pas de validation PS5) | 2026-11-22 |
 
 ### Settings services
 
@@ -5430,7 +5433,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 |---|---|---|---|---|---|
 | csrng | `0` | `GenerateRandomBytes` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | **PARTIEL** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 1, nom historique ExpMod ≠ ModularExponentiate, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `3` | `LoadAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
@@ -5440,27 +5443,27 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `10` | `DecryptLotusMessage` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `11` | `IsDevelopment` | — | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `12` | `GenerateSpecificAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `13` | `DecryptRsaPrivateKey` | — | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `13` | `DecryptRsaPrivateKey` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 13, nom historique DecryptRsaPrivateKey ≠ DecryptDeviceUniqueData, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `14` | `DecryptAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `15` | `CryptAesCtr` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `16` | `ComputeCmac` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `17` | `ImportEsKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `18` | `UnwrapTitleKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `19` | `LoadTitleKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `20` | `UnwrapCommonTitleKey` | 2.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `20` | `UnwrapCommonTitleKey` | 2.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 20, nom historique UnwrapCommonTitleKey ≠ PrepareEsCommonKey, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `21` | `AllocateAesKeyslot` | 2.0.0+ | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `22` | `FreeAesKeyslot` | 2.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `22` | `FreeAesKeyslot` | 2.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 22, nom historique FreeAesKeyslot ≠ DeallocateAesKeySlot, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `23` | `GetAesKeyslotAvailableEvent` | 2.0.0+ | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `24` | `SetBootReason` | 3.0.0+ | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `25` | `GetBootReason` | 3.0.0+ | **D** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `26` | `ImportSslKey` | 5.0.0+ | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `27` | `SslExpMod` | 5.0.0+ | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `28` | `ImportDrmKey` | 5.0.0+ | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `29` | `DrmExpMod` | 5.0.0+ | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `30` | `ReEncryptRsaPrivateKey` | 5.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `26` | `ImportSslKey` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 26, nom historique ImportSslKey ≠ DecryptAndStoreSslClientCertKey, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `27` | `SslExpMod` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 27, nom historique SslExpMod ≠ ModularExponentiateWithSslClientCertKey, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `28` | `ImportDrmKey` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 28, nom historique ImportDrmKey ≠ DecryptAndStoreDrmDeviceCertKey, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `29` | `DrmExpMod` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 29, nom historique DrmExpMod ≠ ModularExponentiateWithDrmDeviceCertKey, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `30` | `ReEncryptRsaPrivateKey` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 30, nom historique ReEncryptRsaPrivateKey ≠ ReencryptDeviceUniqueData, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `31` | `GetPackage2Hash` | 5.0.0+ | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `31` | `UnwrapElicenseKey` | 6.0.0+ | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `32` | `LoadElicenseKey` | 6.0.0+ | Q | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `31` | `UnwrapElicenseKey` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 31, nom historique UnwrapElicenseKey ≠ GetPackage2Hash/PrepareEsArchiveKey, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `32` | `LoadElicenseKey` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 32, nom historique LoadElicenseKey ≠ LoadPreparedAesKey, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
 
 ### USB services
 

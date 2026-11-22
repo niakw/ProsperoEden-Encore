@@ -1779,6 +1779,19 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
             ).hexdigest()
             assert actual == "cdc83734e27d5478f1981126950dd1f3f7a91227", ("NS2 HID predecessor drift", path, actual)
             print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if (path == native_applet_proxy_path and
+            actual == "b1acd90a74bceb03c900a505e217f484f6ecd18f" and
+            blob == "849baf7bfe243734ee49c9e7617462665746d5f1"):
+            selected = raw.decode("utf-8")
+            newer = "        R_THROW(Result(ErrorModule::AM, 201));"
+            earlier = "        R_THROW(Result{ErrorModule::AM, 201});"
+            assert selected.count(newer) == 1 and earlier not in selected
+            historical = selected.replace(newer, earlier, 1).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == blob, ("Applet proxy macro predecessor drift", actual, blob)
+            print("ENCORE_NS2_APPLET_RESULT_MACRO_EXACT_REVERSE_PASS")
         assert actual == blob, (path, actual)
 else:
     assert not ns2_early_hle_present

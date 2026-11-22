@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 352 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 272 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `ebc5a68a`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 352 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 272 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `05784b60`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 272 | 80 | **1 352** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 104 | 3 | **107** |
+| **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
-| **NOOP — No-op documenté** | 108 | 0 | **108** |
-| **NULL — Handler NULL** | 2 252 | 0 | **2 252** |
+| **NOOP — No-op documenté** | 109 | 0 | **109** |
+| **NULL — Handler NULL** | 2 248 | 0 | **2 248** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -371,6 +371,19 @@ Vendor `ebc5a68a` (arbre `7a96cbc2af79a866e194c28fa33e438d9c897712`). La baselin
 
 **Pool restant à examiner : 2 806 = 2 252 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — politiques NIFM d'exclusivité et type réseau
+
+Vendor `05784b60` (arbre `7502d3834222f5e3b35e4cb13f48d2755ab79bfe`). Baseline précédente moteur `04ebfb45` → vendor `ebc5a68a` : **X8D24 + provenance verts**.
+
+- `SetExclusiveClient` : **NULL → PARTIEL**, ABI confirmée comme buffer d'entrée pointeur contenant un `ClientId` de 4 octets.
+- `SetAcceptableNetworkTypeFlag` / `GetAcceptableNetworkTypeFlag` : **2 NULL → PARTIEL**, état u32 atomique avec round-trip réel.
+- `Shutdown` : **NULL → NOOP**, faute de daemon NIFM séparé à arrêter dans Encore.
+- Aucun comportement d'exclusivité ni de filtrage réseau n'est simulé : ces effets restent explicitement ouverts.
+
+**Compteur courant : 1 352 IMPL-SRC, 110 PARTIEL, 149 STUB, 109 NOOP, 2 248 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 805 = 2 248 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
@@ -378,10 +391,10 @@ pie showData
     title NS1 — 4 853 entrées distinctes
     "Implémentation source retrouvée" : 1352
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 107
+    "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
-    "No-op documenté" : 108
-    "Handler NULL" : 2252
+    "No-op documenté" : 109
+    "Handler NULL" : 2248
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -4826,7 +4839,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `23` | `PutToSleep` | — | **NOOP** (aucun daemon NIFM séparé à suspendre dans Encore; commande sans I/O, succès neutre documenté; vendor 36100c17) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `24` | `WakeUp` | — | **NOOP** (aucun daemon NIFM séparé à réveiller dans Encore; commande sans I/O, succès neutre documenté; vendor 36100c17) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `25` | `GetSsidListVersion` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `26` | `SetExclusiveClient` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `26` | `SetExclusiveClient` | — | **PARTIEL** (lit le `ClientId` 4 octets depuis le buffer pointeur 0x19 et le conserve par `IGeneralService`; l'exclusivité n'est pas encore appliquée aux requêtes concurrentes ; vendor `05784b60`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `27` | `GetDefaultIpSetting` | — | **IMPL-SRC** (ABI SwIPC `IpSettingData` 0xC2 ; état partagé initialisé depuis IP/masque/passerelle/DNS hôte, proxy off, MTU 1500 ; vendor `40596a94`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `28` | `SetDefaultIpSetting` | — | **IMPL-SRC** (lit et conserve exactement le bloc `IpSettingData` 0xC2 pour le round-trip du getter ; vendor `40596a94`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `29` | `SetWirelessCommunicationEnabledForTest` | — | **IMPL-SRC** (réutilise le même handler/état `airplane_mode` que l'ID16 ; vendor `bc3d538f`) | 2026-11-22 |
@@ -4837,11 +4850,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `34` | `SetBackgroundRequestEnabled` | 4.0.0+ | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `35` | `GetScanData` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `36` | `GetCurrentAccessPoint` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `37` | `Shutdown` | 4.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `37` | `Shutdown` | 4.0.0+ | **NOOP** (aucun daemon NIFM séparé n'est possédé par Encore ; arrêt neutre explicite, sans casser le backend réseau hôte ; vendor `05784b60`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `38` | `GetAllowedChannels` | 6.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `39` | `NotifyApplicationSuspended` | 8.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `40` | `SetAcceptableNetworkTypeFlag` | 8.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `41` | `GetAcceptableNetworkTypeFlag` | 8.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `40` | `SetAcceptableNetworkTypeFlag` | 8.0.0+ | **PARTIEL** (stocke le flag u32 réel par service ; aucun filtre de sélection réseau ne le consomme encore ; vendor `05784b60`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `41` | `GetAcceptableNetworkTypeFlag` | 8.0.0+ | **PARTIEL** (relit exactement le flag u32 stocké par le setter ; aucun filtre de sélection réseau ne le consomme encore ; vendor `05784b60`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `42` | `NotifyConnectionStateChanged` | 8.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `43` | `SetWowlDelayedWakeTime` | 9.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `0` | `Submit` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |

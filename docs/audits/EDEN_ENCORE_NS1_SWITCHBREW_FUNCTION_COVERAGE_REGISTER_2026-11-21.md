@@ -387,6 +387,20 @@ Vendor `ebc5a68a9b5ac4316aa8c7ba3f6bebeab5817e5c` (arbre `7a96cbc2af79a866e194c2
 
 **Pool restant à examiner = 2 806 entrées** : 2 252 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — politiques NIFM — 22/11/2026
+
+Vendor `05784b605535c987e1619c9b28e36f7752ba735b` (arbre `7502d3834222f5e3b35e4cb13f48d2755ab79bfe`).
+
+- `SetExclusiveClient` : **NULL → PARTIEL**, `ClientId` 4 octets lu depuis le buffer ABI 0x19 et conservé.
+- `Set/GetAcceptableNetworkTypeFlag` : **2 NULL → PARTIEL**, round-trip d'état réel.
+- `Shutdown` : **NULL → NOOP**, aucun processus NIFM indépendant à stopper dans Encore.
+- Les effets d'exclusivité et de filtrage réseau restent ouverts jusqu'à raccordement à la sélection/acceptation des requêtes.
+- Baseline précédente moteur `04ebfb45` → vendor `ebc5a68a` : X8D24 + provenance verts.
+
+**Compteur courant : 1 352 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 248 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 805 entrées** : 2 248 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

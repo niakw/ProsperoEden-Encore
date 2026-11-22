@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné | `a8c9170802811e7bb19345a461c3ae8dc72c27be` |
+| Vendor gitlink sélectionné sur cette branche | `f8d3b79defe1b38fbbf514f60884ef32e8d21f3e` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : `Statut fonctionnel (F)` = comportement `C/P/M/U/V` ; `Traitement déclaré (R)` = représentation dans le registre : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (30), `STUB NOMMÉ` (2), `REFUS EXPLICITE` (6), `AUCUN HANDLER INDIQUÉ` (103), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un refus peut être assuré par le **fallback générique** sans handler spécifique ; une absence de handler indiqué **n'exclut pas un fallback global**. Cette classification documentaire est **à distinguer** de la preuve CMake/ELF/console. Ne jamais compter un stub ou refus comme implémentation fonctionnelle.
+**Colonnes séparées pour chaque commande (§1–§12)** : `Statut fonctionnel (F)` = comportement `C/P/M/U/V` ; `Traitement déclaré (R)` = représentation par ID : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (30), `STUB NOMMÉ` (**68**, dont 66 dans ce lot), `REFUS EXPLICITE` (6), `AUCUN HANDLER INDIQUÉ` (**37**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un refus peut être assuré par le fallback générique, pas nécessairement un handler individuel ; seule la colonne R indique le type de représentation, sans valider le build ou la console.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,26 +30,28 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> **Périmètre exact** : tables §1 à §12 de ce registre **sur `main`**, vérifiées sur moteur `1454df745f980d1db3448b0f4d63f5a41e7a7807`. Les 316 lignes sont des **entrées d'interface recensées**, pas la totalité du firmware SwitchBrew (ni les 4 903 lignes du catalogue NS1). Les ioctls historiques hors tables, les commandes debug S2 non énumérées (§13) et les variantes non recensées ne font pas partie du dénominateur. Ces comptes classent le **registre**, pas un nouveau test CMake/ELF/PS5.
+> **Périmètre** : 316 commandes des 12 tableaux de ce registre, sur la branche `opt/ns2-switchbrew-unimplemented-20261122` issue de `main` moteur `7d05c7c7`, avec vendor C++ `f8d3b79d` et gitlink moteur `451ce07a` à la date de ce lot. Ce n'est ni SwitchBrew exhaustif ni une validation PS5.
 
-Deux dimensions **indépendantes** doivent être suivies, sans assimiler un stub à une implémentation :
+**Deux mesures indépendantes :**
 
-1. **Fonctionnelle (F)** : `C` = implémentation source renseignée, **144** ; `P` ou `C/P` = contrat partiel, **30** ; `M` = comportement non implémenté, **111**, qu'un stub existe ou non ; `U` = ABI/nature inconnue, **25** ; `V` = variante firmware non ciblée, **6**. `C` ne signifie **ni API exhaustive, ni build natif vert, ni succès console**.
-2. **Représentation (R) dans le registre** : **182/316** possèdent une entrée non vide dans la colonne « Handler Encore » : les **144 C**, **29 P**, **1 C/P**, **8 M** avec stub/refus explicite indiqué. **134/316** ne disposent **d'aucun handler renseigné** : **103 M**, **25 U**, **6 V**. La valeur « fail-closed » est parfois un refus du dispatcher, **pas nécessairement un handler C++ propre à l'ID**. `R=mentionné` n'est donc **pas** une preuve de branchement IPC natif ; la couverture déclarative réellement validée demande une vérification ID → enregistrement/fallback → ABI → code de retour dans le C++ sélectionné.
+- **F — couverture fonctionnelle** : C=144, P=29, C/P=1, M=111, U=25, V=6. Les 66 nouveaux stubs **restent M** ; aucune fonction supplémentaire n'est qualifiée fonctionnelle par cet ajout.
+- **R — représentation par commande** : **248/316 (78,5 %) avec handler, stub ou refus indiqué** ; **68/316 (21,5 %) sans traitement renseigné** : 37 M, 25 U, 6 V. Les 66 nouveaux ID sont branchés à `IGraphicsSupervisor::UnavailableDocumentedFeature` dans le C++ natif sélectionné par le gitlink, qui retourne `Kernel::ResultNotImplemented` sans lire de payload inconnu ni créer d'objet.
 
-| Statut fonctionnel | Total | Handler/stub/refus indiqué (R) | Aucun handler indiqué | Conséquence |
-| --- | ---: | ---: | ---: | --- |
-| C — couvert en source | 144 | 144 | 0 | À qualifier PS5 |
-| P — partiel | 29 | 29 | 0 | Compléter le contrat requis |
-| C/P — mixte | 1 | 1 | 0 | Examiner les deux chemins |
-| M — non implémenté | 111 | **8** | **103** | Ne pas confondre refus explicite et absence |
-| U — contrat inconnu | 25 | 0 | 25 | Ne pas inventer l'ABI |
-| V — variante hors version | 6 | 0 | 6 | Garder conditionné au firmware |
-| **Total** | **316** | **182** | **134** | **R ≠ F ≠ validation console** |
+| Statut fonctionnel | Total | Handler/stub/refus indiqué | Aucun handler indiqué |
+| --- | ---: | ---: | ---: |
+| C — implémentation source | 144 | 144 | 0 |
+| P — partielle | 29 | 29 | 0 |
+| C/P — mixte | 1 | 1 | 0 |
+| M — non implémenté | 111 | **74** (68 stubs, 6 refus) | **37** |
+| U — contrat inconnu | 25 | 0 | 25 |
+| V — variante hors version | 6 | 0 | 6 |
+| **Total** | **316** | **248** | **68** |
 
-**Détail des huit `M` avec traitement indiqué (2 stubs nommés + 6 refus explicites) :** GSV `1001`/`1002` → `UnavailableVideoEncoder` ; channel `0x00004810`/`0x00004811` → refus `fail-closed` ; TSG `0x00005405`, `0xC0105409`, `0xC018540C`, `0xC008540D` → refus `TsgIoctl fail-closed`. Ces huit restent **M fonctionnels**.
+**Lot 66 stubs GSV :** NativeMemory debug (1), Syncpt debug (5), GPU debugger (1), caméra (44), décodeur (4), encodeur (6), Chat (1), Adraw (4). Les 2 stubs GSV encodeur `1001/1002` préexistants conservent leur propre handler `UnavailableVideoEncoder`. Les 6 refus GPU/TSG restent distincts. L'état `STUB NOMMÉ` ne vaut jamais succès de l'opération ni qualité de jeu.
 
-**Consignes de mise à jour :** garder les statuts C/P/M/U/V et ajouter séparément le niveau de représentation (handler spécifique / stub sûr / refus générique / aucun / version exclue), avec chemin CMake/owner actif et commit moteur/vendor. Ne cocher « déclaré » comme **validé** qu'après contrôle de l'enregistrement ou du fallback réellement compilé. Un stub qui retourne `Success`/`0` sans exécuter une action mémoire, GPU, synchronisation ou sécurité est interdit. Ne pas ajouter de stub pour un payload/ABI inconnu ; ne pas détourner le P0 première soumission GPU / première frame pour caméra/profiler.
+**À faire dans ce registre** : qualifier les 37 `M` restants ; vérifier/achever les 30 `P` ; rechercher l'ABI des 25 `U` uniquement à partir de preuves ; garder les 6 `V` conditionnés au firmware. **CI hôte/build PS5/console non encore qualifiés pour ce lot.**
+
+**Priorité runtime** : ne pas dissimuler le blocage P0 première soumission GPFIFO et première frame invitée derrière un taux de stubs plus élevé.
 
 ---
 
@@ -69,14 +71,14 @@ Deux dimensions **indépendantes** doivent être suivies, sans assimiler un stub
 | 113 | NativeMemory | CreateNativeMemoryBlockByTransferMemory | C | HANDLER INDIQUÉ | CreateNativeMemoryWithTransferMemory | actif |
 | 114 | NativeMemory | CreateNativeMemoryBlock | C | HANDLER INDIQUÉ | BindNativeMemory | actif; nom Encore différent |
 | 115 | NativeMemory | BootNativeMemoryManagement | C | HANDLER INDIQUÉ | BootNativeMemoryManagement | actif |
-| 187 | NativeMemory | QueryNativeMemoryNvsNvRmMemIdForDebug | M | AUCUN HANDLER INDIQUÉ | — | aucun handler sélectionné; debug, non P0 |
+| 187 | NativeMemory | QueryNativeMemoryNvsNvRmMemIdForDebug | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler sélectionné; debug, non P0 ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 201 | Syncpt | CreateSyncptContext | C | HANDLER INDIQUÉ | CreateSyncptContext | actif |
 | 202 | Syncpt | InitializeSyncptContext | P | HANDLER PARTIEL INDIQUÉ | OpenSyncptSession | session réelle, nom/contrat à aligner |
-| 211 | Syncpt | CreateDebugSyncDevice | M | AUCUN HANDLER INDIQUÉ | — | aucun handler |
-| 212 | Syncpt | DestroyDebugSyncDevice | M | AUCUN HANDLER INDIQUÉ | — | aucun handler |
-| 213 | Syncpt | CreateDebugSyncCounter | M | AUCUN HANDLER INDIQUÉ | — | aucun handler |
-| 214 | Syncpt | DestroyDebugSyncCounter | M | AUCUN HANDLER INDIQUÉ | — | aucun handler |
-| 215 | Syncpt | ReportDebugSyncCounterValue | M | AUCUN HANDLER INDIQUÉ | — | aucun handler |
+| 211 | Syncpt | CreateDebugSyncDevice | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 212 | Syncpt | DestroyDebugSyncDevice | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 213 | Syncpt | CreateDebugSyncCounter | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 214 | Syncpt | DestroyDebugSyncCounter | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 215 | Syncpt | ReportDebugSyncCounterValue | M | STUB NOMMÉ | UnavailableDocumentedFeature | aucun handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 301 | Display | CreateDisplayContext | P | HANDLER PARTIEL INDIQUÉ | InitializeDisplayContext | ID actif; cycle create/init fusionné ou nomenclature divergente |
 | 303 | Display | DestroyDisplayContext | C | HANDLER INDIQUÉ | FinalizeDisplayContext | actif |
 | 305 | Display | InitializeDisplayContext | P | HANDLER PARTIEL INDIQUÉ | OpenDisplaySession | retour session réel; vérifier ABI version |
@@ -102,7 +104,7 @@ Deux dimensions **indépendantes** doivent être suivies, sans assimiler un stub
 | 434 | Gpu | ExistsAddressSpace (nom public) | C | HANDLER INDIQUÉ | RegisterGpuAddressSpace | Ounce/fefw envoie raw `0x1C2` avec un seul AS fd et attend un résultat; Encore enregistre exactement l'AS possédé par le process |
 | 435 | Gpu | CalculateNativeImageSize | C | HANDLER INDIQUÉ | CalculateNativeImageSize | actif |
 | 437 | Gpu | CreateNativeMemoryWithGpukMemHandle | U | ABI INCONNUE · AUCUN HANDLER | — | nom/ID public connu, mais l'implémentation Ounce observée utilise raw `0x1B7` → TIPC 423; aucun contrat raw `0x1C5` prouvé, donc pas de doublon inventé |
-| 493 | Gpu | CreateUserlandDebuggerSession | M | AUCUN HANDLER INDIQUÉ | — | pas de handler; debug non P0 |
+| 493 | Gpu | CreateUserlandDebuggerSession | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler; debug non P0 ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 494 | Gpu | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
 | 496 | Gpu | CreateGpuSessionWithTransferMemory | C | HANDLER INDIQUÉ | OpenGpuSessionWithTransferMemory | session GPU réelle |
 | 497 | Gpu | CreateGpuSessionWithRemoteMemory | C | HANDLER INDIQUÉ | OpenGpuSession | session GPU réelle |
@@ -111,69 +113,69 @@ Deux dimensions **indépendantes** doivent être suivies, sans assimiler un stub
 **Réconciliation Ounce 21/11** : le SDK reconstruit par fefw appelle `CreateNativeMemoryWithGpukMemHandle` via `Invoke(0x1B7)`, soit TIPC **423** après retrait de `0x10`, et appelle l'enregistrement d'address-space via raw `0x1C2`, soit **434**. Pour **498**, il appelle raw `0x202` sans entrée et lit trois `u64`. Ces observations priment pour le runtime actif sur une simple attribution de nom non documentée; elles ne constituent pas une validation console PS5.
 | 601 | Camera | CreateCameraContext | P | HANDLER PARTIEL INDIQUÉ | InitializeFeatureContext | ID actif mais create/init fusionné |
 | 602 | Camera | InitializeCameraContext | P | HANDLER PARTIEL INDIQUÉ | OpenCameraContext | session partielle; contrat à aligner |
-| 603 | Camera | DestroyCameraContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 612 | Camera | DestroyOutputBufferPool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 613 | Camera | CreateAliasOutputBufferPool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 614 | Camera | DestroyAliasOutputBufferPool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 615 | Camera | CreateOutputBufferPool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 616 | Camera | ReadFrameDataAsync | M | AUCUN HANDLER INDIQUÉ | — | pas de handler UserSession |
-| 620 | Camera | InitializeB | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 621 | Camera | FinalizeB | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 622 | Camera | ListCameras | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 623 | Camera | OpenCamera | M | AUCUN HANDLER INDIQUÉ | — | pas de handler UserSession; sous-session caméra possède un OpenCamera séparé |
-| 624 | Camera | CloseCamera | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 626 | Camera | ListSensorMode | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 627 | Camera | SetSensorMode | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 628 | Camera | GetAvailableStreams | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 629 | Camera | GetRequiredWorkBufferSize | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 630 | Camera | CreateStream | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 632 | Camera | GetReadDoneEvent | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 633 | Camera | GetStreamOutputSize | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 634 | Camera | DestroyStream | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 636 | Camera | ReadFrameDataAsync | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 637 | Camera | GetAttachedEvent | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 638 | Camera | GetDetachedEvent | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 639 | Camera | GetFrameInfo | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 640 | Camera | GetFrameInfo2 | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 641 | Camera | GetConnectionChangedEvent | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 650 | Camera | SetPictureQualityConfig | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 651 | Camera | GetPictureQualityConfig | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 652 | Camera | SetDigitalWindow | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 653 | Camera | GetDigitalWindow | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 654 | Camera | GetDigitalWindowCapability | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 655 | Camera | GetSupportedFunctions | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 656 | Camera | GetSupportedDebugFunctions | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 657 | Camera | GetCameraPrivacyCoverStatus | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 658 | Camera | GetCameraDeviceTemperature | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 659 | Camera | GetDeviceUniqueId | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 660 | Camera | GetSensorMode | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 661 | Camera | GetStride | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 662 | Camera | UnlinkSensor | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 663 | Camera | GetDeviceModel | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 664 | Camera | SetRawSensorMode | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 665 | Camera | GetAccessAllowed | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 666 | Camera | GetHostDrivenAeRegion | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 667 | Camera | SetHostDrivenAeRegion | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 691 | Camera | CalculateImageArraySize | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 603 | Camera | DestroyCameraContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 612 | Camera | DestroyOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 613 | Camera | CreateAliasOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 614 | Camera | DestroyAliasOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 615 | Camera | CreateOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 616 | Camera | ReadFrameDataAsync | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 620 | Camera | InitializeB | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 621 | Camera | FinalizeB | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 622 | Camera | ListCameras | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 623 | Camera | OpenCamera | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession; sous-session caméra possède un OpenCamera séparé ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 624 | Camera | CloseCamera | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 626 | Camera | ListSensorMode | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 627 | Camera | SetSensorMode | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 628 | Camera | GetAvailableStreams | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 629 | Camera | GetRequiredWorkBufferSize | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 630 | Camera | CreateStream | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 632 | Camera | GetReadDoneEvent | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 633 | Camera | GetStreamOutputSize | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 634 | Camera | DestroyStream | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 636 | Camera | ReadFrameDataAsync | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 637 | Camera | GetAttachedEvent | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 638 | Camera | GetDetachedEvent | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 639 | Camera | GetFrameInfo | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 640 | Camera | GetFrameInfo2 | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 641 | Camera | GetConnectionChangedEvent | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 650 | Camera | SetPictureQualityConfig | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 651 | Camera | GetPictureQualityConfig | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 652 | Camera | SetDigitalWindow | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 653 | Camera | GetDigitalWindow | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 654 | Camera | GetDigitalWindowCapability | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 655 | Camera | GetSupportedFunctions | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 656 | Camera | GetSupportedDebugFunctions | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 657 | Camera | GetCameraPrivacyCoverStatus | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 658 | Camera | GetCameraDeviceTemperature | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 659 | Camera | GetDeviceUniqueId | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 660 | Camera | GetSensorMode | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 661 | Camera | GetStride | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 662 | Camera | UnlinkSensor | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 663 | Camera | GetDeviceModel | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 664 | Camera | SetRawSensorMode | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 665 | Camera | GetAccessAllowed | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 666 | Camera | GetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 667 | Camera | SetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 691 | Camera | CalculateImageArraySize | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 901 | VideoDecoder | CreateVideoDecoderContext | P | HANDLER PARTIEL INDIQUÉ | InitializeVideoDecoderContext | ID actif, nom/séquence create/init divergents |
 | 902 | VideoDecoder | InitializeVideoDecoderContext | P | HANDLER PARTIEL INDIQUÉ | OpenVideoDecoderSession | retour session réel; sémantique proche mais nom différent |
-| 903 | VideoDecoder | DestroyVideoDecoderContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler UserSession |
-| 904 | VideoDecoderForSystem | InitializeVideoDecoderContextForSystem | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 903 | VideoDecoder | DestroyVideoDecoderContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 904 | VideoDecoderForSystem | InitializeVideoDecoderContextForSystem | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 905 | VideoDecoder | InitializeVideoDecoderContext2 | P | HANDLER PARTIEL INDIQUÉ | OpenVideoDecoderSessionWithFlag | handler actif; ABI à comparer |
 | 911 | VideoDecoder | InitializeDecoderImagePool | P | HANDLER PARTIEL INDIQUÉ | CreateVideoImagePool | pool réel, nomenclature différente |
 | 912 | VideoDecoder | FinalizeDecoderImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyVideoImagePool | pool réel |
-| 921 | VideoDecoderForSystem | InitializeDecoderAliasImagePool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 922 | VideoDecoderForSystem | FinalizeDecoderAliasImagePool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 921 | VideoDecoderForSystem | InitializeDecoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 922 | VideoDecoderForSystem | FinalizeDecoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 961 | VideoDecoder | (nom inconnu) | P | HANDLER PARTIEL INDIQUÉ | GetCpuUserImageDescriptor | handler actif; contrat SwitchBrew incomplet |
 | 991 | VideoDecoder | (nom inconnu) | P | HANDLER PARTIEL INDIQUÉ | CalculateDecoderImagePoolBuffer | handler actif; contrat SwitchBrew incomplet |
 | 1001 | VideoEncoder | CreateVideoEncoderContext | M | STUB NOMMÉ | UnavailableVideoEncoder | stub nommé, commentaire not implemented yet on Encore, retourne NotImplemented ; encodeur non fourni |
 | 1002 | VideoEncoder | InitializeVideoEncoderContext | M | STUB NOMMÉ | UnavailableVideoEncoder | stub nommé, commentaire not implemented yet on Encore, retourne NotImplemented ; aucune session décodeur créée |
-| 1003 | VideoEncoder | DestroyVideoEncoderContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1004 | VideoEncoderForSystem | InitializeVideoEncoderContextForSystem | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1011 | VideoEncoder | InitializeEncoderImagePool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1012 | VideoEncoder | FinalizeEncoderImagePool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1021 | VideoEncoderForSystem | InitializeEncoderAliasImagePool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1022 | VideoEncoderForSystem | FinalizeEncoderAliasImagePool | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 1003 | VideoEncoder | DestroyVideoEncoderContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1004 | VideoEncoderForSystem | InitializeVideoEncoderContextForSystem | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1011 | VideoEncoder | InitializeEncoderImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1012 | VideoEncoder | FinalizeEncoderImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1021 | VideoEncoderForSystem | InitializeEncoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1022 | VideoEncoderForSystem | FinalizeEncoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1061 | VideoEncoder | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
 | 1091 | VideoEncoder | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
 | 1101 | GraphicsFrame | CreateGraphicsFrameContext | C | HANDLER INDIQUÉ | CreateGraphicsFrameContext | host qualifié |
@@ -183,14 +185,14 @@ Deux dimensions **indépendantes** doivent être suivies, sans assimiler un stub
 | 1113 | GraphicsFrame | SetGraphicsFrameGpuTimesliceMode | C | HANDLER INDIQUÉ | SetGraphicsFrameGpuTimesliceMode | valeurs bornées, host qualifié |
 | 1201 | Chat | CreateChatContext | P | HANDLER PARTIEL INDIQUÉ | InitializeChatContext | ID actif, create/init fusionné |
 | 1202 | Chat | InitializeChatContext | P | HANDLER PARTIEL INDIQUÉ | OpenChatSession | session réelle, nom différent |
-| 1203 | Chat | DestroyChatContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 1203 | Chat | DestroyChatContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1211 | Chat | CreateImagePool | P | HANDLER PARTIEL INDIQUÉ | CreateChatImagePool | actif |
 | 1212 | Chat | DestroyImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyChatImagePool | actif |
 | 1291 | Chat | CalculateRequiredBufferMemory | C | HANDLER INDIQUÉ | CalculateChatImagePoolSize | actif |
-| 1301 | Adraw | CreateAdrawContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1302 | Adraw | InitializeAdrawContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1325 | Adraw | GetAdrawFrameBufferHandle | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1326 | Adraw | GetAdrawImageHandle | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 1301 | Adraw | CreateAdrawContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1302 | Adraw | InitializeAdrawContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1325 | Adraw | GetAdrawFrameBufferHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 1326 | Adraw | GetAdrawImageHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1401 | NvDrv | CreateNvDrv2UserSessionWithTransferMemory | P | HANDLER PARTIEL INDIQUÉ | OpenNvsrvSessionWithTransferMemory | session NVDRV réelle; nom interne différent |
 | 1402 | NvDrv | CreateNvDrv2UserSessionWithRemoteMemory | P | HANDLER PARTIEL INDIQUÉ | OpenNvsrvSession | session NVDRV réelle |
 | 1411 | NvDrv | GetNvDrv2UserTransferMemoryUsage | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |

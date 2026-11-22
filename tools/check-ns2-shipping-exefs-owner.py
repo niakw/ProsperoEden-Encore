@@ -29,7 +29,10 @@ assert "Eden::NS2::Content::IdentifyName" in loader
 assert "AppLoader_NSP" in loader and "AppLoader_XCI" in loader
 # Regression: CMake selects metadata/loader.cpp AFTER the maintained NCZ loader.
 # Keep NX, DNSP and DXCI dispatch in that actual shipping translation unit.
-assert 'ns2-runtime/metadata/core/loader/${eden_ns2_basename}' not in cmake or 'EDEN_NS2_METADATA_OVERLAY' in cmake
+assert 'set(eden_ns2_replacement' in release
+assert '"${EDEN_NS2_METADATA_OVERLAY}/core/loader/${eden_ns2_basename}")' in release
+assert 'list(REMOVE_ITEM eden_ns2_exefs_sources "${eden_ns2_original}")' in release
+assert 'list(APPEND eden_ns2_exefs_sources "${eden_ns2_replacement}")' in release
 for required in (
     '#include "core/loader/nx.h"',
     'file->GetName() == "main"',

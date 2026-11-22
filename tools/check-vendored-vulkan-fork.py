@@ -608,6 +608,21 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             out.parent.mkdir(parents=True,exist_ok=True)
             out.write_text(normalized)
             expected[gpu46_name]=out
+        elif (gpu46_name == 'include/video_core/renderer_vulkan/vk_texture_cache.h' and
+              actual_blob == 'ecdadfd6b699d1d4ec58be58f7e37287c1986717'):
+            # The generic Vulkan header now shares GPU-46's layer storage with
+            # the PS5 ASTC header, but intentionally does not expose Layers().
+            # Reverse exactly that one declaration on this audit copy.
+            newer, older = edits[1]
+            assert raw.count(newer) == 1 and edits[0][0] not in raw, (
+                "GPU-46 generic header parity drift", actual_blob)
+            normalized = raw.replace(newer, older, 1)
+            assert _blob_text(normalized) == predecessor_blob, (
+                "GPU-46 generic predecessor reconstruction failed", _blob_text(normalized))
+            out = temp/'normalized-vendor-gpu46'/gpu46_name
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(normalized)
+            expected[gpu46_name] = out
         else:
             assert actual_blob == predecessor_blob, ("Unexpected GPU-46 owner",gpu46_name,actual_blob)
     print("ENCORE_NS1_GPU46_VULKAN_LAYER_EXACT_REVERSE_PASS owners=3")

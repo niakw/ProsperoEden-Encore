@@ -503,6 +503,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool restant à examiner = 2 739 entrées** : 2 182 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Qualification hôte et console du nouveau couple non encore acquise.
 
+## Lot `set:sys` réparation / discovery / ThemeKey — 23/11/2026
+
+**Vendor `33858387c023030896e649c84e1df806a3352889`** (arbre `8bfc545041776e2c88592fb5561020aaed20fc82`) sélectionné par le gitlink de la branche NS1 secondaire.
+
+- **6 NULL → IMPL-SRC** : `Get/SetInRepairProcessEnableFlag` (115/116), `Get/SetServiceDiscoveryControlSettings` (122/123), `Get/SetThemeKey` (177/178).
+- Les deux premiers couples réutilisent les champs persistants de `ApplnSettings` (`bool` et `u32`) ; `ThemeKey` réutilise les 16 octets `theme_key` de `SystemSettings`. Chaque setter marque la sauvegarde via `SetSaveNeeded()`.
+- ABI recroisée avec libnx : bool brut pour 115/116, u32 brut pour 122/123, `FsArchiveMacKey { u8 key[0x10] }` pour 177/178. Aucun backend matériel supplémentaire ni valeur synthétique n'est introduit.
+- Les fichiers `system_settings_server.{cpp,h}` restent les propriétaires réellement listés par `encore-active/eden-backports/src/core/CMakeLists.txt` sans remplacement du même chemin.
+- Le couple code précédent moteur `28b75cca` → vendor `c8688e83` a **X8D24 + Verify pinned vendor verts**. Le présent couple nécessite ses propres contrôles ; aucun build PS5 ni gameplay n'est revendiqué.
+
+**Compteur historique : 1 424 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 176 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 733** : 2 176 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

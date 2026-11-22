@@ -1853,6 +1853,19 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
             ).hexdigest()
             assert actual == "cdc83734e27d5478f1981126950dd1f3f7a91227", ("NS2 HID predecessor drift", path, actual)
             print("ENCORE_NS2_HID_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if (path == "ns2-runtime/hle/core/hle/service/am/service/application_proxy.h"
+                and actual == "ed88acba848071d6c9e2c0b080c3234925003b50"
+                and blob == "03cf286dd642a3e517c7fa4950850603038c6d6b"):
+            # Lichii NX2 adds a typed getter only; preserve the exact
+            # preceding header ABI by reversing its one new declaration.
+            _h = raw.decode("utf-8")
+            _method = "    void GetNx2Interface(HLERequestContext& ctx);\n"
+            assert _h.count(_method) == 1
+            _old = _h.replace(_method, "", 1).encode("utf-8")
+            actual = hashlib.sha1(
+                b"blob " + str(len(_old)).encode() + b"\0" + _old
+            ).hexdigest()
+            assert actual == blob, ("NX2 applet proxy header drift", actual)
         if (path == "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp" and (
             actual == "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912"
             and blob == "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c"

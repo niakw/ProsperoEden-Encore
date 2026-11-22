@@ -36,7 +36,7 @@ if integrated_dma:
         assert selected_guard in helper, ("Merged DMA guard drift", selected_guard)
     for path in (
         "bool MaxwellDMA::CopyBlockLinearRemap() {",
-        "bool MaxwellDMA::CopyBlockLinearToPitch() {",
+        "void MaxwellDMA::CopyBlockLinearToPitch() {",
         "void MaxwellDMA::CopyBlockLinearToBlockLinear() {",
     ):
         assert path in native, ("Merged native DMA entry lost", path)

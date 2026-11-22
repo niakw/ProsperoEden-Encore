@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**169**), `HANDLER PARTIEL INDIQUÉ` (**8**), `STUB NOMMÉ` (72, dont 1 sur une ABI U inconnue), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). EventIdControl est désormais C : seuls les IDs QueryEvent publics 1–3 sont admis.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (169), `HANDLER PARTIEL INDIQUÉ` (8), `STUB NOMMÉ` (72, dont Syncpt 21 en U), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), **`REFUS GÉNÉRIQUE EXPLICITE` (38 : 13 M + 25 U)**, `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (**0**), `VARIANTE HORS VERSION` (6). Une ABI U reste inconnue : le fallback ne lit aucun payload et ne la transforme jamais en C.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,22 +32,22 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=169**, **P=7**, C/P=1, M=107, U=26, V=6.
-- **R** : **285/316 (90,2 %)** traitées explicitement. Toutes les M ont un refus/stub ; Syncpt 21 est U avec stub nommé.
+- **F** : C=169, P=7, C/P=1, M=107, U=26, V=6.
+- **R** : **310/316 (98,1 %)** disposent désormais d'un traitement explicite. Les seules entrées sans traitement actif sont les **6 V firmware 19.x**, gardées hors version tant que leur ABI n'est pas prouvée. Les 26 U échouent toutes proprement : 25 via fallback générique et Syncpt 21 via stub nommé.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **169** | 169 | 0 |
-| P — partielle | **7** | 7 | 0 |
+| C — implémentation source | 169 | 169 | 0 |
+| P — partielle | 7 | 7 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
-| U — contrat insuffisant | 26 | 1 | 25 |
+| U — contrat insuffisant | 26 | **26** | **0** |
 | V — ancienne variante firmware | 6 | 0 | 6 |
-| **Total** | **316** | **285** | **31** |
+| **Total** | **316** | **310** | **6** |
 
-**EventIdControl qualifié C** : la documentation NV publique lie son `id` aux IDs de `QueryEvent`; pour `/dev/nvhost-gpu`, seuls 1 (breakpoint int), 2 (breakpoint pause) et 3 (error notifier) sont publiés. Le runtime borne désormais à 1–3, valide l'ABI 16 octets Ounce et applique réellement enable/disable/clear aux KEvents correspondants. L'extension historique `QueryEvent(7)` reste distincte et n'élargit pas ce contrat.
+**25 U sans ABI spécifique fermées déclarativement** : les IDs GSV inconnus passent par `IGraphicsSupervisor::HandleSyncRequest`, les IDs Display par `IVi2Session::HandleSyncRequest`, et GpuSession 102 par `IGpuSession::HandleSyncRequest`. Ces fallbacks TIPC répondent `ResultNotImplemented` sans lire ni inventer une structure de requête. **Ils restent U fonctionnels.**
 
-**Restent 7 P + 1 C/P** : 391/691, GET_ERROR_INFO/NOTIFICATION, CHANNEL_SETUP_BIND USERD/doorbell, deux réglages TSG post-bind, plus le submit historique C/P.
+**Restent sans traitement** : uniquement les 6 aliases KUserWorker firmware 19.x. Ils ne seront pas reliés aux handlers 20+ tant que la compatibilité des layouts 19.x n'est pas prouvée.
 
 ---
 
@@ -60,7 +60,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1 | Gsv | BootWithTransferMemory | C | HANDLER INDIQUÉ | InitializeWithTransferMemory | handler actif; boot transfert réel, console non qualifiée |
 | 4 | Gsv | BootWithRemoteMemory | C | HANDLER INDIQUÉ | Initialize | handler actif; remote-memory |
 | 11 |  | SetCurrentProcessHandle | C | HANDLER INDIQUÉ | BindProcess | processus natif authentifié |
-| 12 |  | (nom inconnu SwitchBrew) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu, ABI/sémantique insuffisamment documentées |
+| 12 |  | (nom inconnu SwitchBrew) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu, ABI/sémantique insuffisamment documentées ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 101 |  | CreateContext | C | HANDLER INDIQUÉ | CompleteBootstrap | Contrat prouvé : TIPC 0x75 sans données, transition de bootstrap vers Ready ; simple différence de nom C++ (graphics_supervisor_bootstrap.h) |
 | 111 | NativeMemory | CreateNativeMemory | C | HANDLER INDIQUÉ | CreateNativeMemory | actif |
 | 112 | NativeMemory | DestroyNativeMemory | C | HANDLER INDIQUÉ | DestroyNativeMemory | actif |
@@ -78,20 +78,20 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 301 | Display | CreateDisplayContext | C | HANDLER INDIQUÉ | InitializeDisplayContext | Contrat prouvé : CreateDisplayContext sans entrée, état display_ready géré après bootstrap Ready ; nom interne différent seulement |
 | 303 | Display | DestroyDisplayContext | C | HANDLER INDIQUÉ | FinalizeDisplayContext | actif |
 | 305 | Display | InitializeDisplayContext | C | HANDLER INDIQUÉ | OpenDisplaySession | Contrat prouvé : u64 version contrôlée (19.0 + SDK ultérieurs), vraie IVi2Session et handle MOVE ; pas un stub |
-| 311 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
-| 312 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
+| 311 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 312 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 314 | Display | (nom inconnu) | C | HANDLER INDIQUÉ | ConfigureNativeWindowImagePool | Lichii : 314(first image) ; Encore retire exactement le groupe enregistré par 315, sans inférer la longueur depuis des IDs adjacents |
 | 315 | Display | (nom inconnu) | C | HANDLER INDIQUÉ | ConfigureNativeWindowImagePool | Lichii : 315(first image,count) ; Encore mémorise le groupe exact, valide tous les IDs avant publication et marque chaque image alias |
-| 321 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
-| 327 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
-| 361 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
+| 321 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 327 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 361 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 391 | Display | CalculateRequiredBufferMemory | P | HANDLER PARTIEL INDIQUÉ | CalculateNativeImageRequirements | requête 16 u32 + count; taille/alignment du layout natif borné via helper actif; formats non reconnus refusés; compatibilité ABI à qualifier (Lichii nx2_gsv.h) |
 | 401 | Gpu | CreateGpuContext | C | HANDLER INDIQUÉ | InitializeGpuContext | actif; création état GPU |
 | 402 | Gpu | InitializeGpuContext | C | HANDLER INDIQUÉ | ActivateGpuContext | actif |
 | 403 | Gpu | DestroyGpuContext | C | HANDLER INDIQUÉ | DestroyGpuContext | actif |
 | 423 | Gpu | (nom public incomplet) | C | HANDLER INDIQUÉ | BindNativeGpuMemory | Ounce/fefw envoie raw `0x1B7` (TIPC 423) pour le bind enfant NativeMemory → parent GPU/NVMap; ownership, adresse, taille et offset sont validés |
-| 424 | Gpu | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat public incomplet |
-| 425 | Gpu | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat public incomplet |
+| 424 | Gpu | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat public incomplet ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 425 | Gpu | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat public incomplet ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 426 | Gpu | MapNativeImage | C | HANDLER INDIQUÉ | MapNativeGpuImage | actif |
 | 427 | Gpu | UnmapNativeImage | C | HANDLER INDIQUÉ | UnmapNativeGpuImage | actif |
 | 428 | Gpu | QueryNativeImage | C | HANDLER INDIQUÉ | QueryNativeGpuImage | actif |
@@ -99,9 +99,9 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 430 | Gpu | DestroyNativeImage | C | HANDLER INDIQUÉ | DestroyNativeImage | actif |
 | 434 | Gpu | ExistsAddressSpace (nom public) | C | HANDLER INDIQUÉ | RegisterGpuAddressSpace | Ounce/fefw envoie raw `0x1C2` avec un seul AS fd et attend un résultat; Encore enregistre exactement l'AS possédé par le process |
 | 435 | Gpu | CalculateNativeImageSize | C | HANDLER INDIQUÉ | CalculateNativeImageSize | actif |
-| 437 | Gpu | CreateNativeMemoryWithGpukMemHandle | U | ABI INCONNUE · AUCUN HANDLER | — | nom/ID public connu, mais l'implémentation Ounce observée utilise raw `0x1B7` → TIPC 423; aucun contrat raw `0x1C5` prouvé, donc pas de doublon inventé |
+| 437 | Gpu | CreateNativeMemoryWithGpukMemHandle | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | nom/ID public connu, mais l'implémentation Ounce observée utilise raw `0x1B7` → TIPC 423; aucun contrat raw `0x1C5` prouvé, donc pas de doublon inventé ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 493 | Gpu | CreateUserlandDebuggerSession | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler; debug non P0 ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 494 | Gpu | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
+| 494 | Gpu | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 496 | Gpu | CreateGpuSessionWithTransferMemory | C | HANDLER INDIQUÉ | OpenGpuSessionWithTransferMemory | session GPU réelle |
 | 497 | Gpu | CreateGpuSessionWithRemoteMemory | C | HANDLER INDIQUÉ | OpenGpuSession | session GPU réelle |
 | 498 | Gpu | TryQueryDonatedTransferMemoryUsage | C | HANDLER INDIQUÉ | QueryDonatedTransferMemoryUsage | ABI Ounce exacte: aucune entrée, trois u64 total/used/peak; le cmd 1 conserve le vrai KTransferMemory donné, remote-memory échoue fermé |
@@ -172,8 +172,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1012 | VideoEncoder | FinalizeEncoderImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1021 | VideoEncoderForSystem | InitializeEncoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1022 | VideoEncoderForSystem | FinalizeEncoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 1061 | VideoEncoder | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
-| 1091 | VideoEncoder | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
+| 1061 | VideoEncoder | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1091 | VideoEncoder | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 1101 | GraphicsFrame | CreateGraphicsFrameContext | C | HANDLER INDIQUÉ | CreateGraphicsFrameContext | host qualifié |
 | 1102 | GraphicsFrame | InitializeGraphicsFrameContext | C | HANDLER INDIQUÉ | InitializeGraphicsFrameContext | host qualifié |
 | 1111 | GraphicsFrame | SetGraphicsFrameLengthMode | C | HANDLER INDIQUÉ | SetGraphicsFrameLengthMode | valeurs bornées, host qualifié |
@@ -195,12 +195,12 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1501 | InterModuleImage | CreateInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : inter-module image context sans ownership/backing garanti |
 | 1502 | InterModuleImage | InitializeInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : impossible d'initialiser un contexte image intermodule fictif |
 | 1510 | InterModuleImage | (nom inconnu) | C | HANDLER INDIQUÉ | CalculateNativeImageRequirements | Lichii : preference[16]+count → u64 size/alignment ; Encore utilise le helper natif borné et refuse les layouts inconnus |
-| 1601 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
-| 1602 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
-| 1603 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
-| 1611 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
-| 1612 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
-| 1691 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
+| 1601 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1602 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1603 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1611 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1612 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1691 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 
 
 ## 2. SyncptSession
@@ -226,22 +226,22 @@ SwitchBrew ne nomme publiquement que `Ping`; les autres IDs sont conservés comm
 | 3 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetSessionLimit | handler sélectionné; console non qualifiée |
 | 5 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetRequestGroupLimit | handler sélectionné; console non qualifiée |
 | 11 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetNotificationEvent | handler sélectionné; console non qualifiée |
-| 13 | (SwitchBrew non nommé) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler et sémantique publique insuffisante |
+| 13 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 21 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetNotifications | handler sélectionné; console non qualifiée |
 | 31 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetVsyncEvent | handler sélectionné; console non qualifiée |
 | 32 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetDisplayVsyncEvent | handler sélectionné; console non qualifiée |
 | 51 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | ConfigureRequestGroups | handler sélectionné; console non qualifiée |
-| 53 | (SwitchBrew non nommé) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler et sémantique publique insuffisante |
+| 53 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 101 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | OpenDisplay | handler sélectionné; console non qualifiée |
 | 102 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | CloseDisplay | handler sélectionné; console non qualifiée |
 | 103 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | QueryDisplayRefreshRate | handler sélectionné; console non qualifiée |
 | 104 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | QueryDisplayHdrStatus | handler sélectionné; console non qualifiée |
 | 105 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | QueryDisplayHdrPaperWhite | handler sélectionné; console non qualifiée |
 | 106 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetBufferMaxResolution | handler sélectionné; console non qualifiée |
-| 107 | (SwitchBrew non nommé) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler et sémantique publique insuffisante |
+| 107 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 111 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | OpenEndpoint | handler sélectionné; console non qualifiée |
 | 112 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | CloseEndpoint | handler sélectionné; console non qualifiée |
-| 113 | (SwitchBrew non nommé) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler et sémantique publique insuffisante |
+| 113 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 201 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | RegisterClientState | handler sélectionné; console non qualifiée |
 | 202 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | UnregisterClientState | handler sélectionné; console non qualifiée |
 | 212 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetClientAvailability | handler sélectionné; console non qualifiée |
@@ -261,8 +261,8 @@ SwitchBrew ne nomme publiquement que `Ping`; les autres IDs sont conservés comm
 | 270 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | UnbindDisplayBufferMaxResolutionEvent | handler sélectionné; console non qualifiée |
 | 271 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | BindDisplayModeCapabilityEvent | handler sélectionné; console non qualifiée |
 | 272 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | UnbindDisplayModeCapabilityEvent | handler sélectionné; console non qualifiée |
-| 301 | (SwitchBrew non nommé) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler et sémantique publique insuffisante |
-| 302 | (SwitchBrew non nommé) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler et sémantique publique insuffisante |
+| 301 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 302 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 351 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | SetClientOutputEncoding | handler sélectionné; console non qualifiée |
 
 
@@ -323,7 +323,7 @@ Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Le
 | 33 | CreateGpuAddressSpace | C | HANDLER INDIQUÉ | CreateAddressSpace | AS réel |
 | 41 | CreateGraphicsDevice | C | HANDLER INDIQUÉ | CreateGraphicsDevice | actif |
 | 42 | DestroyGraphicsDevice | C | HANDLER INDIQUÉ | DestroyGraphicsDevice | actif |
-| 102 | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID SwitchBrew sans contrat public suffisant |
+| 102 | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGpuSession::HandleSyncRequest fallback | ID SwitchBrew sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 200 | SynchronizeGpuAddressSpace | C | HANDLER INDIQUÉ | SynchronizeGpuAddressSpace | ajouté et host qualifié |
 | 201 | GetUserPartitionGpuAddress | C | HANDLER INDIQUÉ | GetUserPartition | actif |
 | 202 | GetGsvPartitionGpuAddress | C | HANDLER INDIQUÉ | GetGsvPartition | ABI libounce 16 B `{first,last}` ; partition GSV vide = `UINT64_MAX,0` |

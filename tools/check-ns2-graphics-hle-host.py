@@ -195,6 +195,30 @@ def main()->int:
     for command in (1001, 1002):
         assert '{'+str(command)+', &IGraphicsSupervisor::UnavailableVideoEncoder' in text
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in text
+    # ID-known / ABI-unknown commands must use fail-closed generic TIPC fallbacks,
+    # not fabricated payload-aware stubs. Display fallback lives in the same owner.
+    gsv_fallback = text.split(
+        'Result IGraphicsSupervisor::HandleSyncRequest(Kernel::KServerSession& session,', 1
+    )[1].split('void IGraphicsSupervisor::Initialize(', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in gsv_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in gsv_fallback
+    vi2_fallback = text.split(
+        'Result HandleSyncRequest(Kernel::KServerSession& session,HLERequestContext& ctx) override {', 1
+    )[1].split('private:', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in vi2_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in vi2_fallback
+    gpu_session = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp').read_text()
+    gpu_fallback = gpu_session.split(
+        'Result IGpuSession::HandleSyncRequest(Kernel::KServerSession& session,', 1
+    )[1].split('static Result Translate(', 1)[0]
+    assert 'handlers_tipc.contains(ctx.GetCommand())' in gpu_fallback
+    assert 'Kernel::ResultNotImplemented.raw' in gpu_fallback
+    for unknown in (12, 311, 312, 321, 327, 361, 424, 425, 437, 494,
+                    1061, 1091, 1601, 1602, 1603, 1611, 1612, 1691):
+        assert ('{'+str(unknown)+', &IGraphicsSupervisor::') not in text
+    for unknown in (13, 53, 107, 113, 301, 302):
+        assert ('{'+str(unknown)+',&IVi2Session::') not in text
+    assert '{102, &IGpuSession::' not in gpu_session
     # Each known optional GSV command is registered in the selected C++ owner.
     # These are not implementations: no fabricated success/handles for unsupported features.
     known_optional_gsv = (

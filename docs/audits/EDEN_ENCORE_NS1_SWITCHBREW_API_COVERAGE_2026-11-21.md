@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 373 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 293 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `694becfb`. **Ces 1 373 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 393 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 313 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `9aa3b256`. **Ces 1 393 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 293 | 80 | **1 373** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 313 | 80 | **1 393** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 109 | 0 | **109** |
-| **NULL — Handler NULL** | 2 227 | 0 | **2 227** |
+| **NULL — Handler NULL** | 2 207 | 0 | **2 207** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -420,17 +420,25 @@ ABI recroisée avec les signatures Get/Set SwitchBrew et les générateurs IPC h
 
 **Pool restant à examiner : 2 784 = 2 227 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Validation runtime PS5 non effectuée ; checks du nouveau couple encore à vérifier.
 
+### Recheck NULL — 20 commandes de configuration persistante complémentaires
+
+Vendor `0aa3af72`, puis `9aa3b2568b3f74bd124f3923e88116a52c1c589a` (arbre `fbd04c1ab3bc6858e873e48fb6c32c17db7a335e`) : **20 NULL → IMPL-SRC** sur `set:sys`. Dix commandes couvrent les informations PTM (lot, jauge), valeur de shutdown RTC, paramètres de suppression des données et identifiants des applets système, et dix autres couvrent calibrations de sticks, version batterie et flags USB 3.0 host/device. Chaque commande lit ou modifie directement le stockage déjà existant de `SystemSettings`, `PrivateSettings` ou `DeviceSettings` ; les écritures déclenchent `SetSaveNeeded()`. ABI croisée avec les tailles et identifiants IPC libnx / SwitchBrew. Les paramètres matériels ne prouvent pas l'émulation du matériel correspondant.
+
+**Compteur courant : 1 393 IMPL-SRC, 110 PARTIEL, 149 STUB, 109 NOOP, 2 207 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 764 = 2 207 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Aucun build PS5 ni validation console revendiqués ; qualification CI propre à ce couple requise.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1373
+    "Implémentation source retrouvée" : 1393
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 109
-    "Handler NULL" : 2227
+    "Handler NULL" : 2207
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5542,10 +5550,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `46` | `SetForceMuteOnHeadphoneRemoved` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; slot 46 actuel utilise SpeakerAutoMuteFlag au lieu du libellé historique ForceMuteOnHeadphoneRemoved ; statique, PS5 non validé) | 2026-11-22 |
 | set:sys | `47` | `GetQuestFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `48` | `SetQuestFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `49` | `GetDataDeletionSettings` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `50` | `SetDataDeletionSettings` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `51` | `GetInitialSystemAppletProgramId` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `52` | `GetOverlayDispProgramId` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `49` | `GetDataDeletionSettings` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `50` | `SetDataDeletionSettings` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `51` | `GetInitialSystemAppletProgramId` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `52` | `GetOverlayDispProgramId` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `53` | `GetDeviceTimeZoneLocationName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `54` | `SetDeviceTimeZoneLocationName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `55` | `GetWirelessCertificationFileSize` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5577,15 +5585,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `81` | `SetLdnChannel` | — | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `82` | `AcquireTelemetryDirtyFlagEventHandle` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `83` | `GetTelemetryDirtyFlags` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `84` | `GetPtmBatteryLot` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `85` | `SetPtmBatteryLot` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `86` | `GetPtmFuelGaugeParameter` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `87` | `SetPtmFuelGaugeParameter` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `84` | `GetPtmBatteryLot` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `85` | `SetPtmBatteryLot` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `86` | `GetPtmFuelGaugeParameter` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `87` | `SetPtmFuelGaugeParameter` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `88` | `GetBluetoothEnableFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `89` | `SetBluetoothEnableFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `90` | `GetMiiAuthorId` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `91` | `SetShutdownRtcValue` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `92` | `GetShutdownRtcValue` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `91` | `SetShutdownRtcValue` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `92` | `GetShutdownRtcValue` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `93` | `AcquireFatalDirtyFlagEventHandle` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `94` | `GetFatalDirtyFlags` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `95` | `GetAutoUpdateEnableFlag` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5651,16 +5659,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `155` | `SetAccountOnlineStorageSettings` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `156` | `GetPctlReadyFlag` | 6.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `157` | `SetPctlReadyFlag` | 6.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
-| set:sys | `158` | `GetAnalogStickUserCalibrationL` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `159` | `SetAnalogStickUserCalibrationL` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `160` | `GetAnalogStickUserCalibrationR` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `161` | `SetAnalogStickUserCalibrationR` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `162` | `GetPtmBatteryVersion` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `163` | `SetPtmBatteryVersion` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `164` | `GetUsb30HostEnableFlag` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `165` | `SetUsb30HostEnableFlag` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `166` | `GetUsb30DeviceEnableFlag` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `167` | `SetUsb30DeviceEnableFlag` | 6.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `158` | `GetAnalogStickUserCalibrationL` | 9.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `159` | `SetAnalogStickUserCalibrationL` | 9.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `160` | `GetAnalogStickUserCalibrationR` | 9.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `161` | `SetAnalogStickUserCalibrationR` | 9.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `162` | `GetPtmBatteryVersion` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `163` | `SetPtmBatteryVersion` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `164` | `GetUsb30HostEnableFlag` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `165` | `SetUsb30HostEnableFlag` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `166` | `GetUsb30DeviceEnableFlag` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
+| set:sys | `167` | `SetUsb30DeviceEnableFlag` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `168` | `GetThemeId` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `169` | `SetThemeId` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `170` | `GetChineseTraditionalInputMethod` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |

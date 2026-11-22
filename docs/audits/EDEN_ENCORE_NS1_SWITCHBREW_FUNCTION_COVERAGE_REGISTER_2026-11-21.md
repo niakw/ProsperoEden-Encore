@@ -439,6 +439,18 @@ Vendor `694becfbf6a27cecb907d8be5b0315c269654fa7` (arbre `ba9035d2e9289d05d89a61
 
 **Pool restant à examiner = 2 784 entrées** : 2 227 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — configuration PTM, RTC, applets, calibration et USB — 22/11/2026
+
+Vendor `0aa3af72`, puis `9aa3b2568b3f74bd124f3923e88116a52c1c589a` (arbre `fbd04c1ab3bc6858e873e48fb6c32c17db7a335e`).
+
+- **20 NULL → IMPL-SRC** : `Get/SetDataDeletionSettings`, `GetInitialSystemAppletProgramId`, `GetOverlayDispProgramId`, `Get/SetPtmBatteryLot`, `Get/SetPtmFuelGaugeParameter`, `Set/GetShutdownRtcValue`, `Get/SetAnalogStickUserCalibrationL/R`, `Get/SetPtmBatteryVersion` et `Get/SetUsb30HostEnableFlag`, `Get/SetUsb30DeviceEnableFlag`.
+- Les structures et champs SystemSettings, PrivateSettings et DeviceSettings existaient. Réponses liées à leur état persistant, sans inventer de périphérique Nintendo sur PS5. ABI IPC confirmée contre libnx et les définitions générées.
+- Moteur repointé sur `9aa3b2568b3f74bd124f3923e88116a52c1c589a`, source sélectionnée par CMake. Aucun build PS5 ni test gameplay revendiqué ; attendre les contrôles CI du nouveau couple avant qualification hôte.
+
+**Compteur courant : 1 393 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 207 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 764 entrées** : 2 207 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -23,20 +23,20 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 138 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 058 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 124 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 147 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 067 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 124 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC** | 1 058 | 80 | **1 138** |
-| **RACCORDÉ** | 27 | 0 | **27** |
-| **PARTIEL** | 64 | 3 | **67** |
-| **STUB** | 313 | 0 | **313** |
+| **IMPL-SRC** | 1 067 | 80 | **1 147** |
+| **RACCORDÉ** | 0 | 0 | **0** |
+| **PARTIEL** | 65 | 3 | **68** |
+| **STUB** | 319 | 0 | **319** |
 | **NOOP** | 6 | 0 | **6** |
-| **NULL** | 2 094 | 0 | **2 094** |
+| **NULL** | 2 099 | 0 | **2 099** |
 | **D** | 22 | 33 | **55** |
 | **ABSENT** | 105 | 0 | **105** |
 | **ABI-DIFF** | 113 | 0 | **113** |
-| **AMBIGU** | 2 | 0 | **2** |
+| **AMBIGU** | 8 | 0 | **8** |
 | **Q** | 932 | 0 | **932** |
 | **E** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
@@ -46,16 +46,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title SwitchBrew NS1 — 4 853 entrées
-    "IMPL-SRC" : 1138
-    "RACCORDÉ" : 27
-    "PARTIEL" : 67
-    "STUB" : 313
+    "IMPL-SRC" : 1147
+    "RACCORDÉ" : 0
+    "PARTIEL" : 68
+    "STUB" : 319
     "NOOP" : 6
-    "NULL" : 2094
+    "NULL" : 2099
     "D" : 55
     "ABSENT" : 105
     "ABI-DIFF" : 113
-    "AMBIGU" : 2
+    "AMBIGU" : 8
     "Q" : 932
     "E" : 1
 ```
@@ -105,6 +105,9 @@ pie showData
 
 
 **Lot ES, NPNS, PlayReport, Fatal, FGM, ERPT, JIT, NS :** 30 handlers raccordés reclassés en 14 IMPL-SRC, 12 STUB, 3 NULL et 1 PARTIEL. Distinction des interfaces npns:s/u ; ES utilise le trousseau de tickets, le JIT construit les régions mémoire, Fatal rapporte ses erreurs. PREPO/ERPT/NS exposent plusieurs réponses simulées ; FGM::Initialize produit une interface IRequest dont les fonctions sont nulles. Aucune validation PS5.
+
+
+**Lot final des handlers initialement RACCORDÉ :** 27 lignes qualifiées : 9 IMPL-SRC, 6 STUB, 5 NULL, 1 PARTIEL et 6 AMBIGU. Sur `ssl`, le propriétaire standard `ISslService` est distinct de `ssl:s` (`ISslServiceForSystem`), ce qui permet de classifier les 9 commandes de tête sans confondre leurs handlers. Sur Account, six commandes ID/nom sont partagées entre sous-interfaces aux comportements divergents ; l'interface précise étant absente du catalogue historique, leur statut est **AMBIGU** (pas IMPL-SRC). Aucun handler ne demeure simplement « raccordé » sans motif.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -412,7 +415,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `104` | `GetProfileUpdateNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `105` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `106` | `GetProfileSyncNotifier` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `110` | `StoreSaveDataThumbnail` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `110` | `StoreSaveDataThumbnail` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; Module::Interface::StoreSaveDataThumbnailSystem/Application marqué STUBBED ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `111` | `ClearSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `112` | `LoadSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `113` | `GetSaveDataThumbnailExistence` | 5.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -438,9 +441,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `997` | `DebugInvalidateTokenCacheForUser` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `998` | `DebugSetUserStateClose` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `999` | `DebugSetUserStateOpen` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `0` | `CheckAvailability` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `1` | `GetAccountId` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `2` | `EnsureIdTokenCacheAsync` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `0` | `CheckAvailability` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `1` | `GetAccountId` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `2` | `EnsureIdTokenCacheAsync` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `3` | `LoadIdTokenCache` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `100` | `SetSystemProgramIdentification` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `101` | `RefreshNotificationTokenAsync` | 7.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -479,7 +482,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `220` | `SynchronizeProfileAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `221` | `UploadProfileAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `222` | `SynchronizeProfileAsyncIfSecondsElapsed` | — | Q | 2026-11-21 |
-| acc:su | `250` | `IsLinkedWithNintendoAccount` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `250` | `IsLinkedWithNintendoAccount` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; réponse fixe / marquée STUBBED, sans consultation réseau ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `251` | `CreateProcedureToLinkWithNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `252` | `ResumeProcedureToLinkWithNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `255` | `CreateProcedureToUpdateLinkageStateOfNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -512,12 +515,12 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `100` | `GetRequestWithTheme` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `101` | `IsNetworkServiceAccountReplaced` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `0` | `GetSystemEvent` | — | Q | 2026-11-21 |
-| acc:su | `0` | `Get` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `1` | `GetBase` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `10` | `GetImageSize` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `11` | `LoadImage` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `100` | `Store` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `101` | `StoreWithImage` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `0` | `Get` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `1` | `GetBase` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `10` | `GetImageSize` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `11` | `LoadImage` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `100` | `Store` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `101` | `StoreWithImage` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `1` | `Cancel` | — | Q | 2026-11-21 |
 | acc:su | `2` | `HasDone` | — | Q | 2026-11-21 |
 | acc:su | `3` | `GetResult` | — | Q | 2026-11-21 |
@@ -537,7 +540,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u0 | `101` | `GetBaasAccountManagerForApplication` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetBaasAccountManagerForApplication`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `102` | `AuthenticateApplicationAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `103` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `110` | `StoreSaveDataThumbnail` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:u0 | `110` | `StoreSaveDataThumbnail` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; Module::Interface::StoreSaveDataThumbnailSystem/Application marqué STUBBED ; pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `111` | `ClearSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `120` | `CreateGuestLoginRequest` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `130` | `LoadOpenContext` | 5.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::LoadOpenContext`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -551,13 +554,13 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u0 | `14` | `GetNickname` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `15` | `GetProfileImage` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `21` | `LoadIdTokenCache` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `0` | `CheckAvailability` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `1` | `GetAccountId` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `2` | `EnsureIdTokenCacheAsync` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:u0 | `0` | `CheckAvailability` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
+| acc:u0 | `1` | `GetAccountId` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
+| acc:u0 | `2` | `EnsureIdTokenCacheAsync` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `3` | `LoadIdTokenCache` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `130` | `GetNintendoAccountUserResourceCacheForApplication` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:u0 | `130` | `GetNintendoAccountUserResourceCacheForApplication` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; réponse fixe / marquée STUBBED, sans consultation réseau ; pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `150` | `CreateAuthorizationRequest` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `160` | `StoreOpenContext` | 5.0.0+ | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:u0 | `160` | `StoreOpenContext` | 5.0.0+ | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; StoreOpenedUsers() sur ProfileManager ; pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `170` | `LoadNetworkServiceLicenseKindAsync` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `0` | `GetSystemEvent` | — | Q | 2026-11-21 |
 | acc:u0 | `1` | `Cancel` | — | Q | 2026-11-21 |
@@ -582,7 +585,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u1 | `104` | `GetProfileUpdateNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `105` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `106` | `GetProfileSyncNotifier` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `110` | `StoreSaveDataThumbnail` | — | **RACCORDÉ** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:u1 | `110` | `StoreSaveDataThumbnail` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; StoreSaveDataThumbnailApplication marqué STUBBED ; pas de validation PS5) | 2026-11-22 |
 | acc:u1 | `111` | `ClearSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `112` | `LoadSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `113` | `GetSaveDataThumbnailExistence` | 5.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -5348,15 +5351,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| ssl | `0` | `CreateContext` | — | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `1` | `GetContextCount` | — | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `2` | `GetCertificates` | — | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `3` | `GetCertificateBufSize` | — | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `4` | `DebugIoctl` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `5` | `SetInterfaceVersion` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `6` | `FlushSessionCache` | 5.0.0+ | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `7` | `SetDebugOption` | 6.0.0+ | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
-| ssl | `8` | `GetDebugOption` | 6.0.0+ | **RACCORDÉ** ([source C++][ns1-src-028]) | 2026-11-22 |
+| ssl | `0` | `CreateContext` | — | **PARTIEL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; crée un contexte mais LOG(STUBBED) ; pas de validation PS5) | 2026-11-22 |
+| ssl | `1` | `GetContextCount` | — | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
+| ssl | `2` | `GetCertificates` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; appel au magasin de certificats ; pas de validation PS5) | 2026-11-22 |
+| ssl | `3` | `GetCertificateBufSize` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; appel au magasin de certificats ; pas de validation PS5) | 2026-11-22 |
+| ssl | `4` | `DebugIoctl` | 3.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
+| ssl | `5` | `SetInterfaceVersion` | 3.0.0+ | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; SetInterfaceVersion ignore la valeur reçue ; pas de validation PS5) | 2026-11-22 |
+| ssl | `6` | `FlushSessionCache` | 5.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
+| ssl | `7` | `SetDebugOption` | 6.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
+| ssl | `8` | `GetDebugOption` | 6.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
 | ssl | `0` | `SetOption` | — | **STUB** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslContext`, ID/nom et corps analysés; succès simulé) | 2026-11-22 |
 | ssl | `1` | `GetOption` | — | **STUB** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslContext`, ID/nom et corps analysés; succès simulé) | 2026-11-22 |
 | ssl | `2` | `CreateConnection` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslContext`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |

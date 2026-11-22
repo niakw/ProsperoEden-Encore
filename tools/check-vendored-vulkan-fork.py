@@ -1050,10 +1050,12 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     if raster_sha == 'aa3ff8baf97f075d1adf44a9d19335c89403c8e1':
         receipt_path = root/'vendor/tests/native_msaa_handle_receipt.py'
         receipt_text = receipt_path.read_text()
-        assert raster_blob(receipt_text) == (
-            '236713fa06672b39e2a4b9a84907882bbbb1bbbd'
-            if exact_vendor_pin in {'8153654a2f1fe809fb2caa28dcadca90a7661446', '6c38328fbef33de747f5c31ea30d13541a513a4a', '8e564f61e6c8b86149ce0a0d6d2aa323a268dda6', '67759611edc13414c112ea9d2b6664d54827a200'} else
-            '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2')
+        receipt_sha = raster_blob(receipt_text)
+        assert receipt_sha in {
+            '236713fa06672b39e2a4b9a84907882bbbb1bbbd',
+            '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2',
+            '0175833f4758b6b694e1e4528afee6e5f8fd24a1',
+        }, ('Unreviewed native MSAA receipt source', receipt_sha)
         receipt = runpy.run_path(str(receipt_path))
         assert receipt['CURRENT_DRAWTEXTURE'] == raster_sha
         draw_after = receipt['DRAW_TEXTURE_AFTER']

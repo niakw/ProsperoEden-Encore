@@ -221,11 +221,18 @@ Loader::ResultStatus NupAppLoader::ValidateProgramIdentity(u64& program_id) cons
         (declared->title_id & PlatformMask) == 0x0100000000000000ULL &&
         (program_id & PlatformMask) == 0x0400000000000000ULL &&
         (program_id & LowTitleMask) == ((declared->title_id + 1) & LowTitleMask);
+    const bool matching_embedded_edition =
+        declared->kind == 1 && declared->standalone_update && metadata.IsSwitch2() &&
+        (declared->title_id & PlatformMask) == 0x0100000000000000ULL &&
+        (program_id & PlatformMask) == 0x0400000000000000ULL &&
+        (program_id & LowTitleMask) ==
+            ((FileSys::GetBaseTitleID(declared->title_id) + 1) & LowTitleMask);
     if ((declared->kind == 0 && program_id != declared->title_id &&
          !matching_ns2_edition) ||
         (declared->kind == 1 &&
          FileSys::GetBaseTitleID(program_id) !=
-             FileSys::GetBaseTitleID(declared->title_id))) {
+             FileSys::GetBaseTitleID(declared->title_id) &&
+         !matching_embedded_edition)) {
         return Loader::ResultStatus::ErrorBadNPDMHeader;
     }
     return Loader::ResultStatus::Success;

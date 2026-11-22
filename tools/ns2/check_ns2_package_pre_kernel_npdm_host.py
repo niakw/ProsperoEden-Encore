@@ -48,7 +48,8 @@ struct File {
     Loader::FileType kind{Loader::FileType::Unknown};
     VirtualDir directory{},exefs{};
     VirtualFile program{},secure{};
-    bool valid{true},is_second{},throwing{},late_error{};
+    bool valid{true},is_second{},throwing{},late_error{},nup{},nup_mounted{true};
+    std::size_t GetSize() const { return 256; }
     u64 title{0x100};
     VirtualDir GetContainingDirectory() const { return directory; }
 };
@@ -108,6 +109,24 @@ FileType IdentifyFile(const FileSys::VirtualFile& file) {
     return file->kind;
 }
 }
+// NUP follows the source-selected native bridge, not an extension heuristic.
+namespace Eden::NupV1::Native {
+bool HasNupV1Header(const FileSys::VirtualFile& file) {
+    return file && file->nup;
+}
+struct Mount {
+    FileSys::VirtualFile file;
+    static std::shared_ptr<Mount> Open(const FileSys::VirtualFile& source) {
+        return source && source->nup_mounted
+            ? std::make_shared<Mount>(Mount{source}) : nullptr;
+    }
+};
+struct ContentSet {
+    explicit ContentSet(std::shared_ptr<Mount> mount_) : mount(std::move(mount_)) {}
+    FileSys::VirtualDir ExeFS() const { return mount ? mount->file->exefs : nullptr; }
+    std::shared_ptr<Mount> mount;
+};
+}
 // The production logger is tested in the SDK syntax gate. This isolated
 // source-extracted fixture must evaluate the real arguments, without needing
 // the full Core logging category implementation.
@@ -131,6 +150,14 @@ int main() {
     assert(IsSwitch2LaunchProgram(prog,{},0,0));
     assert(IsSwitch2LaunchProgram(pkg,{},0x200,0));
     assert(IsSwitch2LaunchProgram(card,{},0x200,0));
+    auto nup=std::make_shared<File>();nup->nup=true;nup->exefs=dir2;
+    assert(IsSwitch2LaunchProgram(nup,{},0,0));
+    nup->nup_mounted=false;
+    assert(!IsSwitch2LaunchProgram(nup,{},0,0));
+    nup->nup_mounted=true;
+    nup->exefs=dir1;
+    assert(!IsSwitch2LaunchProgram(nup,{},0,0));
+    nup->exefs=dir2;
     auto old=std::make_shared<File>();old->directory=dir1;
     assert(!IsSwitch2LaunchProgram(old,{},0,0));
     prog->exefs=dir1;

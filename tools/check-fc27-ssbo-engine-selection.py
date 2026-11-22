@@ -19,6 +19,9 @@ expected={"76c5efe8cc6d706e1c2ab0a00ddcce96e2d0adf3","6f4bb38594b273fe7cc4fba960
 expected.add("42b34a5dc46b594cb029362e8f130900adf4424e")
 expected.add("77b736148129ffa72c9f6c081695b7c7515c3ed9")
 expected.add("4354add020afac574198f63d87167f3022bff9c6")
+# This integration changes only the reviewed GPU readback method and its
+# source receipts; the active SSBO shader/CMake blobs are checked below.
+expected.add("17253dc91e9fe1eb2d9980f261f59d227bfcd1a1")
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

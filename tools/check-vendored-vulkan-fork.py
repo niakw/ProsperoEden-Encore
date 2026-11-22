@@ -1074,7 +1074,16 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             '236713fa06672b39e2a4b9a84907882bbbb1bbbd',
             '18bf879c31b6d29b77b8fc6cc3026f8bd7fc0ec2',
             '0175833f4758b6b694e1e4528afee6e5f8fd24a1',
+            # New helper reconstructs exactly the two corrected GuestCacheLock
+            # calls before the 16-hunk immutable rasterizer predecessor.
+            '40bbd965be330cfa024005931be98533232971ac',
         }, ('Unreviewed native MSAA receipt source', receipt_sha)
+        if receipt_sha == '40bbd965be330cfa024005931be98533232971ac':
+            assert exact_vendor_pin == "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1"
+            fixture = runpy.run_path(str(receipt_path))
+            source = (root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+            normalized = fixture['restore_guest_cache_lock_successor'](source)
+            assert raster_blob(normalized) == '0633e3cf41c615f46791d3943ff40ac22399b047'
         receipt = runpy.run_path(str(receipt_path))
         assert receipt['CURRENT_DRAWTEXTURE'] == raster_sha
         draw_after = receipt['DRAW_TEXTURE_AFTER']

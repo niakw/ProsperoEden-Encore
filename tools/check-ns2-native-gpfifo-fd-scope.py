@@ -6,6 +6,21 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices"
 source = (BASE / "nvhost_gpu.cpp").read_text()
+# SwitchBrew retry ioctls are wire-compatible with the existing submit paths.
+# Ensure the active dispatch reuses the same bounded helpers, not a fake success.
+ioctl1 = source.split("NvResult nvhost_gpu::Ioctl1(", 1)[1].split(
+    "NvResult nvhost_gpu::Ioctl2(", 1)[0]
+ioctl2 = source.split("NvResult nvhost_gpu::Ioctl2(", 1)[1].split(
+    "NvResult nvhost_gpu::Ioctl3(", 1)[0]
+retry1 = ioctl1.split("case 0x19: { // NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY", 1)[1].split(
+    "case ", 1)[0]
+retry2 = ioctl2.split("case 0x1c: { // NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2_RETRY", 1)[1].split(
+    "case ", 1)[0]
+assert "(command.raw & 0xC000FFFFU) != 0xC0004819U" in retry1
+assert "&nvhost_gpu::SubmitGPFIFOBase1, input, output, fd, false" in retry1
+assert "if (command.raw != 0xC018481CU) break;" in retry2
+assert "&nvhost_gpu::SubmitGPFIFOBase2, input, inline_input" in retry2
+assert "output, fd);" in retry2
 header = (BASE / "nvhost_gpu.h").read_text()
 native_puller = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
 # BindObject must not change the active subchannel before native class

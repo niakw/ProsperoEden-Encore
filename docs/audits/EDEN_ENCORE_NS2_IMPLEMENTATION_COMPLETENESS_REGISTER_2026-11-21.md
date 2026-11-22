@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `f1622554541806ffcd31921389b2dcb3a9fa3e59` |
+| Vendor gitlink sélectionné sur cette branche | `0abc6a74953394b8949a12b0c5550e673281bed1` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**148**), `HANDLER PARTIEL INDIQUÉ` (**28**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `AUCUN HANDLER INDIQUÉ` (26), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus et stubs restent **M** ; un handler n'est classé C que si son contrat C++ est réellement vérifié.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**150**), `HANDLER PARTIEL INDIQUÉ` (28), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `AUCUN HANDLER INDIQUÉ` (**24**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un stub ou un refus demeure M ; les deux retries GPFIFO sont maintenant reliés au vrai chemin de soumission, et non à un stub.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,24 +30,24 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> Périmètre de **316 entrées NS2**, 12 tableaux, branche dédiée issue du moteur `7d05c7c7` / vendor `a8c91708`. Vendor actif `f1622554`, gitlink mis à jour dans le même commit moteur. Ni inventaire intégral SwitchBrew, ni preuve console.
+> Périmètre **316 commandes NS2**, 12 tableaux, branche issue du moteur `7d05c7c7` / vendor `a8c91708`. Le vendor actif `0abc6a74` est fixé par le gitlink de ce lot. Aucun résultat PS5 n'est présumé.
 
-- **F (fonctionnel au niveau source)** : **C=148**, P=27, C/P=1, M=109, U=25, V=6. Après les calculs partiels 391/691, les GSV `101`, `202`, `301`, `305` passent de P à C grâce aux contrats SwitchBrew désormais confirmés dans le C++ sélectionné (bootstrap, vraie session syncpt, display et session VI2). Le 202 vérifie maintenant le TIPC sans entrée avant de publier son handle.
-- **R (traitement renseigné)** : **259/316 (82,0 %)** avec handler, stub ou refus ; **57/316 (18,0 %)** sans handler indiqué : 26 M, 25 U, 6 V. **C ne signifie pas PS5 validée.**
+- **F (fonctionnel au niveau source)** : **C=150**, P=27, C/P=1, M=107, U=25, V=6. En plus des 4 GSV qualifiés (101,202,301,305) et des deux calculs partiels (391,691), les deux chemins GPFIFO **retry** sont désormais réels en source, d'après le contrat SwitchBrew « same as » et les méthodes C++ existantes.
+- **R (traitement renseigné)** : **261/316 (82,6 %)** avec handler/stub/refus, **55/316 (17,4 %)** sans traitement renseigné : 24 M (11 encodeur, 13 profiler), 25 U, 6 V.
 
 | Statut fonctionnel | Total | Traitement indiqué | Aucun handler indiqué |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **148** | 148 | 0 |
+| C — implémentation source | **150** | 150 | 0 |
 | P — partielle | 27 | 27 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
-| M — non implémenté | 109 | **83** (71 stubs, 12 refus) | **26** |
+| M — non implémenté | **107** | **83** (71 stubs, 12 refus) | **24** |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
-| **Total** | **316** | **259** | **57** |
+| **Total** | **316** | **261** | **55** |
 
-**Correctifs déjà appliqués sur cette branche** : GSV 1411/1501/1502 et ioctls ctrl-GPU 0xC0084710/0xC010471E échouent explicitement et restent M ; GSV 391/691 calculent réellement taille/alignment pour formats prouvés mais restent P ; GSV 101, 202, 301, 305 ont un comportement compatible avec l'ABI connue, désormais C en source. Les stubs caméra/debug/encodeur, le refus du décodeur 210 et quatre refus channel sont documentés séparément.
+**Raccordement GPU à forte valeur** : `NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY` H:0x19 reprend `SubmitGPFIFOBase1(..., kickoff=false)` comme H:0x08, avec validation direction/groupe/cmd pour l'ioctl variable ; `NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2_RETRY` H:0x1c reprend `SubmitGPFIFOBase2` comme H:0x1b via Ioctl2 (raw `0xC018481C`). Les deux routes gardent les contrôles réels d'adresse invitée, de droits de l'owner FD, de taille/OOM et de publication des fences. Contrats : [SwitchBrew NV services](https://switchbrew.org/wiki/NV_services). **Ce branchement ne démontre pas un GPU submit réussi sur PS5.**
 
-**Restants** : 26 M sans traitement (11 encodeur, 13 profiler, 2 retries GPFIFO), 25 U sans contrat suffisant, 6 anciennes variantes FW19 et 28 P/C/P à compléter/qualifier. Aucun build PS5 ni gameplay attesté ; CI hôte à vérifier pour ce couple avant merge.
+**Autres travaux sur cette branche** : 71 stubs nommés et 12 refus explicites classés M, GSV 391/691 classés P pour calcul borné, 4 GSV requalifiés C au niveau source. Restent 24 M (encodeur/profiler sans service actif), 25 U à ABI incomplète, 6 variantes FW19, 28 P/C/P à qualifier. Ne pas créer de faux périphérique profiler ou encodeur pour augmenter R.
 
 ---
 
@@ -411,10 +411,10 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0x80804816 | NVGPU_IOCTL_CHANNEL_GET_ERROR_INFO | P | HANDLER PARTIEL INDIQUÉ | GetErrorInfo | ABI 128 B actif; état no_error courant renvoyé; publication d'une faute GPU réelle pas encore reliée |
 | 0xC0104817 | NVGPU_IOCTL_CHANNEL_GET_ERROR_NOTIFICATION | P | HANDLER PARTIEL INDIQUÉ | GetErrorNotification | ABI 16 B actif; status Switch 0xFFFF et état interne courant; publication d'une faute GPU réelle pas encore reliée |
 | 0x40204818 | NVGPU_IOCTL_CHANNEL_ALLOC_GPFIFO_EX | C | HANDLER INDIQUÉ | AllocGPFIFOEx | actif |
-| 0xC0??4819 | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY | M | AUCUN HANDLER INDIQUÉ | — | pas de handler dédié |
+| 0xC0??4819 | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY | C | HANDLER INDIQUÉ | SubmitGPFIFOBase1 (retry) | SwitchBrew : même ABI/flags/fence que H:0x08 ; direction et identifiant vérifiés, chemin WrapFixedVariable réel, backend SubmitGPFIFOImpl conservé ; console à qualifier |
 | 0xC020481A | NVGPU_IOCTL_CHANNEL_ALLOC_GPFIFO_EX2 | C | HANDLER INDIQUÉ | AllocGPFIFOEx2 | actif |
 | 0xC018481B | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2 | C | HANDLER INDIQUÉ | SubmitGPFIFO | actif; S2 conserve les flags d'entrée dans la réponse Ioctl2 (Ounce utilise 6), NS1 conserve le zéro historique |
-| 0xC018481C | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2_RETRY | M | AUCUN HANDLER INDIQUÉ | — | pas de handler dédié |
+| 0xC018481C | NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2_RETRY | C | HANDLER INDIQUÉ | SubmitGPFIFOBase2 (retry) | SwitchBrew : même ABI/flags/fence que H:0x1B via Ioctl2 ; opcode 24 octets vérifié et même backend FD/GPFIFO/fence ; console à qualifier |
 | 0xC004481D | NVGPU_IOCTL_CHANNEL_SET_TIMESLICE | C | HANDLER INDIQUÉ | SetChannelTimeslice | actif |
 | 0xC010481E | [S2] NVGPU_IOCTL_CHANNEL_GET_USER_SYNCPOINT | C | HANDLER INDIQUÉ | GetUserSyncpoint | actif, valeur courante + shim GMMU |
 | 0xC008481F | [S2] NVGPU_IOCTL_CHANNEL_SET_PREEMPTION_MODE | C | HANDLER INDIQUÉ | SetPreemptionMode | Ounce réel envoie {graphics=0, compute=2}; CTA bit1 NVIDIA accepté et retenu, autres modes non modélisés → NotImplemented |

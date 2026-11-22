@@ -110,6 +110,12 @@ Le reader est matérialisé dans `encore-active/eden-backports` avec son header 
 
 **Compteur courant : 1 241 IMPL-SRC / 78 PARTIEL / 327 STUB / 27 NOOP / 2 311 NULL / 68 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le palier précédent `fb52cdf1` était vert sur X8D24 + provenance ; ce nouveau couple n'est pas encore validé PS5.
 
+## Lot FSP save/cache — 22/11/2026
+
+Vendor `e2da4886884f9dec2c6753db1de6e1048cfa095b` : `GetCacheStorageSize` passe **STUB → PARTIEL** et lit les tailles persistées du cache courant après validation d'existence ; `ExtendSaveDataFileSystem` passe **STUB → D**, car aucun indexeur ne permet de résoudre un `save_data_id` et un succès sans extension serait incorrect.
+
+**Compteur courant : 1 241 IMPL-SRC / 79 PARTIEL / 325 STUB / 27 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucun test PS5 n'est déduit de cette qualification.
+
 ---
 
 ## 1. Références et règle de vérité

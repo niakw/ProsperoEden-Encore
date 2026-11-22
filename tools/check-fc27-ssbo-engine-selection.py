@@ -51,7 +51,9 @@ expected.add("569c8e2ae6fe3dfaecb578be4c104381329f53df")
 expected.add("229ebbc5b25776604c061ebdb93ca31330fa5745")
 # FSP cmd203 patch-data + cache-only save reader; concurrent HID/BCAT retained.
 expected.add("8e387b641aa5c227db2d14d06b0457a91be043fc")
-if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4", "60bd03e6e5ad083ee050887028fa33d514a3050e", "488475c8c3867af07892a7f53cc6e15a54d09542", "8d1d9eac331b2b8db218617edff7aa4425503a95", "22e47d3b88d669048a4460b0e8b0a9d315f4ca22", "b9e23460efcf82c3f3e86de303f9a27568004b24", "569c8e2ae6fe3dfaecb578be4c104381329f53df", "229ebbc5b25776604c061ebdb93ca31330fa5745", "8e387b641aa5c227db2d14d06b0457a91be043fc"}:
+# FSP cache-size semantics + fail-closed unresolved save extension.
+expected.add("e2da4886884f9dec2c6753db1de6e1048cfa095b")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4", "60bd03e6e5ad083ee050887028fa33d514a3050e", "488475c8c3867af07892a7f53cc6e15a54d09542", "8d1d9eac331b2b8db218617edff7aa4425503a95", "22e47d3b88d669048a4460b0e8b0a9d315f4ca22", "b9e23460efcf82c3f3e86de303f9a27568004b24", "569c8e2ae6fe3dfaecb578be4c104381329f53df", "229ebbc5b25776604c061ebdb93ca31330fa5745", "8e387b641aa5c227db2d14d06b0457a91be043fc", "e2da4886884f9dec2c6753db1de6e1048cfa095b"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -72,6 +74,7 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
         "569c8e2ae6fe3dfaecb578be4c104381329f53df": "837bf41ef8f54530a06f3da8fbe1b372bbdf61e6",
         "229ebbc5b25776604c061ebdb93ca31330fa5745": "84142bbf8d1c4fc947dbaf0887fc43542349b318",
         "8e387b641aa5c227db2d14d06b0457a91be043fc": "94c9d09b3a1d47d9a0c10bd20a8b271862556eb6",
+        "e2da4886884f9dec2c6753db1de6e1048cfa095b": "d1971e7a571833820a29c83257c661a21c036b39",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

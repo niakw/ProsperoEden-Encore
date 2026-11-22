@@ -29,11 +29,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 161 | 80 | **1 241** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 75 | 3 | **78** |
-| **STUB — Stub / résultat simulé** | 327 | 0 | **327** |
+| **PARTIEL — Implémentation partielle** | 76 | 3 | **79** |
+| **STUB — Stub / résultat simulé** | 325 | 0 | **325** |
 | **NOOP — No-op documenté** | 27 | 0 | **27** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
-| **D — Rejet explicite / historique** | 35 | 33 | **68** |
+| **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 6 | 0 | **6** |
@@ -128,6 +128,14 @@ Le manifeste `eden-backports` contient les empreintes SHA-256 exactes des deux n
 
 **Compteur : 1 241 IMPL-SRC, 78 PARTIEL, 327 STUB, 27 NOOP, 2 311 NULL, 68 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot FSP save/cache — taille réelle et extension fail-closed
+
+**Vendor `e2da4886`.** `GetCacheStorageSize` (34) vérifie maintenant l'existence du cache courant et renvoie les tailles data/journal persistées par `SaveDataController`, au lieu de `0/0`. Le support reste PARTIEL : le modèle de chemin Eden ne possède pas de composant d'index et fusionne encore certains espaces User/SD.
+
+`ExtendSaveDataFileSystem` (32) ne renvoie plus un succès fictif. Sans index `save_data_id → SaveDataAttribute`, Encore ne peut pas appliquer l'extension au bon save ; il retourne donc `ResultTargetNotFound`, comme un identifiant non résolu, plutôt que de laisser le guest croire que le quota a changé.
+
+**Compteur : 1 241 IMPL-SRC, 79 PARTIEL, 325 STUB, 27 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
@@ -135,11 +143,11 @@ pie showData
     title NS1 — 4 853 entrées distinctes
     "Implémentation source retrouvée" : 1241
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 78
-    "Stub / résultat simulé" : 327
+    "Implémentation partielle" : 79
+    "Stub / résultat simulé" : 325
     "No-op documenté" : 27
     "Handler NULL" : 2311
-    "Rejet explicite / historique" : 68
+    "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
     "Hors version firmware cible" : 6
@@ -3681,9 +3689,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `28` | `DeleteSaveDataFileSystemBySaveDataAttribute` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `30` | `OpenGameCardStorage` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `31` | `OpenGameCardFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | **D** (rejet explicite `ResultTargetNotFound` : Encore ne possède pas l'index `save_data_id → SaveDataAttribute`; aucun faux succès d'extension) | 2026-11-22 |
 | fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `34` | `GetCacheStorageSize` | 5.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `34` | `GetCacheStorageSize` | 5.0.0+ | **PARTIEL** (taille data/journal réelle de `/user/save/cache/<program_id>` pour index 0 ; index multiples/SD distinct non représentés) | 2026-11-22 |
 | fsp-srv | `35` | `CreateSaveDataFileSystemWithHashSalt` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `CreateSaveDataFileSystemByHashSalt` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `36` | `OpenHostFileSystemWithOption` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `51` | `OpenSaveDataFileSystem` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |

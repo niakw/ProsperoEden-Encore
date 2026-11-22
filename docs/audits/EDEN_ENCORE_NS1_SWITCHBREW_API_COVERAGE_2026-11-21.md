@@ -23,23 +23,23 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 200 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 120 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 181 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 207 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 127 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 207 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 120 | 80 | **1 200** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 127 | 80 | **1 207** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 73 | 3 | **76** |
-| **STUB — Stub / résultat simulé** | 339 | 0 | **339** |
+| **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
 | **NOOP — No-op documenté** | 6 | 0 | **6** |
-| **NULL — Handler NULL** | 2 254 | 0 | **2 254** |
+| **NULL — Handler NULL** | 2 278 | 0 | **2 278** |
 | **D — Rejet explicite / historique** | 22 | 33 | **55** |
-| **INACCESSIBLE — Interface parente non ouvrable** | 157 | 0 | **157** |
-| **SERVICE-NON-EXPOSÉ — Service non exposé sous ce nom** | 262 | 0 | **262** |
-| **ABSENT — Commande absente des tables** | 111 | 0 | **111** |
-| **ABI-DIFF — Noms/ABI divergents** | 262 | 0 | **262** |
+| **INACCESSIBLE — Interface parente non ouvrable** | 173 | 0 | **173** |
+| **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 289 | 0 | **289** |
+| **ABSENT — Commande absente des tables** | 126 | 0 | **126** |
+| **ABI-DIFF — Noms/ABI divergents** | 283 | 0 | **283** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
-| **Q — Non vérifié** | 118 | 0 | **118** |
+| **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -48,25 +48,32 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1200
+    "Implémentation source retrouvée" : 1207
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 76
-    "Stub / résultat simulé" : 339
+    "Stub / résultat simulé" : 347
     "No-op documenté" : 6
-    "Handler NULL" : 2254
+    "Handler NULL" : 2278
     "Rejet explicite / historique" : 55
-    "Interface parente non ouvrable" : 157
-    "Service non exposé sous ce nom" : 262
-    "Commande absente des tables" : 111
-    "Noms/ABI divergents" : 262
+    "Interface parente non ouvrable" : 173
+    "Service/interface non exposé sous cette forme" : 289
+    "Commande absente des tables" : 126
+    "Noms/ABI divergents" : 283
     "Interface ambiguë" : 12
-    "Non vérifié" : 118
+    "Non vérifié" : 0
     "ID SVC non trouvé" : 1
 ```
 
+
+### Clôture de la classification documentaire — Q = 0
+
+Les **118 dernières entrées Q** ont été reclassées sans modifier le runtime : **7 IMPL-SRC, 8 STUB, 24 NULL, 16 INACCESSIBLE, 27 SERVICE-NON-EXPOSÉ, 15 ABSENT et 21 ABI-DIFF**. Il n'existe donc plus de statut générique « à vérifier ». Les incertitudes restantes sont nommées et justifiées ; elles ne doivent pas être converties automatiquement en succès runtime.
+
+`IMovieMaker` reste inaccessible car `GRC::CreateMovieMaker` est `nullptr`; `DAUTH_0` et ses contextes sont nuls; les interfaces save-data chunk et `IAsyncProgressResult` ne sont pas exposées; `lp2p` et `IMultiCommitManager` sont des stubs explicites; `IAsyncValue`, le progress BCAT, `ISaveDataInfoReader` et `IAsyncResult::Cancel` fournissent les **7 nouveaux corps source**.
+
 **Détail du changement de ce lot :** **119** entrées `RACCORDÉ` ont été qualifiées à partir des tables et des méthodes héritées : **114 IMPL-SRC** et **5 PARTIEL** (notamment `IsUserRegistrationRequestPermitted`, dont le corps mentionne une limite fonctionnelle). Sources effectivement inspectées : [Account](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp), [NFP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp), [NFP Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfp/nfp_interface.cpp), [NFC Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp). La classification concerne la présence d'un corps et certains chemins manifestement incomplets, **pas la présence d'un lecteur NFC PS5 ni un comportement garanti**.
 
-**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 0 `RACCORDÉ` et 118 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 2 248 `NULL` sont des trous des tables rapprochées, pas la preuve qu'elles sont demandées par FC27.
+**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Il ne reste **aucune entrée `Q` ni `RACCORDÉ`** : toute incertitude résiduelle est désormais portée par un statut explicite (`AMBIGU`, `ABI-DIFF`, `INACCESSIBLE`, `SERVICE-NON-EXPOSÉ` ou `ABSENT`) et sa raison. Les 2 278 `NULL` sont des trous des tables rapprochées, pas la preuve qu'elles sont demandées par FC27.
 
 
 **Lot FS de requalification :** 20 commandes précédemment `Q` rapprochées par service et ID dans les sources FS épinglées : **5 implémentations source**, **14 handlers `nullptr`** et **1 stub explicite** (`fsp-srv` ID 70, corps `STUBBED` avec retour succès). Pour les 10 slots `fsp-srv` aux noms différents du catalogue SwitchBrew, seul le **numéro d'ID** et l'état du slot sont confirmés ; l'équivalence des noms/ABI et des variantes firmware reste à vérifier. `IStorage` : Read/GetSize réels, Write/Flush/SetSize/OperateRange nuls. `IFile` : Write/Flush/SetSize réellement raccordés. Sources : [fsp-srv](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp), [IStorage](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp), [IFile](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp).
@@ -442,7 +449,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `5` | `GetProfile` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetProfile`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `6` | `GetProfileDigest` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `50` | `IsUserRegistrationRequestPermitted` | — | **PARTIEL** (méthode héritée `Module::Interface::IsUserRegistrationRequestPermitted`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:su | `51` | `TrySelectUserWithoutInteraction` | — | Q | 2026-11-21 |
+| acc:su | `51` | `TrySelectUserWithoutInteraction` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 51 = TrySelectUserWithoutInteractionDeprecated dans l'owner courant ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `100` | `GetUserRegistrationNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -459,7 +466,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `130` | `ActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `140` | `ListQualifiedUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListQualifiedUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `190` | `GetUserLastOpenedApplication` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `191` | `UpdateNotificationReceiverInfo ([5.0.0-5.1.0] ActivateOpenContextHolder)` | 7.0.0+ | Q | 2026-11-21 |
+| acc:su | `191` | `UpdateNotificationReceiverInfo ([5.0.0-5.1.0] ActivateOpenContextHolder)` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 191 change de nom/owner suivant la version ; slots concernés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `200` | `BeginUserRegistration` | — | **IMPL-SRC** (méthode héritée `Module::Interface::BeginUserRegistration`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `201` | `CompleteUserRegistration` | — | **IMPL-SRC** (méthode héritée `Module::Interface::CompleteUserRegistration`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `202` | `CancelUserRegistration` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -506,8 +513,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `14` | `GetNickname` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `15` | `GetProfileImage` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `21` | `LoadIdTokenCache` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `100` | `RegisterUser ([1.0.0-3.0.2] RegisterAsync)` | — | Q | 2026-11-21 |
-| acc:su | `101` | `RegisterUserWithUid ([1.0.0-3.0.2] RegisterWithUidAsync)` | — | Q | 2026-11-21 |
+| acc:su | `100` | `RegisterUser ([1.0.0-3.0.2] RegisterAsync)` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; IFloatingRegistrationRequest::RegisterUser ID 100 est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| acc:su | `101` | `RegisterUserWithUid ([1.0.0-3.0.2] RegisterWithUidAsync)` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; IFloatingRegistrationRequest::RegisterUserWithUid ID 101 est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `102` | `RegisterNetworkServiceAccountAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `103` | `RegisterNetworkServiceAccountWithUidAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `110` | `SetSystemProgramIdentification` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -518,7 +525,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `203` | `DeleteRegistrationInfoLocally` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `220` | `SynchronizeProfileAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `221` | `UploadProfileAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `222` | `SynchronizeProfileAsyncIfSecondsElapsed` | — | Q | 2026-11-21 |
+| acc:su | `222` | `SynchronizeProfileAsyncIfSecondsElapsed` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; table courante = SynchronizaProfileAsyncIfSecondsElapsed, owner/orthographe différent, nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `250` | `IsLinkedWithNintendoAccount` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; réponse fixe / marquée STUBBED, sans consultation réseau ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `251` | `CreateProcedureToLinkWithNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `252` | `ResumeProcedureToLinkWithNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -551,16 +558,16 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `103` | `GetProfileImage` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `100` | `GetRequestWithTheme` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `101` | `IsNetworkServiceAccountReplaced` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `0` | `GetSystemEvent` | — | Q | 2026-11-21 |
+| acc:su | `0` | `GetSystemEvent` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `0` | `Get` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `1` | `GetBase` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `10` | `GetImageSize` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `11` | `LoadImage` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `100` | `Store` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `101` | `StoreWithImage` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; IProfileCommon : lecture/écriture profil ou image ; pas de validation PS5) | 2026-11-22 |
-| acc:su | `1` | `Cancel` | — | Q | 2026-11-21 |
-| acc:su | `2` | `HasDone` | — | Q | 2026-11-21 |
-| acc:su | `3` | `GetResult` | — | Q | 2026-11-21 |
+| acc:su | `1` | `Cancel` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| acc:su | `2` | `HasDone` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| acc:su | `3` | `GetResult` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `999` | `Dummy` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `0` | `GetUserCount` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserCount`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `1` | `GetUserExistence` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserExistence`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -570,10 +577,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u0 | `5` | `GetProfile` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetProfile`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `6` | `GetProfileDigest` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `50` | `IsUserRegistrationRequestPermitted` | — | **PARTIEL** (méthode héritée `Module::Interface::IsUserRegistrationRequestPermitted`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `51` | `TrySelectUserWithoutInteraction` | — | Q | 2026-11-21 |
+| acc:u0 | `51` | `TrySelectUserWithoutInteraction` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 51 = TrySelectUserWithoutInteractionDeprecated dans l'owner courant ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `100` | `InitializeApplicationInfoV0` | — | Q | 2026-11-21 |
+| acc:u0 | `100` | `InitializeApplicationInfoV0` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ACC_U0 ID 100 = InitializeApplicationInfo ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `101` | `GetBaasAccountManagerForApplication` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetBaasAccountManagerForApplication`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `102` | `AuthenticateApplicationAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `103` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -582,7 +589,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u0 | `120` | `CreateGuestLoginRequest` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `130` | `LoadOpenContext` | 5.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::LoadOpenContext`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `131` | `ListOpenContextStoredUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `140` | `InitializeApplicationInfo` | 6.0.0+ | Q | 2026-11-21 |
+| acc:u0 | `140` | `InitializeApplicationInfo` | 6.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ACC_U0 ID 140 = InitializeApplicationInfoRestricted ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `141` | `ListQualifiedUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListQualifiedUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `150` | `IsUserAccountSwitchLocked` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::IsUserAccountSwitchLocked`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u0 | `0` | `GetSessionId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -599,11 +606,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u0 | `150` | `CreateAuthorizationRequest` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u0 | `160` | `StoreOpenContext` | 5.0.0+ | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; StoreOpenedUsers() sur ProfileManager ; pas de validation PS5) | 2026-11-22 |
 | acc:u0 | `170` | `LoadNetworkServiceLicenseKindAsync` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `0` | `GetSystemEvent` | — | Q | 2026-11-21 |
-| acc:u0 | `1` | `Cancel` | — | Q | 2026-11-21 |
-| acc:u0 | `2` | `HasDone` | — | Q | 2026-11-21 |
-| acc:u0 | `3` | `GetResult` | — | Q | 2026-11-21 |
-| acc:u0 | `100` | `GetNetworkServiceLicenseKind` | — | Q | 2026-11-21 |
+| acc:u0 | `0` | `GetSystemEvent` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| acc:u0 | `1` | `Cancel` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| acc:u0 | `2` | `HasDone` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| acc:u0 | `3` | `GetResult` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| acc:u0 | `100` | `GetNetworkServiceLicenseKind` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; IAsyncNetworkServiceLicenseKindContext expose cette commande à l'ID 4 (nullptr), pas ID 100 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:u1 | `0` | `GetUserCount` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserCount`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u1 | `1` | `GetUserExistence` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserExistence`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u1 | `2` | `ListAllUsers` | — | **IMPL-SRC** (méthode héritée `Module::Interface::ListAllUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -612,7 +619,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u1 | `5` | `GetProfile` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetProfile`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u1 | `6` | `GetProfileDigest` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `50` | `IsUserRegistrationRequestPermitted` | — | **PARTIEL** (méthode héritée `Module::Interface::IsUserRegistrationRequestPermitted`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `51` | `TrySelectUserWithoutInteraction` | — | Q | 2026-11-21 |
+| acc:u1 | `51` | `TrySelectUserWithoutInteraction` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 51 = TrySelectUserWithoutInteractionDeprecated dans l'owner courant ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:u1 | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u1 | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `100` | `GetUserRegistrationNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -629,7 +636,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:u1 | `130` | `ActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `140` | `ListQualifiedUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListQualifiedUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:u1 | `190` | `GetUserLastOpenedApplication` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `191` | `UpdateNotificationReceiverInfo ([5.0.0-5.1.0] ActivateOpenContextHolder)` | 7.0.0+ | Q | 2026-11-21 |
+| acc:u1 | `191` | `UpdateNotificationReceiverInfo ([5.0.0-5.1.0] ActivateOpenContextHolder)` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 191 change de nom/owner suivant la version ; slots concernés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:u1 | `997` | `DebugInvalidateTokenCacheForUser` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `998` | `DebugSetUserStateClose` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:u1 | `999` | `DebugSetUserStateOpen` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -647,14 +654,14 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:aa | `0` | `EnsureCacheAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:aa | `1` | `LoadCache` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:aa | `2` | `GetDeviceAccountId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| dauth:0 | `0` | `EnsureAuthenticationTokenCacheAsync ([5.0.0-5.1.0] GeneratePostData)` | — | Q | 2026-11-21 |
-| dauth:0 | `1` | `LoadAuthenticationTokenCache` | 6.0.0+ | Q | 2026-11-21 |
-| dauth:0 | `10` | `EnsureEdgeTokenCacheAsync` | 6.0.0+ | Q | 2026-11-21 |
-| dauth:0 | `11` | `LoadEdgeTokenCache` | 6.0.0+ | Q | 2026-11-21 |
-| dauth:0 | `0` | `GetResult` | — | Q | 2026-11-21 |
-| dauth:0 | `1` | `Cancel` | — | Q | 2026-11-21 |
-| dauth:0 | `2` | `IsAvailable` | — | Q | 2026-11-21 |
-| dauth:0 | `3` | `GetSystemEvent` | — | Q | 2026-11-21 |
+| dauth:0 | `0` | `EnsureAuthenticationTokenCacheAsync ([5.0.0-5.1.0] GeneratePostData)` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| dauth:0 | `1` | `LoadAuthenticationTokenCache` | 6.0.0+ | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| dauth:0 | `10` | `EnsureEdgeTokenCacheAsync` | 6.0.0+ | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| dauth:0 | `11` | `LoadEdgeTokenCache` | 6.0.0+ | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| dauth:0 | `0` | `GetResult` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| dauth:0 | `1` | `Cancel` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| dauth:0 | `2` | `IsAvailable` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| dauth:0 | `3` | `GetSystemEvent` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; DAUTH_0 / IAsyncResult : handler correspondant nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 
 ### HID services
 
@@ -1162,7 +1169,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `10` | `CreateSystemApplication` | — | **IMPL-SRC** ([source C++][ns1-src-002]) | 2026-11-22 |
 | appletAE | `100` | `PopFloatingApplicationForDevelopment` | — | **NULL** ([source C++][ns1-src-002]) | 2026-11-22 |
 | appletAE | `0` | `GetAppletStateChangedEvent` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `1` | `IsCompleted` | — | Q | 2026-11-21 |
+| appletAE | `1` | `IsCompleted` | — | **IMPL-SRC** (source `sources/eden/src/core/hle/service/am/service/library_applet_accessor.cpp` ; ILibraryAppletAccessor::IsCompleted possède un corps C++ raccordé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `10` | `Start` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `20` | `RequestExit` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `25` | `Terminate` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
@@ -1293,8 +1300,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `500` | `StartContinuousRecordingFlushForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `1000` | `CreateMovieMaker` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `1001` | `PrepareForJit` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `0` | `GetGrcMovieMaker` | — | Q | 2026-11-21 |
-| appletAE | `1` | `GetLayerHandle` | — | Q | 2026-11-21 |
+| appletAE | `0` | `GetGrcMovieMaker` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; aucun getter AM actif et GRC::CreateMovieMaker est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `1` | `GetLayerHandle` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `0` | `CreateLibraryApplet` | — | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
 | appletAE | `1` | `TerminateAllLibraryApplets` | — | **NULL** ([source C++][ns1-src-004]) | 2026-11-22 |
 | appletAE | `2` | `AreAnyLibraryAppletsLeft` | — | **NULL** ([source C++][ns1-src-004]) | 2026-11-22 |
@@ -1392,11 +1399,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `100` | `SetAlbumImageTakenNotificationEnabled` | 7.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `110` | `SetApplicationAlbumUserData` | 8.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `1000` | `GetDebugStorageChannel` | 7.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `0` | `Push` | — | Q | 2026-11-21 |
-| appletAE | `1` | `Unpop` | — | Q | 2026-11-21 |
-| appletAE | `2` | `Pop` | — | Q | 2026-11-21 |
-| appletAE | `3` | `GetPopEventHandle` | — | Q | 2026-11-21 |
-| appletAE | `4` | `Clear` | — | Q | 2026-11-21 |
+| appletAE | `0` | `Push` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `1` | `Unpop` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `2` | `Pop` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `3` | `GetPopEventHandle` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `4` | `Clear` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `0` | `CreateWindow` | — | **NULL** ([source C++][ns1-src-046]) | 2026-11-22 |
 | appletAE | `1` | `GetAppletResourceUserId` | — | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
 | appletAE | `2` | `GetAppletResourceUserIdOfCallerApplet` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
@@ -1438,9 +1445,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `26` | `AcquireCallerAppletCaptureSharedBuffer` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `27` | `ReleaseCallerAppletCaptureSharedBuffer` | 4.0.0+ | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `28` | `TakeScreenShotOfOwnLayerEx` | 6.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `1` | `RequestLaunchApplicationForDebug` | — | Q | 2026-11-21 |
-| appletAE | `2` | `GetDebugStorageChannel` | 7.0.0+ | Q | 2026-11-21 |
-| appletAE | `3` | `CreateStorageForDebug` | 7.0.0+ | Q | 2026-11-21 |
+| appletAE | `1` | `RequestLaunchApplicationForDebug` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/am/service/home_menu_functions.cpp` ; la table actuelle expose PopRequestLaunchApplicationForDebug à l'ID 100 (nullptr), pas ID 1 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `2` | `GetDebugStorageChannel` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/am/service/self_controller.cpp` ; ISelfController expose GetDebugStorageChannel à l'ID 1000 (nullptr), pas ID 2 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `3` | `CreateStorageForDebug` | 7.0.0+ | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `0` | `GetLaunchReason` | — | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
 | appletAE | `11` | `OpenCallingLibraryApplet` | — | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
 | appletAE | `21` | `PushContext` | — | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
@@ -1942,8 +1949,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `RequestUnlinkDevice` | 6.0.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `5` | `RequestRevokeAllELicense` | 6.1.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `6` | `RequestSyncRightsBasedOnAssignedELicenses` | 9.0.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `Attach` | — | Q | 2026-11-21 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `BoostSystemMemoryResourceLimit` | — | Q | 2026-11-21 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `Attach` | — | **ABSENT** (source `sources/eden/src/core/hle/service/ns/service_getter_interface.cpp` ; IServiceGetterInterface n'expose aucun ID 0/Attach ; IDs à partir de 7988 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `BoostSystemMemoryResourceLimit` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp` ; BoostSystemMemoryResourceLimit existe dans IApplicationManagerInterface ID 90 (nullptr), pas ID 1 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | ns:vm | `1200` | `NeedsUpdateVulnerability` | 3.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/ns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
 | ns:vm | `1201` | `UpdateSafeSystemVersionForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
 | ns:vm | `1202` | `GetSafeSystemVersion` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
@@ -1983,13 +1990,13 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:su | `20` | `GetReceivedEulaData` | 4.0.0+ | **NULL** ([source C++][ns1-src-109]) | 2026-11-22 |
 | ns:su | `21` | `SetupToReceiveSystemUpdate` | 4.0.0+ | **NULL** ([source C++][ns1-src-109]) | 2026-11-22 |
 | ns:su | `22` | `RequestCheckLatestUpdateIncludesRebootlessUpdate` | 6.0.0+ | **NULL** ([source C++][ns1-src-109]) | 2026-11-22 |
-| IAsyncValue | `0` | `GetSize` | — | Q | 2026-11-21 |
-| IAsyncValue | `1` | `Get` | — | Q | 2026-11-21 |
-| IAsyncValue | `2` | `Cancel` | — | Q | 2026-11-21 |
-| IAsyncValue | `3` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
-| IAsyncResult | `0` | `Get` | — | Q | 2026-11-21 |
-| IAsyncResult | `1` | `Cancel` | — | Q | 2026-11-21 |
-| IAsyncResult | `2` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
+| IAsyncValue | `0` | `GetSize` | — | **IMPL-SRC** (source `sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp` ; IAsyncValue::GetSize a un corps C++ et une sortie concrète ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncValue | `1` | `Get` | — | **IMPL-SRC** (source `sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp` ; IAsyncValue::Get a un corps C++ et une sortie concrète ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncValue | `2` | `Cancel` | — | **STUB** (source `sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp` ; IAsyncValue::Cancel retourne succès sans effet/erreur exploitable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncValue | `3` | `GetErrorContext` | 4.0.0+ | **STUB** (source `sources/eden/src/core/hle/service/ns/read_only_application_control_data_interface.cpp` ; IAsyncValue::GetErrorContext retourne succès sans effet/erreur exploitable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncResult | `0` | `Get` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/ns/i_async_result.cpp` ; IAsyncResult::Get est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncResult | `1` | `Cancel` | — | **IMPL-SRC** (source `encore-active/eden-backports/src/core/hle/service/ns/i_async_result.cpp` ; IAsyncResult::Cancel signale effectivement son événement ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncResult | `2` | `GetErrorContext` | 4.0.0+ | **NULL** (source `encore-active/eden-backports/src/core/hle/service/ns/i_async_result.cpp` ; IAsyncResult::GetErrorContext est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | ns:dev | `0` | `LaunchProgram` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
 | ns:dev | `1` | `TerminateProcess` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
 | ns:dev | `2` | `TerminateProgram` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
@@ -2226,7 +2233,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | audren:u | `10` | `GetActiveAudioDeviceNameAuto` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `11` | `QueryAudioDeviceInputEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `12` | `QueryAudioDeviceOutputEvent` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-049]) | 2026-11-22 |
-| audren:u | `13` | `GetAudioSystemMasterVolumeSetting` | 5.0.0+ | Q | 2026-11-21 |
+| audren:u | `13` | `GetAudioSystemMasterVolumeSetting` | 5.0.0+ | **ABSENT** (source `sources/eden/src/core/hle/service/audio/audio_renderer_manager.cpp` ; IAudioRendererManager n'enregistre que les IDs 0–4 ; ID 13 absent ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | audout:a | `0` | `RequestSuspendAudioOuts` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 0 de audout:a est nullptr sous le nom `RequestSuspend`, pas `RequestSuspendAudioOuts` ; statique, PS5 non validé) | 2026-11-22 |
 | audout:a | `1` | `RequestResumeAudioOuts` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 1 de audout:a est nullptr sous le nom `RequestResume`, pas `RequestResumeAudioOuts` ; statique, PS5 non validé) | 2026-11-22 |
 | audout:a | `2` | `GetAudioOutsProcessMasterVolume` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 2 de audout:a est nullptr sous le nom `GetProcessMasterVolume`, pas `GetAudioOutsProcessMasterVolume` ; statique, PS5 non validé) | 2026-11-22 |
@@ -2340,8 +2347,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bcat:a, bcat:m, bcat:u, bcat:s | `20400` | `RegisterSystemApplicationDeliveryTask` | 9.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `20401` | `UnregisterSystemApplicationDeliveryTask` | 9.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `30100` | `SetPassphrase` | — | **IMPL-SRC** ([source C++][ns1-src-058]) | 2026-11-22 |
-| bcat:a, bcat:m, bcat:u, bcat:s | `30200` | `RegisterDeliveryTask` | 3.0.0+ | Q | 2026-11-21 |
-| bcat:a, bcat:m, bcat:u, bcat:s | `30201` | `UnregisterDeliveryTask` | 3.0.0+ | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30200` | `RegisterDeliveryTask` | 3.0.0+ | **ABI-DIFF** (source `sources/eden/src/core/hle/service/bcat/bcat_service.cpp` ; ID 30200 renommé RegisterBackgroundDeliveryTask (nullptr) ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30201` | `UnregisterDeliveryTask` | 3.0.0+ | **ABI-DIFF** (source `sources/eden/src/core/hle/service/bcat/bcat_service.cpp` ; ID 30201 renommé UnregisterBackgroundDeliveryTask (nullptr) ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `30202` | `BlockDeliveryTask` | 3.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `30203` | `UnblockDeliveryTask` | 3.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `30300` | `RegisterSystemApplicationDeliveryTasks` | 8.0.0+ | **STUB** ([source C++][ns1-src-058]) | 2026-11-22 |
@@ -2350,8 +2357,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bcat:a, bcat:m, bcat:u, bcat:s | `90201` | `ClearDeliveryCacheStorage` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `90202` | `ClearDeliveryTaskSubscriptionStatus` | 8.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `90300` | `GetPushNotificationLog` | 3.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
-| bcat:a, bcat:m, bcat:u, bcat:s | `0` | `GetEvent` | — | Q | 2026-11-21 |
-| bcat:a, bcat:m, bcat:u, bcat:s | `1` | `GetImpl` | — | Q | 2026-11-21 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `0` | `GetEvent` | — | **IMPL-SRC** (source `sources/eden/src/core/hle/service/bcat/delivery_cache_progress_service.cpp` ; IDeliveryCacheProgressService::GetEvent possède un corps C++ raccordé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `1` | `GetImpl` | — | **IMPL-SRC** (source `sources/eden/src/core/hle/service/bcat/delivery_cache_progress_service.cpp` ; IDeliveryCacheProgressService::GetImpl possède un corps C++ raccordé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `0` | `CreateFileService` | — | **IMPL-SRC** ([source C++][ns1-src-061]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `1` | `CreateDirectoryService` | — | **IMPL-SRC** ([source C++][ns1-src-061]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `10` | `EnumerateDeliveryCacheDirectory` | — | **IMPL-SRC** ([source C++][ns1-src-061]) | 2026-11-22 |
@@ -2877,7 +2884,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:a | `100` | `GetAlbumFileCountEx0` | 5.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `101` | `GetAlbumFileListEx0` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `202` | `SaveEditedScreenShot` | 1.0.0-2.3.0 | **NULL** ([source C++][ns1-src-072]) | 2026-11-22 |
-| caps:a | `301` | `GetLastOverlayScreenShotThumbnail` | — | Q | 2026-11-21 |
+| caps:a | `301` | `GetLastOverlayScreenShotThumbnail` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID 301 = GetLastThumbnail (nullptr), nom différent ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | caps:a | `302` | `GetLastOverlayMovieThumbnail` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `401` | `GetAutoSavingStorage` | — | **STUB** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `501` | `GetRequiredStorageSpaceSizeToCopyAll` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
@@ -2893,14 +2900,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:a | `10011` | `SetInternalErrorConversionEnabled` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `50000` | `LoadMakerNoteInfoForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `60002` | `OpenAccessorSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `2001` | `OpenAlbumMovieReadStream` | — | Q | 2026-11-21 |
-| caps:a | `2002` | `CloseAlbumMovieReadStream` | — | Q | 2026-11-21 |
-| caps:a | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | Q | 2026-11-21 |
-| caps:a | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
-| caps:a | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | Q | 2026-11-21 |
-| caps:a | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | Q | 2026-11-21 |
-| caps:a | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
-| caps:a | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
+| caps:a | `2001` | `OpenAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2002` | `CloseAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | caps:c | `2001` | `NotifyAlbumStorageIsAvailable` | — | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2002` | `NotifyAlbumStorageIsUnavailable` | — | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2011` | `RegisterAppletResourceUserId` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
@@ -2949,11 +2956,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | **PARTIEL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `60002` | `OpenAccessorSessionForApplication` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `2001` | `OpenAlbumMovieReadStream` | — | Q | 2026-11-21 |
-| caps:u | `2002` | `CloseAlbumMovieReadStream` | — | Q | 2026-11-21 |
-| caps:u | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | Q | 2026-11-21 |
-| caps:u | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | Q | 2026-11-21 |
-| caps:u | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | Q | 2026-11-21 |
+| caps:u | `2001` | `OpenAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:u | `2002` | `CloseAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:u | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:u | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:u | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 
 ### Display services
 
@@ -2967,15 +2974,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:sc | `2` | `CaptureRawImageWithTimeout` | — | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `3` | `AttachSharedBuffer` | 5.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `5` | `CaptureRawImageToAttachedSharedBuffer` | 5.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
-| caps:sc | `210` | `?` | 6.0.0+ | Q | 2026-11-21 |
+| caps:sc | `210` | `?` | 6.0.0+ | **NULL** (source `sources/eden/src/core/hle/service/caps/caps_sc.cpp` ; slot ID exact présent sous Unknown* et handler nullptr ; nom SwitchBrew inconnu ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | caps:sc | `1004` | `RequestTakingScreenShotEx1` | 5.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `1009` | `CancelTakingScreenShot` | 5.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `1010` | `SetTakingScreenShotCancelState` | 5.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `1011` | `NotifyTakingScreenShotRefused` | — | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `1012` | `NotifyTakingScreenShotFailed` | — | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `1101` | `SetupOverlayMovieThumbnail` | 4.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
-| caps:sc | `1106` | `?` | 4.0.0+ | Q | 2026-11-21 |
-| caps:sc | `1107` | `?` | 4.0.0+ | Q | 2026-11-21 |
+| caps:sc | `1106` | `?` | 4.0.0+ | **NULL** (source `sources/eden/src/core/hle/service/caps/caps_sc.cpp` ; slot ID exact présent sous Unknown* et handler nullptr ; nom SwitchBrew inconnu ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:sc | `1107` | `?` | 4.0.0+ | **NULL** (source `sources/eden/src/core/hle/service/caps/caps_sc.cpp` ; slot ID exact présent sous Unknown* et handler nullptr ; nom SwitchBrew inconnu ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | caps:sc | `1201` | `OpenRawScreenShotReadStream` | 3.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `1202` | `CloseRawScreenShotReadStream` | 3.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
 | caps:sc | `1203` | `ReadRawScreenShotReadStream` | 3.0.0+ | **NULL** ([source C++][ns1-src-071]) | 2026-11-22 |
@@ -2983,7 +2990,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:ss | `202` | `SaveEditedScreenShot` | — | **NULL** ([source C++][ns1-src-072]) | 2026-11-22 |
 | caps:ss | `203` | `SaveScreenShotEx0` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-072]) | 2026-11-22 |
 | caps:ss | `204` | `SaveEditedScreenShotEx0` | 3.0.0+ | **NULL** ([source C++][ns1-src-072]) | 2026-11-22 |
-| caps:ss | `206` | `[?+]` | — | Q | 2026-11-21 |
+| caps:ss | `206` | `[?+]` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/caps/caps_ss.cpp` ; ID 206 = SaveEditedScreenShotEx1 avec handler raccordé ; nom SwitchBrew non identifié ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | caps:ss | `208` | `SaveScreenShotOfMovieEx1` | 5.0.0+ | **NULL** ([source C++][ns1-src-072]) | 2026-11-22 |
 | caps:su | `201` | `SaveScreenShot` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | caps:su | `203` | `SaveScreenShotEx0` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
@@ -2995,10 +3002,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | cec-mgr | `5` | `OnSystemEvent` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("cec-mgr") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | cec-mgr | `6` | `CancelCurrentCall` | 2.0.0+ | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("cec-mgr") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | cec-mgr | `100` | `GetHdcpServiceObject` | 4.0.0+ | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("cec-mgr") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
-| IHdcpController | `0` | `GetHdcpStateTransitionEvent` | — | Q | 2026-11-21 |
-| IHdcpController | `1` | `GetHdcpAuthenticationState` | — | Q | 2026-11-21 |
-| IHdcpController | `2` | `SetCurrentHdcpMode` | — | Q | 2026-11-21 |
-| IHdcpController | `3` | `GetCurrentHdcpMode` | — | Q | 2026-11-21 |
+| IHdcpController | `0` | `GetHdcpStateTransitionEvent` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/service/common_state_getter.cpp` ; aucune interface IHdcpController ; commandes HDCP distinctes sous ICommonStateGetter ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IHdcpController | `1` | `GetHdcpAuthenticationState` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/service/common_state_getter.cpp` ; aucune interface IHdcpController ; commandes HDCP distinctes sous ICommonStateGetter ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IHdcpController | `2` | `SetCurrentHdcpMode` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/service/common_state_getter.cpp` ; aucune interface IHdcpController ; commandes HDCP distinctes sous ICommonStateGetter ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IHdcpController | `3` | `GetCurrentHdcpMode` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/service/common_state_getter.cpp` ; aucune interface IHdcpController ; commandes HDCP distinctes sous ICommonStateGetter ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | mm:u | `0` | `InitializeOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::InitializeOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
 | mm:u | `1` | `FinalizeOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::FinalizeOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
 | mm:u | `2` | `SetAndWaitOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::SetAndWaitOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
@@ -3707,7 +3714,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IFile | `3` | `SetSize` | — | **IMPL-SRC** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp) ; source NS1, pas validée PS5) | 2026-11-22 |
 | IFile | `4` | `GetSize` | — | **IMPL-SRC** ([source C++][ns1-src-025]) | 2026-11-22 |
 | IFile | `5` | `OperateRange` | 4.0.0+ | **NULL** ([source C++][ns1-src-025]) | 2026-11-22 |
-| ISaveDataInfoReader | `0` | `ReadSaveDataInfo` | — | Q | 2026-11-21 |
+| ISaveDataInfoReader | `0` | `ReadSaveDataInfo` | — | **IMPL-SRC** (source `sources/eden/src/core/hle/service/filesystem/fsp/fs_i_save_data_info_reader.cpp` ; ReadSaveDataInfo possède un corps C++ effectif ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | IDeviceOperator | `0` | `IsSdCardInserted` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
 | IDeviceOperator | `1` | `GetSdCardSpeedMode` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
 | IDeviceOperator | `2` | `GetSdCardCid` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
@@ -3751,7 +3758,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IDeviceOperator | `402` | `GetSdmmcConnectionStatus` | 6.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
 | IDeviceOperator | `500` | `SetDeviceSimulationEvent` | 6.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
 | IDeviceOperator | `501` | `ClearDeviceSimulationEvent` | 6.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
-| IEventNotifier | `0` | `GetEventHandle` | — | Q | 2026-11-21 |
+| IEventNotifier | `0` | `GetEventHandle` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; aucune interface IEventNotifier avec cette table dans le vendor ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | ISaveDataTransferManager | `0` | `GetChallenge` | — | **INACCESSIBLE** ([racine FSP-SRV](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; sous-interface `ISaveDataTransferManager` non ouvrable depuis les gestionnaires de transfert 81/82/85/87, tous nullptr ; corps interne non qualifié, PS5 non testé) | 2026-11-22 |
 | ISaveDataTransferManager | `16` | `SetToken` | — | **INACCESSIBLE** ([racine FSP-SRV](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; sous-interface `ISaveDataTransferManager` non ouvrable depuis les gestionnaires de transfert 81/82/85/87, tous nullptr ; corps interne non qualifié, PS5 non testé) | 2026-11-22 |
 | ISaveDataTransferManager | `32` | `OpenSaveDataExporter` | — | **INACCESSIBLE** ([racine FSP-SRV](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; sous-interface `ISaveDataTransferManager` non ouvrable depuis les gestionnaires de transfert 81/82/85/87, tous nullptr ; corps interne non qualifié, PS5 non testé) | 2026-11-22 |
@@ -3808,14 +3815,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ISaveDataDivisionImporter | `48` | `OpenSaveDataChunkImporter` | — | **INACCESSIBLE** ([racine FSP-SRV](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; sous-interface `ISaveDataDivisionImporter` non ouvrable depuis les gestionnaires de transfert 81/82/85/87, tous nullptr ; corps interne non qualifié, PS5 non testé) | 2026-11-22 |
 | ISaveDataDivisionImporter | `64` | `GetImportInitialDataAad` | 6.0.0+ | **INACCESSIBLE** ([racine FSP-SRV](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; sous-interface `ISaveDataDivisionImporter` non ouvrable depuis les gestionnaires de transfert 81/82/85/87, tous nullptr ; corps interne non qualifié, PS5 non testé) | 2026-11-22 |
 | ISaveDataDivisionImporter | `80` | `GetReportInfo` | 6.0.0+ | **INACCESSIBLE** ([racine FSP-SRV](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; sous-interface `ISaveDataDivisionImporter` non ouvrable depuis les gestionnaires de transfert 81/82/85/87, tous nullptr ; corps interne non qualifié, PS5 non testé) | 2026-11-22 |
-| ISaveDataChunkIterator | `0` | `Next` | — | Q | 2026-11-21 |
-| ISaveDataChunkIterator | `1` | `IsEnd` | — | Q | 2026-11-21 |
-| ISaveDataChunkIterator | `16` | `GetId` | — | Q | 2026-11-21 |
-| ISaveDataChunkExporter | `0` | `Pull` | — | Q | 2026-11-21 |
-| ISaveDataChunkExporter | `16` | `GetRestRawDataSize` | 6.0.0+ | Q | 2026-11-21 |
-| ISaveDataChunkImporter | `0` | `Push` | — | Q | 2026-11-21 |
-| IMultiCommitManager | `1` | `Add` | — | Q | 2026-11-21 |
-| IMultiCommitManager | `2` | `Commit` | — | Q | 2026-11-21 |
+| ISaveDataChunkIterator | `0` | `Next` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkIterator n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ISaveDataChunkIterator | `1` | `IsEnd` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkIterator n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ISaveDataChunkIterator | `16` | `GetId` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkIterator n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ISaveDataChunkExporter | `0` | `Pull` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkExporter n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ISaveDataChunkExporter | `16` | `GetRestRawDataSize` | 6.0.0+ | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkExporter n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ISaveDataChunkImporter | `0` | `Push` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkImporter n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMultiCommitManager | `1` | `Add` | — | **STUB** (source `sources/eden/src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp` ; IMultiCommitManager::Add est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMultiCommitManager | `2` | `Commit` | — | **STUB** (source `sources/eden/src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp` ; IMultiCommitManager::Commit est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 
 ### Bus services
 
@@ -4124,8 +4131,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ndd | `22` | `StartDeviceScan` | — | **SERVICE-NON-EXPOSÉ** ([service natif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; service ndd sans registre nommé dans les processus de services HLE examinés ; absence de routage, corps individuels non évalués ; constat statique, aucune validation PS5) | 2026-11-22 |
 | ndd | `23` | `CancelDeviceScan` | — | **SERVICE-NON-EXPOSÉ** ([service natif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; service ndd sans registre nommé dans les processus de services HLE examinés ; absence de routage, corps individuels non évalués ; constat statique, aucune validation PS5) | 2026-11-22 |
 | ndd | `24` | `GetDeviceScanResult` | — | **SERVICE-NON-EXPOSÉ** ([service natif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; service ndd sans registre nommé dans les processus de services HLE examinés ; absence de routage, corps individuels non évalués ; constat statique, aucune validation PS5) | 2026-11-22 |
-| lp2p:app, lp2p:sys | `0` | `CreateNetworkService` | — | Q | 2026-11-21 |
-| lp2p:app, lp2p:sys | `8` | `CreateNetworkServiceMonitor` | — | Q | 2026-11-21 |
+| lp2p:app, lp2p:sys | `0` | `CreateNetworkService` | — | **STUB** (source `sources/eden/src/core/hle/service/ldn/ldn.cpp` ; ISfServiceCreator::CreateNetworkService est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| lp2p:app, lp2p:sys | `8` | `CreateNetworkServiceMonitor` | — | **STUB** (source `sources/eden/src/core/hle/service/ldn/ldn.cpp` ; ISfServiceCreator::CreateNetworkServiceMonitor est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 
 ### Loader services
 
@@ -4646,10 +4653,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IAsyncResult | `0` | `Get` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | IAsyncResult | `1` | `Cancel` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | IAsyncResult | `2` | `GetErrorContext` | 4.0.0+ | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
-| IAsyncProgressResult | `0` | `Get` | — | Q | 2026-11-21 |
-| IAsyncProgressResult | `1` | `Cancel` | — | Q | 2026-11-21 |
-| IAsyncProgressResult | `2` | `GetProgress` | — | Q | 2026-11-21 |
-| IAsyncProgressResult | `3` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
+| IAsyncProgressResult | `0` | `Get` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/bcat/bcat_service.cpp` ; aucune classe/interface IAsyncProgressResult dans le vendor épinglé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncProgressResult | `1` | `Cancel` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/bcat/bcat_service.cpp` ; aucune classe/interface IAsyncProgressResult dans le vendor épinglé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncProgressResult | `2` | `GetProgress` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/bcat/bcat_service.cpp` ; aucune classe/interface IAsyncProgressResult dans le vendor épinglé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IAsyncProgressResult | `3` | `GetErrorContext` | 4.0.0+ | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/bcat/bcat_service.cpp` ; aucune classe/interface IAsyncProgressResult dans le vendor épinglé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 
 ### NPNS services
 
@@ -4954,9 +4961,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ovln:rcv | `2` | `GetReceiveEventHandle` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
 | ovln:rcv | `3` | `Receive` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
 | ovln:rcv | `4` | `ReceiveWithTick` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
-| ovln:snd | `0` | `OpenSender` | — | Q | 2026-11-21 |
-| ovln:snd | `0` | `Send` | — | Q | 2026-11-21 |
-| ovln:snd | `1` | `GetUnreceivedMessageCount` | — | Q | 2026-11-21 |
+| ovln:snd | `0` | `OpenSender` | — | **STUB** (source `sources/eden/src/core/hle/service/psc/ovln/sender_service.cpp` ; ISenderService::OpenSender est STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ovln:snd | `0` | `Send` | — | **STUB** (source `sources/eden/src/core/hle/service/psc/ovln/sender.cpp` ; ISender::Send est STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ovln:snd | `1` | `GetUnreceivedMessageCount` | — | **NULL** (source `sources/eden/src/core/hle/service/psc/ovln/sender.cpp` ; ISender::GetUnreceivedMessageCount est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | time:m | `0` | `GetUserStaticService` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/service_manager.cpp) ; ServiceManager time:m ID 0 : ancien nom SwitchBrew GetUserStaticService, propriétaire renommé, ABI non établie ; non certifié PS5) | 2026-11-22 |
 | time:m | `5` | `GetAdminStaticService` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/service_manager.cpp) ; ServiceManager time:m ID 5 : ancien nom SwitchBrew GetAdminStaticService, propriétaire renommé, ABI non établie ; non certifié PS5) | 2026-11-22 |
 | time:m | `6` | `GetRepairStaticService` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/service_manager.cpp) ; ServiceManager time:m ID 6 : ancien nom SwitchBrew GetRepairStaticService, propriétaire renommé, ABI non établie ; non certifié PS5) | 2026-11-22 |
@@ -5518,12 +5525,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | usb:hs, usb:hs:a | `1` | `SetInterface` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
 | usb:hs, usb:hs:a | `2` | `GetInterface` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
 | usb:hs, usb:hs:a | `3` | `GetAlternateInterface` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
-| usb:hs, usb:hs:a | `6` | `([1.0.0] SubmitControlInRequest)` | — | Q | 2026-11-21 |
-| usb:hs, usb:hs:a | `7` | `GetCtrlXferReport ([1.0.0] SubmitControlOutRequest)` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `6` | `([1.0.0] SubmitControlInRequest)` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/usb/usb.cpp` ; nomenclature 1.0.0 différente des slots usb:hs actuels ; slots rapprochés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| usb:hs, usb:hs:a | `7` | `GetCtrlXferReport ([1.0.0] SubmitControlOutRequest)` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/usb/usb.cpp` ; nomenclature 1.0.0 différente des slots usb:hs actuels ; slots rapprochés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | usb:hs, usb:hs:a | `8` | `ResetDevice` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
-| usb:hs, usb:hs:a | `0` | `Open ([1.0.0] SubmitOutRequest)` | — | Q | 2026-11-21 |
-| usb:hs, usb:hs:a | `1` | `Close ([1.0.0] SubmitInRequest)` | — | Q | 2026-11-21 |
-| usb:hs, usb:hs:a | `3` | `Populate ([1.0.0] Close)` | — | Q | 2026-11-21 |
+| usb:hs, usb:hs:a | `0` | `Open ([1.0.0] SubmitOutRequest)` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/usb/usb.cpp` ; nomenclature 1.0.0 différente des slots usb:hs actuels ; slots rapprochés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| usb:hs, usb:hs:a | `1` | `Close ([1.0.0] SubmitInRequest)` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/usb/usb.cpp` ; nomenclature 1.0.0 différente des slots usb:hs actuels ; slots rapprochés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| usb:hs, usb:hs:a | `3` | `Populate ([1.0.0] Close)` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/usb/usb.cpp` ; nomenclature 1.0.0 différente des slots usb:hs actuels ; slots rapprochés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | usb:pd | `0` | `GetPdSession` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; ID 0 porte `OpenSession` dans la table actuelle, pas `GetPdSession` ; statique, PS5 non validé) | 2026-11-22 |
 | usb:pd | `0` | `BindNoticeEvent` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
 | usb:pd | `1` | `UnbindNoticeEvent` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
@@ -5606,21 +5613,21 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | grc:c | `2` | `EndTrim` | — | **INACCESSIBLE** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/grc/grc.cpp) ; commandes de l'interface de trimming ; OpenGameMovieTrimmer (grc:c ID 2) est nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | grc:c | `10` | `GetNotTrimmingEvent` | — | **INACCESSIBLE** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/grc/grc.cpp) ; commandes de l'interface de trimming ; OpenGameMovieTrimmer (grc:c ID 2) est nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | grc:c | `20` | `SetThumbnailRgba` | — | **INACCESSIBLE** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/grc/grc.cpp) ; commandes de l'interface de trimming ; OpenGameMovieTrimmer (grc:c ID 2) est nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| IMovieMaker | `2` | `CreateVideoProxy` | — | Q | 2026-11-21 |
-| IMovieMaker | `9` | `SetAlbumShimLibraryVersion` | 7.0.0+ | Q | 2026-11-21 |
-| IMovieMaker | `10` | `OpenOffscreenLayer` | — | Q | 2026-11-21 |
-| IMovieMaker | `11` | `CloseOffscreenLayer` | — | Q | 2026-11-21 |
-| IMovieMaker | `20` | `StartOffscreenRecording` | — | Q | 2026-11-21 |
-| IMovieMaker | `21` | `AbortOffscreenRecording` | — | Q | 2026-11-21 |
-| IMovieMaker | `22` | `RequestOffscreenRecordingFinishReady` | — | Q | 2026-11-21 |
-| IMovieMaker | `23` | `CompleteOffscreenRecordingFinish` | — | Q | 2026-11-21 |
-| IMovieMaker | `24` | `StartOffscreenRecordingEx` | — | Q | 2026-11-21 |
-| IMovieMaker | `25` | `CompleteOffscreenRecordingFinishEx0` | — | Q | 2026-11-21 |
-| IMovieMaker | `26` | `CompleteOffscreenRecordingFinishEx1` | 7.0.0+ | Q | 2026-11-21 |
-| IMovieMaker | `30` | `GetOffscreenLayerError` | — | Q | 2026-11-21 |
-| IMovieMaker | `41` | `EncodeOffscreenLayerAudioSample` | — | Q | 2026-11-21 |
-| IMovieMaker | `50` | `GetOffscreenLayerRecordingFinishReadyEvent` | — | Q | 2026-11-21 |
-| IMovieMaker | `52` | `GetOffscreenLayerAudioEncodeReadyEvent` | — | Q | 2026-11-21 |
+| IMovieMaker | `2` | `CreateVideoProxy` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `9` | `SetAlbumShimLibraryVersion` | 7.0.0+ | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `10` | `OpenOffscreenLayer` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `11` | `CloseOffscreenLayer` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `20` | `StartOffscreenRecording` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `21` | `AbortOffscreenRecording` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `22` | `RequestOffscreenRecordingFinishReady` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `23` | `CompleteOffscreenRecordingFinish` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `24` | `StartOffscreenRecordingEx` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `25` | `CompleteOffscreenRecordingFinishEx0` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `26` | `CompleteOffscreenRecordingFinishEx1` | 7.0.0+ | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `30` | `GetOffscreenLayerError` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `41` | `EncodeOffscreenLayerAudioSample` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `50` | `GetOffscreenLayerRecordingFinishReadyEvent` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| IMovieMaker | `52` | `GetOffscreenLayerAudioEncodeReadyEvent` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; GRC::CreateMovieMaker ID 101 est nullptr, donc l'interface enfant n'est pas ouvrable ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 
 ### Migration services
 
@@ -5686,11 +5693,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | olsc:s | `0` | `GetNativeHandle` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/olsc/native_handle_holder.cpp)) | 2026-11-22 |
-| olsc:s | `0` | `GetResult` | — | Q | 2026-11-21 |
-| olsc:s | `1` | `Cancel` | — | Q | 2026-11-21 |
-| olsc:s | `2` | `IsAvailable` | — | Q | 2026-11-21 |
-| olsc:s | `3` | `GetSystemEvent` | — | Q | 2026-11-21 |
-| olsc:s | `0` | `Update` | — | Q | 2026-11-21 |
+| olsc:s | `0` | `GetResult` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/olsc/olsc_service_for_system_service.cpp` ; aucune surface GetResult/Cancel/IsAvailable/GetSystemEvent/Update dans OLSC système ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| olsc:s | `1` | `Cancel` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/olsc/olsc_service_for_system_service.cpp` ; aucune surface GetResult/Cancel/IsAvailable/GetSystemEvent/Update dans OLSC système ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| olsc:s | `2` | `IsAvailable` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/olsc/olsc_service_for_system_service.cpp` ; aucune surface GetResult/Cancel/IsAvailable/GetSystemEvent/Update dans OLSC système ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| olsc:s | `3` | `GetSystemEvent` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/olsc/olsc_service_for_system_service.cpp` ; aucune surface GetResult/Cancel/IsAvailable/GetSystemEvent/Update dans OLSC système ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| olsc:s | `0` | `Update` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/olsc/olsc_service_for_system_service.cpp` ; aucune surface GetResult/Cancel/IsAvailable/GetSystemEvent/Update dans OLSC système ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 
 ### NGCT services
 

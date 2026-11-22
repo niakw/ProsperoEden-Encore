@@ -152,6 +152,7 @@ reader_harness=r"""
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <mutex>
 #include <stdexcept>
 #include <stop_token>
 #include <string>
@@ -204,6 +205,10 @@ void RunReader(bool fail, bool progress_failure) {
     bool prefer_recent_cache=false;
     std::stop_token stop_loading{};
     std::vector<std::function<void()>> recent_cache_builds;
+    struct {
+        std::mutex mutex;
+        std::size_t total{};
+    } state;
     bool caught=false;
     try {
     {

@@ -819,7 +819,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                 digest = hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
                 assert digest == expected_blob, ('NS2 Lichii AM source drift',relative,digest)
         if actual_vendor_pin == 'f4f5d53596879960b19a3701bbd2272ef1f3c634':
-            for relative, expected in {
+            for relative, expected_blob in {
                 "encore-active/eden-core/src/core/file_sys/card_image.cpp": "5d5e6b40099b18768dadd39ba839881989e7ff6f",
                 "encore-active/eden-core/src/core/file_sys/content_archive.cpp": "d31f75bf354f3ce5af1ac2f1ac170586503b1877",
                 "encore-active/eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp": "49841fbbde5bd086f23aba601c80b19176ed8ae4",
@@ -827,7 +827,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             }.items():
                 raw = (root / 'vendor' / relative).read_bytes()
                 digest = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-                assert digest == expected, ("DNSP/DXCI exact source drift", relative, digest)
+                assert digest == expected_blob, ("DNSP/DXCI exact source drift", relative, digest)
         exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
         actual_vendor_pin = exact_vendor_pin
     # GPU-30 is compiled from this pinned C++ owner, but the frozen R23/P24

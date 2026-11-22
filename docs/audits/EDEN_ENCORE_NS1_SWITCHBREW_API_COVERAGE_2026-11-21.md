@@ -5555,5 +5555,3 @@ Le premier croisement **service + ID + nom** avec les unités `spl`, `irs`, `cap
 **Raisons d'échec documentées** : `nullptr` dans `RegisterHandlers` = commande non raccordée dans le service de base ; `UNIMPLEMENTED` = rejet/logique absente ; `(STUBBED)` = commande répondant parfois `ResultSuccess` sans effet matériel complet (IRS/CAPS). Dans SPL, certaines opérations renvoient `ResultSecureMonitorNotImplemented` plutôt que succès ; conserver cette distinction.
 
 **Exemples hors table wiki historique** : `ModularExponentiate` apparaît explicitement dans le module SPL de base mais pas dans le catalogue des commandes extrait sous ce nom ; `nvmemp::GetAruid` et plusieurs commandes `ngct:s` demandent un rapprochement avec la page SwitchBrew actuelle et leurs interfaces précises. Ne pas leur attribuer d'ID par déduction.
-
-

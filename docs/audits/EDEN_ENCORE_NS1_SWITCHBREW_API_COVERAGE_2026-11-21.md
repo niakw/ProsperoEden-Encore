@@ -27,11 +27,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 199 | 80 | **1 279** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 206 | 80 | **1 286** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 90 | 3 | **93** |
-| **STUB — Stub / résultat simulé** | 227 | 0 | **227** |
-| **NOOP — No-op documenté** | 73 | 0 | **73** |
+| **STUB — Stub / résultat simulé** | 215 | 0 | **215** |
+| **NOOP — No-op documenté** | 78 | 0 | **78** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -176,16 +176,24 @@ Le read-only est appliqué au niveau `IFileSystem` **et** `IFile` : Create/Delet
 
 **Compteur : 1 279 IMPL-SRC / 93 PARTIEL / 227 STUB / 73 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
 
+### Lot FSP SD + NS application-record / lancement
+
+**Vendor `a691b553`.** `IsSdCardAccessible` utilise désormais le vrai `OpenSDMC`; `IsExFatSupported` devient un NOOP documenté à `false`, cohérent avec le backend host-directory et le fallback LibHac.
+
+Côté NS, `HasApplicationRecord` et `IsAnyApplicationEntityInstalled` interrogent le `ContentProviderUnion` réel ; `GetRunningApplicationProgramId` renvoie déjà le ProgramId du processus application et n'est plus faussement étiqueté stub. L'événement `GetApplicationRecordUpdateSystemEvent` n'est plus signalé lors de la simple récupération du handle : il reste passif jusqu'aux mutations de record, comme l'amont Ryujinx. `IsApplicationUpdateRequested` et `CheckApplicationLaunchVersion` sont des NOOP explicites car Encore n'émule ni requêtes NS distantes ni version-list Nintendo poussée.
+
+**Compteur : 1 286 IMPL-SRC / 93 PARTIEL / 215 STUB / 78 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** `HasApplicationRecord` cmd910 reste NULL : c'est une autre entrée de l'interface parentale, non raccordée par ce lot.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1279
+    "Implémentation source retrouvée" : 1286
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 93
-    "Stub / résultat simulé" : 227
-    "No-op documenté" : 73
+    "Stub / résultat simulé" : 215
+    "No-op documenté" : 78
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -1692,7 +1700,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | aoc:u | `4` | `PopPurchasedProductInfoWithUid` | 9.0.0+ | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | ns:am | `0` | `ListApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1` | `GenerateApplicationRecordCount` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **IMPL-SRC** (retourne l'événement passif ; `DeleteApplicationEntity`/mutations le signalent réellement, vendor `a691b553`) | 2026-11-22 |
 | ns:am | `3` | `GetApplicationViewDeprecated` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `4` | `DeleteApplicationEntity` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `5` | `DeleteApplicationCompletely` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1716,7 +1724,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `35` | `UpdateVersionList` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `36` | `PushLaunchVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `37` | `ListRequiredVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `38` | `CheckApplicationLaunchVersion` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `38` | `CheckApplicationLaunchVersion` | — | **NOOP** (aucune version-list Nintendo poussée n'est modélisée ; le contenu local est autorisé à lancer, politique explicite) | 2026-11-22 |
 | ns:am | `39` | `CheckApplicationLaunchRights` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `40` | `GetApplicationLogoData` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `41` | `CalculateApplicationDownloadRequiredSize` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1786,13 +1794,13 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `903` | `DisableApplicationAutoUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `904` | `TouchApplication` | 2.0.0+ | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `905` | `RequestApplicationUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `906` | `IsApplicationUpdateRequested` | 2.0.0+ | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `906` | `IsApplicationUpdateRequested` | 2.0.0+ | **NOOP** (Encore n'a pas d'état de requête de mise à jour NS distant ; `false/0` explicite, conforme au fallback émulateur amont) | 2026-11-22 |
 | ns:am | `907` | `WithdrawApplicationUpdateRequest` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `908` | `ListApplicationRecordInstalledContentMeta` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1000` | `RequestVerifyApplicationDeprecated` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1001` | `CorruptApplicationForDebug` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1200` | `NeedsUpdateVulnerability` | 2.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/ns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
-| ns:am | `1300` | `IsAnyApplicationEntityInstalled` | 2.0.0+ | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `1300` | `IsAnyApplicationEntityInstalled` | 2.0.0+ | **IMPL-SRC** (scan réel des Applications/Program installées, exclusion des sous-programmes, vendor `256b2abe`) | 2026-11-22 |
 | ns:am | `1301` | `DeleteApplicationContentEntities` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1302` | `CleanupUnrecordedApplicationEntity` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1400` | `PrepareShutdown` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1818,7 +1826,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `CreateUserAccount` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/account_proxy_interface.cpp)) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `ListApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `GenerateApplicationRecordCount` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **IMPL-SRC** (retourne l'événement passif ; `DeleteApplicationEntity`/mutations le signalent réellement, vendor `a691b553`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `3` | `GetApplicationViewDeprecated` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `DeleteApplicationEntity` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `5` | `DeleteApplicationCompletely` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1841,7 +1849,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `35` | `UpdateVersionList` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `36` | `PushLaunchVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `37` | `ListRequiredVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `38` | `CheckApplicationLaunchVersion` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `38` | `CheckApplicationLaunchVersion` | — | **NOOP** (aucune version-list Nintendo poussée n'est modélisée ; le contenu local est autorisé à lancer, politique explicite) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `39` | `CheckApplicationLaunchRights` | 1.0.0-6.2.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `40` | `GetApplicationLogoData` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `41` | `CalculateApplicationDownloadRequiredSize` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1883,7 +1891,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `87` | `IsApplicationCrashReportEnabled` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `90` | `BoostSystemMemoryResourceLimit` | 4.0.0-8.1.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `91` | `DeprecatedLaunchApplication` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `92` | `GetRunningApplicationProgramId` | 5.0.0+ | **STUB** ([source C++][ns1-src-104]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `92` | `GetRunningApplicationProgramId` | 5.0.0+ | **IMPL-SRC** (`system.GetApplicationProcessProgramID()` ; seul le marquage STUB historique était faux, vendor `256b2abe`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `93` | `GetMainApplicationProgramIndex` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `94` | `LaunchApplication` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `95` | `GetApplicationLaunchInfo` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1949,7 +1957,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `903` | `DisableApplicationAutoUpdate` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `904` | `TouchApplication` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `905` | `RequestApplicationUpdate` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `906` | `IsApplicationUpdateRequested` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `906` | `IsApplicationUpdateRequested` | — | **NOOP** (Encore n'a pas d'état de requête de mise à jour NS distant ; `false/0` explicite, conforme au fallback émulateur amont) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `907` | `WithdrawApplicationUpdateRequest` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `908` | `ListApplicationRecordInstalledContentMeta` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `909` | `WithdrawCleanupAddOnContentsWithNoRightsRecommendation` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1965,7 +1973,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1003` | `RequestVerifyApplication` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1004` | `CorruptContentForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1200` | `NeedsUpdateVulnerability` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/ns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1300` | `IsAnyApplicationEntityInstalled` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1300` | `IsAnyApplicationEntityInstalled` | — | **IMPL-SRC** (scan réel des Applications/Program installées, exclusion des sous-programmes, vendor `256b2abe`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1301` | `DeleteApplicationContentEntities` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1302` | `CleanupUnrecordedApplicationEntity` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1303` | `CleanupAddOnContentsWithNoRights` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2058,7 +2066,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `707` | `EnableAutoCommit` | 4.0.0+ | **STUB** ([source C++][ns1-src-105]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `708` | `DisableAutoCommit` | 4.0.0+ | **STUB** ([source C++][ns1-src-105]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `709` | `TriggerDynamicCommitEvent` | 4.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `HasApplicationRecord` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/read_only_application_record_interface.cpp)) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `HasApplicationRecord` | — | **IMPL-SRC** (recherche exacte Application/Program dans `ContentProviderUnion`, vendor `256b2abe`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `GetApplicationControlData` | — | **IMPL-SRC** ([source C++][ns1-src-016]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `GetApplicationDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-016]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2` | `ConvertApplicationLanguageToLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-016]) | 2026-11-22 |
@@ -3725,7 +3733,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `24` | `RegisterSaveDataFileSystemAtomicDeletion` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `25` | `DeleteSaveDataFileSystemBySaveDataSpaceId` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `26` | `FormatSdCardDryRun` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `27` | `IsExFatSupported` | 2.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `27` | `IsExFatSupported` | 2.0.0+ | **NOOP** (backend SD host-directory sans distinction FAT/exFAT ; fallback `false` aligné LibHac, vendor `a460d757`) | 2026-11-22 |
 | fsp-srv | `28` | `DeleteSaveDataFileSystemBySaveDataAttribute` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `30` | `OpenGameCardStorage` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `31` | `OpenGameCardFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3792,7 +3800,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `617` | `UnregisterExternalKey` | 7.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `620` | `SetSdCardEncryptionSeed` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `630` | `SetSdCardAccessibility` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `631` | `IsSdCardAccessible` | 4.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `631` | `IsSdCardAccessible` | 4.0.0+ | **IMPL-SRC** (`FileSystemController::OpenSDMC` + présence du VirtualDir réel, vendor `a460d757`) | 2026-11-22 |
 | fsp-srv | `640` | `IsSignedSystemPartitionOnSdCardValid` | 4.0.0-7.0.1 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `700` | `OpenAccessFailureDetectionEventNotifier` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenAccessFailureResolver` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `701` | `GetAccessFailureDetectionEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |

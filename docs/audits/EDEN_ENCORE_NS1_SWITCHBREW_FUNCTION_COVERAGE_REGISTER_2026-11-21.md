@@ -156,6 +156,14 @@ Cmd69 passe PARTIEL → IMPL-SRC ; cmd70 STUB → NOOP. Cmd57/58/59 passent STUB
 
 **Compteur courant : 1 279 IMPL-SRC / 93 PARTIEL / 227 STUB / 73 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le HEAD précédent `854e7785` → `c3c3b6d2` est vert X8D24 + provenance ; aucune validation PS5 n'est revendiquée.
 
+## Lot FSP SD + NS application-record — 22/11/2026
+
+Couple : moteur repointé vers vendor `a691b5535f9c69539b466a926359d805d734acce`. FSP : accessibilité SD issue de `OpenSDMC`, exFAT explicitement non modélisé. NS : présence d'application et existence de records dérivées du `ContentProviderUnion`; ProgramId courant lu du processus application; event de records corrigé pour ne plus être signalé lors de l'ouverture du handle.
+
+`IsApplicationUpdateRequested` et `CheckApplicationLaunchVersion` sont reclassés NOOP plutôt que STUB : l'émulateur n'a pas de version-list/requête NS distante à reproduire et l'amont Ryujinx adopte les mêmes valeurs permissives. `ResolveApplicationContentPath` reste ouvert : Atmosphère délègue cette commande au service Nintendo, sauf exemptions HBL/manual HTML, donc une implémentation locale basée uniquement sur « contenu installé » ne serait pas prouvée.
+
+**Compteur courant : 1 286 IMPL-SRC / 93 PARTIEL / 215 STUB / 78 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le HEAD précédent `77477e94` → `61ab696e` est vert X8D24 + provenance ; aucun test PS5 n'est encore revendiqué pour ce nouveau lot.
+
 ---
 
 ## 1. Références et règle de vérité

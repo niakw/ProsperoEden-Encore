@@ -1665,6 +1665,28 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
+elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    # NS1/NS2 merge preserves these eight active AM/HID owners. Historical
+    # early-HLE provenance stays frozen; check each real selected Git blob.
+    qualified_early_hle = {
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp": "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.h": "03cf286dd642a3e517c7fa4950850603038c6d6b",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_scaling_parameters_functions.h": "bded1f902ac1a0995d71ffc3f425f33ba781b198",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp": "b83f519fef3905eabb0bef65cab4d989033b5287",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.h": "1f3b144324b9014d4e5db64f796019f0e9f4c9a6",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp": "b1acd90a74bceb03c900a505e217f484f6ecd18f",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
+    }
+    assert set(qualified_early_hle) == (set(ns2_early_hle_receipts) | {
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h",
+    })
+    assert ns2_early_hle_present == set(ns2_early_hle_receipts)
+    for source, expected in qualified_early_hle.items():
+        actual = subprocess.check_output(["git","hash-object",source],cwd=ROOT,text=True).strip()
+        assert actual == expected, ("Merged early HLE source changed",source,actual)
+    assert '"hle/service/am/service/application_proxy_service.cpp"' in release_cmake
 else:
     assert not ns2_early_hle_present
 print("ENCORE_NS2_EARLY_HLE_F07_ISOLATION_PASS",

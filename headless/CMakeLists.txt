@@ -4813,3 +4813,49 @@ if(PS5_NATIVE AND EDEN_PS5_VULKAN)
         "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_texture_cache.h" COPYONLY)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/include")
 endif()
+
+# NS2 AM structural parity with the reviewed Lichii service tables.
+# Select exactly one maintained C++ owner per service (never append a second
+# translation unit) and its matching ApplicationAccessor ABI header.
+# The upstream Eden source tree remains immutable. This is the ONE existing
+# native PS5 core build, not an experimental alternative runtime.
+if(PS5_NATIVE)
+    set(EDEN_NS2_AM_STRUCTURE_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/am_structure")
+    get_target_property(eden_ns2_am_structure_sources core SOURCES)
+    foreach(eden_ns2_am_name IN ITEMS
+            application_accessor
+            audio_controller
+            common_state_getter
+            display_controller
+            library_applet_accessor
+            library_applet_creator
+            window_controller)
+        set(eden_ns2_am_replacement
+            "${EDEN_NS2_AM_STRUCTURE_ROOT}/core/hle/service/am/service/${eden_ns2_am_name}.cpp")
+        if(NOT EXISTS "${eden_ns2_am_replacement}")
+            message(FATAL_ERROR "Missing reviewed NS2 AM source ${eden_ns2_am_name}")
+        endif()
+        set(eden_ns2_am_owners "")
+        foreach(eden_ns2_am_unit IN LISTS eden_ns2_am_structure_sources)
+            if(eden_ns2_am_unit MATCHES
+                    "(^|/)hle/service/am/service/${eden_ns2_am_name}\\.cpp$")
+                list(APPEND eden_ns2_am_owners "${eden_ns2_am_unit}")
+            endif()
+        endforeach()
+        list(LENGTH eden_ns2_am_owners eden_ns2_am_count)
+        if(NOT eden_ns2_am_count EQUAL 1)
+            message(FATAL_ERROR
+                "NS2 AM source owner ${eden_ns2_am_name} count=${eden_ns2_am_count}")
+        endif()
+        list(REMOVE_ITEM eden_ns2_am_structure_sources ${eden_ns2_am_owners})
+        list(APPEND eden_ns2_am_structure_sources "${eden_ns2_am_replacement}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_am_structure_sources}")
+    set(eden_ns2_am_header
+        "${EDEN_NS2_AM_STRUCTURE_ROOT}/core/hle/service/am/service/application_accessor.h")
+    if(NOT EXISTS "${eden_ns2_am_header}")
+        message(FATAL_ERROR "NS2 AM ApplicationAccessor ABI header missing")
+    endif()
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_STRUCTURE_ROOT}")
+endif()

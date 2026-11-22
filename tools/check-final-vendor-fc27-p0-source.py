@@ -167,11 +167,12 @@ PS5_NS2_SELF_CONTROLLER_2400_PIN = "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267"
 PS5_NS2_NUP_IPC_PIN = "87964d15e91b6b6523c88682e5ca017f6e1a808b"
 PS5_NS2_LICHII_ZEROED_PIN = "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a"
 PS5_NS2_LICHII_AM_PIN = "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0"
-if actual_vendor_pin in {PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN}:
+PS5_NS2_LICHII_AM_2_PIN = "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"
+if actual_vendor_pin in {PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN, PS5_NS2_LICHII_AM_2_PIN}:
     assert selected == actual_vendor_pin
     tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
-    assert tree == ("68acadcd14d23135fd02df0a0e508c668917168c" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c"), tree
+    assert tree == ("805d74f7ccf0ddf060782615d2bd94bb8d26b412" if actual_vendor_pin == PS5_NS2_LICHII_AM_2_PIN else "68acadcd14d23135fd02df0a0e508c668917168c" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c"), tree
     for relative, expected in {
         "encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp":
             ("01d0f8a05faaa30b01a1802680a954aebfbf118b" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "7783c917d8b2f2e8d26c091d5507964fcf9d44dd" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "743bd9c9a4b9a3550c853ffa8fc06898c01618ff"),
@@ -180,7 +181,7 @@ if actual_vendor_pin in {PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, 
     }.items():
         raw = (V / relative).read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
-    if actual_vendor_pin in {PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN}:
+    if actual_vendor_pin in {PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN, PS5_NS2_LICHII_AM_2_PIN}:
         for relative, expected in {
                 "encore-active/eden-core/src/core/hle/service/service.cpp": ("e388765fb2cf372adc01c2c3ec174955659ccc2a" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "e2d52974d419b9ed4089da8baed104dd1dbd282d"),
                 "encore-active/ns2-runtime/process/core/core.cpp": "a2721a630b8b32222ff586ea2db19ee726d4d5b9",
@@ -214,15 +215,30 @@ if actual_vendor_pin in {PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, 
             actual = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
             assert actual == expected, ("NS2 Lichii structural owner drift",relative,actual)
         REVIEWED_PINS.add(PS5_NS2_LICHII_AM_PIN)
+    if actual_vendor_pin == PS5_NS2_LICHII_AM_2_PIN:
+        for relative, expected in {
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/audio_controller.cpp": "0b9efbe1cfdb3072828709170bbefa202114d08d",
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/common_state_getter.cpp": "2c5e5364146b125c038b239056bf06f2aaea5ef3",
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/display_controller.cpp": "7e7db23708718f6513b784c489edf61d8d555fac",
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/library_applet_accessor.cpp": "7119c605968dd50372d5d62097bb2f9d017ab6e6",
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/library_applet_creator.cpp": "1157033948e6a6f015ef14dedda30a40ff750b54",
+            "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/window_controller.cpp": "6b19368d91035f6372cf8540c4b45caf371c1cd3",
+        }.items():
+            raw = (V/relative).read_bytes()
+            actual = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+            assert actual == expected, ("Lichii AM real and stub owner drift",relative,actual)
+        REVIEWED_PINS.add(PS5_NS2_LICHII_AM_2_PIN)
     REVIEWED_PINS.add(PS5_NS2_SELF_CONTROLLER_2400_PIN)
     selected = "dbef23055897b1649f83c20cf7a0516e64f3d5cd"
 
 PS5_FC27_RECENT_PREWARM_PIN = "dbef23055897b1649f83c20cf7a0516e64f3d5cd"
-if actual_vendor_pin in {PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN}:
+if actual_vendor_pin in {PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN, PS5_NS2_LICHII_AM_2_PIN}:
     assert selected == PS5_FC27_RECENT_PREWARM_PIN
     new_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
-    assert new_tree == ("68acadcd14d23135fd02df0a0e508c668917168c" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541"), ("FC27 prewarm vendor tree drift", new_tree)
+    assert new_tree == ("805d74f7ccf0ddf060782615d2bd94bb8d26b412" if actual_vendor_pin == PS5_NS2_LICHII_AM_2_PIN else "68acadcd14d23135fd02df0a0e508c668917168c" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541"), ("FC27 prewarm vendor tree drift", new_tree)
     source_path = V / "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
     raw = source_path.read_bytes()
     current_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -237,16 +253,16 @@ PS5_FC27_NVDRV_EXIT_BLOBS = {
     "tests/shutdown_teardown_lifetime_source.py": "6f3ff15f43b456ea79ba8f1dc275b690c1e11606",
     "tests/shutdown_general_channel_lifetime_source.py": "4e25852f84f9bc8e73454ef6ac1bac4d9270ac3a",
 }
-if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN}:
+if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN, PS5_NS2_SELF_CONTROLLER_2400_PIN, PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN, PS5_NS2_LICHII_AM_2_PIN}:
     assert selected == PS5_FC27_NVDRV_EXIT_PIN
     actual_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
-    assert actual_tree == ("68acadcd14d23135fd02df0a0e508c668917168c" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541" if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN else "067c72d30a71a79faefd1ad14876e2a46f02755c"), actual_tree
+    assert actual_tree == ("805d74f7ccf0ddf060782615d2bd94bb8d26b412" if actual_vendor_pin == PS5_NS2_LICHII_AM_2_PIN else "68acadcd14d23135fd02df0a0e508c668917168c" if actual_vendor_pin == PS5_NS2_LICHII_AM_PIN else "e125210acec0eaef51c6c038d200cc9c12981ace" if actual_vendor_pin == PS5_NS2_LICHII_ZEROED_PIN else "c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab" if actual_vendor_pin == PS5_NS2_NUP_IPC_PIN else "e21b2c70c00c50fc7d682150cb62e87fe856306c" if actual_vendor_pin == PS5_NS2_SELF_CONTROLLER_2400_PIN else "9e28e5b83cf9c0f4086a33d6838904353a8fd541" if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN else "067c72d30a71a79faefd1ad14876e2a46f02755c"), actual_tree
     active_nvdrv_blobs = ({**PS5_FC27_NVDRV_EXIT_BLOBS, **{
         "encore-active/ns2-runtime/process/core/core.cpp": "a2721a630b8b32222ff586ea2db19ee726d4d5b9",
         "tests/shutdown_general_channel_lifetime_source.py": "4bb0ef388211b1c9110afce55ef80983e5050782",
         "tests/shutdown_teardown_lifetime_source.py": "e40deaae0b1f3aab6a5a12f7978be470b3ee0463",
-    }} if actual_vendor_pin in {PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN} else PS5_FC27_NVDRV_EXIT_BLOBS)
+    }} if actual_vendor_pin in {PS5_NS2_NUP_IPC_PIN, PS5_NS2_LICHII_ZEROED_PIN, PS5_NS2_LICHII_AM_PIN, PS5_NS2_LICHII_AM_2_PIN} else PS5_FC27_NVDRV_EXIT_BLOBS)
     for path, expected_blob in active_nvdrv_blobs.items():
         raw = (V / path).read_bytes()
         actual_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()

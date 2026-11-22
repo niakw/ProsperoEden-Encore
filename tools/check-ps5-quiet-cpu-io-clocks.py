@@ -75,10 +75,11 @@ assert service.count("const auto hle_start = profile_hle ? ::Eden::Performance::
 assert service.count("if (profile_hle)\n                ::Eden::Performance::RecordHle(") == 2
 assert service.count("if (::Eden::Performance::trace_fs_callers.load(std::memory_order_relaxed)") == 2
 assert service.count("EDEN_FS_CALLER command=") == 2
-# Known registered commands with a null handler must fail closed. Unknown command IDs remain
-# untouched, and the opt-in auto-stub path is still the only success fallback.
+# NS1 and unknown non-NS2 callers remain fail-closed; genuine NS2
+# processes use Lichii's initialized 32-word result placeholder instead.
 assert "// not implemented yet on Encore" in service
-assert "else if (info != nullptr)" in service
+assert "IsNx2PlaceholderCaller(ctx, service_name)" in service
+assert "FillNx2StubWords(rb);" in service
 assert "rb.Push(Kernel::ResultNotImplemented);" in service
 # Optional services that Eden does not use for gameplay may be explicit no-ops,
 # but only through the exact whitelist in the maintained dispatcher.

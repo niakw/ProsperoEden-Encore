@@ -741,7 +741,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     exact_vendor_pin = subprocess.check_output(
         ['git', '-C', str(root / 'vendor'), 'rev-parse', 'HEAD'], text=True).strip()
     actual_vendor_pin = exact_vendor_pin
-    if exact_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd", "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267", "87964d15e91b6b6523c88682e5ca017f6e1a808b", "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a", "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0"}:
+    if exact_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd", "dc526f06d277dfa0a4afa48b4cf8b3153ebe7267", "87964d15e91b6b6523c88682e5ca017f6e1a808b", "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a", "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"}:
         # Merge commit retains precisely the source tree of the reviewed
         # GuestCacheLock predecessor; historical rollback uses its receipts.
         reviewed_tree = subprocess.check_output(
@@ -760,6 +760,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             '87964d15e91b6b6523c88682e5ca017f6e1a808b': 'c1cbb8a3ca0b7231e260fdb5e9f6a1c7964097ab',
             'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a': 'e125210acec0eaef51c6c038d200cc9c12981ace',
             'f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0': '68acadcd14d23135fd02df0a0e508c668917168c',
+            'd22b7066410c627230f9bfa8b3b5be8baff4fcdf': '805d74f7ccf0ddf060782615d2bd94bb8d26b412',
         }[exact_vendor_pin], ('Vendor reviewed source tree drift', exact_vendor_pin, reviewed_tree)
         if exact_vendor_pin in {'dc526f06d277dfa0a4afa48b4cf8b3153ebe7267', '87964d15e91b6b6523c88682e5ca017f6e1a808b', 'ae6f59a9865a3f4f178c4d836a3e04c93cceb69a', 'f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0'}:
             for relative, expected_sha in {
@@ -802,6 +803,20 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                 raw = (root/'vendor'/relative).read_bytes()
                 digest = hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
                 assert digest == qualified_blob, ('Lichii structural source drift',relative,digest)
+        if exact_vendor_pin == 'd22b7066410c627230f9bfa8b3b5be8baff4fcdf':
+            for relative, expected_blob in {
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/audio_controller.cpp": "0b9efbe1cfdb3072828709170bbefa202114d08d",
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/common_state_getter.cpp": "2c5e5364146b125c038b239056bf06f2aaea5ef3",
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/display_controller.cpp": "7e7db23708718f6513b784c489edf61d8d555fac",
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/library_applet_accessor.cpp": "7119c605968dd50372d5d62097bb2f9d017ab6e6",
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/library_applet_creator.cpp": "1157033948e6a6f015ef14dedda30a40ff750b54",
+                "encore-active/ns2-runtime/am_structure/core/hle/service/am/service/window_controller.cpp": "6b19368d91035f6372cf8540c4b45caf371c1cd3",
+            }.items():
+                raw = (root/'vendor'/relative).read_bytes()
+                digest = hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+                assert digest == expected_blob, ('NS2 Lichii AM source drift',relative,digest)
         exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
         actual_vendor_pin = exact_vendor_pin
     # GPU-30 is compiled from this pinned C++ owner, but the frozen R23/P24

@@ -517,6 +517,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 733** : 2 176 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` BLE pairing / Account Online Storage — 23/11/2026
+
+**Vendor `3b564c2d141b94fecc78e3f68753e00aea009180`** (arbre `46f035e4e6a40dee8cb751651f9c4f2c0a307a8b`) sur la branche secondaire NS1.
+
+- **4 NULL → IMPL-SRC** : `Set/GetBlePairingSettings` (143/144) et `Get/SetAccountOnlineStorageSettings` (154/155).
+- BLE utilise le buffer MapAlias documenté par libnx, entrées de **0x80 octets**, capacité persistante **10** ; Account Online Storage utilise des entrées **0x40**, capacité **8**. Les getters bornent le nombre copié à la fois par le compteur persistant, la capacité locale et le buffer IPC fourni.
+- Les setters refusent explicitement un tableau plus grand que le stockage local au lieu de déclencher l'`ASSERT` utilisé par certains handlers historiques ; les compteurs et données sont ensuite persistés via `SetSaveNeeded()`.
+- Aucun service réseau Nintendo n'est simulé : ce lot implémente seulement le contrat de stockage/récupération des settings.
+- Le couple précédent est en CI ; le présent couple doit avoir ses propres contrôles. Aucun build PS5 ni validation gameplay revendiqué.
+
+**Compteur historique : 1 428 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 172 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 729** : 2 172 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

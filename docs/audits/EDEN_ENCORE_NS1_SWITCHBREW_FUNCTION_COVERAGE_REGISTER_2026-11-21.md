@@ -252,6 +252,22 @@ Vendor `084983e07dd79fb0276dad03a342554628cdb7e0`, puis `76de6f60e3a3e3982bac17c
 
 **Compteur courant : 1 311 IMPL-SRC / 108 PARTIEL / 152 STUB / 106 NOOP / 2 306 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple moteur `55e6ed38` → vendor `dff1bdb7` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour ce nouveau lot.
 
+## Réouverture du statut NULL + NIFM ClientId / creator lifecycle — 22/11/2026
+
+Vendor `50f086881d16f4c6fb89e710ee1e4c6ce6336a04` (arbre `4f015ccf16419403354a03463a79edb4856b501f`).
+
+- **Doctrine corrigée : NULL n'est plus un statut “fermé”.** Un handler NULL signifie désormais qu'aucun handler n'est raccordé dans la source active ; il reste dans le pool de revue jusqu'à justification individuelle ou implémentation.
+- `GetClientId` : **STUB → IMPL-SRC**, ABI corrigée en ClientId u32 via buffer type 0x1A, valeur non nulle propre à l'instance.
+- `IsAnyInternetRequestAccepted` : **PARTIEL → IMPL-SRC**, désormais indexé par ClientId et alimenté par les IRequest réellement acceptées.
+- `IsAnyForegroundRequestAccepted` : **STUB → IMPL-SRC**, compteur global des IRequest acceptées.
+- `GetCurrentAccessPointOld` : **NULL → PARTIEL**, layout 0x34 historique et données réseau réelles ; canal/auth/cipher restent inconnus.
+- `ILibraryAppletCreator::TerminateAllLibraryApplets` et `AreAnyLibraryAppletsLeft` : **2 NULL → IMPL-SRC** avec le vrai graphe `child_applets`.
+- Le couple moteur précédent `a0d12cfc` → vendor `76de6f60` est vert X8D24 + provenance.
+
+**Compteur courant : 1 316 IMPL-SRC / 108 PARTIEL / 150 STUB / 106 NOOP / 2 303 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 859 entrées** : 2 303 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Il ne s'agit pas d'un nombre de bugs prouvés ; les NULL doivent maintenant être triés par firmware, exposition réelle, backend matériel et disponibilité d'un état local/upstream.
+
 ---
 
 ## 1. Références et règle de vérité

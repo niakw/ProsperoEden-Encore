@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 311 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 231 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `76de6f60`. **Ces 1 311 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 316 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 236 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `50f08688`. **Ces 1 316 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 231 | 80 | **1 311** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 236 | 80 | **1 316** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
-| **STUB — Stub / résultat simulé** | 152 | 0 | **152** |
+| **STUB — Stub / résultat simulé** | 150 | 0 | **150** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 306 | 0 | **2 306** |
+| **NULL — Handler NULL** | 2 303 | 0 | **2 303** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -244,17 +244,29 @@ Vendor `084983e0`, puis `76de6f60` (arbre `5508124e6fbc16279e5870434b331154cb7f6
 
 **Compteur courant : 1 311 IMPL-SRC, 108 PARTIEL, 152 STUB, 106 NOOP, 2 306 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple moteur `55e6ed38` → vendor `dff1bdb7` est vert X8D24 + provenance ; ce nouveau couple reste à qualifier par ses propres checks.
 
+### Réouverture des NULL + NIFM ClientId + lifecycle creator
+
+Vendor cumulé `50f08688` (arbre `4f015ccf16419403354a03463a79edb4856b501f`). Le traitement récent démontre que **NULL ne peut plus être assimilé à “fermé par politique”** : trois lignes NULL du catalogue ont été raccordées directement à de l'état déjà disponible (`GetCurrentAccessPointOld`, `ILibraryAppletCreator::TerminateAllLibraryApplets`, `AreAnyLibraryAppletsLeft`).
+
+NIFM gagne également trois contrats réels : `GetClientId` respecte désormais l'ABI 4 octets dans le buffer de sortie, `IsAnyInternetRequestAccepted` est scindé par ClientId et `IsAnyForegroundRequestAccepted` reflète les requêtes réellement acceptées. Les transitions `IRequest` maintiennent les compteurs lors des passages vers/depuis `Accepted`.
+
+**Nouvelle règle de backlog : les 2 303 NULL restent à requalifier.** Ils ne sont ni comptés comme implémentations ni considérés clos tant qu'une justification individuelle (hors-version, debug/hardware-only, interface inaccessible, NOOP justifié) ou un handler réel n'est pas établie.
+
+**Compteur courant : 1 316 IMPL-SRC, 108 PARTIEL, 150 STUB, 106 NOOP, 2 303 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 859 = 2 303 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Ce chiffre est un pool de revue/code, pas 2 859 bugs démontrés.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1311
+    "Implémentation source retrouvée" : 1316
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 108
-    "Stub / résultat simulé" : 152
+    "Stub / résultat simulé" : 150
     "No-op documenté" : 106
-    "Handler NULL" : 2306
+    "Handler NULL" : 2303
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1505,8 +1517,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `0` | `GetGrcMovieMaker` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; aucun getter AM actif et GRC::CreateMovieMaker est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `1` | `GetLayerHandle` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `0` | `CreateLibraryApplet` | — | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
-| appletAE | `1` | `TerminateAllLibraryApplets` | — | **NULL** ([source C++][ns1-src-004]) | 2026-11-22 |
-| appletAE | `2` | `AreAnyLibraryAppletsLeft` | — | **NULL** ([source C++][ns1-src-004]) | 2026-11-22 |
+| appletAE | `1` | `TerminateAllLibraryApplets` | — | **IMPL-SRC** (snapshot des child applets sous verrou parent, terminaison hors verrou parent, résultat `ResultLibraryAppletTerminated` ; vendor `50f08688`) | 2026-11-22 |
+| appletAE | `2` | `AreAnyLibraryAppletsLeft` | — | **IMPL-SRC** (lit la liste réelle `child_applets` sous verrou sur `ILibraryAppletCreator` ; vendor `50f08688`) | 2026-11-22 |
 | appletAE | `10` | `CreateStorage` | — | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
 | appletAE | `11` | `CreateTransferMemoryStorage` | — | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
 | appletAE | `12` | `CreateHandleStorage` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
@@ -4675,7 +4687,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 |---|---|---|---|---|---|
 | nifm:a, nifm:s, nifm:u | `4` | `CreateGeneralServiceOld ([1.0.0-2.3.0] CreateGeneralService)` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `5` | `CreateGeneralService` | 3.0.0+ | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `1` | `GetClientId` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `1` | `GetClientId` | — | **IMPL-SRC** (ABI ClientId corrigée : u32 écrit dans le buffer type 0x1A, identifiant non nul distinct par `IGeneralService` ; vendor `753ae144`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `2` | `CreateScanRequest` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `4` | `CreateRequest` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `5` | `GetCurrentNetworkProfile` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
@@ -4686,7 +4698,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `10` | `RemoveNetworkProfile` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `11` | `GetScanDataOld ([1.0.0-3.0.2] GetScanData)` | — | **PARTIEL** (sérialise le cache de scan réel au layout historique `AccessPointDataOld` 0x34 ; canal/auth/chiffrement restent zéro car le scanner hôte ne les expose pas encore ; vendor `76de6f60`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `12` | `GetCurrentIpAddress` | — | **PARTIEL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `13` | `GetCurrentAccessPointOld ([1.0.0-3.0.2] GetCurrentAccessPoint)` | — | **NULL** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, nullptr; non validé PS5) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `13` | `GetCurrentAccessPointOld ([1.0.0-3.0.2] GetCurrentAccessPoint)` | — | **PARTIEL** (handler raccordé au backend réseau réel avec `AccessPointDataOld` 0x34 ; SSID/force/connectabilité réels, canal/auth/cipher non exposés par le scanner hôte ; vendor `69a49e7b`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `14` | `CreateTemporaryNetworkProfile` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `15` | `GetCurrentIpConfigInfo` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `16` | `SetWirelessCommunicationEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
@@ -4694,8 +4706,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `18` | `GetInternetConnectionStatus` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `19` | `SetEthernetCommunicationEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `20` | `IsEthernetCommunicationEnabled` | — | **PARTIEL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `21` | `IsAnyInternetRequestAccepted` | — | **PARTIEL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `22` | `IsAnyForegroundRequestAccepted` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `21` | `IsAnyInternetRequestAccepted` | — | **IMPL-SRC** (lit le ClientId du buffer d'entrée et répond à partir des IRequest réellement `Accepted` de ce client ; vendor `81bb97ea`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `22` | `IsAnyForegroundRequestAccepted` | — | **IMPL-SRC** (reflète le compteur réel d'IRequest en état `Accepted`, maintenu par les transitions et le destructeur ; vendor `f757675e`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `23` | `PutToSleep` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `24` | `WakeUp` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `25` | `GetSsidListVersion` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |

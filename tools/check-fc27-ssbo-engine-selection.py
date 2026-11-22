@@ -34,7 +34,9 @@ expected.add("fe5a389ac04fa3c26c1756fc18e73a962e196da4")
 expected.add("e329e52f7de79302bfcc1b658431777501d5edd9")
 # NS1 secondary CAPS tables and NCM cacheless rights-ID invalidation; GPU-53 owners unchanged.
 expected.add("ff0822695ec03ac7d9d2c75b4703adf12eec544f")
-if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f"}:
+# NS1 NCM content-storage helpers; GPU-53 owners remain unchanged.
+expected.add("c3dc80c83d468e04c794b3d7d36bc1316b342bd4")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -46,6 +48,7 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
         "fe5a389ac04fa3c26c1756fc18e73a962e196da4": "d30f26b0ea1bd88ee9c326d7d46aaf5ebc2fbce9",
         "e329e52f7de79302bfcc1b658431777501d5edd9": "c8e22a89d88275ddd57a556bf0e4e715e133f473",
         "ff0822695ec03ac7d9d2c75b4703adf12eec544f": "39d199d468eeae1494a3942bbf13c1fffa05e948",
+        "c3dc80c83d468e04c794b3d7d36bc1316b342bd4": "ec21773d1511a78da2bc3056ffc2b48b2971da7e",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

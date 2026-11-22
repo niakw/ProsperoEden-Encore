@@ -23,20 +23,20 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 213 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 218 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 133 | 80 | **1 213** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 138 | 80 | **1 218** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 73 | 3 | **76** |
 | **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
-| **NOOP — No-op documenté** | 7 | 0 | **7** |
+| **NOOP — No-op documenté** | 9 | 0 | **9** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 32 | 33 | **65** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 289 | 0 | **289** |
-| **ABSENT — Commande absente des tables** | 58 | 0 | **58** |
+| **ABSENT — Commande absente des tables** | 51 | 0 | **51** |
 | **ABI-DIFF — Noms/ABI divergents** | 283 | 0 | **283** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
@@ -59,21 +59,29 @@ Ces classements réduisent les **absences non qualifiées**, pas le nombre de fo
 
 **Compteur source après ce lot :** 1 213 IMPL-SRC, 76 PARTIEL, 347 STUB, **7 NOOP**, **2 311 NULL**, 65 D, 191 INACCESSIBLE, 289 SERVICE-NON-EXPOSÉ, **58 ABSENT**, 283 ABI-DIFF, 12 AMBIGU et 1 E, toujours **4 853 entrées**. Il s'agit de qualification source, pas de nouveaux handlers de capture ni de gains de gameplay vérifiés.
 
+### Lot NCM contenu — owner PS5 actif
+
+**Vendor `c3dc80c8`.** Le propriétaire PS5 réel `encore-active/eden-core/src/core/file_sys/registered_cache.cpp` et son header prioritaire exposent désormais les requêtes NCA par Content ID. `IContentStorage` raccorde **Has (7), GetContentCount (12), ListContentId (13), GetSizeFromContentId (14) et GetRightsIdFromContentId (20)** aux données réellement présentes. La liste est triée/dédupliquée et bornée par le buffer IPC ; les Rights IDs incluent la génération de clé. `GetRightsIdFromPlaceHolderId` renvoie également la structure HOS moderne complète.
+
+`FlushPlaceHolder` (24) et `RepairInvalidFileAttribute` (26) sont **NOOP documentés** : le VFS écrit de façon synchrone et ne représente pas l'attribut Horizon à réparer. Aucun faux stockage, aucune taille libre inventée et aucun chemin NCA fictif n'ont été ajoutés.
+
+**Compteur après ce lot : 1 218 IMPL-SRC, 76 PARTIEL, 347 STUB, 9 NOOP, 2 311 NULL, 65 D, 191 INACCESSIBLE, 289 SERVICE-NON-EXPOSÉ, 51 ABSENT, 283 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1213
+    "Implémentation source retrouvée" : 1218
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 76
     "Stub / résultat simulé" : 347
-    "No-op documenté" : 7
+    "No-op documenté" : 9
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 65
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 289
-    "Commande absente des tables" : 58
+    "Commande absente des tables" : 51
     "Noms/ABI divergents" : 283
     "Interface ambiguë" : 12
     "Non vérifié" : 0
@@ -4266,26 +4274,26 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Content Manager services | `4` | `WritePlaceHolder` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 4, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `5` | `Register` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 5, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `6` | `Delete` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 6, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
-| Content Manager services | `7` | `Has` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 7, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `7` | `Has` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
 | Content Manager services | `8` | `GetPath` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 8, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `9` | `GetPlaceHolderPath` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 9, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `10` | `CleanupAllPlaceHolder` | — | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d8e80440a0dfec75ccc0cbc362dd40c2d270be2b/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 10 raccordé au `PlaceholderCache` ; contrat hôte/PS5 non validé) | 2026-11-22 |
 | Content Manager services | `11` | `ListPlaceHolder` | — | **IMPL-SRC** ([NCM source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fe5a389ac04fa3c26c1756fc18e73a962e196da4/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 11 liste les placeholders réels, écriture bornée au buffer de sortie et nombre d'entrées renvoyé ; hôte/PS5 non validé) | 2026-11-22 |
-| Content Manager services | `12` | `GetContentCount` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 12, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `13` | `ListContentId` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 13, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `14` | `GetSizeFromContentId` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 14, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `12` | `GetContentCount` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
+| Content Manager services | `13` | `ListContentId` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
+| Content Manager services | `14` | `GetSizeFromContentId` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
 | Content Manager services | `15` | `DisableForcibly` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 15, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `16` | `RevertToPlaceHolder` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 16, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `17` | `SetPlaceHolderSize` | 2.0.0+ | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d8e80440a0dfec75ccc0cbc362dd40c2d270be2b/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 17 raccordé au `PlaceholderCache` ; contrat hôte/PS5 non validé) | 2026-11-22 |
 | Content Manager services | `18` | `ReadContentIdFile` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 18, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `19` | `GetRightsIdFromPlaceHolderId` | 2.0.0+ | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/bbdda09991fb31a0b858ba20059200ebd0a85cbc/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 19 lit le Rights ID du NCA par `PlaceholderCache::GetRightsID`, erreur explicite si indisponible ; hôte/PS5 non validé) | 2026-11-22 |
-| Content Manager services | `20` | `GetRightsIdFromContentId` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 20, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `20` | `GetRightsIdFromContentId` | 2.0.0+ | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
 | Content Manager services | `21` | `WriteContentForDebug` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 21, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `22` | `GetFreeSpaceSize` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 22, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `23` | `GetTotalSpaceSize` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 23, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `24` | `FlushPlaceHolder` | 3.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 24, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `24` | `FlushPlaceHolder` | 3.0.0+ | **NOOP** (VFS Encore sans flush différé ni bit d'attribut Horizon représenté ; retour succès documenté, vendor `c3dc80c8`) | 2026-11-22 |
 | Content Manager services | `25` | `GetSizeFromPlaceHolderId` | 4.0.0+ | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d8e80440a0dfec75ccc0cbc362dd40c2d270be2b/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 25 raccordé au `PlaceholderCache` ; contrat hôte/PS5 non validé) | 2026-11-22 |
-| Content Manager services | `26` | `RepairInvalidFileAttribute` | 4.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 26, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `26` | `RepairInvalidFileAttribute` | 4.0.0+ | **NOOP** (VFS Encore sans flush différé ni bit d'attribut Horizon représenté ; retour succès documenté, vendor `c3dc80c8`) | 2026-11-22 |
 | Content Manager services | `27` | `GetRightsIdFromPlaceHolderIdWithCache` | 8.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 27, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `0` | `Set` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 0, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `1` | `Get` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 1, slot ID absent de la table ; source seulement) | 2026-11-22 |

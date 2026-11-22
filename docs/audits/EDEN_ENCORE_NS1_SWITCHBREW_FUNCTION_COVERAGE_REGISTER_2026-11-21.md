@@ -46,6 +46,15 @@
 
 **CI/console :** le [run #45036307129](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45036307129) a échoué sur l'empreinte FSP ; la correction exacte du manifeste a été commise au vendor `e329e52f` et intégrée au moteur `c3a0e0ff`. Nouveau lot CAPS/NCM : code source inspecté et commits effectués ; les verdicts des nouveaux runs restent à relever. **Pas de compilation C++ de ce lot ni de validation PS5 annoncée.**
 
+## Lot NCM content storage — 22/11/2026
+
+**Couple : moteur repointé vers vendor `c3dc80c83d468e04c794b3d7d36bc1316b342bd4`.** Le chemin PS5 réellement sélectionné pour `registered_cache.cpp` est `encore-active/eden-core/src/core/file_sys/registered_cache.cpp`, avec `encore-active/eden-core/include` prioritaire pour le header. Les copies de base ont reçu la même ABI pour préserver les builds hôtes.
+
+Cinq commandes `IContentStorage` passent **ABSENT → IMPL-SRC** : `Has` (7), `GetContentCount` (12), `ListContentId` (13), `GetSizeFromContentId` (14), `GetRightsIdFromContentId` (20). Deux passent **ABSENT → NOOP** : `FlushPlaceHolder` (24) et `RepairInvalidFileAttribute` (26), avec justification VFS explicite. `GetRightsIdFromPlaceHolderId` conserve son statut implémenté mais renvoie désormais les 24 octets HOS 3+ avec génération de clé réelle.
+
+**Compteur courant : 1 218 IMPL-SRC / 76 PARTIEL / 347 STUB / 9 NOOP / 2 311 NULL / 65 D / 191 INACCESSIBLE / 289 SERVICE-NON-EXPOSÉ / 51 ABSENT / 283 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le run de provenance précédent `#45044777362` est vert sur `c287ac44`; ce nouveau lot devra être qualifié sur son propre HEAD. Pas de validation PS5 annoncée.
+
+
 ---
 
 ## 1. Références et règle de vérité

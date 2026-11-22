@@ -349,6 +349,19 @@ Vendor `0897a295624827e95d9248d85ea8274e75584693` (arbre `06e36212834c87b6d464f5
 
 **Pool restant à examiner = 2 831 entrées** : 2 278 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — GameCard NS + FSP data/save reader — 22/11/2026
+
+Vendor `a7c2afb34048ff001b9ff80aad4ec6aa32aff703` (arbre `9b7cefd10652c20bdd3c0a62599e42e35e40c568`), chaîne 8f842b50 → 00a7d197 → a7c2afb3.
+
+- **3 NULL → IMPL-SRC** côté NS pour l'état GameCard réel.
+- FSP `OpenDataStorageByProgramId` ID201 : **NULL → IMPL-SRC**, via le chemin Data NCA actif.
+- FSP `OpenSaveDataInfoReader` ID60 : **NULL → PARTIEL** ; agrégation des backings `System/User/Temporary`, sans inventer les espaces que `SaveDataFactory` ne représente pas.
+- Baseline précédente `3a5e6121` → `0897a295` : X8D24 + provenance verts. Aucun test PS5 revendiqué pour le nouveau lot.
+
+**Compteur courant : 1 348 IMPL-SRC / 107 PARTIEL / 149 STUB / 106 NOOP / 2 273 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 827 entrées** : 2 273 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

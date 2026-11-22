@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 344 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 264 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `0897a295`. **Ces 1 344 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 348 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 268 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `a7c2afb3`. **Ces 1 348 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 264 | 80 | **1 344** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 268 | 80 | **1 348** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 103 | 3 | **106** |
+| **PARTIEL — Implémentation partielle** | 104 | 3 | **107** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 278 | 0 | **2 278** |
+| **NULL — Handler NULL** | 2 273 | 0 | **2 273** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -334,17 +334,30 @@ Vendor `0897a295` (arbre `06e36212834c87b6d464f5349bf26851e336362f`). Le couple 
 
 **Pool restant à examiner : 2 831 = 2 278 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — GameCard NS + lecteurs/data-storage FSP
+
+Vendor final `a7c2afb3` (arbre `9b7cefd10652c20bdd3c0a62599e42e35e40c568`), incluant 8f842b50 → 00a7d197 → a7c2afb3. Le couple précédent moteur `3a5e6121` → vendor `0897a295` est **vert X8D24 + provenance**.
+
+- NS : les deux lignes `GetGameCardAttachmentInfo` et `IsGameCardInserted` passent **3 NULL → IMPL-SRC**, à partir de l'état réel du GameCard dans `FileSystemController`.
+- FSP ID201 `OpenDataStorageByProgramId` : **NULL → IMPL-SRC**, délégation au chemin Data NCA déjà actif `OpenDataStorageByDataId`.
+- FSP ID60 `OpenSaveDataInfoReader` : **NULL → PARTIEL**. SwitchBrew exige un lecteur de tous les save-data ; Encore agrège les trois backings réellement représentés (`System`, `User`, `Temporary`). `SdUser` reste fusionné dans `User`, tandis que `SdSystem/ProperSystem/SafeMode` n'ont pas de path backing et ne sont pas sondés pour éviter les assertions du factory.
+- Les NULL GameCard storage/FS 30/31 restent ouverts : les forks trouvés ne fournissent qu'un stub TargetNotFound, pas de backend applicable.
+
+**Compteur courant : 1 348 IMPL-SRC, 107 PARTIEL, 149 STUB, 106 NOOP, 2 273 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 827 = 2 273 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1344
+    "Implémentation source retrouvée" : 1348
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 106
+    "Implémentation partielle" : 107
     "Stub / résultat simulé" : 149
     "No-op documenté" : 106
-    "Handler NULL" : 2278
+    "Handler NULL" : 2273
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1882,7 +1895,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `43` | `CheckSdCardMountStatus` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `44` | `GetSdCardMountStatusChangedEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de changement de montage SD n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am | `45` | `GetGameCardAttachmentEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `46` | `GetGameCardAttachmentInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `46` | `GetGameCardAttachmentInfo` | — | **IMPL-SRC** (état d'attachement dérivé du vrai FileSystemController::GetGameCard(); vendor 8f842b50) | 2026-11-22 |
 | ns:am | `47` | `GetTotalSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `48` | `GetFreeSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `49` | `GetSdCardRemovedEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2007,7 +2020,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `43` | `CheckSdCardMountStatus` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `44` | `GetSdCardMountStatusChangedEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de changement de montage SD n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `45` | `GetGameCardAttachmentEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `46` | `GetGameCardAttachmentInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `46` | `GetGameCardAttachmentInfo` | — | **IMPL-SRC** (même état GameCard réel sur la seconde surface application-manager; vendor 8f842b50) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `47` | `GetTotalSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `48` | `GetFreeSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `49` | `GetSdCardRemovedEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2079,7 +2092,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `503` | `RequestGameCardRegistrationGoldPoint` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `504` | `RequestRegisterGameCard` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `505` | `GetGameCardMountFailureEvent` | 3.0.0+ | **NOOP** (handle d'événement réel ; aucun producteur de panne GameCard n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `506` | `IsGameCardInserted` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `506` | `IsGameCardInserted` | 3.0.0+ | **IMPL-SRC** (présence GameCard lue depuis le contrôleur FS actif; vendor 8f842b50) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `507` | `EnsureGameCardAccess` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `508` | `GetLastGameCardMountFailureResult` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `509` | `ListApplicationIdOnGameCard` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -3898,7 +3911,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `57` | `ReadSaveDataFileSystemExtraDataBySaveDataSpaceId` | 3.0.0+ | **PARTIEL** (buffer 0x200 + SaveDataId non nul validés contre le scan réel ; directory saves renvoient ExtraData par défaut comme LibHac ; indexer Account/Device absent) | 2026-11-22 |
 | fsp-srv | `58` | `ReadSaveDataFileSystemExtraData` | — | **PARTIEL** (règle LibHac : bit63 → System, sinon User puis SdUser ; scan réel + buffer 0x200, mais indexer Horizon absent) | 2026-11-22 |
 | fsp-srv | `59` | `WriteSaveDataFileSystemExtraData` | 2.0.0+ | **PARTIEL** (buffer 0x200 et save non nul validés ; écriture directory-save sans ExtraData physique = no-op LibHac ; IDs Account/Device non indexés) | 2026-11-22 |
-| fsp-srv | `60` | `OpenSaveDataInfoReader` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `60` | `OpenSaveDataInfoReader` | — | **PARTIEL** (agrège les espaces réellement représentés System/User/Temporary; SdUser reste fusionné dans User et les espaces non-backed ne sont pas simulés; vendor a7c2afb3) | 2026-11-22 |
 | fsp-srv | `61` | `OpenSaveDataInfoReaderBySaveDataSpaceId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `62` | `OpenSaveDataInfoReaderOnlyCacheStorage` | 5.0.0+ | **PARTIEL** (reader réel filtré sur `SaveDataType::Cache` du programme courant ; backend Eden ne distingue pas encore index/SD cache) | 2026-11-22 |
 | fsp-srv | `64` | `OpenSaveDataInternalStorageFileSystem` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3919,7 +3932,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `120` | `OpenCloudBackupWorkStorageFileSystem` | 6.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `130` | `OpenCustomStorageFileSystem` | 7.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `200` | `OpenDataStorageByCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `201` | `OpenDataStorageByProgramId` | 3.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `201` | `OpenDataStorageByProgramId` | 3.0.0+ | **IMPL-SRC** (délègue au chemin actif OpenDataStorageByDataId(storage_id, 0, program_id); vendor 00a7d197) | 2026-11-22 |
 | fsp-srv | `202` | `OpenDataStorageByDataId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `203` | `OpenPatchDataStorageByCurrentProcess` | — | **IMPL-SRC** (ABI corrigée sans argument ; retourne le RomFS courant réellement patché via `OpenRomFSCurrentProcess`) | 2026-11-22 |
 | fsp-srv | `204` | `OpenDataFileSystemWithProgramIndex` | 7.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenDataFileSystemByProgramIndex` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |

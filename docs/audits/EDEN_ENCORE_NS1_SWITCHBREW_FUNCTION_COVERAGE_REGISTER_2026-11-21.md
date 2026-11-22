@@ -459,6 +459,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool restant à examiner = 2 755 entrées** : 2 198 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` RTC et protection auditive — 23/11/2026
+
+**Vendor `b0228bfc2c634ee3b7c61bec56d513b1c4673601`**, sur la branche secondaire NS1, et gitlink moteur repointé dans le même lot.
+
+- `GetRequiresRunRepairTimeReviser` (141) / `SetRequiresRunRepairTimeReviser` (142) : **2 NULL → IMPL-SRC** ; booléen d'état Horizon déjà présent dans `SystemSettings`, lecture / écriture et `SetSaveNeeded()`. La signature bool est corroborée par les API libnx et les IDs par SwitchBrew.
+- `Get/SetHearingProtectionSafeguardFlag` (207/208) et `Get/SetHearingProtectionSafeguardRemainingTime` (209/210) : **4 handlers source supplémentaires**, réutilisant les champs persistants bool et s64. SwitchBrew documente ces commandes NS1 à partir de 14.0.0. **Elles sont absentes des 4 853 lignes du miroir historique et ne modifient donc pas artificiellement le dénominateur ni IMPL-SRC de ce miroir.** Cette lacune du miroir doit être conservée comme réserve d'exhaustivité.
+- Source réellement compilable : `sources/eden/src/core/hle/service/set/system_settings_server.{cpp,h}` listée dans `encore-active/eden-backports/src/core/CMakeLists.txt` ; aucun remplacement de ces deux fichiers dans le répertoire de backports de service Set. Champs natifs vérifiés dans `setting_formats/system_settings.h`.
+- Vérification immédiate : cohérence des 6 enregistrements IPC, déclarations et définitions, sans compilation hôte ni PS5 à ce stade. Ne pas assimiler les états de settings à une émulation des périphériques Nintendo.
+
+**Compteur du miroir NS1 : 1 404 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 196 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 753 entrées** : 2 196 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Aucun gain FPS ni résultat console revendiqué.
+
 ---
 
 ## 1. Références et règle de vérité

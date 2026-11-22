@@ -5650,8 +5650,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `138` | `GetWebInspectorFlag` | 4.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `139` | `GetAllowedSslHosts` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `140` | `GetHostFsMountPoint` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `141` | `GetRequiresRunRepairTimeReviser` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `142` | `SetRequiresRunRepairTimeReviser` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `141` | `GetRequiresRunRepairTimeReviser` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b0228bfc2c634ee3b7c61bec56d513b1c4673601/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `142` | `SetRequiresRunRepairTimeReviser` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b0228bfc2c634ee3b7c61bec56d513b1c4673601/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `143` | `SetBlePairingSettings` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `144` | `GetBlePairingSettings` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `145` | `GetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |

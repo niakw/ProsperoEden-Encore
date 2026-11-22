@@ -1783,7 +1783,7 @@ if fc27_p1_vendor:
 # and qualify only source files that actually changed at this exact gitlink.
 if subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
-).strip() == "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0":
+).strip() in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"}:
     ns2_early_hle_receipts.update({
         "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
             "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912",

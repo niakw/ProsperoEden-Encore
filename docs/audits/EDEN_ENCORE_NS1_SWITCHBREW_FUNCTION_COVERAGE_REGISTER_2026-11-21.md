@@ -336,6 +336,19 @@ Vendor `bc3d538f2c413489b2d881259b57a4c44b6698f9` (arbre `8307e210806b858beea5f8
 
 **Pool restant à examiner = 2 835 entrées** : 2 282 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — conversions langue NS — 22/11/2026
+
+Vendor `0897a295624827e95d9248d85ea8274e75584693` (arbre `06e36212834c87b6d464f5349bf26851e336362f`).
+
+- `ConvertLanguageCodeToApplicationLanguage` : **3 NULL → IMPL-SRC** sur les deux surfaces application-manager et l'interface read-only propriétaire.
+- `SelectApplicationDesiredLanguage` : **1 NULL → IMPL-SRC**, en réutilisant `GetApplicationDesiredLanguage`.
+- Une seule source de vérité : `ConvertToApplicationLanguage` / les priorités existantes de `language.cpp`. Aucun mapping parallèle inventé.
+- Baseline précédente `4b9861f8` → `bc3d538f` : X8D24 + provenance verts. Aucun test PS5 pour ce lot.
+
+**Compteur courant : 1 344 IMPL-SRC / 106 PARTIEL / 149 STUB / 106 NOOP / 2 278 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 831 entrées** : 2 278 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

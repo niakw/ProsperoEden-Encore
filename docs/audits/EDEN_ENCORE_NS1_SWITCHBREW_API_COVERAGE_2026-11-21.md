@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 340 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 260 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `bc3d538f`. **Ces 1 340 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 344 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 264 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `0897a295`. **Ces 1 344 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 260 | 80 | **1 340** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 264 | 80 | **1 344** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 103 | 3 | **106** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 282 | 0 | **2 282** |
+| **NULL — Handler NULL** | 2 278 | 0 | **2 278** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -321,17 +321,30 @@ Vendor final `bc3d538f` (arbre `8307e210806b858beea5f87c49434685fe93831d`). Le c
 
 **Pool restant à examiner : 2 835 = 2 282 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — conversions et sélection de langue NS
+
+Vendor `0897a295` (arbre `06e36212834c87b6d464f5349bf26851e336362f`). Le couple précédent moteur `4b9861f8` → vendor `bc3d538f` est **vert X8D24 + provenance**.
+
+- `ConvertLanguageCodeToApplicationLanguage` : **3 NULL → IMPL-SRC**. L'interface read-only possède désormais l'implémentation canonique via `ConvertToApplicationLanguage`; les deux surfaces `IApplicationManagerInterface` délèguent à ce propriétaire.
+- `SelectApplicationDesiredLanguage` ID4 : **1 NULL → IMPL-SRC**, délégation à `GetApplicationDesiredLanguage` et donc aux mêmes priorités/supported-language flags déjà utilisées.
+- La conversion couvre les codes déjà présents dans `language.cpp` (notamment en-US/en-GB, FR/FR-CA, PT/PT-BR, chinois traditionnel/simplifié, polonais et thaï) et retourne l'erreur NS existante pour une valeur inconnue.
+- Aucun résultat PS5 n'est revendiqué pour ce lot.
+
+**Compteur courant : 1 344 IMPL-SRC, 106 PARTIEL, 149 STUB, 106 NOOP, 2 278 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 831 = 2 278 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1340
+    "Implémentation source retrouvée" : 1344
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 106
     "Stub / résultat simulé" : 149
     "No-op documenté" : 106
-    "Handler NULL" : 2282
+    "Handler NULL" : 2278
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1881,7 +1894,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `57` | `ClearApplicationTerminateResult` | — | **IMPL-SRC** (réinitialise `terminate_result` du main applet réel à Success ; vendor `9424bdad`) | 2026-11-22 |
 | ns:am | `58` | `GetLastSdCardMountUnexpectedResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `59` | `ConvertApplicationLanguageToLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **IMPL-SRC** (délègue à la conversion canonique `ConvertToApplicationLanguage`, erreur `ResultApplicationLanguageNotFound` si code invalide ; vendor `0897a295`) | 2026-11-22 |
 | ns:am | `61` | `GetBackgroundDownloadStressTaskInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `62` | `GetGameCardStopper` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `63` | `IsSystemProgramInstalled` | — | **IMPL-SRC** (interroge le cache System NAND réel pour le Program NCA ; vendor `2508e1f4`) | 2026-11-22 |
@@ -2006,7 +2019,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `57` | `ClearApplicationTerminateResult` | — | **IMPL-SRC** (réinitialise `terminate_result` du main applet réel à Success ; vendor `9424bdad`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `58` | `GetLastSdCardMountUnexpectedResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `59` | `ConvertApplicationLanguageToLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **IMPL-SRC** (même handler `IApplicationManagerInterface`, conversion canonique des codes langue ; vendor `0897a295`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `61` | `GetBackgroundDownloadStressTaskInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `62` | `GetGameCardStopper` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `63` | `IsSystemProgramInstalled` | — | **IMPL-SRC** (même handler `IApplicationManagerInterface`, cache System NAND réel ; vendor `2508e1f4`) | 2026-11-22 |
@@ -2207,8 +2220,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `GetApplicationControlData` | — | **IMPL-SRC** ([source C++][ns1-src-016]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `GetApplicationDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-016]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2` | `ConvertApplicationLanguageToLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-016]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `3` | `ConvertLanguageCodeToApplicationLanguage` | — | **NULL** ([source C++][ns1-src-016]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `SelectApplicationDesiredLanguage` | 9.0.0+ | **NULL** ([source C++][ns1-src-016]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `3` | `ConvertLanguageCodeToApplicationLanguage` | — | **IMPL-SRC** (implémentation propriétaire `IReadOnlyApplicationControlDataInterface`, via `ConvertToApplicationLanguage` ; vendor `0897a295`) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `SelectApplicationDesiredLanguage` | 9.0.0+ | **IMPL-SRC** (délègue à `GetApplicationDesiredLanguage`, donc même sélection/priorités de langue déjà actives ; vendor `0897a295`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `RequestApplicationRightsOnServer` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `RequestAssignRights` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `DeprecatedRequestAssignRightsToResume` | — | **NULL** ([source C++][ns1-src-106]) | 2026-11-22 |

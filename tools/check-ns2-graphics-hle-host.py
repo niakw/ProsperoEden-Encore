@@ -215,6 +215,11 @@ def main()->int:
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in explicit_reject
     assert 'ResultSuccess' not in explicit_reject
     assert 'ctx.CommandBuffer()' not in explicit_reject
+    # Syncpt 21 has no public ABI: reject explicitly, never return fabricated zero-success.
+    assert '{21, &INativeSyncptSession::Unknown21, "Unknown21"}' in text
+    syncpt21 = text.split('void Unknown21(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'Kernel::ResultNotImplemented.raw' in syncpt21
+    assert 'NativeTipcReplyWords' not in syncpt21
     # GSV 202: no input payload and one real MOVE session handle.
     syncpt_open = text.split('void IGraphicsSupervisor::OpenSyncptSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'packet[0] != 16 + 202 || packet[1] != 0' in syncpt_open

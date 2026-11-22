@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**168**), `HANDLER PARTIEL INDIQUÉ` (**10**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 912 et 1212 sont désormais C avec deux cycles de vie distincts, conformes aux clients observés.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (168), `HANDLER PARTIEL INDIQUÉ` (**9**), `STUB NOMMÉ` (**72**, dont 1 sur une ABI U inconnue), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). SyncptSession 21 n'est plus compté comme P : son contrat public est inconnu et le runtime échoue désormais fermé au lieu de fabriquer un u32 zéro.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,22 +32,22 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=168**, P=9, C/P=1, M=107, U=25, V=6.
-- **R** : **285/316 (90,2 %)** traitées explicitement ; toutes les M ont un refus/stub documenté.
+- **F** : C=168, **P=8**, C/P=1, M=107, **U=26**, V=6.
+- **R** : **285/316 (90,2 %)** traitées explicitement. SyncptSession 21 est une ABI U mais possède désormais un stub nommé fail-closed ; les 31 sans traitement restent 25 autres U + 6 V.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **168** | 168 | 0 |
-| P — partielle | **9** | 9 | 0 |
+| C — implémentation source | 168 | 168 | 0 |
+| P — partielle | **8** | 8 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
-| U — contrat insuffisant | 25 | 0 | 25 |
+| U — contrat insuffisant | **26** | **1** (stub nommé cmd 21) | **25** |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**912/1212 corrigées** : `912(image)` retire un image ID decoder individuellement et garde le duplicate/pin NVMap tant qu'un membre du pool reste actif ; la dernière image libère le backing. `1212(first)` conserve la destruction one-shot du pool GameChat observée dans fefw, avant la destruction séparée de sa mémoire native par le client. Une image retirée n'est plus visible par Lookup/961/426/428.
+**SyncptSession 21 corrigé** : SwitchBrew expose l'ID 21 mais toujours aucun nom, paramètre ni sortie publique. L'ancien `Zero` répondait succès + u32 zéro sans preuve ; il est remplacé par `Unknown21`, qui retourne `ResultNotImplemented` sans lire le payload. La ligne passe donc P → U, mais garde une représentation explicite.
 
-**Restent 9 P + 1 C/P** : 391/691 (formats incomplets), Syncpt 21 inconnu, submit historique, event/error GPU, USERD/doorbell et scheduling TSG.
+**Restent 8 P + 1 C/P** : 391/691 (formats feature-image), event/error GPU, USERD/doorbell et scheduling TSG, plus le submit historique C/P.
 
 ---
 
@@ -211,7 +211,7 @@ SwitchBrew ne nomme publiquement que `Ping`; les autres IDs sont conservés comm
 | --- | --- | --- | --- | --- | --- |
 | 0 | Ping | C | HANDLER INDIQUÉ | Handshake | ping/handshake réel |
 | 1 | (nom inconnu) | C | HANDLER INDIQUÉ | GetCount | ID couvert; sémantique publique incomplète |
-| 21 | (nom inconnu) | P | HANDLER PARTIEL INDIQUÉ | Unknown21 | handler explicite mais fonction inconnue |
+| 21 | (nom inconnu) | U | STUB NOMMÉ | Unknown21 | SwitchBrew publie l'ID mais aucun nom/ABI ; refus ResultNotImplemented sans lecture de payload ni faux retour zéro |
 | 22 | (nom inconnu) | C | HANDLER INDIQUÉ | GetSlotEvent | événement réel |
 | 103 | (nom inconnu) | C | HANDLER INDIQUÉ | QueryCounter | compteur réel |
 | 201 | (nom inconnu) | C | HANDLER INDIQUÉ | RequestSlotEvent | événement réel |

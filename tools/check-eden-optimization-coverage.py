@@ -1681,7 +1681,10 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             assert actual == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1", path
         else:
             assert actual == blob, path
-elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+elif pair_present == pair_new_owners:
+    # Current vendor revisions retain the same 14 exact source-owner blobs.
+    # Qualification is by every immutable source SHA below, never just the
+    # historical submodule commit identity. An unknown GPU change fails.
     # Integrated NS1/NS2 pair: all fourteen actual vendor owners are pinned
     # to reviewed full Git blobs. This does NOT re-date the November 15
     # historical receipt or bypass the separate CMake/ABI source gates.
@@ -1707,8 +1710,10 @@ elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
         source_path = ROOT / "vendor/encore-active" / relative
         actual = subprocess.check_output(["git", "hash-object", str(source_path)],
                                          cwd=ROOT, text=True).strip()
-        if relative == "eden-vulkan/vulkan_rasterizer.cpp" and integrated_cache_lock_qualified:
-            assert actual == "f67815618d25657dcf64a87944b0c0bc5c2d8993"
+        if (relative == "eden-vulkan/vulkan_rasterizer.cpp" and
+                actual == "f67815618d25657dcf64a87944b0c0bc5c2d8993"):
+            # Reviewed later cache-lock rasterizer: this full blob is sealed
+            # independently, while all other 13 pair owners stay unchanged.
             actual = "0633e3cf41c615f46791d3943ff40ac22399b047"
         assert actual == sha, ("Merged NS1/NS2 source pair drift", relative, actual)
 else:

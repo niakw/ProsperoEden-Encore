@@ -23,23 +23,23 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 194 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 114 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 181 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 200 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 120 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 181 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 114 | 80 | **1 194** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 120 | 80 | **1 200** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 71 | 3 | **74** |
-| **STUB — Stub / résultat simulé** | 338 | 0 | **338** |
+| **PARTIEL — Implémentation partielle** | 73 | 3 | **76** |
+| **STUB — Stub / résultat simulé** | 339 | 0 | **339** |
 | **NOOP — No-op documenté** | 6 | 0 | **6** |
 | **NULL — Handler NULL** | 2 254 | 0 | **2 254** |
 | **D — Rejet explicite / historique** | 22 | 33 | **55** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 157 | 0 | **157** |
 | **SERVICE-NON-EXPOSÉ — Service non exposé sous ce nom** | 262 | 0 | **262** |
-| **ABSENT — Commande absente des tables** | 105 | 0 | **105** |
-| **ABI-DIFF — Noms/ABI divergents** | 251 | 0 | **251** |
+| **ABSENT — Commande absente des tables** | 111 | 0 | **111** |
+| **ABI-DIFF — Noms/ABI divergents** | 262 | 0 | **262** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
-| **Q — Non vérifié** | 144 | 0 | **144** |
+| **Q — Non vérifié** | 118 | 0 | **118** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -48,25 +48,25 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1194
+    "Implémentation source retrouvée" : 1200
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 74
-    "Stub / résultat simulé" : 338
+    "Implémentation partielle" : 76
+    "Stub / résultat simulé" : 339
     "No-op documenté" : 6
     "Handler NULL" : 2254
     "Rejet explicite / historique" : 55
     "Interface parente non ouvrable" : 157
     "Service non exposé sous ce nom" : 262
-    "Commande absente des tables" : 105
-    "Noms/ABI divergents" : 251
+    "Commande absente des tables" : 111
+    "Noms/ABI divergents" : 262
     "Interface ambiguë" : 12
-    "Non vérifié" : 144
+    "Non vérifié" : 118
     "ID SVC non trouvé" : 1
 ```
 
 **Détail du changement de ce lot :** **119** entrées `RACCORDÉ` ont été qualifiées à partir des tables et des méthodes héritées : **114 IMPL-SRC** et **5 PARTIEL** (notamment `IsUserRegistrationRequestPermitted`, dont le corps mentionne une limite fonctionnelle). Sources effectivement inspectées : [Account](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp), [NFP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp), [NFP Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfp/nfp_interface.cpp), [NFC Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp). La classification concerne la présence d'un corps et certains chemins manifestement incomplets, **pas la présence d'un lecteur NFC PS5 ni un comportement garanti**.
 
-**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 0 `RACCORDÉ` et 144 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 2 248 `NULL` sont des trous des tables rapprochées, pas la preuve qu'elles sont demandées par FC27.
+**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 0 `RACCORDÉ` et 118 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 2 248 `NULL` sont des trous des tables rapprochées, pas la preuve qu'elles sont demandées par FC27.
 
 
 **Lot FS de requalification :** 20 commandes précédemment `Q` rapprochées par service et ID dans les sources FS épinglées : **5 implémentations source**, **14 handlers `nullptr`** et **1 stub explicite** (`fsp-srv` ID 70, corps `STUBBED` avec retour succès). Pour les 10 slots `fsp-srv` aux noms différents du catalogue SwitchBrew, seul le **numéro d'ID** et l'état du slot sont confirmés ; l'équivalence des noms/ABI et des variantes firmware reste à vérifier. `IStorage` : Read/GetSize réels, Write/Flush/SetSize/OperateRange nuls. `IFile` : Write/Flush/SetSize réellement raccordés. Sources : [fsp-srv](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp), [IStorage](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp), [IFile](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp).
@@ -142,6 +142,9 @@ pie showData
 
 
 **Lot services directs exposés :** 46 entrées Q classées : 10 IMPL-SRC, 21 ABI-DIFF, 6 NULL, 7 INACCESSIBLE et 2 STUB. Les créateurs AOC d'événement d'achat sont explicitement marqués `STUBBED`; les méthodes du trimmer GRC et de l'itérateur `set:fd` restent inaccessibles car leurs créateurs parents sont nuls.
+
+
+**Lot Time / NFP / JIT / ERPT / APM :** 26 entrées Q classées. Time : 6 ABSENT, 2 PARTIEL (Glue implémente mais PSC retourne `ResultNotImplemented`) et 4 ABI-DIFF. NFP : 6 ABI-DIFF. JIT : 4 IMPL-SRC avec exécution réelle du plugin et gestion mémoire. ERPT : 1 ABI-DIFF. APM `ISession` : 2 IMPL-SRC et 1 STUB explicite.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -2023,9 +2026,9 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | apm:sys | `5` | `LoadAndApplySettings` | 5.0.0+ | **NULL** ([source C++][ns1-src-048]) | 2026-11-22 |
 | apm:sys | `6` | `SetCpuBoostMode` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
 | apm:sys | `7` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
-| ISession | `0` | `SetPerformanceConfiguration` | — | Q | 2026-11-21 |
-| ISession | `1` | `GetPerformanceConfiguration` | — | Q | 2026-11-21 |
-| ISession | `2` | `SetCpuOverclockEnabled` | 8.0.0+ | Q | 2026-11-21 |
+| ISession | `0` | `SetPerformanceConfiguration` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; met réellement à jour Controller::SetPerformanceConfiguration ; qualification statique, PS5 non validé) | 2026-11-22 |
+| ISession | `1` | `GetPerformanceConfiguration` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; lit réellement Controller::GetCurrentPerformanceConfiguration ; qualification statique, PS5 non validé) | 2026-11-22 |
+| ISession | `2` | `SetCpuOverclockEnabled` | 8.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; handler explicitement marqué STUBBED et retourne succès sans appliquer l'overclock ; qualification statique, PS5 non validé) | 2026-11-22 |
 | fgm, fgm:0, fgm:9 | `0` | `Initialize` | — | **PARTIEL** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/fgm/fgm.cpp) ; factory crée un objet dont les opérations sont nulles ; sans preuve PS5) | 2026-11-22 |
 | fgm, fgm:0, fgm:9 | `1` | `Set` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
 | fgm, fgm:0, fgm:9 | `2` | `Get` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
@@ -2077,8 +2080,8 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | time:a, time:r, time:u | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:a, time:r, time:u | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
-| time:a, time:r, time:u | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
+| time:a, time:r, time:u | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:a, time:r, time:u | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:a, time:r, time:u | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -2098,7 +2101,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | time:a, time:r, time:u | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:a, time:r, time:u | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
+| time:a, time:r, time:u | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:a, time:r, time:u | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -2480,12 +2483,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:u, time:a, time:s | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:u, time:a, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0+ | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:u, time:a, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0+ | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:u, time:a, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **PARTIEL** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; Glue effectue l'opération ; PSC renvoie ResultNotImplemented ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:u, time:a, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:u, time:a, time:s | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | **PARTIEL** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; Glue lit le setting ; PSC renvoie ResultNotImplemented ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:u, time:a, time:s | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -2500,7 +2503,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:u, time:a, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:u, time:a, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
+| time:u, time:a, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:u, time:a, time:s | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -3226,7 +3229,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | erpt:c | `0` | `SubmitContext` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
-| erpt:c | `1` | `CreateReport` | — | Q | 2026-11-21 |
+| erpt:c | `1` | `CreateReport` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; slot 1 actuel = CreateReportV0 ; CreateReport actuel est au slot 12 ; qualification statique, PS5 non validé) | 2026-11-22 |
 | erpt:c | `2` | `SetInitialLaunchSettingsCompletionTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:c | `3` | `ClearInitialLaunchSettingsCompletionTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:c | `4` | `UpdatePowerOnTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
@@ -3975,10 +3978,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | jit:u | `0` | `CreateJitEnvironment` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/jit/jit.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
-| IJitEnvironment | `0` | `GenerateCode` | — | Q | 2026-11-21 |
-| IJitEnvironment | `1` | `Control` | — | Q | 2026-11-21 |
-| IJitEnvironment | `1000` | `LoadPlugin` | — | Q | 2026-11-21 |
-| IJitEnvironment | `1001` | `GetCodeAddress` | — | Q | 2026-11-21 |
+| IJitEnvironment | `0` | `GenerateCode` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/jit/jit.cpp) ; corps non trivial : exécution du plugin JIT, mapping mémoire ou retour d'adresses ; qualification statique, PS5 non validé) | 2026-11-22 |
+| IJitEnvironment | `1` | `Control` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/jit/jit.cpp) ; corps non trivial : exécution du plugin JIT, mapping mémoire ou retour d'adresses ; qualification statique, PS5 non validé) | 2026-11-22 |
+| IJitEnvironment | `1000` | `LoadPlugin` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/jit/jit.cpp) ; corps non trivial : exécution du plugin JIT, mapping mémoire ou retour d'adresses ; qualification statique, PS5 non validé) | 2026-11-22 |
+| IJitEnvironment | `1001` | `GetCodeAddress` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/jit/jit.cpp) ; corps non trivial : exécution du plugin JIT, mapping mémoire ou retour d'adresses ; qualification statique, PS5 non validé) | 2026-11-22 |
 
 ### Backlight services
 
@@ -4382,7 +4385,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfp:user | `19` | `GetState` | — | **IMPL-SRC** (méthode héritée `NfcInterface::GetState`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:user | `20` | `GetDeviceState` | — | **IMPL-SRC** (méthode héritée `NfcInterface::GetDeviceState`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:user | `21` | `GetNpadId` | — | **IMPL-SRC** (méthode héritée `NfcInterface::GetNpadId`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
-| nfp:user | `22` | `GetApplicationArea2` | — | Q | 2026-11-21 |
+| nfp:user | `22` | `GetApplicationArea2` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; slot 22 actuel = GetApplicationAreaSize ; qualification statique, PS5 non validé) | 2026-11-22 |
 | nfp:user | `23` | `AttachAvailabilityChangeEvent` | 3.0.0+ | **IMPL-SRC** (méthode héritée `NfcInterface::AttachAvailabilityChangeEvent`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:user | `24` | `RecreateApplicationArea` | 3.0.0+ | **IMPL-SRC** (méthode héritée `Interface::RecreateApplicationArea`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `0` | `CreateDebugInterface` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
@@ -4408,13 +4411,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfp:dbg | `19` | `GetState` | — | **IMPL-SRC** (méthode héritée `NfcInterface::GetState`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `20` | `GetDeviceState` | — | **IMPL-SRC** (méthode héritée `NfcInterface::GetDeviceState`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `21` | `GetNpadId` | — | **IMPL-SRC** (méthode héritée `NfcInterface::GetNpadId`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
-| nfp:dbg | `22` | `GetApplicationArea2` | — | Q | 2026-11-21 |
+| nfp:dbg | `22` | `GetApplicationArea2` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; slot 22 actuel = GetApplicationAreaSize ; qualification statique, PS5 non validé) | 2026-11-22 |
 | nfp:dbg | `23` | `AttachAvailabilityChangeEvent` | 3.0.0+ | **IMPL-SRC** (méthode héritée `NfcInterface::AttachAvailabilityChangeEvent`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `24` | `RecreateApplicationArea` | 3.0.0+ | **IMPL-SRC** (méthode héritée `Interface::RecreateApplicationArea`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `100` | `Format` | — | **IMPL-SRC** (méthode héritée `Interface::Format`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `101` | `GetAdminInfo` | — | **IMPL-SRC** (méthode héritée `Interface::GetAdminInfo`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
-| nfp:dbg | `102` | `GetRegisterInfo` | — | Q | 2026-11-21 |
-| nfp:dbg | `103` | `SetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:dbg | `102` | `GetRegisterInfo` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; slot 102 actuel = GetRegisterInfoPrivate ; qualification statique, PS5 non validé) | 2026-11-22 |
+| nfp:dbg | `103` | `SetRegisterInfo` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; slot 103 actuel = SetRegisterInfoPrivate ; qualification statique, PS5 non validé) | 2026-11-22 |
 | nfp:dbg | `104` | `DeleteRegisterInfo` | — | **IMPL-SRC** (méthode héritée `Interface::DeleteRegisterInfo`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `105` | `DeleteApplicationArea` | — | **IMPL-SRC** (méthode héritée `Interface::DeleteApplicationArea`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:dbg | `106` | `ExistsApplicationArea` | — | **IMPL-SRC** (méthode héritée `Interface::ExistsApplicationArea`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -4447,8 +4450,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfp:sys | `23` | `AttachAvailabilityChangeEvent` | 3.0.0+ | **IMPL-SRC** (méthode héritée `NfcInterface::AttachAvailabilityChangeEvent`, [corps C++][ns1-src-096] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:sys | `100` | `Format` | — | **IMPL-SRC** (méthode héritée `Interface::Format`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:sys | `101` | `GetAdminInfo` | — | **IMPL-SRC** (méthode héritée `Interface::GetAdminInfo`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
-| nfp:sys | `102` | `GetRegisterInfo` | — | Q | 2026-11-21 |
-| nfp:sys | `103` | `SetRegisterInfo` | — | Q | 2026-11-21 |
+| nfp:sys | `102` | `GetRegisterInfo` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; slot 102 actuel = GetRegisterInfoPrivate ; qualification statique, PS5 non validé) | 2026-11-22 |
+| nfp:sys | `103` | `SetRegisterInfo` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp) ; slot 103 actuel = SetRegisterInfoPrivate ; qualification statique, PS5 non validé) | 2026-11-22 |
 | nfp:sys | `104` | `DeleteRegisterInfo` | — | **IMPL-SRC** (méthode héritée `Interface::DeleteRegisterInfo`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:sys | `105` | `DeleteApplicationArea` | — | **IMPL-SRC** (méthode héritée `Interface::DeleteApplicationArea`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
 | nfp:sys | `106` | `ExistsApplicationArea` | — | **IMPL-SRC** (méthode héritée `Interface::ExistsApplicationArea`, [corps C++][ns1-src-098] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -4968,7 +4971,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:m | `100` | `SetStandardSteadyClockRtcOffset` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/service_manager.cpp) ; ServiceManager time:m ID 100 : ancien nom SwitchBrew SetStandardSteadyClockRtcOffset, propriétaire renommé, ABI non établie ; non certifié PS5) | 2026-11-22 |
 | time:m | `200` | `GetAlarmRegistrationEvent` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/service_manager.cpp) ; ServiceManager time:m ID 200 : ancien nom SwitchBrew GetAlarmRegistrationEvent, propriétaire renommé, ABI non établie ; non certifié PS5) | 2026-11-22 |
 | time:m | `201` | `UpdateSteadyAlarms` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/service_manager.cpp) ; ServiceManager time:m ID 201 : ancien nom SwitchBrew UpdateSteadyAlarms, propriétaire renommé, ABI non établie ; non certifié PS5) | 2026-11-22 |
-| time:al | `0` | `GetWakeUpEvent` | — | Q | 2026-11-21 |
+| time:al | `0` | `GetWakeUpEvent` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/alarms.cpp) ; time:al ID0 actuel = CreateWakeupAlarm ; l'interface enfant ISteadyClockAlarm ID0 = GetAlarmEvent ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:al | `1` | `Enable` | — | **IMPL-SRC** ([psc/time/alarms.cpp][ns1-time-psc-time-alarms-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:al | `2` | `Disable` | — | **IMPL-SRC** ([psc/time/alarms.cpp][ns1-time-psc-time-alarms-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:al | `3` | `IsEnabled` | — | **IMPL-SRC** ([psc/time/alarms.cpp][ns1-time-psc-time-alarms-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -4979,8 +4982,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:su, time:s | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:su, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
-| time:su, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
+| time:su, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:su, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | **ABSENT** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp) ; aucun slot 30/31 correspondant dans les tables Glue/PSC Time inspectées ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:su, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **D** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
 | time:su, time:s | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | **D** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
 | time:su, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -5000,7 +5003,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:su, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:su, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
+| time:su, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-22 |
 | time:su, time:s | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |

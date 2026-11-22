@@ -30,7 +30,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> Périmètre **316 commandes NS2**, 12 tableaux, branche issue du moteur `7d05c7c7` / vendor `a8c91708`. Le vendor actif `0abc6a74` est fixé par le gitlink de ce lot. Aucun résultat PS5 n'est présumé.
+> Périmètre **316 commandes NS2**, 12 tableaux, branche issue du moteur `7d05c7c7` / vendor `a8c91708`. Le vendor actif `c4cd9663` (SHA complet `c4cd96636b6110a606e8aeb5834d93c64edc89b9`) est fixé par le gitlink de ce lot. Aucun résultat PS5 n'est présumé.
 
 - **F (fonctionnel au niveau source)** : **C=150**, P=27, C/P=1, M=107, U=25, V=6. En plus des 4 GSV qualifiés (101,202,301,305) et des deux calculs partiels (391,691), les deux chemins GPFIFO **retry** sont désormais réels en source, d'après le contrat SwitchBrew « same as » et les méthodes C++ existantes.
 - **R (traitement renseigné)** : **261/316 (82,6 %)** avec handler/stub/refus, **55/316 (17,4 %)** sans traitement renseigné : 24 M (11 encodeur, 13 profiler), 25 U, 6 V.

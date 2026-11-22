@@ -1666,8 +1666,43 @@ drawtexture_present = set(drawtexture_receipts) & set(physical_all)
 if gpu_table_vendor_pin in {"42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6", "edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or fc27_p1_vendor:
     assert drawtexture_present == set(drawtexture_receipts)
     for path, blob in drawtexture_receipts.items():
-        assert subprocess.check_output(
-            ["git", "hash-object", str(active / path)], text=True).strip() == blob, path
+        raw = (active / path).read_bytes()
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        if path == "eden-vulkan/blit_image.cpp" and actual == "4ba93afb6594213d5bde82be2693f0e08cb1cd63":
+            lines = raw.decode("utf-8").split("\n")
+            reverse = (
+                (18, ["#include \"video_core/host_shaders/convert_abgr8_to_x8d24_frag_spv.h\"","#include \"video_core/host_shaders/convert_x8d24_to_abgr8_frag_spv.h\"","#include \"video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h\"","#include \"video_core/host_shaders/convert_d24s8_to_abgr8_frag_spv.h\"","#include \"video_core/host_shaders/convert_d32f_to_abgr8_frag_spv.h\""], ["#include \"video_core/host_shaders/convert_abgr8_to_d32f_frag_spv.h\"","#include \"video_core/host_shaders/convert_d24s8_to_abgr8_frag_spv.h\"","#include \"video_core/host_shaders/convert_d32f_to_abgr8_frag_spv.h\""]),
+                (631, ["      convert_abgr8_to_x8d24_frag(BuildShader(device, CONVERT_ABGR8_TO_X8D24_FRAG_SPV)),","      convert_x8d24_to_abgr8_frag(BuildShader(device, CONVERT_X8D24_TO_ABGR8_FRAG_SPV)),","      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),","      convert_d32f_to_abgr8_frag(BuildShader(device, CONVERT_D32F_TO_ABGR8_FRAG_SPV)),","      convert_d24s8_to_abgr8_frag(BuildShader(device, CONVERT_D24S8_TO_ABGR8_FRAG_SPV)),"], ["      convert_abgr8_to_d32f_frag(BuildShader(device, CONVERT_ABGR8_TO_D32F_FRAG_SPV)),","      convert_d32f_to_abgr8_frag(BuildShader(device, CONVERT_D32F_TO_ABGR8_FRAG_SPV)),","      convert_d24s8_to_abgr8_frag(BuildShader(device, CONVERT_D24S8_TO_ABGR8_FRAG_SPV)),"]),
+                (871, ["void BlitImageHelper::ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    ConvertPipelineDepthTargetEx(convert_abgr8_to_x8d24_pipeline, dst_framebuffer->RenderPass(),","                                 convert_abgr8_to_x8d24_frag);","    Convert(*convert_abgr8_to_x8d24_pipeline, dst_framebuffer, src_image_view);","}","","void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    ConvertPipelineEx(convert_x8d24_to_abgr8_pipeline, dst_framebuffer->RenderPass(),","                      convert_x8d24_to_abgr8_frag, true, false);","    Convert(*convert_x8d24_to_abgr8_pipeline, dst_framebuffer, src_image_view);","}","","void BlitImageHelper::ConvertABGR8ToD24S8(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    if (!device.IsExtShaderStencilExportSupported()) {"], ["void BlitImageHelper::ConvertABGR8ToD24S8(const Framebuffer* dst_framebuffer,","                                          const ImageView& src_image_view) {","    if (!device.IsExtShaderStencilExportSupported()) {"]),
+            )
+            for index, newer, earlier in reversed(reverse):
+                assert lines[index:index + len(newer)] == newer, ("X8D24 receipt hunk drift", path)
+                lines[index:index + len(newer)] = earlier
+            historical = "\n".join(lines).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == "bbde031a184b93745fa0449aef74f351355fb70d", ("X8D24 receipt predecessor drift", path, actual)
+            print("ENCORE_X8D24_DRAW_RECEIPT_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        if path == "eden-vulkan/include/video_core/renderer_vulkan/blit_image.h" and actual == "a38cfcf655adcb8ceebfce955b39a2312a239768":
+            lines = raw.decode("utf-8").split("\n")
+            reverse = (
+                (115, ["    void ConvertABGR8ToX8D24(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertABGR8ToD32F(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertD32FToABGR8(const Framebuffer* dst_framebuffer, ImageView& src_image_view);"], ["    void ConvertABGR8ToD32F(const Framebuffer* dst_framebuffer, const ImageView& src_image_view);","","    void ConvertD32FToABGR8(const Framebuffer* dst_framebuffer, ImageView& src_image_view);"]),
+                (237, ["    vk::ShaderModule convert_abgr8_to_x8d24_frag;","    vk::ShaderModule convert_x8d24_to_abgr8_frag;","    vk::ShaderModule convert_abgr8_to_d32f_frag;","    vk::ShaderModule convert_d32f_to_abgr8_frag;","    vk::ShaderModule convert_d24s8_to_abgr8_frag;"], ["    vk::ShaderModule convert_abgr8_to_d32f_frag;","    vk::ShaderModule convert_d32f_to_abgr8_frag;","    vk::ShaderModule convert_d24s8_to_abgr8_frag;"]),
+                (294, ["    vk::Pipeline convert_abgr8_to_x8d24_pipeline;","    vk::Pipeline convert_x8d24_to_abgr8_pipeline;","    vk::Pipeline convert_abgr8_to_d32f_pipeline;","    vk::Pipeline convert_d32f_to_abgr8_pipeline;","    vk::Pipeline convert_d24s8_to_abgr8_pipeline;"], ["    vk::Pipeline convert_abgr8_to_d32f_pipeline;","    vk::Pipeline convert_d32f_to_abgr8_pipeline;","    vk::Pipeline convert_d24s8_to_abgr8_pipeline;"]),
+            )
+            for index, newer, earlier in reversed(reverse):
+                assert lines[index:index + len(newer)] == newer, ("X8D24 receipt hunk drift", path)
+                lines[index:index + len(newer)] = earlier
+            historical = "\n".join(lines).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            assert actual == "81eda086f50e04d3e1537aebff404a6097a07069", ("X8D24 receipt predecessor drift", path, actual)
+            print("ENCORE_X8D24_DRAW_RECEIPT_EXACT_REVERSE_PASS", path, f"hunks={len(reverse)}")
+        assert actual == blob, (path, actual, blob)
 else:
     assert not drawtexture_present
 print("ENCORE_EDEN4559_POST_F07_OWNER_PASS", f"owners={len(drawtexture_present)}")

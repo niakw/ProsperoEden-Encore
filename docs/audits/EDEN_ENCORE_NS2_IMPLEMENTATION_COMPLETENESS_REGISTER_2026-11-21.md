@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `952fefbc0bb7c052e14c0a5ffc9b8efa2e1c11ad` |
+| Vendor gitlink sélectionné sur cette branche | `a76f093e25baab59938284a397078f1a510bf3ee` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : `Statut fonctionnel (F)` = comportement `C/P/M/U/V` ; `Traitement déclaré (R)` : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (**32**), `STUB NOMMÉ` (**67**, dont 65 dans ce lot), `REFUS EXPLICITE` (6), `AUCUN HANDLER INDIQUÉ` (**36**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un refus peut être assuré par un fallback générique, et une entrée enregistrée ne démontre pas l'exécution sur PS5.
+**Colonnes séparées pour chaque commande (§1–§12)** : `Statut fonctionnel (F)` = comportement `C/P/M/U/V` ; `Traitement déclaré (R)` : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (32), `STUB NOMMÉ` (**68** : 65 nouveaux GSV, 2 historiques, 1 nouveau décodeur), `REFUS EXPLICITE` (**10**), `AUCUN HANDLER INDIQUÉ` (**31**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un refus peut être un fallback générique : aucun refus/stub ne compte comme couverture fonctionnelle.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,24 +30,24 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> **Périmètre** : 316 commandes des 12 tableaux, branche `opt/ns2-switchbrew-unimplemented-20261122` issue de `main` moteur `7d05c7c7`, vendor actif `952fefbc`, gitlink moteur `fb316026` lors du second lot. Ni inventaire exhaustif du firmware ni preuve console.
+> **Périmètre** : 316 commandes (§1–§12), branche `opt/ns2-switchbrew-unimplemented-20261122` née du moteur `7d05c7c7` / vendor `a8c91708`. Gitlink moteur `53916479` vers vendor actif `a76f093e` lors du troisième lot. Ni inventaire exhaustif du firmware, ni test PS5.
 
-- **F — couverture fonctionnelle** : C=144, P=31, C/P=1, M=109, U=25, V=6. **65 nouveaux stubs restent M** ; `391` et `691` sont passés de M à **P**, car le C++ calcule réellement taille et alignement des formats connus, mais la couverture ABI/formats complète n'est pas prouvée.
-- **R — représentation** : **249/316 (78,8 %) handlers, stubs ou refus indiqués** ; **67/316 (21,2 %) aucun handler indiqué** : 36 M, 25 U et 6 V. Un stub n'est jamais une implémentation.
+- **F — fonctionnel** : C=144, P=31, C/P=1, M=109, U=25, V=6. **Aucun nouveau C** ; 391 et 691 progressent de M à P après calcul réel borné de taille/alignment, mais formats/ABI non intégralement qualifiés.
+- **R — représentation** : **254/316 (80,4 %) disposent d'un traitement indiqué**, **62/316 (19,6 %) sans handler indiqué** : 31 M, 25 U, 6 V. Les 68 stubs et 10 refus explicites restent M.
 
 | Statut fonctionnel | Total | Traitement indiqué | Aucun handler indiqué |
 | --- | ---: | ---: | ---: |
 | C — implémentation source | 144 | 144 | 0 |
 | P — partielle | 31 | 31 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
-| M — non implémenté | 109 | **73** (67 stubs, 6 refus) | **36** |
+| M — non implémenté | 109 | **78** (68 stubs, 10 refus) | **31** |
 | U — contrat inconnu | 25 | 0 | 25 |
 | V — variante hors version | 6 | 0 | 6 |
-| **Total** | **316** | **249** | **67** |
+| **Total** | **316** | **254** | **62** |
 
-**Lots sur cette branche :** 66 handlers fail-closed ajoutés initialement dans GSV (`UnavailableDocumentedFeature`, erreur `NotImplemented`, aucun faux objet/handle créé) ; `691` ensuite remplacé par un vrai calcul borné, soit **65 nouveaux stubs encore présents**. Les 2 stubs encodeur GSV `1001/1002` préexistaient ; les 6 refus GPU/TSG restent explicites. Pour `391` et `691`, recoupement ciblé avec [Lichii nx2_gsv.h](https://github.com/zortos293/Lichii/blob/nx2/src/core/hle/service/nx2_gsv.h) : protocole 16 préférences + count, réponse size/alignment ; ce n'est pas un certificat console ou une garantie de tous les formats.
+**Runtime branché** : 66 handlers GSV fail-closed `UnavailableDocumentedFeature` créés, puis `691` converti vers `CalculateChatImagePoolSize`, donc **65 nouveaux stubs GSV**. `391` est routé vers `CalculateNativeImageRequirements`. Le VideoDecoderSession `210` est désormais un stub nommé `RejectRemoteMemoryInitialization` sans faux backing. Les ioctls channel `0xC0080004`, `0x40040007`, `0xC0080023`, `0xC0104813` ont des cases exactes `NvResult::NotImplemented` ; refus préexistants et deux stubs encodeur GSV inchangés. Source d'ABI ciblée pour 391/691 : [Lichii nx2_gsv.h](https://github.com/zortos293/Lichii/blob/nx2/src/core/hle/service/nx2_gsv.h).
 
-**Restent à traiter** : 36 M sans handler, 25 U sans ABI suffisante, 6 V ciblant FW19, 32 P/C/P à confirmer/compléter. Ne pas déclarer ces catégories résolues par la seule présence d'une ligne dans le dispatch. **Pas encore de CI hôte/build PS5/console vert vérifié pour ce lot.**
+**Restants** : 31 M sans traitement indiqué (encodeur/profiler notamment), 25 U à ABI insuffisante, 6 V d'anciens firmwares et 32 P/C/P à qualifier. Ne pas créer de faux services pour augmenter le compteur. CI hôte / build PS5 / console : non encore validés pour ce couple.
 
 ---
 
@@ -283,7 +283,7 @@ Le runtime sélectionne `encore-active/ns2-runtime/video_decoder/.../graphics_vi
 | 115 | FinalizeVideoDecoder | C | HANDLER INDIQUÉ | Finalize | actif |
 | 200 | InitializeVideoDecoderWithTransferMemory | C | HANDLER INDIQUÉ | Initialize | actif |
 | 207 | Stop | C | HANDLER INDIQUÉ | Stop | actif |
-| 210 | InitializeVideoDecoderWithRemoteMemory | M | AUCUN HANDLER INDIQUÉ | — | pas de handler explicite |
+| 210 | InitializeVideoDecoderWithRemoteMemory | M | STUB NOMMÉ | RejectRemoteMemoryInitialization | handler TIPC 210 refuse le remote-memory decoder par NotImplemented sans initialisation fictive |
 | 212 | UnbindFrame | C | HANDLER INDIQUÉ | UnregisterOutputImage | actif |
 | 213 | GetFrame | C | HANDLER INDIQUÉ | GetOutputInfo | actif |
 | 311 | BindFrame | C | HANDLER INDIQUÉ | RegisterOutputImage | actif |
@@ -396,16 +396,16 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0xC0??0001 | NVHOST_IOCTL_CHANNEL_SUBMIT | C/P | HANDLER PARTIEL INDIQUÉ | Submit | chemin historique, à qualifier séparément pour native |
 | 0xC0080002 | NVHOST_IOCTL_CHANNEL_GET_SYNCPOINT | C | HANDLER INDIQUÉ | GetSyncpoint | actif |
 | 0xC0080003 | NVHOST_IOCTL_CHANNEL_GET_WAITBASE | C | HANDLER INDIQUÉ | GetWaitbase | actif |
-| 0xC0080004 | NVHOST_IOCTL_CHANNEL_GET_MODMUTEX | M | AUCUN HANDLER INDIQUÉ | — | pas de case sélectionné |
-| 0x40040007 | NVHOST_IOCTL_CHANNEL_SET_SUBMIT_TIMEOUT | M | AUCUN HANDLER INDIQUÉ | — | pas de case sélectionné |
-| 0xC0080023 | NVHOST_IOCTL_CHANNEL_GET_CLK_RATE | M | AUCUN HANDLER INDIQUÉ | — | pas de case sélectionné |
+| 0xC0080004 | NVHOST_IOCTL_CHANNEL_GET_MODMUTEX | M | REFUS EXPLICITE | nvhost_gpu::Ioctl1 (fail-closed) | ioctl exact 0xC0080004 : NotImplemented ; pas de module mutex matériel |
+| 0x40040007 | NVHOST_IOCTL_CHANNEL_SET_SUBMIT_TIMEOUT | M | REFUS EXPLICITE | nvhost_gpu::Ioctl1 (fail-closed) | ioctl exact 0x40040007 : NotImplemented ; pas de timeout du scheduler promis |
+| 0xC0080023 | NVHOST_IOCTL_CHANNEL_GET_CLK_RATE | M | REFUS EXPLICITE | nvhost_gpu::Ioctl1 (fail-closed) | ioctl exact 0xC0080023 : NotImplemented ; pas d'horloge GPU invitée inventée |
 | 0xC018480C | NVGPU_IOCTL_CHANNEL_SET_ERROR_NOTIFIER | C | HANDLER INDIQUÉ | SetErrorNotifier | S2: état interne Switch; mem non nul initialise, mem=0 désinitialise; offset/size ignorés; aucun faux backing NvMap |
 | 0x0000480E | NVGPU_IOCTL_CHANNEL_ENABLE | C | HANDLER INDIQUÉ | NativeChannelSetEnabled | état runnable natif partagé avec TSG |
 | 0x0000480F | NVGPU_IOCTL_CHANNEL_DISABLE | C | HANDLER INDIQUÉ | NativeChannelSetEnabled | bloque réellement les submits natifs |
 | 0x00004810 | NVGPU_IOCTL_CHANNEL_PREEMPT | M | REFUS EXPLICITE | fail-closed | préemption GPU réelle absente |
 | 0x00004811 | NVGPU_IOCTL_CHANNEL_FORCE_RESET | M | REFUS EXPLICITE | fail-closed | reset GPU réel absent |
 | 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | P | HANDLER PARTIEL INDIQUÉ | NativeEventIdControl | Ounce exact: 16 B {cmd,id,u64=0}, appel observé {enable,2,0}; QueryEvent 1/2/3 configurés et clear réel, IDs 4..6 → NotImplemented faute de producteurs |
-| 0xC0104813 | NVGPU_IOCTL_CHANNEL_CYCLE_STATS_SNAPSHOT | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 0xC0104813 | NVGPU_IOCTL_CHANNEL_CYCLE_STATS_SNAPSHOT | M | REFUS EXPLICITE | nvhost_gpu::Ioctl1 (fail-closed) | ioctl exact 0xC0104813 : NotImplemented ; pas de cycle stats fictives |
 | 0x40084714 | NVGPU_IOCTL_CHANNEL_SET_USER_DATA | C | HANDLER INDIQUÉ | SetClientData | actif |
 | 0x80084715 | NVGPU_IOCTL_CHANNEL_GET_USER_DATA | C | HANDLER INDIQUÉ | GetClientData | actif |
 | 0x80804816 | NVGPU_IOCTL_CHANNEL_GET_ERROR_INFO | P | HANDLER PARTIEL INDIQUÉ | GetErrorInfo | ABI 128 B actif; état no_error courant renvoyé; publication d'une faute GPU réelle pas encore reliée |

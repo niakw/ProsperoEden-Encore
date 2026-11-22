@@ -2533,8 +2533,31 @@ bsd_replacements = [["    const Errno result = Translate(file_descriptors[fd]->s
 for i, (needle, replacement) in enumerate(bsd_replacements):
     assert bsd_expected.count(needle) == 1, ("shipping guest BSD anchor changed", i)
     bsd_expected = bsd_expected.replace(needle, replacement)
-assert (active / "eden-core/src/core/hle/service/sockets/bsd.cpp").read_text() == bsd_expected, (
-    "audited guest BSD no longer matches the old CMake transformation")
+# Lichii NX2 added explicit BSD/bsd:cfg method-table entries without
+# changing real socket connect/send/receive paths. Seal the complete revised
+# owner to its reviewed Git blob, while preserving the original five-rewrite
+# audit as an independently computed predecessor checksum.
+bsd_shipping_owner = (active / "eden-core/src/core/hle/service/sockets/bsd.cpp").read_text()
+bsd_shipping_bytes = bsd_shipping_owner.encode("utf-8")
+bsd_shipping_sha = hashlib.sha1(
+    b"blob " + str(len(bsd_shipping_bytes)).encode() + b"\0" + bsd_shipping_bytes
+).hexdigest()
+if bsd_shipping_sha == "ed93f589cc98e3d00d85eb50662073b132ba3ca3":
+    bsd_predecessor_bytes = bsd_expected.encode("utf-8")
+    assert hashlib.sha1(
+        b"blob " + str(len(bsd_predecessor_bytes)).encode() + b"\0" + bsd_predecessor_bytes
+    ).hexdigest() == "95d02fde586d5d08dc797223cd72ee5cc1668b96"
+    for bsd_contract in (
+        '{36, &BSD_USA::RegisterClient, "RegisterClientSwitch2"}',
+        '{41, &BSD_USA::StubReplyEvent, "Unknown41"}',
+        '{44, &BSD_USA::StubReplyZeroed, "Unknown44"}',
+        '{100, &BSDCFG::StubReplyZeroed, "Unknown100"}',
+        '{104, &BSDCFG::StubReplyZeroed, "Unknown104"}',
+    ):
+        assert bsd_contract in bsd_shipping_owner, bsd_contract
+else:
+    assert bsd_shipping_owner == bsd_expected, (
+        "audited guest BSD no longer matches the old CMake transformation")
 assert 'list(APPEND core_sources "${EDEN_MAINTAINED_GUEST_BSD}")' in c
 assert 'write_derived("${PORT_BUILD_DIR}/audited_guest_bsd.cpp"' not in c
 assert 'file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/sockets/bsd.cpp" audited_bsd)' not in c

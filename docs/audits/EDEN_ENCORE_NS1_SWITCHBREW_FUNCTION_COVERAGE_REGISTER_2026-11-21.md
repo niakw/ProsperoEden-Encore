@@ -134,6 +134,12 @@ Vendor `4936c5528e0641e2176fc77a376cfb8d2da2d1b5` : radio BTM et snapshot LBL so
 
 **Compteur courant : 1 271 IMPL-SRC / 88 PARTIEL / 244 STUB / 69 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Pas de validation console déduite.
 
+## Lot set:sys / ntc — 22/11/2026
+
+Vendor `be7f995c13675eeb3af8c1addac536876ed1e90b` : `PlatformRegion` est maintenant persisté dans `PrivateSettings`; les sorties produit/HOME restent synthétiques et donc PARTIELLES. Le service NTC confirme un modèle de tâche synchrone avec événement de fin réel ; Suspend/Resume sont des NOOP explicites faute de worker autonome.
+
+**Compteur courant : 1 276 IMPL-SRC / 91 PARTIEL / 233 STUB / 72 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Pas de validation PS5 déduite.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -23,15 +23,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 271 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 276 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 191 | 80 | **1 271** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 196 | 80 | **1 276** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 85 | 3 | **88** |
-| **STUB — Stub / résultat simulé** | 244 | 0 | **244** |
-| **NOOP — No-op documenté** | 69 | 0 | **69** |
+| **PARTIEL — Implémentation partielle** | 88 | 3 | **91** |
+| **STUB — Stub / résultat simulé** | 233 | 0 | **233** |
+| **NOOP — No-op documenté** | 72 | 0 | **72** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -154,16 +154,22 @@ Le manifeste `eden-backports` contient les empreintes SHA-256 exactes des deux n
 
 **Compteur : 1 271 IMPL-SRC, 88 PARTIEL, 244 STUB, 69 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot settings / network-time — set:sys / ntc
+
+**Vendor `be7f995c`.** `PlatformRegion` utilise désormais le champ persistant de `PrivateSettings` au lieu d'un setter vide ; les anciens fichiers avec valeur 0 sont normalisés vers `Global`. Les valeurs `ProductModel` et HOME scheme restent PARTIELLES car synthétiques. L'absence de rebootless update est un NOOP explicite. Dans NTC, `StartTask`, `GetResult` et `IsProcessing` sont requalifiés IMPL-SRC : la tâche est volontairement synchrone et signale son véritable événement de fin. Suspend/Resume restent NOOP car aucun worker autonome n'existe.
+
+**Compteur : 1 276 IMPL-SRC, 91 PARTIEL, 233 STUB, 72 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1271
+    "Implémentation source retrouvée" : 1276
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 88
-    "Stub / résultat simulé" : 244
-    "No-op documenté" : 69
+    "Implémentation partielle" : 91
+    "Stub / résultat simulé" : 233
+    "No-op documenté" : 72
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -4750,13 +4756,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nim:ecas | `0` | `RegisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:ecas | `1` | `UnregisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | ntc | `0` | `OpenEnsureNetworkClockAvailabilityService` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
-| ntc | `100` | `SuspendAutonomicTimeCorrection` | 3.0.0+ | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
-| ntc | `101` | `ResumeAutonomicTimeCorrection` | 3.0.0+ | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
-| ntc | `0` | `StartTask` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `100` | `SuspendAutonomicTimeCorrection` | 3.0.0+ | **NOOP** (aucun worker autonome de correction réseau à suspendre/reprendre ; vendor `be7f995c`) | 2026-11-22 |
+| ntc | `101` | `ResumeAutonomicTimeCorrection` | 3.0.0+ | **NOOP** (aucun worker autonome de correction réseau à suspendre/reprendre ; vendor `be7f995c`) | 2026-11-22 |
+| ntc | `0` | `StartTask` | — | **IMPL-SRC** (tâche NTC synchrone : StartTask signale l'événement, GetResult succès, IsProcessing=0 ; vendor `be7f995c`) | 2026-11-22 |
 | ntc | `1` | `GetFinishNotificationEvent` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
-| ntc | `2` | `GetResult` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `2` | `GetResult` | — | **IMPL-SRC** (tâche NTC synchrone : StartTask signale l'événement, GetResult succès, IsProcessing=0 ; vendor `be7f995c`) | 2026-11-22 |
 | ntc | `3` | `Cancel` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
-| ntc | `4` | `IsProcessing` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `4` | `IsProcessing` | — | **IMPL-SRC** (tâche NTC synchrone : StartTask signale l'événement, GetResult succès, IsProcessing=0 ; vendor `be7f995c`) | 2026-11-22 |
 | ntc | `5` | `GetServerTime` | 3.0.0+ | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
 | IAsyncValue | `0` | `GetSize` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | IAsyncValue | `1` | `Get` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
@@ -5306,7 +5312,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `76` | `SetInitialLaunchSettings` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `77` | `GetDeviceNickName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `78` | `SetDeviceNickName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `79` | `GetProductModel` | — | **STUB** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `79` | `GetProductModel` | — | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `80` | `GetLdnChannel` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `81` | `SetLdnChannel` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `82` | `AcquireTelemetryDirtyFlagEventHandle` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5376,7 +5382,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `146` | `SetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `147` | `GetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `148` | `SetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `149` | `GetRebootlessSystemUpdateVersion` | 5.0.0+ | **STUB** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `149` | `GetRebootlessSystemUpdateVersion` | 5.0.0+ | **NOOP** (aucun paquet rebootless Horizon installé ; état vide 0 / 0.0.0 explicite ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `150` | `GetDeviceTimeZoneLocationUpdatedTime` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `151` | `SetDeviceTimeZoneLocationUpdatedTime` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `152` | `GetUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5401,7 +5407,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `171` | `SetChineseTraditionalInputMethod` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `172` | `GetPtmCycleCountReliability` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `173` | `SetPtmCycleCountReliability` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `174` | `GetHomeMenuScheme` | 9.0.0+ | **STUB** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `174` | `GetHomeMenuScheme` | 9.0.0+ | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `175` | `GetThemeSettings` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `176` | `SetThemeSettings` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `177` | `GetThemeKey` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5410,9 +5416,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `180` | `SetZoomFlag` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `181` | `GetT` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `182` | `SetT` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `183` | `GetPlatformRegion` | 9.0.0+ | **STUB** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `184` | `SetPlatformRegion` | 9.0.0+ | **STUB** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `185` | `GetHomeMenuSchemeModel` | 9.0.0+ | **STUB** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `183` | `GetPlatformRegion` | 9.0.0+ | **IMPL-SRC** (PlatformRegion lu/écrit dans PrivateSettings persisté ; vendor `be7f995c`) | 2026-11-22 |
+| set:sys | `184` | `SetPlatformRegion` | 9.0.0+ | **IMPL-SRC** (PlatformRegion lu/écrit dans PrivateSettings persisté ; vendor `be7f995c`) | 2026-11-22 |
+| set:sys | `185` | `GetHomeMenuSchemeModel` | 9.0.0+ | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `186` | `GetMemoryUsageRateFlag` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `187` | `GetTouchScreenMode` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `188` | `SetTouchScreenMode` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |

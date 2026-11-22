@@ -1265,18 +1265,18 @@ if gpu_table_vendor_pin in integrated_cache_lock_pins:
     if gpu_table_vendor_pin in {"dc526f06d277dfa0a4afa48b4cf8b3153ebe7267", "87964d15e91b6b6523c88682e5ca017f6e1a808b", "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a", "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"}:
         for relative, expected in {
             "encore-active/ns2-runtime/self_controller/core/hle/service/am/service/self_controller.cpp":
-                ("01d0f8a05faaa30b01a1802680a954aebfbf118b" if gpu_table_vendor_pin == "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0" else "7783c917d8b2f2e8d26c091d5507964fcf9d44dd" if gpu_table_vendor_pin == "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a" else "743bd9c9a4b9a3550c853ffa8fc06898c01618ff"),
+                ("01d0f8a05faaa30b01a1802680a954aebfbf118b" if gpu_table_vendor_pin in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"} else "7783c917d8b2f2e8d26c091d5507964fcf9d44dd" if gpu_table_vendor_pin == "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a" else "743bd9c9a4b9a3550c853ffa8fc06898c01618ff"),
             "tests/r23_fw23_selfcontroller_240.py":
-                ("367b99a467a7cf1559973af65c69f7c2231764f4" if gpu_table_vendor_pin == "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0" else "ed80a6d62d5328c394a133b5f28112443e893f36" if gpu_table_vendor_pin == "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a" else "b03d2015ac00a0ce2e52bea002c931b330a55d96"),
+                ("367b99a467a7cf1559973af65c69f7c2231764f4" if gpu_table_vendor_pin in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"} else "ed80a6d62d5328c394a133b5f28112443e893f36" if gpu_table_vendor_pin == "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a" else "b03d2015ac00a0ce2e52bea002c931b330a55d96"),
         }.items():
             raw = (ROOT/"vendor"/relative).read_bytes()
             digest = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
             assert digest == expected, ("NS2 SelfController 2400 source drift", relative)
     if gpu_table_vendor_pin in {"87964d15e91b6b6523c88682e5ca017f6e1a808b", "ae6f59a9865a3f4f178c4d836a3e04c93cceb69a", "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"}:
         for relative, expected in {
-                "encore-active/eden-core/src/core/hle/service/service.cpp": ("e388765fb2cf372adc01c2c3ec174955659ccc2a" if gpu_table_vendor_pin == "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0" else "e2d52974d419b9ed4089da8baed104dd1dbd282d"),
+                "encore-active/eden-core/src/core/hle/service/service.cpp": ("e388765fb2cf372adc01c2c3ec174955659ccc2a" if gpu_table_vendor_pin in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"} else "e2d52974d419b9ed4089da8baed104dd1dbd282d"),
                 "encore-active/ns2-runtime/process/core/core.cpp": "a2721a630b8b32222ff586ea2db19ee726d4d5b9",
-                "tests/ns1_r23_54_storage_pacing.py": ("eb88e3701448c3b3572155a00158b3a5955eb45e" if gpu_table_vendor_pin == "f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0" else "9abec8ca14bfaaed76128fab34592f0b3911afe9"),
+                "tests/ns1_r23_54_storage_pacing.py": ("eb88e3701448c3b3572155a00158b3a5955eb45e" if gpu_table_vendor_pin in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf"} else "9abec8ca14bfaaed76128fab34592f0b3911afe9"),
                 "tests/shutdown_general_channel_lifetime_source.py": "4bb0ef388211b1c9110afce55ef80983e5050782",
                 "tests/shutdown_teardown_lifetime_source.py": "e40deaae0b1f3aab6a5a12f7978be470b3ee0463"
         }.items():

@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 352 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 272 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `05784b60`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 355 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 275 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `d1e41151`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 272 | 80 | **1 352** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 275 | 80 | **1 355** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 109 | 0 | **109** |
-| **NULL — Handler NULL** | 2 248 | 0 | **2 248** |
+| **NULL — Handler NULL** | 2 245 | 0 | **2 245** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -384,17 +384,30 @@ Vendor `05784b60` (arbre `7502d3834222f5e3b35e4cb13f48d2755ab79bfe`). Baseline p
 
 **Pool restant à examiner : 2 805 = 2 248 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — canaux Friend Invitation / Notification
+
+Vendor `d1e41151` (arbre `34dbfc91c0b5b086ef220eaee856627e37ac20e3`). Baseline précédente moteur `efe0693e` → vendor `05784b60` : **X8D24 + provenance verts**.
+
+- `IApplicationAccessor::PushToFriendInvitationStorageChannel` : **NULL → IMPL-SRC** ; file existante, stockage réel et événement kernel existant.
+- `IApplicationAccessor::PushToNotificationStorageChannel` + `IApplicationFunctions::TryPopFromNotificationStorageChannel` : **2 NULL → IMPL-SRC** ; file Notification ajoutée à l'état `Applet`, push/pop sous verrou et signalement de l'événement existant.
+- Le propriétaire CMake a été vérifié avant modification : `application_functions.cpp` est explicitement remplacé par `encore-active/eden-core/src/core/hle/service/am/service/application_functions.cpp`; l'accessor et `applet.h` restent ceux de `sources/eden`.
+- Les données sont publiées sous verrou avant le signalement de l'événement afin qu'un consommateur réveillé observe toujours un canal cohérent.
+
+**Compteur courant : 1 355 IMPL-SRC, 110 PARTIEL, 149 STUB, 109 NOOP, 2 245 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 802 = 2 245 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1352
+    "Implémentation source retrouvée" : 1355
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 109
-    "Handler NULL" : 2248
+    "Handler NULL" : 2245
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1532,8 +1545,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `150` | `ReportApplicationExitTimeout` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `160` | `SetApplicationAttribute` | 8.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `170` | `HasSaveDataAccessPermission` | 8.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `180` | `PushToFriendInvitationStorageChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `190` | `PushToNotificationStorageChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
+| appletAE | `180` | `PushToFriendInvitationStorageChannel` | 9.0.0+ | **IMPL-SRC** (publie les octets de `IStorage` dans la file applet réelle puis signale `friend_invitation_storage_channel_event`; owner actif `sources/eden` ; vendor `d1e41151`) | 2026-11-22 |
+| appletAE | `190` | `PushToNotificationStorageChannel` | 9.0.0+ | **IMPL-SRC** (publie les octets de `IStorage` dans la nouvelle file Notification puis signale l'événement kernel déjà exposé ; owner actif `sources/eden` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `0` | `SetTerminateResult` | 9.0.0+ | **IMPL-SRC** (écrit le vrai `terminate_result` de l'applet sous verrou, cohérent avec la surface application déjà active ; vendor `e58cfc55`) | 2026-11-22 |
 | appletAE | `10` | `ReadThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `11` | `WriteThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
@@ -1636,7 +1649,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `140` | `GetFriendInvitationStorageChannelEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `141` | `TryPopFromFriendInvitationStorageChannel` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `150` | `GetNotificationStorageChannelEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `151` | `TryPopFromNotificationStorageChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `151` | `TryPopFromNotificationStorageChannel` | 9.0.0+ | **IMPL-SRC** (consomme la file Notification réelle sous verrou et retourne un `IStorage`; owner CMake maintenu `encore-active/eden-core/.../application_functions.cpp` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `160` | `GetHealthWarningDisappearedSystemEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `170` | `SetHdcpAuthenticationActivated` | 9.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `500` | `StartContinuousRecordingFlushForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |

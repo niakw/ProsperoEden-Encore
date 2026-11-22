@@ -401,6 +401,19 @@ Vendor `05784b605535c987e1619c9b28e36f7752ba735b` (arbre `7502d3834222f5e3b35e4c
 
 **Pool restant à examiner = 2 805 entrées** : 2 248 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — canaux Friend Invitation / Notification — 22/11/2026
+
+Vendor `d1e41151f5e23b1ff2653c937b04ff5e344e29b0` (arbre `34dbfc91c0b5b086ef220eaee856627e37ac20e3`).
+
+- `PushToFriendInvitationStorageChannel`, `PushToNotificationStorageChannel`, `TryPopFromNotificationStorageChannel` : **3 NULL → IMPL-SRC**.
+- Owner actif vérifié : accessor + `Applet` depuis `sources/eden`; `application_functions.cpp` est remplacé explicitement par le maintained owner `encore-active/eden-core` dans `headless/CMakeLists.txt`.
+- Les deux pushes copient les données du vrai `IStorage`, publient sous verrou puis signalent l'événement du canal ; le pop Notification reproduit le contrat déjà utilisé par Friend Invitation.
+- Baseline précédente moteur `efe0693e` → vendor `05784b60` : X8D24 + provenance verts. Aucun test PS5 revendiqué pour ce lot.
+
+**Compteur courant : 1 355 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 245 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 802 entrées** : 2 245 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

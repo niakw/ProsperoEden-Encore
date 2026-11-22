@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 438 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 358 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 438 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 440 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 360 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 440 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 358 | 80 | **1 438** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 360 | 80 | **1 440** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 109 | 0 | **109** |
-| **NULL — Handler NULL** | 2 162 | 0 | **2 162** |
+| **NULL — Handler NULL** | 2 160 | 0 | **2 160** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1438
+    "Implémentation source retrouvée" : 1440
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 109
-    "Handler NULL" : 2162
+    "Handler NULL" : 2160
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5515,8 +5515,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:cal | `40` | `GetConsoleSixAxisSensorHorizontalOffset` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `41` | `GetBatteryVersion` | 6.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:sys | `0` | `SetLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `1` | `SetNetworkSettings` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `2` | `GetNetworkSettings` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `1` | `SetNetworkSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3d97ca836c8825fedfc23de76a0c3295a93469fb/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `2` | `GetNetworkSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3d97ca836c8825fedfc23de76a0c3295a93469fb/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `3` | `GetFirmwareVersion` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `4` | `GetFirmwareVersion2` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `5` | `GetFirmwareVersionDigest` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |

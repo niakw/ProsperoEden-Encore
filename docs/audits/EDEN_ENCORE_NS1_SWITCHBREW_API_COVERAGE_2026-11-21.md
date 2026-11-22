@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 393 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 313 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `9aa3b256`. **Ces 1 393 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 402 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 322 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `407b42a9`. **Ces 1 402 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 313 | 80 | **1 393** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 322 | 80 | **1 402** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 109 | 0 | **109** |
-| **NULL — Handler NULL** | 2 207 | 0 | **2 207** |
+| **NULL — Handler NULL** | 2 198 | 0 | **2 198** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -428,17 +428,25 @@ Vendor `0aa3af72`, puis `9aa3b2568b3f74bd124f3923e88116a52c1c589a` (arbre `fbd04
 
 **Pool restant à examiner : 2 764 = 2 207 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Aucun build PS5 ni validation console revendiqués ; qualification CI propre à ce couple requise.
 
+### Recheck NULL — préférences invité, diagnostic et thème
+
+Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84ad42cf0981a0ead8b10`). **9 NULL → IMPL-SRC** dans le miroir 4 853 : `GetWebInspectorFlag`, `SetChineseTraditionalInputMethod`, `Get/SetPtmCycleCountReliability`, `Get/SetThemeSettings`, `Get/SetZoomFlag`, `GetMemoryUsageRateFlag`. Dix méthodes C++ ont été ajoutées : `SetFieldTestingFlag` est également raccordée au champ persistant existant mais ne figure pas comme entrée distincte du miroir historique et ne compte donc pas pour +1. Toutes les écritures utilisent `SetSaveNeeded()`. Aucune fonction matérielle PS5 n'est supposée.
+
+**Compteur courant : 1 402 IMPL-SRC, 110 PARTIEL, 149 STUB, 109 NOOP, 2 198 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 755 = 2 198 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Le couple précédent moteur `caeb314e` → vendor `9aa3b256` est vert X8D24 + provenance ; console non validée.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1393
+    "Implémentation source retrouvée" : 1402
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 109
-    "Handler NULL" : 2207
+    "Handler NULL" : 2198
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5639,7 +5647,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `135` | `SetConsoleSixAxisSensorAngularVelocityGain` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `136` | `GetKeyboardLayout` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `137` | `SetKeyboardLayout` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `138` | `GetWebInspectorFlag` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `138` | `GetWebInspectorFlag` | 4.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `139` | `GetAllowedSslHosts` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `140` | `GetHostFsMountPoint` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `141` | `GetRequiresRunRepairTimeReviser` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
@@ -5672,22 +5680,22 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `168` | `GetThemeId` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `169` | `SetThemeId` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `170` | `GetChineseTraditionalInputMethod` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `171` | `SetChineseTraditionalInputMethod` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `172` | `GetPtmCycleCountReliability` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `173` | `SetPtmCycleCountReliability` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `171` | `SetChineseTraditionalInputMethod` | 7.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
+| set:sys | `172` | `GetPtmCycleCountReliability` | 7.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
+| set:sys | `173` | `SetPtmCycleCountReliability` | 7.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `174` | `GetHomeMenuScheme` | 9.0.0+ | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |
-| set:sys | `175` | `GetThemeSettings` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `176` | `SetThemeSettings` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `175` | `GetThemeSettings` | 7.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
+| set:sys | `176` | `SetThemeSettings` | 7.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `177` | `GetThemeKey` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `178` | `SetThemeKey` | 7.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `179` | `GetZoomFlag` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `180` | `SetZoomFlag` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `179` | `GetZoomFlag` | 8.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
+| set:sys | `180` | `SetZoomFlag` | 8.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `181` | `GetT` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `182` | `SetT` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `183` | `GetPlatformRegion` | 9.0.0+ | **IMPL-SRC** (PlatformRegion lu/écrit dans PrivateSettings persisté ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `184` | `SetPlatformRegion` | 9.0.0+ | **IMPL-SRC** (PlatformRegion lu/écrit dans PrivateSettings persisté ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `185` | `GetHomeMenuSchemeModel` | 9.0.0+ | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |
-| set:sys | `186` | `GetMemoryUsageRateFlag` | 9.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `186` | `GetMemoryUsageRateFlag` | 9.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `187` | `GetTouchScreenMode` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `188` | `SetTouchScreenMode` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 

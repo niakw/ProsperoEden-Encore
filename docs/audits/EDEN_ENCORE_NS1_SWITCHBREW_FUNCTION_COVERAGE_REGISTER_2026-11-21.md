@@ -451,6 +451,14 @@ Vendor `0aa3af72`, puis `9aa3b2568b3f74bd124f3923e88116a52c1c589a` (arbre `fbd04
 
 **Pool restant à examiner = 2 764 entrées** : 2 207 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — thème / zoom / flags et PTM — 22/11/2026
+
+Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84ad42cf0981a0ead8b10`). **9 NULL → IMPL-SRC** pour `GetWebInspectorFlag`, `SetChineseTraditionalInputMethod`, `Get/SetPtmCycleCountReliability`, `Get/SetThemeSettings`, `Get/SetZoomFlag`, `GetMemoryUsageRateFlag`. `SetFieldTestingFlag` est aussi implémentée en C++, sans nouvelle ligne du miroir à reclasser : **10 méthodes source, +9 au compteur**. États existants et persistance via `SetSaveNeeded()` ; compatibilité de contrat IPC source vérifiée, aucun effet matériel ou test PS5 revendiqué. Couple précédent `caeb314e` → `9aa3b256` vert X8D24 et provenance ; nouveau couple à valider.
+
+**Compteur courant : 1 402 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 198 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 755 entrées** : 2 198 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

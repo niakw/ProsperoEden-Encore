@@ -23,46 +23,48 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 147 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 067 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 124 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 153 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 073 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 153 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC** | 1 067 | 80 | **1 147** |
-| **RACCORDÉ** | 0 | 0 | **0** |
-| **PARTIEL** | 65 | 3 | **68** |
-| **STUB** | 319 | 0 | **319** |
-| **NOOP** | 6 | 0 | **6** |
-| **NULL** | 2 099 | 0 | **2 099** |
-| **D** | 22 | 33 | **55** |
-| **ABSENT** | 105 | 0 | **105** |
-| **ABI-DIFF** | 113 | 0 | **113** |
-| **AMBIGU** | 8 | 0 | **8** |
-| **Q** | 932 | 0 | **932** |
-| **E** | 0 | 1 | **1** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 073 | 80 | **1 153** |
+| **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
+| **PARTIEL — Implémentation partielle** | 65 | 3 | **68** |
+| **STUB — Stub / résultat simulé** | 325 | 0 | **325** |
+| **NOOP — No-op documenté** | 6 | 0 | **6** |
+| **NULL — Handler NULL** | 2 123 | 0 | **2 123** |
+| **D — Rejet explicite / historique** | 22 | 33 | **55** |
+| **INACCESSIBLE — Interface parente non ouvrable** | 55 | 0 | **55** |
+| **ABSENT — Commande absente des tables** | 105 | 0 | **105** |
+| **ABI-DIFF — Noms/ABI divergents** | 123 | 0 | **123** |
+| **AMBIGU — Interface ambiguë** | 8 | 0 | **8** |
+| **Q — Non vérifié** | 831 | 0 | **831** |
+| **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
-    title SwitchBrew NS1 — 4 853 entrées
-    "IMPL-SRC" : 1147
-    "RACCORDÉ" : 0
-    "PARTIEL" : 68
-    "STUB" : 319
-    "NOOP" : 6
-    "NULL" : 2099
-    "D" : 55
-    "ABSENT" : 105
-    "ABI-DIFF" : 113
-    "AMBIGU" : 8
-    "Q" : 932
-    "E" : 1
+    title NS1 — 4 853 entrées distinctes
+    "Implémentation source retrouvée" : 1153
+    "Handler raccordé, corps non prouvé" : 0
+    "Implémentation partielle" : 68
+    "Stub / résultat simulé" : 325
+    "No-op documenté" : 6
+    "Handler NULL" : 2123
+    "Rejet explicite / historique" : 55
+    "Interface parente non ouvrable" : 55
+    "Commande absente des tables" : 105
+    "Noms/ABI divergents" : 123
+    "Interface ambiguë" : 8
+    "Non vérifié" : 831
+    "ID SVC non trouvé" : 1
 ```
 
 **Détail du changement de ce lot :** **119** entrées `RACCORDÉ` ont été qualifiées à partir des tables et des méthodes héritées : **114 IMPL-SRC** et **5 PARTIEL** (notamment `IsUserRegistrationRequestPermitted`, dont le corps mentionne une limite fonctionnelle). Sources effectivement inspectées : [Account](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp), [NFP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp), [NFP Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfp/nfp_interface.cpp), [NFC Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp). La classification concerne la présence d'un corps et certains chemins manifestement incomplets, **pas la présence d'un lecteur NFC PS5 ni un comportement garanti**.
 
-**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 57 `RACCORDÉ` et 932 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 2 089 `NULL` sont des trous des tables rapprochées, pas la preuve que 1 821 commandes sont demandées par FC27.
+**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 0 `RACCORDÉ` et 831 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 2 089 `NULL` sont des trous des tables rapprochées, pas la preuve que 1 821 commandes sont demandées par FC27.
 
 
 **Lot FS de requalification :** 20 commandes précédemment `Q` rapprochées par service et ID dans les sources FS épinglées : **5 implémentations source**, **14 handlers `nullptr`** et **1 stub explicite** (`fsp-srv` ID 70, corps `STUBBED` avec retour succès). Pour les 10 slots `fsp-srv` aux noms différents du catalogue SwitchBrew, seul le **numéro d'ID** et l'état du slot sont confirmés ; l'équivalence des noms/ABI et des variantes firmware reste à vérifier. `IStorage` : Read/GetSize réels, Write/Flush/SetSize/OperateRange nuls. `IFile` : Write/Flush/SetSize réellement raccordés. Sources : [fsp-srv](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp), [IStorage](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp), [IFile](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp).
@@ -108,6 +110,9 @@ pie showData
 
 
 **Lot final des handlers initialement RACCORDÉ :** 27 lignes qualifiées : 9 IMPL-SRC, 6 STUB, 5 NULL, 1 PARTIEL et 6 AMBIGU. Sur `ssl`, le propriétaire standard `ISslService` est distinct de `ssl:s` (`ISslServiceForSystem`), ce qui permet de classifier les 9 commandes de tête sans confondre leurs handlers. Sur Account, six commandes ID/nom sont partagées entre sous-interfaces aux comportements divergents ; l'interface précise étant absente du catalogue historique, leur statut est **AMBIGU** (pas IMPL-SRC). Aucun handler ne demeure simplement « raccordé » sans motif.
+
+
+**Lot NS1 système :** **101 entrées précédemment Q** classées : `bsdcfg` : 13 NULL ; `erpt:r` : 12 INACCESSIBLE ; `IDeviceOperator` : 43 INACCESSIBLE ; `ntc` : 4 IMPL-SRC, 5 STUB ; `pl:u, pl:s` : 6 ABI-DIFF, 2 IMPL-SRC, 3 NULL ; `pdm:qry` : 4 ABI-DIFF, 8 NULL, 1 STUB. **INACCESSIBLE** constate un retour de sous-interface actuellement bloqué par un `nullptr` parent, pas l'absence prouvée de chaque sous-commande. Les variantes `ABI-DIFF` restent à l'écart du compteur source.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -2525,19 +2530,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsd:u, bsd:s | `30` | `SendMMsg` | 3.0.0+ | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `31` | `EventFd` | 7.0.0+ | **STUB** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `32` | `RegisterResourceStatisticsName` | 7.0.0+ | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
-| bsdcfg | `0` | `SetIfUp` | — | Q | 2026-11-21 |
-| bsdcfg | `1` | `SetIfUpWithEvent` | — | Q | 2026-11-21 |
-| bsdcfg | `2` | `CancelIf` | — | Q | 2026-11-21 |
-| bsdcfg | `3` | `SetIfDown` | — | Q | 2026-11-21 |
-| bsdcfg | `4` | `GetIfState` | — | Q | 2026-11-21 |
-| bsdcfg | `5` | `DhcpRenew` | — | Q | 2026-11-21 |
-| bsdcfg | `6` | `AddStaticArpEntry` | — | Q | 2026-11-21 |
-| bsdcfg | `7` | `RemoveArpEntry` | — | Q | 2026-11-21 |
-| bsdcfg | `8` | `LookupArpEntry` | — | Q | 2026-11-21 |
-| bsdcfg | `9` | `LookupArpEntry2` | — | Q | 2026-11-21 |
-| bsdcfg | `10` | `ClearArpEntries` | — | Q | 2026-11-21 |
-| bsdcfg | `11` | `ClearArpEntries2` | — | Q | 2026-11-21 |
-| bsdcfg | `12` | `PrintArpEntries` | — | Q | 2026-11-21 |
+| bsdcfg | `0` | `SetIfUp` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `1` | `SetIfUpWithEvent` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `2` | `CancelIf` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `3` | `SetIfDown` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `4` | `GetIfState` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `5` | `DhcpRenew` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `6` | `AddStaticArpEntry` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `7` | `RemoveArpEntry` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `8` | `LookupArpEntry` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `9` | `LookupArpEntry2` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `10` | `ClearArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `11` | `ClearArpEntries2` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `12` | `PrintArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
 | ethc:c | `0` | `Initialize` | — | Q | 2026-11-21 |
 | ethc:c | `1` | `Cancel` | — | Q | 2026-11-21 |
 | ethc:c | `2` | `GetResult` | — | Q | 2026-11-21 |
@@ -3205,18 +3210,18 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | erpt:r | `0` | `OpenReport` | — | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:r | `1` | `OpenManager` | — | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:r | `2` | `OpenAttachment` | 8.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
-| erpt:r | `0` | `Open` | — | Q | 2026-11-21 |
-| erpt:r | `1` | `Read` | — | Q | 2026-11-21 |
-| erpt:r | `2` | `SetFlags` | — | Q | 2026-11-21 |
-| erpt:r | `3` | `GetFlags` | — | Q | 2026-11-21 |
-| erpt:r | `4` | `Close` | — | Q | 2026-11-21 |
-| erpt:r | `5` | `GetSize` | — | Q | 2026-11-21 |
-| erpt:r | `0` | `GetReportList` | — | Q | 2026-11-21 |
-| erpt:r | `1` | `GetEvent` | — | Q | 2026-11-21 |
-| erpt:r | `2` | `CleanupReports` | 4.0.0+ | Q | 2026-11-21 |
-| erpt:r | `3` | `DeleteReport` | 5.0.0+ | Q | 2026-11-21 |
-| erpt:r | `4` | `GetStorageUsageStatistics` | 5.0.0+ | Q | 2026-11-21 |
-| erpt:r | `5` | `GetAttachmentList` | 8.0.0+ | Q | 2026-11-21 |
+| erpt:r | `0` | `Open` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `1` | `Read` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `2` | `SetFlags` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `3` | `GetFlags` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `4` | `Close` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `5` | `GetSize` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `0` | `GetReportList` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `1` | `GetEvent` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `2` | `CleanupReports` | 4.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `3` | `DeleteReport` | 5.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `4` | `GetStorageUsageStatistics` | 5.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
+| erpt:r | `5` | `GetAttachmentList` | 8.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; OpenReport/OpenManager/OpenAttachment du service ErrorReportSession à nullptr; sous-interface non ouvrable ; non validé PS5) | 2026-11-22 |
 
 ### Error Upload services
 
@@ -3671,49 +3676,49 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IFile | `4` | `GetSize` | — | **IMPL-SRC** ([source C++][ns1-src-025]) | 2026-11-22 |
 | IFile | `5` | `OperateRange` | 4.0.0+ | **NULL** ([source C++][ns1-src-025]) | 2026-11-22 |
 | ISaveDataInfoReader | `0` | `ReadSaveDataInfo` | — | Q | 2026-11-21 |
-| IDeviceOperator | `0` | `IsSdCardInserted` | — | Q | 2026-11-21 |
-| IDeviceOperator | `1` | `GetSdCardSpeedMode` | — | Q | 2026-11-21 |
-| IDeviceOperator | `2` | `GetSdCardCid` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `3` | `GetSdCardUserAreaSize` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `4` | `GetSdCardProtectedAreaSize` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `5` | `GetAndClearSdCardErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `100` | `GetMmcCid` | — | Q | 2026-11-21 |
-| IDeviceOperator | `101` | `GetMmcSpeedMode` | — | Q | 2026-11-21 |
-| IDeviceOperator | `110` | `EraseMmc` | — | Q | 2026-11-21 |
-| IDeviceOperator | `111` | `GetMmcPartitionSize` | — | Q | 2026-11-21 |
-| IDeviceOperator | `112` | `GetMmcPatrolCount` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `113` | `GetAndClearMmcErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `114` | `GetMmcExtendedCsd` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `115` | `SuspendMmcPatrol` | 4.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `116` | `ResumeMmcPatrol` | 4.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `200` | `IsGameCardInserted` | — | Q | 2026-11-21 |
-| IDeviceOperator | `201` | `EraseGameCard` | — | Q | 2026-11-21 |
-| IDeviceOperator | `202` | `GetGameCardHandle` | — | Q | 2026-11-21 |
-| IDeviceOperator | `203` | `GetGameCardUpdatePartitionInfo` | — | Q | 2026-11-21 |
-| IDeviceOperator | `204` | `FinalizeGameCardDriver` | — | Q | 2026-11-21 |
-| IDeviceOperator | `205` | `GetGameCardAttribute` | — | Q | 2026-11-21 |
-| IDeviceOperator | `206` | `GetGameCardDeviceCertificate` | — | Q | 2026-11-21 |
-| IDeviceOperator | `207` | `GetGameCardAsicInfo` | — | Q | 2026-11-21 |
-| IDeviceOperator | `208` | `GetGameCardIdSet` | — | Q | 2026-11-21 |
-| IDeviceOperator | `209` | `WriteToGameCardDirectly` | — | Q | 2026-11-21 |
-| IDeviceOperator | `210` | `SetVerifyWriteEnalbleFlag` | — | Q | 2026-11-21 |
-| IDeviceOperator | `211` | `GetGameCardImageHash` | — | Q | 2026-11-21 |
-| IDeviceOperator | `212` | `GetGameCardDeviceIdForProdCard` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `213` | `EraseAndWriteParamDirectly` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `214` | `ReadParamDirectly` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `215` | `ForceEraseGameCard` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `216` | `GetGameCardErrorInfo` | 2.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `217` | `GetGameCardErrorReportInfo` | 2.1.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `218` | `GetGameCardDeviceId` | 3.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `219` | `ChallengeCardExistence` | 8.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `220` | `GetGameCardCompatibilityType` | 9.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `300` | `SetSpeedEmulationMode` | — | Q | 2026-11-21 |
-| IDeviceOperator | `301` | `GetSpeedEmulationMode` | — | Q | 2026-11-21 |
-| IDeviceOperator | `400` | `SuspendSdmmcControl` | 5.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `401` | `ResumeSdmmcControl` | 5.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `402` | `GetSdmmcConnectionStatus` | 6.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `500` | `SetDeviceSimulationEvent` | 6.0.0+ | Q | 2026-11-21 |
-| IDeviceOperator | `501` | `ClearDeviceSimulationEvent` | 6.0.0+ | Q | 2026-11-21 |
+| IDeviceOperator | `0` | `IsSdCardInserted` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `1` | `GetSdCardSpeedMode` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `2` | `GetSdCardCid` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `3` | `GetSdCardUserAreaSize` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `4` | `GetSdCardProtectedAreaSize` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `5` | `GetAndClearSdCardErrorInfo` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `100` | `GetMmcCid` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `101` | `GetMmcSpeedMode` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `110` | `EraseMmc` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `111` | `GetMmcPartitionSize` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `112` | `GetMmcPatrolCount` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `113` | `GetAndClearMmcErrorInfo` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `114` | `GetMmcExtendedCsd` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `115` | `SuspendMmcPatrol` | 4.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `116` | `ResumeMmcPatrol` | 4.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `200` | `IsGameCardInserted` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `201` | `EraseGameCard` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `202` | `GetGameCardHandle` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `203` | `GetGameCardUpdatePartitionInfo` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `204` | `FinalizeGameCardDriver` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `205` | `GetGameCardAttribute` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `206` | `GetGameCardDeviceCertificate` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `207` | `GetGameCardAsicInfo` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `208` | `GetGameCardIdSet` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `209` | `WriteToGameCardDirectly` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `210` | `SetVerifyWriteEnalbleFlag` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `211` | `GetGameCardImageHash` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `212` | `GetGameCardDeviceIdForProdCard` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `213` | `EraseAndWriteParamDirectly` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `214` | `ReadParamDirectly` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `215` | `ForceEraseGameCard` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `216` | `GetGameCardErrorInfo` | 2.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `217` | `GetGameCardErrorReportInfo` | 2.1.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `218` | `GetGameCardDeviceId` | 3.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `219` | `ChallengeCardExistence` | 8.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `220` | `GetGameCardCompatibilityType` | 9.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `300` | `SetSpeedEmulationMode` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `301` | `GetSpeedEmulationMode` | — | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `400` | `SuspendSdmmcControl` | 5.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `401` | `ResumeSdmmcControl` | 5.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `402` | `GetSdmmcConnectionStatus` | 6.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `500` | `SetDeviceSimulationEvent` | 6.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
+| IDeviceOperator | `501` | `ClearDeviceSimulationEvent` | 6.0.0+ | **INACCESSIBLE** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ID 400 FSP_SRV::OpenDeviceOperator = nullptr; interface non obtenable via FSP (corps internes non examinés) ; non validé PS5) | 2026-11-22 |
 | IEventNotifier | `0` | `GetEventHandle` | — | Q | 2026-11-21 |
 | ISaveDataTransferManager | `0` | `GetChallenge` | — | Q | 2026-11-21 |
 | ISaveDataTransferManager | `16` | `SetToken` | — | Q | 2026-11-21 |
@@ -4593,15 +4598,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nim:eca | `5` | `Prepare` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nim:ecas | `0` | `RegisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:ecas | `1` | `UnregisterSpecialClient` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| ntc | `0` | `OpenEnsureNetworkClockAvailabilityService` | — | Q | 2026-11-21 |
-| ntc | `100` | `SuspendAutonomicTimeCorrection` | 3.0.0+ | Q | 2026-11-21 |
-| ntc | `101` | `ResumeAutonomicTimeCorrection` | 3.0.0+ | Q | 2026-11-21 |
-| ntc | `0` | `StartTask` | — | Q | 2026-11-21 |
-| ntc | `1` | `GetFinishNotificationEvent` | — | Q | 2026-11-21 |
-| ntc | `2` | `GetResult` | — | Q | 2026-11-21 |
-| ntc | `3` | `Cancel` | — | Q | 2026-11-21 |
-| ntc | `4` | `IsProcessing` | — | Q | 2026-11-21 |
-| ntc | `5` | `GetServerTime` | 3.0.0+ | Q | 2026-11-21 |
+| ntc | `0` | `OpenEnsureNetworkClockAvailabilityService` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
+| ntc | `100` | `SuspendAutonomicTimeCorrection` | 3.0.0+ | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `101` | `ResumeAutonomicTimeCorrection` | 3.0.0+ | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `0` | `StartTask` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `1` | `GetFinishNotificationEvent` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
+| ntc | `2` | `GetResult` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `3` | `Cancel` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
+| ntc | `4` | `IsProcessing` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; tâche réseau simulée (succès immédiat/état fixe ou STUBBED) ; non validé PS5) | 2026-11-22 |
+| ntc | `5` | `GetServerTime` | 3.0.0+ | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; constructeur IPC, événement ou horloge hôte opérationnels dans la source ; non validé PS5) | 2026-11-22 |
 | IAsyncValue | `0` | `GetSize` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | IAsyncValue | `1` | `Get` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | IAsyncValue | `2` | `Cancel` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
@@ -5269,17 +5274,17 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| pl:u, pl:s | `0` | `RequestSharedFontLoad` | — | Q | 2026-11-21 |
-| pl:u, pl:s | `1` | `GetSharedFontLoadState` | — | Q | 2026-11-21 |
-| pl:u, pl:s | `2` | `GetSharedFontSize` | — | Q | 2026-11-21 |
-| pl:u, pl:s | `3` | `GetSharedFontAddress` | — | Q | 2026-11-21 |
-| pl:u, pl:s | `4` | `GetSharedFontSharedMemoryHandle` | — | Q | 2026-11-21 |
-| pl:u, pl:s | `5` | `GetSharedFontInOrderOfPriority` | — | Q | 2026-11-21 |
-| pl:u, pl:s | `6` | `GetSharedFontInOrderOfPriorityForSystem` | 4.0.0+ | Q | 2026-11-21 |
-| pl:u, pl:s | `100` | `RequestApplicationFunctionAuthorization` | 8.0.0+ | Q | 2026-11-21 |
-| pl:u, pl:s | `101` | `RequestApplicationFunctionAuthorizationForSystem` | 8.0.0+ | Q | 2026-11-21 |
-| pl:u, pl:s | `1000` | `LoadNgWordDataForPlatformRegionChina` | 9.0.0+ | Q | 2026-11-21 |
-| pl:u, pl:s | `1001` | `GetNgWordDataSizeForPlatformRegionChina` | 9.0.0+ | Q | 2026-11-21 |
+| pl:u, pl:s | `0` | `RequestSharedFontLoad` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; ID 0 : catalogue `RequestSharedFontLoad` vs table active `RequestLoad` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `1` | `GetSharedFontLoadState` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; ID 1 : catalogue `GetSharedFontLoadState` vs table active `GetLoadState` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `2` | `GetSharedFontSize` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; ID 2 : catalogue `GetSharedFontSize` vs table active `GetSize` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `3` | `GetSharedFontAddress` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; ID 3 : catalogue `GetSharedFontAddress` vs table active `GetSharedMemoryAddressOffset` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `4` | `GetSharedFontSharedMemoryHandle` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; ID 4 : catalogue `GetSharedFontSharedMemoryHandle` vs table active `GetSharedMemoryNativeHandle` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `5` | `GetSharedFontInOrderOfPriority` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; méthode IPlatformServiceManager::GetSharedFontInOrderOfPriority non triviale ; ABI console non testée ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `6` | `GetSharedFontInOrderOfPriorityForSystem` | 4.0.0+ | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; méthode IPlatformServiceManager::GetSharedFontInOrderOfPriority non triviale ; ABI console non testée ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `100` | `RequestApplicationFunctionAuthorization` | 8.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `101` | `RequestApplicationFunctionAuthorizationForSystem` | 8.0.0+ | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; ID 101 : catalogue `RequestApplicationFunctionAuthorizationForSystem` vs table active `RequestApplicationFunctionAuthorizationByProcessId` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `1000` | `LoadNgWordDataForPlatformRegionChina` | 9.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `1001` | `GetNgWordDataSizeForPlatformRegionChina` | 9.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | mii:u, mii:e | `0` | `GetDatabaseService` | — | **IMPL-SRC** ([source C++][ns1-src-094]) | 2026-11-22 |
 | mii:u, mii:e | `0` | `IsUpdated` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
 | mii:u, mii:e | `1` | `IsFullDatabase` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
@@ -5328,19 +5333,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pdm:ntfy | `5` | `NotifyEventForDebug` | — | Q | 2026-11-21 |
 | pdm:ntfy | `6` | `SuspendUserAccountEventService` | 4.0.0+ | Q | 2026-11-21 |
 | pdm:ntfy | `7` | `ResumeUserAccountEventService` | 4.0.0+ | Q | 2026-11-21 |
-| pdm:qry | `0` | `QueryApplicationEvent` | — | Q | 2026-11-21 |
-| pdm:qry | `4` | `QueryPlayStatisticsByApplicationId` | — | Q | 2026-11-21 |
-| pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | Q | 2026-11-21 |
-| pdm:qry | `7` | `QueryLastPlayTime` | — | Q | 2026-11-21 |
-| pdm:qry | `8` | `QueryPlayEvent` | — | Q | 2026-11-21 |
-| pdm:qry | `9` | `GetAvailablePlayEventRange` | — | Q | 2026-11-21 |
-| pdm:qry | `10` | `QueryAccountEvent` | — | Q | 2026-11-21 |
-| pdm:qry | `11` | `QueryAccountPlayEvent` | 4.0.0+ | Q | 2026-11-21 |
-| pdm:qry | `12` | `GetAvailableAccountPlayEventRange` | 4.0.0+ | Q | 2026-11-21 |
-| pdm:qry | `13` | `QueryApplicationPlayStatisticsForSystem` | 5.0.0+ | Q | 2026-11-21 |
-| pdm:qry | `14` | `QueryRecentlyPlayedApplication` | 6.0.0+ | Q | 2026-11-21 |
-| pdm:qry | `15` | `GetRecentlyPlayedApplicationUpdateEvent` | 6.0.0+ | Q | 2026-11-21 |
-| pdm:qry | `16` | `QueryApplicationPlayStatisticsByUserAccountIdForSystem` | 6.0.0+ | Q | 2026-11-21 |
+| pdm:qry | `0` | `QueryApplicationEvent` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 0 : catalogue `QueryApplicationEvent` vs table active `QueryAppletEvent` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `4` | `QueryPlayStatisticsByApplicationId` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; statistiques fictives : total_launches forcé à 1, corps TODO ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `7` | `QueryLastPlayTime` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 7 : catalogue `QueryLastPlayTime` vs table active `QueryLastPlayTimeV0` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `8` | `QueryPlayEvent` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `9` | `GetAvailablePlayEventRange` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `10` | `QueryAccountEvent` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `11` | `QueryAccountPlayEvent` | 4.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `12` | `GetAvailableAccountPlayEventRange` | 4.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `13` | `QueryApplicationPlayStatisticsForSystem` | 5.0.0+ | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 13 : catalogue `QueryApplicationPlayStatisticsForSystem` vs table active `QueryApplicationPlayStatisticsForSystemV0` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `14` | `QueryRecentlyPlayedApplication` | 6.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `15` | `GetRecentlyPlayedApplicationUpdateEvent` | 6.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `16` | `QueryApplicationPlayStatisticsByUserAccountIdForSystem` | 6.0.0+ | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 16 : catalogue `QueryApplicationPlayStatisticsByUserAccountIdForSystem` vs table active `QueryApplicationPlayStatisticsByUserAccountIdForSystemV0` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
 | avm | `103` | `No input, returns an IVersionListImporter.` | — | Q | 2026-11-21 |
 
 ### SSL services

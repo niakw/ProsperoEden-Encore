@@ -1215,15 +1215,18 @@ post_f07_gpu_table_owners = {"vendor/encore-active/eden-core/src/common/multi_le
 post_f07_gpu_table_present = post_f07_gpu_table_owners & all_owners
 gpu_table_vendor_pin = subprocess.check_output(["git","-C",str(ROOT/"vendor"),"rev-parse","HEAD"],text=True).strip()
 integrated_cache_lock_qualified = False
-integrated_cache_lock_pins = {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539"}
+integrated_cache_lock_pins = {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}
 if gpu_table_vendor_pin in integrated_cache_lock_pins:
-    if gpu_table_vendor_pin == "ac880cd408116e6eb53ba2400abc52970b81f539":
+    if gpu_table_vendor_pin in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}:
         # GitHub verified that this merge commit has exactly the reviewed
         # predecessor tree. Reject future changes even under a reused label.
         reviewed_tree = subprocess.check_output(
             ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD^{tree}"],
             text=True).strip()
-        assert reviewed_tree == "01c09ec124779e7d976718af09a0e5e94cb4ac20", ("Vendor merger tree drift", reviewed_tree)
+        assert reviewed_tree == {
+            "ac880cd408116e6eb53ba2400abc52970b81f539": "01c09ec124779e7d976718af09a0e5e94cb4ac20",
+            "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
+        }[gpu_table_vendor_pin], ("Vendor reviewed source tree drift", gpu_table_vendor_pin, reviewed_tree)
     # This vendor changes exactly the active GuestCacheLock method and
     # its source tests; the historical F07 source table remains frozen.
     raster=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()

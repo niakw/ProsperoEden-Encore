@@ -24,11 +24,15 @@ expected.add("4354add020afac574198f63d87167f3022bff9c6")
 expected.add("17253dc91e9fe1eb2d9980f261f59d227bfcd1a1")
 # The merged vendor commit has the exact reviewed 17253dc9 source tree.
 expected.add("ac880cd408116e6eb53ba2400abc52970b81f539")
-if selected == "ac880cd408116e6eb53ba2400abc52970b81f539":
+expected.add("95343060f948601930f2e62b919da0789f0830bb")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
-    assert reviewed_tree == "01c09ec124779e7d976718af09a0e5e94cb4ac20", ("Vendor merger tree drift", reviewed_tree)
+    assert reviewed_tree == {
+        "ac880cd408116e6eb53ba2400abc52970b81f539": "01c09ec124779e7d976718af09a0e5e94cb4ac20",
+        "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
+    }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

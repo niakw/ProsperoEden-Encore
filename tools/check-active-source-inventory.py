@@ -442,8 +442,13 @@ r437_body = (active / r437_path).read_text()
 # its raw blob and reverse only the three exact added declaration blocks
 # before applying the original R437 byte-for-byte proof.
 def checked_guest_cache_lock_vendor(pin):
-    if pin != "17253dc91e9fe1eb2d9980f261f59d227bfcd1a1":
+    if pin not in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "95343060f948601930f2e62b919da0789f0830bb"}:
         return pin
+    if pin == "95343060f948601930f2e62b919da0789f0830bb":
+        reviewed_tree = subprocess.check_output(
+            ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip()
+        assert reviewed_tree == "efa6548c57f7823d4e8b2c975944c6846b765ff3", ("Vendor source tree drift", reviewed_tree)
     # Only the two exact new C++ function call sites may differ from the
     # reviewed integrated renderer. Runtime C++ is never modified here.
     source=(active/"eden-vulkan/vulkan_rasterizer.cpp").read_text()

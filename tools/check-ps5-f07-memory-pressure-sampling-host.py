@@ -384,7 +384,8 @@ print("F07_BUFFER_USAGE_UNREGISTER_SATURATED_PASS O0=1 O2=1 native=1 desktop_ori
 # Desktop retains its exact historical return semantics.
 frame_begin=buffer_src.index("void BufferCache<P>::TickFrame() {")
 frame_limit=buffer_src.index("    // Calculate hits and shots and move hit bits to the right",frame_begin)
-frame_prelude=buffer_src[frame_begin:frame_limit]
+frame_body=buffer_src.index("#endif\n",frame_begin)+len("#endif\n")
+frame_prelude="void BufferCache<P>::TickFrame() {\n"+buffer_src[frame_body:frame_limit]
 assert "if (!channel_state)" in frame_prelude
 assert "#ifdef PS5_NATIVE" in frame_prelude
 assert "delayed_destruction_ring.Tick();" in frame_prelude

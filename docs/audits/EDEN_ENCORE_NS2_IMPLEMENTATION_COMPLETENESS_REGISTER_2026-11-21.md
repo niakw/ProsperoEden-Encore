@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (168), `HANDLER PARTIEL INDIQUÉ` (**9**), `STUB NOMMÉ` (**72**, dont 1 sur une ABI U inconnue), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). SyncptSession 21 n'est plus compté comme P : son contrat public est inconnu et le runtime échoue désormais fermé au lieu de fabriquer un u32 zéro.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**169**), `HANDLER PARTIEL INDIQUÉ` (**8**), `STUB NOMMÉ` (72, dont 1 sur une ABI U inconnue), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). EventIdControl est désormais C : seuls les IDs QueryEvent publics 1–3 sont admis.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,22 +32,22 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : C=168, **P=8**, C/P=1, M=107, **U=26**, V=6.
-- **R** : **285/316 (90,2 %)** traitées explicitement. SyncptSession 21 est une ABI U mais possède désormais un stub nommé fail-closed ; les 31 sans traitement restent 25 autres U + 6 V.
+- **F** : **C=169**, **P=7**, C/P=1, M=107, U=26, V=6.
+- **R** : **285/316 (90,2 %)** traitées explicitement. Toutes les M ont un refus/stub ; Syncpt 21 est U avec stub nommé.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | 168 | 168 | 0 |
-| P — partielle | **8** | 8 | 0 |
+| C — implémentation source | **169** | 169 | 0 |
+| P — partielle | **7** | 7 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
-| U — contrat insuffisant | **26** | **1** (stub nommé cmd 21) | **25** |
+| U — contrat insuffisant | 26 | 1 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**SyncptSession 21 corrigé** : SwitchBrew expose l'ID 21 mais toujours aucun nom, paramètre ni sortie publique. L'ancien `Zero` répondait succès + u32 zéro sans preuve ; il est remplacé par `Unknown21`, qui retourne `ResultNotImplemented` sans lire le payload. La ligne passe donc P → U, mais garde une représentation explicite.
+**EventIdControl qualifié C** : la documentation NV publique lie son `id` aux IDs de `QueryEvent`; pour `/dev/nvhost-gpu`, seuls 1 (breakpoint int), 2 (breakpoint pause) et 3 (error notifier) sont publiés. Le runtime borne désormais à 1–3, valide l'ABI 16 octets Ounce et applique réellement enable/disable/clear aux KEvents correspondants. L'extension historique `QueryEvent(7)` reste distincte et n'élargit pas ce contrat.
 
-**Restent 8 P + 1 C/P** : 391/691 (formats feature-image), event/error GPU, USERD/doorbell et scheduling TSG, plus le submit historique C/P.
+**Restent 7 P + 1 C/P** : 391/691, GET_ERROR_INFO/NOTIFICATION, CHANNEL_SETUP_BIND USERD/doorbell, deux réglages TSG post-bind, plus le submit historique C/P.
 
 ---
 
@@ -404,7 +404,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 | 0x0000480F | NVGPU_IOCTL_CHANNEL_DISABLE | C | HANDLER INDIQUÉ | NativeChannelSetEnabled | bloque réellement les submits natifs |
 | 0x00004810 | NVGPU_IOCTL_CHANNEL_PREEMPT | M | REFUS EXPLICITE | fail-closed | préemption GPU réelle absente |
 | 0x00004811 | NVGPU_IOCTL_CHANNEL_FORCE_RESET | M | REFUS EXPLICITE | fail-closed | reset GPU réel absent |
-| 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | P | HANDLER PARTIEL INDIQUÉ | NativeEventIdControl | Ounce exact: 16 B {cmd,id,u64=0}, appel observé {enable,2,0}; QueryEvent 1/2/3 configurés et clear réel, IDs 4..6 → NotImplemented faute de producteurs |
+| 0x40104812 | [S2] NVGPU_IOCTL_CHANNEL_EVENT_ID_CONTROL | C | HANDLER INDIQUÉ | NativeEventIdControl | ABI 16 B exact; cmd 0/1/2; IDs bornés aux QueryEvent publics /dev/nvhost-gpu 1/2/3, KEvents réels et clear/enable/disable effectifs |
 | 0xC0104813 | NVGPU_IOCTL_CHANNEL_CYCLE_STATS_SNAPSHOT | M | REFUS EXPLICITE | nvhost_gpu::Ioctl1 (fail-closed) | ioctl exact 0xC0104813 : NotImplemented ; pas de cycle stats fictives |
 | 0x40084714 | NVGPU_IOCTL_CHANNEL_SET_USER_DATA | C | HANDLER INDIQUÉ | SetClientData | actif |
 | 0x80084715 | NVGPU_IOCTL_CHANNEL_GET_USER_DATA | C | HANDLER INDIQUÉ | GetClientData | actif |

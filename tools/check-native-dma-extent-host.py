@@ -326,78 +326,137 @@ assert "i * 4" in header
 assert "remap.GetComponent(3)" in helper
 assert 'list(REMOVE_ITEM video_sources engines/maxwell_dma.cpp)' in cm
 assert 'python3 -B tools/check-native-dma-extent-host.py' in wf
-gpu="""    // Widen before multiplying, then respect the u32 buffer-cache span.
-    const u64 buffer_size_wide = static_cast<u64>(buffer_operand.pitch) * buffer_operand.height;
-    if (buffer_size_wide > static_cast<u64>(~u32{0})) {
-        return false;
-    }
-    const u32 buffer_size = static_cast<u32>(buffer_size_wide);"""
-assert gpu in vulkan and gpu in bridge
-def cut(s,start,end):
- assert s.count(start)==1
- pos=s.index(start)
- return s[pos:s.index(end,pos)].strip()+"\n"
-dst=cut(native,"    const u64 dst_size_wide","\n    Tegra::Memory::GpuGuestMemory<u8")
-src=cut(native,"    const u64 src_size_wide","\n    GPUVAddr src_addr")
-mid=cut(native,"    const u64 pitch_wide","\n    intermediate_buffer.resize_destructive")
-acc=cut(vulkan,"    const u64 buffer_size_wide","\n#endif\n    static constexpr auto sync_info")
-# The extracted desktop arithmetic is inside #else; keep its closing #endif out.
-assert "#else\n    // Widen before multiplying" in vulkan
-cpp=r"""
+# The selected integrated MaxwellDMA uses real u64 bounds / signed-pitch
+# geometry and a newer 2D remap path. Compile its actual self-contained
+# numeric helpers under UBSan, rather than splicing unrelated 2D decoder
+# local variables into the historic row-wise arithmetic mock.
+if integrated_dma:
+    coalesce_begin = "constexpr bool CanCoalescePitchDma("
+    envelope_begin = "constexpr bool PitchDmaEnvelope("
+    row_begin = "constexpr GPUVAddr PitchDmaRowAddress("
+    assert native.count(coalesce_begin) == native.count(envelope_begin) == native.count(row_begin) == 1
+    selected_numeric = (native[native.index(coalesce_begin):native.index(envelope_begin)]
+                        + native[native.index(envelope_begin):native.index(row_begin)])
+    assert "width > (~u32{0}) / rows" in selected_numeric
+    assert "const u64 delta = magnitude * (rows - 1);" in selected_numeric
+    assert "bytes > MAX_ADDRESS - base - delta" in selected_numeric
+    cpp = """
 #include <cassert>
 #include <cstdint>
-#include <cstdlib>
-#include <cstddef>
-#include <optional>
-using u32=std::uint32_t; using u64=std::uint64_t;
-using s32=std::int32_t; using s64=std::int64_t;
-#define LOG_WARNING(...) ((void)0)
-struct Regs{u32 pitch_in;u32 line_count;};
-struct Buf{u32 pitch;u32 height;};
-std::optional<std::size_t> Dst(u32 pitch,u32 count){
- Buf dst_operand{pitch,0};Regs regs{0,count};
-__DST__
- return dst_size;
+#include <limits>
+using u32 = std::uint32_t;
+using u64 = std::uint64_t;
+using s32 = std::int32_t;
+using s64 = std::int64_t;
+using GPUVAddr = u64;
+__SELECTED_NUMERIC__
+int main() {
+    u64 count{}, begin{}, end{};
+    const u64 mx = (std::numeric_limits<u64>::max)();
+    assert(CanCoalescePitchDma(0, 128, 16, 4, 16, 16, count) && count == 64);
+    assert(!CanCoalescePitchDma(0, 32, 16, 4, 16, 16, count));
+    assert(!CanCoalescePitchDma(0, 128, 16, 4, -16, 16, count));
+    assert(!CanCoalescePitchDma(0, 128, 0, 4, 0, 0, count));
+    assert(!CanCoalescePitchDma(0, 128, u32{0xffffffff}, 2, 0xffffffff, 0xffffffff, count));
+    assert(!CanCoalescePitchDma(mx - 5, 128, 16, 1, 16, 16, count));
+    assert(PitchDmaEnvelope(100, 16, 4, 8, begin, end));
+    assert(begin == 100 && end == 156);
+    assert(PitchDmaEnvelope(100, -16, 4, 8, begin, end));
+    assert(begin == 52 && end == 108);
+    assert(PitchDmaEnvelope(100, (std::numeric_limits<s32>::min)(), 1, 1, begin, end));
+    assert(begin == 100 && end == 101);
+    assert(!PitchDmaEnvelope(5, -16, 2, 8, begin, end));
+    assert(!PitchDmaEnvelope(mx - 10, 16, 2, 8, begin, end));
 }
-std::optional<std::size_t> Src(u32 pitch,u32 count){
- Regs regs{pitch,count};
-__SRC__
- return src_size;
-}
-std::optional<std::size_t> Mid(u32 x_elements,u32 bytes_per_pixel,u32 count){
- Regs regs{0,count};
-__MID__
- (void)pitch;return mid_buffer_size;
-}
-bool Acc(u32 pitch,u32 height){
- Buf buffer_operand{pitch,height};
-__ACC__
- return buffer_size==static_cast<u32>(static_cast<u64>(pitch)*height);
-}
-int main(){
- const u32 mx=~u32{0};
- assert(Acc(0,0) && Acc(256,1080) && Acc(mx,1));
- assert(!Acc(65536,65536) && !Acc(mx,2));
- assert(Dst(256,1080)==std::optional<std::size_t>{276480});
- assert(Src(256,1080)==std::optional<std::size_t>{276480});
- assert(!Dst(65536,65536) && !Src(65536,65536));
- assert(Dst(mx,1)==std::optional<std::size_t>{mx});
- assert(Mid(256,4,1080)==std::optional<std::size_t>{1105920});
- assert(Mid(mx,1,1)==std::optional<std::size_t>{mx});
- assert(!Mid(mx,2,1) && !Mid(mx,1,2));
- assert(!Mid(mx,mx,mx));
- assert(static_cast<u32>(std::abs(static_cast<s64>(-2147483647-1)))==2147483648u);
-}
-"""
-for key,body in (("__DST__",dst),("__SRC__",src),("__MID__",mid),("__ACC__",acc)):
- assert cpp.count(key)==1
- cpp=cpp.replace(key,body.replace("return;","return std::nullopt;"))
-clang=shutil.which("clang++-18") or shutil.which("clang++")
-assert clang
-with tempfile.TemporaryDirectory(prefix="dma-extent-") as td:
- f=Path(td)/"main.cpp";out=Path(td)/"test";f.write_text(cpp)
- subprocess.run([clang,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
-                 "-fsanitize=address,undefined","-fno-sanitize-recover=all",
-                 str(f),"-o",str(out)],check=True,timeout=55)
- subprocess.run([str(out)],check=True,timeout=20)
-print("DMA_EXTENT_HOST_PASS real_arithmetic=4 native_owner=1 pinned_parity=1 asan_ubsan=1")
+""".replace("__SELECTED_NUMERIC__", selected_numeric)
+    clang = shutil.which("clang++-18") or shutil.which("clang++")
+    assert clang
+    with tempfile.TemporaryDirectory(prefix="encore-selected-dma-extent-") as td:
+        f = Path(td) / "numeric.cpp"
+        f.write_text(cpp)
+        for opt in ("-O0", "-O2"):
+            out = Path(td) / ("test"+opt)
+            subprocess.run([clang, "-std=c++20", opt, "-Wall", "-Wextra", "-Werror",
+                            "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
+                            str(f), "-o", str(out)], check=True, timeout=55)
+            subprocess.run([str(out)], check=True, timeout=20)
+            print("DMA_EXTENT_SELECTED_HOST_PASS", opt,
+                  "source_extracted=2 bounds=1 signed_pitch=1 no_wrap=1")
+else:
+    gpu="""    // Widen before multiplying, then respect the u32 buffer-cache span.
+        const u64 buffer_size_wide = static_cast<u64>(buffer_operand.pitch) * buffer_operand.height;
+        if (buffer_size_wide > static_cast<u64>(~u32{0})) {
+            return false;
+        }
+        const u32 buffer_size = static_cast<u32>(buffer_size_wide);"""
+    assert gpu in vulkan and gpu in bridge
+    def cut(s,start,end):
+     assert s.count(start)==1
+     pos=s.index(start)
+     return s[pos:s.index(end,pos)].strip()+"\n"
+    dst=cut(native,"    const u64 dst_size_wide","\n    Tegra::Memory::GpuGuestMemory<u8")
+    src=cut(native,"    const u64 src_size_wide","\n    GPUVAddr src_addr")
+    mid=cut(native,"    const u64 pitch_wide","\n    intermediate_buffer.resize_destructive")
+    acc=cut(vulkan,"    const u64 buffer_size_wide","\n#endif\n    static constexpr auto sync_info")
+    # The extracted desktop arithmetic is inside #else; keep its closing #endif out.
+    assert "#else\n    // Widen before multiplying" in vulkan
+    cpp=r"""
+    #include <cassert>
+    #include <cstdint>
+    #include <cstdlib>
+    #include <cstddef>
+    #include <optional>
+    using u32=std::uint32_t; using u64=std::uint64_t;
+    using s32=std::int32_t; using s64=std::int64_t;
+    #define LOG_WARNING(...) ((void)0)
+    struct Regs{u32 pitch_in;u32 line_count;};
+    struct Buf{u32 pitch;u32 height;};
+    std::optional<std::size_t> Dst(u32 pitch,u32 count){
+     Buf dst_operand{pitch,0};Regs regs{0,count};
+    __DST__
+     return dst_size;
+    }
+    std::optional<std::size_t> Src(u32 pitch,u32 count){
+     Regs regs{pitch,count};
+    __SRC__
+     return src_size;
+    }
+    std::optional<std::size_t> Mid(u32 x_elements,u32 bytes_per_pixel,u32 count){
+     Regs regs{0,count};
+    __MID__
+     (void)pitch;return mid_buffer_size;
+    }
+    bool Acc(u32 pitch,u32 height){
+     Buf buffer_operand{pitch,height};
+    __ACC__
+     return buffer_size==static_cast<u32>(static_cast<u64>(pitch)*height);
+    }
+    int main(){
+     const u32 mx=~u32{0};
+     assert(Acc(0,0) && Acc(256,1080) && Acc(mx,1));
+     assert(!Acc(65536,65536) && !Acc(mx,2));
+     assert(Dst(256,1080)==std::optional<std::size_t>{276480});
+     assert(Src(256,1080)==std::optional<std::size_t>{276480});
+     assert(!Dst(65536,65536) && !Src(65536,65536));
+     assert(Dst(mx,1)==std::optional<std::size_t>{mx});
+     assert(Mid(256,4,1080)==std::optional<std::size_t>{1105920});
+     assert(Mid(mx,1,1)==std::optional<std::size_t>{mx});
+     assert(!Mid(mx,2,1) && !Mid(mx,1,2));
+     assert(!Mid(mx,mx,mx));
+     assert(static_cast<u32>(std::abs(static_cast<s64>(-2147483647-1)))==2147483648u);
+    }
+    """
+    for key,body in (("__DST__",dst),("__SRC__",src),("__MID__",mid),("__ACC__",acc)):
+     assert cpp.count(key)==1
+     cpp=cpp.replace(key,body.replace("return;","return std::nullopt;"))
+    clang=shutil.which("clang++-18") or shutil.which("clang++")
+    assert clang
+    with tempfile.TemporaryDirectory(prefix="dma-extent-") as td:
+     f=Path(td)/"main.cpp";out=Path(td)/"test";f.write_text(cpp)
+     subprocess.run([clang,"-std=c++20","-O1","-Wall","-Wextra","-Werror",
+                     "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+                     str(f),"-o",str(out)],check=True,timeout=55)
+     subprocess.run([str(out)],check=True,timeout=20)
+
+if not integrated_dma:
+    print("DMA_EXTENT_HOST_PASS real_arithmetic=4 native_owner=1 pinned_parity=1 asan_ubsan=1")

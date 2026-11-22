@@ -845,7 +845,14 @@ include("__BRIDGE__")
     vk=sources["vulkan_rasterizer_deferred.cpp"]
     assert vk == maintained_m07.read_text(), "M07 configured Vulkan source differs from maintained variant"
     assert vk.count("EnqueueDeferredCPUWrite(addr, size)") == 1
-    assert vk.count("GuestCacheLock(texture_cache.mutex, true)") >= 2
+    # DEV bridge is only staged; its historic GetFlushArea still carries a
+    # typed trace object. The shipping Vulkan rasterizer has TWO callable
+    # locks and is checked separately, never inferred from the DEV text.
+    shipping_vk = (root/"vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
+    assert shipping_vk.count("GuestCacheLock(texture_cache.mutex, true)") >= 2
+    assert "GuestCacheLock(buffer_cache.mutex, false)" in shipping_vk
+    assert vk.count("GuestCacheLock(texture_cache.mutex, true)") == 1
+    assert vk.count("GuestCacheLock texture_wait(texture_cache.mutex, true)") == 1
     assert "texture_cache.mutex.try_lock()" not in vk
     assert "!::Eden::GpuDeferredWrite::replaying_guest_write" in vk
     assert "std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};" in vk

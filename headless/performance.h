@@ -461,6 +461,12 @@ inline void FinishGuestIpc(GuestIpcThread* row, unsigned long long tid,
     }
 }
 void RecordHle(const char* service, unsigned command, long long ns);
+#ifdef PS5_NATIVE
+// Shipping releases omit EDEN_DEV_PROFILE, but stalled NS2 games need
+// the actual last completed HLE command, not just SVC 0x21's kernel result.
+void ResetNs2BootHle() noexcept;
+void ReportNs2BootHle(unsigned stage_seconds) noexcept;
+#endif
 // kspin=N: bounded host mutex acquisition used for guest scheduler locks.
 inline std::atomic<unsigned> kernel_spin_iterations{4000};
 template <typename Mutex>

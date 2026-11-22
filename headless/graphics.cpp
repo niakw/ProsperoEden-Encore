@@ -605,6 +605,7 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
                 static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
 #ifdef PS5_NATIVE
             ::Eden::NS2::LoadingSvcSnapshot::Report(10);
+            ::Eden::Performance::ReportNs2BootHle(10);
 #endif
         } else if (vulkan_loading_diagnostic_stage == 1 && elapsed >= 30.0) {
             vulkan_loading_diagnostic_stage = 2;
@@ -619,6 +620,7 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
                 static_cast<unsigned long long>(gpu.since_window_floor64), gpu.counter_reset);
 #ifdef PS5_NATIVE
             ::Eden::NS2::LoadingSvcSnapshot::Report(30);
+            ::Eden::Performance::ReportNs2BootHle(30);
 #endif
         }
         return true;

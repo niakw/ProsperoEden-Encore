@@ -1045,6 +1045,7 @@ int main(int argc, char** argv) {
             Eden::ResolveGameTitleId(rom_metadata_id, selected_game);
 #ifdef PS5_NATIVE
         incident_title_id = launch_title_id;
+        Eden::Performance::ResetNs2BootHle();
         record_session_phase("title_resolved");
         record_session_boundary("title_resolved");
 #endif

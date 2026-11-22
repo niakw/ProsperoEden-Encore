@@ -3174,6 +3174,27 @@ assert xci_path not in post_index
 if post_f07_vfs_present:
     xci_delta = drift_index.pop(xci_path)
     assert xci_delta["expected"] == "f843e7f9c977b509368e71eb6356066c1a5e0c50"
+    if xci_delta["actual"] == "5d5e6b40099b18768dadd39ba839881989e7ff6f":
+        # Keep DXCI detection in the active gamecard loader; reconstruct only
+        # the exact new magic contract on the historical audit copy.
+        current_xci = (ROOT / xci_path).read_text()
+        added_xci = """        // NxEmu DXCI keeps the XCI/HFS0 layout but changes HEAD -> DXCI.
+        // Admit that decrypted variant only with the matching extension; do
+        // not relax ordinary encrypted game-card validation.
+        const auto name = Common::ToLower(file->GetName());
+        const bool decrypted_card = name.ends_with(".dxci") &&
+            header.magic == Common::MakeMagic('D', 'X', 'C', 'I');
+        if (header.magic != Common::MakeMagic('H', 'E', 'A', 'D') &&
+            !decrypted_card) {"""
+        original_xci = """        if (header.magic != Common::MakeMagic('H', 'E', 'A', 'D')) {"""
+        assert current_xci.count(added_xci) == 1
+        assert current_xci.count('#include "common/string_util.h"\n') == 1
+        restored_xci = current_xci.replace(added_xci, original_xci, 1)
+        restored_xci = restored_xci.replace('#include "common/string_util.h"\\n', "", 1)
+        prior_raw = restored_xci.encode("utf-8")
+        prior_sha = hashlib.sha1(b"blob "+str(len(prior_raw)).encode()+bytes([0])+prior_raw).hexdigest()
+        assert prior_sha == "c3dbb891b10ae2f576566d5a8a5f1a871f94c3d0", prior_sha
+        xci_delta["actual"] = prior_sha
     assert xci_delta["actual"] == "c3dbb891b10ae2f576566d5a8a5f1a871f94c3d0"
 else:
     assert xci_path not in drift_index

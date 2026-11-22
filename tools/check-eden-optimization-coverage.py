@@ -2446,8 +2446,10 @@ actual_service_blob = hashlib.sha1(
     b"blob "+str(len(r457_service_source.encode())).encode()+bytes([0])+
     r457_service_source.encode()).hexdigest()
 if actual_service_blob == "01d025544ac3544ab58779884f6fee10dcbe3209":
-    new_formats = '{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",'
-    old_formats = '{".nsp", ".xci", ".nsz", ".xcz",'
+    new_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
+                                   ".nro", ".nso", ".nca", ".nax", ".kip", ".nup"}'''
+    old_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".nro", ".nso",
+                                   ".nca", ".nax", ".kip"}'''
     assert r457_service_source.count(new_formats) == 1
     r457_service_source = r457_service_source.replace(new_formats, old_formats, 1)
     prior = r457_service_source.encode()

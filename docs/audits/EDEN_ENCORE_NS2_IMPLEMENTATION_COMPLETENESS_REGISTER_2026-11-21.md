@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**163**), `HANDLER PARTIEL INDIQUÉ` (**15**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 905 est désormais C : u8 documenté et session decoder réelle.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**164**), `HANDLER PARTIEL INDIQUÉ` (**14**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 1401 est désormais C source : le contrat TransferMemory est validé jusqu'au handle MOVE.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,28 +32,28 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=163**, P=14, C/P=1, M=107, U=25, V=6.
-- **R** : **285/316 (90,2 %)** traitées explicitement ; aucune M sans traitement.
+- **F** : **C=164**, P=13, C/P=1, M=107, U=25, V=6.
+- **R** : **285/316 (90,2 %)** traitées explicitement.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **163** | 163 | 0 |
-| P — partielle | **14** | 14 | 0 |
+| C — implémentation source | **164** | 164 | 0 |
+| P — partielle | **13** | 13 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**905 qualifiée** : Lichii observe `Initialize(bool)` via GSV 905 avec un `u8` et le même retour de session que 902. Le C++ actif rejette maintenant les valeurs qui débordent un octet et publie la vraie IGraphicsVideoDecoderSession MOVE. Aucun résultat console n'est inféré.
+**1401 qualifiée** : le parser actif vérifie la forme TIPC avec COPY TransferMemory, handle non nul, taille page-aligned et mode ; `OpenNvsrvSession` récupère le vrai KTransferMemory du process, vérifie owner/taille, crée le service NVDRV et publie un MOVE handle avec rollback OOM. Le test hôte `test_graphics_hle.cpp` couvre déjà le parser exact.
 
-**14 P + 1 C/P restent** : 314/315, 391/691, 912, 1212, 1401, Syncpt 21, submit historique, event/error GPU, USERD/doorbell et TSG.
+**Reste structurel** : 912/1212 (destruction image/pool), 314/315 (window alias + count), 391/691 (formats), Syncpt 21 inconnu, submit historique, événements/erreurs GPU, USERD/doorbell et TSG.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=47, P=5, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=48, P=4, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -189,7 +189,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1302 | Adraw | InitializeAdrawContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1325 | Adraw | GetAdrawFrameBufferHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1326 | Adraw | GetAdrawImageHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 1401 | NvDrv | CreateNvDrv2UserSessionWithTransferMemory | P | HANDLER PARTIEL INDIQUÉ | OpenNvsrvSessionWithTransferMemory | session NVDRV réelle; nom interne différent |
+| 1401 | NvDrv | CreateNvDrv2UserSessionWithTransferMemory | C | HANDLER INDIQUÉ | OpenNvsrvSession | DecodeNvDrvTransferSession vérifie COPY handle, taille alignée et mode ; KTransferMemory owner/size vérifiés, vraie session NVDRV MOVE et test hôte exact déjà présent |
 | 1402 | NvDrv | CreateNvDrv2UserSessionWithRemoteMemory | C | HANDLER INDIQUÉ | OpenNvsrvSession | Lichii : 1402 retourne une session nvsrv/NVDRV ; Encore crée INvDrv2User réel lié au KProcess et publie un MOVE handle |
 | 1411 | NvDrv | GetNvDrv2UserTransferMemoryUsage | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : allocation de NVDRV 1401 non mesurée ; les chiffres du bootstrap GSV 498 ne sont pas substituables |
 | 1501 | InterModuleImage | CreateInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : inter-module image context sans ownership/backing garanti |

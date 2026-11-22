@@ -88,6 +88,14 @@ Le parser `nca_metadata.cpp` conserve l'en-tête étendu complet et corrige le d
 
 **Compteur courant : 1 238 IMPL-SRC / 77 PARTIEL / 347 STUB / 11 NOOP / 2 311 NULL / 66 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 3 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Restent ABSENT : NCM `GetPath`, `GetPlaceHolderPath`, NS `Attach`. Validation PS5 toujours absente.
 
+## Clôture du statut ABSENT — 22/11/2026
+
+Vendor `b9e23460efcf82c3f3e86de303f9a27568004b24` : `GetPath` et `GetPlaceHolderPath` passent en **D / rejet explicite**, faute d'abstraction `fs-common path` Horizon ; aucun chemin hôte n'est substitué. Le supposé `NS IServiceGetterInterface::Attach` cmd 0 passe en **ABI-DIFF** : la référence SwitchBrew actuelle commence à 7988 et correspond à la table Eden 7988–7999.
+
+**Compteur courant : 1 238 IMPL-SRC / 77 PARTIEL / 347 STUB / 11 NOOP / 2 311 NULL / 68 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** `ABSENT=0` clôt seulement la catégorie « commande non classée/non raccordée », pas la complétude fonctionnelle.
+
+Le palier moteur `bec0f030` → vendor `22e47d3b` a passé NS1 X8D24 et `Verify pinned vendor` avant ce repointage. Le nouveau vendor doit encore être qualifié sur son propre HEAD ; aucune validation PS5 n'est revendiquée.
+
 ---
 
 ## 1. Références et règle de vérité

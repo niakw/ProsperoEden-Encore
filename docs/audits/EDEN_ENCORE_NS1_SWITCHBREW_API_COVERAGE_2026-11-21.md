@@ -33,12 +33,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
 | **NOOP — No-op documenté** | 11 | 0 | **11** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
-| **D — Rejet explicite / historique** | 33 | 33 | **66** |
+| **D — Rejet explicite / historique** | 35 | 33 | **68** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 6 | 0 | **6** |
-| **ABSENT — Commande absente des tables** | 3 | 0 | **3** |
-| **ABI-DIFF — Noms/ABI divergents** | 284 | 0 | **284** |
+| **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
+| **ABI-DIFF — Noms/ABI divergents** | 285 | 0 | **285** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
@@ -102,6 +102,16 @@ Le parseur CNMT conserve maintenant la totalité de l'en-tête étendu (`table_o
 
 **Compteur : 1 238 IMPL-SRC, 77 PARTIEL, 347 STUB, 11 NOOP, 2 311 NULL, 66 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 3 ABSENT, 284 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Les trois ABSENT restants sont `GetPath`, `GetPlaceHolderPath` et NS `Attach`.
 
+### Clôture des commandes ABSENT
+
+**Vendor `b9e23460`.** `IContentStorage::GetPath` (8) et `GetPlaceHolderPath` (9) sont maintenant enregistrées mais échouent explicitement : Horizon exige un `fs-common path` fixe de 0x300 octets, et Encore ne possède pas cette couche de montage. Renvoyer un chemin hôte PS5 serait incorrect et potentiellement fuyant.
+
+La ligne `IServiceGetterInterface::Attach` (NS cmd 0) n'est pas une commande de l'interface actuelle : la table SwitchBrew `ns:am2/ns:ec/ns:rid/ns:rt/ns:web` expose 7988–7999, exactement comme Eden. Elle passe donc `ABSENT → ABI-DIFF` plutôt que de créer un faux handler.
+
+**ABSENT = 0.** Le compteur reste **1 238 IMPL-SRC** ; seuls les statuts changent : 77 PARTIEL, 347 STUB, 11 NOOP, 2 311 NULL, **68 D**, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, **0 ABSENT**, **285 ABI-DIFF**, 12 AMBIGU, 1 E = 4 853.
+
+Zéro `ABSENT` signifie uniquement qu'aucune ligne du catalogue n'est désormais sans qualification/table correspondante. Cela ne signifie pas 4 853 fonctions fonctionnelles : les NULL, stubs, partiels et écarts ABI restent explicitement ouverts.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
@@ -113,12 +123,12 @@ pie showData
     "Stub / résultat simulé" : 347
     "No-op documenté" : 11
     "Handler NULL" : 2311
-    "Rejet explicite / historique" : 66
+    "Rejet explicite / historique" : 68
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
     "Hors version firmware cible" : 6
-    "Commande absente des tables" : 3
-    "Noms/ABI divergents" : 284
+    "Commande absente des tables" : 0
+    "Noms/ABI divergents" : 285
     "Interface ambiguë" : 12
     "Non vérifié" : 0
     "ID SVC non trouvé" : 1
@@ -2009,7 +2019,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `RequestUnlinkDevice` | 6.0.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `5` | `RequestRevokeAllELicense` | 6.1.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `6` | `RequestSyncRightsBasedOnAssignedELicenses` | 9.0.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `Attach` | — | **ABSENT** (source `sources/eden/src/core/hle/service/ns/service_getter_interface.cpp` ; IServiceGetterInterface n'expose aucun ID 0/Attach ; IDs à partir de 7988 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `Attach` | — | **ABI-DIFF** (la table SwitchBrew actuelle IServiceGetterInterface ne contient aucun cmd 0 ; elle expose 7988–7999 comme Eden ; ligne historique mal rattachée) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `BoostSystemMemoryResourceLimit` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp` ; BoostSystemMemoryResourceLimit existe dans IApplicationManagerInterface ID 90 (nullptr), pas ID 1 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | ns:vm | `1200` | `NeedsUpdateVulnerability` | 3.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/ns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
 | ns:vm | `1201` | `UpdateSafeSystemVersionForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
@@ -4311,8 +4321,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Content Manager services | `5` | `Register` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 5, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `6` | `Delete` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 6, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `7` | `Has` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
-| Content Manager services | `8` | `GetPath` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 8, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `9` | `GetPlaceHolderPath` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 9, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `8` | `GetPath` | — | **D** (rejet explicite : Encore ne modélise pas le fs-common path Horizon 0x300 ; aucun chemin hôte PS5 n'est exposé) | 2026-11-22 |
+| Content Manager services | `9` | `GetPlaceHolderPath` | — | **D** (rejet explicite : Encore ne modélise pas le fs-common path Horizon 0x300 ; aucun chemin hôte PS5 n'est exposé) | 2026-11-22 |
 | Content Manager services | `10` | `CleanupAllPlaceHolder` | — | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d8e80440a0dfec75ccc0cbc362dd40c2d270be2b/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 10 raccordé au `PlaceholderCache` ; contrat hôte/PS5 non validé) | 2026-11-22 |
 | Content Manager services | `11` | `ListPlaceHolder` | — | **IMPL-SRC** ([NCM source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fe5a389ac04fa3c26c1756fc18e73a962e196da4/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 11 liste les placeholders réels, écriture bornée au buffer de sortie et nombre d'entrées renvoyé ; hôte/PS5 non validé) | 2026-11-22 |
 | Content Manager services | `12` | `GetContentCount` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |

@@ -23,15 +23,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 262 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 268 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 182 | 80 | **1 262** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 188 | 80 | **1 268** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 76 | 3 | **79** |
-| **STUB — Stub / résultat simulé** | 276 | 0 | **276** |
-| **NOOP — No-op documenté** | 55 | 0 | **55** |
+| **PARTIEL — Implémentation partielle** | 81 | 3 | **84** |
+| **STUB — Stub / résultat simulé** | 254 | 0 | **254** |
+| **NOOP — No-op documenté** | 66 | 0 | **66** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -142,16 +142,22 @@ Le manifeste `eden-backports` contient les empreintes SHA-256 exactes des deux n
 
 **Compteur : 1 262 IMPL-SRC, 79 PARTIEL, 276 STUB, 55 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot STUB — BLE / hidbus / erpt / pctl
+
+**Vendor final `61e8993c`.** Les quatre acquisitions `btm:u` retournent déjà de vrais événements noyau et passent IMPL-SRC. `hidbus::SetStatusManagerType` devient un NOOP explicite. Les deux lignes ERPT comptées comme stubs deviennent des NOOP local-only. Sur le backport PCTL réellement compilé, `IsRestrictionTemporaryUnlocked` et `GetPinCodeLength` lisent désormais l'état réel ; huit commandes sans backend parental/UI/pairing renvoient un état neutre explicite (dont le faux compteur de whitelist 4 corrigé à 0 et SNS qui ne bloque plus systématiquement) ; les cinq commandes play-timer sont stateful mais restent PARTIELLES faute de décompte Horizon.
+
+**Compteur : 1 268 IMPL-SRC, 84 PARTIEL, 254 STUB, 66 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1262
+    "Implémentation source retrouvée" : 1268
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 79
-    "Stub / résultat simulé" : 276
-    "No-op documenté" : 55
+    "Implémentation partielle" : 84
+    "Stub / résultat simulé" : 254
+    "No-op documenté" : 66
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -1210,7 +1216,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hidbus | `10` | `GetSharedMemoryHandle` | — | **IMPL-SRC** ([source C++][ns1-src-085]) | 2026-11-22 |
 | hidbus | `11` | `EnableJoyPollingReceiveMode` | — | **IMPL-SRC** ([source C++][ns1-src-085]) | 2026-11-22 |
 | hidbus | `12` | `DisableJoyPollingReceiveMode` | — | **IMPL-SRC** ([source C++][ns1-src-085]) | 2026-11-22 |
-| hidbus | `14` | `SetStatusManagerType` | 6.0.0+ | **STUB** ([source C++][ns1-src-085]) | 2026-11-22 |
+| hidbus | `14` | `SetStatusManagerType` | 6.0.0+ | **NOOP** (sélecteur du gestionnaire HID-bus physique sans équivalent ; Encore utilise un unique gestionnaire local ; vendor `45ea626b`) | 2026-11-22 |
 
 ### Applet Manager services
 
@@ -2922,7 +2928,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm:sys | `8` | `AcquireGamepadPairingEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `9` | `IsGamepadPairingStarted` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:u | `0` | `GetCore` | — | **IMPL-SRC** ([source C++][ns1-src-066]) | 2026-11-22 |
-| btm:u | `0` | `AcquireBleScanEvent` | — | **STUB** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `0` | `AcquireBleScanEvent` | — | **IMPL-SRC** (retourne de vrais KReadableEvent créés et gérés par ServiceContext ; vendor `45ea626b`) | 2026-11-22 |
 | btm:u | `1` | `GetBleScanFilterParameter` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `2` | `GetBleScanFilterParameter2` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `3` | `StartBleScanForGeneral` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
@@ -2933,7 +2939,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm:u | `8` | `StartBleScanForSmartDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `9` | `StopBleScanForSmartDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `10` | `GetBleScanResultsForSmartDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `17` | `AcquireBleConnectionEvent` | — | **STUB** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `17` | `AcquireBleConnectionEvent` | — | **IMPL-SRC** (retourne de vrais KReadableEvent créés et gérés par ServiceContext ; vendor `45ea626b`) | 2026-11-22 |
 | btm:u | `18` | `BleConnect` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `19` | `BleDisconnect` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `20` | `BleGetConnectionState` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
@@ -2942,14 +2948,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm:u | `23` | `BleUnPairDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `24` | `BleUnPairDevice2` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `25` | `BleGetPairedDevices` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `26` | `AcquireBleServiceDiscoveryEvent` | — | **STUB** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `26` | `AcquireBleServiceDiscoveryEvent` | — | **IMPL-SRC** (retourne de vrais KReadableEvent créés et gérés par ServiceContext ; vendor `45ea626b`) | 2026-11-22 |
 | btm:u | `27` | `GetGattServices` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `28` | `GetGattService` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `29` | `GetGattIncludedServices` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `30` | `GetBelongingGattService` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `31` | `GetGattCharacteristics` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `32` | `GetGattDescriptors` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `33` | `AcquireBleMtuConfigEvent` | — | **STUB** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `33` | `AcquireBleMtuConfigEvent` | — | **IMPL-SRC** (retourne de vrais KReadableEvent créés et gérés par ServiceContext ; vendor `45ea626b`) | 2026-11-22 |
 | btm:u | `34` | `ConfigureBleMtu` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `35` | `GetBleMtu` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `36` | `RegisterBleGattDataPath` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
@@ -3335,12 +3341,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| erpt:c | `0` | `SubmitContext` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+| erpt:c | `0` | `SubmitContext` | — | **NOOP** (télémétrie/awake-time Nintendo non transmise ; succès local explicite sans rapport distant fictif ; vendor `6bb62bfe`) | 2026-11-22 |
 | erpt:c | `1` | `CreateReport` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; slot 1 actuel = CreateReportV0 ; CreateReport actuel est au slot 12 ; qualification statique, PS5 non validé) | 2026-11-22 |
 | erpt:c | `2` | `SetInitialLaunchSettingsCompletionTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:c | `3` | `ClearInitialLaunchSettingsCompletionTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:c | `4` | `UpdatePowerOnTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
-| erpt:c | `5` | `UpdateAwakeTime` | 3.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/erpt/erpt.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+| erpt:c | `5` | `UpdateAwakeTime` | 3.0.0+ | **NOOP** (télémétrie/awake-time Nintendo non transmise ; succès local explicite sans rapport distant fictif ; vendor `6bb62bfe`) | 2026-11-22 |
 | erpt:c | `6` | `SubmitMultipleCategoryContext` | 5.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:c | `7` | `UpdateApplicationLaunchTime` | 6.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
 | erpt:c | `8` | `ClearApplicationLaunchTime` | 6.0.0+ | **NULL** ([source C++][ns1-src-075]) | 2026-11-22 |
@@ -4920,15 +4926,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1` | `CreateServiceWithoutInitialize` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-115]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1` | `Initialize` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1001` | `CheckFreeCommunicationPermission` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1002` | `ConfirmLaunchApplicationPermission` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1003` | `ConfirmResumeApplicationPermission` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1004` | `ConfirmSnsPostPermission` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1005` | `ConfirmSystemSettingsPermission` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1006` | `IsRestrictionTemporaryUnlocked` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1002` | `ConfirmLaunchApplicationPermission` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1003` | `ConfirmResumeApplicationPermission` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1004` | `ConfirmSnsPostPermission` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1005` | `ConfirmSystemSettingsPermission` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1006` | `IsRestrictionTemporaryUnlocked` | — | **IMPL-SRC** (lit l'état local réel : temporary_unlocked ou longueur PIN ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1007` | `RevertRestrictionTemporaryUnlocked` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1008` | `EnterRestrictedSystemSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1009` | `LeaveRestrictedSystemSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1010` | `IsRestrictedSystemSettingsEntered` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1010` | `IsRestrictedSystemSettingsEntered` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1011` | `RevertRestrictedSystemSettingsEntered` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1012` | `GetRestrictedFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1013` | `ConfirmStereoVisionPermission` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -4936,14 +4942,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1015` | `ConfirmPlayableApplicationVideo` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1016` | `ConfirmShowNewsPermission` | 6.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1031` | `IsRestrictionEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1032` | `GetSafetyLevel` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1032` | `GetSafetyLevel` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1033` | `SetSafetyLevel` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1034` | `GetSafetyLevelSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1035` | `GetCurrentSettings` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1036` | `SetCustomSafetyLevelSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1037` | `GetDefaultRatingOrganization` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1038` | `SetDefaultRatingOrganization` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1039` | `GetFreeCommunicationApplicationListCount` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1039` | `GetFreeCommunicationApplicationListCount` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1042` | `AddToFreeCommunicationApplicationList` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1043` | `DeleteSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1044` | `GetFreeCommunicationApplicationList` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -4961,21 +4967,21 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1203` | `SetPinCode` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1204` | `GenerateInquiryCode` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1205` | `CheckMasterKey` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1206` | `GetPinCodeLength` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1206` | `GetPinCodeLength` | — | **IMPL-SRC** (lit l'état local réel : temporary_unlocked ou longueur PIN ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1207` | `GetPinCodeChangedEvent` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1208` | `GetPinCode` | 4.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1403` | `IsPairingActive` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1403` | `IsPairingActive` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1406` | `GetSettingsLastUpdated` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1411` | `GetPairingAccountInfo` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1421` | `GetAccountNickname` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1424` | `GetAccountState` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1425` | `RequestPostEvents` | 6.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1432` | `GetSynchronizationEvent` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1451` | `StartPlayTimer` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1452` | `StopPlayTimer` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1453` | `IsPlayTimerEnabled` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1454` | `GetPlayTimerRemainingTime` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1455` | `IsRestrictedByPlayTimer` | — | **STUB** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1451` | `StartPlayTimer` | — | **PARTIEL** (cycle Start/Stop/IsEnabled local cohérent ; décompte temporel/budget Horizon non modélisé ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1452` | `StopPlayTimer` | — | **PARTIEL** (cycle Start/Stop/IsEnabled local cohérent ; décompte temporel/budget Horizon non modélisé ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1453` | `IsPlayTimerEnabled` | — | **PARTIEL** (cycle Start/Stop/IsEnabled local cohérent ; décompte temporel/budget Horizon non modélisé ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1454` | `GetPlayTimerRemainingTime` | — | **PARTIEL** (cycle Start/Stop/IsEnabled local cohérent ; décompte temporel/budget Horizon non modélisé ; backport actif vendor `61e8993c`) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1455` | `IsRestrictedByPlayTimer` | — | **PARTIEL** (cycle Start/Stop/IsEnabled local cohérent ; décompte temporel/budget Horizon non modélisé ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1456` | `GetPlayTimerSettings` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pctl/parental_control_service.cpp) ; slot 1456 actuel = GetPlayTimerSettingsOld ; statique, PS5 non validé) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1457` | `GetPlayTimerEventToRequestSuspension` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1458` | `IsPlayTimerAlarmDisabled` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |

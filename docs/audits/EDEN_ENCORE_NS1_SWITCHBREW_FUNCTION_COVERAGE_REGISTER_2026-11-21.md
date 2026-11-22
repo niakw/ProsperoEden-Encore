@@ -122,6 +122,12 @@ Couple repointé vers vendor `51e5cbde026b62038ac7f3b2845d3d00d95eeff6`. `friend
 
 **Compteur courant : 1 262 IMPL-SRC / 79 PARTIEL / 276 STUB / 55 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Validation hôte/CI à refaire sur ce HEAD ; aucun résultat PS5 n'est déduit de ce classement.
 
+## Lot BLE / hidbus / erpt / pctl — 22/11/2026
+
+Couple moteur repointé vers vendor `61e8993c8057ca9536f8997185118d072130497f`. BTM expose quatre vrais événements BLE ; le sélecteur hidbus physique est NOOP explicite. ERPT reste local-only. Le propriétaire PCTL PS5 est le backport `encore-active/eden-backports`, dont le manifeste a été mis à jour avec les empreintes des sources actives. Deux commandes PCTL utilisent l'état local réel, huit sont des fallbacks neutres documentés et cinq commandes de play timer passent en PARTIEL avec cycle Start/Stop local, sans faux décompte temporel.
+
+**Compteur courant : 1 268 IMPL-SRC / 84 PARTIEL / 254 STUB / 66 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucune validation PS5 n'est déduite de ce classement.
+
 ---
 
 ## 1. Références et règle de vérité

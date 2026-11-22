@@ -322,6 +322,20 @@ Vendor `40596a94e35789a57e9ee8236e0e6c4362cd1765` (arbre `b6631a93395622feea9f86
 
 **Pool restant à examiner = 2 843 entrées** : 2 288 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — terminate-result NS + NIFM controls — 22/11/2026
+
+Vendor `bc3d538f2c413489b2d881259b57a4c44b6698f9` (arbre `8307e210806b858beea5f87c49434685fe93831d`).
+
+- NS IDs 56/57 : **4 NULL → IMPL-SRC** sur les deux surfaces catalogue ; `terminate_result` du main applet devient la source de vérité après validation du ProgramId.
+- NIFM IDs 29/30 : **2 NULL → IMPL-SRC**, alias directs des setters actifs radio/Ethernet.
+- NIFM ID12 `GetCurrentIpAddress` et ID20 `IsEthernetCommunicationEnabled` : **2 PARTIEL → IMPL-SRC** ; état hôte/room et état Ethernet réel.
+- `IsWiredConnectionAvailable` est ajouté au runtime mais hors des 4 853 lignes, donc non compté.
+- Baseline précédente `5b5bcfc3` → `40596a94` : X8D24 + provenance verts. Aucun test PS5 pour ce lot.
+
+**Compteur courant : 1 340 IMPL-SRC / 106 PARTIEL / 149 STUB / 106 NOOP / 2 282 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 835 entrées** : 2 282 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

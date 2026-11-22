@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 332 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 252 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `40596a94`. **Ces 1 332 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 340 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 260 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `bc3d538f`. **Ces 1 340 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 252 | 80 | **1 332** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 260 | 80 | **1 340** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
+| **PARTIEL — Implémentation partielle** | 103 | 3 | **106** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 288 | 0 | **2 288** |
+| **NULL — Handler NULL** | 2 282 | 0 | **2 282** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -307,17 +307,31 @@ Vendor final `40596a94` (arbre `b6631a93395622feea9f86abdbb0b79dd6c4993d`). Le c
 
 **Pool restant à examiner : 2 843 = 2 288 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — terminate-result NS + contrôles réseau NIFM
+
+Vendor final `bc3d538f` (arbre `8307e210806b858beea5f87c49434685fe93831d`). Le couple précédent moteur `5b5bcfc3` → vendor `40596a94` est **vert X8D24 + provenance**.
+
+- NS `SetApplicationTerminateResult` / `ClearApplicationTerminateResult` IDs 56/57 : **4 NULL → IMPL-SRC** sur les deux surfaces catalogue. Les handlers valident le ProgramId du main applet et modifient son vrai `terminate_result`.
+- NIFM IDs 29/30 : **2 NULL → IMPL-SRC** en réutilisant exactement les handlers actifs des IDs 16/19 ; aucun état de test séparé ou factice.
+- NIFM `GetCurrentIpAddress` et `IsEthernetCommunicationEnabled` : **2 PARTIEL → IMPL-SRC**. Le premier renvoie l'IPv4 hôte/room réelle ; le second relit l'état `ethernet_enabled` réellement écrit au lieu de confondre toute connectivité IPv4 avec Ethernet.
+- `IsWiredConnectionAvailable` 18.0.0+ est aussi implémenté depuis l'état réseau réel, mais **n'appartient pas aux 4 853 lignes du catalogue courant** : gain runtime, **+0 compteur**.
+- Pas de validation console PS5 revendiquée.
+
+**Compteur courant : 1 340 IMPL-SRC, 106 PARTIEL, 149 STUB, 106 NOOP, 2 282 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 835 = 2 282 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1332
+    "Implémentation source retrouvée" : 1340
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 108
+    "Implémentation partielle" : 106
     "Stub / résultat simulé" : 149
     "No-op documenté" : 106
-    "Handler NULL" : 2288
+    "Handler NULL" : 2282
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1863,8 +1877,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `53` | `DisableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `54` | `EnableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `55` | `GetApplicationDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `56` | `SetApplicationTerminateResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `57` | `ClearApplicationTerminateResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `56` | `SetApplicationTerminateResult` | — | **IMPL-SRC** (écrit `terminate_result` sur le main applet réel après validation du ProgramId ; vendor `9424bdad`) | 2026-11-22 |
+| ns:am | `57` | `ClearApplicationTerminateResult` | — | **IMPL-SRC** (réinitialise `terminate_result` du main applet réel à Success ; vendor `9424bdad`) | 2026-11-22 |
 | ns:am | `58` | `GetLastSdCardMountUnexpectedResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `59` | `ConvertApplicationLanguageToLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1988,8 +2002,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `53` | `DisableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `54` | `EnableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `55` | `GetApplicationDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `56` | `SetApplicationTerminateResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `57` | `ClearApplicationTerminateResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `56` | `SetApplicationTerminateResult` | — | **IMPL-SRC** (écrit `terminate_result` sur le main applet réel après validation du ProgramId ; vendor `9424bdad`) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `57` | `ClearApplicationTerminateResult` | — | **IMPL-SRC** (réinitialise `terminate_result` du main applet réel à Success ; vendor `9424bdad`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `58` | `GetLastSdCardMountUnexpectedResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `59` | `ConvertApplicationLanguageToLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -4748,7 +4762,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `9` | `SetNetworkProfile` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `10` | `RemoveNetworkProfile` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `11` | `GetScanDataOld ([1.0.0-3.0.2] GetScanData)` | — | **PARTIEL** (sérialise le cache de scan réel au layout historique `AccessPointDataOld` 0x34 ; canal/auth/chiffrement restent zéro car le scanner hôte ne les expose pas encore ; vendor `76de6f60`) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `12` | `GetCurrentIpAddress` | — | **PARTIEL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `12` | `GetCurrentIpAddress` | — | **IMPL-SRC** (retourne l'IPv4 hôte réelle ou l'adresse room, avec fallback 0.0.0.0 explicite ; vendor `bc3d538f`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `13` | `GetCurrentAccessPointOld ([1.0.0-3.0.2] GetCurrentAccessPoint)` | — | **PARTIEL** (handler raccordé au backend réseau réel avec `AccessPointDataOld` 0x34 ; SSID/force/connectabilité réels, canal/auth/cipher non exposés par le scanner hôte ; vendor `69a49e7b`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `14` | `CreateTemporaryNetworkProfile` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `15` | `GetCurrentIpConfigInfo` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
@@ -4756,7 +4770,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `17` | `IsWirelessCommunicationEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `18` | `GetInternetConnectionStatus` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `19` | `SetEthernetCommunicationEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `20` | `IsEthernetCommunicationEnabled` | — | **PARTIEL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `20` | `IsEthernetCommunicationEnabled` | — | **IMPL-SRC** (relit désormais l'état `ethernet_enabled` écrit par le setter au lieu d'inférer depuis n'importe quelle IPv4 hôte ; vendor `bc3d538f`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `21` | `IsAnyInternetRequestAccepted` | — | **IMPL-SRC** (lit le ClientId du buffer d'entrée et répond à partir des IRequest réellement `Accepted` de ce client ; vendor `81bb97ea`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `22` | `IsAnyForegroundRequestAccepted` | — | **IMPL-SRC** (reflète le compteur réel d'IRequest en état `Accepted`, maintenu par les transitions et le destructeur ; vendor `f757675e`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `23` | `PutToSleep` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
@@ -4765,8 +4779,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `26` | `SetExclusiveClient` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `27` | `GetDefaultIpSetting` | — | **IMPL-SRC** (ABI SwIPC `IpSettingData` 0xC2 ; état partagé initialisé depuis IP/masque/passerelle/DNS hôte, proxy off, MTU 1500 ; vendor `40596a94`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `28` | `SetDefaultIpSetting` | — | **IMPL-SRC** (lit et conserve exactement le bloc `IpSettingData` 0xC2 pour le round-trip du getter ; vendor `40596a94`) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `29` | `SetWirelessCommunicationEnabledForTest` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `30` | `SetEthernetCommunicationEnabledForTest` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `29` | `SetWirelessCommunicationEnabledForTest` | — | **IMPL-SRC** (réutilise le même handler/état `airplane_mode` que l'ID16 ; vendor `bc3d538f`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `30` | `SetEthernetCommunicationEnabledForTest` | — | **IMPL-SRC** (réutilise le même handler/état `ethernet_enabled` que l'ID19 ; vendor `bc3d538f`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `31` | `GetTelemetorySystemEventReadableHandle` | 2.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `32` | `GetTelemetryInfo` | 2.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `33` | `ConfirmSystemAvailability` | 2.0.0+ | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |

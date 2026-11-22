@@ -1873,7 +1873,7 @@ assert {p for p in physical if p.startswith("eden-header-hygiene/")} == warning_
 # Preserve the immutable 337-path F07 receipt. On a failed integration,
 # identify every unclassified path so it can be assigned a real source owner
 # rather than treating an arbitrary new count as historical coverage.
-catalog_paths = set(re.findall(r"^\\| `([^`]+)` \\|", section, re.MULTILINE))
+catalog_paths = set(re.findall(r"^\| `([^`]+)` \|", section, re.MULTILINE))
 assert len(catalog_paths) == 337, ("Historical F07 catalog drift",len(catalog_paths))
 assert len(physical) == 337, ("Shipping source catalogue changed",len(physical),
     "unclassified=" + repr(sorted(set(physical) - catalog_paths)),

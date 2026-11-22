@@ -80,6 +80,14 @@ Vendor `8d1d9eac331b2b8db218617edff7aa4425503a95` : huit commandes auparavant AB
 
 **Compteur courant : 1 230 IMPL-SRC / 77 PARTIEL / 347 STUB / 11 NOOP / 2 311 NULL / 66 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 11 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Restent réellement ABSENT : NCM `GetPath`/`GetPlaceHolderPath`, huit commandes ContentMetaDatabase complexes (`Get`, `List`, latest/list application, size/versions/patch) et NS `Attach`.
 
+## Lot ContentMetaDatabase complet / CNMT — 22/11/2026
+
+Vendor `22e47d3b88d669048a4460b0e8b0a9d315f4ca22` : `Get`, `List`, latest key, application list, size, versions et Patch/DataPatch IDs utilisent désormais les valeurs ContentMeta réelles. `Set` conserve le buffer fourni et le chemin installé convertit le CNMT packagé vers le format ContentMeta normal (Meta NCA inclus).
+
+Le parser `nca_metadata.cpp` conserve l'en-tête étendu complet et corrige le début des `MetaRecord` : `sizeof(CNMTHeader) + table_offset + content_count * sizeof(ContentRecord)`. Cette correction sert directement `ListContentMetaInfo` et les relations de métadonnées.
+
+**Compteur courant : 1 238 IMPL-SRC / 77 PARTIEL / 347 STUB / 11 NOOP / 2 311 NULL / 66 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 3 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Restent ABSENT : NCM `GetPath`, `GetPlaceHolderPath`, NS `Attach`. Validation PS5 toujours absente.
+
 ---
 
 ## 1. Références et règle de vérité

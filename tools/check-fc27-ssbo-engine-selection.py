@@ -42,7 +42,9 @@ expected.add("60bd03e6e5ad083ee050887028fa33d514a3050e")
 expected.add("488475c8c3867af07892a7f53cc6e15a54d09542")
 # ContentMetaDatabase CNMT lookups; GPU owners unchanged.
 expected.add("8d1d9eac331b2b8db218617edff7aa4425503a95")
-if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4", "60bd03e6e5ad083ee050887028fa33d514a3050e", "488475c8c3867af07892a7f53cc6e15a54d09542", "8d1d9eac331b2b8db218617edff7aa4425503a95"}:
+# CNMT extended metadata + full ContentMetaDatabase query coverage; GPU owners unchanged.
+expected.add("22e47d3b88d669048a4460b0e8b0a9d315f4ca22")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4", "60bd03e6e5ad083ee050887028fa33d514a3050e", "488475c8c3867af07892a7f53cc6e15a54d09542", "8d1d9eac331b2b8db218617edff7aa4425503a95", "22e47d3b88d669048a4460b0e8b0a9d315f4ca22"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -58,6 +60,7 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
         "60bd03e6e5ad083ee050887028fa33d514a3050e": "68f85f8f6c1d0cae8c56fde1cb8a2e8c1a03a087",
         "488475c8c3867af07892a7f53cc6e15a54d09542": "c46a26583a3bcdb672f9a8adfd25b66da592d66c",
         "8d1d9eac331b2b8db218617edff7aa4425503a95": "bbbc72a4967fb0192996d8f4ccc577e254c40acc",
+        "22e47d3b88d669048a4460b0e8b0a9d315f4ca22": "80f98ebd869bb4db01c7de0fbc4dd302c9cc5a49",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

@@ -23,11 +23,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 230 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 238 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 150 | 80 | **1 230** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 158 | 80 | **1 238** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 74 | 3 | **77** |
 | **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
@@ -37,7 +37,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 6 | 0 | **6** |
-| **ABSENT — Commande absente des tables** | 11 | 0 | **11** |
+| **ABSENT — Commande absente des tables** | 3 | 0 | **3** |
 | **ABI-DIFF — Noms/ABI divergents** | 284 | 0 | **284** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
@@ -94,12 +94,20 @@ Les conversions `ContentInfo` reprennent les champs du `PackagedContentInfo` dé
 
 **Compteur : 1 230 IMPL-SRC, 77 PARTIEL, 347 STUB, 11 NOOP, 2 311 NULL, 66 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 11 ABSENT, 284 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot ContentMetaDatabase complet — conversion CNMT réelle
+
+**Vendor `22e47d3b`.** Les huit dernières commandes méta absentes sont raccordées : `Get`, `List`, `GetLatestContentMetaKey`, `ListApplication`, `GetSize`, `GetRequiredSystemVersion`, `GetPatchId` et `GetRequiredApplicationVersion`. Les valeurs enregistrées par `Set` sont désormais conservées intégralement ; pour les contenus installés, Encore reconstruit le `ContentMeta` normal depuis le CNMT packagé selon le schéma Atmosphère, avec le Meta NCA réel ajouté en tête.
+
+Le parseur CNMT conserve maintenant la totalité de l'en-tête étendu (`table_offset`) au lieu des seuls 16 premiers octets. Cela rend disponibles les vrais `required_system_version`, `required_application_version`, Patch ID et DataPatch ID. **Correction connexe importante : les `MetaRecord` sont maintenant lus après tous les `ContentRecord` ; l'ancien offset relisait le début de la table de contenus.**
+
+**Compteur : 1 238 IMPL-SRC, 77 PARTIEL, 347 STUB, 11 NOOP, 2 311 NULL, 66 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 3 ABSENT, 284 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Les trois ABSENT restants sont `GetPath`, `GetPlaceHolderPath` et NS `Attach`.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1230
+    "Implémentation source retrouvée" : 1238
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 77
     "Stub / résultat simulé" : 347
@@ -109,7 +117,7 @@ pie showData
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
     "Hors version firmware cible" : 6
-    "Commande absente des tables" : 11
+    "Commande absente des tables" : 3
     "Noms/ABI divergents" : 284
     "Interface ambiguë" : 12
     "Non vérifié" : 0
@@ -4324,25 +4332,25 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Content Manager services | `26` | `RepairInvalidFileAttribute` | 4.0.0+ | **NOOP** (VFS Encore sans flush différé ni bit d'attribut Horizon représenté ; retour succès documenté, vendor `c3dc80c8`) | 2026-11-22 |
 | Content Manager services | `27` | `GetRightsIdFromPlaceHolderIdWithCache` | 8.0.0+ | **PARTIEL** (Rights ID + key generation réels du placeholder ; l'optimisation cache_content_id n'est pas reproduite) | 2026-11-22 |
 | Content Manager services | `0` | `Set` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 0, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
-| Content Manager services | `1` | `Get` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 1, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `1` | `Get` | — | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
 | Content Manager services | `2` | `Remove` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 2, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `3` | `GetContentIdByType` | — | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
 | Content Manager services | `4` | `ListContentInfo` | — | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
-| Content Manager services | `5` | `List` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 5, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `6` | `GetLatestContentMetaKey` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 6, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `7` | `ListApplication` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 7, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `5` | `List` | — | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
+| Content Manager services | `6` | `GetLatestContentMetaKey` | — | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
+| Content Manager services | `7` | `ListApplication` | — | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
 | Content Manager services | `8` | `Has` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 8, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `9` | `HasAll` | — | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
-| Content Manager services | `10` | `GetSize` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 10, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `11` | `GetRequiredSystemVersion` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 11, slot ID absent de la table ; source seulement) | 2026-11-22 |
-| Content Manager services | `12` | `GetPatchId` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 12, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `10` | `GetSize` | — | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
+| Content Manager services | `11` | `GetRequiredSystemVersion` | — | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
+| Content Manager services | `12` | `GetPatchId` | — | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
 | Content Manager services | `13` | `DisableForcibly` | — | **NOOP** (objet ContentMetaDatabase Encore sans état enabled/disabled séparé ; retour succès documenté) | 2026-11-22 |
 | Content Manager services | `14` | `LookupOrphanContent` | — | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
 | Content Manager services | `15` | `Commit` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 15, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `16` | `HasContent` | — | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
 | Content Manager services | `17` | `ListContentMetaInfo` | — | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
 | Content Manager services | `18` | `GetAttributes` | — | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
-| Content Manager services | `19` | `GetRequiredApplicationVersion` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentMetaDatabase` ID 19, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `19` | `GetRequiredApplicationVersion` | 2.0.0+ | **IMPL-SRC** (ContentMetaDatabase : valeur normalisée depuis CNMT réel/pending KVS, en-tête étendu conservé ; vendor `22e47d3b`) | 2026-11-22 |
 | Content Manager services | `20` | `GetContentIdByTypeAndIdOffset` | 5.0.0+ | **IMPL-SRC** (handler ContentMetaDatabase adossé aux CNMT réels du RegisteredCache ; vendor `8d1d9eac`) | 2026-11-22 |
 
 ### NFC services

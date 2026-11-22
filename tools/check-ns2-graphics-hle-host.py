@@ -191,6 +191,27 @@ def main()->int:
     for command in (1001, 1002):
         assert '{'+str(command)+', &IGraphicsSupervisor::UnavailableVideoEncoder' in text
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in text
+    # Each known optional GSV command is registered in the selected C++ owner.
+    # These are not implementations: no fabricated success/handles for unsupported features.
+    known_optional_gsv = (
+        187, 211, 212, 213, 214, 215, 493, 603, 612, 613, 614, 615,
+        616, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 632,
+        633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
+        654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
+        666, 667, 691, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
+        1022, 1203, 1301, 1302, 1325, 1326,
+    )
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 66
+    for command in known_optional_gsv:
+        assert re.search(
+            r'\\{\\s*'+str(command)+r'\\s*,\\s*&IGraphicsSupervisor::UnavailableDocumentedFeature\\s*,',
+            text), f'optional GSV command {command} missing explicit fail-closed dispatch'
+    explicit_reject = text.split(
+        'void IGraphicsSupervisor::UnavailableDocumentedFeature(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'IPC::ResponseBuilder rb{ctx, 2};' in explicit_reject
+    assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in explicit_reject
+    assert 'ResultSuccess' not in explicit_reject
+    assert 'ctx.CommandBuffer()' not in explicit_reject
     for proof in ('command == 901',
                   'packet[0] == command + 0x10 && packet[1] == 0',
                   'm_bootstrap.GpuContextReady()',

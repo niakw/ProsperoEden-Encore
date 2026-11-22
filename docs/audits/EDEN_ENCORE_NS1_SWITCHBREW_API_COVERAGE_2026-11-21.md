@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 328 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 248 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `aea99647`. **Ces 1 328 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 332 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 252 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `40596a94`. **Ces 1 332 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 248 | 80 | **1 328** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 252 | 80 | **1 332** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 292 | 0 | **2 292** |
+| **NULL — Handler NULL** | 2 288 | 0 | **2 288** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -295,17 +295,29 @@ Vendor `0d21ded6`, consolidé par `aea99647` (arbre `b3b59fda00af67a52aa5bf5b812
 
 **Pool restant à examiner : 2 847 = 2 292 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — System NAND + paramètres IP NIFM
+
+Vendor final `40596a94` (arbre `b6631a93395622feea9f86abdbb0b79dd6c4993d`). Le couple moteur précédent `d84b0ff3` → vendor `aea99647` a passé X8D24 mais échoué au contrôle de provenance sur le reçu actif `self_controller.h` ; le reçu est corrigé dans `fe0ccc13`, inclus dans ce vendor final.
+
+- `IsSystemProgramInstalled` ID63 : **2 NULL → IMPL-SRC** sur les deux surfaces catalogue `ns:am` et `ns:am2/ns:ec/ns:rid/ns:rt/ns:web`. Le handler commun consulte `GetSystemNANDContents()->HasEntry(program_id, Program)`.
+- NIFM ID27 `GetDefaultIpSetting` et ID28 `SetDefaultIpSetting` : **2 NULL → IMPL-SRC**. Le contrat SwIPC vérifié est un buffer `IpSettingData` de **0xC2 octets** ; le getter initialise l'état avec le backend réseau réel (IP, masque, passerelle, DNS), proxy désactivé et MTU 1500, puis le setter assure un round-trip exact du bloc complet.
+- Aucun comportement PS5 n'est déclaré validé par ces contrôles hôte.
+
+**Compteur courant : 1 332 IMPL-SRC, 108 PARTIEL, 149 STUB, 106 NOOP, 2 288 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 843 = 2 288 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1328
+    "Implémentation source retrouvée" : 1332
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 108
     "Stub / résultat simulé" : 149
     "No-op documenté" : 106
-    "Handler NULL" : 2292
+    "Handler NULL" : 2288
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1858,7 +1870,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `61` | `GetBackgroundDownloadStressTaskInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `62` | `GetGameCardStopper` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `63` | `IsSystemProgramInstalled` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `63` | `IsSystemProgramInstalled` | — | **IMPL-SRC** (interroge le cache System NAND réel pour le Program NCA ; vendor `2508e1f4`) | 2026-11-22 |
 | ns:am | `64` | `StartApplyDeltaTask` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `65` | `GetRequestServerStopper` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `100` | `ResetToFactorySettings` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
@@ -1983,7 +1995,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `61` | `GetBackgroundDownloadStressTaskInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `62` | `GetGameCardStopper` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `63` | `IsSystemProgramInstalled` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `63` | `IsSystemProgramInstalled` | — | **IMPL-SRC** (même handler `IApplicationManagerInterface`, cache System NAND réel ; vendor `2508e1f4`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `64` | `StartApplyDeltaTask` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `65` | `GetRequestServerStopper` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `66` | `GetBackgroundApplyDeltaStressTaskInfo` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -4751,8 +4763,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `24` | `WakeUp` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `25` | `GetSsidListVersion` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `26` | `SetExclusiveClient` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `27` | `GetDefaultIpSetting` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `28` | `SetDefaultIpSetting` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `27` | `GetDefaultIpSetting` | — | **IMPL-SRC** (ABI SwIPC `IpSettingData` 0xC2 ; état partagé initialisé depuis IP/masque/passerelle/DNS hôte, proxy off, MTU 1500 ; vendor `40596a94`) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `28` | `SetDefaultIpSetting` | — | **IMPL-SRC** (lit et conserve exactement le bloc `IpSettingData` 0xC2 pour le round-trip du getter ; vendor `40596a94`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `29` | `SetWirelessCommunicationEnabledForTest` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `30` | `SetEthernetCommunicationEnabledForTest` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `31` | `GetTelemetorySystemEventReadableHandle` | 2.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |

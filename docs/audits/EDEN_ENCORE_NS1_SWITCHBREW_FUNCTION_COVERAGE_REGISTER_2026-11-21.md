@@ -309,6 +309,19 @@ Vendor `0d21ded69e049ee9716a376f6d1730d2ca54303f`, puis correction de staging NS
 
 **Pool restant à examiner = 2 847 entrées** : 2 292 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — System NAND + NIFM default IP — 22/11/2026
+
+Vendor `40596a94e35789a57e9ee8236e0e6c4362cd1765` (arbre `b6631a93395622feea9f86abdbb0b79dd6c4993d`).
+
+- `IsSystemProgramInstalled` ID63 : **2 NULL → IMPL-SRC** car les deux surfaces catalogue partagent le même `IApplicationManagerInterface`, qui consulte le cache System NAND réel.
+- `GetDefaultIpSetting` ID27 et `SetDefaultIpSetting` ID28 : **2 NULL → IMPL-SRC**. ABI vérifiée dans SwIPC : `IpSettingData`, buffer 0x1A/0x19, taille **0xC2**. État partagé initialisé depuis le backend réseau Encore, proxy off et MTU 1500, puis round-trip complet du setter.
+- Le rouge provenance de `d84b0ff3` était uniquement un hash actif périmé de `self_controller.h`; `fe0ccc13` le corrige et est ancêtre du vendor final.
+- X8D24 du couple précédent était vert ; le présent couple doit passer ses propres checks. Aucune validation PS5 revendiquée.
+
+**Compteur courant : 1 332 IMPL-SRC / 108 PARTIEL / 149 STUB / 106 NOOP / 2 288 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 843 entrées** : 2 288 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -472,6 +472,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool restant à examiner = 2 753 entrées** : 2 196 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Aucun gain FPS ni résultat console revendiqué.
 
+## Lot `set:sys` calibration six axes persistante — 23/11/2026
+
+**Vendor `0aa309cfbc3489073cc5586b5745be41c2d23e19`**, moteur secondaire repointé vers ce SHA.
+
+- **12 NULL → IMPL-SRC** : commandes 128–135 et 145–148, six paires Get/Set de biais et gains d'accélération et de vitesse angulaire, biais temporel et accélération angulaire.
+- Les commandes enregistrées utilisent les champs déjà persistants de `SystemSettings` : `Common::Vec<f32, 3>` (12 octets) et `std::array<u8, 0x24>` (36 octets). Chaque Set déclenche `SetSaveNeeded()`. Le libnx courant corrobore les IDs 128–135/145–148 ainsi que le passage direct de leurs structures en données IPC (pas de tampon alias inventé).
+- **Portée réelle : configuration invitée persistante**, pas simulation du capteur inertiel ni garantie de calibration physique, et pas de progrès GPU attribué à ces fonctions.
+- Propriétaire C++ : `sources/eden/src/core/hle/service/set/system_settings_server.{cpp,h}` listé par `encore-active/eden-backports/src/core/CMakeLists.txt`, sans remplacement correspondant dans le répertoire de backports. Contrôle statique des 12 enregistrements / déclarations / définitions ; hôte/PS5 à vérifier sur ce nouveau couple.
+
+**Compteur du miroir NS1 : 1 416 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 184 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 741 entrées** : 2 184 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Les quatre commandes NS1 207–210 déjà raccordées hors du miroir restent une réserve d'exhaustivité, non un gain chiffré supplémentaire.
+
 ---
 
 ## 1. Références et règle de vérité

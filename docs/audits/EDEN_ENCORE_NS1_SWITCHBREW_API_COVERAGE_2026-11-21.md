@@ -5637,14 +5637,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `125` | `SetErrorReportSharePermission` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `126` | `GetAppletLaunchFlags` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `127` | `SetAppletLaunchFlags` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `128` | `GetConsoleSixAxisSensorAccelerationBias` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `129` | `SetConsoleSixAxisSensorAccelerationBias` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `130` | `GetConsoleSixAxisSensorAngularVelocityBias` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `131` | `SetConsoleSixAxisSensorAngularVelocityBias` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `132` | `GetConsoleSixAxisSensorAccelerationGain` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `133` | `SetConsoleSixAxisSensorAccelerationGain` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `134` | `GetConsoleSixAxisSensorAngularVelocityGain` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `135` | `SetConsoleSixAxisSensorAngularVelocityGain` | 4.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `128` | `GetConsoleSixAxisSensorAccelerationBias` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `129` | `SetConsoleSixAxisSensorAccelerationBias` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `130` | `GetConsoleSixAxisSensorAngularVelocityBias` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `131` | `SetConsoleSixAxisSensorAngularVelocityBias` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `132` | `GetConsoleSixAxisSensorAccelerationGain` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `133` | `SetConsoleSixAxisSensorAccelerationGain` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `134` | `GetConsoleSixAxisSensorAngularVelocityGain` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `135` | `SetConsoleSixAxisSensorAngularVelocityGain` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `136` | `GetKeyboardLayout` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `137` | `SetKeyboardLayout` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `138` | `GetWebInspectorFlag` | 4.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
@@ -5654,10 +5654,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `142` | `SetRequiresRunRepairTimeReviser` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b0228bfc2c634ee3b7c61bec56d513b1c4673601/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `143` | `SetBlePairingSettings` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `144` | `GetBlePairingSettings` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `145` | `GetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `146` | `SetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `147` | `GetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `148` | `SetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `145` | `GetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `146` | `SetConsoleSixAxisSensorAngularVelocityTimeBias` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `147` | `GetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `148` | `SetConsoleSixAxisSensorAngularAcceleration` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0aa309cfbc3489073cc5586b5745be41c2d23e19/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `149` | `GetRebootlessSystemUpdateVersion` | 5.0.0+ | **NOOP** (aucun paquet rebootless Horizon installé ; état vide 0 / 0.0.0 explicite ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `150` | `GetDeviceTimeZoneLocationUpdatedTime` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `151` | `SetDeviceTimeZoneLocationUpdatedTime` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |

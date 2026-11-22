@@ -1347,7 +1347,23 @@ post_f07_fc27_ssbo_present = set(post_f07_fc27_ssbo_receipts) & all_owners
 if 'set(EDEN_FC27_SSBO_SOURCE' in release_cmake:
     assert post_f07_fc27_ssbo_present == set(post_f07_fc27_ssbo_receipts)
     for path, blob in post_f07_fc27_ssbo_receipts.items():
-        assert subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip() == blob
+        actual = subprocess.check_output(["git","hash-object",path],cwd=ROOT,text=True).strip()
+        if actual == "602d45b4d2ad872b138d62ce05f379b5e1103602":
+            # NS1/NS2 source adds one bounded CAS32 storage-atomic opcode.
+            # Undo only its exact reviewed hunk in an audit copy, and require
+            # the byte-identical frozen post-F07 SSBO predecessor.
+            current = (ROOT / path).read_text()
+            new = ("    case IR::Opcode::GlobalAtomicExchange32:\n"
+                   "    case IR::Opcode::GlobalAtomicCompareExchange32:\n"
+                   "    case IR::Opcode::GlobalAtomicIAdd64:\n")
+            old = ("    case IR::Opcode::GlobalAtomicExchange32:\n"
+                   "    case IR::Opcode::GlobalAtomicIAdd64:\n")
+            assert current.count(new) == 2
+            previous = current.replace(new, old, 1).encode()
+            prior = hashlib.sha1(b"blob " + str(len(previous)).encode() + bytes([0]) + previous).hexdigest()
+            assert prior == blob, ("Unexpected SSBO CAS32 predecessor", prior)
+        else:
+            assert actual == blob, (path, actual)
     assert 'set(EDEN_FC27_SSBO_SOURCE' in release_cmake
 else:
     assert not post_f07_fc27_ssbo_present

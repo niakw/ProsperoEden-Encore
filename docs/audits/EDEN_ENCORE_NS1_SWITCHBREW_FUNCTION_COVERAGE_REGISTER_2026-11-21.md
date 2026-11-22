@@ -55,6 +55,13 @@ Cinq commandes `IContentStorage` passent **ABSENT → IMPL-SRC** : `Has` (7), `G
 **Compteur courant : 1 218 IMPL-SRC / 76 PARTIEL / 347 STUB / 9 NOOP / 2 311 NULL / 65 D / 191 INACCESSIBLE / 289 SERVICE-NON-EXPOSÉ / 51 ABSENT / 283 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le run de provenance précédent `#45044777362` est vert sur `c287ac44`; ce nouveau lot devra être qualifié sur son propre HEAD. Pas de validation PS5 annoncée.
 
 
+## Lot NCM capacité / lifecycle — 22/11/2026
+
+Vendor `60bd03e6e5ad083ee050887028fa33d514a3050e` : `GetFreeSpaceSize` et `GetTotalSpaceSize` sont raccordés aux capacités du `FileSystemController`; `DisableForcibly` est NOOP documenté ; `GetRightsIdFromPlaceHolderIdWithCache` est PARTIEL car la donnée Rights ID/keygen est réelle mais le cache hint firmware est ignoré.
+
+**Compteur courant : 1 220 IMPL-SRC / 77 PARTIEL / 347 STUB / 10 NOOP / 2 311 NULL / 65 D / 191 INACCESSIBLE / 289 SERVICE-NON-EXPOSÉ / 47 ABSENT / 283 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucun résultat PS5 n'est déduit de ces handlers.
+
+
 ---
 
 ## 1. Références et règle de vérité

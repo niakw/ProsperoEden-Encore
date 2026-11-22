@@ -5,6 +5,7 @@ Fast-skip previously maintained sources with a specific historical proof, but
 never confuse code triage with host or console performance validation.
 """
 import json
+import ast
 import hashlib
 import subprocess
 from collections import Counter
@@ -1662,6 +1663,15 @@ if merged_fc27_p1_pair:
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
     })
+# The final vendor integration retains both selected NS2 appletOE
+# support headers. The actual cpp/headers are byte-sealed below.
+if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    ns2_early_hle_receipts.update({
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h":
+            "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h":
+            "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
+    })
 ns2_early_hle_present = set(ns2_early_hle_receipts) & all_owners
 if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or gpu_table_vendor_pin in {"d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6"}:
     assert ns2_early_hle_present == set(ns2_early_hle_receipts)
@@ -1778,7 +1788,54 @@ else:
 print("PS5_NS2_IPC_PEER_F07_ISOLATION_PASS", f"owners={len(ps5_ns2_ipc_present)}")
 print("PS5_VFS128_FD_BUDGET_F07_ISOLATION_PASS", f"owners={len(ps5_vfs128_present)}")
 
-owners=all_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
+# The integrated vendor adds 33 maintained C++ source/header paths after
+# the 518-entry historical F07 optimization receipt. Reuse the explicit,
+# byte-exact path/blob register already verified by the active-source gate:
+# no new lists or opaque count adjustments. Some are headers or only selected
+# through CMake in specific variants, so presence is NOT native execution.
+post_f07_integrated_source_owners = set()
+post_f07_legacy_net_header_owners = set()
+if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    inventory_source = ast.parse((ROOT / "tools/check-active-source-inventory.py").read_text())
+    inventory_assignments = [
+        node.value for node in inventory_source.body if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "merged_ns1_ns2_owner_blobs"
+                for target in node.targets)
+    ]
+    assert len(inventory_assignments) == 1, "Missing exact NS1/NS2 source ledger"
+    integrated_blobs = ast.literal_eval(inventory_assignments[0])
+    assert isinstance(integrated_blobs, dict) and len(integrated_blobs) == 33
+    post_f07_integrated_source_owners = {
+        "vendor/encore-active/" + relative for relative in integrated_blobs
+    }
+    assert post_f07_integrated_source_owners <= all_owners, (
+        "Integrated vendor source missing",
+        sorted(post_f07_integrated_source_owners - all_owners))
+    for relative, expected_blob in integrated_blobs.items():
+        raw = (ROOT / "vendor/encore-active" / relative).read_bytes()
+        digest = hashlib.sha1(b"blob " + str(len(raw)).encode()
+                              + bytes([0]) + raw).hexdigest()
+        assert digest == expected_blob, ("Unreviewed integrated source",relative,digest)
+
+    # This existing Eden network header was already in vendor main. It is
+    # absent from the historical 518-path optimization receipt, but present
+    # in the separate 337-path shipping catalogue. Do NOT label it a new
+    # NS1 runtime source or an F07-optimized file.
+    net_header = "vendor/encore-active/eden-backports/src/common/net/net.h"
+    raw = (ROOT / net_header).read_bytes()
+    digest = hashlib.sha1(b"blob " + str(len(raw)).encode()
+                          + bytes([0]) + raw).hexdigest()
+    assert digest == "f8244b366d591ce10342f110d282c295f835474f"
+    assert net_header in all_owners
+    assert "vendor/encore-active/eden-backports/src/common/net/net.cpp" in all_owners
+    post_f07_legacy_net_header_owners.add(net_header)
+    assert not post_f07_integrated_source_owners & post_f07_legacy_net_header_owners
+print("ENCORE_NS1_NS2_INTEGRATED_F07_SEPARATION_PASS",
+      f"new_maintained={len(post_f07_integrated_source_owners)}",
+      f"existing_unreviewed={len(post_f07_legacy_net_header_owners)}")
+
+owners=all_owners-post_f07_integrated_source_owners-post_f07_legacy_net_header_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

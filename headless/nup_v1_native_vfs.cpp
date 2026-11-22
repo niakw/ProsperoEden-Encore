@@ -137,9 +137,10 @@ public:
     NativeDirectory(std::shared_ptr<Detail::State> state,
                     std::optional<std::size_t> package, ContentView view,
                     std::string path, std::string name,
-                    FileSys::VirtualDir parent = {})
+                    FileSys::VirtualDir parent = {}, bool package_root = false)
         : state_(std::move(state)), package_(package), view_(view),
-          path_(std::move(path)), name_(std::move(name)), parent_(std::move(parent)) {}
+          path_(std::move(path)), name_(std::move(name)), parent_(std::move(parent)),
+          package_root_(package_root) {}
 
     std::vector<FileSys::VirtualFile> GetFiles() const override {
         std::vector<FileSys::VirtualFile> result;
@@ -165,7 +166,7 @@ public:
             if (!entry.directory) continue;
             const auto next = path_.empty() ? entry.name : path_ + "/" + entry.name;
             result.emplace_back(std::make_shared<NativeDirectory>(
-                state_, package_, view_, next, entry.name, self));
+                state_, package_, view_, next, entry.name, self, package_root_));
         }
         return result;
     }
@@ -180,7 +181,9 @@ private:
         // Both VFS GetFiles/GetSubdirectories may be called by different
         // services, so initialize exactly once and never copy the entry vector.
         std::call_once(entries_once_, [this] {
-            entries_ = package_
+            entries_ = package_root_ && package_
+                ? state_->archive->ListPackageRootDirectory(*package_, path_)
+                : package_
                 ? state_->archive->ListPackageDirectory(*package_, view_, path_)
                 : state_->archive->ListEffectiveDirectory(view_, path_);
         });
@@ -195,6 +198,7 @@ private:
     std::string path_;
     std::string name_;
     FileSys::VirtualDir parent_;
+    bool package_root_{};
 };
 } // namespace
 
@@ -230,5 +234,12 @@ FileSys::VirtualDir Mount::PackageView(std::size_t package_index, ContentView vi
     if (!state_->archive->ListPackageDirectory(package_index, view)) return {};
     return std::make_shared<NativeDirectory>(
         state_, package_index, view, "", view == ContentView::ExeFS ? "exefs" : "romfs");
+}
+
+FileSys::VirtualDir Mount::PackageRoot(std::size_t package_index) const {
+    if (!state_->archive->ListPackageRootDirectory(package_index)) return {};
+    return std::make_shared<NativeDirectory>(
+        state_, package_index, ContentView::ExeFS, "", "package",
+        FileSys::VirtualDir{}, true);
 }
 } // namespace Eden::NupV1::Native

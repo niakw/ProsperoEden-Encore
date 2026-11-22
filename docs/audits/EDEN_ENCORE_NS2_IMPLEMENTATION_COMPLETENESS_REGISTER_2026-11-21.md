@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**172**), `HANDLER PARTIEL INDIQUÉ` (**6**), `STUB NOMMÉ` (72, dont Syncpt 21 en U), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), **`REFUS GÉNÉRIQUE EXPLICITE` (43 : 13 M + 24 U + 6 V)**, `AUCUN HANDLER INDIQUÉ` (0). Les feature-image requirements 391/691/1291/1691 partagent désormais un calculateur borné commun ; création et mapping restent séparés.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (172), `HANDLER PARTIEL INDIQUÉ` (5), `STUB NOMMÉ` (72), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (**45**), `AUCUN HANDLER INDIQUÉ` (0). Le submit historique group 0/cmd 1 n'est pas un chemin natif partiel : il tombe explicitement sur `NvResult::NotImplemented`.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,22 +32,21 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=172**, **P=5**, C/P=1, M=107, **U=25**, V=6.
-- **R** : **316/316** disposent d'un dispatch explicite (handler, partiel, stub ou refus).
+- **F** : C=172, **P=5**, **M=108**, U=25, V=6. Il n'y a plus de statut C/P.
+- **R** : **316/316** disposent d'un dispatch explicite ou d'un refus/stub identifié.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **172** | 172 | 0 |
+| C — implémentation source | 172 | 172 | 0 |
 | P — partielle | **5** | 5 | 0 |
-| C/P — mixte | 1 | 1 | 0 |
-| M — non implémenté | 107 | 107 | 0 |
-| U — contrat insuffisant | **25** | 25 | 0 |
+| M — non implémenté | **108** | 108 | 0 |
+| U — contrat insuffisant | 25 | 25 | 0 |
 | V — ancienne variante firmware | 6 | 6 | 0 |
 | **Total** | **316** | **316** | **0** |
 
-**Feature-image requirements fermées** : `391`, `691`, `1291` et `1691` utilisent désormais un calculateur commun requirements-only, conformément au template Lichii. Formats prouvés : 1/RGBA8 et 4/RGB10A2 en 4 Bpp, 5/RGBA16F en 8 Bpp ; le format caméra MKW observé `0x38` reste admis en 4 Bpp. Pitch/block-height invalides reprennent le fallback Lichii, count=0 suit la convention minimum 1, et les formats inconnus échouent fermé. Aucun pool/image/GMMU n'est créé par cette commande.
+**Submit historique clarifié** : `NVHOST_IOCTL_CHANNEL_SUBMIT` group 0/cmd 1 n'existe pas dans le dispatch NS2 actif ; `Ioctl1` tombe dans son refus générique `NvResult::NotImplemented`. Les vraies soumissions natives restent H:0x08/0x19/0x1B/0x1C. La ligne passe donc C/P → M.
 
-**Restent 5 P + 1 C/P** : GET_ERROR_INFO/NOTIFICATION sans producteur de faute réel, CHANNEL_SETUP_BIND userspace USERD/doorbell, deux réglages TSG post-bind et le submit historique C/P.
+**Restent 5 P** : GET_ERROR_INFO/GET_ERROR_NOTIFICATION sans producteur de faute GPU réel, CHANNEL_SETUP_BIND userspace USERD/doorbell, et deux réglages TSG post-bind.
 
 ---
 
@@ -393,7 +392,7 @@ Les autres ioctls de contrôle hérités de Switch 1 restent suivis par les audi
 
 | Ioctl | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore | Écart / raison |
 | --- | --- | --- | --- | --- | --- |
-| 0xC0??0001 | NVHOST_IOCTL_CHANNEL_SUBMIT | C/P | HANDLER PARTIEL INDIQUÉ | Submit | chemin historique, à qualifier séparément pour native |
+| 0xC0??0001 | NVHOST_IOCTL_CHANNEL_SUBMIT | M | REFUS GÉNÉRIQUE EXPLICITE | nvhost_gpu::Ioctl1 fallback | aucun case group 0/cmd 1 dans le runtime NS2 actif ; ioctl historique Maxwell refusé par NvResult::NotImplemented au lieu d'être présenté comme partiellement natif |
 | 0xC0080002 | NVHOST_IOCTL_CHANNEL_GET_SYNCPOINT | C | HANDLER INDIQUÉ | GetSyncpoint | actif |
 | 0xC0080003 | NVHOST_IOCTL_CHANNEL_GET_WAITBASE | C | HANDLER INDIQUÉ | GetWaitbase | actif |
 | 0xC0080004 | NVHOST_IOCTL_CHANNEL_GET_MODMUTEX | M | REFUS EXPLICITE | nvhost_gpu::Ioctl1 (fail-closed) | ioctl exact 0xC0080004 : NotImplemented ; pas de module mutex matériel |

@@ -21,6 +21,11 @@ assert "&nvhost_gpu::SubmitGPFIFOBase1, input, output, fd, false" in retry1
 assert "if (command.raw != 0xC018481CU) break;" in retry2
 assert "&nvhost_gpu::SubmitGPFIFOBase2, input, inline_input" in retry2
 assert "output, fd);" in retry2
+# Legacy NVHOST group-0/cmd-1 submit is intentionally not a native submit path.
+group0 = ioctl1.split("case 0x0:", 1)[1].split("case 'H':", 1)[0]
+assert "case 0x1:" not in group0
+assert 'UNIMPLEMENTED_MSG("Unimplemented ioctl={:08X}", command.raw);' in ioctl1
+assert "return NvResult::NotImplemented;" in ioctl1.split("UNIMPLEMENTED_MSG", 1)[1]
 header = (BASE / "nvhost_gpu.h").read_text()
 native_puller = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
 # BindObject must not change the active subchannel before native class

@@ -164,6 +164,16 @@ Couple : moteur repointé vers vendor `a691b5535f9c69539b466a926359d805d734acce`
 
 **Compteur courant : 1 286 IMPL-SRC / 93 PARTIEL / 215 STUB / 78 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le HEAD précédent `77477e94` → `61ab696e` est vert X8D24 + provenance ; aucun test PS5 n'est encore revendiqué pour ce nouveau lot.
 
+## Lot filesystem commit / multi-commit — 22/11/2026
+
+Vendor `f6deaab8efa7a0c86e70d816a66792d7ce1811c3` (arbre `0a2a081d41bc7400a25ff833b08d085826345478`) : l'owner actif overlay `IFileSystem` et le source actif `IMultiCommitManager` sont corrigés.
+
+- `IFileSystem::Commit` : **STUB → NOOP** ; le backend host-directory écrit immédiatement et le `Fsa::DoCommit` générique est `NotImplemented`, donc le forwarding serait incorrect.
+- `IMultiCommitManager::Add` : **STUB → IMPL-SRC** ; stockage réel des participants, limite 10, rejet null/doublons.
+- `IMultiCommitManager::Commit` : **STUB → PARTIEL** ; commit séquentiel des participants puis clear, sans atomicité/provisional/rollback LibHac.
+
+**Compteur courant : 1 287 IMPL-SRC / 94 PARTIEL / 212 STUB / 79 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent `c864a213` → `a691b553` est vert X8D24 + provenance ; aucune validation PS5 n'est déduite.
+
 ---
 
 ## 1. Références et règle de vérité

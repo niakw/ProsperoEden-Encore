@@ -184,16 +184,22 @@ Côté NS, `HasApplicationRecord` et `IsAnyApplicationEntityInstalled` interroge
 
 **Compteur : 1 286 IMPL-SRC / 93 PARTIEL / 215 STUB / 78 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** `HasApplicationRecord` cmd910 reste NULL : c'est une autre entrée de l'interface parentale, non raccordée par ce lot.
 
+### Lot filesystem commit / multi-commit
+
+Vendor `f6deaab8` : `IFileSystem::Commit` devient NOOP documenté car le VFS host-directory est synchrone. `IMultiCommitManager::Add` stocke réellement jusqu'à 10 participants et rejette null/doublons. `Commit` parcourt les participants et appelle leur contrat Commit, mais reste PARTIEL faute de provisional-commit/rollback/context LibHac.
+
+**Compteur : 1 287 IMPL-SRC, 94 PARTIEL, 212 STUB, 79 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1286
+    "Implémentation source retrouvée" : 1287
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 93
+    "Implémentation partielle" : 94
     "Stub / résultat simulé" : 215
-    "No-op documenté" : 78
+    "No-op documenté" : 79
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -3842,7 +3848,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IFileSystem | `7` | `GetEntryType` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
 | IFileSystem | `8` | `OpenFile` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
 | IFileSystem | `9` | `OpenDirectory` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
-| IFileSystem | `10` | `Commit` | — | **STUB** ([source C++][ns1-src-024]) | 2026-11-22 |
+ | IFileSystem | `10` | `Commit` | — |  **NOOP** (host-directory VFS applique les mutations immédiatement ; aucun commit différé à pousser; vendor `f6deaab8`)  | 2026-11-22 | 
 | IFileSystem | `11` | `GetFreeSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
 | IFileSystem | `12` | `GetTotalSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
 | IFileSystem | `13` | `CleanDirectoryRecursively` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-024]) | 2026-11-22 |
@@ -3963,8 +3969,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ISaveDataChunkExporter | `0` | `Pull` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkExporter n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | ISaveDataChunkExporter | `16` | `GetRestRawDataSize` | 6.0.0+ | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkExporter n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | ISaveDataChunkImporter | `0` | `Push` | — | **SERVICE-NON-EXPOSÉ** (source `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` ; ISaveDataChunkImporter n'existe pas comme interface enregistrée dans le FSP ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| IMultiCommitManager | `1` | `Add` | — | **STUB** (source `sources/eden/src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp` ; IMultiCommitManager::Add est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| IMultiCommitManager | `2` | `Commit` | — | **STUB** (source `sources/eden/src/core/hle/service/filesystem/fsp/fs_i_multi_commit_manager.cpp` ; IMultiCommitManager::Commit est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+ | IMultiCommitManager | `1` | `Add` | — |  **IMPL-SRC** (stocke réellement les IFileSystem, limite 10, rejette null/doublons; vendor `f6deaab8`)  | 2026-11-22 | 
+ | IMultiCommitManager | `2` | `Commit` | — |  **PARTIEL** (commit séquentiel réel des participants, sans protocole provisional/rollback LibHac; vendor `f6deaab8`)  | 2026-11-22 | 
 
 ### Bus services
 

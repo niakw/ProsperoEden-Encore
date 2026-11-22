@@ -58,12 +58,12 @@ base1 = nvdrv.split("NvResult nvhost_gpu::SubmitGPFIFOBase1(", 1)[1].split(
 base2 = nvdrv.split("NvResult nvhost_gpu::SubmitGPFIFOBase2(", 1)[1].split(
     "NvResult nvhost_gpu::GetWaitbase(", 1)[0]
 assert nvdrv.count("Tegra::CommandList entries;") == 2
-for owner in (base1, base2):
-    assert owner.count("Tegra::CommandList entries;") == 1
-    assert owner.count("entries.command_lists.resize(params.num_entries, boost::container::default_init);") == 1
-    assert owner.count("catch (const std::bad_alloc&)") == 1
+for submission in (base1, base2):
+    assert submission.count("Tegra::CommandList entries;") == 1
+    assert submission.count("entries.command_lists.resize(params.num_entries, boost::container::default_init);") == 1
+    assert submission.count("catch (const std::bad_alloc&)") == 1
     assert "return NvResult::InsufficientMemory;" in owner
-    assert owner.index("entries.command_lists.resize(") < owner.index("SubmitGPFIFOImpl(")
+    assert submission.index("entries.command_lists.resize(") < submission.index("SubmitGPFIFOImpl(")
     assert "if (params.num_entries != 0)" in owner
     assert "params.num_entries > commands.size()" in owner
     assert "return SubmitGPFIFOImpl(params, std::move(entries), fd);" in owner

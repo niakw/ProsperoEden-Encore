@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 276 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 290 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 210 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `4483c6a3`. **Ces 1 290 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 206 | 80 | **1 286** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 210 | 80 | **1 290** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 90 | 3 | **93** |
-| **STUB — Stub / résultat simulé** | 215 | 0 | **215** |
-| **NOOP — No-op documenté** | 78 | 0 | **78** |
-| **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
+| **PARTIEL — Implémentation partielle** | 93 | 3 | **96** |
+| **STUB — Stub / résultat simulé** | 198 | 0 | **198** |
+| **NOOP — No-op documenté** | 89 | 0 | **89** |
+| **NULL — Handler NULL** | 2 310 | 0 | **2 310** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -196,16 +196,24 @@ Vendor `ad27e09c` : `NeedsUpdateVulnerability` est NOOP explicite sur ses 3 surf
 
 **Compteur : 1 289 IMPL-SRC, 94 PARTIEL, 207 STUB, 83 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot NS lifecycle / GameCard + faux stubs FS
+
+Vendor `0432fba8`, puis `4483c6a3` (arbre `7ac58de8cc59a33b21de52fae13371d4f85801fa`) : six lignes d'événements/lifecycle NS passent **STUB → NOOP** parce qu'elles retournent un handle réel mais qu'Encore ne possède aucun producteur d'événement correspondant, ou aucun état NS séparé à reprendre. Les deux surfaces `TouchApplication` passent **STUB → PARTIEL** : l'existence de l'application est désormais validée dans le `ContentProviderUnion` réel, mais la métadonnée NS « last touched » n'est pas persistée. `GetApplicationTerminateResult` passe **STUB → IMPL-SRC** et renvoie le vrai `terminate_result` de l'applet principale sous verrou.
+
+Le lot `4483c6a3` raccorde aussi `IsGameCardApplicationRunning` à l'applet principale et au `GameCardContents` réels ; cette commande n'est pas une ligne distincte du miroir historique 4 853 et ne modifie donc pas le compteur. `OpenFileSystemWithPatch` reste **PARTIEL** : le mode Manual ouvre réellement le RomFS patché, mais les autres types ne sont pas implémentés. `FlushAccessLogOnSdCard` devient un NOOP explicite hors catalogue, faute de sink d'access-log SD bufferisé.
+
+**Compteur courant : 1 290 IMPL-SRC, 96 PARTIEL, 198 STUB, 89 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Aucun build PS5 ni validation console n'est déduit de cette requalification.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1289
+    "Implémentation source retrouvée" : 1290
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 94
-    "Stub / résultat simulé" : 215
-    "No-op documenté" : 83
+    "Implémentation partielle" : 96
+    "Stub / résultat simulé" : 198
+    "No-op documenté" : 89
     "Handler NULL" : 2310
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -1742,13 +1750,13 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `41` | `CalculateApplicationDownloadRequiredSize` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `42` | `CleanupSdCard` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `43` | `CheckSdCardMountStatus` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `44` | `GetSdCardMountStatusChangedEvent` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `44` | `GetSdCardMountStatusChangedEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de changement de montage SD n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am | `45` | `GetGameCardAttachmentEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `46` | `GetGameCardAttachmentInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `47` | `GetTotalSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `48` | `GetFreeSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `49` | `GetSdCardRemovedEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `52` | `GetGameCardUpdateDetectionEvent` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `52` | `GetGameCardUpdateDetectionEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de détection de mise à jour GameCard n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am | `53` | `DisableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `54` | `EnableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `55` | `GetApplicationDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1804,7 +1812,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `901` | `GetApplicationRecordProperty` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `902` | `EnableApplicationAutoUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `903` | `DisableApplicationAutoUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `904` | `TouchApplication` | 2.0.0+ | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `904` | `TouchApplication` | 2.0.0+ | **PARTIEL** (valide l'application dans le ContentProviderUnion réel mais ne persiste pas encore le metadata « last touched » NS ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am | `905` | `RequestApplicationUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `906` | `IsApplicationUpdateRequested` | 2.0.0+ | **NOOP** (Encore n'a pas d'état de requête de mise à jour NS distant ; `false/0` explicite, conforme au fallback émulateur amont) | 2026-11-22 |
 | ns:am | `907` | `WithdrawApplicationUpdateRequest` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1867,13 +1875,13 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `41` | `CalculateApplicationDownloadRequiredSize` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `42` | `CleanupSdCard` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `43` | `CheckSdCardMountStatus` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `44` | `GetSdCardMountStatusChangedEvent` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `44` | `GetSdCardMountStatusChangedEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de changement de montage SD n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `45` | `GetGameCardAttachmentEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `46` | `GetGameCardAttachmentInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `47` | `GetTotalSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `48` | `GetFreeSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `49` | `GetSdCardRemovedEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `52` | `GetGameCardUpdateDetectionEvent` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `52` | `GetGameCardUpdateDetectionEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de détection de mise à jour GameCard n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `53` | `DisableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `54` | `EnableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `55` | `GetApplicationDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1891,7 +1899,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `67` | `CancelApplicationApplyDelta` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `68` | `ResumeApplicationApplyDelta` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `69` | `CalculateApplicationApplyDeltaRequiredSize` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `70` | `ResumeAll` | 3.0.0+ | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `70` | `ResumeAll` | 3.0.0+ | **NOOP** (aucun ensemble suspendu propre à NS ; le lifecycle est détenu par AM ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `71` | `GetStorageSize` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `80` | `RequestDownloadApplication` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `81` | `RequestDownloadAddOnContent` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1940,7 +1948,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `502` | `RequestCheckGameCardRegistration` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `503` | `RequestGameCardRegistrationGoldPoint` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `504` | `RequestRegisterGameCard` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `505` | `GetGameCardMountFailureEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `505` | `GetGameCardMountFailureEvent` | 3.0.0+ | **NOOP** (handle d'événement réel ; aucun producteur de panne GameCard n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `506` | `IsGameCardInserted` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `507` | `EnsureGameCardAccess` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `508` | `GetLastGameCardMountFailureResult` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1967,7 +1975,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `901` | `GetApplicationRecordProperty` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `902` | `EnableApplicationAutoUpdate` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `903` | `DisableApplicationAutoUpdate` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `904` | `TouchApplication` | — | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `904` | `TouchApplication` | — | **PARTIEL** (valide l'application dans le ContentProviderUnion réel mais ne persiste pas encore le metadata « last touched » NS ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `905` | `RequestApplicationUpdate` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `906` | `IsApplicationUpdateRequested` | — | **NOOP** (Encore n'a pas d'état de requête de mise à jour NS distant ; `false/0` explicite, conforme au fallback émulateur amont) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `907` | `WithdrawApplicationUpdateRequest` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2034,7 +2042,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2018` | `GetApplicationDeliveryInfoHash` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2050` | `GetApplicationRightsOnClient` | 6.0.0+ | **PARTIEL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2051` | `InvalidateRightsIdCache` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2100` | `GetApplicationTerminateResult` | 6.0.0+ | **STUB** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2100` | `GetApplicationTerminateResult` | 6.0.0+ | **IMPL-SRC** (résultat de terminaison lu sous verrou depuis l'applet principale réelle après validation du ProgramId ; vendor `0432fba8`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2101` | `GetRawApplicationTerminateResult` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2150` | `CreateRightsEnvironment` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2151` | `DestroyRightsEnvironment` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |

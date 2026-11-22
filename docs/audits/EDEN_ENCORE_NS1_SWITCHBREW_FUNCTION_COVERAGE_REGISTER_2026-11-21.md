@@ -185,6 +185,18 @@ Vendor `ad27e09c7135c3c92ef0202b58ee35423fe74300` (arbre `e6ddae9ffeaca9bc0319e0
 
 **Compteur courant : 1 289 IMPL-SRC / 94 PARTIEL / 207 STUB / 83 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent `b04bdf55` → `f6deaab8` est vert X8D24 + provenance. Aucun build PS5 ni validation console n'est revendiqué.
 
+## Lot NS lifecycle / état GameCard / faux stubs FS — 22/11/2026
+
+Vendor `0432fba8303ec9ad523c683e728046996cd48dfa`, puis `4483c6a35526d9dc8fc77c70b140ff2358d76dc9` (arbre `7ac58de8cc59a33b21de52fae13371d4f85801fa`).
+
+- `GetGameCardMountFailureEvent`, les deux surfaces `GetSdCardMountStatusChangedEvent`, les deux surfaces `GetGameCardUpdateDetectionEvent` et `ResumeAll` : **6 lignes STUB → NOOP**. Les handles sont réels mais aucun producteur matériel/NS séparé n'est modélisé.
+- `TouchApplication` sur ses deux surfaces : **2 lignes STUB → PARTIEL**. Le Title ID doit désormais exister dans le `ContentProviderUnion`, mais Encore ne conserve pas encore la date/metadata de « touch » NS.
+- `GetApplicationTerminateResult` : **STUB → IMPL-SRC**. Le service valide le ProgramId de l'applet principale, prend son verrou et renvoie son `terminate_result` réel.
+- `IsGameCardApplicationRunning` : le faux `false` constant est remplacé par une requête sur l'applet principale et le `RegisteredCache` GameCard réel. Cette méthode n'est pas une entrée distincte du miroir historique 4 853, donc elle n'augmente pas le compteur.
+- `OpenFileSystemWithPatch` reste **PARTIEL** : l'ancien libellé STUBBED était trompeur, mais seuls les Manual RomFS sont réellement ouverts. `FlushAccessLogOnSdCard` est un NOOP local explicite hors catalogue.
+
+**Compteur courant : 1 290 IMPL-SRC / 96 PARTIEL / 198 STUB / 89 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Ce lot est qualifié au niveau source/provenance uniquement ; aucune validation PS5 n'est revendiquée.
+
 ---
 
 ## 1. Références et règle de vérité

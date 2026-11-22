@@ -220,18 +220,24 @@ def main()->int:
     assert '{101, &IGraphicsSupervisor::CompleteBootstrap' in text
     assert '{301, &IGraphicsSupervisor::InitializeDisplayContext' in text
     assert '{305, &IGraphicsSupervisor::OpenDisplaySession' in text
-    # GSV child sessions 602/1202 use true MOVE descriptors and never leak on OOM.
+    # GSV child sessions use true MOVE descriptors and never leak on OOM.
+    camera = text.split(
+        'void IGraphicsSupervisor::OpenCameraSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'const u64 version = u64{packet[2]} | (u64{packet[3]} << 32);' in camera
+    assert 'packet[0] != 16 + 602 || packet[1] != 2 || version != 1' in camera
     for command, method in ((602, 'OpenCameraSession'), (1202, 'OpenChatSession')):
         body = text.split(
             f'void IGraphicsSupervisor::{method}(HLERequestContext& ctx) {{', 1)[1].split('\n}', 1)[0]
-        assert f'packet[0] != 16 + {command} || packet[1] != 0' in body
         assert 'IPC::ResponseBuilder rb{ctx, 2, 1, 0};' not in body
         assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in body
         assert 'ctx.AddMoveObject(client);' in body
         assert 'client->Close(system.Kernel());' in body
         assert body.index('ctx.AddMoveObject(client);') < body.index(
             'IPC::ResponseBuilder rb{ctx, 2, 0, 1};')
-    feature_admission = text.split(
+    chat = text.split(
+        'void IGraphicsSupervisor::OpenChatSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'packet[0] != 16 + 1202 || packet[1] != 0' in chat
+        feature_admission = text.split(
         'void IGraphicsSupervisor::InitializeFeatureContext(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'command == 601 || command == 1201' in feature_admission
     assert 'packet[0] == 16 + command && packet[1] == 0' in feature_admission

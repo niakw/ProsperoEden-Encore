@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `c4cd96636b6110a606e8aeb5834d93c64edc89b9` |
+| Vendor gitlink sélectionné sur cette branche | `8428829fa778a006d5adeb3256f2fd3de185a08d` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (150), `HANDLER PARTIEL INDIQUÉ` (28), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), **`REFUS PARENT EXPLICITE` (11)**, **`REFUS GÉNÉRIQUE EXPLICITE` (13)**, `AUCUN HANDLER INDIQUÉ` (**0**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les 11 commandes encodeur sont bloquées par le parent GSV 1001/1002 `UnavailableVideoEncoder`; les 13 ioctls profiler passent réellement par `nx2_stub_device::Stub`. Aucun de ces 24 refus n'est une implémentation fonctionnelle.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**152**), `HANDLER PARTIEL INDIQUÉ` (**26**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus/stubs restent M. GSV 601/602 sont désormais C au niveau source après correction du vrai contrat 602(u64=1).
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,30 +30,30 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> Périmètre **316 commandes NS2**, 12 tableaux, branche dédiée moteur/vendor. Les statuts fonctionnels restent séparés des stubs/refus ; aucun test PS5 n'est déduit du compteur.
+> Périmètre **316 commandes NS2** des 12 tableaux. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F (fonctionnel source)** : C=150, P=27, C/P=1, M=107, U=25, V=6.
-- **R (traitement renseigné)** : **285/316 (90,2 %)** ont maintenant un traitement explicite. Il ne reste **aucune commande M sans traitement**. Les **31/316 non représentées** sont uniquement les 25 U à ABI insuffisante et 6 variantes V hors version.
+- **F** : **C=152**, P=25, C/P=1, M=107, U=25, V=6.
+- **R** : **285/316 (90,2 %)** ont un traitement renseigné ; aucune M n'est sans traitement. Les 31 restantes sans implémentation/représentation sont 25 U + 6 V.
 
-| Statut fonctionnel | Total | Traitement indiqué | Aucun traitement individuel |
+| Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | 150 | 150 | 0 |
-| P — partielle | 27 | 27 | 0 |
+| C — implémentation source | **152** | 152 | 0 |
+| P — partielle | **25** | 25 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
-| M — non implémenté | 107 | **107** (71 stubs, 12 refus directs, 11 refus parent, 13 refus génériques) | **0** |
+| M — non implémenté | 107 | 107 | 0 |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**Fermeture des 24 dernières M sans handler** : les 11 commandes `VideoEncoderCreatorSession/VideoEncoderSession` sont volontairement inatteignables car GSV `1001/1002` renvoie `ResultNotImplemented` et ne crée aucune session encodeur factice. Les 13 ioctls `/dev/nvhost-prof-dev-gpu` utilisent déjà le fallback NVHOST NS2 : tout node inconnu `/dev/nvhost-*` est ouvert comme `nx2_stub_device`, dont `Ioctl1/2/3` renvoient `NvResult::NotImplemented` sans modifier les sorties. **Ces lignes restent M**.
+**Correction caméra** : Lichii documente l'appel SDK `601()` puis `602(u64 1)`. Le précédent contrôle zéro-input de 602 était trop strict et a été corrigé : `OpenCameraSession` exige maintenant deux mots d'entrée formant `u64 version == 1`, puis retourne une vraie session MOVE avec rollback OOM. Les commandes 601 et 602 passent de P à C au niveau source. **Aucun succès caméra en jeu n'est revendiqué.**
 
-**Travaux fonctionnels déjà présents sur cette branche** : C=150 après qualification source de 101/202/301/305 et raccordement réel des deux retries GPFIFO ; 391/691 restent P ; correctif COPY→MOVE sur 602/1202 ; refus explicites GSV/NVDRV sans faux succès. Prochaine étape : réduire les 28 P/C-P, puis seulement traiter U/V avec preuve ABI/version. Aucun build PS5 ni première frame revendiquée.
+**M déjà fermées déclarativement** : 11 commandes encodeur refusées au parent GSV 1001/1002, 13 profiler via `nx2_stub_device::Stub`, autres stubs/refus explicites conservés. Prochaine cible : P restantes, du contrat le plus simple au plus lourd.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=34, P=18, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=36, P=16, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -107,8 +107,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 498 | Gpu | TryQueryDonatedTransferMemoryUsage | C | HANDLER INDIQUÉ | QueryDonatedTransferMemoryUsage | ABI Ounce exacte: aucune entrée, trois u64 total/used/peak; le cmd 1 conserve le vrai KTransferMemory donné, remote-memory échoue fermé |
 
 **Réconciliation Ounce 21/11** : le SDK reconstruit par fefw appelle `CreateNativeMemoryWithGpukMemHandle` via `Invoke(0x1B7)`, soit TIPC **423** après retrait de `0x10`, et appelle l'enregistrement d'address-space via raw `0x1C2`, soit **434**. Pour **498**, il appelle raw `0x202` sans entrée et lit trois `u64`. Ces observations priment pour le runtime actif sur une simple attribution de nom non documentée; elles ne constituent pas une validation console PS5.
-| 601 | Camera | CreateCameraContext | P | HANDLER PARTIEL INDIQUÉ | InitializeFeatureContext | admission caméra sans état supplémentaire, payload TIPC zéro vérifié avant succès; fonction de contexte encore partielle |
-| 602 | Camera | InitializeCameraContext | P | HANDLER PARTIEL INDIQUÉ | OpenCameraContext | vraie CameraSession MOVE, TIPC zéro validé; descriptor COPY incorrect corrigé, rollback OOM sans leak; sous-session caméra partielle |
+| 601 | Camera | CreateCameraContext | C | HANDLER INDIQUÉ | InitializeFeatureContext | SDK/Lichii : 601() admission caméra, aucun payload/objet retour ; validation TIPC exacte et succès sans état fictif |
+| 602 | Camera | InitializeCameraContext | C | HANDLER INDIQUÉ | OpenCameraSession | SDK/Lichii : 602(u64 version=1), vraie CameraSession MOVE ; forme IPC, ownership et rollback OOM vérifiés |
 | 603 | Camera | DestroyCameraContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 612 | Camera | DestroyOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 613 | Camera | CreateAliasOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |

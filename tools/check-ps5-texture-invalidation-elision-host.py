@@ -105,6 +105,11 @@ struct CountingMutex {
 struct Cache {
     CountingMutex mutex;
     int writes{};
+    int claimed_batches{};
+    void ClaimCpuWrites(std::span<const std::pair<DAddr, std::size_t>> ranges) {
+        assert(!ranges.empty());
+        ++claimed_batches;
+    }
     void WriteMemory(DAddr, u64) { ++writes; }
 };
 struct QueryCache {
@@ -214,6 +219,7 @@ int main() {
     assert(x.texture_cache.mutex.locks == 9);
     std::array<std::pair<DAddr, std::size_t>, 0> empty{};
     x.InnerInvalidation(empty);
+    assert(x.buffer_cache.claimed_batches == 4); // only the four GPU-owned batches
     assert(x.texture_cache.mutex.locks == 9 && x.buffer_cache.writes == 6);
     assert(x.buffer_cache.mutex.locks == 5);
 }

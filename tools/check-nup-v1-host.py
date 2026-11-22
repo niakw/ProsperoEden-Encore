@@ -46,10 +46,13 @@ def check(path: Path) -> dict:
         toc_offset, toc_size = struct.unpack_from("<QQ", header, 8)
         blob_offset, announced_size = struct.unpack_from("<QQ", header, 0x38)
         package_count, flags = struct.unpack_from("<II", header, 0x48)
-        require(header_size == 0x80 and version == 1, "unsupported header revision")
-        require(toc_offset == header_size, "wrong TOC offset")
-        require(0 < toc_size <= MAX_TOC and toc_size % 16 == 0, "invalid TOC size")
-        require(blob_offset % 16 == 0 and blob_offset >= toc_offset + toc_size,
+        require(0x80 <= header_size <= total and version == 1,
+                "unsupported header revision")
+        require(header_size <= toc_offset <= total and
+                0 < toc_size <= MAX_TOC and toc_size <= total - toc_offset,
+                "invalid TOC dimensions")
+        require(blob_offset % 16 == 0 and blob_offset >= toc_offset and
+                toc_size <= blob_offset - toc_offset,
                 "invalid blob offset")
         require(announced_size == total and blob_offset <= total, "invalid file size")
         require(0 < package_count <= 65536 and flags == 0, "invalid package count/flags")

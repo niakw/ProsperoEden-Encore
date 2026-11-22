@@ -241,7 +241,7 @@ def main()->int:
     chat = text.split(
         'void IGraphicsSupervisor::OpenChatSession(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'packet[0] != 16 + 1202 || packet[1] != 0' in chat
-        feature_admission = text.split(
+    feature_admission = text.split(
         'void IGraphicsSupervisor::InitializeFeatureContext(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
     assert 'command == 601 || command == 1201' in feature_admission
     assert 'packet[0] == 16 + command && packet[1] == 0' in feature_admission

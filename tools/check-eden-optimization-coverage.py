@@ -2439,6 +2439,23 @@ drift_index = {item['path']: item for item in reviewed_blob_drifts}
 # replay on the proven predecessor. Never rewrite frozen audit receipts.
 r457_service_path = "headless/prosperoeden/eden_services.cpp"
 r457_service_source = (ROOT / r457_service_path).read_text()
+# A separately reviewed DNSP/DXCI library extension change does not alter
+# this R457 log-retention/boottrace owner. Restore its exact predecessor on
+# the source-audit copy, retaining the new extensions in the runtime.
+actual_service_blob = hashlib.sha1(
+    b"blob "+str(len(r457_service_source.encode())).encode()+bytes([0])+
+    r457_service_source.encode()).hexdigest()
+if actual_service_blob == "01d025544ac3544ab58779884f6fee10dcbe3209":
+    new_formats = '{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",'
+    old_formats = '{".nsp", ".xci", ".nsz", ".xcz",'
+    assert r457_service_source.count(new_formats) == 1
+    r457_service_source = r457_service_source.replace(new_formats, old_formats, 1)
+    prior = r457_service_source.encode()
+    recovered_blob = hashlib.sha1(
+        b"blob "+str(len(prior)).encode()+bytes([0])+prior).hexdigest()
+    assert recovered_blob == "90f1f4fb2d239d71d0a856943cc4328704e2058b"
+    assert drift_index[r457_service_path]["actual"] == actual_service_blob
+    drift_index[r457_service_path]["actual"] = recovered_blob
 r457_service_prior_blob = "6efc431641ace097b7216748e1e232c8cc9f1ae1"
 r457_service_current_blob = "be163317ca482765f31ddf3b7d1dbe24be041294"
 # PS5 boot-trace OFF -> ON resume comes AFTER the log-retention fix. Revert

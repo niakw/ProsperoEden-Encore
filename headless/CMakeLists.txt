@@ -4877,3 +4877,45 @@ if(PS5_NATIVE)
     endif()
     target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_AM_STRUCTURE_ROOT}")
 endif()
+
+
+# Lichii NX2 service tables outside AM: select real shared PS5 C++ units.
+# NS1 handlers stay functional; typed placeholders are guarded by the
+# reviewed NS2 caller predicate in ServiceFrameworkBase::StubAllowed.
+if(PS5_NATIVE AND EDEN_SHARED_NS2_AM)
+    set(EDEN_NS2_SERVICE_PARITY_ROOT
+        "${PORT_ROOT}/vendor/encore-active/ns2-runtime/hle")
+    get_target_property(eden_ns2_service_parity_sources core SOURCES)
+    foreach(eden_ns2_service_relative IN ITEMS
+            "caps/caps_u.cpp"
+            "caps/caps_su.cpp"
+            "set/settings_server.cpp"
+            "mii/mii.cpp"
+            "lm/lm.cpp"
+            "audio/audio_device.cpp"
+            "audio/audio_renderer_manager.cpp"
+            "nifm/nifm.cpp")
+        set(eden_ns2_service_rel "hle/service/${eden_ns2_service_relative}")
+        set(eden_ns2_service_full
+            "${EDEN_NS2_SERVICE_PARITY_ROOT}/core/${eden_ns2_service_rel}")
+        if(NOT EXISTS "${eden_ns2_service_full}")
+            message(FATAL_ERROR "Missing NS2 service owner ${eden_ns2_service_relative}")
+        endif()
+        set(eden_ns2_service_owner "")
+        foreach(eden_ns2_service_unit IN LISTS eden_ns2_service_parity_sources)
+            if(eden_ns2_service_unit MATCHES
+                    "(^|/)${eden_ns2_service_rel}$")
+                list(APPEND eden_ns2_service_owner "${eden_ns2_service_unit}")
+            endif()
+        endforeach()
+        list(LENGTH eden_ns2_service_owner eden_ns2_service_count)
+        if(NOT eden_ns2_service_count EQUAL 1)
+            message(FATAL_ERROR
+                "NS2 service ${eden_ns2_service_relative} has ${eden_ns2_service_count} selected owners")
+        endif()
+        list(REMOVE_ITEM eden_ns2_service_parity_sources ${eden_ns2_service_owner})
+        list(APPEND eden_ns2_service_parity_sources "${eden_ns2_service_full}")
+    endforeach()
+    set_property(TARGET core PROPERTY SOURCES "${eden_ns2_service_parity_sources}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_NS2_SERVICE_PARITY_ROOT}")
+endif()

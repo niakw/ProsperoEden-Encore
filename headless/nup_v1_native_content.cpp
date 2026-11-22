@@ -7,10 +7,53 @@
 #include <utility>
 
 #include "core/file_sys/common_funcs.h"
+#include "core/file_sys/program_metadata.h"
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/vfs/vfs.h"
 
 namespace Eden::NupV1::Native {
+namespace {
+
+struct EmbeddedSwitch2Program {
+    FileSys::VirtualDir exefs;
+    FileSys::VirtualDir romfs;
+};
+
+// Lichii SelectProgram: a standalone Switch 1 update NUP may carry a Switch
+// 2 Edition as program1/exefs, even when the ordinary ExeFS is absent.
+// Never infer this from filenames: the embedded NPDM must identify the exact
+// NS2 program-index-1 counterpart of the packaged NS1 update.
+std::optional<EmbeddedSwitch2Program> FindEmbeddedSwitch2Program(const Mount& mount) {
+    const auto& packages = mount.Packages();
+    std::optional<std::size_t> newest;
+    for (std::size_t i = 0; i < packages.size(); ++i) {
+        const auto& p = packages[i];
+        if (p.kind == 0) return std::nullopt; // only the standalone-update form
+        if (p.kind == 1 && p.standalone_update &&
+            (p.title_id >> 56) == 0x01 &&
+            (!newest || p.version > packages[*newest].version))
+            newest = i;
+    }
+    if (!newest) return std::nullopt;
+    const auto root = mount.PackageRoot(*newest);
+    const auto program1 = root ? root->GetSubdirectory("program1") : FileSys::VirtualDir{};
+    const auto exefs = program1 ? program1->GetSubdirectory("exefs") : FileSys::VirtualDir{};
+    const auto npdm = exefs ? exefs->GetFile("main.npdm") : FileSys::VirtualFile{};
+    constexpr std::size_t MaxNpdmBytes = 4U * 1024U * 1024U;
+    if (!exefs || !exefs->GetFile("main") || !npdm ||
+        npdm->GetSize() == 0 || npdm->GetSize() > MaxNpdmBytes)
+        return std::nullopt;
+    FileSys::ProgramMetadata metadata;
+    constexpr std::uint64_t LowTitleMask = 0x00FFFFFFFFFFFFFFULL;
+    const auto expected_id = 0x0400000000000000ULL |
+        ((FileSys::GetBaseTitleID(packages[*newest].title_id) + 1) & LowTitleMask);
+    if (metadata.Load(npdm) != Loader::ResultStatus::Success ||
+        !metadata.IsSwitch2() || metadata.GetTitleID() != expected_id)
+        return std::nullopt;
+    return EmbeddedSwitch2Program{
+        exefs, program1->GetSubdirectory("romfs")};
+}
+} // namespace
 
 ContentSet::ContentSet(std::shared_ptr<Mount> mount,
                        std::optional<std::uint64_t> caller_program_id,
@@ -85,12 +128,24 @@ ContentSet::ContentSet(std::shared_ptr<Mount> mount,
 }
 
 FileSys::VirtualDir ContentSet::ExeFS() const {
-    return mount_ ? mount_->Effective(ContentView::ExeFS) : FileSys::VirtualDir{};
+    if (!mount_) return {};
+    const auto regular = mount_->Effective(ContentView::ExeFS);
+    if (regular && regular->GetFile("main") && regular->GetFile("main.npdm"))
+        return regular;
+    const auto embedded = FindEmbeddedSwitch2Program(*mount_);
+    return embedded ? embedded->exefs : regular;
 }
 
 FileSys::VirtualFile ContentSet::CreateRomFS() const {
     if (!mount_) return {};
+    const auto regular_exefs = mount_->Effective(ContentView::ExeFS);
     auto directory = mount_->Effective(ContentView::RomFS);
+    if (!regular_exefs || !regular_exefs->GetFile("main") ||
+        !regular_exefs->GetFile("main.npdm")) {
+        if (const auto embedded = FindEmbeddedSwitch2Program(*mount_); embedded) {
+            if (embedded->romfs) directory = embedded->romfs;
+        }
+    }
     return directory ? FileSys::CreateRomFS(std::move(directory), nullptr)
                      : FileSys::VirtualFile{};
 }

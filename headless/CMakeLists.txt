@@ -4338,30 +4338,42 @@ if(EDEN_SHARED_NS2_SPIRV_COMPILER)
         message(FATAL_ERROR "Missing reviewed native QMD3 indirect CBUF compiler")
     endif()
     get_target_property(eden_ns2_shader_sources shader_recompiler SOURCES)
+    # NS1 has already selected the reviewed maintained shader owner above.
+    # Replace that exact owner (not the now-retired pinned relative path),
+    # retaining one compiled SPIR-V translation unit in the shared PS5 build.
+    set(eden_ns2_prior_eden_ns2_spirv_source_idx "${EDEN_NS1_SAMPLE_MASK_ROOT}/backend/spirv/spirv_emit_context.cpp")
     list(FIND eden_ns2_shader_sources
-        "backend/spirv/spirv_emit_context.cpp" eden_ns2_spirv_source_idx)
+        "${eden_ns2_prior_eden_ns2_spirv_source_idx}" eden_ns2_spirv_source_idx)
     if(eden_ns2_spirv_source_idx LESS 0)
         message(FATAL_ERROR "Pinned SPIR-V emitter owner changed: audit QMD3 CBUF selection")
     endif()
-    list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/spirv_emit_context.cpp")
+    list(REMOVE_ITEM eden_ns2_shader_sources "${eden_ns2_prior_eden_ns2_spirv_source_idx}")
     list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_SPIRV}")
     # Native direct-bank LDC also requires a pre-access bounds check. Replace
     # this FULL companion translation unit for both authenticated guest modes.
+    # NS1 has already selected the reviewed maintained shader owner above.
+    # Replace that exact owner (not the now-retired pinned relative path),
+    # retaining one compiled SPIR-V translation unit in the shared PS5 build.
+    set(eden_ns2_prior_eden_ns2_cbuf_direct_source_idx "${EDEN_NS1_SAMPLE_MASK_ROOT}/backend/spirv/emit_spirv_context_get_set.cpp")
     list(FIND eden_ns2_shader_sources
-        "backend/spirv/emit_spirv_context_get_set.cpp" eden_ns2_cbuf_direct_source_idx)
+        "${eden_ns2_prior_eden_ns2_cbuf_direct_source_idx}" eden_ns2_cbuf_direct_source_idx)
     if(eden_ns2_cbuf_direct_source_idx LESS 0)
         message(FATAL_ERROR "Pinned direct CBUF emitter owner changed: audit QMD3 selection")
     endif()
-    list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_context_get_set.cpp")
+    list(REMOVE_ITEM eden_ns2_shader_sources "${eden_ns2_prior_eden_ns2_cbuf_direct_source_idx}")
     list(APPEND eden_ns2_shader_sources "${EDEN_NS2_QMD_CBUF_DIRECT_SPIRV}")
     # Exactly one shared SPIR-V image emitter; remove the pinned owner
     # rather than adding a second translation unit or per-title shader.
+    # NS1 has already selected the reviewed maintained shader owner above.
+    # Replace that exact owner (not the now-retired pinned relative path),
+    # retaining one compiled SPIR-V translation unit in the shared PS5 build.
+    set(eden_ns2_prior_eden_ns2_image_source_idx "${EDEN_NS1_IMAGE_DESCRIPTOR_SOURCE}")
     list(FIND eden_ns2_shader_sources
-        "backend/spirv/emit_spirv_image.cpp" eden_ns2_image_source_idx)
+        "${eden_ns2_prior_eden_ns2_image_source_idx}" eden_ns2_image_source_idx)
     if(eden_ns2_image_source_idx LESS 0)
         message(FATAL_ERROR "Pinned SPIR-V image emitter owner changed")
     endif()
-    list(REMOVE_ITEM eden_ns2_shader_sources "backend/spirv/emit_spirv_image.cpp")
+    list(REMOVE_ITEM eden_ns2_shader_sources "${eden_ns2_prior_eden_ns2_image_source_idx}")
     list(APPEND eden_ns2_shader_sources "${EDEN_NS2_SPIRV_IMAGE_ARRAY}")
     set_property(TARGET shader_recompiler PROPERTY SOURCES "${eden_ns2_shader_sources}")
     target_sources(video_core PRIVATE "${EDEN_NS2_VULKAN_SHADER_BRIDGE}")

@@ -15,10 +15,12 @@ OWNER=ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/ser
 source=OWNER.read_text()
 method=source.split('IGpuWorker::~IGpuWorker() {',1)[1].split(
     'Result IGpuWorker::HandleSyncRequest(',1)[0]
-start='    if (!m_dense_regions.empty() || !m_mappings.Mappings().empty() ||'
-end='    for (const auto& [key, mapping] : m_mappings.Mappings()) {'
+start='    if (system.IsPoweredOn() && !system.IsShuttingDown() &&'
+end='        system.GPU().WaitForIdle();'
 assert method.count(start)==method.count(end)==1
-policy=method[method.index(start):method.index(end)]
+policy=method[method.index(start):method.index(end)+len(end)]
+assert 'm_dense_regions.empty()' in policy
+assert 'm_mappings.Mappings().empty()' in policy
 assert 'm_memory.empty()' in policy
 assert 'system.GPU().WaitForIdle();' in policy
 assert method.index('WaitForIdle();') < method.index('as->ReleaseNativeSparse4K(')
@@ -41,7 +43,11 @@ struct Graphics {
 };
 struct System {
     Graphics graphics;
+    bool powered_on{true};
+    bool shutting_down{};
     Graphics& GPU() {return graphics;}
+    bool IsPoweredOn() const {return powered_on;}
+    bool IsShuttingDown() const {return shutting_down;}
 };
 struct Ledger {
     std::map<unsigned,unsigned> mappings;
@@ -57,15 +63,20 @@ __POLICY__
     }
 };
 int main() {
+    for (unsigned powered=0;powered<2;++powered)
+    for (unsigned stopping=0;stopping<2;++stopping)
     for (unsigned dense=0;dense<2;++dense)
     for (unsigned mapped=0;mapped<2;++mapped)
     for (unsigned memory=0;memory<2;++memory) {
         Worker worker;
+        worker.system.powered_on=powered != 0;
+        worker.system.shutting_down=stopping != 0;
         if(dense)worker.m_dense_regions.emplace(2,1);
         if(mapped)worker.m_mappings.mappings.emplace(3,1);
         if(memory)worker.m_memory.push_back(4);
         worker.Destroy();
-        assert(worker.system.graphics.waits==(dense||mapped||memory ? 1U:0U));
+        assert(worker.system.graphics.waits==(
+            powered && !stopping && (dense||mapped||memory) ? 1U:0U));
     }
 }
 '''.replace('__POLICY__',policy)
@@ -87,4 +98,4 @@ with tempfile.TemporaryDirectory(prefix='encore-worker-drain-') as temp:
             test=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=20)
             assert test.returncode==0,(compiler,test.stderr[-2000:])
             print('P2_7_GPU_WORKER_DRAIN_ALL_OWNERS_PASS',Path(compiler).name,
-                  f'O{opt}', 'cases=8','NS1=untouched',flush=True)
+                  f'O{opt}', 'cases=32','powered_shutdown_guard=1','NS1=untouched',flush=True)

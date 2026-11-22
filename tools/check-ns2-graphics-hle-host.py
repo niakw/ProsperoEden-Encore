@@ -220,6 +220,22 @@ def main()->int:
     assert '{101, &IGraphicsSupervisor::CompleteBootstrap' in text
     assert '{301, &IGraphicsSupervisor::InitializeDisplayContext' in text
     assert '{305, &IGraphicsSupervisor::OpenDisplaySession' in text
+    # GSV child sessions 602/1202 use true MOVE descriptors and never leak on OOM.
+    for command, method in ((602, 'OpenCameraSession'), (1202, 'OpenChatSession')):
+        body = text.split(
+            f'void IGraphicsSupervisor::{method}(HLERequestContext& ctx) {{', 1)[1].split('\n}', 1)[0]
+        assert f'packet[0] != 16 + {command} || packet[1] != 0' in body
+        assert 'IPC::ResponseBuilder rb{ctx, 2, 1, 0};' not in body
+        assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in body
+        assert 'ctx.AddMoveObject(client);' in body
+        assert 'client->Close(system.Kernel());' in body
+        assert body.index('ctx.AddMoveObject(client);') < body.index(
+            'IPC::ResponseBuilder rb{ctx, 2, 0, 1};')
+    feature_admission = text.split(
+        'void IGraphicsSupervisor::InitializeFeatureContext(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    assert 'command == 601 || command == 1201' in feature_admission
+    assert 'packet[0] == 16 + command && packet[1] == 0' in feature_admission
+    assert 'ResultInvalidCombination.raw' in feature_admission
     # S2 control-GPU pause and scheduling options must fail closed exactly.
     ctrl_gpu = (ROOT / 'vendor/encore-active/ns2-runtime/nvdrv/core/hle/'
                 'service/nvdrv/devices/nvhost_ctrl_gpu.cpp').read_text()

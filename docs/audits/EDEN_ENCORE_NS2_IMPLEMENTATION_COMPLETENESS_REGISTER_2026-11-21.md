@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `0abc6a74953394b8949a12b0c5550e673281bed1` |
+| Vendor gitlink sélectionné sur cette branche | `c4cd96636b6110a606e8aeb5834d93c64edc89b9` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -44,6 +44,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **261** | **55** |
+
+**Correctif critique de réponse IPC GameChat/caméra** (vendor `c4cd9663`) : `602` et `1202` retournaient une vraie session kernel via `ctx.AddMoveObject` tout en déclarant à tort `ResponseBuilder{ctx,2,1,0}` (COPY). Ils déclarent maintenant `{ctx,2,0,1}` (MOVE), publient le handle avant de construire la réponse, valident la forme TIPC et libèrent la référence créatrice si `AddMoveObject` manque de mémoire. `601`/`1201` refusent un payload invalide au lieu de réussir toujours. **Statut F conservé P** : la fonctionnalité des sessions enfants n'est pas entièrement qualifiée. Les compteurs restent C=150, P=27, C/P=1, M=107, U=25, V=6 et R=261/316. Pas de validation console.
 
 **Raccordement GPU à forte valeur** : `NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO_RETRY` H:0x19 reprend `SubmitGPFIFOBase1(..., kickoff=false)` comme H:0x08, avec validation direction/groupe/cmd pour l'ioctl variable ; `NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO2_RETRY` H:0x1c reprend `SubmitGPFIFOBase2` comme H:0x1b via Ioctl2 (raw `0xC018481C`). Les deux routes gardent les contrôles réels d'adresse invitée, de droits de l'owner FD, de taille/OOM et de publication des fences. Contrats : [SwitchBrew NV services](https://switchbrew.org/wiki/NV_services). **Ce branchement ne démontre pas un GPU submit réussi sur PS5.**
 
@@ -107,8 +109,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 498 | Gpu | TryQueryDonatedTransferMemoryUsage | C | HANDLER INDIQUÉ | QueryDonatedTransferMemoryUsage | ABI Ounce exacte: aucune entrée, trois u64 total/used/peak; le cmd 1 conserve le vrai KTransferMemory donné, remote-memory échoue fermé |
 
 **Réconciliation Ounce 21/11** : le SDK reconstruit par fefw appelle `CreateNativeMemoryWithGpukMemHandle` via `Invoke(0x1B7)`, soit TIPC **423** après retrait de `0x10`, et appelle l'enregistrement d'address-space via raw `0x1C2`, soit **434**. Pour **498**, il appelle raw `0x202` sans entrée et lit trois `u64`. Ces observations priment pour le runtime actif sur une simple attribution de nom non documentée; elles ne constituent pas une validation console PS5.
-| 601 | Camera | CreateCameraContext | P | HANDLER PARTIEL INDIQUÉ | InitializeFeatureContext | ID actif mais create/init fusionné |
-| 602 | Camera | InitializeCameraContext | P | HANDLER PARTIEL INDIQUÉ | OpenCameraContext | session partielle; contrat à aligner |
+| 601 | Camera | CreateCameraContext | P | HANDLER PARTIEL INDIQUÉ | InitializeFeatureContext | admission caméra sans état supplémentaire, payload TIPC zéro vérifié avant succès; fonction de contexte encore partielle |
+| 602 | Camera | InitializeCameraContext | P | HANDLER PARTIEL INDIQUÉ | OpenCameraContext | vraie CameraSession MOVE, TIPC zéro validé; descriptor COPY incorrect corrigé, rollback OOM sans leak; sous-session caméra partielle |
 | 603 | Camera | DestroyCameraContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 612 | Camera | DestroyOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 613 | Camera | CreateAliasOutputBufferPool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
@@ -179,8 +181,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1111 | GraphicsFrame | SetGraphicsFrameLengthMode | C | HANDLER INDIQUÉ | SetGraphicsFrameLengthMode | valeurs bornées, host qualifié |
 | 1112 | GraphicsFrame | SetGraphicsFrameRestartMode | C | HANDLER INDIQUÉ | SetGraphicsFrameRestartMode | valeurs bornées, host qualifié |
 | 1113 | GraphicsFrame | SetGraphicsFrameGpuTimesliceMode | C | HANDLER INDIQUÉ | SetGraphicsFrameGpuTimesliceMode | valeurs bornées, host qualifié |
-| 1201 | Chat | CreateChatContext | P | HANDLER PARTIEL INDIQUÉ | InitializeChatContext | ID actif, create/init fusionné |
-| 1202 | Chat | InitializeChatContext | P | HANDLER PARTIEL INDIQUÉ | OpenChatSession | session réelle, nom différent |
+| 1201 | Chat | CreateChatContext | P | HANDLER PARTIEL INDIQUÉ | InitializeChatContext | admission GameChat sans état supplémentaire, TIPC zéro validé avant succès; service enfant encore partiel |
+| 1202 | Chat | InitializeChatContext | P | HANDLER PARTIEL INDIQUÉ | OpenChatSession | vraie GameChatSession MOVE, TIPC zéro validé; descriptor COPY incorrect corrigé, rollback OOM sans leak; sous-session Chat partielle |
 | 1203 | Chat | DestroyChatContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1211 | Chat | CreateImagePool | P | HANDLER PARTIEL INDIQUÉ | CreateChatImagePool | actif |
 | 1212 | Chat | DestroyImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyChatImagePool | actif |

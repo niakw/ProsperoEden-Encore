@@ -33,8 +33,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
-| **NOOP — No-op documenté** | 116 | 0 | **116** |
-| **NULL — Handler NULL** | 2 148 | 0 | **2 148** |
+| **NOOP — No-op documenté** | 118 | 0 | **118** |
+| **NULL — Handler NULL** | 2 146 | 0 | **2 146** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -447,8 +447,8 @@ pie showData
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
-    "No-op documenté" : 116
-    "Handler NULL" : 2148
+    "No-op documenté" : 118
+    "Handler NULL" : 2146
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -4625,8 +4625,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Location Resolver services | `2` | `UnregisterAllAddOnContentPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
 | Location Resolver services | `3` | `RefreshApplicationAddOnContent` | 9.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
 | Location Resolver services | `4` | `UnregisterApplicationAddOnContent` | 9.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
-| Content Manager services | `0` | `CreateContentStorage` | — | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 0, handler explicitement nul ; source seulement) | 2026-11-22 |
-| Content Manager services | `1` | `CreateContentMetaDatabase` | — | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 1, handler explicitement nul ; source seulement) | 2026-11-22 |
+| Content Manager services | `0` | `CreateContentStorage` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/400974b505e47e85952469aeceb959bbbee41948/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
+| Content Manager services | `1` | `CreateContentMetaDatabase` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/400974b505e47e85952469aeceb959bbbee41948/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `2` | `VerifyContentStorage` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `3` | `VerifyContentMetaDatabase` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `4` | `OpenContentStorage` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 4, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |

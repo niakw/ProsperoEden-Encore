@@ -1968,6 +1968,33 @@ if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
         actual_blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
         assert actual_blob == expected_blob, ('Integrated source blob drift', relative, actual_blob)
 
+# Distinct DNSP/DXCI plaintext NCA owners are present only after F07.
+# Seal exact active blobs and the single native CMake selection.
+post_f07_plaintext_nca_present = {
+    "eden-core/src/core/file_sys/content_archive.cpp",
+    "eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp",
+} & set(physical_all)
+actual_vendor = subprocess.check_output(
+    ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+if actual_vendor == "f4f5d53596879960b19a3701bbd2272ef1f3c634":
+    assert post_f07_plaintext_nca_present == {
+        "eden-core/src/core/file_sys/content_archive.cpp",
+        "eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp",
+    }
+    for relative, expected_blob in {
+        "eden-core/src/core/file_sys/content_archive.cpp":
+            "d31f75bf354f3ce5af1ac2f1ac170586503b1877",
+        "eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp":
+            "49841fbbde5bd086f23aba601c80b19176ed8ae4",
+    }.items():
+        raw = (active/relative).read_bytes()
+        actual_blob = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual_blob == expected_blob, ("Decrypted NCA source drift", relative)
+    assert "foreach(eden_plaintext_content_relative IN ITEMS" in (
+        root/"headless/CMakeLists.txt").read_text()
+else:
+    assert not post_f07_plaintext_nca_present
+
 physical = [p for p in physical_all
             if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | merged_owner_present | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
@@ -1983,7 +2010,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | post_f07_thread_worker_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present | post_f07_plaintext_nca_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

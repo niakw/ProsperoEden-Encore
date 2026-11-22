@@ -4894,7 +4894,8 @@ if(PS5_NATIVE AND EDEN_SHARED_NS2_AM)
             "lm/lm.cpp"
             "audio/audio_device.cpp"
             "audio/audio_renderer_manager.cpp"
-            "nifm/nifm.cpp")
+            "nifm/nifm.cpp"
+            "acc/acc.cpp")
         set(eden_ns2_service_rel "hle/service/${eden_ns2_service_relative}")
         set(eden_ns2_service_full
             "${EDEN_NS2_SERVICE_PARITY_ROOT}/core/${eden_ns2_service_rel}")

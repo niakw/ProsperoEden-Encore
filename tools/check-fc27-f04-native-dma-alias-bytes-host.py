@@ -29,7 +29,10 @@ def section(text, begin, end):
 
 coalesce = section(dma, "constexpr bool CanCoalescePitchDma(", "// Remapped DMA lengths")
 assert "bool CopyPitchDmaPlain(" in coalesce
-assert "bool DmaTiledSoftwareOverlap(" in coalesce
+assert "bool DmaSoftwareOverlap(" in coalesce
+assert "PitchDmaPhysicalOverlap(" in coalesce
+assert "if (!collect(source, src_pitch, src_row_bytes, first)" in coalesce
+assert "return true; // An unknown mapping must not masquerade as disjoint." in coalesce
 launch = section(dma, "void MaxwellDMA::Launch() {", "\nbool MaxwellDMA::CopyBlockLinearRemap()")
 assert "if (!CopyPitchDmaPlain(memory_manager, regs.offset_in, regs.offset_out," in launch
 assert "memory.CopyBlock(destination, source," in coalesce

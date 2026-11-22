@@ -216,7 +216,7 @@ for previous, reviewed in REVIEWED_TILED_SOFTWARE_GUARDS:
 MAXWELL_METHOD_BOUNDS_RECEIPT = [
     ("void MaxwellDMA::ConsumeSinkImpl(Core::System& system) {\n    for (auto [method, value] : method_sink) {\n        regs.reg_array[method] = value;\n    }\n    method_sink.clear();\n}", "void MaxwellDMA::ConsumeSinkImpl(Core::System& system) {\n    for (auto [method, value] : method_sink) {\n        if (method >= NUM_REGS) {\n            ASSERT_MSG(false, \"Invalid deferred MaxwellDMA register\");\n            continue;\n        }\n        regs.reg_array[method] = value;\n    }\n    method_sink.clear();\n}"),
     ("    ASSERT_MSG(method < NUM_REGS, \"Invalid MaxwellDMA register\");\n\n    regs.reg_array[method] = method_argument;", "    if (method >= NUM_REGS) {\n        ASSERT_MSG(false, \"Invalid MaxwellDMA register\");\n        return;\n    }\n\n    regs.reg_array[method] = method_argument;"),
-] 
+]
 for old, reviewed in MAXWELL_METHOD_BOUNDS_RECEIPT:
     assert expected.count(old) == 1, "Pinned DMA register sink drift"
     assert native.count(reviewed) == 1, "Reviewed native DMA guard drift"

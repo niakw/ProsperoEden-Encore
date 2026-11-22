@@ -48,7 +48,8 @@ assert 'image.flags |= ImageFlagBits::Remapped;' in unmap
 assert 'image.flags |= ImageFlagBits::CpuModified;' in write
 assert 'CopyImage(image_id, aliased->id, aliased->copies);' in alias
 assert 'runtime.InsertUploadMemoryBarrier();' in methods
-assert 'memory_manager.CopyBlock(regs.offset_out, regs.offset_in' in pitch
+assert "memory.CopyBlock(destination, source," in coalesce
+assert "PitchDmaPhysicalOverlap(" in coalesce
 
 # This existing fixture has already compiled both selected upload methods at
 # O0 and O2; retain its mocks and assertions to catch fixture drift.

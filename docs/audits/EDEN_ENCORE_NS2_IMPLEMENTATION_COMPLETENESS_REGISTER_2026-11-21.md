@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `f8d3b79defe1b38fbbf514f60884ef32e8d21f3e` |
+| Vendor gitlink sélectionné sur cette branche | `952fefbc0bb7c052e14c0a5ffc9b8efa2e1c11ad` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : `Statut fonctionnel (F)` = comportement `C/P/M/U/V` ; `Traitement déclaré (R)` = représentation par ID : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (30), `STUB NOMMÉ` (**68**, dont 66 dans ce lot), `REFUS EXPLICITE` (6), `AUCUN HANDLER INDIQUÉ` (**37**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un refus peut être assuré par le fallback générique, pas nécessairement un handler individuel ; seule la colonne R indique le type de représentation, sans valider le build ou la console.
+**Colonnes séparées pour chaque commande (§1–§12)** : `Statut fonctionnel (F)` = comportement `C/P/M/U/V` ; `Traitement déclaré (R)` : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (**32**), `STUB NOMMÉ` (**67**, dont 65 dans ce lot), `REFUS EXPLICITE` (6), `AUCUN HANDLER INDIQUÉ` (**36**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un refus peut être assuré par un fallback générique, et une entrée enregistrée ne démontre pas l'exécution sur PS5.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,28 +30,24 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> **Périmètre** : 316 commandes des 12 tableaux de ce registre, sur la branche `opt/ns2-switchbrew-unimplemented-20261122` issue de `main` moteur `7d05c7c7`, avec vendor C++ `f8d3b79d` et gitlink moteur `451ce07a` à la date de ce lot. Ce n'est ni SwitchBrew exhaustif ni une validation PS5.
+> **Périmètre** : 316 commandes des 12 tableaux, branche `opt/ns2-switchbrew-unimplemented-20261122` issue de `main` moteur `7d05c7c7`, vendor actif `952fefbc`, gitlink moteur `fb316026` lors du second lot. Ni inventaire exhaustif du firmware ni preuve console.
 
-**Deux mesures indépendantes :**
+- **F — couverture fonctionnelle** : C=144, P=31, C/P=1, M=109, U=25, V=6. **65 nouveaux stubs restent M** ; `391` et `691` sont passés de M à **P**, car le C++ calcule réellement taille et alignement des formats connus, mais la couverture ABI/formats complète n'est pas prouvée.
+- **R — représentation** : **249/316 (78,8 %) handlers, stubs ou refus indiqués** ; **67/316 (21,2 %) aucun handler indiqué** : 36 M, 25 U et 6 V. Un stub n'est jamais une implémentation.
 
-- **F — couverture fonctionnelle** : C=144, P=29, C/P=1, M=111, U=25, V=6. Les 66 nouveaux stubs **restent M** ; aucune fonction supplémentaire n'est qualifiée fonctionnelle par cet ajout.
-- **R — représentation par commande** : **248/316 (78,5 %) avec handler, stub ou refus indiqué** ; **68/316 (21,5 %) sans traitement renseigné** : 37 M, 25 U, 6 V. Les 66 nouveaux ID sont branchés à `IGraphicsSupervisor::UnavailableDocumentedFeature` dans le C++ natif sélectionné par le gitlink, qui retourne `Kernel::ResultNotImplemented` sans lire de payload inconnu ni créer d'objet.
-
-| Statut fonctionnel | Total | Handler/stub/refus indiqué | Aucun handler indiqué |
+| Statut fonctionnel | Total | Traitement indiqué | Aucun handler indiqué |
 | --- | ---: | ---: | ---: |
 | C — implémentation source | 144 | 144 | 0 |
-| P — partielle | 29 | 29 | 0 |
+| P — partielle | 31 | 31 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
-| M — non implémenté | 111 | **74** (68 stubs, 6 refus) | **37** |
+| M — non implémenté | 109 | **73** (67 stubs, 6 refus) | **36** |
 | U — contrat inconnu | 25 | 0 | 25 |
 | V — variante hors version | 6 | 0 | 6 |
-| **Total** | **316** | **248** | **68** |
+| **Total** | **316** | **249** | **67** |
 
-**Lot 66 stubs GSV :** NativeMemory debug (1), Syncpt debug (5), GPU debugger (1), caméra (44), décodeur (4), encodeur (6), Chat (1), Adraw (4). Les 2 stubs GSV encodeur `1001/1002` préexistants conservent leur propre handler `UnavailableVideoEncoder`. Les 6 refus GPU/TSG restent distincts. L'état `STUB NOMMÉ` ne vaut jamais succès de l'opération ni qualité de jeu.
+**Lots sur cette branche :** 66 handlers fail-closed ajoutés initialement dans GSV (`UnavailableDocumentedFeature`, erreur `NotImplemented`, aucun faux objet/handle créé) ; `691` ensuite remplacé par un vrai calcul borné, soit **65 nouveaux stubs encore présents**. Les 2 stubs encodeur GSV `1001/1002` préexistaient ; les 6 refus GPU/TSG restent explicites. Pour `391` et `691`, recoupement ciblé avec [Lichii nx2_gsv.h](https://github.com/zortos293/Lichii/blob/nx2/src/core/hle/service/nx2_gsv.h) : protocole 16 préférences + count, réponse size/alignment ; ce n'est pas un certificat console ou une garantie de tous les formats.
 
-**À faire dans ce registre** : qualifier les 37 `M` restants ; vérifier/achever les 30 `P` ; rechercher l'ABI des 25 `U` uniquement à partir de preuves ; garder les 6 `V` conditionnés au firmware. **CI hôte/build PS5/console non encore qualifiés pour ce lot.**
-
-**Priorité runtime** : ne pas dissimuler le blocage P0 première soumission GPFIFO et première frame invitée derrière un taux de stubs plus élevé.
+**Restent à traiter** : 36 M sans handler, 25 U sans ABI suffisante, 6 V ciblant FW19, 32 P/C/P à confirmer/compléter. Ne pas déclarer ces catégories résolues par la seule présence d'une ligne dans le dispatch. **Pas encore de CI hôte/build PS5/console vert vérifié pour ce lot.**
 
 ---
 
@@ -89,7 +85,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 321 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
 | 327 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
 | 361 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
-| 391 | Display | CalculateRequiredBufferMemory | M | AUCUN HANDLER INDIQUÉ | — | pas de handler sélectionné |
+| 391 | Display | CalculateRequiredBufferMemory | P | HANDLER PARTIEL INDIQUÉ | CalculateNativeImageRequirements | requête 16 u32 + count; taille/alignment du layout natif borné via helper actif; formats non reconnus refusés; compatibilité ABI à qualifier (Lichii nx2_gsv.h) |
 | 401 | Gpu | CreateGpuContext | C | HANDLER INDIQUÉ | InitializeGpuContext | actif; création état GPU |
 | 402 | Gpu | InitializeGpuContext | C | HANDLER INDIQUÉ | ActivateGpuContext | actif |
 | 403 | Gpu | DestroyGpuContext | C | HANDLER INDIQUÉ | DestroyGpuContext | actif |
@@ -156,7 +152,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 665 | Camera | GetAccessAllowed | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 666 | Camera | GetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 667 | Camera | SetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 691 | Camera | CalculateImageArraySize | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 691 | Camera | CalculateImageArraySize | P | HANDLER PARTIEL INDIQUÉ | CalculateChatImagePoolSize | requête 16 u32 + count vers layout caméra chat borné; seul format prouvé pris en charge; autres refusés; aucun faux succès (Lichii nx2_gsv.h) |
 | 901 | VideoDecoder | CreateVideoDecoderContext | P | HANDLER PARTIEL INDIQUÉ | InitializeVideoDecoderContext | ID actif, nom/séquence create/init divergents |
 | 902 | VideoDecoder | InitializeVideoDecoderContext | P | HANDLER PARTIEL INDIQUÉ | OpenVideoDecoderSession | retour session réel; sémantique proche mais nom différent |
 | 903 | VideoDecoder | DestroyVideoDecoderContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |

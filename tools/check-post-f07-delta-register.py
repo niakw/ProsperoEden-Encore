@@ -105,6 +105,21 @@ for entry in entries:
                                    ".nro", ".nso", ".nca", ".nax", ".kip", ".nup"}'''
             old_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".nro", ".nso",
                                    ".nca", ".nax", ".kip"}'''
+            # The subsequent NX archive registration only appends ".nx" to
+            # the same shipping format set. Replay exactly that one hunk
+            # before the existing immutable DNSP/DXCI and R457 receipts.
+            if actual == "f850b77e7b2a366f2e7cb16a0be9efb57679fef9":
+                nx_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
+                                   ".nro", ".nso", ".nca", ".nax", ".kip", ".nup", ".nx"}'''
+                assert service_audit_source.count(nx_formats) == 1
+                service_audit_source = service_audit_source.replace(
+                    nx_formats, new_formats, 1)
+                actual = subprocess.run(
+                    ["git", "hash-object", "--stdin"],
+                    input=service_audit_source.encode("utf-8"),
+                    stdout=subprocess.PIPE, check=True
+                ).stdout.decode().strip()
+                assert actual == "01d025544ac3544ab58779884f6fee10dcbe3209", actual
             if actual == "01d025544ac3544ab58779884f6fee10dcbe3209":
                 assert service_audit_source.count(new_formats) == 1
                 service_audit_source = service_audit_source.replace(new_formats, old_formats, 1)

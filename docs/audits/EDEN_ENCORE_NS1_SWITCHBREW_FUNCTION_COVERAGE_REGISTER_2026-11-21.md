@@ -229,6 +229,18 @@ Vendor `3f8249a2e587a7aa12f93e3ca3546c90eeedbb4e`, puis `2faf00b1d44881bdaebb24e
 
 **Compteur courant : 1 302 IMPL-SRC / 105 PARTIEL / 160 STUB / 106 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple moteur `b9b3e700` → vendor `1b5b609d` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour ce nouveau lot.
 
+## Lot IApplicationAccessor actif — 22/11/2026
+
+Vendor `b3afcf993cb72713d24a6287dec9334103021179`, puis `dff1bdb769d9d92738ff424aa3f0fe24f92016a2` (arbre `8cc006223327f14da5664476491da0ea364fabf6`). Upstream ciblé : `zortos293/Lichii@9eab742493ba1fe33f60c0f6762dcfcbdb504e96`.
+
+- `GetCurrentLibraryApplet` et `SetHandlesRequestToDisplay` : **2 STUB → PARTIEL**, raccordés à `child_applets` et `handles_request_to_display` réels.
+- `TerminateAllLibraryApplets` ID 110, `AreAnyLibraryAppletsLeft` ID 111, `GetApplicationId` ID 120, `GetApplicationLaunchProperty` ID 123 : **4 NULL → IMPL-SRC**.
+- `TerminateAllLibraryApplets` adapte l'upstream pour ne pas conserver le verrou parent pendant la terminaison des enfants.
+- `IsCompleted` est désormais implémenté aussi sur `IApplicationAccessor`, sans changement de compteur car la ligne dédupliquée était déjà IMPL-SRC via `ILibraryAppletAccessor`.
+- `ILibraryAppletCreator` IDs 1/2 restent NULL ; `GetDesirableUids`, `SetApplicationAttribute` et `HasSaveDataAccessPermission` n'ont pas été importés car leur upstream reste un succès minimal.
+
+**Compteur courant : 1 306 IMPL-SRC / 107 PARTIEL / 158 STUB / 106 NOOP / 2 306 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple moteur `422120c8` → vendor `2faf00b1` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour le nouveau lot.
+
 ---
 
 ## 1. Références et règle de vérité

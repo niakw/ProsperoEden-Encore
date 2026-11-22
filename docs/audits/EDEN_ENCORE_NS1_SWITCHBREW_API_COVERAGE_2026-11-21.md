@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 302 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 222 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `2faf00b1`. **Ces 1 302 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 306 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 226 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `dff1bdb7`. **Ces 1 306 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 222 | 80 | **1 302** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 226 | 80 | **1 306** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 102 | 3 | **105** |
-| **STUB — Stub / résultat simulé** | 160 | 0 | **160** |
+| **PARTIEL — Implémentation partielle** | 104 | 3 | **107** |
+| **STUB — Stub / résultat simulé** | 158 | 0 | **158** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 310 | 0 | **2 310** |
+| **NULL — Handler NULL** | 2 306 | 0 | **2 306** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -228,17 +228,25 @@ Dans HID, **13 STUB → NOOP** sont fermés sans masquer les chemins d'entrée u
 
 **Compteur courant : 1 302 IMPL-SRC, 105 PARTIEL, 160 STUB, 106 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple précédent moteur `b9b3e700` → vendor `1b5b609d` est vert X8D24 + provenance ; ce nouveau couple reste à qualifier par ses checks.
 
+### Lot IApplicationAccessor actif — child applet, display request et backport Lichii
+
+Vendor `b3afcf99`, puis `dff1bdb7` (arbre `8cc006223327f14da5664476491da0ea364fabf6`). `GetCurrentLibraryApplet` et `SetHandlesRequestToDisplay` passent **2 STUB → PARTIEL** : le premier renvoie désormais le dernier enfant réellement suivi, le second persiste le flag applet réel. Les limites restantes sont explicitement bornées.
+
+Le backport ciblé de `zortos293/Lichii@9eab742493ba1fe33f60c0f6762dcfcbdb504e96` apporte quatre lignes catalogue **NULL → IMPL-SRC** : `TerminateAllLibraryApplets` (ID 110), `AreAnyLibraryAppletsLeft` (111), `GetApplicationId` (120) et `GetApplicationLaunchProperty` (123). `IsCompleted` est aussi implémenté sur `IApplicationAccessor`, mais la ligne dédupliquée 4 853 était déjà IMPL-SRC via `ILibraryAppletAccessor`, donc elle n'augmente pas artificiellement le compteur. Les IDs 1/2 du `ILibraryAppletCreator` restent NULL. Le backport n'inclut pas les succès minimaux upstream `GetDesirableUids`, `SetApplicationAttribute` et `HasSaveDataAccessPermission`.
+
+**Compteur courant : 1 306 IMPL-SRC, 107 PARTIEL, 158 STUB, 106 NOOP, 2 306 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple moteur `422120c8` → vendor `2faf00b1` est vert X8D24 + provenance ; ce nouveau couple reste à qualifier par ses checks.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1302
+    "Implémentation source retrouvée" : 1306
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 105
-    "Stub / résultat simulé" : 160
+    "Implémentation partielle" : 107
+    "Stub / résultat simulé" : 158
     "No-op documenté" : 106
-    "Handler NULL" : 2310
+    "Handler NULL" : 2306
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1361,13 +1369,13 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `25` | `Terminate` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `30` | `GetResult` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `101` | `RequestForApplicationToGetForeground` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `110` | `TerminateAllLibraryApplets` | — | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `111` | `AreAnyLibraryAppletsLeft` | — | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `112` | `GetCurrentLibraryApplet` | — | **STUB** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `120` | `GetApplicationId` | — | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
+| appletAE | `110` | `TerminateAllLibraryApplets` | — | **IMPL-SRC** (backport Lichii adapté : copie les children sous verrou parent puis termine hors verrou parent et marque `ResultLibraryAppletTerminated` ; vendor `dff1bdb7`) | 2026-11-22 |
+| appletAE | `111` | `AreAnyLibraryAppletsLeft` | — | **IMPL-SRC** (lit la liste réelle `child_applets` sous verrou ; vendor `dff1bdb7`) | 2026-11-22 |
+| appletAE | `112` | `GetCurrentLibraryApplet` | — | **PARTIEL** (retourne le dernier child applet suivi quand il existe ; conserve le cas vide `nullptr + Success` faute de contrat d'erreur Horizon documenté ; vendor `b3afcf99`) | 2026-11-22 |
+| appletAE | `120` | `GetApplicationId` | — | **IMPL-SRC** (retourne le `program_id` réel de l'application ; vendor `dff1bdb7`) | 2026-11-22 |
 | appletAE | `121` | `PushLaunchParameter` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `122` | `GetApplicationControlProperty` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `123` | `GetApplicationLaunchProperty` | 2.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
+| appletAE | `123` | `GetApplicationLaunchProperty` | 2.0.0+ | **IMPL-SRC** (lit l'ApplicationLaunchProperty réel via `ARPManager` pour le `program_id` courant ; vendor `dff1bdb7`) | 2026-11-22 |
 | appletAE | `124` | `GetApplicationLaunchRequestInfo` | 6.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `130` | `SetUsers` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `131` | `CheckRightsEnvironmentAvailable` | 6.0.0+ | **STUB** ([source C++][ns1-src-031]) | 2026-11-22 |
@@ -1564,7 +1572,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `41` | `IsSystemBufferSharingEnabled` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `42` | `GetSystemSharedLayerHandle` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `43` | `GetSystemSharedBufferHandle` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `50` | `SetHandlesRequestToDisplay` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `50` | `SetHandlesRequestToDisplay` | — | **PARTIEL** (stocke réellement `handles_request_to_display` sous verrou ; le consommateur request-to-display complet reste à raccorder ; vendor `b3afcf99`) | 2026-11-22 |
 | appletAE | `51` | `ApproveToDisplay` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `60` | `OverrideAutoSleepTimeAndDimmingTime` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `61` | `SetMediaPlaybackState` | — | **PARTIEL** (raccordé au même état `media_playback_state` que la surface application, sans consommateur système ; vendor `6fc24667`) | 2026-11-22 |

@@ -108,6 +108,7 @@ REVIEWED_PINS.add("b8396c6483aa8278bd75b6757aed3bb5a9206e52")
 REVIEWED_PINS.add("a8c9170802811e7bb19345a461c3ae8dc72c27be")
 REVIEWED_PINS.add("42b34a5dc46b594cb029362e8f130900adf4424e")
 REVIEWED_PINS.add("77b736148129ffa72c9f6c081695b7c7515c3ed9")
+REVIEWED_PINS.add("4354add020afac574198f63d87167f3022bff9c6")
 selected=subprocess.check_output(["git","rev-parse","HEAD:vendor"],cwd=ROOT,text=True).strip()
 gitlink_vendor_pin = selected
 actual_vendor_pin = gitlink_vendor_pin

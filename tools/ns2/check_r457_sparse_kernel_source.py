@@ -53,6 +53,7 @@ reviewed_vendors={
 }
 reviewed_vendors.add("42b34a5dc46b594cb029362e8f130900adf4424e")
 reviewed_vendors.add("77b736148129ffa72c9f6c081695b7c7515c3ed9")
+reviewed_vendors.add("4354add020afac574198f63d87167f3022bff9c6")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],

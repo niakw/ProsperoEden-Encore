@@ -1361,10 +1361,25 @@ int main(){
     }
     video[1] = 5;
     require(!pools.Add(0x80000001u, 2, 20, 131072, video[2], *video_layout) &&
-            !pools.Lookup(0x80000002u) &&
-            pools.Remove(0x80000000u) && pools.ImageCount() == 0 &&
-            !pools.Remove(0x80000000u),
-            "GSV 911/912 reject overlapping and stale image pools");
+            !pools.Lookup(0x80000002u),
+            "GSV 911 rejects overlapping and out-of-range image pools");
+    require(pools.GetByImage(0x80000001u) &&
+            pools.GetByImage(0x80000001u)->remaining == 2 &&
+            pools.RetireImage(0x80000001u) &&
+            pools.ImageCount() == 1 &&
+            !pools.Lookup(0x80000001u) &&
+            pools.Lookup(0x80000000u) &&
+            pools.Get(0x80000000u)->remaining == 1 &&
+            !pools.RetireImage(0x80000001u) &&
+            pools.RetireImage(0x80000000u) &&
+            pools.ImageCount() == 0 &&
+            !pools.Get(0x80000000u),
+            "GSV 912 retires decoder images individually and removes the pool only at the last image");
+    require(pools.Add(0x80000010u, 2, 20, 131072, video[2], *video_layout) &&
+            pools.Remove(0x80000010u) &&
+            pools.ImageCount() == 0 &&
+            !pools.Remove(0x80000010u),
+            "GSV 1212 removes the complete GameChat image pool by its base handle");
     const NativeVideoImageLayout unaddressable{
         0x1fffff000ULL, 0x1000U, 0xfffff000U, 0x100U, false, 0, 9};
     require(!pools.Add(0x80000010u, 3, 20, 0x200000000ULL,

@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**166**), `HANDLER PARTIEL INDIQUÉ` (**12**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 314/315 sont désormais C : groupes window-alias multi-images réellement suivis et retirés.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**168**), `HANDLER PARTIEL INDIQUÉ` (**10**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 912 et 1212 sont désormais C avec deux cycles de vie distincts, conformes aux clients observés.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,28 +32,28 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=166**, P=11, C/P=1, M=107, U=25, V=6.
-- **R** : **285/316 (90,2 %)** traitées explicitement ; aucune M sans traitement.
+- **F** : **C=168**, P=9, C/P=1, M=107, U=25, V=6.
+- **R** : **285/316 (90,2 %)** traitées explicitement ; toutes les M ont un refus/stub documenté.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **166** | 166 | 0 |
-| P — partielle | **11** | 11 | 0 |
+| C — implémentation source | **168** | 168 | 0 |
+| P — partielle | **9** | 9 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**314/315 corrigées fonctionnellement** : `315(first,count)` valide tout le groupe avant mutation, marque chaque image comme alias et mémorise `count` uniquement sur le premier ID. `314(first)` retire exactement ce groupe enregistré. `430` reste interdit tant qu'une image appartient au pool. Cela remplace l'ancienne limitation `count == 1`.
+**912/1212 corrigées** : `912(image)` retire un image ID decoder individuellement et garde le duplicate/pin NVMap tant qu'un membre du pool reste actif ; la dernière image libère le backing. `1212(first)` conserve la destruction one-shot du pool GameChat observée dans fefw, avant la destruction séparée de sa mémoire native par le client. Une image retirée n'est plus visible par Lookup/961/426/428.
 
-**Restent 11 P + 1 C/P** : 391/691 (formats), 912/1212 (destruction pool/image), Syncpt 21 inconnu, submit historique, event/error GPU, USERD/doorbell et TSG.
+**Restent 9 P + 1 C/P** : 391/691 (formats incomplets), Syncpt 21 inconnu, submit historique, event/error GPU, USERD/doorbell et scheduling TSG.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=50, P=4, M=70, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=52, P=2, M=70, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -159,7 +159,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 904 | VideoDecoderForSystem | InitializeVideoDecoderContextForSystem | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 905 | VideoDecoder | InitializeVideoDecoderContext2 | C | HANDLER INDIQUÉ | OpenVideoDecoderSession | Lichii SDK : 905(u8) variante Initialize(bool), même session MOVE que 902 ; Encore borne la charge à un octet et conserve le vrai backend decoder |
 | 911 | VideoDecoder | InitializeDecoderImagePool | C | HANDLER INDIQUÉ | CreateVideoImagePool | Lichii : preference[16] + u32 count + u32 memory id, retour first image id ; Encore valide 18 mots, backing owner/size, pin et pool réel |
-| 912 | VideoDecoder | FinalizeDecoderImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyVideoImagePool | pool réel |
+| 912 | VideoDecoder | FinalizeDecoderImagePool | C | HANDLER INDIQUÉ | DestroyVideoImagePool | Lichii : 912(image id) retire un output decoder à la fois ; ledger actif suit les membres vivants et ne libère le backing partagé qu'au dernier |
 | 921 | VideoDecoderForSystem | InitializeDecoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 922 | VideoDecoderForSystem | FinalizeDecoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 961 | VideoDecoder | (nom inconnu) | C | HANDLER INDIQUÉ | GetCpuVideoImageDescriptor | Lichii : CpuUserImageDescriptor 128 B pour image decoder ; Encore valide l'ID possédé et renvoie le descriptor réel du pool |
@@ -183,7 +183,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1202 | Chat | InitializeChatContext | C | HANDLER INDIQUÉ | OpenChatSession | Lichii GameChat : 1202 doit retourner une session ; Encore renvoie une vraie INativeChatGsvSession MOVE avec ownership/OOM correct |
 | 1203 | Chat | DestroyChatContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1211 | Chat | CreateImagePool | C | HANDLER INDIQUÉ | CreateVideoImagePool | Lichii : même requête que pool image natif avec count ; Encore valide 16 préférences+count+backing, pin réel et réserve count IDs contigus |
-| 1212 | Chat | DestroyImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyChatImagePool | actif |
+| 1212 | Chat | DestroyImagePool | C | HANDLER INDIQUÉ | DestroyVideoImagePool | fefw GameChat DestroyImagePool envoie le handle de base une fois puis détruit séparément la mémoire native ; Encore retire le pool complet et son duplicate/pin |
 | 1291 | Chat | CalculateRequiredBufferMemory | C | HANDLER INDIQUÉ | CalculateChatImagePoolSize | actif |
 | 1301 | Adraw | CreateAdrawContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1302 | Adraw | InitializeAdrawContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |

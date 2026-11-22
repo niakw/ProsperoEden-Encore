@@ -283,6 +283,9 @@ def main()->int:
         'it->second.address_space == as',
         'const auto as = FindRegisteredGpuAddressSpace(packet[3]);',
         'nvmap.UnpinHandle(pool->backing)',
+        'm_video_pools.GetByImage(packet[2])',
+        'm_video_pools.RetireImage(packet[2])',
+        'pool->remaining > 1',
         'm_video_pools.Remove(pool->first_id)',
         'for (const auto& [key, mapping] : m_video_mappings)',
     ):
@@ -356,6 +359,13 @@ def main()->int:
     assert '!image->window_pool' in text
     for command, method in ((429,"CreateNativeImage"), (430,"DestroyNativeImage")):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
+    video_destroy = text.split('void IGraphicsSupervisor::DestroyVideoImagePool(', 1)[1].split(
+        'void IGraphicsSupervisor::GetCpuVideoImageDescriptor(', 1)[0]
+    assert 'chat_pool ? m_video_pools.Get(packet[2])' in video_destroy
+    assert 'm_video_pools.GetByImage(packet[2])' in video_destroy
+    assert 'if (!chat_pool && pool->remaining > 1)' in video_destroy
+    assert 'm_video_pools.RetireImage(packet[2])' in video_destroy
+    assert 'chat_pool ? m_video_pools.Remove(pool->first_id)' in video_destroy
     # Native present can fail allocations before or after its NVMap dupe.
     # A later shared_ptr control-block OOM must release the duplicate and
     # the service must return a refused image instead of throwing into IPC.

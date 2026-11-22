@@ -23,14 +23,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 290 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 210 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `4483c6a3`. **Ces 1 290 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 294 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 214 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `6fc24667`. **Ces 1 294 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 210 | 80 | **1 290** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 214 | 80 | **1 294** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 93 | 3 | **96** |
-| **STUB — Stub / résultat simulé** | 198 | 0 | **198** |
+| **PARTIEL — Implémentation partielle** | 100 | 3 | **103** |
+| **STUB — Stub / résultat simulé** | 187 | 0 | **187** |
 | **NOOP — No-op documenté** | 89 | 0 | **89** |
 | **NULL — Handler NULL** | 2 310 | 0 | **2 310** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
@@ -204,15 +204,23 @@ Le lot `4483c6a3` raccorde aussi `IsGameCardApplicationRunning` à l'applet prin
 
 **Compteur courant : 1 290 IMPL-SRC, 96 PARTIEL, 198 STUB, 89 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Aucun build PS5 ni validation console n'est déduit de cette requalification.
 
+### Lot AM applet — événement launchable et états réellement raccordés
+
+Vendor `6fc24667` (arbre `28da2f872d33edf2ad11947991a0cf6c4e592475`) : `GetLibraryAppletLaunchableEvent` ne signale plus artificiellement l'événement lors de la simple récupération du handle ; les producteurs réels restent `CreateLibraryApplet` et `CreateLibraryAppletEx`. `GetPreviousProgramIndex` lit l'index réellement injecté par `AppletManager`. `BeginVrModeEx` / `EndVrModeEx` utilisent le même état que `SetVrModeEnabled` / `IsVrModeEnabled`.
+
+Sept autres lignes ne sont plus des succès vides mais restent **PARTIELLES** : les deux surfaces media-playback partagent désormais `m_applet->media_playback_state`, l'extension d'idle est stockée/relue sous verrou et les commandes sleep-lock pilotent le vrai événement ; Encore ne possède toutefois pas encore de consommateur média/idle ni d'arbitre de sommeil hôte, et la réacquisition transitoire n'est pas reproduite.
+
+**Compteur courant : 1 294 IMPL-SRC, 103 PARTIEL, 187 STUB, 89 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le lot précédent moteur `35f52e80` → vendor `4483c6a3` a passé X8D24 et Verify pinned vendor ; ce nouveau lot reste à qualifier par ses propres checks et n'est pas validé PS5.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1290
+    "Implémentation source retrouvée" : 1294
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 96
-    "Stub / résultat simulé" : 198
+    "Implémentation partielle" : 103
+    "Stub / résultat simulé" : 187
     "No-op documenté" : 89
     "Handler NULL" : 2310
     "Rejet explicite / historique" : 69
@@ -1434,7 +1442,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `33` | `EndBlockingHomeButton` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `40` | `NotifyRunning` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `50` | `GetPseudoDeviceId` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `60` | `SetMediaPlaybackStateForApplication` | 2.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `60` | `SetMediaPlaybackStateForApplication` | 2.0.0+ | **PARTIEL** (état `m_applet->media_playback_state` réellement écrit sous verrou, mais aucun consommateur de politique média/énergie n'est encore modélisé ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `65` | `IsGamePlayRecordingSupported` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `66` | `InitializeGamePlayRecording` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `67` | `SetGamePlayRecordingState` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1451,7 +1459,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `120` | `ExecuteProgram` | 5.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `121` | `ClearUserChannel` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `122` | `UnpopToUserChannel` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `123` | `GetPreviousProgramIndex` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `123` | `GetPreviousProgramIndex` | 5.0.0+ | **IMPL-SRC** (lit `previous_program_index` réellement injecté par `AppletManager` au lancement ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `124` | `EnableApplicationAllThreadDumpOnCrash` | 6.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `140` | `GetFriendInvitationStorageChannelEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `141` | `TryPopFromFriendInvitationStorageChannel` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1492,9 +1500,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `7` | `GetCradleStatus` | — | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `8` | `GetBootMode` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `9` | `GetCurrentFocusState` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `10` | `RequestToAcquireSleepLock` | — | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `11` | `ReleaseSleepLock` | — | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `12` | `ReleaseSleepLockTransiently` | — | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `10` | `RequestToAcquireSleepLock` | — | **PARTIEL** (signale le vrai événement de sleep-lock immédiatement ; aucun arbitre de sommeil hôte séparé n'est modélisé ; vendor `6fc24667`) | 2026-11-22 |
+| appletAE | `11` | `ReleaseSleepLock` | — | **PARTIEL** (efface le vrai événement de sleep-lock ; aucun arbitre de sommeil hôte séparé n'est modélisé ; vendor `6fc24667`) | 2026-11-22 |
+| appletAE | `12` | `ReleaseSleepLockTransiently` | — | **PARTIEL** (efface le vrai événement mais la réacquisition transitoire automatique n'est pas modélisée ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `13` | `GetAcquiredSleepLockEvent` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `20` | `PushToGeneralChannel` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `30` | `GetHomeButtonReaderLockAccessor` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
@@ -1504,8 +1512,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `50` | `IsVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `51` | `SetVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `52` | `SetLcdBacklighOffEnabled` | 4.0.0+ | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `53` | `BeginVrModeEx` | 7.0.0+ | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `54` | `EndVrModeEx` | 7.0.0+ | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `53` | `BeginVrModeEx` | 7.0.0+ | **IMPL-SRC** (active le même état `vr_mode_enabled` que `SetVrModeEnabled`, observable par `IsVrModeEnabled` ; vendor `6fc24667`) | 2026-11-22 |
+| appletAE | `54` | `EndVrModeEx` | 7.0.0+ | **IMPL-SRC** (désactive le même état `vr_mode_enabled` que `SetVrModeEnabled`, observable par `IsVrModeEnabled` ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `55` | `IsInControllerFirmwareUpdateSection` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `60` | `GetDefaultDisplayResolution` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `61` | `GetDefaultDisplayResolutionChangeEvent` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
@@ -1524,7 +1532,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `2` | `UnlockExit` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `3` | `EnterFatalSection` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `4` | `LeaveFatalSection` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `9` | `GetLibraryAppletLaunchableEvent` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `9` | `GetLibraryAppletLaunchableEvent` | — | **IMPL-SRC** (handle passif réel ; l'événement est signalé par `ILibraryAppletCreator` seulement après création réussie ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `10` | `SetScreenShotPermission` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `11` | `SetOperationModeChangedNotification` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `12` | `SetPerformanceModeChangedNotification` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
@@ -1543,9 +1551,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `50` | `SetHandlesRequestToDisplay` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `51` | `ApproveToDisplay` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `60` | `OverrideAutoSleepTimeAndDimmingTime` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `61` | `SetMediaPlaybackState` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `62` | `SetIdleTimeDetectionExtension` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `63` | `GetIdleTimeDetectionExtension` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `61` | `SetMediaPlaybackState` | — | **PARTIEL** (raccordé au même état `media_playback_state` que la surface application, sans consommateur système ; vendor `6fc24667`) | 2026-11-22 |
+| appletAE | `62` | `SetIdleTimeDetectionExtension` | — | **PARTIEL** (stocke l'extension dans l'état applet sous verrou ; aucun idle-timer hôte ne la consomme encore ; vendor `6fc24667`) | 2026-11-22 |
+| appletAE | `63` | `GetIdleTimeDetectionExtension` | — | **PARTIEL** (relit l'extension d'idle réellement stockée, mais l'effet système reste non modélisé ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `64` | `SetInputDetectionSourceSet` | — | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `65` | `ReportUserIsActive` | 2.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `66` | `GetCurrentIlluminance` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |

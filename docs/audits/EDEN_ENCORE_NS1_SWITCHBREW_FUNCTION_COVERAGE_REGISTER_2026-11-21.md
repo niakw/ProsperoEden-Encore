@@ -197,6 +197,17 @@ Vendor `0432fba8303ec9ad523c683e728046996cd48dfa`, puis `4483c6a35526d9dc8fc77c7
 
 **Compteur courant : 1 290 IMPL-SRC / 96 PARTIEL / 198 STUB / 89 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Ce lot est qualifié au niveau source/provenance uniquement ; aucune validation PS5 n'est revendiquée.
 
+## Lot AM applet stateful / launchable event — 22/11/2026
+
+Vendor `6fc24667f81ce27d07979ad25c0e4743e331f7d0` (arbre `28da2f872d33edf2ad11947991a0cf6c4e592475`).
+
+- `GetLibraryAppletLaunchableEvent` : **STUB → IMPL-SRC** et correction runtime ; récupérer le handle ne signale plus l'événement. `ILibraryAppletCreator::CreateLibraryApplet{,Ex}` reste le producteur après création réussie.
+- `GetPreviousProgramIndex` : **STUB → IMPL-SRC**, valeur issue de `AppletManager`.
+- `BeginVrModeEx` / `EndVrModeEx` : **2 STUB → IMPL-SRC**, même état `vr_mode_enabled` que les commandes 50/51 déjà classées IMPL-SRC.
+- `SetMediaPlaybackStateForApplication`, `SetMediaPlaybackState`, `SetIdleTimeDetectionExtension`, `GetIdleTimeDetectionExtension`, `RequestToAcquireSleepLock`, `ReleaseSleepLock`, `ReleaseSleepLockTransiently` : **7 STUB → PARTIEL**. Les mutations/événements sont réels, mais il manque encore les consommateurs système média/idle/sleep et la réacquisition transitoire.
+
+**Compteur courant : 1 294 IMPL-SRC / 103 PARTIEL / 187 STUB / 89 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent moteur `35f52e80` → vendor `4483c6a3` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour `6fc24667`.
+
 ---
 
 ## 1. Références et règle de vérité

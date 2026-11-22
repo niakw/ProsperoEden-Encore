@@ -157,17 +157,34 @@ if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53
 # The FC27 2026-11-22 exit crash at nvhost_as_gpu::~nvhost_as_gpu
 # required an exact three-file vendor successor. Its root tree is checked so
 # no unrelated NS2 or FC27 source gets silently accepted.
+# FC27 first-use stalls: the qualified small-cache successor changes only
+# the bounded preload admission policy. Reject other vendor changes by the
+# complete Git tree and require the exact maintained runtime source blob.
+PS5_FC27_RECENT_PREWARM_PIN = "dbef23055897b1649f83c20cf7a0516e64f3d5cd"
+if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN:
+    assert selected == PS5_FC27_RECENT_PREWARM_PIN
+    new_tree = subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
+    assert new_tree == "9e28e5b83cf9c0f4086a33d6838904353a8fd541", ("FC27 prewarm vendor tree drift", new_tree)
+    source_path = V / "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp"
+    raw = source_path.read_bytes()
+    current_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert current_blob == "79660c5cc4ff046f24e7ffa50ab066a86857698c", current_blob
+    assert raw.count(b"constexpr size_t kRecentPrewarmPipelines = 128;") == 1
+    REVIEWED_PINS.add(PS5_FC27_RECENT_PREWARM_PIN)
+    selected = "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb"
+
 PS5_FC27_NVDRV_EXIT_PIN = "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb"
 PS5_FC27_NVDRV_EXIT_BLOBS = {
     "encore-active/ns2-runtime/process/core/core.cpp": "0110907a727b5d0ed15286298f851b59b30f1eb6",
     "tests/shutdown_teardown_lifetime_source.py": "6f3ff15f43b456ea79ba8f1dc275b690c1e11606",
     "tests/shutdown_general_channel_lifetime_source.py": "4e25852f84f9bc8e73454ef6ac1bac4d9270ac3a",
 }
-if actual_vendor_pin == PS5_FC27_NVDRV_EXIT_PIN:
+if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN}:
     assert selected == PS5_FC27_NVDRV_EXIT_PIN
     actual_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip()
-    assert actual_tree == "067c72d30a71a79faefd1ad14876e2a46f02755c", actual_tree
+    assert actual_tree == ("9e28e5b83cf9c0f4086a33d6838904353a8fd541" if actual_vendor_pin == PS5_FC27_RECENT_PREWARM_PIN else "067c72d30a71a79faefd1ad14876e2a46f02755c"), actual_tree
     for path, expected_blob in PS5_FC27_NVDRV_EXIT_BLOBS.items():
         raw = (V / path).read_bytes()
         actual_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -1231,7 +1248,7 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
-    if actual_vendor_pin == PS5_FC27_NVDRV_EXIT_PIN and relative in PS5_FC27_NVDRV_EXIT_BLOBS:
+    if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN} and relative in PS5_FC27_NVDRV_EXIT_BLOBS:
         return PS5_FC27_NVDRV_EXIT_BLOBS[relative]
     if NS2_POISONED_TEARDOWN_ACTIVE and relative in NS2_POISONED_TEARDOWN_BLOBS:
         return NS2_POISONED_TEARDOWN_BLOBS[relative]

@@ -1561,6 +1561,33 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             assert actual == "aa3ff8baf97f075d1adf44a9d19335c89403c8e1", path
         else:
             assert actual == blob, path
+elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    # Integrated NS1/NS2 pair: all fourteen actual vendor owners are pinned
+    # to reviewed full Git blobs. This does NOT re-date the November 15
+    # historical receipt or bypass the separate CMake/ABI source gates.
+    assert pair_present == pair_new_owners
+    integrated_pair = {
+        "eden-core/overrides/core/gpu_dirty_memory_manager.h": "d489855e83f53ba703c18ce67d620f8db7b932fc",
+        "eden-core/overrides/video_core/gpu.h": "d3ad5e60e19b30ddbd43cbfc29af98f7f24c8174",
+        "eden-core/overrides/video_core/rasterizer_interface.h": "294452f99eae33d623a85c5e4db18a850c2a84ba",
+        "eden-core/src/video_core/buffer_cache/buffer_cache.h": "6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b",
+        "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "fd9708571ef61c83c399042a5200c87b2e3784d6",
+        "eden-core/src/video_core/engines/maxwell_3d.cpp": "fe7c4fa421ccabf9fff4b1bc277fb8ab5fe46677",
+        "eden-core/src/video_core/gpu_gl_native.cpp": "8abd4f3652b4a10f27281a2fd43a3764bd6d5c6e",
+        "eden-core/src/video_core/gpu_gl_native_dev.cpp": "091431333f6f05e7e81c691051d64771cab4a5dd",
+        "eden-core/src/video_core/gpu_vulkan.cpp": "90b8f8c99878b21558b3996e8b1e95a5fc6ad9a6",
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "6e0bf7ab2a3a2147f9db0c630070db30d9b35d56",
+        "eden-vulkan/vulkan_rasterizer.cpp": "0633e3cf41c615f46791d3943ff40ac22399b047",
+        "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "3397cd39a3d35c1255802c4c3862584530f15cfe",
+        "ns2-runtime/gpu_dispatch/video_core/native_qmd.h": "a1e99602dbee8c4fc49108382b61ee8cd53af847",
+        "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "33b1b5475e68c8459f9666b1ae1a6e446221cb63",
+    }
+    assert set(integrated_pair) == set(pair_receipt["files"])
+    for relative, sha in integrated_pair.items():
+        source_path = ROOT / "vendor/encore-active" / relative
+        actual = subprocess.check_output(["git", "hash-object", str(source_path)],
+                                         cwd=ROOT, text=True).strip()
+        assert actual == sha, ("Merged NS1/NS2 source pair drift", relative, actual)
 else:
     assert not pair_present
 print("ENCORE_NOV15_VENDOR_PAIR_F07_ISOLATION_PASS", f"new_owners={len(pair_present)}")

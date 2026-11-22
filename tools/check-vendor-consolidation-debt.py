@@ -112,8 +112,11 @@ for name in ("gpu_gl_host.cpp", "gpu_gl_host_dev.cpp",
              "gpu_gl_native.cpp", "gpu_gl_native_dev.cpp"):
     unit = (active/"eden-core/src/video_core"/name).read_text()
     assert unit.count('RequestSyncOperation([this, raster_area]() {') == 1
-assert 'RequestSyncOperation([this, &raster_area]() {' in (
-    active/"eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+vulkan_gpu = (active/"eden-core/src/video_core/gpu_vulkan.cpp").read_text()
+# The queued GPU callback owns its flush range by value. A reference capture
+# can outlive OnCPURead's stack frame while the GPU worker drains later.
+assert 'RequestSyncOperation([this, raster_area]() {' in vulkan_gpu
+assert 'RequestSyncOperation([this, &raster_area]() {' not in vulkan_gpu
 assert (root / "tools/check-native-gpu-read-capture-host.py").is_file()
 assert "python3 -B tools/check-native-gpu-read-capture-host.py" in (
     root / ".github/workflows/encore-core-preflight.yml").read_text()

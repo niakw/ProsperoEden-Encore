@@ -140,6 +140,14 @@ Vendor `be7f995c13675eeb3af8c1addac536876ed1e90b` : `PlatformRegion` est mainten
 
 **Compteur courant : 1 276 IMPL-SRC / 91 PARTIEL / 233 STUB / 72 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Pas de validation PS5 déduite.
 
+## Lot FSP save-data réel — 22/11/2026
+
+Couple : moteur repointé vers vendor `c3c3b6d23925dbe287e5a239663b9a04db6a0d21`. `OpenReadOnlySaveDataFileSystem` ne délègue plus au FS writable : le wrapper actif `fs_i_filesystem/fs_i_file` bloque toutes les mutations avec `ResultWriteNotPermitted`. `FindSaveDataWithFilter` ne retourne plus systématiquement `TargetNotFound` : il applique le filtre Horizon aux `SaveDataInfo` réels et renvoie count 0/1 avec un buffer 0x60 exact.
+
+Le scanner `ISaveDataInfoReader` inclut désormais les caches User/SD et conserve la variante cache-only du programme courant. Référence comportementale : LibHac/Ryujinx pour `SaveDataInfoFilter` et cmd67.
+
+**Compteur courant : 1 278 IMPL-SRC / 91 PARTIEL / 231 STUB / 72 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Validation console PS5 non revendiquée ; le précédent HEAD moteur `c92ded2c` → vendor `be7f995c` était vert X8D24 + provenance.
+
 ---
 
 ## 1. Références et règle de vérité

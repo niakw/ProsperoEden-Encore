@@ -27,10 +27,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 196 | 80 | **1 276** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 198 | 80 | **1 278** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 88 | 3 | **91** |
-| **STUB — Stub / résultat simulé** | 233 | 0 | **233** |
+| **STUB — Stub / résultat simulé** | 231 | 0 | **231** |
 | **NOOP — No-op documenté** | 72 | 0 | **72** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
@@ -160,15 +160,23 @@ Le manifeste `eden-backports` contient les empreintes SHA-256 exactes des deux n
 
 **Compteur : 1 276 IMPL-SRC, 91 PARTIEL, 233 STUB, 72 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot FSP save-data — filtre réel et read-only strict
+
+**Vendor `c3c3b6d2`.** Deux stubs `fsp-srv` deviennent des implémentations source réelles : cmd53 `OpenReadOnlySaveDataFileSystem` ouvre le save réel mais renvoie un wrapper immutable ; cmd67 `FindSaveDataWithFilter` scanne les saves existants et applique les bits de filtre `program_id/type/user_id/save_data_id/index` ainsi que la règle de rank LibHac. Les caches `/user/save/cache/<titleid>` sont maintenant visibles du scanner général.
+
+Le read-only est appliqué au niveau `IFileSystem` **et** `IFile` : Create/Delete/Rename, ouverture Write, Write et SetSize renvoient `ResultWriteNotPermitted`. Aucun succès fictif n'est conservé pour une mutation.
+
+**Compteur : 1 278 IMPL-SRC / 91 PARTIEL / 231 STUB / 72 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1276
+    "Implémentation source retrouvée" : 1278
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 91
-    "Stub / résultat simulé" : 233
+    "Stub / résultat simulé" : 231
     "No-op documenté" : 72
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 69
@@ -3720,7 +3728,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `36` | `OpenHostFileSystemWithOption` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `51` | `OpenSaveDataFileSystem` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `52` | `OpenSaveDataFileSystemBySystemSaveDataId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `53` | `OpenReadOnlySaveDataFileSystem` | 2.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `53` | `OpenReadOnlySaveDataFileSystem` | 2.0.0+ | **IMPL-SRC** (ouvre le save réel via `SaveDataController` et retourne un `IFileSystem` immutable ; Create/Delete/Rename/Write/SetSize refusent `ResultWriteNotPermitted`, vendor `c3c3b6d2`) | 2026-11-22 |
 | fsp-srv | `57` | `ReadSaveDataFileSystemExtraDataBySaveDataSpaceId` | 3.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `58` | `ReadSaveDataFileSystemExtraData` | — | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `59` | `WriteSaveDataFileSystemExtraData` | 2.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3730,7 +3738,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `64` | `OpenSaveDataInternalStorageFileSystem` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `65` | `UpdateSaveDataMacForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `WriteSaveDataFileSystemExtraData2` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
-| fsp-srv | `67` | `FindSaveDataWithFilter` | 6.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `67` | `FindSaveDataWithFilter` | 6.0.0+ | **IMPL-SRC** (scan réel `ISaveDataInfoReader`, filtre program/type/user/save-id/index + sémantique rank LibHac, sortie exacte `SaveDataInfo` 0x60, vendor `c3c3b6d2`) | 2026-11-22 |
 | fsp-srv | `68` | `OpenSaveDataInfoReaderWithFilter` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenSaveDataInfoReaderBySaveDataFilter` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `69` | `ReadSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | **PARTIEL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `70` | `WriteSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | **STUB** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `WriteSaveDataFileSystemExtraDataWithMaskBySaveDataAttribute` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |

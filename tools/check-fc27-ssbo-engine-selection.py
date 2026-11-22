@@ -27,7 +27,10 @@ expected.add("ac880cd408116e6eb53ba2400abc52970b81f539")
 expected.add("95343060f948601930f2e62b919da0789f0830bb")
 expected.add("12ab9a8411f5c9df1b5cc73f01c923ad9479c8af")
 expected.add("224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c")
-if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c"}:
+# NS1 secondary audit: GPIO/IPC, NCM placeholder cache and FSP fail-closed
+# only. The GPU-53 blobs below remain checked byte-for-byte.
+expected.add("fe5a389ac04fa3c26c1756fc18e73a962e196da4")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -36,6 +39,7 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
         "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
         "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
         "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c": "3f7f1523cef730ad153bf658fbb3567222d6e956",
+        "fe5a389ac04fa3c26c1756fc18e73a962e196da4": "d30f26b0ea1bd88ee9c326d7d46aaf5ebc2fbce9",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

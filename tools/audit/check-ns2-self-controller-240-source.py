@@ -24,7 +24,8 @@ assert s == comment + original
 assert s.count(extra) == 1
 implementation = cpp.read_text()
 assert implementation.count("Result ISelfController::Unknown240(u32 in_val)") == 1
-assert implementation.count("D<&ISelfController::Unknown240>") == 1
+assert implementation.count("D<&ISelfController::Unknown240>") == 2
+assert implementation.count('{2400, D<&ISelfController::Unknown240>, "Unknown2400"}') == 1
 assert "r23_self_controller_240_ps5.h" in cm
 assert "target_include_directories(core BEFORE PRIVATE" in cm
 assert "EDEN_R23_SELF_CONTROLLER_INCLUDE" in cm

@@ -16,11 +16,11 @@
 
 ## Lot runtime secondaire NS1 — 22/11/2026
 
-**Couple modifié sur `audit/ns1-switchbrew-main-coverage-20261122` :** moteur `bcde005823f405458ec1d4d56ef856e3046a8d2c` (gitlink) → vendor `d8e80440a0dfec75ccc0cbc362dd40c2d270be2b` (GPIO/NCM/SVC). Commit documentaire ultérieur : voir HEAD de branche.
+**Couple modifié sur `audit/ns1-switchbrew-main-coverage-20261122` :** moteur `fad45f785b5db3013ab7797b79edde53d6471b21` (gitlink) → vendor `bbdda09991fb31a0b858ba20059200ebd0a85cbc` (GPIO/NCM/SVC). Commit documentaire ultérieur : voir HEAD de branche.
 
 | Catégorie du catalogue | Avant (snapshot) | Après ce lot | Changement justifié |
 |---|---:|---:|---|
-| IMPL-SRC | 1 207 | **1 211** | 4 vrais handlers NCM `IContentStorage` avec `PlaceholderCache` |
+| IMPL-SRC | 1 207 | **1 212** | 5 vrais handlers NCM `IContentStorage` avec `PlaceholderCache`, dont lecture du Rights ID |
 | PARTIEL | 76 | **76** | `svcGetThreadList` refuse le handle debug au lieu de retourner les threads du mauvais processus, mais ne gère pas ce mode |
 | STUB | 347 | **347** | Aucun stub existant n'est proclamé pleinement implémenté |
 | NOOP | 6 | **6** | Politique inchangée |
@@ -28,15 +28,15 @@
 | D — rejet explicite | 55 | **65** | 10 commandes GPIO racine présentes et rejetées explicitement |
 | INACCESSIBLE | 173 | **191** | 18 commandes `IPadSession` sans objet de session retournable |
 | SERVICE-NON-EXPOSÉ | 289 | **289** | Inchangé |
-| ABSENT | 126 | **94** | 4 NCM implémentées, 10 GPIO rejetées, 18 GPIO inaccessibles |
+| ABSENT | 126 | **93** | 5 NCM implémentées, 10 GPIO rejetées, 18 GPIO inaccessibles |
 | ABI-DIFF | 283 | **283** | Non présumé résolu |
 | AMBIGU | 12 | **12** | Non présumé résolu |
 | ID SVC absent | 1 | **1** | Non présumé résolu |
 | **Total** | **4 853** | **4 853** | **Zéro entrée non classée** |
 
-**Code actif et contrat :** les sources `sources/eden/src/core/hle/service/gpio/gpio.cpp`, `sources/eden/src/core/hle/service/ncm/ncm.cpp` et `sources/eden/src/core/hle/kernel/svc/svc_thread.cpp` sont listées par `encore-active/eden-backports/src/core/CMakeLists.txt`, sans remplacement portant le même chemin dans le manifeste d'overlays. `GPIO` renvoie `Kernel::ResultNotImplemented` (aucun faux contrôleur). NCM utilise les opérations existantes `Exists`, `CleanAll`, `SetSize`, `Size`, avec erreur en l'absence du cache et protection contre une taille négative. Les numéros/ABI NCM sont recroisés avec [SwitchBrew NCM](https://switchbrew.org/wiki/NCM_services).
+**Code actif et contrat :** les sources `sources/eden/src/core/hle/service/gpio/gpio.cpp`, `sources/eden/src/core/hle/service/ncm/ncm.cpp` et `sources/eden/src/core/hle/kernel/svc/svc_thread.cpp` sont listées par `encore-active/eden-backports/src/core/CMakeLists.txt`, sans remplacement portant le même chemin dans le manifeste d'overlays. `GPIO` renvoie `Kernel::ResultNotImplemented` (aucun faux contrôleur). NCM utilise les opérations existantes `Exists`, `CleanAll`, `SetSize`, `Size`, avec erreur en l'absence du cache et protection contre une taille négative. La commande 19 lit `PlaceholderCache::GetRightsID` et rejette explicitement un NCA sans Rights ID exploitable. Les numéros/ABI NCM sont recroisés avec [SwitchBrew NCM](https://switchbrew.org/wiki/NCM_services).
 
-**Validation :** uniquement inspection statique et rapprochement CMake/manifeste ; **aucun test compilé, CI, build natif, installation ou validation PS5** de ce lot. Ne pas le présenter comme un progrès FC27 mesuré. Les 94 ABSENT restants comportent des interfaces utiles et des fonctions hors périmètre ; la réduction du nombre d'ABSENT ne remplace pas le tri par Title ID/log.
+**Validation :** uniquement inspection statique et rapprochement CMake/manifeste ; **aucun test compilé, CI, build natif, installation ou validation PS5** de ce lot. Ne pas le présenter comme un progrès FC27 mesuré. Les 93 ABSENT restants comportent des interfaces utiles et des fonctions hors périmètre ; la réduction du nombre d'ABSENT ne remplace pas le tri par Title ID/log.
 
 ---
 

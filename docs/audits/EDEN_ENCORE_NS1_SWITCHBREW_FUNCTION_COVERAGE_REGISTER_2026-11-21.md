@@ -148,6 +148,14 @@ Le scanner `ISaveDataInfoReader` inclut désormais les caches User/SD et conserv
 
 **Compteur courant : 1 278 IMPL-SRC / 91 PARTIEL / 231 STUB / 72 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Validation console PS5 non revendiquée ; le précédent HEAD moteur `c92ded2c` → vendor `be7f995c` était vert X8D24 + provenance.
 
+## Lot FSP SaveDataExtraData host-directory — 22/11/2026
+
+Couple : moteur repointé vers vendor `61ab696e00da26fca41e899323acb480e1770d15`. LibHac confirme que les directory saves n'ont pas d'ExtraData physique : lecture = structure par défaut, écriture = succès sans mutation. Encore applique désormais cette règle seulement après validation du buffer 0x200 et de l'existence réelle du save.
+
+Cmd69 passe PARTIEL → IMPL-SRC ; cmd70 STUB → NOOP. Cmd57/58/59 passent STUB → PARTIEL car le scan Eden peut retrouver les IDs système/non nuls, mais ne remplace pas encore l'indexer Horizon pour les IDs Account/Device. Cmd71 masqué a aussi été corrigé dans le runtime actif même s'il n'est pas une ligne distincte du miroir historique du catalogue.
+
+**Compteur courant : 1 279 IMPL-SRC / 93 PARTIEL / 227 STUB / 73 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le HEAD précédent `854e7785` → `c3c3b6d2` est vert X8D24 + provenance ; aucune validation PS5 n'est revendiquée.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -221,8 +221,10 @@ def main()->int:
     )[1].split('static Result Translate(', 1)[0]
     assert 'handlers_tipc.contains(ctx.GetCommand())' in gpu_fallback
     assert 'Kernel::ResultNotImplemented.raw' in gpu_fallback
+    # 1691 is no longer ABI-unknown: it shares the reviewed feature-image
+    # requirements-only calculator with 391/691/1291 below.
     for unknown in (12, 311, 312, 321, 327, 361, 424, 425, 437, 494,
-                    1061, 1091, 1601, 1602, 1603, 1611, 1612, 1691):
+                    1061, 1091, 1601, 1602, 1603, 1611, 1612):
         assert ('{'+str(unknown)+', &IGraphicsSupervisor::') not in text
     for unknown in (13, 53, 107, 113, 301, 302):
         assert ('{'+str(unknown)+',&IVi2Session::') not in text

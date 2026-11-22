@@ -268,6 +268,19 @@ Vendor `50f086881d16f4c6fb89e710ee1e4c6ce6336a04` (arbre `4f015ccf16419403354a03
 
 **Pool restant à examiner = 2 859 entrées** : 2 303 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC. Il ne s'agit pas d'un nombre de bugs prouvés ; les NULL doivent maintenant être triés par firmware, exposition réelle, backend matériel et disponibilité d'un état local/upstream.
 
+## Lot applet common/accessor — NULL runtime actifs — 22/11/2026
+
+Vendor `e58cfc55155e1373758a58e847b5f3de669bd667`, puis `c8b1acd969db74a8250c49bf84dd480e5cd4f7c4` (arbre `30ada5ee51cd74e474250c3132e7a48eb82f3b1d`).
+
+- `IAppletCommonFunctions::SetTerminateResult` : **NULL → IMPL-SRC**, mutation du `terminate_result` réel sous verrou.
+- `ILibraryAppletAccessor::SetOutOfFocusApplicationSuspendingEnabled` : **NULL → IMPL-SRC**, appel au `LifecycleManager::SetOutOfFocusSuspendingEnabled` réellement utilisé par la décision de suspension/focus.
+- `IsHomeButtonShortPressedBlocked` est aussi raccordé au flag réel consommé par `WindowSystem`, mais ne possède pas de ligne distincte dans le miroir 4 853 : aucun +1 artificiel.
+- Le couple moteur précédent `33073f67` → vendor `50f08688` a X8D24 vert et le job de provenance `validate` vert.
+
+**Compteur courant : 1 318 IMPL-SRC / 108 PARTIEL / 150 STUB / 106 NOOP / 2 301 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 857 entrées** : 2 301 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

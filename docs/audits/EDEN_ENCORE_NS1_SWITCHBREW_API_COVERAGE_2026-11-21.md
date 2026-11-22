@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 316 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 236 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `50f08688`. **Ces 1 316 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 318 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 238 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8b1acd9`. **Ces 1 318 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 236 | 80 | **1 316** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 238 | 80 | **1 318** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
 | **STUB — Stub / résultat simulé** | 150 | 0 | **150** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 303 | 0 | **2 303** |
+| **NULL — Handler NULL** | 2 301 | 0 | **2 301** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -256,17 +256,29 @@ NIFM gagne également trois contrats réels : `GetClientId` respecte désormais 
 
 **Pool restant à examiner : 2 859 = 2 303 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Ce chiffre est un pool de revue/code, pas 2 859 bugs démontrés.
 
+### Lot applet NULL — terminaison et suspension hors focus
+
+Vendor `e58cfc55`, puis `c8b1acd9` (arbre `30ada5ee51cd74e474250c3132e7a48eb82f3b1d`).
+
+- `IAppletCommonFunctions::SetTerminateResult` ID 0 : **NULL → IMPL-SRC**, même état `terminate_result` réel que la surface application.
+- `ILibraryAppletAccessor::SetOutOfFocusApplicationSuspendingEnabled` ID 50 : **NULL → IMPL-SRC**, raccord direct au `LifecycleManager` qui décide réellement de la suspension selon le focus.
+- `IAppletCommonFunctions::IsHomeButtonShortPressedBlocked` est aussi désormais implémenté et lit le flag réellement consommé par `WindowSystem`, mais cette commande n'est pas une entrée distincte du miroir 4 853 et n'est donc pas ajoutée artificiellement au compteur.
+
+**Compteur courant : 1 318 IMPL-SRC, 108 PARTIEL, 150 STUB, 106 NOOP, 2 301 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 857 = 2 301 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Les NULL restent ouverts jusqu'à justification individuelle ou implémentation.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1316
+    "Implémentation source retrouvée" : 1318
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 108
     "Stub / résultat simulé" : 150
     "No-op documenté" : 106
-    "Handler NULL" : 2303
+    "Handler NULL" : 2301
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1406,7 +1418,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `170` | `HasSaveDataAccessPermission` | 8.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `180` | `PushToFriendInvitationStorageChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `190` | `PushToNotificationStorageChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `0` | `SetTerminateResult` | 9.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
+| appletAE | `0` | `SetTerminateResult` | 9.0.0+ | **IMPL-SRC** (écrit le vrai `terminate_result` de l'applet sous verrou, cohérent avec la surface application déjà active ; vendor `e58cfc55`) | 2026-11-22 |
 | appletAE | `10` | `ReadThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `11` | `WriteThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `20` | `PushToAppletBoundChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
@@ -1522,7 +1534,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `10` | `CreateStorage` | — | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
 | appletAE | `11` | `CreateTransferMemoryStorage` | — | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
 | appletAE | `12` | `CreateHandleStorage` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
-| appletAE | `50` | `SetOutOfFocusApplicationSuspendingEnabled` | — | **NULL** ([source C++][ns1-src-003]) | 2026-11-22 |
+| appletAE | `50` | `SetOutOfFocusApplicationSuspendingEnabled` | — | **IMPL-SRC** (raccordé à `LifecycleManager::SetOutOfFocusSuspendingEnabled`, directement consommé par la logique focus/suspend ; vendor `c8b1acd9`) | 2026-11-22 |
 | appletAE | `100` | `PushInData` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `101` | `PopOutData` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `102` | `PushExtraStorage` | — | **NULL** ([source C++][ns1-src-003]) | 2026-11-22 |

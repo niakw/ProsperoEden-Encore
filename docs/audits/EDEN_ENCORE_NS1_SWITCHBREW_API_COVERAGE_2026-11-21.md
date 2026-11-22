@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 318 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 238 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8b1acd9`. **Ces 1 318 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 325 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 245 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `6f797482`. **Ces 1 325 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 238 | 80 | **1 318** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 245 | 80 | **1 325** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
 | **STUB — Stub / résultat simulé** | 150 | 0 | **150** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 301 | 0 | **2 301** |
+| **NULL — Handler NULL** | 2 294 | 0 | **2 294** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -268,17 +268,31 @@ Vendor `e58cfc55`, puis `c8b1acd9` (arbre `30ada5ee51cd74e474250c3132e7a48eb82f3
 
 **Pool restant à examiner : 2 857 = 2 301 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.** Les NULL restent ouverts jusqu'à justification individuelle ou implémentation.
 
+### Lot performance applet + ApplicationRecord NS
+
+Vendor `3bd12215` puis `b1b3d6e9`, consolidé par `6f797482` (arbre `12879f10b2d866ba5b4536e62bedfcc0c28bb34e`).
+
+- Les IDs applet 90/91 passent **2 NULL → IMPL-SRC** : la notification de changement de performance est raccordée au `LifecycleManager`, et la configuration courante est lue dans l'APM Controller actif.
+- `GenerateApplicationRecordCount` sur les deux surfaces NS passe **2 NULL → IMPL-SRC**, avec exactement le même filtrage Application/Program racine que `ListApplicationRecord`.
+- `GetApplicationRecord` sur les deux surfaces passe **2 NULL → IMPL-SRC**, avec état Installed/Archived et timestamp réel.
+- `HasApplicationRecord` ID 910 passe **NULL → IMPL-SRC**, par présence réelle du Program NCA.
+- Le défaut de provenance du couple précédent a été corrigé : `SetOutOfFocusApplicationSuspendingEnabled` est maintenant aussi présent dans l'overlay `eden-backports` réellement compilé ; le manifeste porte les hashes upstream et active correspondants.
+
+**Compteur courant : 1 325 IMPL-SRC, 108 PARTIEL, 150 STUB, 106 NOOP, 2 294 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 850 = 2 294 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1318
+    "Implémentation source retrouvée" : 1325
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 108
     "Stub / résultat simulé" : 150
     "No-op documenté" : 106
-    "Handler NULL" : 2301
+    "Handler NULL" : 2294
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1579,8 +1593,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `65` | `GetApplicationIdByContentActionName` | 5.1.0+ | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `66` | `SetCpuBoostMode` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `80` | `PerformSystemButtonPressingIfInFocus` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `90` | `SetPerformanceConfigurationChangedNotification` | 7.0.0+ | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `91` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `90` | `SetPerformanceConfigurationChangedNotification` | 7.0.0+ | **IMPL-SRC** (active/désactive la notification via `LifecycleManager::SetPerformanceModeChangedNotificationEnabled` ; vendor `3bd12215`) | 2026-11-22 |
+| appletAE | `91` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | **IMPL-SRC** (lit la configuration APM réelle pour le mode courant via `APM::Controller` ; vendor `3bd12215`) | 2026-11-22 |
 | appletAE | `200` | `GetOperationModeSystemInfo` | 7.0.0+ | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `300` | `GetSettingsPlatformRegion` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `0` | `Exit` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
@@ -1783,7 +1797,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | aoc:u | `3` | `PopPurchasedProductInfo` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | aoc:u | `4` | `PopPurchasedProductInfoWithUid` | 9.0.0+ | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | ns:am | `0` | `ListApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1` | `GenerateApplicationRecordCount` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `1` | `GenerateApplicationRecordCount` | — | **IMPL-SRC** (compte les mêmes Application/Program racines que `ListApplicationRecord` dans `ContentProviderUnion` ; vendor `b1b3d6e9`) | 2026-11-22 |
 | ns:am | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **IMPL-SRC** (retourne l'événement passif ; `DeleteApplicationEntity`/mutations le signalent réellement, vendor `a691b553`) | 2026-11-22 |
 | ns:am | `3` | `GetApplicationViewDeprecated` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `4` | `DeleteApplicationEntity` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1872,7 +1886,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `705` | `RequestDownloadTaskListData` | 2.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
 | ns:am | `800` | `RequestVersionList` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `801` | `ListVersionList` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `900` | `GetApplicationRecord` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `900` | `GetApplicationRecord` | 2.0.0+ | **IMPL-SRC** (construit l'ApplicationRecord depuis le Program NCA et `LaunchTimestampCache` ; vendor `b1b3d6e9`) | 2026-11-22 |
 | ns:am | `901` | `GetApplicationRecordProperty` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `902` | `EnableApplicationAutoUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `903` | `DisableApplicationAutoUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1909,7 +1923,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7999` | `[GetDocumentInterface](#IDocumentInterface "wikilink")` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetDocumentInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `CreateUserAccount` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/account_proxy_interface.cpp)) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `ListApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `GenerateApplicationRecordCount` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `GenerateApplicationRecordCount` | — | **IMPL-SRC** (même handler actif basé sur `ContentProviderUnion` ; vendor `b1b3d6e9`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **IMPL-SRC** (retourne l'événement passif ; `DeleteApplicationEntity`/mutations le signalent réellement, vendor `a691b553`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `3` | `GetApplicationViewDeprecated` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `4` | `DeleteApplicationEntity` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2035,7 +2049,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `800` | `RequestVersionList` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `801` | `ListVersionList` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `802` | `RequestVersionListData` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `900` | `GetApplicationRecord` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `900` | `GetApplicationRecord` | — | **IMPL-SRC** (même handler actif depuis cache contenu + timestamp ; vendor `b1b3d6e9`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `901` | `GetApplicationRecordProperty` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `902` | `EnableApplicationAutoUpdate` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `903` | `DisableApplicationAutoUpdate` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2045,7 +2059,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `907` | `WithdrawApplicationUpdateRequest` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `908` | `ListApplicationRecordInstalledContentMeta` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `909` | `WithdrawCleanupAddOnContentsWithNoRightsRecommendation` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `910` | `HasApplicationRecord` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `910` | `HasApplicationRecord` | 5.0.0+ | **IMPL-SRC** (présence réelle du Program NCA dans `ContentProviderUnion` ; vendor `b1b3d6e9`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `911` | `SetPreInstalledApplication` | 5.1.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `912` | `ClearPreInstalledApplicationFlag` | 5.1.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `913` | `ListAllApplicationRecord` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |

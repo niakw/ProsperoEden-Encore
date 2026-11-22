@@ -281,6 +281,20 @@ Vendor `e58cfc55155e1373758a58e847b5f3de669bd667`, puis `c8b1acd969db74a8250c49b
 
 **Pool restant à examiner = 2 857 entrées** : 2 301 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot performance applet + ApplicationRecord NS — 22/11/2026
+
+Vendor `3bd1221552398a2221035698dd8ef8b6129e19c8`, `b1b3d6e90d6cb81b08c62cfafed0450517192659`, puis correction de staging `6f797482091484fcf3c926ed287ee4afd7618598` (arbre `12879f10b2d866ba5b4536e62bedfcc0c28bb34e`).
+
+- Applet IDs 90/91 : **2 NULL → IMPL-SRC** via LifecycleManager et APM Controller.
+- NS `GenerateApplicationRecordCount` : **2 NULL → IMPL-SRC** sur les deux surfaces.
+- NS `GetApplicationRecord` : **2 NULL → IMPL-SRC** sur les deux surfaces.
+- NS `HasApplicationRecord` ID 910 : **NULL → IMPL-SRC**.
+- Le run moteur `2c6c2b70` avait X8D24 vert mais provenance rouge : l'overlay actif `library_applet_accessor.cpp` n'avait pas reçu le handler source. `6f797482` porte désormais le même handler dans `eden-backports` et met à jour les reçus `upstream` + `active`. Aucune validation PS5 n'est revendiquée avant les nouveaux checks.
+
+**Compteur courant : 1 325 IMPL-SRC / 108 PARTIEL / 150 STUB / 106 NOOP / 2 294 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 850 entrées** : 2 294 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

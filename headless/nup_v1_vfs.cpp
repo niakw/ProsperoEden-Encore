@@ -718,6 +718,12 @@ std::optional<std::vector<DirEntry>> Archive::ListPackageDirectory(
     return ListFromDir(dir, path);
 }
 
+std::optional<std::vector<DirEntry>> Archive::ListPackageRootDirectory(
+    std::size_t pkg, std::string_view path) const {
+    if (pkg >= packages_.size()) return std::nullopt;
+    return ListFromDir(packages_[pkg].root_dir, path);
+}
+
 std::optional<std::vector<DirEntry>> Archive::ListEffectiveDirectory(
     ContentView view, std::string_view path) const {
     std::optional<std::size_t> base;

@@ -443,6 +443,25 @@ r437_body = (active / r437_path).read_text()
 # before applying the original R437 byte-for-byte proof.
 r437_vendor_pin = subprocess.check_output(
     ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD"], text=True).strip()
+# The NS1/NS2 vendor merge extends only the GPU-owned DMA output ABI in
+# the R437 BufferCacheBase header. Seal the integrated full blob, reverse
+# that declaration on this audit copy, then replay every historical R437 test.
+if r437_vendor_pin in {
+    "53c904b81b6fb91711a917eb2bf1e88d8ec8dd99",
+    "82008bbbfc6a63259566ff31b92851d342cb3b08",
+}:
+    raw = r437_body.encode("utf-8")
+    actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual == "fd9708571ef61c83c399042a5200c87b2e3784d6", ("Unreviewed merged BufferCacheBase ABI", actual)
+    merged_dma = "    /// Optionally report whether the copied source contains GPU-owned buffer bytes.\n    /// gpu_written_dest names the exact destination subranges whose newest bytes stay GPU-owned.\n    bool DMACopy(\n        GPUVAddr src_address, GPUVAddr dest_address, u64 amount, bool* gpu_written = nullptr,\n        boost::container::small_vector<std::pair<DAddr, size_t>, 4>* gpu_written_dest = nullptr);\n"
+    earlier_dma = "    /// Optionally report whether the copied source contains GPU-owned buffer bytes.\n    /// A caller must not re-upload the destination texture from stale guest memory.\n    bool DMACopy(GPUVAddr src_address, GPUVAddr dest_address, u64 amount,\n                 bool* gpu_written = nullptr);\n"
+    assert r437_body.count(merged_dma) == 1
+    r437_body = r437_body.replace(merged_dma, earlier_dma, 1)
+    raw = r437_body.encode("utf-8")
+    previous = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert previous == "716634290574ed4dfc8fd3be0d0ea0ad582980f8", ("Merged BufferCacheBase predecessor drift", previous)
+    print("ENCORE_NS1_NS2_DMA_BUFFER_BASE_EXACT_REVERSE_PASS")
+
 # FC27 P1 added PS5-only shared TickFrame budget and typed CPU-write claims.
 # Reverse only these exact source hunks on this audit COPY, retaining the
 # historical R437/NS2 source replay and never editing the shipping header.

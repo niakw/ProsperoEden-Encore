@@ -545,6 +545,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 725** : 2 168 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` BacklightSettingsEx — 23/11/2026
+
+**Vendor `131cb5828f196fcd46f78a217eec43953e0bd083`** (arbre `e193ac362ae443d8e96fb575fd199df38aea83be`) sur la branche secondaire NS1.
+
+- **2 NULL → IMPL-SRC** : `GetBacklightSettingsEx` (107) et `SetBacklightSettingsEx` (108).
+- Libnx décrit `SetSysBacklightSettingsEx` sur **0x2C octets**, exactement la taille du bloc persistant `backlight_settings_mixed_up`. Le handler effectue donc un round-trip brut de ce bloc et persiste les écritures.
+- Les commandes historiques 9/10 restent NULL : leur structure fait **0x28** et une conversion 0x28↔0x2C n'est pas prouvée. Aucun raccourci n'est pris pour gagner deux lignes supplémentaires.
+- Aucun contrôle matériel de rétroéclairage PS5 n'est revendiqué ; ce lot couvre uniquement le contrat de settings.
+
+**Compteur historique : 1 434 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 166 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 723** : 2 166 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

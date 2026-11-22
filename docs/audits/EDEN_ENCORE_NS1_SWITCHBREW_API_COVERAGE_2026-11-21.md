@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 432 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 352 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 432 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 434 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 354 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 434 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 352 | 80 | **1 432** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 354 | 80 | **1 434** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 109 | 0 | **109** |
-| **NULL — Handler NULL** | 2 168 | 0 | **2 168** |
+| **NULL — Handler NULL** | 2 166 | 0 | **2 166** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1432
+    "Implémentation source retrouvée" : 1434
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 109
-    "Handler NULL" : 2168
+    "Handler NULL" : 2166
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5618,8 +5618,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `104` | `SetUsbFullKeyEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `105` | `SetExternalSteadyClockInternalOffset` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `106` | `GetExternalSteadyClockInternalOffset` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `107` | `GetBacklightSettingsEx` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `108` | `SetBacklightSettingsEx` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `107` | `GetBacklightSettingsEx` | 3.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/131cb5828f196fcd46f78a217eec43953e0bd083/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `108` | `SetBacklightSettingsEx` | 3.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/131cb5828f196fcd46f78a217eec43953e0bd083/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `109` | `GetHeadphoneVolumeWarningCount` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `110` | `SetHeadphoneVolumeWarningCount` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `111` | `GetBluetoothAfhEnableFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |

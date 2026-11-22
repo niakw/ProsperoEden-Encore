@@ -23,46 +23,46 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 119 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 039 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 986 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 124 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 044 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 124 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC** | 1 039 | 80 | **1 119** |
-| **RACCORDÉ** | 57 | 0 | **57** |
-| **PARTIEL** | 63 | 3 | **66** |
-| **STUB** | 301 | 0 | **301** |
-| **NOOP** | 6 | 0 | **6** |
-| **NULL** | 2 091 | 0 | **2 091** |
-| **D** | 22 | 33 | **55** |
-| **ABSENT** | 105 | 0 | **105** |
-| **ABI-DIFF** | 102 | 0 | **102** |
-| **AMBIGU** | 1 | 0 | **1** |
-| **Q** | 949 | 0 | **949** |
-| **E** | 0 | 1 | **1** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 044 | 80 | **1 124** |
+| **RACCORDÉ — Handler raccordé, corps non prouvé** | 57 | 0 | **57** |
+| **PARTIEL — Implémentation partielle** | 63 | 3 | **66** |
+| **STUB — Stub / résultat simulé** | 301 | 0 | **301** |
+| **NOOP — No-op documenté** | 6 | 0 | **6** |
+| **NULL — Handler NULL** | 2 091 | 0 | **2 091** |
+| **D — Rejet explicite / historique** | 22 | 33 | **55** |
+| **ABSENT — Absent de la table examinée** | 105 | 0 | **105** |
+| **ABI-DIFF — Noms et ABI divergents** | 113 | 0 | **113** |
+| **AMBIGU — Interface ambiguë** | 2 | 0 | **2** |
+| **Q — Non vérifié** | 932 | 0 | **932** |
+| **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
-    title SwitchBrew NS1 — 4 853 entrées
-    "IMPL-SRC" : 1119
-    "RACCORDÉ" : 57
-    "PARTIEL" : 66
-    "STUB" : 301
-    "NOOP" : 6
-    "NULL" : 2091
-    "D" : 55
-    "ABSENT" : 105
-    "ABI-DIFF" : 102
-    "AMBIGU" : 1
-    "Q" : 949
-    "E" : 1
+    title NS1 — 4 853 entrées distinctes
+    "Implémentation source retrouvée" : 1124
+    "Handler raccordé, corps non prouvé" : 57
+    "Implémentation partielle" : 66
+    "Stub / résultat simulé" : 301
+    "No-op documenté" : 6
+    "Handler NULL" : 2091
+    "Rejet explicite / historique" : 55
+    "Absent de la table examinée" : 105
+    "Noms et ABI divergents" : 113
+    "Interface ambiguë" : 2
+    "Non vérifié" : 932
+    "ID SVC non trouvé" : 1
 ```
 
 **Détail du changement de ce lot :** **119** entrées `RACCORDÉ` ont été qualifiées à partir des tables et des méthodes héritées : **114 IMPL-SRC** et **5 PARTIEL** (notamment `IsUserRegistrationRequestPermitted`, dont le corps mentionne une limite fonctionnelle). Sources effectivement inspectées : [Account](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp), [NFP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp), [NFP Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfp/nfp_interface.cpp), [NFC Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp). La classification concerne la présence d'un corps et certains chemins manifestement incomplets, **pas la présence d'un lecteur NFC PS5 ni un comportement garanti**.
 
-**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 117 `RACCORDÉ` et 949 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 2 089 `NULL` sont des trous des tables rapprochées, pas la preuve que 1 821 commandes sont demandées par FC27.
+**Limites :** le catalogue n'est pas filtré exhaustivement par version HOS NS1 ni par usage effectif des jeux. Les noms de services utilisés dans les pages SwitchBrew ne permettent pas toujours d'identifier sans ambiguïté une sous-interface. Le graphe CMake/overlays, les retours d'erreur, les buffers/handles, les stubs indirects et la console restent à qualifier pour chaque commande. Les 57 `RACCORDÉ` et 932 `Q` ne sont **pas** des fonctions nécessairement manquantes. Les 2 089 `NULL` sont des trous des tables rapprochées, pas la preuve que 1 821 commandes sont demandées par FC27.
 
 
 **Lot FS de requalification :** 20 commandes précédemment `Q` rapprochées par service et ID dans les sources FS épinglées : **5 implémentations source**, **14 handlers `nullptr`** et **1 stub explicite** (`fsp-srv` ID 70, corps `STUBBED` avec retour succès). Pour les 10 slots `fsp-srv` aux noms différents du catalogue SwitchBrew, seul le **numéro d'ID** et l'état du slot sont confirmés ; l'équivalence des noms/ABI et des variantes firmware reste à vérifier. `IStorage` : Read/GetSize réels, Write/Flush/SetSize/OperateRange nuls. `IFile` : Write/Flush/SetSize réellement raccordés. Sources : [fsp-srv](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp), [IStorage](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_storage.cpp), [IFile](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/filesystem/fsp/fs_i_file.cpp).
@@ -99,6 +99,9 @@ pie showData
 
 
 **Lot NIM/NFP/SPL/PM/LM/LDN :** 32 handlers raccordés reclassés en 21 IMPL-SRC, 5 STUB, 2 PARTIEL, 4 rejets explicites D. NIM/NFP sont des services raccordés mais leur contrat n'est pas entièrement validé ; SPL simulait des clés pour GenerateAesKek/GenerateAesKey et renvoie `ResultSecureMonitorNotImplemented` pour plusieurs commandes SMC. Aucune modification C++ ni preuve console.
+
+
+**Lot audio NS1 — interfaces Opus et entrée audio :** 17 lignes reclassées par ID, nom et corps réellement présent dans le vendor 224b05e6. **5 IMPL-SRC**, **11 ABI-DIFF**, **1 AMBIGU**. Les vieux noms `StartAudioIn`/`StopAudioIn` et les ID Opus décalés selon les versions restent des conflits de contrat, **pas des implémentations certifiées**. Sources listées dans les CMake de base et backport, sans preuve de build console.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -2125,19 +2128,19 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | audin:u | `3` | `OpenAudioInAuto` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-050]) | 2026-11-22 |
 | audin:u | `4` | `ListAudioInsAutoFiltered` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-050]) | 2026-11-22 |
 | audin:u | `0` | `GetAudioInState` | — | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `1` | `StartAudioIn` | — | Q | 2026-11-21 |
-| audin:u | `2` | `StopAudioIn` | — | Q | 2026-11-21 |
+| audin:u | `1` | `StartAudioIn` | — | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 1 : SwitchBrew StartAudioIn / table active Start, le handler Start existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
+| audin:u | `2` | `StopAudioIn` | — | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 2 : SwitchBrew StopAudioIn / table active Stop, le handler Stop existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
 | audin:u | `3` | `AppendAudioInBuffer` | — | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `4` | `RegisterBufferEvent` | — | Q | 2026-11-21 |
-| audin:u | `5` | `GetReleasedAudioInBuffer` | — | Q | 2026-11-21 |
+| audin:u | `4` | `RegisterBufferEvent` | — | **IMPL-SRC** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; IAudioIn::RegisterBufferEvent traite une opération audio ; non testé PS5) | 2026-11-22 |
+| audin:u | `5` | `GetReleasedAudioInBuffer` | — | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 5 : SwitchBrew GetReleasedAudioInBuffer / table active GetReleasedAudioInBuffers, le handler GetReleasedAudioInBuffers existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
 | audin:u | `6` | `ContainsAudioInBuffer` | — | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `7` | `AppendAudioInBufferWithUserEvent` | 3.0.0+ | Q | 2026-11-21 |
+| audin:u | `7` | `AppendAudioInBufferWithUserEvent` | 3.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 7 : SwitchBrew AppendAudioInBufferWithUserEvent / table active AppendUacInBuffer, le handler AppendAudioInBuffer existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
 | audin:u | `8` | `AppendAudioInBufferAuto` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `9` | `GetReleasedAudioInBufferAuto` | 3.0.0+ | Q | 2026-11-21 |
-| audin:u | `10` | `AppendAudioInBufferWithUserEventAuto` | 3.0.0+ | Q | 2026-11-21 |
+| audin:u | `9` | `GetReleasedAudioInBufferAuto` | 3.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 9 : SwitchBrew GetReleasedAudioInBufferAuto / table active GetReleasedAudioInBuffersAuto, le handler GetReleasedAudioInBuffersAuto existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
+| audin:u | `10` | `AppendAudioInBufferWithUserEventAuto` | 3.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 10 : SwitchBrew AppendAudioInBufferWithUserEventAuto / table active AppendUacInBufferAuto, le handler AppendAudioInBufferAuto existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
 | audin:u | `11` | `GetAudioInBufferCount` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `12` | `SetAudioInDeviceGain` | 4.0.0+ | Q | 2026-11-21 |
-| audin:u | `13` | `GetAudioInDeviceGain` | 4.0.0+ | Q | 2026-11-21 |
+| audin:u | `12` | `SetAudioInDeviceGain` | 4.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 12 : SwitchBrew SetAudioInDeviceGain / table active SetDeviceGain, le handler SetDeviceGain existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
+| audin:u | `13` | `GetAudioInDeviceGain` | 4.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 13 : SwitchBrew GetAudioInDeviceGain / table active GetDeviceGain, le handler GetDeviceGain existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
 | audin:u | `14` | `FlushAudioInBuffers` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
 | audrec:u | `0` | `OpenFinalOutputRecorder` | — | **NULL** ([source C++][ns1-src-056]) | 2026-11-22 |
 | audrec:u | `0` | `GetFinalOutputRecorderState` | — | **NULL** ([source C++][ns1-src-056]) | 2026-11-22 |
@@ -2243,18 +2246,18 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | codecctl | `10` | `IsCodecHeadphoneMicJackInserted` | — | Q | 2026-11-21 |
 | codecctl | `11` | `ClearCodecHeadphoneMicJackInterrupt` | — | Q | 2026-11-21 |
 | codecctl | `12` | `IsCodecDeviceRequested` | — | Q | 2026-11-21 |
-| hwopus | `0` | `Initialize` | — | Q | 2026-11-21 |
+| hwopus | `0` | `Initialize` | — | **AMBIGU** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder.cpp) ; ID 0 partagé entre manager et décodeur, aucune commande Initialize ainsi nommée dans leurs tables ; non testé PS5) | 2026-11-22 |
 | hwopus | `1` | `GetWorkBufferSize` | — | **IMPL-SRC** ([source C++][ns1-src-054]) | 2026-11-22 |
-| hwopus | `2` | `OpenHardwareOpusDecoderForMultiStream` | 3.0.0+ | Q | 2026-11-21 |
+| hwopus | `2` | `OpenHardwareOpusDecoderForMultiStream` | 3.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder_manager.cpp) ; ID 2 / OpenHardwareOpusDecoderForMultiStream non équivalent au nom actuellement enregistré, variantes firmware Opus à désambiguïser ; non testé PS5) | 2026-11-22 |
 | hwopus | `3` | `GetWorkBufferSizeForMultiStream` | 3.0.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder_manager.cpp)) | 2026-11-22 |
-| hwopus | `0` | `DecodeInterleavedOld ([1.0.0-3.0.2] DecodeInterleaved)` | 4.0.0+ | Q | 2026-11-21 |
+| hwopus | `0` | `DecodeInterleavedOld ([1.0.0-3.0.2] DecodeInterleaved)` | 4.0.0+ | **IMPL-SRC** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder.cpp) ; IHardwareOpusDecoder::DecodeInterleavedOld appelle le décodeur Opus ; nom/ID concordants sur l'interface ; non testé PS5) | 2026-11-22 |
 | hwopus | `1` | `SetContext` | — | **IMPL-SRC** ([source C++][ns1-src-057]) | 2026-11-22 |
-| hwopus | `2` | `DecodeInterleavedForMultiStreamOld ([3.0.0-3.0.2] DecodeInterleavedForMultiStream)` | 4.0.0+ | Q | 2026-11-21 |
+| hwopus | `2` | `DecodeInterleavedForMultiStreamOld ([3.0.0-3.0.2] DecodeInterleavedForMultiStream)` | 4.0.0+ | **IMPL-SRC** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder.cpp) ; IHardwareOpusDecoder::DecodeInterleavedForMultiStreamOld appelle le décodeur Opus ; nom/ID concordants sur l'interface ; non testé PS5) | 2026-11-22 |
 | hwopus | `3` | `SetContextForMultiStream` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-057]) | 2026-11-22 |
-| hwopus | `4` | `DecodeInterleavedWithPerfOld ([4.0.0-5.1.0] DecodeInterleavedWithPerf)` | 6.0.0+ | Q | 2026-11-21 |
-| hwopus | `5` | `DecodeInterleavedForMultiStreamWithPerfOld ([4.0.0-5.1.0] DecodeInterleavedForMultiStreamWithPerf)` | 6.0.0+ | Q | 2026-11-21 |
-| hwopus | `6` | `DecodeInterleaved` | 6.0.0+ | Q | 2026-11-21 |
-| hwopus | `7` | `DecodeInterleavedForMultiStream` | 6.0.0+ | Q | 2026-11-21 |
+| hwopus | `4` | `DecodeInterleavedWithPerfOld ([4.0.0-5.1.0] DecodeInterleavedWithPerf)` | 6.0.0+ | **IMPL-SRC** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder.cpp) ; IHardwareOpusDecoder::DecodeInterleavedWithPerfOld appelle le décodeur Opus ; nom/ID concordants sur l'interface ; non testé PS5) | 2026-11-22 |
+| hwopus | `5` | `DecodeInterleavedForMultiStreamWithPerfOld ([4.0.0-5.1.0] DecodeInterleavedForMultiStreamWithPerf)` | 6.0.0+ | **IMPL-SRC** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder.cpp) ; IHardwareOpusDecoder::DecodeInterleavedForMultiStreamWithPerfOld appelle le décodeur Opus ; nom/ID concordants sur l'interface ; non testé PS5) | 2026-11-22 |
+| hwopus | `6` | `DecodeInterleaved` | 6.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder.cpp) ; ID 6 / DecodeInterleaved non équivalent au nom actuellement enregistré, variantes firmware Opus à désambiguïser ; non testé PS5) | 2026-11-22 |
+| hwopus | `7` | `DecodeInterleavedForMultiStream` | 6.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/hardware_opus_decoder.cpp) ; ID 7 / DecodeInterleavedForMultiStream non équivalent au nom actuellement enregistré, variantes firmware Opus à désambiguïser ; non testé PS5) | 2026-11-22 |
 | auddebug | `0` | `StartDspProfiler` | — | Q | 2026-11-21 |
 | auddebug | `1` | `StopDspProfiler` | — | Q | 2026-11-21 |
 | auddebug | `2` | `StartCpuProfiler` | — | Q | 2026-11-21 |

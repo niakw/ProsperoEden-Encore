@@ -27,7 +27,9 @@ expected.add("ac880cd408116e6eb53ba2400abc52970b81f539")
 expected.add("95343060f948601930f2e62b919da0789f0830bb")
 expected.add("12ab9a8411f5c9df1b5cc73f01c923ad9479c8af")
 expected.add("224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c")
-if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c"}:
+# Exact two-file SampleMask successor: the native FC27 SSBO owners are unchanged.
+expected.add("150a3a79ca103061f73a9a50ca8f463a3b4712f3")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -36,6 +38,7 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
         "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
         "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
         "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c": "3f7f1523cef730ad153bf658fbb3567222d6e956",
+            "150a3a79ca103061f73a9a50ca8f463a3b4712f3": "39fb9a3efe65f67115dfcdebe39a55334a702f2d",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
@@ -75,7 +78,7 @@ active_ctx=V/"encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/s
 pinned_ctx=V/"sources/eden/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp"
 assert blob(active_mem)=="6e6994343df4a1e3930495f8fd575c4329bfa8c4"
 assert blob(pinned_mem)=="bef4421fedce6d66af1c6ff0c1dcc835e976eb33"
-assert blob(active_ctx)=="a3c36f45fd9b2b89f096258f54dd9189287a82d0"
+assert blob(active_ctx)=="0e14a042ab272f701da90a5b62fdeeb626032188"
 assert blob(pinned_ctx)=="ef1f3f2ee83d3d44a571c03f19399dbe0697dd7e"
 
 for needle in (

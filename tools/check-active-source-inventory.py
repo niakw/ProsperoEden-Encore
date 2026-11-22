@@ -442,13 +442,16 @@ r437_body = (active / r437_path).read_text()
 # its raw blob and reverse only the three exact added declaration blocks
 # before applying the original R437 byte-for-byte proof.
 def checked_guest_cache_lock_vendor(pin):
-    if pin not in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "95343060f948601930f2e62b919da0789f0830bb"}:
+    if pin not in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af"}:
         return pin
-    if pin == "95343060f948601930f2e62b919da0789f0830bb":
+    if pin in {"95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af"}:
         reviewed_tree = subprocess.check_output(
             ["git", "-C", str(root / "vendor"), "rev-parse", "HEAD^{tree}"], text=True
         ).strip()
-        assert reviewed_tree == "efa6548c57f7823d4e8b2c975944c6846b765ff3", ("Vendor source tree drift", reviewed_tree)
+        assert reviewed_tree == {
+            "95343060f948601930f2e62b919da0789f0830bb": "efa6548c57f7823d4e8b2c975944c6846b765ff3",
+            "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af": "64179fcce4962f9b2b7c738504a6fa0e00b2b292",
+        }[pin], ("Vendor source tree drift", pin, reviewed_tree)
     # Only the two exact new C++ function call sites may differ from the
     # reviewed integrated renderer. Runtime C++ is never modified here.
     source=(active/"eden-vulkan/vulkan_rasterizer.cpp").read_text()

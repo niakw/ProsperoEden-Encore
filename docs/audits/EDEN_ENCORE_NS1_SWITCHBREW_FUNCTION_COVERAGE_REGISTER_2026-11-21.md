@@ -613,6 +613,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 705** : 2 148 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot NCM racine — création sur backends préprovisionnés — 23/11/2026
+
+**Vendor `400974b505e47e85952469aeceb959bbbee41948`** (arbre `6fda5c117836e91b18c76796121f9e58b4fe17a0`) sur la branche secondaire NS1.
+
+- `CreateContentStorage` (0) et `CreateContentMetaDatabase` (1) : **2 NULL → NOOP documentés avec post-condition vérifiée**.
+- Encore préprovisionne respectivement `RegisteredCache + PlaceholderCache` et `RegisteredCache` avant le démarrage NCM. Les commandes réussissent seulement lorsque ces backends existent ; un `StorageId` sans backing renvoie une erreur.
+- Aucun chemin hôte ni stockage fictif n'est créé. Le comportement couvre le cas où la création Horizon demande simplement d'assurer l'existence d'un backend déjà provisionné.
+- `CleanupContentMetaDatabase` reste NULL faute de primitive locale équivalente.
+
+**Compteur historique : 1 445 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 146 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 703** : 2 146 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

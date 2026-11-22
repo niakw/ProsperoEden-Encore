@@ -38,7 +38,9 @@ expected.add("ff0822695ec03ac7d9d2c75b4703adf12eec544f")
 expected.add("c3dc80c83d468e04c794b3d7d36bc1316b342bd4")
 # NCM capacity/lifecycle follow-up; GPU source owners unchanged.
 expected.add("60bd03e6e5ad083ee050887028fa33d514a3050e")
-if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4", "60bd03e6e5ad083ee050887028fa33d514a3050e"}:
+# NCM read/revert handlers; GPU source owners unchanged.
+expected.add("488475c8c3867af07892a7f53cc6e15a54d09542")
+if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "fe5a389ac04fa3c26c1756fc18e73a962e196da4", "e329e52f7de79302bfcc1b658431777501d5edd9", "ff0822695ec03ac7d9d2c75b4703adf12eec544f", "c3dc80c83d468e04c794b3d7d36bc1316b342bd4", "60bd03e6e5ad083ee050887028fa33d514a3050e", "488475c8c3867af07892a7f53cc6e15a54d09542"}:
     reviewed_tree = subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip()
@@ -52,6 +54,7 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
         "ff0822695ec03ac7d9d2c75b4703adf12eec544f": "39d199d468eeae1494a3942bbf13c1fffa05e948",
         "c3dc80c83d468e04c794b3d7d36bc1316b342bd4": "ec21773d1511a78da2bc3056ffc2b48b2971da7e",
         "60bd03e6e5ad083ee050887028fa33d514a3050e": "68f85f8f6c1d0cae8c56fde1cb8a2e8c1a03a087",
+        "488475c8c3867af07892a7f53cc6e15a54d09542": "c46a26583a3bcdb672f9a8adfd25b66da592d66c",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

@@ -23,21 +23,21 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 220 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 222 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 140 | 80 | **1 220** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 142 | 80 | **1 222** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 74 | 3 | **77** |
 | **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
 | **NOOP — No-op documenté** | 10 | 0 | **10** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
-| **D — Rejet explicite / historique** | 32 | 33 | **65** |
+| **D — Rejet explicite / historique** | 33 | 33 | **66** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 6 | 0 | **6** |
-| **ABSENT — Commande absente des tables** | 23 | 0 | **23** |
+| **ABSENT — Commande absente des tables** | 20 | 0 | **20** |
 | **ABI-DIFF — Noms/ABI divergents** | 284 | 0 | **284** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
@@ -80,22 +80,28 @@ Les **17 entrées `mig:usr`** restantes sont `SERVICE-NON-EXPOSÉ` : Eden constr
 
 **Il reste donc 23 `ABSENT` réels : 22 NCM et 1 `Attach` NS.** Nouveau total : 1 220 IMPL-SRC, 77 PARTIEL, 347 STUB, 10 NOOP, 2 311 NULL, 65 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 23 ABSENT, 284 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.
 
+### Lot NCM lecture / revert / debug
+
+**Vendor `488475c8`.** `RevertToPlaceHolder` (16) effectue maintenant une vraie copie du contenu enregistré vers le placeholder, supprime l'ancien contenu seulement après copie réussie et rafraîchit le cache. `ReadContentIdFile` (18) lit le NCA réel avec validation de l'offset et bornage exact sur le buffer IPC. `WriteContentForDebug` (21) est un **rejet explicite**, pas une implémentation : Atmosphère réserve ce chemin au matériel de développement.
+
+**Compteur : 1 222 IMPL-SRC, 77 PARTIEL, 347 STUB, 10 NOOP, 2 311 NULL, 66 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 20 ABSENT, 284 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Les 20 ABSENT restants sont 19 NCM (dont 17 ContentMetaDatabase et 2 chemins ContentStorage) + 1 NS Attach.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1220
+    "Implémentation source retrouvée" : 1222
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 77
     "Stub / résultat simulé" : 347
     "No-op documenté" : 10
     "Handler NULL" : 2311
-    "Rejet explicite / historique" : 65
+    "Rejet explicite / historique" : 66
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
     "Hors version firmware cible" : 6
-    "Commande absente des tables" : 23
+    "Commande absente des tables" : 20
     "Noms/ABI divergents" : 284
     "Interface ambiguë" : 12
     "Non vérifié" : 0
@@ -4297,12 +4303,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Content Manager services | `13` | `ListContentId` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
 | Content Manager services | `14` | `GetSizeFromContentId` | — | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
 | Content Manager services | `15` | `DisableForcibly` | — | **NOOP** (aucun état backing enabled/disabled distinct dans IContentStorage Encore ; fermeture/réouverture IPC suffit) | 2026-11-22 |
-| Content Manager services | `16` | `RevertToPlaceHolder` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 16, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `16` | `RevertToPlaceHolder` | 2.0.0+ | **IMPL-SRC** (runtime NCM réel : cache enregistré/placeholder et lecture NCA bornée ; vendor `488475c8`) | 2026-11-22 |
 | Content Manager services | `17` | `SetPlaceHolderSize` | 2.0.0+ | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d8e80440a0dfec75ccc0cbc362dd40c2d270be2b/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 17 raccordé au `PlaceholderCache` ; contrat hôte/PS5 non validé) | 2026-11-22 |
-| Content Manager services | `18` | `ReadContentIdFile` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 18, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `18` | `ReadContentIdFile` | 2.0.0+ | **IMPL-SRC** (runtime NCM réel : cache enregistré/placeholder et lecture NCA bornée ; vendor `488475c8`) | 2026-11-22 |
 | Content Manager services | `19` | `GetRightsIdFromPlaceHolderId` | 2.0.0+ | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/bbdda09991fb31a0b858ba20059200ebd0a85cbc/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 19 lit le Rights ID du NCA par `PlaceholderCache::GetRightsID`, erreur explicite si indisponible ; hôte/PS5 non validé) | 2026-11-22 |
 | Content Manager services | `20` | `GetRightsIdFromContentId` | 2.0.0+ | **IMPL-SRC** (handler NCM raccordé au RegisteredCache actif PS5 ; vendor `c3dc80c8`, validation console absente) | 2026-11-22 |
-| Content Manager services | `21` | `WriteContentForDebug` | 2.0.0+ | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 21, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `21` | `WriteContentForDebug` | 2.0.0+ | **D** (rejet explicite : commande réservée au matériel de développement selon Atmosphère ; aucun write retail simulé) | 2026-11-22 |
 | Content Manager services | `22` | `GetFreeSpaceSize` | 2.0.0+ | **IMPL-SRC** (raccordé aux capacités réelles du FileSystemController pour le StorageId courant ; vendor `60bd03e6`) | 2026-11-22 |
 | Content Manager services | `23` | `GetTotalSpaceSize` | 2.0.0+ | **IMPL-SRC** (raccordé aux capacités réelles du FileSystemController pour le StorageId courant ; vendor `60bd03e6`) | 2026-11-22 |
 | Content Manager services | `24` | `FlushPlaceHolder` | 3.0.0+ | **NOOP** (VFS Encore sans flush différé ni bit d'attribut Horizon représenté ; retour succès documenté, vendor `c3dc80c8`) | 2026-11-22 |

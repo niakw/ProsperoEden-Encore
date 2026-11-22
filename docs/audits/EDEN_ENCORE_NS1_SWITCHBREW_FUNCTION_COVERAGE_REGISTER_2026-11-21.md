@@ -68,6 +68,12 @@ Les 17 lignes migration passent à **SERVICE-NON-EXPOSÉ** (`mig:user` enregistr
 
 **Compteur courant : 1 220 IMPL-SRC / 77 PARTIEL / 347 STUB / 10 NOOP / 2 311 NULL / 65 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 23 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853. Les 23 ABSENT réels sont 22 NCM + 1 NS Attach.**
 
+## Lot NCM lecture / revert — 22/11/2026
+
+Vendor `488475c8c3867af07892a7f53cc6e15a54d09542` : `RevertToPlaceHolder` et `ReadContentIdFile` passent **ABSENT → IMPL-SRC** sur le stockage réel ; `WriteContentForDebug` passe **ABSENT → D** car réservé au matériel de développement et rejeté explicitement sur Encore.
+
+**Compteur courant : 1 222 IMPL-SRC / 77 PARTIEL / 347 STUB / 10 NOOP / 2 311 NULL / 66 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 20 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Les deux fonctions de chemins NCM restent ouvertes : un chemin hôte PS5 ne doit pas être présenté comme un chemin `fscommon` Horizon.
+
 ---
 
 ## 1. Références et règle de vérité

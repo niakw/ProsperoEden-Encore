@@ -362,6 +362,19 @@ Vendor `a7c2afb34048ff001b9ff80aad4ec6aa32aff703` (arbre `9b7cefd10652c20bdd3c0a
 
 **Pool restant à examiner = 2 827 entrées** : 2 273 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — stubs Horizon officiels + NIFM sleep/wake — 22/11/2026
+
+Vendor `36100c1740ad18d53949761846f21ffeb8a0f472` (arbre `c9042596bcfece3250e1574ab44061c182ff54ee`).
+
+- `PutToSleep` / `WakeUp` : **2 NULL → NOOP**, commandes NIFM sans I/O et sans équivalent de daemon réseau suspendu dans Encore.
+- **15 NULL appletAE → D** : SwitchBrew les documente comme stubs Horizon retournant une erreur. Elles ne constituent donc pas un backlog d'implémentation fonctionnelle pour Encore.
+- `NeedsToExitProcess` a été testé localement contre le flag lifecycle puis revert avant pin, la documentation firmware prouvant que ce raccord aurait divergé de l'OS.
+- Baseline précédente `22df8a22` → `a7c2afb3` : X8D24 + provenance verts. Aucun test PS5 revendiqué pour ce nouveau lot.
+
+**Compteur courant : 1 348 IMPL-SRC / 107 PARTIEL / 149 STUB / 108 NOOP / 2 256 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 810 entrées** : 2 256 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

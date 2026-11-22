@@ -31,9 +31,9 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 104 | 3 | **107** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
-| **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 273 | 0 | **2 273** |
-| **D — Rejet explicite / historique** | 36 | 33 | **69** |
+| **NOOP — No-op documenté** | 108 | 0 | **108** |
+| **NULL — Handler NULL** | 2 256 | 0 | **2 256** |
+| **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 6 | 0 | **6** |
@@ -347,6 +347,18 @@ Vendor final `a7c2afb3` (arbre `9b7cefd10652c20bdd3c0a62599e42e35e40c568`), incl
 
 **Pool restant à examiner : 2 827 = 2 273 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — stubs Horizon officiels + NIFM sleep/wake
+
+Vendor `36100c17` (arbre `c9042596bcfece3250e1574ab44061c182ff54ee`). La baseline précédente `22df8a22` → `a7c2afb3` est **verte X8D24 + provenance**.
+
+- NIFM `PutToSleep` / `WakeUp` : **2 NULL → NOOP**. libnx confirme deux commandes sans entrée/sortie ; Encore n'a aucun daemon NIFM séparé ni état de veille réseau à synchroniser, le backend hôte étant interrogé à la demande.
+- Applet Manager : **15 NULL → D** après contre-vérification SwitchBrew. Horizon documente explicitement ces commandes comme *stubbed, just returns an error* : `RequestToEnterSleep`, `EnterSleep`, `NeedsToExitProcess`, `RequestForAppletToGetForeground`, `GetThisAppletKind`, `AllowToEnterSleep`, `DisallowToEnterSleep`, `CreateWindow`, les 3 getters d'images de capture, les 3 acquisitions de buffers de capture et `NotifyMessageToHomeMenuForDebug`.
+- L'essai local de raccorder `NeedsToExitProcess` au flag lifecycle a été explicitement revert avant gitlink : disposer d'un état local ne justifie pas de diverger du contrat Horizon.
+
+**Compteur courant : 1 348 IMPL-SRC, 107 PARTIEL, 149 STUB, 108 NOOP, 2 256 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 810 = 2 256 NULL + 149 STUB + 107 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
@@ -356,9 +368,9 @@ pie showData
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 107
     "Stub / résultat simulé" : 149
-    "No-op documenté" : 106
-    "Handler NULL" : 2273
-    "Rejet explicite / historique" : 69
+    "No-op documenté" : 108
+    "Handler NULL" : 2256
+    "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
     "Hors version firmware cible" : 6
@@ -1457,8 +1469,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `1` | `TryLock` | — | **IMPL-SRC** ([source C++][ns1-src-039]) | 2026-11-22 |
 | appletAE | `2` | `Unlock` | — | **IMPL-SRC** ([source C++][ns1-src-039]) | 2026-11-22 |
 | appletAE | `3` | `GetEvent` | — | **IMPL-SRC** ([source C++][ns1-src-039]) | 2026-11-22 |
-| appletAE | `0` | `RequestToEnterSleep` | — | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
-| appletAE | `1` | `EnterSleep` | — | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
+| appletAE | `0` | `RequestToEnterSleep` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
+| appletAE | `1` | `EnterSleep` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `2` | `StartSleepSequence` | — | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `3` | `StartShutdownSequence` | — | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `4` | `StartRebootSequence` | — | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
@@ -1621,15 +1633,15 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `104` | `PopInteractiveOutData` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `105` | `GetPopOutDataEvent` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `106` | `GetPopInteractiveOutDataEvent` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
-| appletAE | `110` | `NeedsToExitProcess` | — | **NULL** ([source C++][ns1-src-003]) | 2026-11-22 |
+| appletAE | `110` | `NeedsToExitProcess` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `120` | `GetLibraryAppletInfo` | — | **IMPL-SRC** ([source C++][ns1-src-003]) | 2026-11-22 |
-| appletAE | `150` | `RequestForAppletToGetForeground` | — | **NULL** ([source C++][ns1-src-003]) | 2026-11-22 |
+| appletAE | `150` | `RequestForAppletToGetForeground` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `160` | `GetIndirectLayerConsumerHandle` | 2.0.0+ | **STUB** ([source C++][ns1-src-003]) | 2026-11-22 |
 | appletAE | `0` | `GetEventHandle` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `1` | `ReceiveMessage` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `2` | `GetThisAppletKind` | — | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `3` | `AllowToEnterSleep` | — | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `4` | `DisallowToEnterSleep` | — | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `2` | `GetThisAppletKind` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
+| appletAE | `3` | `AllowToEnterSleep` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
+| appletAE | `4` | `DisallowToEnterSleep` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `5` | `GetOperationMode` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `6` | `GetPerformanceMode` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `7` | `GetCradleStatus` | — | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
@@ -1709,7 +1721,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `2` | `Pop` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `3` | `GetPopEventHandle` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `4` | `Clear` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| appletAE | `0` | `CreateWindow` | — | **NULL** ([source C++][ns1-src-046]) | 2026-11-22 |
+| appletAE | `0` | `CreateWindow` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `1` | `GetAppletResourceUserId` | — | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
 | appletAE | `2` | `GetAppletResourceUserIdOfCallerApplet` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
 | appletAE | `10` | `AcquireForegroundRights` | — | **IMPL-SRC** ([source C++][ns1-src-046]) | 2026-11-22 |
@@ -1722,21 +1734,21 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `2` | `GetLibraryAppletExpectedMasterVolume` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
 | appletAE | `3` | `ChangeMainAppletMasterVolume` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
 | appletAE | `4` | `SetTransparentVolumeRate` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
-| appletAE | `0` | `GetLastForegroundCaptureImage` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `0` | `GetLastForegroundCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `1` | `UpdateLastForegroundCaptureImage` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `2` | `GetLastApplicationCaptureImage` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `3` | `GetCallerAppletCaptureImage` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `2` | `GetLastApplicationCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
+| appletAE | `3` | `GetCallerAppletCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `4` | `UpdateCallerAppletCaptureImage` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `5` | `GetLastForegroundCaptureImageEx` | — | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `6` | `GetLastApplicationCaptureImageEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `7` | `GetCallerAppletCaptureImageEx` | — | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `8` | `TakeScreenShotOfOwnLayer` | 2.0.0+ | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `9` | `CopyBetweenCaptureBuffers` | 5.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `10` | `AcquireLastApplicationCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `10` | `AcquireLastApplicationCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `11` | `ReleaseLastApplicationCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `12` | `AcquireLastForegroundCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `12` | `AcquireLastForegroundCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `13` | `ReleaseLastForegroundCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `14` | `AcquireCallerAppletCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `14` | `AcquireCallerAppletCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `15` | `ReleaseCallerAppletCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `16` | `AcquireLastApplicationCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `17` | `AcquireLastForegroundCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
@@ -1761,7 +1773,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `30` | `WindAndDoReserved` | — | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
 | appletAE | `40` | `ReserveToStartAndWaitAndUnwindThis` | — | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
 | appletAE | `41` | `ReserveToStartAndWait` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
-| appletAE | `0` | `NotifyMessageToHomeMenuForDebug` | — | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
+| appletAE | `0` | `NotifyMessageToHomeMenuForDebug` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `1` | `OpenMainApplication` | — | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
 | appletAE | `10` | `PerformSystemButtonPressing` | — | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
 | appletAE | `20` | `InvalidateTransitionLayer` | — | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
@@ -4799,8 +4811,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `20` | `IsEthernetCommunicationEnabled` | — | **IMPL-SRC** (relit désormais l'état `ethernet_enabled` écrit par le setter au lieu d'inférer depuis n'importe quelle IPv4 hôte ; vendor `bc3d538f`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `21` | `IsAnyInternetRequestAccepted` | — | **IMPL-SRC** (lit le ClientId du buffer d'entrée et répond à partir des IRequest réellement `Accepted` de ce client ; vendor `81bb97ea`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `22` | `IsAnyForegroundRequestAccepted` | — | **IMPL-SRC** (reflète le compteur réel d'IRequest en état `Accepted`, maintenu par les transitions et le destructeur ; vendor `f757675e`) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `23` | `PutToSleep` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `24` | `WakeUp` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `23` | `PutToSleep` | — | **NOOP** (aucun daemon NIFM séparé à suspendre dans Encore; commande sans I/O, succès neutre documenté; vendor 36100c17) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `24` | `WakeUp` | — | **NOOP** (aucun daemon NIFM séparé à réveiller dans Encore; commande sans I/O, succès neutre documenté; vendor 36100c17) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `25` | `GetSsidListVersion` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `26` | `SetExclusiveClient` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `27` | `GetDefaultIpSetting` | — | **IMPL-SRC** (ABI SwIPC `IpSettingData` 0xC2 ; état partagé initialisé depuis IP/masque/passerelle/DNS hôte, proxy off, MTU 1500 ; vendor `40596a94`) | 2026-11-22 |

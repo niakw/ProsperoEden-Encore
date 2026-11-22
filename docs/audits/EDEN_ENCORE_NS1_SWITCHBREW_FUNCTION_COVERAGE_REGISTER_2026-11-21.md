@@ -12,6 +12,8 @@
 >
 > Ce document est un **registre de couverture**, pas une preuve de compatibilité console. Une ligne « implémentée source » ne devient « validée PS5 » qu'après un test représentatif.
 
+> **Point source du 22/11 — branche d’audit `audit/ns1-switchbrew-main-coverage-20261122` :** le [catalogue NS1 détaillé](./EDEN_ENCORE_NS1_SWITCHBREW_API_COVERAGE_2026-11-21.md) a été recalculé sur le moteur `452fd7fe` → vendor/gitlink `224b05e6` : **986 entrées avec corps C++ non trivial repéré (906 IPC + 80 SVC) / 4 853 entrées SwitchBrew distinctes**, **187 handlers raccordés non qualifiés**, **61 partiels**, **258 stubs**, **1 966 handlers NULL**, **51 rejets explicites/historiques**, **39 absentes des tables examinées**, **1 304 non vérifiées**, **1 ID SVC absent de l'énumération**. **Ce décompte est une qualification source provisoire : ni conformité ABI intégrale, ni build ni validation PS5.** Les anciens bilans ci-dessous demeurent des *snapshots datés* et ne doivent pas remplacer ce compteur. Aucun code runtime n'a été modifié lors du recalcul.
+
 ## 1. Références et règle de vérité
 
 Référence fonctionnelle principale :

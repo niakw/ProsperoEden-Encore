@@ -364,6 +364,10 @@ KEPLER_MULTI = """        if (!IsKeplerRegisterMethodValid(subchannel_type[dma_s
 """
 
 def apply_reviewed_kepler_bounds(source):
+    source = once(source, '#include "video_core/engines/maxwell_3d.h"\n',
+                  '#include "video_core/engines/kepler_compute.h"\n'
+                  '#include "video_core/engines/kepler_memory.h"\n'
+                  '#include "video_core/engines/maxwell_3d.h"\n')
     source = once(source, "constexpr u32 ComputeInline = 0x6D;\n\n",
                   "constexpr u32 ComputeInline = 0x6D;\n\n" + KEPLER_BOUNDS)
     assert source.count(P27_UNBOUND) == 2

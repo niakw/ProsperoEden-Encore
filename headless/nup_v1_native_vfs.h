@@ -36,6 +36,8 @@ public:
     // ExeFS/RomFS views. Addons are NEVER merged into Effective().
     FileSys::VirtualDir Effective(ContentView view) const;
     FileSys::VirtualDir PackageView(std::size_t package_index, ContentView view) const;
+    // Only for the verified NUP's embedded program1/exefs lookup (Lichii).
+    FileSys::VirtualDir PackageRoot(std::size_t package_index) const;
 
 private:
     explicit Mount(std::shared_ptr<Detail::State> state);

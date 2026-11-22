@@ -62,11 +62,11 @@ for submission in (base1, base2):
     assert submission.count("Tegra::CommandList entries;") == 1
     assert submission.count("entries.command_lists.resize(params.num_entries, boost::container::default_init);") == 1
     assert submission.count("catch (const std::bad_alloc&)") == 1
-    assert "return NvResult::InsufficientMemory;" in owner
+    assert "return NvResult::InsufficientMemory;" in submission
     assert submission.index("entries.command_lists.resize(") < submission.index("SubmitGPFIFOImpl(")
-    assert "if (params.num_entries != 0)" in owner
-    assert "params.num_entries > commands.size()" in owner
-    assert "return SubmitGPFIFOImpl(params, std::move(entries), fd);" in owner
+    assert "if (params.num_entries != 0)" in submission
+    assert "params.num_entries > commands.size()" in submission
+    assert "return SubmitGPFIFOImpl(params, std::move(entries), fd);" in submission
 assert "params.num_entries > MaxKickoffEntries" in base1
 assert "NativeGpfifoGuestHeadersReadable(" in base1
 assert "session->process->GetMemory().IsValidVirtualAddressRange(" in base1

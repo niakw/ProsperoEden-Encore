@@ -1214,7 +1214,20 @@ post_f07_vic_present = {post_f07_vic_receipt} & set(physical_all)
 if post_f07_vic_present:
     assert post_f07_nvdec_present == post_f07_nvdec_owners
     raw_vic = (active / post_f07_vic_receipt).read_bytes()
-    assert hashlib.sha1(b"blob " + str(len(raw_vic)).encode() + bytes([0]) + raw_vic).hexdigest() == "48008fc5f3b05c3e95432827c03e20b815cce21c"
+    vic_sha = hashlib.sha1(
+        b"blob " + str(len(raw_vic)).encode() + bytes([0]) + raw_vic
+    ).hexdigest()
+    if vic_sha == "178d361bc3b5e9a0bf6ca9fa579d49df7ab72935":
+        # The selected VIC adds the reviewed bounds/overflow, unaligned SIMD
+        # and worker-lifetime protections. Reuse its existing exact 29-hunk
+        # source receipt instead of duplicating that reconstruction here.
+        vic_receipt = root / "vendor/tests/fc27_nvdec_vic_witness_host.py"
+        assert vic_receipt.is_file()
+        subprocess.run(["python3", "-B", str(vic_receipt)], check=True, timeout=180)
+        print("ENCORE_POST_F07_VIC29_EXACT_RECEIPT_PASS")
+    else:
+        assert vic_sha == "48008fc5f3b05c3e95432827c03e20b815cce21c", (
+            "Unreviewed VIC source drift", vic_sha)
     raw_ffmpeg = (active / "eden-core/src/video_core/host1x/ffmpeg.cpp").read_bytes()
     assert hashlib.sha1(b"blob " + str(len(raw_ffmpeg)).encode() + bytes([0]) + raw_ffmpeg).hexdigest() == "2eadc437cec5559560e5aaf849dd3b6446782e99"
     vic_cmake = (root / "headless/CMakeLists.txt").read_text()

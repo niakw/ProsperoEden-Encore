@@ -23,15 +23,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 268 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 271 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 188 | 80 | **1 268** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 191 | 80 | **1 271** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 81 | 3 | **84** |
-| **STUB — Stub / résultat simulé** | 254 | 0 | **254** |
-| **NOOP — No-op documenté** | 66 | 0 | **66** |
+| **PARTIEL — Implémentation partielle** | 85 | 3 | **88** |
+| **STUB — Stub / résultat simulé** | 244 | 0 | **244** |
+| **NOOP — No-op documenté** | 69 | 0 | **69** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -148,16 +148,22 @@ Le manifeste `eden-backports` contient les empreintes SHA-256 exactes des deux n
 
 **Compteur : 1 268 IMPL-SRC, 84 PARTIEL, 254 STUB, 66 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot matériel — BTM / LBL / PSM / TS
+
+**Vendor `4936c552`.** `AcquireRadioEvent` et les sauvegardes/restaurations LBL sont désormais de vraies implémentations locales. Le pairing Switch et le capteur de lumière physique sont explicitement non disponibles. Deux erreurs de fallback PSM sont corrigées : `GetBatteryVoltageState` ne renvoie plus 0 (`NeedsShutdown`) mais 3 (`Normal`), et `GetBatteryAgePercentage` renvoie 100.0 % avec une réponse IPC dimensionnée pour le `f64`. Les lectures PSM/TS restent PARTIELLES car elles synthétisent du matériel Switch au lieu d'exposer les capteurs PS5.
+
+**Compteur : 1 271 IMPL-SRC, 88 PARTIEL, 244 STUB, 69 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1268
+    "Implémentation source retrouvée" : 1271
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 84
-    "Stub / résultat simulé" : 254
-    "No-op documenté" : 66
+    "Implémentation partielle" : 88
+    "Stub / résultat simulé" : 244
+    "No-op documenté" : 69
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -2917,14 +2923,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm:dbg | `11` | `GetBleConnectionParameter` | 5.1.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
 | btm:dbg | `12` | `GetBleConnectionParameterRequest` | 5.1.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
 | btm:sys | `0` | `GetCore` | — | **IMPL-SRC** ([source C++][ns1-src-066]) | 2026-11-22 |
-| btm:sys | `0` | `StartGamepadPairing` | — | **STUB** ([source C++][ns1-src-065]) | 2026-11-22 |
-| btm:sys | `1` | `CancelGamepadPairing` | — | **STUB** ([source C++][ns1-src-065]) | 2026-11-22 |
+| btm:sys | `0` | `StartGamepadPairing` | — | **NOOP** (pairing Bluetooth Switch physique non exposé sur PS5 ; succès neutre explicite ; vendor `4936c552`) | 2026-11-22 |
+| btm:sys | `1` | `CancelGamepadPairing` | — | **NOOP** (pairing Bluetooth Switch physique non exposé sur PS5 ; succès neutre explicite ; vendor `4936c552`) | 2026-11-22 |
 | btm:sys | `2` | `ClearGamepadPairingDatabase` | — | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `3` | `GetPairedGamepadCount` | — | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `4` | `EnableRadio` | — | **IMPL-SRC** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `5` | `DisableRadio` | — | **IMPL-SRC** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `6` | `GetRadioOnOff` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btm/btm_system_core.cpp) ; sur IBtmSystemCore, slot 6 = IsRadioEnabled ; catalogue = GetRadioOnOff ; statique, PS5 non validé) | 2026-11-22 |
-| btm:sys | `7` | `AcquireRadioEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-065]) | 2026-11-22 |
+| btm:sys | `7` | `AcquireRadioEvent` | 3.0.0+ | **IMPL-SRC** (retourne le vrai KReadableEvent radio géré par ServiceContext ; vendor `4936c552`) | 2026-11-22 |
 | btm:sys | `8` | `AcquireGamepadPairingEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `9` | `IsGamepadPairingStarted` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:u | `0` | `GetCore` | — | **IMPL-SRC** ([source C++][ns1-src-066]) | 2026-11-22 |
@@ -3468,10 +3474,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | psm | `9` | `DisableEnoughPowerChargeEmulation` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | psm | `10` | `EnableFastBatteryCharging` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | psm | `11` | `DisableFastBatteryCharging` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `12` | `GetBatteryVoltageState` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; réponse factice explicitement marquée stubbed ; ABI et PS5 non validés) | 2026-11-22 |
+| psm | `12` | `GetBatteryVoltageState` | — | **PARTIEL** (fallback batterie synthétique corrigé : VoltageState=Normal(3), âge=100.0%; aucun gauge Switch physique ; vendor `4936c552`) | 2026-11-22 |
 | psm | `13` | `GetRawBatteryChargePercentage` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | psm | `14` | `IsEnoughPowerSupplied` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `15` | `GetBatteryAgePercentage` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; réponse factice explicitement marquée stubbed ; ABI et PS5 non validés) | 2026-11-22 |
+| psm | `15` | `GetBatteryAgePercentage` | — | **PARTIEL** (fallback batterie synthétique corrigé : VoltageState=Normal(3), âge=100.0%; aucun gauge Switch physique ; vendor `4936c552`) | 2026-11-22 |
 | psm | `16` | `GetBatteryChargeInfoEvent` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | psm | `17` | `GetBatteryChargeInfoFields` | — | **PARTIEL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; lecture état hôte mais champs électriques simulés ; ABI et PS5 non validés) | 2026-11-22 |
 | psm | `18` | `GetBatteryChargeCalibratedEvent` | 3.0.0+ | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
@@ -3491,9 +3497,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | tc | `8` | `IsFanControlEnabled` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/ptm.cpp) ; aucun RegisterNamedService("tc") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | tc | `9` | `GetSkinTemperatureMilliC` | 5.0.0+ | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/ptm.cpp) ; aucun RegisterNamedService("tc") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | ts | `0` | `GetTemperatureRange` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/ts.cpp) ; slot exact GetTemperatureRange = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| ts | `1` | `GetTemperature` | — | **STUB** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/ts.cpp) ; retour synthétique 35/20 °C codé en dur ; statique, PS5 non validé) | 2026-11-22 |
+| ts | `1` | `GetTemperature` | — | **PARTIEL** (températures Switch synthétiques stables 35/20°C, volontairement décorrélées des thermiques PS5 ; vendor `4936c552`) | 2026-11-22 |
 | ts | `2` | `SetMeasurementMode` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/ts.cpp) ; slot exact SetMeasurementMode = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| ts | `3` | `GetTemperatureMilliC` | — | **STUB** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/ts.cpp) ; retour synthétique 35000/20000 m°C codé en dur ; statique, PS5 non validé) | 2026-11-22 |
+| ts | `3` | `GetTemperatureMilliC` | — | **PARTIEL** (températures Switch synthétiques stables 35/20°C, volontairement décorrélées des thermiques PS5 ; vendor `4936c552`) | 2026-11-22 |
 | ts | `4` | `? (Takes a total of 4-bytes of input, returns an IUnknown0)` | 8.0.0+ | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/ts.cpp) ; slot 4 actuel = OpenSession ; libellé historique inconnu non assimilé ; statique, PS5 non validé) | 2026-11-22 |
 | pcm | `0` | `IsSupported` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("pcm") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | pcm | `1` | `ReadCurrentPower` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("pcm") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
@@ -4104,8 +4110,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| lbl | `0` | `SaveCurrentSetting` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; stub explicitement marqué ; qualification statique NS1) | 2026-11-22 |
-| lbl | `1` | `LoadCurrentSetting` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; stub explicitement marqué ; qualification statique NS1) | 2026-11-22 |
+| lbl | `0` | `SaveCurrentSetting` | — | **IMPL-SRC** (sauvegarde/restaure réellement l'état local backlight/brightness/dimming/VR ; vendor `4936c552`) | 2026-11-22 |
+| lbl | `1` | `LoadCurrentSetting` | — | **IMPL-SRC** (sauvegarde/restaure réellement l'état local backlight/brightness/dimming/VR ; vendor `4936c552`) | 2026-11-22 |
 | lbl | `2` | `SetCurrentBrightnessSetting` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
 | lbl | `3` | `GetCurrentBrightnessSetting` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
 | lbl | `4` | `ApplyCurrentBrightnessSettingToBacklight` | — | **NULL** ([source C++][ns1-src-088]) | 2026-11-22 |
@@ -4127,7 +4133,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | lbl | `20` | `GetCurrentBrightnessMapping` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
 | lbl | `21` | `SetCurrentAmbientLightSensorMapping` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
 | lbl | `22` | `GetCurrentAmbientLightSensorMapping` | — | **NOOP** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; comportement nul/constant déclaré intentionnel ; contrat à vérifier ; qualification statique NS1) | 2026-11-22 |
-| lbl | `23` | `IsAmbientLightSensorAvailable` | 3.0.0+ | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; stub explicitement marqué ; qualification statique NS1) | 2026-11-22 |
+| lbl | `23` | `IsAmbientLightSensorAvailable` | 3.0.0+ | **NOOP** (aucun capteur de lumière Switch physique exposé sur PS5 ; disponibilité=false explicite ; vendor `4936c552`) | 2026-11-22 |
 | lbl | `24` | `SetCurrentBrightnessSettingForVrMode` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
 | lbl | `25` | `GetCurrentBrightnessSettingForVrMode` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |
 | lbl | `26` | `EnableVrMode` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lbl/lbl.cpp) ; méthode raccordée avec état C++ ; qualification statique NS1) | 2026-11-22 |

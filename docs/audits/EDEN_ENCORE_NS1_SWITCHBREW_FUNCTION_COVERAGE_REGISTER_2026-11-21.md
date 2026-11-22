@@ -128,6 +128,12 @@ Couple moteur repointé vers vendor `61e8993c8057ca9536f8997185118d072130497f`. 
 
 **Compteur courant : 1 268 IMPL-SRC / 84 PARTIEL / 254 STUB / 66 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucune validation PS5 n'est déduite de ce classement.
 
+## Lot matériel BTM / LBL / PSM / TS — 22/11/2026
+
+Vendor `4936c5528e0641e2176fc77a376cfb8d2da2d1b5` : radio BTM et snapshot LBL sont raccordés à un état réel ; pairing/capteur ambiant restent NOOP. Le fallback PSM corrige un faux état critique batterie (`NeedsShutdown` -> `Normal`) et l'âge batterie 1.0 -> 100.0 %. PSM/TS sont conservés PARTIELS car les mesures sont synthétiques.
+
+**Compteur courant : 1 271 IMPL-SRC / 88 PARTIEL / 244 STUB / 69 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Pas de validation console déduite.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -190,17 +190,23 @@ Vendor `f6deaab8` : `IFileSystem::Commit` devient NOOP documenté car le VFS hos
 
 **Compteur : 1 287 IMPL-SRC, 94 PARTIEL, 212 STUB, 79 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot FSP program-index + NS vulnerability
+
+Vendor `ad27e09c` : `NeedsUpdateVulnerability` est NOOP explicite sur ses 3 surfaces, faute de base Nintendo de versions système vulnérables. `OpenSaveDataTransferProhibiter` devient NOOP explicite car aucun moteur de transfert de saves n'existe. Surtout, cmd810 `RegisterProgramIndexMapInfo` devient un vrai registre de structures 0x20, et cmd1011 abandonne l'ancienne ABI yuzu `AccessLogVersion + index` pour l'ABI SwitchBrew/LibHac HOS 7+ `u32 program_index + u32 program_count`.
+
+**Compteur : 1 289 IMPL-SRC, 94 PARTIEL, 207 STUB, 83 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1287
+    "Implémentation source retrouvée" : 1289
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 94
     "Stub / résultat simulé" : 215
-    "No-op documenté" : 79
-    "Handler NULL" : 2311
+    "No-op documenté" : 83
+    "Handler NULL" : 2310
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1805,7 +1811,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am | `908` | `ListApplicationRecordInstalledContentMeta` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1000` | `RequestVerifyApplicationDeprecated` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1001` | `CorruptApplicationForDebug` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1200` | `NeedsUpdateVulnerability` | 2.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/ns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+ | ns:am | `1200` | `NeedsUpdateVulnerability` | 2.0.0+ |  **NOOP** (aucune base safe-system-version/vulnérabilité Nintendo émulée ; false explicite ; vendor `ad27e09c`)  | 2026-11-22 | 
 | ns:am | `1300` | `IsAnyApplicationEntityInstalled` | 2.0.0+ | **IMPL-SRC** (scan réel des Applications/Program installées, exclusion des sous-programmes, vendor `256b2abe`) | 2026-11-22 |
 | ns:am | `1301` | `DeleteApplicationContentEntities` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am | `1302` | `CleanupUnrecordedApplicationEntity` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -1978,7 +1984,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1002` | `RequestVerifyAddOnContentsRights` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1003` | `RequestVerifyApplication` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1004` | `CorruptContentForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1200` | `NeedsUpdateVulnerability` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/ns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+ | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1200` | `NeedsUpdateVulnerability` | — |  **NOOP** (aucune base safe-system-version/vulnérabilité Nintendo émulée ; false explicite ; vendor `ad27e09c`)  | 2026-11-22 | 
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1300` | `IsAnyApplicationEntityInstalled` | — | **IMPL-SRC** (scan réel des Applications/Program installées, exclusion des sous-programmes, vendor `256b2abe`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1301` | `DeleteApplicationContentEntities` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1302` | `CleanupUnrecordedApplicationEntity` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2099,7 +2105,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `6` | `RequestSyncRightsBasedOnAssignedELicenses` | 9.0.0+ | **NULL** ([source C++][ns1-src-107]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `Attach` | — | **ABI-DIFF** (la table SwitchBrew actuelle IServiceGetterInterface ne contient aucun cmd 0 ; elle expose 7988–7999 comme Eden ; ligne historique mal rattachée) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `BoostSystemMemoryResourceLimit` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp` ; BoostSystemMemoryResourceLimit existe dans IApplicationManagerInterface ID 90 (nullptr), pas ID 1 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| ns:vm | `1200` | `NeedsUpdateVulnerability` | 3.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/ns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+ | ns:vm | `1200` | `NeedsUpdateVulnerability` | 3.0.0+ |  **NOOP** (aucune base safe-system-version/vulnérabilité Nintendo émulée ; false explicite ; vendor `ad27e09c`)  | 2026-11-22 | 
 | ns:vm | `1201` | `UpdateSafeSystemVersionForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
 | ns:vm | `1202` | `GetSafeSystemVersion` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
 | ns:su | `0` | `GetBackgroundNetworkUpdateState` | — | **STUB** ([source C++][ns1-src-110]) | 2026-11-22 |
@@ -3767,7 +3773,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `80` | `OpenSaveDataMetaFile` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `81` | `OpenSaveDataTransferManager` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `82` | `OpenSaveDataTransferManagerVersion2` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `83` | `OpenSaveDataTransferProhibiter` | 6.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+ | fsp-srv | `83` | `OpenSaveDataTransferProhibiter` | 6.0.0+ |  **NOOP** (aucun gestionnaire de transfert de saves Encore ; token de durée de vie sans verrou dormant ; vendor `ad27e09c`)  | 2026-11-22 | 
 | fsp-srv | `84` | `ListAccessibleSaveDataOwnerId` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `ListApplicationAccessibleSaveDataOwnerId` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `85` | `OpenSaveDataTransferManagerForSaveDataRepair` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `100` | `OpenImageDirectoryFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3814,7 +3820,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `710` | `ResolveAccessFailure` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `720` | `AbandonAccessFailure` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `800` | `GetAndClearErrorInfo` | 2.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `GetAndClearFileSystemProxyErrorInfo` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
-| fsp-srv | `810` | `RegisterProgramIndexMapInfo` | 7.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+ | fsp-srv | `810` | `RegisterProgramIndexMapInfo` | 7.0.0+ |  **IMPL-SRC** (registre réel ProgramIndexMapInfo 0x20, remplacement de map quand count>0 ; vendor `ad27e09c`)  | 2026-11-22 | 
 | fsp-srv | `1000` | `SetBisRootForHost` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1001` | `SetSaveDataSize` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1002` | `SetSaveDataRootPath` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3826,7 +3832,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `1008` | `OpenRegisteredUpdatePartition` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1009` | `GetAndClearMemoryReportInfo` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1010` | `SetDataStorageRedirectTarget` | 5.1.0-6.2.0 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `1011` | `GetProgramIndexForAccessLog` | 7.0.0+ | **STUB** ([source C++][ns1-src-008]) | 2026-11-22 |
+ | fsp-srv | `1011` | `GetProgramIndexForAccessLog` | 7.0.0+ |  **IMPL-SRC** (ABI HOS7+ corrigée : u32 index + u32 count depuis la map cmd810 et le ProgramId courant ; vendor `ad27e09c`)  | 2026-11-22 | 
 | fsp-srv | `1012` | `GetFsStackUsage` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1013` | `UnsetSaveDataRootPath` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1100` | `OverrideSaveDataTransferTokenSignVerificationKey` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |

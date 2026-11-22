@@ -174,6 +174,17 @@ Vendor `f6deaab8efa7a0c86e70d816a66792d7ce1811c3` (arbre `0a2a081d41bc7400a25ff8
 
 **Compteur courant : 1 287 IMPL-SRC / 94 PARTIEL / 212 STUB / 79 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent `c864a213` → `a691b553` est vert X8D24 + provenance ; aucune validation PS5 n'est déduite.
 
+## Lot FSP program-index / access-log + NS vulnerability — 22/11/2026
+
+Vendor `ad27e09c7135c3c92ef0202b58ee35423fe74300` (arbre `e6ddae9ffeaca9bc0319e056b7fd38ffb35eb056`) au-dessus du couple vert `f6deaab8`.
+
+- `NeedsUpdateVulnerability` : **3 lignes STUB → NOOP**, `false` explicite faute de base safe-system-version/vulnérabilité Nintendo.
+- `OpenSaveDataTransferProhibiter` : **STUB → NOOP**, puisque le transfert de saves n'existe pas dans Encore et qu'aucun état dormant n'est ajouté.
+- `RegisterProgramIndexMapInfo` cmd810 : **NULL → IMPL-SRC**, structure 0x20 (`ProgramId`, `MainProgramId`, `ProgramIndex`, reserved) et map réellement conservée.
+- `GetProgramIndexForAccessLog` cmd1011 : **STUB → IMPL-SRC**, ABI moderne `u32 index + u32 count`; index cherché avec le `program_id` courant, count égal au nombre d'entrées enregistrées, conformément à LibHac.
+
+**Compteur courant : 1 289 IMPL-SRC / 94 PARTIEL / 207 STUB / 83 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent `b04bdf55` → `f6deaab8` est vert X8D24 + provenance. Aucun build PS5 ni validation console n'est revendiqué.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -50,7 +50,27 @@ nvdrv = (vendor / (
     "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/"
     "devices/nvhost_gpu.cpp"
 )).read_text()
-assert nvdrv.count("Tegra::CommandList entries(params.num_entries);") == 2
+# The two ioctl owners now allocate only after validating entry counts and
+# catch host OOM before guest reads or GPU fence publication. Verify both
+# live methods rather than demanding their superseded throwing constructor.
+base1 = nvdrv.split("NvResult nvhost_gpu::SubmitGPFIFOBase1(", 1)[1].split(
+    "NvResult nvhost_gpu::SubmitGPFIFOBase2(", 1)[0]
+base2 = nvdrv.split("NvResult nvhost_gpu::SubmitGPFIFOBase2(", 1)[1].split(
+    "NvResult nvhost_gpu::GetWaitbase(", 1)[0]
+assert nvdrv.count("Tegra::CommandList entries;") == 2
+for owner in (base1, base2):
+    assert owner.count("Tegra::CommandList entries;") == 1
+    assert owner.count("entries.command_lists.resize(params.num_entries, boost::container::default_init);") == 1
+    assert owner.count("catch (const std::bad_alloc&)") == 1
+    assert "return NvResult::InsufficientMemory;" in owner
+    assert owner.index("entries.command_lists.resize(") < owner.index("SubmitGPFIFOImpl(")
+    assert "if (params.num_entries != 0)" in owner
+    assert "params.num_entries > commands.size()" in owner
+    assert "return SubmitGPFIFOImpl(params, std::move(entries), fd);" in owner
+assert "params.num_entries > MaxKickoffEntries" in base1
+assert "NativeGpfifoGuestHeadersReadable(" in base1
+assert "session->process->GetMemory().IsValidVirtualAddressRange(" in base1
+assert "this->GetSessionMemory(fd).ReadBlock(" in base1
 assert nvdrv.count("entries.command_lists.data()") >= 3
 assert "gpu.PushGPUEntries(bind_id, std::move(entries));" in nvdrv
 for helper in (

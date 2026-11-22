@@ -39,6 +39,12 @@ assert stop_entry["required_source_fragment"]=="game stop exceeded 10s; exiting 
 # Later reviewed ExeFS/media/diagnostics changes do not rewrite the frozen
 # historical register or widen acceptance to arbitrary drift.
 successors={
+    # Nov22 shipping NS2 completed-HLE receipt: exact graphics source blob,
+    # 10s/30s hooks only. Preserve the original historical F07 hash.
+    "headless/graphics.cpp": (
+        "ca3107c8745af36d6faf0196cf9692e628d52540",
+        "b498ee4307ffb0b7f6ae18333177687607a297d7",
+    ),
     "headless/hud.h": (
         "0ef8bf75efabf61628b44b91011eb461abcbde81",
         "a506f5dca7efc289f47a172a353bff4f04d9f4e4",

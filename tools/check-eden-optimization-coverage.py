@@ -3226,12 +3226,20 @@ ns2_boot_hle_receipts = {
         "Eden::Performance::ResetNs2BootHle();"),
 }
 for path, (previous_blob, successor_blob, witness) in ns2_boot_hle_receipts.items():
-    assert path in post_index and path in drift_index, path
-    assert post_index[path]["post_snapshot_git_blob"] == previous_blob, path
-    assert drift_index[path]["actual"] == successor_blob, (
-        "NS2 HLE successor source drift", path)
-    assert witness in (ROOT/path).read_text(), ("NS2 HLE witness dropped", path)
-    post_index[path]["post_snapshot_git_blob"] = successor_blob
+    # The F07 518-path historical review did not include every later
+    # headless owner. Pin those engine-only files independently, and update
+    # only the sources that genuinely belong to the frozen post-F07 register.
+    source = ROOT/path
+    assert source.is_file(), ("NS2 HLE source missing", path)
+    assert witness in source.read_text(), ("NS2 HLE witness dropped", path)
+    current_blob = subprocess.check_output(
+        ["git", "hash-object", str(source)], cwd=ROOT, text=True).strip()
+    assert current_blob == successor_blob, ("NS2 HLE successor source drift", path)
+    if path in post_index or path in drift_index:
+        assert path in post_index and path in drift_index, path
+        assert post_index[path]["post_snapshot_git_blob"] == previous_blob, path
+        assert drift_index[path]["actual"] == successor_blob, path
+        post_index[path]["post_snapshot_git_blob"] = successor_blob
 print("NS2_BOOT_HLE_SHIPPING_RECEIPT_PASS owners=4 history=immutable "
       "console_boot=unvalidated")
 

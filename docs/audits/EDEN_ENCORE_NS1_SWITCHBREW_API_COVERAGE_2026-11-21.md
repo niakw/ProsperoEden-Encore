@@ -19,15 +19,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ## Compteur NS1 réévalué sur les sources C++ (22/11/2026)
 
-**Base historique du relevé :** moteur `452fd7fe999757377175ab1eae1bb431877d1ccf` → vendor/gitlink `224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c`. **Lot runtime secondaire appliqué le 22/11 :** moteur `fad45f785b5db3013ab7797b79edde53d6471b21` → vendor/gitlink `bbdda09991fb31a0b858ba20059200ebd0a85cbc` (GPIO, SVC GetThreadList, NCM). Aucun build/essai PS5 validé pour ce couple. [Relevé IPC initial #45021056931](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45021056931) (SUCCESS), puis rapprochement ciblé des héritages C++ dans les familles **Account** et **NFP/NFC**. Cette étape initiale était documentaire ; le lot runtime additionnel est décrit ci-dessous, sans build/installation PS5 validé.
+**Base historique du relevé :** moteur `452fd7fe999757377175ab1eae1bb431877d1ccf` → vendor/gitlink `224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c`. **Lot runtime secondaire appliqué le 22/11 :** moteur `89d7b406a6ee5429f985c1277eeb9653043e7c80` → vendor/gitlink `fe5a389ac04fa3c26c1756fc18e73a962e196da4` (GPIO, SVC GetThreadList, NCM, FSP fail-closed). Aucun build/essai PS5 validé pour ce couple. [Relevé IPC initial #45021056931](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45021056931) (SUCCESS), puis rapprochement ciblé des héritages C++ dans les familles **Account** et **NFP/NFC**. Cette étape initiale était documentaire ; le lot runtime additionnel est décrit ci-dessous, sans build/installation PS5 validé.
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 212 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 132 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 207 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 213 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 132 | 80 | **1 212** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 133 | 80 | **1 213** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 73 | 3 | **76** |
 | **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
@@ -36,7 +36,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **D — Rejet explicite / historique** | 32 | 33 | **65** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 289 | 0 | **289** |
-| **ABSENT — Commande absente des tables** | 93 | 0 | **93** |
+| **ABSENT — Commande absente des tables** | 92 | 0 | **92** |
 | **ABI-DIFF — Noms/ABI divergents** | 283 | 0 | **283** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
@@ -47,9 +47,9 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 - **10 commandes racine GPIO** : enregistrées et rejetées explicitement par `Kernel::ResultNotImplemented` ; elles passent de **ABSENT → D**, et ne sont **pas** comptées comme implémentations matérielles. Aucun contrôleur GPIO Switch fictif, aucune session ou événement factice.
 - **18 commandes `nn::gpio::IPadSession`** : **ABSENT → INACCESSIBLE**, car la racine rejette toute ouverture de session matérielle ; pas de méthode C++ de session artificiellement déclarée.
-- **5 commandes NCM `IContentStorage`** : **ABSENT → IMPL-SRC** : `HasPlaceHolder` (3), `CleanupAllPlaceHolder` (10), `SetPlaceHolderSize` (17), `GetRightsIdFromPlaceHolderId` (19), `GetSizeFromPlaceHolderId` (25), toutes adossées au `PlaceholderCache` sélectionné ; le Rights ID absent renvoie une erreur explicite.
+- **6 commandes NCM `IContentStorage`** : **ABSENT → IMPL-SRC** : `HasPlaceHolder` (3), `CleanupAllPlaceHolder` (10), `ListPlaceHolder` (11), `SetPlaceHolderSize` (17), `GetRightsIdFromPlaceHolderId` (19), `GetSizeFromPlaceHolderId` (25), toutes adossées au `PlaceholderCache` sélectionné ; la liste est bornée par la taille réelle du buffer IPC.
 - **SVC `GetThreadList` (0x66)** : reste **PARTIEL** ; un handle de débogage non pris en charge renvoie maintenant une erreur au lieu de fournir incorrectement la liste des threads de l'appelant.
-- **Provenance :** [vendor `bbdda099`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bbdda09991fb31a0b858ba20059200ebd0a85cbc), gitlink moteur `fad45f78`. Vérifications statiques du CMake et des overlays uniquement : **aucun test hôte, build natif, installation ni test PS5** pour ce lot.
+- **FSP P0 :** `OpenFileSystemWithPatch` reste PARTIEL, mais les trois assertions hôte sur le type et le RomFS ont été remplacées par des résultats d'erreur FS, sans crash volontaire du processus PS5. **Provenance :** [vendor `fe5a389a`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/fe5a389ac04fa3c26c1756fc18e73a962e196da4), gitlink moteur `89d7b406`. Vérifications statiques du CMake et des overlays uniquement : **aucun test hôte, build natif, installation ni test PS5** pour ce lot.
 
 Ces classements réduisent les **absences non qualifiées**, pas le nombre de fonctions requises pour FC27. Les 2 278 `NULL` préexistants restent `NULL` et ne sont pas déclarés implémentés par politique.
 
@@ -58,7 +58,7 @@ Ces classements réduisent les **absences non qualifiées**, pas le nombre de fo
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1212
+    "Implémentation source retrouvée" : 1213
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 76
     "Stub / résultat simulé" : 347
@@ -67,7 +67,7 @@ pie showData
     "Rejet explicite / historique" : 65
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 289
-    "Commande absente des tables" : 93
+    "Commande absente des tables" : 92
     "Noms/ABI divergents" : 283
     "Interface ambiguë" : 12
     "Non vérifié" : 0
@@ -3586,7 +3586,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `0` | `OpenFileSystem` | 1.0.0 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1` | `SetCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `2` | `OpenDataFileSystemByCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | **PARTIEL** ([owner natif FSP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fe5a389ac04fa3c26c1756fc18e73a962e196da4/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; types non supportés et RomFS absent désormais rejetés sans assertion hôte ; mode Manual seul, PS5 non validé) | 2026-11-22 |
 | fsp-srv | `8` | `OpenFileSystemWithId` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenDataFileSystemByApplicationId` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `11` | `OpenBisFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -4264,7 +4264,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Content Manager services | `8` | `GetPath` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 8, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `9` | `GetPlaceHolderPath` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 9, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `10` | `CleanupAllPlaceHolder` | — | **IMPL-SRC** ([NCM C++ actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d8e80440a0dfec75ccc0cbc362dd40c2d270be2b/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 10 raccordé au `PlaceholderCache` ; contrat hôte/PS5 non validé) | 2026-11-22 |
-| Content Manager services | `11` | `ListPlaceHolder` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 11, slot ID absent de la table ; source seulement) | 2026-11-22 |
+| Content Manager services | `11` | `ListPlaceHolder` | — | **IMPL-SRC** ([NCM source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fe5a389ac04fa3c26c1756fc18e73a962e196da4/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; `IContentStorage` ID 11 liste les placeholders réels, écriture bornée au buffer de sortie et nombre d'entrées renvoyé ; hôte/PS5 non validé) | 2026-11-22 |
 | Content Manager services | `12` | `GetContentCount` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 12, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `13` | `ListContentId` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 13, slot ID absent de la table ; source seulement) | 2026-11-22 |
 | Content Manager services | `14` | `GetSizeFromContentId` | — | **ABSENT** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 14, slot ID absent de la table ; source seulement) | 2026-11-22 |

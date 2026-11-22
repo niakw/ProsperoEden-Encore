@@ -74,6 +74,12 @@ Vendor `488475c8c3867af07892a7f53cc6e15a54d09542` : `RevertToPlaceHolder` et `Re
 
 **Compteur courant : 1 222 IMPL-SRC / 77 PARTIEL / 347 STUB / 10 NOOP / 2 311 NULL / 66 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 20 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Les deux fonctions de chemins NCM restent ouvertes : un chemin hôte PS5 ne doit pas être présenté comme un chemin `fscommon` Horizon.
 
+## Lot ContentMetaDatabase CNMT — 22/11/2026
+
+Vendor `8d1d9eac331b2b8db218617edff7aa4425503a95` : huit commandes auparavant ABSENT interrogent maintenant les CNMT réels du cache enregistré ; `DisableForcibly` devient NOOP. `Has` vérifie désormais le ContentMetaKey complet (id/version/type/install type) au lieu d'un simple Meta NCA par title ID.
+
+**Compteur courant : 1 230 IMPL-SRC / 77 PARTIEL / 347 STUB / 11 NOOP / 2 311 NULL / 66 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 11 ABSENT / 284 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Restent réellement ABSENT : NCM `GetPath`/`GetPlaceHolderPath`, huit commandes ContentMetaDatabase complexes (`Get`, `List`, latest/list application, size/versions/patch) et NS `Attach`.
+
 ---
 
 ## 1. Références et règle de vérité

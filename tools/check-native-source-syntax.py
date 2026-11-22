@@ -66,6 +66,12 @@ MAINTAINED_CORE_TARGETS = (
     # here after 1200+ objects; keep it in the cheap real-PS5 compile preflight.
     "vendor/encore-active/eden-core/src/video_core/gpu_gl_native.cpp",
     "vendor/encore-active/eden-core/src/common/fiber.cpp",
+    # Real C++ failures in run 45030042024: NS2 GPU/AS/ctrl and common
+    # Container TUs must see the same selected native headers as NVDRV.
+    "vendor/encore-active/eden-core/src/core/hle/service/nvdrv/core/container.cpp",
+    "vendor/encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp",
+    "vendor/encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp",
+    "vendor/encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp",
 )
 # Native release renderer TUs share the selected CMake ABI header overlay.
 # These use the pinned PS5 compiler's normal warning policy, not an extra
@@ -84,6 +90,8 @@ NATIVE_GRAPHICS_TARGETS = (
 )
 PINNED_CACHE_TARGETS = (
     "video_core/host1x/gpu_device_memory_manager.cpp",
+    # Native NVDRV Module consumes the shared nvdevice virtual ABI.
+    "core/hle/service/nvdrv/nvdrv.cpp",
     # First real native compiler failures in build #10 (881/1870). Keep
     # both source-owned ABI consumers inside the cheap PS5 syntax preflight.
     "video_core/renderer_vulkan/vk_turbo_mode.cpp",
@@ -104,6 +112,8 @@ NS1_APPLET_OVERLAY_TARGETS = (
 GENERATED_TARGETS = (
     # Real PS5 PresentManager source compiled from the maintained Vulkan fork:
     # worker wakeups and waiter counters must match our selected header.
+    # Generated rasterizer needs the layered Vulkan Framebuffer ABI.
+    "headless/vulkan_rasterizer.cpp",
     "headless/vulkan_present_manager.cpp",
     "headless/vulkan_query_cache.cpp",
     "headless/a64_emit_x64.cpp",

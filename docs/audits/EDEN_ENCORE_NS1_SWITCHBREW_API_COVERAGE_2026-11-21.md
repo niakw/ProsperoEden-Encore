@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 355 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 275 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `d1e41151`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 357 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 277 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `b217369d`. **Ces 1 352 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 275 | 80 | **1 355** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 277 | 80 | **1 357** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 109 | 0 | **109** |
-| **NULL — Handler NULL** | 2 245 | 0 | **2 245** |
+| **NULL — Handler NULL** | 2 243 | 0 | **2 243** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -397,17 +397,30 @@ Vendor `d1e41151` (arbre `34dbfc91c0b5b086ef220eaee856627e37ac20e3`). Baseline p
 
 **Pool restant à examiner : 2 802 = 2 245 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Recheck NULL — AppletBoundChannel
+
+Vendor `b217369d` (arbre `d788055b10aa228029f24699acd653609c972baa`). Baseline précédente moteur `e89ca072` → vendor `d1e41151` : **X8D24 + provenance verts**.
+
+- `PushToAppletBoundChannel` / `TryPopFromAppletBoundChannel` : **2 NULL → IMPL-SRC**.
+- ABI recroisée avec libnx/FewFW : échange d'un objet `IStorage`, sans événement ni backend matériel.
+- État ajouté directement à `Applet`, protégé par son verrou ; pop vide retourne `ResultNoDataInChannel`.
+- `ThemeStorage` reste NULL : le contrat implique un stockage offset/persistant et n'est pas remplacé par un simple buffer volatile.
+
+**Compteur courant : 1 357 IMPL-SRC, 110 PARTIEL, 149 STUB, 109 NOOP, 2 243 NULL, 84 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 800 = 2 243 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1355
+    "Implémentation source retrouvée" : 1357
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 109
-    "Handler NULL" : 2245
+    "Handler NULL" : 2243
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1550,8 +1563,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `0` | `SetTerminateResult` | 9.0.0+ | **IMPL-SRC** (écrit le vrai `terminate_result` de l'applet sous verrou, cohérent avec la surface application déjà active ; vendor `e58cfc55`) | 2026-11-22 |
 | appletAE | `10` | `ReadThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `11` | `WriteThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
-| appletAE | `20` | `PushToAppletBoundChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
-| appletAE | `21` | `TryPopFromAppletBoundChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
+| appletAE | `20` | `PushToAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (stocke le vrai `IStorage` dans une file applet dédiée sous verrou ; vendor `b217369d`) | 2026-11-22 |
+| appletAE | `21` | `TryPopFromAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (retourne le dernier `IStorage` de la file applet ou `ResultNoDataInChannel` ; vendor `b217369d`) | 2026-11-22 |
 | appletAE | `40` | `GetDisplayLogicalResolution` | 8.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `42` | `SetDisplayMagnification` | 8.0.0+ | **STUB** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `50` | `SetHomeButtonDoubleClickEnabled` | 8.0.0+ | **PARTIEL** (état applet réellement écrit sous verrou ; aucun consommateur double-click n'est encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |

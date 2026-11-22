@@ -414,6 +414,18 @@ Vendor `d1e41151f5e23b1ff2653c937b04ff5e344e29b0` (arbre `34dbfc91c0b5b086ef220e
 
 **Pool restant à examiner = 2 802 entrées** : 2 245 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — AppletBoundChannel — 22/11/2026
+
+Vendor `b217369d3f01b2958eae58815f190080a8b77296` (arbre `d788055b10aa228029f24699acd653609c972baa`).
+
+- `PushToAppletBoundChannel` et `TryPopFromAppletBoundChannel` : **2 NULL → IMPL-SRC**.
+- Contrat `IStorage` confirmé par libnx/FewFW ; file réelle dans l'état `Applet`, verrouillée, avec `ResultNoDataInChannel` sur canal vide.
+- Baseline précédente moteur `e89ca072` → vendor `d1e41151` : X8D24 + provenance verts. Aucun test PS5 revendiqué.
+
+**Compteur courant : 1 357 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 243 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 800 entrées** : 2 243 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

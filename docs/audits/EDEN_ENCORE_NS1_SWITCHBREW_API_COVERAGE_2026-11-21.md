@@ -25,7 +25,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 418 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 338 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `b84e5881`. **Ces 1 418 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 418 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 338 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 418 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
@@ -5679,8 +5679,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `165` | `SetUsb30HostEnableFlag` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `166` | `GetUsb30DeviceEnableFlag` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `167` | `SetUsb30DeviceEnableFlag` | 6.0.0+ | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `9aa3b256` ; effet matériel hôte non certifié) | 2026-11-22 |
-| set:sys | `168` | `GetThemeId` | 7.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b84e58810ccd509acfbd00a8dda6ada8c0dcdabc/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
-| set:sys | `169` | `SetThemeId` | 7.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b84e58810ccd509acfbd00a8dda6ada8c0dcdabc/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `168` | `GetThemeId` | 7.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c8688e83435eb085285a18b581cea39b701ad266/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
+| set:sys | `169` | `SetThemeId` | 7.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c8688e83435eb085285a18b581cea39b701ad266/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `170` | `GetChineseTraditionalInputMethod` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `171` | `SetChineseTraditionalInputMethod` | 7.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `172` | `GetPtmCycleCountReliability` | 7.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |

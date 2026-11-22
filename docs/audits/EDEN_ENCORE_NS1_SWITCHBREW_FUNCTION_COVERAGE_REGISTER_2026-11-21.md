@@ -487,6 +487,10 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Réconciliation de l'index physique (23/11/2026) :** le catalogue Markdown contient actuellement **117 lignes SVC + 4 777 lignes IPC**, dont **23 META** et **27 DUP** ; le total déduplicable physiquement est donc **4 844 références**, alors que le dénominateur historique documenté reste **4 853**. Les **9 références d'écart** se répartissent, par soustraction des statuts, en **3 IMPL-SRC, 1 PARTIEL et 5 NOOP**, sans identification ligne par ligne. Sur les lignes physiquement présentes, le pool de revue est **2 735** (2 182 NULL + 149 STUB + 106 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 E). Le pool historique conservé est **2 739** en incluant la ligne PARTIEL non matérialisée. **Ne pas annoncer le catalogue exhaustif ni supprimer neuf références arbitrairement** ; réconcilier ces identités avec les sources de l'import avant tout changement du dénominateur.
 
+## Correctif ABI ThemeId — 23/11/2026
+
+**Vendor `c8688e83435eb085285a18b581cea39b701ad266`** : les deux commandes `GetThemeId` et `SetThemeId` conservent leur statut **IMPL-SRC** mais utilisent désormais un payload `std::array<u64, 0x10>` (0x80 octets, alignement 8) conformément à `SetSysThemeId` de libnx. Le sérialiseur `cmif_serialization.h` impose `PrevAlign <= ArgAlign` et place l'argument après `s32 type` à l'offset 8 ; l'ancien `std::array<u8, 0x80>` aurait échoué à la compilation (alignement 1). Le stockage persistant existant reste un tableau d'octets, converti par `memcpy` à taille vérifiée. Exact vendor SHA/arbre consignés dans les deux gardes de provenance. **Aucun +2 additionnel au compteur**, ni compilation PS5 revendiquée.
+
 ## Lot `set:sys` ThemeId typé — 23/11/2026
 
 **Vendor `b84e58810ccd509acfbd00a8dda6ada8c0dcdabc`**, gitlink moteur secondaire aligné sur cet objet Git exact.

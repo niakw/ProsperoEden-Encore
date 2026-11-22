@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**162**), `HANDLER PARTIEL INDIQUÉ` (**16**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus/stubs restent M. 961/991/1211/1510 sont qualifiées C sur ABI SDK/Lichii et comportement C++ actif.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**163**), `HANDLER PARTIEL INDIQUÉ` (**15**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 905 est désormais C : u8 documenté et session decoder réelle.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,28 +32,28 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=162**, P=15, C/P=1, M=107, U=25, V=6.
-- **R** : **285/316 (90,2 %)** ont un traitement renseigné. Les 31 sans représentation restent 25 U + 6 V.
+- **F** : **C=163**, P=14, C/P=1, M=107, U=25, V=6.
+- **R** : **285/316 (90,2 %)** traitées explicitement ; aucune M sans traitement.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **162** | 162 | 0 |
-| P — partielle | **15** | 15 | 0 |
+| C — implémentation source | **163** | 163 | 0 |
+| P — partielle | **14** | 14 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**Nouvelles qualifications** : `961` renvoie le CpuUserImageDescriptor réel du pool decoder ; `991` calcule taille/alignment du pool decoder ; `1211` crée réellement le pool GameChat multi-images sur backing possédé ; `1510` répond size/alignment pour l'image inter-module. ABI et effets recoupés avec Lichii/SDK, sans nouvelle prétention console.
+**905 qualifiée** : Lichii observe `Initialize(bool)` via GSV 905 avec un `u8` et le même retour de session que 902. Le C++ actif rejette maintenant les valeurs qui débordent un octet et publie la vraie IGraphicsVideoDecoderSession MOVE. Aucun résultat console n'est inféré.
 
-**15 P + 1 C/P restent volontairement ouvertes** : 314/315 (count/window alias), 391/691 (formats incomplets), 905 (flag decoder), 912/1212 (sémantique de destruction), 1401 (TransferMemory session), Syncpt 21 inconnu, submit historique, erreurs/event GPU, USERD/doorbell et scheduling TSG.
+**14 P + 1 C/P restent** : 314/315, 391/691, 912, 1212, 1401, Syncpt 21, submit historique, event/error GPU, USERD/doorbell et TSG.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=46, P=6, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=47, P=5, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -157,7 +157,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 902 | VideoDecoder | InitializeVideoDecoderContext | C | HANDLER INDIQUÉ | OpenVideoDecoderSession | Lichii SDK : 902 retourne la session decoder MOVE ; Encore valide no-input, crée la vraie IGraphicsVideoDecoderSession et rollback OOM |
 | 903 | VideoDecoder | DestroyVideoDecoderContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 904 | VideoDecoderForSystem | InitializeVideoDecoderContextForSystem | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 905 | VideoDecoder | InitializeVideoDecoderContext2 | P | HANDLER PARTIEL INDIQUÉ | OpenVideoDecoderSessionWithFlag | handler actif; ABI à comparer |
+| 905 | VideoDecoder | InitializeVideoDecoderContext2 | C | HANDLER INDIQUÉ | OpenVideoDecoderSession | Lichii SDK : 905(u8) variante Initialize(bool), même session MOVE que 902 ; Encore borne la charge à un octet et conserve le vrai backend decoder |
 | 911 | VideoDecoder | InitializeDecoderImagePool | C | HANDLER INDIQUÉ | CreateVideoImagePool | Lichii : preference[16] + u32 count + u32 memory id, retour first image id ; Encore valide 18 mots, backing owner/size, pin et pool réel |
 | 912 | VideoDecoder | FinalizeDecoderImagePool | P | HANDLER PARTIEL INDIQUÉ | DestroyVideoImagePool | pool réel |
 | 921 | VideoDecoderForSystem | InitializeDecoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |

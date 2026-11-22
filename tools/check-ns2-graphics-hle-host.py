@@ -188,6 +188,10 @@ def main()->int:
     ):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
     init_video = text.split('void IGraphicsSupervisor::InitializeVideoCodecContext(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    open_video = text.split('void IGraphicsSupervisor::OpenVideoDecoderSession(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    assert 'cmd == 905 ? (w[1] == 1 && w[2] <= 0xffU)' in open_video
+    assert 'ctx.AddMoveObject(client);' in open_video
+    assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in open_video
     for command in (1001, 1002):
         assert '{'+str(command)+', &IGraphicsSupervisor::UnavailableVideoEncoder' in text
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in text

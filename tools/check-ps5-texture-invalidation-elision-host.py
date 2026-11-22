@@ -12,7 +12,11 @@ import tempfile
 
 root = Path(__file__).resolve().parents[1]
 raster = (root / "vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp").read_text()
-bridge = (root / "vendor/encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp").read_text()
+# The release CMake copies eden-vulkan; guest-bridge is not a TU owner.
+cmake = (root / "headless/vulkan.cmake").read_text()
+assert 'set(EDEN_ACTIVE_VULKAN "${PORT_ROOT}/vendor/encore-active/eden-vulkan")' in cmake
+assert 'file(COPY "${EDEN_ACTIVE_VULKAN}/" DESTINATION "${PORT_BUILD_DIR}")' in cmake
+assert '"${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"' in cmake
 pinned = (root / "vendor/sources/eden/src/video_core/renderer_vulkan/vk_rasterizer.cpp").read_text()
 oracle = (root / "tools/prepare-vulkan-port.py").read_text()
 workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
@@ -31,7 +35,7 @@ def methods(source):
     return (source.split(start, 1)[1].split(mid, 1)[0],
             source.split(end0, 1)[1].split(end1, 1)[0])
 new = methods(raster)
-assert methods(bridge) == new, "inactive bridge invalidation methods drifted"
+# Only the active Vulkan fork's real invalidation body is compiled and replayed.
 assert new[0].count("::Eden::BufferPages::NeverRegistered(addr, size)") == 3
 assert "bool buffer_may_overlap = false;" in new[0]
 assert "if (buffer_may_overlap)" in new[0]
@@ -53,7 +57,7 @@ assert "if (texture_may_overlap)" in new[0]
 assert "R: skip provably unnecessary Vulkan texture-cache invalidation locks" in oracle
 assert oracle.count("texture_may_overlap = false;") == 1
 assert "Recheck under the texture mutex" in oracle
-for source in (raster, bridge):
+for source in (raster,):
     assert "void RasterizerVulkan::InnerInvalidation(" in source
     assert source.index("if (texture_may_overlap)") < source.index(
         "std::scoped_lock lock{texture_cache.mutex};", source.index("if (texture_may_overlap)"))

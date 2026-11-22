@@ -257,7 +257,19 @@ expected_m04 = ('#include "gpu_deferred_replay.h"\n' +
         "    static std::atomic<size_t> unique_identifier_generator;\n"
         "    std::atomic<GPUVAddr> native_syncpoint_shim{0};\n\n"
         "    Common::ScratchBuffer<u8> tmp_buffer;"))
-assert maintained_m04.read_text() == expected_m04, "M04 maintained header parity drift"
+# This active M04 successor adds one read-only, acquire-load shim getter.
+# Reconstruct the frozen source byte-for-byte after removing only that
+# reviewed getter; retain the existing full header parity check.
+current_m04 = maintained_m04.read_text()
+shim_getter = (
+    "    // A channel may expose only an existing, initialized shim mapping,\n"
+    "    // never a guessed GPU virtual address.\n"
+    "    [[nodiscard]] GPUVAddr GetNativeSyncpointShim() const noexcept {\n"
+    "        return native_syncpoint_shim.load(std::memory_order_acquire);\n"
+    "    }\n"
+)
+assert current_m04.count(shim_getter) == 1, "M04 selected getter source drift"
+assert current_m04.replace(shim_getter, "", 1) == expected_m04, "M04 maintained header parity drift"
 assert 'configure_file("${EDEN_DEFERRED_MEMORY_HEADER}"' in code
 assert 'write_derived("${PORT_BUILD_DIR}/include/video_core/memory_manager.h"' not in code
 assert 'target_include_directories(core PRIVATE "${EDEN_PORT_DIR}")' in base

@@ -67,7 +67,7 @@ __ACTIVE_RETIRE__
 };
 int main() {
     Scheduler scheduler;
-    LUT lut{scheduler};
+    LUT lut{scheduler, {}, {}, 0, 0};
     lut.UpdateBuffer(8);
     assert(lut.retired_buffers.empty() && *lut.buffer.value == 1 && lut.num_indices == 8);
     lut.UpdateBuffer(16);
@@ -92,7 +92,7 @@ int main() {
     scheduler.completed = 7;
     lut.UpdateBuffer(25);
     assert(lut.retired_buffers.empty());
-    LUT near_limit{scheduler};
+    LUT near_limit{scheduler, {}, {}, 0, 0};
     near_limit.num_indices = std::numeric_limits<u32>::max() - 1;
     near_limit.UpdateBuffer(std::numeric_limits<u32>::max());
     assert(near_limit.num_indices == std::numeric_limits<u32>::max());

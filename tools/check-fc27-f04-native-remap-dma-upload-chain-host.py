@@ -159,6 +159,8 @@ replace_once('    void RefreshContents(Image&,ImageId);\n',
              '    void RefreshContents(Image&,ImageId);\n    void WriteMemory(DAddr,size_t);\n    void UnmapGPUMemory(size_t,GPUVAddr,size_t);\n    void SynchronizeAliases(ImageId);\n',"declarations")
 replace_once('__METHODS__\n',
              '''__METHODS__
+// Selected Maxwell DMA uses MemoryManager; the host mock calls it Memory.
+using MemoryManager = Memory;
 struct DmaRegs {
     u64 offset_in{},offset_out{};
     u32 line_length_in{},line_count{};

@@ -394,6 +394,35 @@ int main(){
     preferences[4]=4;preferences[6]=0;
     require(!CalculateNativeImageRequirements(preferences,1),"reject unknown color layout");
 
+    // Common feature-image sizing (GSV 391/691/1291/1691) is requirements-only.
+    // It follows Lichii's 4/4/8-Bpp formats and keeps the observed MKW 0x38
+    // camera format without widening actual image creation/mapping.
+    std::array<u32,16> feature{};
+    feature[2]=(63U<<16)|127U; // 128x64
+    feature[4]=4;feature[5]=8;feature[6]=1;
+    auto feature_req=CalculateFeatureImageRequirements(feature,2);
+    require(feature_req && feature_req->size==65536 && feature_req->alignment==4096,
+            "feature RGBA8 requirements");
+    feature[6]=4;
+    feature_req=CalculateFeatureImageRequirements(feature,2);
+    require(feature_req && feature_req->size==65536,
+            "feature RGB10A2 keeps four-byte geometry");
+    feature[6]=5;feature[5]=16;
+    feature_req=CalculateFeatureImageRequirements(feature,2);
+    require(feature_req && feature_req->size==131072 && feature_req->alignment==4096,
+            "feature RGBA16F uses eight-byte geometry");
+    feature={};feature[2]=(215U<<16)|383U;feature[4]=7;feature[5]=24;feature[6]=0x38;
+    feature_req=CalculateFeatureImageRequirements(feature,3);
+    require(feature_req && feature_req->size==0x120000 && feature_req->alignment==0x2000,
+            "observed MKW 384x216 x3 feature-camera requirements");
+    feature[6]=0x99;
+    require(!CalculateFeatureImageRequirements(feature,3),
+            "unknown feature format fails closed");
+    feature={};feature[2]=(63U<<16)|127U;feature[4]=4;feature[5]=8;feature[6]=1;
+    feature_req=CalculateFeatureImageRequirements(feature,0);
+    require(feature_req && feature_req->size==32768,
+            "feature sizing follows SDK zero-count minimum-one convention");
+
     // Sparse NVGPU MMU ABI and mapping lifetime, sourced from latest pinned NS2.
     N::NativeSparseRemapEntry entry{};
     entry.flags=0x1000;entry.kind=6;entry.fallback_kind=6;

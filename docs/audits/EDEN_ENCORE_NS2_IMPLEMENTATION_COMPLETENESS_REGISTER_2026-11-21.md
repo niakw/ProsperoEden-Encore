@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (169), `HANDLER PARTIEL INDIQUÉ` (8), `STUB NOMMÉ` (72, dont Syncpt 21 en U), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), **`REFUS GÉNÉRIQUE EXPLICITE` (44 : 13 M + 25 U + 6 V)**, `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (0). Les V restent hors version fonctionnellement : le fallback les refuse proprement sans prétendre connaître leur ABI 19.x.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**172**), `HANDLER PARTIEL INDIQUÉ` (**6**), `STUB NOMMÉ` (72, dont Syncpt 21 en U), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), **`REFUS GÉNÉRIQUE EXPLICITE` (43 : 13 M + 24 U + 6 V)**, `AUCUN HANDLER INDIQUÉ` (0). Les feature-image requirements 391/691/1291/1691 partagent désormais un calculateur borné commun ; création et mapping restent séparés.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,30 +30,30 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> Périmètre **316 commandes NS2** des 12 tableaux. **Toutes ont désormais un comportement de dispatch explicite**, mais cela ne signifie pas qu'elles sont toutes implémentées : F et R restent indépendants.
+> Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F (fonctionnel)** : C=169, P=7, C/P=1, M=107, U=26, V=6.
-- **R (représentation/dispatch)** : **316/316 (100 %)** ont soit un handler fonctionnel/partiel, soit un stub/refus explicite ou générique. **0 commande recensée tombe désormais dans un comportement non documenté du registre.**
+- **F** : **C=172**, **P=5**, C/P=1, M=107, **U=25**, V=6.
+- **R** : **316/316** disposent d'un dispatch explicite (handler, partiel, stub ou refus).
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | 169 | 169 | 0 |
-| P — partielle | 7 | 7 | 0 |
+| C — implémentation source | **172** | 172 | 0 |
+| P — partielle | **5** | 5 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
-| U — contrat insuffisant | 26 | 26 | 0 |
-| V — ancienne variante firmware | 6 | **6 (fallback fail-closed)** | 0 |
+| U — contrat insuffisant | **25** | 25 | 0 |
+| V — ancienne variante firmware | 6 | 6 | 0 |
 | **Total** | **316** | **316** | **0** |
 
-**Six variantes FW19** : KUserWorker 201/202/203/204/205/207 restent V parce que seuls les noms/version sont publics ici, pas une preuve suffisante que leur layout est identique aux IDs 20+ 211–216. Elles ne sont donc pas aliasées aveuglément. Leur classe `IGpuWorker` refuse déjà tout ID TIPC absent de sa table par `ResultNotImplemented` sans lecture du payload.
+**Feature-image requirements fermées** : `391`, `691`, `1291` et `1691` utilisent désormais un calculateur commun requirements-only, conformément au template Lichii. Formats prouvés : 1/RGBA8 et 4/RGB10A2 en 4 Bpp, 5/RGBA16F en 8 Bpp ; le format caméra MKW observé `0x38` reste admis en 4 Bpp. Pitch/block-height invalides reprennent le fallback Lichii, count=0 suit la convention minimum 1, et les formats inconnus échouent fermé. Aucun pool/image/GMMU n'est créé par cette commande.
 
-**Conséquence** : le chantier « aucune commande recensée sans traitement » est fermé déclarativement. Le travail restant porte uniquement sur **la fonctionnalité réelle** des 7 P + 1 C/P, les 107 M volontairement non supportées, et la découverte d'ABI pour 26 U / compatibilité FW19 pour 6 V.
+**Restent 5 P + 1 C/P** : GET_ERROR_INFO/NOTIFICATION sans producteur de faute réel, CHANNEL_SETUP_BIND userspace USERD/doorbell, deux réglages TSG post-bind et le submit historique C/P.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=52, P=2, M=70, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=55, P=0, M=70, U=17. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -85,7 +85,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 321 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 327 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 361 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 391 | Display | CalculateRequiredBufferMemory | P | HANDLER PARTIEL INDIQUÉ | CalculateNativeImageRequirements | requête 16 u32 + count; taille/alignment du layout natif borné via helper actif; formats non reconnus refusés; compatibilité ABI à qualifier (Lichii nx2_gsv.h) |
+| 391 | Display | CalculateRequiredBufferMemory | C | HANDLER INDIQUÉ | CalculateFeatureImagePoolRequirements | Lichii common feature-image template: preference[16]+count → u64 size/alignment; formats 1/4/5 + observed MKW 0x38, no image creation side effect |
 | 401 | Gpu | CreateGpuContext | C | HANDLER INDIQUÉ | InitializeGpuContext | actif; création état GPU |
 | 402 | Gpu | InitializeGpuContext | C | HANDLER INDIQUÉ | ActivateGpuContext | actif |
 | 403 | Gpu | DestroyGpuContext | C | HANDLER INDIQUÉ | DestroyGpuContext | actif |
@@ -152,7 +152,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 665 | Camera | GetAccessAllowed | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 666 | Camera | GetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 667 | Camera | SetHostDrivenAeRegion | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 691 | Camera | CalculateImageArraySize | P | HANDLER PARTIEL INDIQUÉ | CalculateChatImagePoolSize | requête 16 u32 + count vers layout caméra chat borné; seul format prouvé pris en charge; autres refusés; aucun faux succès (Lichii nx2_gsv.h) |
+| 691 | Camera | CalculateImageArraySize | C | HANDLER INDIQUÉ | CalculateFeatureImagePoolRequirements | Lichii common feature-image template; generic block geometry + format Bpp, includes observed MKW 0x38 and fails closed on unknown formats |
 | 901 | VideoDecoder | CreateVideoDecoderContext | C | HANDLER INDIQUÉ | InitializeVideoCodecContext | Lichii SDK : 901 précède 902 et ne retourne pas d'objet ; Encore valide no-input + GPU context/NVDRV avant succès |
 | 902 | VideoDecoder | InitializeVideoDecoderContext | C | HANDLER INDIQUÉ | OpenVideoDecoderSession | Lichii SDK : 902 retourne la session decoder MOVE ; Encore valide no-input, crée la vraie IGraphicsVideoDecoderSession et rollback OOM |
 | 903 | VideoDecoder | DestroyVideoDecoderContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
@@ -184,7 +184,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1203 | Chat | DestroyChatContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1211 | Chat | CreateImagePool | C | HANDLER INDIQUÉ | CreateVideoImagePool | Lichii : même requête que pool image natif avec count ; Encore valide 16 préférences+count+backing, pin réel et réserve count IDs contigus |
 | 1212 | Chat | DestroyImagePool | C | HANDLER INDIQUÉ | DestroyVideoImagePool | fefw GameChat DestroyImagePool envoie le handle de base une fois puis détruit séparément la mémoire native ; Encore retire le pool complet et son duplicate/pin |
-| 1291 | Chat | CalculateRequiredBufferMemory | C | HANDLER INDIQUÉ | CalculateChatImagePoolSize | actif |
+| 1291 | Chat | CalculateRequiredBufferMemory | C | HANDLER INDIQUÉ | CalculateFeatureImagePoolRequirements | Lichii/SDK common feature-image requirements template; requirements-only size/alignment, actual GameChat pool creation remains separately bounded |
 | 1301 | Adraw | CreateAdrawContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1302 | Adraw | InitializeAdrawContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1325 | Adraw | GetAdrawFrameBufferHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
@@ -200,7 +200,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1603 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 1611 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 1612 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 1691 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1691 |  | (nom inconnu) | C | HANDLER INDIQUÉ | CalculateFeatureImagePoolRequirements | Lichii identifies 1691 as the same feature-image requirements server template as 391/691/1291; same bounded requirements-only handler |
 
 
 ## 2. SyncptSession

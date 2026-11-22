@@ -291,12 +291,22 @@ def main()->int:
         case = ctrl_gpu.split(f'case 0x{num:x}: // Switch 2 ', 1)[1].split('case ', 1)[0]
         assert f'if (command.raw != {raw}) break;' in case
         assert 'return NvResult::NotImplemented;' in case
-    # Documented image-size queries must use real bounded layout calculations,
-    # not the generic unsupported-feature stub or fabricated zero-success data.
-    for command, method in ((391, 'CalculateNativeImageRequirements'),
-                            (691, 'CalculateChatImagePoolSize')):
-        assert ('{'+str(command)+', &IGraphicsSupervisor::'+method) in text
+    # Common feature-image sizing IDs use the same requirements-only layout
+    # calculator. This must not create/map images or fabricate unknown formats.
+    for command in (391, 691, 1291, 1691):
+        assert ('{'+str(command)+', &IGraphicsSupervisor::CalculateFeatureImagePoolRequirements') in text
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') not in text
+    feature_sizer = text.split(
+        'void IGraphicsSupervisor::CalculateFeatureImagePoolRequirements(HLERequestContext& ctx) {', 1
+    )[1].split('static std::optional<NativeImageRequirements> ParseNativeImageRequest', 1)[0]
+    assert 'CalculateFeatureImageRequirements(preference, packet[18])' in feature_sizer
+    assert 'packet[1] == 17' in feature_sizer
+    assert 'CreateNativeImage' not in feature_sizer
+    layout_source = (ROOT / 'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h').read_text()
+    for proof in ('case 1:', 'case 4:', 'case 5:', 'case 0x38:',
+                  'const u64 count = std::max<u64>(requested_count, 1);',
+                  'const u64 alignment = std::max<u64>(4096, 64 * block_rows);'):
+        assert proof in layout_source
     for proof in ('command == 901',
                   'packet[0] == command + 0x10 && packet[1] == 0',
                   'm_bootstrap.GpuContextReady()',

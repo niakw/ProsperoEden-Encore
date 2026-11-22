@@ -2,9 +2,11 @@
 
 > **ANNEXE D'INDEXATION, NON CANONIQUE.** Le [registre fonctionnel NS1 SwitchBrew](./EDEN_ENCORE_NS1_SWITCHBREW_FUNCTION_COVERAGE_REGISTER_2026-11-21.md) reste **l'unique source de vérité** pour les statuts validés, le propriétaire CMake réel, les preuves hôte/PS5 et l'état des tâches. Ce fichier annexe conserve les lignes du miroir SwitchBrew pour faciliter la recherche par numéro/nom. Ses codes D/P/Q sont des **présomptions statiques sur les sources Eden de base**, jamais des preuves que le runtime actif est correct ou manquant.
 
-**Vérification documentaire : 2026-11-21 (Europe/Paris).** Branche `opt/ns1-fc27-runtime-20261121` ; **couple runtime pris comme référence** : moteur `5bef0df2b23f650b470659e928e3682cf2db3916` → vendor/gitlink `b8883667410054db189d00b3a5144088f47d3af9` ; les commits ultérieurs de ce fichier sont uniquement documentaires. Aucun résultat de console PS5 n'est déduit de cette table.
+**Recalcul d'index : 22 novembre 2026 (Europe/Paris).** Branche `audit/ns1-switchbrew-main-coverage-20261122`, créée directement depuis le `main` moteur `452fd7fe999757377175ab1eae1bb431877d1ccf` → vendor/gitlink `224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c`. **Le contenu des corps de fonctions n'a pas été qualifié exhaustivement au nouveau couple ; ne pas interpréter les codes hérités comme une certification de runtime.**
 
-> **Portée** : liste des entrées de la table SVC du miroir SwitchBrew consulté, index des familles IPC et 4 786 lignes de commandes extraites de 54 pages du miroir. Les codes D/P/Q reflètent une **analyse statique limitée** : les commandes doivent encore être rapprochées du C++ réellement sélectionné et du firmware NS1. Une déclaration/registration ne signifie jamais « implémenté ».
+**Provenance des constats de code par ligne : 21 novembre 2026**, branche `opt/ns1-fc27-runtime-20261121`, moteur `5bef0df2b23f650b470659e928e3682cf2db3916` → vendor/gitlink `b8883667410054db189d00b3a5144088f47d3af9`. Les liens vers ce vendor restent volontairement attachés à cette preuve historique. Le recalcul du 22/11 corrige le dénominateur, distingue les stubs et vérifie le gitlink actuel ; il **ne prétend pas réauditer 4 853 corps/ABI/versions et chemins CMake**.
+
+> **Portée et unité :** 117 lignes SVC + 4 786 lignes extraites des tableaux SwitchBrew de 54 pages, soit 4 903 lignes brutes. Elles contiennent **23 codes d'erreur** et **27 répétitions exactes de triplet (interface, ID, fonction)**. Le catalogue compte donc **4 853 entrées distinctes candidates** : 117 SVC + 4 736 IPC. Ce n'est **pas** une liste certifiée de 4 853 appels applicables à un seul firmware NS1, ni 4 853 implémentations.
 
 ## Sources et version du référentiel
 
@@ -15,27 +17,48 @@
 
 Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions HOS ; les évolutions récentes de la page live, notamment **S1/S2**, devront être rapprochées séparément. **Aucune commande exclusive Switch 2 ne doit être comptée NS1.**
 
-## Bilan de classification documentaire (21/11/2026)
+## Bilan corrigé — catalogue NS1 sur la branche issue de `main` (22/11/2026)
 
-| Inventaire | D — rejet explicite | P — partiel/stub | Q — à qualifier | E — ID absent de l'énumération |
-|---|---:|---:|---:|---:|
-| **117 SVC SwitchBrew** | **33** | **3** | **80** | **1** |
-| **4 786 lignes de commandes IPC extraites** | **68** | **19** | **4 699** | — |
+**Compteur de références distinctes : 4 853**, et non 4 903 fonctions. Le nettoyage est reproductible sur les lignes ci-dessous : exclusion de toute ligne `Errors` (23 codes d'erreur, pas des fonctions), puis conservation du premier triplet `(interface, ID, fonction)` et marquage des 27 répétitions en `DUP`. Un triplet répété dans plusieurs pages demeure consultable dans la table, mais n'entre qu'une fois dans le dénominateur. Les évolutions d'ABI/firmware et la couverture réelle ne sont pas résolues par cette déduplication.
 
-**Attention :** ce sont des **lignes documentaires**, pas des jeux testés ni un inventaire certifié de bugs. Les 68 IPC D désignent des handlers nuls ou rejets dans les sources de base inspectées ; les 80 SVC Q ne sont pas 80 implémentations réussies. Deux familles de l'index historique n'ont pas de page de commandes extraite dans ce catalogue. Les versions actuelles des interfaces S1/S2 exigent une comparaison séparée avec SwitchBrew live.
+| Statut sur entrées distinctes | SVC | IPC | Total | Ce que cela démontre |
+|---|---:|---:|---:|---|
+| **D — rejet/non-implémentation explicite dans la source de référence** | **33** | **68** | **101** | Source de base inspectée le 21/11 ; vérifier overlays actifs avant toute conclusion sur PS5 |
+| **STUB — corps explicitement simulé ou minimal** | **0** | **19** | **19** | 14 IRS, 3 Capture `caps:u`, 2 SPL ; ne pas compter comme implémentées |
+| **PARTIEL — contrat conditionnellement/incomplètement couvert** | **3** | **0** | **3** | SVC `GetProcessId`, `GetInfo`, `GetThreadList` |
+| **Q — source présente ou commande documentée, fonctionnalité non qualifiée** | **80** | **4 649** | **4 729** | 80 SVC avec corps C++ identifié ; IPC non classés par handler/owner CMake |
+| **E — ID non trouvé dans l'énumération de base** | **1** | **0** | **1** | `svcMapDeviceAddressSpace` ; absence runtime global non prouvée |
+| **TOTAL DISTINCT** | **117** | **4 736** | **4 853** | Inventaire documentaire sans filtrage firmware complet |
 
-## Statuts (ne pas confondre source et gameplay)
+### Réconciliation avec les 4 903 lignes physiques
+
+| Type de ligne | Nombre |
+|---|---:|
+| SVC distinctes | **117** |
+| IPC distinctes `D`, `STUB` ou `Q` | **4 736** |
+| Lignes `META` (codes `Errors`, non-fonctions) | **23** |
+| Lignes `DUP` (répétitions d'un triplet déjà compté) | **27** |
+| **TOTAL DES LIGNES BRUTES** | **4 903** |
+
+**Compteur d'implémentations réellement intégrées sur PS5 : non déterminable avec cet index**. Un corps C++ ou un handler non nul ne prouve pas sa sémantique, son enregistrement dans l'owner CMake actif, ni son exécution correcte. Les **4 729 Q ne signifient ni 4 729 implémentations réussies, ni 4 729 fonctions manquantes**. Ce registre ne dispose d'aucun décompte exhaustif `OK-HOST`/`OK-PS5` à ces SHAs ; les jeux nécessitent encore les validations natives et console.
+
+**Contrôles ciblés sur le vendor/gitlink actuel `224b05e6` :** `ldr:pm` conserve les handlers `nullptr` pour 0–4 dans [l'override Loader](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp) ; `pm:shell` conserve des `nullptr` pour le lancement et la terminaison dans [l'override PM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; `hidbus` commande 13 `GetPollingData` reste `nullptr` dans [la source Eden](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hidbus.cpp). Ces cas ne démontrent pas l'absence d'une éventuelle délégation externe.
+
+## Statuts utilisés dans l'index
 
 | Code | Signification |
 |---|---|
-| **D** | Non implémenté explicite / rejet confirmé dans un corps C++ inspecté |
-| **P** | Stub, support partiel ou réponse simulée avec limites connues |
-| **Q** | ID ou fonction présente, mais réalisation, source compilée, ABI ou résultat non qualifiés |
-| **E** | ID absent de l'énumération examinée, sans preuve d'absence du runtime complet |
-| **C** | Correctif source actif et tests hôtes : console non prouvée |
-| **V** | ELF exact, installation et résultat PS5 représentatif documentés |
+| **D** | Non implémenté explicitement ou rejeté dans le corps/handler inspecté du snapshot initial |
+| **STUB** | Fonction déclarée avec comportement simulé/minimal, sans garantie contractuelle |
+| **PARTIEL** | Contrat partiellement couvert ; flags, états, retours ou cas conditionnels manquent |
+| **Q** | Fonction documentée ou corps C++ identifié, **implémentation effective non qualifiée** |
+| **E** | ID absent de l'énumération examinée ; pas une preuve universelle d'absence |
+| **META** | Information annexe (ici code d'erreur), **pas une commande** |
+| **DUP** | Deuxième occurrence du même triplet interface/ID/fonction, exclue du compte distinct |
+| **C** | Correctif source actif + tests hôtes pertinents, console non prouvée (aucune attribution générale ici) |
+| **V** | ELF exact, installation et preuve PS5 représentative (aucune attribution générale ici) |
 
-**Politique de stub** : commenter `// Not implemented yet on Encore: <motif/contrat>` si utile ; ne jamais retourner `ResultSuccess` ou `0` pour une opération non réalisée (mapping, registres, sécurité, cache, GPU). Pour un `void`, ne rendre no-op que si le contrat l'autorise. Une fonction de retour facultatif peut indiquer l'absence de capacité selon l'ABI. Aucun stub factice ne doit masquer un nouveau blocage.
+**Règle des stubs :** un `return 0` ou `ResultSuccess` n'est acceptable que pour une véritable opération sans effet et sans sortie obligatoire. Jamais pour un mapping, un handle, une sécurité, une synchro ou une opération GPU non effectuée. Aucun `STUB` n'entre dans le total « implémenté ».
 
 ## Tableau SVC — 117 entrées documentées par le snapshot
 
@@ -76,12 +99,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | `0x21` | [`svcSendSyncRequest`](https://switchbrew.org/wiki/SVC#svcSendSyncRequest) | **Q** | [svc_ipc.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_ipc.cpp#L144) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
 | `0x22` | [`svcSendSyncRequestWithUserBuffer`](https://switchbrew.org/wiki/SVC#svcSendSyncRequestWithUserBuffer) | **Q** | [svc_ipc.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_ipc.cpp#L148) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
 | `0x23` | [`svcSendAsyncRequestWithUserBuffer`](https://switchbrew.org/wiki/SVC#svcSendAsyncRequestWithUserBuffer) | **Q** | [svc_ipc.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_ipc.cpp#L179) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
-| `0x24` | [`svcGetProcessId`](https://switchbrew.org/wiki/SVC#svcGetProcessId) | **P** | [svc_process.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_process.cpp#L25) : Chemin partiel, stub ou UNIMPLEMENTED conditionnel dans le corps | 2026-11-21 |
+| `0x24` | [`svcGetProcessId`](https://switchbrew.org/wiki/SVC#svcGetProcessId) | **PARTIEL** | [svc_process.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_process.cpp#L25) : Chemin partiel, stub ou UNIMPLEMENTED conditionnel dans le corps | 2026-11-21 |
 | `0x25` | [`svcGetThreadId`](https://switchbrew.org/wiki/SVC#svcGetThreadId) | **Q** | [svc_thread.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_thread.cpp#L283) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
 | `0x26` | [`svcBreak`](https://switchbrew.org/wiki/SVC#svcBreak) | **Q** | [svc_exception.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_exception.cpp#L20) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
 | `0x27` | [`svcOutputDebugString`](https://switchbrew.org/wiki/SVC#svcOutputDebugString) | **Q** | [svc_debug_string.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_debug_string.cpp#L21) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
 | `0x28` | [`svcReturnFromException`](https://switchbrew.org/wiki/SVC#svcReturnFromException) | **D** | [svc_exception.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_exception.cpp#L121) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
-| `0x29` | [`svcGetInfo`](https://switchbrew.org/wiki/SVC#svcGetInfo) | **P** | [svc_info.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_info.cpp#L19) : Chemin partiel, stub ou UNIMPLEMENTED conditionnel dans le corps | 2026-11-21 |
+| `0x29` | [`svcGetInfo`](https://switchbrew.org/wiki/SVC#svcGetInfo) | **PARTIEL** | [svc_info.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_info.cpp#L19) : Chemin partiel, stub ou UNIMPLEMENTED conditionnel dans le corps | 2026-11-21 |
 | `0x2A` | [`svcFlushEntireDataCache`](https://switchbrew.org/wiki/SVC#svcFlushEntireDataCache) | **D** | [svc_cache.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_cache.cpp#L15) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
 | `0x2B` | [`svcFlushDataCache`](https://switchbrew.org/wiki/SVC#svcFlushDataCache) | **D** | [svc_cache.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_cache.cpp#L19) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
 | `0x2C` | [`svcMapPhysicalMemory`](https://switchbrew.org/wiki/SVC#svcMapPhysicalMemory) | **Q** | [svc_physical_memory.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_physical_memory.cpp#L33) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
@@ -133,7 +156,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | `0x63` | [`svcGetDebugEvent`](https://switchbrew.org/wiki/SVC#svcGetDebugEvent) | **D** | [svc_debug.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_debug.cpp#L27) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
 | `0x64` | [`svcContinueDebugEvent`](https://switchbrew.org/wiki/SVC#svcContinueDebugEvent) | **D** | [svc_debug.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_debug.cpp#L32) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
 | `0x65` | [`svcGetProcessList`](https://switchbrew.org/wiki/SVC#svcGetProcessList) | **Q** | [svc_process.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_process.cpp#L56) : Corps C++ présent ; source sélectionnée/effet console non qualifiés | 2026-11-21 |
-| `0x66` | [`svcGetThreadList`](https://switchbrew.org/wiki/SVC#svcGetThreadList) | **P** | [svc_thread.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_thread.cpp#L200) : Chemin partiel, stub ou UNIMPLEMENTED conditionnel dans le corps | 2026-11-21 |
+| `0x66` | [`svcGetThreadList`](https://switchbrew.org/wiki/SVC#svcGetThreadList) | **PARTIEL** | [svc_thread.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_thread.cpp#L200) : Chemin partiel, stub ou UNIMPLEMENTED conditionnel dans le corps | 2026-11-21 |
 | `0x67` | [`svcGetDebugThreadContext`](https://switchbrew.org/wiki/SVC#svcGetDebugThreadContext) | **D** | [svc_debug.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_debug.cpp#L38) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
 | `0x68` | [`svcSetDebugThreadContext`](https://switchbrew.org/wiki/SVC#svcSetDebugThreadContext) | **D** | [svc_debug.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_debug.cpp#L44) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
 | `0x69` | [`svcQueryDebugProcessMemory`](https://switchbrew.org/wiki/SVC#svcQueryDebugProcessMemory) | **D** | [svc_debug.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_debug.cpp#L50) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
@@ -269,7 +292,7 @@ Références de suivi : [registre de complétude NS1](./EDEN_ENCORE_NS1_IMPLEMEN
 
 ## 7. Catalogue des commandes IPC documentées par SwitchBrew
 
-**Statut de toutes les entrées de cette section : Q** (commande référencée, mais chemin C++ exécuté et résultat PS5 non qualifiés). La date décrit une comparaison documentaire, pas un test du jeu. Les ID sont propres à leur interface et à la version HOS.
+**Statuts de cette section : D / STUB / Q / META / DUP.** Les 4 786 lignes physiques comportent 4 736 commandes distinctes candidates, 23 codes d'erreur hors fonctions et 27 occurrences répétées. Les statuts D/STUB/Q héritent de la qualification statique de base du 21/11 ; META/DUP sont reclassés par inventaire le 22/11. La date des lignes reste celle de la comparaison de source initiale, pas celle d'un test console. Les ID sont propres à l'interface et à la version HOS.
 
 ### Account services
 
@@ -871,24 +894,24 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `1155` | `SetForceHandheldStyleVibration` | 9.0.0+ | Q | 2026-11-21 |
 | hid:sys | `1156` | `SendConnectionTriggerWithoutTimeoutEvent` | 9.0.0+ | Q | 2026-11-21 |
 | hid:tmp | `0` | `GetConsoleSixAxisSensorCalibrationValues` | — | Q | 2026-11-21 |
-| irs | `302` | `ActivateIrsensor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L64) ; stub explicite en corps) | 2026-11-21 |
-| irs | `303` | `DeactivateIrsensor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L69) ; stub explicite en corps) | 2026-11-21 |
+| irs | `302` | `ActivateIrsensor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L64) ; stub explicite en corps) | 2026-11-21 |
+| irs | `303` | `DeactivateIrsensor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L69) ; stub explicite en corps) | 2026-11-21 |
 | irs | `304` | `GetIrsensorSharedMemoryHandle` | — | Q | 2026-11-21 |
-| irs | `305` | `StopImageProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L82) ; stub explicite en corps) | 2026-11-21 |
-| irs | `306` | `RunMomentProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L96) ; stub explicite en corps) | 2026-11-21 |
-| irs | `307` | `RunClusteringProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L115) ; stub explicite en corps) | 2026-11-21 |
+| irs | `305` | `StopImageProcessor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L82) ; stub explicite en corps) | 2026-11-21 |
+| irs | `306` | `RunMomentProcessor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L96) ; stub explicite en corps) | 2026-11-21 |
+| irs | `307` | `RunClusteringProcessor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L115) ; stub explicite en corps) | 2026-11-21 |
 | irs | `308` | `RunImageTransferProcessor` | — | Q | 2026-11-21 |
-| irs | `309` | `GetImageTransferProcessorState` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L160) ; stub explicite en corps) | 2026-11-21 |
-| irs | `310` | `RunTeraPluginProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L180) ; stub explicite en corps) | 2026-11-21 |
+| irs | `309` | `GetImageTransferProcessorState` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L160) ; stub explicite en corps) | 2026-11-21 |
+| irs | `310` | `RunTeraPluginProcessor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L180) ; stub explicite en corps) | 2026-11-21 |
 | irs | `311` | `GetNpadIrCameraHandle` | — | Q | 2026-11-21 |
-| irs | `312` | `RunPointingProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L217) ; stub explicite en corps) | 2026-11-21 |
-| irs | `313` | `SuspendImageProcessor` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L239) ; stub explicite en corps) | 2026-11-21 |
-| irs | `314` | `CheckFirmwareVersion` | 3.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L252) ; stub explicite en corps) | 2026-11-21 |
-| irs | `315` | `SetFunctionLevel` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L268) ; stub explicite en corps) | 2026-11-21 |
+| irs | `312` | `RunPointingProcessor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L217) ; stub explicite en corps) | 2026-11-21 |
+| irs | `313` | `SuspendImageProcessor` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L239) ; stub explicite en corps) | 2026-11-21 |
+| irs | `314` | `CheckFirmwareVersion` | 3.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L252) ; stub explicite en corps) | 2026-11-21 |
+| irs | `315` | `SetFunctionLevel` | 4.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L268) ; stub explicite en corps) | 2026-11-21 |
 | irs | `316` | `RunImageTransferExProcessor` | 4.0.0+ | Q | 2026-11-21 |
-| irs | `317` | `RunIrLedProcessor` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L309) ; stub explicite en corps) | 2026-11-21 |
-| irs | `318` | `StopImageProcessorAsync` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L331) ; stub explicite en corps) | 2026-11-21 |
-| irs | `319` | `ActivateIrsensorWithFunctionLevel` | 4.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L346) ; stub explicite en corps) | 2026-11-21 |
+| irs | `317` | `RunIrLedProcessor` | 4.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L309) ; stub explicite en corps) | 2026-11-21 |
+| irs | `318` | `StopImageProcessorAsync` | 4.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L331) ; stub explicite en corps) | 2026-11-21 |
+| irs | `319` | `ActivateIrsensorWithFunctionLevel` | 4.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L346) ; stub explicite en corps) | 2026-11-21 |
 | irs:sys | `500` | `SetAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L374) ; handler nullptr) | 2026-11-21 |
 | irs:sys | `501` | `RegisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L375) ; handler nullptr) | 2026-11-21 |
 | irs:sys | `502` | `UnregisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L376) ; handler nullptr) | 2026-11-21 |
@@ -2782,8 +2805,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:c | `2431` | `GetAlbumMovieWriteStreamBrokenReason` | — | Q | 2026-11-21 |
 | caps:c | `2433` | `GetAlbumMovieWriteStreamDataSize` | — | Q | 2026-11-21 |
 | caps:c | `2434` | `SetAlbumMovieWriteStreamDataSize` | — | Q | 2026-11-21 |
-| caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L43) ; stub explicite en corps) | 2026-11-21 |
-| caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L50) ; stub explicite en corps) | 2026-11-21 |
+| caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L43) ; stub explicite en corps) | 2026-11-21 |
+| caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L50) ; stub explicite en corps) | 2026-11-21 |
 | caps:u | `103` | `DeleteAlbumFileByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L23) ; handler nullptr) | 2026-11-21 |
 | caps:u | `104` | `GetAlbumFileSizeByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L24) ; handler nullptr) | 2026-11-21 |
 | caps:u | `105` | `DeleteAlbumFileByAruidForDebug` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L25) ; handler nullptr) | 2026-11-21 |
@@ -2792,7 +2815,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:u | `130` | `PrecheckToCreateContentsByAruid` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L28) ; handler nullptr) | 2026-11-21 |
 | caps:u | `140` | `GetAlbumFileList1AafeAruidDeprecated` | 6.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L29) ; handler nullptr) | 2026-11-21 |
 | caps:u | `141` | `GetAlbumFileList2AafeUidAruidDeprecated` | 6.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L30) ; handler nullptr) | 2026-11-21 |
-| caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L64) ; stub explicite en corps) | 2026-11-21 |
+| caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L64) ; stub explicite en corps) | 2026-11-21 |
 | caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L32) ; handler nullptr) | 2026-11-21 |
 | caps:u | `60002` | `OpenAccessorSessionForApplication` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/caps/caps_u.cpp#L34) ; handler nullptr) | 2026-11-21 |
 | caps:u | `2001` | `OpenAlbumMovieReadStream` | — | Q | 2026-11-21 |
@@ -2831,8 +2854,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:ss | `204` | `SaveEditedScreenShotEx0` | 3.0.0+ | Q | 2026-11-21 |
 | caps:ss | `206` | `[?+]` | — | Q | 2026-11-21 |
 | caps:ss | `208` | `SaveScreenShotOfMovieEx1` | 5.0.0+ | Q | 2026-11-21 |
-| caps:su | `201` | `SaveScreenShot` | — | Q | 2026-11-21 |
-| caps:su | `203` | `SaveScreenShotEx0` | — | Q | 2026-11-21 |
+| caps:su | `201` | `SaveScreenShot` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| caps:su | `203` | `SaveScreenShotEx0` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | cec-mgr | `0` | `RegisterCallback` | — | Q | 2026-11-21 |
 | cec-mgr | `1` | `UnregisterCallback` | — | Q | 2026-11-21 |
 | cec-mgr | `2` | `TriggerSystemEvent` | — | Q | 2026-11-21 |
@@ -3233,24 +3256,24 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | apm:am | `0` | `OpenSession` | — | Q | 2026-11-21 |
 | apm:am | `1` | `GetPerformanceMode` | — | Q | 2026-11-21 |
 | apm:am | `6` | `IsCpuOverclockEnabled` | 7.0.0+ | Q | 2026-11-21 |
-| apm:sys | `0` | `RequestPerformanceMode` | — | Q | 2026-11-21 |
-| apm:sys | `1` | `GetPerformanceEvent` | — | Q | 2026-11-21 |
-| apm:sys | `2` | `GetThrottlingState` | — | Q | 2026-11-21 |
-| apm:sys | `3` | `GetLastThrottlingState` | — | Q | 2026-11-21 |
-| apm:sys | `4` | `ClearLastThrottlingState` | — | Q | 2026-11-21 |
-| apm:sys | `5` | `LoadAndApplySettings` | 5.0.0+ | Q | 2026-11-21 |
-| apm:sys | `6` | `SetCpuBoostMode` | 7.0.0+ | Q | 2026-11-21 |
-| apm:sys | `7` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | Q | 2026-11-21 |
-| ISession | `0` | `SetPerformanceConfiguration` | — | Q | 2026-11-21 |
-| ISession | `1` | `GetPerformanceConfiguration` | — | Q | 2026-11-21 |
-| ISession | `2` | `SetCpuOverclockEnabled` | 8.0.0+ | Q | 2026-11-21 |
-| fgm, fgm:0, fgm:9 | `0` | `Initialize` | — | Q | 2026-11-21 |
-| fgm, fgm:0, fgm:9 | `1` | `Set` | — | Q | 2026-11-21 |
-| fgm, fgm:0, fgm:9 | `2` | `Get` | — | Q | 2026-11-21 |
-| fgm, fgm:0, fgm:9 | `3` | `Cancel` | — | Q | 2026-11-21 |
-| fgm:dbg | `0` | `Initialize` | — | Q | 2026-11-21 |
-| fgm:dbg | `1` | `Read` | — | Q | 2026-11-21 |
-| fgm:dbg | `2` | `Cancel` | — | Q | 2026-11-21 |
+| apm:sys | `0` | `RequestPerformanceMode` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| apm:sys | `1` | `GetPerformanceEvent` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| apm:sys | `2` | `GetThrottlingState` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| apm:sys | `3` | `GetLastThrottlingState` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| apm:sys | `4` | `ClearLastThrottlingState` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| apm:sys | `5` | `LoadAndApplySettings` | 5.0.0+ | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| apm:sys | `6` | `SetCpuBoostMode` | 7.0.0+ | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| apm:sys | `7` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| ISession | `0` | `SetPerformanceConfiguration` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| ISession | `1` | `GetPerformanceConfiguration` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| ISession | `2` | `SetCpuOverclockEnabled` | 8.0.0+ | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `0` | `Initialize` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `1` | `Set` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `2` | `Get` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| fgm, fgm:0, fgm:9 | `3` | `Cancel` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| fgm:dbg | `0` | `Initialize` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| fgm:dbg | `1` | `Read` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| fgm:dbg | `2` | `Cancel` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 
 ### Fatal services
 
@@ -4485,13 +4508,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ntc | `3` | `Cancel` | — | Q | 2026-11-21 |
 | ntc | `4` | `IsProcessing` | — | Q | 2026-11-21 |
 | ntc | `5` | `GetServerTime` | 3.0.0+ | Q | 2026-11-21 |
-| IAsyncValue | `0` | `GetSize` | — | Q | 2026-11-21 |
-| IAsyncValue | `1` | `Get` | — | Q | 2026-11-21 |
-| IAsyncValue | `2` | `Cancel` | — | Q | 2026-11-21 |
-| IAsyncValue | `3` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
-| IAsyncResult | `0` | `Get` | — | Q | 2026-11-21 |
-| IAsyncResult | `1` | `Cancel` | — | Q | 2026-11-21 |
-| IAsyncResult | `2` | `GetErrorContext` | 4.0.0+ | Q | 2026-11-21 |
+| IAsyncValue | `0` | `GetSize` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| IAsyncValue | `1` | `Get` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| IAsyncValue | `2` | `Cancel` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| IAsyncValue | `3` | `GetErrorContext` | 4.0.0+ | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| IAsyncResult | `0` | `Get` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| IAsyncResult | `1` | `Cancel` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
+| IAsyncResult | `2` | `GetErrorContext` | 4.0.0+ | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | IAsyncProgressResult | `0` | `Get` | — | Q | 2026-11-21 |
 | IAsyncProgressResult | `1` | `Cancel` | — | Q | 2026-11-21 |
 | IAsyncProgressResult | `2` | `GetProgress` | — | Q | 2026-11-21 |
@@ -4591,29 +4614,29 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nvdrvdbg | `0` | `OpenLog` | — | Q | 2026-11-21 |
 | nvdrvdbg | `1` | `CloseLog` | — | Q | 2026-11-21 |
 | nvdrvdbg | `2` | `ReadLog` | — | Q | 2026-11-21 |
-| Errors | `0` | `Success` | — | Q | 2026-11-21 |
-| Errors | `1` | `NotImplemented` | — | Q | 2026-11-21 |
-| Errors | `2` | `NotSupported` | — | Q | 2026-11-21 |
-| Errors | `3` | `NotInitialized` | — | Q | 2026-11-21 |
-| Errors | `4` | `BadParameter` | — | Q | 2026-11-21 |
-| Errors | `5` | `Timeout` | — | Q | 2026-11-21 |
-| Errors | `6` | `InsufficientMemory` | — | Q | 2026-11-21 |
-| Errors | `7` | `ReadOnlyAttribute` | — | Q | 2026-11-21 |
-| Errors | `8` | `InvalidState` | — | Q | 2026-11-21 |
-| Errors | `9` | `InvalidAddress` | — | Q | 2026-11-21 |
-| Errors | `0xA` | `InvalidSize` | — | Q | 2026-11-21 |
-| Errors | `0xB` | `BadValue` | — | Q | 2026-11-21 |
-| Errors | `0xD` | `AlreadyAllocated` | — | Q | 2026-11-21 |
-| Errors | `0xE` | `Busy` | — | Q | 2026-11-21 |
-| Errors | `0xF` | `ResourceError` | — | Q | 2026-11-21 |
-| Errors | `0x10` | `CountMismatch` | — | Q | 2026-11-21 |
-| Errors | `0x1000` | `SharedMemoryTooSmall` | — | Q | 2026-11-21 |
-| Errors | `0x30003` | `FileOperationFailed` | — | Q | 2026-11-21 |
-| Errors | `0x30004` | `DirOperationFailed` | — | Q | 2026-11-21 |
-| Errors | `0x3000F` | `IoctlFailed` | — | Q | 2026-11-21 |
-| Errors | `0x30010` | `AccessDenied` | — | Q | 2026-11-21 |
-| Errors | `0x30013` | `FileNotFound` | — | Q | 2026-11-21 |
-| Errors | `0xA000E` | `ModuleNotPresent` | — | Q | 2026-11-21 |
+| Errors | `0` | `Success` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `1` | `NotImplemented` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `2` | `NotSupported` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `3` | `NotInitialized` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `4` | `BadParameter` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `5` | `Timeout` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `6` | `InsufficientMemory` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `7` | `ReadOnlyAttribute` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `8` | `InvalidState` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `9` | `InvalidAddress` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0xA` | `InvalidSize` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0xB` | `BadValue` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0xD` | `AlreadyAllocated` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0xE` | `Busy` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0xF` | `ResourceError` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0x10` | `CountMismatch` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0x1000` | `SharedMemoryTooSmall` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0x30003` | `FileOperationFailed` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0x30004` | `DirOperationFailed` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0x3000F` | `IoctlFailed` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0x30010` | `AccessDenied` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0x30013` | `FileNotFound` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
+| Errors | `0xA000E` | `ModuleNotPresent` | — | META — code d'erreur, pas une commande IPC | 2026-11-21 |
 
 ### PCIe services
 
@@ -5295,9 +5318,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | csrng | `0` | `GenerateRandomBytes` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L61) ; stub explicite en corps) | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L61) ; stub explicite en corps) | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `3` | `LoadAesKey` | — | Q | 2026-11-21 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **P** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L77) ; stub explicite en corps) | 2026-11-21 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L77) ; stub explicite en corps) | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `5` | `SetConfig` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/spl/spl_module.cpp#L91) ; UNIMPLEMENTED en corps) | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `7` | `GenerateRandomBytes` | — | Q | 2026-11-21 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `9` | `ImportLotusKey` | — | Q | 2026-11-21 |

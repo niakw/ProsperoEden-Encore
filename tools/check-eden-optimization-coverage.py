@@ -1158,7 +1158,18 @@ post_f07_vic_receipt = "vendor/encore-active/eden-core/src/video_core/host1x/vic
 post_f07_vic_present = {post_f07_vic_receipt} & all_owners
 if post_f07_vic_present:
     assert len(post_f07_nvdec_owners) == 2
-    assert subprocess.check_output(["git","hash-object",post_f07_vic_receipt],cwd=ROOT,text=True).strip() == "48008fc5f3b05c3e95432827c03e20b815cce21c"
+    vic_sha = subprocess.check_output(["git","hash-object",post_f07_vic_receipt],
+                                      cwd=ROOT,text=True).strip()
+    assert vic_sha in {
+        "48008fc5f3b05c3e95432827c03e20b815cce21c",
+        "178d361bc3b5e9a0bf6ca9fa579d49df7ab72935",
+    }, ("Unreviewed VIC source", vic_sha)
+    if vic_sha == "178d361bc3b5e9a0bf6ca9fa579d49df7ab72935":
+        # The full 29-hunk VIC predecessor replay is owned by the vendor
+        # source witness, which is also required by the native inventory gate.
+        witness = (ROOT / "vendor/tests/fc27_nvdec_vic_witness_host.py").read_text()
+        assert "vic_reverse=(" in witness and 'assert blob(VIC)==' in witness
+        assert "digest==" in witness and "CheckedVicPlane(" in witness
     assert subprocess.check_output(["git","hash-object","vendor/encore-active/eden-core/src/video_core/host1x/ffmpeg.cpp"],cwd=ROOT,text=True).strip() == "2eadc437cec5559560e5aaf849dd3b6446782e99"
     assert 'list(REMOVE_ITEM eden_vic_video_sources "host1x/vic.cpp")' in release_cmake
     assert 'list(APPEND eden_vic_video_sources "${EDEN_VIC_MAINTAINED_SOURCE}")' in release_cmake

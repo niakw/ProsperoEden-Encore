@@ -23,16 +23,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 325 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 245 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `6f797482`. **Ces 1 325 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 328 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 248 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `aea99647`. **Ces 1 328 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 245 | 80 | **1 325** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 248 | 80 | **1 328** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
-| **STUB — Stub / résultat simulé** | 150 | 0 | **150** |
+| **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 106 | 0 | **106** |
-| **NULL — Handler NULL** | 2 294 | 0 | **2 294** |
+| **NULL — Handler NULL** | 2 292 | 0 | **2 292** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -282,17 +282,30 @@ Vendor `3bd12215` puis `b1b3d6e9`, consolidé par `6f797482` (arbre `12879f10b2d
 
 **Pool restant à examiner : 2 850 = 2 294 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
 
+### Lot état firmware contrôleur + layout clavier
+
+Vendor `0d21ded6`, consolidé par `aea99647` (arbre `b3b59fda00af67a52aa5bf5b8125df90ae312c26`).
+
+- `SetControllerFirmwareUpdateSection` ID17 : **NULL → IMPL-SRC** ; l'état est stocké dans l'applet et `IsInControllerFirmwareUpdateSection` ID55 relit désormais ce même état au lieu d'un `false` constant.
+- `SetDesirableKeyboardLayout` ID20 : **NULL → IMPL-SRC**.
+- `GetDesirableKeyboardLayout` ID19 : **STUB → IMPL-SRC**, lecture du layout de l'applet principale réelle.
+- La correction de provenance NS est incluse : le header `application_manager_interface.h` actif contient bien les déclarations des nouveaux handlers records, et le manifeste suit les hashes source + overlay.
+
+**Compteur courant : 1 328 IMPL-SRC, 108 PARTIEL, 149 STUB, 106 NOOP, 2 292 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
+**Pool restant à examiner : 2 847 = 2 292 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1325
+    "Implémentation source retrouvée" : 1328
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 108
-    "Stub / résultat simulé" : 150
+    "Stub / résultat simulé" : 149
     "No-op documenté" : 106
-    "Handler NULL" : 2294
+    "Handler NULL" : 2292
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -1458,7 +1471,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `16` | `GetMainAppletStorageId` | 2.0.0+ | **IMPL-SRC** (StorageId dérivé de la présence réelle du Program NCA dans GameCard/SD/NAND ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `17` | `GetCallerAppletIdentityInfoStack` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `18` | `GetNextReturnDestinationAppletIdentityInfo` | 4.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `19` | `GetDesirableKeyboardLayout` | 4.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `19` | `GetDesirableKeyboardLayout` | 4.0.0+ | **IMPL-SRC** (lit le layout clavier réel de l'applet principale au lieu de retourner 0 constant ; vendor `0d21ded6`) | 2026-11-22 |
 | appletAE | `20` | `PopExtraStorage` | — | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `25` | `GetPopExtraStorageEvent` | — | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `30` | `UnpopInData` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
@@ -1610,10 +1623,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `14` | `SetRestartMessageEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `15` | `SetScreenShotAppletIdentityInfo` | 2.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `16` | `SetOutOfFocusSuspendingEnabled` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `17` | `SetControllerFirmwareUpdateSection` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `17` | `SetControllerFirmwareUpdateSection` | 3.0.0+ | **IMPL-SRC** (stocke l'état firmware-update dans l'applet sous verrou ; le getter ID55 relit désormais ce même état ; vendor `0d21ded6`) | 2026-11-22 |
 | appletAE | `18` | `SetRequiresCaptureButtonShortPressedMessage` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `19` | `SetAlbumImageOrientation` | 3.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `20` | `SetDesirableKeyboardLayout` | 4.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `20` | `SetDesirableKeyboardLayout` | 4.0.0+ | **IMPL-SRC** (stocke le layout clavier désiré dans l'applet principale sous verrou ; vendor `0d21ded6`) | 2026-11-22 |
 | appletAE | `40` | `CreateManagedDisplayLayer` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `41` | `IsSystemBufferSharingEnabled` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `42` | `GetSystemSharedLayerHandle` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |

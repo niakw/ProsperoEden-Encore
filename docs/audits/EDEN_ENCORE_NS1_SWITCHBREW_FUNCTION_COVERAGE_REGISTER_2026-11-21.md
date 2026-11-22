@@ -295,6 +295,20 @@ Vendor `3bd1221552398a2221035698dd8ef8b6129e19c8`, `b1b3d6e90d6cb81b08c62cfafed0
 
 **Pool restant à examiner = 2 850 entrées** : 2 294 NULL + 150 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot firmware contrôleur + layout clavier — 22/11/2026
+
+Vendor `0d21ded69e049ee9716a376f6d1730d2ca54303f`, puis correction de staging NS `aea996472c7c7146795f3bbbb9e04e9bc0895a47` (arbre `b3b59fda00af67a52aa5bf5b8125df90ae312c26`).
+
+- `SetControllerFirmwareUpdateSection` : **NULL → IMPL-SRC**.
+- `SetDesirableKeyboardLayout` : **NULL → IMPL-SRC**.
+- `GetDesirableKeyboardLayout` : **STUB → IMPL-SRC**.
+- `IsInControllerFirmwareUpdateSection`, déjà IMPL-SRC au compteur, passe d'un `false` constant à la vraie valeur applet.
+- La provenance NS est corrigée : les déclarations `GenerateApplicationRecordCount`, `GetApplicationRecord`, `HasApplicationRecord` existent désormais aussi dans le header overlay actif et le manifeste a les nouveaux reçus `upstream` + `active`.
+
+**Compteur courant : 1 328 IMPL-SRC / 108 PARTIEL / 149 STUB / 106 NOOP / 2 292 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool restant à examiner = 2 847 entrées** : 2 292 NULL + 149 STUB + 108 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

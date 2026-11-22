@@ -249,7 +249,8 @@ def main()->int:
     assert 'ctx.CommandBuffer()' not in explicit_reject
     # Syncpt 21 has no public ABI: reject explicitly, never return fabricated zero-success.
     assert '{21, &INativeSyncptSession::Unknown21, "Unknown21"}' in text
-    syncpt21 = text.split('void Unknown21(HLERequestContext& ctx) {', 1)[1].split('\n}', 1)[0]
+    syncpt21 = text.split('void Unknown21(HLERequestContext& ctx) {', 1)[1].split(
+        '    void QueryCounter(HLERequestContext& ctx) {', 1)[0]
     assert 'Kernel::ResultNotImplemented.raw' in syncpt21
     assert 'NativeTipcReplyWords' not in syncpt21
     # GSV 202: no input payload and one real MOVE session handle.

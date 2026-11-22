@@ -24,8 +24,11 @@ int main() {
         {"registered.NAX", Kind::NAX, Route::ExistingArchive},
         {"mkw.XCI", Kind::XCI, Route::ExistingContainer},
         {"mkw.XCZ", Kind::XCZ, Route::ExistingContainer},
+        {"mkw.DXCI", Kind::DXCI, Route::ExistingContainer},
         {"mkw.NSP", Kind::NSP, Route::ExistingContainer},
         {"mkw.NSZ", Kind::NSZ, Route::ExistingContainer},
+        {"mkw.DNSP", Kind::DNSP, Route::ExistingContainer},
+        {"game.NX", Kind::NX, Route::ExistingContainer},
         {"boot.KIP", Kind::KIP, Route::Executable},
         {"main.npdm", Kind::NPDMMetadata, Route::MetadataOnly},
         {"RomFS", Kind::RomFSData, Route::AssetsOnly},
@@ -55,17 +58,23 @@ int main() {
           "legacy registered 00 may still be NCA or NAX, magic wins");
     check(IdentifyName("nca2") == Kind::Unsupported,
           "NCA2 archive variant label is not a Switch 2 file extension");
-    // A malformed compressed wrapper must fail closed. For genuinely
-    // recognized PFS0/XCI contents, the real loader's magic probe wins.
+    // Compressed/decrypted aliases and NX must fail closed if magic probes fail.
+    // NSP/XCI/NCA retain ordinary fallback only where their native loader can
+    // subsequently validate the content; a suffix never certifies a game.
     check(RequiresRecognizedContent(Kind::XCZ) &&
           RequiresRecognizedContent(Kind::NSZ) &&
+          RequiresRecognizedContent(Kind::DNSP) &&
+          RequiresRecognizedContent(Kind::DXCI) &&
+          RequiresRecognizedContent(Kind::NX) &&
           !RequiresRecognizedContent(Kind::XCI) &&
           !RequiresRecognizedContent(Kind::NSP) &&
           !RequiresRecognizedContent(Kind::NCA),
-          "only compressed aliases require a successfully recognized probe");
-    for (const auto name : {"mkw.xcz", "mkw.XCZ", "mkw.nsz", "mkw.NSZ"}) {
+          "new aliases require a recognized content signature");
+    for (const auto name : {"mkw.xcz", "mkw.XCZ", "mkw.nsz", "mkw.NSZ",
+                            "mkw.dnsp", "mkw.DNSP", "mkw.dxci", "mkw.DXCI",
+                            "title.nx", "title.NX"}) {
         check(!MayFallbackByName(IdentifyName(name)),
-              "compressed alias must not enter loader through extension alone");
+              "new container must not enter loader through extension alone");
     }
     for (const auto name : {"mkw.xci", "mkw.nsp", "mkw.nca", "main", "00"}) {
         check(MayFallbackByName(IdentifyName(name)),

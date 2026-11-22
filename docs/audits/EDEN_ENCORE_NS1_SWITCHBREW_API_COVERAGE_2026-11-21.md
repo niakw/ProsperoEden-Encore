@@ -23,15 +23,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 299 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 219 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `1b5b609d`. **Ces 1 299 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 302 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 222 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `2faf00b1`. **Ces 1 302 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 219 | 80 | **1 299** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 222 | 80 | **1 302** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 99 | 3 | **102** |
-| **STUB — Stub / résultat simulé** | 179 | 0 | **179** |
-| **NOOP — No-op documenté** | 93 | 0 | **93** |
+| **PARTIEL — Implémentation partielle** | 102 | 3 | **105** |
+| **STUB — Stub / résultat simulé** | 160 | 0 | **160** |
+| **NOOP — No-op documenté** | 106 | 0 | **106** |
 | **NULL — Handler NULL** | 2 310 | 0 | **2 310** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -220,16 +220,24 @@ Côté AM, `GetMainAppletIdentityInfo`, `GetCurrentApplicationId`, `GetMainApple
 
 **Compteur courant : 1 299 IMPL-SRC, 102 PARTIEL, 179 STUB, 93 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple moteur `0c11653f` → vendor `6fc24667` est vert X8D24 + provenance ; le présent lot doit passer ses propres checks avant qualification hôte.
 
+### Lot Home Button + politiques HID non applicables
+
+Vendor `3f8249a2`, puis `2faf00b1` (arbre `18e76d6b282831c59c343950fac922d0130d1e09`). Les blocages Home short/long utilisent déjà les flags réellement consultés par `WindowSystem` : trois commandes passent **STUB → IMPL-SRC**. Le couple set/get double-click et `BeginBlockingHomeButton` passent **STUB → PARTIEL** : leur état est réel, mais aucun consommateur double-click n'est présent et le timeout automatique de `BeginBlockingHomeButton` n'est pas reproduit.
+
+Dans HID, **13 STUB → NOOP** sont fermés sans masquer les chemins d'entrée utiles : `Set/GetNpadCommunicationMode` sont explicitement des no-op Horizon depuis 2.0.0+, et les politiques firmware Nintendo / USB full-key / bouton console handheld ne possèdent pas de backend matériel applicable à Encore PS5. Les commandes six-axis, événements de connexion, Joy-Con rail et unique-pad restent **STUB** tant qu'un backend réel n'est pas raccordé.
+
+**Compteur courant : 1 302 IMPL-SRC, 105 PARTIEL, 160 STUB, 106 NOOP, 2 310 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.** Le couple précédent moteur `b9b3e700` → vendor `1b5b609d` est vert X8D24 + provenance ; ce nouveau couple reste à qualifier par ses checks.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1299
+    "Implémentation source retrouvée" : 1302
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 102
-    "Stub / résultat simulé" : 179
-    "No-op documenté" : 93
+    "Implémentation partielle" : 105
+    "Stub / résultat simulé" : 160
+    "No-op documenté" : 106
     "Handler NULL" : 2310
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -936,7 +944,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `308` | `SetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `309` | `GetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `310` | `ResetSevenSixAxisSensorTimestamp` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `400` | `IsUsbFullKeyControllerEnabled` | 3.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `400` | `IsUsbFullKeyControllerEnabled` | 3.0.0+ | **NOOP** (aucun backend USB full-key Switch n'est modélisé ; retourne false ; vendor `2faf00b1`) | 2026-11-22 |
 | hid | `401` | `EnableUsbFullKeyController` | 3.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `402` | `IsUsbFullKeyControllerConnected` | 3.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `403` | `HasBattery` | 4.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
@@ -975,10 +983,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `527` | `EnablePalmaBoostMode` | 8.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
 | hid | `528` | `GetPalmaBluetoothAddress` | 8.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
 | hid | `529` | `SetDisallowedPalmaConnection` | 8.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
-| hid | `1000` | `SetNpadCommunicationMode` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `1001` | `GetNpadCommunicationMode` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `1000` | `SetNpadCommunicationMode` | — | **NOOP** (NOOP Horizon documenté depuis 2.0.0+ ; aucun état matériel à modifier ; vendor `2faf00b1`) | 2026-11-22 |
+| hid | `1001` | `GetNpadCommunicationMode` | — | **NOOP** (NOOP Horizon documenté depuis 2.0.0+ ; retourne le mode Default ; vendor `2faf00b1`) | 2026-11-22 |
 | hid | `1002` | `SetTouchScreenConfiguration` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `1003` | `IsFirmwareUpdateNeededForNotification` | 9.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `1003` | `IsFirmwareUpdateNeededForNotification` | 9.0.0+ | **NOOP** (aucun updater firmware contrôleur n'est exposé par Encore ; retourne false ; vendor `2faf00b1`) | 2026-11-22 |
 | hid | `0` | `GetSharedMemoryHandle` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/applet_resource.cpp)) | 2026-11-22 |
 | hid | `0` | `ActivateVibrationDevice` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/active_vibration_device_list.cpp)) | 2026-11-22 |
 | hid:dbg | `0` | `DeactivateDebugPad` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
@@ -1173,17 +1181,17 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `830` | `SetNotificationLedPattern` | 7.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `831` | `SetNotificationLedPatternWithTimeout` | 9.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `832` | `PrepareHidsForNotificationWake` | 9.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `850` | `IsUsbFullKeyControllerEnabled` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `851` | `EnableUsbFullKeyController` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `850` | `IsUsbFullKeyControllerEnabled` | 3.0.0+ | **NOOP** (aucun backend USB full-key Switch n'est modélisé ; retourne false ; vendor `2faf00b1`) | 2026-11-22 |
+| hid:sys | `851` | `EnableUsbFullKeyController` | 3.0.0+ | **NOOP** (aucun backend USB full-key Switch n'est modélisé ; politique locale neutre ; vendor `2faf00b1`) | 2026-11-22 |
 | hid:sys | `852` | `IsUsbConnected` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `870` | `IsHandheldButtonPressedOnConsoleMode` | 5.1.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `870` | `IsHandheldButtonPressedOnConsoleMode` | 5.1.0+ | **NOOP** (pas de bouton console handheld physique exposé sur le backend PS5 ; retourne false ; vendor `2faf00b1`) | 2026-11-22 |
 | hid:sys | `900` | `ActivateInputDetector` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `901` | `NotifyInputDetector` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `1000` | `InitializeFirmwareUpdate` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `1000` | `InitializeFirmwareUpdate` | 3.0.0+ | **NOOP** (aucun updater firmware contrôleur Nintendo n'est modélisé ; vendor `2faf00b1`) | 2026-11-22 |
 | hid:sys | `1001` | `GetFirmwareVersion` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1002` | `GetAvailableFirmwareVersion` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1003` | `IsFirmwareUpdateAvailable` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `1004` | `CheckFirmwareUpdateRequired` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `1004` | `CheckFirmwareUpdateRequired` | 3.0.0+ | **NOOP** (aucun updater firmware contrôleur Nintendo n'est modélisé ; vendor `2faf00b1`) | 2026-11-22 |
 | hid:sys | `1005` | `StartFirmwareUpdate` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1006` | `AbortFirmwareUpdate` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1007` | `GetFirmwareUpdateState` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -1196,10 +1204,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `1052` | `CancelSixAxisSensorAccurateUserCalibration` | 5.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1053` | `GetSixAxisSensorAccurateUserCalibrationState` | 5.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1100` | `GetHidbusSystemServiceObject` | 5.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `1120` | `SetFirmwareHotfixUpdateSkipEnabled` | 6.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `1130` | `InitializeUsbFirmwareUpdate` | 6.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `1131` | `FinalizeUsbFirmwareUpdate` | 6.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `1132` | `CheckUsbFirmwareUpdateRequired` | 6.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `1120` | `SetFirmwareHotfixUpdateSkipEnabled` | 6.0.0+ | **NOOP** (aucun updater firmware contrôleur Nintendo n'est modélisé ; vendor `2faf00b1`) | 2026-11-22 |
+| hid:sys | `1130` | `InitializeUsbFirmwareUpdate` | 6.0.0+ | **NOOP** (aucun updater firmware USB Nintendo n'est modélisé ; vendor `2faf00b1`) | 2026-11-22 |
+| hid:sys | `1131` | `FinalizeUsbFirmwareUpdate` | 6.0.0+ | **NOOP** (aucun updater firmware USB Nintendo n'est modélisé ; vendor `2faf00b1`) | 2026-11-22 |
+| hid:sys | `1132` | `CheckUsbFirmwareUpdateRequired` | 6.0.0+ | **NOOP** (aucun updater firmware USB Nintendo n'est modélisé ; vendor `2faf00b1`) | 2026-11-22 |
 | hid:sys | `1133` | `StartUsbFirmwareUpdate` | 6.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1134` | `GetUsbFirmwareUpdateState` | 6.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1150` | `SetTouchScreenMagnification` | 8.0.0+ | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -1377,8 +1385,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `21` | `TryPopFromAppletBoundChannel` | 9.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `40` | `GetDisplayLogicalResolution` | 8.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `42` | `SetDisplayMagnification` | 8.0.0+ | **STUB** ([source C++][ns1-src-030]) | 2026-11-22 |
-| appletAE | `50` | `SetHomeButtonDoubleClickEnabled` | 8.0.0+ | **STUB** ([source C++][ns1-src-030]) | 2026-11-22 |
-| appletAE | `51` | `GetHomeButtonDoubleClickEnabled` | 8.0.0+ | **STUB** ([source C++][ns1-src-030]) | 2026-11-22 |
+| appletAE | `50` | `SetHomeButtonDoubleClickEnabled` | 8.0.0+ | **PARTIEL** (état applet réellement écrit sous verrou ; aucun consommateur double-click n'est encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
+| appletAE | `51` | `GetHomeButtonDoubleClickEnabled` | 8.0.0+ | **PARTIEL** (relit l'état double-click réellement stocké ; aucun consommateur double-click n'est encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `20` | `OpenLibraryAppletSelfAccessor` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/library_applet_proxy.cpp)) | 2026-11-22 |
 | appletAE | `21` | `GetAppletCommonFunctions` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
 | appletAE | `0` | `PopInData` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
@@ -1444,10 +1452,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `25` | `ExtendSaveData` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `26` | `GetSaveDataSize` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `27` | `CreateCacheStorage` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `30` | `BeginBlockingHomeButtonShortAndLongPressed` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `31` | `EndBlockingHomeButtonShortAndLongPressed` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `32` | `BeginBlockingHomeButton` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `33` | `EndBlockingHomeButton` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `30` | `BeginBlockingHomeButtonShortAndLongPressed` | — | **IMPL-SRC** (active les flags short/long réellement consultés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
+| appletAE | `31` | `EndBlockingHomeButtonShortAndLongPressed` | — | **IMPL-SRC** (désactive les flags short/long réellement consultés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
+| appletAE | `32` | `BeginBlockingHomeButton` | — | **PARTIEL** (active les flags Home réellement consommés, mais le timeout automatique n'est pas encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
+| appletAE | `33` | `EndBlockingHomeButton` | — | **IMPL-SRC** (efface les flags Home réellement consommés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `40` | `NotifyRunning` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `50` | `GetPseudoDeviceId` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `60` | `SetMediaPlaybackStateForApplication` | 2.0.0+ | **PARTIEL** (état `m_applet->media_playback_state` réellement écrit sous verrou, mais aucun consommateur de politique média/énergie n'est encore modélisé ; vendor `6fc24667`) | 2026-11-22 |

@@ -218,6 +218,17 @@ Vendor `57081e124b4b7cb6e5ee3226ca3283d94de73021`, puis `1b5b609d3022c5a54a4e3c7
 
 **Compteur courant : 1 299 IMPL-SRC / 102 PARTIEL / 179 STUB / 93 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple précédent moteur `0c11653f` → vendor `6fc24667` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour ce lot.
 
+## Lot Home Button + HID policy — 22/11/2026
+
+Vendor `3f8249a2e587a7aa12f93e3ca3546c90eeedbb4e`, puis `2faf00b1d44881bdaebb24e27ecf08938eb83144` (arbre `18e76d6b282831c59c343950fac922d0130d1e09`).
+
+- Home Button : `Begin/EndBlockingHomeButtonShortAndLongPressed` et `EndBlockingHomeButton` passent **3 STUB → IMPL-SRC** ; les flags short/long sont effectivement lus par `WindowSystem` lors des messages Home.
+- `Set/GetHomeButtonDoubleClickEnabled` et `BeginBlockingHomeButton` passent **3 STUB → PARTIEL** : état réel, mais double-click sans consommateur et timeout automatique non modélisé.
+- HID : **13 STUB → NOOP** pour les deux commandes Npad explicitement neutres côté Horizon et les politiques firmware Nintendo / USB full-key / bouton handheld non applicables au backend PS5.
+- Aucun six-axis, event de connexion, Joy-Con rail ou unique-pad n'est fermé artificiellement.
+
+**Compteur courant : 1 302 IMPL-SRC / 105 PARTIEL / 160 STUB / 106 NOOP / 2 310 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Le couple moteur `b9b3e700` → vendor `1b5b609d` est vert X8D24 + provenance. Pas de validation PS5 revendiquée pour ce nouveau lot.
+
 ---
 
 ## 1. Références et règle de vérité

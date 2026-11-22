@@ -811,6 +811,45 @@ for earlier, later in hle_dispatch_r23:
     hle_expected = hle_expected.replace(earlier, later, 1)
 assert "std::this_thread::sleep_for(std::chrono::microseconds{600})" not in hle_maintained
 assert "is_i_storage" not in hle_maintained
+# The selected shared HLE owner also gained the reviewed NS1 optional
+# no-op registry and explicit fail-closed response for known unsupported
+# commands. Rewind only those byte-sealed additions on an audit copy; the
+# shipping source and the R23/FC27 runtime behaviour stay unchanged.
+_hle_bytes = hle_maintained.encode("utf-8")
+_hle_blob = hashlib.sha1(
+    b"blob " + str(len(_hle_bytes)).encode() + b"\\0" + _hle_bytes
+).hexdigest()
+if _hle_blob == "be358b0db916b14ab3e92b22a67ec56505b3d86e":
+    _h = hle_maintained
+    _include = '#include "core/hle/kernel/svc_results.h"\\n'
+    assert _h.count(_include) == 1
+    _h = _h.replace(_include, "", 1)
+    _helper_start = _h.index("[[nodiscard]] static bool IsSafeOptionalNoOp(")
+    _helper_end = _h.index("/// @brief Creates a function string", _helper_start)
+    _helper = _h[_helper_start:_helper_end]
+    assert 'service_name == "pdm:ntfy"' in _helper
+    assert 'service_name == "erpt:c"' in _helper
+    assert 'service_name == "ISelfController"' in _helper
+    _h = _h[:_helper_start] + _h[_helper_end:]
+    _no_op_start = _h.index("    if (info != nullptr && IsSafeOptionalNoOp(")
+    _no_op_end = _h.index(
+        "    system.GetReporter().SaveUnimplementedFunctionReport", _no_op_start
+    )
+    _no_op = _h[_no_op_start:_no_op_end]
+    assert "rb.Push(ResultSuccess);" in _no_op and "return;" in _no_op
+    _h = _h[:_no_op_start] + _h[_no_op_end:]
+    _known_fail_closed = """    } else if (info != nullptr) {
+        // not implemented yet on Encore: this command ID is known, but no handler contract exists.
+        // Fail closed instead of leaving request words in the outgoing IPC buffer or faking success.
+        LOG_WARNING(Service, "Known command has no Encore implementation: {}::{} ({})", service_name,
+                    ctx.GetCommand(), function_name);
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(Kernel::ResultNotImplemented);
+    }
+}"""
+    assert _h.count(_known_fail_closed) == 1
+    _h = _h.replace(_known_fail_closed, "    }\\n}", 1)
+    hle_maintained = _h
 assert hle_maintained == hle_expected, (
     "R23 per-IStorage pacing changed HLE beyond three reviewed mutations")
 print("ENCORE_R23_HLE_DISPATCH_ISOLATION_PASS", "legacy_600us_sleep=0", "profile_receipts=2")

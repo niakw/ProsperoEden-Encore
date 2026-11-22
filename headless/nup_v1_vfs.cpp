@@ -497,17 +497,31 @@ void Archive::Parse() {
         Check(update_versions.insert(p.version).second,
               "duplicate update version");
     }
-    // NUP is a single application's base/update bundle. A malicious update
-    // claiming an unrelated base title must never shadow that game's ExeFS
-    // or RomFS simply because its NCM version is larger. This is the same
-    // title-base mask used by the common FileSys::GetBaseTitleID API.
+    // NUP holds one application family. Lichii also supports Switch 2
+    // Edition updates (04... IDs) paired with the exact Switch 1 application
+    // base (01... ID). Permit only the matching low 56-bit title family and
+    // only when an actual NS1 base package exists; never accept unrelated
+    // updates, including an arbitrary second NS2 application.
     constexpr std::uint64_t BaseTitleMask = 0xFFFFFFFFFFFFE000ULL;
+    constexpr std::uint64_t PlatformMask = 0xFF00000000000000ULL;
+    constexpr std::uint64_t LowTitleMask = ~PlatformMask;
+    std::optional<std::uint64_t> ns1_application_base;
+    for (const auto& p : packages_) {
+        if (p.kind == 0 && (p.title_id & PlatformMask) == 0x0100000000000000ULL)
+            ns1_application_base = p.title_id & BaseTitleMask;
+    }
     std::optional<std::uint64_t> application_base;
     for (const auto& p : packages_) {
         if (p.kind == 2) continue; // Addons are isolated by the native AoC view.
         const auto base = p.title_id & BaseTitleMask;
-        if (!application_base) application_base = base;
-        Check(*application_base == base, "unrelated base/update title ID");
+        const bool matching_ns2_edition_update =
+            p.kind == 1 && ns1_application_base &&
+            (base & PlatformMask) == 0x0400000000000000ULL &&
+            (base & LowTitleMask) == (*ns1_application_base & LowTitleMask);
+        const auto family = matching_ns2_edition_update
+            ? *ns1_application_base : base;
+        if (!application_base) application_base = family;
+        Check(*application_base == family, "unrelated base/update title ID");
     }
 
     const auto uuid = uuid_hash.End();

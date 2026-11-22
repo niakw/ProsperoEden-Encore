@@ -23,17 +23,17 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**834 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **754 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Il ne s'agit ni de 808 fonctions certifiées conformes à Horizon, ni de 808 fonctions validées sur console.**
+**952 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **872 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Il ne s'agit ni de 808 fonctions certifiées conformes à Horizon, ni de 808 fonctions validées sur console.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — corps C++ identifiable** | **754** | **80** | **834** |
+| **IMPL-SRC — corps C++ identifiable** | **872** | **80** | **952** |
 | **RACCORDÉ — handler sans corps prouvé** | **234** | 0 | **234** |
 | **PARTIEL — lacune/branche inachevée** | **58** | 3 | **61** |
 | **STUB — réponse minimale/no-op** | **243** | 0 | **243** |
 | **NULL — handler nul repéré** | **1 940** | 0 | **1 940** |
-| **D — rejets constatés historiquement** | **4** | 33 | **37** |
-| **Q — non vérifié / rapprochement insuffisant** | **1 503** | 0 | **1 503** |
+| **D — rejets explicites ou historiques** | **18** | 33 | **51** |
+| **Q — non vérifié / rapprochement insuffisant** | **1 371** | 0 | **1 371** |
 | **E — ID absent dans l'énumération initiale** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -42,13 +42,13 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 834
+    "Implémentation source retrouvée" : 952
     "Handler raccordé, corps non prouvé" : 234
     "Partiel" : 61
     "Stub" : 243
     "Handler NULL" : 1940
-    "Rejet historique" : 37
-    "Non vérifié" : 1503
+    "Rejet explicite / historique" : 51
+    "Non vérifié" : 1371
     "ID non trouvé" : 1
 ```
 
@@ -64,6 +64,9 @@ pie showData
 
 
 **Lot Loader/PM de lancement :** sept lignes historiquement Q (`ldr:dmnt` 0–2, `ldr:pm` 2–3, `ldr:shel` 0–1) sont classées **NULL au slot ID** après lecture des classes réelles de [Loader R23](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ldr/ldr.cpp). Les noms SwitchBrew anciens ne correspondent pas toujours aux noms de la table actuelle : cette classification atteste que **le slot ID est nul**, pas une équivalence des contrats entre firmwares. Le démarrage des jeux via Eden peut être géré ailleurs ; aucun bug de jeu n'est démontré par ces NULL.
+
+
+**Lot horloges `time:*` (CMake examiné)** : 158 commandes précédemment non qualifiées étudiées par service, ID, nom et corps C++. **118 implémentations source identifiées**, **14 rejets explicites** (handler non nul mais `R_RETURN(ResultNotImplemented)`), **24 noms/IDs non appariés** et **2 ambiguïtés entre les propriétaires Glue et PSC** restent `Q`. Les unités sources figurent dans les CMake `sources/eden/src/core/CMakeLists.txt` et `encore-active/eden-backports/src/core/CMakeLists.txt`; la matérialisation finale et le binaire PS5 ne sont pas vérifiés. Un rejet explicite n'est pas un stub de succès. Les doublons de surfaces SwitchBrew restent comptés comme entrées d'interface distinctes.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -1992,54 +1995,54 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | bgtc:sc | `3` | `NotifyEnteringHalfAwake` | — | Q | 2026-11-21 |
 | bgtc:sc | `4` | `NotifyLeavingHalfAwake` | — | Q | 2026-11-21 |
 | bgtc:sc | `5` | `SetIsUsingSleepUnsupportedDevices` | 3.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `0` | `GetStandardUserSystemClock` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `1` | `GetStandardNetworkSystemClock` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `2` | `GetStandardSteadyClock` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `3` | `GetTimeZoneService` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `4` | `GetStandardLocalSystemClock` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | Q | 2026-11-21 |
+| time:a, time:r, time:u | `0` | `GetStandardUserSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `1` | `GetStandardNetworkSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `2` | `GetStandardSteadyClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `3` | `GetTimeZoneService` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
 | time:a, time:r, time:u | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
-| time:a, time:r, time:u | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `400` | `GetClockSnapshot` | 4.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `501` | `CalculateSpanBetween` | 4.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `0` | `GetCurrentTimePoint` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `2` | `GetTestOffset` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `3` | `SetTestOffset` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `100` | `GetRtcValue` | 2.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `101` | `IsRtcResetDetected` | 2.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `102` | `GetSetupResultValue` | 2.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `200` | `GetInternalOffset` | 3.0.0+ | Q | 2026-11-21 |
+| time:a, time:r, time:u | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `400` | `GetClockSnapshot` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `501` | `CalculateSpanBetween` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `0` | `GetCurrentTimePoint` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `2` | `GetTestOffset` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `3` | `SetTestOffset` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `100` | `GetRtcValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
-| time:a, time:r, time:u | `0` | `GetCurrentTime` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `1` | `SetCurrentTime` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `2` | `GetSystemClockContext` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `3` | `SetSystemClockContext` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `0` | `GetDeviceLocationName` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `1` | `SetDeviceLocationName` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `2` | `GetTotalLocationNameCount` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `3` | `LoadLocationNameList` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `4` | `LoadTimeZoneRule` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `7` | `SetDeviceLocationNameWithTimeZoneRule` | 9.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `8` | `ParseTimeZoneBinary` | 9.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `20` | `GetDeviceLocationNameOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
-| time:a, time:r, time:u | `100` | `ToCalendarTime` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `101` | `ToCalendarTimeWithMyRule` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `201` | `ToPosixTime` | — | Q | 2026-11-21 |
-| time:a, time:r, time:u | `202` | `ToPosixTimeWithMyRule` | — | Q | 2026-11-21 |
+| time:a, time:r, time:u | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `3` | `SetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `0` | `GetDeviceLocationName` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `1` | `SetDeviceLocationName` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:a, time:r, time:u | `2` | `GetTotalLocationNameCount` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `3` | `LoadLocationNameList` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:a, time:r, time:u | `4` | `LoadTimeZoneRule` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:a, time:r, time:u | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `7` | `SetDeviceLocationNameWithTimeZoneRule` | 9.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `8` | `ParseTimeZoneBinary` | 9.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `20` | `GetDeviceLocationNameOperationEventReadableHandle` | 9.0.0+ | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:a, time:r, time:u | `100` | `ToCalendarTime` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `101` | `ToCalendarTimeWithMyRule` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `201` | `ToPosixTime` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:a, time:r, time:u | `202` | `ToPosixTimeWithMyRule` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | notif:a | `500` | `RegisterAlarmSetting` | — | Q | 2026-11-21 |
 | notif:a | `510` | `UpdateAlarmSetting` | — | Q | 2026-11-21 |
 | notif:a | `520` | `ListAlarmSettings` | — | Q | 2026-11-21 |
@@ -2395,50 +2398,50 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | rtc | `2` | `SetRtcClientUnknownBool` | — | Q | 2026-11-21 |
 | rtc | `3` | `GetRtcResetDetected` | — | Q | 2026-11-21 |
 | rtc | `4` | `ClearRtcResetDetected` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `0` | `GetStandardUserSystemClock` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `1` | `GetStandardNetworkSystemClock` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `2` | `GetStandardSteadyClock` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `3` | `GetTimeZoneService` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `4` | `GetStandardLocalSystemClock` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `0` | `GetStandardUserSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `1` | `GetStandardNetworkSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `2` | `GetStandardSteadyClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `3` | `GetTimeZoneService` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0+ | Q | 2026-11-21 |
 | time:u, time:a, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0+ | Q | 2026-11-21 |
 | time:u, time:a, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `400` | `GetClockSnapshot` | 4.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `501` | `CalculateSpanBetween` | 4.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `0` | `GetCurrentTimePoint` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `2` | `GetTestOffset` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `3` | `SetTestOffset` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `100` | `GetRtcValue` | 2.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `200` | `GetInternalOffset` | 3.0.0+ | Q | 2026-11-21 |
+| time:u, time:a, time:s | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `400` | `GetClockSnapshot` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `501` | `CalculateSpanBetween` | 4.0.0+ | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp], [psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `0` | `GetCurrentTimePoint` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `2` | `GetTestOffset` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `3` | `SetTestOffset` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `100` | `GetRtcValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
-| time:u, time:a, time:s | `0` | `GetCurrentTime` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `1` | `SetCurrentTime` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `2` | `GetSystemClockContext` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `3` | `SetSystemClockContext` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `0` | `GetDeviceLocationName` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `1` | `SetDeviceLocationName` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `2` | `GetTotalLocationNameCount` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `3` | `LoadLocationNameList` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `4` | `LoadTimeZoneRule` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | Q | 2026-11-21 |
-| time:u, time:a, time:s | `100` | `ToCalendarTime` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `101` | `ToCalendarTimeWithMyRule` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `201` | `ToPosixTime` | — | Q | 2026-11-21 |
-| time:u, time:a, time:s | `202` | `ToPosixTimeWithMyRule` | — | Q | 2026-11-21 |
+| time:u, time:a, time:s | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `3` | `SetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `0` | `GetDeviceLocationName` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `1` | `SetDeviceLocationName` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:u, time:a, time:s | `2` | `GetTotalLocationNameCount` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `3` | `LoadLocationNameList` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:u, time:a, time:s | `4` | `LoadTimeZoneRule` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:u, time:a, time:s | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `100` | `ToCalendarTime` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `101` | `ToCalendarTimeWithMyRule` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `201` | `ToPosixTime` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:u, time:a, time:s | `202` | `ToPosixTimeWithMyRule` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 
 ### Sockets services
 
@@ -4891,57 +4894,57 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:m | `200` | `GetAlarmRegistrationEvent` | — | Q | 2026-11-21 |
 | time:m | `201` | `UpdateSteadyAlarms` | — | Q | 2026-11-21 |
 | time:al | `0` | `GetWakeUpEvent` | — | Q | 2026-11-21 |
-| time:al | `1` | `Enable` | — | Q | 2026-11-21 |
-| time:al | `2` | `Disable` | — | Q | 2026-11-21 |
-| time:al | `3` | `IsEnabled` | — | Q | 2026-11-21 |
-| time:su, time:s | `0` | `GetStandardUserSystemClock` | — | Q | 2026-11-21 |
-| time:su, time:s | `1` | `GetStandardNetworkSystemClock` | — | Q | 2026-11-21 |
-| time:su, time:s | `2` | `GetStandardSteadyClock` | — | Q | 2026-11-21 |
-| time:su, time:s | `3` | `GetTimeZoneService` | — | Q | 2026-11-21 |
-| time:su, time:s | `4` | `GetStandardLocalSystemClock` | — | Q | 2026-11-21 |
-| time:su, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | Q | 2026-11-21 |
+| time:al | `1` | `Enable` | — | **IMPL-SRC** ([psc/time/alarms.cpp][ns1-time-psc-time-alarms-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:al | `2` | `Disable` | — | **IMPL-SRC** ([psc/time/alarms.cpp][ns1-time-psc-time-alarms-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:al | `3` | `IsEnabled` | — | **IMPL-SRC** ([psc/time/alarms.cpp][ns1-time-psc-time-alarms-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `0` | `GetStandardUserSystemClock` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `1` | `GetStandardNetworkSystemClock` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `2` | `GetStandardSteadyClock` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `3` | `GetTimeZoneService` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `4` | `GetStandardLocalSystemClock` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `5` | `GetEphemeralNetworkSystemClock` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `20` | `GetSharedMemoryNativeHandle` | 6.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `30` | `GetStandardNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
 | time:su, time:s | `31` | `GetEphemeralNetworkClockOperationEventReadableHandle` | 6.0.0-8.1.0 | Q | 2026-11-21 |
-| time:su, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
-| time:su, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | Q | 2026-11-21 |
-| time:su, time:s | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `400` | `GetClockSnapshot` | 4.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `501` | `CalculateSpanBetween` | 4.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `0` | `GetCurrentTimePoint` | — | Q | 2026-11-21 |
-| time:su, time:s | `2` | `GetTestOffset` | — | Q | 2026-11-21 |
-| time:su, time:s | `3` | `SetTestOffset` | — | Q | 2026-11-21 |
-| time:su, time:s | `100` | `GetRtcValue` | 2.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `200` | `GetInternalOffset` | 3.0.0+ | Q | 2026-11-21 |
+| time:su, time:s | `50` | `SetStandardSteadyClockInternalOffset` | 4.0.0+ | **D** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:su, time:s | `51` | `GetStandardSteadyClockRtcValue` | 9.0.0+ | **D** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:su, time:s | `100` | `IsStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `101` | `SetStandardUserSystemClockAutomaticCorrectionEnabled` | — | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `102` | `GetStandardUserSystemClockInitialYear` | 5.0.0+ | **D** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:su, time:s | `200` | `IsStandardNetworkSystemClockAccuracySufficient` | 3.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `201` | `GetStandardUserSystemClockAutomaticCorrectionUpdatedTime` | 6.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `300` | `CalculateMonotonicSystemClockBaseTimePoint` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `400` | `GetClockSnapshot` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `401` | `GetClockSnapshotFromSystemClockContext` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `500` | `CalculateStandardUserSystemClockDifferenceByUser` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `501` | `CalculateSpanBetween` | 4.0.0+ | **IMPL-SRC** ([psc/time/static.cpp][ns1-time-psc-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `0` | `GetCurrentTimePoint` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `2` | `GetTestOffset` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `3` | `SetTestOffset` | — | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `100` | `GetRtcValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | Q | 2026-11-21 |
-| time:su, time:s | `0` | `GetCurrentTime` | — | Q | 2026-11-21 |
-| time:su, time:s | `1` | `SetCurrentTime` | — | Q | 2026-11-21 |
-| time:su, time:s | `2` | `GetSystemClockContext` | — | Q | 2026-11-21 |
-| time:su, time:s | `3` | `SetSystemClockContext` | — | Q | 2026-11-21 |
-| time:su, time:s | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `0` | `GetDeviceLocationName` | — | Q | 2026-11-21 |
-| time:su, time:s | `1` | `SetDeviceLocationName` | — | Q | 2026-11-21 |
-| time:su, time:s | `2` | `GetTotalLocationNameCount` | — | Q | 2026-11-21 |
-| time:su, time:s | `3` | `LoadLocationNameList` | — | Q | 2026-11-21 |
-| time:su, time:s | `4` | `LoadTimeZoneRule` | — | Q | 2026-11-21 |
-| time:su, time:s | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `7` | `SetDeviceLocationNameWithTimeZoneRule` | 9.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `8` | `ParseTimeZoneBinary` | 9.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `20` | `GetDeviceLocationNameOperationEventReadableHandle` | 9.0.0+ | Q | 2026-11-21 |
-| time:su, time:s | `100` | `ToCalendarTime` | — | Q | 2026-11-21 |
-| time:su, time:s | `101` | `ToCalendarTimeWithMyRule` | — | Q | 2026-11-21 |
-| time:su, time:s | `201` | `ToPosixTime` | — | Q | 2026-11-21 |
-| time:su, time:s | `202` | `ToPosixTimeWithMyRule` | — | Q | 2026-11-21 |
+| time:su, time:s | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `3` | `SetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `4` | `GetOperationEventReadableHandle` | 9.0.0+ | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `0` | `GetDeviceLocationName` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `1` | `SetDeviceLocationName` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:su, time:s | `2` | `GetTotalLocationNameCount` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `3` | `LoadLocationNameList` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:su, time:s | `4` | `LoadTimeZoneRule` | — | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:su, time:s | `5` | `GetTimeZoneRuleVersion` | 2.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `6` | `GetDeviceLocationNameAndUpdatedTime` | 5.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `7` | `SetDeviceLocationNameWithTimeZoneRule` | 9.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `8` | `ParseTimeZoneBinary` | 9.0.0+ | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `20` | `GetDeviceLocationNameOperationEventReadableHandle` | 9.0.0+ | **D** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; ResultNotImplemented) | 2026-11-22 |
+| time:su, time:s | `100` | `ToCalendarTime` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `101` | `ToCalendarTimeWithMyRule` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `201` | `ToPosixTime` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
+| time:su, time:s | `202` | `ToPosixTimeWithMyRule` | — | **IMPL-SRC** ([psc/time/time_zone_service.cpp][ns1-time-psc-time-time-zone-service-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 
 ### RO services
 
@@ -5754,3 +5757,10 @@ Le premier croisement **service + ID + nom** avec les unités `spl`, `irs`, `cap
 [ns1-src-122]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/set/settings_server.cpp
 [ns1-src-123]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/set/system_settings_server.cpp
 [ns1-src-124]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp
+
+[ns1-time-glue-time-static-cpp]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/time/static.cpp
+[ns1-time-psc-time-steady-clock-cpp]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/steady_clock.cpp
+[ns1-time-psc-time-system-clock-cpp]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/system_clock.cpp
+[ns1-time-psc-time-time-zone-service-cpp]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/time_zone_service.cpp
+[ns1-time-psc-time-static-cpp]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp
+[ns1-time-psc-time-alarms-cpp]: https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/alarms.cpp

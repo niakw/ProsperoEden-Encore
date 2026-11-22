@@ -1856,7 +1856,7 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
         if (path == "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp" and (
             actual == "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912"
             and blob == "d6b14213485b56aefbd9736c8f0e6a2a2b4fa38c"
-        ):
+        )):
             # Reviewed NX2 extra typed interface getters (50/70/80/90).
             # Reverse only these exact bytes in the receipt copy.
             _proxy = raw.decode("utf-8")

@@ -140,7 +140,7 @@ if selected in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "ac880cd408116e6eb53
         # shipping DMA blob; preserve all other vendor owners byte-for-byte.
         dma=(V/"encore-active/eden-core/src/video_core/engines/maxwell_dma.cpp").read_text()
         assert blob(dma.encode("utf-8"))=="0c186d79194135a5d0b300c3a8a6fb0aa503810b"
-        a='#include <utility>\\n'.replace('\\n','\\n')
+        a='#include <utility>' + chr(10)
         guard_new='if (!std::in_range<size_t>(byte_count) ||'
         guard_old='if (byte_count > (std::numeric_limits<size_t>::max)() ||'
         assert dma.count(a)==1 and dma.count(guard_new)==1

@@ -47,13 +47,15 @@ MAINTAINED_CORE_TARGETS = (
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_fused_multiply_add.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_fused_multiply_add.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_min_max.cpp",
-    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
-    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
+    # The shared native PS5 SPIR-V graph replaces these three NS1-owned TUs
+    # with the NS2/Ampere versions; require the actual compiled owner once.
+    "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp",
+    "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/spirv_emit_context.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp",
     "vendor/encore-active/eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp",
-    "vendor/encore-active/eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
+    "vendor/encore-active/ns2-runtime/ampere/shader_recompiler/backend/spirv/emit_spirv_image.cpp",
     "vendor/encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp",
     "vendor/encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp",
     "vendor/encore-active/eden-threading/src/core/hle/kernel/k_condition_variable.cpp",

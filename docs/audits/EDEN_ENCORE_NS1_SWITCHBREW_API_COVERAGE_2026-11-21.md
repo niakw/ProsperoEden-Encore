@@ -23,23 +23,23 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 160 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 080 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 160 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 166 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 086 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 166 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 080 | 80 | **1 160** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 086 | 80 | **1 166** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 71 | 3 | **74** |
-| **STUB — Stub / résultat simulé** | 330 | 0 | **330** |
+| **STUB — Stub / résultat simulé** | 334 | 0 | **334** |
 | **NOOP — No-op documenté** | 6 | 0 | **6** |
-| **NULL — Handler NULL** | 2 178 | 0 | **2 178** |
+| **NULL — Handler NULL** | 2 221 | 0 | **2 221** |
 | **D — Rejet explicite / historique** | 22 | 33 | **55** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 150 | 0 | **150** |
-| **SERVICE-NON-EXPOSÉ — Service natif non exposé sous ce nom** | 140 | 0 | **140** |
+| **SERVICE-NON-EXPOSÉ — Service non exposé sous ce nom** | 152 | 0 | **152** |
 | **ABSENT — Commande absente des tables** | 105 | 0 | **105** |
-| **ABI-DIFF — Noms/ABI divergents** | 146 | 0 | **146** |
+| **ABI-DIFF — Noms ou ABI divergents** | 166 | 0 | **166** |
 | **AMBIGU — Interface ambiguë** | 8 | 0 | **8** |
-| **Q — Non vérifié** | 500 | 0 | **500** |
+| **Q — Non vérifié** | 415 | 0 | **415** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
@@ -48,19 +48,19 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1160
+    "Implémentation source retrouvée" : 1166
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 74
-    "Stub / résultat simulé" : 330
+    "Stub / résultat simulé" : 334
     "No-op documenté" : 6
-    "Handler NULL" : 2178
+    "Handler NULL" : 2221
     "Rejet explicite / historique" : 55
     "Interface parente non ouvrable" : 150
-    "Service natif non exposé sous ce nom" : 140
+    "Service non exposé sous ce nom" : 152
     "Commande absente des tables" : 105
-    "Noms/ABI divergents" : 146
+    "Noms ou ABI divergents" : 166
     "Interface ambiguë" : 8
-    "Non vérifié" : 500
+    "Non vérifié" : 415
     "ID SVC non trouvé" : 1
 ```
 
@@ -124,6 +124,9 @@ pie showData
 
 
 **Lot interfaces système NS1 :** **131 lignes Q** classées sur les tables propriétaires `AHID`, `NSD`, `CLKRST`, `BGTC`, `NOTIF`, `USB DS` et `time:m`. Les aliases et divergences d'ABI restent des `ABI-DIFF`, les sous-interfaces sans parent sont `INACCESSIBLE` et les services `NOTIF` ayant un état local incomplet sont `PARTIEL`. Résultats exacts : `ahid:cd` (4 NULL, 15 INACCESSIBLE); `ahid:hdr` (6 NULL); `bgtc:t` (14 NULL); `notif:a` (3 PARTIEL, 2 IMPL-SRC, 1 STUB); `notif:s` (3 PARTIEL, 2 IMPL-SRC, 5 ABI-DIFF, 1 NULL); `clkrst, clkrst:i` (1 IMPL-SRC, 12 NULL, 3 ABI-DIFF, 2 STUB); `nsd:u, nsd:a` (17 NULL, 2 STUB, 2 IMPL-SRC); `time:m` (14 ABI-DIFF); `usb:ds` (1 ABI-DIFF, 21 INACCESSIBLE). Aucune modification C++ runtime, aucune vérification PS5.
+
+
+**Lot périphériques/réseau NS1 (vendor `224b05e6`)** : **85 commandes Q** reclassées sans ajout de code runtime. `bt` : 9 NULL, 1 STUB. `wlan:lcl` : 9 ABI-DIFF (multi-noms anciens à mêmes ID, tous handlers nuls dans la table examinée) ; `wlan:inf` : 12 SERVICE-NON-EXPOSÉ par le LoopProcess WLAN. `ethc:c/i`, `eupld:c/r`, `pdm:ntfy`, `bgtc:sc` : 34 NULL. `ovln:rcv` : 6 IMPL-SRC, avec sous-interface réellement créée. `i2c` : 3 STUB et 3 ABI-DIFF ; `usb:pd:c` : 8 ABI-DIFF. **Nomenclature divergent ≠ implémentation ou défaut console démontré.**
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -2047,11 +2050,11 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | bgtc:t | `101` | `GetOperationMode` | 3.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `102` | `WillDisconnectNetworkWhenEnteringSleep` | 3.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `103` | `WillStayHalfAwakeInsteadSleep` | 3.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
-| bgtc:sc | `1` | `GetState` | — | Q | 2026-11-21 |
-| bgtc:sc | `2` | `GetStateChangedEvent` | — | Q | 2026-11-21 |
-| bgtc:sc | `3` | `NotifyEnteringHalfAwake` | — | Q | 2026-11-21 |
-| bgtc:sc | `4` | `NotifyLeavingHalfAwake` | — | Q | 2026-11-21 |
-| bgtc:sc | `5` | `SetIsUsingSleepUnsupportedDevices` | 3.0.0+ | Q | 2026-11-21 |
+| bgtc:sc | `1` | `GetState` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bgtc:sc | `2` | `GetStateChangedEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bgtc:sc | `3` | `NotifyEnteringHalfAwake` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bgtc:sc | `4` | `NotifyLeavingHalfAwake` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bgtc:sc | `5` | `SetIsUsingSleepUnsupportedDevices` | 3.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `0` | `GetStandardUserSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `1` | `GetStandardNetworkSystemClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `2` | `GetStandardSteadyClock` | — | **IMPL-SRC** ([glue/time/static.cpp][ns1-time-glue-time-static-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -2554,17 +2557,17 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsdcfg | `10` | `ClearArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
 | bsdcfg | `11` | `ClearArpEntries2` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
 | bsdcfg | `12` | `PrintArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| ethc:c | `0` | `Initialize` | — | Q | 2026-11-21 |
-| ethc:c | `1` | `Cancel` | — | Q | 2026-11-21 |
-| ethc:c | `2` | `GetResult` | — | Q | 2026-11-21 |
-| ethc:c | `3` | `GetMediaList` | — | Q | 2026-11-21 |
-| ethc:c | `4` | `SetMediaType` | — | Q | 2026-11-21 |
-| ethc:c | `5` | `GetMediaType` | — | Q | 2026-11-21 |
-| ethc:i | `0` | `GetReadableHandle` | — | Q | 2026-11-21 |
-| ethc:i | `1` | `Cancel` | — | Q | 2026-11-21 |
-| ethc:i | `2` | `GetResult` | — | Q | 2026-11-21 |
-| ethc:i | `3` | `GetInterfaceList` | — | Q | 2026-11-21 |
-| ethc:i | `4` | `GetInterfaceCount` | — | Q | 2026-11-21 |
+| ethc:c | `0` | `Initialize` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:c | `1` | `Cancel` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:c | `2` | `GetResult` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:c | `3` | `GetMediaList` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:c | `4` | `SetMediaType` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:c | `5` | `GetMediaType` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:i | `0` | `GetReadableHandle` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:i | `1` | `Cancel` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:i | `2` | `GetResult` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:i | `3` | `GetInterfaceList` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:i | `4` | `GetInterfaceCount` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | sfdnsres | `0` | `SetDnsAddressesPrivateRequest (stubbed, returns 0x7FE03)` | — | Q | 2026-11-21 |
 | sfdnsres | `1` | `GetDnsAddressPrivateRequest (stubbed, returns 0x7FE03)` | — | Q | 2026-11-21 |
 | sfdnsres | `2` | `GetHostByNameRequest` | — | **IMPL-SRC** ([source C++][ns1-src-027]) | 2026-11-22 |
@@ -2690,16 +2693,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btdrv | `256` | `GetIsManufacturingMode` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothDriver : ID 256 = `IsManufacturingMode` (nullptr), non `GetIsManufacturingMode` ; correspondance contrat à qualifier ; ABI et PS5 non validés) | 2026-11-22 |
 | btdrv | `257` | `EmulateBluetoothCrash` | 7.0.0+ | **NULL** ([source C++][ns1-src-063]) | 2026-11-22 |
 | btdrv | `258` | `GetBleChannelMap` | 9.0.0+ | **NULL** ([source C++][ns1-src-063]) | 2026-11-22 |
-| bt | `0` | `LeClientReadCharacteristic` | — | Q | 2026-11-21 |
-| bt | `1` | `LeClientReadDescriptor` | — | Q | 2026-11-21 |
-| bt | `2` | `LeClientWriteCharacteristic` | — | Q | 2026-11-21 |
-| bt | `3` | `LeClientWriteDescriptor` | — | Q | 2026-11-21 |
-| bt | `4` | `LeClientRegisterNotification` | — | Q | 2026-11-21 |
-| bt | `5` | `LeClientDeregisterNotification` | — | Q | 2026-11-21 |
-| bt | `6` | `SetLeResponse` | — | Q | 2026-11-21 |
-| bt | `7` | `LeSendIndication` | — | Q | 2026-11-21 |
-| bt | `8` | `GetLeEventInfo` | — | Q | 2026-11-21 |
-| bt | `9` | `RegisterBleEvent` | — | Q | 2026-11-21 |
+| bt | `0` | `LeClientReadCharacteristic` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `1` | `LeClientReadDescriptor` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `2` | `LeClientWriteCharacteristic` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `3` | `LeClientWriteDescriptor` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `4` | `LeClientRegisterNotification` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `5` | `LeClientDeregisterNotification` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `6` | `SetLeResponse` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `7` | `LeSendIndication` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `8` | `GetLeEventInfo` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser : ID/nom exact, handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| bt | `9` | `RegisterBleEvent` | — | **STUB** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothUser::RegisterBleEvent retourne un event mais annonce STUBBED ; ABI/PS5 non validés) | 2026-11-22 |
 
 ### BTM services
 
@@ -3242,17 +3245,17 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| eupld:c | `0` | `SetUrl` | — | Q | 2026-11-21 |
-| eupld:c | `1` | `ImportCrt` | — | Q | 2026-11-21 |
-| eupld:c | `2` | `ImportPki` | — | Q | 2026-11-21 |
-| eupld:c | `3` | `SetAutoUpload` | — | Q | 2026-11-21 |
-| eupld:c | `4` | `GetAutoUpload` | 6.0.0+ | Q | 2026-11-21 |
-| eupld:r | `0` | `Initialize` | — | Q | 2026-11-21 |
-| eupld:r | `1` | `UploadAll` | — | Q | 2026-11-21 |
-| eupld:r | `2` | `UploadSelected` | — | Q | 2026-11-21 |
-| eupld:r | `3` | `GetUploadStatus` | — | Q | 2026-11-21 |
-| eupld:r | `4` | `CancelUpload` | — | Q | 2026-11-21 |
-| eupld:r | `5` | `GetResult` | — | Q | 2026-11-21 |
+| eupld:c | `0` | `SetUrl` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:c | `1` | `ImportCrt` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:c | `2` | `ImportPki` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:c | `3` | `SetAutoUpload` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:c | `4` | `GetAutoUpload` | 6.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:r | `0` | `Initialize` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:r : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:r | `1` | `UploadAll` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:r : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:r | `2` | `UploadSelected` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:r : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:r | `3` | `GetUploadStatus` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:r : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:r | `4` | `CancelUpload` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:r : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| eupld:r | `5` | `GetResult` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/eupld/eupld.cpp) ; eupld:r : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 
 ### ETicket services
 
@@ -3832,12 +3835,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | gpio | `15` | `GetDebounceTime` | — | **ABSENT** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/gpio/gpio.cpp) ; commande non exposée : seul Cmd0(nullptr) est enregistré ; ABI et PS5 non validés) | 2026-11-22 |
 | gpio | `16` | `SetValueForSleepState` | 4.0.0+ | **ABSENT** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/gpio/gpio.cpp) ; commande non exposée : seul Cmd0(nullptr) est enregistré ; ABI et PS5 non validés) | 2026-11-22 |
 | gpio | `17` | `GetValueForSleepState` | 6.0.0+ | **ABSENT** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/gpio/gpio.cpp) ; commande non exposée : seul Cmd0(nullptr) est enregistré ; ABI et PS5 non validés) | 2026-11-22 |
-| i2c, i2c:pcv | `0` | `[OpenSessionForDev](#OpenSessionForDev_2 "wikilink")` | — | Q | 2026-11-21 |
-| i2c, i2c:pcv | `1` | `[OpenSession](#OpenSession_2 "wikilink")` | — | Q | 2026-11-21 |
-| i2c, i2c:pcv | `4` | `[OpenSession2](#OpenSession2_2 "wikilink")` | 6.0.0+ | Q | 2026-11-21 |
-| i2c, i2c:pcv | `10` | `SendAuto` | — | Q | 2026-11-21 |
-| i2c, i2c:pcv | `11` | `ReceiveAuto` | — | Q | 2026-11-21 |
-| i2c, i2c:pcv | `12` | `ExecuteCommandListAuto` | — | Q | 2026-11-21 |
+| i2c, i2c:pcv | `0` | `[OpenSessionForDev](#OpenSessionForDev_2 "wikilink")` | — | **STUB** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/i2c/i2c.cpp) ; I2C::OpenSessionForDev crée une session factice, explicitement log (stubbed) ; ABI/PS5 non validés) | 2026-11-22 |
+| i2c, i2c:pcv | `1` | `[OpenSession](#OpenSession_2 "wikilink")` | — | **STUB** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/i2c/i2c.cpp) ; I2C::OpenSession crée une session factice, explicitement log (stubbed) ; ABI/PS5 non validés) | 2026-11-22 |
+| i2c, i2c:pcv | `4` | `[OpenSession2](#OpenSession2_2 "wikilink")` | 6.0.0+ | **STUB** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/i2c/i2c.cpp) ; I2C::OpenSession2 crée une session factice, explicitement log (stubbed) ; ABI/PS5 non validés) | 2026-11-22 |
+| i2c, i2c:pcv | `10` | `SendAuto` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/i2c/i2c.cpp) ; I2CSession ID 10: SendAuto historique vs source Send (handler présent mais stubbed) ; ABI/PS5 non validés) | 2026-11-22 |
+| i2c, i2c:pcv | `11` | `ReceiveAuto` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/i2c/i2c.cpp) ; I2CSession ID 11: ReceiveAuto historique vs source Receive (nullptr) ; ABI/PS5 non validés) | 2026-11-22 |
+| i2c, i2c:pcv | `12` | `ExecuteCommandListAuto` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/i2c/i2c.cpp) ; I2CSession ID 12: ExecuteCommandListAuto historique vs source ExecuteCommandList (nullptr) ; ABI/PS5 non validés) | 2026-11-22 |
 | uart | `0` | `DoesUartExist` | — | Q | 2026-11-21 |
 | uart | `1` | `DoesUartExistForTest` | — | Q | 2026-11-21 |
 | uart | `2` | `IsUartBaudrateValid` | — | Q | 2026-11-21 |
@@ -4927,12 +4930,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | psc:m | `2` | `Acknowledge` | — | **NULL** ([source C++][ns1-src-119]) | 2026-11-22 |
 | psc:m | `3` | `Finalize` | — | **NULL** ([source C++][ns1-src-119]) | 2026-11-22 |
 | psc:m | `4` | `AcknowledgeEx` | 5.1.0+ | **NULL** ([source C++][ns1-src-119]) | 2026-11-22 |
-| ovln:rcv | `0` | `OpenReceiver` | — | Q | 2026-11-21 |
-| ovln:rcv | `0` | `AddSource` | — | Q | 2026-11-21 |
-| ovln:rcv | `1` | `RemoveSource` | — | Q | 2026-11-21 |
-| ovln:rcv | `2` | `GetReceiveEventHandle` | — | Q | 2026-11-21 |
-| ovln:rcv | `3` | `Receive` | — | Q | 2026-11-21 |
-| ovln:rcv | `4` | `ReceiveWithTick` | — | Q | 2026-11-21 |
+| ovln:rcv | `0` | `OpenReceiver` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver_service.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
+| ovln:rcv | `0` | `AddSource` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
+| ovln:rcv | `1` | `RemoveSource` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
+| ovln:rcv | `2` | `GetReceiveEventHandle` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
+| ovln:rcv | `3` | `Receive` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
+| ovln:rcv | `4` | `ReceiveWithTick` | — | **IMPL-SRC** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/ovln/receiver.cpp) ; création d'interface ou gestion effective des sources, notifications, événements et tick ; ABI/PS5 non validés) | 2026-11-22 |
 | ovln:snd | `0` | `OpenSender` | — | Q | 2026-11-21 |
 | ovln:snd | `0` | `Send` | — | Q | 2026-11-21 |
 | ovln:snd | `1` | `GetUnreceivedMessageCount` | — | Q | 2026-11-21 |
@@ -5337,13 +5340,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | miiimg | `102` | `ImportFile` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `103` | `ExportFile` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `104` | `ForceInitialize` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| pdm:ntfy | `0` | `NotifyAppletEvent` | — | Q | 2026-11-21 |
-| pdm:ntfy | `2` | `NotifyOperationModeChangeEvent` | — | Q | 2026-11-21 |
-| pdm:ntfy | `3` | `NotifyPowerStateChangeEvent` | — | Q | 2026-11-21 |
-| pdm:ntfy | `4` | `NotifyClearAllEvent` | — | Q | 2026-11-21 |
-| pdm:ntfy | `5` | `NotifyEventForDebug` | — | Q | 2026-11-21 |
-| pdm:ntfy | `6` | `SuspendUserAccountEventService` | 4.0.0+ | Q | 2026-11-21 |
-| pdm:ntfy | `7` | `ResumeUserAccountEventService` | 4.0.0+ | Q | 2026-11-21 |
+| pdm:ntfy | `0` | `NotifyAppletEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| pdm:ntfy | `2` | `NotifyOperationModeChangeEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| pdm:ntfy | `3` | `NotifyPowerStateChangeEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| pdm:ntfy | `4` | `NotifyClearAllEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| pdm:ntfy | `5` | `NotifyEventForDebug` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| pdm:ntfy | `6` | `SuspendUserAccountEventService` | 4.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| pdm:ntfy | `7` | `ResumeUserAccountEventService` | 4.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | pdm:qry | `0` | `QueryApplicationEvent` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 0 : catalogue `QueryApplicationEvent` vs table active `QueryAppletEvent` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `4` | `QueryPlayStatisticsByApplicationId` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; statistiques fictives : total_launches forcé à 1, corps TODO ; non validé PS5) | 2026-11-22 |
@@ -5511,14 +5514,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | usb:pd | `4` | `EnablePowerRequestNotice` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
 | usb:pd | `5` | `DisablePowerRequestNotice` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
 | usb:pd | `6` | `ReplyPowerRequest` | — | **NULL** ([source C++][ns1-src-019]) | 2026-11-22 |
-| usb:pd:c | `0` | `GetPdCradleSession` | — | Q | 2026-11-21 |
-| usb:pd:c | `0` | `VdmUserWrite` | — | Q | 2026-11-21 |
-| usb:pd:c | `1` | `VdmUserRead` | — | Q | 2026-11-21 |
-| usb:pd:c | `2` | `Vdm20Init` | — | Q | 2026-11-21 |
-| usb:pd:c | `3` | `GetFwType` | 2.0.0+ | Q | 2026-11-21 |
-| usb:pd:c | `4` | `GetFwRevision` | 2.0.0+ | Q | 2026-11-21 |
-| usb:pd:c | `5` | `GetManufacturerId` | 2.0.0+ | Q | 2026-11-21 |
-| usb:pd:c | `6` | `GetDeviceId` | 2.0.0+ | Q | 2026-11-21 |
+| usb:pd:c | `0` | `GetPdCradleSession` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; root ID 0 nom SwitchBrew GetPdCradleSession, source OpenCradleSession créant une interface ; équivalence ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
+| usb:pd:c | `0` | `VdmUserWrite` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; IPdCradleSession ID 0 : source SetCradleVdo nullptr, nom historique VdmUserWrite ; ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
+| usb:pd:c | `1` | `VdmUserRead` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; IPdCradleSession ID 1 : source GetCradleVdo nullptr, nom historique VdmUserRead ; ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
+| usb:pd:c | `2` | `Vdm20Init` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; IPdCradleSession ID 2 : source ResetCradleUsbHub nullptr, nom historique Vdm20Init ; ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
+| usb:pd:c | `3` | `GetFwType` | 2.0.0+ | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; IPdCradleSession ID 3 : source GetHostPdcFirmwareType nullptr, nom historique GetFwType ; ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
+| usb:pd:c | `4` | `GetFwRevision` | 2.0.0+ | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; IPdCradleSession ID 4 : source GetHostPdcFirmwareRevision nullptr, nom historique GetFwRevision ; ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
+| usb:pd:c | `5` | `GetManufacturerId` | 2.0.0+ | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; IPdCradleSession ID 5 : source GetHostPdcManufactureId nullptr, nom historique GetManufacturerId ; ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
+| usb:pd:c | `6` | `GetDeviceId` | 2.0.0+ | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/usb/usb.cpp) ; IPdCradleSession ID 6 : source GetHostPdcDeviceId nullptr, nom historique GetDeviceId ; ABI inconnue ; ABI/PS5 non validés) | 2026-11-22 |
 
 ### WLAN services
 
@@ -5528,32 +5531,32 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| wlan:inf | `2` | `GetMacAddress` | — | Q | 2026-11-21 |
-| wlan:inf | `3` | `StartScan` | — | Q | 2026-11-21 |
-| wlan:inf | `4` | `StopScan` | — | Q | 2026-11-21 |
-| wlan:inf | `5` | `Connect` | — | Q | 2026-11-21 |
-| wlan:inf | `6` | `CancelConnect` | — | Q | 2026-11-21 |
-| wlan:inf | `7` | `Disconnect` | — | Q | 2026-11-21 |
-| wlan:inf | `10` | `GetState` | — | Q | 2026-11-21 |
-| wlan:inf | `11` | `GetScanResult` | — | Q | 2026-11-21 |
-| wlan:inf | `12` | `GetRssi` | — | Q | 2026-11-21 |
-| wlan:inf | `13` | `ChangeRxAntenna` | — | Q | 2026-11-21 |
-| wlan:inf | `16` | `RequestWakeUp` | — | Q | 2026-11-21 |
-| wlan:inf | `17` | `RequestIfUpDown` | — | Q | 2026-11-21 |
-| wlan:lcl | `6` | `GetMacAddress` | — | Q | 2026-11-21 |
+| wlan:inf | `2` | `GetMacAddress` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `3` | `StartScan` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `4` | `StopScan` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `5` | `Connect` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `6` | `CancelConnect` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `7` | `Disconnect` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `10` | `GetState` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `11` | `GetScanResult` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `12` | `GetRssi` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `13` | `ChangeRxAntenna` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `16` | `RequestWakeUp` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:inf | `17` | `RequestIfUpDown` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `6` | `GetMacAddress` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 6 : source = GetMacAddress_2/StopScan_2 (nullptr), pas le nom historique GetMacAddress ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `7` | `CreateBss` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `8` | `DestroyBss` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `9` | `StartScan` | — | Q | 2026-11-21 |
-| wlan:lcl | `10` | `StopScan` | — | Q | 2026-11-21 |
-| wlan:lcl | `11` | `Connect` | — | Q | 2026-11-21 |
-| wlan:lcl | `12` | `CancelConnect` | — | Q | 2026-11-21 |
+| wlan:lcl | `9` | `StartScan` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 9 : source = StartScan_2/Join (nullptr), pas le nom historique StartScan ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `10` | `StopScan` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 10 : source = StopScan_2/CancelJoin (nullptr), pas le nom historique StopScan ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `11` | `Connect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 11 : source = Connect_2/Disconnect_2 (nullptr), pas le nom historique Connect ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `12` | `CancelConnect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 12 : source = CancelConnect_2/SetBeaconLostCount (nullptr), pas le nom historique CancelConnect ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `13` | `Join` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `14` | `CancelJoin` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `15` | `Disconnect` | — | Q | 2026-11-21 |
+| wlan:lcl | `15` | `Disconnect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 15 : source = Disconnect_2/GetClientStatus (nullptr), pas le nom historique Disconnect ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `16` | `SetBeaconLostCount` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `20` | `GetBssIndicationEvent` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `21` | `GetBssIndicationInfo` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `22` | `GetState` | — | Q | 2026-11-21 |
+| wlan:lcl | `22` | `GetState` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 22 : source = GetState_2/PutFrameRaw (nullptr), pas le nom historique GetState ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `23` | `GetAllowedChannels` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `24` | `AddIe` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `25` | `DeleteIe` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
@@ -5561,13 +5564,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | wlan:lcl | `29` | `DeleteRxEntry` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `32` | `AddMatchingDataToRxEntry` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `33` | `RemoveMatchingDataFromRxEntry` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `34` | `GetScanResult` | — | Q | 2026-11-21 |
+| wlan:lcl | `34` | `GetScanResult` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 34 : source = GetScanResult_2/CreateRxEntryForActionFrame (nullptr), pas le nom historique GetScanResult ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `36` | `SetActionFrameWithBeacon` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `37` | `CancelActionFrameWithBeacon` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `38` | `CreateRxEntryForActionFrame` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `39` | `DeleteRxEntryForActionFrame` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 | wlan:lcl | `42` | `CancelGetActionFrame` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `43` | `GetRssi` | — | Q | 2026-11-21 |
+| wlan:lcl | `43` | `GetRssi` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 43 : source = GetRssi_2/Cmd43 (nullptr), pas le nom historique GetRssi ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:soc | `6` | `GetMacAddress` | — | Q | 2026-11-21 |
 | wlan:soc | `7` | `SwitchTsfTimerFunction` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 

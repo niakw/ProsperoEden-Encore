@@ -10,9 +10,9 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `a6264cb047cd75beff165b1e5e94a84ea37fbf52` |
-| Moteur `main` au contrôle final | `94a4673278726397ecc37a130458c61590d6e754` |
-| Vendor `main` au contrôle final | `ac880cd408116e6eb53ba2400abc52970b81f539` |
+| Vendor gitlink sélectionné après intégration | `12ab9a8411f5c9df1b5cc73f01c923ad9479c8af` |
+| Moteur `main` avant intégration de cette branche | `814bc29918df3c1fc207229537c7d80dfa8c8891` |
+| Vendor `main` fusionné | `12ab9a8411f5c9df1b5cc73f01c923ad9479c8af` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |

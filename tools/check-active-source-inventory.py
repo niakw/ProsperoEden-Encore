@@ -1414,7 +1414,21 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     assert fc27_ssbo_present == set(fc27_ssbo_receipts)
     for relative, blob in fc27_ssbo_receipts.items():
         raw = (active / relative).read_bytes()
-        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == blob
+        actual = hashlib.sha1(
+            b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+        ).hexdigest()
+        if (relative.endswith("global_memory_to_storage_buffer_pass.cpp") and
+            actual == "602d45b4d2ad872b138d62ce05f379b5e1103602"):
+            selected = raw.decode("utf-8")
+            newer = "    case IR::Opcode::GlobalAtomicExchange32:\n    case IR::Opcode::GlobalAtomicCompareExchange32:\n    case IR::Opcode::GlobalAtomicIAdd64:\n"
+            earlier = "    case IR::Opcode::GlobalAtomicExchange32:\n    case IR::Opcode::GlobalAtomicIAdd64:\n"
+            assert newer in selected
+            historical = selected.replace(newer, earlier, 1).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(historical)).encode() + bytes([0]) + historical
+            ).hexdigest()
+            print("ENCORE_FC27_SSBO_CAS32_EXACT_REVERSE_PASS")
+        assert actual == blob, ("FC27 SSBO source drift", relative, actual, blob)
     assert 'set(EDEN_FC27_SSBO_SOURCE' in nov13_cmake
     assert 'list(REMOVE_ITEM eden_fc27_ssbo_sources "ir_opt/global_memory_to_storage_buffer_pass.cpp")' in nov13_cmake
 else:

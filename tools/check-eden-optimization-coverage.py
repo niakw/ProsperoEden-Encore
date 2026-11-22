@@ -3432,6 +3432,22 @@ for path, (previous_blob, successor_blob, witness) in ns2_boot_hle_receipts.item
 print("NS2_BOOT_HLE_SHIPPING_RECEIPT_PASS owners=4 history=immutable "
       "console_boot=unvalidated")
 
+# DNCA/DXCI's shipping loader dispatch and library classifier are
+# post-F07 structural additions, not updates to the frozen F07 receipt.
+# The maintained C++/header owners are already sealed by exact Git blobs
+# and CMake selection above; remove only these two verified new deltas.
+for path, expected_blob, required in (
+    ("headless/game_files.h", "e4502fb143a4e4efc9ffb21bdabcafab90ff922a", '".dnsp"'),
+    ("vendor/encore-active/eden-core/src/core/loader/loader.cpp",
+     "0b4448bcf4bef93b9d2a54cf96256d5b81d9424e", "DXCI"),
+):
+    assert path not in post_index and path in drift_index, ("DNSP/DXCI classification", path)
+    delta = drift_index.pop(path)
+    assert delta["actual"] == expected_blob, ("DNSP/DXCI active source drift", path)
+    assert delta["expected"] != expected_blob
+    assert required in (ROOT/path).read_text(), path
+assert "foreach(eden_plaintext_content_relative IN ITEMS" in release_cmake
+
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

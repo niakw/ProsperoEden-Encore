@@ -199,9 +199,9 @@ def main()->int:
         633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
         654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
         666, 667, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
-        1022, 1203, 1301, 1302, 1325, 1326,
+        1022, 1203, 1301, 1302, 1325, 1326, 1411, 1501, 1502,
     )
-    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 65
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 68
     for command in known_optional_gsv:
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, (
             f'optional GSV command {command} missing explicit fail-closed dispatch')
@@ -211,6 +211,13 @@ def main()->int:
     assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in explicit_reject
     assert 'ResultSuccess' not in explicit_reject
     assert 'ctx.CommandBuffer()' not in explicit_reject
+    # S2 control-GPU pause and scheduling options must fail closed exactly.
+    ctrl_gpu = (ROOT / 'vendor/encore-active/ns2-runtime/nvdrv/core/hle/'
+                'service/nvdrv/devices/nvhost_ctrl_gpu.cpp').read_text()
+    for num, raw in ((0x10, '0xC0084710U'), (0x1e, '0xC010471EU')):
+        case = ctrl_gpu.split(f'case 0x{num:x}: // Switch 2 ', 1)[1].split('case ', 1)[0]
+        assert f'if (command.raw != {raw}) break;' in case
+        assert 'return NvResult::NotImplemented;' in case
     # Documented image-size queries must use real bounded layout calculations,
     # not the generic unsupported-feature stub or fabricated zero-success data.
     for command, method in ((391, 'CalculateNativeImageRequirements'),

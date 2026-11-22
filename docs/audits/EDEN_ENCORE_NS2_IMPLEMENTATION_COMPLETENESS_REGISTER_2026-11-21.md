@@ -10,7 +10,7 @@
 | Élément | Révision / source |
 | --- | --- |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
-| Vendor gitlink sélectionné sur cette branche | `a76f093e25baab59938284a397078f1a510bf3ee` |
+| Vendor gitlink sélectionné sur cette branche | `45b29de426ad94aba61c63bf12ab4440629abb5b` |
 | Vendor `main` à la création | `546e1aa34d2ff183dd4c737f9da8fbf4a62be24e` |
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : `Statut fonctionnel (F)` = comportement `C/P/M/U/V` ; `Traitement déclaré (R)` : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (32), `STUB NOMMÉ` (**68** : 65 nouveaux GSV, 2 historiques, 1 nouveau décodeur), `REFUS EXPLICITE` (**10**), `AUCUN HANDLER INDIQUÉ` (**31**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Un refus peut être un fallback générique : aucun refus/stub ne compte comme couverture fonctionnelle.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (144), `HANDLER PARTIEL INDIQUÉ` (32), `STUB NOMMÉ` (**71**), `REFUS EXPLICITE` (**12**), `AUCUN HANDLER INDIQUÉ` (**26**), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). Les refus et stubs restent **M** ; ce n'est pas une couverture fonctionnelle.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -30,24 +30,24 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
 
-> **Périmètre** : 316 commandes (§1–§12), branche `opt/ns2-switchbrew-unimplemented-20261122` née du moteur `7d05c7c7` / vendor `a8c91708`. Gitlink moteur `53916479` vers vendor actif `a76f093e` lors du troisième lot. Ni inventaire exhaustif du firmware, ni test PS5.
+> Périmètre de **316 entrées NS2**, 12 tableaux, branche dédiée issue du moteur `7d05c7c7` / vendor `a8c91708`. Sur ce lot, vendor `45b29de4` sélectionné par le gitlink moteur. Le compteur n'est ni l'inventaire intégral SwitchBrew, ni une validation console.
 
-- **F — fonctionnel** : C=144, P=31, C/P=1, M=109, U=25, V=6. **Aucun nouveau C** ; 391 et 691 progressent de M à P après calcul réel borné de taille/alignment, mais formats/ABI non intégralement qualifiés.
-- **R — représentation** : **254/316 (80,4 %) disposent d'un traitement indiqué**, **62/316 (19,6 %) sans handler indiqué** : 31 M, 25 U, 6 V. Les 68 stubs et 10 refus explicites restent M.
+- **F (fonctionnel)** : C=144, P=31, C/P=1, M=109, U=25, V=6. Les seules progressions fonctionnelles antérieures sur cette branche sont `391` et `691`, classées P (calcul de taille/alignment borné). Aucun nouveau C.
+- **R (traitement renseigné)** : **259/316 (82,0 %)** avec handler, stub ou refus ; **57/316 (18,0 %)** sans traitement indiqué : 26 M, 25 U, 6 V.
 
 | Statut fonctionnel | Total | Traitement indiqué | Aucun handler indiqué |
 | --- | ---: | ---: | ---: |
 | C — implémentation source | 144 | 144 | 0 |
 | P — partielle | 31 | 31 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
-| M — non implémenté | 109 | **78** (68 stubs, 10 refus) | **31** |
-| U — contrat inconnu | 25 | 0 | 25 |
-| V — variante hors version | 6 | 0 | 6 |
-| **Total** | **316** | **254** | **62** |
+| M — non implémenté | 109 | **83** (71 stubs, 12 refus) | **26** |
+| U — contrat insuffisant | 25 | 0 | 25 |
+| V — ancienne variante firmware | 6 | 0 | 6 |
+| **Total** | **316** | **259** | **57** |
 
-**Runtime branché** : 66 handlers GSV fail-closed `UnavailableDocumentedFeature` créés, puis `691` converti vers `CalculateChatImagePoolSize`, donc **65 nouveaux stubs GSV**. `391` est routé vers `CalculateNativeImageRequirements`. Le VideoDecoderSession `210` est désormais un stub nommé `RejectRemoteMemoryInitialization` sans faux backing. Les ioctls channel `0xC0080004`, `0x40040007`, `0xC0080023`, `0xC0104813` ont des cases exactes `NvResult::NotImplemented` ; refus préexistants et deux stubs encodeur GSV inchangés. Source d'ABI ciblée pour 391/691 : [Lichii nx2_gsv.h](https://github.com/zortos293/Lichii/blob/nx2/src/core/hle/service/nx2_gsv.h).
+**Lot courant** : commandes GSV `1411`, `1501`, `1502` → `UnavailableDocumentedFeature` (NotImplemented), `1411` ne réutilise pas à tort les compteurs de `498` ; ioctls ctrl-gpu `0xC0084710` et `0xC010471E` → refus explicites `NotImplemented`. Les stubs/refus sont non fonctionnels et n'augmentent pas C. Les lots précédents ont enregistré des stubs GSV supplémentaires, le décodeur 210 et les calculs bornés 391/691 ainsi que quatre refus de channel.
 
-**Restants** : 31 M sans traitement indiqué (encodeur/profiler notamment), 25 U à ABI insuffisante, 6 V d'anciens firmwares et 32 P/C/P à qualifier. Ne pas créer de faux services pour augmenter le compteur. CI hôte / build PS5 / console : non encore validés pour ce couple.
+**Restants** : 26 M sans handler renseigné (11 encodeur, 13 profiler et 2 retry GPFIFO), 25 U insuffisamment documentés, 6 variantes FW 19.x, 32 P/C/P non qualifiés. Revalider la CI exacte et les propriétaires CMake avant tout merge. Aucun build PS5 ni gameplay attesté.
 
 ---
 
@@ -191,9 +191,9 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1326 | Adraw | GetAdrawImageHandle | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1401 | NvDrv | CreateNvDrv2UserSessionWithTransferMemory | P | HANDLER PARTIEL INDIQUÉ | OpenNvsrvSessionWithTransferMemory | session NVDRV réelle; nom interne différent |
 | 1402 | NvDrv | CreateNvDrv2UserSessionWithRemoteMemory | P | HANDLER PARTIEL INDIQUÉ | OpenNvsrvSession | session NVDRV réelle |
-| 1411 | NvDrv | GetNvDrv2UserTransferMemoryUsage | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1501 | InterModuleImage | CreateInterModuleImageContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
-| 1502 | InterModuleImage | InitializeInterModuleImageContext | M | AUCUN HANDLER INDIQUÉ | — | pas de handler |
+| 1411 | NvDrv | GetNvDrv2UserTransferMemoryUsage | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : allocation de NVDRV 1401 non mesurée ; les chiffres du bootstrap GSV 498 ne sont pas substituables |
+| 1501 | InterModuleImage | CreateInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : inter-module image context sans ownership/backing garanti |
+| 1502 | InterModuleImage | InitializeInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : impossible d'initialiser un contexte image intermodule fictif |
 | 1510 | InterModuleImage | (nom inconnu) | P | HANDLER PARTIEL INDIQUÉ | CalculateRequirements | handler actif; fonction SwitchBrew non nommée |
 | 1601 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
 | 1602 |  | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans documentation suffisante |
@@ -380,10 +380,10 @@ La numérotation SwitchBrew change entre 19.x et 20.0+. Le runtime actuel suit l
 | Ioctl | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore | Écart / raison |
 | --- | --- | --- | --- | --- | --- |
 | 0xC0E04705 | [S2] NVGPU_GPU_IOCTL_GET_CHARACTERISTICS | C | HANDLER INDIQUÉ | GetCharacteristics native | layout S2 224 octets pris en charge |
-| 0xC0084710 | [S2] NVGPU_GPU_IOCTL_WAIT_FOR_PAUSE | M | AUCUN HANDLER INDIQUÉ | — | aucun handler natif |
+| 0xC0084710 | [S2] NVGPU_GPU_IOCTL_WAIT_FOR_PAUSE | M | REFUS EXPLICITE | nvhost_ctrl_gpu::Ioctl1 (fail-closed) | ioctl S2 exact refuse pause GPU sans frontière matérielle fiable |
 | 0x80084712 | NVGPU_GPU_IOCTL_NUM_VSMS | C | HANDLER INDIQUÉ | NUM_VSMS | profil GA10F cohérent |
 | 0xC0084713 | [S2] NVGPU_GPU_IOCTL_VSMS_MAPPING | C | HANDLER INDIQUÉ | VSMS_MAPPING | inline mapping GA10F |
-| 0xC010471E | [S2] NVGPU_GPU_IOCTL_SET_DETERMINISTIC_OPTS | M | AUCUN HANDLER INDIQUÉ | — | aucun handler |
+| 0xC010471E | [S2] NVGPU_GPU_IOCTL_SET_DETERMINISTIC_OPTS | M | REFUS EXPLICITE | nvhost_ctrl_gpu::Ioctl1 (fail-closed) | ioctl S2 exact refuse options déterministes sans effet scheduler réel |
 | 0xC010471F | [S2] NVGPU_GPU_IOCTL_GET_ENGINE_INFO | C | HANDLER INDIQUÉ | GET_ENGINE_INFO | runlists graphics/copy exposés |
 
 

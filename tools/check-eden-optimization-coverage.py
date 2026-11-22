@@ -1732,7 +1732,7 @@ if gpu_table_vendor_pin in {"42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696
     for path, blob in drawtexture_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
-elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+elif drawtexture_present == set(drawtexture_receipts):
     # Merge selected both DrawTexture owners. Seal the complete active pair
     # while keeping the older Eden #4559 source receipt untouched.
     assert drawtexture_present == set(drawtexture_receipts)

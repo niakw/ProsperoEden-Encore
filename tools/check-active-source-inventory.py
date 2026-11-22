@@ -1783,7 +1783,7 @@ if fc27_p1_vendor:
 # and qualify only source files that actually changed at this exact gitlink.
 if subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
-).strip() in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634"}:
+).strip() in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634", "ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3"}:
     ns2_early_hle_receipts.update({
         "ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp":
             "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912",
@@ -1797,7 +1797,7 @@ if subprocess.check_output(
 # Exact Lichii AM additional direct source owners are selected once by CMake.
 if subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True
-).strip() in {"d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634"}:
+).strip() in {"d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634", "ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3"}:
     ns2_early_hle_receipts.update({
         "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
         "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",

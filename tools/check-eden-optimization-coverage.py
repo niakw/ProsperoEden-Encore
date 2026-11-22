@@ -1604,6 +1604,17 @@ if gpu_table_vendor_pin in {"42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696
     for path, blob in drawtexture_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
+elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    # Merge selected both DrawTexture owners. Seal the complete active pair
+    # while keeping the older Eden #4559 source receipt untouched.
+    assert drawtexture_present == set(drawtexture_receipts)
+    integrated_drawtexture = {
+        "vendor/encore-active/eden-vulkan/blit_image.cpp": "4ba93afb6594213d5bde82be2693f0e08cb1cd63",
+        "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/blit_image.h": "a38cfcf655adcb8ceebfce955b39a2312a239768",
+    }
+    for source, expected in integrated_drawtexture.items():
+        actual = subprocess.check_output(["git","hash-object",source],cwd=ROOT,text=True).strip()
+        assert actual == expected, ("Merged DrawTexture owner drift",source,actual)
 else:
     assert not drawtexture_present
 print("ENCORE_EDEN4559_F07_ISOLATION_PASS", f"owners={len(drawtexture_present)}")

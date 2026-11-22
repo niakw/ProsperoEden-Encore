@@ -23,41 +23,41 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 083 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 003 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 986 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 098 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 018 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 986 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 003 | 80 | **1 083** |
-| **RACCORDÉ — Handler raccordé, corps non prouvé** | 117 | 0 | **117** |
-| **PARTIEL — Implémentation partielle** | 61 | 3 | **64** |
-| **STUB — Stub / résultat simulé** | 287 | 0 | **287** |
-| **NOOP — No-op documenté** | 6 | 0 | **6** |
-| **NULL — Handler NULL** | 2 089 | 0 | **2 089** |
-| **D — Rejet explicite / historique** | 18 | 33 | **51** |
-| **ABSENT — Absent de la table examinée** | 105 | 0 | **105** |
-| **ABI-DIFF — Noms et ABI divergents** | 100 | 0 | **100** |
-| **AMBIGU — Interface ambiguë** | 1 | 0 | **1** |
-| **Q — Non vérifié** | 949 | 0 | **949** |
-| **E — ID SVC non trouvé** | 0 | 1 | **1** |
+| **IMPL-SRC** | 1 018 | 80 | **1 098** |
+| **RACCORDÉ** | 89 | 0 | **89** |
+| **PARTIEL** | 61 | 3 | **64** |
+| **STUB** | 296 | 0 | **296** |
+| **NOOP** | 6 | 0 | **6** |
+| **NULL** | 2 091 | 0 | **2 091** |
+| **D** | 18 | 33 | **51** |
+| **ABSENT** | 105 | 0 | **105** |
+| **ABI-DIFF** | 102 | 0 | **102** |
+| **AMBIGU** | 1 | 0 | **1** |
+| **Q** | 949 | 0 | **949** |
+| **E** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
-    title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1083
-    "Handler raccordé, corps non prouvé" : 117
-    "Implémentation partielle" : 64
-    "Stub / résultat simulé" : 287
-    "No-op documenté" : 6
-    "Handler NULL" : 2089
-    "Rejet explicite / historique" : 51
-    "Absent de la table examinée" : 105
-    "Noms et ABI divergents" : 100
-    "Interface ambiguë" : 1
-    "Non vérifié" : 949
-    "ID SVC non trouvé" : 1
+    title SwitchBrew NS1 — 4 853 entrées
+    "IMPL-SRC" : 1098
+    "RACCORDÉ" : 89
+    "PARTIEL" : 64
+    "STUB" : 296
+    "NOOP" : 6
+    "NULL" : 2091
+    "D" : 51
+    "ABSENT" : 105
+    "ABI-DIFF" : 102
+    "AMBIGU" : 1
+    "Q" : 949
+    "E" : 1
 ```
 
 **Détail du changement de ce lot :** **119** entrées `RACCORDÉ` ont été qualifiées à partir des tables et des méthodes héritées : **114 IMPL-SRC** et **5 PARTIEL** (notamment `IsUserRegistrationRequestPermitted`, dont le corps mentionne une limite fonctionnelle). Sources effectivement inspectées : [Account](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp), [NFP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nfp/nfp.cpp), [NFP Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfp/nfp_interface.cpp), [NFC Interface](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp). La classification concerne la présence d'un corps et certains chemins manifestement incomplets, **pas la présence d'un lecteur NFC PS5 ni un comportement garanti**.
@@ -93,6 +93,9 @@ pie showData
 
 
 **Lot technique local/vidéo/GPU/news/migration :** **140 entrées Q** recroisées avec les unités référencées dans les deux CMake de base/backports (vendor 224b05e6). `ldn:u` : **20 IMPL-SRC** ; `ldn:s` : **20 NULL**. `nvdrv` : **6 IMPL-SRC** (`Open`, `Ioctl`, `Close`, `QueryEvent`, `Ioctl2`, `Ioctl3`) et **3 ABI-DIFF**. `news` : **17 IMPL-SRC**, **9 STUB**, **3 NULL**, **1 ABI-DIFF**, **1 AMBIGU** (commande `Get` 0 présente dans deux interfaces). `caps:c` : **21 ABSENT** de la table examinée, **3 ABI-DIFF**. `mig:usr` : **17 ABSENT** de la table racine, **19 ABI-DIFF** (ID présents mais noms différents). Les `ABSENT` et `ABI-DIFF` décrivent seulement les tables visées, pas un échec console démontré ni une opération à implémenter sans besoin du jeu.
+
+
+**Lot handlers hérités NFC / MM / boot PM (22/11)** : 28 entrées raccordées reclassées : 13 implémentations NfcInterface héritées par MFIUser + 1 WriteMifare STUB, 2 NFC IAm NULL, 2 noms ISystem ABI-DIFF, 8 MM_U STUB loggés STUBBED (gestion de session émulateur sans commande de performance native) et 2 BootMode IMPL-SRC. Aucune preuve d'un lecteur NFC PS5, d'un mode performance matériel ou d'une validation console.
 
 **Priorité suivante :** lever les incertitudes sur le boot et le gameplay NS1 (FS, AM, HID, NVDRV/VI, Loader/PM, IPC/SVC), pas implémenter des services périphériques inutilisés ni fabriquer des succès factices.
 
@@ -2947,14 +2950,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IHdcpController | `1` | `GetHdcpAuthenticationState` | — | Q | 2026-11-21 |
 | IHdcpController | `2` | `SetCurrentHdcpMode` | — | Q | 2026-11-21 |
 | IHdcpController | `3` | `GetCurrentHdcpMode` | — | Q | 2026-11-21 |
-| mm:u | `0` | `InitializeOld` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
-| mm:u | `1` | `FinalizeOld` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
-| mm:u | `2` | `SetAndWaitOld` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
-| mm:u | `3` | `GetOld` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
-| mm:u | `4` | `Initialize` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
-| mm:u | `5` | `Finalize` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
-| mm:u | `6` | `SetAndWait` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
-| mm:u | `7` | `Get` | — | **RACCORDÉ** ([source C++][ns1-src-095]) | 2026-11-22 |
+| mm:u | `0` | `InitializeOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::InitializeOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `1` | `FinalizeOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::FinalizeOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `2` | `SetAndWaitOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::SetAndWaitOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `3` | `GetOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::GetOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `4` | `Initialize` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::Initialize LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `5` | `Finalize` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::Finalize LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `6` | `SetAndWait` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::SetAndWait LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `7` | `Get` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::Get LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
 | vi:u | `0` | `[GetDisplayService](#vi:u "wikilink")` | — | Q | 2026-11-21 |
 | vi:u | `1` | `[GetDisplayServiceWithProxyNameExchange](#vi:u "wikilink")` | 9.0.0+ | Q | 2026-11-21 |
 | vi:s | `1` | `[GetDisplayService](#vi:s "wikilink")` | — | Q | 2026-11-21 |
@@ -4243,24 +4246,24 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | nfc:am | `0` | `CreateAmInterface` | — | Q | 2026-11-21 |
-| nfc:am | `0` | `Initialize` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:am | `1` | `Finalize` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
+| nfc:am | `0` | `Initialize` | — | **NULL** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; IAm nullptr ; non certifié PS5) | 2026-11-22 |
+| nfc:am | `1` | `Finalize` | — | **NULL** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; IAm nullptr ; non certifié PS5) | 2026-11-22 |
 | nfc:am | `2` | `NotifyForegroundApplet` | — | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:mf:u | `0` | `CreateUserInterface` | — | Q | 2026-11-21 |
-| nfc:mf:u | `0` | `Initialize` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `1` | `Finalize` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `2` | `ListDevices` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `3` | `StartDetection` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `4` | `StopDetection` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `5` | `Read` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `6` | `Write` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `7` | `GetTagInfo` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `8` | `GetActivateEventHandle` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `9` | `GetDeactivateEventHandle` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `10` | `GetState` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `11` | `GetDeviceState` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `12` | `GetNpadId` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `13` | `GetAvailabilityChangeEventHandle` | 3.0.0+ | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
+| nfc:mf:u | `0` | `Initialize` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode Initialize ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `1` | `Finalize` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode Finalize ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `2` | `ListDevices` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode ListDevices ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `3` | `StartDetection` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode StartDetection ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `4` | `StopDetection` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode StopDetection ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `5` | `Read` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode ReadMifare ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `6` | `Write` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode WriteMifare (STUBBED) ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `7` | `GetTagInfo` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode GetTagInfo ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `8` | `GetActivateEventHandle` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode AttachActivateEvent ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `9` | `GetDeactivateEventHandle` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode AttachDeactivateEvent ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `10` | `GetState` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode GetState ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `11` | `GetDeviceState` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode GetDeviceState ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `12` | `GetNpadId` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode GetNpadId ; non certifié PS5) | 2026-11-22 |
+| nfc:mf:u | `13` | `GetAvailabilityChangeEventHandle` | 3.0.0+ | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode AttachAvailabilityChangeEvent ; non certifié PS5) | 2026-11-22 |
 | nfc:user | `0` | `CreateUserInterface` | — | Q | 2026-11-21 |
 | nfc:user | `0` | `InitializeOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:user | `1` | `FinalizeOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
@@ -4285,8 +4288,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfc:user | `1301` | `KeepPassThroughSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:user | `1302` | `ReleasePassThroughSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `0` | `CreateSystemInterface` | — | Q | 2026-11-21 |
-| nfc:sys | `0` | `Initialize` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:sys | `1` | `Finalize` | — | **RACCORDÉ** ([source C++][ns1-src-097]) | 2026-11-22 |
+| nfc:sys | `0` | `Initialize` | — | **ABI-DIFF** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; ISystem : nom historique Initialize versus InitializeOld à cet ID ; handler raccordé ; non certifié PS5) | 2026-11-22 |
+| nfc:sys | `1` | `Finalize` | — | **ABI-DIFF** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; ISystem : nom historique Finalize versus FinalizeOld à cet ID ; handler raccordé ; non certifié PS5) | 2026-11-22 |
 | nfc:sys | `2` | `GetStateOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `3` | `IsNfcEnabledOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `100` | `SetNfcEnabledOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
@@ -4864,8 +4867,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| pm:bm | `0` | `GetBootMode` | — | **RACCORDÉ** ([source C++][ns1-src-018]) | 2026-11-22 |
-| pm:bm | `1` | `SetMaintenanceBoot` | — | **RACCORDÉ** ([source C++][ns1-src-018]) | 2026-11-22 |
+| pm:bm | `0` | `GetBootMode` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; BootMode::GetBootMode lit ou modifie boot_mode ; non certifié PS5) | 2026-11-22 |
+| pm:bm | `1` | `SetMaintenanceBoot` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; BootMode::SetMaintenanceBoot lit ou modifie boot_mode ; non certifié PS5) | 2026-11-22 |
 | pm:info | `0` | `GetProgramId` | — | **RACCORDÉ** ([source C++][ns1-src-018]) | 2026-11-22 |
 | pm:shell | `0` | `LaunchProgram` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
 | pm:shell | `1` | `TerminateProcess` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |

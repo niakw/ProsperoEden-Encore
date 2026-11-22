@@ -1291,15 +1291,22 @@ int main(){
             images.Get(*first_image)->preference[1] == 1 &&
             images.Count() == 2,
             "GSV 429 owns distinct image IDs linked to genuine NVMap backing");
-    require(images.ConfigureWindowPool(*first_image, true) &&
+    require(images.ConfigureWindowPool(*first_image, 2, true) &&
             images.Get(*first_image)->window_pool &&
-            !images.ConfigureWindowPool(*first_image, true) &&
-            !images.Destroy(*first_image) &&
-            images.ConfigureWindowPool(*first_image, false) &&
-            !images.Get(*first_image)->window_pool,
-            "GSV 314/315 require explicit window alias retirement");
-    require(!images.ConfigureWindowPool(0xffffffffU, true),
-            "GSV native window alias rejects unowned image IDs");
+            images.Get(*first_image)->window_pool_count == 2 &&
+            images.Get(*second_image)->window_pool &&
+            images.Get(*second_image)->window_pool_count == 0 &&
+            !images.ConfigureWindowPool(*first_image, 1, true) &&
+            !images.Destroy(*first_image) && !images.Destroy(*second_image) &&
+            images.ConfigureWindowPool(*first_image, 0, false) &&
+            !images.Get(*first_image)->window_pool &&
+            !images.Get(*second_image)->window_pool &&
+            images.Get(*first_image)->window_pool_count == 0,
+            "GSV 315 records a two-image alias group and 314 retires it exactly");
+    require(!images.ConfigureWindowPool(0xffffffffU, 1, true) &&
+            !images.ConfigureWindowPool(*first_image, 3, true) &&
+            !images.ConfigureWindowPool(*first_image, 0, false),
+            "GSV native window alias rejects unowned, incomplete and stale groups");
     require(!images.Destroy(0) && !images.Destroy(0xffffffffU) &&
             images.Destroy(*first_image) &&
             !images.Get(*first_image).has_value() &&

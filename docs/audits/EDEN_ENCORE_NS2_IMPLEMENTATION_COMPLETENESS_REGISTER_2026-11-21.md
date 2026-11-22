@@ -20,7 +20,7 @@
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
 **Tous les C/P restent console-non-qualifiés** tant qu’un build PS5 représentatif ne les a pas exercés.
 
-**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**164**), `HANDLER PARTIEL INDIQUÉ` (**14**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 1401 est désormais C source : le contrat TransferMemory est validé jusqu'au handle MOVE.
+**Colonnes séparées pour chaque commande (§1–§12)** : F = couverture comportementale `C/P/M/U/V` ; R = représentation par ID : `HANDLER INDIQUÉ` (**166**), `HANDLER PARTIEL INDIQUÉ` (**12**), `STUB NOMMÉ` (71), `REFUS EXPLICITE` (12), `REFUS PARENT EXPLICITE` (11), `REFUS GÉNÉRIQUE EXPLICITE` (13), `AUCUN HANDLER INDIQUÉ` (0), `ABI INCONNUE · AUCUN HANDLER` (25), `VARIANTE HORS VERSION` (6). 314/315 sont désormais C : groupes window-alias multi-images réellement suivis et retirés.
 
 ### Politique des fonctions connues mais non implémentées
 
@@ -32,28 +32,28 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=164**, P=13, C/P=1, M=107, U=25, V=6.
-- **R** : **285/316 (90,2 %)** traitées explicitement.
+- **F** : **C=166**, P=11, C/P=1, M=107, U=25, V=6.
+- **R** : **285/316 (90,2 %)** traitées explicitement ; aucune M sans traitement.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **164** | 164 | 0 |
-| P — partielle | **13** | 13 | 0 |
+| C — implémentation source | **166** | 166 | 0 |
+| P — partielle | **11** | 11 | 0 |
 | C/P — mixte | 1 | 1 | 0 |
 | M — non implémenté | 107 | 107 | 0 |
 | U — contrat insuffisant | 25 | 0 | 25 |
 | V — ancienne variante firmware | 6 | 0 | 6 |
 | **Total** | **316** | **285** | **31** |
 
-**1401 qualifiée** : le parser actif vérifie la forme TIPC avec COPY TransferMemory, handle non nul, taille page-aligned et mode ; `OpenNvsrvSession` récupère le vrai KTransferMemory du process, vérifie owner/taille, crée le service NVDRV et publie un MOVE handle avec rollback OOM. Le test hôte `test_graphics_hle.cpp` couvre déjà le parser exact.
+**314/315 corrigées fonctionnellement** : `315(first,count)` valide tout le groupe avant mutation, marque chaque image comme alias et mémorise `count` uniquement sur le premier ID. `314(first)` retire exactement ce groupe enregistré. `430` reste interdit tant qu'une image appartient au pool. Cela remplace l'ancienne limitation `count == 1`.
 
-**Reste structurel** : 912/1212 (destruction image/pool), 314/315 (window alias + count), 391/691 (formats), Syncpt 21 inconnu, submit historique, événements/erreurs GPU, USERD/doorbell et TSG.
+**Restent 11 P + 1 C/P** : 391/691 (formats), 912/1212 (destruction pool/image), Syncpt 21 inconnu, submit historique, event/error GPU, USERD/doorbell et TSG.
 
 ---
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=48, P=4, M=72, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=50, P=4, M=70, U=18. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -80,8 +80,8 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 305 | Display | InitializeDisplayContext | C | HANDLER INDIQUÉ | OpenDisplaySession | Contrat prouvé : u64 version contrôlée (19.0 + SDK ultérieurs), vraie IVi2Session et handle MOVE ; pas un stub |
 | 311 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
 | 312 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | ID connu sans contrat public suffisant |
-| 314 | Display | (nom inconnu) | P | HANDLER PARTIEL INDIQUÉ | DestroyNativeWindowAliasImagePool | handler actif; nom SwitchBrew absent |
-| 315 | Display | (nom inconnu) | P | HANDLER PARTIEL INDIQUÉ | CreateNativeWindowAliasImagePool | handler actif; nom SwitchBrew absent |
+| 314 | Display | (nom inconnu) | C | HANDLER INDIQUÉ | ConfigureNativeWindowImagePool | Lichii : 314(first image) ; Encore retire exactement le groupe enregistré par 315, sans inférer la longueur depuis des IDs adjacents |
+| 315 | Display | (nom inconnu) | C | HANDLER INDIQUÉ | ConfigureNativeWindowImagePool | Lichii : 315(first image,count) ; Encore mémorise le groupe exact, valide tous les IDs avant publication et marque chaque image alias |
 | 321 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
 | 327 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |
 | 361 | Display | (nom inconnu) | U | ABI INCONNUE · AUCUN HANDLER | — | pas de handler / contrat insuffisant |

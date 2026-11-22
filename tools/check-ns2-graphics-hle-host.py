@@ -348,7 +348,11 @@ def main()->int:
 
     for command in (314,315):
         assert '{'+str(command)+', &IGraphicsSupervisor::ConfigureNativeWindowImagePool' in text
-    assert 'm_native_images.ConfigureWindowPool(packet[2], create)' in text
+    window_pool = text.split('void IGraphicsSupervisor::ConfigureNativeWindowImagePool(', 1)[1].split(
+        'void IGraphicsSupervisor::DestroyNativeImage(', 1)[0]
+    assert 'const u32 count = create ? packet[3] : 0;' in window_pool
+    assert 'm_native_images.ConfigureWindowPool(packet[2], count, create)' in window_pool
+    assert 'packet[3] == 1' not in window_pool
     assert '!image->window_pool' in text
     for command, method in ((429,"CreateNativeImage"), (430,"DestroyNativeImage")):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text

@@ -96,6 +96,12 @@ Vendor `b9e23460efcf82c3f3e86de303f9a27568004b24` : `GetPath` et `GetPlaceHolder
 
 Le palier moteur `bec0f030` → vendor `22e47d3b` a passé NS1 X8D24 et `Verify pinned vendor` avant ce repointage. Le nouveau vendor doit encore être qualifié sur son propre HEAD ; aucune validation PS5 n'est revendiquée.
 
+## Lot STUB périphériques IRS / prepo / news — 22/11/2026
+
+Couple moteur → vendor final `229ebbc5b25776604c061ebdb93ca31330fa5745` (commit IRS intermédiaire `569c8e2ae6fe3dfaecb578be4c104381329f53df`). Les cinq stubs matériels IRS sont maintenant des NOOP intentionnels et le garde d'index processeur utilise `processors.size()`. `SaveSystemReportOld` est devenu une vraie sauvegarde `Core::Reporter`; trois commandes de transport prepo restent NOOP car aucun transport Nintendo n'existe. `ClearStorage` news est une vraie mutation de `NewsStorage`; huit opérations backend/abonnement/texte sont NOOP documentées.
+
+**Compteur courant : 1 240 IMPL-SRC / 77 PARTIEL / 329 STUB / 27 NOOP / 2 311 NULL / 68 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucun gain console n'est déclaré sans test PS5.
+
 ---
 
 ## 1. Références et règle de vérité

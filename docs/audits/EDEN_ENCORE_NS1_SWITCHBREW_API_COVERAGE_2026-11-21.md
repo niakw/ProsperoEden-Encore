@@ -23,15 +23,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 238 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 240 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 158 | 80 | **1 238** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 160 | 80 | **1 240** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 74 | 3 | **77** |
-| **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
-| **NOOP — No-op documenté** | 11 | 0 | **11** |
+| **STUB — Stub / résultat simulé** | 329 | 0 | **329** |
+| **NOOP — No-op documenté** | 27 | 0 | **27** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 35 | 33 | **68** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -112,16 +112,22 @@ La ligne `IServiceGetterInterface::Attach` (NS cmd 0) n'est pas une commande de 
 
 Zéro `ABSENT` signifie uniquement qu'aucune ligne du catalogue n'est désormais sans qualification/table correspondante. Cela ne signifie pas 4 853 fonctions fonctionnelles : les NULL, stubs, partiels et écarts ABI restent explicitement ouverts.
 
+### Lot STUB périphériques — IRS / prepo / news
+
+**Vendor final `229ebbc5` (IRS `569c8e2a`).** Cinq commandes IRS purement matérielles deviennent des **NOOP** explicites ; les processeurs IRS réellement émulés restent PARTIELS et ne sont pas maquillés en implémentations. `SaveSystemReportOld` écrit désormais réellement via `Core::Reporter`. Les trois commandes de transmission prepo sont des NOOP local-only. Côté news, `ClearStorage` agit réellement sur `NewsStorage`, tandis que huit opérations de backend Nintendo/abonnement/passphrase/colonnes texte sont des NOOP documentés.
+
+**Compteur : 1 240 IMPL-SRC, 77 PARTIEL, 329 STUB, 27 NOOP, 2 311 NULL, 68 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1238
+    "Implémentation source retrouvée" : 1240
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 77
-    "Stub / résultat simulé" : 347
-    "No-op documenté" : 11
+    "Stub / résultat simulé" : 329
+    "No-op documenté" : 27
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 68
     "Interface parente non ouvrable" : 191
@@ -1102,8 +1108,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `1155` | `SetForceHandheldStyleVibration` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1156` | `SendConnectionTriggerWithoutTimeoutEvent` | 9.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:tmp | `0` | `GetConsoleSixAxisSensorCalibrationValues` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp)) | 2026-11-22 |
-| irs | `302` | `ActivateIrsensor` | — | **STUB** ([source C++][ns1-src-086]) | 2026-11-22 |
-| irs | `303` | `DeactivateIrsensor` | — | **STUB** ([source C++][ns1-src-086]) | 2026-11-22 |
+| irs | `302` | `ActivateIrsensor` | — | **NOOP** (matériel IR Joy-Con non exposé sur Encore ; ABI conservée, handle validé quand applicable ; vendor `569c8e2a`) | 2026-11-22 |
+| irs | `303` | `DeactivateIrsensor` | — | **NOOP** (matériel IR Joy-Con non exposé sur Encore ; ABI conservée, handle validé quand applicable ; vendor `569c8e2a`) | 2026-11-22 |
 | irs | `304` | `GetIrsensorSharedMemoryHandle` | — | **IMPL-SRC** ([source C++][ns1-src-086]) | 2026-11-22 |
 | irs | `305` | `StopImageProcessor` | — | **PARTIEL** ([source C++][ns1-src-086]) | 2026-11-22 |
 | irs | `306` | `RunMomentProcessor` | — | **PARTIEL** ([source C++][ns1-src-086]) | 2026-11-22 |
@@ -1113,13 +1119,13 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | irs | `310` | `RunTeraPluginProcessor` | — | **PARTIEL** ([source C++][ns1-src-086]) | 2026-11-22 |
 | irs | `311` | `GetNpadIrCameraHandle` | — | **IMPL-SRC** ([source C++][ns1-src-086]) | 2026-11-22 |
 | irs | `312` | `RunPointingProcessor` | — | **PARTIEL** ([source C++][ns1-src-086]) | 2026-11-22 |
-| irs | `313` | `SuspendImageProcessor` | — | **STUB** ([source C++][ns1-src-086]) | 2026-11-22 |
+| irs | `313` | `SuspendImageProcessor` | — | **NOOP** (matériel IR Joy-Con non exposé sur Encore ; ABI conservée, handle validé quand applicable ; vendor `569c8e2a`) | 2026-11-22 |
 | irs | `314` | `CheckFirmwareVersion` | 3.0.0+ | **PARTIEL** ([source C++][ns1-src-086]) | 2026-11-22 |
-| irs | `315` | `SetFunctionLevel` | 4.0.0+ | **STUB** ([source C++][ns1-src-086]) | 2026-11-22 |
+| irs | `315` | `SetFunctionLevel` | 4.0.0+ | **NOOP** (matériel IR Joy-Con non exposé sur Encore ; ABI conservée, handle validé quand applicable ; vendor `569c8e2a`) | 2026-11-22 |
 | irs | `316` | `RunImageTransferExProcessor` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-086]) | 2026-11-22 |
 | irs | `317` | `RunIrLedProcessor` | 4.0.0+ | **PARTIEL** ([source C++][ns1-src-086]) | 2026-11-22 |
 | irs | `318` | `StopImageProcessorAsync` | 4.0.0+ | **PARTIEL** ([source C++][ns1-src-086]) | 2026-11-22 |
-| irs | `319` | `ActivateIrsensorWithFunctionLevel` | 4.0.0+ | **STUB** ([source C++][ns1-src-086]) | 2026-11-22 |
+| irs | `319` | `ActivateIrsensorWithFunctionLevel` | 4.0.0+ | **NOOP** (matériel IR Joy-Con non exposé sur Encore ; ABI conservée, handle validé quand applicable ; vendor `569c8e2a`) | 2026-11-22 |
 | irs:sys | `500` | `SetAppletResourceUserId` | — | **NULL** ([source C++][ns1-src-086]) | 2026-11-22 |
 | irs:sys | `501` | `RegisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L375) ; handler nullptr) | 2026-11-21 |
 | irs:sys | `502` | `UnregisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L376) ; handler nullptr) | 2026-11-21 |
@@ -2442,19 +2448,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | news:a, news:c, news:m, news:p, news:v | `2` | `CreateNewsDataService` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/service_creator.cpp) ; méthode IServiceCreator::CreateNewsDataService possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `3` | `CreateNewsDatabaseService` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/service_creator.cpp) ; méthode IServiceCreator::CreateNewsDatabaseService possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `4` | `CreateOverwriteEventHolder` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/service_creator.cpp) ; méthode IServiceCreator::CreateOverwriteEventHolder possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `10100` | `PostLocalNews` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::PostLocalNews signale STUBBED ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `20100` | `SetPassphrase` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::SetPassphrase signale STUBBED ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `30100` | `GetSubscriptionStatus` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::GetSubscriptionStatus signale STUBBED ; pas de validation PS5) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `10100` | `PostLocalNews` | — | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `20100` | `SetPassphrase` | — | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `30100` | `GetSubscriptionStatus` | — | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `30101` | `GetTopicList` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::GetTopicList possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `30200` | `IsSystemUpdateRequired` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::IsSystemUpdateRequired signale STUBBED ; pas de validation PS5) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `30200` | `IsSystemUpdateRequired` | — | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `30300` | `RequestImmediateReception` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; slot news explicitement nullptr ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `30400` | `DecodeArchiveFile` | 3.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; slot news explicitement nullptr ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `30500` | `? (Takes a total of 8-bytes of input, a handle, and a type-0x9 input buffer, returns an IUnknown2)` | 8.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; ID 30500 renseigné comme Unknown30500, fonction historique non équivalente vérifiée ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `40100` | `SetSubscriptionStatus` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; slot news explicitement nullptr ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `40101` | `RequestAutoSubscription` | 3.0.0+ | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::RequestAutoSubscription signale STUBBED ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `40200` | `ClearStorage` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::ClearStorage signale STUBBED ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `40201` | `ClearSubscriptionStatusAll` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::ClearSubscriptionStatusAll signale STUBBED ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `90100` | `GetNewsDatabaseDump` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_service.cpp) ; méthode INewsService::GetNewsDatabaseDump signale STUBBED ; pas de validation PS5) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `40101` | `RequestAutoSubscription` | 3.0.0+ | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `40200` | `ClearStorage` | — | **IMPL-SRC** (efface réellement NewsStorage local ; vendor `229ebbc5`) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `40201` | `ClearSubscriptionStatusAll` | — | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `90100` | `GetNewsDatabaseDump` | — | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `0` | `Get` | — | **AMBIGU** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/newly_arrived_event_holder.cpp) ; ID 0 / Get partagé entre newly_arrived_event_holder.cpp et overwrite_event_holder.cpp ; owner non déterminé ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `0` | `Open` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_data_service.cpp) ; méthode INewsDataService::Open possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `1` | `OpenWithNewsRecordV1` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_data_service.cpp) ; méthode INewsDataService::OpenWithNewsRecordV1 possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
@@ -2466,16 +2472,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | news:a, news:c, news:m, news:p, news:v | `2` | `CountWithKey` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::CountWithKey possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `3` | `UpdateIntegerValue` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::UpdateIntegerValue possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `4` | `UpdateIntegerValueWithAddition` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::UpdateIntegerValueWithAddition possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
-| news:a, news:c, news:m, news:p, news:v | `5` | `UpdateStringValue` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::UpdateStringValue signale STUBBED ; pas de validation PS5) | 2026-11-22 |
+| news:a, news:c, news:m, news:p, news:v | `5` | `UpdateStringValue` | — | **NOOP** (backend Nintendo news/abonnements/colonnes texte non modélisé ; état local neutre documenté ; vendor `229ebbc5`) | 2026-11-22 |
 | news:a, news:c, news:m, news:p, news:v | `1000` | `GetList` | 6.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/bcat/news/news_database_service.cpp) ; méthode INewsDatabaseService::GetList possède un corps C++ ; pas de validation PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10100` | `SaveReportOld ([1.0.0-5.1.0] SaveReport)` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10100: historique SaveReportOld vs table SaveReportOld, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10101` | `SaveReportWithUserOld ([1.0.0-5.1.0] SaveReportWithUser)` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10101: historique SaveReportWithUserOld vs table SaveReportWithUserOld, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10102` | `SaveReport` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10102: historique SaveReport vs table SaveReportOld2, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10103` | `SaveReportWithUser` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; PREPO ID 10103: historique SaveReportWithUser vs table SaveReportWithUserOld2, variante HOS non certifiée ; audit statique, pas de validation PS5) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10200` | `RequestImmediateTransmission` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10300` | `GetTransmissionStatus` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10400` | `GetSystemSessionId` | 9.0.0+ | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20100` | `SaveSystemReport` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10200` | `RequestImmediateTransmission` | — | **NOOP** (transport télémétrie Nintendo absent ; reporter local conservé, état neutre explicite ; vendor `229ebbc5`) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10300` | `GetTransmissionStatus` | — | **NOOP** (transport télémétrie Nintendo absent ; reporter local conservé, état neutre explicite ; vendor `229ebbc5`) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10400` | `GetSystemSessionId` | 9.0.0+ | **NOOP** (transport télémétrie Nintendo absent ; reporter local conservé, état neutre explicite ; vendor `229ebbc5`) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20100` | `SaveSystemReport` | — | **IMPL-SRC** (ancienne variante sauvegarde maintenant le rapport système via Core::Reporter ; vendor `229ebbc5`) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20101` | `SaveSystemReportWithUser` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20200` | `SetOperationMode` | 4.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30100` | `ClearStorage` | — | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |

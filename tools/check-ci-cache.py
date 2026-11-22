@@ -112,7 +112,13 @@ syntax_gate = (root / "tools/check-native-source-syntax.py").read_text()
 assert 'HUD_GENERATED_CONSUMER = "headless/vulkan_window_adapt_r08.cpp"' in syntax_gate
 assert 'HUD_GENERATED_TARGET = "eden-vulkan-hud-shaders"' in syntax_gate
 assert '"cmake", "--build", str(native_build_dir.resolve())' in syntax_gate
-assert '"--target", HUD_GENERATED_TARGET' in syntax_gate
+# Syntax-only Clang bypasses Ninja's OBJECT_DEPENDS; both maintained
+# shader producers must be materialized before either native consumer.
+assert 'HOST_SHADER_GENERATED_TARGET = "host_shaders"' in syntax_gate
+assert 'required.append(HUD_GENERATED_TARGET)' in syntax_gate
+assert 'required.append(HOST_SHADER_GENERATED_TARGET)' in syntax_gate
+assert '"--target", target' in syntax_gate
+assert 'if any(consumer in selected for consumer in HOST_SHADER_CONSUMERS):' in syntax_gate
 assert syntax_gate.index("prepare_generated_prerequisites(args.native_build_dir, selected)") < syntax_gate.index("for relative in selected:")
 # The tracked French fallback is generated from fr-FR.po. A native build must
 # rematerialize it immediately before Ninja and reject any generator/source

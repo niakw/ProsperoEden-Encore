@@ -558,6 +558,21 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 723** : 2 166 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` Bluetooth / NX controller settings — 23/11/2026
+
+**Vendor `032e41924a3d82f654ebbab15601eb609dbf4fcf`** (arbre `e1e916b5e51b17b542eea5010889dacc850077fb`) sur la branche secondaire NS1.
+
+- **4 NULL → IMPL-SRC dans le miroir** : `Set/GetBluetoothDevicesSettings` (11/12) et `Get/SetNxControllerSettings` (97/98).
+- **2 handlers runtime supplémentaires hors miroir 4 853** : `Get/SetNxControllerSettingsEx` (205/206), présents dans libnx pour 13.0.0+ mais absents de l'index historique Markdown ; aucun +2 artificiel au compteur.
+- Bluetooth : structure libnx exactement **0x200 octets**, stockage local **10×0x200** ; compteur persistant lu/écrit sur ses 4 octets.
+- NX legacy : payload ABI **0x29 octets** dans un slot persistant 0x40 ; seuls les octets contractuels sont exposés et le padding local est remis à zéro sur Set.
+- NX Ex : payload ABI **0x42C octets** dans un slot persistant 0x800, même séparation entre données invitées et padding réservé.
+- Les buffers sont MapAlias, bornés à la capacité locale. Aucun backend Bluetooth/HID matériel n'est simulé.
+
+**Compteur historique : 1 438 IMPL-SRC / 110 PARTIEL / 149 STUB / 109 NOOP / 2 162 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 719** : 2 162 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -31,12 +31,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 73 | 3 | **76** |
 | **STUB — Stub / résultat simulé** | 347 | 0 | **347** |
-| **NOOP — No-op documenté** | 6 | 0 | **6** |
-| **NULL — Handler NULL** | 2 278 | 0 | **2 278** |
+| **NOOP — No-op documenté** | 7 | 0 | **7** |
+| **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 32 | 33 | **65** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 289 | 0 | **289** |
-| **ABSENT — Commande absente des tables** | 92 | 0 | **92** |
+| **ABSENT — Commande absente des tables** | 58 | 0 | **58** |
 | **ABI-DIFF — Noms/ABI divergents** | 283 | 0 | **283** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
@@ -53,6 +53,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 Ces classements réduisent les **absences non qualifiées**, pas le nombre de fonctions requises pour FC27. Les 2 278 `NULL` préexistants restent `NULL` et ne sont pas déclarés implémentés par politique.
 
+### Lot secondaire suivant — vidéo CAPS non prise en charge et NCM Rights ID
+
+**Vendor `ff082269`, gitlink épinglé sur cette branche.** Les **34 commandes de flux vidéo album CAPS** documentées mais absentes des tables (`caps:a` : 8, `caps:u` : 5, `caps:c` : 21) ont maintenant un slot `nullptr` explicite. Elles passent de **ABSENT à NULL**, sans enregistrement de session vidéo, sans faux succès, et sans prétention de capture vidéo PS5. Dans `ncm`, `InvalidateRightsIdCache` (ID 13) passe de **NULL à NOOP**, car `PlaceholderCache::GetRightsID` relit actuellement le fichier NCA à chaque demande sans cache mémoire de droits à vider.
+
+**Compteur source après ce lot :** 1 213 IMPL-SRC, 76 PARTIEL, 347 STUB, **7 NOOP**, **2 311 NULL**, 65 D, 191 INACCESSIBLE, 289 SERVICE-NON-EXPOSÉ, **58 ABSENT**, 283 ABI-DIFF, 12 AMBIGU et 1 E, toujours **4 853 entrées**. Il s'agit de qualification source, pas de nouveaux handlers de capture ni de gains de gameplay vérifiés.
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
@@ -62,12 +68,12 @@ pie showData
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 76
     "Stub / résultat simulé" : 347
-    "No-op documenté" : 6
-    "Handler NULL" : 2278
+    "No-op documenté" : 7
+    "Handler NULL" : 2311
     "Rejet explicite / historique" : 65
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 289
-    "Commande absente des tables" : 92
+    "Commande absente des tables" : 58
     "Noms/ABI divergents" : 283
     "Interface ambiguë" : 12
     "Non vérifié" : 0
@@ -2910,14 +2916,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:a | `10011` | `SetInternalErrorConversionEnabled` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `50000` | `LoadMakerNoteInfoForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `60002` | `OpenAccessorSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `2001` | `OpenAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:a | `2002` | `CloseAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:a | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:a | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:a | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:a | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:a | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:a | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID movie 2001–2008 absent de IAlbumAccessorService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:a | `2001` | `OpenAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:a | `2002` | `CloseAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:a | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:a | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:a | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:a | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:a | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:a | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:c | `2001` | `NotifyAlbumStorageIsAvailable` | — | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2002` | `NotifyAlbumStorageIsUnavailable` | — | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2011` | `RegisterAppletResourceUserId` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
@@ -2932,27 +2938,27 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:c | `60001` | `OpenControlSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2001` | `OpenAlbumMovieReadStream` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; ID 2001 connu mais nom SwitchBrew OpenAlbumMovieReadStream différent de la table NotifyAlbumStorageIsAvailable (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | caps:c | `2002` | `CloseAlbumMovieReadStream` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; ID 2002 connu mais nom SwitchBrew CloseAlbumMovieReadStream différent de la table NotifyAlbumStorageIsUnavailable (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2401` | `OpenAlbumMovieWriteStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2402` | `FinishAlbumMovieWriteStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2403` | `CommitAlbumMovieWriteStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2404` | `DiscardAlbumMovieWriteStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2405` | `DiscardAlbumMovieWriteStreamNoDelete` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2411` | `StartAlbumMovieWriteStreamDataSection` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2412` | `EndAlbumMovieWriteStreamDataSection` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2413` | `StartAlbumMovieWriteStreamMetaSection` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2414` | `EndAlbumMovieWriteStreamMetaSection` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2421` | `ReadDataFromAlbumMovieWriteStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2422` | `WriteDataToAlbumMovieWriteStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2424` | `WriteMetaToAlbumMovieWriteStream` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2431` | `GetAlbumMovieWriteStreamBrokenReason` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2433` | `GetAlbumMovieWriteStreamDataSize` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
-| caps:c | `2434` | `SetAlbumMovieWriteStreamDataSize` | — | **ABSENT** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; aucun slot équivalent dans la table du service examinée ; pas de validation PS5) | 2026-11-22 |
+| caps:c | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2401` | `OpenAlbumMovieWriteStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2402` | `FinishAlbumMovieWriteStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2403` | `CommitAlbumMovieWriteStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2404` | `DiscardAlbumMovieWriteStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2405` | `DiscardAlbumMovieWriteStreamNoDelete` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2411` | `StartAlbumMovieWriteStreamDataSection` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2412` | `EndAlbumMovieWriteStreamDataSection` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2413` | `StartAlbumMovieWriteStreamMetaSection` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2414` | `EndAlbumMovieWriteStreamMetaSection` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2421` | `ReadDataFromAlbumMovieWriteStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2422` | `WriteDataToAlbumMovieWriteStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2424` | `WriteMetaToAlbumMovieWriteStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2431` | `GetAlbumMovieWriteStreamBrokenReason` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2433` | `GetAlbumMovieWriteStreamDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:c | `2434` | `SetAlbumMovieWriteStreamDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | **STUB** ([source C++][ns1-src-073]) | 2026-11-22 |
 | caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | **PARTIEL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `103` | `DeleteAlbumFileByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
@@ -2966,11 +2972,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | **PARTIEL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `60002` | `OpenAccessorSessionForApplication` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `2001` | `OpenAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:u | `2002` | `CloseAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:u | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:u | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| caps:u | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **ABSENT** (source `sources/eden/src/core/hle/service/caps/caps_u.cpp` ; ID movie 2001–2005 absent de IAlbumApplicationService ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| caps:u | `2001` | `OpenAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:u | `2002` | `CloseAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:u | `2003` | `GetAlbumMovieReadStreamMovieDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:u | `2004` | `ReadMovieDataFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
+| caps:u | `2005` | `GetAlbumMovieReadStreamBrokenReason` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 
 ### Display services
 
@@ -4252,7 +4258,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Content Manager services | `10` | `InactivateContentStorage` | 2.0.0+ | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 10, handler explicitement nul ; source seulement) | 2026-11-22 |
 | Content Manager services | `11` | `ActivateContentMetaDatabase` | 2.0.0+ | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 11, handler explicitement nul ; source seulement) | 2026-11-22 |
 | Content Manager services | `12` | `InactivateContentMetaDatabase` | 2.0.0+ | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 12, handler explicitement nul ; source seulement) | 2026-11-22 |
-| Content Manager services | `13` | `InvalidateRightsIdCache` | 9.0.0+ | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 13, handler explicitement nul ; source seulement) | 2026-11-22 |
+| Content Manager services | `13` | `InvalidateRightsIdCache` | 9.0.0+ | **NOOP** (handler `NCM::InvalidateRightsIdCache` : `PlaceholderCache::GetRightsID` reparcourt la NCA à chaque appel ; aucun cache Rights ID Encore à invalider) | 2026-11-22 |
 | Content Manager services | `0` | `GeneratePlaceHolderId` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 0, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `1` | `CreatePlaceHolder` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 1, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `2` | `DeletePlaceHolder` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `IContentStorage` ID 2, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |

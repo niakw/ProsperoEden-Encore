@@ -23,15 +23,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 241 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 262 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 133 IPC et 80 SVC**. Les 114 entrées IPC supplémentaires (ACC/NFP) étaient précédemment `RACCORDÉ` parce que les méthodes sont définies dans les classes parentes. **Ces 1 213 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 161 | 80 | **1 241** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 182 | 80 | **1 262** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 76 | 3 | **79** |
-| **STUB — Stub / résultat simulé** | 325 | 0 | **325** |
-| **NOOP — No-op documenté** | 27 | 0 | **27** |
+| **STUB — Stub / résultat simulé** | 276 | 0 | **276** |
+| **NOOP — No-op documenté** | 55 | 0 | **55** |
 | **NULL — Handler NULL** | 2 311 | 0 | **2 311** |
 | **D — Rejet explicite / historique** | 36 | 33 | **69** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
@@ -136,16 +136,22 @@ Le manifeste `eden-backports` contient les empreintes SHA-256 exactes des deux n
 
 **Compteur : 1 241 IMPL-SRC, 79 PARTIEL, 325 STUB, 27 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
 
+### Lot STUB — friend / Palma / mm:u
+
+**Vendor `51e5cbde`.** Les 13 commandes `friend:*` deviennent des NOOP offline explicites ; les deux sorties auparavant incomplètes respectent désormais l’ABI (`PlayHistoryRegistrationKey` 0x40 et `PlayHistoryStatistics` u128). Sur Palma, 13 faux stubs sont requalifiés IMPL-SRC car ils pilotent réellement `ResourceManager::Palma` (état, événement et validation de handle), et 15 opérations purement matérielles deviennent NOOP documentées. Les erreurs `InvalidPalmaHandle` ne sont plus avalées sur plusieurs chemins. Les 8 commandes `mm:u` sont IMPL-SRC : elles maintiennent réellement les sessions et bornes min/max ; `GetOld` réserve maintenant la taille de réponse correcte.
+
+**Compteur : 1 262 IMPL-SRC, 79 PARTIEL, 276 STUB, 55 NOOP, 2 311 NULL, 69 D, 191 INACCESSIBLE, 306 SERVICE-NON-EXPOSÉ, 6 HORS-VERSION, 0 ABSENT, 285 ABI-DIFF, 12 AMBIGU, 1 E = 4 853.**
+
 ### Graphique — couverture source de l'inventaire NS1
 
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1241
+    "Implémentation source retrouvée" : 1262
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 79
-    "Stub / résultat simulé" : 325
-    "No-op documenté" : 27
+    "Stub / résultat simulé" : 276
+    "No-op documenté" : 55
     "Handler NULL" : 2311
     "Rejet explicite / historique" : 69
     "Interface parente non ouvrable" : 191
@@ -861,36 +867,36 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `406` | `GetNpadLeftRightInterfaceType` | 4.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `407` | `GetNpadOfHighestBatteryLevelForJoyLeft` | 9.0.0+ | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid_server.cpp) ; slot 407 actuel = GetNpadOfHighestBatteryLevel (nullptr), pas GetNpadOfHighestBatteryLevelForJoyLeft ; statique, PS5 non validé) | 2026-11-22 |
 | hid | `408` | `GetNpadOfHighestBatteryLevelForJoyRight` | 9.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `500` | `GetPalmaConnectionHandle` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `501` | `InitializePalma` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `502` | `AcquirePalmaOperationCompleteEvent` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `503` | `GetPalmaOperationInfo` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `504` | `PlayPalmaActivity` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `505` | `SetPalmaFrModeType` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `506` | `ReadPalmaStep` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `507` | `EnablePalmaStep` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `508` | `ResetPalmaStep` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `509` | `ReadPalmaApplicationSection` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `510` | `WritePalmaApplicationSection` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `511` | `ReadPalmaUniqueCode` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `512` | `SetPalmaUniqueCodeInvalid` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `513` | `WritePalmaActivityEntry` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `514` | `WritePalmaRgbLedPatternEntry` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `500` | `GetPalmaConnectionHandle` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `501` | `InitializePalma` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `502` | `AcquirePalmaOperationCompleteEvent` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `503` | `GetPalmaOperationInfo` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `504` | `PlayPalmaActivity` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `505` | `SetPalmaFrModeType` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `506` | `ReadPalmaStep` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `507` | `EnablePalmaStep` | 5.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `508` | `ResetPalmaStep` | 5.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `509` | `ReadPalmaApplicationSection` | 5.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `510` | `WritePalmaApplicationSection` | 5.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `511` | `ReadPalmaUniqueCode` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `512` | `SetPalmaUniqueCodeInvalid` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `513` | `WritePalmaActivityEntry` | 5.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `514` | `WritePalmaRgbLedPatternEntry` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
 | hid | `515` | `WritePalmaWaveEntry` | 5.0.0+ | **PARTIEL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `516` | `SetPalmaDataBaseIdentificationVersion` | 5.0.0+ | **PARTIEL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `517` | `GetPalmaDataBaseIdentificationVersion` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `518` | `SuspendPalmaFeature` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `519` | `GetPalmaOperationResult` | 5.1.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `520` | `ReadPalmaPlayLog` | 5.1.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `521` | `ResetPalmaPlayLog` | 5.1.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `522` | `SetIsPalmaAllConnectable` | 5.1.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `523` | `SetIsPalmaPairedConnectable` | 5.1.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `524` | `PairPalma` | 5.1.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `525` | `SetPalmaBoostMode` | 5.1.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `526` | `CancelWritePalmaWaveEntry` | 7.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `527` | `EnablePalmaBoostMode` | 8.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `528` | `GetPalmaBluetoothAddress` | 8.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `529` | `SetDisallowedPalmaConnection` | 8.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `517` | `GetPalmaDataBaseIdentificationVersion` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `518` | `SuspendPalmaFeature` | 5.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `519` | `GetPalmaOperationResult` | 5.1.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `520` | `ReadPalmaPlayLog` | 5.1.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `521` | `ResetPalmaPlayLog` | 5.1.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `522` | `SetIsPalmaAllConnectable` | 5.1.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `523` | `SetIsPalmaPairedConnectable` | 5.1.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `524` | `PairPalma` | 5.1.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `525` | `SetPalmaBoostMode` | 5.1.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `526` | `CancelWritePalmaWaveEntry` | 7.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `527` | `EnablePalmaBoostMode` | 8.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `528` | `GetPalmaBluetoothAddress` | 8.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
+| hid | `529` | `SetDisallowedPalmaConnection` | 8.0.0+ | **NOOP** (fonction Poké Ball Plus physique non modélisée ; comportement neutre explicite et sorties initialisées quand nécessaire ; vendor `51e5cbde`) | 2026-11-22 |
 | hid | `1000` | `SetNpadCommunicationMode` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `1001` | `GetNpadCommunicationMode` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `1002` | `SetTouchScreenConfiguration` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
@@ -3100,14 +3106,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IHdcpController | `1` | `GetHdcpAuthenticationState` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/service/common_state_getter.cpp` ; aucune interface IHdcpController ; commandes HDCP distinctes sous ICommonStateGetter ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | IHdcpController | `2` | `SetCurrentHdcpMode` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/service/common_state_getter.cpp` ; aucune interface IHdcpController ; commandes HDCP distinctes sous ICommonStateGetter ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | IHdcpController | `3` | `GetCurrentHdcpMode` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/service/common_state_getter.cpp` ; aucune interface IHdcpController ; commandes HDCP distinctes sous ICommonStateGetter ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| mm:u | `0` | `InitializeOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::InitializeOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
-| mm:u | `1` | `FinalizeOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::FinalizeOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
-| mm:u | `2` | `SetAndWaitOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::SetAndWaitOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
-| mm:u | `3` | `GetOld` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::GetOld LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
-| mm:u | `4` | `Initialize` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::Initialize LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
-| mm:u | `5` | `Finalize` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::Finalize LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
-| mm:u | `6` | `SetAndWait` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::SetAndWait LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
-| mm:u | `7` | `Get` | — | **STUB** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mm/mm_u.cpp) ; MM_U::Get LOG(STUBBED) / état émulé ; non certifié PS5) | 2026-11-22 |
+| mm:u | `0` | `InitializeOld` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
+| mm:u | `1` | `FinalizeOld` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
+| mm:u | `2` | `SetAndWaitOld` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
+| mm:u | `3` | `GetOld` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
+| mm:u | `4` | `Initialize` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
+| mm:u | `5` | `Finalize` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
+| mm:u | `6` | `SetAndWait` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
+| mm:u | `7` | `Get` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
 | vi:u | `0` | `[GetDisplayService](#vi:u "wikilink")` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_root_service.cpp) ; corps GetDisplayService appelle GetApplicationDisplayService avec la permission du service ; statique, PS5 non validé) | 2026-11-22 |
 | vi:u | `1` | `[GetDisplayServiceWithProxyNameExchange](#vi:u "wikilink")` | 9.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_root_service.cpp) ; slot exact ProxyNameExchange = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | vi:s | `1` | `[GetDisplayService](#vi:s "wikilink")` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_root_service.cpp) ; corps GetDisplayService appelle GetApplicationDisplayService avec la permission du service ; statique, PS5 non validé) | 2026-11-22 |
@@ -3532,29 +3538,29 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `CreateNotificationService` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend_interface.cpp) ; handler déclaré dans friend_interface.cpp et constructeur IPC implémenté dans friend.cpp ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `CreateDaemonSuspendSessionService` | 4.0.0+ | **NULL** ([source C++][ns1-src-081]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetCompletionEvent` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Cancel` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Cancel` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10100` | `GetFriendListIds` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10101` | `GetFriendList` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10101` | `GetFriendList` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10102` | `UpdateFriendInfo` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10110` | `GetFriendProfileImage` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10200` | `SendFriendRequestForApplication` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10211` | `AddFacedFriendRequestForApplication` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10400` | `GetBlockedUserListIds` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10400` | `GetBlockedUserListIds` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10500` | `GetProfileList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10600` | `DeclareOpenOnlinePlaySession` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10601` | `DeclareCloseOnlinePlaySession` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10610` | `UpdateUserPresence` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10700` | `GetPlayHistoryRegistrationKey` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10601` | `DeclareCloseOnlinePlaySession` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10610` | `UpdateUserPresence` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10700` | `GetPlayHistoryRegistrationKey` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10701` | `GetPlayHistoryRegistrationKeyWithNetworkServiceAccountId` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10702` | `AddPlayHistory` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `11000` | `GetProfileImageUrl` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20100` | `GetFriendCount` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20101` | `GetNewlyFriendCount` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20100` | `GetFriendCount` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20101` | `GetNewlyFriendCount` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20102` | `GetFriendDetailedInfo` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20103` | `SyncFriendList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20104` | `RequestSyncFriendList` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20104` | `RequestSyncFriendList` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20110` | `LoadFriendSetting` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20110 = LoadFriendSettingV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20200` | `GetReceivedFriendRequestCount` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20200` | `GetReceivedFriendRequestCount` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20201` | `GetFriendRequestList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20201 = GetFriendRequestListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20300` | `GetFriendCandidateList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20301` | `GetNintendoNetworkIdInfo` | 3.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
@@ -3567,14 +3573,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20501` | `GetRelationship` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20600` | `GetUserPresenceView` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20600 = GetUserPresenceViewV1 (handler raccordé) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20700` | `GetPlayHistoryList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20700 = GetPlayHistoryListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20701` | `GetPlayHistoryStatistics` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20701` | `GetPlayHistoryStatistics` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20800` | `LoadUserSetting` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20800 = LoadUserSettingV1 (handler raccordé) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20801` | `SyncUserSetting` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20900` | `RequestListSummaryOverlayNotification` | — | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20900` | `RequestListSummaryOverlayNotification` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `21000` | `GetExternalApplicationCatalog` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `22000` | `GetReceivedFriendInvitationList` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 22000 = GetReceivedFriendInvitationListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `22001` | `GetReceivedFriendInvitationDetailedInfo` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 22001 = GetReceivedFriendInvitationDetailedInfoV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `22010` | `GetReceivedFriendInvitationCountCache` | 9.0.0+ | **STUB** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; stub ami/présence explicitement déclaré ; qualification statique NS1) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `22010` | `GetReceivedFriendInvitationCountCache` | 9.0.0+ | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30100` | `DropFriendNewlyFlags` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30101` | `DeleteFriend` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30110` | `DropFriendNewlyFlag` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |

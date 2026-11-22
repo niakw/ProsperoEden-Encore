@@ -116,6 +116,12 @@ Vendor `e2da4886884f9dec2c6753db1de6e1048cfa095b` : `GetCacheStorageSize` passe 
 
 **Compteur courant : 1 241 IMPL-SRC / 79 PARTIEL / 325 STUB / 27 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Aucun test PS5 n'est déduit de cette qualification.
 
+## Lot STUB friend / Palma / mm:u — 22/11/2026
+
+Couple repointé vers vendor `51e5cbde026b62038ac7f3b2845d3d00d95eeff6`. `friend:*` est explicitement offline avec sorties ABI-correctes. Palma est séparé entre 13 commandes réellement adossées au ResourceManager et 15 opérations de matériel Poké Ball Plus volontairement NOOP ; les erreurs de handle sont propagées sur les chemins raccordés. `mm:u` conserve son état de session réel et corrige la réponse `GetOld`.
+
+**Compteur courant : 1 262 IMPL-SRC / 79 PARTIEL / 276 STUB / 55 NOOP / 2 311 NULL / 69 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.** Validation hôte/CI à refaire sur ce HEAD ; aucun résultat PS5 n'est déduit de ce classement.
+
 ---
 
 ## 1. Références et règle de vérité

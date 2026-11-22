@@ -26,6 +26,31 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 **Mise à jour fail-closed NVHOST (21/11)** : le vendor `f65ccc43` conserve l’ouverture des nodes `/dev/nvhost-*` inconnus nécessaire à la découverte NVN, mais leur fallback générique ne fabrique plus de sortie zéro/copiée ni de `Success`. Toute ioctl non couverte retourne désormais explicitement `NotImplemented` avec le marqueur `// not implemented yet on Encore`. Les handlers TSG authentifiés `BIND_CHANNEL`, `UNBIND_CHANNEL` et `BIND_CHANNEL_EX` restent actifs. **Aucune qualification PS5 n’est revendiquée.**
 
+### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
+
+> **Périmètre exact** : tables §1 à §12 de ce registre **sur `main`**, vérifiées sur moteur `1454df745f980d1db3448b0f4d63f5a41e7a7807`. Les 316 lignes sont des **entrées d'interface recensées**, pas la totalité du firmware SwitchBrew (ni les 4 903 lignes du catalogue NS1). Les ioctls historiques hors tables, les commandes debug S2 non énumérées (§13) et les variantes non recensées ne font pas partie du dénominateur. Ces comptes classent le **registre**, pas un nouveau test CMake/ELF/PS5.
+
+Deux dimensions **indépendantes** doivent être suivies, sans assimiler un stub à une implémentation :
+
+1. **Fonctionnelle (F)** : `C` = implémentation source renseignée, **144** ; `P` ou `C/P` = contrat partiel, **30** ; `M` = comportement non implémenté, **111**, qu'un stub existe ou non ; `U` = ABI/nature inconnue, **25** ; `V` = variante firmware non ciblée, **6**. `C` ne signifie **ni API exhaustive, ni build natif vert, ni succès console**.
+2. **Représentation (R) dans le registre** : **182/316** possèdent une entrée non vide dans la colonne « Handler Encore » : les **144 C**, **29 P**, **1 C/P**, **8 M** avec stub/refus explicite indiqué. **134/316** ne disposent **d'aucun handler renseigné** : **103 M**, **25 U**, **6 V**. La valeur « fail-closed » est parfois un refus du dispatcher, **pas nécessairement un handler C++ propre à l'ID**. `R=mentionné` n'est donc **pas** une preuve de branchement IPC natif ; la couverture déclarative réellement validée demande une vérification ID → enregistrement/fallback → ABI → code de retour dans le C++ sélectionné.
+
+| Statut fonctionnel | Total | Handler/stub/refus indiqué (R) | Aucun handler indiqué | Conséquence |
+| --- | ---: | ---: | ---: | --- |
+| C — couvert en source | 144 | 144 | 0 | À qualifier PS5 |
+| P — partiel | 29 | 29 | 0 | Compléter le contrat requis |
+| C/P — mixte | 1 | 1 | 0 | Examiner les deux chemins |
+| M — non implémenté | 111 | **8** | **103** | Ne pas confondre refus explicite et absence |
+| U — contrat inconnu | 25 | 0 | 25 | Ne pas inventer l'ABI |
+| V — variante hors version | 6 | 0 | 6 | Garder conditionné au firmware |
+| **Total** | **316** | **182** | **134** | **R ≠ F ≠ validation console** |
+
+**Détail des huit `M` avec traitement indiqué :** GSV `1001`/`1002` → `UnavailableVideoEncoder` ; channel `0x00004810`/`0x00004811` → refus `fail-closed` ; TSG `0x00005405`, `0xC0105409`, `0xC018540C`, `0xC008540D` → refus `TsgIoctl fail-closed`. Ces huit restent **M fonctionnels**.
+
+**Consignes de mise à jour :** garder les statuts C/P/M/U/V et ajouter séparément le niveau de représentation (handler spécifique / stub sûr / refus générique / aucun / version exclue), avec chemin CMake/owner actif et commit moteur/vendor. Ne cocher « déclaré » comme **validé** qu'après contrôle de l'enregistrement ou du fallback réellement compilé. Un stub qui retourne `Success`/`0` sans exécuter une action mémoire, GPU, synchronisation ou sécurité est interdit. Ne pas ajouter de stub pour un payload/ABI inconnu ; ne pas détourner le P0 première soumission GPU / première frame pour caméra/profiler.
+
+---
+
 ## 1. UserSession GSV — liste SwitchBrew complète
 
 État initial : 142 commandes recensées ; C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.

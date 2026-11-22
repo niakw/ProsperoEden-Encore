@@ -1846,8 +1846,56 @@ else:
 print("ENCORE_DIAGNOSTICS_NET_POST_F07_OWNER_PASS",
       f"owners={len(post_f07_diagnostics_net_present)}")
 
+# Exact NS1/NS2 integration cohort: these 33 maintained C++/header owners
+# arrived after the historical 337-path F07 ledger. Review each source
+# through its pinned vendor tree; never re-date it as an F07 source.
+merged_ns1_ns2_owner_blobs = {
+    "eden-core/include/video_core/engines/maxwell_dma.h": "457361bc15a68aed231111e66e5617d6f9585d82",
+    "eden-core/overrides/video_core/cdma_pusher.h": "72338d9e2c07f2ebe019450c8b608df802738449",
+    "eden-core/overrides/video_core/host1x/control.h": "fc1c4e3d47bdcf8ef282da02410940432051fcca",
+    "eden-core/overrides/video_core/host1x/host1x.h": "d716ee97dd8be807d2f29219c4b0c7072ed6b028",
+    "eden-core/overrides/video_core/host1x/syncpoint_manager.h": "4f45e7ca10bef7fadf94b4d08a310dea953e7315",
+    "eden-core/src/core/hle/kernel/svc/svc_cache.cpp": "e891c2512eb6b7da9a7493af29f6623fc22adc40",
+    "eden-core/src/video_core/cdma_pusher.cpp": "91ace41154430a718cd163ceacd45b9607b63d43",
+    "eden-core/src/video_core/host1x/control.cpp": "fcbf4e092f054724b9fd4731c8dfec9917cea27a",
+    "eden-core/src/video_core/host1x/host1x.cpp": "1815363b19282be07bb4217dd01f369a38e53272",
+    "eden-core/src/video_core/host1x/nvdec.cpp": "c83ac98215fcf196ec8b2927ec9a421ddf95c9f7",
+    "eden-core/src/video_core/texture_cache/format_lookup_table.cpp": "a3b26a963dddab598610003563fde95d2472058e",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_context_get_set.cpp": "eed2bdd4df5e5512098adfe262339ad8616b6c4c",
+    "eden-shader/src/shader_recompiler/backend/glasm/emit_glasm_memory.cpp": "86b9c091674da72d085d9b3128827705e6a8de9b",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_atomic.cpp": "761a11801d03335d588b9f5758a9728e042a888b",
+    "eden-shader/src/shader_recompiler/backend/glsl/emit_glsl_context_get_set.cpp": "65bd22b3821acfadddf8b1ac4f1bf31cb399940c",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_atomic.cpp": "fc5a7314c680be851c2eb6ae0dee6d27e51c7f38",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_context_get_set.cpp": "98afe1f9f09c0a1da45bfbfa0b0c7646e3067235",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_floating_point.cpp": "276d7f9f9e26b24b01e7afa3e9ea60dc189740f3",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image.cpp": "ce9c143a794294bdfa3db9997a4dd44798cafd49",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_image_atomic.cpp": "a24136b8f088f6c2c2a46661214e420d25423a7a",
+    "eden-shader/src/shader_recompiler/backend/spirv/emit_spirv_memory.cpp": "6e6994343df4a1e3930495f8fd575c4329bfa8c4",
+    "eden-shader/src/shader_recompiler/backend/spirv/spirv_emit_context.cpp": "b28be237b6b0b15daa6a0ffdbcabbe2c498c309f",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/control_flow.cpp": "ea26c7464a02ce95af8709d8388e0899fe2c1425",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_global_memory.cpp": "ee938cd456ca3f10cdece6eaf93c4024fd587a9b",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/atomic_operations_shared_memory.cpp": "5ab0cf6d097436d16f32f71b20fb00cca0305e80",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_add.cpp": "7d4d49dfe8978c659ec3bee04d15ca38b47a2d08",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_fused_multiply_add.cpp": "94c55722641216e5474954b87ca3760b4974ed48",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/double_multiply.cpp": "4986be75ce991e9758066746a73841b78031c50a",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_add.cpp": "00d0eb71220ed43abc2b8c006a69ed8fd175164f",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_fused_multiply_add.cpp": "f56ece313ee619e02d317b9948ac9f091d13907c",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_min_max.cpp": "903e783f593b3be94e2e6611610f6fe8b11a781c",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp": "315c3c7c821016f23af7d2c6ffc8d7ca3a4ebe09",
+    "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp": "e112f14eed85a6ac974a1d81a92d6952dfe57df3",
+}
+merged_owner_present = set(merged_ns1_ns2_owner_blobs) & set(physical_all)
+assert not (merged_owner_present & set(research_paths))
+if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+    assert merged_owner_present == set(merged_ns1_ns2_owner_blobs), (
+        'Missing integrated source owner', sorted(set(merged_ns1_ns2_owner_blobs) - merged_owner_present))
+    for relative, expected_blob in merged_ns1_ns2_owner_blobs.items():
+        data = (active / relative).read_bytes()
+        actual_blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+        assert actual_blob == expected_blob, ('Integrated source blob drift', relative, actual_blob)
+
 physical = [p for p in physical_all
-            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
+            if p not in post_f07_r23_added_owners | post_f07_c03_radv_meta_owners | merged_owner_present | ns2_production_added_owners | set(research_paths) | shared_ns2_kernel_owners | shared_ns2_audio_owners |
             shared_ns2_gpu_access_owners | post_f07_native_vulkan_owners |
             shared_compute_owners | native_typed_texture_owners |
             shared_gpu_scalar_owners | shared_gpu_remap_owners |

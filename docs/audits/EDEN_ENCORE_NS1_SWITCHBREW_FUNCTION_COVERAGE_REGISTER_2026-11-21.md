@@ -600,6 +600,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 713** : 2 156 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot NCM racine — vérification caches et lifecycle — 23/11/2026
+
+**Vendor `67db89c1195d79ee731fc783088ec38083804050`** (arbre `a477fa09a667ba6144e31aaf59921386067ce4ee`) sur la branche secondaire NS1.
+
+- `VerifyContentStorage` (2) et `VerifyContentMetaDatabase` (3) : **2 NULL → IMPL-SRC**. Le premier exige `RegisteredCache + PlaceholderCache`, le second le `RegisteredCache` réellement utilisé par `IContentMetaDatabase`.
+- `CloseContentStorageForcibly` (6), `CloseContentMetaDatabaseForcibly` (7), `Activate/InactivateContentStorage` (9/10) et `Activate/InactivateContentMetaDatabase` (11/12) : **6 NULL → NOOP documentés**. Encore conserve ces caches sous `FileSystemController` pendant la session et ne possède pas de daemon NCM séparé à activer/inactiver.
+- Les six commandes lifecycle valident tout de même le `StorageId` par présence du backend correspondant et échouent sur un stockage inexistant ; aucun succès aveugle.
+- ABI vérifiée avec libnx : les huit commandes prennent un `NcmStorageId` brut.
+
+**Compteur historique : 1 445 IMPL-SRC / 110 PARTIEL / 149 STUB / 116 NOOP / 2 148 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 705** : 2 148 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

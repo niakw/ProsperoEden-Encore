@@ -161,6 +161,8 @@ for module, changes in edits.items():
         from ns2.native_astc_vendor_parity import (
             strip_p22_runtime_cpp, strip_p25_reinterpret,
             strip_post_n73_msaa_framebuffer_source, strip_same_image_blit_layout,
+            strip_gpu51_x8d24_conversion, strip_gpu47_framebuffer_device_limits,
+            strip_gpu46_framebuffer_layer_source, strip_gpu18_d32_depth_plane,
         )
         # Preserve P2.5 depth/stencil and disjoint copy-buffer protections
         # in both generator and production. Undo only the individually
@@ -182,7 +184,19 @@ for module, changes in edits.items():
         # source-offset change after the original six-hunk R23 receipt.
         # Reconstruct the old byte-identical owner in memory, never bypass
         # the historical oracle for any other source drift.
-        before_r23_tir = strip_same_image_blit_layout(current)
+        # The selected Vulkan TU also contains later NS1 GPU-51/47/46/18
+        # deltas. Reverse their independently SHA-pinned source transforms
+        # before the older NS2 R23/TIR receipt, exactly as the N57 parity
+        # oracle does. Keep the real shipping source in 'current'.
+        historical_texture = strip_gpu51_x8d24_conversion(current)
+        historical_texture = strip_gpu47_framebuffer_device_limits(historical_texture)
+        historical_texture = strip_gpu46_framebuffer_layer_source(historical_texture)
+        if "mixed_d32_depth_plane" in historical_texture:
+            assert git_blob(historical_texture.encode()) == (
+                "88c2221eae24b0b3c46e81dfdb27c3a833f77fc6"
+            ), "Unreviewed GPU-18 Vulkan texture source"
+            historical_texture = strip_gpu18_d32_depth_plane(historical_texture)
+        before_r23_tir = strip_same_image_blit_layout(historical_texture)
         if git_blob(before_r23_tir.encode()) == "2b344e2c9adce18a7037194cc4d5f81a5c6df144":
             msaa_new = (
                 "// CopyBufferToImage places each region at image_offset in the\n"

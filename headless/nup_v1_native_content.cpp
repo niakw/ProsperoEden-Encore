@@ -8,6 +8,7 @@
 
 #include "core/file_sys/common_funcs.h"
 #include "core/file_sys/program_metadata.h"
+#include "core/loader/loader.h" // Loader::ResultStatus has only a forward declaration in program_metadata.h
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/vfs/vfs.h"
 

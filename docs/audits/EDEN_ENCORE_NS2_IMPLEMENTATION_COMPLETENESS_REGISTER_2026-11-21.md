@@ -339,7 +339,7 @@ Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Le
 | 203 | GetVmUserRanges (libounce/Ounce) | C | HANDLER INDIQUÉ | GetVaRange | 72 B exacts : `count=1` + 4 ranges ; `[0x08000000,0xBFFFFFFFFF]` inclusif puis trois ranges nuls |
 
 
-**Écart Lichii hors catalogue SwitchBrew §6** : neuf stubs opaques `23`, `24`, `25`, `34`, `51`, `8001`–`8004` de l'interface GPU ne sont pas des handlers nommés dans le parent `IGpuSession` ni dans `IGpuWorker`. Ils reçoivent cependant un `Kernel::ResultNotImplemented` du fallback `IGpuSession::HandleSyncRequest`, sans preuve d'échec d'un titre (détails §17).
+**Complétion Lichii hors catalogue SwitchBrew §6 (23/11)** : les neuf stubs opaques `23`, `24`, `25`, `34`, `51`, `8001`–`8004` sont désormais **nommés dans `IGpuSession`** et dispatchés vers `RejectOpaqueNx2Command` (vendor `716e069f`). Leur ABI reste inconnue : réponse `ResultNotImplemented`, contrairement aux réponses zéro de Lichii. Ils ne sont pas ajoutés aux 316 commandes SwitchBrew (détails §17).
 
 **Recoupement client libounce/OunceVK** : cmd 203 est désormais qualifié par un consommateur réel : `gsvGpuGetVmUserRanges` lit `u64 count + GsvGpuVaRange[4]` (72 B), et OunceVK exige un unique range `[0x08000000,0xBFFFFFFFFF]` avant l’import AS.
 
@@ -505,6 +505,8 @@ Le critère de sortie **source** est borné au boot, au GPU, à la mémoire, aux
 
 ## 15. État console / critère de fermeture
 
+**Correctifs de compilation identifiés, non encore validés par un nouveau build :** sur le moteur, inclusion de `core/loader/loader.h` dans `headless/nup_v1_native_content.cpp` pour la définition complète de `Loader::ResultStatus` ; sur le vendor `716e069f`, virgule ajoutée à l'entrée `DestroyRewriteRule` de `nifm.cpp`. Ces correctifs n'impliquent pas que le build sera vert.
+
 **Actualisation build 23/11, couple moteur `1b772815` / vendor `ee20b5a0` :** [run 45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) a échoué à la fin de la compilation native (Ninja, vers 1459/1463 unités), sur **deux causes C++ distinctes** : (1) `headless/nup_v1_native_content.cpp:50` utilise `Loader::ResultStatus::Success` avec un type incomplet ; (2) `vendor/encore-active/ns2-runtime/hle/core/hle/service/nifm/nifm.cpp:1111` a une initialisation de table incohérente (accolade manquante, puis échec `RegisterHandlers`). **Pas d'ELF/package installable, pas de validation PS5 de ces correctifs.** Ces erreurs de build ne sont pas des écarts Lichii de table de commandes.
 
 Les derniers logs NS2 représentatifs disponibles avant ce registre pour Mario Kart World et Donkey Kong Bananza indiquaient toujours **`gpu_submit_sample=0`** et **`guest_frame_handoff=0`**. Ce registre ne change pas ce fait.
@@ -530,7 +532,9 @@ Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew
 
 ## 17. Parité structurelle avec Lichii `nx2` — suivi complémentaire daté du 23/11/2026
 
-**Réponse vérifiable :** dans les huit tables d'interfaces examinées, **221 / 230** IDs Lichii ont un handler **nommé** chez Encore ; **9 / 230** ne possèdent qu'un fallback de refus explicite dans `IGpuSession`. Cela suffit à dire qu'il n'y a pas de commande silencieusement acceptée parmi ces 230 IDs, **pas** à déclarer la parité de tables stricte ni l'architecture NS2 entière exhaustive. Les stubs de Lichii comptent bien comme **structure présente**, indépendamment de leur fonctionnalité ; Encore doit toutefois enregistrer leur existence (ou documenter une exception), sans renvoyer de faux `Success`.
+**Actualisation de source (après le relevé initial) :** vendor [`716e069f212b89b6fd13af56b0677343cf41ba07`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/716e069f212b89b6fd13af56b0677343cf41ba07) remplace la révision `ee20b5a0` dans le prochain gitlink moteur ; **230/230 IDs nommés**. Le snapshot précédent et son build rouge sont conservés comme provenance historique. L'exécution native à ce nouveau SHA n'est pas encore qualifiée.
+
+**Réponse actualisée :** dans les huit tables d'interfaces examinées, **230 / 230 IDs Lichii ont un handler nommé chez Encore**, sans fallback nécessaire pour ces IDs. Les neuf stubs auparavant absents de la table GPU sont nommés depuis vendor `716e069f`. **Parité des identifiants de ces huit tables : complète.** Cela ne certifie **ni les retours exacts des stubs ni les autres services et ABI NS2**. Les stubs de Lichii sont acceptés comme structure, mais ne deviennent pas des fonctionnalités émulées.
 
 ### 17.1 Couple de révisions, périmètre et règle de comptage
 
@@ -550,10 +554,10 @@ Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew
 | Chat — `INx2ChatGsvSession` | 3 | 3 | 0 | Événements et virtual display encore à qualifier pour ABI et effet. |
 | Camera — `INx2CameraSession` | 3 | 3 | 0 | Stubs acceptés comme structure, pas comme capture caméra fonctionnelle. |
 | Video — `INx2VideoSession` | 17 | 17 | 0 | `210` est un refus explicite de mémoire distante chez Encore, contre une réponse `Success` de stub chez Lichii : divergence comportementale connue. |
-| GPU parent + worker — `INx2GpuSession` | **28** | **19** | **9** | 11 IDs nommés dans `IGpuSession`, 8 autres dans `IGpuWorker` ; les 9 autres sont des stubs opaques Lichii traités par fallback Encore. |
-| **Total des 8 tables comparées** | **230** | **221** | **9** | **96,1 % de représentation nommée.** Les 9 autres sont fail-closed, mais ne prouvent pas une parité stricte des tables. |
+| GPU parent + worker — `INx2GpuSession` | **28** | **28** | **0** | 20 IDs nommés dans `IGpuSession`, 8 autres dans `IGpuWorker` ; les neuf stubs auparavant génériques sont nommés et refusent `NotImplemented` (réponse différente des stubs zéro Lichii). |
+| **Total des 8 tables comparées** | **230** | **230** | **0** | **100 % des ID de ces 8 tables ont un handler nommé.** Cette parité structurelle des tables ne démontre pas l'équivalence ABI/IPC ni la couverture des autres services. |
 
-**9 écarts stricts de déclaration** : dans `INx2GpuSession` Lichii, les commandes `23`, `24`, `25`, `34`, `51`, `8001`, `8002`, `8003`, `8004` utilisent `StubReplyZeroed`. Elles ne sont **pas** inscrites nommément dans `IGpuSession` ou `IGpuWorker` d'Encore ; `IGpuSession::HandleSyncRequest` renvoie néanmoins `Kernel::ResultNotImplemented` pour leurs ID inconnus. **Aucun crash, besoin de jeu ni oubli fonctionnel P0 n'est déduit de ces neuf différences.** Pour une déclaration « tables strictement complètes », il faut traiter ou justifier explicitement ces neuf cas sans inventer leur ABI.
+**9 écarts de déclaration clôturés au niveau source :** les commandes `23`, `24`, `25`, `34`, `51`, `8001`, `8002`, `8003`, `8004` ont maintenant chacune une entrée dans `IGpuSession::IGpuSession` vers `RejectOpaqueNx2Command`, avec test de présence des neuf IDs et du refus fail-closed dans `tests/ns2_gpu_partition_new_sdk_source.py`. **Une différence de comportement reste assumée :** `StubReplyZeroed` chez Lichii et `ResultNotImplemented` chez Encore. Aucun test PS5 de ces commandes n'a encore été reçu.
 
 **Autres différences de comportement sans manque d'ID** : VI2 inconnu et Syncpt `21` peuvent produire une sortie nulle chez Lichii et `NotImplemented` chez Encore ; vidéo `210` retourne `Success` chez Lichii mais est refusée chez Encore tant que son backend remote-memory est absent. Un stub Lichii **compte comme structure**, mais **son retour n'établit pas une implémentation fonctionnelle ni la sécurité d'un faux succès** sur PS5.
 
@@ -562,7 +566,7 @@ Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew
 | Domaine | Constat sur le couple moteur/vendor | Travail exact restant pour annoncer la parité structurelle |
 | --- | --- | --- |
 | **GSV / VI2 / Syncpt / GPU Time / Chat / Camera / Video** | IDs comparés exhaustivement **dans ces tables-là**, pas toutes les sous-interfaces ni tous les modes | ABI des arguments/réponses, types de handles, events, buffers, versions et sémantique des stubs Lichii à comparer avant une équivalence fonctionnelle |
-| **GPU Session / Worker** | **9 IDs Lichii opaques sans handler nommé**, mais fallback explicite ; 19/28 nommés dans l'union des deux services Encore | Décision ciblée sur les neuf stubs : nommer et refuser sans faux `Success`, ou décrire l'exception acceptée ; valider séparément la progression GPFIFO |
+| **GPU Session / Worker** | **28/28 IDs nommés**, dont neuf stubs explicitement enregistrés sur `IGpuSession` | Équivalence des réponses stub/ABI non démontrée ; vérifier séparément la progression GPFIFO |
 | **AM / appletOE / SelfController** | C++ Lichii/overlays `ns2-runtime/hle/.../am`, `am_structure`, `self_controller` présents ; comparaison globale **non réalisée** | Diff versionné des IDs, des interfaces enfants et de l'ABI, puis CMake/nomenclature pour tous les propriétaires réellement sélectionnés |
 | **HID** | Intégrations NS2 (Nmouse, vibration `213/214`) présentes ; parité totale **non mesurée** | Comparer toutes les commandes, leurs versions firmware et les stubs Lichii au `hid_server.cpp/.h` actif |
 | **ACC / SET / NIFM / audio / CAPS / LM / MII** | Sources d'overlays présents dans `ns2-runtime/hle/core/hle/service/` ; ACC `130` corrigée ; **pas de ratio global vérifié** | Recouper les tables Lichii service par service, les objets et les résultats IPC ; ne pas inférer le statut depuis un répertoire présent |
@@ -572,7 +576,7 @@ Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew
 ### 17.4 Critères de fermeture, sans confondre les objectifs
 
 1. **SwitchBrew (§0–§16) :** compteur F/R de **316 commandes**, actuellement **175 C / 3 P / 108 M / 24 U / 6 V**, **316/316 avec comportement de dispatch identifié**. Ce n'est pas un certificat d'implémentation complète.
-2. **Parité des huit tables Lichii :** actuellement **221/230 entrées nommées + 9 fallback**, sans commande non reconnue sans réponse. Fermer les neuf différences ou les qualifier explicitement ; chaque divergence de réponse reste distincte de la présence de l'ID.
+2. **Parité des huit tables Lichii :** **230/230 entrées nommées**, **0 fallback pour ces IDs** sur le vendor `716e069f` ; la différence de réponse des stubs reste documentée et ne vaut pas conformité des ABIs.
 3. **Parité structurelle NS2 globale :** comparaison **non terminée** pour AM, HID, ACC, réseau, fichiers, kernel et variantes. **Aucun « 100 % NS2 vs Lichii » n'est revendiqué sans diff réellement réalisé.**
 4. **Boot PS5 :** exiger un build valide à SHAs moteur/vendor connus et une preuve console des premières soumissions GPU `gpu_submit_sample > 0`, puis `guest_frame_handoff > 0` et première image invitée réelle. Ce n'est **pas** un sous-compteur de parité structurelle.
 

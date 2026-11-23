@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 431 | 0 | **1 431** |
-| **D — Rejet explicite / historique** | 207 | 33 | **240** |
+| **NULL — Handler NULL** | 1 428 | 0 | **1 428** |
+| **D — Rejet explicite / historique** | 210 | 33 | **243** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -1563,7 +1563,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `0` | `CreateApplication` | — | **IMPL-SRC** ([source C++][ns1-src-002]) | 2026-11-22 |
 | appletAE | `1` | `PopLaunchRequestedApplication` | — | **NULL** ([source C++][ns1-src-002]) | 2026-11-22 |
 | appletAE | `10` | `CreateSystemApplication` | — | **IMPL-SRC** ([source C++][ns1-src-002]) | 2026-11-22 |
-| appletAE | `100` | `PopFloatingApplicationForDevelopment` | — | **NULL** ([source C++][ns1-src-002]) | 2026-11-22 |
+| appletAE | `100` | `PopFloatingApplicationForDevelopment` | — | **D** (commande debug/develop explicitement rejetée sur runtime release ; vendor `d1f92eee`, moteur `e0990b2f`) | 2026-11-23 |
 | appletAE | `0` | `GetAppletStateChangedEvent` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `1` | `IsCompleted` | — | **IMPL-SRC** (source `sources/eden/src/core/hle/service/am/service/library_applet_accessor.cpp` ; ILibraryAppletAccessor::IsCompleted possède un corps C++ raccordé ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `10` | `Start` | — | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
@@ -1645,7 +1645,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `20` | `SetHandlingHomeButtonShortPressedEnabled` | 8.0.0+ | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `30` | `SetHealthWarningShowingState` | 9.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `90` | `SetRequiresGpuResourceUse` | 7.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
-| appletAE | `101` | `BeginToObserveHidInputForDevelop` | 5.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
+| appletAE | `101` | `BeginToObserveHidInputForDevelop` | 5.0.0+ | **D** (commande debug/develop explicitement rejetée sur runtime release ; vendor `d1f92eee`, moteur `e0990b2f`) | 2026-11-23 |
 | appletAE | `20` | `GetApplicationFunctions` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/application_proxy.cpp)) | 2026-11-22 |
 | appletAE | `1` | `PopLaunchParameter` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `10` | `CreateApplicationAndPushAndRequestToStart` | — | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1794,7 +1794,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `91` | `GetAccumulatedSuspendedTickChangedEvent` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `100` | `SetAlbumImageTakenNotificationEnabled` | 7.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; conserve la préférence de notification album dans l'état applet) | 2026-11-23 |
 | appletAE | `110` | `SetApplicationAlbumUserData` | 8.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `1000` | `GetDebugStorageChannel` | 7.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `1000` | `GetDebugStorageChannel` | 7.0.0+ | **D** (commande debug/develop explicitement rejetée sur runtime release ; vendor `d1f92eee`, moteur `e0990b2f`) | 2026-11-23 |
 | appletAE | `0` | `Push` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `1` | `Unpop` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `2` | `Pop` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
@@ -6390,3 +6390,10 @@ Vendor `4d8e9da8463ba452f6f3ab8b7119079e18a1c541` → gitlink moteur `7c021841ca
 Vendor `4834515326ac41e679413970783baaf304fb5705` → gitlink moteur `e271ed8ef7d0dd1d9a4bf13d378051164f41ee5f`. `IAllSystemAppletProxiesService` rejette 3 commandes debug/develop, `IHomeMenuFunctions` en rejette 2, et l'ensemble des slots de `IDebugFunctions` est désormais explicitement fail-closed au lieu d'être `nullptr`. **19 lignes matérialisées dans le catalogue passent NULL → D**. Aucun comportement Home Menu, applet, invitation ou canal debug n'est simulé.
 
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 431 NULL / 240 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 846.**
+
+
+### AppletAE — trois commandes develop/debug restantes rejetées (23/11/2026)
+
+Vendor `d1f92eee4c7557bd281ec481de521c178f0c6645` → gitlink moteur `e0990b2f7358c9dc622c1ca05d31286b13b5c03b` : `PopFloatingApplicationForDevelopment`, `GetDebugStorageChannel` et `BeginToObserveHidInputForDevelop` sont explicitement rejetées sur le runtime release. **3 NULL → D**.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 428 NULL / 243 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 843.**

@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 453 | 0 | **1 453** |
-| **D — Rejet explicite / historique** | 185 | 33 | **218** |
+| **NULL — Handler NULL** | 1 450 | 0 | **1 450** |
+| **D — Rejet explicite / historique** | 188 | 33 | **221** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -2153,9 +2153,9 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `97` | `GetMainApplicationProgramIndexByApplicationLaunchInfo` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `98` | `EnableApplicationAllThreadDumpOnCrash` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `99` | `LaunchDevMenu` | 8.0.0+ | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `100` | `ResetToFactorySettings` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `101` | `ResetToFactorySettingsWithoutUserSaveData` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `102` | `ResetToFactorySettingsForRefurbishment` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `100` | `ResetToFactorySettings` | — | **D** (rejet explicite fail-closed sur runtime release ; aucune réinitialisation de l'état hôte/PS5 n'est effectuée ; vendor `4d8e9da8`, moteur `7c021841`) | 2026-11-23 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `101` | `ResetToFactorySettingsWithoutUserSaveData` | — | **D** (rejet explicite fail-closed sur runtime release ; aucune réinitialisation de l'état hôte/PS5 n'est effectuée ; vendor `4d8e9da8`, moteur `7c021841`) | 2026-11-23 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `102` | `ResetToFactorySettingsForRefurbishment` | — | **D** (rejet explicite fail-closed sur runtime release ; aucune réinitialisation de l'état hôte/PS5 n'est effectuée ; vendor `4d8e9da8`, moteur `7c021841`) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `200` | `CalculateUserSaveDataStatistics` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `201` | `DeleteUserSaveDataAll` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `210` | `DeleteUserSystemSaveData` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -6376,3 +6376,10 @@ Vendor `6c138572804b27e7a7248be1654a10529e2dcb61`, gitlink moteur `2f2dcd4649aca
 Vendor `e347b4949305f1f57de94713437218459697bee0` → gitlink moteur `b8879fd60961b285d3b52c428e5a788a7a76b795` : `ISystemDisplayService` cmd1200/1202/1203 sont maintenant des handlers actifs. `GetZOrderCountMin` renvoie 0, `GetZOrderCountMax` 15 et `GetDisplayLogicalResolution` partage les dimensions dockées/portables déjà utilisées par Applet/VI. Les ABI 23.0.1 ont été recroisées avant raccord. **3 NULL → IMPL-SRC**. Les commandes position/taille/alpha restent ouvertes car le SurfaceFlinger Encore ne stocke pas encore ces propriétés.
 
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 453 NULL / 218 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 868.**
+
+
+### NS Factory Reset — rejet explicite release (23/11/2026)
+
+Vendor `4d8e9da8463ba452f6f3ab8b7119079e18a1c541` → gitlink moteur `7c021841caa80226534cb29bf48bd19e6b618b69`. Les 7 slots de `IFactoryResetInterface` utilisent désormais un handler commun qui rejette explicitement la demande. Les trois lignes historiques présentes dans le catalogue (100–102) passent **NULL → D**. Aucun effacement des saves, NAND ou données hôte/PS5 n'est simulé.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 450 NULL / 221 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 865.**

@@ -1342,6 +1342,21 @@ Le même patch corrige une divergence ABI existante de `BatteryChargeInfoFields`
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot audctl — cible audio, play-report et tri firmware — 23/11/2026
+
+**Vendor `c67f77d5b33e71ca70621ab4637f559a420d998d`** (arbre `9e60f3bc7e6a85b5f6c5fb6d4ce79ece460be73e`), propriétaire actif `encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp`.
+
+- `Set/GetDefaultTarget` (7/8), `SetOutputTarget` (15), `SetInputTargetForceEnabled` (16), `GetAudioOutputTargetForPlayReport` (21) et `Set/GetSystemOutputMasterVolume` (23/24) sont raccordés. La cible active applique le volume/mute déjà maintenu et signale `AcquireTargetNotification`.
+- 7, 16 et 23 restent **PARTIELS** : les temps de fade, le routage d'entrée forcé et le gain master ne sont pas encore appliqués de bout en bout. 8, 15, 21 et 24 sont classés **IMPL-SRC**.
+- libnx confirme que `IsTargetConnected` (6) s'arrête à 17.0.1, `Set/GetForceMutePolicy` (11/12) à 13.2.1, et les événements play-report 19/20 à 13.2.1 : **5 entrées → HORS-VERSION** pour HOS23.
+- Le conflit de nomenclature entre `AudioTarget` libnx et `AudioOutputModeTarget` historique Eden/Lichii-rust reste explicitement ouvert ; aucune remap numérique spéculative n'a été introduite.
+
+**Compteur historique : 1 537 IMPL-SRC / 142 PARTIEL / 124 STUB / 141 NOOP / 1 713 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 330 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 259** : 1 713 NULL + 124 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

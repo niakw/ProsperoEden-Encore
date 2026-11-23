@@ -922,6 +922,21 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 529** : 1 984 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot PCTL — liste FreeCommunication stateful — 23/11/2026
+
+**Vendor `0baa3af3f57d883be26587f11ab7bc586e4f79d5`** (arbre `6ea443768cb417cace310e087f52b4250d14f3a2`) sur le backport PCTL actif, manifeste synchronisé dans le même commit.
+
+- **4 NULL → IMPL-SRC** : `AddToFreeCommunicationApplicationList` (1042), `UpdateFreeCommunicationApplicationList` (1045), `DeleteFromFreeCommunicationApplicationListForDebug` (1901), `ClearFreeCommunicationApplicationListForDebug` (1902).
+- `GetFreeCommunicationApplicationListCount` (1039) passe **NOOP → IMPL-SRC** ; `GetFreeCommunicationApplicationList` (1044) reste IMPL-SRC mais renvoie désormais le vrai état local, avec offset et capacité du buffer.
+- **Runtime récent hors miroir** : 1049 Reset et 1050 Add sont raccordés au même état sans gonfler le dénominateur historique.
+- Une entrée est conservée **octet pour octet sur 0x10** : ApplicationId dans les 8 premiers octets, drapeau de restriction à l'octet 8 et sept octets réservés. Add est idempotent par ApplicationId ; Update remplace/ajoute l'entrée correspondante ; les commandes debug suppriment ou vident la même liste.
+- L'ABI est recroisée avec le dump HOS 23.0.1 et le SDK-like : 1042/1050 prennent un u64, 1044 prend un offset u32 et un buffer sortant type 6, 1045 un buffer entrant type 5, 1901 un u64, 1902 aucune donnée.
+- Le palier précédent moteur `ec310dfd` → vendor/gitlink `909c764d` est **X8D24 + Verify pinned vendor vert**. Aucun build PS5 ni validation console n'est revendiqué.
+
+**Compteur historique : 1 487 IMPL-SRC / 114 PARTIEL / 145 STUB / 126 NOOP / 1 980 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 525** : 1 980 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

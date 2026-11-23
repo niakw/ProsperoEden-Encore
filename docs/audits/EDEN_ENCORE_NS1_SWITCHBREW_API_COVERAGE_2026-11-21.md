@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 482 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 402 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 482 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 487 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 407 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 487 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 402 | 80 | **1 482** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 407 | 80 | **1 487** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 111 | 3 | **114** |
 | **STUB — Stub / résultat simulé** | 145 | 0 | **145** |
-| **NOOP — No-op documenté** | 127 | 0 | **127** |
-| **NULL — Handler NULL** | 1 984 | 0 | **1 984** |
+| **NOOP — No-op documenté** | 126 | 0 | **126** |
+| **NULL — Handler NULL** | 1 980 | 0 | **1 980** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1482
+    "Implémentation source retrouvée" : 1487
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 114
     "Stub / résultat simulé" : 145
-    "No-op documenté" : 127
-    "Handler NULL" : 1984
+    "No-op documenté" : 126
+    "Handler NULL" : 1980
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -5239,11 +5239,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1036` | `SetCustomSafetyLevelSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/70829977dbe1e534887c4baa2ddd6c9a1252acc5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp)) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1037` | `GetDefaultRatingOrganization` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/909c764d244ac0cd80ec2930085dbf672504ff84/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état u32 de session, ABI HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1038` | `SetDefaultRatingOrganization` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/909c764d244ac0cd80ec2930085dbf672504ff84/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état u32 de session, ABI HOS23) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1039` | `GetFreeCommunicationApplicationListCount` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1042` | `AddToFreeCommunicationApplicationList` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1039` | `GetFreeCommunicationApplicationListCount` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; compte la liste locale réellement stockée) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1042` | `AddToFreeCommunicationApplicationList` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1043` | `DeleteSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1044` | `GetFreeCommunicationApplicationList` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/70829977dbe1e534887c4baa2ddd6c9a1252acc5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp)) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1045` | `UpdateFreeCommunicationApplicationList` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1044` | `GetFreeCommunicationApplicationList` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp)) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1045` | `UpdateFreeCommunicationApplicationList` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1046` | `DisableFeaturesForReset` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1047` | `NotifyApplicationDownloadStarted` | 3.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1048` | `NotifyNetworkProfileCreated` | 6.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -5282,8 +5282,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1601` | `DisableAllFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1602` | `PostEnableAllFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1603` | `IsAllFeaturesDisabled` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1901` | `DeleteFromFreeCommunicationApplicationListForDebug` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1902` | `ClearFreeCommunicationApplicationListForDebug` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1901` | `DeleteFromFreeCommunicationApplicationListForDebug` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1902` | `ClearFreeCommunicationApplicationListForDebug` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1903` | `GetExemptApplicationListCountForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1904` | `GetExemptApplicationListForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1905` | `UpdateExemptApplicationListForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |

@@ -22,7 +22,7 @@ def git_blob(path: Path) -> str:
 assert git_blob(CPP) == "4ba93afb6594213d5bde82be2693f0e08cb1cd63"
 assert git_blob(HDR) == "a38cfcf655adcb8ceebfce955b39a2312a239768"
 assert git_blob(TEX) == "e9191238ccddd94aa22570eba501fb05fff5b207"
-assert git_blob(CACHE) == "5b3db278f70b560a098a2a479d3ee98e78b987f2"
+assert git_blob(CACHE) == "948960fad4d829ba874746acb6e353a8a2ed19f7"
 
 cpp = CPP.read_text()
 hdr = HDR.read_text()

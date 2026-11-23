@@ -590,4 +590,3 @@ Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew
 4. **Boot PS5 :** exiger un build valide à SHAs moteur/vendor connus et une preuve console des premières soumissions GPU `gpu_submit_sample > 0`, puis `guest_frame_handoff > 0` et première image invitée réelle. Ce n'est **pas** un sous-compteur de parité structurelle.
 
 **Provenance des lots présents sur ce couple :** vendor `38382993` (VI2 53), `852c4be1` (ACC), `95cdffa8` (stubs VI2), `2873d15e` (table GSV), `ee20b5a0` (`gpu_time` et ABI). Le build [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) a **échoué en compilation C++ native** (`nup_v1_native_content.cpp:50`, `nifm.cpp:1111`), sans package ; les tests PS5 de ces correctifs n'ont pas été reçus.
-

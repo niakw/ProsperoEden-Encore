@@ -223,9 +223,18 @@ def main()->int:
     assert 'Kernel::ResultNotImplemented.raw' in gpu_fallback
     # 1691 is no longer ABI-unknown: it shares the reviewed feature-image
     # requirements-only calculator with 391/691/1291 below.
-    for unknown in (12, 311, 312, 321, 327, 361, 424, 425, 437, 494,
-                    1061, 1091, 1601, 1602, 1603, 1611, 1612):
+    for unknown in (12, 327, 437, 1061):
         assert ('{'+str(unknown)+', &IGraphicsSupervisor::') not in text
+    # Lichii-known IDs below are deliberately registered and fail closed.
+    lichii_fail_closed = (
+        5, 120, 121, 122, 123, 124, 125, 126, 131, 133,
+        311, 312, 321, 361, 424, 425, 436,
+        461, 462, 463, 464, 465, 466, 467, 468, 494,
+        801, 802, 803, 811, 812, 813, 814, 861,
+        1091, 1503, 1601, 1602, 1603, 1611, 1612,
+    )
+    for command in lichii_fail_closed:
+        assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, command
     for unknown in (13, 53, 107, 113, 301, 302):
         assert ('{'+str(unknown)+',&IVi2Session::') not in text
     assert '{102, &IGpuSession::' not in gpu_session

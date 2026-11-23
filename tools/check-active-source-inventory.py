@@ -2077,6 +2077,56 @@ post_f07_plaintext_nca_present = {
 } & set(physical_all)
 actual_vendor = subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+
+# Current vendor source additions postdate the immutable 337-path F07
+# catalogue. One exact ledger serves both source inventories.
+current_vendor_post_f07_owner_blobs = {
+    "eden-core/src/core/hle/service/services.cpp": "19e8b023fe6467557766c71cd45e0ce2ba6d3cea",
+    "eden-core/src/core/hle/service/services.h": "08593584bdcdc51f8ab96e2487fb26fad03193d1",
+    "eden-core/src/core/hle/service/sm/sm.cpp": "494ee50d2880a491b07c2b981193df1a686c696a",
+    "eden-core/src/core/hle/service/vi/vi.cpp": "42d3bad664e92ebf7be3650446e492306c6ff912",
+    "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
+    "ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",
+    "ns2-runtime/am_structure/core/hle/service/am/service/audio_controller.cpp": "0b9efbe1cfdb3072828709170bbefa202114d08d",
+    "ns2-runtime/am_structure/core/hle/service/am/service/common_state_getter.cpp": "2c5e5364146b125c038b239056bf06f2aaea5ef3",
+    "ns2-runtime/am_structure/core/hle/service/am/service/display_controller.cpp": "7e7db23708718f6513b784c489edf61d8d555fac",
+    "ns2-runtime/am_structure/core/hle/service/am/service/library_applet_accessor.cpp": "7119c605968dd50372d5d62097bb2f9d017ab6e6",
+    "ns2-runtime/am_structure/core/hle/service/am/service/library_applet_creator.cpp": "1157033948e6a6f015ef14dedda30a40ff750b54",
+    "ns2-runtime/am_structure/core/hle/service/am/service/window_controller.cpp": "6b19368d91035f6372cf8540c4b45caf371c1cd3",
+    "ns2-runtime/hle/core/hle/service/acc/acc.cpp": "bda184c54aa81a037f7ff064554fe9557fff47bb",
+    "ns2-runtime/hle/core/hle/service/acc/acc.h": "829c70a3afe5c7bf495bf10d66a75f7b0baff9be",
+    "ns2-runtime/hle/core/hle/service/audio/audio_device.cpp": "59d2a5e65ba69fb4a8962c360f34b7695c81a214",
+    "ns2-runtime/hle/core/hle/service/audio/audio_device.h": "d0dfca6406e2b427849aac541055916240da0ccc",
+    "ns2-runtime/hle/core/hle/service/audio/audio_renderer_manager.cpp": "5b369d46170d1e92c2daa30ebc47deb6d8af7de7",
+    "ns2-runtime/hle/core/hle/service/caps/caps_su.cpp": "b19e6b7a2775b89595b96c21275f0c777d69a120",
+    "ns2-runtime/hle/core/hle/service/caps/caps_u.cpp": "1590265957c5e37d77edc1116ccc66dd934e534f",
+    "ns2-runtime/hle/core/hle/service/lm/lm.cpp": "83d9b178459c33321a6fe388dae93bb3cb8b6f75",
+    "ns2-runtime/hle/core/hle/service/mii/mii.cpp": "ffdb17fd145f032283ee9eda22a472d7a037cce6",
+    "ns2-runtime/hle/core/hle/service/nifm/nifm.cpp": "342d00bc470e309f1027aeaa7f4abf5239ef9b77",
+    "ns2-runtime/hle/core/hle/service/nx2_stub_interface.h": "68c087899680b8a3a764d6cd3c362b0e98237ae0",
+    "ns2-runtime/hle/core/hle/service/set/settings_server.cpp": "297bd5ac2eadeb7b501b50f2655a43183e84e1df",
+    "ns2-runtime/nx/core/file_sys/decrypted_nca.h": "623f142cfffea3194b9a39842750c3b715e1fdf8",
+    "ns2-runtime/nx/core/file_sys/nx_content.cpp": "c374fab2fa5dbc6174099db309a2f6ebbf9e849c",
+    "ns2-runtime/nx/core/loader/loader.h": "9efa7b4e54790942f5699c63b1286e6023873a65",
+    "ns2-runtime/nx/core/loader/nx.cpp": "8a64df9a95675c1c9655f838efd6328645915d71",
+    "ns2-runtime/nx/core/loader/nx.h": "508939fbd0d6eadafe488a19eb18dde5404919fd",
+    "ns2-runtime/nx/nxformat/nx_reader.hpp": "7deff5cb5a4fbe5f9a04edf359ccd0504568b657",
+    "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",
+    "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
+}
+current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
+if actual_vendor == "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e":
+    assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
+    for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
+        raw = (active / relative).read_bytes()
+        actual_blob = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual_blob == expected_blob, ("Current post-F07 owner drift", relative, actual_blob)
+    cmake_text = (root / "headless/CMakeLists.txt").read_text()
+    for token in ("EDEN_NS2_AM_STRUCTURE_ROOT", "EDEN_NS2_SERVICE_PARITY_ROOT",
+                  "EDEN_NS2_NX_ARCHIVE_ROOT", "EDEN_R457_SPARSE_PAGE_HEAP_SRC"):
+        assert token in cmake_text, ("Current native selector missing", token)
+else:
+    assert not current_vendor_post_f07_present
 if post_f07_plaintext_nca_present:
     # The decrypted NCA readers are source-identical in the later vendor
     # gitlink; verify both complete blobs and the active CMake selection.
@@ -2113,7 +2163,7 @@ physical = [p for p in physical_all
              post_f07_native_gpfifo_owners | post_f07_feature_vendor_owners |
              post_f07_r09_vendor_owners | post_f07_h05_syncpoint_owners |
              post_f07_h01_fs_owners | post_f07_thread_worker_owners | r457_native_audio_owners | post_f07_r457_slab_owners | nov13_native_owners |
-             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present | post_f07_plaintext_nca_present]
+             usage_tracker_present | post_f07_nvdec_present | post_f07_vic_present | post_f07_jxr_present | post_f07_gpu_table_present | post_f07_vfs_present | ps5_vfs128_present | ns2_ipc_present | post_f07_nca_present | post_f07_romfs_present | fc27_ssa_present | fc27_ssbo_present | fc27_descriptor_present | fc27_scalar_unselected_present | pair_present | drawtexture_present | ns2_early_hle_present | ns2_font_service_present | post_f07_diagnostics_net_present | post_f07_plaintext_nca_present | current_vendor_post_f07_present]
 # These two versioned headers preserve the immutable upstream Eden snapshot.
 # They must be present in the real source catalogue, not excluded as NS2 fixtures.
 warning_hygiene = {

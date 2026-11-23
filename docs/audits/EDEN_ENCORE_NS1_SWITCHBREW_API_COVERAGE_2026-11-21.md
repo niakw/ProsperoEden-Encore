@@ -25,14 +25,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 575 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le reclassement du service historique `ns:am` en HORS-VERSION retire ses 20 handlers de ce total courant ; l'interface moderne reste suivie via `ns:am2`. **Ces 1 588 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 576 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 576 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 495 | 80 | **1 575** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 496 | 80 | **1 576** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
-| **STUB — Stub / résultat simulé** | 78 | 0 | **78** |
+| **STUB — Stub / résultat simulé** | 77 | 0 | **77** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
 | **NULL — Handler NULL** | 1 607 | 0 | **1 607** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
@@ -2957,7 +2957,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsd:u, bsd:s | `22` | `Shutdown` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `23` | `ShutdownAllSockets` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `24` | `Write` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
-| bsd:u, bsd:s | `25` | `Read` | — | **STUB** ([source C++][ns1-src-026]) | 2026-11-22 |
+| bsd:u, bsd:s | `25` | `Read` | — | **IMPL-SRC** (socket `read()` délégué au `RecvWork` réel avec flags=0 ; erreurs/blocage/copie buffer partagent le chemin `Recv`; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | bsd:u, bsd:s | `26` | `Close` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `27` | `DuplicateSocket` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `28` | `GetResourceStatistics` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |

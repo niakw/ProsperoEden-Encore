@@ -1524,6 +1524,18 @@ Les **113 lignes historiques `ns:am`** sont donc reclassées **HORS-VERSION** po
 
 La CI X8D24 du lot HID précédent est verte ; aucune validation gameplay PS5 n'est déduite de ce reclassement documentaire/source.
 
+## Lot BSD `Read` — 23/11/2026
+
+**Vendor `8c6c57ecded4a650ba575f8e937543a363a3d680`**, sélectionné par le nouveau gitlink moteur.
+
+La commande BSD **25 `Read`** passe **STUB → IMPL-SRC**. L'ancien handler retournait systématiquement une lecture de longueur zéro avec errno zéro. Le nouveau handler réutilise le `RecvWork` déjà actif avec `flags=0`, ce qui correspond à la sémantique socket de `read()` et conserve le même chemin de descripteur, errno, blocage et copie du buffer que `Recv`. La copie de base et l'overlay backports réellement compilé ont été mis à jour ensemble, avec empreinte manifeste actualisée.
+
+**Compteur courant : 1 576 IMPL-SRC / 140 PARTIEL / 77 STUB / 145 NOOP / 1 607 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 443 HORS-VERSION / 0 ABSENT / 270 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 103** : 1 607 NULL + 77 STUB + 140 PARTIEL + 270 ABI-DIFF + 9 AMBIGU.
+
+Pas de build natif PS5 ni de validation console revendiqués pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

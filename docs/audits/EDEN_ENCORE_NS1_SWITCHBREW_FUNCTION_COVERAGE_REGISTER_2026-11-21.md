@@ -649,6 +649,16 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 696** : 2 139 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot runtime hors miroir — ButtonConfig 189–200 — 23/11/2026
+
+**Vendor `5fdfa239cb6e148abac1ef2d6393b8950132bc2b`** (arbre `dbfc5e1a0e5ff72834206bb4cbe066ce1ab85246`).
+
+- Les **12 commandes `set:sys` 189–200** sont maintenant implémentées sur le stockage persistant Eden : Full/Embedded/Left/Right en 0x5A8, RegisteredEmbedded/Registered en 0x5C8, avec compteurs et bornage IPC.
+- Libnx confirme les tailles et modes MapAlias. Aucun format propriétaire n'est reconstruit : les payloads sont conservés octet pour octet.
+- **Ces 12 commandes sont absentes du miroir historique 4 853**, donc elles ne réduisent pas artificiellement le compteur historique. Elles augmentent la couverture runtime réelle et renforcent la preuve que le miroir n'est pas exhaustif des versions récentes de SwitchBrew.
+- Le compteur historique reste **1 452 IMPL-SRC / 2 139 NULL**, pool **2 696**, tant qu'une réconciliation formelle du dénominateur n'est pas faite.
+
+
 ---
 
 ## 1. Références et règle de vérité

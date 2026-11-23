@@ -1205,6 +1205,16 @@ Le nouveau vendor `4ce41124344107322445092db240e74fa824dbc6` n'est pas encore qu
 
 Aucun build natif PS5 ni résultat console n’est revendiqué pour ce nouveau vendor à ce stade.
 
+## Lot Friend — aliases modernes HOS18/22+ prouvés — 23/11/2026
+
+**Vendor `170c613138dfa7d8740459239f2ee9cb54a936b1`** (arbre `006b451ddc375575b35ec37778356243273f01e5`).
+
+Trois handlers modernes supplémentaires sont raccordés sans nouveau backend : `GetFriendProfileImageWithImageSize` (10111) réutilise `GetFriendProfileImage`, et `UpdateFriendInfoForViewerV1` / `V2` (20106/20109) réutilisent `GetFriendDetailedInfo`. Lichii emploie exactement ces mêmes routes pour ces IDs. Les sorties Encore restent offline/default et aucune donnée sociale fictive n'est créée.
+
+Ces commandes ne sont pas matérialisées comme entrées distinctes dans le miroir historique 4 853 ; **le compteur historique reste inchangé à 1 775 NULL et pool 2 295**, tandis que la couverture runtime HOS23 progresse.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

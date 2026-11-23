@@ -2178,6 +2178,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
     if (cancelled()) return {};
     if (home.setup_ready && home.last_exists) {
         const uint64_t title_id = ResolveTitleId(last_path, home.last_file);
+        const bool second_generation = IsNs2MediaIdentity(title_id, home.last_file);
         const GameLanguage language = LanguageFor(last_path, title_id, selected_language);
         home.last_title_id = title_id;
         const NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
@@ -2185,10 +2186,10 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             // Home's verified extracted Control icon wins. NUP is NS2:
             // do not replace its square with an unrelated NX/NS1 cache.
             if (IsNupSelection(home.last_file))
-                home.last_cover = CachedGamesDbSquare(title_id);
+                home.last_cover = CachedGamesDbSquare(title_id, true);
             else
                 home.last_cover = nlib.icon.empty() ?
-                    CachedGamesDbSquare(title_id) : nlib.icon;
+                    CachedGamesDbSquare(title_id, second_generation) : nlib.icon;
         }
         // NLIB is the first provider, including its screenshots when the
         // title has no NLIB banner. Only then consult GamesDB's first fanart
@@ -2196,7 +2197,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         home.last_screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
         home.last_hero = !nlib.hero.empty() ? nlib.hero :
             !home.last_screenshot.empty() ? home.last_screenshot :
-            CachedGamesDbHero(title_id);
+            CachedGamesDbHero(title_id, second_generation);
         home.last_max_players = nlib.max_players;
         home.last_intro = nlib.intro;
         home.last_description = nlib.description;
@@ -2287,12 +2288,15 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         if (home.setup_ready) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
+                const bool second_generation =
+                    IsNs2MediaIdentity(recent.title_id, recent.file);
                 const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
                 if (!nlib.icon.empty() && recent.tile_icon.empty() && !IsNupSelection(name)) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
                 } else if (recent.cover.empty()) {
-                    const std::string square = CachedGamesDbSquare(recent.title_id);
+                    const std::string square =
+                        CachedGamesDbSquare(recent.title_id, second_generation);
                     if (!square.empty()) {
                         recent.cover = square;
                         recent.tile_icon = square;
@@ -2301,7 +2305,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
                 recent.hero = !nlib.hero.empty() ? nlib.hero :
                     !recent.screenshot.empty() ? recent.screenshot :
-                    CachedGamesDbHero(recent.title_id);
+                    CachedGamesDbHero(recent.title_id, second_generation);
                 recent.max_players = nlib.max_players;
                 recent.intro = nlib.intro;
                 recent.description = nlib.description;
@@ -2605,7 +2609,7 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 // a fallback only; an older NS1 cache must not overwrite the
                 // icon extracted from an ExeFS or NUP package.
                 if (game.cover.empty() && game.format == "NUP")
-                    game.cover = CachedGamesDbSquare(game.title_id);
+                    game.cover = CachedGamesDbSquare(game.title_id, true);
                 if (game.cover.empty() && game.format != "NUP") {
                     const std::string cached_icon = CachedNlibIcon(game.title_id);
                     if (!cached_icon.empty()) game.cover = cached_icon;

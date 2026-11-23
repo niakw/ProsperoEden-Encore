@@ -2196,7 +2196,7 @@ upstream=json.loads((ROOT/"UPSTREAM.json").read_text())
 assert shipping["pinned_eden_commit"]==upstream["eden_commit"]
 current_backport_tree_qualified = False
 if gpu_table_vendor_pin in {"4354add020afac574198f63d87167f3022bff9c6",
-                            "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+                            "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb"}:
     # The merged/current vendor carries the EXACT same reviewed
     # eden-backports subtree. Verify all 84 entries by tree SHA without
     # broadening the old F07 83/84-file source-history branches.
@@ -2230,7 +2230,7 @@ assert len(r23_fw23_successors)==6
 vendor_head = subprocess.check_output(
     ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"], text=True
 ).strip()
-if current_backport_tree_qualified and vendor_head in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+if current_backport_tree_qualified and vendor_head in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb"}:
     # All post-4354 changes live outside eden-backports; the exact subtree
     # was already sealed above. Replay the immutable historical receipts
     # against the reviewed 4354 successor matrix, not the outer gitlink SHA.

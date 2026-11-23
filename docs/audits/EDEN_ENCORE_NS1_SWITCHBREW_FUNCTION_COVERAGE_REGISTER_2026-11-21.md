@@ -2409,3 +2409,12 @@ Vendor `1d8b6c8ad8ba3ac57c0e17a827afd3e86fb74b22` → gitlink moteur `9322d949c9
 **Compteur courant : 1 662 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 397 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 797** : 1 397 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## Lot accéléré HID + Applet self-controller + PCTL (23/11/2026)
+
+Vendor `5f548ff51dcc14a71758944a35476e26fec2916e` → `7ce1c67ccaaa5a1e75d9f129ad9ae2234e000fae` → `1c9bc1840eb211b86aeaec7d648bcbbd96206b26`, gitlink moteur `be89a76a42f3820e29554db1161c66230b80256c`. Le lot ferme **8 NULL HID** (accéléromètre + force de fusion SevenSixAxis), **6 NULL + 1 STUB AppletAE** (états input/illumination/WLAN + notifications hôte), puis **14 NULL PCTL** (permissions, reset, disable/enable, unlock, notifications et unlink). Les no-op retenus correspondent uniquement à des notifications/politiques sans backend Horizon sur PS5 ; les getters/setters conservent un état local explicite. Le commit LDN concurrent `1d8b6c8a` est préservé. Pas de validation console PS5 revendiquée.
+
+**Compteur courant : 1 685 IMPL-SRC / 141 PARTIEL / 59 STUB / 159 NOOP / 1 369 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 768** : 1 369 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

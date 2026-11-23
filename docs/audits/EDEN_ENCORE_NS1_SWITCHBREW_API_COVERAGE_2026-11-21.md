@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 582 | 80 | **1 662** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 605 | 80 | **1 685** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
-| **STUB — Stub / résultat simulé** | 60 | 0 | **60** |
-| **NOOP — No-op documenté** | 153 | 0 | **153** |
-| **NULL — Handler NULL** | 1 397 | 0 | **1 397** |
+| **STUB — Stub / résultat simulé** | 59 | 0 | **59** |
+| **NOOP — No-op documenté** | 159 | 0 | **159** |
+| **NULL — Handler NULL** | 1 369 | 0 | **1 369** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1093,12 +1093,12 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `70` | `SetSixAxisSensorFusionParameters` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `71` | `GetSixAxisSensorFusionParameters` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `72` | `ResetSixAxisSensorFusionParameters` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `73` | `SetAccelerometerParameters` | — | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `74` | `GetAccelerometerParameters` | — | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `75` | `ResetAccelerometerParameters` | — | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `76` | `SetAccelerometerPlayMode` | — | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `77` | `GetAccelerometerPlayMode` | — | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `78` | `ResetAccelerometerPlayMode` | — | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `73` | `SetAccelerometerParameters` | — | **IMPL-SRC** (état local f32x2, ABI 0x18 confirmée ; vendor `5f548ff5`) | 2026-11-23 |
+| hid | `74` | `GetAccelerometerParameters` | — | **IMPL-SRC** (retourne l'état local f32x2, ABI out 0x8 ; vendor `5f548ff5`) | 2026-11-23 |
+| hid | `75` | `ResetAccelerometerParameters` | — | **IMPL-SRC** (réinitialise l'état local ; vendor `5f548ff5`) | 2026-11-23 |
+| hid | `76` | `SetAccelerometerPlayMode` | — | **IMPL-SRC** (état local u32 ; vendor `5f548ff5`) | 2026-11-23 |
+| hid | `77` | `GetAccelerometerPlayMode` | — | **IMPL-SRC** (retourne l'état local u32 ; vendor `5f548ff5`) | 2026-11-23 |
+| hid | `78` | `ResetAccelerometerPlayMode` | — | **IMPL-SRC** (réinitialise le mode ; vendor `5f548ff5`) | 2026-11-23 |
 | hid | `79` | `SetGyroscopeZeroDriftMode` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `80` | `GetGyroscopeZeroDriftMode` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `81` | `ResetGyroscopeZeroDriftMode` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
@@ -1151,8 +1151,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `305` | `StopSevenSixAxisSensor` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `306` | `InitializeSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `307` | `FinalizeSevenSixAxisSensor` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `308` | `SetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `309` | `GetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `308` | `SetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **IMPL-SRC** (état local f32, ABI 0x10 ; vendor `5f548ff5`) | 2026-11-23 |
+| hid | `309` | `GetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **IMPL-SRC** (retourne la force locale f32 ; vendor `5f548ff5`) | 2026-11-23 |
 | hid | `310` | `ResetSevenSixAxisSensorTimestamp` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `400` | `IsUsbFullKeyControllerEnabled` | 3.0.0+ | **IMPL-SRC** (état enable/disable conservé par `IHidServer`; ABI corrigée sans ARUID selon libnx ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
 | hid | `401` | `EnableUsbFullKeyController` | 3.0.0+ | **IMPL-SRC** (met à jour l’état USB full-key lu par cmd400 ; ABI bool sans ARUID recroisée libnx ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
@@ -1780,20 +1780,20 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `61` | `SetMediaPlaybackState` | — | **PARTIEL** (raccordé au même état `media_playback_state` que la surface application, sans consommateur système ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `62` | `SetIdleTimeDetectionExtension` | — | **PARTIEL** (stocke l'extension dans l'état applet sous verrou ; aucun idle-timer hôte ne la consomme encore ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `63` | `GetIdleTimeDetectionExtension` | — | **PARTIEL** (relit l'extension d'idle réellement stockée, mais l'effet système reste non modélisé ; vendor `6fc24667`) | 2026-11-22 |
-| appletAE | `64` | `SetInputDetectionSourceSet` | — | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `64` | `SetInputDetectionSourceSet` | — | **IMPL-SRC** (état local conservé ; vendor `7ce1c67c`) | 2026-11-23 |
 | appletAE | `65` | `ReportUserIsActive` | 2.0.0+ | **NOOP** (Horizon relaie cette notification à `idle:sys` ; Encore n'expose pas ce scheduler invité et ne modifie pas la politique d'inactivité PS5 ; vendor `55be5734`) | 2026-11-23 |
-| appletAE | `66` | `GetCurrentIlluminance` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `66` | `GetCurrentIlluminance` | 3.0.0+ | **IMPL-SRC** (0 lux cohérent avec `IsIlluminanceAvailable=false` ; vendor `7ce1c67c`) | 2026-11-23 |
 | appletAE | `67` | `IsIlluminanceAvailable` | 3.0.0+ | **IMPL-SRC** (capability query réelle : aucun capteur de lumière ambiante n'est exposé par l'intégration PS5, retourne donc `false` ; vendor `3e8effa0`, moteur `1bb6cfcb`) | 2026-11-23 |
 | appletAE | `68` | `SetAutoSleepDisabled` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `69` | `IsAutoSleepDisabled` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `70` | `ReportMultimediaError` | 4.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `71` | `GetCurrentIlluminanceEx` | 5.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `72` | `SetInputDetectionPolicy` | 9.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `80` | `SetWirelessPriorityMode` | 4.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `70` | `ReportMultimediaError` | 4.0.0+ | **NOOP** (notification consommée ; aucun collecteur Horizon sur PS5 ; vendor `7ce1c67c`) | 2026-11-23 |
+| appletAE | `71` | `GetCurrentIlluminanceEx` | 5.0.0+ | **IMPL-SRC** (sortie neutre 0/0 lux avec capteur indisponible ; vendor `7ce1c67c`) | 2026-11-23 |
+| appletAE | `72` | `SetInputDetectionPolicy` | 9.0.0+ | **IMPL-SRC** (politique conservée dans l'état du contrôleur ; vendor `7ce1c67c`) | 2026-11-23 |
+| appletAE | `80` | `SetWirelessPriorityMode` | 4.0.0+ | **IMPL-SRC** (mode conservé ; pas de scheduler WLAN Horizon côté PS5 ; vendor `7ce1c67c`) | 2026-11-23 |
 | appletAE | `90` | `GetAccumulatedSuspendedTickValue` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `91` | `GetAccumulatedSuspendedTickChangedEvent` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `100` | `SetAlbumImageTakenNotificationEnabled` | 7.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; conserve la préférence de notification album dans l'état applet) | 2026-11-23 |
-| appletAE | `110` | `SetApplicationAlbumUserData` | 8.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `110` | `SetApplicationAlbumUserData` | 8.0.0+ | **NOOP** (blob opaque sans consommateur dans le backend capture actuel ; vendor `7ce1c67c`) | 2026-11-23 |
 | appletAE | `1000` | `GetDebugStorageChannel` | 7.0.0+ | **D** (commande debug/develop explicitement rejetée sur runtime release ; vendor `d1f92eee`, moteur `e0990b2f`) | 2026-11-23 |
 | appletAE | `0` | `Push` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `1` | `Unpop` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
@@ -5228,9 +5228,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1011` | `RevertRestrictedSystemSettingsEntered` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1012` | `GetRestrictedFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1013` | `ConfirmStereoVisionPermission` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1014` | `ConfirmPlayableApplicationVideoOld` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1015` | `ConfirmPlayableApplicationVideo` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1016` | `ConfirmShowNewsPermission` | 6.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1014` | `ConfirmPlayableApplicationVideoOld` | 5.0.0+ | **IMPL-SRC** (politique locale permissive sans UI parentale Horizon ; vendor `1c9bc184`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1015` | `ConfirmPlayableApplicationVideo` | 5.0.0+ | **IMPL-SRC** (politique locale permissive sans UI parentale Horizon ; vendor `1c9bc184`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1016` | `ConfirmShowNewsPermission` | 6.0.0+ | **IMPL-SRC** (politique locale permissive ; vendor `1c9bc184`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1031` | `IsRestrictionEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1032` | `GetSafetyLevel` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1033` | `SetSafetyLevel` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -5241,19 +5241,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1038` | `SetDefaultRatingOrganization` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/909c764d244ac0cd80ec2930085dbf672504ff84/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état u32 de session, ABI HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1039` | `GetFreeCommunicationApplicationListCount` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; compte la liste locale réellement stockée) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1042` | `AddToFreeCommunicationApplicationList` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1043` | `DeleteSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1043` | `DeleteSettings` | — | **IMPL-SRC** (réinitialise settings/restrictions/PIN/listes et signale les événements locaux ; vendor `1c9bc184`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1044` | `GetFreeCommunicationApplicationList` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp)) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1045` | `UpdateFreeCommunicationApplicationList` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1046` | `DisableFeaturesForReset` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1047` | `NotifyApplicationDownloadStarted` | 3.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1048` | `NotifyNetworkProfileCreated` | 6.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1046` | `DisableFeaturesForReset` | — | **IMPL-SRC** (`settings.disabled=true` ; vendor `1c9bc184`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1047` | `NotifyApplicationDownloadStarted` | 3.0.0+ | **NOOP** (notification locale consommée ; vendor `1c9bc184`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1048` | `NotifyNetworkProfileCreated` | 6.0.0+ | **NOOP** (notification locale consommée ; vendor `1c9bc184`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1061` | `ConfirmStereoVisionRestrictionConfigurable` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1062` | `GetStereoVisionRestriction` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1063` | `SetStereoVisionRestriction` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1064` | `ResetConfirmedStereoVisionPermission` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1065` | `IsStereoVisionPermitted` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1201` | `UnlockRestrictionTemporarily` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1202` | `UnlockSystemSettingsRestriction` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1202` | `UnlockSystemSettingsRestriction` | — | **IMPL-SRC** (états unlock/system-settings mis à jour ; vendor `1c9bc184`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1203` | `SetPinCode` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6f487f76b88c2ca12f81c189fddcc2a8f083c74c/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état PIN 8 octets et événement de changement réellement raccordés) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1204` | `GenerateInquiryCode` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1205` | `CheckMasterKey` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -5275,13 +5275,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1456` | `GetPlayTimerSettings` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pctl/parental_control_service.cpp) ; slot 1456 actuel = GetPlayTimerSettingsOld ; statique, PS5 non validé) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1457` | `GetPlayTimerEventToRequestSuspension` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1458` | `IsPlayTimerAlarmDisabled` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1471` | `NotifyWrongPinCodeInputManyTimes` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1472` | `CancelNetworkRequest` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1471` | `NotifyWrongPinCodeInputManyTimes` | — | **NOOP** (notification sans backend réseau/UI ; vendor `1c9bc184`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1472` | `CancelNetworkRequest` | — | **NOOP** (aucune requête réseau parentale active ; vendor `1c9bc184`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1473` | `GetUnlinkedEvent` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1474` | `ClearUnlinkedEvent` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1601` | `DisableAllFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1602` | `PostEnableAllFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1603` | `IsAllFeaturesDisabled` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1601` | `DisableAllFeatures` | — | **IMPL-SRC** (`settings.disabled=true` ; vendor `1c9bc184`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1602` | `PostEnableAllFeatures` | — | **IMPL-SRC** (`settings.disabled=false` ; vendor `1c9bc184`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1603` | `IsAllFeaturesDisabled` | — | **IMPL-SRC** (retourne `settings.disabled` ; vendor `1c9bc184`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1901` | `DeleteFromFreeCommunicationApplicationListForDebug` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1902` | `ClearFreeCommunicationApplicationListForDebug` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1903` | `GetExemptApplicationListCountForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
@@ -5290,7 +5290,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1906` | `AddToExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1907` | `DeleteFromExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1908` | `ClearExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1941` | `DeletePairing` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1941` | `DeletePairing` | — | **IMPL-SRC** (état local non appairé + signal `unlinked_event` ; vendor `1c9bc184`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1951` | `SetPlayTimerSettingsForDebug` | — | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1952` | `GetPlayTimerSpentTimeForTest` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1953` | `SetPlayTimerAlarmDisabledForDebug` | 4.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
@@ -6467,3 +6467,12 @@ Vendor `f48b517270481dffb1a47a8e76c68035b73baedf` → gitlink moteur `52973e885b
 Vendor `1d8b6c8ad8ba3ac57c0e17a827afd3e86fb74b22` → gitlink moteur `9322d949c9fcfc0ecdb00e6609eed4d06c2c6d88`. L'interface `ldn:s` n'est plus une table vide pour les opérations communes : 22 commandes utilisent désormais le même `LANDiscovery`, état réseau, callback room, event et sélection d'interface que `ldn:u`. Les commandes dont la sémantique reste distincte/non prouvée (`104/205/207/208/209/303/402/403`) restent ouvertes. **22 NULL → IMPL-SRC.** Aucune validation PS5 revendiquée.
 
 **Compteur courant : 1 662 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 397 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 797.**
+
+
+## Lot accéléré HID + Applet self-controller + PCTL (23/11/2026)
+
+Vendor `5f548ff51dcc14a71758944a35476e26fec2916e` → `7ce1c67ccaaa5a1e75d9f129ad9ae2234e000fae` → `1c9bc1840eb211b86aeaec7d648bcbbd96206b26`, gitlink moteur `be89a76a42f3820e29554db1161c66230b80256c`. Le lot ferme **8 NULL HID** (accéléromètre + force de fusion SevenSixAxis), **6 NULL + 1 STUB AppletAE** (états input/illumination/WLAN + notifications hôte), puis **14 NULL PCTL** (permissions, reset, disable/enable, unlock, notifications et unlink). Les no-op retenus correspondent uniquement à des notifications/politiques sans backend Horizon sur PS5 ; les getters/setters conservent un état local explicite. Le commit LDN concurrent `1d8b6c8a` est préservé. Pas de validation console PS5 revendiquée.
+
+**Compteur courant : 1 685 IMPL-SRC / 141 PARTIEL / 59 STUB / 159 NOOP / 1 369 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 768** : 1 369 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

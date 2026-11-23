@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 528 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 529 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 448 | 80 | **1 528** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 449 | 80 | **1 529** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 140 | 0 | **140** |
-| **NULL — Handler NULL** | 1 774 | 0 | **1 774** |
+| **NULL — Handler NULL** | 1 773 | 0 | **1 773** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1528
+    "Implémentation source retrouvée" : 1529
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 125
     "No-op documenté" : 140
-    "Handler NULL" : 1774
+    "Handler NULL" : 1773
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -4009,7 +4009,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `65` | `UpdateSaveDataMacForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `WriteSaveDataFileSystemExtraData2` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `67` | `FindSaveDataWithFilter` | 6.0.0+ | **IMPL-SRC** (scan réel `ISaveDataInfoReader`, filtre program/type/user/save-id/index + sémantique rank LibHac, sortie exacte `SaveDataInfo` 0x60, vendor `c3c3b6d2`) | 2026-11-22 |
-| fsp-srv | `68` | `OpenSaveDataInfoReaderWithFilter` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenSaveDataInfoReaderBySaveDataFilter` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
+| fsp-srv | `68` | `OpenSaveDataInfoReaderWithFilter` | 6.0.0+ | **IMPL-SRC** ([vendor 9f4f9bef](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/9f4f9bef141c33a3bce353f68cf5b58bd94603e5/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; filtre multi-résultats sur le lecteur réel, ABI SaveDataSpaceId + SaveDataFilter) | 2026-11-23 |
 | fsp-srv | `69` | `ReadSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | **IMPL-SRC** (attribut complet résolu contre SaveDataInfo réel ; buffer 0x200 obligatoire ; backend directory-save renvoie SaveDataExtraData{} comme LibHac, vendor `61ab696e`) | 2026-11-22 |
 | fsp-srv | `70` | `WriteSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | **NOOP** (attribut + buffers data/mask 0x200 validés ; backend directory-save LibHac n'a pas d'ExtraData physique et accepte l'écriture sans mutation) | 2026-11-22 |
 | fsp-srv | `80` | `OpenSaveDataMetaFile` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |

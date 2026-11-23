@@ -1229,6 +1229,20 @@ Le manifeste `eden-backports` et le pin du test hôte existant ont été rafraî
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot FSP — lecteur SaveData filtré multi-résultats — 23/11/2026
+
+**Vendor `9f4f9bef141c33a3bce353f68cf5b58bd94603e5`** (arbre `bf9097bdaf82c025fc15f2a4cd9e1541adbdb152`).
+
+`fsp-srv::OpenSaveDataInfoReaderWithFilter` (cmd 68) passe **NULL → IMPL-SRC**. L'ABI recroisée avec Ryujinx/LibHac est `SaveDataSpaceId + SaveDataFilter -> ISaveDataInfoReader`. Le nouveau constructeur du reader énumère d'abord le vrai backing Encore, puis conserve **toutes** les entrées satisfaisant les drapeaux de filtre (program id, type, user id, save id, index et rank). Il ne réutilise pas le lookup mono-résultat de cmd67.
+
+Le manifeste `eden-backports` couvre les quatre unités modifiées et le test hôte existant vérifie le raccordement cmd68 et les critères du filtre.
+
+**Compteur historique : 1 529 IMPL-SRC / 115 PARTIEL / 125 STUB / 140 NOOP / 1 773 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 293** : 1 773 NULL + 125 STUB + 115 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 560 | 80 | **1 640** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 582 | 80 | **1 662** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 60 | 0 | **60** |
 | **NOOP — No-op documenté** | 153 | 0 | **153** |
-| **NULL — Handler NULL** | 1 419 | 0 | **1 419** |
+| **NULL — Handler NULL** | 1 397 | 0 | **1 397** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -4442,34 +4442,34 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:m | `100` | `InitializeMonitor` | — | **IMPL-SRC** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:m | `101` | `FinalizeMonitor` | — | **IMPL-SRC** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:s | `0` | `CreateSystemLocalCommunicationService` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/ldn.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
-| ldn:s | `0` | `GetState` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `1` | `GetNetworkInfo` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `2` | `GetIpv4Address` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `3` | `GetDisconnectReason` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `4` | `GetSecurityParameter` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `5` | `GetNetworkConfig` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `100` | `AttachStateChangeEvent` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `101` | `GetNetworkInfoLatestUpdate` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `102` | `Scan` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `103` | `ScanPrivate` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
+| ldn:s | `0` | `GetState` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `1` | `GetNetworkInfo` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `2` | `GetIpv4Address` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `3` | `GetDisconnectReason` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `4` | `GetSecurityParameter` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `5` | `GetNetworkConfig` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `100` | `AttachStateChangeEvent` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `101` | `GetNetworkInfoLatestUpdate` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `102` | `Scan` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `103` | `ScanPrivate` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `104` | `SetWirelessControllerRestriction` | 5.0.0+ | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:s | `200` | `OpenAccessPoint` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `201` | `CloseAccessPoint` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `202` | `CreateNetwork` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `203` | `CreateNetworkPrivate` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `204` | `DestroyNetwork` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
+| ldn:s | `200` | `OpenAccessPoint` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `201` | `CloseAccessPoint` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `202` | `CreateNetwork` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `203` | `CreateNetworkPrivate` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `204` | `DestroyNetwork` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `205` | `Reject` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:s | `206` | `SetAdvertiseData` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
+| ldn:s | `206` | `SetAdvertiseData` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `207` | `SetStationAcceptPolicy` | — | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
 | ldn:s | `208` | `AddAcceptFilterEntry` | — | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
 | ldn:s | `209` | `ClearAcceptFilter` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:s | `300` | `OpenStation` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `301` | `CloseStation` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `302` | `Connect` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
+| ldn:s | `300` | `OpenStation` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `301` | `CloseStation` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `302` | `Connect` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `303` | `ConnectPrivate` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:s | `304` | `Disconnect` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/system_local_communication_service.cpp) ; ISystemLocalCommunicationService : nullptr ; pas de validation PS5) | 2026-11-22 |
-| ldn:s | `400` | `InitializeSystem` | — | **NULL** ([source C++][ns1-src-091]) | 2026-11-22 |
-| ldn:s | `401` | `FinalizeSystem` | — | **NULL** ([source C++][ns1-src-091]) | 2026-11-22 |
+| ldn:s | `304` | `Disconnect` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `400` | `InitializeSystem` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
+| ldn:s | `401` | `FinalizeSystem` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `402` | `SetOperationMode` | 4.0.0+ | **NULL** ([source C++][ns1-src-091]) | 2026-11-22 |
 | ldn:s | `403` | `InitializeSystem2` | 7.0.0+ | **STUB** ([source C++][ns1-src-091]) | 2026-11-22 |
 | ldn:u | `0` | `CreateUserLocalCommunicationService` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/ldn.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
@@ -6460,3 +6460,10 @@ Vendor `90bf581546e467daf19ac091cb301c5271df3f94` → gitlink moteur `2fded1df7b
 Vendor `f48b517270481dffb1a47a8e76c68035b73baedf` → gitlink moteur `52973e885b296e55a1615dab463f511289172aa5`. Les dumps Applet Manager NS1 22.5/23.0.1 confirment que cmd11/13/15 sont des releases sans entrée ni sortie. Encore utilise déjà un chemin capture synchrone pour les shared buffers 22–27 : le snapshot est copié sous verrou puis l'ownership est libéré avant le retour. Les trois releases legacy sont donc raccordées au même modèle explicite, sans inventer les handles Horizon requis par les acquisitions 10/12/14/16–18. **3 NULL → IMPL-SRC.** Validation PS5 non revendiquée.
 
 **Compteur courant : 1 640 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 419 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 819.**
+
+
+### LDN system — backend LANDiscovery partagé (23/11/2026)
+
+Vendor `1d8b6c8ad8ba3ac57c0e17a827afd3e86fb74b22` → gitlink moteur `9322d949c9fcfc0ecdb00e6609eed4d06c2c6d88`. L'interface `ldn:s` n'est plus une table vide pour les opérations communes : 22 commandes utilisent désormais le même `LANDiscovery`, état réseau, callback room, event et sélection d'interface que `ldn:u`. Les commandes dont la sémantique reste distincte/non prouvée (`104/205/207/208/209/303/402/403`) restent ouvertes. **22 NULL → IMPL-SRC.** Aucune validation PS5 revendiquée.
+
+**Compteur courant : 1 662 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 397 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 797.**

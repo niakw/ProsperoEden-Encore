@@ -2400,3 +2400,12 @@ Vendor `f48b517270481dffb1a47a8e76c68035b73baedf` → gitlink moteur `52973e885b
 **Compteur courant : 1 640 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 419 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 819** : 1 419 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## LDN system — backend LANDiscovery partagé (23/11/2026)
+
+Vendor `1d8b6c8ad8ba3ac57c0e17a827afd3e86fb74b22` → gitlink moteur `9322d949c9fcfc0ecdb00e6609eed4d06c2c6d88`. **22 NULL → IMPL-SRC** sur `ldn:s` : GetState/NetworkInfo/IPv4/disconnect/security/config, event + latest update + scans, AP/station, create/destroy network, advertise, connect/disconnect et initialize/finalize utilisent le backend `LANDiscovery` déjà actif pour `ldn:u`. Les huit commandes à sémantique distincte/non prouvée restent ouvertes. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 662 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 397 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 797** : 1 397 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

@@ -17,6 +17,7 @@ constexpr int W = 960, H = 540;
 using Pixel = std::array<std::uint8_t, 4>;
 constexpr Pixel red{255, 0, 0, 255}, green{0, 255, 0, 255};
 constexpr Pixel blue{0, 0, 255, 255}, yellow{255, 255, 0, 255};
+constexpr Pixel cyan{0, 255, 255, 255};
 
 void Expect(const Pixel& a, const Pixel& b, int tolerance = 2) {
     for (std::size_t c = 0; c < a.size(); ++c) {
@@ -48,6 +49,19 @@ void Paint(int w, int h) {
     rect(w/2, h/2, 0, 1, 0);
     rect(0, 0, 0, 0, 1);
     rect(w/2, 0, 1, 1, 0);
+}
+
+void PaintAlternate(int w, int h) {
+    glEnable(GL_SCISSOR_TEST);
+    auto rect = [&](int x, int y, float r, float g, float b) {
+        glScissor(x, y, w/2, h/2);
+        glClearColor(r, g, b, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    };
+    rect(0, h/2, 0, 1, 1);
+    rect(w/2, h/2, 1, 0, 1);
+    rect(0, 0, 1, 1, 1);
+    rect(w/2, 0, 0, 0, 0);
 }
 
 void ExpectCorners() {
@@ -92,6 +106,9 @@ int main() {
     glPixelStorei(GL_PACK_SKIP_ROWS, 2);
     glPixelStorei(GL_PACK_SKIP_PIXELS, 3);
     assert(artwork::Capture(Paint));
+    assert(artwork::Capture(PaintAlternate, true));
+    const auto alternate = handoff::PeekAlternate();
+    assert(alternate && handoff::Valid(*alternate));
     GLint state[4]{};
     glGetIntegerv(GL_VIEWPORT,state);
     assert(state[0]==3 && state[1]==4 && state[2]==W-6 && state[3]==H-8);
@@ -146,6 +163,12 @@ int main() {
         }
     }
     assert(animated>0);
+    // During the 700ms turn interval the alternate authentic pose is visible.
+    assert(game.Draw(W,H,2.05));
+    const auto turning = ReadFrame();
+    assert(turning != initial);
+    const Pixel turning_corner = Read(W/4, 3*H/4);
+    assert(turning_corner != red && turning_corner != cyan);
     assert(game.Draw(W,H,1001.0));
     const auto calm=ReadFrame();
     assert(game.Draw(W,H,1001.4));
@@ -153,6 +176,7 @@ int main() {
     game.Release();
     handoff::Clear();
     assert(!handoff::Peek());
+    assert(!handoff::PeekAlternate());
     artwork::GlPresenter missing;
     assert(missing.Draw(W,H,1.0));
     Expect(Read(W/4,H/4),Pixel{14,19,27,255});
@@ -162,5 +186,5 @@ int main() {
     assert(eglDestroySurface(display,surface));
     assert(eglTerminate(display));
     std::cout << "ENCORE_LOADING_ARTWORK_MESA_PIXELS_PASS independent_contexts=2 top_row=1 animated_pixels="
-              << animated << " reduced_motion=1 neutral_fallback=1\n";
+              << animated << " authentic_pair=1 reduced_motion=1 neutral_fallback=1\n";
 }

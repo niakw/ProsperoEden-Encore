@@ -85,6 +85,16 @@ int main() {
         assert(guest.UsedBytes()==kGranule);
         assert(successful_commits==2);
 
+        // Once the guest page heap proves this whole 2 MiB block free, the
+        // private PA returns to the pool and the bytes read as ZERO again.
+        EdenNs2GuestBackingFreed(0,kGranule);
+        assert(guest.UsedBytes()==0);
+        assert(base[64]==0);
+        const auto after_free=successful_commits;
+        base[64]=0x31;
+        assert(base[64]==0x31 && successful_commits==after_free+1);
+        assert(guest.UsedBytes()==kGranule);
+
         assert(guest.Clear(2*kGranule+17,4096,0));
         assert(successful_commits==2 && guest.UsedBytes()==kGranule);
         assert(base[2*kGranule+17]==0);
@@ -127,7 +137,7 @@ int main() {
         assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
     }
     for (const auto& [pa,live]:alive) assert(!live);
-    // one rolled-back OWN + four live OWN + one shared ZERO.
-    assert(released==6);
+    // one page-heap return + one rolled-back OWN + four live OWN + shared ZERO.
+    assert(released==7);
     std::puts("R457_PS5_DEMAND_ZERO_GUEST_REAL_OWNER_MOCK_PASS");
 }

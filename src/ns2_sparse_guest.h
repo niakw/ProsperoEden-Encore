@@ -26,6 +26,9 @@ public:
     [[nodiscard]] bool Clear(std::size_t offset, std::size_t bytes,
                              std::uint32_t fill) noexcept;
     [[nodiscard]] bool EnsureReadable(std::size_t offset, std::size_t bytes) noexcept;
+    // Called only after the guest buddy allocator proves complete 2 MiB
+    // slots free. Replaces private OWN mappings with shared ZERO mappings.
+    void ReleaseFreed(std::size_t offset, std::size_t bytes) noexcept;
     [[nodiscard]] bool HandleWriteFault(void* address) noexcept;
 
     // Only one active guest reservation is allowed. A registry lock protects
@@ -46,3 +49,5 @@ extern "C" bool EdenNs2CommitGuestBacking(const void* backing_base,
 extern "C" bool EdenNs2EnsureGuestBackingReadable(const void* backing_base,
                                                     std::size_t offset,
                                                     std::size_t bytes) noexcept;
+extern "C" void EdenNs2GuestBackingFreed(std::size_t offset,
+                                          std::size_t bytes) noexcept;

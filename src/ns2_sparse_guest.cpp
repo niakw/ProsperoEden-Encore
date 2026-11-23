@@ -283,6 +283,37 @@ struct Runtime::Impl {
         return true;
     }
 
+    void ReleaseFreed(std::size_t offset, std::size_t length) noexcept {
+        GateGuard lock{*this};
+        if (!lock || !ValidateLocked(offset, length) || !length) return;
+
+        // Only whole native granules fully contained in the proven-free
+        // page-heap block may be returned. Never touch live partial edges.
+        const auto first = (offset + kGranule - 1) / kGranule;
+        const auto last = (offset + length) / kGranule;
+        for (auto index = first; index < last; ++index) {
+            const auto state = plan.At(index).state;
+            if (state == State::Unmapped) continue;
+            if (state != State::Resident) return;
+
+            const auto old_physical = physical[index];
+            if (old_physical < 0) std::abort();
+            auto* const at = base + index * kGranule;
+
+            // Revoke the writable CPU mapping before returning its direct PA.
+            // If ZERO cannot be installed, restore OWN and keep accounting.
+            if (!MapPhysical(at, PROT_READ, zero_physical)) {
+                if (!MapPhysical(at, PROT_READ | PROT_WRITE, old_physical))
+                    std::abort();
+                return;
+            }
+            if (sceKernelReleaseDirectMemory(old_physical, kGranule) != 0)
+                std::abort();
+            physical[index] = -1;
+            if (!plan.ReleaseResident(index, old_physical)) std::abort();
+        }
+    }
+
     bool PromoteFault(void* fault) noexcept {
         if (!fault || !base || owner_gate_held) return false;
         const auto address = reinterpret_cast<std::uintptr_t>(fault);
@@ -360,6 +391,9 @@ bool Runtime::Clear(std::size_t offset, std::size_t bytes,
 bool Runtime::EnsureReadable(std::size_t offset, std::size_t bytes) noexcept {
     return impl_ && impl_->EnsureReadable(offset, bytes);
 }
+void Runtime::ReleaseFreed(std::size_t offset, std::size_t bytes) noexcept {
+    if (impl_) impl_->ReleaseFreed(offset, bytes);
+}
 bool Runtime::HandleWriteFault(void* address) noexcept {
     return impl_ && impl_->PromoteFault(address);
 }
@@ -403,4 +437,11 @@ extern "C" bool EdenNs2EnsureGuestBackingReadable(const void* backing_base,
     if (!owner) return true;
     if (owner->Base() != backing_base) return false;
     return owner->EnsureReadable(offset, bytes);
+}
+
+extern "C" void EdenNs2GuestBackingFreed(std::size_t offset,
+                                          std::size_t bytes) noexcept {
+    std::lock_guard lock{Eden::PS5::GuestBacking::registry_mutex};
+    auto* const owner = Eden::PS5::GuestBacking::active_guest;
+    if (owner) owner->ReleaseFreed(offset, bytes);
 }

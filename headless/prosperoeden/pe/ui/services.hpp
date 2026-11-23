@@ -332,7 +332,10 @@ class Services
     virtual std::string exact_game_size(const std::string&, const std::atomic<bool>*) { return {}; }
     // Resolve locally cached, user-supplied retail-case artwork by title ID.
     // Never requests an API or blocks gameplay startup on a network call.
-    virtual BoxArt box_art(std::uint64_t) { return {}; }
+    virtual BoxArt box_art(std::uint64_t, bool second_generation = false) {
+        (void)second_generation;
+        return {};
+    }
     // The value the launcher hands back to start a game.
     virtual std::string game_path(const std::string &file) = 0;
     // Cheap presence check used while the launcher is open.

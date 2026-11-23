@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 545 | 80 | **1 625** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 548 | 80 | **1 628** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 456 | 0 | **1 456** |
+| **NULL — Handler NULL** | 1 453 | 0 | **1 453** |
 | **D — Rejet explicite / historique** | 185 | 33 | **218** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3437,9 +3437,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IApplicationDisplayService | `2460` | `GetIndirectLayerImageRequiredMemoryInfo` | — | **IMPL-SRC** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `5202` | `GetDisplayVsyncEvent` | — | **IMPL-SRC** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `5203` | `GetDisplayVsyncEventForDebug` | — | **IMPL-SRC** (`GetDisplayVsyncEventForDebug` réutilise le vrai handler `GetDisplayVsyncEvent` et son KEvent VSync ; owner backport VI actif ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
-| IApplicationDisplayService | `1200` | `GetZOrderCountMin` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
-| IApplicationDisplayService | `1202` | `GetZOrderCountMax` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
-| IApplicationDisplayService | `1203` | `GetDisplayLogicalResolution` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
+| IApplicationDisplayService | `1200` | `GetZOrderCountMin` | — | **IMPL-SRC** (retourne la borne Z minimale `0` selon l'ABI HOS 23 (`display_id` -> `s64`); vendor `e347b494`, gitlink moteur `b8879fd6`) | 2026-11-23 |
+| IApplicationDisplayService | `1202` | `GetZOrderCountMax` | — | **IMPL-SRC** (retourne la borne Z maximale `15` avec l'ABI HOS 23 (`display_id` -> `s64`); vendor `e347b494`, gitlink moteur `b8879fd6`) | 2026-11-23 |
+| IApplicationDisplayService | `1203` | `GetDisplayLogicalResolution` | — | **IMPL-SRC** (retourne la résolution logique dockée/portable depuis `Settings::IsDockedMode()` et `VI::DisplayResolution`, même source que le chemin Applet actif; vendor `e347b494`, gitlink moteur `b8879fd6`) | 2026-11-23 |
 | IApplicationDisplayService | `1204` | `SetDisplayMagnification` | 3.0.0+ | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `2201` | `SetLayerPosition` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `2203` | `SetLayerSize` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
@@ -6369,3 +6369,10 @@ Vendor `8580856ac4ba06f7e83723f5e2eaed20ed68e200`, gitlink moteur `36fe443ac608d
 Vendor `6c138572804b27e7a7248be1654a10529e2dcb61`, gitlink moteur `2f2dcd4649acadcba017df4807e6cb7d329190d1` : les commandes debug `acc:su` du catalogue sont désormais rejetées explicitement par leur owner réel (`ACC_SU` ou `IAdministrator`) au lieu de rester `nullptr`. Le même lot ferme aussi quatre slots debug ACC supplémentaires hors catalogue. **6 NULL → D** dans le compteur ; aucun état Nintendo Account debug n'est simulé.
 
 **Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 456 NULL / 218 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 871.**
+
+
+### VI system display — requêtes de base raccordées (23/11/2026)
+
+Vendor `e347b4949305f1f57de94713437218459697bee0` → gitlink moteur `b8879fd60961b285d3b52c428e5a788a7a76b795` : `ISystemDisplayService` cmd1200/1202/1203 sont maintenant des handlers actifs. `GetZOrderCountMin` renvoie 0, `GetZOrderCountMax` 15 et `GetDisplayLogicalResolution` partage les dimensions dockées/portables déjà utilisées par Applet/VI. Les ABI 23.0.1 ont été recroisées avant raccord. **3 NULL → IMPL-SRC**. Les commandes position/taille/alpha restent ouvertes car le SurfaceFlinger Encore ne stocke pas encore ces propriétés.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 453 NULL / 218 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 868.**

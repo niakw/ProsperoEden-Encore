@@ -127,9 +127,10 @@ public:
     GlPresenter& operator=(const GlPresenter&) = delete;
     void Release() {
         glDeleteTextures(1, &texture_);
+        glDeleteTextures(1, &alternate_texture_);
         glDeleteVertexArrays(1, &vao_);
         glDeleteProgram(program_);
-        texture_ = vao_ = program_ = 0;
+        texture_ = alternate_texture_ = vao_ = program_ = 0;
         width_ = height_ = 0;
         attempted_ = false;
     }

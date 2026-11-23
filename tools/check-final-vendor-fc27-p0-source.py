@@ -1869,6 +1869,20 @@ if actual_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
         assert actual == expected, ("bfdf exact reviewed delta drift", relative, actual)
     REVIEWED_PINS.add("bfdf39014db15f237a16d4a50e6cdfd68bdd87b8")
+# Launcher handoff successor: inherit every FC27/P0 owner from bfdf only after
+# proving the selected vendor is its direct child and changed exactly the PS5
+# VideoOut WSI file. Dedicated engine contracts validate the new WSI semantics.
+if actual_vendor_pin == "63826507846e253761ca2c6a77727446fe712774":
+    parent = subprocess.check_output(
+        ["git", "-C", str(V), "rev-parse", "HEAD^"], text=True).strip()
+    assert parent == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", ("Unexpected WSI successor parent", parent)
+    changed = subprocess.check_output(
+        ["git", "-C", str(V), "diff", "--name-only", "HEAD^", "HEAD"],
+        text=True).splitlines()
+    assert changed == [
+        "encore-active/ps5-mesa/src/vulkan/wsi/wsi_common_videoout.c"
+    ], ("Unexpected WSI successor files", changed)
+    REVIEWED_PINS.add("63826507846e253761ca2c6a77727446fe712774")
 if actual_vendor_pin in {"84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"}:
     relative = "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"
     raw = (V / relative).read_bytes()

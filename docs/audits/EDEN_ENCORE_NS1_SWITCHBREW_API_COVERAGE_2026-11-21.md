@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 534 | 80 | **1 614** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 537 | 80 | **1 617** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 601 | 0 | **1 601** |
+| **NULL — Handler NULL** | 1 598 | 0 | **1 598** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -5323,12 +5323,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pm:bm | `1` | `SetMaintenanceBoot` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; BootMode::SetMaintenanceBoot lit ou modifie boot_mode ; non certifié PS5) | 2026-11-22 |
 | pm:info | `0` | `GetProgramId` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/pm/pm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | pm:shell | `0` | `LaunchProgram` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
-| pm:shell | `1` | `TerminateProcess` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
-| pm:shell | `2` | `TerminateProgram` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
+| pm:shell | `1` | `TerminateProcess` | — | **IMPL-SRC** (cherche le KProcess par PID puis appelle KProcess::Terminate(KernelCore&), avec ResultProcessNotFound si absent ; vendor `078f7de0`, gitlink moteur `9bf4128c`, ABI 23.0.1 recroisée) | 2026-11-23 |
+| pm:shell | `2` | `TerminateProgram` | — | **IMPL-SRC** (cherche le KProcess par ProgramId puis appelle KProcess::Terminate(KernelCore&), avec ResultProcessNotFound si absent ; vendor `078f7de0`, gitlink moteur `9bf4128c`, ABI 23.0.1 recroisée) | 2026-11-23 |
 | pm:shell | `3` | `GetProcessEventHandle` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
 | pm:shell | `4` | `GetProcessEventInfo` | — | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
 | pm:shell | `8` | `BoostApplicationThreadResourceLimit` | 7.0.0+ | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
-| pm:shell | `9` | `GetBootFinishedEventHandle` | 8.0.0+ | **NULL** ([source C++][ns1-src-018]) | 2026-11-22 |
+| pm:shell | `9` | `GetBootFinishedEventHandle` | 8.0.0+ | **IMPL-SRC** (retourne le KReadableEvent réel associé à BootFinishedEvent ; vendor `078f7de0`, gitlink moteur `9bf4128c`, ABI 23.0.1 recroisée) | 2026-11-23 |
 
 ### PSC services
 
@@ -6299,3 +6299,10 @@ Le dump WLAN NS1 23.0.1 ne publie plus `wlan:lcl`, ce qui ferme ses 9 ABI histor
 Vendor `cd36610156c7591edf2f7527b714b226911ee50f` → gitlink moteur `3a19889cf6bb5e7f7fed7548d9d35e259e143f68`. `StartGamepadPairing`/`CancelGamepadPairing` maintiennent désormais un état invité et signalent un `KEvent` réel ; `AcquireGamepadPairingEvent` et `IsGamepadPairingStarted` sont raccordés. `ClearGamepadPairingDatabase` est un NOOP explicite car Encore ne possède aucune base persistante de pairing Switch. `GetPairedGamepadCount` respecte l'ABI HOS 23 et renvoie zéro, mais reste PARTIEL faute de backend/persistance Bluetooth Switch.
 
 **Compteur courant : 1 614 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 601 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 016.**
+
+
+### PM shell — terminaison et boot-finished raccordés (23/11/2026)
+
+Vendor `078f7de0f675b7128fffc96499b0d39ee41a9973` → gitlink moteur `9bf4128ce5a524fe2e3c0eb33626c0f02335ed4b`. `TerminateProcess` et `TerminateProgram` appellent désormais le vrai `KProcess::Terminate`; `NotifyBootFinished` signale un `KEvent` réel et `GetBootFinishedEvent` en retourne le handle lisible. L'ID HOS23 `GetProcessId` (12) est également ajouté à la table active. Le catalogue historique contient les lignes 1/2/9 mais pas 5/12 : **seules trois lignes** réduisent donc le pool 4 853, tandis que cmd5/12 restent un gain runtime hors dénominateur historique.
+
+**Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 598 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 013.**

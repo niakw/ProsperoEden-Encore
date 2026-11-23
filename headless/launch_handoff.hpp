@@ -84,6 +84,10 @@ inline std::shared_ptr<const Frame> PeekAlternate() {
     const std::lock_guard lock{frame_mutex};
     return alternate_frame;
 }
+inline void ClearAlternate() {
+    const std::lock_guard lock{frame_mutex};
+    alternate_frame.reset();
+}
 inline std::shared_ptr<const Frame> Take() {
     const std::lock_guard lock{frame_mutex};
     alternate_frame.reset();

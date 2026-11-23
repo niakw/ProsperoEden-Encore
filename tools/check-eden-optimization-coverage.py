@@ -1789,7 +1789,7 @@ if merged_fc27_p1_pair:
     })
 # The final vendor integration retains both selected NS2 appletOE
 # support headers. The actual cpp/headers are byte-sealed below.
-if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+if gpu_table_vendor_pin in {"4354add020afac574198f63d87167f3022bff9c6", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"}:
     ns2_early_hle_receipts.update({
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h":
             "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
@@ -1800,7 +1800,7 @@ if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
 # real graphics/performance handlers and added their typed IPC peers.
 if subprocess.check_output(
     ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"], text=True
-).strip() in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634"}:
+).strip() in {"f5c80c900b58b57808f609b5ffdc0e6ab9de7bd0", "d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"}:
     ns2_early_hle_receipts.update({
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp": "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912",
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.h": "ed88acba848071d6c9e2c0b080c3234925003b50",
@@ -1810,7 +1810,7 @@ if subprocess.check_output(
 # Exact Lichii AM additional direct source owners are selected once by CMake.
 if subprocess.check_output(
     ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"], text=True
-).strip() in {"d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634"}:
+).strip() in {"d22b7066410c627230f9bfa8b3b5be8baff4fcdf", "f4f5d53596879960b19a3701bbd2272ef1f3c634", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"}:
     ns2_early_hle_receipts.update({
         "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
         "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",
@@ -1841,6 +1841,14 @@ elif gpu_table_vendor_pin in {"716e069f212b89b6fd13af56b0677343cf41ba07", "6c15e
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/nx2_stub_interface.h": "68c087899680b8a3a764d6cd3c362b0e98237ae0",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.cpp": "25e75933c344a75f108ff1c7f40845feb405c5fd",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/application_accessor.h": "48ec3effbf4af4df285dc98fbd6c5cf7a3ada21a",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/audio_controller.cpp": "0b9efbe1cfdb3072828709170bbefa202114d08d",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/common_state_getter.cpp": "2c5e5364146b125c038b239056bf06f2aaea5ef3",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/display_controller.cpp": "7e7db23708718f6513b784c489edf61d8d555fac",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/library_applet_accessor.cpp": "7119c605968dd50372d5d62097bb2f9d017ab6e6",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/library_applet_creator.cpp": "1157033948e6a6f015ef14dedda30a40ff750b54",
+        "vendor/encore-active/ns2-runtime/am_structure/core/hle/service/am/service/window_controller.cpp": "6b19368d91035f6372cf8540c4b45caf371c1cd3",
     }
     assert ns2_early_hle_present == set(ns2_early_hle_receipts)
     assert set(ns2_early_hle_receipts).issubset(qualified_early_hle)
@@ -1993,7 +2001,7 @@ print("PS5_VFS128_FD_BUDGET_F07_ISOLATION_PASS", f"owners={len(ps5_vfs128_presen
 # through CMake in specific variants, so presence is NOT native execution.
 post_f07_integrated_source_owners = set()
 post_f07_legacy_net_header_owners = set()
-if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
+if gpu_table_vendor_pin in {"4354add020afac574198f63d87167f3022bff9c6", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"}:
     inventory_source = ast.parse((ROOT / "tools/check-active-source-inventory.py").read_text())
     inventory_assignments = [
         node.value for node in inventory_source.body if isinstance(node, ast.Assign)

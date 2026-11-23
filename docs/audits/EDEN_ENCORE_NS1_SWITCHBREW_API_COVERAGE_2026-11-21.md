@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 588 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `2f294bbf`. **Ces 1 588 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 595 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `20d0c7bb`. **Ces 1 588 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 508 | 80 | **1 588** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 515 | 80 | **1 595** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
 | **STUB — Stub / résultat simulé** | 79 | 0 | **79** |
-| **NOOP — No-op documenté** | 150 | 0 | **150** |
-| **NULL — Handler NULL** | 1 698 | 0 | **1 698** |
+| **NOOP — No-op documenté** | 149 | 0 | **149** |
+| **NULL — Handler NULL** | 1 692 | 0 | **1 692** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -1154,13 +1154,13 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `308` | `SetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `309` | `GetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `310` | `ResetSevenSixAxisSensorTimestamp` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `400` | `IsUsbFullKeyControllerEnabled` | 3.0.0+ | **NOOP** (aucun backend USB full-key Switch n'est modélisé ; retourne false ; vendor `2faf00b1`) | 2026-11-22 |
-| hid | `401` | `EnableUsbFullKeyController` | 3.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `402` | `IsUsbFullKeyControllerConnected` | 3.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `403` | `HasBattery` | 4.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `404` | `HasLeftRightBattery` | 4.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `405` | `GetNpadInterfaceType` | 4.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `406` | `GetNpadLeftRightInterfaceType` | 4.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `400` | `IsUsbFullKeyControllerEnabled` | 3.0.0+ | **IMPL-SRC** (état enable/disable conservé par `IHidServer`; ABI corrigée sans ARUID selon libnx ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
+| hid | `401` | `EnableUsbFullKeyController` | 3.0.0+ | **IMPL-SRC** (met à jour l’état USB full-key lu par cmd400 ; ABI bool sans ARUID recroisée libnx ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
+| hid | `402` | `IsUsbFullKeyControllerConnected` | 3.0.0+ | **IMPL-SRC** (interroge le `NpadAbstractPropertiesHandler` du Npad et teste l’interface FullKey USB réelle ; ABI u32→bool recroisée libnx ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
+| hid | `403` | `HasBattery` | 4.0.0+ | **IMPL-SRC** (délègue au `NpadAbstractBatteryHandler::HasBattery` sur l’état contrôleur connecté ; ABI u32→bool recroisée Ryujinx/SwIPC ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
+| hid | `404` | `HasLeftRightBattery` | 4.0.0+ | **IMPL-SRC** (délègue au `NpadAbstractBatteryHandler::HasLeftRightBattery` ; ABI u32→bool,bool recroisée Ryujinx/SwIPC ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
+| hid | `405` | `GetNpadInterfaceType` | 4.0.0+ | **IMPL-SRC** (délègue au `NpadAbstractPropertiesHandler::GetNpadInterfaceType` ; ABI u32→u8 confirmée SwitchBrew/libnx ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
+| hid | `406` | `GetNpadLeftRightInterfaceType` | 4.0.0+ | **IMPL-SRC** (délègue au `NpadAbstractPropertiesHandler::GetNpadLeftRightInterfaceType` ; ABI u32→u8,u8 recroisée Ryujinx/SwIPC ; vendor `20d0c7bb`, PS5 non validé) | 2026-11-23 |
 | hid | `407` | `GetNpadOfHighestBatteryLevelForJoyLeft` | 9.0.0+ | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid_server.cpp) ; slot 407 actuel = GetNpadOfHighestBatteryLevel (nullptr), pas GetNpadOfHighestBatteryLevelForJoyLeft ; statique, PS5 non validé) | 2026-11-22 |
 | hid | `408` | `GetNpadOfHighestBatteryLevelForJoyRight` | 9.0.0+ | **NULL** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `500` | `GetPalmaConnectionHandle` | 5.0.0+ | **IMPL-SRC** (handler Palma raccordé au ResourceManager : état/événement/validation de handle réels ; vendor `51e5cbde`) | 2026-11-22 |

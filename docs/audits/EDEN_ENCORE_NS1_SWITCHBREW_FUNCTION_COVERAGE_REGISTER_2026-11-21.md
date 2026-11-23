@@ -1498,6 +1498,20 @@ Important : `GetUniquePadIds` reste STUB. L'ABI demande un buffer de `UniquePadI
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot HID user — batterie / interface / USB full-key — 23/11/2026
+
+**Vendor `20d0c7bb01d31c80f090abec811f2d920b96240c`**, sélectionné par le nouveau gitlink moteur de cette branche.
+
+Les commandes HID user **401–406** passent **NULL → IMPL-SRC**. Les commandes 403–406 exploitent les handlers NPad déjà présents pour les batteries et types d'interface, au lieu de renvoyer des constantes. Les ABI ont été recroisées : libnx confirme 400–402 et 405 ; les signatures 403/404/406 sont recoupées avec la table CMIF Ryujinx/SwIPC. La commande **400** passe **NOOP → IMPL-SRC** et son ancienne ABI erronée avec ARUID est corrigée : l'état enable/disable est maintenant conservé par le service.
+
+Le runtime PS5 utilise bien l'overlay `encore-active/eden-backports/src/hid_core/resources/npad/npad.cpp`; la copie de base a reçu la même ABI pour préserver les builds/replays sans overlay, et l'empreinte du manifeste a été mise à jour.
+
+**Compteur historique : 1 595 IMPL-SRC / 142 PARTIEL / 79 STUB / 149 NOOP / 1 692 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 330 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 193** : 1 692 NULL + 79 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

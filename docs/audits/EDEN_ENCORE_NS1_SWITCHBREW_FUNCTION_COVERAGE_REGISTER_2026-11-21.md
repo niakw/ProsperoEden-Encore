@@ -2236,3 +2236,14 @@ Les dumps NS1 23.0.1 confirment la réaffectation des IDs de six anciennes comma
 **Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 459 HORS-VERSION / 0 ABSENT / 204 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 2 033** : 1 605 NULL + 75 STUB + 140 PARTIEL + 204 ABI-DIFF + 9 AMBIGU.
+
+
+## Rattrapage compteur + HID debug fail-closed (23/11/2026)
+
+Depuis le dernier compteur canonique à 2 033, les lots suivants ont été intégrés sur la branche secondaire : requalifications HOS23 WLAN/CLKRST/PCIe/Applet, lifecycle BTM pairing, handlers PM shell, puis rejet explicite de la surface HID debug non supportée. Le dernier couple runtime est moteur `56e9033f41079a26db2e2b626c2743f81fc74482` → vendor `0c533eecab77160f347c860e494db7a062ea9319`.
+
+Pour `hid:dbg`, les 138 slots `nullptr` du propriétaire actif ont été remplacés par `RejectUnsupportedDebugCommand`, qui retourne `Kernel::ResultNotImplemented` même si `auto_stub` est activé. Les **85 lignes historiques** du catalogue qui correspondent à ces slots passent **NULL → D**. Il s'agit d'un rejet explicite de fonctions debug/dev non supportées, **pas** d'une implémentation HID debug.
+
+**Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 513 NULL / 169 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 928** : 1 513 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

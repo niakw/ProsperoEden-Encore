@@ -29,11 +29,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 550 | 80 | **1 630** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 554 | 80 | **1 634** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
-| **STUB — Stub / résultat simulé** | 72 | 0 | **72** |
-| **NOOP — No-op documenté** | 146 | 0 | **146** |
+| **STUB — Stub / résultat simulé** | 65 | 0 | **65** |
+| **NOOP — No-op documenté** | 149 | 0 | **149** |
 | **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -922,7 +922,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `220` | `SynchronizeProfileAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `221` | `UploadProfileAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `222` | `SynchronizeProfileAsyncIfSecondsElapsed` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; table courante = SynchronizaProfileAsyncIfSecondsElapsed, owner/orthographe différent, nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:su | `250` | `IsLinkedWithNintendoAccount` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; réponse fixe / marquée STUBBED, sans consultation réseau ; pas de validation PS5) | 2026-11-22 |
+| acc:su | `250` | `IsLinkedWithNintendoAccount` | — | **IMPL-SRC** (capacité locale : aucun backend Nintendo Account n'est exposé par Encore ; le handler actif retourne donc `false` explicitement ; vendor `d527dc85`, PS5 non validé) | 2026-11-23 |
 | acc:su | `251` | `CreateProcedureToLinkWithNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `252` | `ResumeProcedureToLinkWithNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `255` | `CreateProcedureToUpdateLinkageStateOfNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -1947,11 +1947,11 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | aoc:u | `8` | `GetAddOnContentListChangedEvent` | 4.0.0+ | **IMPL-SRC** (event kernel réel ; `NotifyMountAddOnContent`/`NotifyUnmountAddOnContent` rafraîchissent l'inventaire AOC puis signalent l'événement ; vendor `ee971276`, gitlink moteur `df976b87`) | 2026-11-23 |
 | aoc:u | `100` | `[CreateEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 7.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) + [TU sélectionné moteur](https://github.com/niakw/ProsperoEden-Encore/blob/audit/ns1-switchbrew-main-coverage-20261122/headless/nup_v1_aoc_service.cpp) ; crée et retourne un vrai `IPurchaseEventManager`) | 2026-11-23 |
 | aoc:u | `101` | `[CreatePermanentEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 9.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) + [TU sélectionné moteur](https://github.com/niakw/ProsperoEden-Encore/blob/audit/ns1-switchbrew-main-coverage-20261122/headless/nup_v1_aoc_service.cpp) ; crée et retourne un vrai `IPurchaseEventManager`) | 2026-11-23 |
-| aoc:u | `0` | `SetDefaultDeliveryTarget` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
-| aoc:u | `1` | `SetDeliveryTarget` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
+| aoc:u | `0` | `SetDefaultDeliveryTarget` | — | **NOOP** (aucun transport Nintendo eShop/purchase n'est exposé ; la cible n'a aucun producteur ni consommateur observable et est volontairement acceptée sans effet ; vendor `d527dc85`) | 2026-11-23 |
+| aoc:u | `1` | `SetDeliveryTarget` | — | **NOOP** (aucun transport Nintendo eShop/purchase n'est exposé ; la cible de livraison est sans effet observable sur Encore ; vendor `d527dc85`) | 2026-11-23 |
 | aoc:u | `2` | `GetPurchasedEventReadableHandle` | — | **IMPL-SRC** (SwitchBrew `IPurchaseEventManager` cmd2 ; handler actif `GetPurchasedEvent` renvoie le `KReadableEvent` réel du manager, écart de nom seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
-| aoc:u | `3` | `PopPurchasedProductInfo` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
-| aoc:u | `4` | `PopPurchasedProductInfoWithUid` | 9.0.0+ | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
+| aoc:u | `3` | `PopPurchasedProductInfo` | — | **IMPL-SRC** (file d'achat vide faute de backend Nintendo : retourne explicitement `ResultNoPurchasedProductInfoAvailable` au lieu d'un faux succès ; vendor `d527dc85`) | 2026-11-23 |
+| aoc:u | `4` | `PopPurchasedProductInfoWithUid` | 9.0.0+ | **IMPL-SRC** (file d'achat vide faute de backend Nintendo : retourne explicitement `ResultNoPurchasedProductInfoAvailable` au lieu d'un faux succès ; vendor `d527dc85`) | 2026-11-23 |
 | ns:am | `0` | `ListApplicationRecord` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
 | ns:am | `1` | `GenerateApplicationRecordCount` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
 | ns:am | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
@@ -5747,9 +5747,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | mii:u, mii:e | `23` | `Convert` | 5.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
 | mii:u, mii:e | `24` | `ConvertCoreDataToCharInfo` | 7.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
 | mii:u, mii:e | `25` | `ConvertCharInfoToCoreData` | 7.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
-| miiimg | `0` | `Initialize` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : retour minimal sans base d'images ; ABI et PS5 non validés) | 2026-11-22 |
+| miiimg | `0` | `Initialize` | — | **NOOP** (base d'images Mii volontairement vide tant qu'aucun backend fichier Horizon n'est exposé ; aucune initialisation hôte à effectuer ; vendor `d527dc85`) | 2026-11-23 |
 | miiimg | `10` | `Reload` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| miiimg | `11` | `GetCount` | — | **STUB** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : retour minimal sans base d'images ; ABI et PS5 non validés) | 2026-11-22 |
+| miiimg | `11` | `GetCount` | — | **IMPL-SRC** (retourne le compte réel de la base d'images Encore actuellement vide, soit 0 ; aucun contenu fictif n'est créé ; vendor `d527dc85`) | 2026-11-23 |
 | miiimg | `12` | `IsEmpty` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `13` | `IsFull` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `14` | `GetAttribute` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
@@ -6418,3 +6418,10 @@ Vendor `4b8110b70ae05698b4c8db1354b87ff0c7b1f4a1` → gitlink moteur `3a72dfbae2
 Vendor `3e8effa0b3dc8184d46228e8bc82fa7c626d08bb` → gitlink moteur `1bb6cfcb49ea4af12095eafd312f9ab38e83bb5c`. `SetLcdBacklighOffEnabled` conserve désormais le flag invité mais reste un **NOOP matériel PS5** puisqu'il n'existe pas de LCD Switch à piloter. `IsIlluminanceAvailable` renvoie explicitement `false` comme capacité hôte réelle, ce qui empêche les invités d'enchaîner vers les lectures de capteur non exposées. **2 STUB sortent du pool**.
 
 **Compteur courant : 1 630 IMPL-SRC / 141 PARTIEL / 72 STUB / 146 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 836.**
+
+
+### Lot rapide STUB — ACC / AOC / miiimg (23/11/2026)
+
+Vendor `d527dc85bf42ec57f150fd02c6612c86042ff0bb` → gitlink moteur `d210bcd07be4a7468c35d0790d05dd50cc9d9937`. Propriétaires actifs recroisés avec CMake : ACC via l'overlay backport ; AOC et `miiimg` via les sources Eden de base. Aucun transport Nintendo Account/eShop n'est simulé. **7 STUB sortent du pool : 4 → IMPL-SRC, 3 → NOOP.** Ce lot qualifie surtout des comportements minimaux déjà cohérents et ne constitue pas un gain gameplay PS5.
+
+**Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 65 STUB / 149 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 829.**

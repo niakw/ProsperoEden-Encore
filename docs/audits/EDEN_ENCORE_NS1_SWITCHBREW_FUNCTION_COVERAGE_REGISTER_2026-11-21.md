@@ -2346,3 +2346,12 @@ Vendor `3e8effa0b3dc8184d46228e8bc82fa7c626d08bb` → gitlink moteur `1bb6cfcb49
 **Compteur courant : 1 630 IMPL-SRC / 141 PARTIEL / 72 STUB / 146 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 836** : 1 424 NULL + 72 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## Lot rapide STUB — ACC / AOC / miiimg (23/11/2026)
+
+Vendor `d527dc85bf42ec57f150fd02c6612c86042ff0bb` → gitlink moteur `d210bcd07be4a7468c35d0790d05dd50cc9d9937`. Les chemins actifs CMake ont été vérifiés : ACC utilise l'overlay backport ; AOC et `miiimg` utilisent les sources Eden de base. **7 STUB sortent du pool : 4 → IMPL-SRC, 3 → NOOP.** Aucun backend Nintendo Account/eShop n'est inventé ; les pop AOC restent fail-closed avec `ResultNoPurchasedProductInfoAvailable`, et la base d'images Mii reste explicitement vide. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 65 STUB / 149 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 829** : 1 424 NULL + 65 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

@@ -1051,7 +1051,7 @@ endif()
             zero_owner = maintained.index("    bool ZeroBlock(", before_map)
             zero_memset = maintained.index(
                 "            std::memset(ptr, 0, copy_amount);", zero_start)
-            assert zero_owner < zero_start < zero_end < zero_memset, owner
+            assert zero_owner < zero_start < zero_end == zero_memset, owner
             zero_guard = maintained[zero_start:zero_end]
             for witness in (
                 'GetIntendedMemorySize() ==',

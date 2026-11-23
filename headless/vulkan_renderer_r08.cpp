@@ -324,8 +324,11 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     frame_gen.Process(device, frame, present_manager.SwapchainImageFormat(), GuestExtent(framebuffers));
 
     const size_t generated_frames = frame_gen.GeneratedFrameCount();
+    const u32 lsfg_game_frame_presents = static_cast<u32>(generated_frames) + 1;
+    frame->game_frame_presents = lsfg_game_frame_presents;
     for (size_t generation = 0; generation < generated_frames; ++generation) {
         Frame* generated = present_manager.GetRenderFrame();
+        generated->game_frame_presents = lsfg_game_frame_presents;
         blit_swapchain.PrepareFrame(device, generated, render_window.GetFramebufferLayout());
         frame_gen.GenerateInto(device, generated, generation);
         // LSFG's shader output is in GENERAL. Native UI is post-composited
@@ -633,6 +636,17 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         // Game/menu/renderer switch cannot reuse an old source pair.
         mihawk_present_gate.Reset();
         mihawk_previous_source_ns = 0;
+    }
+
+    // Native generated frames and their source frame share one pacing slot.
+    // Exactly one native generator can own a synthetic frame in a session.
+    if (native_fg_method != 3) {
+        const u32 native_game_frame_presents = (r08_generated || fsr3_generated) ? 2U : 1U;
+        frame->game_frame_presents = native_game_frame_presents;
+        if (r08_generated && r08_synthetic)
+            r08_synthetic->game_frame_presents = native_game_frame_presents;
+        if (fsr3_generated && fsr3_synthetic)
+            fsr3_synthetic->game_frame_presents = native_game_frame_presents;
     }
 
     // If generated, submit and queue the midpoint FIRST. The original real

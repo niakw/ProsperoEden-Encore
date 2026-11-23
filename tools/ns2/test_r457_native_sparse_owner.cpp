@@ -72,7 +72,7 @@ int main() {
         4ull * GiB, 6ull * GiB, 8ull * GiB, 10ull * GiB, 12ull * GiB,
     };
     for (const auto bytes : layouts) {
-        const auto budget = (std::min)(bytes, 6ull * GiB);
+        const auto budget = bytes < 6ull * GiB ? bytes : 6ull * GiB;
         Eden::PS5::GuestBacking::Plan plan(bytes, budget);
         assert(plan.Valid());
         assert(plan.VirtualBytes() == bytes);

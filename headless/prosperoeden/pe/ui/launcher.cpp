@@ -584,12 +584,13 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     launch_case_placeholder_mask_ = 0;
     launch_case_ready_mask_ = 0;
     if (!launch_box_front_.empty()) (void)textures_.cover(launch_box_front_, 760.0f);
-    if (!native_artwork_loading_ && !launch_box_back_.empty())
+    if (!launch_box_back_.empty())
         (void)textures_.cover(launch_box_back_, 760.0f);
     if (!launch_box_spine_.empty()) (void)textures_.cover(launch_box_spine_, 760.0f);
     // Native launch leaves as soon as usable front art is composed. A real
     // deadline bounds pending local decodes; there is no mandatory dwell.
     native_launch_art_ready_ = false;
+    native_launch_show_back_ = false;
     native_launch_deadline_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(750);
     launch_.start(theme::kLaunchSeconds);
     press_ = 1.0f;
@@ -1362,7 +1363,25 @@ void Launcher::draw_launch(Canvas &c)
     constexpr float kBackYaw = 3.14159265358979323846f + 0.18f;
     constexpr float kFullTurn = 6.28318530717958647692f;
     float angle = kFrontYaw;
-    if (!native_artwork_loading_ && motion() > 0.0f) {
+    if (native_artwork_loading_ && motion() > 0.0f) {
+        // The normal 4.5-second rear-reading hold belongs to the long
+        // preview, NOT the native game-start critical path. A rear that is
+        // already uploaded can make one genuine front-to-back turn within
+        // the existing 750-ms launch budget, then the captured final back
+        // remains readable during the GL/Vulkan loading handoff.
+        // No invented/mirrored rear and no extra game boot delay.
+        if (!native_launch_show_back_ && seconds <= 0.12f &&
+            !launch_box_back_.empty() &&
+            c.textures.cover(launch_box_back_, 760.0f).texture != 0)
+            native_launch_show_back_ = true;
+        if (native_launch_show_back_) {
+            constexpr float native_begin = 0.08f;
+            constexpr float native_end = 0.62f;
+            angle = kFrontYaw + (kBackYaw - kFrontYaw) *
+                tween::cubic_in_out(tween::clamp01(
+                    (seconds - native_begin) / (native_end - native_begin)));
+        }
+    } else if (motion() > 0.0f) {
         if (seconds < turn_start) {
             angle = kFrontYaw;
         } else if (seconds < back_start) {
@@ -1511,7 +1530,8 @@ void Launcher::draw_launch(Canvas &c)
         use_composed ? composed_page : artwork.texture;
     if (native_artwork_loading_)
         native_launch_art_ready_ = hero_ready && visible_texture != 0 &&
-            (!use_composed || !launch_composed_front_provisional_);
+            (!use_composed || !launch_composed_front_provisional_) &&
+            (!native_launch_show_back_ || seconds >= 0.62f);
     // One event per visible paper face and state, NEVER a per-frame log.
     // Stored/decoded/uploaded assets can still fail to reach the render list;
     // this is the last observable stage before the case-face GPU draw call.

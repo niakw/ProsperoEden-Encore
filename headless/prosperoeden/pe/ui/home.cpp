@@ -960,7 +960,10 @@ void Launcher::draw_home(Canvas &c)
             cover(c, art, icon, 20.0f, 0.0f);
             if (picture.texture == 0) {
                 const bool fetching = recent.title_id != 0 &&
-                    (home_icon_scan_title_id_ == recent.title_id ||
+                    ((home_icon_scan_title_id_ == recent.title_id &&
+                      home_icon_scan_file_ == recent.file) ||
+                     (home_icon_scan_extra_title_id_ == recent.title_id &&
+                      home_icon_scan_extra_file_ == recent.file) ||
                      home_media_scan_title_id_ == recent.title_id ||
                      media_scan_title_id_ == recent.title_id);
                 text_shrink(c, tr(fetching || !picture.missing ?

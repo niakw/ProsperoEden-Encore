@@ -56,6 +56,9 @@ assert "c.list.case_spine_image(ink.texture, side_strip, angle," in launcher
 assert "if (ink.texture != 0)" in launcher
 assert "c.list.case_spine_blank(" in launcher
 assert "launch_case_game_.title_id = title_id;" in launcher
+assert 'launch_case_game_.file = file;' in launcher
+assert 'launch_case_game_.file.ends_with(".nup")' in launcher
+assert 'game.format == "NUP" || game.file.ends_with(".nup")' in library
 
 for path in (texture_header, textures):
     assert "switch2_header_" in path

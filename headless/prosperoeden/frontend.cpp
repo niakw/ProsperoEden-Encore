@@ -428,19 +428,51 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             if (launcher.done() && !launcher.selected_game().empty()) {
-                // Render the real artwork without baked dots into an explicit
-                // 1080p target; do not recapture a transient scanout buffer.
-                const bool ready = Eden::LoadingArtwork::Capture([&](int w, int h) {
-                    batch.draw(list, pe::gfx::fit_viewport(w, h), w, h);
-                });
+                // Render deterministic launcher poses into explicit 1080p
+                // targets. The stable primary is the final rear pose so the
+                // first loading frame exactly matches the launcher. When a
+                // genuine rear exists, also capture the real front; the
+                // retained GL presenter can then keep the case turning during
+                // System::Load without disk I/O or guest GPU work.
+                const auto capture_pose = [&](pe::ui::Launcher::LoadingCapturePose pose,
+                                              bool alternate) {
+                    launcher.set_loading_capture_pose(pose);
+                    list.clear();
+                    launcher.draw(list);
+                    batch.sync_font_texture(font_texture, font);
+                    return Eden::LoadingArtwork::Capture([&](int w, int h) {
+                        batch.draw(list, pe::gfx::fit_viewport(w, h), w, h);
+                    }, alternate);
+                };
+                const bool animate_case = launcher.loading_back_available() && !reduce_motion;
+                const bool final_back = launcher.loading_final_pose_is_back();
+                const auto primary_pose = animate_case
+                    ? (final_back ? pe::ui::Launcher::LoadingCapturePose::back
+                                  : pe::ui::Launcher::LoadingCapturePose::front)
+                    : pe::ui::Launcher::LoadingCapturePose::live;
+                const auto alternate_pose = final_back
+                    ? pe::ui::Launcher::LoadingCapturePose::front
+                    : pe::ui::Launcher::LoadingCapturePose::back;
+                const bool ready = capture_pose(primary_pose, false);
+                const bool alternate_ready = ready && animate_case &&
+                    capture_pose(alternate_pose, true);
+                launcher.set_loading_capture_pose(pe::ui::Launcher::LoadingCapturePose::live);
+                // capture_pose(front) leaves the reusable draw list on the
+                // alternate image. Rebuild the actual final launcher pose so
+                // a presenter failure falls back to the same frame the user
+                // just saw, never an unexpected front-cover jump.
+                list.clear();
+                launcher.draw(list);
+                batch.sync_font_texture(font_texture, font);
                 Eden::LoadingArtwork::GlPresenter presenter;
                 const bool shown = ready && presenter.Draw(display.width(), display.height(),
                     Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));
                 presenter.Release();
                 loading_presented = shown;
                 if (!shown) batch.draw(list, viewport, display.width(), display.height());
-                std::fprintf(stderr, "EDEN_LOADING_ARTWORK_CAPTURE ready=%d presented=%d\n",
-                             int(ready), int(shown));
+                std::fprintf(stderr,
+                    "EDEN_LOADING_ARTWORK_CAPTURE ready=%d alternate=%d presented=%d\n",
+                    int(ready), int(alternate_ready), int(shown));
             } else {
                 batch.draw(list, viewport, display.width(), display.height());
             }

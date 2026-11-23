@@ -154,6 +154,8 @@ Launcher::~Launcher()
         presence_scan_.wait();
     if (home_icon_scan_.valid())
         home_icon_scan_.wait();
+    if (home_icon_scan_extra_.valid())
+        home_icon_scan_extra_.wait();
     if (home_media_scan_.valid())
         home_media_scan_.wait();
     if (media_scan_.valid())
@@ -550,6 +552,7 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     // Home and Recent launch routes may not have a fully populated Library
     // snapshot. Use their actual cached metadata, never an invented scan.
     launch_case_game_.name = title;
+    launch_case_game_.file = file; // Home-only NUP launches still need edition identity.
     launch_case_game_.cover = cover;
     launch_case_game_.hero = launch_hero_;
     launch_case_game_.screenshots = launch_screenshots_;
@@ -574,7 +577,14 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
 
     // Real, locally cached retail scans win independently per face. A missing
     // back is composed from cached game metadata, never faked as a real scan.
-    const BoxArt case_art = services_.box_art(title_id);
+    // NUP editions can reuse an NS1 program TitleID, so the cache namespace
+    // must include the generation at launch as well as during enrichment.
+    const bool launch_ns2_case =
+        case_media::IsSwitch2TitleId(title_id) ||
+        launch_case_game_.format == "NUP" ||
+        launch_case_game_.file.ends_with(".nup") ||
+        launch_case_game_.file.ends_with(".NUP");
+    const BoxArt case_art = services_.box_art(title_id, launch_ns2_case);
     launch_box_front_ = case_art.front;
     launch_box_back_ = case_art.back;
     launch_box_spine_ = case_art.spine;
@@ -582,12 +592,14 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     launch_case_placeholder_mask_ = 0;
     launch_case_ready_mask_ = 0;
     if (!launch_box_front_.empty()) (void)textures_.cover(launch_box_front_, 760.0f);
-    if (!native_artwork_loading_ && !launch_box_back_.empty())
+    if (!launch_box_back_.empty())
         (void)textures_.cover(launch_box_back_, 760.0f);
     if (!launch_box_spine_.empty()) (void)textures_.cover(launch_box_spine_, 760.0f);
     // Native launch leaves as soon as usable front art is composed. A real
     // deadline bounds pending local decodes; there is no mandatory dwell.
     native_launch_art_ready_ = false;
+    native_launch_back_ready_ = false;
+    native_launch_show_back_ = false;
     native_launch_deadline_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(750);
     launch_.start(theme::kLaunchSeconds);
     press_ = 1.0f;
@@ -1285,6 +1297,15 @@ void Launcher::draw_launch(Canvas &c)
 {
     const float t = tween::clamp01(launch_.progress());
     const float seconds = theme::kLaunchSeconds * t;
+    // The launcher UI caps dt to 50ms after long EGL stalls, while native
+    // admission is bounded by a real 750ms deadline. Drive the short cover
+    // turn from the same wall clock as admission: otherwise a slow initial
+    // render could capture the case mid-spine and freeze it for all loading.
+    const float native_phase = native_artwork_loading_
+        ? std::clamp(0.75f - std::chrono::duration<float>(
+              native_launch_deadline_ - std::chrono::steady_clock::now()).count(),
+              0.0f, 0.75f)
+        : seconds;
     // No fade to black: the Vulkan loading surface reuses this EXACT final
     // launcher picture until the guest actually presents its first frame.
     const float appear = native_artwork_loading_ ? 1.0f : tween::cubic_out(seconds / 0.25f);
@@ -1360,7 +1381,30 @@ void Launcher::draw_launch(Canvas &c)
     constexpr float kBackYaw = 3.14159265358979323846f + 0.18f;
     constexpr float kFullTurn = 6.28318530717958647692f;
     float angle = kFrontYaw;
-    if (!native_artwork_loading_ && motion() > 0.0f) {
+    if (native_artwork_loading_ && motion() > 0.0f) {
+        // The normal 4.5-second rear-reading hold belongs to the long
+        // preview, NOT the native game-start critical path. A rear that is
+        // already uploaded can make one genuine front-to-back turn within
+        // the existing 750-ms launch budget, then the captured final back
+        // remains readable during the GL/Vulkan loading handoff.
+        // No invented/mirrored rear and no extra game boot delay.
+        if (!native_launch_back_ready_ && !launch_box_back_.empty() &&
+            c.textures.cover(launch_box_back_, 760.0f).texture != 0)
+            native_launch_back_ready_ = true;
+        // Do not jump to a late rear during the 750-ms native admission
+        // window. A rear that arrives later is still retained for the
+        // continuous loading animation after the launcher hands off.
+        if (!native_launch_show_back_ && native_phase <= 0.12f &&
+            native_launch_back_ready_)
+            native_launch_show_back_ = true;
+        if (native_launch_show_back_) {
+            constexpr float native_begin = 0.08f;
+            constexpr float native_end = 0.62f;
+            angle = kFrontYaw + (kBackYaw - kFrontYaw) *
+                tween::cubic_in_out(tween::clamp01(
+                    (native_phase - native_begin) / (native_end - native_begin)));
+        }
+    } else if (motion() > 0.0f) {
         if (seconds < turn_start) {
             angle = kFrontYaw;
         } else if (seconds < back_start) {
@@ -1373,11 +1417,21 @@ void Launcher::draw_launch(Canvas &c)
                 tween::cubic_in_out((seconds - return_start) / theme::kCaseTurnSeconds);
         }
     }
+    if (native_artwork_loading_) {
+        if (loading_capture_pose_ == LoadingCapturePose::front)
+            angle = kFrontYaw;
+        else if (loading_capture_pose_ == LoadingCapturePose::back &&
+                 native_launch_back_ready_)
+            angle = kBackYaw;
+    }
     const float facing = std::cos(angle);
     const bool back = facing < 0.0f;
     constexpr float case_depth = 44.0f;
     constexpr float case_radius = 22.0f;
-    const bool ns2_case = case_media::IsSwitch2TitleId(launch_title_id_);
+    const bool ns2_case = case_media::IsSwitch2TitleId(launch_title_id_) ||
+        launch_case_game_.format == "NUP" ||
+        launch_case_game_.file.ends_with(".nup") ||
+        launch_case_game_.file.ends_with(".NUP");
     // Use the actual reusable case outline for projected shadow/geometry.
     // The reference template is taller than the previous 422x655 poster.
     const Rect physical{374.0f, 126.0f, 454.0f, 730.0f};
@@ -1507,7 +1561,8 @@ void Launcher::draw_launch(Canvas &c)
         use_composed ? composed_page : artwork.texture;
     if (native_artwork_loading_)
         native_launch_art_ready_ = hero_ready && visible_texture != 0 &&
-            (!use_composed || !launch_composed_front_provisional_);
+            (!use_composed || !launch_composed_front_provisional_) &&
+            (!native_launch_show_back_ || native_phase >= 0.62f);
     // One event per visible paper face and state, NEVER a per-frame log.
     // Stored/decoded/uploaded assets can still fail to reach the render list;
     // this is the last observable stage before the case-face GPU draw call.

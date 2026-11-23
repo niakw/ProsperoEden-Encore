@@ -27,6 +27,7 @@ scene = (root / "headless/loading_scene.glsl").read_text()
 launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
 launcher_h = (root / "headless/prosperoeden/pe/ui/launcher.hpp").read_text()
 transfer = (root / "headless/loading_artwork_transfer.hpp").read_text()
+wsi = (root / "vendor/encore-active/ps5-mesa/src/vulkan/wsi/wsi_common_videoout.c").read_text()
 
 assert 'target_compile_definitions(video_core PRIVATE PS5_NATIVE=1)' in vulkan_cmake
 assert "vulkan_renderer_r08.cpp" in vulkan_cmake
@@ -64,7 +65,17 @@ assert "glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)" in gl_art
 assert "glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)" in gl_art
 assert "glPixelStorei(GL_PACK_ROW_LENGTH, 0)" in gl_art
 assert "std::swap_ranges" in gl_art
-assert "LaunchHandoff::Publish(std::move(frame))" in gl_art
+assert "LaunchHandoff::Publish(std::move(frame), alternate)" in gl_art
+assert "LaunchHandoff::PeekAlternate()" in gl_art
+assert "alternate_texture_" in gl_art
+assert "has_alternate" in gl_art
+assert "seconds<1000.0" in gl_art
+assert "LoadingCapturePose::back" in frontend
+assert "LoadingCapturePose::front" in frontend
+assert "launcher.loading_back_available() && !reduce_motion" in frontend
+assert "launcher.loading_final_pose_is_back()" in frontend
+assert "const auto primary_pose = animate_case" in frontend
+assert "const auto alternate_pose = final_back" in frontend
 assert "LaunchHandoff::Peek()" in gl_art
 assert "LaunchHandoff::Valid(*artwork)" in gl_art
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in frontend
@@ -109,6 +120,9 @@ for required in (
 ):
     assert required in close_deferred
 assert close_deferred.index("presenter.join();") < close_deferred.index(
+    "Eden::LaunchHandoff::ClearAlternate();"
+)
+assert close_deferred.index("Eden::LaunchHandoff::ClearAlternate();") < close_deferred.index(
     "eglDestroyContext(display, context)"
 )
 assert close_deferred.index("eglDestroyContext(display, context)") < close_deferred.index(
@@ -152,7 +166,23 @@ assert "cmdbuf.ClearAttachments" not in overlay
 handover = renderer.split("vk::SurfaceKHR CreateHandoffSurface(", 1)[1].split(
     "} // Anonymous namespace", 1
 )[0]
-assert handover.index("close_deferred_scanout()") < handover.index("CreateSurface(")
+assert "requested_hz.load(std::memory_order_relaxed) >= 120" in handover
+assert "PrepareHandoffSwapchain(vk::SurfaceKHR& surface)" in handover
+assert "boundary=create_surface reason=120hz" in handover
+assert "boundary=create_swapchain reason=60hz" in handover
+assert renderer.index("device(CreateDevice(instance, dld, *surface))") < renderer.index(
+    "PrepareHandoffSwapchain(surface)"
+)
+assert "if (videoout_title_declares_high_frame_rate()) {" in wsi
+modes = wsi.split("static uint32_t\nvideoout_modes(", 1)[1].split(
+    "VKAPI_ATTR VkResult VKAPI_CALL\nwsi_GetDisplayModePropertiesKHR", 1)[0]
+assert modes.index("if (videoout_title_declares_high_frame_rate())") < modes.index(
+    "videoout_settle_modes();"
+)
+assert modes.index("videoout_settle_modes();") < modes.index(
+    "modes[count++] = &videoout_high_mode;"
+)
+assert "modes[count++] = &videoout_mode;" in modes
 
 assert "LaunchHandoff::LoadingSeconds(LoadingCalm())" in graphics
 assert "inline void BeginLoading() noexcept" in handoff

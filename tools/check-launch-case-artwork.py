@@ -15,8 +15,8 @@ launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
 theme = (root / "headless/prosperoeden/pe/ui/theme.hpp").read_text()
 
 assert "struct BoxArt" in service
-assert "virtual BoxArt box_art(std::uint64_t)" in service
-assert "pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id)" in native
+assert "virtual BoxArt box_art(std::uint64_t, bool second_generation = false)" in service
+assert "pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id, bool second_generation)" in native
 native_resolver = native.split("pe::ui::BoxArt EdenServices::box_art(", 1)[1].split(
     "std::string EdenServices::game_path(", 1
 )[0]
@@ -36,7 +36,9 @@ assert "MakeRequest" not in native_resolver
 launch_setup = launcher.split("void Launcher::launch(", 1)[1].split(
     "void Launcher::press(", 1
 )[0]
-assert "services_.box_art(title_id)" in launch_setup
+assert "services_.box_art(title_id, launch_ns2_case)" in launch_setup
+assert 'launch_case_game_.format == "NUP"' in launch_setup
+assert '(second_generation ? "-ns2-" : "-") + id' in native_resolver
 assert "launch_box_front_ = case_art.front;" in launch_setup
 assert "launch_box_back_ = case_art.back;" in launch_setup
 assert "launch_box_spine_ = case_art.spine;" in launch_setup
@@ -139,6 +141,25 @@ assert "constexpr float kCaseBackHold = 4.50f;" in theme
 assert "s.wait(0.51f); // instantaneous ~90-degree spine glimpse, no dwell" in (
     root / "headless/prosperoeden/host/preview_main.cpp").read_text()
 assert "constexpr float kLaunchSeconds = kCaseFrontHold" in theme
+# Native game start never delays the emulator just to animate a missing
+# physical back. A GPU-resident authentic rear can turn once within the
+# existing 750-ms cap and remain visible through the loading capture.
+assert "native_launch_back_ready_ = false;" in launch_setup
+assert "native_launch_show_back_ = false;" in launch_setup
+assert "native_launch_back_ready_ = true;" in draw
+assert "native_launch_back_ready_" in header
+assert "loading_final_pose_is_back() const noexcept" in header
+assert "c.textures.cover(launch_box_back_, 760.0f).texture != 0" in draw
+assert "native_launch_show_back_ = true;" in draw
+assert "constexpr float native_end = 0.62f;" in draw
+assert "(!native_launch_show_back_ || native_phase >= 0.62f)" in draw
+assert 'native_launch_deadline_ - std::chrono::steady_clock::now()' in draw
+assert 'if (!native_launch_show_back_ && native_phase <= 0.12f' in draw
+assert "std::chrono::milliseconds(750)" in launcher
+assert "LoadingCapturePose::front" in draw
+assert "LoadingCapturePose::back" in draw
+assert "loading_back_available() const noexcept" in header
+assert "set_loading_capture_pose(LoadingCapturePose pose)" in header
 
 # The temporary FBO painter must be bounded (two faces) and cleaned up
 # when changing titles or leaving the native OpenGL context.
@@ -364,12 +385,12 @@ assert '"Fanart - Background"' in indexer
 assert '"Screenshot - Game Title"' in indexer
 assert '"Square"' in indexer
 assert 'EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}' in indexer
-assert 'AppendCaseScenes(game.screenshots, game.title_id);' in native
+assert 'AppendCaseScenes(game.screenshots, game.title_id, second_generation);' in native
 assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in native
 assert "// Gameplay previews remain independent of real back paper." in native
 assert 'const char* const names[]' in native
 assert '"scene-1", "scene-2", "scene-3", "scene-4", "scene-5"' in native
-assert "for (int side = 0; side < 8; ++side)" in native
+assert "for (const int side : {0, 1, 3, 5, 2, 4, 6, 7})" in native
 assert 'selected->second[8]' in native
 assert 'scene_columns{"-", "-", "-", "-", "-"}' in native
 assert "if (receipt) receipt << filename" in native
@@ -383,11 +404,19 @@ assert 'region_code(element.findtext("Region", ""))' in indexer
 assert '"north america": "us"' in indexer
 assert 'region:filename' in native
 assert "SafeCaseCandidate(part)" in native
-assert "LocaleCaseCandidates(selected->second[side], language_choice, side)" in native
+assert "LocaleCaseCandidates(sources, language_choice, side)" in native
+assert "FindCaseEntry(index, second_generation, name, alternate_name)" in native
+assert "MatchingNs1Back(index, name, alternate_name)" in native
+assert "const auto* ns1_back = second_generation && selected->second[1].empty()" in native
+assert "side == 1 && ns1_back ? *ns1_back : selected->second[side]" in native
+assert 'std::string(ns2 ? "ns2:" : "ns1:") + key' in native
+assert 'if (it == index.end() && !ns2) it = index.find(key);' in native
+assert "CachedGamesDbHero(std::uint64_t title_id," in native
+assert "for (int scene : {1, 3, 4, 5})" in native
 assert 'regions = {"us", "ca", "world", "uk", "eu", "fr"};' in native
 assert 'regions = {"fr", "eu", "world", "uk", "ca", "us"};' in native
 assert "face == 1" in native
-assert "EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file)," in native
+assert "game.title_id, scanned_name, CleanTitle(game.file)," in native
 assert "Eden::Ns2Catalog::Find(game.title_id)" in native
 assert "game.title_id, std::string(ns2->name), scanned_name," in native
 assert "9524e5f7-ccc8-4ce6-a581-03f82c51825e.jpg" in indexer
@@ -400,8 +429,8 @@ assert 'Eden::AppResourceFile("ui/box-art-index.tsv")' in native
 # The supplemental metadata is a deterministic packaging fallback, not a
 # replacement for the large generated index and never embeds copyrighted art.
 fallback_index = (root / "headless/prosperoeden/ui/box-art-fallback.tsv").read_text()
-assert "mario kart world\t" in fallback_index
-assert "donkey kong bananza\t" in fallback_index
+assert "ns2:mario kart world\t" in fallback_index
+assert "ns2:donkey kong bananza\t" in fallback_index
 assert "r2_22b0967c-08e4-4988-9eeb-c5d7a1c34408.png" in fallback_index
 assert "991fd827-5f47-47ee-a400-4c6f22266b4f.jpg" in fallback_index
 assert "r2_02551e34-3f1e-4bf6-88d5-d083b700cf9f.jpg" in fallback_index
@@ -420,7 +449,7 @@ assert "std::chrono::minutes(5)" in native
 assert "std::chrono::hours(4)" not in native.split("unsigned EnsureRetailCase(", 1)[1].split("NlibEnrichment CachedNlibEnrichment(", 1)[0]
 # Genuine compact NS2 spines do not need an uploaded back scan.
 assert "both_faces_cached_at_start" not in native
-assert 'MigrateGeneratedTga(CaseFacePath(title_id, side), true)' in native
+assert 'CaseFacePath(title_id, side, second_generation), true)' in native
 assert 'MigrateGeneratedTga(NlibHeroPath(title_id), false)' in native
 assert 'const std::string base = path.substr(0, path.size() - 5);' in native
 assert 'const std::string old_receipt = legacy + ".source";' in native
@@ -429,11 +458,12 @@ assert 'const std::string old_receipt = legacy + ".source";' in native
 case_fetch = native.split("unsigned EnsureRetailCase(", 1)[1].split(
     "NlibEnrichment CachedNlibEnrichment(", 1
 )[0]
-assert "std::unique_lock guard(locks[ArtworkLockBucket(title_id, locks.size())], std::defer_lock);" in case_fetch
+assert "std::unique_lock guard(locks[ArtworkLockBucket(artwork_key, locks.size())], std::defer_lock);" in case_fetch
+assert 'title_id ^ (second_generation ? 0x8000000000000000ULL : 0ULL)' in case_fetch
 assert "if (!LockArtworkUnlessCancelled(guard, cancel)) return 0;" in case_fetch
 assert "std::this_thread::sleep_for(std::chrono::milliseconds(50));" in native
 assert "if (all_ready || (cancel && cancel->load(std::memory_order_acquire))) {" in case_fetch
-assert "retries.erase(title_id);" in case_fetch
+assert "retries.erase(artwork_key);" in case_fetch
 assert "all_ready = false;\n            break;" in case_fetch
 assert "if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;" in case_fetch
 assert "std::chrono::steady_clock::now() < it->second)\n            return migrated_faces;" in case_fetch
@@ -466,8 +496,11 @@ assert 'game.box_front = box.front;' in native
 assert 'game.box_back = box.back;' in native
 assert 'const bool opened = static_cast<bool>(input);' in native
 case_worker = native.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,", 1)[1].split("pe::ui::BoxArt EdenServices::box_art(", 1)[0]
-assert "const auto cached_case = box_art(game.title_id);" in case_worker
-assert case_worker.index("EnsureRetailCase(game.title_id, scanned_name") < case_worker.index("EnsureNlibEnrichment(game.title_id")
+assert "const auto cached_case = box_art(game.title_id, second_generation);" in case_worker
+assert "const auto box = box_art(game.title_id, second_generation);" in case_worker
+assert "CachedGamesDbSquare(game.title_id, true)" in case_worker
+assert "CachedGamesDbHero(game.title_id, second_generation)" in case_worker
+assert case_worker.index("game.case_artwork_changed = EnsureRetailCase(") < case_worker.index("EnsureNlibEnrichment(game.title_id")
 # A generated retail TGA must not be fetched again merely because stb_image's
 # format probe does not recognize the native loader's uncompressed BGRA TGA.
 case_cache = native.split("unsigned EnsureRetailCase(", 1)[1].split("NlibEnrichment CachedNlibEnrichment(", 1)[0]
@@ -488,11 +521,12 @@ assert 'ui_expected.add("ui/box-art-index.tsv")' in staged_validator
 assert 'if case_index_source.is_file():' in staged_validator
 assert 'Common::Net::MakeRequest(' in native
 assert '"https://images.launchbox-app.com"' in native
-assert "EnsureRetailCase(game.title_id, game.name," in native
+assert "game.case_artwork_changed |= EnsureRetailCase(" in native
+assert "game.title_id, game.name, scanned_name," in native
 assert "1500.0f / width, 2100.0f / height" in native
 assert "ValidNlibWebP(path)" in native
 assert 'return ValidNlibTga(path);' in native
-assert "EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file)," in native
+assert "game.title_id, scanned_name, CleanTitle(game.file)," in native
 assert 'IsFile(base + ".png")' in native
 assert "ui/box-art-index.tsv" in workflow
 assert "tools/launcher/build-box-art-index.py --download" in workflow

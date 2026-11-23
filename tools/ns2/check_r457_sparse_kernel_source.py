@@ -74,6 +74,9 @@ reviewed_vendors.add("93da3b707ef147385380eb0690e0d93fc8e907ad")
 reviewed_vendors.add("a6240909b823492d9ff20070c09387a732d83007")
 # FC27 SM/NVDRV + NS2 trace successor leaves sparse kernel/GPU owners intact.
 reviewed_vendors.add("0390980a5752808dfba7b8edaa7d113cc4e4e6eb")
+# Selected AM WindowSystem/LM contracts changed without touching sparse kernel/GMMU;
+# the exact sparse-owner blobs remain sealed by this source test below.
+reviewed_vendors.add("273680a5b33bff15c9ca12685cfadb2aa15ff9f1")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],

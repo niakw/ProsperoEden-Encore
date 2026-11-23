@@ -1837,6 +1837,9 @@ if shipping_vendor_pin == "0390980a5752808dfba7b8edaa7d113cc4e4e6eb":
         digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert digest == expected_blob,("NS1/NS2 latest reviewed vendor drift",relative,digest)
 REVIEWED_PINS.add("0390980a5752808dfba7b8edaa7d113cc4e4e6eb")
+# Lichii/Eglantine source-only AM WindowSystem + LM hashes with preserved NS1 ABI;
+# retain the full reviewed FC27/P0 vendor graph tests below.
+REVIEWED_PINS.add("273680a5b33bff15c9ca12685cfadb2aa15ff9f1")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

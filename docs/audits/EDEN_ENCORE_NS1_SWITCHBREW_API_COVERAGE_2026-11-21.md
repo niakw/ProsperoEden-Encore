@@ -33,8 +33,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
-| **NOOP — No-op documenté** | 118 | 0 | **118** |
-| **NULL — Handler NULL** | 2 125 | 0 | **2 125** |
+| **NOOP — No-op documenté** | 119 | 0 | **119** |
+| **NULL — Handler NULL** | 2 124 | 0 | **2 124** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -447,8 +447,8 @@ pie showData
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
-    "No-op documenté" : 118
-    "Handler NULL" : 2125
+    "No-op documenté" : 119
+    "Handler NULL" : 2124
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -4633,7 +4633,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Content Manager services | `5` | `OpenContentMetaDatabase` | — | **IMPL-SRC** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 5, corps C++ présent, non certifié PS5 ; source seulement) | 2026-11-22 |
 | Content Manager services | `6` | `CloseContentStorageForcibly` | 1.0.0 | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `7` | `CloseContentMetaDatabaseForcibly` | 1.0.0 | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
-| Content Manager services | `8` | `CleanupContentMetaDatabase` | — | **NULL** ([table NCM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) `NCM` ID 8, handler explicitement nul ; source seulement) | 2026-11-22 |
+| Content Manager services | `8` | `CleanupContentMetaDatabase` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1a2a614892cde741adb10ba7dfc23dfee4d8ff06/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; backend RegisteredCache validé, aucune table NCM séparée à compacter) | 2026-11-23 |
 | Content Manager services | `9` | `ActivateContentStorage` | 2.0.0+ | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `10` | `InactivateContentStorage` | 2.0.0+ | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `11` | `ActivateContentMetaDatabase` | 2.0.0+ | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |

@@ -724,6 +724,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 682** : 2 125 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot NCM — cleanup metadata / activation FS content — 23/11/2026
+
+**Vendor `1a2a614892cde741adb10ba7dfc23dfee4d8ff06`** (arbre `e6e631075d5e4ffbd8895fcfc6741363ae4b2bf8`) sur la branche secondaire NS1.
+
+- `CleanupContentMetaDatabase` (8) : **NULL → NOOP documenté**. `IContentMetaDatabase` lit directement le `RegisteredCache` vivant ; Encore n'a pas de base NCM séparée à compacter. La commande ne réussit que si le backend demandé existe.
+- `ActivateFsContentStorage` (15, HOS 16+) : handler runtime ajouté hors miroir historique. Les IDs FS System/User/SD/System0 sont mappés vers les backends déjà provisionnés et l'appel réussit seulement si le `RegisteredCache` correspondant existe.
+- Aucun répertoire hôte ni contenu n'est créé, aucun montage artificiel n'est simulé.
+- **Impact miroir : +1 NOOP, -1 NULL**. Le handler cmd15 reste hors dénominateur 4 853.
+
+**Compteur historique : 1 466 IMPL-SRC / 110 PARTIEL / 149 STUB / 119 NOOP / 2 124 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 681** : 2 124 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

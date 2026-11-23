@@ -79,15 +79,30 @@ struct Runtime::Impl {
                 std::abort();
         }
     }
-    bool Commit(std::size_t offset, std::size_t length) {
+    bool Commit(std::size_t offset, std::size_t length, bool* wholly_new = nullptr) {
         std::lock_guard lock{mutex};
         if (!base || offset > bytes || length > bytes - offset) {
             ReportCommitDenial("range", offset, length);
             return false;
         }
-        if (!length) return true;
+        if (!length) {
+            if (wholly_new) *wholly_new = true;
+            return true;
+        }
         const auto first = offset / kGranule;
         const auto last = (offset + length - 1) / kGranule + 1;
+        // The caller may elide a second zero fill ONLY when every touched
+        // native granule was previously absent. CommitMemoryRange already
+        // maps and zeroes each new granule before Plan::Publish.
+        bool all_fresh = wholly_new != nullptr;
+        if (all_fresh) {
+            for (auto index = first; index < last; ++index) {
+                if (plan.At(index).state != State::Unmapped) {
+                    all_fresh = false;
+                    break;
+                }
+            }
+        }
         const auto admit = plan.Begin(first * kGranule, (last - first) * kGranule);
         if (!admit) {
             ReportCommitDenial("admission", offset, length);
@@ -126,6 +141,8 @@ struct Runtime::Impl {
             physical[index] = pa;
         }
         if (!plan.Publish(*admit)) std::abort();
+        // Never report fresh state until ALL physical owners are published.
+        if (wholly_new) *wholly_new = all_fresh;
         return true;
     }
 };
@@ -148,6 +165,16 @@ bool Runtime::Commit(std::size_t offset, std::size_t bytes) noexcept {
     } catch (...) {
         // Never publish an alias when the physical ownership is uncertain.
         std::abort();
+    }
+}
+bool Runtime::CommitForClear(std::size_t offset, std::size_t bytes,
+                             bool* wholly_new) noexcept {
+    if (wholly_new) *wholly_new = false;
+    if (!impl_ || !wholly_new) return false;
+    try {
+        return impl_->Commit(offset, bytes, wholly_new);
+    } catch (...) {
+        std::abort(); // never publish a partially owned PA
     }
 }
 bool Runtime::Install() noexcept {

@@ -8,6 +8,8 @@
 
 **P0 runtime complémentaire (23/11) :** vendor [`ced1b9cd`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ced1b9cdd6f0fa4e0ca7949b404f450aae0055df) ajoute une admission préalable des blocs pour les allocations optimisées dans le `KMemoryManager` NS2 compilé. Si un `CommitKernelDirectGuestRange` refuse un engagement physique, le groupe de pages invitées non publié est restitué avant tout changement de bitmap. Le suivi `any_new` est agrégé entre segments. **Ce correctif limite un crash natif sur OOM ; il ne réduit pas à lui seul la résidence physique ni n'implémente les états `ZERO/OWN`. Aucun test console récent ne le valide.**
 
+**Correction supplémentaire du propriétaire sparse (23/11) :** sous `PS5_NATIVE && EDEN_NS2_SPARSE_BACKING`, `CommitMemoryRange` met déjà à zéro chaque nouvelle unité physique de 2 Mio. Le nouveau `CommitForClear` signale uniquement les plages **entièrement nouvelles**, permettant à `HostMemory::ClearBackingRegion(fill=0)` d'éviter le second `memset` massif. Les plages mixtes, partiellement résidentes ou à remplissage non nul conservent leur effacement exact. L'admission et le rollback précèdent le signal de fraîcheur. **Bénéfice possible : temps de chargement et trafic mémoire ; aucun gain de résidence RAM, aucune première frame ni fluidité NS1 validée.**
+
 ## 1. Décision et priorités
 
 La mémoire physique PS5 est une ressource **commune** à l'hôte, au processus invité, au JIT, aux buffers/images RADV, aux stacks, aux caches et aux services. Une grande adresse invitée mappée n'est pas une grande allocation physique. La solution pérenne doit partager des **contrats d'ownership** entre NS1 et NS2, sans leur imposer des politiques identiques.

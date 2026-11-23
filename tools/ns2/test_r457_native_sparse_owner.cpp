@@ -70,11 +70,21 @@ int main() {
         assert(guest.UsedBytes()==3*kGranule);
         assert(released==1); // rollback: exact newly staged piece
         fail_at=-1;
-        assert(guest.Commit(3*kGranule,kGranule)); // zero-filled retry
+        bool entirely_new = false;
+        assert(guest.CommitForClear(3*kGranule,kGranule,&entirely_new));
+        assert(entirely_new); // physical owner created and zeroed by commit
+        assert(base[3*kGranule]==0);
+        base[3*kGranule] = 0x61;
+        assert(guest.CommitForClear(3*kGranule,1,&entirely_new));
+        assert(!entirely_new && base[3*kGranule] == 0x61); // caller must clear
+        std::memset(base+3*kGranule,0,1);
         assert(base[3*kGranule]==0);
         assert(guest.UsedBytes()==4*kGranule);
         assert(guest.Commit(4*kGranule,kGranule));
         assert(guest.UsedBytes()==5*kGranule);
+        entirely_new = true;
+        assert(!guest.CommitForClear(6*kGranule,kGranule,&entirely_new));
+        assert(!entirely_new); // no zero-elision after denied admission
         assert(!guest.Commit(6*kGranule,kGranule)); // hard budget
         assert(base[kGranule-2]==0xA2 && base[kGranule+2]==0xB3);
         assert(base[kNs2Dram-1]==0xC5);

@@ -34,6 +34,8 @@ REVIEWED_VENDORS={
     "6f4bb38594b273fe7cc4fba960dfe62cdb9f508e",
     "4572e581d011c444fd59428d5c042098f05dcfca","f7ee793f1ee1bb1c2b1a35f68073844163658262","3f019c64c2907ac3e84baa9b6200de8898f30636","f0324324768bdc090a003079bbf121df862bc7f7","0ae51658a5d93e368408cad2484b99083ed7309f","697159fd0c183f8a164d0493929ae3b4bcb391d1","b1bb49abea63b6664e0945df8431e10aac128c2f","89d70eb505594447b3ca98658311002e74dac8ad", "b68126c9cd95eef6c6656ff6d7834c62c092aa46", "0fc157b7ccef428e675ff945bc48eceb08fff607", "42459a7893c51a178ecd0c2f74f3951cc20fa12d", "d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce",
 }
+# Exact vendor successor: revised optimized memory OOM owner, no source drift.
+REVIEWED_VENDORS.add("ced1b9cdd6f0fa4e0ca7949b404f450aae0055df")
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
@@ -62,7 +64,9 @@ def main():
         (NATIVE_GUEST[0],"1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
         (NATIVE_GUEST[1],"c8f197810af244c3f2d66413352533734d031620"),
         (NATIVE_SHARED,"9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
-        (NATIVE_KERNEL,"88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
+        (NATIVE_KERNEL,"c5b5dd99bb9a65286783f4b220d991f422d19e67"
+         if sha == "ced1b9cdd6f0fa4e0ca7949b404f450aae0055df"
+         else "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
         (NATIVE_SLAB,"130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
     ):
         if gitblob(owner)!=expected:

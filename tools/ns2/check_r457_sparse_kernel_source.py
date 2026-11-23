@@ -54,6 +54,8 @@ reviewed_vendors={
 reviewed_vendors.add("42b34a5dc46b594cb029362e8f130900adf4424e")
 reviewed_vendors.add("77b736148129ffa72c9f6c081695b7c7515c3ed9")
 reviewed_vendors.add("4354add020afac574198f63d87167f3022bff9c6")
+# Exact successor: optimized sparse OOM rollback and tracking before PTE.
+reviewed_vendors.add("ced1b9cdd6f0fa4e0ca7949b404f450aae0055df")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
@@ -88,7 +90,8 @@ def gitblob(path):
     return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
 for path,expected in (
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp",
-     "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
+     "c5b5dd99bb9a65286783f4b220d991f422d19e67" if selected == "ced1b9cdd6f0fa4e0ca7949b404f450aae0055df"
+     else "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp",
      "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
     ("vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc",
@@ -114,11 +117,25 @@ baseline=read("vendor/sources/eden/src/core/hle/kernel/k_memory_manager.cpp")
 guarded=(r"^#if defined\(PS5_NATIVE\) && "
          r"defined\(EDEN_NS2_SPARSE_BACKING\)\n"
          r"[\s\S]*?^#endif\n")
-assert len(re.findall(guarded,kernel,flags=re.MULTILINE))==4
-stripped=re.sub(guarded,"",kernel,flags=re.MULTILINE)
-stripped=stripped.replace("#include <new>\n#include <limits>\n","")
-normalize=lambda source: re.sub(r"\n\s*\n","\n\n",source).strip()
-assert normalize(stripped)==normalize(baseline), "kernel semantics drift"
+guard_count = len(re.findall(guarded,kernel,flags=re.MULTILINE))
+if selected == "ced1b9cdd6f0fa4e0ca7949b404f450aae0055df":
+    # This exact runtime blob carries the OOM rollback and optimized
+    # preflight reviewed after the original R457 source-only parity gate.
+    # Its full SHA is already checked above; do not silently normalize an
+    # arbitrary new kernel semantic delta.
+    assert guard_count == 5
+    allocation = kernel.split("Result KMemoryManager::AllocateForProcess(",1)[1].split(
+        "size_t KMemoryManager::Impl::Initialize(",1)[0]
+    assert allocation.index("CommitKernelDirectGuestRange(m_system, block.GetAddress()") < (
+        allocation.index("manager.ProcessOptimizedAllocation("))
+    assert "any_new |= manager.ProcessOptimizedAllocation(" in allocation
+    assert allocation.count("R_THROW(ResultOutOfMemory);") == 2
+else:
+    assert guard_count == 4
+    stripped=re.sub(guarded,"",kernel,flags=re.MULTILINE)
+    stripped=stripped.replace("#include <new>\n#include <limits>\n","")
+    normalize=lambda source: re.sub(r"\n\s*\n","\n\n",source).strip()
+    assert normalize(stripped)==normalize(baseline), "kernel semantics drift"
 assert "set(EDEN_NS2_SPARSE_BACKING OFF)" in cmake
 assert "set(EDEN_NS2_SPARSE_BACKING ON)" in cmake
 # KPort and KPageBuffer both write guest physical pages before a process
@@ -189,7 +206,7 @@ assert mapping.index("process_memory->GetPointerSilent(")<mapping.index(
 assert gpu.count("AtomicStorePhysical(")==3, "Unexpected new GPU PA publisher: review separately"
 
 physical=read("src/ns2_sparse_guest.cpp")
-start=physical.index("    bool Commit(std::size_t offset, std::size_t length)")
+start=physical.index("    bool Commit(std::size_t offset, std::size_t length, bool* wholly_new")
 end=physical.index("\n};",start)
 transaction=physical[start:end]
 assert transaction.index("Common::CommitMemoryRange(")<transaction.index(

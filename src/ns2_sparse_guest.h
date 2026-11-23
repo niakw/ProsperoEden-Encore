@@ -20,6 +20,11 @@ public:
     [[nodiscard]] std::size_t VirtualBytes() const noexcept;
     [[nodiscard]] std::size_t UsedBytes() const noexcept;
     [[nodiscard]] bool Commit(std::size_t offset, std::size_t bytes) noexcept;
+    // Only a wholly new range can skip the SECOND zero fill in HostMemory.
+    // A range containing any resident 2 MiB block must still be cleared.
+    // Failure always leaves *wholly_new=false.
+    [[nodiscard]] bool CommitForClear(std::size_t offset, std::size_t bytes,
+                                      bool* wholly_new) noexcept;
 
     // Only one active guest reservation is allowed. A registry lock protects
     // admission calls against owner teardown. Engine must quiesce GPU first.

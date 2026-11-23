@@ -3132,6 +3132,35 @@ dense_fallback_guard = """#ifdef PS5_NATIVE
 #endif
 """
 current_sparse_source = (ROOT/sparse_path).read_text()
+# Replay the exact post-snapshot zero-fill elision delta on the audit copy:
+# a brand-new physical 2 MiB mapping is already zero from CommitMemoryRange.
+# Never alter the historical F07 research snapshot or the shipping C++.
+zero_elision_successor = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        if (impl->sparse) {
+            bool just_committed = false;
+            if (!impl->sparse->CommitForClear(offset, length, &just_committed))
+                throw std::bad_alloc{}; // fail closed, not a virtual-hole write
+            // CommitMemoryRange already zeroed every entirely new 2 MiB
+            // granule. Do not repeat that huge write; mixed/reused ranges
+            // still require their exact fill and may hold live guest bytes.
+            if (fill == 0 && just_committed) return;
+        }
+#endif"""
+zero_elision_predecessor = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        if (impl->sparse && !impl->sparse->Commit(offset, length))
+            throw std::bad_alloc{}; // fail closed, not a virtual-hole write
+#endif"""
+current_raw = current_sparse_source.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(current_raw)).encode() + bytes([0]) +
+    current_raw).hexdigest() == "5dad5e00f27aa4ff8b88e5e1ca28c96def51f428"
+assert current_sparse_source.count(zero_elision_successor) == 1
+current_sparse_source = current_sparse_source.replace(
+    zero_elision_successor, zero_elision_predecessor, 1)
+previous_raw = current_sparse_source.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(previous_raw)).encode() + bytes([0]) +
+    previous_raw).hexdigest() == "b9349360b3f615784247133026ac7aaf8d71eb9e"
 assert current_sparse_source.count(dense_fallback_guard) == 1
 pre_guard = current_sparse_source.replace(dense_fallback_guard, "", 1)
 pre_guard_bytes = pre_guard.encode("utf-8")

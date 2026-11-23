@@ -2115,7 +2115,8 @@ current_vendor_post_f07_owner_blobs = {
     "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
 }
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
-if actual_vendor == "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e":
+if actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
+                     "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
     assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
     for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
         raw = (active / relative).read_bytes()

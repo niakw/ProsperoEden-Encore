@@ -3182,7 +3182,10 @@ assert sparse_drift["expected"] == sparse_receipt["historical_f07_git_blob"]
 # preprocessor path is absent. Reconstruct the earlier checked Git blob.
 assert sparse_receipt["research_source_git_blob"] == (
     "4f109a0286a13afc93dcacd3b287b26b256d13f4")
-assert sparse_drift["actual"] == "b9349360b3f615784247133026ac7aaf8d71eb9e"
+# The current source has advanced through the three separately replayed
+# sparse clear/demand-zero successors below. Require that exact current blob
+# here; the immutable b934 owner is reconstructed before the R457 receipt.
+assert sparse_drift["actual"] == "086fdbeaeffc5eca7beeff509804e6cc4c2333cf"
 dense_fallback_guard = """#ifdef PS5_NATIVE
         // NS2 must never request 12 GiB of physical RAM because a
         // compile-flag mismatch silently disabled the sparse owner.

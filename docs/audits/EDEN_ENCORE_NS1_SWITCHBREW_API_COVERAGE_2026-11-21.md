@@ -31,10 +31,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 449 | 80 | **1 529** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
+| **PARTIEL — Implémentation partielle** | 113 | 3 | **116** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 140 | 0 | **140** |
-| **NULL — Handler NULL** | 1 773 | 0 | **1 773** |
+| **NULL — Handler NULL** | 1 772 | 0 | **1 772** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -445,10 +445,10 @@ pie showData
     title NS1 — 4 853 entrées distinctes
     "Implémentation source retrouvée" : 1529
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 115
+    "Implémentation partielle" : 116
     "Stub / résultat simulé" : 125
     "No-op documenté" : 140
-    "Handler NULL" : 1773
+    "Handler NULL" : 1772
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -4007,7 +4007,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `62` | `OpenSaveDataInfoReaderOnlyCacheStorage` | 5.0.0+ | **PARTIEL** (reader réel filtré sur `SaveDataType::Cache` du programme courant ; backend Eden ne distingue pas encore index/SD cache) | 2026-11-22 |
 | fsp-srv | `64` | `OpenSaveDataInternalStorageFileSystem` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `65` | `UpdateSaveDataMacForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `WriteSaveDataFileSystemExtraData2` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
+| fsp-srv | `66` | `WriteSaveDataFileSystemExtraDataWithMask` | 5.0.0+ | **PARTIEL** ([vendor 8a721e38](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8a721e38520792fdc1e0f474ec2ef07d7c16a665/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ABI et cible réelle validées, mais directory-save sans ExtraData physique) | 2026-11-23 |
 | fsp-srv | `67` | `FindSaveDataWithFilter` | 6.0.0+ | **IMPL-SRC** (scan réel `ISaveDataInfoReader`, filtre program/type/user/save-id/index + sémantique rank LibHac, sortie exacte `SaveDataInfo` 0x60, vendor `c3c3b6d2`) | 2026-11-22 |
 | fsp-srv | `68` | `OpenSaveDataInfoReaderWithFilter` | 6.0.0+ | **IMPL-SRC** ([vendor 9f4f9bef](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/9f4f9bef141c33a3bce353f68cf5b58bd94603e5/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; filtre multi-résultats sur le lecteur réel, ABI SaveDataSpaceId + SaveDataFilter) | 2026-11-23 |
 | fsp-srv | `69` | `ReadSaveDataFileSystemExtraDataBySaveDataAttribute` | 8.0.0+ | **IMPL-SRC** (attribut complet résolu contre SaveDataInfo réel ; buffer 0x200 obligatoire ; backend directory-save renvoie SaveDataExtraData{} comme LibHac, vendor `61ab696e`) | 2026-11-22 |

@@ -1243,6 +1243,18 @@ Le manifeste `eden-backports` couvre les quatre unités modifiées et le test h�
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot FSP — écriture ExtraData masquée — 23/11/2026
+
+**Vendor `8a721e38520792fdc1e0f474ec2ef07d7c16a665`** (arbre `72e68b086fb0911c6211d0550c753f87feb3f966`).
+
+`fsp-srv::WriteSaveDataFileSystemExtraDataWithMask` (cmd 66) passe **NULL → PARTIEL**. L'ABI HOS recroisée est `SaveDataSpaceId + saveDataId + deux buffers SaveDataExtraData`. Encore valide les deux buffers 0x200 et résout la cible réelle via le reader save-data ; sur le backend directory-save sans ExtraData physique, l'écriture reste ensuite un no-op cohérent avec les autres chemins ExtraData. Ce statut reste PARTIEL car la métadonnée n'est pas persistée.
+
+**Compteur historique : 1 529 IMPL-SRC / 116 PARTIEL / 125 STUB / 140 NOOP / 1 772 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 293** : 1 772 NULL + 125 STUB + 116 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué.
+
 ---
 
 ## 1. Références et règle de vérité

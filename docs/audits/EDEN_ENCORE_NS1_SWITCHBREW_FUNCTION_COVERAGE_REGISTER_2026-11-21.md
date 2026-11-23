@@ -2355,3 +2355,12 @@ Vendor `d527dc85bf42ec57f150fd02c6612c86042ff0bb` → gitlink moteur `d210bcd07b
 **Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 65 STUB / 149 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 829** : 1 424 NULL + 65 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## AppletAE — politique idle invitée neutralisée côté PS5 (23/11/2026)
+
+Vendor `55be5734cb4f820eebfb05e43449b45b7bdf23ad` → gitlink moteur `e9228efbfae8534713604b78d64c566f08d2fb64`. `LoadAndApplyIdlePolicySettings`, `OverrideAutoSleepTimeAndDimmingTime` et `ReportUserIsActive` ne sont plus présentés comme des effets Horizon simulés : Encore n'expose pas de scheduler invité `idle:sys` et ne transmet pas ces politiques de veille/atténuation au système PS5 hôte. **3 STUB → NOOP**. Le changement est limité aux chemins actifs et à l'overlay `self_controller` avec manifeste régénéré ; aucune validation PS5 n'est revendiquée.
+
+**Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 62 STUB / 152 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 826** : 1 424 NULL + 62 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

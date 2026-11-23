@@ -32,8 +32,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 554 | 80 | **1 634** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
-| **STUB — Stub / résultat simulé** | 65 | 0 | **65** |
-| **NOOP — No-op documenté** | 149 | 0 | **149** |
+| **STUB — Stub / résultat simulé** | 62 | 0 | **62** |
+| **NOOP — No-op documenté** | 152 | 0 | **152** |
 | **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -1554,7 +1554,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `3` | `StartShutdownSequence` | — | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `4` | `StartRebootSequence` | — | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `9` | `IsAutoPowerDownRequested` | 7.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
-| appletAE | `10` | `LoadAndApplyIdlePolicySettings` | — | **STUB** ([source C++][ns1-src-036]) | 2026-11-22 |
+| appletAE | `10` | `LoadAndApplyIdlePolicySettings` | — | **NOOP** (adaptation PS5 : Encore n'expose pas le scheduler invité `idle:sys` et ne doit pas appliquer la politique de veille Horizon au système hôte ; vendor `55be5734`) | 2026-11-23 |
 | appletAE | `11` | `NotifyCecSettingsChanged` | 2.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `12` | `SetDefaultHomeButtonLongPressTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `13` | `UpdateDefaultDisplayResolution` | 3.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
@@ -1776,12 +1776,12 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `43` | `GetSystemSharedBufferHandle` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `50` | `SetHandlesRequestToDisplay` | — | **PARTIEL** (stocke réellement `handles_request_to_display` sous verrou ; le consommateur request-to-display complet reste à raccorder ; vendor `b3afcf99`) | 2026-11-22 |
 | appletAE | `51` | `ApproveToDisplay` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `60` | `OverrideAutoSleepTimeAndDimmingTime` | — | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `60` | `OverrideAutoSleepTimeAndDimmingTime` | — | **NOOP** (adaptation PS5 : les délais de veille/atténuation invités ne sont pas transmis au système hôte et aucun `idle:sys` invité ne les consomme ; vendor `55be5734`) | 2026-11-23 |
 | appletAE | `61` | `SetMediaPlaybackState` | — | **PARTIEL** (raccordé au même état `media_playback_state` que la surface application, sans consommateur système ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `62` | `SetIdleTimeDetectionExtension` | — | **PARTIEL** (stocke l'extension dans l'état applet sous verrou ; aucun idle-timer hôte ne la consomme encore ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `63` | `GetIdleTimeDetectionExtension` | — | **PARTIEL** (relit l'extension d'idle réellement stockée, mais l'effet système reste non modélisé ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `64` | `SetInputDetectionSourceSet` | — | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `65` | `ReportUserIsActive` | 2.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `65` | `ReportUserIsActive` | 2.0.0+ | **NOOP** (Horizon relaie cette notification à `idle:sys` ; Encore n'expose pas ce scheduler invité et ne modifie pas la politique d'inactivité PS5 ; vendor `55be5734`) | 2026-11-23 |
 | appletAE | `66` | `GetCurrentIlluminance` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `67` | `IsIlluminanceAvailable` | 3.0.0+ | **IMPL-SRC** (capability query réelle : aucun capteur de lumière ambiante n'est exposé par l'intégration PS5, retourne donc `false` ; vendor `3e8effa0`, moteur `1bb6cfcb`) | 2026-11-23 |
 | appletAE | `68` | `SetAutoSleepDisabled` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
@@ -6425,3 +6425,10 @@ Vendor `3e8effa0b3dc8184d46228e8bc82fa7c626d08bb` → gitlink moteur `1bb6cfcb49
 Vendor `d527dc85bf42ec57f150fd02c6612c86042ff0bb` → gitlink moteur `d210bcd07be4a7468c35d0790d05dd50cc9d9937`. Propriétaires actifs recroisés avec CMake : ACC via l'overlay backport ; AOC et `miiimg` via les sources Eden de base. Aucun transport Nintendo Account/eShop n'est simulé. **7 STUB sortent du pool : 4 → IMPL-SRC, 3 → NOOP.** Ce lot qualifie surtout des comportements minimaux déjà cohérents et ne constitue pas un gain gameplay PS5.
 
 **Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 65 STUB / 149 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 829.**
+
+
+### AppletAE — politique idle invitée neutralisée côté PS5 (23/11/2026)
+
+Vendor `55be5734cb4f820eebfb05e43449b45b7bdf23ad` → gitlink moteur `e9228efbfae8534713604b78d64c566f08d2fb64`. `LoadAndApplyIdlePolicySettings`, `OverrideAutoSleepTimeAndDimmingTime` et `ReportUserIsActive` sont désormais des **NOOP d'adaptation hôte explicites** : Encore n'expose pas de scheduler invité `idle:sys` et ne doit pas piloter la veille/atténuation de la PS5. **3 STUB → NOOP.** Aucun gain gameplay ni validation console n'est revendiqué.
+
+**Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 62 STUB / 152 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 826.**

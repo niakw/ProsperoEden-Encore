@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 513 | 0 | **1 513** |
-| **D — Rejet explicite / historique** | 136 | 33 | **169** |
+| **NULL — Handler NULL** | 1 488 | 0 | **1 488** |
+| **D — Rejet explicite / historique** | 161 | 33 | **194** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
@@ -2393,20 +2393,20 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | IAsyncResult | `0` | `Get` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/ns/i_async_result.cpp` ; IAsyncResult::Get est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | IAsyncResult | `1` | `Cancel` | — | **IMPL-SRC** (source `encore-active/eden-backports/src/core/hle/service/ns/i_async_result.cpp` ; IAsyncResult::Cancel signale effectivement son événement ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | IAsyncResult | `2` | `GetErrorContext` | 4.0.0+ | **NULL** (source `encore-active/eden-backports/src/core/hle/service/ns/i_async_result.cpp` ; IAsyncResult::GetErrorContext est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| ns:dev | `0` | `LaunchProgram` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `1` | `TerminateProcess` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `2` | `TerminateProgram` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `4` | `GetShellEvent` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `5` | `GetShellEventInfo` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `6` | `TerminateApplication` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `7` | `PrepareLaunchProgramFromHost` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
+| ns:dev | `0` | `LaunchProgram` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `1` | `TerminateProcess` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `2` | `TerminateProgram` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `4` | `GetShellEvent` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `5` | `GetShellEventInfo` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `6` | `TerminateApplication` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `7` | `PrepareLaunchProgramFromHost` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
 | ns:dev | `8` | `LaunchApplicationForDevelop` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/develop_interface.cpp) ; slot 8 actuel = LaunchApplicationFromHost (nullptr), pas LaunchApplicationForDevelop ; statique, PS5 non validé) | 2026-11-22 |
-| ns:dev | `9` | `LaunchApplicationWithStorageIdForDevelop` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
+| ns:dev | `9` | `LaunchApplicationWithStorageIdForDevelop` | — | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
 | ns:dev | `10` | `IsSystemMemoryResourceLimitBoosted` | 6.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-103]) | 2026-11-23 |
-| ns:dev | `11` | `GetRunningApplicationProcessIdForDevelop` | 6.0.0+ | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `12` | `SetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop` | 6.0.0+ | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `13` | `CreateApplicationResourceForDevelop` | 9.0.0+ | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `14` | `IsPreomiaForDevelop` | 9.0.0+ | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
+| ns:dev | `11` | `GetRunningApplicationProcessIdForDevelop` | 6.0.0+ | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `12` | `SetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop` | 6.0.0+ | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `13` | `CreateApplicationResourceForDevelop` | 9.0.0+ | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| ns:dev | `14` | `IsPreomiaForDevelop` | 9.0.0+ | **D** (commande NS de développement explicitement rejetée par `IDevelopInterface::RejectUnsupportedDevelopCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; pas de launcher/dev-host fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
 
 ### PPC services
 
@@ -3193,19 +3193,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm | `57` | `RegisterAppletResourceUserId` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `58` | `UnregisterAppletResourceUserId` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `59` | `SetAppletResourceUserId` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm:dbg | `0` | `AcquireDiscoveryEvent` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `1` | `StartDiscovery` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `2` | `CancelDiscovery` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `3` | `GetDeviceProperty` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `4` | `CreateBond` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `5` | `CancelBond` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `6` | `SetTsiMode` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `7` | `GeneralTest` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `8` | `HidConnect` | — | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `9` | `GeneralGet` | 5.0.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `10` | `GetGattClientDisconnectionReason` | 5.1.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `11` | `GetBleConnectionParameter` | 5.1.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
-| btm:dbg | `12` | `GetBleConnectionParameterRequest` | 5.1.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
+| btm:dbg | `0` | `AcquireDiscoveryEvent` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `1` | `StartDiscovery` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `2` | `CancelDiscovery` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `3` | `GetDeviceProperty` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `4` | `CreateBond` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `5` | `CancelBond` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `6` | `SetTsiMode` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `7` | `GeneralTest` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `8` | `HidConnect` | — | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `9` | `GeneralGet` | 5.0.0+ | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `10` | `GetGattClientDisconnectionReason` | 5.1.0+ | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `11` | `GetBleConnectionParameter` | 5.1.0+ | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
+| btm:dbg | `12` | `GetBleConnectionParameterRequest` | 5.1.0+ | **D** (commande Bluetooth debug explicitement rejetée par `IBtmDebug::RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` indépendamment de `auto_stub`; aucun discovery/bond/test debug fictif ; vendor `3d3b80ec`, moteur `4369aaba`) | 2026-11-23 |
 | btm:sys | `0` | `GetCore` | — | **IMPL-SRC** ([source C++][ns1-src-066]) | 2026-11-22 |
 | btm:sys | `0` | `StartGamepadPairing` | — | **IMPL-SRC** (mémorise l'état de pairing invité et signale le KEvent de changement ; aucun périphérique Switch fictif ; vendor `cd366101`, gitlink moteur `3a19889c`) | 2026-11-23 |
 | btm:sys | `1` | `CancelGamepadPairing` | — | **IMPL-SRC** (efface l'état de pairing invité et signale le KEvent de changement ; vendor `cd366101`, gitlink moteur `3a19889c`) | 2026-11-23 |
@@ -6313,3 +6313,10 @@ Vendor `078f7de0f675b7128fffc96499b0d39ee41a9973` → gitlink moteur `9bf4128ce5
 Vendor `0c533eecab77160f347c860e494db7a062ea9319` → gitlink moteur `56e9033f41079a26db2e2b626c2743f81fc74482`. Les **138 slots `nullptr`** du propriétaire actif `hid_debug_server.cpp` utilisent désormais un handler commun qui retourne explicitement `Kernel::ResultNotImplemented`, y compris lorsque `auto_stub` est activé. Dans le catalogue historique, **85 lignes `hid:dbg`** correspondent à ces slots et passent **NULL → D**. Ce lot n'implémente ni firmware HID, ni autopilot, ni calibration/debug hardware ; il supprime les succès factices possibles et rend l'absence de support déterministe.
 
 **Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 513 NULL / 169 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 928.**
+
+
+### BTM debug + NS develop — rejet explicite des surfaces non retail (23/11/2026)
+
+Vendor `3d3b80ecb9cbe6e5bd230a12460ec859d70f33f3` → gitlink moteur `4369aaba82949cc748528d95130e392d69e2614c`. Les 18 slots `nullptr` de `btm:dbg` et les 19 slots `nullptr` de `ns:dev` utilisent désormais des handlers fail-closed dédiés. Le catalogue historique contient **13 + 12 = 25** de ces commandes : elles passent **NULL → D**. Ce classement signifie explicitement « non pris en charge dans le runtime retail Encore », pas « fonctionnalité implémentée ».
+
+**Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 488 NULL / 194 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 903.**

@@ -1417,7 +1417,10 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // Even compact genuine spine scans are preferable to a fabricated title.
     // NS2 games may have a real front and spine but NO uploaded back.
     // Their spine must not depend on the existence of a back scan.
-    for (int side = 0; side < 8; ++side) {
+    // Front and rear paper remain first. Then fetch Home's hero fallbacks
+    // before the optional spine, title-screen and additional rear screenshots.
+    // The semantic side indices / changed-face bitmask are unchanged.
+    for (const int side : {0, 1, 3, 5, 2, 4, 6, 7}) {
         if (cancel && cancel->load(std::memory_order_acquire)) {
             // Aborted title switch must not lock the next attempt out for
             // five minutes after a partial or cancelled CDN transaction.

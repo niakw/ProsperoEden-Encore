@@ -1381,6 +1381,22 @@ Les variantes par chemin 609/610 restent ouvertes : elles exigent une résolutio
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot FSP — clés externes transitoires sans pollution de title.keys — 23/11/2026
+
+**Vendor `0d4246090dac222c344cb3bed912728c56d79c7b`** (arbre `181d4d1a18dedf20c4e28fb4c1a48a8fde2be1d9`).
+
+Les commandes `RegisterExternalKey` (607), `UnregisterAllExternalKey` (608) et `UnregisterExternalKey` (617) passent **NULL → IMPL-SRC**. L'ABI est recroisée avec Ryubing/LibHac : `RightsId[0x10] + AccessKey[0x10]` pour 607, aucun argument pour 608, `RightsId[0x10]` pour 617.
+
+Le correctif ajoute dans le `KeyManager` actif un overlay `external_title_keys` distinct de `s128_keys`. `HasKey/GetKey` consultent l'overlay en priorité uniquement pour `S128KeyType::Titlekey`. Enregistrement d'un doublon identique réussit ; une valeur différente pour le même RightsId renvoie **FS 6452 / NcaExternalKeyInconsistent**. Les unregister ne peuvent jamais effacer une clé chargée depuis `title.keys`.
+
+Les deux unités `key_manager.cpp/.h` sont ajoutées comme backports complets avec empreinte upstream et active dans le manifeste, plutôt que de modifier le socle `sources/eden`.
+
+**Compteur historique : 1 543 IMPL-SRC / 142 PARTIEL / 121 STUB / 142 NOOP / 1 709 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 252** : 1 709 NULL + 121 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

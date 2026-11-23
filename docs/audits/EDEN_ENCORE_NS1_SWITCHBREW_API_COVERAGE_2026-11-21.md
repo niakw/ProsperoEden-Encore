@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 540 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 543 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 460 | 80 | **1 540** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 463 | 80 | **1 543** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
 | **STUB — Stub / résultat simulé** | 121 | 0 | **121** |
 | **NOOP — No-op documenté** | 142 | 0 | **142** |
-| **NULL — Handler NULL** | 1 712 | 0 | **1 712** |
+| **NULL — Handler NULL** | 1 709 | 0 | **1 709** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1540
+    "Implémentation source retrouvée" : 1543
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 142
     "Stub / résultat simulé" : 121
     "No-op documenté" : 142
-    "Handler NULL" : 1712
+    "Handler NULL" : 1709
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 196
     "Service/interface non exposé sous cette forme" : 306
@@ -4041,8 +4041,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `604` | `CreatePaddingFile` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `605` | `DeleteAllPaddingFiles` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `606` | `GetRightsId` | 2.0.0+ | **IMPL-SRC** ([vendor 83acc512](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/83acc5124b1cdb62ba4b65ed8607968c832757a4/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; lit le NCA Program réel via StorageId/ProgramId et retourne son RightsId 0x10) | 2026-11-23 |
-| fsp-srv | `607` | `RegisterExternalKey` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `608` | `UnregisterAllExternalKey` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `607` | `RegisterExternalKey` | 2.0.0+ | **IMPL-SRC** ([vendor 0d424609](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0d4246090dac222c344cb3bed912728c56d79c7b/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; enregistre une title key externe transitoire prioritaire, sans écrire title.keys ; doublon incohérent -> FS 6452) | 2026-11-23 |
+| fsp-srv | `608` | `UnregisterAllExternalKey` | 2.0.0+ | **IMPL-SRC** ([vendor 0d424609](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0d4246090dac222c344cb3bed912728c56d79c7b/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; vide uniquement l'overlay de clés externes, sans toucher aux clés persistantes) | 2026-11-23 |
 | fsp-srv | `609` | `GetRightsIdByPath` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `610` | `GetRightsIdAndKeyGenerationByPath` | 3.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `611` | `SetCurrentPosixTimeWithTimeDifference` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -4051,7 +4051,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `614` | `CorruptSaveDataFileSystemBySaveDataSpaceId` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `615` | `QuerySaveDataInternalStorageTotalSize` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `616` | `GetSaveDataCommitId` | 6.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `617` | `UnregisterExternalKey` | 7.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `617` | `UnregisterExternalKey` | 7.0.0+ | **IMPL-SRC** ([vendor 0d424609](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0d4246090dac222c344cb3bed912728c56d79c7b/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; retire uniquement le RightsId de l'overlay externe, opération idempotente) | 2026-11-23 |
 | fsp-srv | `620` | `SetSdCardEncryptionSeed` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `630` | `SetSdCardAccessibility` | 4.0.0+ | **IMPL-SRC** ([active FSP source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/be00691dcb6abbf888cc00a4a5dcbf10b377fac5/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; politique d'accessibilité persistée dans le proxy, getter 631 combine politique et disponibilité SDMC) | 2026-11-23 |
 | fsp-srv | `631` | `IsSdCardAccessible` | 4.0.0+ | **IMPL-SRC** (`FileSystemController::OpenSDMC` + présence du VirtualDir réel, vendor `a460d757`) | 2026-11-22 |

@@ -852,7 +852,8 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                             "5f7e92ebb9600809d81ee6fbb898c7011b95c719",
                             "c67f77d5b33e71ca70621ab4637f559a420d998d",
                             "d23a6e5bbb235f4b277e523baeac668330eb5982",
-                            "83acc5124b1cdb62ba4b65ed8607968c832757a4"}:
+                            "83acc5124b1cdb62ba4b65ed8607968c832757a4",
+                            "0d4246090dac222c344cb3bed912728c56d79c7b"}:
         # Merge commit retains precisely the source tree of the reviewed
         # GuestCacheLock predecessor; historical rollback uses its receipts.
         reviewed_tree = subprocess.check_output(
@@ -976,6 +977,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             'c67f77d5b33e71ca70621ab4637f559a420d998d': '9e60f3bc7e6a85b5f6c5fb6d4ce79ece460be73e',
             'd23a6e5bbb235f4b277e523baeac668330eb5982': '3c893de47856e787abf50ca4b0b86429b243225b',
             '83acc5124b1cdb62ba4b65ed8607968c832757a4': 'b7bf7c18140e7af806bccb2aab1ee99733a09937',
+            '0d4246090dac222c344cb3bed912728c56d79c7b': '181d4d1a18dedf20c4e28fb4c1a48a8fde2be1d9',
         }[exact_vendor_pin], ('Vendor reviewed source tree drift', exact_vendor_pin, reviewed_tree)
         exact_vendor_pin = '17253dc91e9fe1eb2d9980f261f59d227bfcd1a1'
         actual_vendor_pin = exact_vendor_pin

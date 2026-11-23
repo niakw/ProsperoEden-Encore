@@ -54,7 +54,10 @@ assert "display.swap()" in unified
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in unified
 assert "Eden::LaunchHandoff::BeginLoading();" in frontend
 assert "Eden::LoadingArtwork::Capture(" in frontend
-assert "LaunchHandoff::Publish(std::move(frame))" in gl_art
+assert "LaunchHandoff::Publish(std::move(frame), alternate)" in gl_art
+assert "LaunchHandoff::PeekAlternate()" in gl_art
+assert "LoadingCapturePose::back" in frontend
+assert "LoadingCapturePose::front" in frontend
 assert "handoff_captured" not in frontend
 assert "handoff_attempts" not in frontend
 assert frontend.index("PresentUnifiedLoading(display, reduce_motion)") < frontend.index(

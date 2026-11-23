@@ -1027,6 +1027,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 508** : 1 973 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot `set:cal` — champs CAL0 non secrets — 23/11/2026
+
+**Vendor `8b62686225121d894e40e7853083f636ac344c3c`** (arbre `b52c35e5b39352a3a86c44c45f0ee17892fbb066`) sur la branche secondaire NS1.
+
+- **11 NULL → IMPL-SRC** : Bluetooth BD address (0), ConfigurationId1 (1), offsets/scales accéléromètre (2/3), offsets/scales gyroscope (4/5), WLAN MAC (6), nombre/liste de pays WLAN (7/8), SerialNumber (9), BatteryLot (12).
+- Les valeurs viennent du vrai **CalibrationBinary / PRODINFO (CAL0)** via `OpenBISPartitionStorage(CalibrationBinary)`. Le lecteur vérifie le magic `CAL0`, la taille du fichier et les bornes avant toute copie.
+- Les offsets suivent la table SwitchBrew : ConfigurationId1 0x40/0x1E, pays 0x80/0x88, WLAN MAC 0x210, BD 0x220, IMU 0x230–0x248, SerialNumber 0x250, BatteryLot 0x2CE0.
+- La liste de pays est bornée à 0x80 entrées de 3 octets et à la taille du buffer HIPC Pointer fourni.
+- **Aucune clé privée ni certificat** n'est exposé dans ce lot : les commandes 14–21 et 24–31 restent ouvertes jusqu'à validation séparée du contrat et des implications de sécurité.
+
+**Compteur historique : 1 501 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 962 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 497** : 1 962 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 490 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 410 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `822662c7`. **Ces 1 490 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 501 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 421 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `8b626862`. **Ces 1 501 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 410 | 80 | **1 490** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 421 | 80 | **1 501** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
 | **NOOP — No-op documenté** | 134 | 0 | **134** |
-| **NULL — Handler NULL** | 1 973 | 0 | **1 973** |
+| **NULL — Handler NULL** | 1 962 | 0 | **1 962** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1490
+    "Implémentation source retrouvée" : 1501
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 134
-    "Handler NULL" : 1973
+    "Handler NULL" : 1962
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -5473,19 +5473,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:fd | `0` | `GoNext` | — | **INACCESSIBLE** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/set/firmware_debug_settings_server.cpp) ; commandes de ISettingsItemKeyIterator ; le créateur parent ID 4 est nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | set:fd | `1` | `GetKeySize` | — | **INACCESSIBLE** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/set/firmware_debug_settings_server.cpp) ; commandes de ISettingsItemKeyIterator ; le créateur parent ID 4 est nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | set:fd | `2` | `GetKey` | — | **INACCESSIBLE** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/set/firmware_debug_settings_server.cpp) ; commandes de ISettingsItemKeyIterator ; le créateur parent ID 4 est nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| set:cal | `0` | `GetBluetoothBdAddress` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `1` | `GetConfigurationId1` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `2` | `GetAccelerometerOffset` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `3` | `GetAccelerometerScale` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `4` | `GetGyroscopeOffset` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `5` | `GetGyroscopeScale` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `6` | `GetWirelessLanMacAddress` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `7` | `GetWirelessLanCountryCodeCount` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `8` | `GetWirelessLanCountryCodes` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `9` | `GetSerialNumber` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
+| set:cal | `0` | `GetBluetoothBdAddress` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `1` | `GetConfigurationId1` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `2` | `GetAccelerometerOffset` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `3` | `GetAccelerometerScale` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `4` | `GetGyroscopeOffset` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `5` | `GetGyroscopeScale` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `6` | `GetWirelessLanMacAddress` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `7` | `GetWirelessLanCountryCodeCount` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `8` | `GetWirelessLanCountryCodes` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `9` | `GetSerialNumber` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
 | set:cal | `10` | `SetInitialSystemAppletProgramId` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `11` | `SetOverlayDispProgramId` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `12` | `GetBatteryLot` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
+| set:cal | `12` | `GetBatteryLot` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/8b62686225121d894e40e7853083f636ac344c3c/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
 | set:cal | `14` | `GetEciDeviceCertificate` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `15` | `GetEticketDeviceCertificate` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `16` | `GetSslKey` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |

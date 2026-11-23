@@ -32,8 +32,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 407 | 80 | **1 487** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 111 | 3 | **114** |
-| **STUB — Stub / résultat simulé** | 142 | 0 | **142** |
-| **NOOP — No-op documenté** | 129 | 0 | **129** |
+| **STUB — Stub / résultat simulé** | 139 | 0 | **139** |
+| **NOOP — No-op documenté** | 132 | 0 | **132** |
 | **NULL — Handler NULL** | 1 975 | 0 | **1 975** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
@@ -446,8 +446,8 @@ pie showData
     "Implémentation source retrouvée" : 1487
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 114
-    "Stub / résultat simulé" : 142
-    "No-op documenté" : 129
+    "Stub / résultat simulé" : 139
+    "No-op documenté" : 132
     "Handler NULL" : 1975
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
@@ -4892,7 +4892,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `22` | `IsAnyForegroundRequestAccepted` | — | **IMPL-SRC** (reflète le compteur réel d'IRequest en état `Accepted`, maintenu par les transitions et le destructeur ; vendor `f757675e`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `23` | `PutToSleep` | — | **NOOP** (aucun daemon NIFM séparé à suspendre dans Encore; commande sans I/O, succès neutre documenté; vendor 36100c17) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `24` | `WakeUp` | — | **NOOP** (aucun daemon NIFM séparé à réveiller dans Encore; commande sans I/O, succès neutre documenté; vendor 36100c17) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `25` | `GetSsidListVersion` | — | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `25` | `GetSsidListVersion` | — | **NOOP** ([active NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f918ebdbae5c375ab2eb5887031f26d14bec5976/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; politique locale explicite sans daemon NIFM séparé) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `26` | `SetExclusiveClient` | — | **PARTIEL** (lit le `ClientId` 4 octets depuis le buffer pointeur 0x19 et le conserve par `IGeneralService`; l'exclusivité n'est pas encore appliquée aux requêtes concurrentes ; vendor `05784b60`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `27` | `GetDefaultIpSetting` | — | **IMPL-SRC** (ABI SwIPC `IpSettingData` 0xC2 ; état partagé initialisé depuis IP/masque/passerelle/DNS hôte, proxy off, MTU 1500 ; vendor `40596a94`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `28` | `SetDefaultIpSetting` | — | **IMPL-SRC** (lit et conserve exactement le bloc `IpSettingData` 0xC2 pour le round-trip du getter ; vendor `40596a94`) | 2026-11-22 |
@@ -4900,8 +4900,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `30` | `SetEthernetCommunicationEnabledForTest` | — | **IMPL-SRC** (réutilise le même handler/état `ethernet_enabled` que l'ID19 ; vendor `bc3d538f`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `31` | `GetTelemetorySystemEventReadableHandle` | 2.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `32` | `GetTelemetryInfo` | 2.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `33` | `ConfirmSystemAvailability` | 2.0.0+ | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `34` | `SetBackgroundRequestEnabled` | 4.0.0+ | **STUB** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `33` | `ConfirmSystemAvailability` | 2.0.0+ | **NOOP** ([active NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f918ebdbae5c375ab2eb5887031f26d14bec5976/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; politique locale explicite sans daemon NIFM séparé) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `34` | `SetBackgroundRequestEnabled` | 4.0.0+ | **NOOP** ([active NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f918ebdbae5c375ab2eb5887031f26d14bec5976/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; politique locale explicite sans daemon NIFM séparé) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `35` | `GetScanData` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `36` | `GetCurrentAccessPoint` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `37` | `Shutdown` | 4.0.0+ | **NOOP** (aucun daemon NIFM séparé n'est possédé par Encore ; arrêt neutre explicite, sans casser le backend réseau hôte ; vendor `05784b60`) | 2026-11-22 |

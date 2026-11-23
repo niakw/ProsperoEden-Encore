@@ -960,6 +960,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 517** : 1 975 NULL + 142 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot NIFM — politiques locales sans daemon séparé — 23/11/2026
+
+**Vendor `f918ebdbae5c375ab2eb5887031f26d14bec5976`** (arbre `c52752f61475b9ac2e2e4e7ff2374106b989ced0`) sur le propriétaire actif `encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp`, avec manifeste d'intégrité mis à jour dans le même commit.
+
+- `GetSsidListVersion` (25), `ConfirmSystemAvailability` (33) et `SetBackgroundRequestEnabled` (34) : **3 STUB → NOOP documentés**.
+- Encore ne conserve pas de liste SSID Horizon persistante : la version locale est explicitement 0. La disponibilité système est acquise lorsque l'interface NIFM locale est créée. Les requêtes réseau sont évaluées par les chemins Encore existants, sans daemon NIFM autonome à mettre en arrière-plan.
+- `SetBackgroundRequestEnabled` consomme désormais réellement son booléen ABI et documente l'absence de scheduler séparé ; les logs `(STUBBED)` et TODO associés à ces trois commandes sont retirés.
+- Les setters de requirement/profil restent ouverts tant que leur effet contractuel n'est pas raccordé ; aucune connectivité fictive n'est ajoutée.
+- Le lot FreeCommunication moteur `3e1385fe` est désormais **X8D24 + provenance vert**. Le lot APM `1a3d1a84` a X8D24 vert ; sa provenance était encore en cours au dernier relevé.
+
+**Compteur historique : 1 487 IMPL-SRC / 114 PARTIEL / 139 STUB / 132 NOOP / 1 975 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 154 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 514** : 1 975 NULL + 139 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

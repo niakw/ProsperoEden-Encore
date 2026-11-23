@@ -1080,6 +1080,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 480** : 1 945 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot Friend — image / NNID / catalogue offline — 23/11/2026
+
+**Vendor `e15f20df4dd3765b1c3df3ee3fcfc4ab3e155590`** (arbre `ef8803c118f902adac0ed1edd6aa914371317ad6`).
+
+- `GetFriendProfileImage` (10110) : **NULL → IMPL-SRC** ; `Uid + NetworkServiceAccountId`, taille retournée 0 en l'absence d'image réseau, conformément à Ryujinx/SwIPC.
+- `GetNintendoNetworkIdInfo` (20301) : **NULL → IMPL-SRC** ; consomme `u32 + Uid`, initialise le buffer Pointer fixe **0x38**, initialise la liste MapAlias et retourne count 0.
+- `GetExternalApplicationCatalog` (21000) : **NULL → IMPL-SRC** ; consomme `LanguageCode` + identifiant catalogue 0x10, renvoie le buffer Pointer fixe **0x4B8** par défaut.
+- Toutes les sorties sont explicitement initialisées ; aucune donnée Nintendo ou relation fictive n'est créée.
+
+**Compteur historique : 1 521 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 942 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 477** : 1 942 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

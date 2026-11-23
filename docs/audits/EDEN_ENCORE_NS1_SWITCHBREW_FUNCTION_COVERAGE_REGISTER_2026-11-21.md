@@ -1546,6 +1546,14 @@ Le scan systématique des **77 STUB** contre leurs corps C++ actuels a trouvé u
 
 Les 76 autres STUB conservent au moins un marqueur explicite de stub/TODO/UNIMPLEMENTED dans leur propriétaire courant ; ils ne sont pas requalifiés automatiquement.
 
+## Requalification PCV legacy — 23/11/2026
+
+SwitchBrew borne explicitement **`pcv:arb`** et **`pcv:imm`** à HOS **1.0.0–7.0.1**. Aucune réapparition ultérieure des mêmes noms de service n'est listée ; la cible Encore est HOS 23.x. Les deux commandes cataloguées (`ReleaseControl` et `SetClockRate`) passent donc **NULL → HORS-VERSION**. Les services PCV/clock actuels restent suivis séparément et ne sont pas masqués par ce reclassement.
+
+**Compteur courant : 1 576 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 270 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 100** : 1 605 NULL + 76 STUB + 140 PARTIEL + 270 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

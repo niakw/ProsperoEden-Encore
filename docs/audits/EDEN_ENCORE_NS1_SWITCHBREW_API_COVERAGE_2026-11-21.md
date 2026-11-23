@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
 | **STUB — Stub / résultat simulé** | 76 | 0 | **76** |
 | **NOOP — No-op documenté** | 146 | 0 | **146** |
-| **NULL — Handler NULL** | 1 607 | 0 | **1 607** |
+| **NULL — Handler NULL** | 1 605 | 0 | **1 605** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 442 | 1 | **443** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 270 | 0 | **270** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -2843,8 +2843,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bpc:r | `4` | `SetUpRtcResetOnShutdown` | 3.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
 | pcv | `26` | `GetFuseInfo` | 3.0.0+ | **NULL** ([source C++][ns1-src-116]) | 2026-11-22 |
 | pcv | `27` | `GetDramId` | 5.0.0+ | **NULL** ([source C++][ns1-src-116]) | 2026-11-22 |
-| pcv:arb | `0` | `ReleaseControl` | — | **NULL** ([source C++][ns1-src-116]) | 2026-11-22 |
-| pcv:imm | `0` | `SetClockRate` | — | **NULL** ([source C++][ns1-src-116]) | 2026-11-22 |
+| pcv:arb | `0` | `ReleaseControl` | — | **HORS-VERSION** (service `pcv:arb` explicitement limité à HOS 1.0.0–7.0.1 dans SwitchBrew ; cible HOS 23.x) | 2026-11-23 |
+| pcv:imm | `0` | `SetClockRate` | — | **HORS-VERSION** (service `pcv:imm` explicitement limité à HOS 1.0.0–7.0.1 dans SwitchBrew ; cible HOS 23.x) | 2026-11-23 |
 | clkrst, clkrst:i | `0` | `OpenSession` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; CLKRST::OpenSession crée IClkrstSession ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `1` | `GetTemperatureThresholds` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `2` | `SetTemperature` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |

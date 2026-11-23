@@ -29,16 +29,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 541 | 80 | **1 621** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 542 | 80 | **1 622** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 481 | 0 | **1 481** |
+| **NULL — Handler NULL** | 1 480 | 0 | **1 480** |
 | **D — Rejet explicite / historique** | 164 | 33 | **197** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 190 | 0 | **190** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -1593,7 +1593,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `11` | `WriteThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
 | appletAE | `20` | `PushToAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (stocke le vrai `IStorage` dans une file applet dédiée sous verrou ; vendor `b217369d`) | 2026-11-22 |
 | appletAE | `21` | `TryPopFromAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (retourne le dernier `IStorage` de la file applet ou `ResultNoDataInChannel` ; vendor `b217369d`) | 2026-11-22 |
-| appletAE | `40` | `GetDisplayLogicalResolution` | 8.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
+| appletAE | `40` | `GetDisplayLogicalResolution` | 8.0.0+ | **IMPL-SRC** (ABI HOS 23.0.1 = deux sorties 32-bit ; utilise `Settings::IsDockedMode()` et `VI::DisplayResolution`, même source de vérité que `GetDefaultDisplayResolution` ; vendor `ab32ad62`, moteur `b4a3615b` ; non validé PS5) | 2026-11-23 |
 | appletAE | `42` | `SetDisplayMagnification` | 8.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit la rectangle de magnification protégée par le verrou applet) | 2026-11-23 |
 | appletAE | `50` | `SetHomeButtonDoubleClickEnabled` | 8.0.0+ | **PARTIEL** (état applet réellement écrit sous verrou ; aucun consommateur double-click n'est encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `51` | `GetHomeButtonDoubleClickEnabled` | 8.0.0+ | **PARTIEL** (relit l'état double-click réellement stocké ; aucun consommateur double-click n'est encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
@@ -6327,3 +6327,10 @@ Vendor `3d3b80ecb9cbe6e5bd230a12460ec859d70f33f3` → gitlink moteur `4369aaba82
 Le couple moteur `2c51ec230c5c4ceb5f962b9d4cf5d5e57a52aa13` → vendor `ed2f2d166c0621363a2e36d042897e1cc718adbf` intègre deux lots compatibles : `lm:get` refuse explicitement ses quatre commandes dev non supportées, et les backports VI raccordent les variantes `GetDisplayServiceWithProxyNameExchange` aux vrais services d'affichage ainsi que `GetDisplayVsyncEventForDebug` au vrai event VSync. Dans le catalogue historique, cela représente **3 NULL → D** et **4 NULL → IMPL-SRC**.
 
 **Compteur courant : 1 621 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 481 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 896.**
+
+
+### Applet common — résolution logique raccordée (23/11/2026)
+
+Vendor `ab32ad62ded46a623e265e257b30d692baf9c53c`, gitlink moteur `b4a3615b1a71f68108382db3488f2bfc7dd8913b` : `IAppletCommonFunctions` cmd40 `GetDisplayLogicalResolution` est maintenant raccordé à un handler réel. Le contrat HOS 23.0.1 retourne 8 octets ; Encore renvoie les dimensions `VI::DisplayResolution` correspondant à `Settings::IsDockedMode()`, exactement comme le chemin existant `ICommonStateGetter::GetDefaultDisplayResolution`. **1 NULL → IMPL-SRC**. Le résumé de tête est également corrigé à **473 HORS-VERSION**, cohérent avec les lignes et les compteurs récents.
+
+**Compteur courant : 1 622 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 480 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 895.**

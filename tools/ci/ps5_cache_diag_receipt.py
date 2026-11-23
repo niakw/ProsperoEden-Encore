@@ -231,10 +231,20 @@ void ClearShaderTranslationSnapshotForThread() noexcept;""",
         """void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept;""",
         "4bd declaration")
 
-    start = source.find("    // Worker translation must never traverse the live guest GMMU. Snapshot\\n")
-    stop = source.find("    if (parallel_translate_stages) {\\n        size_t parallel_env_index{};", start)
+    start = source.find("    // Worker translation must never traverse the live guest GMMU. Snapshot\n")
+    stop = source.find("    if (parallel_translate_stages) {\n        size_t parallel_env_index{};", start)
     assert start >= 0 and stop > start, ("snapshot owner block anchors", start, stop)
     source = source[:start] + source[stop:]
+    once(
+        """        parallel_stage_costs{};
+
+    if (parallel_translate_stages) {""",
+        """        parallel_stage_costs{};
+    if (parallel_translate_stages) {""",
+        "4bd owner block spacer")
+    once(
+        """            const size_t physical_stage = index <= 1 ? 0 : index - 1;
+""", "", "4bd physical stage")
 
     once(
         """                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,

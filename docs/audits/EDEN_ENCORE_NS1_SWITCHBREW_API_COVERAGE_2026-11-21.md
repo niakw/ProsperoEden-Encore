@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 488 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 408 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 488 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 490 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 410 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `822662c7`. **Ces 1 490 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 408 | 80 | **1 488** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 410 | 80 | **1 490** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
 | **NOOP — No-op documenté** | 134 | 0 | **134** |
-| **NULL — Handler NULL** | 1 975 | 0 | **1 975** |
+| **NULL — Handler NULL** | 1 973 | 0 | **1 973** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1488
+    "Implémentation source retrouvée" : 1490
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 134
-    "Handler NULL" : 1975
+    "Handler NULL" : 1973
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -5566,8 +5566,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `52` | `GetOverlayDispProgramId` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `53` | `GetDeviceTimeZoneLocationName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `54` | `SetDeviceTimeZoneLocationName` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `55` | `GetWirelessCertificationFileSize` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `56` | `[GetWirelessCertificationFile](Flash%20Filesystem#PRODINFOF.md##PRODINFOF "wikilink")` | — | **NULL** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; GetWirelessCertificationFile exact = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| set:sys | `55` | `GetWirelessCertificationFileSize` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/822662c72f38324e1f6eb56eeb4e0f55f3bc45d0/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; taille réelle de PRODINFOF/Certifications/WirelessCertification.png) | 2026-11-23 |
+| set:sys | `56` | `GetWirelessCertificationFile` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/822662c72f38324e1f6eb56eeb4e0f55f3bc45d0/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; lecture réelle PRODINFOF, buffer MapAlias borné) | 2026-11-23 |
 | set:sys | `57` | `SetRegionCode` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `58` | `GetNetworkSystemClockContext` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `59` | `SetNetworkSystemClockContext` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |

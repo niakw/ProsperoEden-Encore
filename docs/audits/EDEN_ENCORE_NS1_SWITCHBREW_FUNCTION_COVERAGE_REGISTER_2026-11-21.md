@@ -1013,6 +1013,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 510** : 1 975 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot `set:sys` — certificat Wi-Fi réel depuis PRODINFOF — 23/11/2026
+
+**Vendor `822662c72f38324e1f6eb56eeb4e0f55f3bc45d0`** (arbre `7a9fe224d54a0c73e014a0e6f32f0229dfbb2dce`) sur la branche secondaire NS1.
+
+- `GetWirelessCertificationFileSize` (55) et `GetWirelessCertificationFile` (56) : **2 NULL → IMPL-SRC**.
+- SwitchBrew documente la source réelle dans **PRODINFOF / `Certifications/WirelessCertification.png`** ; Eden expose déjà la partition BIS `CalibrationFile` via `FileSystemController::OpenBISPartition`.
+- Le getter de taille renvoie la taille réelle du fichier. Le getter de données utilise le buffer HIPC MapAlias de libnx, refuse un buffer trop petit et propage les erreurs BIS/fichier au lieu de fabriquer ou tronquer un certificat.
+- Aucun certificat Nintendo n'est embarqué dans Encore et aucun fichier hôte arbitraire n'est substitué. Si l'utilisateur n'a pas le fichier PRODINFOF attendu, l'appel échoue explicitement.
+- **`set:sys` atteint 0 NULL dans le miroir historique** après ce lot. Cela ne signifie pas que toutes ses commandes sont validées sur PS5 ni que les entrées hors miroir sont exhaustives.
+
+**Compteur historique : 1 490 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 973 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 508** : 1 973 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

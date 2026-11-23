@@ -169,7 +169,9 @@ int main() {
         // Both the staged first chunk and the destructively failed second
         // chunk must again be readable ZERO aliases after rollback.
         assert(base[3*kGranule]==0 && base[4*kGranule]==0);
-        assert(released==1);
+        // One PA was returned by the earlier page-heap OWN->ZERO,
+        // and the newly staged chunk was returned by this failed admission.
+        assert(released==2);
 
         assert(guest.Commit(3*kGranule,kGranule));
         assert(guest.UsedBytes()==3*kGranule);

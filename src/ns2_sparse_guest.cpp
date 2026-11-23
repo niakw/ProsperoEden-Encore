@@ -44,6 +44,23 @@ struct Runtime::Impl {
     std::vector<std::int64_t> physical;
     std::mutex mutex;
     bool installed{};
+    bool failure_reported{};
+
+    void ReportCommitDenial(const char* stage, std::size_t offset,
+                            std::size_t length) noexcept {
+        // Exactly once, only after a rejected residency operation. This
+        // discriminates a 6 GiB guest-budget admission refusal from a
+        // native PS5 direct-memory allocation/map failure without adding
+        // work to successful guest-memory accesses.
+        if (failure_reported) return;
+        failure_reported = true;
+        std::fprintf(stderr,
+                     "EDEN_NS2_SPARSE_COMMIT_DENIED stage=%s offset=%zu bytes=%zu"
+                     " resident=%llu budget=%llu\n",
+                     stage, offset, length,
+                     static_cast<unsigned long long>(plan.UsedBytes()),
+                     static_cast<unsigned long long>(plan.BudgetBytes()));
+    }
 
     Impl(std::size_t capacity, std::size_t budget)
       : plan(capacity, budget), bytes(capacity),
@@ -64,12 +81,18 @@ struct Runtime::Impl {
     }
     bool Commit(std::size_t offset, std::size_t length) {
         std::lock_guard lock{mutex};
-        if (!base || offset > bytes || length > bytes - offset) return false;
+        if (!base || offset > bytes || length > bytes - offset) {
+            ReportCommitDenial("range", offset, length);
+            return false;
+        }
         if (!length) return true;
         const auto first = offset / kGranule;
         const auto last = (offset + length - 1) / kGranule + 1;
         const auto admit = plan.Begin(first * kGranule, (last - first) * kGranule);
-        if (!admit) return false; // budget or pending owner; never overcommit
+        if (!admit) {
+            ReportCommitDenial("admission", offset, length);
+            return false; // budget or pending owner; never overcommit
+        }
         const auto rollback = [&] {
             const auto retired = plan.Abort(*admit);
             if (!retired) std::abort();
@@ -88,6 +111,7 @@ struct Runtime::Impl {
             auto* at = base + index * kGranule;
             if (!Common::CommitMemoryRange(at, kGranule, &pa)) {
                 rollback();
+                ReportCommitDenial("native_physical_map", offset, length);
                 return false;
             }
             if (pa < 0 || !plan.Stage(*admit, index, pa)) {
@@ -96,6 +120,7 @@ struct Runtime::Impl {
                 if (pa < 0) std::abort();
                 Retract(at, pa);
                 rollback();
+                ReportCommitDenial("ownership_stage", offset, length);
                 return false;
             }
             physical[index] = pa;

@@ -1338,7 +1338,11 @@ ns2_gsv_497_dual = selected in {"010d5c61cefd62cbb5d27102cd9a2350fa0e69ce", "346
 # selected NVDRV AS TU and its focused source test. Every older receipt
 # remains strict for every other file and every older vendor revision.
 def reviewed_blob(relative, expected):
-    if actual_vendor_pin == "97fa38381d9ce23b63b3bf3751615dc254ab3634" and relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h":
+    if actual_vendor_pin == "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48" and relative == "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp":
+        return "02e406d9209de6029bcc526bf800428268b81ed4"
+    if actual_vendor_pin == "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48" and relative == "encore-active/ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h":
+        return "1f60c4cda2a7d5206082434945f40a1cf2bb546c"
+    if actual_vendor_pin in {"97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48"} and relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h":
         return "ff9d81f1e2f5b65b73b2cf233579591e07267870"
     if actual_vendor_pin in {PS5_FC27_NVDRV_EXIT_PIN, PS5_FC27_RECENT_PREWARM_PIN} and relative in PS5_FC27_NVDRV_EXIT_BLOBS:
         return PS5_FC27_NVDRV_EXIT_BLOBS[relative]
@@ -1845,14 +1849,15 @@ REVIEWED_PINS.add("273680a5b33bff15c9ca12685cfadb2aa15ff9f1")
 # The native NS2 GPU exception-mask reader is the only 273680 -> 84b997
 # delta. Verify the exact selected C++ blob before admitting this successor;
 # all other vendor-owner receipts remain unchanged and are replayed below.
-if actual_vendor_pin in {"84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634"}:
+if actual_vendor_pin in {"84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48"}:
     relative = "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"
     raw = (V / relative).read_bytes()
     actual_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert actual_blob == ("332ae7800c2639a1185ed417bf3a5a9508058d86" if actual_vendor_pin in {"84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634"} else "32ba64b4b83848c0cd8f82af52429e3dea42609f"), ("Native NVDRV native query owner drift", actual_blob)
+    assert actual_blob == ("332ae7800c2639a1185ed417bf3a5a9508058d86" if actual_vendor_pin in {"84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48"} else "32ba64b4b83848c0cd8f82af52429e3dea42609f"), ("Native NVDRV native query owner drift", actual_blob)
 REVIEWED_PINS.add("84b9975726092a32d1cb2aa714b96e4f5f85d7c4")
 REVIEWED_PINS.add("84ec89ce112b83603b2095a9f6bb785f8e999ef6")
 REVIEWED_PINS.add("97fa38381d9ce23b63b3bf3751615dc254ab3634")
+REVIEWED_PINS.add("b099bd7cbefaa1a35d6626d4fd3161afcefa1b48")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

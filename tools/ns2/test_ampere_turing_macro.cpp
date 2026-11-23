@@ -278,6 +278,33 @@ int main(){
            (committed[0]==std::pair<W,W>(0x230,0x3579)));
     committed.clear();
 
+    // Lichii row 58 / TU104 DMA_READ_FIFOED: a staged MME method may
+    // append GPU-read words to the current load FIFO before the following
+    // instruction consumes them. The injected FIFO is transaction-local.
+    Tegra::NativeAmpereMacroState fifoed_state;
+    code.clear(); committed.clear();
+    Append(code,Insn(0x158,1,false,false));
+    Append(code,Insn(0x270,0,true,true));
+    Append(code,Insn(0,0,false,false,false));
+    assert(fifoed_state.SetCodePointer(0));
+    for(W w:code) assert(fifoed_state.PushCode(w));
+    assert(fifoed_state.SetPositionPointer(0) && fifoed_state.BindPosition(0));
+    const auto fifoed_effect=[](W address,W count,std::vector<W>& load_fifo,
+                                Tegra::NativeAmpereMacroState::DataRam&,
+                                const auto&) {
+        if(address==0x158) {
+            if(count!=1) return false;
+            load_fifo.push_back(0xD00DFEED);
+        }
+        return true;
+    };
+    result=fifoed_state.ExecuteStagedWithEffects(
+        0xe00,std::span<const W>{},read,allow_all,fifoed_effect,commit,valid);
+    assert(result.success && result.consumed==1 && committed.size()==2);
+    assert((committed[0]==std::pair<W,W>(0x158,1)));
+    assert((committed[1]==std::pair<W,W>(0x270,0xD00DFEED)));
+    committed.clear();
+
     std::vector<W> oversized(Tegra::NativeAmpereMacroState::MaxFifo+1,3);
     auto too_many=state.Execute(0xe00,std::span<const W>{oversized},read,emit);
     assert(!too_many.success &&

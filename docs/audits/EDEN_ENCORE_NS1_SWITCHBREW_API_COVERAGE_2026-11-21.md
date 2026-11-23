@@ -29,7 +29,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 529 | 80 | **1 609** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 530 | 80 | **1 610** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
@@ -40,7 +40,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 219 | 0 | **219** |
+| **ABI-DIFF — Noms/ABI divergents** | 215 | 0 | **215** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
@@ -2629,7 +2629,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | audren:u | `10` | `GetActiveAudioDeviceNameAuto` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `11` | `QueryAudioDeviceInputEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `12` | `QueryAudioDeviceOutputEvent` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-049]) | 2026-11-22 |
-| audren:u | `13` | `GetAudioSystemMasterVolumeSetting` | 5.0.0+ | **ABI-DIFF** (l'ABI audio Eden actuelle utilise l'ID 13 pour GetActiveAudioOutputDeviceName ; ancien master-volume retiré des révisions audio ultérieures) | 2026-11-22 |
+| audren:u | `13` | `GetAudioSystemMasterVolumeSetting` | 5.0.0+ | **HORS-VERSION** (ancienne commande retirée ; sur l'ABI audio actuelle l'ID 13 est réutilisé pour `GetActiveAudioOutputDeviceName`, donc cette ligne historique n'est pas applicable à HOS 23) | 2026-11-23 |
 | audout:a | `0` | `RequestSuspendAudioOuts` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 0 de audout:a est nullptr sous le nom `RequestSuspend`, pas `RequestSuspendAudioOuts` ; statique, PS5 non validé) | 2026-11-22 |
 | audout:a | `1` | `RequestResumeAudioOuts` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 1 de audout:a est nullptr sous le nom `RequestResume`, pas `RequestResumeAudioOuts` ; statique, PS5 non validé) | 2026-11-22 |
 | audout:a | `2` | `GetAudioOutsProcessMasterVolume` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 2 de audout:a est nullptr sous le nom `GetProcessMasterVolume`, pas `GetAudioOutsProcessMasterVolume` ; statique, PS5 non validé) | 2026-11-22 |
@@ -5142,7 +5142,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `10` | `InitializeDevtools` | 3.0.0+ | **NULL** ([source C++][ns1-src-111]) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `11` | `Ioctl2` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; NVDRV::Ioctl2 : gestion IPC/GPU non triviale ; pas de validation PS5) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `12` | `Ioctl3` | 3.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; NVDRV::Ioctl3 : gestion IPC/GPU non triviale ; pas de validation PS5) | 2026-11-22 |
-| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `13` | `FinishInitialize` | 3.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; ID 13, nom SwitchBrew FinishInitialize, owner SetGraphicsFirmwareMemoryMarginEnabled (raccordé) ; pas de validation PS5) | 2026-11-22 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `13` | `FinishInitialize` | 3.0.0+ | **HORS-VERSION** (dump NS1 23.0.1 : ID 13 = `SetGraphicsFirmwareMemoryMarginEnabled`; l'ancien `FinishInitialize` n'est plus la commande de cet ID sur le firmware cible) | 2026-11-23 |
 | nvmemp | `0` | `Open` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/nvdrv/nvmemp.cpp#L23) ; UNIMPLEMENTED en corps) | 2026-11-21 |
 | nvmemp | `1` | `GetPid` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvmemp.cpp) ; slot 1 actuel = GetAruid, pas GetPid ; statique, PS5 non validé) | 2026-11-22 |
 | nvdrvdbg | `0` | `OpenLog` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp) ; aucun service `nvdrvdbg`; le vendor expose `nvdbg:d` ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
@@ -5717,7 +5717,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pl:u, pl:s | `5` | `GetSharedFontInOrderOfPriority` | — | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; méthode IPlatformServiceManager::GetSharedFontInOrderOfPriority non triviale ; ABI console non testée ; non validé PS5) | 2026-11-22 |
 | pl:u, pl:s | `6` | `GetSharedFontInOrderOfPriorityForSystem` | 4.0.0+ | **IMPL-SRC** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; méthode IPlatformServiceManager::GetSharedFontInOrderOfPriority non triviale ; ABI console non testée ; non validé PS5) | 2026-11-22 |
 | pl:u, pl:s | `100` | `RequestApplicationFunctionAuthorization` | 8.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
-| pl:u, pl:s | `101` | `RequestApplicationFunctionAuthorizationForSystem` | 8.0.0+ | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; ID 101 : catalogue `RequestApplicationFunctionAuthorizationForSystem` vs table active `RequestApplicationFunctionAuthorizationByProcessId` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
+| pl:u, pl:s | `101` | `RequestApplicationFunctionAuthorizationForSystem` | 8.0.0+ | **HORS-VERSION** (dump NS1 23.0.1 `IPlatformServiceManagerForSystem` : ID 101 = `RequestApplicationFunctionAuthorizationByProcessId`; l'ancien nom/contrat n'est pas applicable à HOS 23) | 2026-11-23 |
 | pl:u, pl:s | `1000` | `LoadNgWordDataForPlatformRegionChina` | 9.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | pl:u, pl:s | `1001` | `GetNgWordDataSizeForPlatformRegionChina` | 9.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/platform_service_manager.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | mii:u, mii:e | `0` | `GetDatabaseService` | — | **IMPL-SRC** ([source C++][ns1-src-094]) | 2026-11-22 |
@@ -5851,7 +5851,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 |---|---|---|---|---|---|
 | csrng | `0` | `GenerateRandomBytes` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `0` | `GetConfig` | — | **PARTIEL** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
-| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl.cpp) ; SPL ID 1, nom historique ExpMod ≠ ModularExponentiate, sélections interfaces/firmware à vérifier ; audit statique, pas de validation PS5) | 2026-11-22 |
+| spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `1` | `ExpMod` | — | **IMPL-SRC** (ID 1 HOS 23.0.1 = `ModularExponentiate`; alias historique `ExpMod`, même commande. Encore raccorde `SPL::ModularExponentiate` à l'ID 1 sur les interfaces concernées ; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `2` | `GenerateAesKek` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `3` | `LoadAesKey` | — | **NULL** ([source C++][ns1-src-124]) | 2026-11-22 |
 | spl:, spl:mig, spl:fs, spl:ssl, spl:es, spl:manu | `4` | `GenerateAesKey` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/spl/spl_module.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
@@ -6271,3 +6271,10 @@ Les commandes `audin:u` 1, 2, 5, 9, 12 et 13 ont été recroisées avec l'interf
 Les commandes `audout:u` 1, 2, 5 et 8 correspondent en ID et signature aux handlers actifs `Start`, `Stop`, `GetReleasedAudioOutBuffers` et `GetReleasedAudioOutBuffersAuto`. Elles passent **ABI-DIFF → IMPL-SRC**.
 
 **Compteur courant : 1 609 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 219 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 048.**
+
+
+### HOS 23 — quatre ABI historiques fermées (23/11/2026)
+
+Recroisement avec les dumps NS1 23.0.1 et les owners actifs : `SPL` ID 1 (`ExpMod`) est l'alias historique de `ModularExponentiate` et passe **ABI-DIFF → IMPL-SRC**. `audren:u` ID 13 `GetAudioSystemMasterVolumeSetting`, `nvdrv` ID 13 `FinishInitialize` et `pl` ID 101 `RequestApplicationFunctionAuthorizationForSystem` sont des contrats historiques remplacés sur HOS 23 et passent **ABI-DIFF → HORS-VERSION**.
+
+**Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 448 HORS-VERSION / 0 ABSENT / 215 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 044.**

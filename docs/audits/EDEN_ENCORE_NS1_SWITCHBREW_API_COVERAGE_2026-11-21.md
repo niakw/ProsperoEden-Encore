@@ -29,7 +29,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 548 | 80 | **1 628** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 549 | 80 | **1 629** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
@@ -1666,7 +1666,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `31` | `EndBlockingHomeButtonShortAndLongPressed` | — | **IMPL-SRC** (désactive les flags short/long réellement consultés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `32` | `BeginBlockingHomeButton` | — | **PARTIEL** (active les flags Home réellement consommés, mais le timeout automatique n'est pas encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `33` | `EndBlockingHomeButton` | — | **IMPL-SRC** (efface les flags Home réellement consommés par `WindowSystem` ; vendor `3f8249a2`) | 2026-11-22 |
-| appletAE | `40` | `NotifyRunning` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `40` | `NotifyRunning` | — | **IMPL-SRC** (`Applet::is_process_running` est mis à jour sous verrou ; le bool indique la transition vers running ; `WindowSystem::RequestUpdate()` recalcule visibilité/focus/input ; vendor `4b8110b7`, moteur `3a72dfba`) | 2026-11-23 |
 | appletAE | `50` | `GetPseudoDeviceId` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `60` | `SetMediaPlaybackStateForApplication` | 2.0.0+ | **PARTIEL** (état `m_applet->media_playback_state` réellement écrit sous verrou, mais aucun consommateur de politique média/énergie n'est encore modélisé ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `65` | `IsGamePlayRecordingSupported` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; lit l'état de capacité `game_play_recording_supported` de l'applet) | 2026-11-23 |
@@ -6404,3 +6404,10 @@ Vendor `d1f92eee4c7557bd281ec481de521c178f0c6645` → gitlink moteur `e0990b2f73
 Vendor `fd389efbe1b51743aa630243fe00074f873dfb8a` → gitlink moteur `efc5f412feb680dc9ac462c3cd8dbd771a61dfdf`. Les deux variantes `GetLaunchStorageInfoForDebug`, `RequestFlushGamePlayingMovieForDebug` et `StartContinuousRecordingFlushForDebug` sont désormais rejetées explicitement sur le runtime release. **4 NULL → D**.
 
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 839.**
+
+
+### AppletAE — `NotifyRunning` raccordé au lifecycle réel (23/11/2026)
+
+Vendor `4b8110b70ae05698b4c8db1354b87ff0c7b1f4a1` → gitlink moteur `3a72dfbae25c130f856da4c17992a76514d25157`. `NotifyRunning` ne renvoie plus `true` sans effet : il fait transiter `Applet::is_process_running`, renvoie si la transition vient réellement d'avoir lieu et demande une mise à jour du `WindowSystem`, qui consomme cet état pour visibilité, focus et input. **1 STUB → IMPL-SRC**.
+
+**Compteur courant : 1 629 IMPL-SRC / 141 PARTIEL / 74 STUB / 145 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 838.**

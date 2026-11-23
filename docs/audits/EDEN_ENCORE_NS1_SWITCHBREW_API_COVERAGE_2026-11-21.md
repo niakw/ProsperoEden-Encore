@@ -38,12 +38,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 154 | 0 | **154** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 154 | 1 | **155** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 276 | 0 | **276** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
-| **E — ID SVC non trouvé** | 0 | 1 | **1** |
+| **E — ID SVC non trouvé** | 0 | 0 | **0** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
 
 ### Lot d'exécution NS1 du 22/11 — GPIO et NCM
@@ -452,7 +452,7 @@ pie showData
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 154
+    "Hors version firmware cible" : 155
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 276
     "Interface ambiguë" : 9
@@ -679,7 +679,7 @@ Les **118 dernières entrées Q** ont été reclassées sans modifier le runtime
 | `0x58` | [`svcDetachDeviceAddressSpace`](https://switchbrew.org/wiki/SVC#svcDetachDeviceAddressSpace) | **IMPL-SRC** | [svc_device_address_space.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/kernel/svc/svc_device_address_space.cpp) : Corps C++ non trivial retrouvé au vendor épinglé ; ABI et PS5 non qualifiés | 2026-11-22 |
 | `0x59` | [`svcMapDeviceAddressSpaceByForce`](https://switchbrew.org/wiki/SVC#svcMapDeviceAddressSpaceByForce) | **IMPL-SRC** | [svc_device_address_space.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/kernel/svc/svc_device_address_space.cpp) : Corps C++ non trivial retrouvé au vendor épinglé ; ABI et PS5 non qualifiés | 2026-11-22 |
 | `0x5A` | [`svcMapDeviceAddressSpaceAligned`](https://switchbrew.org/wiki/SVC#svcMapDeviceAddressSpaceAligned) | **IMPL-SRC** | [svc_device_address_space.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/kernel/svc/svc_device_address_space.cpp) : Corps C++ non trivial retrouvé au vendor épinglé ; ABI et PS5 non qualifiés | 2026-11-22 |
-| `0x5B` | [`svcMapDeviceAddressSpace`](https://switchbrew.org/wiki/SVC#svcMapDeviceAddressSpace) | **E** | Énumération examinée sans cet ID | 2026-11-21 |
+| `0x5B` | [`svcMapDeviceAddressSpace`](https://switchbrew.org/wiki/SVC#svcMapDeviceAddressSpace) | **HORS-VERSION** | libnx : SVC disponible uniquement sur HOS 1.0.0–12.1.0 ; cible Encore HOS23, cohérent avec l'absence dans libmesosphere moderne | 2026-11-23 |
 | `0x5C` | [`svcUnmapDeviceAddressSpace`](https://switchbrew.org/wiki/SVC#svcUnmapDeviceAddressSpace) | **IMPL-SRC** | [svc_device_address_space.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/kernel/svc/svc_device_address_space.cpp) : Corps C++ non trivial retrouvé au vendor épinglé ; ABI et PS5 non qualifiés | 2026-11-22 |
 | `0x5D` | [`svcInvalidateProcessDataCache`](https://switchbrew.org/wiki/SVC#svcInvalidateProcessDataCache) | **D** | [svc_cache.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_cache.cpp#L24) : Rejet explicite dans le corps C++ de base | 2026-11-21 |
 | `0x5E` | [`svcStoreProcessDataCache`](https://switchbrew.org/wiki/SVC#svcStoreProcessDataCache) | **D** | [svc_cache.cpp](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/kernel/svc/svc_cache.cpp#L30) : Rejet explicite dans le corps C++ de base | 2026-11-21 |

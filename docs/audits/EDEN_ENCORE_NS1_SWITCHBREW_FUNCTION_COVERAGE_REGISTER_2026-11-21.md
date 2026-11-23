@@ -974,6 +974,17 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 514** : 1 975 NULL + 139 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Clôture du dernier SVC ouvert — 0x5B hors HOS23 — 23/11/2026
+
+- `svcMapDeviceAddressSpace` (**0x5B**) passe **E → HORS-VERSION**.
+- libnx documente explicitement ce syscall sur **HOS 1.0.0–12.1.0**. Sur les kernels modernes, Atmosphère/libmesosphere expose `0x59 MapDeviceAddressSpaceByForce`, `0x5A MapDeviceAddressSpaceAligned`, puis `0x5C UnmapDeviceAddressSpace` ; `0x5B` n'est plus une obligation HOS23.
+- Eden possède déjà les chemins DAS modernes ; ajouter artificiellement 0x5B à son générateur aurait réintroduit une ABI legacy sans utilité pour la cible firmware.
+- **E = 0** : il ne reste plus de SVC non classé dans ce registre.
+
+**Compteur historique : 1 487 IMPL-SRC / 114 PARTIEL / 139 STUB / 132 NOOP / 1 975 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 513** : 1 975 NULL + 139 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -412,9 +412,13 @@ class Launcher
     // banner/player metadata as soon as the network/cache can provide it.
     std::future<Game> home_icon_scan_;
     std::uint64_t home_icon_scan_title_id_ = 0;
+    std::string home_icon_scan_file_; // exact installed input, not only shared TitleID
     std::future<Game> home_icon_scan_extra_;
     std::uint64_t home_icon_scan_extra_title_id_ = 0;
-    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_icon_next_retry_;
+    std::string home_icon_scan_extra_file_;
+    // Multiple NS1/NS2 editions can advertise the same TitleID; failures and
+    // successes belong to the exact installed input instead.
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> home_icon_next_retry_;
     std::future<Game> home_media_scan_;
     std::uint64_t home_media_scan_title_id_ = 0;
     std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_media_next_retry_;

@@ -1165,6 +1165,18 @@ SwitchBrew borne ou retire avant HOS23 les services suivants : `wlan:lcl` (suppr
 
 **Pool historique restant à examiner = 2 332** : 1 801 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
 
+## Lot Friend HOS19/20+ — complétude runtime hors miroir historique — 23/11/2026
+
+**Vendor `8e8e29be0c571686ca9852b6a968d440e20cd88e`** (arbre `6e41aa672a4f4098b982204ad00c8060b2e846dc`).
+
+Six commandes présentes sur les firmwares modernes mais non matérialisées comme lignes distinctes dans l'ancien miroir historique sont maintenant raccordées dans le C++ actif : `EnsureFriendListAvailable` (10121), `EnsureBlockedUserListAvailable` (10421), `GetFriendRequestListV2` (20202), `GetBlockedUserListV2` (20402), `GetPlayHistoryListV2` (20702) et `GetReceivedFriendInvitationListV2` (22002).
+
+Les deux commandes `Ensure*` consomment le `Uid` et confirment la disponibilité des listes locales. Les quatre listes V2 initialisent explicitement leur buffer de sortie, renvoient `count=0` et ne fabriquent aucune donnée sociale. Les sorties sont cohérentes avec les implémentations offline observées dans Den2/Citron ; aucun backend Nintendo/Nextendo n'est introduit.
+
+**Ces six handlers améliorent la couverture HOS23 mais ne modifient pas le compteur historique 4 853**, puisque le miroir ancien ne leur attribue pas six entrées distinctes. Le compteur historique reste donc : **1 527 IMPL-SRC / 115 PARTIEL / 135 STUB / 139 NOOP / 1 801 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 289 HORS-VERSION / 0 ABSENT / 272 ABI-DIFF / 9 AMBIGU / 0 E = 4 853**, pool **2 332**.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

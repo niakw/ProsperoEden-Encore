@@ -398,7 +398,10 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
 
     // Canonical Control icons win over loose portrait covers: Home/library
     // tiles are square and must not stretch a retail jacket into that slot.
-    for (const char* base : {"control", "base/control"}) {
+    // Extracted dumps keep filesystem casing. The launcher must not rely
+    // on a lower-case path when the loader accepted "Base/Control".
+    for (const char* base : {"control", "Control", "base/control",
+                             "base/Control", "Base/control", "Base/Control"}) {
         if (auto path = localized_icon(base); !path.empty()) return path;
     }
 
@@ -441,7 +444,9 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
     }
 
     // Older extractions sometimes leave icon_<language>.dat beside ExeFS.
-    for (const char* base : {"exefs", "base/exefs", ".", "base"}) {
+    for (const char* base : {"exefs", "ExeFS", "exefs/Control",
+                             "base/exefs", "base/ExeFS", "Base/exefs",
+                             "Base/ExeFS", ".", "base", "Base"}) {
         if (auto path = localized_icon(base); !path.empty()) return path;
     }
     return {};
@@ -1078,15 +1083,76 @@ const BoxIndex& RetailCaseIndex() {
     return index;
 }
 
-std::string CaseFacePath(std::uint64_t title_id, const char* side) {
-    char id[17]{};
-    std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
-    return Eden::CoversDir() + "/box-" + side + "-" + id + ".webp";
+// Keep retail artwork keyed by console generation. Legacy unscoped v9
+// indices may serve NS1, but must NEVER feed an NS2 front or square icon.
+bool IsNupSelection(std::string_view file) {
+    if (file.size() < 4) return false;
+    const auto extension = file.substr(file.size() - 4);
+    return extension == ".nup" || extension == ".NUP" ||
+           (extension[0] == '.' &&
+            (extension[1] == 'n' || extension[1] == 'N') &&
+            (extension[2] == 'u' || extension[2] == 'U') &&
+            (extension[3] == 'p' || extension[3] == 'P'));
 }
 
-std::string CachedGamesDbSquare(std::uint64_t title_id) {
+bool IsNs2MediaIdentity(std::uint64_t title_id, std::string_view file = {}) {
+    return (title_id & 0xFF00000000000000ULL) == 0x0400000000000000ULL ||
+           IsNupSelection(file);
+}
+
+bool UseNs2CaseIndex(const pe::ui::Game& game) {
+    return IsNs2MediaIdentity(game.title_id, game.file) || game.format == "NUP";
+}
+
+BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
+                                       const std::string& name,
+                                       const std::string& alternate_name) {
+    const auto find = [&](const std::string& title) {
+        const std::string key = CaseKey(title);
+        if (key.empty()) return index.end();
+        auto it = index.find(std::string(ns2 ? "ns2:" : "ns1:") + key);
+        if (it == index.end() && !ns2) it = index.find(key);
+        return it;
+    };
+    const auto first = find(name);
+    return first == index.end() ? find(alternate_name) : first;
+}
+
+// Explicit cross-generation BACK fallback only, for the same base title.
+// A Switch 1 front must never masquerade as the Switch 2 edition.
+const std::vector<std::string>* MatchingNs1Back(
+    const BoxIndex& index, const std::string& name,
+    const std::string& alternate_name) {
+    const auto lookup = [&](const std::string& title)
+        -> const std::vector<std::string>* {
+        std::string key = CaseKey(title);
+        constexpr std::string_view suffix = " nintendo switch 2 edition";
+        if (key.ends_with(suffix)) key.erase(key.size() - suffix.size());
+        if (key.empty()) return nullptr;
+        auto it = index.find("ns1:" + key);
+        if (it == index.end()) it = index.find(key); // legacy v9
+        return it == index.end() || it->second[1].empty()
+            ? nullptr : &it->second[1];
+    };
+    if (const auto* back = lookup(name)) return back;
+    return lookup(alternate_name);
+}
+
+std::string CaseFacePath(std::uint64_t title_id, const char* side,
+                         bool second_generation = false) {
+    char id[17]{};
+    std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
+    // Preserve every existing NS1 cache path. NS2 is explicitly namespaced
+    // so a NUP that reuses an NS1 TitleID cannot inherit its front/back,
+    // Square or scenic GamesDB files.
+    return Eden::CoversDir() + "/box-" + side +
+           (second_generation ? "-ns2-" : "-") + id + ".webp";
+}
+
+std::string CachedGamesDbSquare(std::uint64_t title_id,
+                                bool second_generation = false) {
     if (title_id == 0) return {};
-    const std::string path = CaseFacePath(title_id, "square");
+    const std::string path = CaseFacePath(title_id, "square", second_generation);
     int width = 0, height = 0;
     if (!ValidNlibWebP(path, &width, &height)) return {};
     const int larger = std::max(width, height);
@@ -1097,12 +1163,28 @@ std::string CachedGamesDbSquare(std::uint64_t title_id) {
 
 // Scenic images are actual LaunchBox screenshots/fanart, cached separately
 // from genuine physical box scans. Original covers never read these paths.
-std::vector<std::string> CachedCaseScenes(std::uint64_t title_id) {
+// Use the first GamesDB fanart, then its first real gameplay shot.
+// Caller gives Nlib banner/screenshot priority over both.
+std::string CachedGamesDbHero(std::uint64_t title_id,
+                              bool second_generation = false) {
+    if (title_id == 0) return {};
+    for (int scene : {1, 3, 4, 5}) {
+        const std::string side = "scene-" + std::to_string(scene);
+        if (auto path = AvailableArtwork(
+                CaseFacePath(title_id, side.c_str(), second_generation));
+            !path.empty()) return path;
+    }
+    return {};
+}
+
+std::vector<std::string> CachedCaseScenes(std::uint64_t title_id,
+                                           bool second_generation = false) {
     std::vector<std::string> scenes;
     if (title_id == 0) return scenes;
     for (int i : {3, 4, 5, 1, 2}) {
         const std::string side = "scene-" + std::to_string(i);
-        const std::string path = CaseFacePath(title_id, side.c_str());
+        const std::string path =
+            CaseFacePath(title_id, side.c_str(), second_generation);
         if (auto available = AvailableArtwork(path); !available.empty()) scenes.push_back(available);
     }
     return scenes;
@@ -1110,8 +1192,9 @@ std::vector<std::string> CachedCaseScenes(std::uint64_t title_id) {
 
 // Nlib screenshots are retained first; independent LaunchBox pictures fill
 // empty slots and support the rear collage, never the actual back scan.
-void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id) {
-    for (const auto& scene : CachedCaseScenes(title_id)) {
+void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id,
+                      bool second_generation = false) {
+    for (const auto& scene : CachedCaseScenes(title_id, second_generation)) {
         if (screens.size() >= 6) break;
         if (std::find(screens.begin(), screens.end(), scene) == screens.end())
             screens.push_back(scene);
@@ -1229,20 +1312,34 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
     return false;
 }
 
+constexpr std::size_t ArtworkLockBucket(std::uint64_t title_id, std::size_t count);
+bool LockArtworkUnlessCancelled(std::unique_lock<std::mutex>& lock,
+                                const std::atomic<bool>* cancel);
+
 bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
                          const std::string& alternate_name, int language_choice,
-                         const std::atomic<bool>* cancel) {
+                         const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return false;
-    if (!CachedGamesDbSquare(title_id).empty()) return true;
+    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
     const auto& index = RetailCaseIndex();
-    auto selected = index.find(CaseKey(name));
-    if (selected == index.end()) selected = index.find(CaseKey(alternate_name));
+    const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end() || selected->second[8].empty()) return false;
     auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
     if (candidates.empty()) return false;
-    const std::string path = CaseFacePath(title_id, "square");
+    // Home and selected-title media can ask for the same Square concurrently.
+    // Serialize the atomic .new writer by generation as well as TitleID; an
+    // NS1 request sharing the numeric ID must never delay or satisfy NS2.
+    static std::array<std::mutex, 32> square_locks;
+    const std::uint64_t square_key =
+        title_id ^ (second_generation ? 0x8000000000000000ULL : 0ULL);
+    std::unique_lock square_guard(
+        square_locks[ArtworkLockBucket(square_key, square_locks.size())],
+        std::defer_lock);
+    if (!LockArtworkUnlessCancelled(square_guard, cancel)) return false;
+    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
+    const std::string path = CaseFacePath(title_id, "square", second_generation);
     if (!FetchCaseFace(candidates, path, false, cancel, true)) return false;
-    const bool ready = !CachedGamesDbSquare(title_id).empty();
+    const bool ready = !CachedGamesDbSquare(title_id, second_generation).empty();
     std::fprintf(stderr,
                  "EDEN_GAMESDB_SQUARE title=%016llX status=%s candidates=%zu\n",
                  static_cast<unsigned long long>(title_id),
@@ -1301,15 +1398,11 @@ bool LimitRetailCasePromotion(std::vector<std::string>& candidates,
 }
 
 unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
-                      const std::string& alternate_name, int language_choice,
-                      const std::atomic<bool>* cancel) {
+                          const std::string& alternate_name, int language_choice,
+                          const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return 0;
     const auto& index = RetailCaseIndex();
-    const auto selected = [&]() -> BoxIndex::const_iterator {
-        auto it = index.find(CaseKey(name));
-        if (it != index.end()) return it;
-        return index.find(CaseKey(alternate_name));
-    }();
+    const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end()) {
         std::fprintf(stderr, "EDEN_CASE_LOOKUP title=%016llX status=no-match name=%s alternate=%s index_entries=%zu\n",
                      static_cast<unsigned long long>(title_id), name.c_str(),
@@ -1331,7 +1424,9 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // finished cache, but never hold launcher teardown hostage to this wait.
     // No socket request or mutex sleep runs on the UI/render thread.
     static std::array<std::mutex, 64> locks;
-    std::unique_lock guard(locks[ArtworkLockBucket(title_id, locks.size())], std::defer_lock);
+    const std::uint64_t artwork_key =
+        title_id ^ (second_generation ? 0x8000000000000000ULL : 0ULL);
+    std::unique_lock guard(locks[ArtworkLockBucket(artwork_key, locks.size())], std::defer_lock);
     if (!LockArtworkUnlessCancelled(guard, cancel)) return 0;
     // The physical scans supplied by users have no Encore .source receipt.
     // Migrate and reclaim ONLY our previously downloaded retail cases.
@@ -1340,7 +1435,8 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     for (const char* side : {"front", "back", "spine",
                              "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"}) {
         if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;
-        if (MigrateGeneratedTga(CaseFacePath(title_id, side), true))
+        if (MigrateGeneratedTga(
+                CaseFacePath(title_id, side, second_generation), true))
             migrated_faces |= 1u << side_index;
         ++side_index;
     }
@@ -1348,13 +1444,15 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     static std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> retries;
     {
         std::lock_guard retry(retry_mutex);
-        const auto it = retries.find(title_id);
+        const auto it = retries.find(artwork_key);
         if (it != retries.end() && std::chrono::steady_clock::now() < it->second)
             return migrated_faces;
         // Failed image hosts, cancellation or an incomplete side must not
         // disable all retries for four hours on a newly installed game.
-        retries[title_id] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
+        retries[artwork_key] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
     }
+    const auto* ns1_back = second_generation && selected->second[1].empty()
+        ? MatchingNs1Back(index, name, alternate_name) : nullptr;
     bool all_ready = true;
     // Migration to WebP also changes the art; notify the UI even when the
     // underlying CDN candidate was already in cache.
@@ -1362,7 +1460,10 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // Even compact genuine spine scans are preferable to a fabricated title.
     // NS2 games may have a real front and spine but NO uploaded back.
     // Their spine must not depend on the existence of a back scan.
-    for (int side = 0; side < 8; ++side) {
+    // Front and rear paper remain first. Then fetch Home's hero fallbacks
+    // before the optional spine, title-screen and additional rear screenshots.
+    // The semantic side indices / changed-face bitmask are unchanged.
+    for (const int side : {0, 1, 3, 5, 2, 4, 6, 7}) {
         if (cancel && cancel->load(std::memory_order_acquire)) {
             // Aborted title switch must not lock the next attempt out for
             // five minutes after a partial or cancelled CDN transaction.
@@ -1374,11 +1475,13 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
         // Gameplay previews remain independent of real back paper.
-        auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
+        const auto& sources = side == 1 && ns1_back ? *ns1_back : selected->second[side];
+        auto candidates = LocaleCaseCandidates(sources, language_choice, side);
         if (candidates.empty()) continue;
         const char* const names[] = {
             "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};
-        const std::string path = CaseFacePath(title_id, names[side]);
+        const std::string path =
+            CaseFacePath(title_id, names[side], second_generation);
         // User-provided original scans win. Cached low-resolution CDN scans
         // may be upgraded when a better ranked alternative becomes available.
         const std::string base = path.substr(0, path.size() - 5);
@@ -1417,7 +1520,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // A fully successful refresh needs no retry guard; a cancelled
         // refresh is immediately retryable on the next launcher session.
         std::lock_guard retry(retry_mutex);
-        retries.erase(title_id);
+        retries.erase(artwork_key);
     }
     return changed_faces;
 }
@@ -2090,16 +2193,27 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
     if (cancelled()) return {};
     if (home.setup_ready && home.last_exists) {
         const uint64_t title_id = ResolveTitleId(last_path, home.last_file);
+        const bool second_generation = IsNs2MediaIdentity(title_id, home.last_file);
         const GameLanguage language = LanguageFor(last_path, title_id, selected_language);
         home.last_title_id = title_id;
-        const NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
-        if (!nlib.icon.empty()) {
-            home.last_cover = nlib.icon;
-        } else if (home.last_cover.empty()) {
-            home.last_cover = CachedGamesDbSquare(title_id);
+        const NlibEnrichment nlib = second_generation
+            ? NlibEnrichment{} : CachedNlibEnrichment(title_id, selected_language);
+        if (home.last_cover.empty()) {
+            // Home's verified extracted Control icon wins. NUP is NS2:
+            // do not replace its square with an unrelated NX/NS1 cache.
+            if (IsNupSelection(home.last_file))
+                home.last_cover = CachedGamesDbSquare(title_id, true);
+            else
+                home.last_cover = nlib.icon.empty() ?
+                    CachedGamesDbSquare(title_id, second_generation) : nlib.icon;
         }
-        home.last_hero = nlib.hero;
+        // NLIB is the first provider, including its screenshots when the
+        // title has no NLIB banner. Only then consult GamesDB's first fanart
+        // and first gameplay shot, in that order.
         home.last_screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
+        home.last_hero = !nlib.hero.empty() ? nlib.hero :
+            !home.last_screenshot.empty() ? home.last_screenshot :
+            CachedGamesDbHero(title_id, second_generation);
         home.last_max_players = nlib.max_players;
         home.last_intro = nlib.intro;
         home.last_description = nlib.description;
@@ -2190,19 +2304,26 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         if (home.setup_ready) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
-                const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
-                if (!nlib.icon.empty() && recent.tile_icon.empty()) {
+                const bool second_generation =
+                    IsNs2MediaIdentity(recent.title_id, recent.file);
+                const NlibEnrichment nlib = second_generation
+                    ? NlibEnrichment{} :
+                      CachedNlibEnrichment(recent.title_id, selected_language);
+                if (!nlib.icon.empty() && recent.tile_icon.empty() && !IsNupSelection(name)) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
                 } else if (recent.cover.empty()) {
-                    const std::string square = CachedGamesDbSquare(recent.title_id);
+                    const std::string square =
+                        CachedGamesDbSquare(recent.title_id, second_generation);
                     if (!square.empty()) {
                         recent.cover = square;
                         recent.tile_icon = square;
                     }
                 }
-                recent.hero = nlib.hero;
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
+                recent.hero = !nlib.hero.empty() ? nlib.hero :
+                    !recent.screenshot.empty() ? recent.screenshot :
+                    CachedGamesDbHero(recent.title_id, second_generation);
                 recent.max_players = nlib.max_players;
                 recent.intro = nlib.intro;
                 recent.description = nlib.description;
@@ -2502,11 +2623,20 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 // already cached locally. Hero/screenshots, retail case faces,
                 // player count, language probing and add-on summaries belong
                 // to the selected-title worker below.
-                const std::string cached_icon = CachedNlibIcon(game.title_id);
-                if (!cached_icon.empty()) game.cover = cached_icon;
+                // Genuine package/Control icons are authoritative. Nlib is
+                // a fallback only; an older NS1 cache must not overwrite the
+                // icon extracted from an ExeFS or NUP package.
+                if (game.cover.empty() && game.format == "NUP")
+                    game.cover = CachedGamesDbSquare(game.title_id, true);
+                if (game.cover.empty() && game.format != "NUP") {
+                    const std::string cached_icon = CachedNlibIcon(game.title_id);
+                    if (!cached_icon.empty()) game.cover = cached_icon;
+                }
                 nlohmann::json metadata;
                 NlibEnrichment list_metadata;
-                if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
+                const bool second_generation = UseNs2CaseIndex(game);
+                if (!second_generation &&
+                    LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
                     ApplyNlibMetadata(metadata, &list_metadata);
                 if (!list_metadata.name.empty()) game.name = std::move(list_metadata.name);
                 if (!list_metadata.intro.empty()) game.intro = std::move(list_metadata.intro);
@@ -2546,28 +2676,48 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
                                             const std::atomic<bool>* cancel) {
     if (!game.title_id || (cancel && cancel->load(std::memory_order_acquire)))
         return game;
-    // A selected full-media worker may own the same title's .new paths.
-    // Never wait behind its retail/content requests during Home teardown.
-    std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
-    if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire)))
-        return game;
-    game.cover = CachedNlibIcon(game.title_id);
-    if (!game.cover.empty()) return game;
-    game.cover = CachedGamesDbSquare(game.title_id);
+    // These files are published via atomic rename, so cached icons can be
+    // consumed even while another title worker holds its download lock.
+    // Previously a perfectly ready ExeFS/Home icon waited for that remote
+    // worker, then remained in the retry queue for up to two minutes.
+    const bool second_generation = UseNs2CaseIndex(game);
+    if (second_generation) {
+        game.cover = CachedGamesDbSquare(game.title_id, true);
+    } else {
+        game.cover = CachedNlibIcon(game.title_id);
+        if (game.cover.empty())
+            game.cover = CachedGamesDbSquare(game.title_id, false);
+    }
     if (!game.cover.empty()) return game;
 
-    // Switch 2 Control dumps often omit the canonical icon and Nlib may have
-    // no record. Use GamesDB's explicit Square category, not a cropped box.
-    if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
+    // NS2/NUP does not participate in the Switch 1 Nlib mutex at all.
+    // Its own generation-aware Square writer serializes only matching NS2
+    // requests, so a simultaneous NS1 network request cannot delay this tile.
+    if (second_generation) {
+        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
         const int language_choice = Eden::LoadPreferences().language;
-        if (EnsureGamesDbSquare(game.title_id, std::string(known->name), game.name,
-                                language_choice, cancel)) {
-            game.cover = CachedGamesDbSquare(game.title_id);
+        const std::string canonical = known ? std::string(known->name) : game.name;
+        if (EnsureGamesDbSquare(game.title_id, canonical, game.name,
+                                language_choice, cancel, true)) {
+            game.cover = CachedGamesDbSquare(game.title_id, true);
             game.artwork_changed = !game.cover.empty();
-            if (!game.cover.empty()) return game;
         }
+        return game;
     }
 
+    // NS1 icon writes share the Nlib title lock. Do not stall Home teardown
+    // behind another title's retail or Nlib network transaction.
+    std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
+    if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire))) {
+        game.artwork_deferred = !title_lock.owns_lock();
+        return game;
+    }
+    // Recheck after acquiring the writer lock; another NS1 worker may have
+    // atomically published either the Nlib icon or GamesDB square meanwhile.
+    game.cover = CachedNlibIcon(game.title_id);
+    if (game.cover.empty())
+        game.cover = CachedGamesDbSquare(game.title_id, false);
+    if (!game.cover.empty()) return game;
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX",
                   static_cast<unsigned long long>(game.title_id));
@@ -2614,6 +2764,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         (cancel && cancel->load(std::memory_order_acquire))) return game;
     const int language_choice = Eden::LoadPreferences().language;
     const std::string scanned_name = game.name;
+    const bool second_generation = UseNs2CaseIndex(game);
     // Library detail-only work is intentionally deferred until this title is
     // selected. None of these package/add-on probes delays the initial grid.
     const std::string selected_path = Eden::AssetsPath("roms/" + game.file);
@@ -2633,39 +2784,67 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     if (const auto* ns2 = Eden::Ns2Catalog::Find(game.title_id)) {
         game.case_artwork_changed = EnsureRetailCase(
             game.title_id, std::string(ns2->name), scanned_name,
-            language_choice, cancel);
+            language_choice, cancel, true);
     } else {
-        game.case_artwork_changed = EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file),
-                         language_choice, cancel);
+        game.case_artwork_changed = EnsureRetailCase(
+            game.title_id, scanned_name, CleanTitle(game.file),
+            language_choice, cancel, second_generation);
     }
     // A completed local migration or atomic replacement needs cache
     // invalidation even if selection changed before media enrichment ended.
     if (game.case_artwork_changed || !(cancel && cancel->load(std::memory_order_acquire))) {
-        const auto cached_case = box_art(game.title_id);
+        const auto cached_case = box_art(game.title_id, second_generation);
         game.box_front = cached_case.front;
         game.box_back = cached_case.back;
         if (game.case_artwork_changed & 0xF8u) {
-            AppendCaseScenes(game.screenshots, game.title_id);
+            AppendCaseScenes(game.screenshots, game.title_id, second_generation);
             game.artwork_changed = true;
         }
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
-    NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
+    const bool nup = game.format == "NUP" || IsNupSelection(game.file);
+    if (nup && game.cover.empty()) {
+        // NS2 NUP's real Square outranks any cached NS1 Nlib app icon.
+        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
+        const std::string canonical = known ? std::string(known->name) : scanned_name;
+        if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
+                                language_choice, cancel, true)) {
+            game.cover = CachedGamesDbSquare(game.title_id, true);
+            game.artwork_changed |= !game.cover.empty();
+        }
+    }
+    if (cancel && cancel->load(std::memory_order_acquire)) return game;
+    // Nlib's /nx/ service is a Switch 1 source. An NS2/NUP title can reuse
+    // a Switch 1 program TitleID, so querying it would deliberately attach
+    // the wrong generation's banner/icon/screens to the NS2 edition.
+    NlibEnrichment enrichment = second_generation
+        ? NlibEnrichment{}
+        : EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     game.artwork_changed |= enrichment.artwork_changed;
-    if (!enrichment.icon.empty() && game.cover.empty()) {
+    if (!enrichment.icon.empty() && game.cover.empty() && !nup) {
         game.cover = std::move(enrichment.icon);
-    } else if (game.cover.empty()) {
-        if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
-            if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
-                                    language_choice, cancel)) {
-                game.cover = CachedGamesDbSquare(game.title_id);
+    } else if (game.cover.empty() && !nup) {
+        if (UseNs2CaseIndex(game)) {
+            const auto* known = Eden::Ns2Catalog::Find(game.title_id);
+            const std::string canonical = known ? std::string(known->name) : scanned_name;
+            if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
+                                    language_choice, cancel, true)) {
+                game.cover = CachedGamesDbSquare(game.title_id, second_generation);
                 game.artwork_changed |= !game.cover.empty();
             }
         }
     }
     // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.
-    if (!enrichment.hero.empty()) game.hero = std::move(enrichment.hero);
-    if (!enrichment.screenshots.empty()) game.screenshots = std::move(enrichment.screenshots);
+    // NLIB screenshot is still NLIB artwork and outranks GamesDB fanart.
+    // Apply this on every refresh, including when GamesDB was the provisional
+    // hero while NLIB's JPEG was being downloaded in another worker.
+    const bool nlib_banner = !enrichment.hero.empty();
+    const bool nlib_screenshots = !enrichment.screenshots.empty();
+    if (nlib_banner) game.hero = std::move(enrichment.hero);
+    else if (nlib_screenshots) game.hero = enrichment.screenshots.front();
+    else if (game.hero.empty())
+        game.hero = CachedGamesDbHero(game.title_id, second_generation);
+    if (nlib_screenshots) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
     if (!enrichment.name.empty()) game.name = std::move(enrichment.name);
     else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) game.name = std::string(known->name);
@@ -2688,24 +2867,27 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     // from the launcher draw or game-start path.
     if ((game.box_front.empty() || game.box_back.empty()) &&
         scanned_name != game.name) {
-        game.case_artwork_changed |= EnsureRetailCase(game.title_id, game.name, scanned_name,
-                         language_choice, cancel);
+        game.case_artwork_changed |= EnsureRetailCase(
+            game.title_id, game.name, scanned_name,
+            language_choice, cancel, second_generation);
     }
     if (!(cancel && cancel->load(std::memory_order_acquire))) {
-        const auto box = box_art(game.title_id);
+        const auto box = box_art(game.title_id, second_generation);
         if (!box.front.empty()) game.box_front = box.front;
         if (!box.back.empty()) game.box_back = box.back;
         // A late local/NX2 retail-cover fetch may complete after the first
         // Nlib/cache snapshot. Always expose its real front to the game tile.
         // Never promote a portrait retail front into the square tile slot.
-        AppendCaseScenes(game.screenshots, game.title_id);
+        AppendCaseScenes(game.screenshots, game.title_id, second_generation);
+        if (!nlib_banner && !nlib_screenshots && game.hero.empty())
+            game.hero = CachedGamesDbHero(game.title_id, second_generation);
         if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement
     }
     return game;
 }
 
-pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
+pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id, bool second_generation) {
     pe::ui::BoxArt artwork;
     if (title_id == 0) return artwork;
 
@@ -2717,7 +2899,8 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
 
     const auto find_face = [&](const char* side) -> std::string {
         for (const char* ext : {"png", "jpg", "jpeg", "webp", "tga"}) {
-            const std::string path = root + side + "-" + id + "." + ext;
+            const std::string path = root + side +
+                (second_generation ? "-ns2-" : "-") + id + "." + ext;
             struct stat info{};
             if (!IsFile(path) || stat(path.c_str(), &info) != 0 ||
                 info.st_size <= 0 || info.st_size > (16LL << 20))

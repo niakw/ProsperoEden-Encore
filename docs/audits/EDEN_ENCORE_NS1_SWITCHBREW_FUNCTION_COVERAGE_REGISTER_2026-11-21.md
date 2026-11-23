@@ -2209,3 +2209,12 @@ Les commandes `audin:u` 1, 2, 5, 9, 12 et 13 correspondent en ID et signature au
 **Compteur courant : 1 605 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 223 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 2 052** : 1 605 NULL + 75 STUB + 140 PARTIEL + 223 ABI-DIFF + 9 AMBIGU.
+
+
+## AudioOut — alias historiques recroisés (23/11/2026)
+
+Les commandes `audout:u` 1, 2, 5 et 8 correspondent en ID et signature aux handlers actifs `Start`, `Stop`, `GetReleasedAudioOutBuffers` et `GetReleasedAudioOutBuffersAuto`. Elles passent **ABI-DIFF → IMPL-SRC**.
+
+**Compteur courant : 1 609 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 219 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 048** : 1 605 NULL + 75 STUB + 140 PARTIEL + 219 ABI-DIFF + 9 AMBIGU.

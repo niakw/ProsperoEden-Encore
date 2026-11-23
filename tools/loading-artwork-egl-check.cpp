@@ -17,6 +17,7 @@ constexpr int W = 960, H = 540;
 using Pixel = std::array<std::uint8_t, 4>;
 constexpr Pixel red{255, 0, 0, 255}, green{0, 255, 0, 255};
 constexpr Pixel blue{0, 0, 255, 255}, yellow{255, 255, 0, 255};
+constexpr Pixel cyan{0, 255, 255, 255};
 
 void Expect(const Pixel& a, const Pixel& b, int tolerance = 2) {
     for (std::size_t c = 0; c < a.size(); ++c) {
@@ -167,7 +168,7 @@ int main() {
     const auto turning = ReadFrame();
     assert(turning != initial);
     const Pixel turning_corner = Read(W/4, 3*H/4);
-    assert(turning_corner != red && turning_corner != Pixel{0,255,255,255});
+    assert(turning_corner != red && turning_corner != cyan);
     assert(game.Draw(W,H,1001.0));
     const auto calm=ReadFrame();
     assert(game.Draw(W,H,1001.4));

@@ -639,6 +639,16 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 699** : 2 142 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck SSL R23 — faux NULL déjà raccordés — 23/11/2026
+
+- `Peek` (13) : **NULL → IMPL-SRC** ; le chemin actif appelle `SSL_peek`, borne la taille `int`, remet la taille de sortie à zéro avant l'appel et propage le résultat backend. Le test R23 #120 couvre lecture courte/erreur/zero-length.
+- `SetRenegotiationMode` (20) et `GetRenegotiationMode` (21) : **2 NULL → IMPL-SRC** ; le backend OpenSSL applique les options de renégociation et lit le support de renégociation sécurisée.
+- `Poll`, `GetVerifyCertError`, `GetNeededServerCertBufferSize`, `GetSessionCacheMode` et `FlushSessionCache` restent des stubs malgré leurs handlers : aucun gain de compteur n'est revendiqué pour eux.
+
+**Compteur historique : 1 452 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 139 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 696** : 2 139 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 449 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 369 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 449 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 452 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 372 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 452 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 369 | 80 | **1 449** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 372 | 80 | **1 452** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 118 | 0 | **118** |
-| **NULL — Handler NULL** | 2 142 | 0 | **2 142** |
+| **NULL — Handler NULL** | 2 139 | 0 | **2 139** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1449
+    "Implémentation source retrouvée" : 1452
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 118
-    "Handler NULL" : 2142
+    "Handler NULL" : 2139
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5825,15 +5825,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ssl | `10` | `Read` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslConnection`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
 | ssl | `11` | `Write` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslConnection`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
 | ssl | `12` | `Pending` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslConnection`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
-| ssl | `13` | `Peek` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
+| ssl | `13` | `Peek` | — | **IMPL-SRC** ([active SSL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6b477c04581797bc3a5677c6c849b297f3a4587f/encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp) ; backend OpenSSL SSL_peek réel, test R23 #120 ; pas de validation PS5) | 2026-11-23 |
 | ssl | `14` | `Poll` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
 | ssl | `15` | `GetVerifyCertError` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
 | ssl | `16` | `GetNeededServerCertBufferSize` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
 | ssl | `17` | `SetSessionCacheMode` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslConnection`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
 | ssl | `18` | `GetSessionCacheMode` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
 | ssl | `19` | `FlushSessionCache` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
-| ssl | `20` | `SetRenegotiationMode` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
-| ssl | `21` | `GetRenegotiationMode` | — | **NULL** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `nullptr`, ID/nom et corps analysés; handler nul) | 2026-11-22 |
+| ssl | `20` | `SetRenegotiationMode` | — | **IMPL-SRC** ([active SSL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6b477c04581797bc3a5677c6c849b297f3a4587f/encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp) ; backend OpenSSL de renégociation réel ; pas de validation PS5) | 2026-11-23 |
+| ssl | `21` | `GetRenegotiationMode` | — | **IMPL-SRC** ([active SSL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6b477c04581797bc3a5677c6c849b297f3a4587f/encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp) ; backend OpenSSL de renégociation réel ; pas de validation PS5) | 2026-11-23 |
 | ssl | `22` | `SetOption` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslConnection`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
 | ssl | `23` | `GetOption` | — | **IMPL-SRC** ([SSL C++ source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp); interface `ISslConnection`, ID/nom et corps analysés; fonction source présente, non certifiée PS5) | 2026-11-22 |
 | ssl | `24` | `GetVerifyCertErrors` | — | **NULL** ([source C++][ns1-src-028]) | 2026-11-22 |

@@ -2918,10 +2918,10 @@ void Launcher::start_home_icons()
     for (const Recent& recent : home_.recents) {
         if (!recent.title_id || !recent.tile_icon.empty()) continue;
         if ((home_icon_scan_.valid() &&
-             home_icon_scan_title_id_ == recent.title_id) ||
+             home_icon_scan_file_ == recent.file) ||
             (home_icon_scan_extra_.valid() &&
-             home_icon_scan_extra_title_id_ == recent.title_id)) continue;
-        const auto due = home_icon_next_retry_.find(recent.title_id);
+             home_icon_scan_extra_file_ == recent.file)) continue;
+        const auto due = home_icon_next_retry_.find(recent.file);
         if (due != home_icon_next_retry_.end() && now < due->second) continue;
         Game request;
         request.title_id = recent.title_id;
@@ -2930,12 +2930,14 @@ void Launcher::start_home_icons()
         auto job = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
             return services_.enrich_home_icon(std::move(request), &media_cancel_);
         });
-        home_icon_next_retry_[recent.title_id] = now + std::chrono::minutes(2);
+        home_icon_next_retry_[recent.file] = now + std::chrono::minutes(2);
         if (!home_icon_scan_.valid()) {
             home_icon_scan_title_id_ = recent.title_id;
+            home_icon_scan_file_ = recent.file;
             home_icon_scan_ = std::move(job);
         } else {
             home_icon_scan_extra_title_id_ = recent.title_id;
+            home_icon_scan_extra_file_ = recent.file;
             home_icon_scan_extra_ = std::move(job);
         }
         if (home_icon_scan_.valid() && home_icon_scan_extra_.valid())
@@ -2945,7 +2947,8 @@ void Launcher::start_home_icons()
 
 void Launcher::finish_home_icons()
 {
-    const auto finish = [this](std::future<Game>& job, std::uint64_t& requested_id) {
+    const auto finish = [this](std::future<Game>& job, std::uint64_t& requested_id,
+                               std::string& requested_file) {
         if (!job.valid() ||
             job.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
         try {
@@ -2953,19 +2956,23 @@ void Launcher::finish_home_icons()
             // A selected full-media worker may temporarily own the same
             // title lock. Retry promptly rather than hiding the square for
             // the default two-minute network backoff.
-            if (result.artwork_deferred && result.title_id == requested_id)
-                home_icon_next_retry_[result.title_id] =
+            if (result.artwork_deferred && result.title_id == requested_id &&
+                result.file == requested_file)
+                home_icon_next_retry_[result.file] =
                     std::chrono::steady_clock::now() + std::chrono::seconds(1);
             if (!media_cancel_.load(std::memory_order_acquire) &&
                 result.title_id && result.title_id == requested_id &&
-                !result.cover.empty()) {
+                result.file == requested_file && !result.cover.empty()) {
                 if (result.artwork_changed) textures_.invalidate(result.cover);
                 if (result.title_id == home_.last_title_id && result.file == home_.last_file)
                     home_.last_cover = result.cover;
                 for (Recent& recent : home_.recents) {
-                    if (recent.title_id != result.title_id) continue;
+                    // A legitimate NS2 NUP with a reused program TitleID
+                    // must not replace the square art of its NS1 package.
+                    if (recent.title_id != result.title_id ||
+                        recent.file != result.file) continue;
                     recent.tile_icon = result.cover;
-                    if (recent.file == result.file) recent.cover = result.cover;
+                    recent.cover = result.cover;
                 }
                 for (Game& game : games_)
                     if (game.title_id == result.title_id && game.file == result.file)
@@ -2975,9 +2982,11 @@ void Launcher::finish_home_icons()
             sys::log("Nlib Home icon: %s", error.what());
         }
         requested_id = 0;
+        requested_file.clear();
     };
-    finish(home_icon_scan_, home_icon_scan_title_id_);
-    finish(home_icon_scan_extra_, home_icon_scan_extra_title_id_);
+    finish(home_icon_scan_, home_icon_scan_title_id_, home_icon_scan_file_);
+    finish(home_icon_scan_extra_, home_icon_scan_extra_title_id_,
+           home_icon_scan_extra_file_);
 }
 
 } // namespace pe::ui

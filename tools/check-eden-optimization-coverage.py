@@ -3692,6 +3692,63 @@ for path, expected_blob, required in (
     assert required in (ROOT/path).read_text(), path
 assert "foreach(eden_plaintext_content_relative IN ITEMS" in release_cmake
 
+# Two current vendor successors are independently reviewed post-F07 changes,
+# not historical F07 owners: Lichii AOC explicit placeholder replies and the
+# PS5 service-manager close/waiter header used by joined teardown.
+aoc_path = "vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp"
+assert aoc_path in drift_index and aoc_path not in post_index
+aoc_delta = drift_index.pop(aoc_path)
+assert aoc_delta["actual"] == "443982a3887744e9c76db74d282338b17b152516"
+assert aoc_delta["expected"] == "874172cc88bb3c4980df16aef42e3268e368d966"
+aoc_source = (ROOT/aoc_path).read_text()
+for current, previous in (
+    ('{9, &IAddOnContentManager::StubReplyZeroed, "GetAddOnContentLostErrorCode"}',
+     '{9, nullptr, "GetAddOnContentLostErrorCode"}'),
+    ('{13, &IAddOnContentManager::StubReplyZeroed, "IsAddOnContentMountedForDebug"}',
+     '{13, nullptr, "IsAddOnContentMountedForDebug"}'),
+    ('{110, &IAddOnContentManager::StubReplyInterface, "CreateContentsServiceManager"}',
+     '{110, nullptr, "CreateContentsServiceManager"}'),
+    ('{200, &IAddOnContentManager::StubReplyZeroed, "SetRequiredAddOnContentsOnContentsAvailabilityTransition"}',
+     '{200, nullptr, "SetRequiredAddOnContentsOnContentsAvailabilityTransition"}'),
+    ('{300, &IAddOnContentManager::StubReplyZeroed, "SetupHostAddOnContent"}',
+     '{300, nullptr, "SetupHostAddOnContent"}'),
+    ('{301, &IAddOnContentManager::StubReplyZeroed, "GetRegisteredAddOnContentPath"}',
+     '{301, nullptr, "GetRegisteredAddOnContentPath"}'),
+    ('{302, &IAddOnContentManager::StubReplyZeroed, "UpdateCachedList"}',
+     '{302, nullptr, "UpdateCachedList"}'),
+):
+    assert aoc_source.count(current) == 1, current
+    aoc_source = aoc_source.replace(current, previous, 1)
+aoc_raw = aoc_source.encode("utf-8")
+assert hashlib.sha1(b"blob "+str(len(aoc_raw)).encode()+bytes([0])+aoc_raw).hexdigest() == (
+    "874172cc88bb3c4980df16aef42e3268e368d966")
+print("NS2_AOC_PLACEHOLDER_SOURCE_SUCCESSOR_PASS predecessor=874172cc current=443982a3")
+
+sm_header_path = "vendor/encore-active/eden-core/src/core/hle/service/sm/sm.h"
+assert sm_header_path in drift_index and sm_header_path not in post_index
+sm_delta = drift_index.pop(sm_header_path)
+assert sm_delta["actual"] == "afaad1b58658c9fe7807756410b7f1a82d0e3c7d"
+assert sm_delta["expected"] == "83e0b7e26a867d578eb869389a807fe3b9c7035b"
+sm_source = (ROOT/sm_header_path).read_text()
+for current, previous in (
+    ("#include <condition_variable>\n", ""),
+    ("""    bool WaitForService(const std::string& name);
+    void Close();
+
+""", ""),
+    ("""    bool closing{};
+    u32 service_waiters{};
+    std::condition_variable waiters_changed;
+
+""", ""),
+):
+    assert sm_source.count(current) == 1, current
+    sm_source = sm_source.replace(current, previous, 1)
+sm_raw = sm_source.encode("utf-8")
+assert hashlib.sha1(b"blob "+str(len(sm_raw)).encode()+bytes([0])+sm_raw).hexdigest() == (
+    "83e0b7e26a867d578eb869389a807fe3b9c7035b")
+print("PS5_SM_HEADER_TEARDOWN_SOURCE_SUCCESSOR_PASS predecessor=83e0b7e2 current=afaad1b5")
+
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",
     sorted(set(drift_index) ^ set(post_index)))

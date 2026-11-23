@@ -212,6 +212,10 @@ struct Runtime::Impl {
             std::int64_t pa = -1;
             auto* at = base + index * kGranule;
             if (!Common::CommitMemoryRange(at, kGranule, &pa)) {
+                // A failed MAP_FIXED is not allowed to leave a hole while
+                // the Plan rolls this newcomer back to ZERO. Reinstall the
+                // shared read-only zero alias before cancelling ownership.
+                if (!MapPhysical(at, PROT_READ, zero_physical)) std::abort();
                 rollback();
                 ReportCommitDenial("native_physical_map", offset, length);
                 return false;

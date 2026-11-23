@@ -16,6 +16,7 @@ using Eden::PS5::GuestBacking::kGranule;
 using Eden::PS5::GuestBacking::kNs2Dram;
 static std::int64_t pa_next = 0;
 static int successful_commits = 0, released = 0, fail_at = -1;
+static bool destructive_fail = false;
 static std::map<std::int64_t,bool> alive;
 
 namespace Common {
@@ -24,7 +25,14 @@ void* ReserveMemoryRange(std::size_t bytes) noexcept {
     return p == MAP_FAILED ? nullptr : p;
 }
 bool CommitMemoryRange(void* at, std::size_t bytes, std::int64_t* physical) noexcept {
-    if (fail_at == successful_commits) return false;
+    if (fail_at == successful_commits) {
+        if (destructive_fail) {
+            void* hole = mmap(at,bytes,PROT_NONE,
+                              MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
+            assert(hole == at);
+        }
+        return false;
+    }
     void* p = mmap(at,bytes,PROT_READ|PROT_WRITE,
                    MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
     if (p != at) return false;
@@ -96,9 +104,13 @@ int main() {
         // Failed two-chunk admission restores every new chunk to ZERO.
         const auto before=successful_commits;
         fail_at=before+1;
+        destructive_fail=true; // emulate MAP_FIXED failure that damaged VA
         assert(!guest.Commit(3*kGranule,2*kGranule));
         fail_at=-1;
+        destructive_fail=false;
         assert(guest.UsedBytes()==2*kGranule);
+        // Both the staged first chunk and the destructively failed second
+        // chunk must again be readable ZERO aliases after rollback.
         assert(base[3*kGranule]==0 && base[4*kGranule]==0);
         assert(released==1);
 

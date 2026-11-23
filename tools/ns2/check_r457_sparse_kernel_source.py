@@ -241,6 +241,9 @@ transaction=physical[start:end]
 assert transaction.index("Common::CommitMemoryRange(")<transaction.index(
     "plan.Publish(*admit)")
 assert "RestoreZero(at, zero_physical, part.physical);" in transaction
+failed_map = transaction.index("if (!Common::CommitMemoryRange(")
+assert transaction.index("if (!MapPhysical(at, PROT_READ, zero_physical))", failed_map) < transaction.index(
+    "rollback();", failed_map)
 assert "MapPhysical(base + index * kGranule, PROT_READ, zero_physical)" in physical
 assert "GuestSignal(int signal, siginfo_t* info, void* context)" in physical
 assert "plan.CancelSingleUnstaged(*admit)" in physical

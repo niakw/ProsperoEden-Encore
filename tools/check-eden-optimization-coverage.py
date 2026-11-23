@@ -1712,13 +1712,27 @@ elif pair_present == pair_new_owners:
         "ns2-runtime/gpu_dispatch/video_core/native_qmd.h": "a1e99602dbee8c4fc49108382b61ee8cd53af847",
         "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "33b1b5475e68c8459f9666b1ae1a6e446221cb63",
     }
-    if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"}:
+    if gpu_table_vendor_pin in {"bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da", "60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb"}:
         integrated_pair["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
     assert set(integrated_pair) == set(pair_receipt["files"])
     for relative, sha in integrated_pair.items():
         source_path = ROOT / "vendor/encore-active" / relative
         actual = subprocess.check_output(["git", "hash-object", str(source_path)],
                                          cwd=ROOT, text=True).strip()
+        if gpu_table_vendor_pin in {"60fa67b98286bd84bd591987c5690ae9b15bda3f", "bf981e9d39d4a908d0d5b6f8407cca814c609bdb"}:
+            stabilization_pair = {
+                "eden-core/overrides/core/gpu_dirty_memory_manager.h":
+                    "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
+                "eden-core/src/video_core/buffer_cache/buffer_cache.h":
+                    "7f07e392ea0cc828d862da29d32ada1ebc3966aa",
+                "eden-core/src/video_core/gpu_vulkan.cpp":
+                    "f083c985451563dcfe387d1bc61f54bd02ed762e",
+            }
+            expected_current = stabilization_pair.get(relative)
+            if expected_current is not None:
+                assert actual == expected_current, (
+                    "Nov23 stabilization pair owner drift", relative, actual)
+                continue
         if (relative == "eden-core/src/video_core/buffer_cache/buffer_cache.h" and
                 actual == "6aa9754506ee82b4d25a4e36d4f3be646a62456b"):
             text = source_path.read_text()

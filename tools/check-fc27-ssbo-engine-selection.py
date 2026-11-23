@@ -97,6 +97,7 @@ if selected in {"ac880cd408116e6eb53ba2400abc52970b81f539", "95343060f948601930f
             "f4f5d53596879960b19a3701bbd2272ef1f3c634": "e1e3fa4878d6203a51c7aa6ec93e09f81a175cdf",
     }[selected], ("Vendor reviewed source tree drift", selected, reviewed_tree)
 expected.add("60fa67b98286bd84bd591987c5690ae9b15bda3f")
+expected.add("bf981e9d39d4a908d0d5b6f8407cca814c609bdb")
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

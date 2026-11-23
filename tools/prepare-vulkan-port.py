@@ -2921,6 +2921,24 @@ shader_source = shader_source.replace(f07_prewarm_total_old, f07_prewarm_total_n
 # FC27 first-use shader translation: the active Vulkan fork keeps the historical
 # header input immutable, so reproduce the reviewed PS5-only API/member delta
 # in the generated include tree. The existing builder worker remains separate.
+def apply_reviewed_delta(relative, old, new, label, *, allow_preapplied=False):
+    path = output / relative
+    data = path.read_text()
+    before = data.count(old)
+    after = data.count(new)
+    if before == 1 and after == 0:
+        path.write_text(data.replace(old, new, 1))
+        return
+    # The shipping Eden backport now includes the exact empty-view fast path.
+    # The generator also runs against pristine older bases: both are allowed,
+    # but *only* this reviewed already-patched block may be skipped. All
+    # other deltas still require their unmodified source anchors.
+    if allow_preapplied and before == 0 and after == 1:
+        return
+    raise RuntimeError(f"Reviewed native Vulkan anchor drift: {label} "
+                       f"(before={before}, after={after})")
+
+
 apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
     "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
     "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
@@ -3226,23 +3244,6 @@ for relative, previous, corrected in (
 # and feedback-view deltas from the immutable source generator's own output.
 # Require each exact preimage once. Never copy the tracked active file into
 # the generated tree or relax byte-for-byte validation.
-def apply_reviewed_delta(relative, old, new, label, *, allow_preapplied=False):
-    path = output / relative
-    data = path.read_text()
-    before = data.count(old)
-    after = data.count(new)
-    if before == 1 and after == 0:
-        path.write_text(data.replace(old, new, 1))
-        return
-    # The shipping Eden backport now includes the exact empty-view fast path.
-    # The generator also runs against pristine older bases: both are allowed,
-    # but *only* this reviewed already-patched block may be skipped. All
-    # other deltas still require their unmodified source anchors.
-    if allow_preapplied and before == 0 and after == 1:
-        return
-    raise RuntimeError(f"Reviewed native Vulkan anchor drift: {label} "
-                       f"(before={before}, after={after})")
-
 # Keep zero-clear Vulkan render passes from capturing nine unneeded VkClearValues.
 # This change is PS5 selected-only: a smaller Record closure for ordinary draws,
 # with the original nine-slot bounded payload for actual clears.

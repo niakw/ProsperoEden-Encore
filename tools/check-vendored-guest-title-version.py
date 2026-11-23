@@ -25,7 +25,9 @@ print("GUEST_TITLE_VERSION_SOURCE_PASS parity=guarded runtime-quiet=1")
 import hashlib
 selected = root/"vendor/encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp"
 raw = selected.read_bytes()
-assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "a26850d9addcd35c483fa1da28d440537896ee13"
+# Reviewed NS2 AM diagnostic successor: HLE result stays unchanged and
+# the termination result now emits a bounded release marker.
+assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest() == "9bfaa26664361994902d5b7f73d6a41ff0eadb07"
 source = raw.decode()
 # The merged native AM owner also exposes NS2 command 321 with one byte,
 # without changing the previously reviewed language response path.
@@ -35,6 +37,9 @@ assert '*out = 0;' in source.split('Result IApplicationFunctions::Unknown321(Out
 assert source.index("R_TRY(app_man->ConvertApplicationLanguageToLanguageCode(out_language_code, desired_language));") < source.index("const GuestLanguageReply reply{")
 assert "EDEN_GUEST_LANGUAGE_REPLY title=" in source
 assert "emitted >= 32" in source
+assert 'EDEN_APP_TERMINATE_RESULT title=%016llX' in source
+assert 'terminate_reports.fetch_add(1, std::memory_order_relaxed) < 32' in source
+assert 'm_applet->terminate_result = terminate_result;' in source
 assert 'set(EDEN_SHARED_NS2_AM ON)' in cmake
 assert 'list(APPEND eden_ns2_am_sources "${EDEN_NS2_AM_ROOT}/core/hle/service/am/service/application_functions.cpp")' in cmake
 print("SHARED_NATIVE_AM_LANGUAGE_REPLY_SOURCE_PASS exact_blob=1 real_return=1 bounded=32 native_execution=0")

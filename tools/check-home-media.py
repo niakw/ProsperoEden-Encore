@@ -132,7 +132,7 @@ assert "enriched.file == home_.last_file" in home_completed
 assert "media_next_retry_[game.file]" in lib
 assert "home_media_next_retry_[file]" in lib
 assert "home_icon_scan_extra_file_ == recent.file" in home
-assert "std::unordered_map<std::string, std::chrono::steady_clock::time_point> media_next_retry_" in hdr
+assert "std::unordered_map<std::string, std::chrono::steady_clock::time_point> media_next_retry_" in hpp
 print('Selected-only complete Nlib media, bounded visible icon worker and aspect-safe Home tiles PASS')
 
 # Test the exact current worker, including both historic request branches.

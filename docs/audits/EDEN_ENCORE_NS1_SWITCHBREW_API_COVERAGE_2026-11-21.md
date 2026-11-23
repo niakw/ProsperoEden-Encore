@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 527 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 528 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 447 | 80 | **1 527** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 448 | 80 | **1 528** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 140 | 0 | **140** |
-| **NULL — Handler NULL** | 1 775 | 0 | **1 775** |
+| **NULL — Handler NULL** | 1 774 | 0 | **1 774** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,21 +443,21 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1527
+    "Implémentation source retrouvée" : 1528
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 115
-    "Stub / résultat simulé" : 135
+    "Stub / résultat simulé" : 125
     "No-op documenté" : 140
-    "Handler NULL" : 1775
+    "Handler NULL" : 1774
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
     "Hors version firmware cible" : 325
     "Commande absente des tables" : 0
-    "Noms/ABI divergents" : 272
+    "Noms/ABI divergents" : 271
     "Interface ambiguë" : 9
     "Non vérifié" : 0
-    "ID SVC non trouvé" : 1
+    "ID SVC non trouvé" : 0
 ```
 
 
@@ -3992,7 +3992,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `30` | `OpenGameCardStorage` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `31` | `OpenGameCardFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | **D** (rejet explicite `ResultTargetNotFound` : Encore ne possède pas l'index `save_data_id → SaveDataAttribute`; aucun faux succès d'extension) | 2026-11-22 |
-| fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | **IMPL-SRC** ([vendor 3234390c](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3234390c8fa29100b3d64b637ed1abf822e6b223/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; index 0 uniquement, suppression VFS du cache réel du programme courant) | 2026-11-23 |
 | fsp-srv | `34` | `GetCacheStorageSize` | 5.0.0+ | **PARTIEL** (taille data/journal réelle de `/user/save/cache/<program_id>` pour index 0 ; index multiples/SD distinct non représentés) | 2026-11-22 |
 | fsp-srv | `35` | `CreateSaveDataFileSystemWithHashSalt` | 6.0.0+ | **PARTIEL** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ABI 0xB0 consommée et save créé au space_id ; hash salt / métadonnées d’intégrité non matérialisés par le backend host-directory) | 2026-11-23 |
 | fsp-srv | `36` | `OpenHostFileSystemWithOption` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |

@@ -1215,6 +1215,20 @@ Ces commandes ne sont pas matérialisées comme entrées distinctes dans le miro
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot FSP — suppression réelle du cache programme — 23/11/2026
+
+**Vendor `3234390c8fa29100b3d64b637ed1abf822e6b223`** (arbre `24772de52fe6c3837ff71231e2121b5bcebd47a0`).
+
+`fsp-srv::DeleteCacheStorage` (cmd 33) passe **NULL → IMPL-SRC**. Le contrat HOS est `u16 index -> ()`; Encore supporte déjà un seul slot de cache par programme dans `GetCacheStorageSize`, donc la suppression accepte uniquement l'index 0. Le handler ouvre le vrai espace User via `SaveDataController`, cible `save/cache/<program_id>`, vérifie l'existence puis utilise la suppression récursive VFS existante. Aucun chemin hôte absolu n'est exposé et aucun succès n'est renvoyé si le cache est absent.
+
+Le manifeste `eden-backports` et le pin du test hôte existant ont été rafraîchis dans le même commit. `QuerySaveDataTotalSize` (601) reste volontairement NULL : LibHac calcule des overheads JournalIntegrity et un simple `data+journal` serait faux.
+
+**Compteur historique : 1 528 IMPL-SRC / 115 PARTIEL / 125 STUB / 140 NOOP / 1 774 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 294** : 1 774 NULL + 125 STUB + 115 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

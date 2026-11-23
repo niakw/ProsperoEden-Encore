@@ -99,7 +99,8 @@ assert 'NlibEnrichment enrichment = second_generation' in full_media
 assert '? NlibEnrichment{}' in full_media
 assert ': EnsureNlibEnrichment(game.title_id, language_choice, cancel);' in full_media
 assert 'CachedGamesDbSquare(game.title_id, true)' in native_icon
-assert 'CachedGamesDbSquare(game.title_id, second_generation)' in native_icon
+assert 'const bool second_generation = UseNs2CaseIndex(game);' in native_icon
+assert 'CachedGamesDbSquare(game.title_id, false)' in native_icon
 assert 'if (second_generation) {' in native_icon
 assert 'EnsureGamesDbSquare(game.title_id, canonical, game.name,' in native_icon
 assert 'game.cover = CachedGamesDbSquare(game.title_id, true);' in native_icon

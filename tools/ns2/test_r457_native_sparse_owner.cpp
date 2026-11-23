@@ -64,6 +64,23 @@ extern "C" std::int32_t sceKernelReleaseDirectMemory(std::int64_t pa, std::size_
 }
 
 int main() {
+    // The ownership/accounting model is generation-neutral. Validate every
+    // guest DRAM layout accepted by NS1/NS2 before exercising the exact
+    // native ZERO/OWN runtime below.
+    constexpr std::uint64_t GiB = 1ull << 30;
+    constexpr std::uint64_t layouts[] = {
+        4ull * GiB, 6ull * GiB, 8ull * GiB, 10ull * GiB, 12ull * GiB,
+    };
+    for (const auto bytes : layouts) {
+        const auto budget = (std::min)(bytes, 6ull * GiB);
+        Eden::PS5::GuestBacking::Plan plan(bytes, budget);
+        assert(plan.Valid());
+        assert(plan.VirtualBytes() == bytes);
+        assert(plan.ChunkCount() == bytes / kGranule);
+        assert(plan.BudgetBytes() == budget);
+        assert(plan.UsedBytes() == 0);
+    }
+
     assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
     assert(EdenNs2EnsureGuestBackingReadable(nullptr,0,kGranule));
     {

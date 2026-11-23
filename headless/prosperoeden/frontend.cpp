@@ -445,12 +445,17 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                     }, alternate);
                 };
                 const bool animate_case = launcher.loading_back_available() && !reduce_motion;
-                const bool ready = capture_pose(
-                    animate_case ? pe::ui::Launcher::LoadingCapturePose::back
-                                 : pe::ui::Launcher::LoadingCapturePose::live,
-                    false);
+                const bool final_back = launcher.loading_final_pose_is_back();
+                const auto primary_pose = animate_case
+                    ? (final_back ? pe::ui::Launcher::LoadingCapturePose::back
+                                  : pe::ui::Launcher::LoadingCapturePose::front)
+                    : pe::ui::Launcher::LoadingCapturePose::live;
+                const auto alternate_pose = final_back
+                    ? pe::ui::Launcher::LoadingCapturePose::front
+                    : pe::ui::Launcher::LoadingCapturePose::back;
+                const bool ready = capture_pose(primary_pose, false);
                 const bool alternate_ready = ready && animate_case &&
-                    capture_pose(pe::ui::Launcher::LoadingCapturePose::front, true);
+                    capture_pose(alternate_pose, true);
                 launcher.set_loading_capture_pose(pe::ui::Launcher::LoadingCapturePose::live);
                 // capture_pose(front) leaves the reusable draw list on the
                 // alternate image. Rebuild the actual final launcher pose so

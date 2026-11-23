@@ -1411,6 +1411,13 @@ void Launcher::draw_launch(Canvas &c)
                 tween::cubic_in_out((seconds - return_start) / theme::kCaseTurnSeconds);
         }
     }
+    if (native_artwork_loading_) {
+        if (loading_capture_pose_ == LoadingCapturePose::front)
+            angle = kFrontYaw;
+        else if (loading_capture_pose_ == LoadingCapturePose::back &&
+                 native_launch_show_back_)
+            angle = kBackYaw;
+    }
     const float facing = std::cos(angle);
     const bool back = facing < 0.0f;
     constexpr float case_depth = 44.0f;

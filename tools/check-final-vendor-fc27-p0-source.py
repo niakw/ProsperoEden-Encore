@@ -1718,7 +1718,7 @@ REVIEWED_PINS.add("716e069f212b89b6fd13af56b0677343cf41ba07")
 REVIEWED_PINS.add("6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b")  # immutable runtime, shutdown test provenance only
 # Current shutdown successor on top of the reviewed demand-zero graph.
 # Seal every source changed after ee64; do not blanket-accept later vendors.
-if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"}:
+if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
     for relative, expected in {
         "encore-active/eden-core/src/core/hle/service/server_manager.cpp":
             "dd6dc2d8359ac14d36526a9dc88905cabf36a798",
@@ -1730,14 +1730,30 @@ if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6d
         raw=(V/relative).read_bytes()
         digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert digest == expected, ("Current PS5 teardown successor drift", relative, digest)
-    if actual_vendor_pin == "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e":
+    if actual_vendor_pin in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
         relative="tests/ns2_syncpt_bootstrap_source.py"
         raw=(V/relative).read_bytes()
         digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert digest == "74b84b9015d6642ff5627e2897d39f5e1d093e68", (
             "GSV 1121 parity test successor drift", digest)
+    if actual_vendor_pin == "6b48e6734e738306dd57ceed8be9b003631eb8cb":
+        # Exact successor of 593bc9ee: only the two native guest memory
+        # backends changed, making ZeroBlock generation-neutral for NS1/NS2.
+        for relative, expected in {
+            "encore-active/eden-core/src/core/memory_native_a32.cpp":
+                "3e3b07af30032ce14ca68e8482986d2f1a7201da",
+            "encore-active/eden-core/src/core/memory_native_standard.cpp":
+                "96663d23335fe7448712a15416003a975a3f8023",
+        }.items():
+            raw=(V/relative).read_bytes()
+            digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+            assert digest == expected, ("NS1/NS2 sparse memory successor drift", relative, digest)
+        # Replay every unaffected historical receipt through the qualified
+        # predecessor after sealing the only two changed blobs above.
+        selected = "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"
 REVIEWED_PINS.add("603e0d5c70b04fa84a19cca8f580ed1bdb230be0")
 REVIEWED_PINS.add("593bc9ee6ddfcf38e488325ccf318f1a0a109d8e")
+REVIEWED_PINS.add("6b48e6734e738306dd57ceed8be9b003631eb8cb")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

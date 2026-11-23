@@ -29,7 +29,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 513 | 80 | **1 593** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 518 | 80 | **1 598** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
 | **STUB — Stub / résultat simulé** | 76 | 0 | **76** |
@@ -40,7 +40,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 253 | 0 | **253** |
+| **ABI-DIFF — Noms/ABI divergents** | 248 | 0 | **248** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
@@ -4739,14 +4739,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfc:user | `1300` | `SendCommandByPassThrough` | 4.0.0+ | **PARTIEL** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:user | `1301` | `KeepPassThroughSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:user | `1302` | `ReleasePassThroughSession` | 4.0.0+ | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:sys | `0` | `CreateSystemInterface` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; slot 0 actuel = CreateSystemNfcInterface, pas CreateSystemInterface ; statique, PS5 non validé) | 2026-11-22 |
-| nfc:sys | `0` | `Initialize` | — | **ABI-DIFF** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; ISystem : nom historique Initialize versus InitializeOld à cet ID ; handler raccordé ; non certifié PS5) | 2026-11-22 |
-| nfc:sys | `1` | `Finalize` | — | **ABI-DIFF** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; ISystem : nom historique Finalize versus FinalizeOld à cet ID ; handler raccordé ; non certifié PS5) | 2026-11-22 |
+| nfc:sys | `0` | `CreateSystemInterface` | — | **IMPL-SRC** (`NFC_SYS::CreateSystemNfcInterface` renvoie réellement l’interface `ISystem`; SwitchBrew confirme `nfc:sys` manager cmd0 `CreateSystemInterface`, écart de nom interne seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
+| nfc:sys | `0` | `Initialize` | — | **IMPL-SRC** (`ISystem` cmd0 appelle `NfcInterface::Initialize`, initialise le manager NFC et passe l’état à Initialized; `InitializeOld` n’est que le label interne de la variante historique ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
+| nfc:sys | `1` | `Finalize` | — | **IMPL-SRC** (`ISystem` cmd1 appelle le vrai `NfcInterface::Finalize`, finalise le manager, libère le device manager et remet l’état NonInitialized ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | nfc:sys | `2` | `GetStateOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `3` | `IsNfcEnabledOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `100` | `SetNfcEnabledOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:sys | `400` | `InitializeSystem` | 4.0.0+ | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; slot 400 actuel = Initialize, pas InitializeSystem ; statique, PS5 non validé) | 2026-11-22 |
-| nfc:sys | `401` | `FinalizeSystem` | 4.0.0+ | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; slot 401 actuel = Finalize, pas FinalizeSystem ; statique, PS5 non validé) | 2026-11-22 |
+| nfc:sys | `400` | `InitializeSystem` | 4.0.0+ | **IMPL-SRC** (SwitchBrew cmd400 HOS4+ ; table active route vers le même vrai `NfcInterface::Initialize`, `InitializeSystem` étant le nom public/versionné ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
+| nfc:sys | `401` | `FinalizeSystem` | 4.0.0+ | **IMPL-SRC** (SwitchBrew cmd401 HOS4+ ; table active route vers le même vrai `NfcInterface::Finalize`, `FinalizeSystem` étant le nom public/versionné ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | nfc:sys | `402` | `GetState` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `403` | `IsNfcEnabled` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:sys | `404` | `ListDevices` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |

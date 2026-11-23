@@ -1576,6 +1576,16 @@ Ces **10 lignes passent ABI-DIFF → IMPL-SRC**, sans modification C++.
 
 **Pool restant à examiner = 2 083** : 1 605 NULL + 76 STUB + 140 PARTIEL + 253 ABI-DIFF + 9 AMBIGU.
 
+## Réconciliation ABI NFC system — 23/11/2026
+
+Cinq lignes `nfc:sys` ont été recroisées avec SwitchBrew et les corps actifs. Le manager cmd0 renvoie réellement `ISystem`. Les commandes ISystem 0/1 et leurs variantes HOS4+ 400/401 utilisent le même backend réel `NfcInterface::Initialize/Finalize` : initialisation/finalisation du manager NFC, transition d'état et nettoyage du device manager. Les différences `CreateSystemNfcInterface`, `InitializeOld`, `InitializeSystem` et `FinalizeSystem` sont ici des libellés/versionnements, pas des fonctions manquantes.
+
+Ces **5 lignes passent ABI-DIFF → IMPL-SRC**, sans modification C++. SPL cmd1 `ExpMod` reste volontairement ouvert : malgré son handler enregistré `ModularExponentiate`, le corps courant est encore `UNIMPLEMENTED` et renvoie `ResultSecureMonitorNotImplemented`.
+
+**Compteur courant : 1 598 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 248 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 078** : 1 605 NULL + 76 STUB + 140 PARTIEL + 248 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

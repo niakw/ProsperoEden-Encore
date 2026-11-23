@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 652 | 80 | **1 732** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 658 | 80 | **1 738** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
-| **NOOP — No-op documenté** | 200 | 0 | **200** |
-| **NULL — Handler NULL** | 1 288 | 0 | **1 288** |
+| **NOOP — No-op documenté** | 203 | 0 | **203** |
+| **NULL — Handler NULL** | 1 279 | 0 | **1 279** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -5078,9 +5078,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:u | `104` | `GetStatistics` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `111` | `GetJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `120` | `CreateNotificationReceiver` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `151` | `GetStateWithHandover` | 8.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `153` | `GetDropEventWithHandover` | 8.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:u | `151` | `GetStateWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
+| npns:u | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
+| npns:u | `153` | `GetDropEventWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:u | `1` | `ListenTo` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 1 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
 | npns:u | `2` | `ListenToMyApplicationId` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 2 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
 | npns:u | `4` | `GetReceiveEvent` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 4 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
@@ -5089,10 +5089,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `3` | `Receive` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `4` | `ReceiveRaw` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `5` | `GetReceiveEvent` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; retourne le handle du vrai `get_receive_event` détenu par NPNS) | 2026-11-23 |
-| npns:s | `6` | `ListenUndelivered` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `6` | `ListenUndelivered` | — | **NOOP** (adaptation offline explicite : aucune souscription distante NPNS n'est créée ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `7` | `GetStateChangeEvent` | — | **IMPL-SRC** (renvoie un KEvent réel de changement d'état ; en mode offline il reste non signalé tant que l'état ne change pas ; vendor `1bbeb625`) | 2026-11-23 |
-| npns:s | `11` | `SubscribeTopic` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `12` | `UnsubscribeTopic` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `11` | `SubscribeTopic` | — | **NOOP** (adaptation offline explicite : aucune souscription distante NPNS n'est créée ; vendor `3cda4d41`) | 2026-11-23 |
+| npns:s | `12` | `UnsubscribeTopic` | — | **NOOP** (adaptation offline explicite : aucune souscription distante NPNS n'est créée ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `13` | `QueryIsTopicExist` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `21` | `CreateToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `22` | `CreateTokenWithApplicationId` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -5115,9 +5115,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `114` | `AttachJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `115` | `DetachJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `120` | `CreateNotificationReceiver` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `151` | `GetStateWithHandover` | 8.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `153` | `GetDropEventWithHandover` | 8.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `151` | `GetStateWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
+| npns:s | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
+| npns:s | `153` | `GetDropEventWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `201` | `RequestChangeStateForceTimed` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `202` | `RequestChangeStateForceAsync` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 
@@ -6548,3 +6548,10 @@ Vendor `bdab8fc1a8d31305f63412305d577011d07cf3fe` → gitlink moteur `6c99a252ab
 Vendor `1bbeb625af292945d60f98e91c4fc55a9ee4f4e0` → gitlink moteur `ed3e7c9a12a464061dd433f640b5e72a330501a7`. **10 NULL sortent du pool : 2 → IMPL-SRC, 8 → NOOP.** `GetStateChangeEvent` renvoie un événement kernel réel sur `npns:u` et `npns:s`. `ListenAll`, `ListenToMyApplicationId`, `Suspend` et `Resume` sont des adaptations offline explicites : Encore n'expose aucune connexion push Nintendo à suspendre ou reprendre. Les tokens opaques restent ouverts. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 732 IMPL-SRC / 141 PARTIEL / 52 STUB / 200 NOOP / 1 288 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 680.**
+
+
+### NPNS — topics offline + handover (23/11/2026)
+
+Vendor `3cda4d41066c22a4873019206b1f5e2da139892e` → gitlink moteur `1dbb774b0d226f16e0b50621a93dfc6f04098525`. **11 handlers C++** ont été raccordés, mais **9 entrées seulement sortent du registre** : 6 → IMPL-SRC (état/events handover sur user+system) et 3 → NOOP (ListenUndelivered + subscribe/unsubscribe topic système). Les deux variantes account 18.0+ ne figurent pas dans ce catalogue et ne sont donc pas comptées. Tokens opaques toujours ouverts. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 738 IMPL-SRC / 141 PARTIEL / 52 STUB / 203 NOOP / 1 279 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 671.**

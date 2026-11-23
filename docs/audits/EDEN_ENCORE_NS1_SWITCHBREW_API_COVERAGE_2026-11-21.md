@@ -29,10 +29,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 518 | 80 | **1 598** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 519 | 80 | **1 599** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
-| **STUB — Stub / résultat simulé** | 76 | 0 | **76** |
+| **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 146 | 0 | **146** |
 | **NULL — Handler NULL** | 1 605 | 0 | **1 605** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
@@ -1944,7 +1944,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | aoc:u | `5` | `GetAddOnContentBaseId` | — | **IMPL-SRC** ([source C++][ns1-src-022]) | 2026-11-22 |
 | aoc:u | `6` | `PrepareAddOnContentByApplicationId` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-022]) | 2026-11-23 |
 | aoc:u | `7` | `PrepareAddOnContent` | — | **IMPL-SRC** ([source C++][ns1-src-022]) | 2026-11-22 |
-| aoc:u | `8` | `GetAddOnContentListChangedEvent` | 4.0.0+ | **STUB** ([source C++][ns1-src-022]) | 2026-11-22 |
+| aoc:u | `8` | `GetAddOnContentListChangedEvent` | 4.0.0+ | **IMPL-SRC** (event kernel réel ; `NotifyMountAddOnContent`/`NotifyUnmountAddOnContent` rafraîchissent l'inventaire AOC puis signalent l'événement ; vendor `ee971276`, gitlink moteur `df976b87`) | 2026-11-23 |
 | aoc:u | `100` | `[CreateEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 7.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) + [TU sélectionné moteur](https://github.com/niakw/ProsperoEden-Encore/blob/audit/ns1-switchbrew-main-coverage-20261122/headless/nup_v1_aoc_service.cpp) ; crée et retourne un vrai `IPurchaseEventManager`) | 2026-11-23 |
 | aoc:u | `101` | `[CreatePermanentEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 9.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) + [TU sélectionné moteur](https://github.com/niakw/ProsperoEden-Encore/blob/audit/ns1-switchbrew-main-coverage-20261122/headless/nup_v1_aoc_service.cpp) ; crée et retourne un vrai `IPurchaseEventManager`) | 2026-11-23 |
 | aoc:u | `0` | `SetDefaultDeliveryTarget` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
@@ -6250,3 +6250,10 @@ Le premier croisement **service + ID + nom** avec les unités `spl`, `irs`, `cap
 ### Requalification `mig:usr` — service non exposé (23/11/2026)
 
 Sur le vendor `8c6c57ec`, `MIG_USR` conserve une table interne nommée `mig:usr`, mais `LoopProcess` n'enregistre auprès de SM que `mig:user`. Les **19 entrées encore classées ABI-DIFF** rejoignent donc les 17 déjà classées **SERVICE-NON-EXPOSÉ**. Aucune implémentation runtime n'est revendiquée : il s'agit de corriger l'accessibilité réelle du service. Le compteur courant devient **1 598 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 229 ABI-DIFF / 9 AMBIGU / 0 E = 4 853**, soit un **pool restant de 2 059**.
+
+
+### AOC — événement de changement d'inventaire raccordé (23/11/2026)
+
+Vendor `ee971276a3254c0eb003f1e6f34cd10988874f1b`, gitlink moteur `df976b8722f7de250f7207b71183de559053e809` : `GetAddOnContentListChangedEvent` retourne le `KEvent` réel existant ; les notifications de montage/démontage recalculent maintenant l'inventaire AOC puis signalent cet événement. Le cmd8 passe **STUB → IMPL-SRC**. Les commandes d'achat eShop restent ouvertes et ne sont pas requalifiées.
+
+**Compteur courant : 1 599 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 229 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 058.**

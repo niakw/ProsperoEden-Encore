@@ -146,7 +146,9 @@ assert "native_launch_show_back_ = false;" in launch_setup
 assert "c.textures.cover(launch_box_back_, 760.0f).texture != 0" in draw
 assert "native_launch_show_back_ = true;" in draw
 assert "constexpr float native_end = 0.62f;" in draw
-assert "(!native_launch_show_back_ || seconds >= 0.62f)" in draw
+assert "(!native_launch_show_back_ || native_phase >= 0.62f)" in draw
+assert 'native_launch_deadline_ - std::chrono::steady_clock::now()' in draw
+assert 'if (!native_launch_show_back_ && native_phase <= 0.12f' in draw
 assert "std::chrono::milliseconds(750)" in launcher
 
 # The temporary FBO painter must be bounded (two faces) and cleaned up

@@ -2274,3 +2274,12 @@ Depuis le dernier compteur registre à 1 895, `ReadThemeStorage` et `WriteThemeS
 **Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 477 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 892** : 1 477 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## NS/PCTL debug — surfaces fail-closed synchronisées (23/11/2026)
+
+Le couple moteur `36fe443ac608d71f911ce164b86d645d30689d80` → vendor `8580856ac4ba06f7e83723f5e2eaed20ed68e200` contient désormais 7 rejets explicites NS debug et 8 rejets explicites PCTL debug. Ces commandes n'exécutent aucune action destructive ou état debug simulé ; elles renvoient `ResultUnknown` au runtime release au lieu de rester `nullptr`. Depuis le dernier compteur registre à 1 892, **15 NULL → D**.
+
+**Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 462 NULL / 212 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 877** : 1 462 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

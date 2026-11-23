@@ -204,11 +204,25 @@ private:
             "void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
             "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}";
         const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
-            "uniform sampler2D art; uniform int has_art; uniform vec4 fit_rect;"
+            "uniform sampler2D art; uniform sampler2D alternate_art;"
+            "uniform int has_art; uniform int has_alternate; uniform vec4 fit_rect;"
             "uniform vec2 size; uniform float seconds; out vec4 color;\n"
             "void main(){vec2 p=vec2(gl_FragCoord.x,size.y-gl_FragCoord.y);"
             "vec2 uv=clamp((p-fit_rect.xy)/fit_rect.zw,vec2(0),vec2(1));"
-            "vec3 base=has_art!=0?texture(art,uv).rgb:vec3(0.055,0.075,0.105);"
+            "vec3 primary=has_art!=0?texture(art,uv).rgb:vec3(0.055,0.075,0.105);"
+            "vec3 base=primary;"
+            "if(has_alternate!=0&&seconds<1000.0){"
+            "float cycle=mod(max(seconds,0.0),6.0);"
+            "float blend=0.0;"
+            "if(cycle>=1.7&&cycle<2.4)blend=smoothstep(0.0,1.0,(cycle-1.7)/0.7);"
+            "else if(cycle>=2.4&&cycle<4.4)blend=1.0;"
+            "else if(cycle>=4.4&&cycle<5.1)blend=1.0-smoothstep(0.0,1.0,(cycle-4.4)/0.7);"
+            "vec3 alternate=texture(alternate_art,uv).rgb;"
+            "float changed=clamp(length(primary-alternate)*1.8,0.0,1.0);"
+            "float edge=abs(blend*2.0-1.0);"
+            "base=mix(primary,alternate,blend);"
+            "base*=mix(0.72+0.28*edge,1.0,1.0-changed);"
+            "}"
             "vec4 dots=loading_artwork_indicator(gl_FragCoord.xy,size,seconds);"
             "color=vec4(mix(base,dots.rgb,dots.a),1.0);}";
         GLuint program = glCreateProgram();

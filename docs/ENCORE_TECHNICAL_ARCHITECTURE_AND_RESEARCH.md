@@ -11,6 +11,8 @@
 >
 > **Limite :** une présence de fichiers, de déclarations ou de tests hôtes n'est pas une preuve d'exécution PS5. Une compilation native n'est ni un boot NS1/NS2, ni une image invitée, ni une réduction de saccades. Ce document est une **carte de référence**, non une certification d'implémentation exhaustive ni un changelog des états CI.
 
+**Registre opérationnel NS2 (actualisé au 23/11) :** [complétude SwitchBrew et parité structurelle Lichii](audits/EDEN_ENCORE_NS2_IMPLEMENTATION_COMPLETENESS_REGISTER_2026-11-21.md). Le document architectural ci-dessous est une photographie historique ; pour l'état des commandes, stubs et écarts Lichii, consulter les compteurs séparés de ce registre, à SHAs datés.
+
 ## Sommaire
 
 1. [Convention et périmètre](#1-convention-et-périmètre)

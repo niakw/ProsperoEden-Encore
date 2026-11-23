@@ -1,6 +1,6 @@
-# Eden Encore — registre de complétude d’implémentation NS2 / SwitchBrew (21 novembre 2026)
+# Eden Encore — registre de complétude NS2 : SwitchBrew et parité structurelle Lichii (ouvert le 21 novembre 2026)
 
-> **Nature** : registre vivant de couverture **statique et hôte** pour Nintendo Switch 2. Il reprend les commandes publiées par SwitchBrew et les compare au C++ réellement sélectionné par Eden Encore. Une ligne manquante n’est **pas** automatiquement un bug de Mario Kart World ou Donkey Kong Bananza ; une ligne implémentée n’est **pas** une preuve console.
+> **Nature** : registre vivant de couverture **statique et hôte** pour Nintendo Switch 2. Il distingue le catalogue de commandes SwitchBrew (fonction F, dispatch R) et la couverture des tables de Lichii `nx2` (§17) ; ces deux nombres ne s'additionnent pas. Une ligne manquante n’est **pas** automatiquement un bug de Mario Kart World ou Donkey Kong Bananza ; une ligne implémentée n’est **pas** une preuve console.
 
 **Issue maîtresse NS2 : [#123](https://github.com/niakw/ProsperoEden-Encore/issues/123).**
 **Référence historique complémentaire : [analyse des écarts NS2 puis NS1 du 20/11](./EDEN_ENCORE_GAP_ANALYSIS_NS2_THEN_NS1_2026-11-20.md).**
@@ -9,6 +9,10 @@
 
 | Élément | Révision / source |
 | --- | --- |
+| **Relevé 23/11 — moteur `main`** | [`1b772815a470008cc3bc80a3f97f65553569c649`](https://github.com/niakw/ProsperoEden-Encore/commit/1b772815a470008cc3bc80a3f97f65553569c649) — version avant cette mise à jour documentaire |
+| **Relevé 23/11 — gitlink vendor `main`** | [`ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3) — sous-module `vendor` mode `160000` vérifié dans l'arbre moteur |
+| **Référence Lichii `nx2`** | [`66c555ad9a21b1caaf57a5d9f8f1fea6f90c2508`](https://github.com/zortos293/Lichii/tree/66c555ad9a21b1caaf57a5d9f8f1fea6f90c2508) — `src/core/hle/service/nx2_gsv.h` |
+| **Build natif au relevé** | [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) à l'étape `Build and stage native release` ; aucune qualification package ou PS5 encore |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
 | Vendor gitlink sélectionné après intégration | `224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c` |
 | Moteur `main` avant intégration de cette branche | `814bc29918df3c1fc207229537c7d80dfa8c8891` |
@@ -30,25 +34,27 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 **Mise à jour fail-closed NVHOST (21/11)** : le vendor `f65ccc43` conserve l’ouverture des nodes `/dev/nvhost-*` inconnus nécessaire à la découverte NVN, mais leur fallback générique ne fabrique plus de sortie zéro/copiée ni de `Success`. Toute ioctl non couverte retourne désormais explicitement `NotImplemented` avec le marqueur `// not implemented yet on Encore`. Les handlers TSG authentifiés `BIND_CHANNEL`, `UNBIND_CHANNEL` et `BIND_CHANNEL_EX` restent actifs. **Aucune qualification PS5 n’est revendiquée.**
 
-### Double compteur : couverture fonctionnelle et représentation explicite (22/11/2026)
+### Double compteur SwitchBrew : fonctions et dispatch (recalcul 23/11/2026)
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=174**, **P=3**, M=108, U=25, V=6.
+- **F** : **C=175**, **P=3**, M=108, U=24, V=6. Seule requalification F : **VI2 53, U → C-source** ; le tick est produit après libération du buffer, mais l'ABI et le résultat console restent à qualifier.
 - **R** : **316/316** disposent d'un dispatch explicite ou d'un refus/stub identifié.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **174** | 174 | 0 |
+| C — implémentation source | **175** | 175 | 0 |
 | P — partielle | **3** | 3 | 0 |
 | M — non implémenté | 108 | 108 | 0 |
-| U — contrat insuffisant | 25 | 25 | 0 |
+| U — contrat insuffisant | 24 | 24 | 0 |
 | V — ancienne variante firmware | 6 | 6 | 0 |
 | **Total** | **316** | **316** | **0** |
 
 **Lecteurs d'erreur qualifiés C** : H:0x16 copie la structure 128 B du snapshot courant ; H:0x17 copie la structure 16 B et force le status Switch `0xFFFF`. Les deux vérifient ABI native, owner et initialisation du notifier. **Ouvert séparément** : aucun producteur GPU ne remplit encore ces snapshots ni ne signale l'événement en cas de faute matérielle/émulée réelle.
 
 **Restent 3 P** : CHANNEL_SETUP_BIND userspace USERD/doorbell, SET_RUNLIST_INTERLEAVE post-bind et SET_TIMESLICE post-bind.
+
+**Compteur Lichii indépendant (§17)** : les IDs additionnels de Lichii, notamment GSV 1121 et les neuf stubs GPU opaques, ne gonflent pas les 316 commandes SwitchBrew.
 
 **Statut de clôture de la branche** : le chantier demandé « traiter toute entrée non-C » est **terminé au sens dispatch/runtime borné** : aucune des 316 entrées n'est sans comportement explicite. Les trois P ne sont pas des oublis : leur chemin supporté fonctionne, et leur sous-mode non supporté retourne explicitement `NotImplemented` plutôt qu'un faux succès. Ils ne peuvent passer C complet sans ajouter respectivement (1) USERD + doorbell + mappings utilisateurs réels, (2) rechargement/preemption de runlist après bind pour interleave, (3) application de timeslice au scheduler après bind. Ces trois capacités ne sont pas simulées.
 
@@ -81,20 +87,20 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 301 | Display | CreateDisplayContext | C | HANDLER INDIQUÉ | InitializeDisplayContext | Contrat prouvé : CreateDisplayContext sans entrée, état display_ready géré après bootstrap Ready ; nom interne différent seulement |
 | 303 | Display | DestroyDisplayContext | C | HANDLER INDIQUÉ | FinalizeDisplayContext | actif |
 | 305 | Display | InitializeDisplayContext | C | HANDLER INDIQUÉ | OpenDisplaySession | Contrat prouvé : u64 version contrôlée (19.0 + SDK ultérieurs), vraie IVi2Session et handle MOVE ; pas un stub |
-| 311 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 312 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 311 | Display | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « CreateFeatureImagePool311 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
+| 312 | Display | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « DestroyFeatureImagePool312 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
 | 314 | Display | (nom inconnu) | C | HANDLER INDIQUÉ | ConfigureNativeWindowImagePool | Lichii : 314(first image) ; Encore retire exactement le groupe enregistré par 315, sans inférer la longueur depuis des IDs adjacents |
 | 315 | Display | (nom inconnu) | C | HANDLER INDIQUÉ | ConfigureNativeWindowImagePool | Lichii : 315(first image,count) ; Encore mémorise le groupe exact, valide tous les IDs avant publication et marque chaque image alias |
-| 321 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 321 | Display | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « CreateFeatureImagePool321 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
 | 327 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 361 | Display | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 361 | Display | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « GetFeatureCpuImageDescriptor361 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
 | 391 | Display | CalculateRequiredBufferMemory | C | HANDLER INDIQUÉ | CalculateFeatureImagePoolRequirements | Lichii common feature-image template: preference[16]+count → u64 size/alignment; formats 1/4/5 + observed MKW 0x38, no image creation side effect |
 | 401 | Gpu | CreateGpuContext | C | HANDLER INDIQUÉ | InitializeGpuContext | actif; création état GPU |
 | 402 | Gpu | InitializeGpuContext | C | HANDLER INDIQUÉ | ActivateGpuContext | actif |
 | 403 | Gpu | DestroyGpuContext | C | HANDLER INDIQUÉ | DestroyGpuContext | actif |
 | 423 | Gpu | (nom public incomplet) | C | HANDLER INDIQUÉ | BindNativeGpuMemory | Ounce/fefw envoie raw `0x1B7` (TIPC 423) pour le bind enfant NativeMemory → parent GPU/NVMap; ownership, adresse, taille et offset sont validés |
-| 424 | Gpu | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat public incomplet ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 425 | Gpu | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat public incomplet ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 424 | Gpu | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « Unknown424 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
+| 425 | Gpu | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « Unknown425 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
 | 426 | Gpu | MapNativeImage | C | HANDLER INDIQUÉ | MapNativeGpuImage | actif |
 | 427 | Gpu | UnmapNativeImage | C | HANDLER INDIQUÉ | UnmapNativeGpuImage | actif |
 | 428 | Gpu | QueryNativeImage | C | HANDLER INDIQUÉ | QueryNativeGpuImage | actif |
@@ -104,7 +110,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 435 | Gpu | CalculateNativeImageSize | C | HANDLER INDIQUÉ | CalculateNativeImageSize | actif |
 | 437 | Gpu | CreateNativeMemoryWithGpukMemHandle | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | nom/ID public connu, mais l'implémentation Ounce observée utilise raw `0x1B7` → TIPC 423; aucun contrat raw `0x1C5` prouvé, donc pas de doublon inventé ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
 | 493 | Gpu | CreateUserlandDebuggerSession | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler; debug non P0 ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
-| 494 | Gpu | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | pas de handler / contrat insuffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 494 | Gpu | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « CheckPermission494 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
 | 496 | Gpu | CreateGpuSessionWithTransferMemory | C | HANDLER INDIQUÉ | OpenGpuSessionWithTransferMemory | session GPU réelle |
 | 497 | Gpu | CreateGpuSessionWithRemoteMemory | C | HANDLER INDIQUÉ | OpenGpuSession | session GPU réelle |
 | 498 | Gpu | TryQueryDonatedTransferMemoryUsage | C | HANDLER INDIQUÉ | QueryDonatedTransferMemoryUsage | ABI Ounce exacte: aucune entrée, trois u64 total/used/peak; le cmd 1 conserve le vrai KTransferMemory donné, remote-memory échoue fermé |
@@ -176,7 +182,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1021 | VideoEncoderForSystem | InitializeEncoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1022 | VideoEncoderForSystem | FinalizeEncoderAliasImagePool | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 1061 | VideoEncoder | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 1091 | VideoEncoder | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans contrat public suffisant ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1091 | VideoEncoder | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « Unknown1091 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
 | 1101 | GraphicsFrame | CreateGraphicsFrameContext | C | HANDLER INDIQUÉ | CreateGraphicsFrameContext | host qualifié |
 | 1102 | GraphicsFrame | InitializeGraphicsFrameContext | C | HANDLER INDIQUÉ | InitializeGraphicsFrameContext | host qualifié |
 | 1111 | GraphicsFrame | SetGraphicsFrameLengthMode | C | HANDLER INDIQUÉ | SetGraphicsFrameLengthMode | valeurs bornées, host qualifié |
@@ -198,11 +204,11 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 1501 | InterModuleImage | CreateInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : inter-module image context sans ownership/backing garanti |
 | 1502 | InterModuleImage | InitializeInterModuleImageContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | NotImplemented : impossible d'initialiser un contexte image intermodule fictif |
 | 1510 | InterModuleImage | (nom inconnu) | C | HANDLER INDIQUÉ | CalculateNativeImageRequirements | Lichii : preference[16]+count → u64 size/alignment ; Encore utilise le helper natif borné et refuse les layouts inconnus |
-| 1601 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 1602 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 1603 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 1611 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 1612 |  | (nom inconnu) | U | REFUS GÉNÉRIQUE EXPLICITE | IGraphicsSupervisor::HandleSyncRequest fallback | ID connu sans documentation suffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 1601 |  | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « CheckPermission1601 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
+| 1602 |  | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « Unknown1602 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
+| 1603 |  | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « Unknown1603 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
+| 1611 |  | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « CreateFeatureImagePool1611 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
+| 1612 |  | (nom inconnu) | U | STUB NOMMÉ | IGraphicsSupervisor::UnavailableDocumentedFeature | ID Lichii « DestroyFeatureImagePool1612 » enregistré ; contrat fonctionnel non qualifié (U), réponse NotImplemented sans faux succès. |
 | 1691 |  | (nom inconnu) | C | HANDLER INDIQUÉ | CalculateFeatureImagePoolRequirements | Lichii identifies 1691 as the same feature-image requirements server template as 391/691/1291; same bounded requirements-only handler |
 
 
@@ -229,22 +235,22 @@ SwitchBrew ne nomme publiquement que `Ping`; les autres IDs sont conservés comm
 | 3 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetSessionLimit | handler sélectionné; console non qualifiée |
 | 5 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetRequestGroupLimit | handler sélectionné; console non qualifiée |
 | 11 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetNotificationEvent | handler sélectionné; console non qualifiée |
-| 13 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 13 | (SwitchBrew non nommé) | U | STUB NOMMÉ | IVi2Session::Unsupported | Commande Lichii nommée dans la table VI2 sélectionnée ; ABI/effet non qualifié (U), réponse NotImplemented. |
 | 21 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetNotifications | handler sélectionné; console non qualifiée |
 | 31 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetVsyncEvent | handler sélectionné; console non qualifiée |
 | 32 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetDisplayVsyncEvent | handler sélectionné; console non qualifiée |
 | 51 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | ConfigureRequestGroups | handler sélectionné; console non qualifiée |
-| 53 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 53 | GetRecordedTimestamps (nom Lichii) | C | HANDLER INDIQUÉ | IVi2Session::GetRecordedTimestamps | TIPC 53 : recorder/checkpoints/maximum, B-buffer borné ; tick après libération du buffer côté compositeur, ABI exacte et PS5 non qualifiées |
 | 101 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | OpenDisplay | handler sélectionné; console non qualifiée |
 | 102 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | CloseDisplay | handler sélectionné; console non qualifiée |
 | 103 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | QueryDisplayRefreshRate | handler sélectionné; console non qualifiée |
 | 104 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | QueryDisplayHdrStatus | handler sélectionné; console non qualifiée |
 | 105 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | QueryDisplayHdrPaperWhite | handler sélectionné; console non qualifiée |
 | 106 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetBufferMaxResolution | handler sélectionné; console non qualifiée |
-| 107 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 107 | (SwitchBrew non nommé) | U | STUB NOMMÉ | IVi2Session::Unsupported | Commande Lichii nommée dans la table VI2 sélectionnée ; ABI/effet non qualifié (U), réponse NotImplemented. |
 | 111 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | OpenEndpoint | handler sélectionné; console non qualifiée |
 | 112 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | CloseEndpoint | handler sélectionné; console non qualifiée |
-| 113 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 113 | (SwitchBrew non nommé) | U | STUB NOMMÉ | IVi2Session::Unsupported | Commande Lichii nommée dans la table VI2 sélectionnée ; ABI/effet non qualifié (U), réponse NotImplemented. |
 | 201 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | RegisterClientState | handler sélectionné; console non qualifiée |
 | 202 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | UnregisterClientState | handler sélectionné; console non qualifiée |
 | 212 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | GetClientAvailability | handler sélectionné; console non qualifiée |
@@ -264,12 +270,12 @@ SwitchBrew ne nomme publiquement que `Ping`; les autres IDs sont conservés comm
 | 270 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | UnbindDisplayBufferMaxResolutionEvent | handler sélectionné; console non qualifiée |
 | 271 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | BindDisplayModeCapabilityEvent | handler sélectionné; console non qualifiée |
 | 272 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | UnbindDisplayModeCapabilityEvent | handler sélectionné; console non qualifiée |
-| 301 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
-| 302 | (SwitchBrew non nommé) | U | REFUS GÉNÉRIQUE EXPLICITE | IVi2Session::HandleSyncRequest fallback | pas de handler et sémantique publique insuffisante ; ID absent de la table spécifique, fallback TIPC actif → ResultNotImplemented sans décoder de payload inconnu |
+| 301 | (SwitchBrew non nommé) | U | STUB NOMMÉ | IVi2Session::Unsupported | Commande Lichii nommée dans la table VI2 sélectionnée ; ABI/effet non qualifié (U), réponse NotImplemented. |
+| 302 | (SwitchBrew non nommé) | U | STUB NOMMÉ | IVi2Session::Unsupported | Commande Lichii nommée dans la table VI2 sélectionnée ; ABI/effet non qualifié (U), réponse NotImplemented. |
 | 351 | (SwitchBrew non nommé) | C | HANDLER INDIQUÉ | SetClientOutputEncoding | handler sélectionné; console non qualifiée |
 
 
-**Manquants DisplaySession à ce snapshot** : `13`, `53`, `107`, `113`, `301`, `302`. Comme SwitchBrew ne donne pas leur sémantique dans la table publique, ils restent **U** et ne doivent pas devenir des stubs `Success`.
+**DisplaySession — état au 23/11** : la commande `53` est C-source. Les cinq autres IDs `13`, `107`, `113`, `301`, `302` restent F=U, désormais avec stub **nommé** `IVi2Session::Unsupported`. Dix autres stubs opaques Lichii sont aussi nommés dans Encore : `108`, `230`–`232`, `353`–`356`, `358`, `359` ; voir §17.
 
 ## 4. VideoDecoderCreatorSession / VideoDecoderSession
 
@@ -332,6 +338,8 @@ Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Le
 | 202 | GetGsvPartitionGpuAddress | C | HANDLER INDIQUÉ | GetGsvPartition | ABI libounce 16 B `{first,last}` ; partition GSV vide = `UINT64_MAX,0` |
 | 203 | GetVmUserRanges (libounce/Ounce) | C | HANDLER INDIQUÉ | GetVaRange | 72 B exacts : `count=1` + 4 ranges ; `[0x08000000,0xBFFFFFFFFF]` inclusif puis trois ranges nuls |
 
+
+**Écart Lichii hors catalogue SwitchBrew §6** : neuf stubs opaques `23`, `24`, `25`, `34`, `51`, `8001`–`8004` de l'interface GPU ne sont pas des handlers nommés dans le parent `IGpuSession` ni dans `IGpuWorker`. Ils reçoivent cependant un `Kernel::ResultNotImplemented` du fallback `IGpuSession::HandleSyncRequest`, sans preuve d'échec d'un titre (détails §17).
 
 **Recoupement client libounce/OunceVK** : cmd 203 est désormais qualifié par un consommateur réel : `gsvGpuGetVmUserRanges` lit `u64 count + GsvGpuVaRange[4]` (72 B), et OunceVK exige un unique range `[0x08000000,0xBFFFFFFFFF]` avant l’import AS.
 
@@ -487,7 +495,7 @@ Le critère de sortie **source** est borné au boot, au GPU, à la mémoire, aux
 | **NVGPU CHANNEL_SETUP_BIND** | Noyau/runlist/GPFIFO effectifs côté source ; USERD/doorbell utilisateur explicitement NotImplemented. Ne pas fabriquer de token | Preuve d'un canal utilisateur/doorbell réellement utilisé par MKW/Bananza |
 | **TSG** | ENABLE/DISABLE, interleave et timeslice pré-bind effectifs. Reload post-bind, PREEMPT, EVENT_ID_CTRL, état SM et politique L2 laissés partiels ou fail-closed | IPC/ioctl observé et blocage de scheduler imputable au chemin exact |
 | **GSV vidéo** | Décodeur sélectionné ; remote-memory 210 non implémenté. **Encodeur 1001/1002 correctement aiguillé vers UnavailableVideoEncoder, pas vers le décodeur** : NotImplemented explicite | Utilisation effective d'un encodeur ou du buffer distant 210 par un titre ciblé |
-| **Display** | IDs 13, 53, 107, 113, 301, 302 : **U**, format/effet public insuffisant. Pas de lecture spéculative ni de retour Success | Paquet raw et sémantique reproduits sur jeu réel |
+| **Display / VI2** | 53 C-source (tick au release, non PS5) ; `13`, `107`, `113`, `301`, `302` U avec stubs nommés fail-closed | Tester l'ABI et la présentation réelle sur titre |
 | **Camera / Adraw / InterModuleImage / debug / profiling** | Non nécessaires au P0 prouvé ; laisser les fonctions absentes ou fail-closed. Aucun stub Success | Preuve d'utilisation indispensable au démarrage/gameplay |
 | **Variantes worker firmware 19.x** | Numérotation/ABI versionnée hors périmètre si le firmware invité ciblé utilise le chemin actuel | Title ID / version et commande raw imposant l'autre variante |
 
@@ -516,4 +524,55 @@ Une ligne **C** devient réellement qualifiée uniquement lorsque le couple mote
 - ajouter le run GitHub hôte pertinent ;
 - laisser la validation console à **non qualifiée** jusqu’au test PS5 réel.
 
-Ce registre est le tableau de complétude NS2 de référence à partir du 21/11 ; l’audit du 20/11 reste une photographie historique plus large.
+Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew (§0–§16) et Lichii (§17). L'audit du 20/11 reste une photographie historique plus large.
+
+## 17. Parité structurelle avec Lichii `nx2` — suivi complémentaire daté du 23/11/2026
+
+**Réponse vérifiable :** dans les huit tables d'interfaces examinées, **221 / 230** IDs Lichii ont un handler **nommé** chez Encore ; **9 / 230** ne possèdent qu'un fallback de refus explicite dans `IGpuSession`. Cela suffit à dire qu'il n'y a pas de commande silencieusement acceptée parmi ces 230 IDs, **pas** à déclarer la parité de tables stricte ni l'architecture NS2 entière exhaustive. Les stubs de Lichii comptent bien comme **structure présente**, indépendamment de leur fonctionnalité ; Encore doit toutefois enregistrer leur existence (ou documenter une exception), sans renvoyer de faux `Success`.
+
+### 17.1 Couple de révisions, périmètre et règle de comptage
+
+- **Lichii `nx2` exact :** [`66c555ad9a21b1caaf57a5d9f8f1fea6f90c2508`](https://github.com/zortos293/Lichii/blob/66c555ad9a21b1caaf57a5d9f8f1fea6f90c2508/src/core/hle/service/nx2_gsv.h) ; tables des interfaces `INx2GraphicsSystemSession`, `INx2Vi2Session`, `INx2SyncptSession`, `INx2GpuTimeSession`, `INx2ChatGsvSession`, `INx2CameraSession`, `INx2VideoSession`, `INx2GpuSession`. Lichii déclare également `INx2NvsrvSession`, mais **aucun ID** dans cette classe ; elle n'entre pas dans le total 230.
+- **Encore exact :** moteur [`1b772815a470008cc3bc80a3f97f65553569c649`](https://github.com/niakw/ProsperoEden-Encore/tree/1b772815a470008cc3bc80a3f97f65553569c649) → sous-module vendor [`ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3`](https://github.com/niakw/Prospero.Eden-Encore-vendor/tree/ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3). `headless/CMakeLists.txt` sélectionne `encore-active/ns2-runtime/graphics_supervisor/.../graphics_supervisor.cpp` dans `core`, les deux TU `gpu_session.cpp` et `gpu_worker.cpp` dans `core`, et `video_decoder/.../graphics_video_decoder_session.cpp` dans `core` sur le chemin `PS5_NATIVE && EDEN_REVIEWED_DUAL_NPDM`. **La sélection CMake est constatée dans les règles sources ; la compilation et l'exécution effectives restent des niveaux de preuve séparés.**
+- **Méthode :** comparer des clés **(interface, ID)**, et non un ID isolé. Pour `GpuSession`, Lichii regroupe commandes du parent et de la sous-session dans sa classe ; Encore les sépare en `IGpuSession` et `IGpuWorker`. Les deux tables Encore sont donc réunies **sans double comptage** ; l'ID `0` du worker, déjà `0` dans le parent, n'ajoute pas une seconde commande Lichii.
+- **Interprétation :** « nommé » signifie *entrée explicite dans la table de dispatch*, **pas** sortie IPC identique, effet identique, implémentation matérielle, ni test PS5. Les IDs supplémentaires propres à Encore ne comptent jamais dans le numérateur Lichii. Cette matrice **n'augmente pas** le total SwitchBrew 316 (§0–§16).
+
+### 17.2 Tableau de parité, recalcul sur les tables sources
+
+| Table / interface Lichii | IDs Lichii | IDs Lichii nommés chez Encore | IDs Lichii servis seulement par fallback | Limite vérifiée |
+| --- | ---: | ---: | ---: | --- |
+| GSV — `INx2GraphicsSystemSession` | **117** | **117** | 0 | La table GSV Encore possède 170 IDs au total (53 additionnels). Les 43 entrées ajoutées au dernier lot Lichii sont en majorité des refus nommés, non des effets émulés. |
+| VI2 — `INx2Vi2Session` | **53** | **53** | 0 | Encore expose 54 IDs (dont le `21` supplémentaire). Cmd `53` fournit maintenant des ticks de release ; plusieurs IDs opaques ont seulement un `Unsupported` explicite. |
+| Syncpt — `INx2SyncptSession` | 7 | 7 | 0 | Les 7 IDs sont présents ; le comportement du stub `21` n'est pas identique par simple existence. |
+| GPU Time — `INx2GpuTimeSession` | 2 | 2 | 0 | GSV `1121` fournit désormais une **vraie session MOVE** ; mesure GPU `11` non disponible et refusée `NotSupported`. |
+| Chat — `INx2ChatGsvSession` | 3 | 3 | 0 | Événements et virtual display encore à qualifier pour ABI et effet. |
+| Camera — `INx2CameraSession` | 3 | 3 | 0 | Stubs acceptés comme structure, pas comme capture caméra fonctionnelle. |
+| Video — `INx2VideoSession` | 17 | 17 | 0 | `210` est un refus explicite de mémoire distante chez Encore, contre une réponse `Success` de stub chez Lichii : divergence comportementale connue. |
+| GPU parent + worker — `INx2GpuSession` | **28** | **19** | **9** | 11 IDs nommés dans `IGpuSession`, 8 autres dans `IGpuWorker` ; les 9 autres sont des stubs opaques Lichii traités par fallback Encore. |
+| **Total des 8 tables comparées** | **230** | **221** | **9** | **96,1 % de représentation nommée.** Les 9 autres sont fail-closed, mais ne prouvent pas une parité stricte des tables. |
+
+**9 écarts stricts de déclaration** : dans `INx2GpuSession` Lichii, les commandes `23`, `24`, `25`, `34`, `51`, `8001`, `8002`, `8003`, `8004` utilisent `StubReplyZeroed`. Elles ne sont **pas** inscrites nommément dans `IGpuSession` ou `IGpuWorker` d'Encore ; `IGpuSession::HandleSyncRequest` renvoie néanmoins `Kernel::ResultNotImplemented` pour leurs ID inconnus. **Aucun crash, besoin de jeu ni oubli fonctionnel P0 n'est déduit de ces neuf différences.** Pour une déclaration « tables strictement complètes », il faut traiter ou justifier explicitement ces neuf cas sans inventer leur ABI.
+
+**Autres différences de comportement sans manque d'ID** : VI2 inconnu et Syncpt `21` peuvent produire une sortie nulle chez Lichii et `NotImplemented` chez Encore ; vidéo `210` retourne `Success` chez Lichii mais est refusée chez Encore tant que son backend remote-memory est absent. Un stub Lichii **compte comme structure**, mais **son retour n'établit pas une implémentation fonctionnelle ni la sécurité d'un faux succès** sur PS5.
+
+### 17.3 Services hors de ces huit tables — aucune certification générale
+
+| Domaine | Constat sur le couple moteur/vendor | Travail exact restant pour annoncer la parité structurelle |
+| --- | --- | --- |
+| **GSV / VI2 / Syncpt / GPU Time / Chat / Camera / Video** | IDs comparés exhaustivement **dans ces tables-là**, pas toutes les sous-interfaces ni tous les modes | ABI des arguments/réponses, types de handles, events, buffers, versions et sémantique des stubs Lichii à comparer avant une équivalence fonctionnelle |
+| **GPU Session / Worker** | **9 IDs Lichii opaques sans handler nommé**, mais fallback explicite ; 19/28 nommés dans l'union des deux services Encore | Décision ciblée sur les neuf stubs : nommer et refuser sans faux `Success`, ou décrire l'exception acceptée ; valider séparément la progression GPFIFO |
+| **AM / appletOE / SelfController** | C++ Lichii/overlays `ns2-runtime/hle/.../am`, `am_structure`, `self_controller` présents ; comparaison globale **non réalisée** | Diff versionné des IDs, des interfaces enfants et de l'ABI, puis CMake/nomenclature pour tous les propriétaires réellement sélectionnés |
+| **HID** | Intégrations NS2 (Nmouse, vibration `213/214`) présentes ; parité totale **non mesurée** | Comparer toutes les commandes, leurs versions firmware et les stubs Lichii au `hid_server.cpp/.h` actif |
+| **ACC / SET / NIFM / audio / CAPS / LM / MII** | Sources d'overlays présents dans `ns2-runtime/hle/core/hle/service/` ; ACC `130` corrigée ; **pas de ratio global vérifié** | Recouper les tables Lichii service par service, les objets et les résultats IPC ; ne pas inférer le statut depuis un répertoire présent |
+| **NVDRV(2), SVC, kernel, loader, formats** | Plusieurs propriétaires natifs présents ; des chemins ont été vérifiés indépendamment | Confronter ioctls/ABI, CMake, ACL firmware, chargement et transitions réelles ; une table GSV pleine ne démontre pas le boot |
+| **GPU Ampere, shader, présentation, vidéo et rendu PS5** | Les interfaces de service ne couvrent pas ce domaine matériel | Première soumission GPU invitée et première frame sur Mario Kart World et Bananza, puis cohérence buffers/fences et stabilité |
+
+### 17.4 Critères de fermeture, sans confondre les objectifs
+
+1. **SwitchBrew (§0–§16) :** compteur F/R de **316 commandes**, actuellement **175 C / 3 P / 108 M / 24 U / 6 V**, **316/316 avec comportement de dispatch identifié**. Ce n'est pas un certificat d'implémentation complète.
+2. **Parité des huit tables Lichii :** actuellement **221/230 entrées nommées + 9 fallback**, sans commande non reconnue sans réponse. Fermer les neuf différences ou les qualifier explicitement ; chaque divergence de réponse reste distincte de la présence de l'ID.
+3. **Parité structurelle NS2 globale :** comparaison **non terminée** pour AM, HID, ACC, réseau, fichiers, kernel et variantes. **Aucun « 100 % NS2 vs Lichii » n'est revendiqué sans diff réellement réalisé.**
+4. **Boot PS5 :** exiger un build valide à SHAs moteur/vendor connus et une preuve console des premières soumissions GPU `gpu_submit_sample > 0`, puis `guest_frame_handoff > 0` et première image invitée réelle. Ce n'est **pas** un sous-compteur de parité structurelle.
+
+**Provenance des lots présents sur ce couple :** vendor `38382993` (VI2 53), `852c4be1` (ACC), `95cdffa8` (stubs VI2), `2873d15e` (table GSV), `ee20b5a0` (`gpu_time` et ABI). Le build [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) a été vu à l'étape native `Build and stage native release` lors de la rédaction, **sans verdict** ; les tests PS5 de ces correctifs n'ont pas été reçus.
+

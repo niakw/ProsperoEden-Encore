@@ -8,6 +8,7 @@ on:
       - headless/nup_v1_vfs.cpp
       - tools/check-nup-v1-host.py
       - tools/check-nup-v1-vfs-host.py
+      - tools/check-nup-v1-native-abi.py
       - tools/check-nup-metadata-bounds-source.py
       - .github/workflows/nup-v1-host.yml
 permissions:

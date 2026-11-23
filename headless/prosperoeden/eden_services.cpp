@@ -1316,15 +1316,15 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
                          const std::string& alternate_name, int language_choice,
                          const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return false;
-    if (!CachedGamesDbSquare(title_id).empty()) return true;
+    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
     const auto& index = RetailCaseIndex();
     const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end() || selected->second[8].empty()) return false;
     auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
     if (candidates.empty()) return false;
-    const std::string path = CaseFacePath(title_id, "square");
+    const std::string path = CaseFacePath(title_id, "square", second_generation);
     if (!FetchCaseFace(candidates, path, false, cancel, true)) return false;
-    const bool ready = !CachedGamesDbSquare(title_id).empty();
+    const bool ready = !CachedGamesDbSquare(title_id, second_generation).empty();
     std::fprintf(stderr,
                  "EDEN_GAMESDB_SQUARE title=%016llX status=%s candidates=%zu\n",
                  static_cast<unsigned long long>(title_id),
@@ -1409,7 +1409,9 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     // finished cache, but never hold launcher teardown hostage to this wait.
     // No socket request or mutex sleep runs on the UI/render thread.
     static std::array<std::mutex, 64> locks;
-    std::unique_lock guard(locks[ArtworkLockBucket(title_id, locks.size())], std::defer_lock);
+    const std::uint64_t artwork_key =
+        title_id ^ (second_generation ? 0x8000000000000000ULL : 0ULL);
+    std::unique_lock guard(locks[ArtworkLockBucket(artwork_key, locks.size())], std::defer_lock);
     if (!LockArtworkUnlessCancelled(guard, cancel)) return 0;
     // The physical scans supplied by users have no Encore .source receipt.
     // Migrate and reclaim ONLY our previously downloaded retail cases.
@@ -1418,7 +1420,8 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     for (const char* side : {"front", "back", "spine",
                              "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"}) {
         if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;
-        if (MigrateGeneratedTga(CaseFacePath(title_id, side), true))
+        if (MigrateGeneratedTga(
+                CaseFacePath(title_id, side, second_generation), true))
             migrated_faces |= 1u << side_index;
         ++side_index;
     }
@@ -1426,12 +1429,12 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
     static std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> retries;
     {
         std::lock_guard retry(retry_mutex);
-        const auto it = retries.find(title_id);
+        const auto it = retries.find(artwork_key);
         if (it != retries.end() && std::chrono::steady_clock::now() < it->second)
             return migrated_faces;
         // Failed image hosts, cancellation or an incomplete side must not
         // disable all retries for four hours on a newly installed game.
-        retries[title_id] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
+        retries[artwork_key] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
     }
     const auto* ns1_back = second_generation && selected->second[1].empty()
         ? MatchingNs1Back(index, name, alternate_name) : nullptr;
@@ -1462,7 +1465,8 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         if (candidates.empty()) continue;
         const char* const names[] = {
             "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};
-        const std::string path = CaseFacePath(title_id, names[side]);
+        const std::string path =
+            CaseFacePath(title_id, names[side], second_generation);
         // User-provided original scans win. Cached low-resolution CDN scans
         // may be upgraded when a better ranked alternative becomes available.
         const std::string base = path.substr(0, path.size() - 5);
@@ -1501,7 +1505,7 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // A fully successful refresh needs no retry guard; a cancelled
         // refresh is immediately retryable on the next launcher session.
         std::lock_guard retry(retry_mutex);
-        retries.erase(title_id);
+        retries.erase(artwork_key);
     }
     return changed_faces;
 }

@@ -1241,6 +1241,16 @@ void Launcher::finish_home_scan()
         }
         home_ = std::move(snapshot);
         home_loaded_ = true;
+        // Queue the first seven displayed square icons before their first
+        // Home draw. Urgent requests are inserted at the front; reverse the
+        // traversal so the first tile decodes first. Both workers do decoding,
+        // while the UI keeps its existing one-upload-per-frame GPU budget.
+        for (std::size_t i = std::min<std::size_t>(7, home_.recents.size()); i > 0; --i) {
+            const Recent& recent = home_.recents[i - 1];
+            const std::string& art =
+                recent.tile_icon.empty() ? recent.cover : recent.tile_icon;
+            if (!art.empty()) (void)textures_.cover(art, 232.0f, true);
+        }
         // Reconcile the completed ROM catalog with the Home snapshot even when
         // the two independent workers finish in the opposite order.
         if (games_loaded_) name_home_games();
@@ -2924,6 +2934,12 @@ void Launcher::finish_home_icons()
         home_icon_scan_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
     try {
         Game result = home_icon_scan_.get();
+        // The full-media worker can hold the same title lock for a remote
+        // request. try_lock is correct for UI teardown, but its transient
+        // refusal must not suppress this ExeFS/Home icon for two minutes.
+        if (result.artwork_deferred && result.title_id == home_icon_scan_title_id_)
+            home_icon_next_retry_[result.title_id] =
+                std::chrono::steady_clock::now() + std::chrono::seconds(1);
         if (!media_cancel_.load(std::memory_order_acquire) &&
             result.title_id && result.title_id == home_icon_scan_title_id_ && !result.cover.empty()) {
             if (result.artwork_changed) textures_.invalidate(result.cover);

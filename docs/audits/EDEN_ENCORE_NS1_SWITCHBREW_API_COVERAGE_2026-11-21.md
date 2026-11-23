@@ -25,22 +25,22 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 527 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 524 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 444 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 447 | 80 | **1 527** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 444 | 80 | **1 524** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
-| **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
+| **PARTIEL — Implémentation partielle** | 111 | 3 | **114** |
+| **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 139 | 0 | **139** |
-| **NULL — Handler NULL** | 1 801 | 0 | **1 801** |
+| **NULL — Handler NULL** | 1 780 | 0 | **1 780** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 288 | 1 | **289** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 324 | 1 | **325** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 272 | 0 | **272** |
+| **ABI-DIFF — Noms/ABI divergents** | 271 | 0 | **271** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 139
-    "Handler NULL" : 1801
+    "Handler NULL" : 1780
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 289
+    "Hors version firmware cible" : 325
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 272
     "Interface ambiguë" : 9
@@ -845,8 +845,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `5` | `GetProfile` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetProfile`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `6` | `GetProfileDigest` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `50` | `IsUserRegistrationRequestPermitted` | — | **PARTIEL** (méthode héritée `Module::Interface::IsUserRegistrationRequestPermitted`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:su | `51` | `TrySelectUserWithoutInteraction` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 51 = TrySelectUserWithoutInteractionDeprecated dans l'owner courant ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:su | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
+| acc:su | `51` | `TrySelectUserWithoutInteraction` | — | **HORS-VERSION** (SwitchBrew Account : cmd51 deprecated limité à HOS 1.0.0–18.1.0, cmd52 utilisé depuis HOS 19 ; cible HOS 23) | 2026-11-23 |
+| acc:su | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **HORS-VERSION** (SwitchBrew Account : commande limitée à HOS 5.0.0–5.1.0 ; cible HOS 23) | 2026-11-23 |
 | acc:su | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `100` | `GetUserRegistrationNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `101` | `GetUserStateChangeNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -1073,19 +1073,19 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `21` | `ActivateMouse` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `31` | `ActivateKeyboard` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `32` | `SendKeyboardLockKeyEvent` | 6.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `40` | `AcquireXpadIdEventHandle` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `41` | `ReleaseXpadIdEventHandle` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `40` | `AcquireXpadIdEventHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `41` | `ReleaseXpadIdEventHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
 | hid | `51` | `ActivateXpad` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `55` | `GetXpadIds` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `56` | `ActivateJoyXpad` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `58` | `GetJoyXpadLifoHandle` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `59` | `GetJoyXpadIds` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `60` | `ActivateSixAxisSensor` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `61` | `DeactivateSixAxisSensor` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `62` | `GetSixAxisSensorLifoHandle` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `63` | `ActivateJoySixAxisSensor` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `64` | `DeactivateJoySixAxisSensor` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `65` | `GetJoySixAxisSensorLifoHandle` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `56` | `ActivateJoyXpad` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `58` | `GetJoyXpadLifoHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `59` | `GetJoyXpadIds` | — | **HORS-VERSION** (SwitchBrew HID : GetJoyXpadIds limité à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `60` | `ActivateSixAxisSensor` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `61` | `DeactivateSixAxisSensor` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `62` | `GetSixAxisSensorLifoHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `63` | `ActivateJoySixAxisSensor` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `64` | `DeactivateJoySixAxisSensor` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
+| hid | `65` | `GetJoySixAxisSensorLifoHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
 | hid | `66` | `StartSixAxisSensor` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `67` | `StopSixAxisSensor` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `68` | `IsSixAxisSensorFusionEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
@@ -1213,8 +1213,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:dbg | `31` | `SetKeyboardAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `32` | `UnsetKeyboardAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `50` | `DeactivateXpad` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `51` | `SetXpadAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `52` | `UnsetXpadAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `51` | `SetXpadAutoPilotState` | — | **HORS-VERSION** (SwitchBrew HID : Xpad AutoPilot IDs51/52 limités à HOS 1.0.0–9.2.0 ; cible HOS 23) | 2026-11-23 |
+| hid:dbg | `52` | `UnsetXpadAutoPilotState` | — | **HORS-VERSION** (SwitchBrew HID : Xpad AutoPilot IDs51/52 limités à HOS 1.0.0–9.2.0 ; cible HOS 23) | 2026-11-23 |
 | hid:dbg | `60` | `ClearNpadSystemCommonPolicy` | 9.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `91` | `DeactivateGesture` | — | **IMPL-SRC** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `110` | `DeactivateHomeButton` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
@@ -1317,7 +1317,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `211` | `GetNpadsWithNfc` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `212` | `AcquireNfcActivateEventHandle` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `213` | `ActivateNfc` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `214` | `GetXcdHandleForNpadWithNfc` | 4.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `214` | `GetXcdHandleForNpadWithNfc` | 4.0.0+ | **HORS-VERSION** (SwitchBrew HID : GetXcdHandleForNpadWithNfc limité à HOS 4.0.0–18.1.0 ; cible HOS 23) | 2026-11-23 |
 | hid:sys | `215` | `IsNfcActivated` | 4.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `230` | `AcquireIrSensorEventHandle` | — | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer ID 230 : nom historique AcquireIrSensorEventHandle, source AcquireIrSensorEventHndle ; audit statique, pas de validation PS5) | 2026-11-22 |
 | hid:sys | `231` | `ActivateIrSensor` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -1516,8 +1516,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| appletAE | `100` | `OpenSystemAppletProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
-| appletAE | `200` | `OpenLibraryAppletProxyOld ([1.0.0-2.3.0] OpenLibraryAppletProxy)` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/all_system_applet_proxies_service.cpp) ; OpenLibraryAppletProxyOld crée réellement un proxy library ; ancienne plage firmware annotée ; audit statique, pas de validation PS5) | 2026-11-22 |
+| appletAE | `100` | `OpenSystemAppletProxy` | — | **HORS-VERSION** (SwitchBrew AM : cmd100 est OpenSystemAppletProxyOld, limité à HOS 1.0.0–19.0.1 et remplacé par cmd110 ; cible HOS 23) | 2026-11-23 |
+| appletAE | `200` | `OpenLibraryAppletProxyOld ([1.0.0-2.3.0] OpenLibraryAppletProxy)` | — | **HORS-VERSION** (SwitchBrew AM : ancien cmd200 remplacé par cmd201 depuis HOS 3.0.0 ; cible HOS 23) | 2026-11-23 |
 | appletAE | `201` | `OpenLibraryAppletProxy` | 3.0.0+ | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `300` | `OpenOverlayAppletProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `350` | `OpenSystemApplicationProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
@@ -2828,14 +2828,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bpc | `3` | `GetShutdownReason` | — | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
 | bpc | `4` | `GetAcOk` | — | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
 | bpc | `5` | `GetBoardPowerControlEvent` | — | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
-| bpc | `6` | `GetSleepButtonState` | 2.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
+| bpc | `6` | `GetSleepButtonState` | 2.0.0+ | **HORS-VERSION** (SwitchBrew BPC : commande retirée avant HOS 23 (ID6 : 13.2.1 ; IDs8–13 : 9.2.0) ; cible HOS 23) | 2026-11-23 |
 | bpc | `7` | `GetPowerEvent` | 2.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
-| bpc | `8` | `CreateWakeupTimer` | 2.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
-| bpc | `9` | `CancelWakeupTimer` | 2.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
-| bpc | `10` | `EnableWakeupTimerOnDevice` | 2.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
-| bpc | `11` | `CreateWakeupTimerEx` | 3.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
-| bpc | `12` | `GetLastEnabledWakeupTimerType` | 3.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
-| bpc | `13` | `CleanAllWakeupTimers` | 3.0.0+ | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
+| bpc | `8` | `CreateWakeupTimer` | 2.0.0+ | **HORS-VERSION** (SwitchBrew BPC : commande retirée avant HOS 23 (ID6 : 13.2.1 ; IDs8–13 : 9.2.0) ; cible HOS 23) | 2026-11-23 |
+| bpc | `9` | `CancelWakeupTimer` | 2.0.0+ | **HORS-VERSION** (SwitchBrew BPC : commande retirée avant HOS 23 (ID6 : 13.2.1 ; IDs8–13 : 9.2.0) ; cible HOS 23) | 2026-11-23 |
+| bpc | `10` | `EnableWakeupTimerOnDevice` | 2.0.0+ | **HORS-VERSION** (SwitchBrew BPC : commande retirée avant HOS 23 (ID6 : 13.2.1 ; IDs8–13 : 9.2.0) ; cible HOS 23) | 2026-11-23 |
+| bpc | `11` | `CreateWakeupTimerEx` | 3.0.0+ | **HORS-VERSION** (SwitchBrew BPC : commande retirée avant HOS 23 (ID6 : 13.2.1 ; IDs8–13 : 9.2.0) ; cible HOS 23) | 2026-11-23 |
+| bpc | `12` | `GetLastEnabledWakeupTimerType` | 3.0.0+ | **HORS-VERSION** (SwitchBrew BPC : commande retirée avant HOS 23 (ID6 : 13.2.1 ; IDs8–13 : 9.2.0) ; cible HOS 23) | 2026-11-23 |
+| bpc | `13` | `CleanAllWakeupTimers` | 3.0.0+ | **HORS-VERSION** (SwitchBrew BPC : commande retirée avant HOS 23 (ID6 : 13.2.1 ; IDs8–13 : 9.2.0) ; cible HOS 23) | 2026-11-23 |
 | bpc:r | `0` | `GetRtcTime` | — | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
 | bpc:r | `1` | `SetRtcTime` | — | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
 | bpc:r | `2` | `GetRtcResetDetected` | — | **NULL** ([source C++][ns1-src-007]) | 2026-11-22 |
@@ -4998,24 +4998,24 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nim:shp | `1` | `RequestCachedDeviceAuthenticationToken` | 3.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `100` | `RequestRegisterDeviceAccount` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `101` | `RequestUnregisterDeviceAccount` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `102` | `RequestDeviceAccountStatus` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `103` | `GetDeviceAccountInfo` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `104` | `RequestDeviceRegistrationInfo` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `105` | `RequestTransferDeviceAccount` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `106` | `RequestSyncRegistration` | 3.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
+| nim:shp | `102` | `RequestDeviceAccountStatus` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
+| nim:shp | `103` | `GetDeviceAccountInfo` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
+| nim:shp | `104` | `RequestDeviceRegistrationInfo` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
+| nim:shp | `105` | `RequestTransferDeviceAccount` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
+| nim:shp | `106` | `RequestSyncRegistration` | 3.0.0+ | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
 | nim:shp | `107` | `IsOwnDeviceId` | 3.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `200` | `RequestRegisterNotificationToken` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `300` | `RequestUnlinkDevice` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `301` | `RequestUnlinkDeviceIntegrated` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `302` | `RequestLinkDevice` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `303` | `HasDeviceLink` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
+| nim:shp | `303` | `HasDeviceLink` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
 | nim:shp | `304` | `RequestUnlinkDeviceAll` | 4.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `305` | `RequestCreateVirtualAccount` | 4.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
+| nim:shp | `305` | `RequestCreateVirtualAccount` | 4.0.0+ | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
 | nim:shp | `306` | `RequestDeviceLinkStatus` | 4.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `400` | `GetAccountByVirtualAccount` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `401` | `GetVirtualAccount` | 6.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:shp | `500` | `RequestSyncTicketLegacy ([1.0.0-8.1.0] RequestSyncTicket)` | — | **NULL** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; slot exact RequestSyncTicketLegacy = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| nim:shp | `501` | `RequestDownloadTicket` | — | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
+| nim:shp | `400` | `GetAccountByVirtualAccount` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
+| nim:shp | `401` | `GetVirtualAccount` | 6.0.0+ | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
+| nim:shp | `500` | `RequestSyncTicketLegacy ([1.0.0-8.1.0] RequestSyncTicket)` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
+| nim:shp | `501` | `RequestDownloadTicket` | — | **HORS-VERSION** (SwitchBrew NIM : ancienne commande retirée avant HOS 23 ; cible HOS 23) | 2026-11-23 |
 | nim:shp | `502` | `RequestDownloadTicketForPrepurchasedContents` | 4.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `503` | `RequestSyncTicket` | 9.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `504` | `RequestDownloadTicketForPrepurchasedContents2` | 9.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |

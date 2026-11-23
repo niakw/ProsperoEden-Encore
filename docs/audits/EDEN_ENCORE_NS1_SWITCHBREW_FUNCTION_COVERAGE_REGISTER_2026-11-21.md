@@ -1177,6 +1177,18 @@ Les deux commandes `Ensure*` consomment le `Uid` et confirment la disponibilité
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot Friend moderne + requalification HOS23 ciblée — 23/11/2026
+
+**Moteur parent validé `41280af8` :** NS1 X8D24 Vulkan et Verify pinned vendor verts. **Nouveau vendor `4ce41124344107322445092db240e74fa824dbc6`** (arbre `620e78545ee2775dbdfa0716fff9a64f789a3812`) : `GetProfileListV2` (10501) et `GetProfileExtraListV2` (20502) renvoient des listes offline initialisées et vides ; `GetFriendDetailedInfoV2` (20107) réutilise le handler 20102, son contrat ayant été recroisé avec Ryujinx-Nextendo (sortie 0x800, Uid, NSAID). Cela porte à **9 commandes Friend modernes HOS18+ raccordées hors lignes distinctes du vieux miroir** depuis le début de cette reprise.
+
+Requalification firmware du miroir : **36 entrées → HORS-VERSION** sur preuve SwitchBrew actuelle : 7 BPC, 11 NIM shop, 2 hid:dbg, 1 hid:sys, 11 anciennes commandes HID racine (10 STUB + 1 IMPL-SRC), l'ancien `OpenSystemAppletProxy` cmd100, l'ancien `OpenLibraryAppletProxy` cmd200, `acc:su` cmd51 deprecated et cmd60. Aucun handler n'est supprimé du C++ : seule leur exigibilité sur la cible HOS23 est corrigée dans le catalogue.
+
+**Compteur historique : 1 524 IMPL-SRC / 114 PARTIEL / 125 STUB / 139 NOOP / 1 780 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 299** : 1 780 NULL + 125 STUB + 114 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Le nouveau vendor `4ce41124344107322445092db240e74fa824dbc6` n'est pas encore qualifié par les CI du moteur au moment de ce commit et aucun build natif/essai PS5 n'est revendiqué.
+
 ---
 
 ## 1. Références et règle de vérité

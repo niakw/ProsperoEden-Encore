@@ -626,6 +626,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 703** : 2 146 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot SSL — getters d'état de connexion — 23/11/2026
+
+**Vendor `6b477c04581797bc3a5677c6c849b297f3a4587f`** (arbre `9f16c143a040213aa2429acbceaf5b2250ce5b30`) au-dessus du vendor NCM `400974b505e47e85952469aeceb959bbbee41948`.
+
+- **4 NULL → IMPL-SRC** dans `ISslConnection` : `GetSocketDescriptor` (4), `GetHostName` (5), `GetVerifyOption` (6), `GetIoMode` (7).
+- Le socket conserve désormais le fd invité d'origine et sa référence vivante après duplication ; le hostname validé est mémorisé après `SetHostName`; `SetIoMode` mémorise le mode uniquement après succès du backend ; `GetVerifyOption` retourne l'état effectivement appliqué par le setter.
+- Le destructeur ferme correctement le fd dupliqué conservé ; un échec de récupération du socket dupliqué ferme immédiatement ce fd.
+- Le fichier actif est `encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp`, avec test R23 #120 mis à jour. Ce lot ne prétend pas couvrir DTLS/SRTP/cipher info/timeouts et ne constitue pas une validation réseau PS5.
+
+**Compteur historique : 1 449 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 142 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 699** : 2 142 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

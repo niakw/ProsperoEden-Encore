@@ -552,6 +552,7 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     // Home and Recent launch routes may not have a fully populated Library
     // snapshot. Use their actual cached metadata, never an invented scan.
     launch_case_game_.name = title;
+    launch_case_game_.file = file; // Home-only NUP launches still need edition identity.
     launch_case_game_.cover = cover;
     launch_case_game_.hero = launch_hero_;
     launch_case_game_.screenshots = launch_screenshots_;

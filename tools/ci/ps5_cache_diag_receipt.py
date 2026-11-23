@@ -22,6 +22,7 @@ REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB = "dcc4c9cbb4e3cec48ab4d1dece9f8708196c5f
 REVIEWED_PIPELINE_DRAIN_BLOB = "e3910d11f33376097a90858118ba276f7e02cb70"
 # NS1-only successors: integer fragment output typing and recent shader prewarm.
 # Reverse their exact reviewed source hunks only for the immutable R23 oracle.
+REVIEWED_IMMUTABLE_SNAPSHOT_BLOB = "ad07512d129667a617b49b448d898c5756c99025"
 REVIEWED_PARALLEL_TIMING_BLOB = "52470b6160f6049801d963960adf6952c79a45cf"
 PARALLEL_TIMING_REVERSES = [
     [
@@ -154,6 +155,131 @@ def git_blob(content: str) -> str:
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
 
 
+def reverse_immutable_snapshot_successor(source: str) -> str:
+    """Reverse only the reviewed immutable-worker snapshot deltas to 44f5."""
+    def once(old: str, new: str, label: str) -> None:
+        nonlocal source
+        assert source.count(old) == 1, ("snapshot reverse anchor", label, source.count(old))
+        source = source.replace(old, new, 1)
+
+    # 70789b12: freeze Maxwell register state used by translation workers.
+    once(
+        """void SetShaderTranslationSnapshotForThread(
+    GPUVAddr texture_base, u32 texture_limit, const u8* texture_data,
+    bool via_header_index, u32 viewport_transform_state,
+    const u8* const* cbuf_data, const u32* cbuf_sizes, size_t cbuf_count) noexcept;""",
+        """void SetShaderTranslationSnapshotForThread(
+    GPUVAddr texture_base, u32 texture_limit, const u8* texture_data,
+    const u8* const* cbuf_data, const u32* cbuf_sizes, size_t cbuf_count) noexcept;""",
+        "707 declaration")
+    once(
+        """    const bool snapshot_via_header_index =
+        maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;
+    const u32 snapshot_viewport_transform_state =
+        maxwell3d->regs.viewport_scale_offset_enabled;
+""", "", "707 register snapshot")
+    once(
+        """    if (parallel_translate_stages) {
+        for (Shader::Environment* const env : envs) {
+            // HLE replacement lookup still belongs to Maxwell3D::replace_table.
+            // Keep those rare shaders on the GPU owner until that table has an
+            // immutable per-environment representation too.
+            if (env->HasHLEMacroState()) {
+                parallel_translate_stages = false;
+                break;
+            }
+        }
+    }
+
+""", "", "707 HLE serial fallback")
+    once(
+        """                 physical_stage, snapshot_texture_base, snapshot_texture_limit,
+                 snapshot_via_header_index, snapshot_viewport_transform_state,
+                 &parallel_texture_snapshot, &parallel_cbuf_ptrs,""",
+        """                 physical_stage, snapshot_texture_base, snapshot_texture_limit,
+                 &parallel_texture_snapshot, &parallel_cbuf_ptrs,""",
+        "707 lambda capture")
+    once(
+        """                            const std::vector<u8>& texture, bool via_header_index,
+                            u32 viewport_transform_state,
+                            const std::array<const u8*, Maxwell::MaxConstBuffers>& cbuf_data,""",
+        """                            const std::vector<u8>& texture,
+                            const std::array<const u8*, Maxwell::MaxConstBuffers>& cbuf_data,""",
+        "707 scope params")
+    once(
+        """                                texture_base, texture_limit, texture.data(),
+                                via_header_index, viewport_transform_state,
+                                cbuf_data.data(), cbuf_sizes.data(),""",
+        """                                texture_base, texture_limit, texture.data(),
+                                cbuf_data.data(), cbuf_sizes.data(),""",
+        "707 setter args")
+    once(
+        """                        snapshot_texture_base, snapshot_texture_limit,
+                        parallel_texture_snapshot, snapshot_via_header_index,
+                        snapshot_viewport_transform_state,
+                        parallel_cbuf_ptrs[physical_stage],""",
+        """                        snapshot_texture_base, snapshot_texture_limit,
+                        parallel_texture_snapshot, parallel_cbuf_ptrs[physical_stage],""",
+        "707 scope invocation")
+
+    # 4bd7eb17: immutable TIC/CBUF bytes replaced the earlier owner-flushed TIC path.
+    once(
+        """void SetShaderTranslationSnapshotForThread(
+    GPUVAddr texture_base, u32 texture_limit, const u8* texture_data,
+    const u8* const* cbuf_data, const u32* cbuf_sizes, size_t cbuf_count) noexcept;
+void ClearShaderTranslationSnapshotForThread() noexcept;""",
+        """void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept;""",
+        "4bd declaration")
+
+    start = source.find("    // Worker translation must never traverse the live guest GMMU. Snapshot\\n")
+    stop = source.find("    if (parallel_translate_stages) {\\n        size_t parallel_env_index{};", start)
+    assert start >= 0 and stop > start, ("snapshot owner block anchors", start, stop)
+    source = source[:start] + source[stop:]
+
+    once(
+        """                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,
+                 physical_stage, snapshot_texture_base, snapshot_texture_limit,
+                 &parallel_texture_snapshot, &parallel_cbuf_ptrs,
+                 &parallel_cbuf_sizes, &parallel_programs, &parallel_errors,
+                 &parallel_stage_costs] {""",
+        """                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,
+                 &parallel_programs, &parallel_errors, &parallel_stage_costs] {""",
+        "4bd lambda capture")
+
+    scope_start = source.find("                    struct ImmutableGuestSnapshotScope {")
+    scope_stop = source.find("                    try {", scope_start)
+    assert scope_start >= 0 and scope_stop > scope_start
+    source = source[:scope_start] + """                    struct PreflushedTexturePoolScope {
+                        PreflushedTexturePoolScope() {
+                            VideoCommon::SetShaderTexturePoolPreflushedForThread(true);
+                        }
+                        ~PreflushedTexturePoolScope() {
+                            VideoCommon::SetShaderTexturePoolPreflushedForThread(false);
+                        }
+                    } texture_pool_scope;
+""" + source[scope_stop:]
+
+    once(
+        """        // The GPU owner intentionally waits here. Workers see only immutable
+        // host snapshots plus each environment's already-copied shader code;
+        // no worker traverses the live GMMU/PTE table.
+""",
+        """        // The GPU owner intentionally waits here. While it waits, the TIC pool
+        // that it flushed cannot be made GPU-dirty by a later draw/dispatch.
+""",
+        "4bd wait comment")
+    once(
+        """                // Full TIC/CBUF byte snapshots are built inside
+                // CreateGraphicsPipeline on the GPU owner before queueing work.
+                parallel_translate_stages = true;""",
+        """                // Flush once on the GPU owner. Translation workers use only
+                // ReadBlockUnsafe for TICs until this owner joins them.
+                gpu_memory->FlushRegion(pool_base, pool_bytes);
+                parallel_translate_stages = true;""",
+        "4bd owner TIC flush")
+    return source
+
+
 def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     """Return old exact source and whether reviewed diagnostic blocks existed.
 
@@ -162,6 +288,11 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    if current == REVIEWED_IMMUTABLE_SNAPSHOT_BLOB:
+        source = reverse_immutable_snapshot_successor(source)
+        current = git_blob(source)
+        assert current == REVIEWED_PARALLEL_TIMING_BLOB, (
+            "Immutable shader snapshot predecessor drift", current)
     if current == REVIEWED_PARALLEL_TIMING_BLOB:
         source = reverse_reviewed_source(
             source, PARALLEL_TIMING_REVERSES,

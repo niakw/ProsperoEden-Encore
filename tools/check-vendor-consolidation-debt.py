@@ -2451,130 +2451,151 @@ reader_maintained = active / "eden-core/src/video_core/shader_cache_reader.inc"
 # owner. Reverse only the three exact authenticated-graphics additions and
 # still require byte-for-byte parity with the generated historical source.
 shader_mesh = shader_maintained.read_text()
-# FC27 first-use stage translation keeps the immutable shader-environment ABI:
-# reverse ONLY the reviewed worker-safe TIC delta, then replay the existing
-# null-TIC and P2.4 historical proofs byte-for-byte.
-check_canonical_git_object(
-    shader_maintained, "253771ae3f57ec04afa4e41ef081f9d730246276",
-    "parallel shader TIC environment")
-parallel_tic_reverse = [
-    [
-"""#ifdef PS5_NATIVE
-namespace {
-// Set only by a shader-translation worker after the GPU owner has flushed the
-// complete TIC pool and while that owner waits for every translation to finish.
-// Thread-local state cannot leak into the GPU thread or another worker job.
-thread_local bool shader_texture_pool_preflushed{};
-}
-
-void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept {
-    shader_texture_pool_preflushed = preflushed;
-}
-#endif
-
-""",
-        "",
-    ],
-    [
-"""    Tegra::Texture::TICEntry entry;
-#ifdef PS5_NATIVE
-    if (shader_texture_pool_preflushed) {
-        // The GPU-owner thread flushed the whole bounded TIC pool before
-        // dispatching stage translation and is blocked until this worker ends.
-        // Avoid a renderer/cache flush from this worker thread.
-        gpu_memory->ReadBlockUnsafe(descriptor_addr, &entry, sizeof(entry));
-    } else
-#endif
-    {
-        gpu_memory->ReadBlock(descriptor_addr, &entry, sizeof(entry));
+# The immutable worker snapshot successor changes this maintained owner again.
+# Seal the complete current blob and its worker-isolation witnesses. Older pins
+# continue through the detailed reversible historical proof below.
+shader_current_bytes = shader_mesh.encode("utf-8")
+shader_current_blob = hashlib.sha1(
+    b"blob " + str(len(shader_current_bytes)).encode() + bytes([0]) +
+    shader_current_bytes
+).hexdigest()
+if shader_current_blob == "2ed48cbbcc9b1c5ee963c78410a6e5caeeafaab1":
+    for witness in (
+        "struct ShaderTranslationSnapshotView",
+        "parallel shader instruction escaped cached snapshot",
+        "parallel shader CBUF read escaped immutable snapshot",
+        "shader_translation_snapshot.via_header_index",
+        "shader_translation_snapshot.viewport_transform_state",
+    ):
+        assert witness in shader_mesh, ("immutable shader snapshot witness lost", witness)
+    print("ENCORE_IMMUTABLE_SHADER_SNAPSHOT_SOURCE_PASS exact_blob=2ed48cbb "
+          "live_maxwell_worker_reads=sealed")
+else:
+    # FC27 first-use stage translation keeps the immutable shader-environment ABI:
+    # reverse ONLY the reviewed worker-safe TIC delta, then replay the existing
+    # null-TIC and P2.4 historical proofs byte-for-byte.
+    check_canonical_git_object(
+        shader_maintained, "253771ae3f57ec04afa4e41ef081f9d730246276",
+        "parallel shader TIC environment")
+    parallel_tic_reverse = [
+        [
+    """#ifdef PS5_NATIVE
+    namespace {
+    // Set only by a shader-translation worker after the GPU owner has flushed the
+    // complete TIC pool and while that owner waits for every translation to finish.
+    // Thread-local state cannot leak into the GPU thread or another worker job.
+    thread_local bool shader_texture_pool_preflushed{};
     }
-    NormalizeEmptyTexture(entry);
-""",
-"""    Tegra::Texture::TICEntry entry;
-    gpu_memory->ReadBlock(descriptor_addr, &entry, sizeof(entry));
-    NormalizeEmptyTexture(entry);
-""",
-    ],
-]
-for new, old in parallel_tic_reverse:
-    assert shader_mesh.count(new) == 1, "Unexpected parallel TIC shader delta"
-    shader_mesh = shader_mesh.replace(new, old, 1)
-parallel_tic_preimage = shader_mesh.encode()
-assert hashlib.sha1(
-    b"blob " + str(len(parallel_tic_preimage)).encode() + bytes([0]) +
-    parallel_tic_preimage
-).hexdigest() == "8b4e883aaad5507652e13be211581e4965b7fe89"
-print("ENCORE_PARALLEL_SHADER_TIC_SOURCE_PARITY_PASS historical_source_preserved=1")
-# Null-TIC correction from Lichii #1443. Preserve the frozen historical
-# SHA and exact P2.4 check; reverse only the five reviewed textual deltas.
-if "NULL_TEXTURE_2D_KEY" in shader_mesh:
-    null_tic_owner = shader_mesh.encode()
-    assert hashlib.sha1(
-        b"blob " + str(len(null_tic_owner)).encode() + bytes([0]) + null_tic_owner
-    ).hexdigest() == "8b4e883aaad5507652e13be211581e4965b7fe89", (
-        "null TIC shader environment predecessor drift")
-    null_tic_reverse = [["// Lichii #1443: distinguish an empty TIC from a genuine 1D descriptor.\n// Reserve an impossible guest CBUF index in the existing environment record;\n// the record layout is unchanged and older readers ignore the extra key.\nconstexpr u64 NULL_TEXTURE_2D_KEY = 0xffffffff00000001ULL;\nconstexpr u32 NULL_TEXTURE_2D_VALUE = 1;\n\nstatic void NormalizeEmptyTexture(Tegra::Texture::TICEntry& entry) {\n    if (entry.raw != decltype(entry.raw){}) {\n        return;\n    }\n    entry.format.Assign(Tegra::Texture::TextureFormat::A8B8G8R8);\n    entry.r_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.g_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.b_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.a_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.texture_type.Assign(Tegra::Texture::TextureType::Texture2D);\n    entry.normalized_coords.Assign(1);\n}\n\nstatic void WriteNullTextureMarker(std::ostream& file) {\n    file.write(reinterpret_cast<const char*>(&NULL_TEXTURE_2D_KEY), sizeof(NULL_TEXTURE_2D_KEY))\n        .write(reinterpret_cast<const char*>(&NULL_TEXTURE_2D_VALUE), sizeof(NULL_TEXTURE_2D_VALUE));\n}\n\nstatic void RestoreNullTextureMarker(auto& cbufs, auto& types, auto& formats) {\n    const auto marker = cbufs.find(NULL_TEXTURE_2D_KEY);\n    const bool current = marker != cbufs.end() && marker->second == NULL_TEXTURE_2D_VALUE;\n    if (marker != cbufs.end()) {\n        cbufs.erase(marker);\n    }\n    if (!current) {\n        // Older records cannot distinguish genuine 1D textures from empty TICs.\n        // Omit ambiguous values so the existing missing-value path can rebuild.\n        for (auto it = types.begin(); it != types.end();) {\n            if (it->second == Shader::TextureType::Color1D) {\n                formats.erase(it->first);\n                it = types.erase(it);\n            } else {\n                ++it;\n            }\n        }\n    }\n}\n\n",""],["const u64 num_cbuf_values{static_cast<u64>(cbuf_values.size()) + 1};","const u64 num_cbuf_values{static_cast<u64>(cbuf_values.size())};"],["    WriteNullTextureMarker(file);\n",""],["    NormalizeEmptyTexture(entry);\n",""],["    RestoreNullTextureMarker(cbuf_values, texture_types, texture_pixel_formats);\n",""]]
-    for new, old in null_tic_reverse:
-        assert shader_mesh.count(new) == 1, "Unexpected null TIC delta"
-        shader_mesh = shader_mesh.replace(new, old, 1)
-    null_tic_preimage = shader_mesh.encode()
-    assert hashlib.sha1(b"blob " + str(len(null_tic_preimage)).encode() + bytes([0]) + null_tic_preimage).hexdigest() == "787cbe84d2a4d587d944f980195932e83979a479"
-    print("ENCORE_NULL_TIC_SOURCE_PARITY_PASS historical_source_preserved=1")
-mesh_include = '''#ifdef PS5_NATIVE
-#include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"
-#endif
-'''
-assert shader_mesh.count(mesh_include) == 1
-shader_mesh = shader_mesh.replace(mesh_include, '')
-mesh_select = '''#ifdef PS5_NATIVE
-    // NVC597 SET_MESH_CONTROL (0x114c) replaces the vertex stage with
-    // Task or Mesh. Only a verified native 0xC797 engine may select it.
-    const auto& regs = maxwell3d->regs;
-    const bool native_mesh =
-        Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
-            .CaptureGraphicsTicket(maxwell3d).has_value() &&
-        (regs.reg_array[0x114c / 4] & 1U) != 0;
-    const bool has_task = native_mesh &&
-        regs.IsShaderConfigEnabled(Maxwell::ShaderType::TessellationInit);
-#else
-    constexpr bool native_mesh = false;
-    constexpr bool has_task = false;
-#endif
-'''
-assert shader_mesh.count(mesh_select) == 1
-shader_mesh = shader_mesh.replace(mesh_select, '')
-mesh_stage = '''    if (native_mesh &&
-        (program == Maxwell::ShaderType::VertexB ||
-         program == Maxwell::ShaderType::TessellationInit)) {
-        // Physical banks: VertexB=0 (Task or solo Mesh); TCS=1 (Mesh
-        // only with Task). No reinterpretation of ordinary NS1 stages.
-        stage = program == Maxwell::ShaderType::VertexB && has_task
-                    ? Shader::Stage::Task : Shader::Stage::Mesh;
-        mesh_registers = {maxwell3d->regs.reg_array[0x1150 / 4],
-                          maxwell3d->regs.reg_array[0x1154 / 4],
-                          maxwell3d->regs.reg_array[0x1158 / 4]};
-        if (stage == Shader::Stage::Mesh &&
-            maxwell3d->regs.IsShaderConfigEnabled(Maxwell::ShaderType::Geometry)) {
-            // NVC597 uses Geometry only as a per-primitive output map
-            // header. Do not compile a phantom geometry shader.
-            const auto& geometry = maxwell3d->regs.pipelines[
-                static_cast<std::size_t>(Maxwell::ShaderType::Geometry)];
-            const GPUVAddr address =
-                (GPUVAddr{geometry.reserved[0] & 0xffU} << 32) |
-                GPUVAddr{geometry.reserved[1]};
-            if (!gpu_memory->IsFullyMappedRange(address, sizeof(mesh_primitive_header))) {
-                throw std::out_of_range("Native mesh primitive-output header unmapped");
-            }
-            gpu_memory->ReadBlock(address, &mesh_primitive_header,
-                                  sizeof(mesh_primitive_header));
+    
+    void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept {
+        shader_texture_pool_preflushed = preflushed;
+    }
+    #endif
+    
+    """,
+            "",
+        ],
+        [
+    """    Tegra::Texture::TICEntry entry;
+    #ifdef PS5_NATIVE
+        if (shader_texture_pool_preflushed) {
+            // The GPU-owner thread flushed the whole bounded TIC pool before
+            // dispatching stage translation and is blocked until this worker ends.
+            // Avoid a renderer/cache flush from this worker thread.
+            gpu_memory->ReadBlockUnsafe(descriptor_addr, &entry, sizeof(entry));
+        } else
+    #endif
+        {
+            gpu_memory->ReadBlock(descriptor_addr, &entry, sizeof(entry));
         }
-    }
-'''
-assert shader_mesh.count(mesh_stage) == 1
-shader_mesh = shader_mesh.replace(mesh_stage, '')
-assert shader_mesh == shader_expected, "Shader cache source differs after exact P2.4 stage normalization"
-print("ENCORE_P24_AUTHENTICATED_SHADER_ENVIRONMENT_PARITY_PASS",
-      "mesh_source=versioned native_only=1 ns1_baseline=unchanged")
+        NormalizeEmptyTexture(entry);
+    """,
+    """    Tegra::Texture::TICEntry entry;
+        gpu_memory->ReadBlock(descriptor_addr, &entry, sizeof(entry));
+        NormalizeEmptyTexture(entry);
+    """,
+        ],
+    ]
+    for new, old in parallel_tic_reverse:
+        assert shader_mesh.count(new) == 1, "Unexpected parallel TIC shader delta"
+        shader_mesh = shader_mesh.replace(new, old, 1)
+    parallel_tic_preimage = shader_mesh.encode()
+    assert hashlib.sha1(
+        b"blob " + str(len(parallel_tic_preimage)).encode() + bytes([0]) +
+        parallel_tic_preimage
+    ).hexdigest() == "8b4e883aaad5507652e13be211581e4965b7fe89"
+    print("ENCORE_PARALLEL_SHADER_TIC_SOURCE_PARITY_PASS historical_source_preserved=1")
+    # Null-TIC correction from Lichii #1443. Preserve the frozen historical
+    # SHA and exact P2.4 check; reverse only the five reviewed textual deltas.
+    if "NULL_TEXTURE_2D_KEY" in shader_mesh:
+        null_tic_owner = shader_mesh.encode()
+        assert hashlib.sha1(
+            b"blob " + str(len(null_tic_owner)).encode() + bytes([0]) + null_tic_owner
+        ).hexdigest() == "8b4e883aaad5507652e13be211581e4965b7fe89", (
+            "null TIC shader environment predecessor drift")
+        null_tic_reverse = [["// Lichii #1443: distinguish an empty TIC from a genuine 1D descriptor.\n// Reserve an impossible guest CBUF index in the existing environment record;\n// the record layout is unchanged and older readers ignore the extra key.\nconstexpr u64 NULL_TEXTURE_2D_KEY = 0xffffffff00000001ULL;\nconstexpr u32 NULL_TEXTURE_2D_VALUE = 1;\n\nstatic void NormalizeEmptyTexture(Tegra::Texture::TICEntry& entry) {\n    if (entry.raw != decltype(entry.raw){}) {\n        return;\n    }\n    entry.format.Assign(Tegra::Texture::TextureFormat::A8B8G8R8);\n    entry.r_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.g_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.b_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.a_type.Assign(Tegra::Texture::ComponentType::UNORM);\n    entry.texture_type.Assign(Tegra::Texture::TextureType::Texture2D);\n    entry.normalized_coords.Assign(1);\n}\n\nstatic void WriteNullTextureMarker(std::ostream& file) {\n    file.write(reinterpret_cast<const char*>(&NULL_TEXTURE_2D_KEY), sizeof(NULL_TEXTURE_2D_KEY))\n        .write(reinterpret_cast<const char*>(&NULL_TEXTURE_2D_VALUE), sizeof(NULL_TEXTURE_2D_VALUE));\n}\n\nstatic void RestoreNullTextureMarker(auto& cbufs, auto& types, auto& formats) {\n    const auto marker = cbufs.find(NULL_TEXTURE_2D_KEY);\n    const bool current = marker != cbufs.end() && marker->second == NULL_TEXTURE_2D_VALUE;\n    if (marker != cbufs.end()) {\n        cbufs.erase(marker);\n    }\n    if (!current) {\n        // Older records cannot distinguish genuine 1D textures from empty TICs.\n        // Omit ambiguous values so the existing missing-value path can rebuild.\n        for (auto it = types.begin(); it != types.end();) {\n            if (it->second == Shader::TextureType::Color1D) {\n                formats.erase(it->first);\n                it = types.erase(it);\n            } else {\n                ++it;\n            }\n        }\n    }\n}\n\n",""],["const u64 num_cbuf_values{static_cast<u64>(cbuf_values.size()) + 1};","const u64 num_cbuf_values{static_cast<u64>(cbuf_values.size())};"],["    WriteNullTextureMarker(file);\n",""],["    NormalizeEmptyTexture(entry);\n",""],["    RestoreNullTextureMarker(cbuf_values, texture_types, texture_pixel_formats);\n",""]]
+        for new, old in null_tic_reverse:
+            assert shader_mesh.count(new) == 1, "Unexpected null TIC delta"
+            shader_mesh = shader_mesh.replace(new, old, 1)
+        null_tic_preimage = shader_mesh.encode()
+        assert hashlib.sha1(b"blob " + str(len(null_tic_preimage)).encode() + bytes([0]) + null_tic_preimage).hexdigest() == "787cbe84d2a4d587d944f980195932e83979a479"
+        print("ENCORE_NULL_TIC_SOURCE_PARITY_PASS historical_source_preserved=1")
+    mesh_include = '''#ifdef PS5_NATIVE
+    #include "core/hle/service/nvdrv/devices/native_gpu_channel_registry.h"
+    #endif
+    '''
+    assert shader_mesh.count(mesh_include) == 1
+    shader_mesh = shader_mesh.replace(mesh_include, '')
+    mesh_select = '''#ifdef PS5_NATIVE
+        // NVC597 SET_MESH_CONTROL (0x114c) replaces the vertex stage with
+        // Task or Mesh. Only a verified native 0xC797 engine may select it.
+        const auto& regs = maxwell3d->regs;
+        const bool native_mesh =
+            Service::Nvidia::Devices::NativeGpuChannelRegistry::Instance()
+                .CaptureGraphicsTicket(maxwell3d).has_value() &&
+            (regs.reg_array[0x114c / 4] & 1U) != 0;
+        const bool has_task = native_mesh &&
+            regs.IsShaderConfigEnabled(Maxwell::ShaderType::TessellationInit);
+    #else
+        constexpr bool native_mesh = false;
+        constexpr bool has_task = false;
+    #endif
+    '''
+    assert shader_mesh.count(mesh_select) == 1
+    shader_mesh = shader_mesh.replace(mesh_select, '')
+    mesh_stage = '''    if (native_mesh &&
+            (program == Maxwell::ShaderType::VertexB ||
+             program == Maxwell::ShaderType::TessellationInit)) {
+            // Physical banks: VertexB=0 (Task or solo Mesh); TCS=1 (Mesh
+            // only with Task). No reinterpretation of ordinary NS1 stages.
+            stage = program == Maxwell::ShaderType::VertexB && has_task
+                        ? Shader::Stage::Task : Shader::Stage::Mesh;
+            mesh_registers = {maxwell3d->regs.reg_array[0x1150 / 4],
+                              maxwell3d->regs.reg_array[0x1154 / 4],
+                              maxwell3d->regs.reg_array[0x1158 / 4]};
+            if (stage == Shader::Stage::Mesh &&
+                maxwell3d->regs.IsShaderConfigEnabled(Maxwell::ShaderType::Geometry)) {
+                // NVC597 uses Geometry only as a per-primitive output map
+                // header. Do not compile a phantom geometry shader.
+                const auto& geometry = maxwell3d->regs.pipelines[
+                    static_cast<std::size_t>(Maxwell::ShaderType::Geometry)];
+                const GPUVAddr address =
+                    (GPUVAddr{geometry.reserved[0] & 0xffU} << 32) |
+                    GPUVAddr{geometry.reserved[1]};
+                if (!gpu_memory->IsFullyMappedRange(address, sizeof(mesh_primitive_header))) {
+                    throw std::out_of_range("Native mesh primitive-output header unmapped");
+                }
+                gpu_memory->ReadBlock(address, &mesh_primitive_header,
+                                      sizeof(mesh_primitive_header));
+            }
+        }
+    '''
+    assert shader_mesh.count(mesh_stage) == 1
+    shader_mesh = shader_mesh.replace(mesh_stage, '')
+    assert shader_mesh == shader_expected, "Shader cache source differs after exact P2.4 stage normalization"
+    print("ENCORE_P24_AUTHENTICATED_SHADER_ENVIRONMENT_PARITY_PASS",
+          "mesh_source=versioned native_only=1 ns1_baseline=unchanged")
+    
 assert reader_maintained.is_file() and not (root / "headless/shader_cache_reader.inc").exists()
 check_canonical_git_object(reader_maintained, "5d652ca5cd6d8ec919c04902a18d87247673e523", "shader cache reader")
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_SHADER_ENVIRONMENT}")' in c

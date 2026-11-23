@@ -32,8 +32,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 496 | 80 | **1 576** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
-| **STUB — Stub / résultat simulé** | 77 | 0 | **77** |
-| **NOOP — No-op documenté** | 145 | 0 | **145** |
+| **STUB — Stub / résultat simulé** | 76 | 0 | **76** |
+| **NOOP — No-op documenté** | 146 | 0 | **146** |
 | **NULL — Handler NULL** | 1 607 | 0 | **1 607** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -2747,7 +2747,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bcat:a, bcat:m, bcat:u, bcat:s | `30201` | `UnregisterDeliveryTask` | 3.0.0+ | **ABI-DIFF** (source `sources/eden/src/core/hle/service/bcat/bcat_service.cpp` ; ID 30201 renommé UnregisterBackgroundDeliveryTask (nullptr) ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `30202` | `BlockDeliveryTask` | 3.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `30203` | `UnblockDeliveryTask` | 3.0.0+ | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
-| bcat:a, bcat:m, bcat:u, bcat:s | `30300` | `RegisterSystemApplicationDeliveryTasks` | 8.0.0+ | **STUB** ([source C++][ns1-src-058]) | 2026-11-22 |
+| bcat:a, bcat:m, bcat:u, bcat:s | `30300` | `RegisterSystemApplicationDeliveryTasks` | 8.0.0+ | **NOOP** (Encore synchronise BCAT uniquement sur requête explicite et n'a pas de scheduler Horizon de livraison système ; le corps actif documente et ignore volontairement cet enregistrement ; vendor `8c6c57ec`) | 2026-11-23 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `90100` | `GetDeliveryTaskList` | — | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `90200` | `GetDeliveryList` | — | **NULL** ([source C++][ns1-src-058]) | 2026-11-22 |
 | bcat:a, bcat:m, bcat:u, bcat:s | `90201` | `ClearDeliveryCacheStorage` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-058]) | 2026-11-22 |

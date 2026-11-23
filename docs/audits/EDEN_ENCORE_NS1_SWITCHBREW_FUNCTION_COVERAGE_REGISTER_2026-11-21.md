@@ -1536,6 +1536,16 @@ La commande BSD **25 `Read`** passe **STUB → IMPL-SRC**. L'ancien handler reto
 
 Pas de build natif PS5 ni de validation console revendiqués pour ce lot.
 
+## Requalification BCAT 30300 — 23/11/2026
+
+Le scan systématique des **77 STUB** contre leurs corps C++ actuels a trouvé une seule entrée déjà sortie du statut stub sans mise à jour du catalogue : `IBcatService::RegisterSystemApplicationDeliveryTasks` (30300). Le corps actif explique explicitement qu'Encore ne possède pas de scheduler Horizon de livraison BCAT en arrière-plan et que l'enregistrement des tâches système est donc un **NOOP intentionnel** ; les synchronisations BCAT réelles restent déclenchées par les requêtes explicites du backend.
+
+**Compteur courant : 1 576 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 607 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 443 HORS-VERSION / 0 ABSENT / 270 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 102** : 1 607 NULL + 76 STUB + 140 PARTIEL + 270 ABI-DIFF + 9 AMBIGU.
+
+Les 76 autres STUB conservent au moins un marqueur explicite de stub/TODO/UNIMPLEMENTED dans leur propriétaire courant ; ils ne sont pas requalifiés automatiquement.
+
 ---
 
 ## 1. Références et règle de vérité

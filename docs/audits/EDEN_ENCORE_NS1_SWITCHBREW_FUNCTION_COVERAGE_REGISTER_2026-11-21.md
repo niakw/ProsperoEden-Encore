@@ -2526,3 +2526,12 @@ Vendor `98ea6932ee52d0c7b6ad4de5776a05df3316f32d` → gitlink moteur `8e2cbafa59
 **Compteur courant : 1 743 IMPL-SRC / 142 PARTIEL / 52 STUB / 205 NOOP / 1 271 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 664** : 1 271 NULL + 52 STUB + 142 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## CAPS — album application wrappers (23/11/2026)
+
+Vendor `71ead3c34a782580ad52770fbfbcb87de83da416` → gitlink moteur `d3ef1ddd30f0570bb75285b0f216d58c409062a2`. Les wrappers caps:u 103/104/105/110/120/140/141/143 utilisent désormais AlbumManager ; caps:c 2014 vérifie la table d'applications enregistrées avec le code officiel ControlNotOpened (2206-822). **9 NULL reclassés : 4 IMPL-SRC + 5 PARTIEL ; baisse nette du pool = 4.** Aucun build PS5 ni résultat console revendiqué.
+
+**Compteur courant : 1 747 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 262 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 660** : 1 262 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

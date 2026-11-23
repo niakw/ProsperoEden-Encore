@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 663 | 80 | **1 743** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 667 | 80 | **1 747** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
+| **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 205 | 0 | **205** |
-| **NULL — Handler NULL** | 1 271 | 0 | **1 271** |
+| **NULL — Handler NULL** | 1 262 | 0 | **1 262** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3309,7 +3309,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:c | `2011` | `RegisterAppletResourceUserId` | 2.0.0+ | **IMPL-SRC** (ABI 0x18 HOS19+ confirmée libnx/dump 23.0.1 ; conserve ARUID→ApplicationId[0x10] ; vendor `9c8dd143`) | 2026-11-23 |
 | caps:c | `2012` | `UnregisterAppletResourceUserId` | 2.0.0+ | **IMPL-SRC** (retire le mapping ARUID correspondant sans affecter les autres registrations ; vendor `9c8dd143`) | 2026-11-23 |
 | caps:c | `2013` | `GetApplicationIdFromAruid` | 2.0.0+ | **IMPL-SRC** (ABI 0x8→0x10 confirmée ; lit le registre caps:c puis fallback sur le propriétaire ARUID du core ; vendor `9c8dd143`) | 2026-11-23 |
-| caps:c | `2014` | `CheckApplicationIdRegistered` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
+| caps:c | `2014` | `CheckApplicationIdRegistered` | 2.0.0+ | **IMPL-SRC** (vérifie l'application dans `registered_applications` ; retourne ControlNotOpened 2206-822 sinon ; vendor `a0f2681a`) | 2026-11-23 |
 | caps:c | `2101` | `GenerateCurrentAlbumFileId` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2102` | `GenerateApplicationAlbumEnrty` | 2.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; ID 2102 connu mais nom SwitchBrew GenerateApplicationAlbumEnrty différent de la table GenerateApplicationAlbumEntry (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
 | caps:c | `2202` | `SaveAlbumScreenShotFileEx` | 4.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
@@ -3341,16 +3341,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:c | `2434` | `SetAlbumMovieWriteStreamDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | **NOOP** ([active CAPS source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/7dfbe3cc1409cc4b5f3bba145ba7fd4134cf271f/sources/eden/src/core/hle/service/caps/caps_u.cpp) ; shim-version consommée comme hint de compatibilité sans branche runtime Encore) | 2026-11-23 |
 | caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | **PARTIEL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `103` | `DeleteAlbumFileByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `104` | `GetAlbumFileSizeByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `105` | `DeleteAlbumFileByAruidForDebug` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `110` | `LoadAlbumScreenShotImageByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `120` | `LoadAlbumScreenShotThumbnailImageByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
+| caps:u | `103` | `DeleteAlbumFileByAruid` | — | **IMPL-SRC** (reconstruit l'AlbumFileId depuis ARUID + entrée application et appelle `AlbumManager::DeleteAlbumFile`; vendor `71ead3c3`) | 2026-11-23 |
+| caps:u | `104` | `GetAlbumFileSizeByAruid` | — | **IMPL-SRC** (`AlbumManager::GetAlbumFileSize` sur l'identifiant reconstruit ; ABI 0x38 confirmée ; vendor `71ead3c3`) | 2026-11-23 |
+| caps:u | `105` | `DeleteAlbumFileByAruidForDebug` | — | **IMPL-SRC** (même suppression locale que cmd103 sans filtre ContentType séparé ; vendor `71ead3c3`) | 2026-11-23 |
+| caps:u | `110` | `LoadAlbumScreenShotImageByAruid` | — | **PARTIEL** (décode réellement l'image via AlbumManager et remplit dimensions/attribut ; ApplicationData reste non reconstruit ; vendor `71ead3c3`) | 2026-11-23 |
+| caps:u | `120` | `LoadAlbumScreenShotThumbnailImageByAruid` | — | **PARTIEL** (thumbnail réel via AlbumManager ; données application annexes non reconstruites ; vendor `71ead3c3`) | 2026-11-23 |
 | caps:u | `130` | `PrecheckToCreateContentsByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `140` | `GetAlbumFileList1AafeAruidDeprecated` | 6.0.0+ | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `141` | `GetAlbumFileList2AafeUidAruidDeprecated` | 6.0.0+ | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
+| caps:u | `140` | `GetAlbumFileList1AafeAruidDeprecated` | 6.0.0+ | **PARTIEL** (liste réelle depuis AlbumManager et conversion vers ApplicationAlbumFileEntry ; mêmes limites de filtrage/crypto que cmd142 ; vendor `71ead3c3`) | 2026-11-23 |
+| caps:u | `141` | `GetAlbumFileList2AafeUidAruidDeprecated` | 6.0.0+ | **PARTIEL** (liste réelle ; UID accepté mais non filtré par le backend album local ; vendor `71ead3c3`) | 2026-11-23 |
 | caps:u | `142` | `GetAlbumFileList3AaeAruid` | 7.0.0+ | **PARTIEL** ([source C++][ns1-src-074]) | 2026-11-22 |
-| caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
+| caps:u | `143` | `GetAlbumFileList4AaeUidAruid` | 7.0.0+ | **PARTIEL** (réutilise la liste date/ARUID réelle ; UID non filtré par le stockage local ; vendor `71ead3c3`) | 2026-11-23 |
 | caps:u | `60002` | `OpenAccessorSessionForApplication` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `2001` | `OpenAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:u | `2002` | `CloseAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
@@ -6562,3 +6562,10 @@ Vendor `3cda4d41066c22a4873019206b1f5e2da139892e` → gitlink moteur `1dbb774b0d
 Vendor `98ea6932ee52d0c7b6ad4de5776a05df3316f32d` (inclut `7f5859ea`, `14bdf52c`, `ab2819b`) → gitlink moteur `8e2cbafa5992d7eecd9cac2694c93375a23dd97a`. **8 NULL sortent de l'état NULL** : deux `Reject` LDN deviennent NOOP documentés, cinq ouvertures FSP deviennent IMPL-SRC (BIS FS/storage, GameCard FS, image directory, content storage) et `OpenGameCardStorage` devient PARTIEL car la partition `RootWriteOnly` n'est pas exposée en écriture par le backend XCI Encore. Baisse nette du pool : **7**. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 743 IMPL-SRC / 142 PARTIEL / 52 STUB / 205 NOOP / 1 271 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 664.**
+
+
+### CAPS — album application wrappers (23/11/2026)
+
+Vendor `71ead3c34a782580ad52770fbfbcb87de83da416` → gitlink moteur `d3ef1ddd30f0570bb75285b0f216d58c409062a2`. **9 NULL sont raccordés** au backend album existant : quatre deviennent IMPL-SRC (registration check, delete, size, delete-debug) et cinq deviennent PARTIEL (image/thumbnail et listes 140/141/143), afin de ne pas masquer les limites ApplicationData, filtrage UID et crypto déjà présentes dans le modèle local. Baisse nette du pool : **4**. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 747 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 262 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 660.**

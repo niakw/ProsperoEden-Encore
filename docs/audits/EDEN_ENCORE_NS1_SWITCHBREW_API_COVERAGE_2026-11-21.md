@@ -29,7 +29,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 519 | 80 | **1 599** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 525 | 80 | **1 605** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
@@ -40,7 +40,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 229 | 0 | **229** |
+| **ABI-DIFF — Noms/ABI divergents** | 223 | 0 | **223** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
@@ -2574,19 +2574,19 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | audin:u | `3` | `OpenAudioInAuto` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-050]) | 2026-11-22 |
 | audin:u | `4` | `ListAudioInsAutoFiltered` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-050]) | 2026-11-22 |
 | audin:u | `0` | `GetAudioInState` | — | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `1` | `StartAudioIn` | — | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 1 : SwitchBrew StartAudioIn / table active Start, le handler Start existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
-| audin:u | `2` | `StopAudioIn` | — | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 2 : SwitchBrew StopAudioIn / table active Stop, le handler Stop existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
+| audin:u | `1` | `StartAudioIn` | — | **IMPL-SRC** (ID/signature recroisés avec l'interface Nintendo actuelle fefw : le nom Eden moderne diffère seulement du libellé historique ; handler C++ réel actif pour StartAudioIn; vendor `ee971276`, 23/11/2026) | 2026-11-23 |
+| audin:u | `2` | `StopAudioIn` | — | **IMPL-SRC** (ID/signature recroisés avec l'interface Nintendo actuelle fefw : le nom Eden moderne diffère seulement du libellé historique ; handler C++ réel actif pour StopAudioIn; vendor `ee971276`, 23/11/2026) | 2026-11-23 |
 | audin:u | `3` | `AppendAudioInBuffer` | — | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
 | audin:u | `4` | `RegisterBufferEvent` | — | **IMPL-SRC** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; IAudioIn::RegisterBufferEvent traite une opération audio ; non testé PS5) | 2026-11-22 |
-| audin:u | `5` | `GetReleasedAudioInBuffer` | — | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 5 : SwitchBrew GetReleasedAudioInBuffer / table active GetReleasedAudioInBuffers, le handler GetReleasedAudioInBuffers existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
+| audin:u | `5` | `GetReleasedAudioInBuffer` | — | **IMPL-SRC** (ID/signature recroisés avec l'interface Nintendo actuelle fefw : le nom Eden moderne diffère seulement du libellé historique ; handler C++ réel actif pour GetReleasedAudioInBuffer; vendor `ee971276`, 23/11/2026) | 2026-11-23 |
 | audin:u | `6` | `ContainsAudioInBuffer` | — | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
 | audin:u | `7` | `AppendAudioInBufferWithUserEvent` | 3.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 7 : SwitchBrew AppendAudioInBufferWithUserEvent / table active AppendUacInBuffer, le handler AppendAudioInBuffer existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
 | audin:u | `8` | `AppendAudioInBufferAuto` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `9` | `GetReleasedAudioInBufferAuto` | 3.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 9 : SwitchBrew GetReleasedAudioInBufferAuto / table active GetReleasedAudioInBuffersAuto, le handler GetReleasedAudioInBuffersAuto existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
+| audin:u | `9` | `GetReleasedAudioInBufferAuto` | 3.0.0+ | **IMPL-SRC** (ID/signature recroisés avec l'interface Nintendo actuelle fefw : le nom Eden moderne diffère seulement du libellé historique ; handler C++ réel actif pour GetReleasedAudioInBufferAuto; vendor `ee971276`, 23/11/2026) | 2026-11-23 |
 | audin:u | `10` | `AppendAudioInBufferWithUserEventAuto` | 3.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 10 : SwitchBrew AppendAudioInBufferWithUserEventAuto / table active AppendUacInBufferAuto, le handler AppendAudioInBufferAuto existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
 | audin:u | `11` | `GetAudioInBufferCount` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
-| audin:u | `12` | `SetAudioInDeviceGain` | 4.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 12 : SwitchBrew SetAudioInDeviceGain / table active SetDeviceGain, le handler SetDeviceGain existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
-| audin:u | `13` | `GetAudioInDeviceGain` | 4.0.0+ | **ABI-DIFF** ([table et corps](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio_in.cpp) ; ID 13 : SwitchBrew GetAudioInDeviceGain / table active GetDeviceGain, le handler GetDeviceGain existe mais l'ABI historique n'est pas prouvée ; non testé PS5) | 2026-11-22 |
+| audin:u | `12` | `SetAudioInDeviceGain` | 4.0.0+ | **IMPL-SRC** (ID/signature recroisés avec l'interface Nintendo actuelle fefw : le nom Eden moderne diffère seulement du libellé historique ; handler C++ réel actif pour SetAudioInDeviceGain; vendor `ee971276`, 23/11/2026) | 2026-11-23 |
+| audin:u | `13` | `GetAudioInDeviceGain` | 4.0.0+ | **IMPL-SRC** (ID/signature recroisés avec l'interface Nintendo actuelle fefw : le nom Eden moderne diffère seulement du libellé historique ; handler C++ réel actif pour GetAudioInDeviceGain; vendor `ee971276`, 23/11/2026) | 2026-11-23 |
 | audin:u | `14` | `FlushAudioInBuffers` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-051]) | 2026-11-22 |
 | audrec:u | `0` | `OpenFinalOutputRecorder` | — | **NULL** ([source C++][ns1-src-056]) | 2026-11-22 |
 | audrec:u | `0` | `GetFinalOutputRecorderState` | — | **NULL** ([source C++][ns1-src-056]) | 2026-11-22 |
@@ -6257,3 +6257,10 @@ Sur le vendor `8c6c57ec`, `MIG_USR` conserve une table interne nommée `mig:usr`
 Vendor `ee971276a3254c0eb003f1e6f34cd10988874f1b`, gitlink moteur `df976b8722f7de250f7207b71183de559053e809` : `GetAddOnContentListChangedEvent` retourne le `KEvent` réel existant ; les notifications de montage/démontage recalculent maintenant l'inventaire AOC puis signalent cet événement. Le cmd8 passe **STUB → IMPL-SRC**. Les commandes d'achat eShop restent ouvertes et ne sont pas requalifiées.
 
 **Compteur courant : 1 599 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 229 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 058.**
+
+
+### AudioIn — six alias historiques requalifiés (23/11/2026)
+
+Les commandes `audin:u` 1, 2, 5, 9, 12 et 13 ont été recroisées avec l'interface Nintendo actuelle : leurs IDs et signatures correspondent aux handlers Encore `Start`, `Stop`, `GetReleasedAudioInBuffers`, `GetReleasedAudioInBuffersAuto`, `SetDeviceGain` et `GetDeviceGain`. Elles passent **ABI-DIFF → IMPL-SRC**. Les IDs 7/10 restent ouverts : l'ABI UAC de référence transporte un `NativeHandle` qu'Encore ne prend pas en paramètre.
+
+**Compteur courant : 1 605 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 223 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 052.**

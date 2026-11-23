@@ -1,5 +1,7 @@
 # Eden Encore — suivi maître F07 et exploitation PS5
 
+> **Essais FC27 PS5 du 23/11 (binaire moteur `25f12c02`, vendor `716e069f`) :** 2 arrêts natifs à la fermeture manuelle, `recursive_mutex lock failed: Invalid argument`, thread main (250 s / 342 s). Journal : `gpu_core.reset`, `kernel.CloseServices`, `services.reset` achevés avant exception. Correctif de durée de vie SM [vendor `09ce0af1`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/09ce0af1ccf20a1f9278ed4ab401729768b1f925) intégré **sans validation console**. FC27 atteint des fenêtres à ~30 FPS mais une autre tombe à 25,517 FPS, pire frame 628,770 ms ; BufferCache 7552 contentions / 206,239 ms d'attentes cumulées sur cette fenêtre ; `surface.cpp format=0` et Fermi2D volume-slice non résolus. P0 fermeture et P1 fidélité/frame pacing **ouverts**. Voir [architecture mémoire invitée](EDEN_ENCORE_GUEST_MEMORY_NS1_NS2_PS5_ARCHITECTURE.md).
+
 **Suivi exécutable des optimisations restantes :** [F07_REMAINING_OPTIMIZATION_CHECKLIST.md](F07_REMAINING_OPTIMIZATION_CHECKLIST.md) — une case par contrôle, séparant décisions pré-build et preuves console post-build. Ne pas confondre nombre de cases et nombre de patchs nécessaires.
 
 **Date de référence historique :** 28 octobre 2026. **Branche actuelle : `main`** depuis le 30 octobre 2026. L'ancienne branche `dev/ps5-sparse-jit` n'est plus éditée ; ses cinq derniers correctifs ont été fusionnés via PR #5. Les résultats historiques liés à cette branche ne prouvent pas les CI récentes de `main`.

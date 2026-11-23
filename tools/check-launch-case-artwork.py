@@ -858,6 +858,7 @@ with tempfile.TemporaryDirectory(prefix="encore-case-fallback-") as workspace:
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <sys/stat.h>

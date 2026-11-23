@@ -60,7 +60,7 @@ assert 'for (std::size_t offset = 0; offset < games_.size(); ++offset)' not in s
 for marker in ("screen_ != Screen::library", "media_scan_.valid()",
                "library_.selected < 0", "library_.selected >= static_cast<int>(games_.size())",
                "games_[static_cast<std::size_t>(library_.selected)]",
-               "media_next_retry_.find(game.title_id)",
+               "media_next_retry_.find(game.file)",
                "media_scan_title_id_ = game.title_id",
                "services_.enrich_game_media(std::move(copy), &selected_media_cancel_)"):
     assert marker in start, marker

@@ -216,7 +216,7 @@ for native in (False, True):
 # R457 sparse and final FC27/P0 provenance gates) and verify the live lifetime
 # order directly rather than replaying an incomplete historical reverse chain.
 ns2 = (root / "vendor/encore-active/ns2-runtime/process/core/core.cpp").read_text()
-assert git_blob(ns2) == "83fc9a903b05ed9fd096c35102db54a966d736c2", (
+assert git_blob(ns2) == "0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98", (
     "reviewed current NS2 Core source drift")
 ns2_shutdown = ns2.split("    void ShutdownMainProcess() {", 1)[1].split(
     "\n    bool IsShuttingDown()", 1)[0]

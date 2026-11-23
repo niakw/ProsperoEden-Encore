@@ -29,11 +29,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 549 | 80 | **1 629** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 550 | 80 | **1 630** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
-| **NOOP — No-op documenté** | 145 | 0 | **145** |
+| **NOOP — No-op documenté** | 146 | 0 | **146** |
 | **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -1737,7 +1737,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `40` | `GetCradleFwVersion` | 2.0.0+ | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `50` | `IsVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `51` | `SetVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `52` | `SetLcdBacklighOffEnabled` | 4.0.0+ | **STUB** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `52` | `SetLcdBacklighOffEnabled` | 4.0.0+ | **NOOP** (adaptation PS5 sans LCD Switch : la requête est acceptée, `Applet::lcd_backlight_off_enabled` est conservé sous verrou, aucun écran hôte n'est éteint ; vendor `3e8effa0`, moteur `1bb6cfcb`) | 2026-11-23 |
 | appletAE | `53` | `BeginVrModeEx` | 7.0.0+ | **IMPL-SRC** (active le même état `vr_mode_enabled` que `SetVrModeEnabled`, observable par `IsVrModeEnabled` ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `54` | `EndVrModeEx` | 7.0.0+ | **IMPL-SRC** (désactive le même état `vr_mode_enabled` que `SetVrModeEnabled`, observable par `IsVrModeEnabled` ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `55` | `IsInControllerFirmwareUpdateSection` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
@@ -1783,7 +1783,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `64` | `SetInputDetectionSourceSet` | — | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `65` | `ReportUserIsActive` | 2.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `66` | `GetCurrentIlluminance` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `67` | `IsIlluminanceAvailable` | 3.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `67` | `IsIlluminanceAvailable` | 3.0.0+ | **IMPL-SRC** (capability query réelle : aucun capteur de lumière ambiante n'est exposé par l'intégration PS5, retourne donc `false` ; vendor `3e8effa0`, moteur `1bb6cfcb`) | 2026-11-23 |
 | appletAE | `68` | `SetAutoSleepDisabled` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `69` | `IsAutoSleepDisabled` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `70` | `ReportMultimediaError` | 4.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
@@ -6411,3 +6411,10 @@ Vendor `fd389efbe1b51743aa630243fe00074f873dfb8a` → gitlink moteur `efc5f412fe
 Vendor `4b8110b70ae05698b4c8db1354b87ff0c7b1f4a1` → gitlink moteur `3a72dfbae25c130f856da4c17992a76514d25157`. `NotifyRunning` ne renvoie plus `true` sans effet : il fait transiter `Applet::is_process_running`, renvoie si la transition vient réellement d'avoir lieu et demande une mise à jour du `WindowSystem`, qui consomme cet état pour visibilité, focus et input. **1 STUB → IMPL-SRC**.
 
 **Compteur courant : 1 629 IMPL-SRC / 141 PARTIEL / 74 STUB / 145 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 838.**
+
+
+### AppletAE — capacités écran PS5 qualifiées (23/11/2026)
+
+Vendor `3e8effa0b3dc8184d46228e8bc82fa7c626d08bb` → gitlink moteur `1bb6cfcb49ea4af12095eafd312f9ab38e83bb5c`. `SetLcdBacklighOffEnabled` conserve désormais le flag invité mais reste un **NOOP matériel PS5** puisqu'il n'existe pas de LCD Switch à piloter. `IsIlluminanceAvailable` renvoie explicitement `false` comme capacité hôte réelle, ce qui empêche les invités d'enchaîner vers les lectures de capteur non exposées. **2 STUB sortent du pool**.
+
+**Compteur courant : 1 630 IMPL-SRC / 141 PARTIEL / 72 STUB / 146 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 836.**

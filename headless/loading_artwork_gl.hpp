@@ -182,7 +182,13 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture_);
         glUniform1i(glGetUniformLocation(program_, "art"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, alternate_texture_);
+        glUniform1i(glGetUniformLocation(program_, "alternate_art"), 1);
+        glActiveTexture(GL_TEXTURE0);
         glUniform1i(glGetUniformLocation(program_, "has_art"), texture_ ? 1 : 0);
+        glUniform1i(glGetUniformLocation(program_, "has_alternate"),
+                    alternate_texture_ ? 1 : 0);
         const auto fit = Fit(width_, height_, width, height);
         glUniform4f(glGetUniformLocation(program_, "fit_rect"), float(fit.x), float(fit.y),
                     float(std::max(1u, fit.width)), float(std::max(1u, fit.height)));
@@ -231,7 +237,7 @@ private:
         program_ = program;
         return true;
     }
-    GLuint program_{}, vao_{}, texture_{};
+    GLuint program_{}, vao_{}, texture_{}, alternate_texture_{};
     std::uint32_t width_{}, height_{};
     bool attempted_{};
 };

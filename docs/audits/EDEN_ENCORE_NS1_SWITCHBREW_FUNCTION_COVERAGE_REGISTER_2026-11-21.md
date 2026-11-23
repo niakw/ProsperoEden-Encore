@@ -1411,6 +1411,23 @@ Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+
+## Lot HID debug — désactivation des contrôleurs réels — 23/11/2026
+
+**Vendor `a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc`** (arbre `f53f4750d84de2bbb941984508a885241e7e6f41`).
+
+Neuf handlers runtime `hid:dbg` sont désormais raccordés : `DeactivateDebugPad` (0), `DeactivateMouse` (20), `DeactivateKeyboard` (30), `DeactivateHomeButton` (110), `DeactivateSleepButton` (120), `DeactivateCaptureButton` (130), `DeactivateConsoleSixAxisSensor` (140), `DeactivateSevenSixAxisSensor` (142) et `DeactivateDigitizer` (2000).
+
+Le handler résout le périphérique déjà détenu par le `ResourceManager` actif et appelle `ControllerBase::DeactivateController()`. Aucun état HID synthétique, aucune sortie inventée et aucun alias de commande ne sont ajoutés. La table `hid:dbg` réellement compilée est celle de `sources/eden/src/core/hle/service/hid/hid_debug_server.cpp`, listée par le CMake actif ; aucun overlay homonyme `encore-active/eden-backports` ne la remplace.
+
+Le catalogue canonique SwitchBrew utilisé par ce registre contient huit de ces neuf commandes : elles passent **NULL → IMPL-SRC**. `DeactivateDigitizer` (2000) n'est pas présent dans ce dénominateur physique et ne fait donc pas baisser artificiellement le compteur.
+
+**Compteur historique : 1 553 IMPL-SRC / 142 PARTIEL / 121 STUB / 142 NOOP / 1 699 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 242** : 1 699 NULL + 121 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

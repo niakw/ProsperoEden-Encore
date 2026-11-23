@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 545 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 553 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `a243ecb0`. **Ces 1 553 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 465 | 80 | **1 545** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 473 | 80 | **1 553** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
 | **STUB — Stub / résultat simulé** | 121 | 0 | **121** |
 | **NOOP — No-op documenté** | 142 | 0 | **142** |
-| **NULL — Handler NULL** | 1 707 | 0 | **1 707** |
+| **NULL — Handler NULL** | 1 699 | 0 | **1 699** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -1199,17 +1199,17 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `1003` | `IsFirmwareUpdateNeededForNotification` | 9.0.0+ | **NOOP** (aucun updater firmware contrôleur n'est exposé par Encore ; retourne false ; vendor `2faf00b1`) | 2026-11-22 |
 | hid | `0` | `GetSharedMemoryHandle` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/applet_resource.cpp)) | 2026-11-22 |
 | hid | `0` | `ActivateVibrationDevice` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/active_vibration_device_list.cpp)) | 2026-11-22 |
-| hid:dbg | `0` | `DeactivateDebugPad` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `0` | `DeactivateDebugPad` | — | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `1` | `SetDebugPadAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `2` | `UnsetDebugPadAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `10` | `DeactivateTouchScreen` | — | **IMPL-SRC** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `11` | `SetTouchScreenAutoPilotState` | — | **IMPL-SRC** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `12` | `UnsetTouchScreenAutoPilotState` | — | **IMPL-SRC** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `13` | `GetTouchScreenConfiguration` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `20` | `DeactivateMouse` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `20` | `DeactivateMouse` | — | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `21` | `SetMouseAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `22` | `UnsetMouseAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `30` | `DeactivateKeyboard` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `30` | `DeactivateKeyboard` | — | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `31` | `SetKeyboardAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `32` | `UnsetKeyboardAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `50` | `DeactivateXpad` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
@@ -1217,23 +1217,23 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:dbg | `52` | `UnsetXpadAutoPilotState` | — | **HORS-VERSION** (SwitchBrew HID : Xpad AutoPilot IDs51/52 limités à HOS 1.0.0–9.2.0 ; cible HOS 23) | 2026-11-23 |
 | hid:dbg | `60` | `ClearNpadSystemCommonPolicy` | 9.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `91` | `DeactivateGesture` | — | **IMPL-SRC** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `110` | `DeactivateHomeButton` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `110` | `DeactivateHomeButton` | — | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `111` | `SetHomeButtonAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `112` | `UnsetHomeButtonAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `120` | `DeactivateSleepButton` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `120` | `DeactivateSleepButton` | — | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `121` | `SetSleepButtonAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `122` | `UnsetSleepButtonAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `123` | `DeactivateInputDetector` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `130` | `DeactivateCaptureButton` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `130` | `DeactivateCaptureButton` | — | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `131` | `SetCaptureButtonAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `132` | `UnsetCaptureButtonAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `133` | `SetShiftAccelerometerCalibrationValue` | 3.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `134` | `GetShiftAccelerometerCalibrationValue` | 3.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `135` | `SetShiftGyroscopeCalibrationValue` | 3.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `136` | `GetShiftGyroscopeCalibrationValue` | 3.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `140` | `DeactivateConsoleSixAxisSensor` | 3.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `140` | `DeactivateConsoleSixAxisSensor` | 3.0.0+ | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `141` | `GetConsoleSixAxisSensorSamplingFrequency` | 5.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `142` | `DeactivateSevenSixAxisSensor` | 5.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `142` | `DeactivateSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `143` | `GetConsoleSixAxisSensorCountStates` | 5.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `144` | `GetAccelerometerFsr` | 8.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `145` | `SetAccelerometerFsr` | 8.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |

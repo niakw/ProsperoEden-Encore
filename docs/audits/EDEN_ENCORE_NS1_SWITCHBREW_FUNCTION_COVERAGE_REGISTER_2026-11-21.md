@@ -1105,6 +1105,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 475** : 1 940 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot Friend — quatre listes V1 ABI réconciliées — 23/11/2026
+
+**Vendor `de2daec43b71d2f13e00b154f96e39770c4bd8c9`** (arbre `5b4f442159c08643686b78fc5dd82146c4141f2a`).
+
+- `GetFriendRequestList` (20201), `GetBlockedUserList` (20400), `GetPlayHistoryList` (20700) et `GetReceivedFriendInvitationList` (22000) : **4 ABI-DIFF → IMPL-SRC**.
+- SwIPC confirme les IDs et les formes V1 : paramètres `u32/Uid` selon la commande, sortie count `u32` + tableau MapAlias. Ryujinx renvoie count 0 pour chacune en mode sans données sociales.
+- Encore consomme les entrées, initialise explicitement les buffers de sortie et renvoie count 0. Les anciens suffixes `V1` ne masquent donc plus un écart de contrat pour ces quatre IDs.
+- Aucun historique, blocage, demande ou invitation fictifs ne sont produits.
+
+**Compteur historique : 1 527 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 940 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 272 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 471** : 1 940 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

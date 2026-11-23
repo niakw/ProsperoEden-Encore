@@ -1397,6 +1397,20 @@ Les deux unités `key_manager.cpp/.h` sont ajoutées comme backports complets av
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot BTM legacy — état radio partagé avec set:sys — 23/11/2026
+
+**Vendor `0fcec5e76502b0def90d946bffdc29ff3e19000f`** (arbre `562294e7a9742631cdaab84d2924f6454486a4a3`).
+
+`btm::EnableRadio` (14) et `btm::DisableRadio` (15) passent **NULL → IMPL-SRC**. SwIPC confirme que les deux commandes legacy n'ont ni entrée ni sortie. Le backport résout `set:sys` une seule fois et appelle les mêmes `SetBluetoothEnableFlag(true/false)` que `IBtmSystemCore`, de sorte que les interfaces legacy et moderne partagent un état unique.
+
+`btm::GetState` (0) reste ouvert : SwIPC ne documente que quatre octets de sortie inconnus et aucun enum fiable n'a été trouvé ; aucune valeur synthétique n'est ajoutée.
+
+**Compteur historique : 1 545 IMPL-SRC / 142 PARTIEL / 121 STUB / 142 NOOP / 1 707 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 250** : 1 707 NULL + 121 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

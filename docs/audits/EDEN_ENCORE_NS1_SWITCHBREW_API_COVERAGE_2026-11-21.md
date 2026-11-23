@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 543 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 545 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 463 | 80 | **1 543** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 465 | 80 | **1 545** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
 | **STUB — Stub / résultat simulé** | 121 | 0 | **121** |
 | **NOOP — No-op documenté** | 142 | 0 | **142** |
-| **NULL — Handler NULL** | 1 709 | 0 | **1 709** |
+| **NULL — Handler NULL** | 1 707 | 0 | **1 707** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1543
+    "Implémentation source retrouvée" : 1545
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 142
     "Stub / résultat simulé" : 121
     "No-op documenté" : 142
-    "Handler NULL" : 1709
+    "Handler NULL" : 1707
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 196
     "Service/interface non exposé sous cette forme" : 306
@@ -3147,8 +3147,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm | `11` | `RemoveDeviceInfo` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `12` | `IncreaseDeviceInfoOrder` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `13` | `LlrNotify` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `14` | `EnableRadio` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `15` | `DisableRadio` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `14` | `EnableRadio` | — | **IMPL-SRC** ([vendor 0fcec5e7](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0fcec5e76502b0def90d946bffdc29ff3e19000f/encore-active/eden-backports/src/core/hle/service/btm/btm.cpp) ; raccordé au flag Bluetooth persistant set:sys, partagé avec IBtmSystemCore::EnableRadio) | 2026-11-23 |
+| btm | `15` | `DisableRadio` | — | **IMPL-SRC** ([vendor 0fcec5e7](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0fcec5e76502b0def90d946bffdc29ff3e19000f/encore-active/eden-backports/src/core/hle/service/btm/btm.cpp) ; raccordé au flag Bluetooth persistant set:sys, partagé avec IBtmSystemCore::DisableRadio) | 2026-11-23 |
 | btm | `16` | `HidDisconnect` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `17` | `HidSetRetransmissionMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `18` | `AcquireAwakeReqEvent` | 2.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |

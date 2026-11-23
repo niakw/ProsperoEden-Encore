@@ -2001,7 +2001,7 @@ print("PS5_VFS128_FD_BUDGET_F07_ISOLATION_PASS", f"owners={len(ps5_vfs128_presen
 # through CMake in specific variants, so presence is NOT native execution.
 post_f07_integrated_source_owners = set()
 post_f07_legacy_net_header_owners = set()
-if gpu_table_vendor_pin in {"4354add020afac574198f63d87167f3022bff9c6", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+if gpu_table_vendor_pin in {"4354add020afac574198f63d87167f3022bff9c6", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb"}:
     inventory_source = ast.parse((ROOT / "tools/check-active-source-inventory.py").read_text())
     inventory_assignments = [
         node.value for node in inventory_source.body if isinstance(node, ast.Assign)
@@ -2052,11 +2052,17 @@ current_vendor_nodes = [
 ]
 assert len(current_vendor_nodes) == 1
 current_vendor_blobs = ast.literal_eval(current_vendor_nodes[0])
+if gpu_table_vendor_pin == "0390980a5752808dfba7b8edaa7d113cc4e4e6eb":
+    # Latest vendor main changes only SM/NS2 diagnostic owners; all other
+    # exact legacy post-F07 source blobs remain immutable.
+    current_vendor_blobs["eden-core/src/core/hle/service/sm/sm.cpp"] = (
+        "34c7c85f1476a3ba819ad20b8a4f8150cca86e16"
+    )
 assert isinstance(current_vendor_blobs, dict) and len(current_vendor_blobs) == 32
 current_vendor_post_f07_owners = {
     "vendor/encore-active/" + relative for relative in current_vendor_blobs
 } & all_owners
-if gpu_table_vendor_pin in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+if gpu_table_vendor_pin in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb"}:
     assert current_vendor_post_f07_owners == {
         "vendor/encore-active/" + relative for relative in current_vendor_blobs
     }
@@ -2078,7 +2084,7 @@ post_f07_plaintext_nca_owners = {
 } & all_owners
 if subprocess.check_output(
     ["git", "-C", str(ROOT/"vendor"), "rev-parse", "HEAD"], text=True
-).strip() in {"f4f5d53596879960b19a3701bbd2272ef1f3c634", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+).strip() in {"f4f5d53596879960b19a3701bbd2272ef1f3c634", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb"}:
     assert post_f07_plaintext_nca_owners == {
         "vendor/encore-active/eden-core/src/core/file_sys/content_archive.cpp",
         "vendor/encore-active/eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp",

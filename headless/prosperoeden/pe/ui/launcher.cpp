@@ -1379,7 +1379,9 @@ void Launcher::draw_launch(Canvas &c)
     const bool back = facing < 0.0f;
     constexpr float case_depth = 44.0f;
     constexpr float case_radius = 22.0f;
-    const bool ns2_case = case_media::IsSwitch2TitleId(launch_title_id_);
+    const bool ns2_case = case_media::IsSwitch2TitleId(launch_title_id_) ||
+        launch_case_game_.format == "NUP" ||
+        launch_case_game_.file.ends_with(".nup");
     // Use the actual reusable case outline for projected shadow/geometry.
     // The reference template is taller than the previous 422x655 poster.
     const Rect physical{374.0f, 126.0f, 454.0f, 730.0f};

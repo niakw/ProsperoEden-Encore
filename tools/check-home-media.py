@@ -225,14 +225,16 @@ icon_cpp = r"""
 #include <vector>
 #include <utility>
 enum class Screen { home, library, settings };
-struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; };
+struct Game { std::uint64_t title_id=0; std::string file,name,cover; bool artwork_changed=false; bool artwork_deferred=false; };
 struct Recent { std::uint64_t title_id=0; std::string file,title,cover; std::string tile_icon{}; };
 struct Home { bool setup_ready=true; std::uint64_t last_title_id=0; std::string last_file,last_cover; std::vector<Recent> recents; };
 struct Services {
-    unsigned calls=0;
+    std::atomic<unsigned> calls{0};
     Game enrich_home_icon(Game g,const std::atomic<bool>* cancel) {
-        assert(cancel && !cancel->load()); ++calls;
-        g.cover="nlib-icon-"+std::to_string(g.title_id); g.artwork_changed=true;
+        assert(cancel && !cancel->load());
+        calls.fetch_add(1);
+        g.cover="nlib-icon-"+std::to_string(g.title_id)+"-"+g.file;
+        g.artwork_changed=true;
         return g;
     }
 };
@@ -245,8 +247,11 @@ struct Launcher {
     Services services_;
     Textures textures_;
     std::future<Game> home_icon_scan_;
-    std::uint64_t home_icon_scan_title_id_=0, home_media_scan_title_id_=1;
-    std::unordered_map<std::uint64_t,std::chrono::steady_clock::time_point> home_icon_next_retry_;
+    std::future<Game> home_icon_scan_extra_;
+    std::uint64_t home_icon_scan_title_id_=0, home_icon_scan_extra_title_id_=0;
+    std::uint64_t home_media_scan_title_id_=1;
+    std::string home_icon_scan_file_, home_icon_scan_extra_file_;
+    std::unordered_map<std::string,std::chrono::steady_clock::time_point> home_icon_next_retry_;
     std::vector<Game> games_;
     void start_home_icons();
     void finish_home_icons();
@@ -260,27 +265,58 @@ int main() {
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());
     l.screen_=Screen::home; l.media_cancel_=true;
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());
-    l.media_cancel_=false; l.start_home_icons();
-    assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==1);
-    l.home_icon_scan_.wait(); l.finish_home_icons();
-    assert(l.home_.recents[0].tile_icon=="nlib-icon-1");
-    l.start_home_icons(); assert(l.home_icon_scan_title_id_==2);
-    l.start_home_icons(); l.home_icon_scan_.wait(); l.finish_home_icons();
-    assert(l.home_.last_cover=="nlib-icon-2" && l.home_.recents[1].cover=="nlib-icon-2");
-    assert(l.home_.recents[1].tile_icon=="nlib-icon-2");
-    assert(l.games_[0].cover=="nlib-icon-2" && l.services_.calls==2);
-    l.start_home_icons(); assert(l.home_icon_scan_title_id_==3);
-    l.home_icon_scan_.wait(); l.finish_home_icons();
-    assert(l.games_[1].cover=="nlib-icon-3" && l.games_[2].cover=="unchanged");
-    assert(l.home_.recents[2].cover=="nlib-icon-3" && l.textures_.invalidations==3);
-    assert(l.home_.recents[4].tile_icon=="nlib-icon-3" && l.home_.recents[4].cover=="fallback");
-    l.start_home_icons(); assert(l.home_icon_scan_title_id_==4);
-    l.home_icon_scan_.wait(); l.media_cancel_=true; l.finish_home_icons();
-    assert(l.home_.recents[3].tile_icon.empty() && l.home_.recents[3].cover=="local-icon");
     l.media_cancel_=false;
-    l.start_home_icons(); assert(!l.home_icon_scan_.valid() && l.services_.calls==4);
-    l.home_.recents[1].tile_icon.clear(); l.home_.recents[1].cover.clear(); l.start_home_icons();
-    assert(!l.home_icon_scan_.valid()); // retry not every frame
+    l.start_home_icons();
+    // A slow first title must not block the next title's first square.
+    assert(l.home_icon_scan_.valid() && l.home_icon_scan_extra_.valid());
+    assert(l.home_icon_scan_file_=="selected" && l.home_icon_scan_extra_file_=="two");
+    l.home_icon_scan_.wait(); l.home_icon_scan_extra_.wait();
+    l.finish_home_icons();
+    assert(l.home_.recents[0].tile_icon=="nlib-icon-1-selected");
+    assert(l.home_.recents[1].tile_icon=="nlib-icon-2-two");
+    assert(l.home_.last_cover=="nlib-icon-2-two");
+    assert(l.games_[0].cover=="nlib-icon-2-two");
+    assert(l.services_.calls.load()==2 && l.textures_.invalidations==2);
+    assert(l.home_icon_scan_file_.empty() && l.home_icon_scan_extra_file_.empty());
+
+    l.start_home_icons();
+    assert(l.home_icon_scan_title_id_==3 && l.home_icon_scan_file_=="three");
+    assert(l.home_icon_scan_extra_title_id_==4 && l.home_icon_scan_extra_file_=="four");
+    l.home_icon_scan_.wait(); l.home_icon_scan_extra_.wait();
+    l.finish_home_icons();
+    assert(l.games_[1].cover=="nlib-icon-3-three");
+    assert(l.games_[2].cover=="unchanged");
+    assert(l.home_.recents[2].cover=="nlib-icon-3-three");
+    // Same numeric program ID but a different edition/file is untouched.
+    assert(l.home_.recents[4].tile_icon=="fallback");
+    assert(l.home_.recents[4].cover=="fallback");
+    assert(l.textures_.invalidations==4);
+
+    // The other installed edition may request its OWN square immediately.
+    // A TitleID-wide cooldown previously suppressed it for two minutes.
+    l.home_.recents[4].tile_icon.clear();
+    l.start_home_icons();
+    assert(l.home_icon_scan_.valid() && l.home_icon_scan_title_id_==3);
+    assert(l.home_icon_scan_file_=="different-file");
+    l.home_icon_scan_.wait(); l.finish_home_icons();
+    assert(l.games_[2].cover=="nlib-icon-3-different-file");
+    assert(l.games_[1].cover=="nlib-icon-3-three");
+    assert(l.home_.recents[4].tile_icon=="nlib-icon-3-different-file");
+    assert(l.textures_.invalidations==5);
+
+    // A completed request cannot publish after launcher teardown starts.
+    l.home_.recents.push_back({6,"cancel","F",""});
+    l.start_home_icons(); assert(l.home_icon_scan_file_=="cancel");
+    l.home_icon_scan_.wait();
+    l.media_cancel_=true;
+    l.finish_home_icons();
+    assert(l.home_.recents.back().tile_icon.empty());
+    l.media_cancel_=false;
+    l.home_.recents[1].tile_icon.clear();
+    l.home_.recents[1].cover.clear();
+    l.start_home_icons();
+    assert(!l.home_icon_scan_.valid()); // per-file cooldown, not per-frame retry
+    assert(l.services_.calls.load()==6);
 }
 """
 with tempfile.TemporaryDirectory(prefix="home-icon-visible-") as tmp:
@@ -291,4 +327,4 @@ with tempfile.TemporaryDirectory(prefix="home-icon-visible-") as tmp:
         subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-pthread",
                         str(source),"-o",str(exe)],check=True,timeout=60)
         subprocess.run([str(exe)],check=True,timeout=10)
-print("HOME_VISIBLE_ICONS_HOST_PASS independent=1 selected_only_full_media=1 exact_identity=1 cancellation=1 cooldown=1 actual_owner=1")
+print("HOME_VISIBLE_ICONS_HOST_PASS parallel=2 per_file_identity=1 cancellation=1 cooldown=1 actual_owner=1")

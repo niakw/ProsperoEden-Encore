@@ -999,6 +999,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 511** : 1 975 NULL + 137 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot NIFM — UUID de profil et suppression locale réelle — 23/11/2026
+
+**Vendor `d1524eb55acb905c694a46cdb1333e32c0e4bdbf`** (arbre `b4b65ea5bffc675c996d4e8eae4b7dc530a6ea53`) sur le backport NIFM actif, manifeste d'intégrité synchronisé dans le même commit.
+
+- `RemoveNetworkProfile` (10) : **STUB → IMPL-SRC**. `SetNetworkProfile` conserve désormais l'UUID 0x10 du profil pending et la commande 10 supprime réellement le profil local qui porte l'UUID demandé.
+- `IRequest::SetNetworkProfileId` (9) : **STUB → PARTIEL**. Le bug ABI est corrigé : l'ancien code lisait un `u32` comme une longueur SSID et pouvait même répondre avec une valeur brute incorrecte ; il lit maintenant le `util::Uuid` 0x10 attendu et le mémorise dans la requête.
+- Le statut 9 reste PARTIEL : l'UUID sélectionné n'est pas encore utilisé pour contraindre le routage/choix de l'interface lors de `Submit`. Aucun faux effet réseau n'est revendiqué.
+- Le stockage de profil demeure local à la session Encore ; ce lot ne simule pas la base de profils système Nintendo.
+- Le palier précédent moteur `6ce8ea0a` → vendor `7dfbe3cc` a X8D24 vert ; Verify pinned vendor était encore en cours au dernier relevé avant ce repointage.
+
+**Compteur historique : 1 488 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 975 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 510** : 1 975 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

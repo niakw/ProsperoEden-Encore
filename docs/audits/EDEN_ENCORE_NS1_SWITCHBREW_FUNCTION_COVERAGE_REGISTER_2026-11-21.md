@@ -2436,3 +2436,12 @@ Vendor `6eae21258ac6bae5db93c4b7d70935c5f9eaa032` → gitlink moteur `0f2f00236f
 **Compteur courant : 1 692 IMPL-SRC / 141 PARTIEL / 59 STUB / 168 NOOP / 1 353 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 752** : 1 353 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## PREPO — état local et transport offline (23/11/2026)
+
+Vendor `7b75ebb71f440f046f7f3e1819435de43e58f87d` → gitlink moteur `8ae25ce272ea89a05f6aa5ea85be691c3f46da59`. **12 handlers runtime ajoutés, 9 entrées de catalogue sorties du pool** : 7 IMPL-SRC + 2 NOOP. L'usage/statistiques/throughput/upload reflètent l'absence de transport Nintendo ; les fichiers `Core::Reporter` restent des diagnostics hôte et ne sont pas assimilés au stockage PREPO invité. Pas de validation console PS5 revendiquée.
+
+**Compteur courant : 1 699 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 344 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 743** : 1 344 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

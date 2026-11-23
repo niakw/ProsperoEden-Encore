@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 612 | 80 | **1 692** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 619 | 80 | **1 699** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 59 | 0 | **59** |
-| **NOOP — No-op documenté** | 168 | 0 | **168** |
-| **NULL — Handler NULL** | 1 353 | 0 | **1 353** |
+| **NOOP — No-op documenté** | 170 | 0 | **170** |
+| **NULL — Handler NULL** | 1 344 | 0 | **1 344** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -2803,15 +2803,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `10400` | `GetSystemSessionId` | 9.0.0+ | **NOOP** (transport télémétrie Nintendo absent ; reporter local conservé, état neutre explicite ; vendor `229ebbc5`) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20100` | `SaveSystemReport` | — | **IMPL-SRC** (ancienne variante sauvegarde maintenant le rapport système via Core::Reporter ; vendor `229ebbc5`) | 2026-11-22 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20101` | `SaveSystemReportWithUser` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20200` | `SetOperationMode` | 4.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30100` | `ClearStorage` | — | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30200` | `ClearStatistics` | 6.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30300` | `GetStorageUsage` | 6.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30400` | `GetStatistics` | 6.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30401` | `GetThroughputHistory` | 6.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30500` | `GetLastUploadError` | 6.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40100` | `IsUserAgreementCheckEnabled` | 2.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
-| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40101` | `SetUserAgreementCheckEnabled` | 2.0.0+ | **NULL** ([source C++][ns1-src-117]) | 2026-11-22 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `20200` | `SetOperationMode` | 4.0.0+ | **IMPL-SRC** (mode d'opération PREPO conservé localement; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30100` | `ClearStorage` | — | **NOOP** (stockage PREPO invité absent; les fichiers Reporter restent des diagnostics hôte distincts; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30200` | `ClearStatistics` | 6.0.0+ | **NOOP** (aucune statistique de transport Nintendo n'existe en mode local; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30300` | `GetStorageUsage` | 6.0.0+ | **IMPL-SRC** (usage PREPO invité 0x10 nul, stockage invité non représenté; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30400` | `GetStatistics` | 6.0.0+ | **IMPL-SRC** (buffer de statistiques initialisé à zéro en transport offline; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30401` | `GetThroughputHistory` | 6.0.0+ | **IMPL-SRC** (historique zéro et count=0 sans transport; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `30500` | `GetLastUploadError` | 6.0.0+ | **IMPL-SRC** (aucune erreur d'upload en absence de transport; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40100` | `IsUserAgreementCheckEnabled` | 2.0.0+ | **IMPL-SRC** (état booléen local; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
+| prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `40101` | `SetUserAgreementCheckEnabled` | 2.0.0+ | **IMPL-SRC** (état booléen local; vendor `7b75ebb7`, PS5 non validé) | 2026-11-23 |
 | prepo:a, prepo:a2, prepo:m, prepo:u, prepo:s | `90100` | `ReadAllReportFiles ([1.0.0-5.1.0] GetStorageUsage)` | 6.0.0+ | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/prepo/prepo.cpp) ; ReadAllReportFiles ID90100 est nullptr ; audit statique, pas de validation PS5) | 2026-11-22 |
 
 ### PCV services
@@ -6492,3 +6492,10 @@ Vendor `1effcd1413a458f58db476d6ffd37c63c7550eee` → gitlink moteur `dfffa79e46
 Vendor `6eae21258ac6bae5db93c4b7d70935c5f9eaa032` → gitlink moteur `0f2f00236fd7ce2e8f8a33c824caac30d4810abd`. **8 NULL sortent du pool** : MiiImg cmd10/12/13 suit la base volontairement vide déjà exposée par cmd11 ; NPNS user cmd2/103 reprend l'état offline du service système ; Friend cmd30810-30812 conserve les préférences par UUID et les réinjecte dans `LoadUserSetting`. Aucun backend Nintendo distant n'est simulé. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 692 IMPL-SRC / 141 PARTIEL / 59 STUB / 168 NOOP / 1 353 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 752.**
+
+
+### PREPO — état local et transport offline (23/11/2026)
+
+Vendor `7b75ebb71f440f046f7f3e1819435de43e58f87d` → gitlink moteur `8ae25ce272ea89a05f6aa5ea85be691c3f46da59`. Douze handlers runtime ont été ajoutés dans `PlayReport`, dont **9 entrées du catalogue sortent du pool** : mode d'opération, clear stockage/statistiques, usage, statistiques, throughput, dernier upload et état d'accord utilisateur. Les lectures globales/summary ajoutées au runtime ne sont pas des entrées distinctes du catalogue actuel et ne sont donc pas comptées. **7 NULL → IMPL-SRC + 2 NULL → NOOP.** Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 699 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 344 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 743.**

@@ -758,6 +758,16 @@ jobs:
         run: |
           set -euxo pipefail
           python3 -B tools/check-maintained-heap-sources.py
+          # Compile and execute the exact PS5 guest backing owner against host
+          # syscall mocks. This covers NS1/NS2 layout plans plus ZERO->OWN,
+          # OWN->ZERO, OOM rollback and zero-clear ownership on every main push.
+          clang++ -std=c++20 -O1 -Wall -Wextra -Werror -pedantic \
+            -DPS5_NATIVE=1 -fsanitize=undefined -fno-sanitize-recover=all \
+            -Isrc -Iheadless src/ns2_sparse_guest.cpp \
+            tools/ns2/test_r457_native_sparse_owner.cpp -o /tmp/r457-native-owner
+          /tmp/r457-native-owner
+          python3 -B tools/ns2/check_r457_sparse_kernel_source.py
+          python3 -B tools/ns2/check_gpu_worker_native_guard_host.py
           # P1.3 real close-admission body: refuse malformed/stale NVDRV session
           # IDs BEFORE NvMap cleanup and ASID unregistration.
           python3 -B tools/ns2/check_native_nvcore_session_close_host.py

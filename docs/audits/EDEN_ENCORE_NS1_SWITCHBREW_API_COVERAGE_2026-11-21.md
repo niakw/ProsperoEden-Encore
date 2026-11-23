@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
 | **NOOP — No-op documenté** | 139 | 0 | **139** |
-| **NULL — Handler NULL** | 1 834 | 0 | **1 834** |
+| **NULL — Handler NULL** | 1 801 | 0 | **1 801** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 255 | 1 | **256** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 288 | 1 | **289** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 272 | 0 | **272** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 139
-    "Handler NULL" : 1834
+    "Handler NULL" : 1801
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 256
+    "Hors version firmware cible" : 289
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 272
     "Interface ambiguë" : 9
@@ -2436,9 +2436,9 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | fgm, fgm:0, fgm:9 | `1` | `Set` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
 | fgm, fgm:0, fgm:9 | `2` | `Get` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
 | fgm, fgm:0, fgm:9 | `3` | `Cancel` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
-| fgm:dbg | `0` | `Initialize` | — | **NULL** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/fgm/fgm.cpp) ; handler nul de l'interface exacte ; sans preuve PS5) | 2026-11-22 |
-| fgm:dbg | `1` | `Read` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
-| fgm:dbg | `2` | `Cancel` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
+| fgm:dbg | `0` | `Initialize` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–8.1.0 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| fgm:dbg | `1` | `Read` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–8.1.0 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| fgm:dbg | `2` | `Cancel` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–8.1.0 ; non applicable à la cible HOS 23) | 2026-11-23 |
 
 ### Glue services
 
@@ -2978,17 +2978,17 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsdcfg | `10` | `ClearArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
 | bsdcfg | `11` | `ClearArpEntries2` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
 | bsdcfg | `12` | `PrintArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| ethc:c | `0` | `Initialize` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:c | `1` | `Cancel` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:c | `2` | `GetResult` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:c | `3` | `GetMediaList` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:c | `4` | `SetMediaType` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:c | `5` | `GetMediaType` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:c : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:i | `0` | `GetReadableHandle` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:i | `1` | `Cancel` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:i | `2` | `GetResult` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:i | `3` | `GetInterfaceList` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| ethc:i | `4` | `GetInterfaceCount` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sockets.cpp) ; ethc:i : slot ID/nom exact nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| ethc:c | `0` | `Initialize` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:c | `1` | `Cancel` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:c | `2` | `GetResult` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:c | `3` | `GetMediaList` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:c | `4` | `SetMediaType` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:c | `5` | `GetMediaType` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:i | `0` | `GetReadableHandle` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:i | `1` | `Cancel` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:i | `2` | `GetResult` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:i | `3` | `GetInterfaceList` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| ethc:i | `4` | `GetInterfaceCount` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | sfdnsres | `0` | `SetDnsAddressesPrivateRequest (stubbed, returns 0x7FE03)` | — | **NULL** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sfdnsres.cpp) ; slot exact 0 = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | sfdnsres | `1` | `GetDnsAddressPrivateRequest (stubbed, returns 0x7FE03)` | — | **NULL** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/sfdnsres.cpp) ; slot exact 1 = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | sfdnsres | `2` | `GetHostByNameRequest` | — | **IMPL-SRC** ([source C++][ns1-src-027]) | 2026-11-22 |
@@ -5965,32 +5965,32 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | wlan:inf | `16` | `RequestWakeUp` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:inf | `17` | `RequestIfUpDown` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `6` | `GetMacAddress` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 6 : source = GetMacAddress_2/StopScan_2 (nullptr), pas le nom historique GetMacAddress ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `7` | `CreateBss` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `8` | `DestroyBss` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
+| wlan:lcl | `7` | `CreateBss` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `8` | `DestroyBss` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `9` | `StartScan` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 9 : source = StartScan_2/Join (nullptr), pas le nom historique StartScan ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `10` | `StopScan` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 10 : source = StopScan_2/CancelJoin (nullptr), pas le nom historique StopScan ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `11` | `Connect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 11 : source = Connect_2/Disconnect_2 (nullptr), pas le nom historique Connect ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:lcl | `12` | `CancelConnect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 12 : source = CancelConnect_2/SetBeaconLostCount (nullptr), pas le nom historique CancelConnect ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `13` | `Join` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `14` | `CancelJoin` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
+| wlan:lcl | `13` | `Join` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `14` | `CancelJoin` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `15` | `Disconnect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 15 : source = Disconnect_2/GetClientStatus (nullptr), pas le nom historique Disconnect ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `16` | `SetBeaconLostCount` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `20` | `GetBssIndicationEvent` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `21` | `GetBssIndicationInfo` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
+| wlan:lcl | `16` | `SetBeaconLostCount` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `20` | `GetBssIndicationEvent` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `21` | `GetBssIndicationInfo` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `22` | `GetState` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 22 : source = GetState_2/PutFrameRaw (nullptr), pas le nom historique GetState ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `23` | `GetAllowedChannels` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `24` | `AddIe` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `25` | `DeleteIe` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `28` | `CreateRxEntry` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `29` | `DeleteRxEntry` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `32` | `AddMatchingDataToRxEntry` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `33` | `RemoveMatchingDataFromRxEntry` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
+| wlan:lcl | `23` | `GetAllowedChannels` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `24` | `AddIe` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `25` | `DeleteIe` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `28` | `CreateRxEntry` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `29` | `DeleteRxEntry` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `32` | `AddMatchingDataToRxEntry` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `33` | `RemoveMatchingDataFromRxEntry` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `34` | `GetScanResult` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 34 : source = GetScanResult_2/CreateRxEntryForActionFrame (nullptr), pas le nom historique GetScanResult ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `36` | `SetActionFrameWithBeacon` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `37` | `CancelActionFrameWithBeacon` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `38` | `CreateRxEntryForActionFrame` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `39` | `DeleteRxEntryForActionFrame` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
-| wlan:lcl | `42` | `CancelGetActionFrame` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
+| wlan:lcl | `36` | `SetActionFrameWithBeacon` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `37` | `CancelActionFrameWithBeacon` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `38` | `CreateRxEntryForActionFrame` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `39` | `DeleteRxEntryForActionFrame` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| wlan:lcl | `42` | `CancelGetActionFrame` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `43` | `GetRssi` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 43 : source = GetRssi_2/Cmd43 (nullptr), pas le nom historique GetRssi ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:soc | `6` | `GetMacAddress` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ISocketManager slot 6 = GetMacAddress_3 (nullptr), pas GetMacAddress ; statique, PS5 non validé) | 2026-11-22 |
 | wlan:soc | `7` | `SwitchTsfTimerFunction` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |

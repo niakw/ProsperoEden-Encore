@@ -1157,6 +1157,14 @@ La liste officielle des services borne `hid:tmp` à **HOS 3.0.0–7.0.1**, et `i
 
 **Pool historique restant à examiner = 2 365** : 1 834 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
 
+## Requalification firmware — WLAN local / Ethernet legacy / fgm:dbg — 23/11/2026
+
+SwitchBrew borne ou retire avant HOS23 les services suivants : `wlan:lcl` (supprimé en 15.0.0+), `ethc:c` et `ethc:i` (1.0.0–14.1.2), `fgm:dbg` (1.0.0–8.1.0). Les **33 lignes encore NULL** passent **HORS-VERSION** : 19 + 6 + 5 + 3. Aucun runtime fictif n'est ajouté.
+
+**Compteur historique : 1 527 IMPL-SRC / 115 PARTIEL / 135 STUB / 139 NOOP / 1 801 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 289 HORS-VERSION / 0 ABSENT / 272 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 332** : 1 801 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

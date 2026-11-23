@@ -985,6 +985,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 513** : 1 975 NULL + 139 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot CAPS — ShimLibraryVersion comme hint de compatibilité — 23/11/2026
+
+**Vendor `7dfbe3cc1409cc4b5f3bba145ba7fd4134cf271f`** (arbre `4a8902e36b4c0d429b0bf1071fedc8f7f85c0109`).
+
+- `caps:su::SetShimLibraryVersion` (32) et `caps:u::SetShimLibraryVersion` (32) : **2 STUB → NOOP documentés** dans le miroir.
+- La même politique est appliquée à `caps:c` côté runtime, hors ligne distincte du miroir historique.
+- Encore ne possède aucune branche Album/Screenshot dépendante de `ShimLibraryVersion`. Les commandes consomment déjà `library_version + aruid`; elles sont désormais explicitement traitées comme hints sans effet, plutôt que journalisées `(STUBBED)`.
+- Aucun comportement de capture/album n'est revendiqué comme ajouté par ce lot.
+- Le palier NIFM moteur `5cc56c00` → vendor `f918ebdb` est **X8D24 + Verify pinned vendor vert**.
+
+**Compteur historique : 1 487 IMPL-SRC / 114 PARTIEL / 137 STUB / 134 NOOP / 1 975 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 511** : 1 975 NULL + 137 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

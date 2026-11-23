@@ -32,8 +32,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 407 | 80 | **1 487** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 111 | 3 | **114** |
-| **STUB — Stub / résultat simulé** | 139 | 0 | **139** |
-| **NOOP — No-op documenté** | 132 | 0 | **132** |
+| **STUB — Stub / résultat simulé** | 137 | 0 | **137** |
+| **NOOP — No-op documenté** | 134 | 0 | **134** |
 | **NULL — Handler NULL** | 1 975 | 0 | **1 975** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
@@ -446,8 +446,8 @@ pie showData
     "Implémentation source retrouvée" : 1487
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 114
-    "Stub / résultat simulé" : 139
-    "No-op documenté" : 132
+    "Stub / résultat simulé" : 137
+    "No-op documenté" : 134
     "Handler NULL" : 1975
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
@@ -1921,7 +1921,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | tcap | `0` | `GetContinuousHighSkinTemperatureEvent` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | tcap | `1` | `SetOperationMode` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | tcap | `2` | `LoadAndApplySettings` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
-| caps:su | `32` | `SetShimLibraryVersion` | 7.0.0+ | **STUB** ([source C++][ns1-src-073]) | 2026-11-22 |
+| caps:su | `32` | `SetShimLibraryVersion` | 7.0.0+ | **NOOP** ([active CAPS source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/7dfbe3cc1409cc4b5f3bba145ba7fd4134cf271f/sources/eden/src/core/hle/service/caps/caps_su.cpp) ; shim-version consommée comme hint de compatibilité sans branche runtime Encore) | 2026-11-23 |
 | caps:su | `201` | `SaveScreenShot` | — | **NULL** ([source C++][ns1-src-072]) | 2026-11-22 |
 | caps:su | `203` | `SaveScreenShotEx0` | — | **IMPL-SRC** ([source C++][ns1-src-072]) | 2026-11-22 |
 | caps:su | `205` | `SaveScreenShotEx1` | 8.0.0+ | **IMPL-SRC** ([source C++][ns1-src-073]) | 2026-11-22 |
@@ -3339,7 +3339,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:c | `2431` | `GetAlbumMovieWriteStreamBrokenReason` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:c | `2433` | `GetAlbumMovieWriteStreamDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:c | `2434` | `SetAlbumMovieWriteStreamDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
-| caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | **STUB** ([source C++][ns1-src-073]) | 2026-11-22 |
+| caps:u | `32` | `SetShimLibraryVersion` | 7.0.0+ | **NOOP** ([active CAPS source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/7dfbe3cc1409cc4b5f3bba145ba7fd4134cf271f/sources/eden/src/core/hle/service/caps/caps_u.cpp) ; shim-version consommée comme hint de compatibilité sans branche runtime Encore) | 2026-11-23 |
 | caps:u | `102` | `GetAlbumFileList0AafeAruidDeprecated` | — | **PARTIEL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `103` | `DeleteAlbumFileByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |
 | caps:u | `104` | `GetAlbumFileSizeByAruid` | — | **NULL** ([source C++][ns1-src-074]) | 2026-11-22 |

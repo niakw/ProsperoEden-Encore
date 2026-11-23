@@ -29,16 +29,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 386 | 80 | **1 466** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 388 | 80 | **1 468** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 119 | 0 | **119** |
-| **NULL — Handler NULL** | 2 094 | 0 | **2 094** |
+| **NULL — Handler NULL** | 2 090 | 0 | **2 090** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 39 | 0 | **39** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 41 | 0 | **41** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 282 | 0 | **282** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
@@ -443,16 +443,16 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1466
+    "Implémentation source retrouvée" : 1468
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 119
-    "Handler NULL" : 2094
+    "Handler NULL" : 2090
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 39
+    "Hors version firmware cible" : 41
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 282
     "Interface ambiguë" : 12
@@ -5236,13 +5236,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1033` | `SetSafetyLevel` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1034` | `GetSafetyLevelSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1035` | `GetCurrentSettings` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1036` | `SetCustomSafetyLevelSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1036` | `SetCustomSafetyLevelSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/70829977dbe1e534887c4baa2ddd6c9a1252acc5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp)) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1037` | `GetDefaultRatingOrganization` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1038` | `SetDefaultRatingOrganization` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1039` | `GetFreeCommunicationApplicationListCount` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1042` | `AddToFreeCommunicationApplicationList` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1043` | `DeleteSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1044` | `GetFreeCommunicationApplicationList` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1044` | `GetFreeCommunicationApplicationList` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/70829977dbe1e534887c4baa2ddd6c9a1252acc5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp)) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1045` | `UpdateFreeCommunicationApplicationList` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1046` | `DisableFeaturesForReset` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1047` | `NotifyApplicationDownloadStarted` | 3.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -5778,8 +5778,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pdm:qry | `11` | `QueryAccountPlayEvent` | 4.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `12` | `GetAvailableAccountPlayEventRange` | 4.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `13` | `QueryApplicationPlayStatisticsForSystem` | 5.0.0+ | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 13 : catalogue `QueryApplicationPlayStatisticsForSystem` vs table active `QueryApplicationPlayStatisticsForSystemV0` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
-| pdm:qry | `14` | `QueryRecentlyPlayedApplication` | 6.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
-| pdm:qry | `15` | `GetRecentlyPlayedApplicationUpdateEvent` | 6.0.0+ | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `14` | `QueryRecentlyPlayedApplication` | 6.0.0-14.1.2 | **HORS-VERSION** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-23 |
+| pdm:qry | `15` | `GetRecentlyPlayedApplicationUpdateEvent` | 6.0.0-14.1.2 | **HORS-VERSION** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-23 |
 | pdm:qry | `16` | `QueryApplicationPlayStatisticsByUserAccountIdForSystem` | 6.0.0+ | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 16 : catalogue `QueryApplicationPlayStatisticsByUserAccountIdForSystem` vs table active `QueryApplicationPlayStatisticsByUserAccountIdForSystemV0` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
 | avm | `103` | `No input, returns an IVersionListImporter.` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("avm") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 

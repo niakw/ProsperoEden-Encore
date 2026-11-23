@@ -757,6 +757,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 648** : 2 094 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot PCTL + surface PDM HOS23 — 23/11/2026
+
+**Vendor `70829977dbe1e534887c4baa2ddd6c9a1252acc5`** (arbre `7dc7ba8a5ecbc75cf37f2f54efeb0cdbd04f24f8`) sur la branche secondaire NS1.
+
+- PCTL `SetCustomSafetyLevelSettings` (1036) : **NULL → IMPL-SRC** ; l'état `restriction_settings` réellement utilisé par le service est mis à jour.
+- PCTL `GetFreeCommunicationApplicationList` (1044) : **NULL → IMPL-SRC** ; le service renvoie la liste locale réellement vide, cohérente avec le compteur déjà ramené à zéro.
+- `pdm:qry::QueryRecentlyPlayedApplication` (14) et `GetRecentlyPlayedApplicationUpdateEvent` (15) : **2 NULL → HORS-VERSION** et suppression des deux entrées de la table runtime. Libnx documente leur retrait en **HOS 15.0.0** ; elles ne doivent pas être exposées sur HOS 23.
+- Aucun historique de jeu fictif ni événement PDM synthétique n'est ajouté.
+
+**Compteur historique : 1 468 IMPL-SRC / 110 PARTIEL / 149 STUB / 119 NOOP / 2 090 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 41 HORS-VERSION / 0 ABSENT / 282 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 644** : 2 090 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

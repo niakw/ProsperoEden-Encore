@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 119 | 0 | **119** |
-| **NULL — Handler NULL** | 2 124 | 0 | **2 124** |
+| **NULL — Handler NULL** | 2 094 | 0 | **2 094** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 6 | 0 | **6** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 36 | 0 | **36** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 285 | 0 | **285** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 119
-    "Handler NULL" : 2124
+    "Handler NULL" : 2094
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 6
+    "Hors version firmware cible" : 36
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 285
     "Interface ambiguë" : 12
@@ -889,7 +889,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `101` | `RefreshNotificationTokenAsync` | 7.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `110` | `GetServiceEntryRequirementCache` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `111` | `InvalidateServiceEntryRequirementCache` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `112` | `InvalidateTokenCache` | 4.0.0-6.2.0 | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `112` | `InvalidateTokenCache` | 4.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-001]) | 2026-11-23 |
 | acc:su | `113` | `GetServiceEntryRequirementCacheForOnlinePlay` | 6.1.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `120` | `GetNintendoAccountId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `121` | `CalculateNintendoAccountAuthenticationFingerprint` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -1282,11 +1282,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:dbg | `244` | `RequestKuinaFirmwareVersion` | 9.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `245` | `GetKuinaFirmwareVersion` | 9.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `246` | `GetVidPid` | 9.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `301` | `GetAbstractedPadHandles` | 5.0.0-8.1.0 | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `302` | `GetAbstractedPadState` | 5.0.0-8.1.0 | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `303` | `GetAbstractedPadsState` | 5.0.0-8.1.0 | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `321` | `SetAutoPilotVirtualPadState` | 5.0.0-8.1.0 | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
-| hid:dbg | `322` | `UnsetAutoPilotVirtualPadState` | 5.0.0-8.1.0 | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `301` | `GetAbstractedPadHandles` | 5.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-083]) | 2026-11-23 |
+| hid:dbg | `302` | `GetAbstractedPadState` | 5.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-083]) | 2026-11-23 |
+| hid:dbg | `303` | `GetAbstractedPadsState` | 5.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-083]) | 2026-11-23 |
+| hid:dbg | `321` | `SetAutoPilotVirtualPadState` | 5.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-083]) | 2026-11-23 |
+| hid:dbg | `322` | `UnsetAutoPilotVirtualPadState` | 5.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-083]) | 2026-11-23 |
 | hid:dbg | `323` | `UnsetAllAutoPilotVirtualPadState` | 5.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `324` | `AttachHdlsWorkBuffer` | 7.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `325` | `ReleaseHdlsWorkBuffer` | 7.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
@@ -1917,7 +1917,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | spsm | `8` | `AnalyzePerformanceLogForLastSleepWakeSequence` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 8/AnalyzePerformanceLogForLastSleepWakeSequence = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | spsm | `9` | `ChangeHomeButtonLongPressingTime` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 9/ChangeHomeButtonLongPressingTime = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | spsm | `10` | `PutErrorState` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 10/PutErrorState = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `11` | `InvalidateCurrentHomeButtonPressing` | 1.0.0-3.0.2 | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 11/InvalidateCurrentHomeButtonPressing = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `11` | `InvalidateCurrentHomeButtonPressing` | 1.0.0-3.0.2 | **HORS-VERSION** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 11/InvalidateCurrentHomeButtonPressing = nullptr ; statique, PS5 non validé) | 2026-11-23 |
 | tcap | `0` | `GetContinuousHighSkinTemperatureEvent` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | tcap | `1` | `SetOperationMode` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | tcap | `2` | `LoadAndApplySettings` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
@@ -1936,13 +1936,13 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| aoc:u | `0` | `CountAddOnContentByApplicationId` | 1.0.0-6.2.0 | **NULL** ([source C++][ns1-src-022]) | 2026-11-22 |
-| aoc:u | `1` | `ListAddOnContentByApplicationId` | 1.0.0-6.2.0 | **NULL** ([source C++][ns1-src-022]) | 2026-11-22 |
+| aoc:u | `0` | `CountAddOnContentByApplicationId` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-022]) | 2026-11-23 |
+| aoc:u | `1` | `ListAddOnContentByApplicationId` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-022]) | 2026-11-23 |
 | aoc:u | `2` | `CountAddOnContent` | — | **IMPL-SRC** ([source C++][ns1-src-022]) | 2026-11-22 |
 | aoc:u | `3` | `ListAddOnContent` | — | **IMPL-SRC** ([source C++][ns1-src-022]) | 2026-11-22 |
-| aoc:u | `4` | `GetAddOnContentBaseIdByApplicationId` | 1.0.0-6.2.0 | **NULL** ([source C++][ns1-src-022]) | 2026-11-22 |
+| aoc:u | `4` | `GetAddOnContentBaseIdByApplicationId` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-022]) | 2026-11-23 |
 | aoc:u | `5` | `GetAddOnContentBaseId` | — | **IMPL-SRC** ([source C++][ns1-src-022]) | 2026-11-22 |
-| aoc:u | `6` | `PrepareAddOnContentByApplicationId` | 1.0.0-6.2.0 | **NULL** ([source C++][ns1-src-022]) | 2026-11-22 |
+| aoc:u | `6` | `PrepareAddOnContentByApplicationId` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-022]) | 2026-11-23 |
 | aoc:u | `7` | `PrepareAddOnContent` | — | **IMPL-SRC** ([source C++][ns1-src-022]) | 2026-11-22 |
 | aoc:u | `8` | `GetAddOnContentListChangedEvent` | 4.0.0+ | **STUB** ([source C++][ns1-src-022]) | 2026-11-22 |
 | aoc:u | `100` | `[CreateEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 7.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/aoc/addon_content_manager.cpp) ; créateur d'IPurchaseEventManager explicitement marqué STUBBED mais retourne l'interface ; statique, PS5 non validé) | 2026-11-22 |
@@ -2091,7 +2091,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `11` | `CalculateApplicationOccupiedSize` | — | **PARTIEL** ([source C++][ns1-src-102]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `16` | `PushApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `17` | `ListApplicationRecordContentMeta` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `19` | `LaunchApplicationOld` | 1.0.0-5.1.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `19` | `LaunchApplicationOld` | 1.0.0-5.1.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `21` | `GetApplicationContentPath` | — | **NULL** ([source C++][ns1-src-104]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `22` | `TerminateApplication` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `23` | `ResolveApplicationContentPath` | — | **STUB** ([source C++][ns1-src-104]) | 2026-11-22 |
@@ -2104,7 +2104,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `36` | `PushLaunchVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `37` | `ListRequiredVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `38` | `CheckApplicationLaunchVersion` | — | **NOOP** (aucune version-list Nintendo poussée n'est modélisée ; le contenu local est autorisé à lancer, politique explicite) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `39` | `CheckApplicationLaunchRights` | 1.0.0-6.2.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `39` | `CheckApplicationLaunchRights` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `40` | `GetApplicationLogoData` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `41` | `CalculateApplicationDownloadRequiredSize` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `42` | `CleanupSdCard` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2138,12 +2138,12 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `80` | `RequestDownloadApplication` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `81` | `RequestDownloadAddOnContent` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `82` | `DownloadApplication` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `83` | `CheckApplicationResumeRights` | 4.0.0-6.2.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `83` | `CheckApplicationResumeRights` | 4.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `84` | `GetDynamicCommitEvent` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `85` | `RequestUpdateApplication2` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `86` | `EnableApplicationCrashReport` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `87` | `IsApplicationCrashReportEnabled` | 4.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `90` | `BoostSystemMemoryResourceLimit` | 4.0.0-8.1.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `90` | `BoostSystemMemoryResourceLimit` | 4.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `91` | `DeprecatedLaunchApplication` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `92` | `GetRunningApplicationProgramId` | 5.0.0+ | **IMPL-SRC** (`system.GetApplicationProcessProgramID()` ; seul le marquage STUB historique était faux, vendor `256b2abe`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `93` | `GetMainApplicationProgramIndex` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2190,7 +2190,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `510` | `GetGameCardPlatformRegion` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `600` | `CountApplicationContentMeta` | — | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `601` | `ListApplicationContentMetaStatus` | — | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `602` | `ListAvailableAddOnContent` | 2.0.0-5.1.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `602` | `ListAvailableAddOnContent` | 2.0.0-5.1.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `603` | `GetOwnedApplicationContentMetaStatus` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `604` | `RegisterContentsExternalKey` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `605` | `ListApplicationContentMetaStatusWithRightsCheck` | — | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
@@ -2296,8 +2296,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2199` | `GetRightsEnvironmentCountForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2200` | `GetGameCardApplicationCopyIdentifier` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2201` | `GetInstalledApplicationCopyIdentifier` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2250` | `RequestReportActiveELicence` | 6.0.0-6.2.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2300` | `ListEventLog` | 6.0.0-8.1.0 | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2250` | `RequestReportActiveELicence` | 6.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2300` | `ListEventLog` | 6.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2350` | `PerformAutoUpdateByApplicationId` | 7.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2351` | `RequestNoDownloadRightsErrorResolution` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2352` | `RequestResolveNoDownloadRightsError` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2402,7 +2402,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:dev | `7` | `PrepareLaunchProgramFromHost` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
 | ns:dev | `8` | `LaunchApplicationForDevelop` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/develop_interface.cpp) ; slot 8 actuel = LaunchApplicationFromHost (nullptr), pas LaunchApplicationForDevelop ; statique, PS5 non validé) | 2026-11-22 |
 | ns:dev | `9` | `LaunchApplicationWithStorageIdForDevelop` | — | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
-| ns:dev | `10` | `IsSystemMemoryResourceLimitBoosted` | 6.0.0-8.1.0 | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
+| ns:dev | `10` | `IsSystemMemoryResourceLimitBoosted` | 6.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-103]) | 2026-11-23 |
 | ns:dev | `11` | `GetRunningApplicationProcessIdForDevelop` | 6.0.0+ | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
 | ns:dev | `12` | `SetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop` | 6.0.0+ | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
 | ns:dev | `13` | `CreateApplicationResourceForDevelop` | 9.0.0+ | **NULL** ([source C++][ns1-src-103]) | 2026-11-22 |
@@ -3109,7 +3109,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btdrv | `87` | `UnregisterLeHidDataPath` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothDriver : ID 87 = `UnregisterGattHidDataPath` (nullptr), non `UnregisterLeHidDataPath` ; correspondance contrat à qualifier ; ABI et PS5 non validés) | 2026-11-22 |
 | btdrv | `88` | `RegisterLeDataPath` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothDriver : ID 88 = `RegisterGattDataPath` (nullptr), non `RegisterLeDataPath` ; correspondance contrat à qualifier ; ABI et PS5 non validés) | 2026-11-22 |
 | btdrv | `94` | `LeClientRegisterNotification` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothDriver : ID 94 = `RegisterGattNotification` (nullptr), non `LeClientRegisterNotification` ; correspondance contrat à qualifier ; ABI et PS5 non validés) | 2026-11-22 |
-| btdrv | `97` | `RegisterBleHidEvent` | 5.0.0-5.0.2 | **NULL** ([source C++][ns1-src-063]) | 2026-11-22 |
+| btdrv | `97` | `RegisterBleHidEvent` | 5.0.0-5.0.2 | **HORS-VERSION** ([source C++][ns1-src-063]) | 2026-11-23 |
 | btdrv | `98` | `SetLeScanParameter` | 5.1.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothDriver : ID 98 = `SetBleScanParameter` (nullptr), non `SetLeScanParameter` ; correspondance contrat à qualifier ; ABI et PS5 non validés) | 2026-11-22 |
 | btdrv | `256` | `GetIsManufacturingMode` | 5.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btdrv/btdrv.cpp) ; IBluetoothDriver : ID 256 = `IsManufacturingMode` (nullptr), non `GetIsManufacturingMode` ; correspondance contrat à qualifier ; ABI et PS5 non validés) | 2026-11-22 |
 | btdrv | `257` | `EmulateBluetoothCrash` | 7.0.0+ | **NULL** ([source C++][ns1-src-063]) | 2026-11-22 |
@@ -3139,7 +3139,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm | `3` | `GetDeviceCondition` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `4` | `SetBurstMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `5` | `SetSlotMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `6` | `SetBluetoothMode` | 1.0.0-8.1.0 | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `6` | `SetBluetoothMode` | 1.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-068]) | 2026-11-23 |
 | btm | `7` | `SetWlanMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `8` | `AcquireDeviceInfoEvent` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `9` | `GetDeviceInfo` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
@@ -3279,7 +3279,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:a | `17` | `GetAlbumUsage16` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `100` | `GetAlbumFileCountEx0` | 5.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `101` | `GetAlbumFileListEx0` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `202` | `SaveEditedScreenShot` | 1.0.0-2.3.0 | **NULL** ([source C++][ns1-src-072]) | 2026-11-22 |
+| caps:a | `202` | `SaveEditedScreenShot` | 1.0.0-2.3.0 | **HORS-VERSION** ([source C++][ns1-src-072]) | 2026-11-23 |
 | caps:a | `301` | `GetLastOverlayScreenShotThumbnail` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID 301 = GetLastThumbnail (nullptr), nom différent ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | caps:a | `302` | `GetLastOverlayMovieThumbnail` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `401` | `GetAutoSavingStorage` | — | **STUB** ([source C++][ns1-src-069]) | 2026-11-22 |
@@ -3447,7 +3447,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IApplicationDisplayService | `2205` | `SetLayerZ` | — | **IMPL-SRC** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `2207` | `SetLayerVisibility` | — | **IMPL-SRC** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `2209` | `SetLayerAlpha` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
-| IApplicationDisplayService | `2312` | `CreateStrayLayer` | 1.0.0-6.2.0 | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
+| IApplicationDisplayService | `2312` | `CreateStrayLayer` | 1.0.0-6.2.0 | **HORS-VERSION** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-23 |
 | IApplicationDisplayService | `2400` | `OpenIndirectLayer` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `2401` | `CloseIndirectLayer` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `2402` | `FlipIndirectLayer` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
@@ -3706,7 +3706,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | es | `18` | `OwnTicket` | — | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `19` | `GetTicketInfo` | — | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `20` | `ListLightTicketInfo` | — | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
-| es | `21` | `SignData` | 2.0.0-6.2.0 | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
+| es | `21` | `SignData` | 2.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-076]) | 2026-11-23 |
 | es | `22` | `GetCommonTicketAndCertificateSize` | 4.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `23` | `GetCommonTicketAndCertificateData` | 4.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `24` | `ImportPrepurchaseRecord` | 4.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
@@ -3718,7 +3718,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | es | `30` | `CountTicket` | 5.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `31` | `ListTicketRightsIds` | 5.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `32` | `CountPrepurchaseRecordEx` | 5.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
-| es | `33` | `ListPrepurchaseRecordRightsIdsEx` | 5.0.0-6.2.0 | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
+| es | `33` | `ListPrepurchaseRecordRightsIdsEx` | 5.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-076]) | 2026-11-23 |
 | es | `34` | `GetEncryptedTicketSize` | 5.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `35` | `GetEncryptedTicketData` | 5.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `36` | `DeleteAllInactiveELicenseRequiredPersonalizedTicket` | 6.0.0+ | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
@@ -4034,7 +4034,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `510` | `OpenSystemDataUpdateEventNotifier` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `511` | `NotifySystemDataUpdateEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `520` | `SimulateDeviceDetectionEvent` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `SimulateGameCardDetectionEvent` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
-| fsp-srv | `600` | `SetCurrentPosixTime` | 1.0.0-3.0.2 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `600` | `SetCurrentPosixTime` | 1.0.0-3.0.2 | **HORS-VERSION** ([source C++][ns1-src-008]) | 2026-11-23 |
 | fsp-srv | `601` | `QuerySaveDataTotalSize` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `602` | `VerifySaveDataFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `603` | `CorruptSaveDataFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -4055,7 +4055,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `620` | `SetSdCardEncryptionSeed` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `630` | `SetSdCardAccessibility` | 4.0.0+ | **IMPL-SRC** ([active FSP source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/be00691dcb6abbf888cc00a4a5dcbf10b377fac5/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; politique d'accessibilité persistée dans le proxy, getter 631 combine politique et disponibilité SDMC) | 2026-11-23 |
 | fsp-srv | `631` | `IsSdCardAccessible` | 4.0.0+ | **IMPL-SRC** (`FileSystemController::OpenSDMC` + présence du VirtualDir réel, vendor `a460d757`) | 2026-11-22 |
-| fsp-srv | `640` | `IsSignedSystemPartitionOnSdCardValid` | 4.0.0-7.0.1 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `640` | `IsSignedSystemPartitionOnSdCardValid` | 4.0.0-7.0.1 | **HORS-VERSION** ([source C++][ns1-src-008]) | 2026-11-23 |
 | fsp-srv | `700` | `OpenAccessFailureDetectionEventNotifier` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenAccessFailureResolver` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `701` | `GetAccessFailureDetectionEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `702` | `IsAccessFailureDetected` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -4073,7 +4073,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `1007` | `RegisterUpdatePartition` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1008` | `OpenRegisteredUpdatePartition` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1009` | `GetAndClearMemoryReportInfo` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `1010` | `SetDataStorageRedirectTarget` | 5.1.0-6.2.0 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `1010` | `SetDataStorageRedirectTarget` | 5.1.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-008]) | 2026-11-23 |
  | fsp-srv | `1011` | `GetProgramIndexForAccessLog` | 7.0.0+ |  **IMPL-SRC** (ABI HOS7+ corrigée : u32 index + u32 count depuis la map cmd810 et le ProgramId courant ; vendor `ad27e09c`)  | 2026-11-22 | 
 | fsp-srv | `1012` | `GetFsStackUsage` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `1013` | `UnsetSaveDataRootPath` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -5343,7 +5343,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | psc:c | `2` | `GetResult` | — | **NULL** ([source C++][ns1-src-118]) | 2026-11-22 |
 | psc:c | `3` | `GetState` | — | **NULL** ([source C++][ns1-src-118]) | 2026-11-22 |
 | psc:c | `4` | `Cancel` | — | **NULL** ([source C++][ns1-src-118]) | 2026-11-22 |
-| psc:c | `5` | `PrintModuleInformation` | 1.0.0-6.2.0 | **NULL** ([source C++][ns1-src-118]) | 2026-11-22 |
+| psc:c | `5` | `PrintModuleInformation` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-118]) | 2026-11-23 |
 | psc:c | `6` | `GetModuleInformation` | — | **NULL** ([source C++][ns1-src-118]) | 2026-11-22 |
 | psc:m | `0` | `GetPmModule` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/pm_service.cpp)) | 2026-11-22 |
 | psc:m | `0` | `Initialize` | — | **NULL** ([source C++][ns1-src-119]) | 2026-11-22 |
@@ -5630,7 +5630,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `116` | `SetInRepairProcessEnableFlag` | 3.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/33858387c023030896e649c84e1df806a3352889/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `117` | `GetHeadphoneVolumeUpdateFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `118` | `SetHeadphoneVolumeUpdateFlag` | 3.0.0+ | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
-| set:sys | `119` | `NeedsToUpdateHeadphoneVolume` | 3.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `119` | `NeedsToUpdateHeadphoneVolume` | 3.0.0-14.1.2 | **HORS-VERSION** ([source C++][ns1-src-123]) | 2026-11-23 |
 | set:sys | `120` | `GetPushNotificationActivityModeOnSleep` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `121` | `SetPushNotificationActivityModeOnSleep` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `122` | `GetServiceDiscoveryControlSettings` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/33858387c023030896e649c84e1df806a3352889/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |

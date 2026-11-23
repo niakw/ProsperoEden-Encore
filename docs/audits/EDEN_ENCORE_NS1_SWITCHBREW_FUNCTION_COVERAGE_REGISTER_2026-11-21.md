@@ -737,6 +737,17 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 681** : 2 124 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck NULL — commandes retirées avant HOS 23 — 23/11/2026
+
+- **30 NULL → HORS-VERSION** sans modification runtime.
+- **29 lignes** du miroir indiquaient déjà une fenêtre fermée entre HOS 1.x et 8.1.0 : anciennes commandes Account, HID debug, SPSM, AOC, NS, BT, CAPS, VI, ES, FSP et PSC.
+- `NeedsToUpdateHeadphoneVolume` (set:sys 119) est corrigée de `3.0.0+` vers **3.0.0–14.1.2** : libnx documente explicitement sa suppression en 15.0.0. Sur la cible **HOS 23**, elle ne doit pas être exposée.
+- Cette requalification suit la même règle que les six anciennes commandes Time déjà classées HORS-VERSION : aucune fonction disparue du firmware cible n'est remplacée par un faux succès.
+
+**Compteur historique : 1 466 IMPL-SRC / 110 PARTIEL / 149 STUB / 119 NOOP / 2 094 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 36 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 651** : 2 094 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

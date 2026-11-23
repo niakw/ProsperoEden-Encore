@@ -36,6 +36,7 @@ REVIEWED_VENDORS={
 }
 # Exact vendor successor: revised optimized memory OOM owner, no source drift.
 REVIEWED_VENDORS.add("ced1b9cdd6f0fa4e0ca7949b404f450aae0055df")
+REVIEWED_VENDORS.add("06b453171af26b5703e2fcc5e68c4e8288d758b7")
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
@@ -63,9 +64,10 @@ def main():
     for owner,expected in (
         (NATIVE_GUEST[0],"1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
         (NATIVE_GUEST[1],"c8f197810af244c3f2d66413352533734d031620"),
-        (NATIVE_SHARED,"9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
+        (NATIVE_SHARED,"515df1ec4a4b231266d6f3e5481c54ca87c94453" if sha == "06b453171af26b5703e2fcc5e68c4e8288d758b7"
+         else "9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
         (NATIVE_KERNEL,"c5b5dd99bb9a65286783f4b220d991f422d19e67"
-         if sha == "ced1b9cdd6f0fa4e0ca7949b404f450aae0055df"
+         if sha in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7"}
          else "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
         (NATIVE_SLAB,"130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
     ):

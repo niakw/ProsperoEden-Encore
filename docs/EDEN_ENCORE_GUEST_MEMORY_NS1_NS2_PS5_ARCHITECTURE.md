@@ -10,6 +10,8 @@
 
 **Correction supplémentaire du propriétaire sparse (23/11) :** sous `PS5_NATIVE && EDEN_NS2_SPARSE_BACKING`, `CommitMemoryRange` met déjà à zéro chaque nouvelle unité physique de 2 Mio. Le nouveau `CommitForClear` signale uniquement les plages **entièrement nouvelles**, permettant à `HostMemory::ClearBackingRegion(fill=0)` d'éviter le second `memset` massif. Les plages mixtes, partiellement résidentes ou à remplissage non nul conservent leur effacement exact. L'admission et le rollback précèdent le signal de fraîcheur. **Bénéfice possible : temps de chargement et trafic mémoire ; aucun gain de résidence RAM, aucune première frame ni fluidité NS1 validée.**
 
+**P0 kernel shared memory (23/11) :** vendor [`06b45317`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/06b453171af26b5703e2fcc5e68c4e8288d758b7) : `KSharedMemory::Initialize` du runtime NS2 supprime le double pré-engagement C ABI et laisse `HostMemory::ClearBackingRegion` engager/mettre à zéro les pages ; le groupe de pages invitées et ses descripteurs sont rendus sur `std::bad_alloc` avant publication/commit des ressources. Échec de `AddBlock` traité également. L'objectif est d'éviter un terminate hôte et une réservation fuitée pendant l'initialisation des mémoires partagées, **pas** de réduire la RAM physique déjà engagée ni de certifier le boot. Validation console toujours absente.
+
 ## 1. Décision et priorités
 
 La mémoire physique PS5 est une ressource **commune** à l'hôte, au processus invité, au JIT, aux buffers/images RADV, aux stacks, aux caches et aux services. Une grande adresse invitée mappée n'est pas une grande allocation physique. La solution pérenne doit partager des **contrats d'ownership** entre NS1 et NS2, sans leur imposer des politiques identiques.

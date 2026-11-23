@@ -1067,6 +1067,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 483** : 1 948 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot Friend — profils / clé NSAID / URL offline — 23/11/2026
+
+**Vendor `b5bdec17c65914db77f8dac4a6eb4f740c8bb1f0`** (arbre `ee52c1bb868bc0e1bf28566bb7bae0c9a314c768`).
+
+- `GetProfileList` (10500) : **NULL → IMPL-SRC** ; l'UID est consommé et le buffer MapAlias de profils demandé est entièrement initialisé à zéro, ce qui représente des profils invalides/absents sans backend social.
+- `GetPlayHistoryRegistrationKeyWithNetworkServiceAccountId` (10701) : **NULL → IMPL-SRC** ; même contrat 0x40 que 10700 avec `bool + NetworkServiceAccountId`, sortie zéro en mode offline, conforme à SwIPC et Ryujinx.
+- `GetProfileImageUrl` (11000) : **NULL → IMPL-SRC** ; `nn::friends::Url` fait **0xA0 octets**, l'entrée `Url + u32 ImageSize` est consommée et une URL vide ABI-correcte est renvoyée comme chez Ryujinx.
+- Aucun appel réseau Nintendo, faux profil ou image factice n'est créé.
+
+**Compteur historique : 1 518 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 945 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 480** : 1 945 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -1428,6 +1428,23 @@ Le catalogue canonique SwitchBrew utilisé par ce registre contient huit de ces 
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+
+## Lot AM stateful + HID policy HOS 23 — 23/11/2026
+
+**Vendor `f20f6736b79259cb325f6a44b7b994749e458bec`** (arbre `c467583c2cc4dd86e59461792c31a0d43f6f82cc`).
+
+Le dump IPC NS1 **HOS 23.0.1** de `borntohonk/Switch-Ghidra-Guides` confirme pour `hid:dbg` cmd 60 `ClearNpadSystemCommonPolicy` un payload **0x8 + PID, sortie 0**. Le runtime raccorde cette commande au backend déjà présent `NPad::ClearNpadSystemCommonPolicy(system.Kernel(), aruid.pid)`. La cmd 3000 `ReloadFirmwareDebugSettings` est aussi raccordée à `HidFirmwareSettings::Reload()`, mais elle n'est pas matérialisée dans le dénominateur SwitchBrew historique et ne modifie donc pas le compteur.
+
+La revue des **STUB appletAE** a identifié neuf faux positifs : leurs corps modifient déjà un état applet réel ou retournent un objet réel. Ils passent **STUB → IMPL-SRC** : `SetDisplayMagnification`, `GetGpuErrorDetectedSystemEvent`, `IsGamePlayRecordingSupported`, `SetGamePlayRecordingState`, `EnableApplicationCrashReport`, `PrepareForJit`, `SetScreenShotAppletIdentityInfo`, `SetAlbumImageOrientation`, `SetAlbumImageTakenNotificationEnabled`. Les marqueurs de log `(STUBBED)` trompeurs ont été retirés du C++ actif.
+
+Les trois `Release*CaptureSharedBuffer` passent **STUB → NOOP** avec justification runtime : `WriteAppletCaptureBuffer` effectue une copie synchrone sous `SharedBufferManager::m_guard` puis libère ce verrou avant le retour ; aucun ownership persistant n'existe à relâcher.
+
+**Compteur historique : 1 563 IMPL-SRC / 142 PARTIEL / 109 STUB / 145 NOOP / 1 698 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 330 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 229** : 1 698 NULL + 109 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

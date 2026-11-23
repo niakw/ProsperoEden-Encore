@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 553 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `a243ecb0`. **Ces 1 553 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 563 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `f20f6736`. **Ces 1 563 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 473 | 80 | **1 553** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 483 | 80 | **1 563** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
-| **STUB — Stub / résultat simulé** | 121 | 0 | **121** |
-| **NOOP — No-op documenté** | 142 | 0 | **142** |
-| **NULL — Handler NULL** | 1 699 | 0 | **1 699** |
+| **STUB — Stub / résultat simulé** | 109 | 0 | **109** |
+| **NOOP — No-op documenté** | 145 | 0 | **145** |
+| **NULL — Handler NULL** | 1 698 | 0 | **1 698** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -1215,7 +1215,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:dbg | `50` | `DeactivateXpad` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `51` | `SetXpadAutoPilotState` | — | **HORS-VERSION** (SwitchBrew HID : Xpad AutoPilot IDs51/52 limités à HOS 1.0.0–9.2.0 ; cible HOS 23) | 2026-11-23 |
 | hid:dbg | `52` | `UnsetXpadAutoPilotState` | — | **HORS-VERSION** (SwitchBrew HID : Xpad AutoPilot IDs51/52 limités à HOS 1.0.0–9.2.0 ; cible HOS 23) | 2026-11-23 |
-| hid:dbg | `60` | `ClearNpadSystemCommonPolicy` | 9.0.0+ | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
+| hid:dbg | `60` | `ClearNpadSystemCommonPolicy` | 9.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; ABI NS1 23.0.1 : ARUID 0x8 + PID, raccordé à `NPad::ClearNpadSystemCommonPolicy`) | 2026-11-23 |
 | hid:dbg | `91` | `DeactivateGesture` | — | **IMPL-SRC** ([source C++][ns1-src-083]) | 2026-11-22 |
 | hid:dbg | `110` | `DeactivateHomeButton` | — | **IMPL-SRC** ([vendor a243ecb0](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/a243ecb09ad7853c9be5f1d9d192c5206c1ef3cc/sources/eden/src/core/hle/service/hid/hid_debug_server.cpp) ; périphérique réel via `ResourceManager`, désactivé par `ControllerBase::DeactivateController()`) | 2026-11-23 |
 | hid:dbg | `111` | `SetHomeButtonAutoPilotState` | — | **NULL** ([source C++][ns1-src-083]) | 2026-11-22 |
@@ -1594,7 +1594,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `20` | `PushToAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (stocke le vrai `IStorage` dans une file applet dédiée sous verrou ; vendor `b217369d`) | 2026-11-22 |
 | appletAE | `21` | `TryPopFromAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (retourne le dernier `IStorage` de la file applet ou `ResultNoDataInChannel` ; vendor `b217369d`) | 2026-11-22 |
 | appletAE | `40` | `GetDisplayLogicalResolution` | 8.0.0+ | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
-| appletAE | `42` | `SetDisplayMagnification` | 8.0.0+ | **STUB** ([source C++][ns1-src-030]) | 2026-11-22 |
+| appletAE | `42` | `SetDisplayMagnification` | 8.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit la rectangle de magnification protégée par le verrou applet) | 2026-11-23 |
 | appletAE | `50` | `SetHomeButtonDoubleClickEnabled` | 8.0.0+ | **PARTIEL** (état applet réellement écrit sous verrou ; aucun consommateur double-click n'est encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `51` | `GetHomeButtonDoubleClickEnabled` | 8.0.0+ | **PARTIEL** (relit l'état double-click réellement stocké ; aucun consommateur double-click n'est encore modélisé ; vendor `3f8249a2`) | 2026-11-22 |
 | appletAE | `20` | `OpenLibraryAppletSelfAccessor` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/library_applet_proxy.cpp)) | 2026-11-22 |
@@ -1631,7 +1631,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `102` | `UnreserveResourceForMovieOperation` | 5.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `110` | `GetMainAppletAvailableUsers` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `120` | `GetLaunchStorageInfoForDebug` | 9.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `130` | `GetGpuErrorDetectedSystemEvent` | 9.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `130` | `GetGpuErrorDetectedSystemEvent` | 9.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; retourne le vrai KReadableEvent de l'applet) | 2026-11-23 |
 | appletAE | `20` | `GetOverlayFunctions` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
 | appletAE | `0` | `BeginToWatchShortHomeButtonMessage` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `1` | `EndToWatchShortHomeButtonMessage` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
@@ -1669,14 +1669,14 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `40` | `NotifyRunning` | — | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `50` | `GetPseudoDeviceId` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `60` | `SetMediaPlaybackStateForApplication` | 2.0.0+ | **PARTIEL** (état `m_applet->media_playback_state` réellement écrit sous verrou, mais aucun consommateur de politique média/énergie n'est encore modélisé ; vendor `6fc24667`) | 2026-11-22 |
-| appletAE | `65` | `IsGamePlayRecordingSupported` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `65` | `IsGamePlayRecordingSupported` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; lit l'état de capacité `game_play_recording_supported` de l'applet) | 2026-11-23 |
 | appletAE | `66` | `InitializeGamePlayRecording` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `67` | `SetGamePlayRecordingState` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `67` | `SetGamePlayRecordingState` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit l'état `game_play_recording_state` sous verrou) | 2026-11-23 |
 | appletAE | `68` | `RequestFlushGamePlayingMovieForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `70` | `RequestToShutdown` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `71` | `RequestToReboot` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `80` | `ExitAndRequestToShowThanksMessage` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `90` | `EnableApplicationCrashReport` | 4.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `90` | `EnableApplicationCrashReport` | 4.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit `application_crash_report_enabled` sous verrou) | 2026-11-23 |
 | appletAE | `100` | `InitializeApplicationCopyrightFrameBuffer` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `101` | `SetApplicationCopyrightImage` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `102` | `SetApplicationCopyrightVisibility` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1695,7 +1695,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `170` | `SetHdcpAuthenticationActivated` | 9.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `500` | `StartContinuousRecordingFlushForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `1000` | `CreateMovieMaker` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `1001` | `PrepareForJit` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `1001` | `PrepareForJit` | 5.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; enregistre `jit_service_launched` sous verrou) | 2026-11-23 |
 | appletAE | `0` | `GetGrcMovieMaker` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; aucun getter AM actif et GRC::CreateMovieMaker est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `1` | `GetLayerHandle` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `0` | `CreateLibraryApplet` | — | **IMPL-SRC** ([source C++][ns1-src-004]) | 2026-11-22 |
@@ -1764,11 +1764,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `12` | `SetPerformanceModeChangedNotification` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `13` | `SetFocusHandlingMode` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `14` | `SetRestartMessageEnabled` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `15` | `SetScreenShotAppletIdentityInfo` | 2.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `15` | `SetScreenShotAppletIdentityInfo` | 2.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; conserve l'identité screenshot dans l'état applet) | 2026-11-23 |
 | appletAE | `16` | `SetOutOfFocusSuspendingEnabled` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `17` | `SetControllerFirmwareUpdateSection` | 3.0.0+ | **IMPL-SRC** (stocke l'état firmware-update dans l'applet sous verrou ; le getter ID55 relit désormais ce même état ; vendor `0d21ded6`) | 2026-11-22 |
 | appletAE | `18` | `SetRequiresCaptureButtonShortPressedMessage` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `19` | `SetAlbumImageOrientation` | 3.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `19` | `SetAlbumImageOrientation` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; conserve l'orientation album dans l'état applet) | 2026-11-23 |
 | appletAE | `20` | `SetDesirableKeyboardLayout` | 4.0.0+ | **IMPL-SRC** (stocke le layout clavier désiré dans l'applet principale sous verrou ; vendor `0d21ded6`) | 2026-11-22 |
 | appletAE | `40` | `CreateManagedDisplayLayer` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `41` | `IsSystemBufferSharingEnabled` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
@@ -1792,7 +1792,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `80` | `SetWirelessPriorityMode` | 4.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `90` | `GetAccumulatedSuspendedTickValue` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `91` | `GetAccumulatedSuspendedTickChangedEvent` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
-| appletAE | `100` | `SetAlbumImageTakenNotificationEnabled` | 7.0.0+ | **STUB** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `100` | `SetAlbumImageTakenNotificationEnabled` | 7.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; conserve la préférence de notification album dans l'état applet) | 2026-11-23 |
 | appletAE | `110` | `SetApplicationAlbumUserData` | 8.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `1000` | `GetDebugStorageChannel` | 7.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `0` | `Push` | — | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
@@ -1835,11 +1835,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `20` | `ClearCaptureBuffer` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `21` | `ClearAppletTransitionBuffer` | 3.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `22` | `AcquireLastApplicationCaptureSharedBuffer` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `23` | `ReleaseLastApplicationCaptureSharedBuffer` | 4.0.0+ | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `23` | `ReleaseLastApplicationCaptureSharedBuffer` | 4.0.0+ | **NOOP** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; acquisition Encore synchrone sous `SharedBufferManager::m_guard`, aucun ownership persistant à libérer) | 2026-11-23 |
 | appletAE | `24` | `AcquireLastForegroundCaptureSharedBuffer` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `25` | `ReleaseLastForegroundCaptureSharedBuffer` | 4.0.0+ | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `25` | `ReleaseLastForegroundCaptureSharedBuffer` | 4.0.0+ | **NOOP** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; acquisition Encore synchrone sous `SharedBufferManager::m_guard`, aucun ownership persistant à libérer) | 2026-11-23 |
 | appletAE | `26` | `AcquireCallerAppletCaptureSharedBuffer` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `27` | `ReleaseCallerAppletCaptureSharedBuffer` | 4.0.0+ | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `27` | `ReleaseCallerAppletCaptureSharedBuffer` | 4.0.0+ | **NOOP** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; acquisition Encore synchrone sous `SharedBufferManager::m_guard`, aucun ownership persistant à libérer) | 2026-11-23 |
 | appletAE | `28` | `TakeScreenShotOfOwnLayerEx` | 6.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `1` | `RequestLaunchApplicationForDebug` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/am/service/home_menu_functions.cpp` ; la table actuelle expose PopRequestLaunchApplicationForDebug à l'ID 100 (nullptr), pas ID 1 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `2` | `GetDebugStorageChannel` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/am/service/self_controller.cpp` ; ISelfController expose GetDebugStorageChannel à l'ID 1000 (nullptr), pas ID 2 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |

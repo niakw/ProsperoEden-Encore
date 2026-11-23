@@ -173,8 +173,17 @@ def check(path: Path) -> dict:
         if kind == 0:
             base_packages += 1
         if meta_size:
-            require(meta_offset >= blob_offset and meta_offset <= total and
-                    meta_size <= total - meta_offset, "metadata outside container")
+            # Upstream Lichii / Eglantine: optional metadata advertised
+            # outside the file is absent, not a reason to read outside it.
+            if meta_offset == 0 or meta_offset > total or meta_size > total - meta_offset:
+                pass
+            else:
+                in_toc_gap = (meta_offset >= toc_offset + toc_size and
+                              meta_offset < blob_offset and
+                              meta_size <= blob_offset - meta_offset)
+                after_blob = meta_offset >= blob_offset
+                require(meta_size <= 32 * 1024 * 1024 and
+                        (in_toc_gap or after_blob), "metadata overlaps TOC/blob or exceeds cap")
         else:
             require(meta_offset == 0, "empty metadata with nonzero offset")
         signature.extend(struct.pack("<QIB", title_id, version_num, kind))

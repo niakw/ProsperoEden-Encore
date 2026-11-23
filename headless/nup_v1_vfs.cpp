@@ -390,20 +390,40 @@ void Archive::Parse() {
             const bool metadata_bounded =
                 metadata_inside_file && (metadata_in_toc_gap || metadata_after_blob);
             if (!metadata_bounded) {
-                const char* reason = meta_size > MaxMeta ? "size_limit" :
-                    meta_at > file_size ? "offset_outside_file" :
-                    meta_size > file_size - meta_at ? "range_outside_file" :
-                    meta_at < toc_at + toc_size ? "overlaps_toc_or_header" :
-                    meta_at < blob_at ? "gap_crosses_blob" : "invalid_extent";
-                std::fprintf(stderr,
-                    "EDEN_NUP_METADATA_BOUNDS_REJECT package=%u reason=%s offset=%llu size=%u blob_at=%llu declared_file=%llu\n",
-                    static_cast<unsigned>(i), reason,
-                    static_cast<unsigned long long>(meta_at),
-                    static_cast<unsigned>(meta_size),
-                    static_cast<unsigned long long>(blob_at),
-                    static_cast<unsigned long long>(file_size));
-                Check(false, "metadata exceeds file");
+                // The metadata region is optional; upstream Lichii nx2 and
+                // EglantinePS5 discard an absent/out-of-file advertisement
+                // instead of rejecting the otherwise authenticated payload.
+                // Never dereference or read an invalid metadata range.
+                const bool optional_metadata_outside_file =
+                    meta_at == 0 || meta_at > file_size ||
+                    meta_size > file_size - meta_at;
+                if (optional_metadata_outside_file) {
+                    const char* reason = meta_at == 0 ? "missing_offset" :
+                        meta_at > file_size ? "offset_outside_file" : "range_outside_file";
+                    std::fprintf(stderr,
+                        "EDEN_NUP_OPTIONAL_METADATA_SKIPPED package=%u reason=%s offset=%llu size=%u declared_file=%llu\n",
+                        static_cast<unsigned>(i), reason,
+                        static_cast<unsigned long long>(meta_at),
+                        static_cast<unsigned>(meta_size),
+                        static_cast<unsigned long long>(file_size));
+                } else {
+                    // In-file metadata whose extent overlaps the TOC/blob
+                    // boundary or exceeds our bounded parser is not optional
+                    // to validate: do not read a disguised payload/TOC alias.
+                    const char* reason = meta_size > MaxMeta ? "size_limit" :
+                        meta_at < toc_at + toc_size ? "overlaps_toc_or_header" :
+                        meta_at < blob_at ? "gap_crosses_blob" : "invalid_extent";
+                    std::fprintf(stderr,
+                        "EDEN_NUP_METADATA_BOUNDS_REJECT package=%u reason=%s offset=%llu size=%u blob_at=%llu declared_file=%llu\n",
+                        static_cast<unsigned>(i), reason,
+                        static_cast<unsigned long long>(meta_at),
+                        static_cast<unsigned>(meta_size),
+                        static_cast<unsigned long long>(blob_at),
+                        static_cast<unsigned long long>(file_size));
+                    Check(false, "metadata exceeds file");
+                }
             }
+            if (metadata_bounded) {
             metadata_regions.emplace_back(meta_at, meta_at + meta_size);
             const auto meta = ReadChunk(source_, meta_at, meta_size);
             std::size_t pos = 0;
@@ -484,6 +504,7 @@ void Archive::Parse() {
                     }
                 }
                 pos += 8 + length;
+            }
             }
         }
         package_metadata_.push_back(std::move(package_meta));

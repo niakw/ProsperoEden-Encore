@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 532 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 533 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 452 | 80 | **1 532** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 453 | 80 | **1 533** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 126 | 3 | **129** |
+| **PARTIEL — Implémentation partielle** | 136 | 3 | **139** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 141 | 0 | **141** |
-| **NULL — Handler NULL** | 1 735 | 0 | **1 735** |
+| **NULL — Handler NULL** | 1 724 | 0 | **1 724** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1532
+    "Implémentation source retrouvée" : 1533
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 129
+    "Implémentation partielle" : 139
     "Stub / résultat simulé" : 125
     "No-op documenté" : 141
-    "Handler NULL" : 1735
+    "Handler NULL" : 1724
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 196
     "Service/interface non exposé sous cette forme" : 306
@@ -3748,19 +3748,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fan | `7` | `GetActualRotationSpeedLevel` | 1.0.0-6.2.0 | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; aucun RegisterNamedService("fan") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | psm | `0` | `GetBatteryChargePercentage` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; méthode PSM::GetBatteryChargePercentage et gestion d'état ; ABI et PS5 non validés) | 2026-11-22 |
 | psm | `1` | `GetChargerType` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; méthode PSM::GetChargerType et gestion d'état ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `2` | `EnableBatteryCharging` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `3` | `DisableBatteryCharging` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `4` | `IsBatteryChargingEnabled` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `5` | `AcquireControllerPowerSupply` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `6` | `ReleaseControllerPowerSupply` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
+| psm | `2` | `EnableBatteryCharging` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
+| psm | `3` | `DisableBatteryCharging` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
+| psm | `4` | `IsBatteryChargingEnabled` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
+| psm | `5` | `AcquireControllerPowerSupply` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
+| psm | `6` | `ReleaseControllerPowerSupply` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
 | psm | `7` | `OpenSession` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; méthode PSM::OpenSession et gestion d'état ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `8` | `EnableEnoughPowerChargeEmulation` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `9` | `DisableEnoughPowerChargeEmulation` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `10` | `EnableFastBatteryCharging` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `11` | `DisableFastBatteryCharging` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
+| psm | `8` | `EnableEnoughPowerChargeEmulation` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
+| psm | `9` | `DisableEnoughPowerChargeEmulation` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
+| psm | `10` | `EnableFastBatteryCharging` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
+| psm | `11` | `DisableFastBatteryCharging` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
 | psm | `12` | `GetBatteryVoltageState` | — | **PARTIEL** (fallback batterie synthétique corrigé : VoltageState=Normal(3), âge=100.0%; aucun gauge Switch physique ; vendor `4936c552`) | 2026-11-22 |
-| psm | `13` | `GetRawBatteryChargePercentage` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| psm | `14` | `IsEnoughPowerSupplied` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
+| psm | `13` | `GetRawBatteryChargePercentage` | — | **IMPL-SRC** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; ABI f64 libnx/SwIPC, pourcentage hôte réel si disponible, fallback 100.0 sans batterie) | 2026-11-23 |
+| psm | `14` | `IsEnoughPowerSupplied` | — | **PARTIEL** ([vendor 5f7e92eb](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5f7e92ebb9600809d81ee6fbb898c7011b95c719/sources/eden/src/core/hle/service/ptm/psm.cpp) ; état PSM conservé et reflété localement, sans contrôle physique de l'alimentation PS5) | 2026-11-23 |
 | psm | `15` | `GetBatteryAgePercentage` | — | **PARTIEL** (fallback batterie synthétique corrigé : VoltageState=Normal(3), âge=100.0%; aucun gauge Switch physique ; vendor `4936c552`) | 2026-11-22 |
 | psm | `16` | `GetBatteryChargeInfoEvent` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; table PSM : nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | psm | `17` | `GetBatteryChargeInfoFields` | — | **PARTIEL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ptm/psm.cpp) ; lecture état hôte mais champs électriques simulés ; ABI et PS5 non validés) | 2026-11-22 |

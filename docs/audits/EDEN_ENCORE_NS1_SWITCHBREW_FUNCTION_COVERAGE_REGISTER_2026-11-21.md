@@ -1328,6 +1328,20 @@ Les **20 commandes de session** présentes dans le miroir historique, de `QueryF
 
 **Pool historique restant à examiner = 2 269** : 1 735 NULL + 125 STUB + 129 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
 
+## Lot PSM — état d'alimentation hôte et correction ABI HOS17+ — 23/11/2026
+
+**Vendor `5f7e92ebb9600809d81ee6fbb898c7011b95c719`** (arbre `faf1ab63c88c0c408b42c74735e2072d90818c84`).
+
+Onze commandes PSM quittent NULL. `GetRawBatteryChargePercentage` (13) passe **IMPL-SRC** avec l'ABI `f64` confirmée par libnx/SwIPC et lit `Common::PowerStatus` quand l'hôte expose une batterie, sinon 100.0. Les commandes 2/3/4, 5/6, 8/9, 10/11 et `IsEnoughPowerSupplied` (14) passent **PARTIEL** : leurs états sont réellement conservés dans `PSM`, et fast-charge / controller-supply / battery-charging sont reflétés dans `GetBatteryChargeInfoFields`, mais ils ne pilotent évidemment pas physiquement l'alimentation PS5.
+
+Le même patch corrige une divergence ABI existante de `BatteryChargeInfoFields` HOS17+ : `battery_charge_percentage` et `battery_age_percentage` sont des **u32 per-cent-mille**, pas des `f32`. Le fallback 100 % devient donc 100000. Les événements 16/18 restent NULL : aucun watcher de batterie hôte ne peut actuellement les signaler correctement.
+
+**Compteur historique : 1 533 IMPL-SRC / 139 PARTIEL / 125 STUB / 141 NOOP / 1 724 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 268** : 1 724 NULL + 125 STUB + 139 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

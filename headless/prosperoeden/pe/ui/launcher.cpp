@@ -577,7 +577,14 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
 
     // Real, locally cached retail scans win independently per face. A missing
     // back is composed from cached game metadata, never faked as a real scan.
-    const BoxArt case_art = services_.box_art(title_id);
+    // NUP editions can reuse an NS1 program TitleID, so the cache namespace
+    // must include the generation at launch as well as during enrichment.
+    const bool launch_ns2_case =
+        case_media::IsSwitch2TitleId(title_id) ||
+        launch_case_game_.format == "NUP" ||
+        launch_case_game_.file.ends_with(".nup") ||
+        launch_case_game_.file.ends_with(".NUP");
+    const BoxArt case_art = services_.box_art(title_id, launch_ns2_case);
     launch_box_front_ = case_art.front;
     launch_box_back_ = case_art.back;
     launch_box_spine_ = case_art.spine;

@@ -1305,6 +1305,19 @@ L'état est conservé dans l'objet `IRequest` sous le verrou existant ; les desc
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot NIFM — notification live et délai WoWLAN — 23/11/2026
+
+**Vendor `0e9652b4f19ca998fe7d60d34460bd4bbdb1be30`** (arbre `d8fcbce6d134cdcd8716060d7817c94cf5f89df7`).
+
+- `NotifyConnectionStateChanged` (42) : **NULL → NOOP**. Encore n'entretient pas de cache NIFM séparé ; les requêtes réseau relisent `EmuNetState` / rafraîchissent l'hôte, donc la notification n'a aucun état interne à invalider.
+- `SetWowlDelayedWakeTime(s32)` (43) : **NULL → PARTIEL**. La valeur Horizon est réellement consommée et conservée dans `IGeneralService`; Encore n'a pas encore de daemon wake-on-wireless PS5 qui applique ce délai.
+
+**Compteur historique : 1 532 IMPL-SRC / 129 PARTIEL / 125 STUB / 141 NOOP / 1 755 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 289** : 1 755 NULL + 125 STUB + 129 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

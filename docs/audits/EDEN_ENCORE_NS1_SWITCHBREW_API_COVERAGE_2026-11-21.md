@@ -31,10 +31,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 452 | 80 | **1 532** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 125 | 3 | **128** |
+| **PARTIEL — Implémentation partielle** | 126 | 3 | **129** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
-| **NOOP — No-op documenté** | 140 | 0 | **140** |
-| **NULL — Handler NULL** | 1 757 | 0 | **1 757** |
+| **NOOP — No-op documenté** | 141 | 0 | **141** |
+| **NULL — Handler NULL** | 1 755 | 0 | **1 755** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -445,10 +445,10 @@ pie showData
     title NS1 — 4 853 entrées distinctes
     "Implémentation source retrouvée" : 1532
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 128
+    "Implémentation partielle" : 129
     "Stub / résultat simulé" : 125
-    "No-op documenté" : 140
-    "Handler NULL" : 1757
+    "No-op documenté" : 141
+    "Handler NULL" : 1755
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -4909,8 +4909,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `39` | `NotifyApplicationSuspended` | 8.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `40` | `SetAcceptableNetworkTypeFlag` | 8.0.0+ | **PARTIEL** (stocke le flag u32 réel par service ; aucun filtre de sélection réseau ne le consomme encore ; vendor `05784b60`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `41` | `GetAcceptableNetworkTypeFlag` | 8.0.0+ | **PARTIEL** (relit exactement le flag u32 stocké par le setter ; aucun filtre de sélection réseau ne le consomme encore ; vendor `05784b60`) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `42` | `NotifyConnectionStateChanged` | 8.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `43` | `SetWowlDelayedWakeTime` | 9.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `42` | `NotifyConnectionStateChanged` | 8.0.0+ | **NOOP** ([vendor 0e9652b4](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0e9652b4f19ca998fe7d60d34460bd4bbdb1be30/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; Encore relit l'état réseau live et n'a pas de cache NIFM séparé à invalider) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `43` | `SetWowlDelayedWakeTime` | 9.0.0+ | **PARTIEL** ([vendor 0e9652b4](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0e9652b4f19ca998fe7d60d34460bd4bbdb1be30/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; s32 WoWLAN conservé dans IGeneralService, sans daemon de réveil sans-fil PS5) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `0` | `Submit` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `1` | `IsProcessing` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `2` | `GetResult` | — | **IMPL-SRC** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps C++ non trivial retrouvé; non validé PS5) | 2026-11-22 |

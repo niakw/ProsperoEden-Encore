@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 658 | 80 | **1 738** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 663 | 80 | **1 743** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
+| **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
-| **NOOP — No-op documenté** | 203 | 0 | **203** |
-| **NULL — Handler NULL** | 1 279 | 0 | **1 279** |
+| **NOOP — No-op documenté** | 205 | 0 | **205** |
+| **NULL — Handler NULL** | 1 271 | 0 | **1 271** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3975,8 +3975,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | **PARTIEL** ([owner natif FSP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fe5a389ac04fa3c26c1756fc18e73a962e196da4/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; types non supportés et RomFS absent désormais rejetés sans assertion hôte ; mode Manual seul, PS5 non validé) | 2026-11-22 |
 | fsp-srv | `8` | `OpenFileSystemWithId` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; montage du RomFS Program patché par ProgramId via le ContentProvider actif) | 2026-11-23 |
-| fsp-srv | `11` | `OpenBisFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `12` | `OpenBisStorage` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `11` | `OpenBisFileSystem` | — | **IMPL-SRC** (ABI NS1 confirmée ; `FileSystemController::OpenBISPartition` + `IFileSystem`, mapping NandSystem/NandUser ; vendor `14bdf52c`) | 2026-11-23 |
+| fsp-srv | `12` | `OpenBisStorage` | — | **IMPL-SRC** (ABI NS1 confirmée ; `OpenBISPartitionStorage` + `IStorage` ; vendor `14bdf52c`) | 2026-11-23 |
 | fsp-srv | `13` | `InvalidateBisCache` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; NOOP causal : Encore ne maintient pas le cache MBR/GPT BIS de FS-module) | 2026-11-23 |
 | fsp-srv | `17` | `OpenHostFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `18` | `OpenSdCardFileSystem` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3989,8 +3989,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `26` | `FormatSdCardDryRun` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `27` | `IsExFatSupported` | 2.0.0+ | **NOOP** (backend SD host-directory sans distinction FAT/exFAT ; fallback `false` aligné LibHac, vendor `a460d757`) | 2026-11-22 |
 | fsp-srv | `28` | `DeleteSaveDataFileSystemBySaveDataAttribute` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `30` | `OpenGameCardStorage` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `31` | `OpenGameCardFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `30` | `OpenGameCardStorage` | — | **PARTIEL** (Normal/Secure raw réellement ouverts depuis l'XCI ; `RootWriteOnly` est rejeté car le backend XCI Encore est read-only ; vendor `ab2819b`) | 2026-11-23 |
+| fsp-srv | `31` | `OpenGameCardFileSystem` | — | **IMPL-SRC** (Update/Normal/Secure/Logo mappés sur `XCI::GetPartition`, retour `IFileSystem`; ABI NS1 confirmée ; vendor `ab2819b`) | 2026-11-23 |
 | fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | **D** (rejet explicite `ResultTargetNotFound` : Encore ne possède pas l'index `save_data_id → SaveDataAttribute`; aucun faux succès d'extension) | 2026-11-22 |
 | fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | **IMPL-SRC** ([vendor 3234390c](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3234390c8fa29100b3d64b637ed1abf822e6b223/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; index 0 uniquement, suppression VFS du cache réel du programme courant) | 2026-11-23 |
 | fsp-srv | `34` | `GetCacheStorageSize` | 5.0.0+ | **PARTIEL** (taille data/journal réelle de `/user/save/cache/<program_id>` pour index 0 ; index multiples/SD distinct non représentés) | 2026-11-22 |
@@ -4018,8 +4018,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
  | fsp-srv | `83` | `OpenSaveDataTransferProhibiter` | 6.0.0+ |  **NOOP** (aucun gestionnaire de transfert de saves Encore ; token de durée de vie sans verrou dormant ; vendor `ad27e09c`)  | 2026-11-22 | 
 | fsp-srv | `84` | `ListAccessibleSaveDataOwnerId` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `ListApplicationAccessibleSaveDataOwnerId` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
 | fsp-srv | `85` | `OpenSaveDataTransferManagerForSaveDataRepair` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `100` | `OpenImageDirectoryFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `110` | `OpenContentStorageFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `100` | `OpenImageDirectoryFileSystem` | — | **IMPL-SRC** (`FileSystemController::GetImageDirectory`, NAND/SD, retour `IFileSystem`; vendor `98ea6932`) | 2026-11-23 |
+| fsp-srv | `110` | `OpenContentStorageFileSystem` | — | **IMPL-SRC** (`GetContentDirectory` System/User/SdCard + size getter correspondant ; vendor `98ea6932`) | 2026-11-23 |
 | fsp-srv | `120` | `OpenCloudBackupWorkStorageFileSystem` | 6.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `130` | `OpenCustomStorageFileSystem` | 7.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `200` | `OpenDataStorageByCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -4458,7 +4458,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:s | `202` | `CreateNetwork` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `203` | `CreateNetworkPrivate` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `204` | `DestroyNetwork` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
-| ldn:s | `205` | `Reject` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
+| ldn:s | `205` | `Reject` | — | **NOOP** (même contrat que `ldn:u`: ABI explicite et succès de compatibilité sans primitive de rejet par nœud ; vendor `7f5859ea`) | 2026-11-23 |
 | ldn:s | `206` | `SetAdvertiseData` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `207` | `SetStationAcceptPolicy` | — | **NOOP** (compatibilité ldn_mitm : admission policy non propagée au backend host ; vendor `beb30c7a`) | 2026-11-23 |
 | ldn:s | `208` | `AddAcceptFilterEntry` | — | **NOOP** (compatibilité ldn_mitm ; filtre d'admission non appliqué au backend host ; vendor `beb30c7a`) | 2026-11-23 |
@@ -4489,7 +4489,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:u | `202` | `CreateNetwork` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `203` | `CreateNetworkPrivate` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `204` | `DestroyNetwork` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
-| ldn:u | `205` | `Reject` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
+| ldn:u | `205` | `Reject` | — | **NOOP** (ABI `u32 node_id` raccordée ; ldn_mitm et le client offline Ryujinx acceptent la commande sans effet hôte ; Encore n'a pas de primitive de rejet par nœud, vendor `7f5859ea`) | 2026-11-23 |
 | ldn:u | `206` | `SetAdvertiseData` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `207` | `SetStationAcceptPolicy` | — | **NOOP** (compatibilité ldn_mitm ; vendor `beb30c7a`) | 2026-11-23 |
 | ldn:u | `208` | `AddAcceptFilterEntry` | — | **NOOP** (compatibilité ldn_mitm ; vendor `beb30c7a`) | 2026-11-23 |
@@ -6555,3 +6555,10 @@ Vendor `1bbeb625af292945d60f98e91c4fc55a9ee4f4e0` → gitlink moteur `ed3e7c9a12
 Vendor `3cda4d41066c22a4873019206b1f5e2da139892e` → gitlink moteur `1dbb774b0d226f16e0b50621a93dfc6f04098525`. **11 handlers C++** ont été raccordés, mais **9 entrées seulement sortent du registre** : 6 → IMPL-SRC (état/events handover sur user+system) et 3 → NOOP (ListenUndelivered + subscribe/unsubscribe topic système). Les deux variantes account 18.0+ ne figurent pas dans ce catalogue et ne sont donc pas comptées. Tokens opaques toujours ouverts. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 738 IMPL-SRC / 141 PARTIEL / 52 STUB / 203 NOOP / 1 279 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 671.**
+
+
+### LDN + FSP — batch runtime direct (23/11/2026)
+
+Vendor `98ea6932ee52d0c7b6ad4de5776a05df3316f32d` (inclut `7f5859ea`, `14bdf52c`, `ab2819b`) → gitlink moteur `8e2cbafa5992d7eecd9cac2694c93375a23dd97a`. **8 NULL sortent de l'état NULL** : deux `Reject` LDN deviennent NOOP documentés, cinq ouvertures FSP deviennent IMPL-SRC (BIS FS/storage, GameCard FS, image directory, content storage) et `OpenGameCardStorage` devient PARTIEL car la partition `RootWriteOnly` n'est pas exposée en écriture par le backend XCI Encore. Baisse nette du pool : **7**. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 743 IMPL-SRC / 142 PARTIEL / 52 STUB / 205 NOOP / 1 271 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 664.**

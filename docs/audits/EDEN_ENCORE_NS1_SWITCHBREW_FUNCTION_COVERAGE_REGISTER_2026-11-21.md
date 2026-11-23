@@ -2517,3 +2517,12 @@ Vendor `3cda4d41066c22a4873019206b1f5e2da139892e` → gitlink moteur `1dbb774b0d
 **Compteur courant : 1 738 IMPL-SRC / 141 PARTIEL / 52 STUB / 203 NOOP / 1 279 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 671** : 1 279 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## LDN + FSP — batch runtime direct (23/11/2026)
+
+Vendor `98ea6932ee52d0c7b6ad4de5776a05df3316f32d` → gitlink moteur `8e2cbafa5992d7eecd9cac2694c93375a23dd97a`. Deux `Reject` LDN sont raccordés avec ABI `u32 node_id` et comportement offline no-op documenté. FSP gagne les ouvertures BIS filesystem/storage, GameCard filesystem, image directory et content storage via les backends déjà actifs. `OpenGameCardStorage` ouvre Normal/Secure raw mais reste PARTIEL faute de racine write-only dans le modèle XCI read-only. **8 NULL reclassés, baisse nette du pool = 7.** Aucun build PS5 ni résultat gameplay n'est revendiqué.
+
+**Compteur courant : 1 743 IMPL-SRC / 142 PARTIEL / 52 STUB / 205 NOOP / 1 271 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 664** : 1 271 NULL + 52 STUB + 142 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

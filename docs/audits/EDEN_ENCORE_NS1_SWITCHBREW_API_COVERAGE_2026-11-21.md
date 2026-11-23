@@ -32,7 +32,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 550 | 80 | **1 630** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
-| **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
+| **STUB — Stub / résultat simulé** | 72 | 0 | **72** |
 | **NOOP — No-op documenté** | 146 | 0 | **146** |
 | **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |

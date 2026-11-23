@@ -1076,6 +1076,18 @@ endif()
             decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
             assert decl_end < alias_start < point < zero_start, owner
             reviewed = maintained[:zero_start] + maintained[zero_end:]
+            # 648989 changed this one direct ZeroBlock lambda from [=] to [&]
+            # only so the sparse path can reach system.DeviceMemory().
+            zero_lambda = (
+                "        [&](const std::size_t offset, const std::size_t copy_amount, u8* const ptr) {\n"
+                "            std::memset(ptr, 0, copy_amount);"
+            )
+            historical_zero_lambda = (
+                "        [=](const std::size_t offset, const std::size_t copy_amount, u8* const ptr) {\n"
+                "            std::memset(ptr, 0, copy_amount);"
+            )
+            assert reviewed.count(zero_lambda) == 1, owner
+            reviewed = reviewed.replace(zero_lambda, historical_zero_lambda, 1)
             reviewed = reviewed[:point] + reviewed[call_end:]
             # The direct-alias helper and its three historical call sites
             # already belong to the G13 baseline: keep them for parity.

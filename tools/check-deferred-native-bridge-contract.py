@@ -1071,14 +1071,15 @@ endif()
                 'address - base <= capacity - bytes',
             ):
                 assert witness in alias_method, ("direct alias bounds guard", owner, witness)
-            assert maintained.count("IsDirectBackingAlias(") == 2, owner
+            assert maintained.count("IsDirectBackingAlias(") == 5, owner
             decl_start = maintained.index(marker)
             decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
             assert decl_end < alias_start < point < zero_start, owner
             reviewed = maintained[:zero_start] + maintained[zero_end:]
             reviewed = reviewed[:point] + reviewed[call_end:]
-            reviewed = reviewed[:alias_start] + reviewed[alias_end:]
-            # Remove the standalone gated native declaration and separator.
+            # The direct-alias helper and its three historical call sites
+            # already belong to the G13 baseline: keep them for parity.
+            # Remove only the standalone NS2-gated declaration and separator.
             assert reviewed[decl_end:decl_end+1] == "\n", owner
             reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
             assert reviewed.count("#include <new>\n") == 1, owner

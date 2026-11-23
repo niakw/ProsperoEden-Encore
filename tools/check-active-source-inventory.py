@@ -1318,6 +1318,11 @@ post_f07_gpu_table_present = post_f07_gpu_table_owners & set(physical_all)
 # The tracker workflow also explicitly tests historical vendor 1ec7b42.
 # Only that known historical checkout (not a missing production TU) may omit it.
 gpu_table_vendor_pin = checked_guest_cache_lock_vendor(subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],text=True).strip())
+# 63826507 changes only ps5-mesa VideoOut WSI. This inventory does
+# not classify that WSI; replay the exact bfdf owner receipts for every
+# maintained non-WSI source instead of weakening their hashes.
+if gpu_table_vendor_pin == "63826507846e253761ca2c6a77727446fe712774":
+    gpu_table_vendor_pin = "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"
 gpu_table_vendor_pin = "ab417b59c5f7f4613ff27386be05c0644d0ed776" if gpu_table_vendor_pin in {
     "ce25655b08751aa0c2f9efb10ff05fd8fcbf7a93", "7fc673495b2ee18d5216023280057a42aa78d46c", "510f1efde545357fe8095a812df32251ee546285"
 } else gpu_table_vendor_pin
@@ -2086,6 +2091,8 @@ post_f07_plaintext_nca_present = {
 } & set(physical_all)
 actual_vendor = subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
+if actual_vendor == "63826507846e253761ca2c6a77727446fe712774":
+    actual_vendor = "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"
 
 # Current vendor source additions postdate the immutable 337-path F07
 # catalogue. One exact ledger serves both source inventories.

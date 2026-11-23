@@ -126,18 +126,38 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
             raise RuntimeError(f"Missing maintained active-core source: {relative}")
         maintained_bytes = maintained.read_bytes()
         if maintained_bytes != new:
-            # N76 is a guarded, exact additive extension of the canonical
-            # A64 JIT source; reject all other source drift.
-            if relative != "src/core/arm/dynarmic/arm_dynarmic_64.cpp":
+            if relative == "src/core/hle/service/sm/sm.h":
+                # The shutdown-lifetime successor extends the already-reviewed
+                # host-wait header only. Reverse those exact additive pieces
+                # and require byte-for-byte parity with the patch oracle.
+                shutdown = maintained_bytes
+                additions = (
+                    (b"#include <condition_variable>\n", b""),
+                    (b"    bool WaitForService(const std::string& name);\n"
+                     b"    void Close();\n\n", b""),
+                    (b"    bool closing{};\n"
+                     b"    u32 service_waiters{};\n"
+                     b"    std::condition_variable waiters_changed;\n\n", b""),
+                )
+                for added, replacement in additions:
+                    if shutdown.count(added) != 1:
+                        raise RuntimeError("SM shutdown successor shape drift")
+                    shutdown = shutdown.replace(added, replacement, 1)
+                if shutdown != new:
+                    raise RuntimeError("SM shutdown successor modified unrelated host-wait source")
+            elif relative == "src/core/arm/dynarmic/arm_dynarmic_64.cpp":
+                # N76 is a guarded, exact additive extension of the canonical
+                # A64 JIT source; reject all other source drift.
+                header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n".encode()
+                guest_counter = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Set before JIT is instantiated; never hardcode a game-specific name.\n    config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());\n#else\n    config.cntfrq_el0 = Hardware::CNTFREQ;\n#endif".encode()
+                original_counter = b"    config.cntfrq_el0 = Hardware::CNTFREQ;"
+                if (maintained_bytes.count(header) != 1 or
+                        maintained_bytes.count(guest_counter) != 1 or
+                        maintained_bytes.replace(header, b"").replace(
+                            guest_counter, original_counter) != new):
+                    raise RuntimeError("N76 modified unrelated native A64 source")
+            else:
                 raise RuntimeError(f"Unreviewed active-core patch drift: {relative}")
-            header = "#ifdef EDEN_NS2_GUEST_COUNTER\n#include \"encore/guest_counter_policy.h\"\n#endif\n".encode()
-            guest_counter = "#ifdef EDEN_NS2_GUEST_COUNTER\n    // Set before JIT is instantiated; never hardcode a game-specific name.\n    config.cntfrq_el0 = static_cast<u32>(Eden::GuestCounter::Rate());\n#else\n    config.cntfrq_el0 = Hardware::CNTFREQ;\n#endif".encode()
-            original_counter = b"    config.cntfrq_el0 = Hardware::CNTFREQ;"
-            if (maintained_bytes.count(header) != 1 or
-                    maintained_bytes.count(guest_counter) != 1 or
-                    maintained_bytes.replace(header, b"").replace(
-                        guest_counter, original_counter) != new):
-                raise RuntimeError("N76 modified unrelated native A64 source")
         current = target.read_bytes()
         if current == maintained_bytes:
             continue

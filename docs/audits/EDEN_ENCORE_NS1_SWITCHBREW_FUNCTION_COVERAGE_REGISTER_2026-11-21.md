@@ -796,6 +796,18 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 638** : 2 084 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck HOS23 — GetFirmwareVersionDigest retiré — 23/11/2026
+
+**Vendor `c1b7768aa16f8a731de420783cd1e31ca2f58104`** (arbre `ae8748e568d9ad38d40e32ae95bb342a3a08daa6`).
+
+- `set:sys::GetFirmwareVersionDigest` (cmd5) : **NULL → HORS-VERSION**.
+- SwitchBrew courant borne cette commande S1 à **HOS 5.0.0–22.5.0**. La table runtime HOS23 n'expose donc plus cmd5.
+- Aucun digest synthétique n'est dérivé de `version_hash` : sur la cible actuelle, ce contrat n'existe simplement plus.
+
+**Compteur historique : 1 470 IMPL-SRC / 110 PARTIEL / 149 STUB / 123 NOOP / 2 083 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 42 HORS-VERSION / 0 ABSENT / 282 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 637** : 2 083 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

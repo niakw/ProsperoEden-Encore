@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 123 | 0 | **123** |
-| **NULL — Handler NULL** | 2 084 | 0 | **2 084** |
+| **NULL — Handler NULL** | 2 083 | 0 | **2 083** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 41 | 0 | **41** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 42 | 0 | **42** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 282 | 0 | **282** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 123
-    "Handler NULL" : 2084
+    "Handler NULL" : 2083
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 41
+    "Hors version firmware cible" : 42
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 282
     "Interface ambiguë" : 12
@@ -5519,7 +5519,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `2` | `GetNetworkSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3d97ca836c8825fedfc23de76a0c3295a93469fb/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `3` | `GetFirmwareVersion` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `4` | `GetFirmwareVersion2` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `5` | `GetFirmwareVersionDigest` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `5` | `GetFirmwareVersionDigest` | 5.0.0-22.5.0 | **HORS-VERSION** ([source C++][ns1-src-123]) | 2026-11-23 |
 | set:sys | `7` | `GetLockScreenFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `8` | `SetLockScreenFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `9` | `GetBacklightSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/9a5401c93d9c87bc0fcb3f955f35bd54744046a4/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; conversion legacy 0x28 ↔ Ex 0x2C prouvée par layout libnx, champ VR préservé) | 2026-11-23 |

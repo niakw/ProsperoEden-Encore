@@ -2665,7 +2665,6 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     // consumed even while another title worker holds its download lock.
     // Previously a perfectly ready ExeFS/Home icon waited for that remote
     // worker, then remained in the retry queue for up to two minutes.
-    const bool nup = game.format == "NUP" || IsNupSelection(game.file);
     const bool second_generation = UseNs2CaseIndex(game);
     if (second_generation) {
         game.cover = CachedGamesDbSquare(game.title_id, true);

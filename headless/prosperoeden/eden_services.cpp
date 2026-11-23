@@ -2661,12 +2661,13 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     // Previously a perfectly ready ExeFS/Home icon waited for that remote
     // worker, then remained in the retry queue for up to two minutes.
     const bool nup = game.format == "NUP" || IsNupSelection(game.file);
+    const bool second_generation = UseNs2CaseIndex(game);
     if (nup) {
-        game.cover = CachedGamesDbSquare(game.title_id);
+        game.cover = CachedGamesDbSquare(game.title_id, true);
     } else {
         game.cover = CachedNlibIcon(game.title_id);
         if (game.cover.empty())
-            game.cover = CachedGamesDbSquare(game.title_id);
+            game.cover = CachedGamesDbSquare(game.title_id, second_generation);
     }
     if (!game.cover.empty()) return game;
     // Only WRITES need the per-title lock. Do not stall Home teardown
@@ -2678,10 +2679,10 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     }
     // Recheck after acquiring the write lock. NUP's canonical NS2 Square
     // must never be displaced by an old Switch 1 Nlib icon.
-    game.cover = nup ? CachedGamesDbSquare(game.title_id) :
+    game.cover = nup ? CachedGamesDbSquare(game.title_id, true) :
                        CachedNlibIcon(game.title_id);
     if (game.cover.empty() && !nup)
-        game.cover = CachedGamesDbSquare(game.title_id);
+        game.cover = CachedGamesDbSquare(game.title_id, second_generation);
     if (!game.cover.empty()) return game;
 
     // Switch 2 Control dumps often omit the canonical icon and Nlib may have
@@ -2692,7 +2693,7 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
         const std::string canonical = known ? std::string(known->name) : game.name;
         if (EnsureGamesDbSquare(game.title_id, canonical, game.name,
                                 language_choice, cancel, true)) {
-            game.cover = CachedGamesDbSquare(game.title_id);
+            game.cover = CachedGamesDbSquare(game.title_id, true);
             game.artwork_changed = !game.cover.empty();
             if (!game.cover.empty()) return game;
         }

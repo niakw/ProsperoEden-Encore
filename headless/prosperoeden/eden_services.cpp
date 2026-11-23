@@ -2152,10 +2152,14 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         const GameLanguage language = LanguageFor(last_path, title_id, selected_language);
         home.last_title_id = title_id;
         const NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
-        if (!nlib.icon.empty()) {
-            home.last_cover = nlib.icon;
-        } else if (home.last_cover.empty()) {
-            home.last_cover = CachedGamesDbSquare(title_id);
+        if (home.last_cover.empty()) {
+            // Home's verified extracted Control icon wins. NUP is NS2:
+            // do not replace its square with an unrelated NX/NS1 cache.
+            if (home.last_file.ends_with(".nup"))
+                home.last_cover = CachedGamesDbSquare(title_id);
+            else
+                home.last_cover = nlib.icon.empty() ?
+                    CachedGamesDbSquare(title_id) : nlib.icon;
         }
         home.last_hero = nlib.hero.empty() ? CachedGamesDbHero(title_id) : nlib.hero;
         home.last_screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
@@ -2561,8 +2565,15 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 // already cached locally. Hero/screenshots, retail case faces,
                 // player count, language probing and add-on summaries belong
                 // to the selected-title worker below.
-                const std::string cached_icon = CachedNlibIcon(game.title_id);
-                if (!cached_icon.empty()) game.cover = cached_icon;
+                // Genuine package/Control icons are authoritative. Nlib is
+                // a fallback only; an older NS1 cache must not overwrite the
+                // icon extracted from an ExeFS or NUP package.
+                if (game.cover.empty() && game.format == "NUP")
+                    game.cover = CachedGamesDbSquare(game.title_id);
+                if (game.cover.empty() && game.format != "NUP") {
+                    const std::string cached_icon = CachedNlibIcon(game.title_id);
+                    if (!cached_icon.empty()) game.cover = cached_icon;
+                }
                 nlohmann::json metadata;
                 NlibEnrichment list_metadata;
                 if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))

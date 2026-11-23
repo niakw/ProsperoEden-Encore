@@ -2171,8 +2171,13 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
                 home.last_cover = nlib.icon.empty() ?
                     CachedGamesDbSquare(title_id) : nlib.icon;
         }
-        home.last_hero = nlib.hero.empty() ? CachedGamesDbHero(title_id) : nlib.hero;
+        // NLIB is the first provider, including its screenshots when the
+        // title has no NLIB banner. Only then consult GamesDB's first fanart
+        // and first gameplay shot, in that order.
         home.last_screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
+        home.last_hero = !nlib.hero.empty() ? nlib.hero :
+            !home.last_screenshot.empty() ? home.last_screenshot :
+            CachedGamesDbHero(title_id);
         home.last_max_players = nlib.max_players;
         home.last_intro = nlib.intro;
         home.last_description = nlib.description;
@@ -2274,8 +2279,10 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
                         recent.tile_icon = square;
                     }
                 }
-                recent.hero = nlib.hero.empty() ? CachedGamesDbHero(recent.title_id) : nlib.hero;
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
+                recent.hero = !nlib.hero.empty() ? nlib.hero :
+                    !recent.screenshot.empty() ? recent.screenshot :
+                    CachedGamesDbHero(recent.title_id);
                 recent.max_players = nlib.max_players;
                 recent.intro = nlib.intro;
                 recent.description = nlib.description;
@@ -2782,9 +2789,15 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         }
     }
     // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.
-    if (!enrichment.hero.empty()) game.hero = std::move(enrichment.hero);
+    // NLIB screenshot is still NLIB artwork and outranks GamesDB fanart.
+    // Apply this on every refresh, including when GamesDB was the provisional
+    // hero while NLIB's JPEG was being downloaded in another worker.
+    const bool nlib_banner = !enrichment.hero.empty();
+    const bool nlib_screenshots = !enrichment.screenshots.empty();
+    if (nlib_banner) game.hero = std::move(enrichment.hero);
+    else if (nlib_screenshots) game.hero = enrichment.screenshots.front();
     else if (game.hero.empty()) game.hero = CachedGamesDbHero(game.title_id);
-    if (!enrichment.screenshots.empty()) game.screenshots = std::move(enrichment.screenshots);
+    if (nlib_screenshots) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
     if (!enrichment.name.empty()) game.name = std::move(enrichment.name);
     else if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) game.name = std::string(known->name);
@@ -2819,7 +2832,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         // Nlib/cache snapshot. Always expose its real front to the game tile.
         // Never promote a portrait retail front into the square tile slot.
         AppendCaseScenes(game.screenshots, game.title_id);
-        if (enrichment.hero.empty() && game.hero.empty())
+        if (!nlib_banner && !nlib_screenshots && game.hero.empty())
             game.hero = CachedGamesDbHero(game.title_id);
         if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement

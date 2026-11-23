@@ -90,6 +90,7 @@ KNOWN_VENDOR_GRAPH = {
 KNOWN_VENDOR_GRAPH["fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"] = "same NS1 audio owners; NS2 demand-zero guest-memory successor"
 KNOWN_VENDOR_GRAPH["56959a23273ea2ee82d2e59628c92cc9e1144fe9"] = "same NS1 audio owners; NS2 zero metadata stays demand-backed"
 KNOWN_VENDOR_GRAPH["d3c76f07cd82f7766be7b5e3fc3c399a3be15291"] = "same NS1 audio owners; NS2 no-op zero bitmap writes stay demand-backed"
+KNOWN_VENDOR_GRAPH["436e702cc970417455c088c4bc38ce5fec8e0762"] = "same NS1 audio owners; NS2 optimized bitmap OOM is recoverable"
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"
 
@@ -125,8 +126,8 @@ backends = [VENDOR / f"encore-active/eden-core/src/core/memory_native_{name}.cpp
 for owner, expected in (
     (h, "d4273c4539971285711a8e26c39bae046ccbbad6"),
     (audio, "893e5e5352149555ac15895d86e79068ab0ee7ae"),
-    (backends[0], "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"} else "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
-    (backends[1], "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"} else "c8f197810af244c3f2d66413352533734d031620"),
+    (backends[0], "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"} else "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
+    (backends[1], "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"} else "c8f197810af244c3f2d66413352533734d031620"),
 ):
     assert git_blob(owner) == expected, ("Unreviewed audio owner drift", owner)
 assert 'ReadyForAudioRead() const noexcept' in h.read_text()

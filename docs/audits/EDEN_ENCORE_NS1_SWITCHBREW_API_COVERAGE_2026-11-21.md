@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 501 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 421 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `8b626862`. **Ces 1 501 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 513 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 433 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `5e77bf80`. **Ces 1 513 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 421 | 80 | **1 501** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 433 | 80 | **1 513** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
 | **NOOP — No-op documenté** | 134 | 0 | **134** |
-| **NULL — Handler NULL** | 1 962 | 0 | **1 962** |
+| **NULL — Handler NULL** | 1 950 | 0 | **1 950** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1501
+    "Implémentation source retrouvée" : 1513
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 134
-    "Handler NULL" : 1962
+    "Handler NULL" : 1950
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -5494,8 +5494,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:cal | `19` | `GetGameCardCertificate` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `20` | `GetEciDeviceKey` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `21` | `GetEticketDeviceKey` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `22` | `GetSpeakerParameter` | — | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `23` | `GetLcdVendorId` | 4.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
+| set:cal | `22` | `GetSpeakerParameter` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `23` | `GetLcdVendorId` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
 | set:cal | `24` | `GetEciDeviceCertificate2` | 5.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `25` | `GetEciDeviceKey2` | 5.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `26` | `GetAmiiboKey` | 5.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
@@ -5504,16 +5504,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:cal | `29` | `GetAmiiboEcqvBlsKey` | 5.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `30` | `GetAmiiboEcqvBlsCertificate` | 5.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
 | set:cal | `31` | `GetAmiiboEcqvBlsRootCertificate` | 5.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `32` | `GetUsbTypeCPowerSourceCircuitVersion` | 5.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `33` | `GetAnalogStickModuleTypeL` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `34` | `GetAnalogStickModelParameterL` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `35` | `GetAnalogStickFactoryCalibrationL` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `36` | `GetAnalogStickModuleTypeR` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `37` | `GetAnalogStickModelParameterR` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `38` | `GetAnalogStickFactoryCalibrationR` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `39` | `GetConsoleSixAxisSensorModuleType` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `40` | `GetConsoleSixAxisSensorHorizontalOffset` | 9.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
-| set:cal | `41` | `GetBatteryVersion` | 6.0.0+ | **NULL** ([source C++][ns1-src-120]) | 2026-11-22 |
+| set:cal | `32` | `GetUsbTypeCPowerSourceCircuitVersion` | 5.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `33` | `GetAnalogStickModuleTypeL` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `34` | `GetAnalogStickModelParameterL` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `35` | `GetAnalogStickFactoryCalibrationL` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `36` | `GetAnalogStickModuleTypeR` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `37` | `GetAnalogStickModelParameterR` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `38` | `GetAnalogStickFactoryCalibrationR` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `39` | `GetConsoleSixAxisSensorModuleType` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `40` | `GetConsoleSixAxisSensorHorizontalOffset` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
+| set:cal | `41` | `GetBatteryVersion` | 6.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/5e77bf80aacb96088b281487525e5c73d7884d22/sources/eden/src/core/hle/service/set/factory_settings_server.cpp) ; lecture CAL0 réelle) | 2026-11-23 |
 | set:sys | `0` | `SetLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `1` | `SetNetworkSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3d97ca836c8825fedfc23de76a0c3295a93469fb/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `2` | `GetNetworkSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/3d97ca836c8825fedfc23de76a0c3295a93469fb/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |

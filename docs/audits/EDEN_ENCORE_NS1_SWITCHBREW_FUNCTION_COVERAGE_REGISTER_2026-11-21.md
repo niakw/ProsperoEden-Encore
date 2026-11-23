@@ -1041,6 +1041,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 497** : 1 962 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot `set:cal` — champs matériels CAL0 non secrets — 23/11/2026
+
+**Vendor `5e77bf80aacb96088b281487525e5c73d7884d22`** (arbre `94d3a154d9b897032cc75da54b62fb33a870e89a`).
+
+- **12 NULL → IMPL-SRC** : SpeakerParameter (22), LcdVendorId (23), UsbTypeCPowerSourceCircuitVersion (32), AnalogStick module/model/factory L (33–35), mêmes champs R (36–38), ConsoleSixAxisSensorModuleType (39), HorizontalOffset (40), BatteryVersion (41).
+- Tous les getters lisent les octets réels du CAL0 validé ; les scalaires gardent leur alignement ABI natif (`u32` ou `u8`) et les structures opaques restent des tableaux de taille documentée.
+- Offsets SwitchBrew utilisés : Speaker 0x2D00/0x5A, LCD 0x3D60/4, USB-C 0x4210/1, sticks 0x4270–0x42E8, six-axis 0x42F0/0x4300, batterie 0x4310.
+- Aucune donnée secrète n'est ajoutée : clés/certificats restent hors de ce lot.
+
+**Compteur historique : 1 513 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 950 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 485** : 1 950 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

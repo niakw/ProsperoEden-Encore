@@ -1289,6 +1289,15 @@ void Launcher::draw_launch(Canvas &c)
 {
     const float t = tween::clamp01(launch_.progress());
     const float seconds = theme::kLaunchSeconds * t;
+    // The launcher UI caps dt to 50ms after long EGL stalls, while native
+    // admission is bounded by a real 750ms deadline. Drive the short cover
+    // turn from the same wall clock as admission: otherwise a slow initial
+    // render could capture the case mid-spine and freeze it for all loading.
+    const float native_phase = native_artwork_loading_
+        ? std::clamp(0.75f - std::chrono::duration<float>(
+              native_launch_deadline_ - std::chrono::steady_clock::now()).count(),
+              0.0f, 0.75f)
+        : seconds;
     // No fade to black: the Vulkan loading surface reuses this EXACT final
     // launcher picture until the guest actually presents its first frame.
     const float appear = native_artwork_loading_ ? 1.0f : tween::cubic_out(seconds / 0.25f);
@@ -1371,7 +1380,7 @@ void Launcher::draw_launch(Canvas &c)
         // the existing 750-ms launch budget, then the captured final back
         // remains readable during the GL/Vulkan loading handoff.
         // No invented/mirrored rear and no extra game boot delay.
-        if (!native_launch_show_back_ && seconds <= 0.12f &&
+        if (!native_launch_show_back_ && native_phase <= 0.12f &&
             !launch_box_back_.empty() &&
             c.textures.cover(launch_box_back_, 760.0f).texture != 0)
             native_launch_show_back_ = true;
@@ -1380,7 +1389,7 @@ void Launcher::draw_launch(Canvas &c)
             constexpr float native_end = 0.62f;
             angle = kFrontYaw + (kBackYaw - kFrontYaw) *
                 tween::cubic_in_out(tween::clamp01(
-                    (seconds - native_begin) / (native_end - native_begin)));
+                    (native_phase - native_begin) / (native_end - native_begin)));
         }
     } else if (motion() > 0.0f) {
         if (seconds < turn_start) {
@@ -1533,7 +1542,7 @@ void Launcher::draw_launch(Canvas &c)
     if (native_artwork_loading_)
         native_launch_art_ready_ = hero_ready && visible_texture != 0 &&
             (!use_composed || !launch_composed_front_provisional_) &&
-            (!native_launch_show_back_ || seconds >= 0.62f);
+            (!native_launch_show_back_ || native_phase >= 0.62f);
     // One event per visible paper face and state, NEVER a per-frame log.
     // Stored/decoded/uploaded assets can still fail to reach the render list;
     // this is the last observable stage before the case-face GPU draw call.

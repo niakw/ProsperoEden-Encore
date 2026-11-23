@@ -144,7 +144,11 @@ assert "constexpr float kLaunchSeconds = kCaseFrontHold" in theme
 # Native game start never delays the emulator just to animate a missing
 # physical back. A GPU-resident authentic rear can turn once within the
 # existing 750-ms cap and remain visible through the loading capture.
+assert "native_launch_back_ready_ = false;" in launch_setup
 assert "native_launch_show_back_ = false;" in launch_setup
+assert "native_launch_back_ready_ = true;" in draw
+assert "native_launch_back_ready_" in header
+assert "loading_final_pose_is_back() const noexcept" in header
 assert "c.textures.cover(launch_box_back_, 760.0f).texture != 0" in draw
 assert "native_launch_show_back_ = true;" in draw
 assert "constexpr float native_end = 0.62f;" in draw

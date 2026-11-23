@@ -95,9 +95,13 @@ assert 'CachedGamesDbSquare(title_id, second_generation)' in svc
 assert 'EnsureGamesDbSquare(game.title_id' in native_icon
 full_media = svc.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n", 1)[1]
 assert 'if (!enrichment.icon.empty() && game.cover.empty() && !nup)' in full_media
+assert 'NlibEnrichment enrichment = second_generation' in full_media
+assert '? NlibEnrichment{}' in full_media
+assert ': EnsureNlibEnrichment(game.title_id, language_choice, cancel);' in full_media
 assert 'CachedGamesDbSquare(game.title_id, true)' in native_icon
 assert 'CachedGamesDbSquare(game.title_id, second_generation)' in native_icon
-assert 'if (nup) return game;' in native_icon
+assert 'if (second_generation) return game;' in native_icon
+assert 'game.cover = CachedGamesDbSquare(game.title_id, true);' in native_icon
 assert 'else if (game.cover.empty() && !nup) {' in full_media
 # NLIB screenshot must outrank GamesDB fanart when the banner is missing.
 assert 'home.last_hero = !nlib.hero.empty() ? nlib.hero :' in native_home

@@ -863,6 +863,21 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 558** : 2 018 NULL + 145 STUB + 109 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot LR — RegisteredLocationResolver stateful — 23/11/2026
+
+**Vendor `0e261f9ce092ade8243443175ffc3b977772616c`** (arbre `8dd9abffeab8f3e2c75ec39806570881c7d30b12`) dans la source active `sources/eden/src/core/hle/service/ncm/ncm.cpp`.
+
+- Les **10 commandes** de `IRegisteredLocationResolver` (0–9) disposent maintenant d'un runtime stateful : chemins Program/HTML enregistrés, redirections prioritaires, `owner_id` HOS9+, unregister et refresh sélectif.
+- Les chemins sont des `ContentPath` fixes de **0x301 octets** avec terminaison NUL obligatoire. Les codes d'échec utilisent le module LR Horizon : `ProgramNotFound` (8/2), `HtmlDocumentNotFound` (8/6) et `InvalidPath` (8/140).
+- Le comportement suit Atmosphère : capacité enregistrée **0x20** sur HOS9+, remplacement par clé, clear+register si le registre est plein ; `Refresh()` conserve les fallbacks enregistrés mais efface les redirections ; `RefreshExcluding` conserve uniquement les entrées/redirections dont l'**owner-id** figure dans la liste d'exclusion.
+- Le dump HOS **23.0.1** confirme les ABI : Resolve = u64 + buffer sortant fixe ; Register/Redirect = u64 ProgramId + u64 owner-id + buffer entrant 0x301 ; RefreshExcluding = tableau de ProgramId.
+- Le miroir 4 853 fusionne `ResolveProgramPath` du resolver normal et du resolver enregistré en une seule ligne. Comme le resolver normal reste NULL, cette ligne passe **NULL → PARTIEL** au lieu d'être faussement déclarée complète. Les **9 autres lignes** de l'interface passent **NULL → IMPL-SRC**.
+- Le palier précédent moteur `8e508017` → vendor `f5ae5e20` est **X8D24 + provenance vert**. Aucun build PS5 ni test console n'est revendiqué pour le présent lot.
+
+**Compteur historique : 1 462 IMPL-SRC / 110 PARTIEL / 145 STUB / 127 NOOP / 2 008 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 549** : 2 008 NULL + 145 STUB + 110 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

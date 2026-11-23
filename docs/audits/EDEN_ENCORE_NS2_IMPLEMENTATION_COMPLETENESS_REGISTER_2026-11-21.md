@@ -624,6 +624,10 @@ Contrôle sur `headless/CMakeLists.txt` du moteur : `EDEN_SHARED_NS2_AM` remplac
 - **EglantinePS5 :** le dépôt porte une pile NS2 et un mécanisme mémoire `demand-zero` avec mesures de jeux **sur un autre binaire**. Encore a intégré les états `ZERO -> OWN` pour NS1/NS2 avec tests hôtes (document [architecture mémoire](../EDEN_ENCORE_GUEST_MEMORY_NS1_NS2_PS5_ARCHITECTURE.md)), sans preuve de cohérence GPU/boot sur la console pour les derniers commits. Les expériences mémoire, fragmentation, compression et optimisations shader d'EglantinePS5 ne doivent pas être déclarées « manquantes » si le propriétaire Encore a déjà un équivalent, ni fusionnées sans audit des différences de code/PS5 ABI.
 - **Registre fonctionnel restant ouvert :** en dehors des tables comparées ici et au §17, le différentiel exhaustif des autres services, des sous-interfaces et des ABI NS2 (notamment `nvdrv`, `kernel/SVC`, `filesystem`, `loader`, `shader`, `GPU` et des variantes firmware) **n'est pas clos**. `230/230` ne signifie pas `100 % NS2`.
 
+
+
+**Complément AoC ciblé (23/11, audit et qualification source) :** `headless/nup_v1_aoc_service.cpp` conservait **7 handlers à `nullptr`** dans le constructeur `IAddOnContentManager` alors que le propriétaire vendor `encore-active/eden-core/.../addon_content_manager.cpp` a des stubs explicites pour les IDs `9, 13, 110, 200, 300, 301, 302`. Les trois régions comparées hors pont NUP sont identiques au vendor épinglé ; les 7 entrées du constructeur ont été réalignées **sans toucher au comportement de Count/List/Base/Prepare**. C'est une correction de parité de dispatch, **pas** une implémentation fonctionnelle de ces commandes, encore moins une preuve de boot NS2.
+
 ### 18.3 Seuils de preuve et ordre du travail P0
 
 1. Conserver les correctifs de fermeture FC27 et les traces NS2 sur `main` ; les deux tests historiques de provenance ont été réconciliés, CI vendor [45200615951](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/45200615951) verte. L'état de la fermeture sur console reste **non prouvé**.

@@ -9,6 +9,8 @@ on:
       - tools/check-nup-v1-host.py
       - tools/check-nup-v1-vfs-host.py
       - tools/check-nup-v1-native-abi.py
+      - headless/nup_v1_aoc_service.cpp
+      - tools/check-nup-v1-service-parity-host.py
       - tools/check-nup-metadata-bounds-source.py
       - .github/workflows/nup-v1-host.yml
 permissions:

@@ -1718,7 +1718,7 @@ REVIEWED_PINS.add("716e069f212b89b6fd13af56b0677343cf41ba07")
 REVIEWED_PINS.add("6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b")  # immutable runtime, shutdown test provenance only
 # Current shutdown successor on top of the reviewed demand-zero graph.
 # Seal every source changed after ee64; do not blanket-accept later vendors.
-if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
+if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb"}:
     for relative, expected in {
         "encore-active/eden-core/src/core/hle/service/server_manager.cpp":
             "dd6dc2d8359ac14d36526a9dc88905cabf36a798",
@@ -1730,13 +1730,32 @@ if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6d
         raw=(V/relative).read_bytes()
         digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert digest == expected, ("Current PS5 teardown successor drift", relative, digest)
-    if actual_vendor_pin in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
+    if actual_vendor_pin in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb"}:
         relative="tests/ns2_syncpt_bootstrap_source.py"
         raw=(V/relative).read_bytes()
         digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert digest == "74b84b9015d6642ff5627e2897d39f5e1d093e68", (
+        expected_syncpt = (
+            "07ee9ba7ca648ae51128f865fa568bde1ffb2916"
+            if actual_vendor_pin == "93c3dd6c86627e91999f965c45c05cd8e50e17eb"
+            else "74b84b9015d6642ff5627e2897d39f5e1d093e68"
+        )
+        assert digest == expected_syncpt, (
             "GSV 1121 parity test successor drift", digest)
-    if actual_vendor_pin in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
+        if actual_vendor_pin == "93c3dd6c86627e91999f965c45c05cd8e50e17eb":
+            # 93c3dd6c changes exactly this selected GSV C++ owner plus the
+            # source receipt above: replace the nonexistent IPC result with
+            # the already-used Kernel fail-closed result.
+            relative = (
+                "encore-active/ns2-runtime/graphics_supervisor/core/hle/service/"
+                "am/service/graphics_supervisor.cpp"
+            )
+            raw = (V / relative).read_bytes()
+            gsv_digest = hashlib.sha1(
+                b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+            ).hexdigest()
+            assert gsv_digest == "79855d2276973977b58d523df5b53fc4229759a4", (
+                "Compiled GSV gpu-time successor drift", gsv_digest)
+    if actual_vendor_pin in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb"}:
         # Exact successor of 593bc9ee: only the two native guest memory
         # backends changed, making ZeroBlock generation-neutral for NS1/NS2.
         for relative, expected in {
@@ -1748,7 +1767,7 @@ if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6d
             raw=(V/relative).read_bytes()
             digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
             assert digest == expected, ("NS1/NS2 sparse memory successor drift", relative, digest)
-        if actual_vendor_pin == "d554e257ae82db66d9542f472dcde067510bfa1f":
+        if actual_vendor_pin in {"d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb"}:
             relative = "tests/ns2_r457_kernel_slab_precommit_host.py"
             raw = (V / relative).read_bytes()
             digest = hashlib.sha1(
@@ -1763,6 +1782,7 @@ REVIEWED_PINS.add("603e0d5c70b04fa84a19cca8f580ed1bdb230be0")
 REVIEWED_PINS.add("593bc9ee6ddfcf38e488325ccf318f1a0a109d8e")
 REVIEWED_PINS.add("6b48e6734e738306dd57ceed8be9b003631eb8cb")
 REVIEWED_PINS.add("d554e257ae82db66d9542f472dcde067510bfa1f")
+REVIEWED_PINS.add("93c3dd6c86627e91999f965c45c05cd8e50e17eb")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

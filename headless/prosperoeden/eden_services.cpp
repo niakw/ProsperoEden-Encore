@@ -2866,7 +2866,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     return game;
 }
 
-pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
+pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id, bool second_generation) {
     pe::ui::BoxArt artwork;
     if (title_id == 0) return artwork;
 
@@ -2878,7 +2878,8 @@ pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id) {
 
     const auto find_face = [&](const char* side) -> std::string {
         for (const char* ext : {"png", "jpg", "jpeg", "webp", "tga"}) {
-            const std::string path = root + side + "-" + id + "." + ext;
+            const std::string path = root + side +
+                (second_generation ? "-ns2-" : "-") + id + "." + ext;
             struct stat info{};
             if (!IsFile(path) || stat(path.c_str(), &info) != 0 ||
                 info.st_size <= 0 || info.st_size > (16LL << 20))

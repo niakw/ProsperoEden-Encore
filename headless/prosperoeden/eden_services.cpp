@@ -2602,13 +2602,22 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
                                             const std::atomic<bool>* cancel) {
     if (!game.title_id || (cancel && cancel->load(std::memory_order_acquire)))
         return game;
-    // A selected full-media worker may own the same title's .new paths.
-    // Never wait behind its retail/content requests during Home teardown.
+    // These files are published via atomic rename, so cached icons can be
+    // consumed even while another title worker holds its download lock.
+    // Previously a perfectly ready ExeFS/Home icon waited for that remote
+    // worker, then remained in the retry queue for up to two minutes.
+    game.cover = CachedNlibIcon(game.title_id);
+    if (!game.cover.empty()) return game;
+    game.cover = CachedGamesDbSquare(game.title_id);
+    if (!game.cover.empty()) return game;
+    // Only WRITES need the per-title lock. Do not stall Home teardown
+    // behind another title's retail or Nlib network transaction.
     std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
     if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire))) {
         game.artwork_deferred = !title_lock.owns_lock();
         return game;
     }
+    // A concurrent worker may have published the square before we locked.
     game.cover = CachedNlibIcon(game.title_id);
     if (!game.cover.empty()) return game;
     game.cover = CachedGamesDbSquare(game.title_id);

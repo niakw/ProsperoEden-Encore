@@ -93,7 +93,9 @@ assert 'CachedGamesDbSquare(recent.title_id)' in svc
 assert 'CachedGamesDbSquare(title_id)' in svc
 assert 'EnsureGamesDbSquare(game.title_id' in native_icon
 full_media = svc.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n", 1)[1]
-assert 'if (!enrichment.icon.empty() && game.cover.empty())' in full_media
+assert 'if (!enrichment.icon.empty() && game.cover.empty() && !nup)' in full_media
+assert 'CachedGamesDbSquare(game.title_id)' in native_icon
+assert 'if (nup) return game;' in native_icon
 assert 'else if (game.cover.empty()) {' in full_media
 assert 'recent.tile_icon = square;' in svc
 assert 'recent.cover = box_art(recent.title_id).front;' not in svc

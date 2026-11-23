@@ -3628,6 +3628,53 @@ assert drift_index[nx_game_files_path]["actual"] == nx_current_blob
 drift_index[nx_game_files_path]["actual"] = nx_predecessor_blob
 print("NX_GAME_FILES_SOURCE_SUCCESSOR_PASS predecessor=e4502fb1 current=497a4500")
 
+# The same NX integration changes the maintained vendor loader in seven exact
+# hunks. Reverse them only on the audit copy so the prior DNSP/DXCI loader
+# receipt remains immutable while the shipping runtime keeps real NX support.
+nx_loader_path = "vendor/encore-active/eden-core/src/core/loader/loader.cpp"
+assert nx_loader_path in drift_index and nx_loader_path not in post_index
+nx_loader_source = (ROOT/nx_loader_path).read_text()
+nx_loader_current = subprocess.check_output(
+    ["git", "hash-object", nx_loader_path], cwd=ROOT, text=True
+).strip()
+assert nx_loader_current == "1bfb0d797119087882da5d9674c8ef6ded879dc8"
+nx_loader_hunks = (
+    ('#include "core/loader/nx.h"\n', ''),
+    ("""    if (const auto nx_type = IdentifyFileLoader<AppLoader_NX>(file)) {
+        return *nx_type;
+    }
+""", ""),
+    ("""    return type == FileType::NSP || type == FileType::XCI || type == FileType::NX;""",
+     """    return type == FileType::NSP || type == FileType::XCI;"""),
+    ("""    if (type == FileType::NX) {
+        return AppLoader_NX::IsBootable(file);
+    }
+""", ""),
+    ("""    else if (extension == "nx")
+        return FileType::NX;
+""", ""),
+    ("""    case FileType::NX:
+        return "NX";
+""", ""),
+    ("""    // NX archive: verified NxFormat container plus NS1/NS2 content snapshots.
+    case FileType::NX:
+        return std::make_unique<AppLoader_NX>(system, std::move(file), program_id, program_index);
+
+""", ""),
+)
+for current, previous in nx_loader_hunks:
+    assert nx_loader_source.count(current) == 1, current
+    nx_loader_source = nx_loader_source.replace(current, previous, 1)
+nx_loader_predecessor = nx_loader_source.encode("utf-8")
+nx_loader_predecessor_blob = hashlib.sha1(
+    b"blob " + str(len(nx_loader_predecessor)).encode() + bytes([0]) +
+    nx_loader_predecessor
+).hexdigest()
+assert nx_loader_predecessor_blob == "0b4448bcf4bef93b9d2a54cf96256d5b81d9424e"
+assert drift_index[nx_loader_path]["actual"] == nx_loader_current
+drift_index[nx_loader_path]["actual"] = nx_loader_predecessor_blob
+print("NX_LOADER_SOURCE_SUCCESSOR_PASS predecessor=0b4448bc current=1bfb0d79")
+
 # DNCA/DXCI's shipping loader dispatch and library classifier are
 # post-F07 structural additions, not updates to the frozen F07 receipt.
 # The maintained C++/header owners are already sealed by exact Git blobs

@@ -12,7 +12,7 @@
 | **Relevé 23/11 — moteur `main`** | [`1b772815a470008cc3bc80a3f97f65553569c649`](https://github.com/niakw/ProsperoEden-Encore/commit/1b772815a470008cc3bc80a3f97f65553569c649) — version avant cette mise à jour documentaire |
 | **Relevé 23/11 — gitlink vendor `main`** | [`ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ee20b5a00e4fd96c02b5d12d6f4eaabee8623bf3) — sous-module `vendor` mode `160000` vérifié dans l'arbre moteur |
 | **Référence Lichii `nx2`** | [`66c555ad9a21b1caaf57a5d9f8f1fea6f90c2508`](https://github.com/zortos293/Lichii/tree/66c555ad9a21b1caaf57a5d9f8f1fea6f90c2508) — `src/core/hle/service/nx2_gsv.h` |
-| **Build natif au relevé** | [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) à l'étape `Build and stage native release` ; aucune qualification package ou PS5 encore |
+| **Build natif du couple relevé — résultat final** | [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) **ROUGE lors de la compilation native**, sans package : `nup_v1_native_content.cpp:50` (`Loader::ResultStatus` incomplet) et vendor `nifm.cpp:1111` (table `FunctionInfo` mal formée, erreur `RegisterHandlers`) |
 | Moteur `main` à la création de ce registre | `a59cae85eb1dd7246f5648b46e6fddceb736a5a6` |
 | Vendor gitlink sélectionné après intégration | `224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c` |
 | Moteur `main` avant intégration de cette branche | `814bc29918df3c1fc207229537c7d80dfa8c8891` |
@@ -505,6 +505,8 @@ Le critère de sortie **source** est borné au boot, au GPU, à la mémoire, aux
 
 ## 15. État console / critère de fermeture
 
+**Actualisation build 23/11, couple moteur `1b772815` / vendor `ee20b5a0` :** [run 45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) a échoué à la fin de la compilation native (Ninja, vers 1459/1463 unités), sur **deux causes C++ distinctes** : (1) `headless/nup_v1_native_content.cpp:50` utilise `Loader::ResultStatus::Success` avec un type incomplet ; (2) `vendor/encore-active/ns2-runtime/hle/core/hle/service/nifm/nifm.cpp:1111` a une initialisation de table incohérente (accolade manquante, puis échec `RegisterHandlers`). **Pas d'ELF/package installable, pas de validation PS5 de ces correctifs.** Ces erreurs de build ne sont pas des écarts Lichii de table de commandes.
+
 Les derniers logs NS2 représentatifs disponibles avant ce registre pour Mario Kart World et Donkey Kong Bananza indiquaient toujours **`gpu_submit_sample=0`** et **`guest_frame_handoff=0`**. Ce registre ne change pas ce fait.
 
 Une ligne **C** devient réellement qualifiée uniquement lorsque le couple moteur/vendor exact est :
@@ -574,5 +576,5 @@ Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew
 3. **Parité structurelle NS2 globale :** comparaison **non terminée** pour AM, HID, ACC, réseau, fichiers, kernel et variantes. **Aucun « 100 % NS2 vs Lichii » n'est revendiqué sans diff réellement réalisé.**
 4. **Boot PS5 :** exiger un build valide à SHAs moteur/vendor connus et une preuve console des premières soumissions GPU `gpu_submit_sample > 0`, puis `guest_frame_handoff > 0` et première image invitée réelle. Ce n'est **pas** un sous-compteur de parité structurelle.
 
-**Provenance des lots présents sur ce couple :** vendor `38382993` (VI2 53), `852c4be1` (ACC), `95cdffa8` (stubs VI2), `2873d15e` (table GSV), `ee20b5a0` (`gpu_time` et ABI). Le build [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) a été vu à l'étape native `Build and stage native release` lors de la rédaction, **sans verdict** ; les tests PS5 de ces correctifs n'ont pas été reçus.
+**Provenance des lots présents sur ce couple :** vendor `38382993` (VI2 53), `852c4be1` (ACC), `95cdffa8` (stubs VI2), `2873d15e` (table GSV), `ee20b5a0` (`gpu_time` et ABI). Le build [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) a **échoué en compilation C++ native** (`nup_v1_native_content.cpp:50`, `nifm.cpp:1111`), sans package ; les tests PS5 de ces correctifs n'ont pas été reçus.
 

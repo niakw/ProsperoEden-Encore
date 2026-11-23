@@ -2337,3 +2337,12 @@ Vendor `4b8110b70ae05698b4c8db1354b87ff0c7b1f4a1` → gitlink moteur `3a72dfbae2
 **Compteur courant : 1 629 IMPL-SRC / 141 PARTIEL / 74 STUB / 145 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 838** : 1 424 NULL + 74 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## AppletAE — capacités écran PS5 qualifiées (23/11/2026)
+
+Vendor `3e8effa0b3dc8184d46228e8bc82fa7c626d08bb` → gitlink moteur `1bb6cfcb49ea4af12095eafd312f9ab38e83bb5c`. `SetLcdBacklighOffEnabled` conserve le flag invité mais est explicitement qualifié **NOOP matériel PS5** ; `IsIlluminanceAvailable` retourne `false` comme capacité réelle car aucun capteur ambiant n'est exposé. Avec `NotifyRunning` déjà raccordé, le bloc Applet retire trois STUB au total.
+
+**Compteur courant : 1 630 IMPL-SRC / 141 PARTIEL / 72 STUB / 146 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 836** : 1 424 NULL + 72 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

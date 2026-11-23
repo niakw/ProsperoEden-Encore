@@ -172,7 +172,8 @@ void flat_front_fallback(Canvas& c, const Game& game, const Rect& r)
                             Color::rgb(0x09101c, 0.36f));
     // The supplied red NS2 banner belongs only to reconstructed fronts:
     // genuine retail scans already include their own printed platform header.
-    const bool ns2_cover = case_media::IsSwitch2TitleId(game.title_id);
+    const bool ns2_cover = case_media::IsSwitch2TitleId(game.title_id) ||
+        game.format == "NUP" || game.file.ends_with(".nup");
     if (ns2_cover) {
         constexpr float kHeaderAspect = 246.0f / 1164.0f;
         const Rect header{r.x, r.y, r.w, r.w * kHeaderAspect};
@@ -378,7 +379,8 @@ void flat_retail_sleeve(Canvas& c, const Game& game, const Rect& shell,
     const float side = shell.w * (7.0f / 454.0f);
     const float top = shell.h * (13.0f / 730.0f);
     const float radius = std::max(5.0f, shell.w * 0.028f);
-    const bool ns2_case = case_media::IsSwitch2TitleId(game.title_id);
+    const bool ns2_case = case_media::IsSwitch2TitleId(game.title_id) ||
+        game.format == "NUP" || game.file.ends_with(".nup");
     // One continuous square-corner paper wrap, folded directly onto the
     // printed red spine: front touches its LEFT hinge, back its RIGHT hinge.
     // The ONLY exposed clear-plastic vertical opening is the opposite edge.

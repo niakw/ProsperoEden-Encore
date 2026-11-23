@@ -3321,7 +3321,9 @@ assert pre_guard_blob == sparse_receipt["research_source_git_blob"], (
 print("R457_NS2_SPARSE_DENSE_FALLBACK_GUARD_PASS",
       "12GiB_dense=forbidden", "original_receipt=preserved")
 assert sparse_receipt["opt_in"] in (ROOT/sparse_path).read_text()
-assert sparse_receipt["source_fragment"] in (ROOT/sparse_path).read_text()
+# The current production constructor is generation-neutral; the archived
+# NS2-only source fragment must exist in the exact reconstructed predecessor.
+assert sparse_receipt["source_fragment"] in current_sparse_source
 print("R457_NS2_SPARSE_F07_SEPARATE_PIN_PASS", "historical_F07_unchanged=1",
       "new_owner_consoles_qualified=0")
 # Reviewed NS2 production deltas supersede only their exact pinned vendor blobs.\n# R458 advances the already-reviewed launcher owner from a frozen retained frame\n# to one bounded GL presenter; the historical F07/R457 receipts stay immutable.

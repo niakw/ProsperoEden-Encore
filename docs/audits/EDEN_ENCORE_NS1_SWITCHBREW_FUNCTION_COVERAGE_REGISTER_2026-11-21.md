@@ -710,6 +710,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 688** : 2 131 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot PCTL — unlock / restricted-settings / unlinked event — 23/11/2026
+
+**Vendor `6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e`** (arbre `f24749580d8cf74dfacee33dd11ebce7836c8629`).
+
+- **6 NULL → IMPL-SRC** : `RevertRestrictionTemporaryUnlocked` (1007), `EnterRestrictedSystemSettings` (1008), `LeaveRestrictedSystemSettings` (1009), `RevertRestrictedSystemSettingsEntered` (1011), `UnlockRestrictionTemporarily` (1201) et `ClearUnlinkedEvent` (1474).
+- 1201 suit l'ABI SDK (buffer PIN Pointer), compare le PIN au même état que 1203/1206/1208 et renvoie **PCTL 221** en cas de PIN invalide, code déjà utilisé par l'applet système Eden et les upstreams.
+- 1007 pilote l'état `temporary_unlocked` déjà consommé par les vérifications de permission ; 1008/1009/1011 pilotent un état de session désormais lu par 1010 `IsRestrictedSystemSettingsEntered`.
+- 1474 appelle réellement `unlinked_event.Clear()`, symétrique de 1473 `GetUnlinkedEvent`.
+- Les commandes 1601–1603 restent ouvertes : des preuves console indiquent qu'elles peuvent renvoyer une erreur PCTL sur console normale ; aucune émulation arbitraire n'est ajoutée.
+
+**Compteur historique : 1 466 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 125 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 682** : 2 125 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 460 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 380 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 460 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 466 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 386 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 466 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 380 | 80 | **1 460** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 386 | 80 | **1 466** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 118 | 0 | **118** |
-| **NULL — Handler NULL** | 2 131 | 0 | **2 131** |
+| **NULL — Handler NULL** | 2 125 | 0 | **2 125** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1460
+    "Implémentation source retrouvée" : 1466
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 118
-    "Handler NULL" : 2131
+    "Handler NULL" : 2125
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5221,11 +5221,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1004` | `ConfirmSnsPostPermission` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1005` | `ConfirmSystemSettingsPermission` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1006` | `IsRestrictionTemporaryUnlocked` | — | **IMPL-SRC** (lit l'état local réel : temporary_unlocked ou longueur PIN ; backport actif vendor `61e8993c`) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1007` | `RevertRestrictionTemporaryUnlocked` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1008` | `EnterRestrictedSystemSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1009` | `LeaveRestrictedSystemSettings` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1007` | `RevertRestrictionTemporaryUnlocked` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1008` | `EnterRestrictedSystemSettings` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1009` | `LeaveRestrictedSystemSettings` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1010` | `IsRestrictedSystemSettingsEntered` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1011` | `RevertRestrictedSystemSettingsEntered` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1011` | `RevertRestrictedSystemSettingsEntered` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1012` | `GetRestrictedFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1013` | `ConfirmStereoVisionPermission` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1014` | `ConfirmPlayableApplicationVideoOld` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -5252,7 +5252,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1063` | `SetStereoVisionRestriction` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1064` | `ResetConfirmedStereoVisionPermission` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1065` | `IsStereoVisionPermitted` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1201` | `UnlockRestrictionTemporarily` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1201` | `UnlockRestrictionTemporarily` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1202` | `UnlockSystemSettingsRestriction` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1203` | `SetPinCode` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6f487f76b88c2ca12f81c189fddcc2a8f083c74c/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état PIN 8 octets et événement de changement réellement raccordés) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1204` | `GenerateInquiryCode` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -5278,7 +5278,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1471` | `NotifyWrongPinCodeInputManyTimes` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1472` | `CancelNetworkRequest` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1473` | `GetUnlinkedEvent` | — | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1474` | `ClearUnlinkedEvent` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1474` | `ClearUnlinkedEvent` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6a4ef643a90629e005844cd7be6ea7d8f3cb3c6e/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état de session/événement réellement piloté) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1601` | `DisableAllFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1602` | `PostEnableAllFeatures` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1603` | `IsAllFeaturesDisabled` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |

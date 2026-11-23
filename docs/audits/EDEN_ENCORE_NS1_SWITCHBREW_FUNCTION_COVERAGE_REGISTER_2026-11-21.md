@@ -2200,3 +2200,12 @@ Vendor `ee971276a3254c0eb003f1e6f34cd10988874f1b` → gitlink moteur `df976b8722
 **Compteur courant : 1 599 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 229 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 2 058** : 1 605 NULL + 75 STUB + 140 PARTIEL + 229 ABI-DIFF + 9 AMBIGU.
+
+
+## AudioIn — alias historiques recroisés (23/11/2026)
+
+Les commandes `audin:u` 1, 2, 5, 9, 12 et 13 correspondent en ID et signature aux handlers actifs `Start`, `Stop`, `GetReleasedAudioInBuffers`, `GetReleasedAudioInBuffersAuto`, `SetDeviceGain` et `GetDeviceGain`. Elles passent **ABI-DIFF → IMPL-SRC**. Les IDs 7/10 restent ABI-DIFF car l'ABI UAC de référence inclut un `NativeHandle` absent de la signature Encore.
+
+**Compteur courant : 1 605 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 223 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 052** : 1 605 NULL + 75 STUB + 140 PARTIEL + 223 ABI-DIFF + 9 AMBIGU.

@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 371 | 80 | **1 451** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 373 | 80 | **1 453** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 106 | 3 | **109** |
 | **STUB — Stub / résultat simulé** | 145 | 0 | **145** |
-| **NOOP — No-op documenté** | 123 | 0 | **123** |
-| **NULL — Handler NULL** | 2 024 | 0 | **2 024** |
+| **NOOP — No-op documenté** | 127 | 0 | **127** |
+| **NULL — Handler NULL** | 2 018 | 0 | **2 018** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1451
+    "Implémentation source retrouvée" : 1453
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 109
     "Stub / résultat simulé" : 145
-    "No-op documenté" : 123
-    "Handler NULL" : 2024
+    "No-op documenté" : 127
+    "Handler NULL" : 2018
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -3835,7 +3835,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `CreateDaemonSuspendSessionService` | 4.0.0+ | **NULL** ([source C++][ns1-src-081]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetCompletionEvent` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Cancel` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10100` | `GetFriendListIds` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10100` | `GetFriendListIds` | — | **IMPL-SRC** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; liste d'identifiants vide, backend social offline) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10101` | `GetFriendList` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10102` | `UpdateFriendInfo` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10110` | `GetFriendProfileImage` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
@@ -3843,7 +3843,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10211` | `AddFacedFriendRequestForApplication` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10400` | `GetBlockedUserListIds` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10500` | `GetProfileList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `10600` | `DeclareOpenOnlinePlaySession` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `10600` | `DeclareOpenOnlinePlaySession` | — | **NOOP** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; publication de présence distante absente) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10601` | `DeclareCloseOnlinePlaySession` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10610` | `UpdateUserPresence` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `10700` | `GetPlayHistoryRegistrationKey` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
@@ -3853,25 +3853,25 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20100` | `GetFriendCount` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20101` | `GetNewlyFriendCount` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20102` | `GetFriendDetailedInfo` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20103` | `SyncFriendList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20103` | `SyncFriendList` | — | **NOOP** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; aucune liste distante à synchroniser) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20104` | `RequestSyncFriendList` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20110` | `LoadFriendSetting` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20110 = LoadFriendSettingV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20200` | `GetReceivedFriendRequestCount` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20201` | `GetFriendRequestList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20201 = GetFriendRequestListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20300` | `GetFriendCandidateList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20300` | `GetFriendCandidateList` | — | **IMPL-SRC** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; liste de candidats vide, count=0) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20301` | `GetNintendoNetworkIdInfo` | 3.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20302` | `GetSnsAccountLinkage` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20303` | `GetSnsAccountProfile` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20304` | `GetSnsAccountFriendList` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20400` | `GetBlockedUserList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20400 = GetBlockedUserListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20401` | `SyncBlockedUserList` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20401` | `SyncBlockedUserList` | — | **NOOP** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; liste bloquée locale déjà vide) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20500` | `GetProfileExtraList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20500 = GetProfileExtraListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20501` | `GetRelationship` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20600` | `GetUserPresenceView` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20600 = GetUserPresenceViewV1 (handler raccordé) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20700` | `GetPlayHistoryList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20700 = GetPlayHistoryListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20701` | `GetPlayHistoryStatistics` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20800` | `LoadUserSetting` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20800 = LoadUserSettingV1 (handler raccordé) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20801` | `SyncUserSetting` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20801` | `SyncUserSetting` | — | **NOOP** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; aucun backend de réglages Friend distant) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20900` | `RequestListSummaryOverlayNotification` | — | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `21000` | `GetExternalApplicationCatalog` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `22000` | `GetReceivedFriendInvitationList` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 22000 = GetReceivedFriendInvitationListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |

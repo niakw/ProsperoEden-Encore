@@ -849,6 +849,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 564** : 2 024 NULL + 145 STUB + 109 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot Friend — contrats offline explicites — 23/11/2026
+
+**Vendor `f5ae5e2073add91752d510195a6f2d9f454b92de`** (arbre `c4eb1151a2007ff263b547be5d09fce431064c97`) sur la source active `sources/eden/src/core/hle/service/friend/friend.cpp`.
+
+- `GetFriendListIds` (10100) et `GetFriendCandidateList` (20300) : **2 NULL → IMPL-SRC**. Encore n'a aucun backend social Nintendo ; les ensembles réels locaux sont donc vides et les commandes renvoient `count=0` sans toucher aux buffers de sortie.
+- `DeclareOpenOnlinePlaySession` (10600), `SyncFriendList` (20103), `SyncBlockedUserList` (20401) et `SyncUserSetting` (20801) : **4 NULL → NOOP documentés**. Ce sont des publications/synchronisations distantes sans état distant à muter ; elles sont cohérentes avec `DeclareCloseOnlinePlaySession`, `RequestSyncFriendList` et les listes vides déjà actives.
+- ABI recroisée avec le dump HOS **23.0.1** : 10100 sort un `u32` + buffer type 0xA ; 20300 sort un `u32` + buffer type 0x6 ; les quatre autres n'ont aucune sortie de données. Aucun ami, profil ou présence fictive n'est synthétisé.
+- Le palier précédent moteur `fe5f4f9e` → vendor `2990b313` est **X8D24 + Verify pinned vendor vert**. Le présent couple doit être qualifié séparément.
+- **Aucun build PS5 ni validation console** n'est revendiqué.
+
+**Compteur historique : 1 453 IMPL-SRC / 109 PARTIEL / 145 STUB / 127 NOOP / 2 018 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 558** : 2 018 NULL + 145 STUB + 109 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

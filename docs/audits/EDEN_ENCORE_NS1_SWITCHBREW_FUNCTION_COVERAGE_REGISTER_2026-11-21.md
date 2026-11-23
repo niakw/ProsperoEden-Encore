@@ -937,6 +937,16 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 525** : 1 980 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Recheck Friend — surfaces SNS retirées avant HOS23 — 23/11/2026
+
+- **5 NULL → HORS-VERSION** : `GetSnsAccountLinkage` (20302), `GetSnsAccountProfile` (20303), `GetSnsAccountFriendList` (20304), `GetSnsAccountLinkPageUrl` (30300) et `UnlinkSnsAccount` (30301).
+- La table active `IFriendService` documente explicitement ces cinq commandes sur **HOS 5.0.0–19.0.1**. La cible NS1 Encore est HOS23 : elles ne doivent pas être complétées par un faux backend SNS.
+- Aucun runtime n'est modifié par ce lot documentaire ; il retire seulement des obligations obsolètes du pool actif.
+
+**Compteur historique : 1 487 IMPL-SRC / 114 PARTIEL / 145 STUB / 126 NOOP / 1 975 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 154 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 520** : 1 975 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

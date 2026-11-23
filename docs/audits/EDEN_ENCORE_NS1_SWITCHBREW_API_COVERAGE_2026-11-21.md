@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 111 | 3 | **114** |
 | **STUB — Stub / résultat simulé** | 145 | 0 | **145** |
 | **NOOP — No-op documenté** | 126 | 0 | **126** |
-| **NULL — Handler NULL** | 1 980 | 0 | **1 980** |
+| **NULL — Handler NULL** | 1 975 | 0 | **1 975** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 149 | 0 | **149** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 154 | 0 | **154** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 276 | 0 | **276** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 114
     "Stub / résultat simulé" : 145
     "No-op documenté" : 126
-    "Handler NULL" : 1980
+    "Handler NULL" : 1975
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 149
+    "Hors version firmware cible" : 154
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 276
     "Interface ambiguë" : 9
@@ -3860,9 +3860,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20201` | `GetFriendRequestList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20201 = GetFriendRequestListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20300` | `GetFriendCandidateList` | — | **IMPL-SRC** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; liste de candidats vide, count=0) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20301` | `GetNintendoNetworkIdInfo` | 3.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20302` | `GetSnsAccountLinkage` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20303` | `GetSnsAccountProfile` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `20304` | `GetSnsAccountFriendList` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20302` | `GetSnsAccountLinkage` | 5.0.0–19.0.1 | **HORS-VERSION** ([active Friend source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/sources/eden/src/core/hle/service/friend/friend.cpp) ; table runtime borne explicitement 5.0.0–19.0.1, cible HOS23) | 2026-11-23 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20303` | `GetSnsAccountProfile` | 5.0.0–19.0.1 | **HORS-VERSION** ([active Friend source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/sources/eden/src/core/hle/service/friend/friend.cpp) ; table runtime borne explicitement 5.0.0–19.0.1, cible HOS23) | 2026-11-23 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `20304` | `GetSnsAccountFriendList` | 5.0.0–19.0.1 | **HORS-VERSION** ([active Friend source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/sources/eden/src/core/hle/service/friend/friend.cpp) ; table runtime borne explicitement 5.0.0–19.0.1, cible HOS23) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20400` | `GetBlockedUserList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20400 = GetBlockedUserListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20401` | `SyncBlockedUserList` | — | **NOOP** ([source active](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/f5ae5e2073add91752d510195a6f2d9f454b92de/sources/eden/src/core/hle/service/friend/friend.cpp) ; liste bloquée locale déjà vide) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `20500` | `GetProfileExtraList` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 20500 = GetProfileExtraListV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
@@ -3896,8 +3896,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30215` | `SendFriendRequestWithExternalApplicationCatalogId` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30216` | `ResendFacedFriendRequest` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30217` | `SendFriendRequestWithNintendoNetworkIdInfo` | 3.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30300` | `GetSnsAccountLinkPageUrl` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30301` | `UnlinkSnsAccount` | 5.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30300` | `GetSnsAccountLinkPageUrl` | 5.0.0–19.0.1 | **HORS-VERSION** ([active Friend source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/sources/eden/src/core/hle/service/friend/friend.cpp) ; table runtime borne explicitement 5.0.0–19.0.1, cible HOS23) | 2026-11-23 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30301` | `UnlinkSnsAccount` | 5.0.0–19.0.1 | **HORS-VERSION** ([active Friend source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/sources/eden/src/core/hle/service/friend/friend.cpp) ; table runtime borne explicitement 5.0.0–19.0.1, cible HOS23) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30400` | `BlockUser` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30401` | `BlockUserWithApplicationInfo` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30401 = BlockUserWithApplicationInfoV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30402` | `UnblockUser` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |

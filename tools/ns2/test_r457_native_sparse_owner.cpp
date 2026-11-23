@@ -52,11 +52,13 @@ bool CommitMemoryRange(void* at, std::size_t bytes, std::int64_t* physical) noex
     void* p = mmap(at,bytes,PROT_READ|PROT_WRITE,
                    MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
     if (p != at) return false;
-    const auto slot = static_cast<std::size_t>(++next_physical_slot);
+    const auto slot = static_cast<std::size_t>(next_physical_slot) + 1;
+    next_physical_slot = static_cast<std::sig_atomic_t>(slot);
     assert(slot < kMaxMockOwners && alive[slot] == 0);
     *physical = static_cast<std::int64_t>(slot * kGranule);
     alive[slot] = 1;
-    ++successful_commits;
+    successful_commits =
+        static_cast<std::sig_atomic_t>(successful_commits + 1);
     // MAP_ANONYMOUS supplies zero-filled pages, matching the production
     // CommitMemoryRange postcondition without invoking allocator-backed mocks.
     return true;
@@ -79,7 +81,7 @@ extern "C" std::int32_t sceKernelReleaseDirectMemory(std::int64_t pa, std::size_
     const auto slot = OwnerSlot(pa);
     assert(alive[slot] != 0);
     alive[slot] = 0;
-    ++released;
+    released = static_cast<std::sig_atomic_t>(released + 1);
     return 0;
 }
 

@@ -2917,6 +2917,94 @@ if shader_source.count(f07_prewarm_total_old) != 2:
     raise RuntimeError("F07 prewarm progress mutex anchor drift")
 shader_source = shader_source.replace(f07_prewarm_total_old, f07_prewarm_total_new)
 
+
+# FC27 first-use shader translation: the active Vulkan fork keeps the historical
+# header input immutable, so reproduce the reviewed PS5-only API/member delta
+# in the generated include tree. The existing builder worker remains separate.
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
+    "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
+    "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
+    "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
+    "        bool build_in_parallel);\n",
+    "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
+    "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
+    "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
+    "        bool build_in_parallel, bool parallel_translate_stages = false);\n",
+    "FC27 parallel graphics translation API")
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
+    "    ShaderPools main_pools;\n",
+    "    ShaderPools main_pools;\n"
+    "#ifdef PS5_NATIVE\n"
+    "    // First-use graphics IR is latency critical and must not wait behind\n"
+    "    // driver-pipeline/prewarm jobs queued on the existing builder pool.\n"
+    "    Common::ThreadWorker shader_translation_workers;\n"
+    "#endif\n",
+    "FC27 dedicated graphics translation workers")
+
+# Apply the reviewed runtime delta only after all historical F07 transforms.
+# The first list is stored as exact (newer, predecessor) pairs by the source
+# receipt; invert each pair here so regeneration produces the shipping fork.
+_parallel_translation_reverse = [
+    [
+        "#include <cstdio>\n#include <exception>\n#include <stdexcept>\n// ENCORE_PS5_CACHE_DIAG_BEGIN",
+        "#include <cstdio>\n// ENCORE_PS5_CACHE_DIAG_BEGIN"
+    ],
+    [
+        "#ifdef PS5_NATIVE\nnamespace VideoCommon {\nvoid SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept;\n}\n#endif\n\nnamespace Vulkan {\n#ifdef PS5_NATIVE",
+        "namespace Vulkan {\n#ifdef PS5_NATIVE"
+    ],
+    [
+        "      use_vulkan_pipeline_cache{Settings::values.use_vulkan_driver_pipeline_cache.GetValue()},\n#ifdef PS5_NATIVE\n      shader_translation_workers(2, \"VkShaderTranslate\"),\n#endif\n      workers(device.HasBrokenParallelShaderCompiling() ? 1ULL : GetTotalPipelineWorkers(),\n              \"VkPipelineBuilder\", {}, Common::ThreadPlacement::Background),",
+        "      use_vulkan_pipeline_cache{Settings::values.use_vulkan_driver_pipeline_cache.GetValue()},\n      workers(device.HasBrokenParallelShaderCompiling() ? 1ULL : GetTotalPipelineWorkers(),\n              \"VkPipelineBuilder\", {}, Common::ThreadPlacement::Background),"
+    ],
+    [
+        "std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(\n    ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n    std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n    bool build_in_parallel, bool parallel_translate_stages) try {",
+        "std::unique_ptr<GraphicsPipeline> PipelineCache::CreateGraphicsPipeline(\n    ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n    std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n    bool build_in_parallel) try {"
+    ],
+    [
+        "    // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer\n    Shader::IR::Program* layer_source_program{};\n\n#ifdef PS5_NATIVE\n    // Lichii's stage-parallel model adapted to Encore's active renderer:\n    // every stage owns its IR pools until SPIR-V emission has consumed the\n    // resulting Program. Only NS1 first-use calls can enable this flag; NS2\n    // native keeps its authenticated GMMU/channel translation synchronous.\n    std::array<std::unique_ptr<ShaderPools>, Maxwell::MaxShaderProgram> parallel_pools{};\n    std::array<std::unique_ptr<Shader::IR::Program>, Maxwell::MaxShaderProgram>\n        parallel_programs{};\n    std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};\n    if (parallel_translate_stages) {\n        size_t parallel_env_index{};\n        for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {\n            if (key.unique_hashes[index] == 0) {\n                continue;\n            }\n            Shader::Environment* const env = envs[parallel_env_index++];\n            const u32 cfg_offset{\n                static_cast<u32>(env->StartAddress() + sizeof(Shader::ProgramHeader))};\n            parallel_pools[index] = std::make_unique<ShaderPools>();\n            ShaderPools* const stage_pools = parallel_pools[index].get();\n            const bool exits_to_dispatcher = index == 0;\n            shader_translation_workers.QueueWork(\n                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,\n                 &parallel_programs, &parallel_errors] {\n                    struct PreflushedTexturePoolScope {\n                        PreflushedTexturePoolScope() {\n                            VideoCommon::SetShaderTexturePoolPreflushedForThread(true);\n                        }\n                        ~PreflushedTexturePoolScope() {\n                            VideoCommon::SetShaderTexturePoolPreflushedForThread(false);\n                        }\n                    } texture_pool_scope;\n                    try {\n                        ::Eden::Performance::CachePhaseTimer cfg_stage_cost{\n                            ::Eden::Performance::CachePhase::ShaderCfg,\n                            ::Eden::Performance::detailed_gpu_profile.load(\n                                std::memory_order_relaxed)};\n                        auto cfg_cost = Eden::Performance::VulkanTimer(20);\n                        Shader::Maxwell::Flow::CFG cfg(\n                            *env, stage_pools->flow_block, cfg_offset, exits_to_dispatcher);\n                        cfg_cost.reset();\n                        cfg_stage_cost.Stop();\n                        auto program = ([&] {\n                            auto cost = Eden::Performance::VulkanTimer(21);\n                            ::Eden::Performance::CachePhaseTimer stage_cost{\n                                ::Eden::Performance::CachePhase::ShaderIr,\n                                ::Eden::Performance::detailed_gpu_profile.load(\n                                    std::memory_order_relaxed)};\n                            return TranslateProgram(stage_pools->inst, stage_pools->block,\n                                                    *env, cfg, host_info);\n                        }());\n                        parallel_programs[index] =\n                            std::make_unique<Shader::IR::Program>(std::move(program));\n                    } catch (...) {\n                        parallel_errors[index] = std::current_exception();\n                    }\n                });\n        }\n        // The GPU owner intentionally waits here. While it waits, the TIC pool\n        // that it flushed cannot be made GPU-dirty by a later draw/dispatch.\n        shader_translation_workers.WaitForRequests();\n        for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {\n            if (parallel_errors[index]) {\n                std::rethrow_exception(parallel_errors[index]);\n            }\n            if (key.unique_hashes[index] != 0 && !parallel_programs[index]) {\n                throw std::runtime_error(\"graphics shader translation worker returned no program\");\n            }\n        }\n    }\n#endif\n\n    for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {",
+        "    // Layer passthrough generation for devices without VK_EXT_shader_viewport_index_layer\n    Shader::IR::Program* layer_source_program{};\n\n    for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {"
+    ],
+    [
+        "#ifdef PS5_NATIVE\n        if (parallel_translate_stages) {\n            if (!uses_vertex_a || index != 1) {\n                programs[index] = std::move(*parallel_programs[index]);\n            } else {\n                auto& program_va{programs[0]};\n                auto program_vb{std::move(*parallel_programs[index])};\n                programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);\n            }\n        } else\n#endif\n        {\n            const u32 cfg_offset{\n                static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};\n            ::Eden::Performance::CachePhaseTimer cfg_stage_cost{\n                ::Eden::Performance::CachePhase::ShaderCfg,\n                ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};\n            auto cfg_cost = Eden::Performance::VulkanTimer(20);\n            Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);\n            cfg_cost.reset();\n            cfg_stage_cost.Stop();\n            if (!uses_vertex_a || index != 1) {\n                // Normal path\n                programs[index] = ([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }());\n            } else {\n                // VertexB path when VertexA is present.\n                auto& program_va{programs[0]};\n                auto program_vb{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};\n                programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);\n            }\n        }\n",
+        "        const u32 cfg_offset{static_cast<u32>(env.StartAddress() + sizeof(Shader::ProgramHeader))};\n        ::Eden::Performance::CachePhaseTimer cfg_stage_cost{\n            ::Eden::Performance::CachePhase::ShaderCfg,\n            ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)};\n        auto cfg_cost = Eden::Performance::VulkanTimer(20);\n        Shader::Maxwell::Flow::CFG cfg(env, pools.flow_block, cfg_offset, index == 0);\n        cfg_cost.reset();\n        cfg_stage_cost.Stop();\n        if (!uses_vertex_a || index != 1) {\n            // Normal path\n            programs[index] = ([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }());\n        } else {\n            // VertexB path when VertexA is present.\n            auto& program_va{programs[0]};\n            auto program_vb{([&] { auto cost = Eden::Performance::VulkanTimer(21); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderIr, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return TranslateProgram(pools.inst, pools.block, env, cfg, host_info); }())};\n            programs[index] = MergeDualVertexPrograms(program_va, program_vb, env);\n        }\n"
+    ],
+    [
+        "        auto pipeline = CreateGraphicsPipeline(\n            main_pools, graphics_key,\n            std::span<Shader::Environment* const>{ptrs.data(), active}, nullptr, true, false);",
+        "        auto pipeline = CreateGraphicsPipeline(\n            main_pools, graphics_key,\n            std::span<Shader::Environment* const>{ptrs.data(), active}, nullptr, true);"
+    ],
+    [
+        "    ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());\n#ifdef PS5_NATIVE\n    bool parallel_translate_stages{};\n    const size_t shader_stage_count = std::count_if(\n        graphics_key.unique_hashes.begin(), graphics_key.unique_hashes.end(),\n        [](u64 hash) { return hash != 0; });\n    if (shader_stage_count >= 2) {\n        // Lichii upstream bound: flushing at most 4 MiB keeps this owner-thread\n        // operation cheaper than serializing multiple expensive IR translations.\n        constexpr u64 MaxFlushedTexturePoolBytes = u64{4} << 20;\n        const auto& tex_header = maxwell3d->regs.tex_header;\n        const u64 pool_bytes =\n            (u64{static_cast<u32>(tex_header.limit)} + 1) *\n            sizeof(Tegra::Texture::TICEntry);\n        const GPUVAddr pool_base = tex_header.Address();\n        const u64 last_offset = pool_bytes - 1;\n        if (pool_bytes <= MaxFlushedTexturePoolBytes &&\n            pool_base <= std::numeric_limits<GPUVAddr>::max() - last_offset) {\n            const GPUVAddr pool_last = pool_base + last_offset;\n            if (gpu_memory->IsWithinGPUAddressRange(pool_last)) {\n                // Flush once on the GPU owner. Translation workers use only\n                // ReadBlockUnsafe for TICs until this owner joins them.\n                gpu_memory->FlushRegion(pool_base, pool_bytes);\n                parallel_translate_stages = true;\n            }\n        }\n    }\n    auto pipeline{CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(),\n                                         nullptr, true, parallel_translate_stages)};\n#else\n    auto pipeline{\n        CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(), nullptr, true)};\n#endif",
+        "    ([&] { auto cost = Eden::Performance::VulkanTimer(19); ::Eden::Performance::CachePhaseTimer stage_cost{::Eden::Performance::CachePhase::ShaderPoolReset, ::Eden::Performance::detailed_gpu_profile.load(std::memory_order_relaxed)}; return main_pools.ReleaseContents(); }());\n    auto pipeline{\n        CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(), nullptr, true)};"
+    ]
+]
+for newer, predecessor in _parallel_translation_reverse:
+    if shader_source.count(predecessor) != 1:
+        raise RuntimeError("FC27 parallel graphics translation anchor drift")
+    shader_source = shader_source.replace(predecessor, newer, 1)
+
+# CachePhaseTimer's keyed attribution is thread-local. The worker-safe runtime
+# therefore gives each stage a private cost bucket and merges it on the GPU
+# owner after joining; preserve the existing diagnostic without new logging.
+_parallel_timing_reverse = [
+    [
+        "    std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};\n    // CachePhaseTimer's per-key shader attribution is intentionally thread-local.\n    // Give every stage worker a private accumulator, then merge after the owner\n    // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.\n    std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>\n        parallel_stage_costs{};\n    if (parallel_translate_stages) {",
+        "    std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};\n    if (parallel_translate_stages) {"
+    ],
+    [
+        "                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,\n                 &parallel_programs, &parallel_errors, &parallel_stage_costs] {\n                    struct ShaderMissStageScope {\n                        ::Eden::Performance::ShaderMissStageCosts* previous{\n                            ::Eden::Performance::shader_miss_stage_active};\n                        explicit ShaderMissStageScope(\n                            ::Eden::Performance::ShaderMissStageCosts* current) noexcept {\n                            ::Eden::Performance::shader_miss_stage_active = current;\n                        }\n                        ~ShaderMissStageScope() {\n                            ::Eden::Performance::shader_miss_stage_active = previous;\n                        }\n                    } shader_miss_stage_scope{&parallel_stage_costs[index]};\n                    struct PreflushedTexturePoolScope {",
+        "                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,\n                 &parallel_programs, &parallel_errors] {\n                    struct PreflushedTexturePoolScope {"
+    ],
+    [
+        "        shader_translation_workers.WaitForRequests();\n        if (auto* const owner_stage_costs =\n                ::Eden::Performance::shader_miss_stage_active) {\n            for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {\n                if (key.unique_hashes[index] == 0) {\n                    continue;\n                }\n                // These are CPU-work totals, matching the former serial keyed\n                // timers. The enclosing miss cpu_ns remains the elapsed critical\n                // path and therefore reflects the parallel overlap.\n                owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;\n                owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;\n            }\n        }\n        for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {",
+        "        shader_translation_workers.WaitForRequests();\n        for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {"
+    ]
+]
+for newer, predecessor in _parallel_timing_reverse:
+    if shader_source.count(predecessor) != 1:
+        raise RuntimeError("FC27 parallel shader timing anchor drift")
+    shader_source = shader_source.replace(predecessor, newer, 1)
+
 shader_output = output / 'vk_pipeline_cache_cost.cpp'
 if not shader_output.exists() or shader_output.read_text() != shader_source:
     shader_output.write_text(shader_source)

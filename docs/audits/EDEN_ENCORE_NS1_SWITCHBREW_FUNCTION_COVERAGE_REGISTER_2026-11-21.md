@@ -1093,6 +1093,18 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 477** : 1 942 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot Friend — daemon suspend session / refresh offline — 23/11/2026
+
+**Vendor `c1ae766d44a4871387232eefdeefd47a2dc00ff0`** (arbre `b20ef68916315f21a52e2b76b637f3bd9b04d717`).
+
+- `CreateDaemonSuspendSessionService` (2) : **NULL → IMPL-SRC** ; retourne un véritable objet IPC `IDaemonSuspendSessionService`. L'interface n'expose pas de commandes supplémentaires dans Ryujinx et les runtimes recomp de référence.
+- `UpdateFriendInfo` (10102) : **NULL → IMPL-SRC** ; consomme `Uid + pid placeholder`, initialise tout le tableau MapAlias de `FriendImpl` à l'état invalide/défaut en l'absence de backend social.
+- Aucun daemon réseau ou profil distant fictif n'est créé.
+
+**Compteur historique : 1 523 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 940 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 475** : 1 940 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

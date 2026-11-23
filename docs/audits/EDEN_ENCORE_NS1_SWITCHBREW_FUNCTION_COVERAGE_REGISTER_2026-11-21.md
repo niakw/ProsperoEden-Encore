@@ -1479,6 +1479,25 @@ Les six unités concernées sont bien listées dans `encore-active/eden-backport
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+
+## Lot handles/events/stateful options — 23/11/2026
+
+**Vendor `2f294bbfaa54440eaf9dafe9cabd2c104ba3a439`** (arbre `0675e1f32d05e13c3ae0c8bbf0c20d841be03ecf`).
+
+Douze entrées sortent du pool. Neuf passent **STUB → IMPL-SRC** : Bluetooth `RegisterBleEvent`, NS `OpenSystemUpdateControl`, OLSC `GetNativeHandle`, NFC Mifare `Write`, Audio `QueryAudioDeviceSystemEvent` / `GetActiveChannelCount`, SSL `SetOption` / `GetOption`, et NSD `SetChangeEnvironmentIdentifierDisabled`. Elles retournent des objets/events réels, atteignent un backend réel ou conservent/relisent un état de contexte observable.
+
+Trois passent **STUB → NOOP** avec justification contractuelle : VI `SetDisplayEnabled` est commenté dans la source comme une commande qui ne fait littéralement rien dans le service réel ; `notif:a Initialize` n'a aucune persistance externe à restaurer parce que le backend d'alarmes est déjà en mémoire ; `IAsyncValue::Cancel` s'applique à un objet synchrone dont l'événement de complétion est signalé dès le constructeur, et le dump IPC HOS 23 confirme une cmd2 sans sortie.
+
+La source SSL réellement compilée sur PS5 a été vérifiée dans `headless/CMakeLists.txt` : le build retire les deux TUs SSL de base et sélectionne exactement `vendor/encore-active/eden-core/src/core/hle/service/ssl/ssl.cpp` + backend OpenSSL assorti. Les TUs VI/BT/NS/OLSC/NFC/Audio/notif/NSD sont listés dans le CMake core actif.
+
+Important : `GetUniquePadIds` reste STUB. L'ABI demande un buffer de `UniquePadId`, mais le backend Encore ne conserve pas d'identifiant matériel unique ; aucun ID n'a été inventé à partir des Npad IDs.
+
+**Compteur historique : 1 588 IMPL-SRC / 142 PARTIEL / 79 STUB / 150 NOOP / 1 698 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 330 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 199** : 1 698 NULL + 79 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

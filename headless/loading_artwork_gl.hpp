@@ -20,7 +20,7 @@ namespace {
 // The caller supplies the already composed Encore draw list. Render once at
 // a bounded resolution using an explicit FBO, not the transient scanout.
 template<class Draw>
-bool Capture(Draw&& draw) {
+bool Capture(Draw&& draw, bool alternate = false) {
     constexpr int width = 1920, height = 1080;
     LaunchHandoff::Frame frame;
     frame.width = width;
@@ -111,7 +111,7 @@ bool Capture(Draw&& draw) {
                          frame.rgba.begin() + (height - y - 1) * stride);
     }
     try {
-        LaunchHandoff::Publish(std::move(frame));
+        LaunchHandoff::Publish(std::move(frame), alternate);
     } catch (...) {
         return false;
     }
@@ -127,9 +127,10 @@ public:
     GlPresenter& operator=(const GlPresenter&) = delete;
     void Release() {
         glDeleteTextures(1, &texture_);
+        glDeleteTextures(1, &alternate_texture_);
         glDeleteVertexArrays(1, &vao_);
         glDeleteProgram(program_);
-        texture_ = vao_ = program_ = 0;
+        texture_ = alternate_texture_ = vao_ = program_ = 0;
         width_ = height_ = 0;
         attempted_ = false;
     }
@@ -138,11 +139,12 @@ public:
         if (!program_ && !Build()) return false;
         if (!attempted_) {
             attempted_ = true;
-            const auto artwork = LaunchHandoff::Peek();
-            if (artwork && LaunchHandoff::Valid(*artwork)) {
+            const auto upload = [&](const std::shared_ptr<const LaunchHandoff::Frame>& artwork,
+                                    GLuint* out) {
+                if (!artwork || !LaunchHandoff::Valid(*artwork)) return;
                 glActiveTexture(GL_TEXTURE0);
-                glGenTextures(1, &texture_);
-                glBindTexture(GL_TEXTURE_2D, texture_);
+                glGenTextures(1, out);
+                glBindTexture(GL_TEXTURE_2D, *out);
                 glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
                 glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -154,13 +156,20 @@ public:
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                if (texture_ && glGetError() == GL_NO_ERROR) {
-                    width_ = artwork->width;
-                    height_ = artwork->height;
-                } else {
-                    glDeleteTextures(1, &texture_);
-                    texture_ = 0;
+                if (!*out || glGetError() != GL_NO_ERROR) {
+                    glDeleteTextures(1, out);
+                    *out = 0;
                 }
+            };
+            const auto artwork = LaunchHandoff::Peek();
+            upload(artwork, &texture_);
+            if (texture_ && artwork) {
+                width_ = artwork->width;
+                height_ = artwork->height;
+                const auto alternate = LaunchHandoff::PeekAlternate();
+                if (alternate && alternate->width == artwork->width &&
+                    alternate->height == artwork->height)
+                    upload(alternate, &alternate_texture_);
             }
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -173,7 +182,13 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture_);
         glUniform1i(glGetUniformLocation(program_, "art"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, alternate_texture_);
+        glUniform1i(glGetUniformLocation(program_, "alternate_art"), 1);
+        glActiveTexture(GL_TEXTURE0);
         glUniform1i(glGetUniformLocation(program_, "has_art"), texture_ ? 1 : 0);
+        glUniform1i(glGetUniformLocation(program_, "has_alternate"),
+                    alternate_texture_ ? 1 : 0);
         const auto fit = Fit(width_, height_, width, height);
         glUniform4f(glGetUniformLocation(program_, "fit_rect"), float(fit.x), float(fit.y),
                     float(std::max(1u, fit.width)), float(std::max(1u, fit.height)));
@@ -189,11 +204,42 @@ private:
             "void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
             "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}";
         const std::string fragment = std::string{"#version 330 core\n"} + kLoadingSceneGlsl +
-            "uniform sampler2D art; uniform int has_art; uniform vec4 fit_rect;"
+            "uniform sampler2D art; uniform sampler2D alternate_art;"
+            "uniform int has_art; uniform int has_alternate; uniform vec4 fit_rect;"
             "uniform vec2 size; uniform float seconds; out vec4 color;\n"
             "void main(){vec2 p=vec2(gl_FragCoord.x,size.y-gl_FragCoord.y);"
             "vec2 uv=clamp((p-fit_rect.xy)/fit_rect.zw,vec2(0),vec2(1));"
-            "vec3 base=has_art!=0?texture(art,uv).rgb:vec3(0.055,0.075,0.105);"
+            "vec3 primary=has_art!=0?texture(art,uv).rgb:vec3(0.055,0.075,0.105);"
+            "vec3 base=primary;"
+            "if(has_alternate!=0&&seconds<1000.0){"
+            "float cycle=mod(max(seconds,0.0),6.0);"
+            "vec3 alternate=texture(alternate_art,uv).rgb;"
+            "if(cycle>=2.4&&cycle<4.4)base=alternate;"
+            "bool to_front=cycle>=1.7&&cycle<2.4;"
+            "bool to_back=cycle>=4.4&&cycle<5.1;"
+            "if(to_front||to_back){"
+            "float begin=to_front?1.7:4.4;"
+            "float turn=smoothstep(0.0,1.0,(cycle-begin)/0.7);"
+            "float width=max(0.035,abs(cos(turn*3.14159265)));"
+            "float x0=0.185;float x1=0.442;float y0=0.102;float y1=0.810;"
+            "bool inside=uv.x>=x0&&uv.x<=x1&&uv.y>=y0&&uv.y<=y1;"
+            "base=to_front?primary:alternate;"
+            "if(inside){"
+            "float center=(x0+x1)*0.5;float halfw=(x1-x0)*0.5;"
+            "float local=(uv.x-center)/(halfw*width);"
+            "float srcx=clamp(center+local*halfw,x0,x1);"
+            "vec2 face_uv=vec2(srcx,uv.y);"
+            "bool alternate_face=to_front?(turn>=0.5):(turn<0.5);"
+            "vec3 face=alternate_face?texture(alternate_art,face_uv).rgb:texture(art,face_uv).rgb;"
+            "float bgmix=clamp((uv.x-x0)/(x1-x0),0.0,1.0);"
+            "vec3 bg=mix(texture(art,vec2(max(0.0,x0-0.012),uv.y)).rgb,"
+            "texture(art,vec2(min(1.0,x1+0.012),uv.y)).rgb,bgmix);"
+            "float visible=1.0-smoothstep(0.96,1.0,abs(local));"
+            "face*=0.72+0.28*width;"
+            "base=mix(bg,face,visible);"
+            "}"
+            "}"
+            "}"
             "vec4 dots=loading_artwork_indicator(gl_FragCoord.xy,size,seconds);"
             "color=vec4(mix(base,dots.rgb,dots.a),1.0);}";
         GLuint program = glCreateProgram();
@@ -222,7 +268,7 @@ private:
         program_ = program;
         return true;
     }
-    GLuint program_{}, vao_{}, texture_{};
+    GLuint program_{}, vao_{}, texture_{}, alternate_texture_{};
     std::uint32_t width_{}, height_{};
     bool attempted_{};
 };

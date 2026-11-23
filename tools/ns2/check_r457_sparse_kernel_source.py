@@ -57,6 +57,7 @@ reviewed_vendors.add("4354add020afac574198f63d87167f3022bff9c6")
 # Exact successor: optimized sparse OOM rollback and tracking before PTE.
 reviewed_vendors.add("ced1b9cdd6f0fa4e0ca7949b404f450aae0055df")
 reviewed_vendors.add("06b453171af26b5703e2fcc5e68c4e8288d758b7")
+reviewed_vendors.add("fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
@@ -91,7 +92,8 @@ def gitblob(path):
     return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
 for path,expected in (
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp",
-     "c5b5dd99bb9a65286783f4b220d991f422d19e67" if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7"}
+     "12d3d0ddc59308b80df46bc54e6e8ee54011d568" if selected == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"
+     else "c5b5dd99bb9a65286783f4b220d991f422d19e67" if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7"}
      else "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp",
      "130eb7bd53e29b816bb81fec3fa053a584cd4b6e"),
@@ -119,7 +121,7 @@ guarded=(r"^#if defined\(PS5_NATIVE\) && "
          r"defined\(EDEN_NS2_SPARSE_BACKING\)\n"
          r"[\s\S]*?^#endif\n")
 guard_count = len(re.findall(guarded,kernel,flags=re.MULTILINE))
-if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7"}:
+if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"}:
     # This exact runtime blob carries the OOM rollback and optimized
     # preflight reviewed after the original R457 source-only parity gate.
     # Its full SHA is already checked above; do not silently normalize an
@@ -207,14 +209,21 @@ assert mapping.index("process_memory->GetPointerSilent(")<mapping.index(
 assert gpu.count("AtomicStorePhysical(")==3, "Unexpected new GPU PA publisher: review separately"
 
 physical=read("src/ns2_sparse_guest.cpp")
-start=physical.index("    bool Commit(std::size_t offset, std::size_t length, bool* wholly_new")
-end=physical.index("\n};",start)
+start=physical.index("    bool CommitLocked(std::size_t offset, std::size_t length)")
+end=physical.index("\n    bool Commit(std::size_t offset",start)
 transaction=physical[start:end]
 assert transaction.index("Common::CommitMemoryRange(")<transaction.index(
     "plan.Publish(*admit)")
+assert "RestoreZero(at, zero_physical, part.physical);" in transaction
+assert "MapPhysical(base + index * kGranule, PROT_READ, zero_physical)" in physical
+assert "GuestSignal(int signal, siginfo_t* info, void* context)" in physical
+assert "plan.CancelSingleUnstaged(*admit)" in physical
+assert "active_guest_signal.store(this, std::memory_order_release)" in physical
+assert "EdenNs2EnsureGuestBackingReadable" in physical
 host=read("src/host_memory.cpp")
 assert host.index("if (requested == Ns2Dram)")<host.index(
     "AllocateMemoryPages(requested)")
-assert "if (impl->sparse && !impl->sparse->Commit(offset, length))" in host
+assert "impl->sparse->PrepareClear(offset, length, fill, &already_zero)" in host
+assert "if (fill == 0 && already_zero) return;" in host
 print("R457_NS2_KERNEL_PTE_GPU_RESIDENCY_CHAIN_SOURCE_PASS"
       " native_runtime_unqualified=1 gpu_fences_unqualified=1")

@@ -87,6 +87,7 @@ KNOWN_VENDOR_GRAPH = {
     "ab417b59c5f7f4613ff27386be05c0644d0ed776": "same FC27 audio/cache plus PS5 NS2-only HLE IPC wake and VFS128 owners",
     "7fc673495b2ee18d5216023280057a42aa78d46c": "same FC27 audio/cache plus reviewed MKW NS2 GameChat/GSV boot services",
 }
+KNOWN_VENDOR_GRAPH["fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"] = "same NS1 audio owners; NS2 demand-zero guest-memory successor"
 selected = subprocess.check_output(["git", "-C", str(VENDOR), "rev-parse", "HEAD"], text=True).strip()
 assert selected in KNOWN_VENDOR_GRAPH, f"Unexpected vendor submodule {selected}"
 
@@ -122,8 +123,8 @@ backends = [VENDOR / f"encore-active/eden-core/src/core/memory_native_{name}.cpp
 for owner, expected in (
     (h, "d4273c4539971285711a8e26c39bae046ccbbad6"),
     (audio, "893e5e5352149555ac15895d86e79068ab0ee7ae"),
-    (backends[0], "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
-    (backends[1], "c8f197810af244c3f2d66413352533734d031620"),
+    (backends[0], "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if selected == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2" else "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
+    (backends[1], "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2" else "c8f197810af244c3f2d66413352533734d031620"),
 ):
     assert git_blob(owner) == expected, ("Unreviewed audio owner drift", owner)
 assert 'ReadyForAudioRead() const noexcept' in h.read_text()

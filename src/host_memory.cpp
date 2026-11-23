@@ -653,13 +653,12 @@ void HostMemory::ClearBackingRegion(size_t offset, size_t length, u32 fill) {
     if (length) {
 #if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
         if (impl->sparse) {
-            bool just_committed = false;
-            if (!impl->sparse->CommitForClear(offset, length, &just_committed))
+            bool already_zero = false;
+            if (!impl->sparse->PrepareClear(offset, length, fill, &already_zero))
                 throw std::bad_alloc{}; // fail closed, not a virtual-hole write
-            // CommitMemoryRange already zeroed every entirely new 2 MiB
-            // granule. Do not repeat that huge write; mixed/reused ranges
-            // still require their exact fill and may hold live guest bytes.
-            if (fill == 0 && just_committed) return;
+            // Untouched chunks already read as zero through the shared
+            // read-only zero block. Do not allocate or rewrite them.
+            if (fill == 0 && already_zero) return;
         }
 #endif
         std::memset(backing_base + offset, fill, length);

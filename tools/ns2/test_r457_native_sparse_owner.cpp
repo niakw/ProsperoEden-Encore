@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The EXACT PS5 Runtime TU is linked with mocked syscall ownership, not a
-// reimplementation of its transactions. No real PS5 mapping is claimed.
+// Exact native owner linked against host mocks: shared ZERO aliases, SIGSEGV
+// promotion to OWN, budget rollback and teardown ownership.
 #include "ns2_sparse_guest.h"
 #include "ps5_ns2_guest_backing_plan.h"
 #include <cassert>
-#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <map>
 #include <sys/mman.h>
@@ -38,6 +36,17 @@ bool CommitMemoryRange(void* at, std::size_t bytes, std::int64_t* physical) noex
     return true;
 }
 }
+extern "C" std::int32_t sceKernelEnableDmemAliasing() { return 0; }
+extern "C" std::int32_t sceKernelMapDirectMemory(void** at, std::size_t bytes,
+                                                   int protection, int,
+                                                   std::int64_t physical,
+                                                   std::size_t alignment) {
+    assert(bytes == kGranule && alignment == kGranule);
+    assert(alive.count(physical) && alive[physical]);
+    void* mapped = mmap(*at,bytes,protection,
+                        MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
+    return mapped == *at ? 0 : -1;
+}
 extern "C" std::int32_t sceKernelReleaseDirectMemory(std::int64_t pa, std::size_t bytes) {
     assert(bytes == kGranule);
     assert(alive.count(pa) && alive[pa]);
@@ -47,51 +56,61 @@ extern "C" std::int32_t sceKernelReleaseDirectMemory(std::int64_t pa, std::size_
 }
 
 int main() {
-    assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule)); // NS1 no active owner
+    assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
+    assert(EdenNs2EnsureGuestBackingReadable(nullptr,0,kGranule));
     {
         Runtime guest(kNs2Dram,5*kGranule);
         assert(guest.Valid() && guest.VirtualBytes()==kNs2Dram);
+        assert(successful_commits==1); // one shared ZERO physical block
+        assert(guest.UsedBytes()==0);
+        auto* base=static_cast<std::uint8_t*>(guest.Base());
+        assert(base[0]==0 && base[4*kGranule+123]==0);
         assert(guest.Install());
-        auto* base = static_cast<std::uint8_t*>(guest.Base());
-        assert(!EdenNs2CommitGuestBacking(nullptr,0,kGranule)); // wrong owner
-        assert(!guest.Commit(kNs2Dram-1,2));
-        assert(!guest.Commit(0,6*kGranule)); // budget fail before first mapping
-        assert(guest.UsedBytes()==0 && successful_commits==0);
-        assert(EdenNs2CommitGuestBacking(base,0,kGranule+1));
-        assert(successful_commits==2 && guest.UsedBytes()==2*kGranule);
-        base[kGranule-2]=0xA2; base[kGranule+2]=0xB3;
-        assert(guest.Commit(1,kGranule+2)); // existing PA remains owned
-        assert(successful_commits==2 && base[kGranule-2]==0xA2);
-        assert(EdenNs2CommitGuestBacking(base,kNs2Dram-1,1));
-        assert(base[kNs2Dram-1]==0); base[kNs2Dram-1]=0xC5;
-        assert(guest.UsedBytes()==3*kGranule);
-        fail_at = successful_commits+1;
-        assert(!guest.Commit(3*kGranule,2*kGranule)); // second PA fails
-        assert(guest.UsedBytes()==3*kGranule);
-        assert(released==1); // rollback: exact newly staged piece
+        assert(!EdenNs2EnsureGuestBackingReadable(nullptr,0,kGranule));
+        assert(EdenNs2EnsureGuestBackingReadable(base,0,kNs2Dram));
+        assert(successful_commits==1); // PTE/readability takes no OWN block
+
+        // First write faults on the read-only ZERO alias. The handler maps
+        // a private zeroed block and the faulting instruction repeats.
+        base[64]=0x7A;
+        assert(base[64]==0x7A);
+        assert(guest.UsedBytes()==kGranule);
+        assert(successful_commits==2);
+
+        bool already_zero=false;
+        assert(guest.PrepareClear(2*kGranule+17,4096,0,&already_zero));
+        assert(already_zero && successful_commits==2);
+        assert(base[2*kGranule+17]==0);
+
+        // Nonzero fill needs writable backing before the caller writes.
+        assert(guest.PrepareClear(2*kGranule+17,4096,0x45,&already_zero));
+        assert(!already_zero && guest.UsedBytes()==2*kGranule);
+        std::memset(base+2*kGranule+17,0x45,4096);
+        assert(base[2*kGranule+17]==0x45);
+
+        // Failed two-chunk admission restores every new chunk to ZERO.
+        const auto before=successful_commits;
+        fail_at=before+1;
+        assert(!guest.Commit(3*kGranule,2*kGranule));
         fail_at=-1;
-        bool entirely_new = false;
-        assert(guest.CommitForClear(3*kGranule,kGranule,&entirely_new));
-        assert(entirely_new); // physical owner created and zeroed by commit
-        assert(base[3*kGranule]==0);
-        base[3*kGranule] = 0x61;
-        assert(guest.CommitForClear(3*kGranule,1,&entirely_new));
-        assert(!entirely_new && base[3*kGranule] == 0x61); // caller must clear
-        std::memset(base+3*kGranule,0,1);
-        assert(base[3*kGranule]==0);
-        assert(guest.UsedBytes()==4*kGranule);
+        assert(guest.UsedBytes()==2*kGranule);
+        assert(base[3*kGranule]==0 && base[4*kGranule]==0);
+        assert(released==1);
+
+        assert(guest.Commit(3*kGranule,kGranule));
+        assert(guest.UsedBytes()==3*kGranule);
+        base[3*kGranule]=0xC5;
+        assert(base[3*kGranule]==0xC5);
         assert(guest.Commit(4*kGranule,kGranule));
-        assert(guest.UsedBytes()==5*kGranule);
-        entirely_new = true;
-        assert(!guest.CommitForClear(6*kGranule,kGranule,&entirely_new));
-        assert(!entirely_new); // no zero-elision after denied admission
-        assert(!guest.Commit(6*kGranule,kGranule)); // hard budget
-        assert(base[kGranule-2]==0xA2 && base[kGranule+2]==0xB3);
-        assert(base[kNs2Dram-1]==0xC5);
+        assert(guest.UsedBytes()==4*kGranule);
+        assert(!guest.Commit(5*kGranule,2*kGranule));
+        assert(guest.UsedBytes()==4*kGranule);
+
         guest.Uninstall();
         assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
     }
-    assert(released==6); // 1 rolled back + 5 committed at teardown
     for (const auto& [pa,live]:alive) assert(!live);
-    std::puts("R457_PS5_SPARSE_GUEST_REAL_OWNER_MOCK_PASS");
+    // one rolled-back OWN + four live OWN + one shared ZERO.
+    assert(released==6);
+    std::puts("R457_PS5_DEMAND_ZERO_GUEST_REAL_OWNER_MOCK_PASS");
 }

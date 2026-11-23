@@ -25,15 +25,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 563 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `f20f6736`. **Ces 1 563 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 569 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `ecb8ae0e`. **Ces 1 569 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 483 | 80 | **1 563** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 489 | 80 | **1 569** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
-| **STUB — Stub / résultat simulé** | 109 | 0 | **109** |
-| **NOOP — No-op documenté** | 145 | 0 | **145** |
+| **STUB — Stub / résultat simulé** | 102 | 0 | **102** |
+| **NOOP — No-op documenté** | 146 | 0 | **146** |
 | **NULL — Handler NULL** | 1 698 | 0 | **1 698** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -1075,7 +1075,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `32` | `SendKeyboardLockKeyEvent` | 6.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `40` | `AcquireXpadIdEventHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
 | hid | `41` | `ReleaseXpadIdEventHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
-| hid | `51` | `ActivateXpad` | — | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `51` | `ActivateXpad` | — | **NOOP** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) ; HOS 10.0.0+ : compatibilité intentionnelle sans mutation, cible NS1 23.x) | 2026-11-23 |
 | hid | `55` | `GetXpadIds` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `56` | `ActivateJoyXpad` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
 | hid | `58` | `GetJoyXpadLifoHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
@@ -1351,19 +1351,19 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `520` | `EnableHandheldHids` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `521` | `DisableHandheldHids` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `522` | `SetJoyConRailEnabled` | 9.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `523` | `IsJoyConRailEnabled` | 9.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `523` | `IsJoyConRailEnabled` | 9.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) ; retourne `HidFirmwareSettings::IsRailEnabled()` au lieu de `true` constant) | 2026-11-23 |
 | hid:sys | `540` | `AcquirePlayReportControllerUsageUpdateEvent` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `541` | `GetPlayReportControllerUsages` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `542` | `AcquirePlayReportRegisteredDeviceUpdateEvent` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `543` | `GetRegisteredDevicesOld ([1.0.0-4.1.0] GetRegisteredDevices)` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/hid/hid_system_server.cpp) ; IHidSystemServer exact : nullptr ; audit statique, pas de validation PS5) | 2026-11-22 |
-| hid:sys | `544` | `AcquireConnectionTriggerTimeoutEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `544` | `AcquireConnectionTriggerTimeoutEvent` | 3.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) ; retourne le `acquire_connection_trigger_timeout_event` dédié ; corrige l'ancien mauvais événement `acquire_device_registered_event`) | 2026-11-23 |
 | hid:sys | `545` | `SendConnectionTrigger` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `546` | `AcquireDeviceRegisteredEventForControllerSupport` | 3.0.0+ | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `546` | `AcquireDeviceRegisteredEventForControllerSupport` | 3.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) ; retourne le vrai `KReadableEvent` créé et détenu par `IHidSystemServer`) | 2026-11-23 |
 | hid:sys | `547` | `GetAllowedBluetoothLinksCount` | 3.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `548` | `GetRegisteredDevices` | 5.0.0+ | **PARTIEL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `549` | `GetConnectableRegisteredDevices` | 6.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `700` | `ActivateUniquePad` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:sys | `702` | `AcquireUniquePadConnectionEventHandle` | — | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `702` | `AcquireUniquePadConnectionEventHandle` | — | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) ; retourne le vrai `unique_pad_connection_event` détenu par `IHidSystemServer`) | 2026-11-23 |
 | hid:sys | `703` | `GetUniquePadIds` | — | **STUB** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `751` | `AcquireJoyDetachOnBluetoothOffEventHandle` | — | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `800` | `ListSixAxisSensorHandles` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
@@ -1945,8 +1945,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | aoc:u | `6` | `PrepareAddOnContentByApplicationId` | 1.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-022]) | 2026-11-23 |
 | aoc:u | `7` | `PrepareAddOnContent` | — | **IMPL-SRC** ([source C++][ns1-src-022]) | 2026-11-22 |
 | aoc:u | `8` | `GetAddOnContentListChangedEvent` | 4.0.0+ | **STUB** ([source C++][ns1-src-022]) | 2026-11-22 |
-| aoc:u | `100` | `[CreateEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 7.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/aoc/addon_content_manager.cpp) ; créateur d'IPurchaseEventManager explicitement marqué STUBBED mais retourne l'interface ; statique, PS5 non validé) | 2026-11-22 |
-| aoc:u | `101` | `[CreatePermanentEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 9.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/aoc/addon_content_manager.cpp) ; créateur d'IPurchaseEventManager explicitement marqué STUBBED mais retourne l'interface ; statique, PS5 non validé) | 2026-11-22 |
+| aoc:u | `100` | `[CreateEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 7.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) + [TU sélectionné moteur](https://github.com/niakw/ProsperoEden-Encore/blob/audit/ns1-switchbrew-main-coverage-20261122/headless/nup_v1_aoc_service.cpp) ; crée et retourne un vrai `IPurchaseEventManager`) | 2026-11-23 |
+| aoc:u | `101` | `[CreatePermanentEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 9.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) + [TU sélectionné moteur](https://github.com/niakw/ProsperoEden-Encore/blob/audit/ns1-switchbrew-main-coverage-20261122/headless/nup_v1_aoc_service.cpp) ; crée et retourne un vrai `IPurchaseEventManager`) | 2026-11-23 |
 | aoc:u | `0` | `SetDefaultDeliveryTarget` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | aoc:u | `1` | `SetDeliveryTarget` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | aoc:u | `2` | `GetPurchasedEventReadableHandle` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/aoc/purchase_event_manager.cpp) ; IPurchaseEventManager slot 2 actuel = GetPurchasedEvent, pas GetPurchasedEventReadableHandle ; statique, PS5 non validé) | 2026-11-22 |

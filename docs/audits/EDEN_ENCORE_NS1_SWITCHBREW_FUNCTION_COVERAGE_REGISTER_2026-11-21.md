@@ -1445,6 +1445,23 @@ Les trois `Release*CaptureSharedBuffer` passent **STUB → NOOP** avec justifica
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+
+## Lot HID system handles + AOC factories — 23/11/2026
+
+**Vendor `ecb8ae0e177cf5ac2015b26bff722f70a147f6cd`** (arbre `f54da66c6c41185383dcf9df07f0211aee96df5c`) ; moteur de la branche repointé sur ce gitlink.
+
+Sept entrées sortent du pool de revue. `hid` cmd51 `ActivateXpad` passe **STUB → NOOP** : le commentaire source confirme le comportement de compatibilité sans effet depuis Horizon 10.0.0+, donc applicable à la cible HOS 23.x. Côté `hid:sys`, `IsJoyConRailEnabled` passe **STUB → IMPL-SRC** en lisant `HidFirmwareSettings::IsRailEnabled()` au lieu de renvoyer `true` en dur.
+
+Trois acquisitions d'événements `hid:sys` passent **STUB → IMPL-SRC** parce qu'elles retournent des `KEvent` réellement créés et détenus par `IHidSystemServer`. Le lot corrige en plus un bug concret : cmd544 `AcquireConnectionTriggerTimeoutEvent` renvoyait auparavant `acquire_device_registered_event`; elle retourne désormais `acquire_connection_trigger_timeout_event`. La source de signalisation de ces événements reste à qualifier séparément ; aucune réactivité console n'est déduite de la seule validité du handle.
+
+Enfin, `aoc:u` cmd100/101 passent **STUB → IMPL-SRC** : les deux factories construisent et retournent effectivement `IPurchaseEventManager`. Le propriétaire maintenu est `vendor/encore-active/eden-core/src/core/hle/service/aoc/addon_content_manager.cpp`, mais le build unifié retire ce TU puis sélectionne `headless/nup_v1_aoc_service.cpp` via `headless/nup_v1_runtime.cmake`; les deux propriétaires sont donc gardés cohérents. `GetAddOnContentListChangedEvent` reste ouvert/partiel : un `KEvent` existe mais sa signalisation n'est pas prouvée.
+
+**Compteur historique : 1 569 IMPL-SRC / 142 PARTIEL / 102 STUB / 146 NOOP / 1 698 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 330 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 222** : 1 698 NULL + 102 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -3593,6 +3593,41 @@ for path, (previous_blob, successor_blob, witness) in ns2_boot_hle_receipts.item
 print("NS2_BOOT_HLE_SHIPPING_RECEIPT_PASS owners=4 history=immutable "
       "console_boot=unvalidated")
 
+# NX library selection (e0080f38) postdates the DNSP/DXCI game-file
+# classifier. Reverse its four exact header hunks on the audit copy first;
+# the shipping runtime keeps NX support and the DNSP/DXCI receipt stays frozen.
+nx_game_files_path = "headless/game_files.h"
+assert nx_game_files_path in drift_index and nx_game_files_path not in post_index
+nx_game_files_source = (ROOT/nx_game_files_path).read_text()
+nx_current_blob = subprocess.check_output(
+    ["git", "hash-object", nx_game_files_path], cwd=ROOT, text=True
+).strip()
+assert nx_current_blob == "497a4500fb2b38fd2606acd7251c2a4343a0182f"
+nx_hunks = (
+    ("""// NX has a full content loader with verified VFS and snapshot dispatch.
+inline bool IsNxFile(std::string_view name) {
+    return EndsWithNoCase(name, ".nx");
+}
+""", ""),
+    ("""           IsDirectLoaderFile(name) || IsNupFile(name) || IsNxFile(name);""",
+     """           IsDirectLoaderFile(name) || IsNupFile(name);"""),
+    ("""        !IsNupFile(selection) && !IsNxFile(selection)) return false;""",
+     """        !IsNupFile(selection)) return false;"""),
+    ("""                 !IsNupFile(name) && !IsNxFile(name))) continue;""",
+     """                 !IsNupFile(name))) continue;"""),
+)
+for current, previous in nx_hunks:
+    assert nx_game_files_source.count(current) == 1, current
+    nx_game_files_source = nx_game_files_source.replace(current, previous, 1)
+nx_predecessor = nx_game_files_source.encode("utf-8")
+nx_predecessor_blob = hashlib.sha1(
+    b"blob " + str(len(nx_predecessor)).encode() + bytes([0]) + nx_predecessor
+).hexdigest()
+assert nx_predecessor_blob == "e4502fb143a4e4efc9ffb21bdabcafab90ff922a"
+assert drift_index[nx_game_files_path]["actual"] == nx_current_blob
+drift_index[nx_game_files_path]["actual"] = nx_predecessor_blob
+print("NX_GAME_FILES_SOURCE_SUCCESSOR_PASS predecessor=e4502fb1 current=497a4500")
+
 # DNCA/DXCI's shipping loader dispatch and library classifier are
 # post-F07 structural additions, not updates to the frozen F07 receipt.
 # The maintained C++/header owners are already sealed by exact Git blobs

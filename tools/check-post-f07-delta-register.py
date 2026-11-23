@@ -98,6 +98,12 @@ launcher_consolidation = {
     "headless/prosperoeden/pe/ui/services.hpp":
         ("2509658b7e8fb888c10e6bede6ba9ce12a124a7d",
          "300fa56ad3d8932e25a898c53ed8052f4d69841f"),
+    "headless/prosperoeden/pe/ui/home.cpp":
+        ("5fe7795275f7f7561f9a79354ac84197b404f3d3",
+         "c4a835b5cfb3033342e6575ef3ccb2606bab0eae"),
+    "headless/prosperoeden/pe/platform/display_egl.cpp":
+        ("e9484e8e433b1199d30bd80826a6b0f8864ada51",
+         "190a885cc2e50e440234b79a8b69f10b8aa84d18"),
 }
 drifts=[]
 successor_hits=set()

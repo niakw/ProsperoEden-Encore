@@ -878,6 +878,21 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 549** : 2 008 NULL + 145 STUB + 110 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot LR — gestion AddOnContent enregistrée — 23/11/2026
+
+**Vendor `da41c660c92a9d8cfddeac29ec30e2148203aa27`** (arbre `bfcb971ca0c7c6fdff2fb5732b594c1259c14e2d`) dans `sources/eden/src/core/hle/service/ncm/ncm.cpp`.
+
+- `RegisterAddOnContentStorage` (1), `UnregisterAllAddOnContentPath` (2), `RefreshApplicationAddOnContent` (3) et `UnregisterApplicationAddOnContent` (4) : **4 NULL → IMPL-SRC**.
+- HOS23/Atmosphère associe `DataId → StorageId + ApplicationId owner`. La capacité est **8 entrées** sur HOS12+, une réinscription du même DataId remplace son stockage/owner, et un neuvième DataId renvoie LR `TooManyRegisteredPaths` (module 8, description 90).
+- `RefreshApplicationAddOnContent` conserve uniquement les entrées dont l'owner figure dans le tableau d'ApplicationId ; `UnregisterApplicationAddOnContent` retire toutes les entrées de cet owner.
+- `ResolveAddOnContentPath` (0) reste **NULL** : Atmosphère résout ensuite via ContentMetaDatabase + ContentStorage::GetPath, alors qu'Encore refuse encore de substituer un chemin hôte PS5 au `ContentPath` Horizon. Aucun faux chemin n'est introduit.
+- ABI HOS **23.0.1** : Register = 0x18 octets (`DataId, ApplicationId, StorageId` sérialisés CMIF), Refresh = tableau entrant, Unregister = u64.
+- X8D24 du palier précédent `850ea68c → 0e261f9c` est vert ; sa provenance était encore en cours au moment du repointage. Aucun build PS5 ni résultat console revendiqué.
+
+**Compteur historique : 1 466 IMPL-SRC / 110 PARTIEL / 145 STUB / 127 NOOP / 2 004 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 545** : 2 004 NULL + 145 STUB + 110 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

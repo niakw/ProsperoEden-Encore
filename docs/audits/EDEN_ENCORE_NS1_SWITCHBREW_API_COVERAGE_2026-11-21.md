@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 382 | 80 | **1 462** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 386 | 80 | **1 466** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 145 | 0 | **145** |
 | **NOOP — No-op documenté** | 127 | 0 | **127** |
-| **NULL — Handler NULL** | 2 008 | 0 | **2 008** |
+| **NULL — Handler NULL** | 2 004 | 0 | **2 004** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1462
+    "Implémentation source retrouvée" : 1466
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 145
     "No-op documenté" : 127
-    "Handler NULL" : 2008
+    "Handler NULL" : 2004
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -4621,10 +4621,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Location Resolver services | `8` | `Refresh` | 7.0.0+ | **IMPL-SRC** ([registered resolver](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0e261f9ce092ade8243443175ffc3b977772616c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; état Program/HTML, owner-id et redirections conformes au modèle Atmosphère/HOS23) | 2026-11-23 |
 | Location Resolver services | `9` | `RefreshExcluding` | 9.0.0+ | **IMPL-SRC** ([registered resolver](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0e261f9ce092ade8243443175ffc3b977772616c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; état Program/HTML, owner-id et redirections conformes au modèle Atmosphère/HOS23) | 2026-11-23 |
 | Location Resolver services | `0` | `ResolveAddOnContentPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
-| Location Resolver services | `1` | `RegisterAddOnContentStorage` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
-| Location Resolver services | `2` | `UnregisterAllAddOnContentPath` | — | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
-| Location Resolver services | `3` | `RefreshApplicationAddOnContent` | 9.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
-| Location Resolver services | `4` | `UnregisterApplicationAddOnContent` | 9.0.0+ | **NULL** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; toutes les sous-interfaces IAddOnContentLocationResolver exposent nullptr ; qualification statique NS1) | 2026-11-22 |
+| Location Resolver services | `1` | `RegisterAddOnContentStorage` | — | **IMPL-SRC** ([add-on resolver](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/da41c660c92a9d8cfddeac29ec30e2148203aa27/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; registre DataId/StorageId/owner conforme au modèle Atmosphère HOS23) | 2026-11-23 |
+| Location Resolver services | `2` | `UnregisterAllAddOnContentPath` | — | **IMPL-SRC** ([add-on resolver](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/da41c660c92a9d8cfddeac29ec30e2148203aa27/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; registre DataId/StorageId/owner conforme au modèle Atmosphère HOS23) | 2026-11-23 |
+| Location Resolver services | `3` | `RefreshApplicationAddOnContent` | 9.0.0+ | **IMPL-SRC** ([add-on resolver](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/da41c660c92a9d8cfddeac29ec30e2148203aa27/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; registre DataId/StorageId/owner conforme au modèle Atmosphère HOS23) | 2026-11-23 |
+| Location Resolver services | `4` | `UnregisterApplicationAddOnContent` | 9.0.0+ | **IMPL-SRC** ([add-on resolver](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/da41c660c92a9d8cfddeac29ec30e2148203aa27/sources/eden/src/core/hle/service/ncm/ncm.cpp) ; registre DataId/StorageId/owner conforme au modèle Atmosphère HOS23) | 2026-11-23 |
 | Content Manager services | `0` | `CreateContentStorage` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/400974b505e47e85952469aeceb959bbbee41948/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `1` | `CreateContentMetaDatabase` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/400974b505e47e85952469aeceb959bbbee41948/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |
 | Content Manager services | `2` | `VerifyContentStorage` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/67db89c1195d79ee731fc783088ec38083804050/sources/eden/src/core/hle/service/ncm/ncm.cpp)) | 2026-11-23 |

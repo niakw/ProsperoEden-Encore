@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 452 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 372 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 452 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 454 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 374 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 454 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 372 | 80 | **1 452** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 374 | 80 | **1 454** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 118 | 0 | **118** |
-| **NULL — Handler NULL** | 2 139 | 0 | **2 139** |
+| **NULL — Handler NULL** | 2 137 | 0 | **2 137** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1452
+    "Implémentation source retrouvée" : 1454
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 118
-    "Handler NULL" : 2139
+    "Handler NULL" : 2137
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5522,8 +5522,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `5` | `GetFirmwareVersionDigest` | 5.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `7` | `GetLockScreenFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `8` | `SetLockScreenFlag` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `9` | `GetBacklightSettings` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `10` | `SetBacklightSettings` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `9` | `GetBacklightSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/9a5401c93d9c87bc0fcb3f955f35bd54744046a4/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; conversion legacy 0x28 ↔ Ex 0x2C prouvée par layout libnx, champ VR préservé) | 2026-11-23 |
+| set:sys | `10` | `SetBacklightSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/9a5401c93d9c87bc0fcb3f955f35bd54744046a4/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; conversion legacy 0x28 ↔ Ex 0x2C prouvée par layout libnx, champ VR préservé) | 2026-11-23 |
 | set:sys | `11` | `SetBluetoothDevicesSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/032e41924a3d82f654ebbab15601eb609dbf4fcf/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `12` | `GetBluetoothDevicesSettings` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/032e41924a3d82f654ebbab15601eb609dbf4fcf/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `13` | `GetExternalSteadyClockSourceId` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |

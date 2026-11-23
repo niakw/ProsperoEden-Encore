@@ -659,6 +659,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 - Le compteur historique reste **1 452 IMPL-SRC / 2 139 NULL**, pool **2 696**, tant qu'une réconciliation formelle du dénominateur n'est pas faite.
 
 
+## Lot `set:sys` Backlight legacy 0x28 — 23/11/2026
+
+**Vendor `9a5401c93d9c87bc0fcb3f955f35bd54744046a4`** (arbre `e4da559826dccca47deb8d35a4fdfb0882404733`).
+
+- `GetBacklightSettings` (9) et `SetBacklightSettings` (10) : **2 NULL → IMPL-SRC**.
+- Libnx montre que le layout legacy fait **0x28** et que `BacklightSettingsEx` fait **0x2C** en insérant uniquement `current_brightness_for_vr_mode` à l'offset 0x8.
+- Le getter legacy copie 0x00–0x07 puis 0x0C–0x2B du bloc persistant Ex. Le setter fait l'inverse et **préserve** les 4 octets Ex-only à 0x08–0x0B ; aucun champ n'est synthétisé.
+- Cela complète le round-trip de settings, sans prétendre contrôler physiquement la luminosité de la PS5.
+
+**Compteur historique : 1 454 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 137 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 694** : 2 137 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

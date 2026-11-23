@@ -808,6 +808,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 637** : 2 083 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Retrait HOS23 des services AHID historiques — 23/11/2026
+
+**Vendor `d6b9b3ff6dc8ffc8898fcc286569e6fc77750277`** (arbre `dad2460f1464a2a98122be21d9389d579af75a94`) sur la branche secondaire NS1.
+
+- `ahid:cd` et `ahid:hdr` ne sont plus enregistrés par le runtime actif. SwitchBrew borne les deux services S1 à **HOS 1.0.0–8.1.0**.
+- **25 lignes → HORS-VERSION** : 10 étaient NULL et 15 INACCESSIBLE. Les sous-interfaces `ICtrlSession` / read / write disparaissent avec leur service parent.
+- `ahid:cd::Write` est borné 3.0.0–8.1.0 et `ahid:hdr::SetDeviceFilter` 6.0.0–8.1.0 ; les autres lignes héritent de la fenêtre 1.0.0–8.1.0 du service.
+- Source réellement compilée : `sources/eden/src/core/hle/service/hid/hid.cpp`, listée par `encore-active/eden-backports/src/core/CMakeLists.txt`. Aucun faux backend USB HID n'est ajouté.
+
+**Compteur historique : 1 470 IMPL-SRC / 110 PARTIEL / 149 STUB / 123 NOOP / 2 073 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 67 HORS-VERSION / 0 ABSENT / 282 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 627** : 2 073 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

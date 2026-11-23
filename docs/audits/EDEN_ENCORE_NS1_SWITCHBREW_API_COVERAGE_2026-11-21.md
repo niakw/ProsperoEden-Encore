@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 123 | 0 | **123** |
-| **NULL — Handler NULL** | 2 083 | 0 | **2 083** |
+| **NULL — Handler NULL** | 2 073 | 0 | **2 073** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
-| **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
+| **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 42 | 0 | **42** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 67 | 0 | **67** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 282 | 0 | **282** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 123
-    "Handler NULL" : 2083
+    "Handler NULL" : 2073
     "Rejet explicite / historique" : 84
-    "Interface parente non ouvrable" : 191
+    "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 42
+    "Hors version firmware cible" : 67
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 282
     "Interface ambiguë" : 12
@@ -1450,31 +1450,31 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | irs:sys | `501` | `RegisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L375) ; handler nullptr) | 2026-11-21 |
 | irs:sys | `502` | `UnregisterAppletResourceUserId` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L376) ; handler nullptr) | 2026-11-21 |
 | irs:sys | `503` | `EnableAppletToGetInput` | — | **D** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/b8883667410054db189d00b3a5144088f47d3af9/sources/eden/src/core/hle/service/hid/irs.cpp#L377) ; handler nullptr) | 2026-11-21 |
-| ahid:cd | `0` | `AcquireDevice` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_CD : slot root explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `1` | `ReleaseDevice` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_CD : slot root explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `2` | `GetCtrlSession` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_CD : slot root explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `3` | `GetReadSession` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_CD : slot root explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `0` | `GetString` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `1` | `GetCodeBook` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `2` | `GetReport` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `3` | `SetReport` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `4` | `GetIdle` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `5` | `SetIdle` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `6` | `GetProtocol` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `7` | `SetProtocol` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `8` | `GetDescriptor` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `9` | `SetDescriptor` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `10` | `GetStateChangeEvent` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `11` | `SignalStateChangeEvent` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `12` | `Write` | 3.0.0+ | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `0` | `Read` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:cd | `0` | `Write` | — | **INACCESSIBLE** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; GetCtrlSession/GetReadSession/GetWriteSession = nullptr : sous-interface non ouvrable ; non certifié PS5) | 2026-11-22 |
-| ahid:hdr | `0` | `GetDeviceEntries` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_HDR : slot ID/nom exact explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:hdr | `1` | `GetDeviceList` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_HDR : slot ID/nom exact explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:hdr | `2` | `GetDeviceParameters` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_HDR : slot ID/nom exact explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:hdr | `3` | `AttachDevice` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_HDR : slot ID/nom exact explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:hdr | `4` | `DetachDevice` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_HDR : slot ID/nom exact explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| ahid:hdr | `5` | `SetDeviceFilter` | 6.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp) ; AHID_HDR : slot ID/nom exact explicitement nullptr ; non certifié PS5) | 2026-11-22 |
+| ahid:cd | `0` | `AcquireDevice` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `1` | `ReleaseDevice` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `2` | `GetCtrlSession` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `3` | `GetReadSession` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `0` | `GetString` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `1` | `GetCodeBook` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `2` | `GetReport` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `3` | `SetReport` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `4` | `GetIdle` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `5` | `SetIdle` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `6` | `GetProtocol` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `7` | `SetProtocol` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `8` | `GetDescriptor` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `9` | `SetDescriptor` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `10` | `GetStateChangeEvent` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `11` | `SignalStateChangeEvent` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `12` | `Write` | 3.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `0` | `Read` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:cd | `0` | `Write` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:hdr | `0` | `GetDeviceEntries` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:hdr | `1` | `GetDeviceList` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:hdr | `2` | `GetDeviceParameters` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:hdr | `3` | `AttachDevice` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:hdr | `4` | `DetachDevice` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
+| ahid:hdr | `5` | `SetDeviceFilter` | 6.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
 | xcd:sys | `0` | `GetDataFormat` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
 | xcd:sys | `1` | `SetDataFormat` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
 | xcd:sys | `2` | `GetMcuState` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |

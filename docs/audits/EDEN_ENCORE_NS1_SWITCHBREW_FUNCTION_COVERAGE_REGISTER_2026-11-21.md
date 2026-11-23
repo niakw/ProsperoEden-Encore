@@ -2247,3 +2247,12 @@ Pour `hid:dbg`, les 138 slots `nullptr` du propriétaire actif ont été remplac
 **Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 513 NULL / 169 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 928** : 1 513 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## BTM debug + NS develop — surfaces non retail fail-closed (23/11/2026)
+
+Vendor `3d3b80ecb9cbe6e5bd230a12460ec859d70f33f3` → moteur `4369aaba82949cc748528d95130e392d69e2614c`. Les 18 slots `nullptr` de `btm:dbg` et 19 slots `nullptr` de `ns:dev` sont désormais reliés à des handlers de rejet explicite `Kernel::ResultNotImplemented`, indépendants de `auto_stub`. Le catalogue historique contient 13 commandes `btm:dbg` et 12 commandes `ns:dev` correspondantes, soit **25 NULL → D**. Ce lot qualifie explicitement des fonctions debug/development non prises en charge ; il ne les implémente pas.
+
+**Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 488 NULL / 194 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 903** : 1 488 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

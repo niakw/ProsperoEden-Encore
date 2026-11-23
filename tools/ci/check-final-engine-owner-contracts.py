@@ -13,7 +13,7 @@ paths={
  "jit": "vendor/encore-active/eden-core/src/dynarmic/backend/x64/a64_interface_standard.cpp",
 }
 expected={
- "sm": "83e0b7e26a867d578eb869389a807fe3b9c7035b",
+ "sm": "afaad1b58658c9fe7807756410b7f1a82d0e3c7d",
  "thread": "89bbcbd2b0d3627210a980496d00f30a45c7d944",
  # J10 was a "reviewed without edit" historical source. The JIT drain
  # is now a source correction; retain the old hash below as provenance and
@@ -29,12 +29,23 @@ def gitblob(data: bytes)->str:
 # checks both paths and reentrant guest requests.
 JIT_PREVIOUS_REVIEW_BLOB = "20362a046adfe89d65225c1822104f2910eeb2c5"
 THREAD_PREVIOUS_REVIEW_BLOB = "e2f359a54cb6b879bdd41f092cf1ea19fb03e4e6"
+SM_PREVIOUS_REVIEW_BLOB = "83e0b7e26a867d578eb869389a807fe3b9c7035b"
 assert expected["jit"] != JIT_PREVIOUS_REVIEW_BLOB
 assert expected["thread"] != THREAD_PREVIOUS_REVIEW_BLOB
+assert expected["sm"] != SM_PREVIOUS_REVIEW_BLOB
 sources={key:(root/path).read_text() for key,path in paths.items()}
 for key,path in paths.items():
     assert gitblob((root/path).read_bytes())==expected[key], (key,"source changed; re-audit")
 sm=sources["sm"]
+for invariant in (
+ "#include <condition_variable>",
+ "bool WaitForService(const std::string& name);",
+ "void Close();",
+ "bool closing{};",
+ "u32 service_waiters{};",
+ "std::condition_variable waiters_changed;",
+):
+    assert invariant in sm, invariant
 getter=sm.split("std::shared_ptr<T> GetService(",1)[1].split("\n    void InvokeControlRequest(",1)[0]
 for invariant in (
  "std::scoped_lock l{lock};",

@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 542 | 80 | **1 622** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 544 | 80 | **1 624** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 480 | 0 | **1 480** |
+| **NULL — Handler NULL** | 1 478 | 0 | **1 478** |
 | **D — Rejet explicite / historique** | 164 | 33 | **197** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1589,8 +1589,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `180` | `PushToFriendInvitationStorageChannel` | 9.0.0+ | **IMPL-SRC** (publie les octets de `IStorage` dans la file applet réelle puis signale `friend_invitation_storage_channel_event`; owner actif `sources/eden` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `190` | `PushToNotificationStorageChannel` | 9.0.0+ | **IMPL-SRC** (publie les octets de `IStorage` dans la nouvelle file Notification puis signale l'événement kernel déjà exposé ; owner actif `sources/eden` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `0` | `SetTerminateResult` | 9.0.0+ | **IMPL-SRC** (écrit le vrai `terminate_result` de l'applet sous verrou, cohérent avec la surface application déjà active ; vendor `e58cfc55`) | 2026-11-22 |
-| appletAE | `10` | `ReadThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
-| appletAE | `11` | `WriteThemeStorage` | — | **NULL** ([source C++][ns1-src-030]) | 2026-11-22 |
+| appletAE | `10` | `ReadThemeStorage` | — | **IMPL-SRC** (`IAppletCommonFunctions::ReadThemeStorage` actif : lecture bornée de `applet->theme_storage`, taille réellement retournée ; vendor `ab32ad62`, moteur `87c31c06`) | 2026-11-23 |
+| appletAE | `11` | `WriteThemeStorage` | — | **IMPL-SRC** (`IAppletCommonFunctions::WriteThemeStorage` actif : écriture bornée dans `applet->theme_storage` ; vendor `ab32ad62`, moteur `87c31c06`) | 2026-11-23 |
 | appletAE | `20` | `PushToAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (stocke le vrai `IStorage` dans une file applet dédiée sous verrou ; vendor `b217369d`) | 2026-11-22 |
 | appletAE | `21` | `TryPopFromAppletBoundChannel` | 9.0.0+ | **IMPL-SRC** (retourne le dernier `IStorage` de la file applet ou `ResultNoDataInChannel` ; vendor `b217369d`) | 2026-11-22 |
 | appletAE | `40` | `GetDisplayLogicalResolution` | 8.0.0+ | **IMPL-SRC** (ABI HOS 23.0.1 = deux sorties 32-bit ; utilise `Settings::IsDockedMode()` et `VI::DisplayResolution`, même source de vérité que `GetDefaultDisplayResolution` ; vendor `ab32ad62`, moteur `b4a3615b` ; non validé PS5) | 2026-11-23 |
@@ -6334,3 +6334,10 @@ Le couple moteur `2c51ec230c5c4ceb5f962b9d4cf5d5e57a52aa13` → vendor `ed2f2d16
 Vendor `ab32ad62ded46a623e265e257b30d692baf9c53c`, gitlink moteur `b4a3615b1a71f68108382db3488f2bfc7dd8913b` : `IAppletCommonFunctions` cmd40 `GetDisplayLogicalResolution` est maintenant raccordé à un handler réel. Le contrat HOS 23.0.1 retourne 8 octets ; Encore renvoie les dimensions `VI::DisplayResolution` correspondant à `Settings::IsDockedMode()`, exactement comme le chemin existant `ICommonStateGetter::GetDefaultDisplayResolution`. **1 NULL → IMPL-SRC**. Le résumé de tête est également corrigé à **473 HORS-VERSION**, cohérent avec les lignes et les compteurs récents.
 
 **Compteur courant : 1 622 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 480 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 895.**
+
+
+### Applet common — stockage de thème requalifié (23/11/2026)
+
+Le propriétaire actif `IAppletCommonFunctions` raccorde déjà les cmd10/11 à `ReadThemeStorage`/`WriteThemeStorage`. Les deux corps manipulent réellement `applet->theme_storage` avec bornage de l'offset et de la taille ; ces lignes historiques étaient restées `NULL` dans le catalogue. **2 NULL → IMPL-SRC**.
+
+**Compteur courant : 1 624 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 478 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 893.**

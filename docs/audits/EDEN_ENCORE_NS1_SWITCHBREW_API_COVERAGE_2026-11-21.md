@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
 | **NOOP — No-op documenté** | 134 | 0 | **134** |
-| **NULL — Handler NULL** | 1 940 | 0 | **1 940** |
+| **NULL — Handler NULL** | 1 901 | 0 | **1 901** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 154 | 1 | **155** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 193 | 1 | **194** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 272 | 0 | **272** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 134
-    "Handler NULL" : 1940
+    "Handler NULL" : 1901
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 155
+    "Hors version firmware cible" : 194
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 272
     "Interface ambiguë" : 9
@@ -3914,45 +3914,45 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetEvent` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Clear` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `Pop` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
-| nd:app | `0` | `GetReceivableNeighborInfoCountMax` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForApplication slot exact 0/GetReceivableNeighborInfoCountMax = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| nd:app | `10` | `IsNeighborDetectionEnabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForApplication slot exact 10/IsNeighborDetectionEnabled = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| nd:sys | `0` | `GetReceivableNeighborInfoCountMax` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `10` | `IsNeighborDetectionEnabled` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `200` | `SetSystemData` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `201` | `ClearSystemData` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `203` | `GetReceivableNeighborInfoCountForSystem` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `204` | `ReceiveNeighborInfoForSystem` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `205` | `SetSender` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `206` | `GetSender` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `207` | `CreateScannerForSystem` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `208` | `CreateReceiveEventHolderForSystem` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `223` | `EnableNeighborDetection` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `224` | `DisableNeighborDetection` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `226` | `EnablePowerSave` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `227` | `DisablePowerSave` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `228` | `IsPowerSaveEnabled` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `232` | `ClearBlockedUsers` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `233` | `GetBlockedUserCount` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `234` | `BlockUserByLocalUserId` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `235` | `BlockUserByNetworkUserId` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `236` | `UnblockUserByLocalUserId` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `237` | `UnblockUserByNetworkUserId` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `240` | `DeleteApplication` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `250` | `InitializeApplicationInfo` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `260` | `CreateAccountSystemSaveDataAccessSuppressor` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `300` | `AddReceivedNeighborInfoForSystemForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `301` | `GetSendDataForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `302` | `ClearReceiveCounterForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `303` | `GetNextReceiveCounterForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `304` | `ListBlockedUsersForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `305` | `RefreshSendDataIdForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `306` | `ReloadFwdbgSettingsForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `307` | `EnableApplicationForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `308` | `GetNextReceiveCountersForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `309` | `ListApplicationInfoForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `310` | `SetApplicationDataForDebug` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `400` | `GetNetworkUserId` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| nd:sys | `401` | `DeleteNetworkUserId` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; IServiceForSystem / nd:sys : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
+| nd:app | `0` | `GetReceivableNeighborInfoCountMax` | — | **HORS-VERSION** (SwitchBrew : nd:app ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:app | `10` | `IsNeighborDetectionEnabled` | — | **HORS-VERSION** (SwitchBrew : nd:app ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `0` | `GetReceivableNeighborInfoCountMax` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `10` | `IsNeighborDetectionEnabled` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `200` | `SetSystemData` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `201` | `ClearSystemData` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `203` | `GetReceivableNeighborInfoCountForSystem` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `204` | `ReceiveNeighborInfoForSystem` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `205` | `SetSender` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `206` | `GetSender` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `207` | `CreateScannerForSystem` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `208` | `CreateReceiveEventHolderForSystem` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `223` | `EnableNeighborDetection` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `224` | `DisableNeighborDetection` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `226` | `EnablePowerSave` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `227` | `DisablePowerSave` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `228` | `IsPowerSaveEnabled` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `232` | `ClearBlockedUsers` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `233` | `GetBlockedUserCount` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `234` | `BlockUserByLocalUserId` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `235` | `BlockUserByNetworkUserId` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `236` | `UnblockUserByLocalUserId` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `237` | `UnblockUserByNetworkUserId` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `240` | `DeleteApplication` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `250` | `InitializeApplicationInfo` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `260` | `CreateAccountSystemSaveDataAccessSuppressor` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `300` | `AddReceivedNeighborInfoForSystemForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `301` | `GetSendDataForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `302` | `ClearReceiveCounterForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `303` | `GetNextReceiveCounterForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `304` | `ListBlockedUsersForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `305` | `RefreshSendDataIdForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `306` | `ReloadFwdbgSettingsForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `307` | `EnableApplicationForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `308` | `GetNextReceiveCountersForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `309` | `ListApplicationInfoForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `310` | `SetApplicationDataForDebug` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `400` | `GetNetworkUserId` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
+| nd:sys | `401` | `DeleteNetworkUserId` | — | **HORS-VERSION** (SwitchBrew : nd:sys ajouté en HOS 5.0.0 puis retiré en HOS 6.0.0 ; non applicable à la cible HOS 23) | 2026-11-22 |
 
 ### Filesystem services
 

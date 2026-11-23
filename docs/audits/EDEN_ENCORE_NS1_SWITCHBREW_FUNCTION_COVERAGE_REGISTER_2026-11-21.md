@@ -1118,6 +1118,14 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 471** : 1 940 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
 
+## Requalification firmware — nd:app / nd:sys retirés depuis HOS 6 — 23/11/2026
+
+SwitchBrew documente `nd:app` et `nd:sys` comme services introduits en **HOS 5.0.0** puis retirés en **HOS 6.0.0**. Les **39 commandes** encore classées NULL dans le miroir historique (2 `nd:app` + 37 `nd:sys`) passent donc **NULL → HORS-VERSION** pour la cible NS1/HOS 23. Aucun handler factice n'est ajouté et aucun gain gameplay n'est revendiqué.
+
+**Compteur historique : 1 527 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 901 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 194 HORS-VERSION / 0 ABSENT / 272 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 432** : 1 901 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

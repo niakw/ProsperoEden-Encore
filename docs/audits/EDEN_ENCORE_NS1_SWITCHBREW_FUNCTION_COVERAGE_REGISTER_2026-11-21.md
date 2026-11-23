@@ -1367,6 +1367,20 @@ Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
 **Pool historique restant à examiner = 2 256** : 1 713 NULL + 121 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
 
+## Lot FSP — RightsId réel du NCA Program — 23/11/2026
+
+**Vendor `83acc5124b1cdb62ba4b65ed8607968c832757a4`** (arbre `b7bf7c18140e7af806bccb2aab1ee99733a09937`).
+
+`fsp-srv::GetRightsId` (cmd 606) passe **NULL → IMPL-SRC**. L'ABI recroisée avec Ryubing/LibHac est `StorageId + ProgramId -> RightsId[0x10]`. Le handler ouvre le NCA Program réel via `RomFsController::OpenBaseNca`, renvoie `TargetNotFound` si l'entrée n'existe pas et copie directement `NCA::GetRightsId()`. Aucun RightsId synthétique n'est fabriqué.
+
+Les variantes par chemin 609/610 restent ouvertes : elles exigent une résolution sûre du `FspPath` vers l'archive NCA et ne sont pas aliasées à 606.
+
+**Compteur historique : 1 540 IMPL-SRC / 142 PARTIEL / 121 STUB / 142 NOOP / 1 712 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 255** : 1 712 NULL + 121 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

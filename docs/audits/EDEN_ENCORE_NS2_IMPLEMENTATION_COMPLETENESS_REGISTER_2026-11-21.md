@@ -635,3 +635,47 @@ Contrôle sur `headless/CMakeLists.txt` du moteur : `EDEN_SHARED_NS2_AM` remplac
 3. Pour Z-A, vérifier `EDEN_NS2_PROCESS_TRACE` : le correctif enregistre maintenant le PID NS2 des conteneurs acceptés, mais `active_pid=1` n'est qu'une trace diagnostique, pas un boot.
 4. Pour Pokopia, examiner les valeurs de bornes NUP (taille de fichier déclarée, offset/longueur metadata, blob offset) et classer fichier tronqué, format incompatible ou parseur erroné ; ne jamais remplacer ce refus par une lecture hors limites.
 5. N'intégrer un port Lichii/Eglantine qu'après diff de sa **source réellement sélectionnée**, de l'ABI PS5 et d'un test hôte pertinent ; puis qualification PS5. Aucune première frame MKW/Bananza/ZA ni gameplay NS2 certifiés par le présent audit.
+
+
+---
+
+## 19. Comparaison à trois propriétaires compilés — Lichii / EglantinePS5 / Encore (23 novembre 2026, complément)
+
+**Références de comparaison :** Lichii `nx2:e7893bea` (après le correctif de fermeture #2502), EglantinePS5 `main:5eb70367`, Encore vendor `main:273680a5`. Les valeurs du tableau sont des **entrées de tables `FunctionInfo` observées dans les fichiers indiqués**, pas des implémentations complètes ni des commandes SwitchBrew additionnelles. Le moteur sélectionne ces propriétaires sur PS5 via `headless/CMakeLists.txt`, sans sélectionner ces remplacements pour les cibles non natives.
+
+### 19.1 Comptage Lichii / Eglantine / Encore dans les propriétaires effectivement compilés
+
+| Interface/fichier | Lichii | EglantinePS5 | Encore | Écarts démontrés |
+| --- | ---: | ---: | ---: | --- |
+| `am/service/application_functions.cpp` | 74 | 74 | 74 | Mêmes IDs. Encore a des noms/handlers spécifiques pour 210/320, qu'il ne faut pas écraser par des stubs plus anciens. |
+| `hid/hid_server.cpp` | 235 | 235 | 235 | Mêmes IDs. Encore conserve SceneId, JCMS, Nmouse et vibration NS2 ; ces handlers ne doivent pas être rétrogradés en stubs Lichii/Eglantine. |
+| `nifm/nifm.cpp` | 86 | 86 | 86 | Mêmes tables/IDs ; les 86 entrées ne sont pas 86 IDs distincts, car plusieurs interfaces les réutilisent. |
+| `caps/caps_u.cpp` / `caps_su.cpp` | 18 / 5 | 18 / 5 | 18 / 5 | Aucun ID absent dans ces deux tables. |
+| `set/settings_server.cpp` | 18 | 18 | 18 | Aucun ID absent. |
+| `mii/mii.cpp` | 44 | 44 | 44 | Trois tables, mêmes IDs. |
+| `lm/lm.cpp` | 10 | 10 | 10 | **Écart source corrigé** : ILogger cmd 2 `TransmitHashedLog` était `nullptr` chez Encore, stub explicite chez les deux amonts. |
+| `audio/audio_device.cpp` / `audio_renderer_manager.cpp` | 22 / 5 | 22 / 5 | 22 / 5 | Aucun ID absent dans les tables sélectionnées. |
+| `filesystem/fsp/fsp_srv.cpp` | 128 | 128 | 128 | **Parité des 128 IDs et noms/handlers dans la table.** Le fichier Encore compilé `encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp` est **identique à celui d'EglantinePS5** (blob Git `58303a0bd66387244c44968a0878e2f7c821bc9f`). |
+| `acc/acc.cpp` | 25 tables | 24 tables | 24 tables | **12 entrées d'une table conditionnelle en plus chez Lichii** : `ScratchSystemAccount` et `GetScratchProfileManager`, absents des deux autres. Ne pas greffer ces commandes sans reprendre l'ownership du profil et prouver la non-régression NS1. |
+
+Les comptes ACC précédemment affichés dans le §18 (502 / 490) utilisent un relevé textuel plus large ; la comparaison par blocs `FunctionInfo functions[]` strictement parsés donne **499 / 487** (Lichii / Encore) et exactement **12** entrées de différence. Ces chiffres désignent des méthodes de décompte différentes, **pas des fonctionnalités disparues**.
+
+### 19.2 Backports réalisés sur `vendor/main`, sans remplacement des propriétaires NS1
+
+1. **Lichii #2502 / AM WindowSystem** : un latch `m_exit_sent` empêche `WindowSystem::PruneTerminatedAppletsLocked()` de redemander `System::Exit()` après la première sortie. Source native sélectionnée : `encore-active/eden-core/src/core/hle/service/am/window_system.cpp` ; déclaration dans `sources/eden/src/core/hle/service/am/window_system.h`. Le `window_system.cpp` historique non natif est **inchangé**. Les tests [AM one-shot](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/45224922997) valident deux sessions distinctes et la reconstitution exacte du précédent source PS5 hors latch, y compris le z-index des overlays NS1. Ce patch évite une répétition de la demande de fermeture ; **il n'établit pas que l'ancien crash NVDRV de FC27 est entièrement résolu sur console**.
+2. **Lichii + EglantinePS5 / LM ILogger cmd 2** : l'entrée nulle `TransmitHashedLog` est remplacée par un handler explicite dans `encore-active/ns2-runtime/hle/core/hle/service/lm/lm.cpp`. Pour un titre classé NS2 par son ID de processus (`0x04...`), il renvoie le stub à **32 mots initialisés** via `StubReplyZeroed` ; pour NS1 ou un processus non identifié, il conserve **exactement le succès court à deux mots** que l'ancien `IsSafeOptionalNoOp` renvoyait. Pas de modification du dispatcher NS1 ni du protocole de `Log`/ `SetDestination`. [Test hôte LM](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/45225294936) vert ; réponse IPC réelle console non encore observée.
+
+### 19.3 Noyau/NPDM/GPU et particularités EglantinePS5
+
+- **NPDM Switch 2** : les trois projets identifient le layout ACID étendu, mais le propriétaire Encore `encore-active/ns2-runtime/metadata/core/file_sys/program_metadata.cpp` utilise `FindAcidBody` avec validation des bornes et réinitialise `uses_extended_acid/is_switch2` au chargement. **Ne pas remplacer** par une version amont moins strictement bornée.
+- **KProcess** : tous trois ont la majoration mémoire `GetHeapRegionSize() + GetAliasRegionSize()` pour `metadata.IsSwitch2()` ; Encore la garde strictement sous cette condition, sans ajouter de champ `m_is_switch2` à sa classe partagée. Eglantine ajoute ce champ : transplantation directe = **risque de divergence d'ABI NS1/NS2**.
+- **SVC physical memory** : les trois sources exposent les variantes `MapPhysicalMemory`, `UnmapPhysicalMemory` et `Unsafe`, mais les corps/tailles et quelques chemins diffèrent. Le propriétaire compilé Encore est `encore-active/ns2-runtime/kernel/core/hle/kernel/svc/svc_physical_memory.cpp` ; aucun remplacement en bloc avant comparaison des contrats, codes retour et validation du comportement NS1.
+- **Sémaphores GPU Eglantine** (port amont #1592) : `Puller::~Puller()` retire ses slots de `Nx2SemaphoreWaiters`. Encore compile son propre `encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp`, utilisant `PendingNativeAcquire` et des protections par génération/identité. Ces propriétaires ne sont **pas** interchangeables : risque d'accès libéré et de régression NS1 si copie brute.
+- **Eglantine `EDEN_NX2_LIST_INDIRECT`** : option désactivée par défaut sur PS5 après mesure de régression d'environ 3–4 % sur Ocarina of Time. Fonction non requise pour la structure de démarrage Encore : pas de backport expérimental, conformément à l'objectif d'un seul cœur NS1/NS2 fonctionnel.
+- **Lichii GPU/Vulkan** : soumissions aux frontières de render pass (#2481), cache de textures (#2485), économies Bananza ; aucune de ces optimisations n'est une preuve de résolution pour les sessions Encore qui n'atteignent pas la **première soumission GPU**.
+
+### 19.4 Périmètre encore non certifié
+
+La parité structurelle globale reste **ouverte** pour les ABI noyau/SVC (mapping des commandes, taille/alignement des entrées/sorties, erreurs), les opérations NVDRV et Ampere/Maxwell, le graphe des chargeurs/fichiers et les objets IPC/services non revus. Un tableau de commandes **complet en IDs** peut malgré tout avoir des réponses fonctionnellement différentes. La barrière P0 demeure : MKW/Bananza/Z-A doivent démontrer `gpu_submit_sample > 0` puis `guest_frame_handoff > 0` sur PS5 avant toute annonce de boot.
+
+Le script hôte `tools/ns2/check-three-way-structural-baseline.py` épingle les preuves des **propriétaires locaux réellement sélectionnés**, pas l'intégralité des dépôts amont. Les références des trois dépôts restent fixées dans cet addendum : une nouvelle révision de Lichii ou Eglantine impose un nouveau différentiel et non une affirmation automatique de parité globale.

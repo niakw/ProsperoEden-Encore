@@ -117,6 +117,9 @@ for required in (
 ):
     assert required in close_deferred
 assert close_deferred.index("presenter.join();") < close_deferred.index(
+    "Eden::LaunchHandoff::ClearAlternate();"
+)
+assert close_deferred.index("Eden::LaunchHandoff::ClearAlternate();") < close_deferred.index(
     "eglDestroyContext(display, context)"
 )
 assert close_deferred.index("eglDestroyContext(display, context)") < close_deferred.index(

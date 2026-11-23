@@ -1907,6 +1907,23 @@ else:
 print("ENCORE_NS2_EARLY_HLE_F07_ISOLATION_PASS",
       f"owners={len(ns2_early_hle_present)}", "blanket_autostub=0")
 
+# The reviewed late Lichii AM service bridge has two extra headers beyond
+# the original six early-HLE implementation receipts. Keep the frozen F07
+# 518-owner baseline unchanged; seal both exact shipping header blobs.
+post_f07_ns2_late_hle_headers = set()
+if gpu_table_vendor_pin == "0390980a5752808dfba7b8edaa7d113cc4e4e6eb":
+    late_headers = {
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h":
+            "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h":
+            "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
+    }
+    assert set(late_headers) <= all_owners
+    for owner, digest in late_headers.items():
+        raw=(ROOT/owner).read_bytes()
+        actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual==digest,("NS2 late HLE header drift",owner,actual)
+    post_f07_ns2_late_hle_headers=set(late_headers)
 # Reviewed Lichii NS2 built-in-font implementation is selected by the
 # release CMake graph, but remains a post-F07 owner outside the frozen 518.
 ns2_font_service_receipts = {
@@ -2104,7 +2121,7 @@ if subprocess.check_output(
 else:
     assert not post_f07_plaintext_nca_owners
 
-owners=all_owners-post_f07_integrated_source_owners-post_f07_legacy_net_header_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners-post_f07_plaintext_nca_owners-current_vendor_post_f07_owners
+owners=all_owners-post_f07_integrated_source_owners-post_f07_legacy_net_header_owners-ps5_ns2_ipc_present-ps5_vfs128_present-post_f07_ns2_loading_svc_owners-fc27_deferred_owners-post_f07_ns2_fault_owner-pair_present-drawtexture_present-ns2_early_hle_present-ns2_font_service_present-post_f07_loading_artwork_owners-post_f07_typography_owners-post_f07_fc27_ssa_present-post_f07_fc27_ssbo_present-post_f07_fc27_descriptor_present-post_f07_fc27_scalar_unselected_present-post_f07_diagnostics_owners-post_f07_romfs_present-post_f07_nca_present-post_f07_vfs_present-post_f07_gpu_table_present-post_f07_r23_source_owners-post_f07_thread_worker_owners-ns1_am_draft_owners-post_f07_c03_radv_owners-post_f07_ns2_production_owners-research_owners-hygiene_owners-ns2_shared_release_owners-ns2_shared_audio_owners-ns2_shared_gpu_access_owners-post_f07_native_vulkan_owners-post_f07_shared_compute_owners-post_f07_launcher_handoff_owners-post_f07_ns2_typed_cache_owners-post_f07_shared_gpu_scalar_owners-post_f07_shared_gpu_remap_owners-post_f07_nup_vfs_owners-post_f07_native_atomic_span_owners-post_f07_native_gpfifo_fetch_owners-post_f07_shared_wait64_owners-post_f07_unified_rasterizer_owners-post_f07_static_engine_owners-post_f07_shared_nvdrv_owners-post_f07_video_decoder_owners-post_f07_native_global_atomic_owners-post_f07_native_stage_buffer_owners-post_f07_task_mesh_owners-post_f07_r437_buffer_base_owners-post_f07_image_array_owners-post_f07_ampere_semaphore_owners-post_f07_native_opcode_owners-post_f07_native_gpfifo_owners-post_f07_feature_stack_owners-post_f07_r09_overlay_owners-post_f07_h05_syncpoint_owners-h01_fs_paths-post_f07_p5_astc_scope_bridge_owners-post_f07_r457_console_owners-post_f07_r457_sparse_runtime_owners-post_f07_ns1_audio_owners-post_f07_r23_final_headless_owners-post_f07_r457_slab_owners-nov13_native_owners-post_f07_usage_tracker_owners-post_f07_nvdec_owners-post_f07_vic_present-post_f07_jxr_adapter_owners-post_f07_plaintext_nca_owners-current_vendor_post_f07_owners-post_f07_ns2_late_hle_headers
 print("ENCORE_EXTRACTED_AOC_F07_OWNER_PASS", f"post_snapshot_reviewed={len(extracted_aoc_owners)}")
 # Source audit diagnostic: never amend the frozen 518-source baseline
 # without first identifying exact post-F07 source additions by name.

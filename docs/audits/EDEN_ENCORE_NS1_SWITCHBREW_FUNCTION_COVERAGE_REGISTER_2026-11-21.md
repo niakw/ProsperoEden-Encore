@@ -1054,6 +1054,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 485** : 1 950 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
 
+## Lot Friend — détail et relation offline ABI-corrects — 23/11/2026
+
+**Vendor `a12fa5d6eec6350470374088e011bc93684e5763`** (arbre `855c15d239a1cd44547a3cda8de29cace9bee328`).
+
+- `GetFriendDetailedInfo` (20102) : **NULL → IMPL-SRC** ; consomme `Uid + NetworkServiceAccountId` et renvoie le buffer Pointer fixe **0x800** entièrement initialisé à zéro lorsqu'aucun backend social Nintendo n'est connecté.
+- `GetRelationship` (20501) : **NULL → IMPL-SRC** ; même entrée `Uid + NetworkServiceAccountId`, sortie brute **8 octets** avec la valeur `Relationship` par défaut.
+- Les ABI sont recroisées avec SwIPC et le comportement offline avec Ryujinx, qui renvoie respectivement `FriendDetailedInfoImpl = default` et `Relationship = default`.
+- Aucune relation, profil ou donnée réseau fictive n'est créée. Les mutations Friend restent ouvertes.
+
+**Compteur historique : 1 515 IMPL-SRC / 115 PARTIEL / 135 STUB / 134 NOOP / 1 948 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 155 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 483** : 1 948 NULL + 135 STUB + 115 PARTIEL + 276 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

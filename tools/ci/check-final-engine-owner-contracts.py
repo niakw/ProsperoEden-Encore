@@ -25,7 +25,7 @@ expected={
 # for older vendors; require the exact new SM header blob on selected main.
 import subprocess
 pin = subprocess.check_output(["git","rev-parse","HEAD:vendor"], cwd=root, text=True).strip()
-if pin in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4"}:
+if pin in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6"}:
     expected["sm"] = "7069439e66a6f28ffa56229e08906a21222e2801"
 
 def gitblob(data: bytes)->str:

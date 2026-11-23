@@ -1843,12 +1843,13 @@ REVIEWED_PINS.add("273680a5b33bff15c9ca12685cfadb2aa15ff9f1")
 # The native NS2 GPU exception-mask reader is the only 273680 -> 84b997
 # delta. Verify the exact selected C++ blob before admitting this successor;
 # all other vendor-owner receipts remain unchanged and are replayed below.
-if actual_vendor_pin == "84b9975726092a32d1cb2aa714b96e4f5f85d7c4":
+if actual_vendor_pin in {"84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6"}:
     relative = "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"
     raw = (V / relative).read_bytes()
     actual_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert actual_blob == "32ba64b4b83848c0cd8f82af52429e3dea42609f", ("Native NVDRV TPC mask owner drift", actual_blob)
+    assert actual_blob == ("332ae7800c2639a1185ed417bf3a5a9508058d86" if actual_vendor_pin == "84ec89ce112b83603b2095a9f6bb785f8e999ef6" else "32ba64b4b83848c0cd8f82af52429e3dea42609f"), ("Native NVDRV native query owner drift", actual_blob)
 REVIEWED_PINS.add("84b9975726092a32d1cb2aa714b96e4f5f85d7c4")
+REVIEWED_PINS.add("84ec89ce112b83603b2095a9f6bb785f8e999ef6")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

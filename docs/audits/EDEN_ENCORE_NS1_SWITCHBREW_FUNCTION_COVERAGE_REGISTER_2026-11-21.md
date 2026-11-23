@@ -2256,3 +2256,12 @@ Vendor `3d3b80ecb9cbe6e5bd230a12460ec859d70f33f3` → moteur `4369aaba82949cc748
 **Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 488 NULL / 194 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 903** : 1 488 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## Applet common — résolution logique raccordée (23/11/2026)
+
+Couple moteur `b4a3615b1a71f68108382db3488f2bfc7dd8913b` → vendor `ab32ad62ded46a623e265e257b30d692baf9c53c`. `IAppletCommonFunctions::GetDisplayLogicalResolution` utilise désormais le même état docked/portable et les mêmes constantes `VI::DisplayResolution` que `ICommonStateGetter::GetDefaultDisplayResolution`. Le wire ABI HOS 23.0.1 (8 octets de sortie) est respecté. **1 NULL → IMPL-SRC**. Ce lot n'est pas encore validé sur PS5.
+
+**Compteur courant : 1 622 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 480 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 895** : 1 480 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

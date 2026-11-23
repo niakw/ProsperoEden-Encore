@@ -40,7 +40,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 204 | 0 | **204** |
+| **ABI-DIFF — Noms/ABI divergents** | 190 | 0 | **190** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
@@ -1841,7 +1841,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `26` | `AcquireCallerAppletCaptureSharedBuffer` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `27` | `ReleaseCallerAppletCaptureSharedBuffer` | 4.0.0+ | **NOOP** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; acquisition Encore synchrone sous `SharedBufferManager::m_guard`, aucun ownership persistant à libérer) | 2026-11-23 |
 | appletAE | `28` | `TakeScreenShotOfOwnLayerEx` | 6.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `1` | `RequestLaunchApplicationForDebug` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/am/service/home_menu_functions.cpp` ; la table actuelle expose PopRequestLaunchApplicationForDebug à l'ID 100 (nullptr), pas ID 1 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| appletAE | `1` | `RequestLaunchApplicationForDebug` | — | **HORS-VERSION** (HOS 23.0.1 `IHomeMenuFunctions` expose `PopRequestLaunchApplicationForDebug` à l'ID 100 ; l'ancien ID 1 n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | appletAE | `2` | `GetDebugStorageChannel` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/am/service/self_controller.cpp` ; ISelfController expose GetDebugStorageChannel à l'ID 1000 (nullptr), pas ID 2 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `3` | `CreateStorageForDebug` | 7.0.0+ | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `0` | `GetLaunchReason` | — | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
@@ -2848,9 +2848,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | clkrst, clkrst:i | `0` | `OpenSession` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; CLKRST::OpenSession crée IClkrstSession ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `1` | `GetTemperatureThresholds` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `2` | `SetTemperature` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `3` | `GetPossibleClockRates` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; ancien nom/ID racine différent du propriétaire C++ ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `4` | `GetClockInfoEvent` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; ancien nom/ID racine différent du propriétaire C++ ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `5` | `GetClockModuleNumLimit` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; ancien nom/ID racine différent du propriétaire C++ ; non certifié PS5) | 2026-11-22 |
+| clkrst, clkrst:i | `3` | `GetPossibleClockRates` | — | **HORS-VERSION** (HOS 23.0.1 : l'ID manager 3 = `GetClkrstStateTable`; `GetPossibleClockRates` est désormais sur `IClkrstSession` ID 10; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
+| clkrst, clkrst:i | `4` | `GetClockInfoEvent` | — | **HORS-VERSION** (HOS 23.0.1 : l'ID manager 4 = `GetClkrstStateTableUpdateEvent`; l'ancien contrat n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
+| clkrst, clkrst:i | `5` | `GetClockModuleNumLimit` | — | **HORS-VERSION** (HOS 23.0.1 : l'ID manager 5 = `GetClkrstStateTableCount`; l'ancien contrat n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | clkrst, clkrst:i | `0` | `SetClockEnabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `1` | `SetClockDisabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `2` | `SetResetAsserted` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
@@ -5202,7 +5202,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pcie | `17` | `AcquireIrq` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
 | pcie | `18` | `ReleaseIrq` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
 | pcie | `19` | `SetIrqEnable` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
-| pcie | `20` | `SetAspmEnable` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcie/pcie.cpp) ; ID 20 porte `GetIrqEvent` dans la table actuelle, pas `SetAspmEnable` ; statique, PS5 non validé) | 2026-11-22 |
+| pcie | `20` | `SetAspmEnable` | — | **HORS-VERSION** (HOS 23.0.1 PCIe : ID 20 = `GetIrqEvent`, tandis que `SetAspmEnable` est à l'ID 21; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 
 ### Parental Control services
 
@@ -5964,20 +5964,20 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | wlan:inf | `13` | `ChangeRxAntenna` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:inf | `16` | `RequestWakeUp` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
 | wlan:inf | `17` | `RequestIfUpDown` | — | **SERVICE-NON-EXPOSÉ** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; WLAN LoopProcess enregistre wlan:lcl/lg/lga/sg/soc/dtc/p/nd mais aucun wlan:inf ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `6` | `GetMacAddress` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 6 : source = GetMacAddress_2/StopScan_2 (nullptr), pas le nom historique GetMacAddress ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `6` | `GetMacAddress` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
 | wlan:lcl | `7` | `CreateBss` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `8` | `DestroyBss` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
-| wlan:lcl | `9` | `StartScan` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 9 : source = StartScan_2/Join (nullptr), pas le nom historique StartScan ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `10` | `StopScan` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 10 : source = StopScan_2/CancelJoin (nullptr), pas le nom historique StopScan ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `11` | `Connect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 11 : source = Connect_2/Disconnect_2 (nullptr), pas le nom historique Connect ; ABI/PS5 non validés) | 2026-11-22 |
-| wlan:lcl | `12` | `CancelConnect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 12 : source = CancelConnect_2/SetBeaconLostCount (nullptr), pas le nom historique CancelConnect ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `9` | `StartScan` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
+| wlan:lcl | `10` | `StopScan` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
+| wlan:lcl | `11` | `Connect` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
+| wlan:lcl | `12` | `CancelConnect` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
 | wlan:lcl | `13` | `Join` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `14` | `CancelJoin` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
-| wlan:lcl | `15` | `Disconnect` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 15 : source = Disconnect_2/GetClientStatus (nullptr), pas le nom historique Disconnect ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `15` | `Disconnect` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
 | wlan:lcl | `16` | `SetBeaconLostCount` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `20` | `GetBssIndicationEvent` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `21` | `GetBssIndicationInfo` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
-| wlan:lcl | `22` | `GetState` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 22 : source = GetState_2/PutFrameRaw (nullptr), pas le nom historique GetState ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `22` | `GetState` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
 | wlan:lcl | `23` | `GetAllowedChannels` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `24` | `AddIe` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `25` | `DeleteIe` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
@@ -5985,13 +5985,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | wlan:lcl | `29` | `DeleteRxEntry` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `32` | `AddMatchingDataToRxEntry` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `33` | `RemoveMatchingDataFromRxEntry` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
-| wlan:lcl | `34` | `GetScanResult` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 34 : source = GetScanResult_2/CreateRxEntryForActionFrame (nullptr), pas le nom historique GetScanResult ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `34` | `GetScanResult` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
 | wlan:lcl | `36` | `SetActionFrameWithBeacon` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `37` | `CancelActionFrameWithBeacon` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `38` | `CreateRxEntryForActionFrame` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `39` | `DeleteRxEntryForActionFrame` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | wlan:lcl | `42` | `CancelGetActionFrame` | — | **HORS-VERSION** (SwitchBrew Services API : service supprimé en HOS 15.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
-| wlan:lcl | `43` | `GetRssi` | — | **ABI-DIFF** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ILocalManager ID 43 : source = GetRssi_2/Cmd43 (nullptr), pas le nom historique GetRssi ; ABI/PS5 non validés) | 2026-11-22 |
+| wlan:lcl | `43` | `GetRssi` | — | **HORS-VERSION** (le dump WLAN NS1 23.0.1 n'expose plus `wlan:lcl` dans `_services`; surface historique non applicable au firmware cible) | 2026-11-23 |
 | wlan:soc | `6` | `GetMacAddress` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/wlan/wlan.cpp) ; ISocketManager slot 6 = GetMacAddress_3 (nullptr), pas GetMacAddress ; statique, PS5 non validé) | 2026-11-22 |
 | wlan:soc | `7` | `SwitchTsfTimerFunction` | — | **NULL** ([source C++][ns1-src-020]) | 2026-11-22 |
 
@@ -6285,3 +6285,10 @@ Recroisement avec les dumps NS1 23.0.1 et les owners actifs : `SPL` ID 1 (`ExpMo
 Les dumps NS1 23.0.1 confirment la réaffectation des IDs de six anciennes commandes `ldr:ro`, de `hid:sys` 322/323 et des anciens PDM 7/13/16. Ces **11 lignes historiques** passent **ABI-DIFF → HORS-VERSION** ; les commandes HOS 23 qui occupent désormais ces IDs restent suivies sous leurs propres lignes/statuts.
 
 **Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 459 HORS-VERSION / 0 ABSENT / 204 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 033.**
+
+
+### HOS 23 — WLAN/CLKRST/PCIe/Applet historiques retirés du pool (23/11/2026)
+
+Le dump WLAN NS1 23.0.1 ne publie plus `wlan:lcl`, ce qui ferme ses 9 ABI historiques pour le firmware cible. Trois anciennes commandes `clkrst`, `pcie` ID 20 `SetAspmEnable` et `appletAE` ID 1 `RequestLaunchApplicationForDebug` ont également été déplacées/réaffectées sur HOS 23. Ces **14 lignes** passent **ABI-DIFF → HORS-VERSION**.
+
+**Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 019.**

@@ -1312,6 +1312,10 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
     return false;
 }
 
+constexpr std::size_t ArtworkLockBucket(std::uint64_t title_id, std::size_t count);
+bool LockArtworkUnlessCancelled(std::unique_lock<std::mutex>& lock,
+                                const std::atomic<bool>* cancel);
+
 bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
                          const std::string& alternate_name, int language_choice,
                          const std::atomic<bool>* cancel, bool second_generation) {
@@ -1322,6 +1326,17 @@ bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
     if (selected == index.end() || selected->second[8].empty()) return false;
     auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
     if (candidates.empty()) return false;
+    // Home and selected-title media can ask for the same Square concurrently.
+    // Serialize the atomic .new writer by generation as well as TitleID; an
+    // NS1 request sharing the numeric ID must never delay or satisfy NS2.
+    static std::array<std::mutex, 32> square_locks;
+    const std::uint64_t square_key =
+        title_id ^ (second_generation ? 0x8000000000000000ULL : 0ULL);
+    std::unique_lock square_guard(
+        square_locks[ArtworkLockBucket(square_key, square_locks.size())],
+        std::defer_lock);
+    if (!LockArtworkUnlessCancelled(square_guard, cancel)) return false;
+    if (!CachedGamesDbSquare(title_id, second_generation).empty()) return true;
     const std::string path = CaseFacePath(title_id, "square", second_generation);
     if (!FetchCaseFace(candidates, path, false, cancel, true)) return false;
     const bool ready = !CachedGamesDbSquare(title_id, second_generation).empty();

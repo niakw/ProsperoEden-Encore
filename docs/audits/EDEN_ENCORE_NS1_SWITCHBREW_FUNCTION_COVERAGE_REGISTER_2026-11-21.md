@@ -2418,3 +2418,12 @@ Vendor `5f548ff51dcc14a71758944a35476e26fec2916e` → `7ce1c67ccaaa5a1e75d9f129a
 **Compteur courant : 1 685 IMPL-SRC / 141 PARTIEL / 59 STUB / 159 NOOP / 1 369 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 768** : 1 369 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## NS system update — notifications locales sans firmware hôte (23/11/2026)
+
+Vendor `1effcd1413a458f58db476d6ffd37c63c7550eee` → gitlink moteur `dfffa79e463e189866c90e4bece6d29c4b904428`. **8 NULL sortent du pool** : sept notifications/commandes de coordination deviennent des no-op explicites car Encore ne doit jamais piloter une mise à jour firmware de la PS5 ; `NotifySystemUpdateForContentDelivery` signale réellement l'événement déjà retourné par cmd9. Les commandes 17/18 de transfert/progression restent ouvertes plutôt que de simuler un transfert inexistant. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 686 IMPL-SRC / 141 PARTIEL / 59 STUB / 166 NOOP / 1 361 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 760** : 1 361 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

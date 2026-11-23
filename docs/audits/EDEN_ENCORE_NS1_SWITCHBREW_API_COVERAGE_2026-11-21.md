@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 605 | 80 | **1 685** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 606 | 80 | **1 686** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 59 | 0 | **59** |
-| **NOOP — No-op documenté** | 159 | 0 | **159** |
-| **NULL — Handler NULL** | 1 369 | 0 | **1 369** |
+| **NOOP — No-op documenté** | 166 | 0 | **166** |
+| **NULL — Handler NULL** | 1 361 | 0 | **1 361** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -2352,15 +2352,15 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:vm | `1202` | `GetSafeSystemVersion` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
 | ns:su | `0` | `GetBackgroundNetworkUpdateState` | — | **NOOP** (retourne explicitement `None` car aucun transport de mise à jour système en arrière-plan n'est modélisé ; vendor `57081e12`) | 2026-11-22 |
 | ns:su | `1` | `OpenSystemUpdateControl` | — | **IMPL-SRC** ([source NS](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2f294bbfaa54440eaf9dafe9cabd2c104ba3a439/sources/eden/src/core/hle/service/ns/system_update_interface.cpp) ; construit et retourne un vrai `ISystemUpdateControl`) | 2026-11-23 |
-| ns:su | `2` | `NotifyExFatDriverRequired` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
-| ns:su | `3` | `ClearExFatDriverStatusForDebug` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
-| ns:su | `4` | `RequestBackgroundNetworkUpdate` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
-| ns:su | `5` | `NotifyBackgroundNetworkUpdate` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
-| ns:su | `6` | `NotifyExFatDriverDownloadedForDebug` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
+| ns:su | `2` | `NotifyExFatDriverRequired` | — | **NOOP** (notification exFAT hôte consommée ; vendor `1effcd14`) | 2026-11-23 |
+| ns:su | `3` | `ClearExFatDriverStatusForDebug` | — | **NOOP** (état debug exFAT sans backend Horizon ; vendor `1effcd14`) | 2026-11-23 |
+| ns:su | `4` | `RequestBackgroundNetworkUpdate` | — | **NOOP** (aucune mise à jour firmware hôte déclenchée ; vendor `1effcd14`) | 2026-11-23 |
+| ns:su | `5` | `NotifyBackgroundNetworkUpdate` | — | **NOOP** (notification consommée ; vendor `1effcd14`) | 2026-11-23 |
+| ns:su | `6` | `NotifyExFatDriverDownloadedForDebug` | — | **NOOP** (notification debug consommée ; vendor `1effcd14`) | 2026-11-23 |
 | ns:su | `9` | `GetSystemUpdateNotificationEventForContentDelivery` | — | **NOOP** (retourne le handle réel mais aucun producteur content-delivery n'est modélisé ; vendor `57081e12`) | 2026-11-22 |
-| ns:su | `10` | `NotifySystemUpdateForContentDelivery` | — | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
-| ns:su | `11` | `PrepareShutdown` | 3.0.0+ | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
-| ns:su | `16` | `DestroySystemUpdateTask` | 4.0.0+ | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
+| ns:su | `10` | `NotifySystemUpdateForContentDelivery` | — | **IMPL-SRC** (signale `update_notification_event` ; vendor `1effcd14`) | 2026-11-23 |
+| ns:su | `11` | `PrepareShutdown` | 3.0.0+ | **NOOP** (aucune tâche update hôte à préparer ; vendor `1effcd14`) | 2026-11-23 |
+| ns:su | `16` | `DestroySystemUpdateTask` | 4.0.0+ | **NOOP** (aucune tâche firmware hôte persistante ; vendor `1effcd14`) | 2026-11-23 |
 | ns:su | `17` | `RequestSendSystemUpdate` | 4.0.0+ | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `18` | `GetSendSystemUpdateProgress` | 4.0.0+ | **NULL** ([source C++][ns1-src-110]) | 2026-11-22 |
 | ns:su | `0` | `HasDownloaded` | — | **NULL** ([source C++][ns1-src-109]) | 2026-11-22 |
@@ -6476,3 +6476,12 @@ Vendor `5f548ff51dcc14a71758944a35476e26fec2916e` → `7ce1c67ccaaa5a1e75d9f129a
 **Compteur courant : 1 685 IMPL-SRC / 141 PARTIEL / 59 STUB / 159 NOOP / 1 369 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 768** : 1 369 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## NS system update — notifications locales sans firmware hôte (23/11/2026)
+
+Vendor `1effcd1413a458f58db476d6ffd37c63c7550eee` → gitlink moteur `dfffa79e463e189866c90e4bece6d29c4b904428`. **8 NULL sortent du pool** : sept notifications/commandes de coordination deviennent des no-op explicites car Encore ne doit jamais piloter une mise à jour firmware de la PS5 ; `NotifySystemUpdateForContentDelivery` signale réellement l'événement déjà retourné par cmd9. Les commandes 17/18 de transfert/progression restent ouvertes plutôt que de simuler un transfert inexistant. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 686 IMPL-SRC / 141 PARTIEL / 59 STUB / 166 NOOP / 1 361 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 760** : 1 361 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

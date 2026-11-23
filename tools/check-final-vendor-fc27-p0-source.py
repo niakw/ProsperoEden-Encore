@@ -1819,6 +1819,24 @@ REVIEWED_PINS.add("93c3dd6c86627e91999f965c45c05cd8e50e17eb")
 REVIEWED_PINS.add("eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb")
 REVIEWED_PINS.add("93da3b707ef147385380eb0690e0d93fc8e907ad")
 REVIEWED_PINS.add("a6240909b823492d9ff20070c09387a732d83007")
+# PS5 23/11 FC27 shutdown + NS2 NUP/AM diagnostics on the latest qualified
+# vendor main: read the four changed full blobs and immutable sparse owners
+# before admitting the updated gitlink to the historical receipts.
+if shipping_vendor_pin == "0390980a5752808dfba7b8edaa7d113cc4e4e6eb":
+    verified_changed_and_unchanged={
+    "encore-active/eden-core/src/core/hle/service/sm/sm.cpp": "34c7c85f1476a3ba819ad20b8a4f8150cca86e16",
+    "encore-active/eden-core/src/core/hle/service/sm/sm.h": "7069439e66a6f28ffa56229e08906a21222e2801",
+    "encore-active/ns2-runtime/process/core/core.cpp": "83fc9a903b05ed9fd096c35102db54a966d736c2",
+    "encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp": "9bfaa26664361994902d5b7f73d6a41ff0eadb07",
+    "encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp": "2b5be4eba2500da2993db2ed1c86d44ddfa5554f",
+    "encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp": "130eb7bd53e29b816bb81fec3fa053a584cd4b6e",
+    "encore-active/eden-core/overrides/core/device_memory_manager.inc": "daf493ce6e863397ec44bfae467c4f7533570477",
+}
+    for relative, expected_blob in verified_changed_and_unchanged.items():
+        raw=(V/relative).read_bytes()
+        digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert digest == expected_blob,("NS1/NS2 latest reviewed vendor drift",relative,digest)
+REVIEWED_PINS.add("0390980a5752808dfba7b8edaa7d113cc4e4e6eb")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

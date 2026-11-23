@@ -2114,9 +2114,26 @@ current_vendor_post_f07_owner_blobs = {
     "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
 }
+# Post-F07 registry includes old SM while the latest exact successor
+# changes ONLY SM handler retirement in that owner. Preserve exact pin and
+# verify all other reviewed owners byte for byte.
+if actual_vendor == "0390980a5752808dfba7b8edaa7d113cc4e4e6eb":
+    current_vendor_post_f07_owner_blobs = {
+        **current_vendor_post_f07_owner_blobs,
+        "eden-core/src/core/hle/service/sm/sm.cpp": "34c7c85f1476a3ba819ad20b8a4f8150cca86e16",
+    }
+    # These changed C++ owners are not all in the post-F07 path table.
+    for relative, digest in {
+        "eden-core/src/core/hle/service/sm/sm.h": "7069439e66a6f28ffa56229e08906a21222e2801",
+        "ns2-runtime/process/core/core.cpp": "83fc9a903b05ed9fd096c35102db54a966d736c2",
+        "ns2-runtime/am/core/hle/service/am/service/application_functions.cpp": "9bfaa26664361994902d5b7f73d6a41ff0eadb07",
+    }.items():
+        raw=(active/relative).read_bytes()
+        got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert got==digest,("Post-F07 latest vendor source drift",relative,got)
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
 if actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
-                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007"}:
+                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb"}:
     assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
     for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
         raw = (active / relative).read_bytes()

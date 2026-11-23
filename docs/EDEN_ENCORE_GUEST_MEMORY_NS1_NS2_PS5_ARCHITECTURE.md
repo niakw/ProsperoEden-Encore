@@ -20,6 +20,8 @@
 
 **P0 bitmap optimisé — correction de sûreté (23/11) :** vendor [`436e702c`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/436e702cc970417455c088c4bc38ce5fec8e0762) pré-engage uniquement le petit bitmap de contrôle avant ses écritures et intercepte son `std::bad_alloc` dans `KMemoryManager::InitializeOptimizedMemory`, avec remise à zéro de l'état « process optimisé » puis `ResultOutOfMemory`. Cela **supplante pour ce bitmap** l'économie de résidence décrite par `56959a23/d3c76f07` : les gros buffers invités restent demand-zero, mais le contrôle bitmap devient OWN pour éviter un OOM fatal dans le signal handler.
 
+**P0 demand-zero — extension 23/11 :** vendor [`64898962`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/6489896230a030cf28d31961c7c8f242cab73f27) route désormais `Core::Memory::ZeroBlock` vers le propriétaire `HostMemory` uniquement pour le layout NS2 12 Gio et une adresse de backing directe. Un `memset(0)` HLE ne transforme donc plus une page ZERO/read-only en OWN lorsqu'aucun octet n'a besoin de changer ; les zones rasterizer continuent leur chemin de cohérence GPU existant. **Gain de résidence attendu, validation console non effectuée.**
+
 ## 1. Décision et priorités
 
 La mémoire physique PS5 est une ressource **commune** à l'hôte, au processus invité, au JIT, aux buffers/images RADV, aux stacks, aux caches et aux services. Une grande adresse invitée mappée n'est pas une grande allocation physique. La solution pérenne doit partager des **contrats d'ownership** entre NS1 et NS2, sans leur imposer des politiques identiques.

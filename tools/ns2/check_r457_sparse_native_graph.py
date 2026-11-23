@@ -41,6 +41,7 @@ REVIEWED_VENDORS.add("fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2")
 REVIEWED_VENDORS.add("56959a23273ea2ee82d2e59628c92cc9e1144fe9")
 REVIEWED_VENDORS.add("d3c76f07cd82f7766be7b5e3fc3c399a3be15291")
 REVIEWED_VENDORS.add("436e702cc970417455c088c4bc38ce5fec8e0762")
+REVIEWED_VENDORS.add("6489896230a030cf28d31961c7c8f242cab73f27")
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
@@ -66,13 +67,13 @@ def main():
         raw=path.read_bytes()
         return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
     for owner,expected in (
-        (NATIVE_GUEST[0],"8007c91fd1757acf66f5f5b6a67d862afa0c475c" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+        (NATIVE_GUEST[0],"aa08b4af80e22109495f8dfbec1fec129f2261e9" if sha == "6489896230a030cf28d31961c7c8f242cab73f27" else "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
-        (NATIVE_GUEST[1],"3757b123153c66584ec0dde8bd01334ec41ec9e2" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+        (NATIVE_GUEST[1],"9dad056a223b90f27470c6a5b55977217238993a" if sha == "6489896230a030cf28d31961c7c8f242cab73f27" else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "c8f197810af244c3f2d66413352533734d031620"),
-        (NATIVE_SHARED,"515df1ec4a4b231266d6f3e5481c54ca87c94453" if sha in {"06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+        (NATIVE_SHARED,"515df1ec4a4b231266d6f3e5481c54ca87c94453" if sha in {"06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27"}
          else "9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
-        (NATIVE_KERNEL,"2b5be4eba2500da2993db2ed1c86d44ddfa5554f" if sha == "436e702cc970417455c088c4bc38ce5fec8e0762"
+        (NATIVE_KERNEL,"2b5be4eba2500da2993db2ed1c86d44ddfa5554f" if sha in {"436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27"}
          else "6397dd2c4a9c9c10674ab87b344f5c6956b79e0c" if sha == "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"
          else "aeee7f62a3fc609936ff5dc6a64722ca8d860c2e" if sha == "56959a23273ea2ee82d2e59628c92cc9e1144fe9"
          else "12d3d0ddc59308b80df46bc54e6e8ee54011d568" if sha == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"

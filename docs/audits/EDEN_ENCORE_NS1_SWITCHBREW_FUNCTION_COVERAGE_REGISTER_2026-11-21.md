@@ -893,6 +893,21 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 545** : 2 004 NULL + 145 STUB + 110 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot LR — redirections du LocationResolver normal — 23/11/2026
+
+**Vendor `9b1c483eea8e013f1907ede3c235fe7a8216a6b6`** (arbre `bfd2db62ed954aefa1c6b50ee7ea4e48db7f6f08`) dans `sources/eden/src/core/hle/service/ncm/ncm.cpp`.
+
+- **14 NULL → IMPL-SRC** : Redirect Program/Control/HTML/Legal, Refresh, RedirectApplicationProgram, ClearApplicationRedirection, quatre Erase, et les trois opérations debug de redirection/erase.
+- **4 NULL → PARTIEL** : `ResolveApplicationControlPath`, `ResolveApplicationHtmlDocumentPath`, `ResolveApplicationLegalInformationPath` et `ResolveProgramPathForDebug`. Ils résolvent réellement les redirections invitées, mais le fallback vers le contenu installé n'est pas encore modélisé.
+- `ResolveProgramPath` était déjà PARTIEL dans le miroir fusionné à cause du resolver enregistré ; le resolver normal couvre désormais ses redirections mais ne justifie pas un passage à IMPL-SRC.
+- `ResolveDataPath` (4) reste **NULL**. Aucun chemin hôte PS5 n'est substitué à un `ContentPath` Horizon.
+- Les chemins sont des buffers fixes 0x301 avec NUL obligatoire ; owner-id et opérations Clear/Erase suivent le modèle HOS9+/Atmosphère. Les erreurs LR restent explicites.
+- Le HEAD précédent moteur `1d470f4f` → vendor/gitlink `da41c660` est **X8D24 + Verify pinned vendor vert**. Le présent couple doit être qualifié séparément ; aucun build PS5 n'est revendiqué.
+
+**Compteur historique : 1 480 IMPL-SRC / 114 PARTIEL / 145 STUB / 127 NOOP / 1 986 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 531** : 1 986 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

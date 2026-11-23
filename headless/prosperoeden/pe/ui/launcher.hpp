@@ -421,15 +421,17 @@ class Launcher
     std::unordered_map<std::string, std::chrono::steady_clock::time_point> home_icon_next_retry_;
     std::future<Game> home_media_scan_;
     std::uint64_t home_media_scan_title_id_ = 0;
-    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_media_next_retry_;
+    std::string home_media_scan_file_;
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> home_media_next_retry_;
     std::future<Game> media_scan_; // selected Library title only; never a full-library HTTP queue
     std::uint64_t media_scan_title_id_ = 0;
+    std::string media_scan_file_;
     std::future<std::string> selected_size_scan_; // exact extracted-folder size; never gates media
     std::uint64_t selected_size_scan_title_id_ = 0;
     std::string selected_size_scan_file_;
     std::uint64_t selected_size_failed_title_id_ = 0; // suppress immediate retry until selection changes
     std::string selected_size_failed_file_;
-    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> media_next_retry_;
     float media_retry_timer_ = 0.0f; // only periodically poll for failed/late Nlib artwork
     bool games_loaded_ = false;
     ListView library_;

@@ -2382,3 +2382,12 @@ Vendor `77ec007d1b9cc66487cc6bbf94a1a9231d2b4117` (inclut `8cf1727e6ce48acf1d3d3
 **Compteur courant : 1 635 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 824** : 1 424 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## ACC — cycle d'inscription utilisateur local (23/11/2026)
+
+Vendor `90bf581546e467daf19ac091cb301c5271df3f94` → gitlink moteur `2fded1df7b7c0f3f1e49bc85183e9bfaf4f48568`. Cmd202 et cmd206 utilisent l'UUID 0x10 confirmé par les dumps NS1 22.5/23.0.1. Un état `pending_registration_user` empêche `CancelUserRegistration` de supprimer un utilisateur déjà enregistré : seule l'inscription provisoire créée par cmd200 peut être annulée. Cmd206 réutilise la persistance du chemin normal, Encore ne modélisant pas les restrictions qu'il contourne sur Horizon. **2 NULL → IMPL-SRC**. Les équivalents `acc:e` sont raccordés pour le runtime moderne sans modifier le compteur distinct. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 637 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 422 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 822** : 1 422 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

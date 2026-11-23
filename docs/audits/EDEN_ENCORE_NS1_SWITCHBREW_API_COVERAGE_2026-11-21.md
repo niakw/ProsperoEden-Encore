@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 555 | 80 | **1 635** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 557 | 80 | **1 637** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 60 | 0 | **60** |
 | **NOOP — No-op documenté** | 153 | 0 | **153** |
-| **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
+| **NULL — Handler NULL** | 1 422 | 0 | **1 422** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -865,11 +865,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `191` | `UpdateNotificationReceiverInfo ([5.0.0-5.1.0] ActivateOpenContextHolder)` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 191 change de nom/owner suivant la version ; slots concernés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `200` | `BeginUserRegistration` | — | **IMPL-SRC** (méthode héritée `Module::Interface::BeginUserRegistration`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `201` | `CompleteUserRegistration` | — | **IMPL-SRC** (méthode héritée `Module::Interface::CompleteUserRegistration`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:su | `202` | `CancelUserRegistration` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `202` | `CancelUserRegistration` | — | **IMPL-SRC** (ABI UUID 0x10 confirmée NS1 22.5/23.0.1 ; supprime uniquement le profil provisoire créé par `BeginUserRegistration`, suivi par état de session ; vendor `90bf5815`) | 2026-11-23 |
 | acc:su | `203` | `DeleteUser` | — | **IMPL-SRC** (méthode héritée `Module::Interface::DeleteUser`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `204` | `SetUserPosition` | — | **IMPL-SRC** (méthode héritée `Module::Interface::SetUserPosition`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `205` | `GetProfileEditor` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetProfileEditor`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:su | `206` | `CompleteUserRegistrationForcibly` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `206` | `CompleteUserRegistrationForcibly` | — | **IMPL-SRC** (ABI UUID 0x10 confirmée NS1 22.5/23.0.1 ; partage la persistance de `CompleteUserRegistration`, les restrictions contournées par la variante forcée n'étant pas modélisées par Encore ; vendor `90bf5815`) | 2026-11-23 |
 | acc:su | `210` | `CreateFloatingRegistrationRequest` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `211` | `CreateProcedureToRegisterUserWithNintendoAccount` | 8.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `212` | `ResumeProcedureToRegisterUserWithNintendoAccount` | 8.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -6446,3 +6446,10 @@ Vendor `06ce1025d8f1e2a6074527b35e54acc7d3570699` → gitlink moteur `d576d3e7f7
 Vendor `77ec007d1b9cc66487cc6bbf94a1a9231d2b4117` (inclut `8cf1727e6ce48acf1d3d36ffa580c2542df2b2af`) → gitlink moteur `441e5741343e0e77c0277ddb7f6f86881d98973c`. `Select` implémente désormais l'ABI 0x20 observée dans Lichii, les trois fd_sets, les erreurs `EINVAL/BADF`, le timeout et la readiness via le backend `Network::Poll` déjà actif. Le test `fd >= MAX_FD` remplace les deux comparaisons `fd > MAX_FD`, supprimant l'accès potentiel à `file_descriptors[128]`. `Read`, déjà compté IMPL-SRC par un ancien lot, était redevenu stub dans le propriétaire CMake actif ; la régression est réparée avec un `RecvImpl(fd, 0)` réel. **Compteur : seulement 1 STUB → IMPL-SRC**, car `Read` était déjà sorti du pool dans le registre. Aucun build PS5 ni gameplay n'est revendiqué sur ce couple de SHAs.
 
 **Compteur courant : 1 635 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 824.**
+
+
+### ACC — cycle d'inscription utilisateur local (23/11/2026)
+
+Vendor `90bf581546e467daf19ac091cb301c5271df3f94` → gitlink moteur `2fded1df7b7c0f3f1e49bc85183e9bfaf4f48568`. Les dumps Account NS1 22.5.0/23.0.1 confirment une entrée UUID de 0x10 octets pour les commandes 202 et 206. Encore suit maintenant explicitement le profil provisoire créé par `BeginUserRegistration` : `CancelUserRegistration` ne peut supprimer que ce profil provisoire, et `CompleteUserRegistration[Forcibly]` le persiste puis libère l'état pending. Les mêmes handlers sont raccordés sur `acc:e` moderne, sans les recompter dans ce catalogue. **2 NULL → IMPL-SRC.** Validation PS5 non revendiquée.
+
+**Compteur courant : 1 637 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 422 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 822.**

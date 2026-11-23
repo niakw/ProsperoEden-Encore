@@ -3805,9 +3805,17 @@ print("NS2_AOC_PLACEHOLDER_SOURCE_SUCCESSOR_PASS predecessor=874172cc current=44
 sm_header_path = "vendor/encore-active/eden-core/src/core/hle/service/sm/sm.h"
 assert sm_header_path in drift_index and sm_header_path not in post_index
 sm_delta = drift_index.pop(sm_header_path)
-assert sm_delta["actual"] == "afaad1b58658c9fe7807756410b7f1a82d0e3c7d"
+assert sm_delta["actual"] == "7069439e66a6f28ffa56229e08906a21222e2801"
 assert sm_delta["expected"] == "83e0b7e26a867d578eb869389a807fe3b9c7035b"
 sm_source = (ROOT/sm_header_path).read_text()
+# Current FC27 destructor fix adds a separate SM-owned handler retirement
+# method; strip only its exact source delta in the historical F07 replay.
+late_sm_release = """    // Drop service-owned guest/device references before guest KProcesses retire.
+    // Does not destroy SM ports or the SM object itself.
+    void ReleaseRegisteredHandlersForShutdown();
+"""
+assert sm_source.count(late_sm_release) == 1
+sm_source = sm_source.replace(late_sm_release, "", 1)
 for current, previous in (
     ("#include <condition_variable>\n", ""),
     ("""    bool WaitForService(const std::string& name);
@@ -3825,7 +3833,7 @@ for current, previous in (
 sm_raw = sm_source.encode("utf-8")
 assert hashlib.sha1(b"blob "+str(len(sm_raw)).encode()+bytes([0])+sm_raw).hexdigest() == (
     "83e0b7e26a867d578eb869389a807fe3b9c7035b")
-print("PS5_SM_HEADER_TEARDOWN_SOURCE_SUCCESSOR_PASS predecessor=83e0b7e2 current=afaad1b5")
+print("PS5_SM_HEADER_TEARDOWN_SOURCE_SUCCESSOR_PASS predecessor=83e0b7e2 current=7069439e")
 
 assert set(drift_index) == set(post_index), (
     "Unregistered or obsolete post-F07 source delta",

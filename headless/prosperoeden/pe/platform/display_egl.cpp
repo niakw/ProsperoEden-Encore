@@ -332,6 +332,10 @@ bool Display::close_deferred_scanout()
         presenter.request_stop();
         presenter.join();
     }
+    // The retained GL presenter has uploaded and released its alternate pose.
+    // Vulkan consumes only the stable primary frame, so retire the second
+    // 1080p CPU capture before swapchain/device-side allocations begin.
+    Eden::LaunchHandoff::ClearAlternate();
 
     if (context != EGL_NO_CONTEXT && !eglDestroyContext(display, context))
     {

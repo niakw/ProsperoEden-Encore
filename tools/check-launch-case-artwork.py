@@ -152,6 +152,10 @@ assert "(!native_launch_show_back_ || native_phase >= 0.62f)" in draw
 assert 'native_launch_deadline_ - std::chrono::steady_clock::now()' in draw
 assert 'if (!native_launch_show_back_ && native_phase <= 0.12f' in draw
 assert "std::chrono::milliseconds(750)" in launcher
+assert "LoadingCapturePose::front" in draw
+assert "LoadingCapturePose::back" in draw
+assert "loading_back_available() const noexcept" in header
+assert "set_loading_capture_pose(LoadingCapturePose pose)" in header
 
 # The temporary FBO painter must be bounded (two faces) and cleaned up
 # when changing titles or leaving the native OpenGL context.

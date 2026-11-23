@@ -2364,3 +2364,12 @@ Vendor `55be5734cb4f820eebfb05e43449b45b7bdf23ad` → gitlink moteur `e9228efbfa
 **Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 62 STUB / 152 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 826** : 1 424 NULL + 62 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## AppletAE — gameplay recording non exposé (23/11/2026)
+
+Vendor `06ce1025d8f1e2a6074527b35e54acc7d3570699` → gitlink moteur `d576d3e7f746c3bf4dcef7352dda4278d358e6b4`. `InitializeGamePlayRecording` passe de **STUB → NOOP** : la capacité d'enregistrement reste désactivée sans backend Horizon, et la commande conserve le succès attendu par les titres qui l'appellent sans mapper le transfer-memory vers un backend PS5 fictif. Pas de validation console revendiquée.
+
+**Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 61 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 825** : 1 424 NULL + 61 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

@@ -32,8 +32,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 554 | 80 | **1 634** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
-| **STUB — Stub / résultat simulé** | 62 | 0 | **62** |
-| **NOOP — No-op documenté** | 152 | 0 | **152** |
+| **STUB — Stub / résultat simulé** | 61 | 0 | **61** |
+| **NOOP — No-op documenté** | 153 | 0 | **153** |
 | **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -1670,7 +1670,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `50` | `GetPseudoDeviceId` | 2.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `60` | `SetMediaPlaybackStateForApplication` | 2.0.0+ | **PARTIEL** (état `m_applet->media_playback_state` réellement écrit sous verrou, mais aucun consommateur de politique média/énergie n'est encore modélisé ; vendor `6fc24667`) | 2026-11-22 |
 | appletAE | `65` | `IsGamePlayRecordingSupported` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; lit l'état de capacité `game_play_recording_supported` de l'applet) | 2026-11-23 |
-| appletAE | `66` | `InitializeGamePlayRecording` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `66` | `InitializeGamePlayRecording` | 3.0.0+ | **NOOP** (Encore annonce `game_play_recording_supported=false` lorsqu'aucun backend Horizon d'enregistrement n'est disponible ; cmd66 reste un succès de compatibilité sans mapper le transfer-memory vers la PS5 ; vendor `06ce1025`) | 2026-11-23 |
 | appletAE | `67` | `SetGamePlayRecordingState` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit l'état `game_play_recording_state` sous verrou) | 2026-11-23 |
 | appletAE | `68` | `RequestFlushGamePlayingMovieForDebug` | 4.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `70` | `RequestToShutdown` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -6432,3 +6432,10 @@ Vendor `d527dc85bf42ec57f150fd02c6612c86042ff0bb` → gitlink moteur `d210bcd07b
 Vendor `55be5734cb4f820eebfb05e43449b45b7bdf23ad` → gitlink moteur `e9228efbfae8534713604b78d64c566f08d2fb64`. `LoadAndApplyIdlePolicySettings`, `OverrideAutoSleepTimeAndDimmingTime` et `ReportUserIsActive` sont désormais des **NOOP d'adaptation hôte explicites** : Encore n'expose pas de scheduler invité `idle:sys` et ne doit pas piloter la veille/atténuation de la PS5. **3 STUB → NOOP.** Aucun gain gameplay ni validation console n'est revendiqué.
 
 **Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 62 STUB / 152 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 826.**
+
+
+### AppletAE — gameplay recording non exposé (23/11/2026)
+
+Vendor `06ce1025d8f1e2a6074527b35e54acc7d3570699` → gitlink moteur `d576d3e7f746c3bf4dcef7352dda4278d358e6b4`. `InitializeGamePlayRecording` est désormais documenté comme **NOOP de compatibilité** cohérent avec `IsGamePlayRecordingSupported=false` sur Encore lorsqu'aucun backend Horizon d'enregistrement n'est exposé. Le transfer-memory n'est pas détourné vers un enregistreur PS5 fictif. **1 STUB → NOOP.** Aucun gain vidéo ni validation PS5 revendiqué.
+
+**Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 61 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 825.**

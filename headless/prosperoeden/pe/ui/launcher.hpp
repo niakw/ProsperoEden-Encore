@@ -86,6 +86,9 @@ class Launcher
         loading_capture_pose_ = pose;
     }
     [[nodiscard]] bool loading_back_available() const noexcept {
+        return native_launch_back_ready_;
+    }
+    [[nodiscard]] bool loading_final_pose_is_back() const noexcept {
         return native_launch_show_back_;
     }
     // Empty until a game is chosen.
@@ -400,7 +403,8 @@ class Launcher
     bool first_start_ = true;
     const bool native_artwork_loading_ = false;
     bool native_launch_art_ready_ = false;
-    bool native_launch_show_back_ = false; // only after the authentic rear is GPU-resident
+    bool native_launch_back_ready_ = false; // authentic rear reached GPU, even if it arrived late
+    bool native_launch_show_back_ = false; // final native pose already turned to that rear
     LoadingCapturePose loading_capture_pose_ = LoadingCapturePose::live;
     std::chrono::steady_clock::time_point native_launch_deadline_{};
 

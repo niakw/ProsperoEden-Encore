@@ -590,3 +590,44 @@ Le présent registre reste le tableau NS2 de référence : couverture SwitchBrew
 4. **Boot PS5 :** exiger un build valide à SHAs moteur/vendor connus et une preuve console des premières soumissions GPU `gpu_submit_sample > 0`, puis `guest_frame_handoff > 0` et première image invitée réelle. Ce n'est **pas** un sous-compteur de parité structurelle.
 
 **Provenance des lots présents sur ce couple :** vendor `38382993` (VI2 53), `852c4be1` (ACC), `95cdffa8` (stubs VI2), `2873d15e` (table GSV), `ee20b5a0` (`gpu_time` et ABI). Le build [45084634419](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45084634419) a **échoué en compilation C++ native** (`nup_v1_native_content.cpp:50`, `nifm.cpp:1111`), sans package ; les tests PS5 de ces correctifs n'ont pas été reçus.
+
+
+---
+
+## 18. Reprise sur `main` — revue ciblée Lichii / EglantinePS5 du 23/11/2026
+
+**Révisions comparées :** Lichii [`nx2:63cde532`](https://github.com/zortos293/Lichii/tree/63cde5321e8402a827458807c4e09420db33afd1), EglantinePS5 [`main:5eb70367`](https://github.com/heydemoura/EglantinePS5/tree/5eb70367ffde039f237b3b828856f4b4247ea09e), Encore vendor `main:0390980a` (contrôle hôte sécurité/qualité [45200615951](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/45200615951) vert). Cet addendum concerne le **source/dispatch sélectionné** ; aucun build ou essai console du nouveau couple n'est implicite. Les relevés antérieurs des §0 et §17 restent des instantanés historiques, pas des chiffres courants de tous les sous-systèmes.
+
+### 18.1 Tables supplémentaires relues, propriétaires sélectionnés par CMake
+
+Contrôle sur `headless/CMakeLists.txt` du moteur : `EDEN_SHARED_NS2_AM` remplace `application_functions.cpp`; `EDEN_NS2_EARLY_HLE_ROOT` remplace `hid_server.cpp`; `EDEN_NS2_SERVICE_PARITY_ROOT` remplace les fichiers ACC, NIFM, CAPS, SET, MII, LM et audio en natif PS5 avec l'option NS2 approuvée. Comparaison des déclarations `FunctionInfo` et de leurs IDs avec Lichii :
+
+| Propriétaire actif comparé | Lichii / Encore (entrées) | Tables inspectées | Écart de déclaration et limite |
+| --- | ---: | ---: | --- |
+| `am/service/application_functions.cpp` | **74 / 74** | 1 | Zéro ID absent ; cmd 210 nommé `Unknown210` chez Encore vs `GetOperationModeRefreshEvent (guessed)` chez Lichii. Cmd 320 nommé/servi autrement. **Pas de parité d'ABI déduite.** |
+| `hid/hid_server.cpp` | **235 / 235** | 1 | Zéro ID absent. Lichii a des stubs nommés pour 138/139 et 3130–3133/3138/3139, Encore des handlers d'état `SceneId` / `Nmouse`; 3110–3113 passent par `StubJcms`. Différence comportementale à tester, non un oubli d'ID. |
+| `nifm/nifm.cpp` | **86 / 86** | Plusieurs interfaces | Entrées par table conservées ; 52 IDs numériques distincts dans le fichier ne représentent pas 52 fonctions uniques, car réutilisés dans plusieurs interfaces. |
+| `caps/caps_u.cpp` + `caps/caps_su.cpp` | **18 / 18 ; 5 / 5** | 1 + 1 | Aucun ID absent dans les tables sélectionnées. |
+| `set/settings_server.cpp` | **18 / 18** | 1 | Aucun ID absent. |
+| `mii/mii.cpp` | **44 / 44** | 3 | Aucun ID absent par table ordonnée. |
+| `lm/lm.cpp` | **10 / 10** | 3 | Aucun ID absent par table ordonnée. |
+| `audio/audio_device.cpp` + `audio/audio_renderer_manager.cpp` | **22 / 22 ; 5 / 5** | 1 + 1 | Aucun ID absent. |
+| `acc/acc.cpp` | **25 tables Lichii / 24 tables Encore** ; **502 / 490 entrées** | 25 vs 24 | **Écart structurel exact :** Lichii ajoute un `ScratchSystemAccount` de 12 entrées conditionné par `GetScratchProfileManager()` et son propre choix dans `LoopProcess`. Encore ne possède ni ce propriétaire ni ce mécanisme de profil scratch. Son `acc:su` classique est déjà enregistré. EglantinePS5 `main:5eb70367` a également 24 tables, sans `ScratchSystemAccount`. Il faut analyser l'ownership du profil avant de transplanter cet ajout ; son absence n'est **pas** un défaut de boot démontré. |
+
+**Méthode/limites :** comparaison statique des tables et de leurs déclarations (non une exécution d'IPC). Les comptes `ACC` portent sur toutes les tables du fichier et `NIFM` sur plusieurs interfaces ; ne pas additionner ces entrées au total SwitchBrew 316 ou aux 230 IDs des huit tables GPU/VI2/GSV. La sémantique, les tailles de requête/réponse, les handles MOVE/COPY, les événements, les modes de firmware et les effets de `nullptr` / stub exigent des audits séparés.
+
+### 18.2 Comparaison PS5 et Lichii : différences restantes sans faux positif
+
+- **Avant première image :** les logs Encore R457 du 23/11 montrent toujours `gpu_submit_sample=0` et `guest_frame_handoff=0` sur MKW / Bananza / Z-A ; un chargement animé ne constitue pas une image du jeu. L'interface `IApplicationFunctions` cmd 22 est bien présente chez les trois projets ; son *résultat d'arrêt invité* est maintenant exposé par la nouvelle trace `EDEN_APP_TERMINATE_RESULT` du vendor, mais **aucune session PS5 de ce nouveau commit n'a encore prouvé le code retourné**. Ne pas attribuer la stalle à cmd 22 sur son seul ordre de journalisation.
+- **Conteneur Pokopia :** `metadata exceeds file` est un rejet de bornes dans le parseur NUP propre au moteur. Le diagnostic `EDEN_NUP_METADATA_BOUNDS_REJECT` distingue les raisons sans désactiver la vérification. Aucun correctif de format n'est validé sans les quatre valeurs réelles et un échantillon vérifié.
+- **Source Lichii actuelle :** les commits récents `#2481` (soumissions Vulkan à frontière de render-pass), `#2485` (durée de vie des images) et `#2470/#2215/#2173` (textures et coûts de Bananza) concernent essentiellement les ressources/pipelines **après progression du GPU**. Écart à comparer dans les sources PS5 sélectionnées, **pas** une résolution causalement prouvée du démarrage sans première soumission.
+- **EglantinePS5 :** le dépôt porte une pile NS2 et un mécanisme mémoire `demand-zero` avec mesures de jeux **sur un autre binaire**. Encore a intégré les états `ZERO -> OWN` pour NS1/NS2 avec tests hôtes (document [architecture mémoire](../EDEN_ENCORE_GUEST_MEMORY_NS1_NS2_PS5_ARCHITECTURE.md)), sans preuve de cohérence GPU/boot sur la console pour les derniers commits. Les expériences mémoire, fragmentation, compression et optimisations shader d'EglantinePS5 ne doivent pas être déclarées « manquantes » si le propriétaire Encore a déjà un équivalent, ni fusionnées sans audit des différences de code/PS5 ABI.
+- **Registre fonctionnel restant ouvert :** en dehors des tables comparées ici et au §17, le différentiel exhaustif des autres services, des sous-interfaces et des ABI NS2 (notamment `nvdrv`, `kernel/SVC`, `filesystem`, `loader`, `shader`, `GPU` et des variantes firmware) **n'est pas clos**. `230/230` ne signifie pas `100 % NS2`.
+
+### 18.3 Seuils de preuve et ordre du travail P0
+
+1. Conserver les correctifs de fermeture FC27 et les traces NS2 sur `main` ; les deux tests historiques de provenance ont été réconciliés, CI vendor [45200615951](https://github.com/niakw/Prospero.Eden-Encore-vendor/actions/runs/45200615951) verte. L'état de la fermeture sur console reste **non prouvé**.
+2. Pour MKW/Bananza, recouper le résultat CMIF/AM réel et la dernière SVC terminée avec l'entrée du processeur invité ; demander une preuve de transition à une **première soumission** avant d'importer des optimisations de texture/rendu qui présupposent déjà cette progression.
+3. Pour Z-A, vérifier `EDEN_NS2_PROCESS_TRACE` : le correctif enregistre maintenant le PID NS2 des conteneurs acceptés, mais `active_pid=1` n'est qu'une trace diagnostique, pas un boot.
+4. Pour Pokopia, examiner les valeurs de bornes NUP (taille de fichier déclarée, offset/longueur metadata, blob offset) et classer fichier tronqué, format incompatible ou parseur erroné ; ne jamais remplacer ce refus par une lecture hors limites.
+5. N'intégrer un port Lichii/Eglantine qu'après diff de sa **source réellement sélectionnée**, de l'ABI PS5 et d'un test hôte pertinent ; puis qualification PS5. Aucune première frame MKW/Bananza/ZA ni gameplay NS2 certifiés par le présent audit.

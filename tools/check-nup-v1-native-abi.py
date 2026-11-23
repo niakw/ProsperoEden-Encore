@@ -37,11 +37,11 @@ def main() -> None:
     ).strip()
     assert len(pinned) == 40 and all(c in "0123456789abcdef" for c in pinned), pinned
     urlbase = ("https://raw.githubusercontent.com/niakw/"
-               "Prospero.Eden-Encore-vendor/" + pinned + "/sources/eden/src/")
+               "Prospero.Eden-Encore-vendor/" + pinned + "/")
     # A locally mounted vendor submodule at the exact gitlink SHA is a
     # stronger and much faster source of truth than repeated HTTP downloads.
     # If absent in a CI sandbox, retain the original pinned-URL fallback.
-    local_vendor = ROOT / "vendor/sources/eden/src"
+    local_vendor = ROOT / "vendor"
     local_sha = subprocess.run(
         ["git", "-C", str(ROOT / "vendor"), "rev-parse", "HEAD"],
         capture_output=True, text=True, check=False)
@@ -51,15 +51,26 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as folder:
         includes = Path(folder)
         for path in FILES:
-            request = Request(urlbase + path, headers={"User-Agent": "EdenEncore-NUP-ABI-CI"})
-            local_path = local_vendor / path
+            # The PS5-selected NS2 loader uses the maintained, versioned
+            # program-metadata header, not the stale upstream Eden header.
+            # Fetch the exact selected owner under the immutable gitlink.
+            source_path = (
+                "encore-active/ns2-helpers/include/" + path
+                if path == "core/file_sys/program_metadata.h"
+                else "sources/eden/src/" + path
+            )
+            request = Request(urlbase + source_path,
+                              headers={"User-Agent": "EdenEncore-NUP-ABI-CI"})
+            local_path = local_vendor / source_path
             if local_verified and local_path.is_file():
                 data = local_path.read_bytes()
             else:
                 with urlopen(request, timeout=20) as response:
                     data = response.read(128 * 1024 + 1)
             if len(data) > 128 * 1024 or not data.startswith(b"// SPDX-"):
-                raise ValueError(f"Invalid pinned vendor header: {path}")
+                raise ValueError(f"Invalid pinned vendor header: {source_path}")
+            if path == "core/file_sys/program_metadata.h" and b"IsSwitch2() const" not in data:
+                raise ValueError("PS5-selected NS2 ProgramMetadata interface missing")
             target = includes / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)

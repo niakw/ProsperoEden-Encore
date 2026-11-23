@@ -139,6 +139,15 @@ assert "constexpr float kCaseBackHold = 4.50f;" in theme
 assert "s.wait(0.51f); // instantaneous ~90-degree spine glimpse, no dwell" in (
     root / "headless/prosperoeden/host/preview_main.cpp").read_text()
 assert "constexpr float kLaunchSeconds = kCaseFrontHold" in theme
+# Native game start never delays the emulator just to animate a missing
+# physical back. A GPU-resident authentic rear can turn once within the
+# existing 750-ms cap and remain visible through the loading capture.
+assert "native_launch_show_back_ = false;" in launch_setup
+assert "c.textures.cover(launch_box_back_, 760.0f).texture != 0" in draw
+assert "native_launch_show_back_ = true;" in draw
+assert "constexpr float native_end = 0.62f;" in draw
+assert "(!native_launch_show_back_ || seconds >= 0.62f)" in draw
+assert "std::chrono::milliseconds(750)" in launcher
 
 # The temporary FBO painter must be bounded (two faces) and cleaned up
 # when changing titles or leaving the native OpenGL context.

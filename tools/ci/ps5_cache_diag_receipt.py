@@ -22,6 +22,21 @@ REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB = "dcc4c9cbb4e3cec48ab4d1dece9f8708196c5f
 REVIEWED_PIPELINE_DRAIN_BLOB = "e3910d11f33376097a90858118ba276f7e02cb70"
 # NS1-only successors: integer fragment output typing and recent shader prewarm.
 # Reverse their exact reviewed source hunks only for the immutable R23 oracle.
+REVIEWED_PARALLEL_TIMING_BLOB = "52470b6160f6049801d963960adf6952c79a45cf"
+PARALLEL_TIMING_REVERSES = [
+    [
+        "    std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};\n    // CachePhaseTimer's per-key shader attribution is intentionally thread-local.\n    // Give every stage worker a private accumulator, then merge after the owner\n    // joins them so EDEN_VULKAN_SHADER_MISS keeps the pre-parallel accounting.\n    std::array<::Eden::Performance::ShaderMissStageCosts, Maxwell::MaxShaderProgram>\n        parallel_stage_costs{};\n    if (parallel_translate_stages) {",
+        "    std::array<std::exception_ptr, Maxwell::MaxShaderProgram> parallel_errors{};\n    if (parallel_translate_stages) {"
+    ],
+    [
+        "                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,\n                 &parallel_programs, &parallel_errors, &parallel_stage_costs] {\n                    struct ShaderMissStageScope {\n                        ::Eden::Performance::ShaderMissStageCosts* previous{\n                            ::Eden::Performance::shader_miss_stage_active};\n                        explicit ShaderMissStageScope(\n                            ::Eden::Performance::ShaderMissStageCosts* current) noexcept {\n                            ::Eden::Performance::shader_miss_stage_active = current;\n                        }\n                        ~ShaderMissStageScope() {\n                            ::Eden::Performance::shader_miss_stage_active = previous;\n                        }\n                    } shader_miss_stage_scope{&parallel_stage_costs[index]};\n                    struct PreflushedTexturePoolScope {",
+        "                [this, env, stage_pools, cfg_offset, exits_to_dispatcher, index,\n                 &parallel_programs, &parallel_errors] {\n                    struct PreflushedTexturePoolScope {"
+    ],
+    [
+        "        shader_translation_workers.WaitForRequests();\n        if (auto* const owner_stage_costs =\n                ::Eden::Performance::shader_miss_stage_active) {\n            for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {\n                if (key.unique_hashes[index] == 0) {\n                    continue;\n                }\n                // These are CPU-work totals, matching the former serial keyed\n                // timers. The enclosing miss cpu_ns remains the elapsed critical\n                // path and therefore reflects the parallel overlap.\n                owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;\n                owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;\n            }\n        }\n        for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {",
+        "        shader_translation_workers.WaitForRequests();\n        for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {"
+    ]
+]
 REVIEWED_PARALLEL_TRANSLATION_BLOB = "b28a190e92ca80b0385148a0b558828353326f12"
 PARALLEL_TRANSLATION_REVERSES = [
     [
@@ -147,6 +162,13 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    if current == REVIEWED_PARALLEL_TIMING_BLOB:
+        source = reverse_reviewed_source(
+            source, PARALLEL_TIMING_REVERSES,
+            "parallel graphics keyed shader timing")
+        current = git_blob(source)
+        assert current == REVIEWED_PARALLEL_TRANSLATION_BLOB, (
+            "Parallel shader timing predecessor drift", current)
     if current == REVIEWED_PARALLEL_TRANSLATION_BLOB:
         source = reverse_reviewed_source(
             source, PARALLEL_TRANSLATION_REVERSES,

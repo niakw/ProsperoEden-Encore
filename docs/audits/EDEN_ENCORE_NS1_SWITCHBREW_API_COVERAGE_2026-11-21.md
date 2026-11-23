@@ -29,7 +29,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 496 | 80 | **1 576** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 503 | 80 | **1 583** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
 | **STUB — Stub / résultat simulé** | 76 | 0 | **76** |
@@ -40,7 +40,7 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 270 | 0 | **270** |
+| **ABI-DIFF — Noms/ABI divergents** | 263 | 0 | **263** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
@@ -1949,7 +1949,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | aoc:u | `101` | `[CreatePermanentEcPurchasedEventManager](#IPurchaseEventManager "wikilink")` | 9.0.0+ | **IMPL-SRC** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) + [TU sélectionné moteur](https://github.com/niakw/ProsperoEden-Encore/blob/audit/ns1-switchbrew-main-coverage-20261122/headless/nup_v1_aoc_service.cpp) ; crée et retourne un vrai `IPurchaseEventManager`) | 2026-11-23 |
 | aoc:u | `0` | `SetDefaultDeliveryTarget` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | aoc:u | `1` | `SetDeliveryTarget` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
-| aoc:u | `2` | `GetPurchasedEventReadableHandle` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/aoc/purchase_event_manager.cpp) ; IPurchaseEventManager slot 2 actuel = GetPurchasedEvent, pas GetPurchasedEventReadableHandle ; statique, PS5 non validé) | 2026-11-22 |
+| aoc:u | `2` | `GetPurchasedEventReadableHandle` | — | **IMPL-SRC** (SwitchBrew `IPurchaseEventManager` cmd2 ; handler actif `GetPurchasedEvent` renvoie le `KReadableEvent` réel du manager, écart de nom seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | aoc:u | `3` | `PopPurchasedProductInfo` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | aoc:u | `4` | `PopPurchasedProductInfoWithUid` | 9.0.0+ | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | ns:am | `0` | `ListApplicationRecord` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
@@ -3213,7 +3213,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm:sys | `3` | `GetPairedGamepadCount` | — | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `4` | `EnableRadio` | — | **IMPL-SRC** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `5` | `DisableRadio` | — | **IMPL-SRC** ([source C++][ns1-src-065]) | 2026-11-22 |
-| btm:sys | `6` | `GetRadioOnOff` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/btm/btm_system_core.cpp) ; sur IBtmSystemCore, slot 6 = IsRadioEnabled ; catalogue = GetRadioOnOff ; statique, PS5 non validé) | 2026-11-22 |
+| btm:sys | `6` | `GetRadioOnOff` | — | **IMPL-SRC** (SwitchBrew IBtmSystemCore cmd6 ; handler actif `IsRadioEnabled` lit le vrai `BluetoothEnableFlag` partagé `set:sys`, même getter d’état radio ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | btm:sys | `7` | `AcquireRadioEvent` | 3.0.0+ | **IMPL-SRC** (retourne le vrai KReadableEvent radio géré par ServiceContext ; vendor `4936c552`) | 2026-11-22 |
 | btm:sys | `8` | `AcquireGamepadPairingEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `9` | `IsGamepadPairingStarted` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
@@ -3696,8 +3696,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | es | `8` | `GetTitleKey` | 2.0.0-5.1.0 | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | es | `9` | `CountCommonTicket` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | es | `10` | `CountPersonalizedTicket` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
-| es | `11` | `ListCommonTicketRightsIds ([2.0.0-5.1.0] ListCommonTicket)` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; variante historique firmware de ListCommonTicketRightsIds, corps présent mais contrat ancien non comparé ; audit statique, pas de validation PS5) | 2026-11-22 |
-| es | `12` | `ListPersonalizedTicketRightsIds ([2.0.0-5.1.0] ListPersonalizedTicket)` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; variante historique firmware de ListPersonalizedTicketRightsIds, corps présent mais contrat ancien non comparé ; audit statique, pas de validation PS5) | 2026-11-22 |
+| es | `11` | `ListCommonTicketRightsIds ([2.0.0-5.1.0] ListCommonTicket)` | 6.0.0+ | **IMPL-SRC** (SwitchBrew confirme cmd11 depuis HOS6 ; handler actif peuple les tickets, écrit les Rights IDs `u128` dans le buffer et retourne le nombre d’entrées ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
+| es | `12` | `ListPersonalizedTicketRightsIds ([2.0.0-5.1.0] ListPersonalizedTicket)` | 6.0.0+ | **IMPL-SRC** (SwitchBrew confirme cmd12 depuis HOS6 ; handler actif peuple les tickets personnalisés, écrit les Rights IDs `u128` et retourne le nombre d’entrées ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | es | `13` | `ListMissingPersonalizedTicket` | — | **NULL** ([source C++][ns1-src-076]) | 2026-11-22 |
 | es | `14` | `GetCommonTicketSize` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | es | `15` | `GetPersonalizedTicketSize` | 2.0.0-4.1.0 | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/es/es.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
@@ -4697,11 +4697,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| nfc:am | `0` | `CreateAmInterface` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; slot 0 actuel = CreateAmNfcInterface, pas CreateAmInterface ; statique, PS5 non validé) | 2026-11-22 |
+| nfc:am | `0` | `CreateAmInterface` | — | **IMPL-SRC** (SwitchBrew `nfc:am` cmd0 ; handler actif `CreateAmNfcInterface` renvoie réellement l’interface `IAm`, écart de nom seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | nfc:am | `0` | `Initialize` | — | **NULL** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; IAm nullptr ; non certifié PS5) | 2026-11-22 |
 | nfc:am | `1` | `Finalize` | — | **NULL** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; IAm nullptr ; non certifié PS5) | 2026-11-22 |
 | nfc:am | `2` | `NotifyForegroundApplet` | — | **NULL** ([source C++][ns1-src-097]) | 2026-11-22 |
-| nfc:mf:u | `0` | `CreateUserInterface` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; slot 0 actuel = CreateUserNfcInterface, pas CreateUserInterface ; statique, PS5 non validé) | 2026-11-22 |
+| nfc:mf:u | `0` | `CreateUserInterface` | — | **IMPL-SRC** (SwitchBrew `nfc:mf:u` cmd0 ; handler actif `CreateUserNfcInterface` renvoie réellement `MFIUser`, écart de nom seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | nfc:mf:u | `0` | `Initialize` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode Initialize ; non certifié PS5) | 2026-11-22 |
 | nfc:mf:u | `1` | `Finalize` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode Finalize ; non certifié PS5) | 2026-11-22 |
 | nfc:mf:u | `2` | `ListDevices` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode ListDevices ; non certifié PS5) | 2026-11-22 |
@@ -4716,7 +4716,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nfc:mf:u | `11` | `GetDeviceState` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode GetDeviceState ; non certifié PS5) | 2026-11-22 |
 | nfc:mf:u | `12` | `GetNpadId` | — | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode GetNpadId ; non certifié PS5) | 2026-11-22 |
 | nfc:mf:u | `13` | `GetAvailabilityChangeEventHandle` | 3.0.0+ | **IMPL-SRC** ([corps et table C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc_interface.cpp) ; héritage MFIUser→NfcInterface, méthode AttachAvailabilityChangeEvent ; non certifié PS5) | 2026-11-22 |
-| nfc:user | `0` | `CreateUserInterface` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nfc/nfc.cpp) ; slot 0 actuel = CreateUserNfcInterface, pas CreateUserInterface ; statique, PS5 non validé) | 2026-11-22 |
+| nfc:user | `0` | `CreateUserInterface` | — | **IMPL-SRC** (SwitchBrew `nfc:user` cmd0 ; handler actif `CreateUserNfcInterface` renvoie réellement `IUser`, écart de nom seulement ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | nfc:user | `0` | `InitializeOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:user | `1` | `FinalizeOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |
 | nfc:user | `2` | `GetStateOld` | — | **IMPL-SRC** ([source C++][ns1-src-097]) | 2026-11-22 |

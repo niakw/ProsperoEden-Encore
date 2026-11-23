@@ -1554,6 +1554,16 @@ SwitchBrew borne explicitement **`pcv:arb`** et **`pcv:imm`** à HOS **1.0.0–7
 
 **Pool restant à examiner = 2 100** : 1 605 NULL + 76 STUB + 140 PARTIEL + 270 ABI-DIFF + 9 AMBIGU.
 
+## Réconciliation ABI simple — BTM / NFC / AOC / ES — 23/11/2026
+
+Sept lignes classées ABI-DIFF dans le snapshot étaient des écarts de libellé/version, pas des trous de contrat : BTM System cmd6 lit le vrai flag radio partagé ; les trois managers NFC cmd0 retournent les interfaces attendues ; AOC PurchaseEvent cmd2 retourne son event lisible ; ES cmd11/12 correspondent aux variantes HOS6+ documentées par SwitchBrew et parcourent les tickets réels pour écrire les Rights IDs.
+
+Elles passent **ABI-DIFF → IMPL-SRC**. Aucun C++ n'est modifié dans ce lot : il s'agit d'une réconciliation du catalogue avec le runtime déjà actif.
+
+**Compteur courant : 1 583 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 263 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 093** : 1 605 NULL + 76 STUB + 140 PARTIEL + 263 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

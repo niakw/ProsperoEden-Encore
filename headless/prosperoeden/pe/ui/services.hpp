@@ -80,6 +80,7 @@ struct Game
     std::vector<std::string> screenshots; // up to three cached Nlib gameplay screenshots
     int max_players = 0; // Nlib maximum local players; 0 when unknown/offline
     bool artwork_changed = false; // async refresh replaced one or more files
+    bool artwork_deferred = false; // icon worker missed per-title lock; retry shortly
     unsigned case_artwork_changed = 0; // bit 0 front, bit 1 back, bit 2 spine; only successful replacements
     std::string intro;
     std::string description;
@@ -331,7 +332,10 @@ class Services
     virtual std::string exact_game_size(const std::string&, const std::atomic<bool>*) { return {}; }
     // Resolve locally cached, user-supplied retail-case artwork by title ID.
     // Never requests an API or blocks gameplay startup on a network call.
-    virtual BoxArt box_art(std::uint64_t) { return {}; }
+    virtual BoxArt box_art(std::uint64_t, bool second_generation = false) {
+        (void)second_generation;
+        return {};
+    }
     // The value the launcher hands back to start a game.
     virtual std::string game_path(const std::string &file) = 0;
     // Cheap presence check used while the launcher is open.

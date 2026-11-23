@@ -9,6 +9,7 @@ import io
 import pathlib
 import re
 import urllib.request
+import unicodedata
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -112,7 +113,8 @@ def parse(source):
             if element.findtext("Platform", "") in ("Nintendo Switch", "Nintendo Switch 2"):
                 gid = element.findtext("DatabaseID", "")
                 if gid.isdecimal():
-                    games[gid] = element.findtext("Name", "")
+                    games[gid] = (element.findtext("Name", ""),
+                                  "ns2" if element.findtext("Platform", "") == "Nintendo Switch 2" else "ns1")
         elif tag == "GameAlternateName":
             gid = element.findtext("DatabaseID", "")
             if gid in games:
@@ -131,14 +133,27 @@ def parse(source):
             element.clear()
             root.clear()
     names = {}
-    for gid, name in games.items():
+    for gid, (name, platform) in games.items():
         if gid not in images:
             continue
         for label in (name, *aliases.get(gid, ())):
-            key = normalize(label)
-            if key:
-                names.setdefault(key, set()).add(gid)
-    lines = ["# Eden Encore media index v9 (NS1+NS2: case faces, scenes, square tile)\n"]
+            # NACP/NUP names may omit the accent of a GamesDB title. Keep
+            # both the former ASCII-byte key and a Unicode-folded alias;
+            # runtime CaseKey uses the former for accented local names.
+            folded = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode()
+            for spelling in (label, folded):
+                key = normalize(spelling)
+                if not key:
+                    continue
+                # A shared title must never resolve to another generation.
+                names.setdefault(f"{platform}:{key}", set()).add(gid)
+                # NUP sometimes advertises only the base name, while GamesDB
+                # carries the explicit Switch 2 Edition suffix.
+                if platform == "ns2" and key.endswith(" nintendo switch 2 edition"):
+                    base = key.removesuffix(" nintendo switch 2 edition")
+                    if base:
+                        names.setdefault(f"ns2:{base}", set()).add(gid)
+    lines = ["# Eden Encore media index v10 (edition-scoped cases, scenes, square tile)\n"]
     for key, matching in sorted(names.items()):
         if len(matching) != 1:
             continue  # avoid colliding editions / ambiguous matching
@@ -211,14 +226,14 @@ def self_test():
     <GameAlternateName><DatabaseID>1</DatabaseID><AlternateName>Example Voyage</AlternateName></GameAlternateName>
     </LaunchBox>"""
     result = parse(io.BytesIO(sample.encode()))
-    assert "example journey\t" in result and "eu:22222222" in result
+    assert "ns1:example journey\t" in result and "eu:22222222" in result
     assert "world:11111111" in result
-    assert "example voyage\t" in result and "eu:22222222" in result
+    assert "ns1:example voyage\t" in result and "eu:22222222" in result
     assert "fr:33333333-3333-3333-3333-333333333333.jpg" in result
-    assert "ambiguous\t" not in result and "44444444" not in result
-    assert "example next gen\t" in result
+    assert "ns1:ambiguous\t" not in result and "44444444" not in result
+    assert "ns2:example next gen\t" in result
     ns2 = next(row.split("\t") for row in result.splitlines()
-               if row.startswith("example next gen\t"))
+               if row.startswith("ns2:example next gen\t"))
     assert ns2[1].startswith("eu:r2_22222222"), ns2
     assert ns2[2].startswith("us:r2_33333333"), ns2
     assert ns2[3].startswith("us:r2_77777777"), ns2
@@ -226,7 +241,7 @@ def self_test():
     assert ns2[9].startswith("world:r2_cccccccc"), ns2
     assert "eu:77777777-7777-7777-7777-777777777777.png" in result
     fields = next(row.split("\t") for row in result.splitlines()
-                  if row.startswith("example journey\t"))
+                  if row.startswith("ns1:example journey\t"))
     assert len(fields) == 10, fields
     assert fields[4].startswith("world:aaaaaaaa"), fields
     assert fields[5].startswith("world:bbbbbbbb"), fields
@@ -242,6 +257,19 @@ def self_test():
     assert "us:" in regional_candidates([("eu", EUROPE_FRONT_PINS["79189"][0]),
                                          ("us", "0" * 36 + ".jpg")])
     assert normalize("EA SPORTS FC 27!") == "ea sports fc 27"
+    edition_xml = """<LaunchBox>
+        <Game><DatabaseID>392130</DatabaseID><Platform>Nintendo Switch</Platform><Name>Pokémon Legends: Z-A</Name></Game>
+        <Game><DatabaseID>424055</DatabaseID><Platform>Nintendo Switch 2</Platform><Name>Pokémon Legends: Z-A: Nintendo Switch 2 Edition</Name></Game>
+        <GameImage><DatabaseID>392130</DatabaseID><Type>Box - Back</Type><Region>Europe</Region><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
+        <GameImage><DatabaseID>424055</DatabaseID><Type>Box - Front</Type><Region>Germany</Region><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
+    </LaunchBox>"""
+    edition = parse(io.BytesIO(edition_xml.encode()))
+    assert "ns1:pokemon legends z a\t" in edition, edition
+    assert "ns1:pok mon legends z a\t" in edition, edition
+    assert "ns2:pokemon legends z a\t" in edition, edition
+    assert "ns2:pokemon legends z a nintendo switch 2 edition\t" in edition, edition
+    assert "eu:aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg" in edition
+    assert "de:bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg" in edition
     print("PASS NS1+NS2 regional case index, independent front/back/spine, collision guards")
 
 def main():

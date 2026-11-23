@@ -1255,6 +1255,20 @@ Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
 Aucun build natif PS5 ni test console n'est revendiqué.
 
+## Lot NIFM IRequest — Requirement HOS23 byte-exact — 23/11/2026
+
+**Vendor `62660c058f2a76353dba6bc208f165857460000e`** (arbre `1b4a906b11137ad31c9b45a3063e70d6686a0eeb`).
+
+`SetRequirement` (5) et `GetRequirement` (19) passent **2 NULL → IMPL-SRC**. Le dump reverse NS1 **23.0.1** confirme exactement 0x24 octets en entrée/sortie ; SwIPC confirme `nn::nifm::Requirement = bytes<0x24, align 4>`. Encore conserve donc les 0x24 octets opaques dans l'objet `IRequest` et les restitue sans interprétation ni perte. Aucun champ interne non documenté n'est inventé.
+
+`SetRequirementByRevision` (18) et `GetRevision` (20) restent ouverts : une simple mémorisation du numéro de révision ne suffirait pas à reproduire la transformation firmware vers un Requirement.
+
+**Compteur historique : 1 531 IMPL-SRC / 116 PARTIEL / 125 STUB / 140 NOOP / 1 770 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 291** : 1 770 NULL + 125 STUB + 116 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Pas de build natif PS5 ni de validation console revendiqués pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

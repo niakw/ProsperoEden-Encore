@@ -352,9 +352,10 @@ if(PS5_NATIVE)
         COMPILE_OPTIONS "-Wno-implicit-fallthrough;-Wno-missing-declarations;-Wno-missing-field-initializers")
 endif()
 
-# Isolated R457 NS2 12 GiB virtual / bounded 2 MiB physical resident owner.
-# Real native syscalls and guest PTE precommit; NOT included by default.
-# Do not turn this on in production until GPU coherency and PS5 boot pass.
+# R457 PS5 demand-zero owner shared by NS1/NS2 guest layouts
+# (4/6/8/10/12 GiB), with bounded 2 MiB physical residency.
+# The historical EDEN_NS2_SPARSE_BACKING option name is retained for source
+# compatibility; PS5 dual-NPDM production enables the generation-neutral owner.
 set(EDEN_NS2_SPARSE_BACKING OFF)
 if(PS5_NATIVE AND EDEN_REVIEWED_DUAL_NPDM)
     set(EDEN_NS2_SPARSE_BACKING ON)

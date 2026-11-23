@@ -2481,3 +2481,12 @@ Vendor `9c8dd143c5fd54dd51c88e96d15a8e4cba8f8674` → gitlink moteur `cc0cd9f042
 **Compteur courant : 1 717 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 311 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 703** : 1 311 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## CAPS:A — wrappers AlbumManager (23/11/2026)
+
+Vendor `486fd09dcd10c3c59c85bc67024b09d19e6f5d19` (inclut `7428d50144fe527fe136211823491dd82e40156b`) → gitlink moteur `9c1df636ca461b59a6f845779169d506c29d8790`. **11 NULL → IMPL-SRC** : fonctions de comptage/taille/montage/cache et chargement screenshot/thumbnail réutilisent le backend AlbumManager existant. Pas de validation console revendiquée.
+
+**Compteur courant : 1 728 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 300 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 692** : 1 300 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

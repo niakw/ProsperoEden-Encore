@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 637 | 80 | **1 717** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 648 | 80 | **1 728** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 192 | 0 | **192** |
-| **NULL — Handler NULL** | 1 311 | 0 | **1 311** |
+| **NULL — Handler NULL** | 1 300 | 0 | **1 300** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3259,25 +3259,25 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| caps:a | `0` | `GetAlbumFileCount` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `0` | `GetAlbumFileCount` | — | **IMPL-SRC** (compte réel via AlbumManager par stockage ; vendor `7428d501`) | 2026-11-23 |
 | caps:a | `1` | `GetAlbumFileList` | — | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `2` | `LoadAlbumFile` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `3` | `DeleteAlbumFile` | — | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `4` | `StorageCopyAlbumFile` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `5` | `IsAlbumMounted` | — | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `6` | `GetAlbumUsage` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `7` | `GetAlbumFileSize` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `7` | `GetAlbumFileSize` | — | **IMPL-SRC** (taille réelle du fichier album indexé ; vendor `7428d501`) | 2026-11-23 |
 | caps:a | `8` | `LoadAlbumFileThumbnail` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `9` | `LoadAlbumScreenShotImage` | 2.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `10` | `LoadAlbumScreenShotThumbnailImage` | 2.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `9` | `LoadAlbumScreenShotImage` | 2.0.0+ | **IMPL-SRC** (ABI libnx width/height + buffers ; décodeur AlbumManager réel ; vendor `486fd09d`) | 2026-11-23 |
+| caps:a | `10` | `LoadAlbumScreenShotThumbnailImage` | 2.0.0+ | **IMPL-SRC** (thumbnail réel via AlbumManager ; vendor `486fd09d`) | 2026-11-23 |
 | caps:a | `11` | `GetAlbumEntryFromApplicationAlbumEntry` | 2.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `12` | `LoadAlbumScreenShotImageEx` | 3.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `13` | `LoadAlbumScreenShotThumbnailImageEx` | 3.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `12` | `LoadAlbumScreenShotImageEx` | 3.0.0+ | **IMPL-SRC** (decode options + buffers réels ; vendor `486fd09d`) | 2026-11-23 |
+| caps:a | `13` | `LoadAlbumScreenShotThumbnailImageEx` | 3.0.0+ | **IMPL-SRC** (thumbnail Ex réel ; vendor `486fd09d`) | 2026-11-23 |
 | caps:a | `14` | `LoadAlbumScreenShotImageEx0` | 3.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `15` | `GetAlbumUsage3` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `16` | `GetAlbumMountResult` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `16` | `GetAlbumMountResult` | 4.0.0+ | **IMPL-SRC** (retourne l'état de montage AlbumManager sans le modifier ; vendor `7428d501`) | 2026-11-23 |
 | caps:a | `17` | `GetAlbumUsage16` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `100` | `GetAlbumFileCountEx0` | 5.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `100` | `GetAlbumFileCountEx0` | 5.0.0+ | **IMPL-SRC** (ABI 0x10 libnx ; compte réel avec flags conservés ; vendor `7428d501`) | 2026-11-23 |
 | caps:a | `101` | `GetAlbumFileListEx0` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `202` | `SaveEditedScreenShot` | 1.0.0-2.3.0 | **HORS-VERSION** ([source C++][ns1-src-072]) | 2026-11-23 |
 | caps:a | `301` | `GetLastOverlayScreenShotThumbnail` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID 301 = GetLastThumbnail (nullptr), nom différent ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
@@ -3287,9 +3287,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:a | `1001` | `LoadAlbumScreenShotThumbnailImageEx0` | 3.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `1002` | `LoadAlbumScreenShotImageEx1` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `1003` | `LoadAlbumScreenShotThumbnailImageEx1` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `8001` | `ForceAlbumUnmounted` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `8002` | `ResetAlbumMountStatus` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `8011` | `RefreshAlbumCache` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `8001` | `ForceAlbumUnmounted` | — | **IMPL-SRC** (déclare le stockage album indisponible dans AlbumManager ; vendor `7428d501`) | 2026-11-23 |
+| caps:a | `8002` | `ResetAlbumMountStatus` | — | **IMPL-SRC** (remonte le stockage disponible conformément à libnx ; vendor `7428d501`) | 2026-11-23 |
+| caps:a | `8011` | `RefreshAlbumCache` | — | **IMPL-SRC** (rescan réel du cache SD ; vendor `7428d501`) | 2026-11-23 |
 | caps:a | `8012` | `GetAlbumCache` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `8013` | `GetAlbumCacheEx` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `8021` | `GetAlbumEntryFromApplicationAlbumEntryAruid` | 2.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
@@ -6527,3 +6527,10 @@ Vendor `beb30c7a2de729e582472c106abe03f50cc01542` → gitlink moteur `b7cf2d1893
 Vendor `9c8dd143c5fd54dd51c88e96d15a8e4cba8f8674` → gitlink moteur `cc0cd9f042f41ce77a05988f0770879243cd1b6d`. **5 NULL → IMPL-SRC.** ABI recroisée sur libnx et le dump Capture NS1 23.0.1 : storage u8, registration 0x18, lookup 0x8→0x10. L'AlbumManager expose maintenant le montage/démontage réel et le service conserve le mapping ARUID→ApplicationId. Cmd2014 reste ouvert faute de code résultat « non enregistré » confirmé. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 717 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 311 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 703.**
+
+
+### CAPS:A — wrappers AlbumManager (23/11/2026)
+
+Vendor `486fd09dcd10c3c59c85bc67024b09d19e6f5d19` (inclut `7428d50144fe527fe136211823491dd82e40156b`) → gitlink moteur `9c1df636ca461b59a6f845779169d506c29d8790`. **11 NULL → IMPL-SRC** : count/size/mount/countEx0, force/reset/refresh cache, plus quatre loaders screenshot/thumbnail standard et Ex. Les ABI viennent de libnx et les données restent celles de l'AlbumManager réellement utilisé par Encore. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 728 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 300 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 692.**

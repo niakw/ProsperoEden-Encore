@@ -1078,6 +1078,47 @@ const BoxIndex& RetailCaseIndex() {
     return index;
 }
 
+// Keep retail artwork keyed by console generation. Legacy unscoped v9
+// indices may serve NS1, but must NEVER feed an NS2 front or square icon.
+bool UseNs2CaseIndex(const pe::ui::Game& game) {
+    return (game.title_id & 0xFF00000000000000ULL) == 0x0400000000000000ULL ||
+           game.format == "NUP" || game.file.ends_with(".nup");
+}
+
+BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
+                                       const std::string& name,
+                                       const std::string& alternate_name) {
+    const auto find = [&](const std::string& title) {
+        const std::string key = CaseKey(title);
+        if (key.empty()) return index.end();
+        auto it = index.find(std::string(ns2 ? "ns2:" : "ns1:") + key);
+        if (it == index.end() && !ns2) it = index.find(key);
+        return it;
+    };
+    const auto first = find(name);
+    return first == index.end() ? find(alternate_name) : first;
+}
+
+// Explicit cross-generation BACK fallback only, for the same base title.
+// A Switch 1 front must never masquerade as the Switch 2 edition.
+const std::vector<std::string>* MatchingNs1Back(
+    const BoxIndex& index, const std::string& name,
+    const std::string& alternate_name) {
+    const auto lookup = [&](const std::string& title)
+        -> const std::vector<std::string>* {
+        std::string key = CaseKey(title);
+        constexpr std::string_view suffix = " nintendo switch 2 edition";
+        if (key.ends_with(suffix)) key.erase(key.size() - suffix.size());
+        if (key.empty()) return nullptr;
+        auto it = index.find("ns1:" + key);
+        if (it == index.end()) it = index.find(key); // legacy v9
+        return it == index.end() || it->second[1].empty()
+            ? nullptr : &it->second[1];
+    };
+    if (const auto* back = lookup(name)) return back;
+    return lookup(alternate_name);
+}
+
 std::string CaseFacePath(std::uint64_t title_id, const char* side) {
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
@@ -1097,6 +1138,18 @@ std::string CachedGamesDbSquare(std::uint64_t title_id) {
 
 // Scenic images are actual LaunchBox screenshots/fanart, cached separately
 // from genuine physical box scans. Original covers never read these paths.
+// Use the first GamesDB fanart, then its first real gameplay shot.
+// Caller gives Nlib banner/screenshot priority over both.
+std::string CachedGamesDbHero(std::uint64_t title_id) {
+    if (title_id == 0) return {};
+    for (int scene : {1, 3, 4, 5}) {
+        const std::string side = "scene-" + std::to_string(scene);
+        if (auto path = AvailableArtwork(CaseFacePath(title_id, side.c_str()));
+            !path.empty()) return path;
+    }
+    return {};
+}
+
 std::vector<std::string> CachedCaseScenes(std::uint64_t title_id) {
     std::vector<std::string> scenes;
     if (title_id == 0) return scenes;
@@ -1231,12 +1284,11 @@ bool FetchCaseFace(const std::vector<std::string>& candidates,
 
 bool EnsureGamesDbSquare(std::uint64_t title_id, const std::string& name,
                          const std::string& alternate_name, int language_choice,
-                         const std::atomic<bool>* cancel) {
+                         const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return false;
     if (!CachedGamesDbSquare(title_id).empty()) return true;
     const auto& index = RetailCaseIndex();
-    auto selected = index.find(CaseKey(name));
-    if (selected == index.end()) selected = index.find(CaseKey(alternate_name));
+    const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end() || selected->second[8].empty()) return false;
     auto candidates = LocaleCaseCandidates(selected->second[8], language_choice, 8);
     if (candidates.empty()) return false;
@@ -1301,15 +1353,11 @@ bool LimitRetailCasePromotion(std::vector<std::string>& candidates,
 }
 
 unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
-                      const std::string& alternate_name, int language_choice,
-                      const std::atomic<bool>* cancel) {
+                          const std::string& alternate_name, int language_choice,
+                          const std::atomic<bool>* cancel, bool second_generation) {
     if (title_id == 0 || (cancel && cancel->load(std::memory_order_acquire))) return 0;
     const auto& index = RetailCaseIndex();
-    const auto selected = [&]() -> BoxIndex::const_iterator {
-        auto it = index.find(CaseKey(name));
-        if (it != index.end()) return it;
-        return index.find(CaseKey(alternate_name));
-    }();
+    const auto selected = FindCaseEntry(index, second_generation, name, alternate_name);
     if (selected == index.end()) {
         std::fprintf(stderr, "EDEN_CASE_LOOKUP title=%016llX status=no-match name=%s alternate=%s index_entries=%zu\n",
                      static_cast<unsigned long long>(title_id), name.c_str(),
@@ -1355,6 +1403,8 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // disable all retries for four hours on a newly installed game.
         retries[title_id] = std::chrono::steady_clock::now() + std::chrono::minutes(5);
     }
+    const auto* ns1_back = second_generation && selected->second[1].empty()
+        ? MatchingNs1Back(index, name, alternate_name) : nullptr;
     bool all_ready = true;
     // Migration to WebP also changes the art; notify the UI even when the
     // underlying CDN candidate was already in cache.
@@ -1374,7 +1424,8 @@ unsigned EnsureRetailCase(std::uint64_t title_id, const std::string& name,
         // otherwise the 5-minute retry could leave a complete paper wrap
         // without its printed spine until the next launcher session.
         // Gameplay previews remain independent of real back paper.
-        auto candidates = LocaleCaseCandidates(selected->second[side], language_choice, side);
+        const auto& sources = side == 1 && ns1_back ? *ns1_back : selected->second[side];
+        auto candidates = LocaleCaseCandidates(sources, language_choice, side);
         if (candidates.empty()) continue;
         const char* const names[] = {
             "front", "back", "spine", "scene-1", "scene-2", "scene-3", "scene-4", "scene-5"};

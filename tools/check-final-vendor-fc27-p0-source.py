@@ -1718,7 +1718,7 @@ REVIEWED_PINS.add("716e069f212b89b6fd13af56b0677343cf41ba07")
 REVIEWED_PINS.add("6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b")  # immutable runtime, shutdown test provenance only
 # Current shutdown successor on top of the reviewed demand-zero graph.
 # Seal every source changed after ee64; do not blanket-accept later vendors.
-if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb":
+if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb"}:
     for relative, expected in {
         "encore-active/eden-core/src/core/hle/service/server_manager.cpp":
             "dd6dc2d8359ac14d36526a9dc88905cabf36a798",
@@ -1730,7 +1730,7 @@ if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6d
         raw=(V/relative).read_bytes()
         digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert digest == expected, ("Current PS5 teardown successor drift", relative, digest)
-    if actual_vendor_pin in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb":
+    if actual_vendor_pin in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb"}:
         relative="tests/ns2_syncpt_bootstrap_source.py"
         raw=(V/relative).read_bytes()
         digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
@@ -1763,7 +1763,7 @@ if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6d
             ).hexdigest()
             assert pipeline_digest == "d222fb5565cdf8db30c6d3d464f107ff26a042c8", (
                 "FC27 NONE render-target successor drift", pipeline_digest)
-    if actual_vendor_pin in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb":
+    if actual_vendor_pin in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb"}:
         # Exact successor of 593bc9ee: only the two native guest memory
         # backends changed, making ZeroBlock generation-neutral for NS1/NS2.
         for relative, expected in {
@@ -1775,7 +1775,7 @@ if actual_vendor_pin in {"603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6d
             raw=(V/relative).read_bytes()
             digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
             assert digest == expected, ("NS1/NS2 sparse memory successor drift", relative, digest)
-        if actual_vendor_pin in {"d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb":
+        if actual_vendor_pin in {"d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb"}:
             relative = "tests/ns2_r457_kernel_slab_precommit_host.py"
             raw = (V / relative).read_bytes()
             digest = hashlib.sha1(

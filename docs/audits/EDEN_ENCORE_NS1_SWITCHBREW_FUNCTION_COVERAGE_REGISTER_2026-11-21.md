@@ -2391,3 +2391,12 @@ Vendor `90bf581546e467daf19ac091cb301c5271df3f94` → gitlink moteur `2fded1df7b
 **Compteur courant : 1 637 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 422 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 822** : 1 422 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## AppletAE — releases des buffers de capture legacy (23/11/2026)
+
+Vendor `f48b517270481dffb1a47a8e76c68035b73baedf` → gitlink moteur `52973e885b296e55a1615dab463f511289172aa5`. Cmd11/13/15 sont confirmées sans entrée/sortie dans les dumps NS1 22.5/23.0.1. Le backend Encore capture les snapshots de façon synchrone et ne garde aucun ownership après retour ; les releases legacy sont donc des handlers explicites cohérents avec 23/25/27. Les acquisitions avec handles restent ouvertes. **3 NULL → IMPL-SRC.** Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 640 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 419 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 819** : 1 419 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

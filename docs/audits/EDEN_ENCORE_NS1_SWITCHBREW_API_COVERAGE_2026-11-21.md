@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 557 | 80 | **1 637** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 560 | 80 | **1 640** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 60 | 0 | **60** |
 | **NOOP — No-op documenté** | 153 | 0 | **153** |
-| **NULL — Handler NULL** | 1 422 | 0 | **1 422** |
+| **NULL — Handler NULL** | 1 419 | 0 | **1 419** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1824,11 +1824,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `8` | `TakeScreenShotOfOwnLayer` | 2.0.0+ | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `9` | `CopyBetweenCaptureBuffers` | 5.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `10` | `AcquireLastApplicationCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `11` | `ReleaseLastApplicationCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `11` | `ReleaseLastApplicationCaptureBuffer` | — | **IMPL-SRC** (release explicite du chemin legacy ; le port PS5 copie le snapshot de façon synchrone et ne conserve aucun ownership après Acquire ; vendor `f48b5172`) | 2026-11-23 |
 | appletAE | `12` | `AcquireLastForegroundCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `13` | `ReleaseLastForegroundCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `13` | `ReleaseLastForegroundCaptureBuffer` | — | **IMPL-SRC** (release explicite cohérente avec le backend capture synchrone Encore, sans ownership persistant ; vendor `f48b5172`) | 2026-11-23 |
 | appletAE | `14` | `AcquireCallerAppletCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `15` | `ReleaseCallerAppletCaptureBuffer` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `15` | `ReleaseCallerAppletCaptureBuffer` | — | **IMPL-SRC** (release explicite cohérente avec le backend capture synchrone Encore, sans ownership persistant ; vendor `f48b5172`) | 2026-11-23 |
 | appletAE | `16` | `AcquireLastApplicationCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `17` | `AcquireLastForegroundCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `18` | `AcquireCallerAppletCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
@@ -6453,3 +6453,10 @@ Vendor `77ec007d1b9cc66487cc6bbf94a1a9231d2b4117` (inclut `8cf1727e6ce48acf1d3d3
 Vendor `90bf581546e467daf19ac091cb301c5271df3f94` → gitlink moteur `2fded1df7b7c0f3f1e49bc85183e9bfaf4f48568`. Les dumps Account NS1 22.5.0/23.0.1 confirment une entrée UUID de 0x10 octets pour les commandes 202 et 206. Encore suit maintenant explicitement le profil provisoire créé par `BeginUserRegistration` : `CancelUserRegistration` ne peut supprimer que ce profil provisoire, et `CompleteUserRegistration[Forcibly]` le persiste puis libère l'état pending. Les mêmes handlers sont raccordés sur `acc:e` moderne, sans les recompter dans ce catalogue. **2 NULL → IMPL-SRC.** Validation PS5 non revendiquée.
 
 **Compteur courant : 1 637 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 422 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 822.**
+
+
+### AppletAE — releases des buffers de capture legacy (23/11/2026)
+
+Vendor `f48b517270481dffb1a47a8e76c68035b73baedf` → gitlink moteur `52973e885b296e55a1615dab463f511289172aa5`. Les dumps Applet Manager NS1 22.5/23.0.1 confirment que cmd11/13/15 sont des releases sans entrée ni sortie. Encore utilise déjà un chemin capture synchrone pour les shared buffers 22–27 : le snapshot est copié sous verrou puis l'ownership est libéré avant le retour. Les trois releases legacy sont donc raccordées au même modèle explicite, sans inventer les handles Horizon requis par les acquisitions 10/12/14/16–18. **3 NULL → IMPL-SRC.** Validation PS5 non revendiquée.
+
+**Compteur courant : 1 640 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 419 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 819.**

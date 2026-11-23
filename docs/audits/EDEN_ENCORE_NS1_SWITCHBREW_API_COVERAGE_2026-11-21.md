@@ -33,8 +33,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
-| **NOOP — No-op documenté** | 119 | 0 | **119** |
-| **NULL — Handler NULL** | 2 088 | 0 | **2 088** |
+| **NOOP — No-op documenté** | 123 | 0 | **123** |
+| **NULL — Handler NULL** | 2 084 | 0 | **2 084** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -447,8 +447,8 @@ pie showData
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
-    "No-op documenté" : 119
-    "Handler NULL" : 2088
+    "No-op documenté" : 123
+    "Handler NULL" : 2084
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5593,8 +5593,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `79` | `GetProductModel` | — | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `80` | `GetLdnChannel` | — | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
 | set:sys | `81` | `SetLdnChannel` | — | **IMPL-SRC** (valeur lue/écrite dans `SystemSettings` existant, persistée via `SetSaveNeeded()` ; effet matériel hôte non revendiqué ; vendor `694becfb`) | 2026-11-22 |
-| set:sys | `82` | `AcquireTelemetryDirtyFlagEventHandle` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `83` | `GetTelemetryDirtyFlags` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `82` | `AcquireTelemetryDirtyFlagEventHandle` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d833c0f790973b53be9abf24df8d328377557494/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; handle événement valide non signalé / masque nul faute de producteur local) | 2026-11-23 |
+| set:sys | `83` | `GetTelemetryDirtyFlags` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d833c0f790973b53be9abf24df8d328377557494/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; handle événement valide non signalé / masque nul faute de producteur local) | 2026-11-23 |
 | set:sys | `84` | `GetPtmBatteryLot` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `85` | `SetPtmBatteryLot` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `86` | `GetPtmFuelGaugeParameter` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
@@ -5604,8 +5604,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `90` | `GetMiiAuthorId` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `91` | `SetShutdownRtcValue` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
 | set:sys | `92` | `GetShutdownRtcValue` | — | **IMPL-SRC** (handler raccordé aux données existantes, conservation par `SetSaveNeeded()` lorsque modifiées ; vendor `0aa3af72` ; effet matériel hôte non certifié) | 2026-11-22 |
-| set:sys | `93` | `AcquireFatalDirtyFlagEventHandle` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `94` | `GetFatalDirtyFlags` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `93` | `AcquireFatalDirtyFlagEventHandle` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d833c0f790973b53be9abf24df8d328377557494/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; handle événement valide non signalé / masque nul faute de producteur local) | 2026-11-23 |
+| set:sys | `94` | `GetFatalDirtyFlags` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d833c0f790973b53be9abf24df8d328377557494/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; handle événement valide non signalé / masque nul faute de producteur local) | 2026-11-23 |
 | set:sys | `95` | `GetAutoUpdateEnableFlag` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `96` | `SetAutoUpdateEnableFlag` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `97` | `GetNxControllerSettings` | 2.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/032e41924a3d82f654ebbab15601eb609dbf4fcf/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |

@@ -783,6 +783,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 642** : 2 088 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` dirty flags Telemetry / Fatal — 23/11/2026
+
+**Vendor `d833c0f790973b53be9abf24df8d328377557494`** (arbre `53e0136353a64f4cfaa86e24541d634764d8e318`) sur la branche secondaire NS1.
+
+- `AcquireTelemetryDirtyFlagEventHandle` (82), `GetTelemetryDirtyFlags` (83), `AcquireFatalDirtyFlagEventHandle` (93) et `GetFatalDirtyFlags` (94) : **4 NULL → NOOP documentés**.
+- Les deux Acquire retournent de vrais `KReadableEvent` détenus par un `ServiceContext`; ils ne sont jamais signalés car Encore ne possède aucun producteur Telemetry/Fatal.
+- Les getters renvoient les deux masques 64 bits à zéro, cohérents avec l'absence de modification locale dans ces domaines. Aucun changement de settings n'est inventé pour provoquer un événement.
+- ABI recroisée avec libnx : événements non auto-clear et deux `u64` de sortie pour chaque getter.
+
+**Compteur historique : 1 470 IMPL-SRC / 110 PARTIEL / 149 STUB / 123 NOOP / 2 084 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 41 HORS-VERSION / 0 ABSENT / 282 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 638** : 2 084 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

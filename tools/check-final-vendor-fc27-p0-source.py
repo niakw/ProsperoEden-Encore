@@ -1949,6 +1949,30 @@ REVIEWED_PINS.add("04e252186aa42bacde0899e0c9224035c83a6b0d")
 REVIEWED_PINS.add("44f5b75bc93bcea146ad6fba3ac294405ae8709b")
 REVIEWED_PINS.add("70789b12dea4d72ce9e7f054c5b6f552ec488f5d")
 REVIEWED_PINS.add("9db97fb12db1a390d6b2410f0c18333aa31e37da")
+# Nov23 stabilization successor: runtime shutdown/cache/fidelity plus guest-frame pacing.
+# Seal every changed selected owner exactly; all older audit receipts remain immutable.
+if actual_vendor_pin == "60fa67b98286bd84bd591987c5690ae9b15bda3f":
+    for relative, expected in {
+        "encore-active/eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
+        "encore-active/eden-core/src/core/hle/kernel/kernel_dev.cpp": "48c48318f2d6587bc8d7dc4ca7bbe9f73d107c6e",
+        "encore-active/eden-core/src/core/hle/kernel/kernel_standard.cpp": "6ca8f7a848a2c39cba906374049b55badf418d46",
+        "encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": "7f07e392ea0cc828d862da29d32ada1ebc3966aa",
+        "encore-active/eden-core/src/video_core/gpu_vulkan.cpp": "f083c985451563dcfe387d1bc61f54bd02ed762e",
+        "encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h": "5c6d015cf207d63de31b577411972606145d9f2e",
+        "encore-active/ns2-runtime/process/core/core.cpp": "0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98",
+        "sources/eden/src/core/hle/service/am/applet_manager.cpp": "f16d7c2585595d91e89ff34f3223e0b8fe905220",
+        "sources/eden/src/core/hle/service/am/applet_manager.h": "9724a70f172cbb48130f5c1bfa8703cac119a3cb",
+        "encore-active/eden-vulkan/include/video_core/renderer_vulkan/frame_pacer.h": "c3f6f99dd427fb9fd0acb84bb50ba88dc25d9a89",
+        "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_present_manager.h": "5e4b021612130d5e297b38f34dec2ed3295ad143",
+        "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h": "c82ae5986c5028795093ff8573c33068d12c6de3",
+        "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_swapchain.h": "c4df1ab813495b8014e0eda5ed4bcd8fb0be855c",
+        "encore-active/eden-vulkan/vulkan_present_manager.cpp": "87575a627c3bf2d8280d9ad7916d86988177e67b",
+        "encore-active/eden-vulkan/vulkan_swapchain.cpp": "135aed0cc6a30caf43caefdd2d6a81256c359bfc",
+    }.items():
+        raw = (V / relative).read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == expected, ("Nov23 stabilization owner drift", relative, actual)
+    REVIEWED_PINS.add("60fa67b98286bd84bd591987c5690ae9b15bda3f")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

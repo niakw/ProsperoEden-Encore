@@ -91,6 +91,7 @@ reviewed_vendors.add("04e252186aa42bacde0899e0c9224035c83a6b0d")
 reviewed_vendors.add("44f5b75bc93bcea146ad6fba3ac294405ae8709b")
 reviewed_vendors.add("70789b12dea4d72ce9e7f054c5b6f552ec488f5d")
 reviewed_vendors.add("9db97fb12db1a390d6b2410f0c18333aa31e37da")
+reviewed_vendors.add("60fa67b98286bd84bd591987c5690ae9b15bda3f")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
@@ -125,7 +126,7 @@ if selected in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9c
     new_owner_blobs={
     "encore-active/eden-core/src/core/hle/service/sm/sm.cpp": "34c7c85f1476a3ba819ad20b8a4f8150cca86e16",
     "encore-active/eden-core/src/core/hle/service/sm/sm.h": "7069439e66a6f28ffa56229e08906a21222e2801",
-    "encore-active/ns2-runtime/process/core/core.cpp": "83fc9a903b05ed9fd096c35102db54a966d736c2",
+    "encore-active/ns2-runtime/process/core/core.cpp": "0e0aadb72c8de5bb2c66ce9105b1dd2d381b5f98",
     "encore-active/ns2-runtime/am/core/hle/service/am/service/application_functions.cpp": "9bfaa26664361994902d5b7f73d6a41ff0eadb07",
     "encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp": "2b5be4eba2500da2993db2ed1c86d44ddfa5554f",
     "encore-active/ns2-runtime/sparse-residency/core/hle/kernel/init/init_slab_setup.cpp": "130eb7bd53e29b816bb81fec3fa053a584cd4b6e",

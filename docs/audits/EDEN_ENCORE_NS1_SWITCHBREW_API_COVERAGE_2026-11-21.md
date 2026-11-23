@@ -29,19 +29,19 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 390 | 80 | **1 470** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 368 | 80 | **1 448** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
-| **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
+| **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
+| **STUB — Stub / résultat simulé** | 146 | 0 | **146** |
 | **NOOP — No-op documenté** | 123 | 0 | **123** |
-| **NULL — Handler NULL** | 2 073 | 0 | **2 073** |
+| **NULL — Handler NULL** | 2 027 | 0 | **2 027** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 67 | 0 | **67** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 149 | 0 | **149** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 282 | 0 | **282** |
-| **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
+| **ABI-DIFF — Noms/ABI divergents** | 276 | 0 | **276** |
+| **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
 | **TOTAL DISTINCT** | **4 736** | **117** | **4 853** |
@@ -443,19 +443,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1470
+    "Implémentation source retrouvée" : 1448
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 110
-    "Stub / résultat simulé" : 149
+    "Implémentation partielle" : 108
+    "Stub / résultat simulé" : 146
     "No-op documenté" : 123
-    "Handler NULL" : 2073
+    "Handler NULL" : 2027
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 67
+    "Hors version firmware cible" : 149
     "Commande absente des tables" : 0
-    "Noms/ABI divergents" : 282
-    "Interface ambiguë" : 12
+    "Noms/ABI divergents" : 276
+    "Interface ambiguë" : 9
     "Non vérifié" : 0
     "ID SVC non trouvé" : 1
 ```
@@ -965,88 +965,88 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `2` | `HasDone` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `3` | `GetResult` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | acc:su | `999` | `Dummy` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `0` | `GetUserCount` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserCount`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `1` | `GetUserExistence` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserExistence`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `2` | `ListAllUsers` | — | **IMPL-SRC** (méthode héritée `Module::Interface::ListAllUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `3` | `ListOpenUsers` | — | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `4` | `GetLastOpenedUser` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetLastOpenedUser`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `5` | `GetProfile` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetProfile`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `6` | `GetProfileDigest` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `50` | `IsUserRegistrationRequestPermitted` | — | **PARTIEL** (méthode héritée `Module::Interface::IsUserRegistrationRequestPermitted`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `51` | `TrySelectUserWithoutInteraction` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 51 = TrySelectUserWithoutInteractionDeprecated dans l'owner courant ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `100` | `InitializeApplicationInfoV0` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ACC_U0 ID 100 = InitializeApplicationInfo ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `101` | `GetBaasAccountManagerForApplication` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetBaasAccountManagerForApplication`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `102` | `AuthenticateApplicationAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `103` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `110` | `StoreSaveDataThumbnail` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; Module::Interface::StoreSaveDataThumbnailSystem/Application marqué STUBBED ; pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `111` | `ClearSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `120` | `CreateGuestLoginRequest` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `130` | `LoadOpenContext` | 5.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::LoadOpenContext`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `131` | `ListOpenContextStoredUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `140` | `InitializeApplicationInfo` | 6.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ACC_U0 ID 140 = InitializeApplicationInfoRestricted ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `141` | `ListQualifiedUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListQualifiedUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `150` | `IsUserAccountSwitchLocked` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::IsUserAccountSwitchLocked`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u0 | `0` | `GetSessionId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `12` | `GetAccountId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `13` | `GetLinkedNintendoAccountId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `14` | `GetNickname` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `15` | `GetProfileImage` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `21` | `LoadIdTokenCache` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `0` | `CheckAvailability` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `1` | `GetAccountId` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `2` | `EnsureIdTokenCacheAsync` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `3` | `LoadIdTokenCache` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `130` | `GetNintendoAccountUserResourceCacheForApplication` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; réponse fixe / marquée STUBBED, sans consultation réseau ; pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `150` | `CreateAuthorizationRequest` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `160` | `StoreOpenContext` | 5.0.0+ | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; StoreOpenedUsers() sur ProfileManager ; pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `170` | `LoadNetworkServiceLicenseKindAsync` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u0 | `0` | `GetSystemEvent` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `1` | `Cancel` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `2` | `HasDone` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `3` | `GetResult` | — | **NULL** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; commande exacte du contexte asynchrone Account avec handler nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u0 | `100` | `GetNetworkServiceLicenseKind` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; IAsyncNetworkServiceLicenseKindContext expose cette commande à l'ID 4 (nullptr), pas ID 100 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u1 | `0` | `GetUserCount` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserCount`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `1` | `GetUserExistence` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetUserExistence`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `2` | `ListAllUsers` | — | **IMPL-SRC** (méthode héritée `Module::Interface::ListAllUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `3` | `ListOpenUsers` | — | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `4` | `GetLastOpenedUser` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetLastOpenedUser`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `5` | `GetProfile` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetProfile`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `6` | `GetProfileDigest` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `50` | `IsUserRegistrationRequestPermitted` | — | **PARTIEL** (méthode héritée `Module::Interface::IsUserRegistrationRequestPermitted`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `51` | `TrySelectUserWithoutInteraction` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 51 = TrySelectUserWithoutInteractionDeprecated dans l'owner courant ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u1 | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **IMPL-SRC** (méthode héritée `Module::Interface::ListOpenContextStoredUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `100` | `GetUserRegistrationNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `101` | `GetUserStateChangeNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `102` | `GetBaasAccountManagerForSystemService` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetBaasAccountManagerForSystemService`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `103` | `GetBaasUserAvailabilityChangeNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `104` | `GetProfileUpdateNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `105` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `106` | `GetProfileSyncNotifier` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `110` | `StoreSaveDataThumbnail` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; StoreSaveDataThumbnailApplication marqué STUBBED ; pas de validation PS5) | 2026-11-22 |
-| acc:u1 | `111` | `ClearSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `112` | `LoadSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `113` | `GetSaveDataThumbnailExistence` | 5.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `130` | `ActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `140` | `ListQualifiedUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListQualifiedUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
-| acc:u1 | `190` | `GetUserLastOpenedApplication` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `191` | `UpdateNotificationReceiverInfo ([5.0.0-5.1.0] ActivateOpenContextHolder)` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp` ; ID 191 change de nom/owner suivant la version ; slots concernés nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| acc:u1 | `997` | `DebugInvalidateTokenCacheForUser` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `998` | `DebugSetUserStateClose` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `999` | `DebugSetUserStateOpen` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `0` | `PrepareAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `1` | `GetRequest` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `2` | `ApplyResponse` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `3` | `ApplyResponseAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `10` | `Suspend` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `100` | `GetAccountId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `101` | `GetLinkedNintendoAccountId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `102` | `GetNickname` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `103` | `GetProfileImage` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `110` | `RegisterUserAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:u1 | `111` | `GetUid` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:u0 | `0` | `GetUserCount` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `1` | `GetUserExistence` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `2` | `ListAllUsers` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `3` | `ListOpenUsers` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `4` | `GetLastOpenedUser` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `5` | `GetProfile` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `6` | `GetProfileDigest` | 3.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `50` | `IsUserRegistrationRequestPermitted` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `51` | `TrySelectUserWithoutInteraction` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `99` | `DebugActivateOpenContextRetention` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `100` | `InitializeApplicationInfoV0` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `101` | `GetBaasAccountManagerForApplication` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `102` | `AuthenticateApplicationAsync` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `103` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `110` | `StoreSaveDataThumbnail` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `111` | `ClearSaveDataThumbnail` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `120` | `CreateGuestLoginRequest` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `130` | `LoadOpenContext` | 5.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `131` | `ListOpenContextStoredUsers` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `140` | `InitializeApplicationInfo` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `141` | `ListQualifiedUsers` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `150` | `IsUserAccountSwitchLocked` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `0` | `GetSessionId` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `12` | `GetAccountId` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `13` | `GetLinkedNintendoAccountId` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `14` | `GetNickname` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `15` | `GetProfileImage` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `21` | `LoadIdTokenCache` | 3.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `0` | `CheckAvailability` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `1` | `GetAccountId` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `2` | `EnsureIdTokenCacheAsync` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `3` | `LoadIdTokenCache` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `130` | `GetNintendoAccountUserResourceCacheForApplication` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `150` | `CreateAuthorizationRequest` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `160` | `StoreOpenContext` | 5.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `170` | `LoadNetworkServiceLicenseKindAsync` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `0` | `GetSystemEvent` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `1` | `Cancel` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `2` | `HasDone` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `3` | `GetResult` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u0 | `100` | `GetNetworkServiceLicenseKind` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `0` | `GetUserCount` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `1` | `GetUserExistence` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `2` | `ListAllUsers` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `3` | `ListOpenUsers` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `4` | `GetLastOpenedUser` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `5` | `GetProfile` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `6` | `GetProfileDigest` | 3.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `50` | `IsUserRegistrationRequestPermitted` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `51` | `TrySelectUserWithoutInteraction` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `99` | `DebugActivateOpenContextRetention` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `100` | `GetUserRegistrationNotifier` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `101` | `GetUserStateChangeNotifier` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `102` | `GetBaasAccountManagerForSystemService` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `103` | `GetBaasUserAvailabilityChangeNotifier` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `104` | `GetProfileUpdateNotifier` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `105` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `106` | `GetProfileSyncNotifier` | 9.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `110` | `StoreSaveDataThumbnail` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `111` | `ClearSaveDataThumbnail` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `112` | `LoadSaveDataThumbnail` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `113` | `GetSaveDataThumbnailExistence` | 5.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `130` | `ActivateOpenContextRetention` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `140` | `ListQualifiedUsers` | 6.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `190` | `GetUserLastOpenedApplication` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `191` | `UpdateNotificationReceiverInfo ([5.0.0-5.1.0] ActivateOpenContextHolder)` | 7.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `997` | `DebugInvalidateTokenCacheForUser` | 3.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `998` | `DebugSetUserStateClose` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `999` | `DebugSetUserStateOpen` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `0` | `PrepareAsync` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `1` | `GetRequest` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `2` | `ApplyResponse` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `3` | `ApplyResponseAsync` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `10` | `Suspend` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `100` | `GetAccountId` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `101` | `GetLinkedNintendoAccountId` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `102` | `GetNickname` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `103` | `GetProfileImage` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `110` | `RegisterUserAsync` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
+| acc:u1 | `111` | `GetUid` | 1.0.0-12.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; acc:u0/acc:u1 S1 retiré après 12.1.0, remplacé par acc:e* sur HOS 13+) | 2026-11-23 |
 | acc:aa | `0` | `EnsureCacheAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:aa | `1` | `LoadCache` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:aa | `2` | `GetDeviceAccountId` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |

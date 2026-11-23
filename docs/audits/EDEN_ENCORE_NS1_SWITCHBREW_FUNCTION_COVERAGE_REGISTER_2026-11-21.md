@@ -821,6 +821,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 627** : 2 073 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Retrait HOS23 des anciennes surfaces Account `acc:u0` / `acc:u1` — 23/11/2026
+
+**Vendor `b4297d22a50b391540e3b89f9c9a5afd1f9f1985`** (arbre `c192126108c3780633116955500f3f25c406c825`) sur la branche secondaire NS1.
+
+- Les registrations `acc:u0` et `acc:u1` ont été retirées de l'owner actif `encore-active/eden-backports/src/core/hle/service/acc/acc.cpp`.
+- SwitchBrew borne ces deux services S1 à **HOS 1.0.0–12.1.0** ; HOS 13+ expose `acc:e`, `acc:e:u1` et `acc:e:u2`.
+- **82 lignes historiques → HORS-VERSION** : 22 IMPL-SRC, 46 NULL, 2 PARTIEL, 3 STUB, 6 ABI-DIFF et 3 AMBIGU. Les corps partagés peuvent rester utiles aux nouvelles surfaces Account, mais les anciennes routes `acc:u0/u1` ne sont plus des contrats HOS23.
+- **Impact sur le pool actif : -60** entrées. Aucun comportement réseau Nintendo ni profil fictif n'est ajouté.
+
+**Compteur historique : 1 448 IMPL-SRC / 108 PARTIEL / 146 STUB / 123 NOOP / 2 027 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 567** : 2 027 NULL + 146 STUB + 108 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

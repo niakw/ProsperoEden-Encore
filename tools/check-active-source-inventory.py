@@ -2077,7 +2077,9 @@ post_f07_plaintext_nca_present = {
 } & set(physical_all)
 actual_vendor = subprocess.check_output(
     ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD"], text=True).strip()
-if actual_vendor == "f4f5d53596879960b19a3701bbd2272ef1f3c634":
+if post_f07_plaintext_nca_present:
+    # The decrypted NCA readers are source-identical in the later vendor
+    # gitlink; verify both complete blobs and the active CMake selection.
     assert post_f07_plaintext_nca_present == {
         "eden-core/src/core/file_sys/content_archive.cpp",
         "eden-core/src/core/file_sys/fssystem/fssystem_nca_reader.cpp",

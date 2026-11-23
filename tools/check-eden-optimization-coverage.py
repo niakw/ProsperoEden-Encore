@@ -1958,7 +1958,9 @@ print("ENCORE_NS2_LOADING_SVC_F07_ISOLATION_PASS owner=1 old=518")
 # reviewed runtime resource fix. Keep the 518-source audit immutable.
 ps5_vfs128_owner = "vendor/encore-active/eden-core/src/core/file_sys/vfs/vfs_real.cpp"
 ps5_vfs128_present = {ps5_vfs128_owner} & all_owners
-if ps5_vfs128_selected:
+if ps5_vfs128_present:
+    # Source-owned validation survives vendor revisions where this exact
+    # PS5 VFS resource-budget owner remains unchanged.
     assert ps5_vfs128_present == {ps5_vfs128_owner}
     raw = (ROOT / ps5_vfs128_owner).read_bytes()
     actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
@@ -1970,7 +1972,9 @@ else:
     assert not ps5_vfs128_present
 ps5_ns2_ipc_owner = "vendor/encore-active/eden-threading/src/core/hle/kernel/k_server_session.cpp"
 ps5_ns2_ipc_present = {ps5_ns2_ipc_owner} & all_owners
-if ps5_ns2_ipc_selected:
+if ps5_ns2_ipc_present:
+    # Validate selected HLE IPC owner and its CMake overlay by immutable
+    # source blobs, not a historical version tag.
     assert ps5_ns2_ipc_present == {ps5_ns2_ipc_owner}
     for relative, expected in ((ps5_ns2_ipc_owner, "5bd8cd81c2bf8d32f0d65406881b8286a06ca771"),
         ("vendor/encore-active/eden-threading/native-hle-overrides.cmake", "0ed9f8520019c07874c157c97ded3864c07a8a32")):

@@ -31,10 +31,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 452 | 80 | **1 532** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 113 | 3 | **116** |
+| **PARTIEL — Implémentation partielle** | 125 | 3 | **128** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 140 | 0 | **140** |
-| **NULL — Handler NULL** | 1 769 | 0 | **1 769** |
+| **NULL — Handler NULL** | 1 757 | 0 | **1 757** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -445,10 +445,10 @@ pie showData
     title NS1 — 4 853 entrées distinctes
     "Implémentation source retrouvée" : 1532
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 116
+    "Implémentation partielle" : 128
     "Stub / résultat simulé" : 125
     "No-op documenté" : 140
-    "Handler NULL" : 1769
+    "Handler NULL" : 1757
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -4923,24 +4923,24 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `4` | `Submit` | — | **IMPL-SRC** (place réellement IRequest en `OnHold` sous verrou avant résolution observable ; vendor `084983e0`) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `5` | `SetRequirement` | — | **IMPL-SRC** ([vendor 62660c05](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/62660c058f2a76353dba6bc208f165857460000e/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; Requirement HOS23 opaque 0x24 conservé byte-exact dans IRequest) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `6` | `SetRequirementPreset` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `8` | `SetPriority` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `8` | `SetPriority` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `9` | `SetNetworkProfileId` | — | **PARTIEL** ([active NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d1524eb55acb905c694a46cdb1333e32c0e4bdbf/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI UUID 0x10 corrigée et état mémorisé, sélection/routage par profil encore incomplet) | 2026-11-23 |
-| nifm:a, nifm:s, nifm:u | `10` | `SetRejectable` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `10` | `SetRejectable` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `11` | `SetConnectionConfirmationOption` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `12` | `SetPersistent` | — | **IMPL-SRC** ([vendor 2a7dfec8](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2a7dfec8c6e31b4ba004501a666a4836443d3787/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; bool persistant appliqué aux transitions OnHold/Accepted/Invalid selon la connectivité) | 2026-11-23 |
-| nifm:a, nifm:s, nifm:u | `13` | `SetInstant` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `14` | `SetSustainable` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `15` | `SetRawPriority` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `16` | `SetGreedy` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `17` | `SetSharable` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `18` | `SetRequirementByRevision` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `13` | `SetInstant` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `14` | `SetSustainable` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `15` | `SetRawPriority` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `16` | `SetGreedy` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `17` | `SetSharable` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `18` | `SetRequirementByRevision` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `19` | `GetRequirement` | — | **IMPL-SRC** ([vendor 62660c05](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/62660c058f2a76353dba6bc208f165857460000e/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; Requirement HOS23 opaque 0x24 conservé byte-exact dans IRequest) | 2026-11-23 |
-| nifm:a, nifm:s, nifm:u | `20` | `GetRevision` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `20` | `GetRevision` | — | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `21` | `GetAppletInfo` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `22` | `GetAdditionalInfo` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `23` | `SetKeptInSleep` | 3.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `24` | `RegisterSocketDescriptor` | 3.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `25` | `UnregisterSocketDescriptor` | 3.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `23` | `SetKeptInSleep` | 3.0.0+ | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `24` | `RegisterSocketDescriptor` | 3.0.0+ | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
+| nifm:a, nifm:s, nifm:u | `25` | `UnregisterSocketDescriptor` | 3.0.0+ | **PARTIEL** ([vendor 1e7f7911](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/1e7f7911c5601714733c53e3b5b73a15ec44c9b7/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI SwIPC consommée et état IRequest conservé localement ; politique/arbitrage réseau HOS non entièrement reproduits) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `0` | `Update` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `1` | `PersistOld ([1.0.0-2.3.0] Persist)` | — | **NULL** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, nullptr; non validé PS5) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `2` | `Persist` | 3.0.0+ | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |

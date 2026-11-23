@@ -1291,6 +1291,20 @@ Le miroir historique 4 853 ne matérialise pas `CreateConnectionEx` comme entré
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot NIFM IRequest — état de politique et descripteurs — 23/11/2026
+
+**Vendor `1e7f7911c5601714733c53e3b5b73a15ec44c9b7`** (arbre `f7cdef676a8b47790971e20c2b6ba03e0d66cb81`).
+
+Douze commandes `IRequest` passent **NULL → PARTIEL** avec leurs signatures SwIPC exactes : `SetPriority(u8)`, `SetRejectable(b8)`, `SetInstant(b8)`, `SetSustainable(b8,u8)`, `SetRawPriority(u8)`, `SetGreedy(b8)`, `SetSharable(b8)`, `SetRequirementByRevision(u32)`, `GetRevision()->u32`, `SetKeptInSleep(b8)`, `RegisterSocketDescriptor(u32)` et `UnregisterSocketDescriptor(u32)`.
+
+L'état est conservé dans l'objet `IRequest` sous le verrou existant ; les descripteurs sont enregistrés dans un ensemble réel, et la révision est relue par `GetRevision`. Ces commandes restent **PARTIELLES** parce que priorité, greedy/sustainable, sleep et sockets ne pilotent pas encore toutes les politiques/arbitrages réseau Horizon.
+
+**Compteur historique : 1 532 IMPL-SRC / 128 PARTIEL / 125 STUB / 140 NOOP / 1 757 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 290** : 1 757 NULL + 125 STUB + 128 PARTIEL + 271 ABI-DIFF + 9 AMBIGU. Le pool ne baisse pas sur ce lot : douze inconnues NULL deviennent douze comportements partiels qualifiés.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

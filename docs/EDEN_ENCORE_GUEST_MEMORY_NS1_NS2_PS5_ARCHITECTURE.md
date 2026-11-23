@@ -24,6 +24,8 @@
 
 **P0 retour page heap — 23/11 :** à partir de l'amont Eglantine `e01b2d9f3c5d37b6d969c93d47c485d407a88a0f`, Encore ajoute un propriétaire natif `k_page_heap.cpp` (hook initial vendor `05de9e8e`, pin courant `ee64fac7`) : lorsqu'un bloc buddy complet d'au moins 2 Mio est réellement libre, le VA est d'abord remappé sur ZERO read-only, le PA privé est ensuite restitué au pool PS5, puis seulement retiré du `Plan`. Les bords partiels ne sont jamais rendus. Ce mécanisme est distinct des trims RADV et de la compression froide, volontairement non repris. **Validation console encore requise.**
 
+**Pin courant candidat — 23/11 :** vendor `603e0d5c`, successeur strict de `ee64fac7`. Il conserve demand-zero + retour OWN→ZERO du page heap et ajoute deux protections de fermeture : les workers additionnels sont joints avant destruction de leur état de service, et le gestionnaire SM conserve le `max_sessions` dynamique. Ces changements ciblent le crash de fermeture FC27 ; **aucune validation console n'est encore revendiquée**.
+
 ## 1. Décision et priorités
 
 La mémoire physique PS5 est une ressource **commune** à l'hôte, au processus invité, au JIT, aux buffers/images RADV, aux stacks, aux caches et aux services. Une grande adresse invitée mappée n'est pas une grande allocation physique. La solution pérenne doit partager des **contrats d'ownership** entre NS1 et NS2, sans leur imposer des politiques identiques.

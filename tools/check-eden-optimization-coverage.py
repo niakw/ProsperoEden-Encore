@@ -1827,7 +1827,7 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
-elif gpu_table_vendor_pin in {"716e069f212b89b6fd13af56b0677343cf41ba07", "6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b"}:
+elif gpu_table_vendor_pin in {"716e069f212b89b6fd13af56b0677343cf41ba07", "6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"}:
     # Snapshot of exactly the current native-selected AM/HID source owners.
     # Prove immutable blob content rather than mistaking a newer vendor SHA
     # for loss of the previously reviewed HLE service graph.
@@ -3219,10 +3219,10 @@ ns2_production_blobs = {
     # until the selected renderer takes ownership. Console continuity pending.
     "headless/prosperoeden/frontend.cpp": "25884807fdf7759834cb232548184ffefca715d4",
     "vendor/encore-active/eden-core/src/core/memory_native_a32.cpp":
-        ("aa08b4af80e22109495f8dfbec1fec129f2261e9" if selected_texture_vendor in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16"} else "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if selected_texture_vendor in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+        ("aa08b4af80e22109495f8dfbec1fec129f2261e9" if selected_texture_vendor in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"} else "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if selected_texture_vendor in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "318cb932c496c09853c2d9ba333d726cf7f820cd"),
     "vendor/encore-active/eden-core/src/core/memory_native_standard.cpp":
-        ("9dad056a223b90f27470c6a5b55977217238993a" if selected_texture_vendor in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16"} else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected_texture_vendor in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+        ("9dad056a223b90f27470c6a5b55977217238993a" if selected_texture_vendor in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"} else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if selected_texture_vendor in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "91463583eec9cfcbd180a56662cda072553787e0"),
     "vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h": (
         "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972" if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"}

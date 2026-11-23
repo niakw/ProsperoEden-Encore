@@ -1716,6 +1716,21 @@ def reviewed_blob(relative, expected):
 # the immutable per-file checks below, so qualify this *one* new pin.
 REVIEWED_PINS.add("716e069f212b89b6fd13af56b0677343cf41ba07")
 REVIEWED_PINS.add("6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b")  # immutable runtime, shutdown test provenance only
+# Current shutdown successor on top of the reviewed demand-zero graph.
+# Seal every source changed after ee64; do not blanket-accept later vendors.
+if actual_vendor_pin == "603e0d5c70b04fa84a19cca8f580ed1bdb230be0":
+    for relative, expected in {
+        "encore-active/eden-core/src/core/hle/service/server_manager.cpp":
+            "dd6dc2d8359ac14d36526a9dc88905cabf36a798",
+        "encore-active/eden-core/src/core/hle/service/sm/sm.cpp":
+            "494ee50d2880a491b07c2b981193df1a686c696a",
+        "tests/shutdown_teardown_lifetime_source.py":
+            "3f46b0dbed50dcbde294a05693decd602dffa194",
+    }.items():
+        raw=(V/relative).read_bytes()
+        digest=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert digest == expected, ("Current PS5 teardown successor drift", relative, digest)
+REVIEWED_PINS.add("603e0d5c70b04fa84a19cca8f580ed1bdb230be0")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

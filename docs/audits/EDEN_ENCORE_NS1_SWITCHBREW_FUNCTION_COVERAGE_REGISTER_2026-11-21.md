@@ -947,6 +947,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 520** : 1 975 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot APM — politique guest CPU overclock explicite — 23/11/2026
+
+**Vendor `cff675360f1985a856a91f587565c79b79567818`** (arbre `1ca6e84c217e6a85bf9a686e378f05192b44c68c`) dans le propriétaire réellement compilé `sources/eden/src/core/hle/service/apm/apm_interface.cpp` ; le CMake actif liste ce chemin et aucun fichier de remplacement APM n'existe dans `eden-backports`.
+
+- `apm::IsCpuOverclockEnabled` (6), sa surface `apm:am` (6) et `ISession::SetCpuOverclockEnabled` (2) : **3 STUB → NOOP documentés**.
+- Encore ne possède pas de domaine de fréquence CPU invité à muter sur PS5. Le setter accepte donc explicitement la requête sans modifier les clocks hôtes ; le getter renvoie `false`, cohérent avec cette politique.
+- Le code n'émet plus `(STUBBED)` pour ces chemins. Aucun overclock physique PS5, gain FPS ou validation gameplay n'est revendiqué.
+- Le palier précédent moteur `ec310dfd` → vendor `909c764d` est vert X8D24 + provenance ; le lot FreeCommunication `3e1385fe` a X8D24 vert, sa provenance était encore en cours au dernier relevé.
+
+**Compteur historique : 1 487 IMPL-SRC / 114 PARTIEL / 142 STUB / 129 NOOP / 1 975 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 154 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 517** : 1 975 NULL + 142 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

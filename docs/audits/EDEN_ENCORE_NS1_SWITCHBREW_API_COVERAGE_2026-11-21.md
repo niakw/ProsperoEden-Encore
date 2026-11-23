@@ -32,8 +32,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 407 | 80 | **1 487** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 111 | 3 | **114** |
-| **STUB — Stub / résultat simulé** | 145 | 0 | **145** |
-| **NOOP — No-op documenté** | 126 | 0 | **126** |
+| **STUB — Stub / résultat simulé** | 142 | 0 | **142** |
+| **NOOP — No-op documenté** | 129 | 0 | **129** |
 | **NULL — Handler NULL** | 1 975 | 0 | **1 975** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
@@ -446,8 +446,8 @@ pie showData
     "Implémentation source retrouvée" : 1487
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 114
-    "Stub / résultat simulé" : 145
-    "No-op documenté" : 126
+    "Stub / résultat simulé" : 142
+    "No-op documenté" : 129
     "Handler NULL" : 1975
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
@@ -2419,7 +2419,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 |---|---|---|---|---|---|
 | apm | `0` | `OpenSession` | — | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
 | apm | `1` | `GetPerformanceMode` | — | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
-| apm | `6` | `IsCpuOverclockEnabled` | 7.0.0+ | **STUB** ([source C++][ns1-src-048]) | 2026-11-22 |
+| apm | `6` | `IsCpuOverclockEnabled` | 7.0.0+ | **NOOP** ([active APM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/cff675360f1985a856a91f587565c79b79567818/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; politique émulation explicite : aucun domaine d'overclock CPU invité sur PS5) | 2026-11-23 |
 | apm:p | `0` | `OpenSession` | — | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
 | apm:sys | `0` | `RequestPerformanceMode` | — | **NULL** ([source C++][ns1-src-048]) | 2026-11-22 |
 | apm:sys | `1` | `GetPerformanceEvent` | — | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
@@ -2431,7 +2431,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | apm:sys | `7` | `GetCurrentPerformanceConfiguration` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
 | ISession | `0` | `SetPerformanceConfiguration` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; met réellement à jour Controller::SetPerformanceConfiguration ; qualification statique, PS5 non validé) | 2026-11-22 |
 | ISession | `1` | `GetPerformanceConfiguration` | — | **IMPL-SRC** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; lit réellement Controller::GetCurrentPerformanceConfiguration ; qualification statique, PS5 non validé) | 2026-11-22 |
-| ISession | `2` | `SetCpuOverclockEnabled` | 8.0.0+ | **STUB** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; handler explicitement marqué STUBBED et retourne succès sans appliquer l'overclock ; qualification statique, PS5 non validé) | 2026-11-22 |
+| ISession | `2` | `SetCpuOverclockEnabled` | 8.0.0+ | **NOOP** ([active APM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/cff675360f1985a856a91f587565c79b79567818/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; politique émulation explicite : aucun domaine d'overclock CPU invité sur PS5) | 2026-11-23 |
 | fgm, fgm:0, fgm:9 | `0` | `Initialize` | — | **PARTIEL** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/fgm/fgm.cpp) ; factory crée un objet dont les opérations sont nulles ; sans preuve PS5) | 2026-11-22 |
 | fgm, fgm:0, fgm:9 | `1` | `Set` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
 | fgm, fgm:0, fgm:9 | `2` | `Get` | — | **NULL** ([source C++][ns1-src-078]) | 2026-11-22 |
@@ -3789,7 +3789,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pcm | `1` | `ReadCurrentPower` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("pcm") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | apm:am | `0` | `OpenSession` | — | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
 | apm:am | `1` | `GetPerformanceMode` | — | **IMPL-SRC** ([source C++][ns1-src-048]) | 2026-11-22 |
-| apm:am | `6` | `IsCpuOverclockEnabled` | 7.0.0+ | **STUB** ([source C++][ns1-src-048]) | 2026-11-22 |
+| apm:am | `6` | `IsCpuOverclockEnabled` | 7.0.0+ | **NOOP** ([active APM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/cff675360f1985a856a91f587565c79b79567818/sources/eden/src/core/hle/service/apm/apm_interface.cpp) ; politique émulation explicite : aucun domaine d'overclock CPU invité sur PS5) | 2026-11-23 |
 | apm:sys | `0` | `RequestPerformanceMode` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | apm:sys | `1` | `GetPerformanceEvent` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |
 | apm:sys | `2` | `GetThrottlingState` | — | DUP — répétition interface/ID/fonction (hors compteur unique) | 2026-11-21 |

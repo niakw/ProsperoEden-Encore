@@ -2171,10 +2171,11 @@ for e in entries:
 shipping=json.loads((ROOT/"vendor/encore-active/eden-backports/manifest.json").read_text())
 upstream=json.loads((ROOT/"UPSTREAM.json").read_text())
 assert shipping["pinned_eden_commit"]==upstream["eden_commit"]
-if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
-    # The merged NS1/NS2 vendor carries the EXACT pre-merge main
-    # eden-backports subtree. Verify all 84 entries without broadening
-    # the old F07 83/84-file source-history branches.
+if gpu_table_vendor_pin in {"4354add020afac574198f63d87167f3022bff9c6",
+                            "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"}:
+    # The merged/current vendor carries the EXACT same reviewed
+    # eden-backports subtree. Verify all 84 entries by tree SHA without
+    # broadening the old F07 83/84-file source-history branches.
     tree_sha = subprocess.check_output(
         ["git", "-C", str(ROOT/"vendor"),
          "rev-parse", "HEAD:encore-active/eden-backports"], text=True).strip()

@@ -105,6 +105,43 @@ int main() {
 
     assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
     assert(EdenNs2EnsureGuestBackingReadable(nullptr,0,kGranule));
+
+    // Execute the real native owner once with the default 4 GiB NS1 layout,
+    // not only the accounting Plan. This proves that the same shared ZERO
+    // mapping, write-fault promotion and page-heap return work below 12 GiB.
+    {
+        Runtime ns1_guest(4ull * GiB, 4ull * GiB);
+        assert(ns1_guest.Valid() && ns1_guest.VirtualBytes() == 4ull * GiB);
+        assert(successful_commits == 1);
+        assert(ns1_guest.UsedBytes() == 0);
+        auto* ns1_base = static_cast<std::uint8_t*>(ns1_guest.Base());
+        assert(ns1_base[0] == 0 && ns1_base[3 * kGranule + 77] == 0);
+        assert(ns1_guest.Install());
+        assert(EdenNs2EnsureGuestBackingReadable(ns1_base, 0, 4ull * GiB));
+
+        ns1_base[128] = 0x4A;
+        assert(ns1_base[128] == 0x4A);
+        assert(ns1_guest.UsedBytes() == kGranule);
+        assert(successful_commits == 2);
+
+        EdenNs2GuestBackingFreed(0, kGranule);
+        assert(ns1_guest.UsedBytes() == 0);
+        assert(ns1_base[128] == 0);
+        assert(released == 1);
+        ns1_guest.Uninstall();
+    }
+    assert(released == 2); // private OWN + shared ZERO
+    for (std::size_t slot = 1; slot < kMaxMockOwners; ++slot)
+        assert(alive[slot] == 0);
+
+    // Reset mock accounting so the long NS2 transaction below keeps its
+    // historical exact counters and rollback assertions.
+    next_physical_slot = 0;
+    successful_commits = 0;
+    released = 0;
+    fail_at = -1;
+    destructive_fail = 0;
+
     {
         Runtime guest(kNs2Dram,5*kGranule);
         assert(guest.Valid() && guest.VirtualBytes()==kNs2Dram);

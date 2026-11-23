@@ -2319,3 +2319,12 @@ Vendor `d1f92eee4c7557bd281ec481de521c178f0c6645` → gitlink moteur `e0990b2f73
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 428 NULL / 243 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 843** : 1 428 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## AppletAE — derniers chemins capture/launch debug fail-closed (23/11/2026)
+
+Vendor `fd389efbe1b51743aa630243fe00074f873dfb8a` → gitlink moteur `efc5f412feb680dc9ac462c3cd8dbd771a61dfdf`. Deux variantes `GetLaunchStorageInfoForDebug`, `RequestFlushGamePlayingMovieForDebug` et `StartContinuousRecordingFlushForDebug` passent **NULL → D** via des handlers actifs fail-closed.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 839** : 1 424 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

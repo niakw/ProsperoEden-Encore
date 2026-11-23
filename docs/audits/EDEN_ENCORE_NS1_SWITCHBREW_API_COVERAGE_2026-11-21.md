@@ -29,13 +29,13 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 537 | 80 | **1 617** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 541 | 80 | **1 621** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 488 | 0 | **1 488** |
-| **D — Rejet explicite / historique** | 161 | 33 | **194** |
+| **NULL — Handler NULL** | 1 481 | 0 | **1 481** |
+| **D — Rejet explicite / historique** | 164 | 33 | **197** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 444 | 1 | **445** |
@@ -3411,11 +3411,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | mm:u | `6` | `SetAndWait` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
 | mm:u | `7` | `Get` | — | **IMPL-SRC** (sessions MM émulées avec request_id/min/max ; GetOld reply corrigée à 3 mots ; vendor `51e5cbde`) | 2026-11-22 |
 | vi:u | `0` | `[GetDisplayService](#vi:u "wikilink")` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_root_service.cpp) ; corps GetDisplayService appelle GetApplicationDisplayService avec la permission du service ; statique, PS5 non validé) | 2026-11-22 |
-| vi:u | `1` | `[GetDisplayServiceWithProxyNameExchange](#vi:u "wikilink")` | 9.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_root_service.cpp) ; slot exact ProxyNameExchange = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| vi:u | `1` | `[GetDisplayServiceWithProxyNameExchange](#vi:u "wikilink")` | 9.0.0+ | **IMPL-SRC** (alias `GetDisplayServiceWithProxyNameExchange` raccordé au vrai `GetDisplayService`; owner backport VI actif ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
 | vi:s | `1` | `[GetDisplayService](#vi:s "wikilink")` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_root_service.cpp) ; corps GetDisplayService appelle GetApplicationDisplayService avec la permission du service ; statique, PS5 non validé) | 2026-11-22 |
-| vi:s | `3` | `[GetDisplayServiceWithProxyNameExchange](#vi:s "wikilink")` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_root_service.cpp) ; slot exact ProxyNameExchange = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| vi:s | `3` | `[GetDisplayServiceWithProxyNameExchange](#vi:s "wikilink")` | — | **IMPL-SRC** (alias `GetDisplayServiceWithProxyNameExchange` raccordé au vrai `GetDisplayService`; owner backport VI actif ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
 | vi:m | `2` | `[GetDisplayService](#vi:m "wikilink")` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_root_service.cpp) ; corps GetDisplayService appelle GetApplicationDisplayService avec la permission du service ; statique, PS5 non validé) | 2026-11-22 |
-| vi:m | `3` | `[GetDisplayServiceWithProxyNameExchange](#vi:m "wikilink")` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_root_service.cpp) ; slot exact ProxyNameExchange = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| vi:m | `3` | `[GetDisplayServiceWithProxyNameExchange](#vi:m "wikilink")` | — | **IMPL-SRC** (alias `GetDisplayServiceWithProxyNameExchange` raccordé au vrai `GetDisplayService`; owner backport VI actif ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
 | IApplicationDisplayService | `100` | `GetRelayService` | — | **PARTIEL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `101` | `GetSystemDisplayService` | — | **PARTIEL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `102` | `GetManagerDisplayService` | — | **PARTIEL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
@@ -3436,7 +3436,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IApplicationDisplayService | `2451` | `GetIndirectLayerImageCropMap` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `2460` | `GetIndirectLayerImageRequiredMemoryInfo` | — | **IMPL-SRC** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `5202` | `GetDisplayVsyncEvent` | — | **IMPL-SRC** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
-| IApplicationDisplayService | `5203` | `GetDisplayVsyncEventForDebug` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/application_display_service.cpp) ; interface réelle `IApplicationDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
+| IApplicationDisplayService | `5203` | `GetDisplayVsyncEventForDebug` | — | **IMPL-SRC** (`GetDisplayVsyncEventForDebug` réutilise le vrai handler `GetDisplayVsyncEvent` et son KEvent VSync ; owner backport VI actif ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
 | IApplicationDisplayService | `1200` | `GetZOrderCountMin` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `1202` | `GetZOrderCountMax` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `1203` | `GetDisplayLogicalResolution` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/system_display_service.cpp) ; interface réelle `ISystemDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
@@ -4559,9 +4559,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | lm | `0` | `OpenLogger` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lm/lm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | lm | `0` | `Log` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lm/lm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | lm | `1` | `SetDestination` | 3.0.0+ | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/lm/lm.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
-| lm:get | `0` | `StartLogging` | — | **NULL** ([source C++][ns1-src-093]) | 2026-11-22 |
-| lm:get | `1` | `StopLogging` | — | **NULL** ([source C++][ns1-src-093]) | 2026-11-22 |
-| lm:get | `2` | `GetLog` | — | **NULL** ([source C++][ns1-src-093]) | 2026-11-22 |
+| lm:get | `0` | `StartLogging` | — | **D** (`lm:get` est une surface de récupération de logs/dev non fournie par le runtime retail Encore ; handler dédié retourne `Kernel::ResultNotImplemented` même avec `auto_stub` ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
+| lm:get | `1` | `StopLogging` | — | **D** (`lm:get` est une surface de récupération de logs/dev non fournie par le runtime retail Encore ; handler dédié retourne `Kernel::ResultNotImplemented` même avec `auto_stub` ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
+| lm:get | `2` | `GetLog` | — | **D** (`lm:get` est une surface de récupération de logs/dev non fournie par le runtime retail Encore ; handler dédié retourne `Kernel::ResultNotImplemented` même avec `auto_stub` ; vendor `ed2f2d16`, moteur `2c51ec23`) | 2026-11-23 |
 
 ### Manu Services
 
@@ -6320,3 +6320,10 @@ Vendor `0c533eecab77160f347c860e494db7a062ea9319` → gitlink moteur `56e9033f41
 Vendor `3d3b80ecb9cbe6e5bd230a12460ec859d70f33f3` → gitlink moteur `4369aaba82949cc748528d95130e392d69e2614c`. Les 18 slots `nullptr` de `btm:dbg` et les 19 slots `nullptr` de `ns:dev` utilisent désormais des handlers fail-closed dédiés. Le catalogue historique contient **13 + 12 = 25** de ces commandes : elles passent **NULL → D**. Ce classement signifie explicitement « non pris en charge dans le runtime retail Encore », pas « fonctionnalité implémentée ».
 
 **Compteur courant : 1 617 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 488 NULL / 194 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 903.**
+
+
+### LM getter + alias VI actifs (23/11/2026)
+
+Le couple moteur `2c51ec230c5c4ceb5f962b9d4cf5d5e57a52aa13` → vendor `ed2f2d166c0621363a2e36d042897e1cc718adbf` intègre deux lots compatibles : `lm:get` refuse explicitement ses quatre commandes dev non supportées, et les backports VI raccordent les variantes `GetDisplayServiceWithProxyNameExchange` aux vrais services d'affichage ainsi que `GetDisplayVsyncEventForDebug` au vrai event VSync. Dans le catalogue historique, cela représente **3 NULL → D** et **4 NULL → IMPL-SRC**.
+
+**Compteur courant : 1 621 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 481 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 896.**

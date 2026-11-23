@@ -109,7 +109,14 @@ int main() {
         assert(base[64]==0);
         const auto after_free=successful_commits;
         base[64]=0x31;
-        assert(base[64]==0x31 && successful_commits==after_free+1);
+        if (base[64] != 0x31 || successful_commits != after_free + 1) {
+            std::fprintf(stderr,
+                         "R457_REPROMOTE_DIAG value=%u commits=%d after_free=%d used=%llu\n",
+                         static_cast<unsigned>(base[64]), successful_commits, after_free,
+                         static_cast<unsigned long long>(guest.UsedBytes()));
+        }
+        assert(base[64]==0x31);
+        assert(successful_commits==after_free+1);
         assert(guest.UsedBytes()==kGranule);
 
         assert(guest.Clear(2*kGranule+17,4096,0));

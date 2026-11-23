@@ -2454,3 +2454,12 @@ Vendor `41446c0476dc0b6b5aa9091c8d9b022d215679ea` → gitlink moteur `aaa0a4d94c
 **Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 332 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 731** : 1 332 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## BSDCFG — contrôle réseau hôte neutralisé (23/11/2026)
+
+Vendor `0264621817f4d7e2a98c2a123194e9eebbbf7efd` → gitlink moteur `23446811296ebff339f8e1b7219521b421646691`. **13 NULL → NOOP** : SetIfUp/Down, CancelIf, GetIfState, DhcpRenew et opérations ARP 6-12 répondent avec une IPC valide sans modifier l'interface réseau de la PS5. ABI recroisée sur le dump Sockets NS1 23.0.1. Pas de validation console PS5 revendiquée.
+
+**Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 183 NOOP / 1 319 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 718** : 1 319 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

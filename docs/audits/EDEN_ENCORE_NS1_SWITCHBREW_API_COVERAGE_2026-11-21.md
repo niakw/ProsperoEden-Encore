@@ -33,8 +33,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 59 | 0 | **59** |
-| **NOOP — No-op documenté** | 170 | 0 | **170** |
-| **NULL — Handler NULL** | 1 332 | 0 | **1 332** |
+| **NOOP — No-op documenté** | 183 | 0 | **183** |
+| **NULL — Handler NULL** | 1 319 | 0 | **1 319** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -2965,19 +2965,19 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsd:u, bsd:s | `30` | `SendMMsg` | 3.0.0+ | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `31` | `EventFd` | 7.0.0+ | **STUB** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `32` | `RegisterResourceStatisticsName` | 7.0.0+ | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
-| bsdcfg | `0` | `SetIfUp` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `1` | `SetIfUpWithEvent` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `2` | `CancelIf` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `3` | `SetIfDown` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `4` | `GetIfState` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `5` | `DhcpRenew` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `6` | `AddStaticArpEntry` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `7` | `RemoveArpEntry` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `8` | `LookupArpEntry` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `9` | `LookupArpEntry2` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `10` | `ClearArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `11` | `ClearArpEntries2` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
-| bsdcfg | `12` | `PrintArpEntries` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/bsd.cpp) ; table de BSDCFG exacte : nullptr ; non validé PS5) | 2026-11-22 |
+| bsdcfg | `0` | `SetIfUp` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `1` | `SetIfUpWithEvent` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `2` | `CancelIf` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `3` | `SetIfDown` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `4` | `GetIfState` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `5` | `DhcpRenew` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `6` | `AddStaticArpEntry` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `7` | `RemoveArpEntry` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `8` | `LookupArpEntry` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `9` | `LookupArpEntry2` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `10` | `ClearArpEntries` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `11` | `ClearArpEntries2` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
+| bsdcfg | `12` | `PrintArpEntries` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
 | ethc:c | `0` | `Initialize` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | ethc:c | `1` | `Cancel` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | ethc:c | `2` | `GetResult` | — | **HORS-VERSION** (SwitchBrew Services API : service borné à HOS 1.0.0–14.1.2 ; non applicable à la cible HOS 23) | 2026-11-23 |
@@ -6506,3 +6506,10 @@ Vendor `7b75ebb71f440f046f7f3e1819435de43e58f87d` → gitlink moteur `8ae25ce272
 Vendor `41446c0476dc0b6b5aa9091c8d9b022d215679ea` → gitlink moteur `aaa0a4d94c3251565b6b953d9b90ed9cdc2e99d8`. **12 NULL → IMPL-SRC**. Les commandes session 0-6/9-11 utilisent le layout Horizon `ModuleState` 0xC confirmé par les dumps NS1 23.0.1 et l'implémentation Skyline : clock/reset/power, fréquence minimale, fréquences discrètes CPU/GPU/EMC et DVFS vide lorsqu'aucun rail de tension Switch n'est émulé. Le manager gère aussi température locale et liste de seuils vide plutôt que d'inventer des seuils thermiques hôte. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 332 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 731.**
+
+
+### BSDCFG — contrôle réseau hôte neutralisé (23/11/2026)
+
+Vendor `0264621817f4d7e2a98c2a123194e9eebbbf7efd` → gitlink moteur `23446811296ebff339f8e1b7219521b421646691`. **13 NULL → NOOP documenté** pour les commandes 0-12. Les ABI ont été recroisées sur Sockets NS1 23.0.1 ; Encore n'essaie pas de monter/descendre l'interface PS5, renouveler son DHCP ou modifier sa table ARP. Les commandes avec sortie u32 renvoient un statut nul explicite. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 183 NOOP / 1 319 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 718.**

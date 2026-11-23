@@ -3682,7 +3682,8 @@ print("NX_LOADER_SOURCE_SUCCESSOR_PASS predecessor=0b4448bc current=1bfb0d79")
 for path, expected_blob, required in (
     ("headless/game_files.h", "e4502fb143a4e4efc9ffb21bdabcafab90ff922a", '".dnsp"'),
     ("vendor/encore-active/eden-core/src/core/loader/loader.cpp",
-     "0b4448bcf4bef93b9d2a54cf96256d5b81d9424e", "DXCI"),
+     "0b4448bcf4bef93b9d2a54cf96256d5b81d9424e",
+     'extension == "xci" || extension == "xcz" || extension == "dxci"'),
 ):
     assert path not in post_index and path in drift_index, ("DNSP/DXCI classification", path)
     delta = drift_index.pop(path)

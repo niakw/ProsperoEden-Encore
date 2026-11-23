@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <cstring>
 #include <deque>
 #include <functional>
@@ -373,9 +374,26 @@ void Archive::Parse() {
         std::set<std::string> localized_icon_tags;
         if (!meta_size) Check(meta_at == 0, "zero metadata with nonzero address");
         else {
-            Check(meta_size <= MaxMeta && meta_at >= blob_at &&
-                  meta_at <= file_size && meta_size <= file_size - meta_at,
-                  "metadata exceeds file");
+            // Fail closed on malformed NUP metadata, but retain the exact
+            // failing range classification in release stderr. A generic
+            // "metadata exceeds file" cannot distinguish oversized metadata
+            // from a truncated file or an invalid package offset.
+            const bool metadata_bounded =
+                meta_size <= MaxMeta && meta_at >= blob_at &&
+                meta_at <= file_size && meta_size <= file_size - meta_at;
+            if (!metadata_bounded) {
+                const char* reason = meta_size > MaxMeta ? "size_limit" :
+                    meta_at < blob_at ? "before_blob" :
+                    meta_at > file_size ? "offset_outside_file" : "range_outside_file";
+                std::fprintf(stderr,
+                    "EDEN_NUP_METADATA_BOUNDS_REJECT package=%u reason=%s offset=%llu size=%u blob_at=%llu declared_file=%llu\n",
+                    static_cast<unsigned>(i), reason,
+                    static_cast<unsigned long long>(meta_at),
+                    static_cast<unsigned>(meta_size),
+                    static_cast<unsigned long long>(blob_at),
+                    static_cast<unsigned long long>(file_size));
+                Check(false, "metadata exceeds file");
+            }
             metadata_regions.emplace_back(meta_at, meta_at + meta_size);
             const auto meta = ReadChunk(source_, meta_at, meta_size);
             std::size_t pos = 0;

@@ -2445,3 +2445,12 @@ Vendor `7b75ebb71f440f046f7f3e1819435de43e58f87d` → gitlink moteur `8ae25ce272
 **Compteur courant : 1 699 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 344 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 743** : 1 344 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## CLKRST — état module clock/reset/power (23/11/2026)
+
+Vendor `41446c0476dc0b6b5aa9091c8d9b022d215679ea` → gitlink moteur `aaa0a4d94c3251565b6b953d9b90ed9cdc2e99d8`. **12 NULL → IMPL-SRC** : six toggles clock/reset/power, `GetState` 0xC, min-V clock, possible clock rates, DVFS table, température et seuils. ABI vérifiée sur le dump PCV NS1 23.0.1 ; aucune tension Switch fictive n'est fabriquée. Pas de validation console PS5 revendiquée.
+
+**Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 332 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 731** : 1 332 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

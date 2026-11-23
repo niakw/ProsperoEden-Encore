@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 619 | 80 | **1 699** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 631 | 80 | **1 711** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 59 | 0 | **59** |
 | **NOOP — No-op documenté** | 170 | 0 | **170** |
-| **NULL — Handler NULL** | 1 344 | 0 | **1 344** |
+| **NULL — Handler NULL** | 1 332 | 0 | **1 332** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -2846,23 +2846,23 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pcv:arb | `0` | `ReleaseControl` | — | **HORS-VERSION** (service `pcv:arb` explicitement limité à HOS 1.0.0–7.0.1 dans SwitchBrew ; cible HOS 23.x) | 2026-11-23 |
 | pcv:imm | `0` | `SetClockRate` | — | **HORS-VERSION** (service `pcv:imm` explicitement limité à HOS 1.0.0–7.0.1 dans SwitchBrew ; cible HOS 23.x) | 2026-11-23 |
 | clkrst, clkrst:i | `0` | `OpenSession` | — | **IMPL-SRC** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; CLKRST::OpenSession crée IClkrstSession ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `1` | `GetTemperatureThresholds` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `2` | `SetTemperature` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
+| clkrst, clkrst:i | `1` | `GetTemperatureThresholds` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `2` | `SetTemperature` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
 | clkrst, clkrst:i | `3` | `GetPossibleClockRates` | — | **HORS-VERSION** (HOS 23.0.1 : l'ID manager 3 = `GetClkrstStateTable`; `GetPossibleClockRates` est désormais sur `IClkrstSession` ID 10; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | clkrst, clkrst:i | `4` | `GetClockInfoEvent` | — | **HORS-VERSION** (HOS 23.0.1 : l'ID manager 4 = `GetClkrstStateTableUpdateEvent`; l'ancien contrat n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | clkrst, clkrst:i | `5` | `GetClockModuleNumLimit` | — | **HORS-VERSION** (HOS 23.0.1 : l'ID manager 5 = `GetClkrstStateTableCount`; l'ancien contrat n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
-| clkrst, clkrst:i | `0` | `SetClockEnabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `1` | `SetClockDisabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `2` | `SetResetAsserted` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `3` | `SetResetDeasserted` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `4` | `SetPowerEnabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `5` | `SetPowerDisabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `6` | `GetState` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
+| clkrst, clkrst:i | `0` | `SetClockEnabled` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `1` | `SetClockDisabled` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `2` | `SetResetAsserted` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `3` | `SetResetDeasserted` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `4` | `SetPowerEnabled` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `5` | `SetPowerDisabled` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `6` | `GetState` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
 | clkrst, clkrst:i | `7` | `SetClockRate` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; écrit le `clock_rate` de session relu par cmd8) | 2026-11-23 |
 | clkrst, clkrst:i | `8` | `GetClockRate` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; retourne le `clock_rate` conservé par la même session) | 2026-11-23 |
-| clkrst, clkrst:i | `9` | `SetMinVClockRate` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `10` | `GetPossibleClockRates` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `11` | `GetDvfsTable` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
+| clkrst, clkrst:i | `9` | `SetMinVClockRate` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `10` | `GetPossibleClockRates` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
+| clkrst, clkrst:i | `11` | `GetDvfsTable` | — | **IMPL-SRC** (ABI NS1 23.0.1 confirmée; état local CLKRST / layout ModuleState 0xC; vendor `41446c04`, PS5 non validé) | 2026-11-22 |
 | clkrst:a | `0` | `ReleaseControl` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; slot exact 0/ReleaseControl = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | rgltr | `0` | `OpenSession` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("rgltr") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | rgltr | `1` | `GetPowerDomainStateTable` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("rgltr") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
@@ -6499,3 +6499,10 @@ Vendor `6eae21258ac6bae5db93c4b7d70935c5f9eaa032` → gitlink moteur `0f2f00236f
 Vendor `7b75ebb71f440f046f7f3e1819435de43e58f87d` → gitlink moteur `8ae25ce272ea89a05f6aa5ea85be691c3f46da59`. Douze handlers runtime ont été ajoutés dans `PlayReport`, dont **9 entrées du catalogue sortent du pool** : mode d'opération, clear stockage/statistiques, usage, statistiques, throughput, dernier upload et état d'accord utilisateur. Les lectures globales/summary ajoutées au runtime ne sont pas des entrées distinctes du catalogue actuel et ne sont donc pas comptées. **7 NULL → IMPL-SRC + 2 NULL → NOOP.** Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 699 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 344 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 743.**
+
+
+### CLKRST — état module clock/reset/power (23/11/2026)
+
+Vendor `41446c0476dc0b6b5aa9091c8d9b022d215679ea` → gitlink moteur `aaa0a4d94c3251565b6b953d9b90ed9cdc2e99d8`. **12 NULL → IMPL-SRC**. Les commandes session 0-6/9-11 utilisent le layout Horizon `ModuleState` 0xC confirmé par les dumps NS1 23.0.1 et l'implémentation Skyline : clock/reset/power, fréquence minimale, fréquences discrètes CPU/GPU/EMC et DVFS vide lorsqu'aucun rail de tension Switch n'est émulé. Le manager gère aussi température locale et liste de seuils vide plutôt que d'inventer des seuils thermiques hôte. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 170 NOOP / 1 332 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 731.**

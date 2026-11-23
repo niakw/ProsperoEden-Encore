@@ -127,7 +127,7 @@ import tempfile
 worker = lib.split("void Launcher::start_home_media()", 1)[1].split(
     "void Launcher::finish_home_media()", 1)[0]
 assert "screen_ != Screen::home" in worker
-assert worker.index("screen_ != Screen::home") < worker.index("home_media_next_retry_[title_id]")
+assert worker.index("screen_ != Screen::home") < worker.index("home_media_next_retry_[file]")
 cpp = r"""
 #include <atomic>
 #include <cassert>
@@ -170,7 +170,8 @@ struct Launcher {
     Services services_;
     std::future<Game> home_media_scan_;
     std::uint64_t home_media_scan_title_id_=0;
-    std::unordered_map<std::uint64_t,std::chrono::steady_clock::time_point> home_media_next_retry_;
+    std::string home_media_scan_file_;
+    std::unordered_map<std::string,std::chrono::steady_clock::time_point> home_media_next_retry_;
     void start_home_media();
 };
 """ + "void Launcher::start_home_media()" + worker + r"""
@@ -184,7 +185,8 @@ int main() {
     l.screen_=Screen::home; l.media_cancel_=true; l.start_home_media();
     assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.empty());
     l.media_cancel_=false; l.start_home_media();
-    assert(l.home_media_scan_.valid() && l.home_media_scan_title_id_==101);
+    assert(l.home_media_scan_.valid() && l.home_media_scan_title_id_==101 &&
+           l.home_media_scan_file_=="last");
     l.start_home_media();
     auto last=l.home_media_scan_.get();
     assert(last.title_id==101 && last.file=="last" && last.max_players==2 && l.services_.calls==1);
@@ -192,11 +194,22 @@ int main() {
     Recent recent; recent.title_id=202; recent.file="new"; recent.screenshot="shot";
     l.home_.recents.push_back(recent); l.home_recent_=0;
     l.screen_=Screen::library; l.start_home_media(); // late Home completion/restart
-    assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.count(202)==0);
+    assert(!l.home_media_scan_.valid() && l.home_media_next_retry_.count("new")==0);
     l.screen_=Screen::home; l.start_home_media();
     auto selected=l.home_media_scan_.get();
     assert(selected.title_id==202 && selected.file=="new" && selected.screenshots.size()==1);
+    assert(l.home_media_scan_file_=="new");
     assert(l.services_.calls==2);
+    // A second installed edition with the SAME TitleID is not blocked by
+    // the first edition's network retry cooldown.
+    Recent other; other.title_id=101; other.file="other-edition";
+    l.home_.recents.push_back(other); l.home_recent_=1;
+    l.start_home_media();
+    assert(l.home_media_scan_.valid() && l.home_media_scan_file_=="other-edition");
+    auto edition=l.home_media_scan_.get();
+    assert(edition.title_id==101 && edition.file=="other-edition");
+    assert(l.services_.calls==3);
+    l.home_recent_=0;
     l.home_.recents[0].title_id=0; l.start_home_media(); assert(!l.home_media_scan_.valid());
 }
 """

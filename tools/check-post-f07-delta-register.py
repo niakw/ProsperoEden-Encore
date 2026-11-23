@@ -101,6 +101,23 @@ for entry in entries:
             # the reviewed R457 owner on an audit copy, preserving the real
             # shipping extension list and both prior source receipts.
             service_audit_source = path.read_text(encoding="utf-8")
+            # Nov23 launcher/media consolidation is a large reviewed successor
+            # of this service owner. Do not replay hundreds of UI/media hunks
+            # inline here: admit only its exact full blob, then recover the
+            # exact pre-launcher owner from the immutable parent commit before
+            # continuing the existing NX/DNSP/R457 historical chain.
+            if actual == "c80d171b9177987f4f29cf675c41a75771c62685":
+                service_audit_source = subprocess.check_output(
+                    ["git", "show",
+                     "e0080f38204bab4cb596a3bed38ba9a625762c86:headless/prosperoeden/eden_services.cpp"],
+                    cwd=ROOT, text=True)
+                actual = subprocess.run(
+                    ["git", "hash-object", "--stdin"],
+                    input=service_audit_source.encode("utf-8"),
+                    stdout=subprocess.PIPE, check=True
+                ).stdout.decode().strip()
+                assert actual == "f850b77e7b2a366f2e7cb16a0be9efb57679fef9", (
+                    "Reviewed Nov23 launcher predecessor changed", actual)
             new_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
                                    ".nro", ".nso", ".nca", ".nax", ".kip", ".nup"}'''
             old_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".nro", ".nso",

@@ -2218,3 +2218,12 @@ Les commandes `audout:u` 1, 2, 5 et 8 correspondent en ID et signature aux handl
 **Compteur courant : 1 609 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 219 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 2 048** : 1 605 NULL + 75 STUB + 140 PARTIEL + 219 ABI-DIFF + 9 AMBIGU.
+
+
+## HOS 23 — fermeture de quatre ABI historiques (23/11/2026)
+
+Recroisement avec les dumps NS1 23.0.1 et les propriétaires actifs : `SPL` ID 1 `ExpMod` est l'alias historique de `ModularExponentiate` et passe **ABI-DIFF → IMPL-SRC**. `audren:u` ID 13 `GetAudioSystemMasterVolumeSetting`, `nvdrv` ID 13 `FinishInitialize` et `pl` ID 101 `RequestApplicationFunctionAuthorizationForSystem` sont des contrats historiques remplacés sur HOS 23 et passent **ABI-DIFF → HORS-VERSION**.
+
+**Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 448 HORS-VERSION / 0 ABSENT / 215 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 044** : 1 605 NULL + 75 STUB + 140 PARTIEL + 215 ABI-DIFF + 9 AMBIGU.

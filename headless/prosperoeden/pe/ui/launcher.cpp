@@ -598,6 +598,7 @@ void Launcher::launch(const std::string &file, const std::string &title, const s
     // Native launch leaves as soon as usable front art is composed. A real
     // deadline bounds pending local decodes; there is no mandatory dwell.
     native_launch_art_ready_ = false;
+    native_launch_back_ready_ = false;
     native_launch_show_back_ = false;
     native_launch_deadline_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(750);
     launch_.start(theme::kLaunchSeconds);
@@ -1387,9 +1388,14 @@ void Launcher::draw_launch(Canvas &c)
         // the existing 750-ms launch budget, then the captured final back
         // remains readable during the GL/Vulkan loading handoff.
         // No invented/mirrored rear and no extra game boot delay.
-        if (!native_launch_show_back_ && native_phase <= 0.12f &&
-            !launch_box_back_.empty() &&
+        if (!native_launch_back_ready_ && !launch_box_back_.empty() &&
             c.textures.cover(launch_box_back_, 760.0f).texture != 0)
+            native_launch_back_ready_ = true;
+        // Do not jump to a late rear during the 750-ms native admission
+        // window. A rear that arrives later is still retained for the
+        // continuous loading animation after the launcher hands off.
+        if (!native_launch_show_back_ && native_phase <= 0.12f &&
+            native_launch_back_ready_)
             native_launch_show_back_ = true;
         if (native_launch_show_back_) {
             constexpr float native_begin = 0.08f;
@@ -1415,7 +1421,7 @@ void Launcher::draw_launch(Canvas &c)
         if (loading_capture_pose_ == LoadingCapturePose::front)
             angle = kFrontYaw;
         else if (loading_capture_pose_ == LoadingCapturePose::back &&
-                 native_launch_show_back_)
+                 native_launch_back_ready_)
             angle = kBackYaw;
     }
     const float facing = std::cos(angle);

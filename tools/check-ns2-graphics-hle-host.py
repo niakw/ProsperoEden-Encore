@@ -235,8 +235,32 @@ def main()->int:
     )
     for command in lichii_fail_closed:
         assert ('{'+str(command)+', &IGraphicsSupervisor::UnavailableDocumentedFeature') in text, command
-    for unknown in (13, 53, 107, 113, 301, 302):
-        assert ('{'+str(unknown)+',&IVi2Session::') not in text
+    # VI2 53 now has a reviewed native timestamp reply. The other Lichii-
+    # documented IDs are intentionally registered but must reject unknown
+    # payloads: a structural stub is not an implemented ABI.
+    assert '{53,&IVi2Session::GetRecordedTimestamps,"GetRecordedTimestamps"}' in text
+    timestamps = text.split(
+        'void GetRecordedTimestamps(HLERequestContext& ctx) {', 1
+    )[1].split('void Event(HLERequestContext& ctx) {', 1)[0]
+    for witness in (
+        'const u32 recorder = p[5];',
+        'recorder >= m_recorded_ticks.size()',
+        'ctx.GetWriteBufferSize(0)',
+        'ctx.WriteBufferB(ticks.data(), requested, 0)',
+        'NativeTipcReplyWords(ctx, {static_cast<u32>(written), 0, 0});',
+    ):
+        assert witness in timestamps, "VI2 53 lost its bounded timestamp response: " + witness
+    vi2_unknown = (
+        13, 107, 108, 113, 230, 231, 232, 301, 302,
+        353, 354, 355, 356, 358, 359,
+    )
+    for command in vi2_unknown:
+        assert ('{'+str(command)+',&IVi2Session::Unsupported,"Unknown'+str(command)+'"}') in text, (
+            f'VI2 unknown command {command} must be registered fail-closed')
+    vi2_reject = text.split('void Unsupported(HLERequestContext& ctx) {', 1)[1].split(
+        'void Handshake(HLERequestContext& ctx) {', 1)[0]
+    assert 'rb.Push(Kernel::ResultNotImplemented.raw);' in vi2_reject
+    assert 'ResultSuccess' not in vi2_reject
     assert '{102, &IGpuSession::' not in gpu_session
     # Each known optional GSV command is registered in the selected C++ owner.
     # These are not implementations: no fabricated success/handles for unsupported features.

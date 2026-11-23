@@ -696,6 +696,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 691** : 2 134 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot PCTL — stockage PIN et événement de changement — 23/11/2026
+
+**Vendor `6f487f76b88c2ca12f81c189fddcc2a8f083c74c`** (arbre `34ca4655b3822ed3ba9d47622d4399bae9f3ff3b`) sur le runtime PCTL réellement compilé.
+
+- `SetPinCode` (1203), `GetPinCodeChangedEvent` (1207) et `GetPinCode` (1208) : **3 NULL → IMPL-SRC**.
+- La référence SDK-like `nn::pctl::detail::IParentalControlService` confirme : 1203 reçoit un buffer Pointer entrant ; 1207 retourne un handle natif ; 1208 retourne la longueur et un buffer Pointer sortant.
+- Eden possédait déjà `pin_code[8]` et `GetPinCodeLength` (1206). Le setter alimente maintenant ce même état, signale un événement `pin_code_changed_event` dédié, et le getter renvoie les octets réellement stockés.
+- Le buffer entrant est borné à 8 octets afin d'éviter toute corruption ; les appels SDK normaux restent dans cette capacité. Aucun code d'erreur PCTL non documenté n'est inventé.
+- Aucun jumelage Nintendo, master key ou persistance disque du PIN n'est revendiqué.
+
+**Compteur historique : 1 460 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 131 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 688** : 2 131 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

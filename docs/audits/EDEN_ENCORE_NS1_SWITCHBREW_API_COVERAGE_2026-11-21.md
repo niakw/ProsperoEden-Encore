@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 457 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 377 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 457 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 460 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 380 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 460 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 377 | 80 | **1 457** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 380 | 80 | **1 460** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 118 | 0 | **118** |
-| **NULL — Handler NULL** | 2 134 | 0 | **2 134** |
+| **NULL — Handler NULL** | 2 131 | 0 | **2 131** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1457
+    "Implémentation source retrouvée" : 1460
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 118
-    "Handler NULL" : 2134
+    "Handler NULL" : 2131
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5254,12 +5254,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1065` | `IsStereoVisionPermitted` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1201` | `UnlockRestrictionTemporarily` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1202` | `UnlockSystemSettingsRestriction` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1203` | `SetPinCode` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1203` | `SetPinCode` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6f487f76b88c2ca12f81c189fddcc2a8f083c74c/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état PIN 8 octets et événement de changement réellement raccordés) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1204` | `GenerateInquiryCode` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1205` | `CheckMasterKey` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1206` | `GetPinCodeLength` | — | **IMPL-SRC** (lit l'état local réel : temporary_unlocked ou longueur PIN ; backport actif vendor `61e8993c`) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1207` | `GetPinCodeChangedEvent` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1208` | `GetPinCode` | 4.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1207` | `GetPinCodeChangedEvent` | — | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6f487f76b88c2ca12f81c189fddcc2a8f083c74c/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état PIN 8 octets et événement de changement réellement raccordés) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1208` | `GetPinCode` | 4.0.0+ | **IMPL-SRC** ([active PCTL source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/6f487f76b88c2ca12f81c189fddcc2a8f083c74c/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; état PIN 8 octets et événement de changement réellement raccordés) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1403` | `IsPairingActive` | — | **NOOP** (UI/backend parental ou pairing/liste non modélisé ; état permissif/vides explicite, sans restrictions inventées ; backport actif vendor `61e8993c`) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1406` | `GetSettingsLastUpdated` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1411` | `GetPairingAccountInfo` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |

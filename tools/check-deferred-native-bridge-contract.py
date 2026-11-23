@@ -1023,33 +1023,66 @@ endif()
             assert maintained.count(native_span_guard) == 1, (
                 "PS5 early audio GetSpan null-table guard missing or duplicated", owner)
             baseline = baseline.replace(native_span_old, native_span_guard)
-        # PR #53 adds a PS5-only precommit hook to the two real native
-        # memory owners. Remove ONLY that exact gated addition when checking
-        # immutable G13/M12 history, then independently assert its placement
-        # before MapPages. The unrelated historical paths retain parity.
+        # The PS5 NS2 demand-zero path has three reviewed sparse guards:
+        # admission before PTE publication, the native declaration, and
+        # ZeroBlock's no-op-zero bypass. Reverse only their exact source
+        # regions to compare against immutable G13/M12 history; retain the
+        # real production checks independently.
         if owner.startswith("eden-core/src/core/memory_native_"):
             marker = "#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)"
-            if marker in maintained:
-                declaration = (
-                    "#include <new>\n"
-                )
-                assert maintained.count(marker) == 2, ("sparse gate count", owner)
-                assert maintained.count('extern "C" bool EdenNs2CommitGuestBacking(') == 1
-                call_start = marker + "\n        // The guest PTE contains a direct pointer into HostMemory."
-                point = maintained.index(call_start)
-                call_end = maintained.index("#endif\n", point) + len("#endif\n")
-                before_map = maintained.index("        MapPages(page_table", point)
-                assert call_end <= before_map, ("sparse admission after PTE", owner)
-                decl_start = maintained.index(marker)
-                decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
-                assert decl_end < point
-                reviewed = maintained[:point] + maintained[call_end:]
-                # The production declaration adds one blank separator after
-                # #endif. Remove it too, preserving exact historical parity.
-                assert reviewed[decl_end:decl_end+1] == "\n", owner
-                reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
-                reviewed = reviewed.replace("#include <new>\n", "", 1)
-                maintained = reviewed
+            assert maintained.count(marker) == 3, ("NS2 sparse guard locations", owner)
+            assert maintained.count('extern "C" bool EdenNs2EnsureGuestBackingReadable(') == 1
+            assert 'EdenNs2CommitGuestBacking(' not in maintained
+            call_start = marker + "\n        // PTE publication only needs readable backing."
+            point = maintained.index(call_start)
+            call_end = maintained.index("#endif\n", point) + len("#endif\n")
+            before_map = maintained.index("        MapPages(page_table", point)
+            assert call_end <= before_map, ("sparse admission after PTE", owner)
+            admission = maintained[point:call_end]
+            assert 'EdenNs2EnsureGuestBackingReadable(' in admission
+            assert 'throw std::bad_alloc{};' in admission
+            assert admission.index('EdenNs2EnsureGuestBackingReadable(') < admission.index(
+                'throw std::bad_alloc{};')
+            # A zero-fill of genuinely unowned NS2 backing must not promote
+            # the whole 2 MiB granule. Non-direct aliases still use memset.
+            zero_start = maintained.index(
+                marker + "\n            // A normal guest-memory ZERO page")
+            zero_end = maintained.index("#endif\n", zero_start) + len("#endif\n")
+            zero_owner = maintained.index("    bool ZeroBlock(", before_map)
+            zero_memset = maintained.index(
+                "            std::memset(ptr, 0, copy_amount);", zero_start)
+            assert zero_owner < zero_start < zero_end < zero_memset, owner
+            zero_guard = maintained[zero_start:zero_end]
+            for witness in (
+                'GetIntendedMemorySize() ==',
+                '(12ull << 30)',
+                'IsDirectBackingAlias(reinterpret_cast<std::uintptr_t>(ptr), copy_amount)',
+                'buffer.ClearBackingRegion(',
+                'return;',
+            ):
+                assert witness in zero_guard, ("NS2 zero-owner safety guard", owner, witness)
+            alias_start = maintained.index(
+                "#ifdef PS5_NATIVE\n    // Delta-zero page pointers")
+            alias_end = maintained.index("#endif\n\n", alias_start) + len("#endif\n\n")
+            alias_method = maintained[alias_start:alias_end]
+            for witness in (
+                'IsDirectBackingAlias(u64 address, std::size_t bytes) const',
+                'base != 0 && address >= base && bytes <= capacity',
+                'address - base <= capacity - bytes',
+            ):
+                assert witness in alias_method, ("direct alias bounds guard", owner, witness)
+            assert maintained.count("IsDirectBackingAlias(") == 2, owner
+            decl_start = maintained.index(marker)
+            decl_end = maintained.index("#endif\n", decl_start) + len("#endif\n")
+            assert decl_end < alias_start < point < zero_start, owner
+            reviewed = maintained[:zero_start] + maintained[zero_end:]
+            reviewed = reviewed[:point] + reviewed[call_end:]
+            reviewed = reviewed[:alias_start] + reviewed[alias_end:]
+            # Remove the standalone gated native declaration and separator.
+            assert reviewed[decl_end:decl_end+1] == "\n", owner
+            reviewed = reviewed[:decl_start] + reviewed[decl_end+1:]
+            assert reviewed.count("#include <new>\n") == 1, owner
+            maintained = reviewed.replace("#include <new>\n", "", 1)
         # C00/R457 adds exactly one reviewed, native-only readiness method
         # to BOTH selected memory backends. Reverse just this fixed addition
         # for the historical G13/M12 parity check; all older bytes remain

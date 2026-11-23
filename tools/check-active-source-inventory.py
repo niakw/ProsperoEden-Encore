@@ -2117,14 +2117,14 @@ current_vendor_post_f07_owner_blobs = {
 # Post-F07 registry includes old SM while the latest exact successor
 # changes ONLY SM handler retirement in that owner. Preserve exact pin and
 # verify all other reviewed owners byte for byte.
-if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1"}:
+if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4"}:
     current_vendor_post_f07_owner_blobs = {
         **current_vendor_post_f07_owner_blobs,
         "eden-core/src/core/hle/service/sm/sm.cpp": "34c7c85f1476a3ba819ad20b8a4f8150cca86e16",
         # Same exact SM teardown successor; only LM C++ changed for the new pin.
         "ns2-runtime/hle/core/hle/service/lm/lm.cpp": (
             "9136cf19b1176e96fb17609fd401e4592028d1e2"
-            if actual_vendor == "273680a5b33bff15c9ca12685cfadb2aa15ff9f1" else
+            if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4"} else
             "83d9b178459c33321a6fe388dae93bb3cb8b6f75"
         ),
     }
@@ -2137,7 +2137,7 @@ if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff
         raw=(active/relative).read_bytes()
         got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert got==digest,("Post-F07 latest vendor source drift",relative,got)
-    if actual_vendor == "273680a5b33bff15c9ca12685cfadb2aa15ff9f1":
+    if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4"}:
         # Changed source-list owners are not part of frozen 337-path F07 receipt.
         # Preserve the verified old NS1 overlay and compile-only AM guard delta.
         for relative,digest in {
@@ -2151,7 +2151,7 @@ if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff
             assert got==digest,("NS1/NS2 AM one-shot exact owner drift",relative,got)
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
 if actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
-                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1"}:
+                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4"}:
     assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
     for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
         raw = (active / relative).read_bytes()

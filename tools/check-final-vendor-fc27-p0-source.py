@@ -1840,6 +1840,15 @@ REVIEWED_PINS.add("0390980a5752808dfba7b8edaa7d113cc4e4e6eb")
 # Lichii/Eglantine source-only AM WindowSystem + LM hashes with preserved NS1 ABI;
 # retain the full reviewed FC27/P0 vendor graph tests below.
 REVIEWED_PINS.add("273680a5b33bff15c9ca12685cfadb2aa15ff9f1")
+# The native NS2 GPU exception-mask reader is the only 273680 -> 84b997
+# delta. Verify the exact selected C++ blob before admitting this successor;
+# all other vendor-owner receipts remain unchanged and are replayed below.
+if actual_vendor_pin == "84b9975726092a32d1cb2aa714b96e4f5f85d7c4":
+    relative = "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/nvhost_ctrl_gpu.cpp"
+    raw = (V / relative).read_bytes()
+    actual_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    assert actual_blob == "32ba64b4b83848c0cd8f82af52429e3dea42609f", ("Native NVDRV TPC mask owner drift", actual_blob)
+REVIEWED_PINS.add("84b9975726092a32d1cb2aa714b96e4f5f85d7c4")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

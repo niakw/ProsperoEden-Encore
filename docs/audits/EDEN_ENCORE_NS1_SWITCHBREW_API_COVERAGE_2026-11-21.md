@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 470 | 0 | **1 470** |
-| **D — Rejet explicite / historique** | 171 | 33 | **204** |
+| **NULL — Handler NULL** | 1 462 | 0 | **1 462** |
+| **D — Rejet explicite / historique** | 179 | 33 | **212** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -5284,16 +5284,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pctl:s, pctl:r, pctl:a, pctl | `1603` | `IsAllFeaturesDisabled` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `1901` | `DeleteFromFreeCommunicationApplicationListForDebug` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1902` | `ClearFreeCommunicationApplicationListForDebug` | — | **IMPL-SRC** ([active PCTL](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0baa3af3f57d883be26587f11ab7bc586e4f79d5/encore-active/eden-backports/src/core/hle/service/pctl/parental_control_service.cpp) ; liste locale stateful 0x10/HOS23) | 2026-11-23 |
-| pctl:s, pctl:r, pctl:a, pctl | `1903` | `GetExemptApplicationListCountForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1904` | `GetExemptApplicationListForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1905` | `UpdateExemptApplicationListForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1906` | `AddToExemptApplicationListForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1907` | `DeleteFromExemptApplicationListForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1908` | `ClearExemptApplicationListForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1903` | `GetExemptApplicationListCountForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1904` | `GetExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1905` | `UpdateExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1906` | `AddToExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1907` | `DeleteFromExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
+| pctl:s, pctl:r, pctl:a, pctl | `1908` | `ClearExemptApplicationListForDebug` | 5.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1941` | `DeletePairing` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1951` | `SetPlayTimerSettingsForDebug` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1951` | `SetPlayTimerSettingsForDebug` | — | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `1952` | `GetPlayTimerSpentTimeForTest` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
-| pctl:s, pctl:r, pctl:a, pctl | `1953` | `SetPlayTimerAlarmDisabledForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
+| pctl:s, pctl:r, pctl:a, pctl | `1953` | `SetPlayTimerAlarmDisabledForDebug` | 4.0.0+ | **D** (commande PCTL debug non supportée sur le runtime release ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` ; vendor `8580856a`, moteur `36fe443a`) | 2026-11-23 |
 | pctl:s, pctl:r, pctl:a, pctl | `2001` | `RequestPairingAsync` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `2002` | `FinishRequestPairing` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
 | pctl:s, pctl:r, pctl:a, pctl | `2003` | `AuthorizePairingAsync` | — | **NULL** ([source C++][ns1-src-017]) | 2026-11-22 |
@@ -6355,3 +6355,10 @@ Vendor `4ab4481d7572d3dd7589837f65b7baee5519d80d`, gitlink moteur `d30f3aaab2e6c
 Vendor `1887ae94bffe3d1223d40c56248bfe6ad78405b6`, gitlink moteur `272355286b91fea56a407e258ac97acdd4a4e876` : `LaunchDevMenu`, les commandes de corruption/suppression debug, le compteur RightsEnvironment debug et les commandes promotion debug ne restent plus `nullptr`. Elles sont raccordées à un rejet explicite commun `ResultUnknown` sur le runtime release. **7 NULL → D** ; aucune opération destructive n'est simulée.
 
 **Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 470 NULL / 204 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 885.**
+
+
+### PCTL — huit commandes debug fail-closed (23/11/2026)
+
+Vendor `8580856ac4ba06f7e83723f5e2eaed20ed68e200`, gitlink moteur `36fe443ac608d71f911ce164b86d645d30689d80` : les six commandes de liste d'exemption debug et les deux réglages de play timer debug sont désormais raccordés à un rejet explicite `ResultUnknown` sur le runtime release. **8 NULL → D** ; aucun état de contrôle parental debug n'est simulé.
+
+**Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 462 NULL / 212 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 877.**

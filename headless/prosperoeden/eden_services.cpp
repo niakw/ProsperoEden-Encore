@@ -1085,9 +1085,19 @@ const BoxIndex& RetailCaseIndex() {
 
 // Keep retail artwork keyed by console generation. Legacy unscoped v9
 // indices may serve NS1, but must NEVER feed an NS2 front or square icon.
+bool IsNupSelection(std::string_view file) {
+    if (file.size() < 4) return false;
+    const auto extension = file.substr(file.size() - 4);
+    return extension == ".nup" || extension == ".NUP" ||
+           (extension[0] == '.' &&
+            (extension[1] == 'n' || extension[1] == 'N') &&
+            (extension[2] == 'u' || extension[2] == 'U') &&
+            (extension[3] == 'p' || extension[3] == 'P'));
+}
+
 bool UseNs2CaseIndex(const pe::ui::Game& game) {
     return (game.title_id & 0xFF00000000000000ULL) == 0x0400000000000000ULL ||
-           game.format == "NUP" || game.file.ends_with(".nup");
+           game.format == "NUP" || IsNupSelection(game.file);
 }
 
 BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
@@ -2155,7 +2165,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         if (home.last_cover.empty()) {
             // Home's verified extracted Control icon wins. NUP is NS2:
             // do not replace its square with an unrelated NX/NS1 cache.
-            if (home.last_file.ends_with(".nup"))
+            if (IsNupSelection(home.last_file))
                 home.last_cover = CachedGamesDbSquare(title_id);
             else
                 home.last_cover = nlib.icon.empty() ?
@@ -2254,7 +2264,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             recent.title_id = ResolveTitleId(recent_path, name);
             if (recent.title_id != 0) {
                 const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
-                if (!nlib.icon.empty() && recent.tile_icon.empty()) {
+                if (!nlib.icon.empty() && recent.tile_icon.empty() && !IsNupSelection(name)) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
                 } else if (recent.cover.empty()) {
@@ -2620,9 +2630,14 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     // consumed even while another title worker holds its download lock.
     // Previously a perfectly ready ExeFS/Home icon waited for that remote
     // worker, then remained in the retry queue for up to two minutes.
-    game.cover = CachedNlibIcon(game.title_id);
-    if (!game.cover.empty()) return game;
-    game.cover = CachedGamesDbSquare(game.title_id);
+    const bool nup = game.format == "NUP" || IsNupSelection(game.file);
+    if (nup) {
+        game.cover = CachedGamesDbSquare(game.title_id);
+    } else {
+        game.cover = CachedNlibIcon(game.title_id);
+        if (game.cover.empty())
+            game.cover = CachedGamesDbSquare(game.title_id);
+    }
     if (!game.cover.empty()) return game;
     // Only WRITES need the per-title lock. Do not stall Home teardown
     // behind another title's retail or Nlib network transaction.
@@ -2631,10 +2646,12 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
         game.artwork_deferred = !title_lock.owns_lock();
         return game;
     }
-    // A concurrent worker may have published the square before we locked.
-    game.cover = CachedNlibIcon(game.title_id);
-    if (!game.cover.empty()) return game;
-    game.cover = CachedGamesDbSquare(game.title_id);
+    // Recheck after acquiring the write lock. NUP's canonical NS2 Square
+    // must never be displaced by an old Switch 1 Nlib icon.
+    game.cover = nup ? CachedGamesDbSquare(game.title_id) :
+                       CachedNlibIcon(game.title_id);
+    if (game.cover.empty() && !nup)
+        game.cover = CachedGamesDbSquare(game.title_id);
     if (!game.cover.empty()) return game;
 
     // Switch 2 Control dumps often omit the canonical icon and Nlib may have
@@ -2651,6 +2668,9 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
         }
     }
 
+    // A genuine NUP may have no cached Square yet. Do not fabricate an
+    // NS2 app icon using the Switch 1-only Nlib endpoint on failed CDN.
+    if (nup) return game;
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX",
                   static_cast<unsigned long long>(game.title_id));

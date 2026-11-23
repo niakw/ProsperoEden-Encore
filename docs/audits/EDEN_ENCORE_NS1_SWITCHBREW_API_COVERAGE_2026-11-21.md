@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 632 | 80 | **1 712** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 637 | 80 | **1 717** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 192 | 0 | **192** |
-| **NULL — Handler NULL** | 1 316 | 0 | **1 316** |
+| **NULL — Handler NULL** | 1 311 | 0 | **1 311** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3304,11 +3304,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:a | `2006` | `GetAlbumMovieReadStreamImageDataSize` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:a | `2007` | `ReadImageDataFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
 | caps:a | `2008` | `ReadFileAttributeFromAlbumMovieReadStream` | — | **NULL** (commande de flux vidéo album explicitement enregistrée avec `nullptr` dans l'owner CAPS ; rejet contrôlé, aucune capture simulée) | 2026-11-22 |
-| caps:c | `2001` | `NotifyAlbumStorageIsAvailable` | — | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
-| caps:c | `2002` | `NotifyAlbumStorageIsUnavailable` | — | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
-| caps:c | `2011` | `RegisterAppletResourceUserId` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
-| caps:c | `2012` | `UnregisterAppletResourceUserId` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
-| caps:c | `2013` | `GetApplicationIdFromAruid` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
+| caps:c | `2001` | `NotifyAlbumStorageIsAvailable` | — | **IMPL-SRC** (ABI u8 NS1 23.0.1 ; monte réellement l'album manager et rescane le stockage SD ; vendor `9c8dd143`) | 2026-11-23 |
+| caps:c | `2002` | `NotifyAlbumStorageIsUnavailable` | — | **IMPL-SRC** (ABI u8 NS1 23.0.1 ; démonte l'état album manager sans toucher au stockage PS5 ; vendor `9c8dd143`) | 2026-11-23 |
+| caps:c | `2011` | `RegisterAppletResourceUserId` | 2.0.0+ | **IMPL-SRC** (ABI 0x18 HOS19+ confirmée libnx/dump 23.0.1 ; conserve ARUID→ApplicationId[0x10] ; vendor `9c8dd143`) | 2026-11-23 |
+| caps:c | `2012` | `UnregisterAppletResourceUserId` | 2.0.0+ | **IMPL-SRC** (retire le mapping ARUID correspondant sans affecter les autres registrations ; vendor `9c8dd143`) | 2026-11-23 |
+| caps:c | `2013` | `GetApplicationIdFromAruid` | 2.0.0+ | **IMPL-SRC** (ABI 0x8→0x10 confirmée ; lit le registre caps:c puis fallback sur le propriétaire ARUID du core ; vendor `9c8dd143`) | 2026-11-23 |
 | caps:c | `2014` | `CheckApplicationIdRegistered` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2101` | `GenerateCurrentAlbumFileId` | 2.0.0+ | **NULL** ([source C++][ns1-src-070]) | 2026-11-22 |
 | caps:c | `2102` | `GenerateApplicationAlbumEnrty` | 2.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/caps/caps_c.cpp) ; ID 2102 connu mais nom SwitchBrew GenerateApplicationAlbumEnrty différent de la table GenerateApplicationAlbumEntry (nullptr), contrat non prouvé ; pas de validation PS5) | 2026-11-22 |
@@ -6520,3 +6520,10 @@ Vendor `0264621817f4d7e2a98c2a123194e9eebbbf7efd` → gitlink moteur `2344681129
 Vendor `beb30c7a2de729e582472c106abe03f50cc01542` → gitlink moteur `b7cf2d189392b069514492043a35de960630d073`. **10 entrées sortent du pool : 9 → NOOP documenté, 1 → IMPL-SRC.** Les politiques radio/admission/filter suivent le contrat de compatibilité ldn_mitm sans muter la pile réseau PS5. `InitializeSystem2` prend désormais la vraie ABI version+PID observée dans libnx/ldn_mitm et réutilise l'initialisation LANDiscovery. `Reject` et `ConnectPrivate` restent ouverts. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 712 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 316 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 708.**
+
+
+### CAPS:C — stockage album + registre ARUID/ApplicationId (23/11/2026)
+
+Vendor `9c8dd143c5fd54dd51c88e96d15a8e4cba8f8674` → gitlink moteur `cc0cd9f042f41ce77a05988f0770879243cd1b6d`. **5 NULL → IMPL-SRC.** ABI recroisée sur libnx et le dump Capture NS1 23.0.1 : storage u8, registration 0x18, lookup 0x8→0x10. L'AlbumManager expose maintenant le montage/démontage réel et le service conserve le mapping ARUID→ApplicationId. Cmd2014 reste ouvert faute de code résultat « non enregistré » confirmé. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 717 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 311 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 703.**

@@ -2472,3 +2472,12 @@ Vendor `beb30c7a2de729e582472c106abe03f50cc01542` → gitlink moteur `b7cf2d1893
 **Compteur courant : 1 712 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 316 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 708** : 1 316 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## CAPS:C — stockage album + registre ARUID/ApplicationId (23/11/2026)
+
+Vendor `9c8dd143c5fd54dd51c88e96d15a8e4cba8f8674` → gitlink moteur `cc0cd9f042f41ce77a05988f0770879243cd1b6d`. **5 NULL → IMPL-SRC** : notifications de disponibilité stockage, registration/unregistration ARUID et lookup ApplicationId. Les ABI sont celles du dump NS1 23.0.1/libnx. Cmd2014 reste ouvert. Pas de validation console revendiquée.
+
+**Compteur courant : 1 717 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 311 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 703** : 1 311 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

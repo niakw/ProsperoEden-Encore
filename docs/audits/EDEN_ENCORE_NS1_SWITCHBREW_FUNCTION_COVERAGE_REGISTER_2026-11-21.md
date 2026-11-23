@@ -2427,3 +2427,12 @@ Vendor `1effcd1413a458f58db476d6ffd37c63c7550eee` → gitlink moteur `dfffa79e46
 **Compteur courant : 1 686 IMPL-SRC / 141 PARTIEL / 59 STUB / 166 NOOP / 1 361 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 760** : 1 361 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## MiiImg + NPNS + Friend — état local/offline (23/11/2026)
+
+Vendor `6eae21258ac6bae5db93c4b7d70935c5f9eaa032` → gitlink moteur `0f2f00236fd7ce2e8f8a33c824caac30d4810abd`. **8 NULL sortent du pool** : 3 MiiImg, 2 NPNS user et 3 préférences Friend. Les ABI MiiImg sont celles de libnx ; les trois commandes Friend ont une entrée 0x18 confirmée sur NS1 22.5/23.0.1. L'état Friend est conservé en mémoire par UUID et reflété dans `LoadUserSetting`. Pas de validation console PS5 revendiquée.
+
+**Compteur courant : 1 692 IMPL-SRC / 141 PARTIEL / 59 STUB / 168 NOOP / 1 353 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 752** : 1 353 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

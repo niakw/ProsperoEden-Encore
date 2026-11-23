@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 606 | 80 | **1 686** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 612 | 80 | **1 692** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 59 | 0 | **59** |
-| **NOOP — No-op documenté** | 166 | 0 | **166** |
-| **NULL — Handler NULL** | 1 361 | 0 | **1 361** |
+| **NOOP — No-op documenté** | 168 | 0 | **168** |
+| **NULL — Handler NULL** | 1 353 | 0 | **1 353** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3903,9 +3903,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30402` | `UnblockUser` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30500` | `GetProfileExtraFromFriendCode` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30500 = GetProfileExtraFromFriendCodeV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30700` | `DeletePlayHistory` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/ab4f28f4d8f3b118c1d64d2f6744598860c388b6/sources/eden/src/core/hle/service/friend/friend.cpp) ; état Friend correspondant absent/vide dans Encore, entrée ABI consommée, opération idempotente) | 2026-11-23 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30810` | `ChangePresencePermission` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30811` | `ChangeFriendRequestReception` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30812` | `ChangePlayLogPermission` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30810` | `ChangePresencePermission` | — | **IMPL-SRC** (ABI 0x18 confirmée dumps NS1 ; état local par UUID renvoyé par `LoadUserSetting` ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30811` | `ChangeFriendRequestReception` | — | **IMPL-SRC** (ABI 0x18 confirmée dumps NS1 ; bool stocké par UUID et reflété par `LoadUserSetting` ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30812` | `ChangePlayLogPermission` | — | **IMPL-SRC** (ABI 0x18 confirmée dumps NS1 ; état local par UUID reflété par `LoadUserSetting` ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30820` | `IssueFriendCode` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30830` | `ClearPlayLog` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/ab4f28f4d8f3b118c1d64d2f6744598860c388b6/sources/eden/src/core/hle/service/friend/friend.cpp) ; état Friend correspondant absent/vide dans Encore, entrée ABI consommée, opération idempotente) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30900` | `SendFriendInvitation` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30900 = SendFriendInvitationV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
@@ -5063,7 +5063,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | npns:u | `1` | `ListenAll` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `2` | `ListenTo` | — | **NULL** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; handler nul de l'interface exacte ; sans preuve PS5) | 2026-11-22 |
+| npns:u | `2` | `ListenTo` | — | **NOOP** (même sémantique offline que `npns:s` : abonnement accepté localement, aucun backend Nintendo distant ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
 | npns:u | `3` | `Receive` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `4` | `ReceiveRaw` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `5` | `GetReceiveEvent` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
@@ -5074,7 +5074,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:u | `26` | `ListenToMyApplicationId` | 5.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `101` | `Suspend` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `102` | `Resume` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `103` | `GetState` | — | **NULL** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; handler nul de l'interface exacte ; sans preuve PS5) | 2026-11-22 |
+| npns:u | `103` | `GetState` | — | **IMPL-SRC** (retourne l'état offline 0 comme `npns:s`, cohérent avec l'absence de session push distante ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
 | npns:u | `104` | `GetStatistics` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `111` | `GetJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `120` | `CreateNotificationReceiver` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -5748,10 +5748,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | mii:u, mii:e | `24` | `ConvertCoreDataToCharInfo` | 7.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
 | mii:u, mii:e | `25` | `ConvertCharInfoToCoreData` | 7.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; délégation effective à MiiManager, ABI et données à qualifier ; qualification statique NS1) | 2026-11-22 |
 | miiimg | `0` | `Initialize` | — | **NOOP** (base d'images Mii volontairement vide tant qu'aucun backend fichier Horizon n'est exposé ; aucune initialisation hôte à effectuer ; vendor `d527dc85`) | 2026-11-23 |
-| miiimg | `10` | `Reload` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
+| miiimg | `10` | `Reload` | — | **NOOP** (ABI libnx cmd10 ; base image volontairement vide sans backend fichier, reload explicite sans travail hôte ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
 | miiimg | `11` | `GetCount` | — | **IMPL-SRC** (retourne le compte réel de la base d'images Encore actuellement vide, soit 0 ; aucun contenu fictif n'est créé ; vendor `d527dc85`) | 2026-11-23 |
-| miiimg | `12` | `IsEmpty` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
-| miiimg | `13` | `IsFull` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
+| miiimg | `12` | `IsEmpty` | — | **IMPL-SRC** (ABI libnx bool ; base locale vide cohérente avec `GetCount=0`, retourne true ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
+| miiimg | `13` | `IsFull` | — | **IMPL-SRC** (ABI libnx bool ; base locale vide/non allouée, retourne false ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
 | miiimg | `14` | `GetAttribute` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `15` | `LoadImage` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
 | miiimg | `16` | `AddOrUpdateImage` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/mii/mii.cpp) ; IImageDatabaseService : handler nullptr ; ABI et PS5 non validés) | 2026-11-22 |
@@ -6485,3 +6485,10 @@ Vendor `1effcd1413a458f58db476d6ffd37c63c7550eee` → gitlink moteur `dfffa79e46
 **Compteur courant : 1 686 IMPL-SRC / 141 PARTIEL / 59 STUB / 166 NOOP / 1 361 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 760** : 1 361 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+### MiiImg + NPNS + Friend — état local/offline (23/11/2026)
+
+Vendor `6eae21258ac6bae5db93c4b7d70935c5f9eaa032` → gitlink moteur `0f2f00236fd7ce2e8f8a33c824caac30d4810abd`. **8 NULL sortent du pool** : MiiImg cmd10/12/13 suit la base volontairement vide déjà exposée par cmd11 ; NPNS user cmd2/103 reprend l'état offline du service système ; Friend cmd30810-30812 conserve les préférences par UUID et les réinjecte dans `LoadUserSetting`. Aucun backend Nintendo distant n'est simulé. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 692 IMPL-SRC / 141 PARTIEL / 59 STUB / 168 NOOP / 1 353 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 752.**

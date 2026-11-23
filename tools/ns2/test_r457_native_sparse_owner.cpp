@@ -106,33 +106,48 @@ int main() {
     assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
     assert(EdenNs2EnsureGuestBackingReadable(nullptr,0,kGranule));
 
-    // Execute the real native owner once with the default 4 GiB NS1 layout,
-    // not only the accounting Plan. This proves that the same shared ZERO
-    // mapping, write-fault promotion and page-heap return work below 12 GiB.
-    {
-        Runtime ns1_guest(4ull * GiB, 4ull * GiB);
-        assert(ns1_guest.Valid() && ns1_guest.VirtualBytes() == 4ull * GiB);
-        assert(successful_commits == 1);
-        assert(ns1_guest.UsedBytes() == 0);
-        auto* ns1_base = static_cast<std::uint8_t*>(ns1_guest.Base());
-        assert(ns1_base[0] == 0 && ns1_base[3 * kGranule + 77] == 0);
-        assert(ns1_guest.Install());
-        assert(EdenNs2EnsureGuestBackingReadable(ns1_base, 0, 4ull * GiB));
+    // Execute the real native owner for every NS1 DRAM layout, not only the
+    // accounting Plan. Exercise both the first and last native granule so a
+    // layout-size error cannot hide behind the low-address ZERO/OWN path.
+    constexpr std::uint64_t ns1_layouts[] = {
+        4ull * GiB, 6ull * GiB, 8ull * GiB, 10ull * GiB,
+    };
+    for (const auto bytes : ns1_layouts) {
+        next_physical_slot = 0;
+        successful_commits = 0;
+        released = 0;
+        fail_at = -1;
+        destructive_fail = 0;
 
-        ns1_base[128] = 0x4A;
-        assert(ns1_base[128] == 0x4A);
-        assert(ns1_guest.UsedBytes() == kGranule);
-        assert(successful_commits == 2);
+        const auto budget = bytes < 6ull * GiB ? bytes : 6ull * GiB;
+        {
+            Runtime ns1_guest(bytes, budget);
+            assert(ns1_guest.Valid() && ns1_guest.VirtualBytes() == bytes);
+            assert(successful_commits == 1); // one shared ZERO physical block
+            assert(ns1_guest.UsedBytes() == 0);
+            auto* ns1_base = static_cast<std::uint8_t*>(ns1_guest.Base());
+            const auto tail = static_cast<std::size_t>(bytes - kGranule + 128);
+            assert(ns1_base[0] == 0 && ns1_base[tail] == 0);
+            assert(ns1_guest.Install());
+            assert(EdenNs2EnsureGuestBackingReadable(ns1_base, 0, bytes));
 
-        EdenNs2GuestBackingFreed(0, kGranule);
-        assert(ns1_guest.UsedBytes() == 0);
-        assert(ns1_base[128] == 0);
-        assert(released == 1);
-        ns1_guest.Uninstall();
+            ns1_base[128] = 0x4A;
+            ns1_base[tail] = 0x6C;
+            assert(ns1_base[128] == 0x4A && ns1_base[tail] == 0x6C);
+            assert(ns1_guest.UsedBytes() == 2 * kGranule);
+            assert(successful_commits == 3);
+
+            EdenNs2GuestBackingFreed(0, kGranule);
+            EdenNs2GuestBackingFreed(bytes - kGranule, kGranule);
+            assert(ns1_guest.UsedBytes() == 0);
+            assert(ns1_base[128] == 0 && ns1_base[tail] == 0);
+            assert(released == 2);
+            ns1_guest.Uninstall();
+        }
+        assert(released == 3); // two private OWN blocks + shared ZERO
+        for (std::size_t slot = 1; slot < kMaxMockOwners; ++slot)
+            assert(alive[slot] == 0);
     }
-    assert(released == 2); // private OWN + shared ZERO
-    for (std::size_t slot = 1; slot < kMaxMockOwners; ++slot)
-        assert(alive[slot] == 0);
 
     // Reset mock accounting so the long NS2 transaction below keeps its
     // historical exact counters and rollback assertions.

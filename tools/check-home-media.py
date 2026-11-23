@@ -100,8 +100,11 @@ assert '? NlibEnrichment{}' in full_media
 assert ': EnsureNlibEnrichment(game.title_id, language_choice, cancel);' in full_media
 assert 'CachedGamesDbSquare(game.title_id, true)' in native_icon
 assert 'CachedGamesDbSquare(game.title_id, second_generation)' in native_icon
-assert 'if (second_generation) return game;' in native_icon
+assert 'if (second_generation) {' in native_icon
+assert 'EnsureGamesDbSquare(game.title_id, canonical, game.name,' in native_icon
 assert 'game.cover = CachedGamesDbSquare(game.title_id, true);' in native_icon
+assert native_icon.index('if (second_generation) {') < native_icon.index('NlibTitleMutex(game.title_id)')
+assert 'game.cover = CachedNlibIcon(game.title_id);' in native_icon
 assert 'else if (game.cover.empty() && !nup) {' in full_media
 # NLIB screenshot must outrank GamesDB fanart when the banner is missing.
 assert 'home.last_hero = !nlib.hero.empty() ? nlib.hero :' in native_home

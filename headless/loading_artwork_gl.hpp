@@ -20,7 +20,7 @@ namespace {
 // The caller supplies the already composed Encore draw list. Render once at
 // a bounded resolution using an explicit FBO, not the transient scanout.
 template<class Draw>
-bool Capture(Draw&& draw) {
+bool Capture(Draw&& draw, bool alternate = false) {
     constexpr int width = 1920, height = 1080;
     LaunchHandoff::Frame frame;
     frame.width = width;
@@ -111,7 +111,7 @@ bool Capture(Draw&& draw) {
                          frame.rgba.begin() + (height - y - 1) * stride);
     }
     try {
-        LaunchHandoff::Publish(std::move(frame));
+        LaunchHandoff::Publish(std::move(frame), alternate);
     } catch (...) {
         return false;
     }

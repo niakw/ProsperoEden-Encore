@@ -1939,6 +1939,22 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
             assert actual == blob, ("NX2 applet proxy reverse drift", actual)
             print("ENCORE_NS2_APPLET_NX2_INTERFACE_EXACT_REVERSE_PASS")
         if (path == native_applet_proxy_path and
+            actual == "0d2ed417d23f11a97f91cf18e733fad6515d0756"
+            and blob == "849baf7bfe243734ee49c9e7617462665746d5f1"):
+            # Lichii NX2 added a typed appletOE ID 2000. Reverse this
+            # single declared row on the audit copy to the exact prior
+            # merged appletOE blob; the active C++ keeps the extra handler.
+            selected = raw.decode("utf-8")
+            added = '        {2000, &IApplicationProxyService::StubReplyInterface, "Unknown2000"},\n'
+            assert selected.count(added) == 1
+            previous = selected.replace(added, "", 1).encode()
+            actual = hashlib.sha1(
+                b"blob " + str(len(previous)).encode() + bytes([0]) + previous
+            ).hexdigest()
+            assert actual == "b1acd90a74bceb03c900a505e217f484f6ecd18f", (
+                "AppletOE ID 2000 predecessor drift", actual)
+            raw = previous
+        if (path == native_applet_proxy_path and
             actual == "b1acd90a74bceb03c900a505e217f484f6ecd18f" and
             blob == "849baf7bfe243734ee49c9e7617462665746d5f1"):
             selected = raw.decode("utf-8")

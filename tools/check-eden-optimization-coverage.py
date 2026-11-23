@@ -1827,6 +1827,29 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
+elif gpu_table_vendor_pin == "716e069f212b89b6fd13af56b0677343cf41ba07":
+    # Snapshot of exactly the current native-selected AM/HID source owners.
+    # Prove immutable blob content rather than mistaking a newer vendor SHA
+    # for loss of the previously reviewed HLE service graph.
+    qualified_early_hle = {
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.cpp": "92de53cfc78a028c7fd8ccd57ec73b0b81ab0912",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy.h": "ed88acba848071d6c9e2c0b080c3234925003b50",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/graphics_scaling_parameters_functions.h": "bded1f902ac1a0995d71ffc3f425f33ba781b198",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.cpp": "27182c310b7e26ed4ffa57d3ece919d1c88a12f9",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/hid/hid_server.h": "6c93ae9a04b121903f3ae3211b705b91e3675942",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp": "0d2ed417d23f11a97f91cf18e733fad6515d0756",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h": "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
+        "vendor/encore-active/ns2-runtime/hle/core/hle/service/nx2_stub_interface.h": "68c087899680b8a3a764d6cd3c362b0e98237ae0",
+    }
+    assert ns2_early_hle_present == set(ns2_early_hle_receipts)
+    assert set(ns2_early_hle_receipts).issubset(qualified_early_hle)
+    for source, expected in qualified_early_hle.items():
+        actual = subprocess.check_output(
+            ["git", "hash-object", source], cwd=ROOT, text=True
+        ).strip()
+        assert actual == expected, ("NS2 shipping HLE owner drift", source, actual)
+    assert '"hle/service/am/service/application_proxy_service.cpp"' in release_cmake
 elif gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
     # NS1/NS2 merge preserves these eight active AM/HID owners. Historical
     # early-HLE provenance stays frozen; check each real selected Git blob.

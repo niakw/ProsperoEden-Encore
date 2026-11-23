@@ -1711,6 +1711,10 @@ def reviewed_blob(relative, expected):
             return "90b1d4e0fec9379c99c717eac54e3fdc0fb9cc54"
     return expected
 
+# This exact vendor revision repairs NIFM's handler table and names nine
+# fail-closed GPU-session commands. The shader/renderer owners still pass
+# the immutable per-file checks below, so qualify this *one* new pin.
+REVIEWED_PINS.add("716e069f212b89b6fd13af56b0677343cf41ba07")
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

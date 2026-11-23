@@ -1357,6 +1357,16 @@ Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot audctl — modes de sortie et casque persistants — 23/11/2026
+
+**Vendor `d23a6e5bbb235f4b277e523baeac668330eb5982`** (arbre `3c893de47856e787abf50ca4b0b86429b243225b`).
+
+`GetOutputModeSetting` (13) et `SetHeadphoneOutputLevelMode` (17) quittent **STUB → IMPL-SRC** : les réglages sont désormais conservés, et leurs getters (13/18) relisent l'état réel de la session. `NotifyHeadphoneVolumeWarningDisplayedEvent` (22) passe **STUB → NOOP** : Encore ne maintient aucune latch d'avertissement casque distincte à acquitter.
+
+**Compteur historique : 1 539 IMPL-SRC / 142 PARTIEL / 121 STUB / 142 NOOP / 1 713 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 330 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 256** : 1 713 NULL + 121 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

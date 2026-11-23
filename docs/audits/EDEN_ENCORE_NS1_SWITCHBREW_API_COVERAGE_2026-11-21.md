@@ -25,15 +25,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 537 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 539 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 457 | 80 | **1 537** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 459 | 80 | **1 539** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
-| **STUB — Stub / résultat simulé** | 124 | 0 | **124** |
-| **NOOP — No-op documenté** | 141 | 0 | **141** |
+| **STUB — Stub / résultat simulé** | 121 | 0 | **121** |
+| **NOOP — No-op documenté** | 142 | 0 | **142** |
 | **NULL — Handler NULL** | 1 713 | 0 | **1 713** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -443,11 +443,11 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1537
+    "Implémentation source retrouvée" : 1539
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 142
-    "Stub / résultat simulé" : 124
-    "No-op documenté" : 141
+    "Stub / résultat simulé" : 121
+    "No-op documenté" : 142
     "Handler NULL" : 1713
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 196
@@ -2665,16 +2665,16 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | audctl | `10` | `SetAudioOutputMode` | — | **IMPL-SRC** ([source C++][ns1-src-023]) | 2026-11-22 |
 | audctl | `11` | `SetForceMutePolicy` | — | **HORS-VERSION** (libnx : commande disponible uniquement avant HOS23 ; 3.0.0–13.2.1 / 1.0.0–13.2.1) | 2026-11-23 |
 | audctl | `12` | `GetForceMutePolicy` | — | **HORS-VERSION** (libnx : commande disponible uniquement avant HOS23 ; 3.0.0–13.2.1 / 1.0.0–13.2.1) | 2026-11-23 |
-| audctl | `13` | `GetOutputModeSetting` | — | **STUB** ([source C++][ns1-src-023]) | 2026-11-22 |
+| audctl | `13` | `GetOutputModeSetting` | — | **IMPL-SRC** ([vendor d23a6e5b](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d23a6e5bbb235f4b277e523baeac668330eb5982/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; état de mode de sortie réellement conservé et relu) | 2026-11-23 |
 | audctl | `14` | `SetOutputModeSetting` | — | **IMPL-SRC** ([source C++][ns1-src-023]) | 2026-11-22 |
 | audctl | `15` | `SetOutputTarget` | — | **IMPL-SRC** ([vendor c67f77d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c67f77d5b33e71ca70621ab4637f559a420d998d/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; état audctl réel conservé/retourné et cible active appliquée pour cmd15) | 2026-11-23 |
 | audctl | `16` | `SetInputTargetForceEnabled` | — | **PARTIEL** ([vendor c67f77d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c67f77d5b33e71ca70621ab4637f559a420d998d/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; valeur ABI conservée mais effet matériel/routage complet non reproduit) | 2026-11-23 |
-| audctl | `17` | `SetHeadphoneOutputLevelMode` | 3.0.0+ | **STUB** ([source C++][ns1-src-023]) | 2026-11-22 |
+| audctl | `17` | `SetHeadphoneOutputLevelMode` | 3.0.0+ | **IMPL-SRC** ([vendor d23a6e5b](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d23a6e5bbb235f4b277e523baeac668330eb5982/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; mode de niveau casque réellement conservé et relu) | 2026-11-23 |
 | audctl | `18` | `GetHeadphoneOutputLevelMode` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-023]) | 2026-11-22 |
 | audctl | `19` | `AcquireAudioVolumeUpdateEventForPlayReport` | 3.0.0+ | **HORS-VERSION** (libnx : commande disponible uniquement avant HOS23 ; 3.0.0–13.2.1) | 2026-11-23 |
 | audctl | `20` | `AcquireAudioOutputDeviceUpdateEventForPlayReport` | 3.0.0+ | **HORS-VERSION** (libnx : commande disponible uniquement avant HOS23 ; 3.0.0–13.2.1) | 2026-11-23 |
 | audctl | `21` | `GetAudioOutputTargetForPlayReport` | 3.0.0+ | **IMPL-SRC** ([vendor c67f77d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c67f77d5b33e71ca70621ab4637f559a420d998d/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; état audctl réel conservé/retourné et cible active appliquée pour cmd15) | 2026-11-23 |
-| audctl | `22` | `NotifyHeadphoneVolumeWarningDisplayedEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-023]) | 2026-11-22 |
+| audctl | `22` | `NotifyHeadphoneVolumeWarningDisplayedEvent` | 3.0.0+ | **NOOP** ([vendor d23a6e5b](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d23a6e5bbb235f4b277e523baeac668330eb5982/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; aucune latch d'avertissement casque persistante dans Encore) | 2026-11-23 |
 | audctl | `23` | `SetSystemOutputMasterVolume` | 4.0.0+ | **PARTIEL** ([vendor c67f77d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c67f77d5b33e71ca70621ab4637f559a420d998d/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; valeur ABI conservée mais effet matériel/routage complet non reproduit) | 2026-11-23 |
 | audctl | `24` | `GetSystemOutputMasterVolume` | 4.0.0+ | **IMPL-SRC** ([vendor c67f77d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/c67f77d5b33e71ca70621ab4637f559a420d998d/encore-active/eden-core/src/core/hle/service/audio/audio_controller.cpp) ; état audctl réel conservé/retourné et cible active appliquée pour cmd15) | 2026-11-23 |
 | audctl | `25` | `GetAudioVolumeDataForPlayReport` | 4.0.0+ | **NULL** ([source C++][ns1-src-023]) | 2026-11-22 |

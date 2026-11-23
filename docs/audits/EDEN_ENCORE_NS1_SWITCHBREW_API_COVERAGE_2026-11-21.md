@@ -25,15 +25,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 569 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `ecb8ae0e`. **Ces 1 569 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 579 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `81cf89d5`. **Ces 1 579 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 489 | 80 | **1 569** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 499 | 80 | **1 579** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
-| **STUB — Stub / résultat simulé** | 102 | 0 | **102** |
-| **NOOP — No-op documenté** | 146 | 0 | **146** |
+| **STUB — Stub / résultat simulé** | 91 | 0 | **91** |
+| **NOOP — No-op documenté** | 147 | 0 | **147** |
 | **NULL — Handler NULL** | 1 698 | 0 | **1 698** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -2858,8 +2858,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | clkrst, clkrst:i | `4` | `SetPowerEnabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `5` | `SetPowerDisabled` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `6` | `GetState` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `7` | `SetClockRate` | — | **STUB** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; clock_rate émulé avec LOG(STUBBED) ; non certifié PS5) | 2026-11-22 |
-| clkrst, clkrst:i | `8` | `GetClockRate` | — | **STUB** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; clock_rate émulé avec LOG(STUBBED) ; non certifié PS5) | 2026-11-22 |
+| clkrst, clkrst:i | `7` | `SetClockRate` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; écrit le `clock_rate` de session relu par cmd8) | 2026-11-23 |
+| clkrst, clkrst:i | `8` | `GetClockRate` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; retourne le `clock_rate` conservé par la même session) | 2026-11-23 |
 | clkrst, clkrst:i | `9` | `SetMinVClockRate` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `10` | `GetPossibleClockRates` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
 | clkrst, clkrst:i | `11` | `GetDvfsTable` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcv/pcv.cpp) ; table IClkrstSession ou CLKRST explicitement nullptr ; non certifié PS5) | 2026-11-22 |
@@ -3006,7 +3006,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | sfdnsres | `14` | `ResolverSetOptionRequest` | 5.0.0+ | **STUB** ([source C++][ns1-src-027]) | 2026-11-22 |
 | sfdnsres | `15` | `ResolverGetOptionRequest` | 5.0.0+ | **NULL** ([source C++][ns1-src-027]) | 2026-11-22 |
 | nsd:u, nsd:a | `10` | `GetSettingName` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
-| nsd:u, nsd:a | `11` | `GetEnvironmentIdentifier` | — | **STUB** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; réponse fixe lp1 ou LOG(STUBBED) ; non certifié PS5) | 2026-11-22 |
+| nsd:u, nsd:a | `11` | `GetEnvironmentIdentifier` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; écrit l'identifiant local stable `lp1`, changement d'environnement Nintendo désactivé) | 2026-11-23 |
 | nsd:u, nsd:a | `12` | `GetDeviceId` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
 | nsd:u, nsd:a | `13` | `DeleteSettings` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
 | nsd:u, nsd:a | `14` | `ImportSettings` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
@@ -3282,7 +3282,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | caps:a | `202` | `SaveEditedScreenShot` | 1.0.0-2.3.0 | **HORS-VERSION** ([source C++][ns1-src-072]) | 2026-11-23 |
 | caps:a | `301` | `GetLastOverlayScreenShotThumbnail` | — | **ABI-DIFF** (source `sources/eden/src/core/hle/service/caps/caps_a.cpp` ; ID 301 = GetLastThumbnail (nullptr), nom différent ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | caps:a | `302` | `GetLastOverlayMovieThumbnail` | 4.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
-| caps:a | `401` | `GetAutoSavingStorage` | — | **STUB** ([source C++][ns1-src-069]) | 2026-11-22 |
+| caps:a | `401` | `GetAutoSavingStorage` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; délègue à `AlbumManager::GetAutoSavingStorage` et retourne la capacité actuelle) | 2026-11-23 |
 | caps:a | `501` | `GetRequiredStorageSpaceSizeToCopyAll` | — | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `1001` | `LoadAlbumScreenShotThumbnailImageEx0` | 3.0.0+ | **NULL** ([source C++][ns1-src-069]) | 2026-11-22 |
 | caps:a | `1002` | `LoadAlbumScreenShotImageEx1` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-069]) | 2026-11-22 |
@@ -4527,8 +4527,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ndd | `22` | `StartDeviceScan` | — | **SERVICE-NON-EXPOSÉ** ([service natif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; service ndd sans registre nommé dans les processus de services HLE examinés ; absence de routage, corps individuels non évalués ; constat statique, aucune validation PS5) | 2026-11-22 |
 | ndd | `23` | `CancelDeviceScan` | — | **SERVICE-NON-EXPOSÉ** ([service natif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; service ndd sans registre nommé dans les processus de services HLE examinés ; absence de routage, corps individuels non évalués ; constat statique, aucune validation PS5) | 2026-11-22 |
 | ndd | `24` | `GetDeviceScanResult` | — | **SERVICE-NON-EXPOSÉ** ([service natif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; service ndd sans registre nommé dans les processus de services HLE examinés ; absence de routage, corps individuels non évalués ; constat statique, aucune validation PS5) | 2026-11-22 |
-| lp2p:app, lp2p:sys | `0` | `CreateNetworkService` | — | **STUB** (source `sources/eden/src/core/hle/service/ldn/ldn.cpp` ; ISfServiceCreator::CreateNetworkService est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
-| lp2p:app, lp2p:sys | `8` | `CreateNetworkServiceMonitor` | — | **STUB** (source `sources/eden/src/core/hle/service/ldn/ldn.cpp` ; ISfServiceCreator::CreateNetworkServiceMonitor est explicitement STUBBED ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
+| lp2p:app, lp2p:sys | `0` | `CreateNetworkService` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; construit et retourne `ISfService`) | 2026-11-23 |
+| lp2p:app, lp2p:sys | `8` | `CreateNetworkServiceMonitor` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; construit et retourne `ISfServiceMonitor`) | 2026-11-23 |
 
 ### Loader services
 
@@ -5019,11 +5019,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nim:shp | `502` | `RequestDownloadTicketForPrepurchasedContents` | 4.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `503` | `RequestSyncTicket` | 9.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:shp | `504` | `RequestDownloadTicketForPrepurchasedContents2` | 9.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `0` | `CreateServerInterface` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `0` | `CreateServerInterface` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; construit et retourne un vrai `IShopServiceAccessServer`) | 2026-11-23 |
 | nim:eca | `1` | `RefreshDebugAvailability` | 6.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:eca | `2` | `ClearDebugResponse` | 6.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
 | nim:eca | `3` | `RegisterDebugResponse` | 6.0.0+ | **NULL** ([source C++][ns1-src-099]) | 2026-11-22 |
-| nim:eca | `0` | `CreateAccessorInterface` | — | **STUB** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
+| nim:eca | `0` | `CreateAccessorInterface` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; construit et retourne un vrai `IShopServiceAccessor`) | 2026-11-23 |
 | nim:eca | `0` | `CreateAsyncInterface` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nim:eca | `0` | `Cancel` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | nim:eca | `1` | `GetSize` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nim/nim.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
@@ -5085,10 +5085,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:u | `2` | `ListenToMyApplicationId` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 2 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
 | npns:u | `4` | `GetReceiveEvent` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 4 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
 | npns:s | `1` | `ListenAll` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `2` | `ListenTo` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+| npns:s | `2` | `ListenTo` | — | **NOOP** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; compatibilité locale explicite : aucun backend Nintendo push, abonnement distant non simulé) | 2026-11-23 |
 | npns:s | `3` | `Receive` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `4` | `ReceiveRaw` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `5` | `GetReceiveEvent` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+| npns:s | `5` | `GetReceiveEvent` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; retourne le handle du vrai `get_receive_event` détenu par NPNS) | 2026-11-23 |
 | npns:s | `6` | `ListenUndelivered` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `7` | `GetStateChangeEvent` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `11` | `SubscribeTopic` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -5106,7 +5106,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `34` | `SetBaasDeviceAccountIdList` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `101` | `Suspend` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `102` | `Resume` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `103` | `GetState` | — | **STUB** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; opération simulée ou STUBBED ; sans preuve PS5) | 2026-11-22 |
+| npns:s | `103` | `GetState` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; état offline explicite correspondant à l'absence de connexion push persistante) | 2026-11-23 |
 | npns:s | `104` | `GetStatistics` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `105` | `GetPlayReportRequestEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `111` | `GetJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |

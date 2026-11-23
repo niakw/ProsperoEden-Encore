@@ -1462,6 +1462,23 @@ Enfin, `aoc:u` cmd100/101 passent **STUB → IMPL-SRC** : les deux factories con
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+
+## Lot factories/stateful services — 23/11/2026
+
+**Vendor `81cf89d58b0b4081ea3e276668368040a6a75355`** (arbre `147ec9af95f283aad866c61ed853cb76be98c270`).
+
+Onze entrées sortent du pool sans succès factice. `clkrst` cmd7/8 passent **STUB → IMPL-SRC** : le setter conserve la fréquence dans l'état de session et le getter relit exactement cette valeur. Les factories NIM ECA `CreateServerInterface` / `CreateAccessorInterface` et LP2P `CreateNetworkService` / `CreateNetworkServiceMonitor` passent **STUB → IMPL-SRC** car elles construisent et renvoient leurs interfaces IPC concrètes.
+
+NPNS `GetReceiveEvent` retourne son `KEvent` réel et `GetState` expose explicitement l'état offline du backend local : **STUB → IMPL-SRC**. `ListenTo` devient **NOOP documenté** : Encore n'a pas de connexion Nintendo Push et accepte localement l'abonnement sans prétendre avoir créé un abonnement distant. NSD `GetEnvironmentIdentifier` retourne le profil local stable `lp1` avec le changement d'environnement Nintendo volontairement désactivé. CAPS `GetAutoSavingStorage` délègue au `AlbumManager` et expose la capacité actuelle au lieu d'être un corps vide.
+
+Les six unités concernées sont bien listées dans `encore-active/eden-backports/src/core/CMakeLists.txt`. Les autres STUB proches qui renvoient des constantes arbitraires, ignorent un payload utile ou n'ont pas de backend (I2C data path, SSL PKI, AM copyright/capture, etc.) restent ouverts.
+
+**Compteur historique : 1 579 IMPL-SRC / 142 PARTIEL / 91 STUB / 147 NOOP / 1 698 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 330 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 211** : 1 698 NULL + 91 STUB + 142 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

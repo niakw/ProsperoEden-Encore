@@ -25,14 +25,20 @@ assert META['tracked_files']==9496
 LOCK = json.loads((ROOT/'tools/deps.json').read_text())
 record = next(x for x in LOCK['items'] if x['name']=='encore-overrides')
 assert record['commit']==PIN
-# The root submodule is a provenance/link surface only; the native build still
-# consumes the immutable vendor snapshot below. Keep both pinned to one source
-# commit so GitHub never advertises a different game-profile database.
-assert subprocess.check_output(
+# The gitlink tracks the latest encore-overrides/main for discovery only;
+# the native app still consumes the vendor snapshot and generated header pinned
+# to PIN. A new upstream gitlink must never silently change the compiled data.
+tracking_link = subprocess.check_output(
     ['git','-C',str(ROOT),'rev-parse','HEAD:encore-overrides'], text=True
-).strip() == PIN
+).strip()
+assert re.fullmatch(r'[a-f0-9]{40}',tracking_link),tracking_link
 gitmodules=(ROOT/'.gitmodules').read_text()
 assert '[submodule "encore-overrides"]' in gitmodules
+assert 'branch = main' in gitmodules
+assert subprocess.check_output(
+    ['git','-C',str(ROOT),'config','-f','.gitmodules','submodule.encore-overrides.branch'],
+    text=True
+).strip() == 'main'
 assert 'url = https://github.com/niakw/encore-overrides.git' in gitmodules
 assert 'update = none' in gitmodules
 assert 'shallow = true' in gitmodules

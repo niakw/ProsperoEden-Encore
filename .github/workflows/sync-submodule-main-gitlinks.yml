@@ -1,0 +1,54 @@
+name: Sync upstream submodule main gitlinks
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: encore-upstream-submodule-main-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Advance Gitlinks to latest remote main commits, validate, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git config -f .gitmodules submodule.vendor.branch)" = main
+          test "$(git config -f .gitmodules submodule.encore-overrides.branch)" = main
+          test "$(git config -f .gitmodules submodule.encore-overrides.update)" = none
+          for spec in 'vendor niakw/Prospero.Eden-Encore-vendor' 'encore-overrides niakw/encore-overrides'; do
+            read -r path repository <<< "$spec"
+            read -r sha ref < <(git ls-remote "https://github.com/$repository.git" refs/heads/main)
+            [[ "$sha" =~ ^[0-9a-f]{40}$ && "$ref" == refs/heads/main ]]
+            current="$(git rev-parse "HEAD:$path")"
+            echo "$path: $current -> $sha"
+            if [[ "$current" != "$sha" ]]; then
+              git update-index --add --cacheinfo "160000,$sha,$path"
+            fi
+          done
+          if git diff --cached --quiet; then
+            echo 'Both gitlinks already point to upstream main; nothing to change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'ci: sync vendor and overrides gitlinks to upstream main'
+          # Qualify on the newly committed immutable tree before pushing.
+          git submodule update --init --force vendor
+          bash tools/check-vendor-submodule.sh
+          python3 -B tools/check-vendored-overrides.py
+          # No force: preserve concurrent user changes; retry at next scheduled run.
+          git push origin HEAD:main

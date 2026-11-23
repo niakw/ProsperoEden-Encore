@@ -2521,6 +2521,24 @@ r457_service_source = (ROOT / r457_service_path).read_text()
 actual_service_blob = hashlib.sha1(
     b"blob "+str(len(r457_service_source.encode())).encode()+bytes([0])+
     r457_service_source.encode()).hexdigest()
+# Unified NX library support (e0080f38) was added after the DNSP/DXCI/NUP
+# library extension and changes exactly one CountFiles suffix. Reverse that
+# one line first so the already-reviewed R457 replay can remain immutable.
+if actual_service_blob == "f850b77e7b2a366f2e7cb16a0be9efb57679fef9":
+    nx_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
+                                   ".nro", ".nso", ".nca", ".nax", ".kip", ".nup", ".nx"}'''
+    pre_nx_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
+                                   ".nro", ".nso", ".nca", ".nax", ".kip", ".nup"}'''
+    assert r457_service_source.count(nx_formats) == 1
+    r457_service_source = r457_service_source.replace(nx_formats, pre_nx_formats, 1)
+    prior = r457_service_source.encode()
+    recovered_blob = hashlib.sha1(
+        b"blob "+str(len(prior)).encode()+bytes([0])+prior).hexdigest()
+    assert recovered_blob == "01d025544ac3544ab58779884f6fee10dcbe3209"
+    assert drift_index[r457_service_path]["actual"] == actual_service_blob
+    drift_index[r457_service_path]["actual"] = recovered_blob
+    actual_service_blob = recovered_blob
+    print("NX_LIBRARY_SOURCE_SUCCESSOR_PASS predecessor=01d02554 current=f850b77e")
 if actual_service_blob == "01d025544ac3544ab58779884f6fee10dcbe3209":
     new_formats = '''{".nsp", ".xci", ".nsz", ".xcz", ".dnsp", ".dxci",
                                    ".nro", ".nso", ".nca", ".nax", ".kip", ".nup"}'''

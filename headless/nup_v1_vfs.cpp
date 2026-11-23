@@ -374,17 +374,27 @@ void Archive::Parse() {
         std::set<std::string> localized_icon_tags;
         if (!meta_size) Check(meta_at == 0, "zero metadata with nonzero address");
         else {
-            // Fail closed on malformed NUP metadata, but retain the exact
-            // failing range classification in release stderr. A generic
-            // "metadata exceeds file" cannot distinguish oversized metadata
-            // from a truncated file or an invalid package offset.
+            // Some verified NUP v1 packers place OPTIONAL package metadata
+            // in the padding between the TOC and the payload blob (Lichii's
+            // writer explicitly supports this layout). Do not reject that
+            // non-overlapping gap merely because it is before blob_at.
+            // Payloads and TOC hashes remain mandatory; metadata overlapping
+            // the TOC, payloads or other metadata is still rejected.
+            const bool metadata_inside_file =
+                meta_size <= MaxMeta && meta_at <= file_size &&
+                meta_size <= file_size - meta_at;
+            const bool metadata_in_toc_gap =
+                meta_at >= toc_at + toc_size && meta_at < blob_at &&
+                meta_size <= blob_at - meta_at;
+            const bool metadata_after_blob = meta_at >= blob_at;
             const bool metadata_bounded =
-                meta_size <= MaxMeta && meta_at >= blob_at &&
-                meta_at <= file_size && meta_size <= file_size - meta_at;
+                metadata_inside_file && (metadata_in_toc_gap || metadata_after_blob);
             if (!metadata_bounded) {
                 const char* reason = meta_size > MaxMeta ? "size_limit" :
-                    meta_at < blob_at ? "before_blob" :
-                    meta_at > file_size ? "offset_outside_file" : "range_outside_file";
+                    meta_at > file_size ? "offset_outside_file" :
+                    meta_size > file_size - meta_at ? "range_outside_file" :
+                    meta_at < toc_at + toc_size ? "overlaps_toc_or_header" :
+                    meta_at < blob_at ? "gap_crosses_blob" : "invalid_extent";
                 std::fprintf(stderr,
                     "EDEN_NUP_METADATA_BOUNDS_REJECT package=%u reason=%s offset=%llu size=%u blob_at=%llu declared_file=%llu\n",
                     static_cast<unsigned>(i), reason,

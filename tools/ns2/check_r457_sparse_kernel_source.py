@@ -67,6 +67,7 @@ reviewed_vendors.add("ee64fac70671126c9b6ab9aa3b3885a40538cf16")
 reviewed_vendors.add("603e0d5c70b04fa84a19cca8f580ed1bdb230be0")
 reviewed_vendors.add("593bc9ee6ddfcf38e488325ccf318f1a0a109d8e")
 reviewed_vendors.add("6b48e6734e738306dd57ceed8be9b003631eb8cb")
+reviewed_vendors.add("d554e257ae82db66d9542f472dcde067510bfa1f")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
@@ -101,7 +102,7 @@ def gitblob(path):
     return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
 for path,expected in (
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp",
-     "2b5be4eba2500da2993db2ed1c86d44ddfa5554f" if selected in {"436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}
+     "2b5be4eba2500da2993db2ed1c86d44ddfa5554f" if selected in {"436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}
      else "6397dd2c4a9c9c10674ab87b344f5c6956b79e0c" if selected == "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"
      else "aeee7f62a3fc609936ff5dc6a64722ca8d860c2e" if selected == "56959a23273ea2ee82d2e59628c92cc9e1144fe9"
      else "12d3d0ddc59308b80df46bc54e6e8ee54011d568" if selected == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"
@@ -133,7 +134,7 @@ guarded=(r"^#if defined\(PS5_NATIVE\) && "
          r"defined\(EDEN_NS2_SPARSE_BACKING\)\n"
          r"[\s\S]*?^#endif\n")
 guard_count = len(re.findall(guarded,kernel,flags=re.MULTILINE))
-if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
     # This exact runtime blob carries the OOM rollback and optimized
     # preflight reviewed after the original R457 source-only parity gate.
     # Its full SHA is already checked above; do not silently normalize an
@@ -144,7 +145,7 @@ if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e
                     "ee64fac70671126c9b6ab9aa3b3885a40538cf16",
                     "603e0d5c70b04fa84a19cca8f580ed1bdb230be0",
                     "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
-                    "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+                    "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
         # Exact blob 2b5be4eb adds a guarded try/catch pair around optimized
         # metadata initialization, so the textual guard count is seven.
         assert guard_count == 7
@@ -208,7 +209,7 @@ for variant in ("memory_native_a32.cpp","memory_native_standard.cpp"):
     begin=owner.index("    void MapMemoryRegion(")
     end=owner.index("    void UnmapRegion(",begin)
     section=owner[begin:end]
-    if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+    if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
         assert section.count("EdenNs2EnsureGuestBackingReadable(")==1,variant
         assert "EdenNs2CommitGuestBacking(" not in section,variant
         assert section.index("EdenNs2EnsureGuestBackingReadable(")<section.index(
@@ -218,11 +219,11 @@ for variant in ("memory_native_a32.cpp","memory_native_standard.cpp"):
         assert section.index("EdenNs2CommitGuestBacking(")<section.index(
             "MapPages(page_table"),variant
     assert 'throw std::bad_alloc{};' in section,variant
-    if selected in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+    if selected in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
         zero=owner.split("    bool ZeroBlock(",1)[1].split(
             "    bool CopyBlock(",1)[0]
         assert "buffer.ClearBackingRegion(" in zero,variant
-        if selected == "6b48e6734e738306dd57ceed8be9b003631eb8cb":
+        if selected in {"6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
             assert "(12ull << 30)" not in zero,variant
             assert "either NS1 or NS2" in zero,variant
         else:
@@ -242,14 +243,14 @@ else:
 
 optimized=kernel.split("bool KMemoryManager::Impl::ProcessOptimizedAllocation",1)[1].split(
     "size_t KMemoryManager::Impl::CalculateManagementOverheadSize",1)[0]
-if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
     assert "device_memory.buffer.ClearBackingRegion(" in optimized
     assert "CommitKernelDirectGuestRange(kernel.System(), block" not in optimized
 else:
     assert optimized.index("CommitKernelDirectGuestRange(")<optimized.index("GetPointer<u64>(")
     assert optimized.index("CommitKernelDirectGuestRange(")<optimized.index("std::memset(")
 assert 'Core::DramMemoryMap::Base' in kernel
-if selected in {"d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+if selected in {"d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
     track_unoptimized=kernel.split("void KMemoryManager::Impl::TrackUnoptimizedAllocation",1)[1].split(
         "void KMemoryManager::Impl::TrackOptimizedAllocation",1)[0]
     assert "if (word & mask)" in track_unoptimized
@@ -263,10 +264,10 @@ assert mapping.index("process_memory->GetPointerSilent(")<mapping.index(
     "AtomicStorePhysical(valid, phys_addr);")
 assert gpu.count("AtomicStorePhysical(")==3, "Unexpected new GPU PA publisher: review separately"
 
-if selected in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+if selected in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
     page_heap=read("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp")
     assert "EdenNs2GuestBackingFreed(" in page_heap
-    if selected in {"ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+    if selected in {"ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
         assert "size >= (std::size_t{2} << 20)" in page_heap
     else:
         assert "size >= (2_MiB)" in page_heap
@@ -287,7 +288,7 @@ assert "plan.CancelSingleUnstaged(*admit)" in physical
 assert "if (state == State::Resident) return lock.waited;" in physical
 assert "active_guest_signal.store(this, std::memory_order_release)" in physical
 assert "EdenNs2EnsureGuestBackingReadable" in physical
-if selected in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+if selected in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
     release=physical.split("    void ReleaseFreed(",1)[1].split(
         "    bool PromoteFault(",1)[0]
     assert "plan.ReleaseResident(index, old_physical)" in release

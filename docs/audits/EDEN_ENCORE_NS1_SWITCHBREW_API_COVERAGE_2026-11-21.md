@@ -29,10 +29,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 554 | 80 | **1 634** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 555 | 80 | **1 635** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
-| **STUB — Stub / résultat simulé** | 61 | 0 | **61** |
+| **STUB — Stub / résultat simulé** | 60 | 0 | **60** |
 | **NOOP — No-op documenté** | 153 | 0 | **153** |
 | **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
@@ -2937,7 +2937,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsd:u, bsd:s | `2` | `Socket` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `3` | `SocketExempt` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `4` | `Open` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
-| bsd:u, bsd:s | `5` | `Select` | — | **STUB** ([source C++][ns1-src-026]) | 2026-11-22 |
+| bsd:u, bsd:s | `5` | `Select` | — | **IMPL-SRC** (ABI `0x20` alignée sur Lichii/FreeBSD : validation `nfds`/timeval/BADF, 3 `fd_set` read/write/except, attente via `Network::Poll`, réécriture des bits prêts et vrai `(ret, errno)` ; vendor `8cf1727e`, PS5 non validé) | 2026-11-23 |
 | bsd:u, bsd:s | `6` | `Poll` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `7` | `Sysctl` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `8` | `Recv` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
@@ -2957,7 +2957,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsd:u, bsd:s | `22` | `Shutdown` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `23` | `ShutdownAllSockets` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `24` | `Write` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
-| bsd:u, bsd:s | `25` | `Read` | — | **IMPL-SRC** (socket `read()` délégué au `RecvWork` réel avec flags=0 ; erreurs/blocage/copie buffer partagent le chemin `Recv`; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
+| bsd:u, bsd:s | `25` | `Read` | — | **IMPL-SRC** (régression du chemin actif réparée : socket `read()` appelle `RecvImpl(fd, 0)`, renvoie le vrai `(ret, errno)` et n'écrit que les octets lus ; vendor `77ec007d`, PS5 non validé) | 2026-11-23 |
 | bsd:u, bsd:s | `26` | `Close` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `27` | `DuplicateSocket` | — | **IMPL-SRC** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `28` | `GetResourceStatistics` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
@@ -6439,3 +6439,10 @@ Vendor `55be5734cb4f820eebfb05e43449b45b7bdf23ad` → gitlink moteur `e9228efbfa
 Vendor `06ce1025d8f1e2a6074527b35e54acc7d3570699` → gitlink moteur `d576d3e7f746c3bf4dcef7352dda4278d358e6b4`. `InitializeGamePlayRecording` est désormais documenté comme **NOOP de compatibilité** cohérent avec `IsGamePlayRecordingSupported=false` sur Encore lorsqu'aucun backend Horizon d'enregistrement n'est exposé. Le transfer-memory n'est pas détourné vers un enregistreur PS5 fictif. **1 STUB → NOOP.** Aucun gain vidéo ni validation PS5 revendiqué.
 
 **Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 61 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 825.**
+
+
+### BSD — Select réel + réparation Read + borne FD (23/11/2026)
+
+Vendor `77ec007d1b9cc66487cc6bbf94a1a9231d2b4117` (inclut `8cf1727e6ce48acf1d3d36ffa580c2542df2b2af`) → gitlink moteur `441e5741343e0e77c0277ddb7f6f86881d98973c`. `Select` implémente désormais l'ABI 0x20 observée dans Lichii, les trois fd_sets, les erreurs `EINVAL/BADF`, le timeout et la readiness via le backend `Network::Poll` déjà actif. Le test `fd >= MAX_FD` remplace les deux comparaisons `fd > MAX_FD`, supprimant l'accès potentiel à `file_descriptors[128]`. `Read`, déjà compté IMPL-SRC par un ancien lot, était redevenu stub dans le propriétaire CMake actif ; la régression est réparée avec un `RecvImpl(fd, 0)` réel. **Compteur : seulement 1 STUB → IMPL-SRC**, car `Read` était déjà sorti du pool dans le registre. Aucun build PS5 ni gameplay n'est revendiqué sur ce couple de SHAs.
+
+**Compteur courant : 1 635 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 824.**

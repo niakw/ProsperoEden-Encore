@@ -2373,3 +2373,12 @@ Vendor `06ce1025d8f1e2a6074527b35e54acc7d3570699` → gitlink moteur `d576d3e7f7
 **Compteur courant : 1 634 IMPL-SRC / 141 PARTIEL / 61 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 825** : 1 424 NULL + 61 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## BSD — Select réel + réparation Read + borne FD (23/11/2026)
+
+Vendor `77ec007d1b9cc66487cc6bbf94a1a9231d2b4117` (inclut `8cf1727e6ce48acf1d3d36ffa580c2542df2b2af`) → gitlink moteur `441e5741343e0e77c0277ddb7f6f86881d98973c`. Le propriétaire actif `encore-active/eden-core/src/core/hle/service/sockets/bsd.cpp` a été modifié directement. `Select` n'est plus un succès zéro : ABI 0x20, fd_sets read/write/except, timeout, `BADF/EINVAL`, poll réel et sortie des bits prêts. Deux bornes `> MAX_FD` deviennent `>= MAX_FD`, supprimant l'index hors limites `file_descriptors[128]`. Enfin `Read`, déjà classé IMPL-SRC mais perdu dans le chemin CMake actif, est restauré avec `RecvImpl(fd, 0)` et une copie limitée à `ret` octets. **Baisse du pool : 1 seulement**, `Read` étant déjà comptabilisé comme implémenté. Aucun résultat PS5 n'est revendiqué.
+
+**Compteur courant : 1 635 IMPL-SRC / 141 PARTIEL / 60 STUB / 153 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 824** : 1 424 NULL + 60 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

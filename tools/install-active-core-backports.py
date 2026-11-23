@@ -29,6 +29,10 @@ def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def git_blob_sha1(data: bytes) -> str:
+    return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+
+
 def affected() -> list[str]:
     names = set()
     for patch in PATCHES:
@@ -78,6 +82,10 @@ def derive() -> dict[str, tuple[bytes, bytes]]:
 # owned source cache. Recover only that exact SHA-256, never arbitrary bytes.
 KNOWN_STALE_A64_SHA256 = "08ae577aa069b589faaa8cc6659baa66c80661d78abc15381907d63b343c17b0"
 A64_OWNER = "src/core/arm/dynarmic/arm_dynarmic_64.cpp"
+SM_SOURCE_OWNER = "src/core/hle/service/sm/sm.cpp"
+SM_SHIPPING_SOURCE = ROOT / "vendor/encore-active/eden-backports" / SM_SOURCE_OWNER
+SM_SHIPPING_GIT_BLOB = "c75c5437dfae5176d25a9994ff8aa7164d8b6713"
+SM_SHUTDOWN_GIT_BLOB = "494ee50d2880a491b07c2b981193df1a686c696a"
 
 
 def preserve_known_owned_cache_source(destination: Path, target: Path, digest: str) -> None:
@@ -111,6 +119,44 @@ def preserve_known_owned_cache_source(destination: Path, target: Path, digest: s
     elif sha(backup.read_bytes()) != digest:
         raise RuntimeError("Cached A64 backup has a different SHA-256")
     print(f"EDEN_KNOWN_STALE_A64_PRESERVED sha256={digest}", flush=True)
+
+
+def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
+    """Keep the shutdown-aware SM header and implementation under one owner."""
+    target = destination / SM_SOURCE_OWNER
+    maintained = ACTIVE / SM_SOURCE_OWNER
+    predecessor = SM_SHIPPING_SOURCE
+    if not target.is_file() or target.is_symlink():
+        raise RuntimeError("Missing staged SM source")
+    if not maintained.is_file() or not predecessor.is_file():
+        raise RuntimeError("Missing reviewed SM source owner")
+    maintained_bytes = maintained.read_bytes()
+    predecessor_bytes = predecessor.read_bytes()
+    if git_blob_sha1(predecessor_bytes) != SM_SHIPPING_GIT_BLOB:
+        raise RuntimeError("Shipping SM predecessor drift")
+    if git_blob_sha1(maintained_bytes) != SM_SHUTDOWN_GIT_BLOB:
+        raise RuntimeError("Shutdown SM owner drift")
+    current = target.read_bytes()
+    if current == maintained_bytes:
+        return False
+    if check:
+        raise RuntimeError(
+            f"Active SM source check found predecessor: current={git_blob_sha1(current)} "
+            f"active={SM_SHUTDOWN_GIT_BLOB}"
+        )
+    if current != predecessor_bytes:
+        raise RuntimeError(
+            f"Refusing unknown staged SM source: current={git_blob_sha1(current)} "
+            f"shipping={SM_SHIPPING_GIT_BLOB}"
+        )
+    with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as handle:
+        tmp = Path(handle.name)
+    try:
+        shutil.copyfile(maintained, tmp)
+        tmp.replace(target)
+    finally:
+        tmp.unlink(missing_ok=True)
+    return True
 
 
 def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *, check: bool, repair_owned_cache: bool = False) -> None:
@@ -185,8 +231,10 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
         finally:
             tmp.unlink(missing_ok=True)
         changed += 1
-    print(f"EDEN_ACTIVE_CORE_BACKPORTS files={len(expected)} changed={changed} "
-          "icache=on service_wait=on dummy_wait=quarantined")
+    if stage_selected_sm_source(destination, check=check):
+        changed += 1
+    print(f"EDEN_ACTIVE_CORE_BACKPORTS files={len(expected) + 1} changed={changed} "
+          "icache=on service_wait=on sm_shutdown=on dummy_wait=quarantined")
 
 
 def main() -> None:

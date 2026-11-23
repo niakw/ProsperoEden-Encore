@@ -748,6 +748,15 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 651** : 2 094 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Recheck ABI-DIFF — anciennes surfaces Time — 23/11/2026
+
+- Les trois lignes `SetInternalOffset` (cmd201) exposées sur les anciennes surfaces Time sont limitées à **HOS 3.0.0–3.0.2** dans le miroir.
+- **3 ABI-DIFF → HORS-VERSION** pour la cible HOS 23. Aucune adaptation de l'ABI moderne n'est nécessaire pour ces commandes retirées.
+
+**Compteur historique : 1 466 IMPL-SRC / 110 PARTIEL / 149 STUB / 119 NOOP / 2 094 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 39 HORS-VERSION / 0 ABSENT / 282 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 648** : 2 094 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

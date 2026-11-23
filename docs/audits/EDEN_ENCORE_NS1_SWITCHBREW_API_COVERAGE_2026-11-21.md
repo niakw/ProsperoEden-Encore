@@ -38,9 +38,9 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 36 | 0 | **36** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 39 | 0 | **39** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 285 | 0 | **285** |
+| **ABI-DIFF — Noms/ABI divergents** | 282 | 0 | **282** |
 | **AMBIGU — Interface ambiguë** | 12 | 0 | **12** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 1 | **1** |
@@ -452,9 +452,9 @@ pie showData
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 36
+    "Hors version firmware cible" : 39
     "Commande absente des tables" : 0
-    "Noms/ABI divergents" : 285
+    "Noms/ABI divergents" : 282
     "Interface ambiguë" : 12
     "Non vérifié" : 0
     "ID SVC non trouvé" : 1
@@ -2504,7 +2504,7 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | time:a, time:r, time:u | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:a, time:r, time:u | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:a, time:r, time:u | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **HORS-VERSION** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-23 |
 | time:a, time:r, time:u | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:a, time:r, time:u | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -2906,7 +2906,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:u, time:a, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:u, time:a, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:u, time:a, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **HORS-VERSION** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-23 |
 | time:u, time:a, time:s | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:u, time:a, time:s | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
@@ -5406,7 +5406,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | time:su, time:s | `101` | `IsRtcResetDetected` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `102` | `GetSetupResultValue` | 2.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `200` | `GetInternalOffset` | 3.0.0+ | **IMPL-SRC** ([psc/time/steady_clock.cpp][ns1-time-psc-time-steady-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
-| time:su, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-22 |
+| time:su, time:s | `201` | `SetInternalOffset` | 3.0.0-3.0.2 | **HORS-VERSION** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/psc/time/static.cpp) ; slot 201 actuel porte d'autres commandes selon les interfaces Time ; aucune équivalence prouvée ; qualification statique, PS5 non validé) | 2026-11-23 |
 | time:su, time:s | `0` | `GetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `1` | `SetCurrentTime` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |
 | time:su, time:s | `2` | `GetSystemClockContext` | — | **IMPL-SRC** ([psc/time/system_clock.cpp][ns1-time-psc-time-system-clock-cpp] ; ID/nom et corps C++ recroisés ; source, ABI/PS5 non validés) | 2026-11-22 |

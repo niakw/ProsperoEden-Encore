@@ -82,10 +82,17 @@ reviewed_vendors.add("84ec89ce112b83603b2095a9f6bb785f8e999ef6")
 reviewed_vendors.add("97fa38381d9ce23b63b3bf3751615dc254ab3634")
 reviewed_vendors.add("b099bd7cbefaa1a35d6626d4fd3161afcefa1b48")
 reviewed_vendors.add("bfdf39014db15f237a16d4a50e6cdfd68bdd87b8")
+# Vendor 63826507 is a direct bfdf successor changing only the PS5
+# VideoOut WSI. Normalize it to bfdf for sparse/GMMU receipt selection while
+# retaining the actual gitlink for admission below.
+reviewed_vendors.add("63826507846e253761ca2c6a77727446fe712774")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
                                  text=True).strip()
+actual_selected = selected
+if selected == "63826507846e253761ca2c6a77727446fe712774":
+    selected = "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"
 if pinned in {"17253dc91e9fe1eb2d9980f261f59d227bfcd1a1", "95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd"}:
     if pinned in {"95343060f948601930f2e62b919da0789f0830bb", "12ab9a8411f5c9df1b5cc73f01c923ad9479c8af", "224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c", "150a3a79ca103061f73a9a50ca8f463a3b4712f3", "fcd62408fdbc33af01a4caebc8fd44c8500b628f", "b6b9e98e0dd16c4702f21f2e0b5e322126abeecb", "dbef23055897b1649f83c20cf7a0516e64f3d5cd"}:
         tree_sha = subprocess.check_output(
@@ -153,7 +160,7 @@ if selected in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9c
             b"blob "+str(len(payload)).encode()+bytes([0])+payload
         ).hexdigest()
         assert actual==expected_blob, ("R457 successor owner drift",relative,actual)
-assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
+assert pinned==actual_selected and actual_selected in reviewed_vendors,(pinned,actual_selected)
 def read(path): return (root/path).read_text()
 def gitblob(path):
     raw=(root/path).read_bytes()

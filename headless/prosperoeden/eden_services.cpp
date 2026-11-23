@@ -1095,9 +1095,13 @@ bool IsNupSelection(std::string_view file) {
             (extension[3] == 'p' || extension[3] == 'P'));
 }
 
+bool IsNs2MediaIdentity(std::uint64_t title_id, std::string_view file = {}) {
+    return (title_id & 0xFF00000000000000ULL) == 0x0400000000000000ULL ||
+           IsNupSelection(file);
+}
+
 bool UseNs2CaseIndex(const pe::ui::Game& game) {
-    return (game.title_id & 0xFF00000000000000ULL) == 0x0400000000000000ULL ||
-           game.format == "NUP" || IsNupSelection(game.file);
+    return IsNs2MediaIdentity(game.title_id, game.file) || game.format == "NUP";
 }
 
 BoxIndex::const_iterator FindCaseEntry(const BoxIndex& index, bool ns2,
@@ -1134,15 +1138,21 @@ const std::vector<std::string>* MatchingNs1Back(
     return lookup(alternate_name);
 }
 
-std::string CaseFacePath(std::uint64_t title_id, const char* side) {
+std::string CaseFacePath(std::uint64_t title_id, const char* side,
+                         bool second_generation = false) {
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX", static_cast<unsigned long long>(title_id));
-    return Eden::CoversDir() + "/box-" + side + "-" + id + ".webp";
+    // Preserve every existing NS1 cache path. NS2 is explicitly namespaced
+    // so a NUP that reuses an NS1 TitleID cannot inherit its front/back,
+    // Square or scenic GamesDB files.
+    return Eden::CoversDir() + "/box-" + side +
+           (second_generation ? "-ns2-" : "-") + id + ".webp";
 }
 
-std::string CachedGamesDbSquare(std::uint64_t title_id) {
+std::string CachedGamesDbSquare(std::uint64_t title_id,
+                                bool second_generation = false) {
     if (title_id == 0) return {};
-    const std::string path = CaseFacePath(title_id, "square");
+    const std::string path = CaseFacePath(title_id, "square", second_generation);
     int width = 0, height = 0;
     if (!ValidNlibWebP(path, &width, &height)) return {};
     const int larger = std::max(width, height);
@@ -1155,22 +1165,26 @@ std::string CachedGamesDbSquare(std::uint64_t title_id) {
 // from genuine physical box scans. Original covers never read these paths.
 // Use the first GamesDB fanart, then its first real gameplay shot.
 // Caller gives Nlib banner/screenshot priority over both.
-std::string CachedGamesDbHero(std::uint64_t title_id) {
+std::string CachedGamesDbHero(std::uint64_t title_id,
+                              bool second_generation = false) {
     if (title_id == 0) return {};
     for (int scene : {1, 3, 4, 5}) {
         const std::string side = "scene-" + std::to_string(scene);
-        if (auto path = AvailableArtwork(CaseFacePath(title_id, side.c_str()));
+        if (auto path = AvailableArtwork(
+                CaseFacePath(title_id, side.c_str(), second_generation));
             !path.empty()) return path;
     }
     return {};
 }
 
-std::vector<std::string> CachedCaseScenes(std::uint64_t title_id) {
+std::vector<std::string> CachedCaseScenes(std::uint64_t title_id,
+                                           bool second_generation = false) {
     std::vector<std::string> scenes;
     if (title_id == 0) return scenes;
     for (int i : {3, 4, 5, 1, 2}) {
         const std::string side = "scene-" + std::to_string(i);
-        const std::string path = CaseFacePath(title_id, side.c_str());
+        const std::string path =
+            CaseFacePath(title_id, side.c_str(), second_generation);
         if (auto available = AvailableArtwork(path); !available.empty()) scenes.push_back(available);
     }
     return scenes;
@@ -1178,8 +1192,9 @@ std::vector<std::string> CachedCaseScenes(std::uint64_t title_id) {
 
 // Nlib screenshots are retained first; independent LaunchBox pictures fill
 // empty slots and support the rear collage, never the actual back scan.
-void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id) {
-    for (const auto& scene : CachedCaseScenes(title_id)) {
+void AppendCaseScenes(std::vector<std::string>& screens, std::uint64_t title_id,
+                      bool second_generation = false) {
+    for (const auto& scene : CachedCaseScenes(title_id, second_generation)) {
         if (screens.size() >= 6) break;
         if (std::find(screens.begin(), screens.end(), scene) == screens.end())
             screens.push_back(scene);

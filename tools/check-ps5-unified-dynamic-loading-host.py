@@ -73,6 +73,9 @@ assert "seconds<1000.0" in gl_art
 assert "LoadingCapturePose::back" in frontend
 assert "LoadingCapturePose::front" in frontend
 assert "launcher.loading_back_available() && !reduce_motion" in frontend
+assert "launcher.loading_final_pose_is_back()" in frontend
+assert "const auto primary_pose = animate_case" in frontend
+assert "const auto alternate_pose = final_back" in frontend
 assert "LaunchHandoff::Peek()" in gl_art
 assert "LaunchHandoff::Valid(*artwork)" in gl_art
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in frontend

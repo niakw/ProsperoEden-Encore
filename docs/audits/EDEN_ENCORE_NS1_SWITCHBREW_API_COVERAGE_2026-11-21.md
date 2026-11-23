@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 530 | 80 | **1 610** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 534 | 80 | **1 614** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
+| **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
-| **NOOP — No-op documenté** | 146 | 0 | **146** |
-| **NULL — Handler NULL** | 1 605 | 0 | **1 605** |
+| **NOOP — No-op documenté** | 145 | 0 | **145** |
+| **NULL — Handler NULL** | 1 601 | 0 | **1 601** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3207,16 +3207,16 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm:dbg | `11` | `GetBleConnectionParameter` | 5.1.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
 | btm:dbg | `12` | `GetBleConnectionParameterRequest` | 5.1.0+ | **NULL** ([source C++][ns1-src-064]) | 2026-11-22 |
 | btm:sys | `0` | `GetCore` | — | **IMPL-SRC** ([source C++][ns1-src-066]) | 2026-11-22 |
-| btm:sys | `0` | `StartGamepadPairing` | — | **NOOP** (pairing Bluetooth Switch physique non exposé sur PS5 ; succès neutre explicite ; vendor `4936c552`) | 2026-11-22 |
-| btm:sys | `1` | `CancelGamepadPairing` | — | **NOOP** (pairing Bluetooth Switch physique non exposé sur PS5 ; succès neutre explicite ; vendor `4936c552`) | 2026-11-22 |
-| btm:sys | `2` | `ClearGamepadPairingDatabase` | — | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
-| btm:sys | `3` | `GetPairedGamepadCount` | — | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
+| btm:sys | `0` | `StartGamepadPairing` | — | **IMPL-SRC** (mémorise l'état de pairing invité et signale le KEvent de changement ; aucun périphérique Switch fictif ; vendor `cd366101`, gitlink moteur `3a19889c`) | 2026-11-23 |
+| btm:sys | `1` | `CancelGamepadPairing` | — | **IMPL-SRC** (efface l'état de pairing invité et signale le KEvent de changement ; vendor `cd366101`, gitlink moteur `3a19889c`) | 2026-11-23 |
+| btm:sys | `2` | `ClearGamepadPairingDatabase` | — | **NOOP** (Encore ne persiste aucune base de pairing de manettes Switch ; vider cette base vide n'a aucun effet matériel à reproduire ; vendor `cd366101`) | 2026-11-23 |
+| btm:sys | `3` | `GetPairedGamepadCount` | — | **PARTIEL** (retourne 0 pour la base de pairing Switch non modélisée ; ABI u8 HOS 23 respectée, mais pas de persistance/pairing physique ; vendor `cd366101`) | 2026-11-23 |
 | btm:sys | `4` | `EnableRadio` | — | **IMPL-SRC** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `5` | `DisableRadio` | — | **IMPL-SRC** ([source C++][ns1-src-065]) | 2026-11-22 |
 | btm:sys | `6` | `GetRadioOnOff` | — | **IMPL-SRC** (SwitchBrew IBtmSystemCore cmd6 ; handler actif `IsRadioEnabled` lit le vrai `BluetoothEnableFlag` partagé `set:sys`, même getter d’état radio ; vendor `8c6c57ec`, PS5 non validé) | 2026-11-23 |
 | btm:sys | `7` | `AcquireRadioEvent` | 3.0.0+ | **IMPL-SRC** (retourne le vrai KReadableEvent radio géré par ServiceContext ; vendor `4936c552`) | 2026-11-22 |
-| btm:sys | `8` | `AcquireGamepadPairingEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
-| btm:sys | `9` | `IsGamepadPairingStarted` | 3.0.0+ | **NULL** ([source C++][ns1-src-065]) | 2026-11-22 |
+| btm:sys | `8` | `AcquireGamepadPairingEvent` | 3.0.0+ | **IMPL-SRC** (retourne un KReadableEvent réel créé par ServiceContext et signalé sur Start/Cancel ; vendor `cd366101`) | 2026-11-23 |
+| btm:sys | `9` | `IsGamepadPairingStarted` | 3.0.0+ | **IMPL-SRC** (relit l'état lifecycle réellement maintenu par Start/Cancel ; vendor `cd366101`) | 2026-11-23 |
 | btm:u | `0` | `GetCore` | — | **IMPL-SRC** ([source C++][ns1-src-066]) | 2026-11-22 |
 | btm:u | `0` | `AcquireBleScanEvent` | — | **IMPL-SRC** (retourne de vrais KReadableEvent créés et gérés par ServiceContext ; vendor `45ea626b`) | 2026-11-22 |
 | btm:u | `1` | `GetBleScanFilterParameter` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
@@ -6292,3 +6292,10 @@ Les dumps NS1 23.0.1 confirment la réaffectation des IDs de six anciennes comma
 Le dump WLAN NS1 23.0.1 ne publie plus `wlan:lcl`, ce qui ferme ses 9 ABI historiques pour le firmware cible. Trois anciennes commandes `clkrst`, `pcie` ID 20 `SetAspmEnable` et `appletAE` ID 1 `RequestLaunchApplicationForDebug` ont également été déplacées/réaffectées sur HOS 23. Ces **14 lignes** passent **ABI-DIFF → HORS-VERSION**.
 
 **Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 019.**
+
+
+### BTM system — lifecycle pairing invité raccordé (23/11/2026)
+
+Vendor `cd36610156c7591edf2f7527b714b226911ee50f` → gitlink moteur `3a19889cf6bb5e7f7fed7548d9d35e259e143f68`. `StartGamepadPairing`/`CancelGamepadPairing` maintiennent désormais un état invité et signalent un `KEvent` réel ; `AcquireGamepadPairingEvent` et `IsGamepadPairingStarted` sont raccordés. `ClearGamepadPairingDatabase` est un NOOP explicite car Encore ne possède aucune base persistante de pairing Switch. `GetPairedGamepadCount` respecte l'ABI HOS 23 et renvoie zéro, mais reste PARTIEL faute de backend/persistance Bluetooth Switch.
+
+**Compteur courant : 1 614 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 601 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 2 016.**

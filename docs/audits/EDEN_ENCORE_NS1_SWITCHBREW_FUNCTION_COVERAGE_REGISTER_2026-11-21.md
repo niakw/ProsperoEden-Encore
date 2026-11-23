@@ -2283,3 +2283,12 @@ Le couple moteur `36fe443ac608d71f911ce164b86d645d30689d80` → vendor `8580856a
 **Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 462 NULL / 212 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 877** : 1 462 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## VI system display — requêtes de base raccordées (23/11/2026)
+
+Vendor `e347b4949305f1f57de94713437218459697bee0` → gitlink moteur `b8879fd60961b285d3b52c428e5a788a7a76b795`. `ISystemDisplayService` cmd1200 `GetZOrderCountMin`, cmd1202 `GetZOrderCountMax` et cmd1203 `GetDisplayLogicalResolution` sont désormais des handlers actifs, avec ABI HOS 23.0.1 recroisée. Les bornes Z exposées sont 0/15 et la résolution logique réutilise `Settings::IsDockedMode()` + `VI::DisplayResolution`. **3 NULL → IMPL-SRC**. Position/taille/alpha restent ouverts car le compositor Encore ne stocke pas encore ces propriétés.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 453 NULL / 218 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 868** : 1 453 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

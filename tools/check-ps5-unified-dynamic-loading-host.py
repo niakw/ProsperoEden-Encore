@@ -65,7 +65,14 @@ assert "glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo)" in gl_art
 assert "glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)" in gl_art
 assert "glPixelStorei(GL_PACK_ROW_LENGTH, 0)" in gl_art
 assert "std::swap_ranges" in gl_art
-assert "LaunchHandoff::Publish(std::move(frame))" in gl_art
+assert "LaunchHandoff::Publish(std::move(frame), alternate)" in gl_art
+assert "LaunchHandoff::PeekAlternate()" in gl_art
+assert "alternate_texture_" in gl_art
+assert "has_alternate" in gl_art
+assert "seconds<1000.0" in gl_art
+assert "LoadingCapturePose::back" in frontend
+assert "LoadingCapturePose::front" in frontend
+assert "launcher.loading_back_available() && !reduce_motion" in frontend
 assert "LaunchHandoff::Peek()" in gl_art
 assert "LaunchHandoff::Valid(*artwork)" in gl_art
 assert "Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0)" in frontend

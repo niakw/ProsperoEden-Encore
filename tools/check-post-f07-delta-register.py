@@ -78,6 +78,27 @@ successors={
         "8b59abca5e756f6be6e5da70aec9c477c7e0e1ab",
     ),
 }
+# Nov23 launcher/media consolidation changed five additional reviewed owners
+# in one commit. Each is accepted only at its exact full Git blob, then the
+# exact pre-consolidation bytes are loaded from the immutable parent commit so
+# the existing Nov15 successor receipts remain authoritative.
+launcher_consolidation = {
+    "headless/prosperoeden/frontend.cpp":
+        ("5433ebd155a504084d84cc1d74a3cbb0eb11b229",
+         "1de983352dad85e4dd6c1520a0c9e9aec26d052d"),
+    "headless/prosperoeden/eden_services.h":
+        ("8c6248417cb3ec25b327661e410960a3e2a738de",
+         "7c4133b4e2f0340aa1e0e182ae469619d5a8c687"),
+    "headless/prosperoeden/pe/ui/launcher.cpp":
+        ("1d7822b025dd5b8927baa7ddb23d6c78e5a22276",
+         "255b110f1e1d021ed92511e64c2f8f67ee62a66d"),
+    "headless/prosperoeden/pe/ui/launcher.hpp":
+        ("4f82cc58396bb3f45aeadc4fb7638e3565d56d03",
+         "fb3a0037cfb86328f398a3059c5dd95faa9d950b"),
+    "headless/prosperoeden/pe/ui/services.hpp":
+        ("2509658b7e8fb888c10e6bede6ba9ce12a124a7d",
+         "300fa56ad3d8932e25a898c53ed8052f4d69841f"),
+}
 drifts=[]
 successor_hits=set()
 for entry in entries:
@@ -88,6 +109,22 @@ for entry in entries:
     actual=subprocess.check_output(
         ["git","hash-object",str(path)],cwd=ROOT,text=True
     ).strip()
+    if entry["path"] in launcher_consolidation:
+        current_blob, predecessor_blob = launcher_consolidation[entry["path"]]
+        if actual == current_blob:
+            predecessor = subprocess.check_output(
+                ["git", "show",
+                 "e0080f38204bab4cb596a3bed38ba9a625762c86:" + entry["path"]],
+                cwd=ROOT, text=True)
+            recovered = subprocess.run(
+                ["git", "hash-object", "--stdin"],
+                input=predecessor.encode("utf-8"),
+                stdout=subprocess.PIPE, check=True
+            ).stdout.decode().strip()
+            assert recovered == predecessor_blob, (
+                "Reviewed Nov23 launcher predecessor changed",
+                entry["path"], recovered)
+            actual = recovered
     if entry["path"] in successors:
         prior, successor=successors[entry["path"]]
         assert expected==prior,(entry["path"],expected,prior)

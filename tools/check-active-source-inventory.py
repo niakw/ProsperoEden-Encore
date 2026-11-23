@@ -2116,7 +2116,7 @@ current_vendor_post_f07_owner_blobs = {
 }
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
 if actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
-                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb"}:
+                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad"}:
     assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
     for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
         raw = (active / relative).read_bytes()

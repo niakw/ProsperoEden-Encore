@@ -1937,7 +1937,9 @@ post_f07_ns2_late_hle_headers = set()
 if gpu_table_vendor_pin in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"}:
     late_headers = {
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h":
-            "e534f8da6c4b88fe042cff8098dd386dcc29a8e4",
+            ("7aab2ba6235b33b91819ea78a006129183194194"
+             if gpu_table_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8" else
+             "e534f8da6c4b88fe042cff8098dd386dcc29a8e4"),
         "vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/performance_functions.h":
             "be4ce2bee44ac77e4f8b8bbe9e18cad11ab47b19",
     }

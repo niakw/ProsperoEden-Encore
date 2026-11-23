@@ -1189,6 +1189,22 @@ Requalification firmware du miroir : **36 entrées → HORS-VERSION** sur preuve
 
 Le nouveau vendor `4ce41124344107322445092db240e74fa824dbc6` n'est pas encore qualifié par les CI du moteur au moment de ce commit et aucun build natif/essai PS5 n'est revendiqué.
 
+## Lot FSP runtime — montages programme / save / capacité — 23/11/2026
+
+**Vendor `fca87f6aed972e9326a1b2e616649c9cbd884ee6`** (arbre `31ae4572584d1216be8bdc81a446a6f8110e94dc`), après palier moteur `ae310e43` validé par **NS1 X8D24 Vulkan** et **Verify pinned vendor**.
+
+- cmd9 `OpenDataFileSystemByProgramId` : **NULL → IMPL-SRC**, montage du RomFS Program patché par `ProgramId` via le `ContentProvider` actif ;
+- cmd204 `OpenDataFileSystemWithProgramIndex` : **NULL → IMPL-SRC**, variante filesystem du chemin déjà utilisé par le cmd205 storage ;
+- cmd612 `GetFreeSpaceSizeForSaveData` : **NULL → IMPL-SRC**, ABI `Out<s64> + SaveDataSpaceId`, capacité réelle NAND/SD via `FileSystemController` ;
+- cmd13 `InvalidateBisCache` : **NULL → NOOP documenté** ; Encore expose le BIS via VFS et ne maintient pas le cache MBR/GPT de FS-module que la commande Horizon invalide ;
+- cmd35 `CreateSaveDataFileSystemWithHashSalt` : **NULL → PARTIEL** ; l’ABI complète 0xB0 est consommée et le save est réellement créé au `space_id`, mais le backend host-directory ne matérialise pas le hash salt ni les métadonnées d’intégrité.
+
+**Compteur historique : 1 527 IMPL-SRC / 115 PARTIEL / 125 STUB / 140 NOOP / 1 775 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 295** : 1 775 NULL + 125 STUB + 115 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni résultat console n’est revendiqué pour ce nouveau vendor à ce stade.
+
 ---
 
 ## 1. Références et règle de vérité

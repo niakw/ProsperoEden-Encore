@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 524 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 444 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 527 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 444 | 80 | **1 524** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 447 | 80 | **1 527** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 111 | 3 | **114** |
+| **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
-| **NOOP — No-op documenté** | 139 | 0 | **139** |
-| **NULL — Handler NULL** | 1 780 | 0 | **1 780** |
+| **NOOP — No-op documenté** | 140 | 0 | **140** |
+| **NULL — Handler NULL** | 1 775 | 0 | **1 775** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -447,8 +447,8 @@ pie showData
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
-    "No-op documenté" : 139
-    "Handler NULL" : 1780
+    "No-op documenté" : 140
+    "Handler NULL" : 1775
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -3974,10 +3974,10 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `2` | `OpenDataFileSystemByCurrentProcess` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `7` | `OpenFileSystemWithPatch` | 2.0.0+ | **PARTIEL** ([owner natif FSP](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fe5a389ac04fa3c26c1756fc18e73a962e196da4/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; types non supportés et RomFS absent désormais rejetés sans assertion hôte ; mode Manual seul, PS5 non validé) | 2026-11-22 |
 | fsp-srv | `8` | `OpenFileSystemWithId` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenDataFileSystemByApplicationId` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
+| fsp-srv | `9` | `OpenDataFileSystemByProgramId` | 3.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; montage du RomFS Program patché par ProgramId via le ContentProvider actif) | 2026-11-23 |
 | fsp-srv | `11` | `OpenBisFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `12` | `OpenBisStorage` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `13` | `InvalidateBisCache` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `13` | `InvalidateBisCache` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; NOOP causal : Encore ne maintient pas le cache MBR/GPT BIS de FS-module) | 2026-11-23 |
 | fsp-srv | `17` | `OpenHostFileSystem` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `18` | `OpenSdCardFileSystem` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `19` | `FormatSdCardFileSystem` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -3994,7 +3994,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `32` | `ExtendSaveDataFileSystem` | 3.0.0+ | **D** (rejet explicite `ResultTargetNotFound` : Encore ne possède pas l'index `save_data_id → SaveDataAttribute`; aucun faux succès d'extension) | 2026-11-22 |
 | fsp-srv | `33` | `DeleteCacheStorage` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `34` | `GetCacheStorageSize` | 5.0.0+ | **PARTIEL** (taille data/journal réelle de `/user/save/cache/<program_id>` pour index 0 ; index multiples/SD distinct non représentés) | 2026-11-22 |
-| fsp-srv | `35` | `CreateSaveDataFileSystemWithHashSalt` | 6.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `CreateSaveDataFileSystemByHashSalt` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
+| fsp-srv | `35` | `CreateSaveDataFileSystemWithHashSalt` | 6.0.0+ | **PARTIEL** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; ABI 0xB0 consommée et save créé au space_id ; hash salt / métadonnées d’intégrité non matérialisés par le backend host-directory) | 2026-11-23 |
 | fsp-srv | `36` | `OpenHostFileSystemWithOption` | 9.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `51` | `OpenSaveDataFileSystem` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `52` | `OpenSaveDataFileSystemBySystemSaveDataId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -4026,7 +4026,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `201` | `OpenDataStorageByProgramId` | 3.0.0+ | **IMPL-SRC** (délègue au chemin actif OpenDataStorageByDataId(storage_id, 0, program_id); vendor 00a7d197) | 2026-11-22 |
 | fsp-srv | `202` | `OpenDataStorageByDataId` | — | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `203` | `OpenPatchDataStorageByCurrentProcess` | — | **IMPL-SRC** (ABI corrigée sans argument ; retourne le RomFS courant réellement patché via `OpenRomFSCurrentProcess`) | 2026-11-22 |
-| fsp-srv | `204` | `OpenDataFileSystemWithProgramIndex` | 7.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenDataFileSystemByProgramIndex` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |
+| fsp-srv | `204` | `OpenDataFileSystemWithProgramIndex` | 7.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; montage du RomFS Program patché par index ; pendant filesystem du cmd205 storage) | 2026-11-23 |
 | fsp-srv | `205` | `OpenDataStorageWithProgramIndex` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `400` | `OpenDeviceOperator` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `500` | `OpenSdCardDetectionEventNotifier` | — | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
@@ -4046,7 +4046,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `609` | `GetRightsIdByPath` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `610` | `GetRightsIdAndKeyGenerationByPath` | 3.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `611` | `SetCurrentPosixTimeWithTimeDifference` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `612` | `GetFreeSpaceSizeForSaveData` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `612` | `GetFreeSpaceSizeForSaveData` | 4.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/fca87f6aed972e9326a1b2e616649c9cbd884ee6/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; SaveDataSpaceId mappé sur NAND/SD ; capacité libre réelle via FileSystemController) | 2026-11-23 |
 | fsp-srv | `613` | `VerifySaveDataFileSystemBySaveDataSpaceId` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `614` | `CorruptSaveDataFileSystemBySaveDataSpaceId` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `615` | `QuerySaveDataInternalStorageTotalSize` | 5.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |

@@ -171,6 +171,7 @@ def executable_fixture() -> bytes:
          "files": {
             "exefs/main": b"base-main",
             "exefs/main.npdm": b"base-npdm",
+            "exefs/base-only-marker.txt": b"must-not-leak-to-update",
             "romfs/state.bin": b"base-v1",
             "romfs/sub/base.dat": b"base-only",
         }},

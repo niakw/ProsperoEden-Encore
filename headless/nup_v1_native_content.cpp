@@ -130,11 +130,39 @@ ContentSet::ContentSet(std::shared_ptr<Mount> mount,
 
 FileSys::VirtualDir ContentSet::ExeFS() const {
     if (!mount_) return {};
-    const auto regular = mount_->Effective(ContentView::ExeFS);
-    if (regular && regular->GetFile("main") && regular->GetFile("main.npdm"))
-        return regular;
+    // An update's ExeFS is one executable, not a per-file patch over base
+    // modules. Never combine a new main with an old main.npdm or SDK.
+    // Lichii SelectProgram likewise chooses a single program package.
+    const auto& packages = mount_->Packages();
+    std::optional<std::size_t> newest_update;
+    std::optional<std::size_t> base;
+    for (std::size_t i = 0; i < packages.size(); ++i) {
+        const auto& package = packages[i];
+        if (package.kind == 0) base = i;
+        if (package.kind == 1 &&
+            (!newest_update || package.version > packages[*newest_update].version))
+            newest_update = i;
+    }
+    if (newest_update) {
+        const auto update = mount_->PackageView(*newest_update, ContentView::ExeFS);
+        if (update) {
+            // Incomplete executable updates cannot be repaired by mixing
+            // their code and NPDM with a different package's revision.
+            if (!update->GetFile("main") || !update->GetFile("main.npdm"))
+                return {};
+            return update;
+        }
+    }
+    if (base) {
+        const auto base_exefs = mount_->PackageView(*base, ContentView::ExeFS);
+        if (base_exefs && base_exefs->GetFile("main") &&
+            base_exefs->GetFile("main.npdm"))
+            return base_exefs;
+    }
+    // A standalone NS1 update may instead embed a separately identified
+    // NS2 program1, admitted only after exact platform/title NPDM checks.
     const auto embedded = FindEmbeddedSwitch2Program(*mount_);
-    return embedded ? embedded->exefs : regular;
+    return embedded ? embedded->exefs : FileSys::VirtualDir{};
 }
 
 FileSys::VirtualFile ContentSet::CreateRomFS() const {

@@ -26,6 +26,7 @@ public:
         return Loader::ResultStatus::Success;
     }
     u64 GetTitleID() const { return program_id_; }
+    bool IsSwitch2() const { return false; }
 private:
     u64 program_id_{};
 };

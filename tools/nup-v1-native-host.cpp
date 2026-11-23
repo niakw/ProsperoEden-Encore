@@ -276,6 +276,8 @@ int main(int argc, char** argv) {
     auto exefs = exec_content.ExeFS();
     assert(exefs && Read(exefs->GetFile("main")) == "latest-main");
     assert(Read(exefs->GetFile("main.npdm")) == "latest-npdm");
+    // The selected update program must not inherit base-only ExeFS members.
+    assert(!exefs->GetFile("base-only-marker.txt"));
     assert(exefs->GetFile("main")->GetContainingDirectory() == exefs);
     assert(Read(exec_content.CreateRomFS()) == "state.bin=latest-v3\n");
     auto effective_tree = playable_mount->Effective(ContentView::RomFS);

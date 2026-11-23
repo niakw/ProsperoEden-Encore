@@ -22,7 +22,9 @@ REVIEWED_FRAGMENT_SHUFFLE_WITNESS_BLOB = "dcc4c9cbb4e3cec48ab4d1dece9f8708196c5f
 REVIEWED_PIPELINE_DRAIN_BLOB = "e3910d11f33376097a90858118ba276f7e02cb70"
 # NS1-only successors: integer fragment output typing and recent shader prewarm.
 # Reverse their exact reviewed source hunks only for the immutable R23 oracle.
+REVIEWED_FC27_NONE_RT_BLOB = "d222fb5565cdf8db30c6d3d464f107ff26a042c8"
 REVIEWED_FC27_RECENT_128_BLOB = "79660c5cc4ff046f24e7ffa50ab066a86857698c"
+NONE_RT_REVERSES = [("                // Unused color slots are encoded as RenderTargetFormat::NONE.\n                // They have no attachment whose numeric class needs decoding.\n                // Avoid the generic surface fallback/log and preserve the\n                // historical default Float type, matching Lichii's path.\n                if (format == Tegra::RenderTargetFormat::NONE) {\n                    info.color_output_types[i] = Shader::AttributeType::Float;\n                    continue;\n                }\n", "")]
 REVIEWED_FRAGMENT_INTEGER_RT_BLOB = "a0e2a45b9b0f080b739d97abb92e9485a0063f73"
 RECENT_128_PREWARM_REVERSES = [
     ("    // FC27: the old fixed 32-entry PREFIX admitted 18 compute and only\n    // 14 graphics shaders from a 28.7 MiB cache. Thousands of newer records\n    // were ignored and the GPU owner still translated 303 new graphics keys.\n    // A recorded FC27 warm cache contains 710 valid pipeline records, yet the\n    // 32-entry prewarm left 361 guest shaders to translate during the match.\n    // For a modest, already populated cache, admit the newest 128 builders\n    // before gameplay; preserve the 32-entry prefix for large/absent caches.\n    // This shifts some first-use work to loading without skipping any draw.\n    constexpr size_t kStartupPrewarmPipelines = 32;\n    constexpr size_t kRecentPrewarmPipelines = 128;\n    constexpr std::uintmax_t kRecentShaderCacheScanLimit = 64ULL << 20;\n    const bool prefer_recent_cache =\n        env_before.present && env_before.bytes > 12 &&\n        env_before.bytes <= kRecentShaderCacheScanLimit;\n    const size_t prewarm_pipeline_limit =\n        prefer_recent_cache ? kRecentPrewarmPipelines : kStartupPrewarmPipelines;\n", "    // FC27: the old fixed 32-entry PREFIX admitted 18 compute and only\n    // 14 graphics shaders from a 28.7 MiB cache. Thousands of newer records\n    // were ignored and the GPU owner still translated 303 new graphics keys.\n    // Parse modest caches once and retain only the newest 32 valid builders;\n    // a large cache keeps the existing fast prefix cap to avoid startup I/O.\n    constexpr size_t kStartupPrewarmPipelines = 32;\n    constexpr std::uintmax_t kRecentShaderCacheScanLimit = 64ULL << 20;\n    const bool prefer_recent_cache =\n        env_before.present && env_before.bytes > 12 &&\n        env_before.bytes <= kRecentShaderCacheScanLimit;\n"),
@@ -110,6 +112,12 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    if current == REVIEWED_FC27_NONE_RT_BLOB:
+        source = reverse_reviewed_source(source, NONE_RT_REVERSES,
+                                         "FC27 unused render-target NONE guard")
+        current = git_blob(source)
+        assert current == REVIEWED_FC27_RECENT_128_BLOB, (
+            "FC27 NONE guard predecessor drift", current)
     if current == REVIEWED_FC27_RECENT_128_BLOB:
         # Reconstruct only the reviewed 128-entry small-cache admission policy
         # before the established integer-output and original R23 receipts.

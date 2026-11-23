@@ -22,6 +22,11 @@ spirv_store = (root / "vendor/sources/eden/src/shader_recompiler/backend/spirv/e
 fragment = pipeline.split("case Shader::Stage::Fragment: {", 1)[1].split("\n    default:", 1)[0]
 assert "const bool require_typed_fragment_outputs =" in fragment
 assert "#ifdef PS5_NATIVE\n            true;\n#else\n            device.IsMoltenVK();\n#endif" in fragment
+none_guard = "if (format == Tegra::RenderTargetFormat::NONE)"
+assert fragment.count(none_guard) == 1
+assert "info.color_output_types[i] = Shader::AttributeType::Float;" in fragment
+assert fragment.index(none_guard) < fragment.index("PixelFormatFromRenderTargetFormat(format)")
+assert "Unused color slots are encoded as RenderTargetFormat::NONE" in gen
 assert fragment.index("if (require_typed_fragment_outputs)") < fragment.index("IsPixelFormatInteger(pixel_format)")
 assert "Shader::AttributeType::SignedInt" in fragment
 assert "Shader::AttributeType::UnsignedInt" in fragment

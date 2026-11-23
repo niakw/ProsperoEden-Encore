@@ -2655,12 +2655,26 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         'GPU-23 generated integer fragment output gate drift')
     assert native_raw_n3m.count(typed_output_after) == 1, (
         'GPU-23 shipping integer fragment output gate drift')
+    none_rt_guard = """                // Unused color slots are encoded as RenderTargetFormat::NONE.
+                // They have no attachment whose numeric class needs decoding.
+                // Avoid the generic surface fallback/log and preserve the
+                // historical default Float type, matching Lichii's path.
+                if (format == Tegra::RenderTargetFormat::NONE) {
+                    info.color_output_types[i] = Shader::AttributeType::Float;
+                    continue;
+                }
+"""
+    assert generated_raw_n3m.count(none_rt_guard) == 1, (
+        'GPU-23 generated NONE render-target guard drift')
+    assert native_raw_n3m.count(none_rt_guard) == 1, (
+        'GPU-23 shipping NONE render-target guard drift')
     assert n3m.count(typed_output_before) == 1 and typed_output_after not in n3m, (
         'GPU-23 historical cache owner unexpectedly changed')
     # Later generator-oracle checks operate on the same historical copy,
     # while GPU-23 remains byte-identical in the original C++ and generator.
     generated_n3m = generated_raw_n3m.replace(
         typed_output_after, typed_output_before, 1)
+    generated_n3m = generated_n3m.replace(none_rt_guard, "", 1)
     actual[n56_name].write_text(generated_n3m)
     print('ENCORE_NS1_GPU23_GENERATOR_EXACT_REVERSE_PASS')
     if generated_n3m.count(n3m_flag) != n3m.count(n3m_flag):

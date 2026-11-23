@@ -383,11 +383,19 @@ assert 'region_code(element.findtext("Region", ""))' in indexer
 assert '"north america": "us"' in indexer
 assert 'region:filename' in native
 assert "SafeCaseCandidate(part)" in native
-assert "LocaleCaseCandidates(selected->second[side], language_choice, side)" in native
+assert "LocaleCaseCandidates(sources, language_choice, side)" in native
+assert "FindCaseEntry(index, second_generation, name, alternate_name)" in native
+assert "MatchingNs1Back(index, name, alternate_name)" in native
+assert "const auto* ns1_back = second_generation && selected->second[1].empty()" in native
+assert "side == 1 && ns1_back ? *ns1_back : selected->second[side]" in native
+assert 'std::string(ns2 ? "ns2:" : "ns1:") + key' in native
+assert 'if (it == index.end() && !ns2) it = index.find(key);' in native
+assert "CachedGamesDbHero(std::uint64_t title_id)" in native
+assert "for (int scene : {1, 3, 4, 5})" in native
 assert 'regions = {"us", "ca", "world", "uk", "eu", "fr"};' in native
 assert 'regions = {"fr", "eu", "world", "uk", "ca", "us"};' in native
 assert "face == 1" in native
-assert "EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file)," in native
+assert "game.title_id, scanned_name, CleanTitle(game.file)," in native
 assert "Eden::Ns2Catalog::Find(game.title_id)" in native
 assert "game.title_id, std::string(ns2->name), scanned_name," in native
 assert "9524e5f7-ccc8-4ce6-a581-03f82c51825e.jpg" in indexer
@@ -400,8 +408,8 @@ assert 'Eden::AppResourceFile("ui/box-art-index.tsv")' in native
 # The supplemental metadata is a deterministic packaging fallback, not a
 # replacement for the large generated index and never embeds copyrighted art.
 fallback_index = (root / "headless/prosperoeden/ui/box-art-fallback.tsv").read_text()
-assert "mario kart world\t" in fallback_index
-assert "donkey kong bananza\t" in fallback_index
+assert "ns2:mario kart world\t" in fallback_index
+assert "ns2:donkey kong bananza\t" in fallback_index
 assert "r2_22b0967c-08e4-4988-9eeb-c5d7a1c34408.png" in fallback_index
 assert "991fd827-5f47-47ee-a400-4c6f22266b4f.jpg" in fallback_index
 assert "r2_02551e34-3f1e-4bf6-88d5-d083b700cf9f.jpg" in fallback_index
@@ -492,7 +500,7 @@ assert "EnsureRetailCase(game.title_id, game.name," in native
 assert "1500.0f / width, 2100.0f / height" in native
 assert "ValidNlibWebP(path)" in native
 assert 'return ValidNlibTga(path);' in native
-assert "EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file)," in native
+assert "game.title_id, scanned_name, CleanTitle(game.file)," in native
 assert 'IsFile(base + ".png")' in native
 assert "ui/box-art-index.tsv" in workflow
 assert "tools/launcher/build-box-art-index.py --download" in workflow

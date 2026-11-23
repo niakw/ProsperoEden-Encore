@@ -2689,24 +2689,11 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
             game.cover = CachedGamesDbSquare(game.title_id, false);
     }
     if (!game.cover.empty()) return game;
-    // Only WRITES need the per-title lock. Do not stall Home teardown
-    // behind another title's retail or Nlib network transaction.
-    std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
-    if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire))) {
-        game.artwork_deferred = !title_lock.owns_lock();
-        return game;
-    }
-    // Recheck after acquiring the write lock. NUP's canonical NS2 Square
-    // must never be displaced by an old Switch 1 Nlib icon.
-    game.cover = second_generation ? CachedGamesDbSquare(game.title_id, true) :
-                                     CachedNlibIcon(game.title_id);
-    if (game.cover.empty() && !second_generation)
-        game.cover = CachedGamesDbSquare(game.title_id, false);
-    if (!game.cover.empty()) return game;
 
-    // Switch 2 Control dumps often omit the canonical icon and Nlib may have
-    // no record. Use GamesDB's explicit Square category, not a cropped box.
-    if (UseNs2CaseIndex(game)) {
+    // NS2/NUP does not participate in the Switch 1 Nlib mutex at all.
+    // Its own generation-aware Square writer serializes only matching NS2
+    // requests, so a simultaneous NS1 network request cannot delay this tile.
+    if (second_generation) {
         const auto* known = Eden::Ns2Catalog::Find(game.title_id);
         const int language_choice = Eden::LoadPreferences().language;
         const std::string canonical = known ? std::string(known->name) : game.name;
@@ -2714,13 +2701,23 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
                                 language_choice, cancel, true)) {
             game.cover = CachedGamesDbSquare(game.title_id, true);
             game.artwork_changed = !game.cover.empty();
-            if (!game.cover.empty()) return game;
         }
+        return game;
     }
 
-    // NS2/NUP may have no cached Square yet. Never fabricate its icon with
-    // the Switch 1-only /nx/ Nlib endpoint after a GamesDB miss.
-    if (second_generation) return game;
+    // NS1 icon writes share the Nlib title lock. Do not stall Home teardown
+    // behind another title's retail or Nlib network transaction.
+    std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
+    if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire))) {
+        game.artwork_deferred = !title_lock.owns_lock();
+        return game;
+    }
+    // Recheck after acquiring the writer lock; another NS1 worker may have
+    // atomically published either the Nlib icon or GamesDB square meanwhile.
+    game.cover = CachedNlibIcon(game.title_id);
+    if (game.cover.empty())
+        game.cover = CachedGamesDbSquare(game.title_id, false);
+    if (!game.cover.empty()) return game;
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX",
                   static_cast<unsigned long long>(game.title_id));

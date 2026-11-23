@@ -1541,6 +1541,10 @@ merged_fc27_pair_receipts.update({
     "eden-vulkan/vulkan_rasterizer.cpp": "71d097b9a83028dfad9370792c905bb3bfccfd5a",
     "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "3397cd39a3d35c1255802c4c3862584530f15cfe",
 })
+if gpu_table_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
+    # Keep the frozen Nov15 receipt immutable; only the selected runtime
+    # successor carries the reviewed Ampere lowering from vendor af32/bfdf.
+    merged_fc27_pair_receipts["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
 current_pair_successor_blobs = {
     "eden-core/src/video_core/buffer_cache/buffer_cache.h": "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "bd424e728182500b573a4cc4cf07987ddc4cbdc3",
@@ -1550,6 +1554,8 @@ current_pair_successor_blobs = {
     "eden-vulkan/vulkan_rasterizer.cpp": "01c6880e5a8836da45601b0a3cb7c0fd6c46cf35",
     "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "3397cd39a3d35c1255802c4c3862584530f15cfe"
 }
+if gpu_table_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
+    current_pair_successor_blobs["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
 latest_pair_successor_blobs = dict(current_pair_successor_blobs)
 latest_pair_successor_blobs["eden-core/src/video_core/buffer_cache/buffer_cache.h"] = (
     "505ee80a37d5991b7925019282e71926c1648e02"
@@ -1808,6 +1814,9 @@ if subprocess.check_output(
         "ns2-runtime/am_structure/core/hle/service/am/service/library_applet_creator.cpp": "1157033948e6a6f015ef14dedda30a40ff750b54",
         "ns2-runtime/am_structure/core/hle/service/am/service/window_controller.cpp": "6b19368d91035f6372cf8540c4b45caf371c1cd3",
     })
+if gpu_table_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
+    ns2_early_hle_receipts[native_applet_proxy_path] = "a07dae606312e673bdbff5110fbf81d4ce307776"
+    ns2_early_hle_receipts["ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h"] = "7aab2ba6235b33b91819ea78a006129183194194"
 ns2_early_hle_present = set(ns2_early_hle_receipts) & set(physical_all)
 if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385cb96f539a5b2ab2edf269683dd1e9ebad9", "2acf67ac8c6b8b1973ba29043206782a13ac8f41", "ab38816078a53b81d4c59152ec660fcb653d4e7f", "3cac7130d6626dced483d038cbf034274a0463d8", "ec3757b3f17d974577b304faa0d54279e01d0a5a", "2a8d841c4c7e34e89254e532fc75fd23e16f01fe", "3b3a26afd70fbfbfb706e5b9964e3303c07a944c", "49070af1bfee1ef67ed8037221345baf71d02373", "388f0bda53806cd89d9c2f85139ec0491f212654", "c92ce9a8b90808869be76d02e73d35636857a0d4", "1e51d1f3383f149a599e36052aba7d887d4b1f77", "b79c774d5d976b7d374b7f851354a652f6aa69c4", "9d324ca5ca2cdd84053f2d3dfadde5b86084c13d", "cd476e6e93e8a786bef6260006baec134f5df71f", "2ccc4b0a714ca621ac2879768f87118a64ed65f6", "97ac02f263ec90f40a029f4aa62980c76bc25d5c", "9a83a6ba1cb464c9e5d14457cab18ad511c1104b", "d0246caf58a3127597bba1edfc1f8dcbe0c5cfdc"} or gpu_table_vendor_pin in {"d1f8696448ed481e36380c3ea8431e3dc722304e", "c5614d3c7ef75958965bac93c9e343eccdbc0fbe", "67926ea4b6960eefebf0427929cf299e8e056013", "50a849a93494f442d47573b8ce8b8797c3cecd26", "2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab", "053acc8ddf30fe65f6376564bbd6efef58f07ddc", "ffa519db0f68fb0d5d2acf791e381c898a34a175", "9e38066a508716fd959477eccf32c7fb2fde3356", "e298a9b05732346141b685eb4c9850bfa02d9e58","f7ccfda091fd7429f44159318a07391881a3e7c0","92c480e17fedecc21ab4882b76e8507b5aed3771","7039d7752c5d8b1a53db50be0d8f2f7803867e13","d3fca0aa188052f0efd2bad102950aeaeeb36ab0","dfc39fcc087738955b0373b45fa97facdeb2fc47","b806bc497049819e716ef6de81f2a85312b188ce","a0e17271e94342c32b02acdc3199c3f258a8aecf","772f06c8f5b12fdc81066e61f3db2dedfe3eed81","568ae541c07691518e9663aa0fc5f3b017a98d53","dcfe3d2384bd800c6139ede672518ea2c66922a6"} or fc27_p1_vendor:
     assert ns2_early_hle_present == set(ns2_early_hle_receipts)
@@ -2117,14 +2126,25 @@ current_vendor_post_f07_owner_blobs = {
 # Post-F07 registry includes old SM while the latest exact successor
 # changes ONLY SM handler retirement in that owner. Preserve exact pin and
 # verify all other reviewed owners byte for byte.
-if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634"}:
+if actual_vendor == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
+    # Exact bfdf delta over b099: reviewed Ampere lowering + appletOE cmd10 ABI.
+    for relative, digest in {
+        "encore-active/ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "9169e95ec14559aa6466c68b7d1e1cd3f9e69557",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.cpp": "a07dae606312e673bdbff5110fbf81d4ce307776",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/application_proxy_service.h": "7aab2ba6235b33b91819ea78a006129183194194",
+        "tests/ns2_early_hle_services_source.py": "a8885d094315e22f9bf0a3c41c969f31463815cb",
+    }.items():
+        raw = (root/"vendor"/relative).read_bytes()
+        got = hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert got == digest, ("bfdf reviewed successor drift", relative, got)
+if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"}:
     current_vendor_post_f07_owner_blobs = {
         **current_vendor_post_f07_owner_blobs,
         "eden-core/src/core/hle/service/sm/sm.cpp": "34c7c85f1476a3ba819ad20b8a4f8150cca86e16",
         # Same exact SM teardown successor; only LM C++ changed for the new pin.
         "ns2-runtime/hle/core/hle/service/lm/lm.cpp": (
             "9136cf19b1176e96fb17609fd401e4592028d1e2"
-            if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634"} else
+            if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"} else
             "83d9b178459c33321a6fe388dae93bb3cb8b6f75"
         ),
     }
@@ -2137,7 +2157,7 @@ if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff
         raw=(active/relative).read_bytes()
         got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert got==digest,("Post-F07 latest vendor source drift",relative,got)
-    if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634"}:
+    if actual_vendor in {"273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"}:
         # Changed source-list owners are not part of frozen 337-path F07 receipt.
         # Preserve the verified old NS1 overlay and compile-only AM guard delta.
         for relative,digest in {
@@ -2149,9 +2169,18 @@ if actual_vendor in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff
             raw=(root/"vendor"/relative).read_bytes()
             got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
             assert got==digest,("NS1/NS2 AM one-shot exact owner drift",relative,got)
+if actual_vendor in {"b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"}:
+    # MME DMA read successor changes only the selected native GPU-dispatch pair.
+    for relative,digest in {
+        "ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "02e406d9209de6029bcc526bf800428268b81ed4",
+        "ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h": "1f60c4cda2a7d5206082434945f40a1cf2bb546c",
+    }.items():
+        raw=(active/relative).read_bytes()
+        got=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert got==digest,("Native MME DMA owner drift",relative,got)
 current_vendor_post_f07_present = set(current_vendor_post_f07_owner_blobs) & set(physical_all)
 if actual_vendor in {"593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
-                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634"}:
+                     "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f", "93c3dd6c86627e91999f965c45c05cd8e50e17eb", "eb9a454db4d21a3aff2642c72eea3ca01bf2b3bb", "93da3b707ef147385380eb0690e0d93fc8e907ad", "a6240909b823492d9ff20070c09387a732d83007", "0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1", "84b9975726092a32d1cb2aa714b96e4f5f85d7c4", "84ec89ce112b83603b2095a9f6bb785f8e999ef6", "97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8"}:
     assert current_vendor_post_f07_present == set(current_vendor_post_f07_owner_blobs)
     for relative, expected_blob in current_vendor_post_f07_owner_blobs.items():
         raw = (active / relative).read_bytes()

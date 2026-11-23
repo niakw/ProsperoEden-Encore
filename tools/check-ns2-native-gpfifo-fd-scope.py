@@ -28,6 +28,7 @@ assert 'UNIMPLEMENTED_MSG("Unimplemented ioctl={:08X}", command.raw);' in ioctl1
 assert "return NvResult::NotImplemented;" in ioctl1.split("UNIMPLEMENTED_MSG", 1)[1]
 header = (BASE / "nvhost_gpu.h").read_text()
 native_puller = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp").read_text()
+native_mme_state = (ROOT / "vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h").read_text()
 # BindObject must not change the active subchannel before native class
 # authentication, or a rejected Ampere bind can hijack subsequent methods.
 bind_source = native_puller.split("void Puller::ProcessBindMethod(", 1)[1].split(
@@ -47,7 +48,11 @@ required_puller = (
     "engine_id == static_cast<EngineID>(0xc797)",
     "CallNative3D(dma_pusher,method_call.method,",
     "CallNative3D(dma_pusher,method,",
-    "native_3d->ExecuteStaged(",
+    "native_3d->ExecuteStagedWithEffects(",
+    "DmaReadFifoed = 0x158",
+    "IsFullyMappedRange(source, bytes)",
+    "ReadBlock(source, data.data(), bytes)",
+    "fifo.insert(fifo.end(), data.begin(), data.begin() + words)",
     "native_macro_method=method",
     "engine.draw_manager.DrawDeferred(engine)",
     "native_3d = std::make_unique<Tegra::NativeAmpereMacroState>(&native_mme_dram)",
@@ -132,6 +137,12 @@ checks = [
     (all(s in header for s in required_header), "native header exposes caller FD"),
     (all(s in native_puller for s in required_puller),
      "actual research Puller owns authenticated native 3D/Turing macro dispatch"),
+    (all(s in native_mme_state for s in (
+        "ExecuteStagedWithEffects(",
+        "ExecuteWithMutableFifo(",
+        "return effect(address, value, fifo, *active_dram, stage_read);",
+        "fifo.reserve(MaxFifo);",
+    )), "native MME staging exposes only rollback-safe FIFO/DRAM effects"),
     (binding_write not in bind_source.split(
         "if (engine_id == static_cast<EngineID>(0xc797)) {", 1)[0],
      "native classes do not commit binding before authentication"),

@@ -154,6 +154,8 @@ Launcher::~Launcher()
         presence_scan_.wait();
     if (home_icon_scan_.valid())
         home_icon_scan_.wait();
+    if (home_icon_scan_extra_.valid())
+        home_icon_scan_extra_.wait();
     if (home_media_scan_.valid())
         home_media_scan_.wait();
     if (media_scan_.valid())

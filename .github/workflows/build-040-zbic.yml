@@ -37,7 +37,7 @@ permissions:
 # never accidentally schedule a 1458-object compiler run.
 # workflow_dispatch is already isolated by its event name.
 concurrency:
-  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !startsWith(github.event.head_commit.message || '', '[full-build]') && !startsWith(github.event.head_commit.message || '', '[build-only]') && !startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]')) && 'skip-only' || 'build-capable' }}
+  group: encore-native-${{ github.ref }}-${{ github.event_name }}-${{ (github.ref == 'refs/heads/main' && github.event_name == 'push' && !startsWith(github.event.head_commit.message || '', '[full-build]') && !startsWith(github.event.head_commit.message || '', '[build-only]') && !startsWith(github.event.head_commit.message || '', '[resume-stage:45087056642]')) && 'skip-only' || 'build-capable' }}
   cancel-in-progress: true
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
           (github.event_name == 'push' &&
            (startsWith(github.event.head_commit.message || '', '[full-build]') ||
             startsWith(github.event.head_commit.message || '', '[build-only]') ||
-            startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]'))) }}
+            startsWith(github.event.head_commit.message || '', '[resume-stage:45087056642]'))) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     env:
@@ -63,7 +63,7 @@ jobs:
       BUILD_ONLY: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_only) || (github.event_name == 'push' && startsWith(github.event.head_commit.message || '', '[build-only]')) }}
       # GitHub-only push resume for an already compiled staged app. This marker
       # is one-shot and cannot alter the downloaded binary or publish a release.
-      RESUME_STAGE_RUN_ID: ${{ startsWith(github.event.head_commit.message || '', '[resume-stage:37728435816]') && '37728435816' || inputs.resume_run_id || '' }}
+      RESUME_STAGE_RUN_ID: ${{ startsWith(github.event.head_commit.message || '', '[resume-stage:45087056642]') && '45087056642' || inputs.resume_run_id || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

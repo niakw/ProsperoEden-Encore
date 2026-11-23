@@ -908,6 +908,20 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 531** : 1 986 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot PCTL — organisation de classification par défaut — 23/11/2026
+
+**Vendor `909c764d244ac0cd80ec2930085dbf672504ff84`** (arbre `d95cd18c5a0156428f8e09be246a4bcca13b3cdc`) sur l'owner PCTL actif et son manifeste d'intégrité.
+
+- `GetDefaultRatingOrganization` (1037) et `SetDefaultRatingOrganization` (1038) : **2 NULL → IMPL-SRC**.
+- L'ABI HOS23 est un entier brut 32 bits dans les deux sens. Encore conserve désormais la valeur dans l'état de session PCTL et le getter renvoie exactement la dernière valeur appliquée.
+- Aucun mapping arbitraire vers ESRB/CERO/PEGI n'est inventé : la valeur reste opaque comme dans l'ABI.
+- Le manifeste `eden-backports/manifest.json` est mis à jour dans le même commit vendor pour `parental_control_service.{cpp,h}`.
+- Le palier précédent moteur `e899a218` → vendor/gitlink `9b1c483e` est **X8D24 + Verify pinned vendor vert**. Aucun build PS5 ni validation console revendiqué.
+
+**Compteur historique : 1 482 IMPL-SRC / 114 PARTIEL / 145 STUB / 127 NOOP / 1 984 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 529** : 1 984 NULL + 145 STUB + 114 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

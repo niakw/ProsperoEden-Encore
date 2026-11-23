@@ -1,5 +1,19 @@
 name: R457 native sparse NS1/NS2 guest owner qualification (host, no PS5 build)
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/ns2_sparse_guest.cpp'
+      - 'src/ns2_sparse_guest.h'
+      - 'src/host_memory.cpp'
+      - 'headless/ps5_ns2_guest_backing_plan.h'
+      - 'headless/CMakeLists.txt'
+      - 'tools/ns2/test_r457_native_sparse_owner.cpp'
+      - 'tools/ns2/check_r457_sparse_kernel_source.py'
+      - 'tools/ns2/check_gpu_worker_native_guard_host.py'
+      - vendor
+      - '.github/workflows/r457-ns2-sparse-guest-native-host.yml'
   pull_request:
     paths:
       - 'src/ns2_sparse_guest.cpp'

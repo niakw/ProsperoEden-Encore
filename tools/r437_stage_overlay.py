@@ -151,6 +151,16 @@ def restore_r437_without_production_r2(path: Path) -> str:
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
     restore_current_overlap_guard = False
+    if actual == "6aa9754506ee82b4d25a4e36d4f3be646a62456b":
+        # One bounded clean CPU-write fast-path change; normalize on this
+        # historical audit copy before replaying the existing GPU-50 proof.
+        successor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        // WriteMemory's clean-page branch does exactly this mark. Re-entering\n        // it would scan the same GPU-modified ranges again under the buffer\n        // cache mutex, even though this full-page query already proved that\n        // no GPU-owned sibling bytes need a download.\n        memory_tracker.MarkRegionAsCpuModified(device_addr, size);\n        return;\n    }"
+        predecessor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        WriteMemory(device_addr, size);\n        return;\n    }"
+        assert source.count(successor) == 1, "Unexpected clean-page BufferCache delta"
+        source = source.replace(successor, predecessor, 1)
+        raw = source.encode("utf-8")
+        actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == _INTEGRATED_BUFFER_BLOB, ("Clean-page predecessor drift", actual)
     if actual == _INTEGRATED_BUFFER_BLOB:
         restore_current_overlap_guard = True
         assert len(_integrated_buffer_reversal) == 4

@@ -1638,6 +1638,22 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         base_owner = root / 'vendor/encore-active/eden-core/src/video_core/buffer_cache/buffer_cache_base.h'
         base_blob = subprocess.check_output(
             ['git', 'hash-object', str(base_owner)], text=True).strip()
+        if core_blob == '6aa9754506ee82b4d25a4e36d4f3be646a62456b':
+            # Normalize the exact reduced clean-page path only in the
+            # historical proof copy. The compiled vendor source is unchanged.
+            current = core_owner.read_text()
+            successor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        // WriteMemory's clean-page branch does exactly this mark. Re-entering\n        // it would scan the same GPU-modified ranges again under the buffer\n        // cache mutex, even though this full-page query already proved that\n        // no GPU-owned sibling bytes need a download.\n        memory_tracker.MarkRegionAsCpuModified(device_addr, size);\n        return;\n    }"
+            predecessor = "    if (!IsRegionGpuModified(aligned_start, aligned_end - aligned_start)) {\n        WriteMemory(device_addr, size);\n        return;\n    }"
+            assert current.count(successor) == 1, "Unexpected BufferCache CPU path"
+            previous = current.replace(successor, predecessor, 1)
+            raw = previous.encode('utf-8')
+            digest = hashlib.sha1(b'blob ' + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert digest == '6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b', ("Clean-page owner predecessor drift", digest)
+            restored = temp/'normalized-clean-cpu-write'/'buffer_cache.h'
+            restored.parent.mkdir(parents=True, exist_ok=True)
+            restored.write_text(previous)
+            core_owner = restored
+            core_blob = digest
         if core_blob == '6bbbae48f3c45fa5fd68d82940f5c5c508cbfd7b':
             # NS1: the selected stream-overlap owner clamps low-address
             # backward expansion without moving the existing buffer start

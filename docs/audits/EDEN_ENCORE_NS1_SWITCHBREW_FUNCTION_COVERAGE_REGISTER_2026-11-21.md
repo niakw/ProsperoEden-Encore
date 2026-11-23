@@ -2463,3 +2463,12 @@ Vendor `0264621817f4d7e2a98c2a123194e9eebbbf7efd` → gitlink moteur `2344681129
 **Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 183 NOOP / 1 319 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 718** : 1 319 NULL + 59 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## LDN — politiques simples + InitializeSystem2 (23/11/2026)
+
+Vendor `beb30c7a2de729e582472c106abe03f50cc01542` → gitlink moteur `b7cf2d189392b069514492043a35de960630d073`. **10 entrées sortent du pool** : cmd104/207/208/209 côté `ldn:u` et `ldn:s` deviennent des NOOP de compatibilité documentés, cmd402 système devient NOOP, et cmd403 système devient IMPL-SRC avec ABI version+PID réelle. `Reject` et `ConnectPrivate` restent ouverts. Pas de validation console revendiquée.
+
+**Compteur courant : 1 712 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 316 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 708** : 1 316 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

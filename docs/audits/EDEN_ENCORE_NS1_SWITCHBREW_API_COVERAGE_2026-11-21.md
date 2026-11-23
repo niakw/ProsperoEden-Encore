@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 631 | 80 | **1 711** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 632 | 80 | **1 712** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
-| **STUB — Stub / résultat simulé** | 59 | 0 | **59** |
-| **NOOP — No-op documenté** | 183 | 0 | **183** |
-| **NULL — Handler NULL** | 1 319 | 0 | **1 319** |
+| **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
+| **NOOP — No-op documenté** | 192 | 0 | **192** |
+| **NULL — Handler NULL** | 1 316 | 0 | **1 316** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -4452,7 +4452,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:s | `101` | `GetNetworkInfoLatestUpdate` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `102` | `Scan` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `103` | `ScanPrivate` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
-| ldn:s | `104` | `SetWirelessControllerRestriction` | 5.0.0+ | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
+| ldn:s | `104` | `SetWirelessControllerRestriction` | 5.0.0+ | **NOOP** (politique radio invitée non appliquée à la PS5 ; comportement de compatibilité aligné sur ldn_mitm ; vendor `beb30c7a`) | 2026-11-23 |
 | ldn:s | `200` | `OpenAccessPoint` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `201` | `CloseAccessPoint` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `202` | `CreateNetwork` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
@@ -4460,9 +4460,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:s | `204` | `DestroyNetwork` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `205` | `Reject` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
 | ldn:s | `206` | `SetAdvertiseData` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
-| ldn:s | `207` | `SetStationAcceptPolicy` | — | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:s | `208` | `AddAcceptFilterEntry` | — | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:s | `209` | `ClearAcceptFilter` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
+| ldn:s | `207` | `SetStationAcceptPolicy` | — | **NOOP** (compatibilité ldn_mitm : admission policy non propagée au backend host ; vendor `beb30c7a`) | 2026-11-23 |
+| ldn:s | `208` | `AddAcceptFilterEntry` | — | **NOOP** (compatibilité ldn_mitm ; filtre d'admission non appliqué au backend host ; vendor `beb30c7a`) | 2026-11-23 |
+| ldn:s | `209` | `ClearAcceptFilter` | — | **NOOP** (compatibilité ldn_mitm ; aucun filtre host persistant à vider ; vendor `beb30c7a`) | 2026-11-23 |
 | ldn:s | `300` | `OpenStation` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `301` | `CloseStation` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `302` | `Connect` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
@@ -4470,8 +4470,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:s | `304` | `Disconnect` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `400` | `InitializeSystem` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
 | ldn:s | `401` | `FinalizeSystem` | — | **IMPL-SRC** (backend `LANDiscovery` réel partagé avec `ldn:u`; vendor `1d8b6c8a`, source seulement, PS5 non validé) | 2026-11-22 |
-| ldn:s | `402` | `SetOperationMode` | 4.0.0+ | **NULL** ([source C++][ns1-src-091]) | 2026-11-22 |
-| ldn:s | `403` | `InitializeSystem2` | 7.0.0+ | **STUB** ([source C++][ns1-src-091]) | 2026-11-22 |
+| ldn:s | `402` | `SetOperationMode` | 4.0.0+ | **NOOP** (mode LDN invité accepté sans mutation de la politique réseau PS5 ; cohérent Recompia/libnx ; vendor `beb30c7a`) | 2026-11-23 |
+| ldn:s | `403` | `InitializeSystem2` | 7.0.0+ | **IMPL-SRC** (ABI `version + ClientProcessId` alignée libnx/ldn_mitm ; réutilise `InitializeSystem` et le backend `LANDiscovery` réel ; vendor `beb30c7a`) | 2026-11-23 |
 | ldn:u | `0` | `CreateUserLocalCommunicationService` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/ldn.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
 | ldn:u | `0` | `GetState` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `1` | `GetNetworkInfo` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
@@ -4483,7 +4483,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:u | `101` | `GetNetworkInfoLatestUpdate` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `102` | `Scan` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `103` | `ScanPrivate` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
-| ldn:u | `104` | `SetWirelessControllerRestriction` | 5.0.0+ | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
+| ldn:u | `104` | `SetWirelessControllerRestriction` | 5.0.0+ | **NOOP** (politique radio invitée non appliquée à la PS5 ; compatibilité ldn_mitm ; vendor `beb30c7a`) | 2026-11-23 |
 | ldn:u | `200` | `OpenAccessPoint` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `201` | `CloseAccessPoint` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `202` | `CreateNetwork` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
@@ -4491,9 +4491,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ldn:u | `204` | `DestroyNetwork` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `205` | `Reject` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
 | ldn:u | `206` | `SetAdvertiseData` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
-| ldn:u | `207` | `SetStationAcceptPolicy` | — | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:u | `208` | `AddAcceptFilterEntry` | — | **STUB** ([source C++][ns1-src-092]) | 2026-11-22 |
-| ldn:u | `209` | `ClearAcceptFilter` | — | **NULL** ([source C++][ns1-src-092]) | 2026-11-22 |
+| ldn:u | `207` | `SetStationAcceptPolicy` | — | **NOOP** (compatibilité ldn_mitm ; vendor `beb30c7a`) | 2026-11-23 |
+| ldn:u | `208` | `AddAcceptFilterEntry` | — | **NOOP** (compatibilité ldn_mitm ; vendor `beb30c7a`) | 2026-11-23 |
+| ldn:u | `209` | `ClearAcceptFilter` | — | **NOOP** (compatibilité ldn_mitm ; vendor `beb30c7a`) | 2026-11-23 |
 | ldn:u | `300` | `OpenStation` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `301` | `CloseStation` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
 | ldn:u | `302` | `Connect` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/user_local_communication_service.cpp) ; IUserLocalCommunicationService, corps déléguant à LanDiscovery ; pas de validation PS5) | 2026-11-22 |
@@ -6513,3 +6513,10 @@ Vendor `41446c0476dc0b6b5aa9091c8d9b022d215679ea` → gitlink moteur `aaa0a4d94c
 Vendor `0264621817f4d7e2a98c2a123194e9eebbbf7efd` → gitlink moteur `23446811296ebff339f8e1b7219521b421646691`. **13 NULL → NOOP documenté** pour les commandes 0-12. Les ABI ont été recroisées sur Sockets NS1 23.0.1 ; Encore n'essaie pas de monter/descendre l'interface PS5, renouveler son DHCP ou modifier sa table ARP. Les commandes avec sortie u32 renvoient un statut nul explicite. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 711 IMPL-SRC / 141 PARTIEL / 59 STUB / 183 NOOP / 1 319 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 718.**
+
+
+### LDN — politiques simples + InitializeSystem2 (23/11/2026)
+
+Vendor `beb30c7a2de729e582472c106abe03f50cc01542` → gitlink moteur `b7cf2d189392b069514492043a35de960630d073`. **10 entrées sortent du pool : 9 → NOOP documenté, 1 → IMPL-SRC.** Les politiques radio/admission/filter suivent le contrat de compatibilité ldn_mitm sans muter la pile réseau PS5. `InitializeSystem2` prend désormais la vraie ABI version+PID observée dans libnx/ldn_mitm et réutilise l'initialisation LANDiscovery. `Reject` et `ConnectPrivate` restent ouverts. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 712 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 316 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 708.**

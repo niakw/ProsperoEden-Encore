@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 462 | 0 | **1 462** |
-| **D — Rejet explicite / historique** | 179 | 33 | **212** |
+| **NULL — Handler NULL** | 1 456 | 0 | **1 456** |
+| **D — Rejet explicite / historique** | 185 | 33 | **218** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -847,7 +847,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `50` | `IsUserRegistrationRequestPermitted` | — | **PARTIEL** (méthode héritée `Module::Interface::IsUserRegistrationRequestPermitted`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `51` | `TrySelectUserWithoutInteraction` | — | **HORS-VERSION** (SwitchBrew Account : cmd51 deprecated limité à HOS 1.0.0–18.1.0, cmd52 utilisé depuis HOS 19 ; cible HOS 23) | 2026-11-23 |
 | acc:su | `60` | `ListOpenContextStoredUsers` | 5.0.0-5.1.0 | **HORS-VERSION** (SwitchBrew Account : commande limitée à HOS 5.0.0–5.1.0 ; cible HOS 23) | 2026-11-23 |
-| acc:su | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `99` | `DebugActivateOpenContextRetention` | 6.0.0+ | **D** (surface compte debug non supportée sur le runtime release ; callback actif renvoie explicitement `ResultUnknown` dans l'owner ACC_SU/IAdministrator approprié ; vendor `6c138572`, moteur `2f2dcd46`) | 2026-11-23 |
 | acc:su | `100` | `GetUserRegistrationNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `101` | `GetUserStateChangeNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `102` | `GetBaasAccountManagerForSystemService` | — | **IMPL-SRC** (méthode héritée `Module::Interface::GetBaasAccountManagerForSystemService`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
@@ -878,9 +878,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `290` | `ProxyProcedureForGuestLoginWithNintendoAccount` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `291` | `ProxyProcedureForFloatingRegistrationWithNintendoAccount` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `299` | `SuspendBackgroundDaemon` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `997` | `DebugInvalidateTokenCacheForUser` | 3.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `998` | `DebugSetUserStateClose` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `999` | `DebugSetUserStateOpen` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `997` | `DebugInvalidateTokenCacheForUser` | 3.0.0+ | **D** (surface compte debug non supportée sur le runtime release ; callback actif renvoie explicitement `ResultUnknown` dans l'owner ACC_SU/IAdministrator approprié ; vendor `6c138572`, moteur `2f2dcd46`) | 2026-11-23 |
+| acc:su | `998` | `DebugSetUserStateClose` | — | **D** (surface compte debug non supportée sur le runtime release ; callback actif renvoie explicitement `ResultUnknown` dans l'owner ACC_SU/IAdministrator approprié ; vendor `6c138572`, moteur `2f2dcd46`) | 2026-11-23 |
+| acc:su | `999` | `DebugSetUserStateOpen` | — | **D** (surface compte debug non supportée sur le runtime release ; callback actif renvoie explicitement `ResultUnknown` dans l'owner ACC_SU/IAdministrator approprié ; vendor `6c138572`, moteur `2f2dcd46`) | 2026-11-23 |
 | acc:su | `0` | `CheckAvailability` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `1` | `GetAccountId` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
 | acc:su | `2` | `EnsureIdTokenCacheAsync` | — | **AMBIGU** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; plusieurs sous-interfaces Account au même ID/nom ; handlers divergents, interface SwitchBrew non explicite ; pas de validation PS5) | 2026-11-22 |
@@ -936,8 +936,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `401` | `RefreshServiceEntryRequirementCacheForOnlinePlayAsync` | 6.1.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `900` | `GetAuthenticationInfoForWin` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `901` | `ImportAsyncForWin` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `997` | `DebugUnlinkNintendoAccountAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `998` | `DebugSetAvailabilityErrorDetail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `997` | `DebugUnlinkNintendoAccountAsync` | — | **D** (surface compte debug non supportée sur le runtime release ; callback actif renvoie explicitement `ResultUnknown` dans l'owner ACC_SU/IAdministrator approprié ; vendor `6c138572`, moteur `2f2dcd46`) | 2026-11-23 |
+| acc:su | `998` | `DebugSetAvailabilityErrorDetail` | — | **D** (surface compte debug non supportée sur le runtime release ; callback actif renvoie explicitement `ResultUnknown` dans l'owner ACC_SU/IAdministrator approprié ; vendor `6c138572`, moteur `2f2dcd46`) | 2026-11-23 |
 | acc:su | `10` | `InvokeWithoutInteractionAsync` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `19` | `IsAuthorized` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `20` | `GetAuthorizationCode` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
@@ -6362,3 +6362,10 @@ Vendor `1887ae94bffe3d1223d40c56248bfe6ad78405b6`, gitlink moteur `272355286b91f
 Vendor `8580856ac4ba06f7e83723f5e2eaed20ed68e200`, gitlink moteur `36fe443ac608d71f911ce164b86d645d30689d80` : les six commandes de liste d'exemption debug et les deux réglages de play timer debug sont désormais raccordés à un rejet explicite `ResultUnknown` sur le runtime release. **8 NULL → D** ; aucun état de contrôle parental debug n'est simulé.
 
 **Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 462 NULL / 212 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 877.**
+
+
+### ACC — commandes compte debug fail-closed (23/11/2026)
+
+Vendor `6c138572804b27e7a7248be1654a10529e2dcb61`, gitlink moteur `2f2dcd4649acadcba017df4807e6cb7d329190d1` : les commandes debug `acc:su` du catalogue sont désormais rejetées explicitement par leur owner réel (`ACC_SU` ou `IAdministrator`) au lieu de rester `nullptr`. Le même lot ferme aussi quatre slots debug ACC supplémentaires hors catalogue. **6 NULL → D** dans le compteur ; aucun état Nintendo Account debug n'est simulé.
+
+**Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 456 NULL / 218 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 871.**

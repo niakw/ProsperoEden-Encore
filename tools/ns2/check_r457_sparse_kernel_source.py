@@ -283,6 +283,41 @@ if selected in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6
     assert release.index("MapPhysical(at, PROT_READ, zero_physical)") < release.index(
         "sceKernelReleaseDirectMemory(old_physical, kGranule)") < release.index(
         "plan.ReleaseResident(index, old_physical)")
+
+# Source-level device-alias lifetime proof shared by NS1/NS2. A physical page
+# reaches KPageHeap::Free only when its kernel refcount becomes zero, while a
+# live device mapping marks the guest range DeviceShared. Heap shrink and
+# physical unmap both require attributes to be clear before they can retire
+# those pages. Hardware queue/fence completion remains a console qualification.
+memory_manager_h=read("vendor/sources/eden/src/core/hle/kernel/k_memory_manager.h")
+ref_close=memory_manager_h.rsplit(
+    "void Close(KPhysicalAddress address, size_t num_pages) {",1
+)[1].split("    private:",1)[0]
+assert ref_close.index(
+    "const RefCount ref_count = (--m_page_reference_counts[index]);"
+) < ref_close.index("if (ref_count == 0)") < ref_close.index("this->Free(")
+
+page_table=read("vendor/encore-active/eden-core/src/core/hle/kernel/k_page_table_base.cpp")
+device_map=page_table.split(
+    "Result KPageTableBase::LockForMapDeviceAddressSpace",1
+)[1].split("Result KPageTableBase::LockForUnmapDeviceAddressSpace",1)[0]
+assert "KMemoryAttribute::DeviceShared" in device_map
+assert "&KMemoryBlock::ShareToDevice" in device_map
+
+heap_shrink=page_table.split(
+    "Result KPageTableBase::SetHeapSize",1
+)[1].split("Result KPageTableBase::SetMaxHeapSize",1)[0]
+assert "KMemoryAttribute::All, KMemoryAttribute::None" in heap_shrink
+assert heap_shrink.index("CheckMemoryState(") < heap_shrink.index(
+    "OperationType::Unmap")
+
+physical_unmap=page_table.split(
+    "Result KPageTableBase::UnmapPhysicalMemory",1
+)[1].split("Result KPageTableBase::MapPhysicalMemoryUnsafe",1)[0]
+assert "info.GetAttribute() == KMemoryAttribute::None" in physical_unmap
+assert physical_unmap.index(
+    "info.GetAttribute() == KMemoryAttribute::None"
+) < physical_unmap.index("OperationType::UnmapPhysical")
 host=read("src/host_memory.cpp")
 assert "const bool supported_guest_layout =" in host
 for gib in (4, 6, 8, 10, 12):
@@ -295,5 +330,6 @@ assert "impl->sparse->Clear(offset, length, fill)" in host
 assert "return; // sparse owner performed the exact clear" in host
 assert "if (state == State::Unmapped) continue;" in physical
 assert "std::memset(base + begin, 0, end - begin);" in physical
-print("R457_NS2_KERNEL_PTE_GPU_RESIDENCY_CHAIN_SOURCE_PASS"
-      " native_runtime_unqualified=1 gpu_fences_unqualified=1")
+print("R457_NS1_NS2_KERNEL_PTE_GPU_RESIDENCY_CHAIN_SOURCE_PASS"
+      " device_alias_retirement_source=1 native_runtime_host_mock=1"
+      " hardware_gpu_fences_unqualified=1")

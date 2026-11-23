@@ -87,6 +87,9 @@ close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].s
 )[0]
 assert close_deferred.index("presenter.request_stop();") < close_deferred.index("presenter.join();")
 assert close_deferred.index("presenter.join();") < close_deferred.index(
+    "Eden::LaunchHandoff::ClearAlternate();"
+)
+assert close_deferred.index("Eden::LaunchHandoff::ClearAlternate();") < close_deferred.index(
     "eglDestroyContext(display, context)"
 )
 assert close_deferred.index("eglDestroyContext(display, context)") < close_deferred.index(

@@ -834,6 +834,21 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 567** : 2 027 NULL + 146 STUB + 108 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
 
+## Lot Account — miniatures de sauvegarde persistantes — 23/11/2026
+
+**Vendor `2990b313b00f739b7a8863e3b3d896aede75f712`** (arbre `a2c8c7999086be1afad86466c4f9a5c867671ff7`), incluant le runtime Account `3fec6fd63c962266a82026f67c5ff7960238e7ac` et la remise en cohérence des manifestes actifs FSP/PCTL.
+
+- `StoreSaveDataThumbnail` (110) : **STUB → IMPL-SRC**. Les **0x24000 octets** exigés sont maintenant persistés par `Uid + ApplicationId` dans le system-save Account local, après validation de l'utilisateur et de l'ApplicationId.
+- `ClearSaveDataThumbnail` (111) et `GetSaveDataThumbnailExistence` (113) : **2 NULL → IMPL-SRC**, sur le même état réellement persisté.
+- `LoadSaveDataThumbnail` (112) : **NULL → PARTIEL**. Le fichier réel est relu avec taille et buffer bornés ; en absence de fichier, Encore renvoie actuellement succès + taille 0. Les dumps HOS 22.5/23.0.1 prouvent l'ABI `Uid(0x10)+ApplicationId(0x8)`, le `u32` de sortie et le buffer, mais pas le Result exact du cas absent.
+- Ryujinx documente que le service Nintendo passe par `nn::fs::WriteSaveDataThumbnailFile()` dans le system-save Account `0x8000000000000010`. Les upstreams Eden/Lichii classiques ne faisaient jusque-là qu'un succès sans stockage ; ce lot ne reprend pas ce faux succès.
+- Les empreintes `eden-backports/manifest.json` sont synchronisées avec les owners actifs Account, FSP et PCTL. Le contrôle de provenance précédent `541be9be` avait d'abord échoué sur `acc.cpp`, puis sur `fsp_srv.cpp`; le présent couple doit être requalifié par CI.
+- **Aucun build PS5 ni validation console** n'est revendiqué.
+
+**Compteur historique : 1 451 IMPL-SRC / 109 PARTIEL / 145 STUB / 123 NOOP / 2 024 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 149 HORS-VERSION / 0 ABSENT / 276 ABI-DIFF / 9 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 564** : 2 024 NULL + 145 STUB + 109 PARTIEL + 276 ABI-DIFF + 9 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

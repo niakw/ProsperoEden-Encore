@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 368 | 80 | **1 448** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 371 | 80 | **1 451** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 105 | 3 | **108** |
-| **STUB — Stub / résultat simulé** | 146 | 0 | **146** |
+| **PARTIEL — Implémentation partielle** | 106 | 3 | **109** |
+| **STUB — Stub / résultat simulé** | 145 | 0 | **145** |
 | **NOOP — No-op documenté** | 123 | 0 | **123** |
-| **NULL — Handler NULL** | 2 027 | 0 | **2 027** |
+| **NULL — Handler NULL** | 2 024 | 0 | **2 024** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1448
+    "Implémentation source retrouvée" : 1451
     "Handler raccordé, corps non prouvé" : 0
-    "Implémentation partielle" : 108
-    "Stub / résultat simulé" : 146
+    "Implémentation partielle" : 109
+    "Stub / résultat simulé" : 145
     "No-op documenté" : 123
-    "Handler NULL" : 2027
+    "Handler NULL" : 2024
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -855,10 +855,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | acc:su | `104` | `GetProfileUpdateNotifier` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `105` | `CheckNetworkServiceAvailabilityAsync` | 4.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `106` | `GetProfileSyncNotifier` | 9.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `110` | `StoreSaveDataThumbnail` | — | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; Module::Interface::StoreSaveDataThumbnailSystem/Application marqué STUBBED ; pas de validation PS5) | 2026-11-22 |
-| acc:su | `111` | `ClearSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `112` | `LoadSaveDataThumbnail` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
-| acc:su | `113` | `GetSaveDataThumbnailExistence` | 5.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
+| acc:su | `110` | `StoreSaveDataThumbnail` | — | **IMPL-SRC** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; stockage réel 0x24000 par UID/ApplicationId) | 2026-11-23 |
+| acc:su | `111` | `ClearSaveDataThumbnail` | — | **IMPL-SRC** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; suppression idempotente du thumbnail local) | 2026-11-23 |
+| acc:su | `112` | `LoadSaveDataThumbnail` | — | **PARTIEL** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; lecture réelle, résultat exact en absence de fichier non documenté) | 2026-11-23 |
+| acc:su | `113` | `GetSaveDataThumbnailExistence` | 5.0.0+ | **IMPL-SRC** ([owner actif](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2990b313b00f739b7a8863e3b3d896aede75f712/encore-active/eden-backports/src/core/hle/service/acc/acc.cpp) ; existence issue du même stockage local) | 2026-11-23 |
 | acc:su | `130` | `ActivateOpenContextRetention` | 6.0.0+ | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |
 | acc:su | `140` | `ListQualifiedUsers` | 6.0.0+ | **IMPL-SRC** (méthode héritée `Module::Interface::ListQualifiedUsers`, [corps C++][ns1-src-001] ; source seulement, non validée PS5) | 2026-11-22 |
 | acc:su | `190` | `GetUserLastOpenedApplication` | — | **NULL** ([source C++][ns1-src-001]) | 2026-11-22 |

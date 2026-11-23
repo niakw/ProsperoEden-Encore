@@ -2611,9 +2611,11 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
 
     // Switch 2 Control dumps often omit the canonical icon and Nlib may have
     // no record. Use GamesDB's explicit Square category, not a cropped box.
-    if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
+    if (UseNs2CaseIndex(game)) {
+        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
         const int language_choice = Eden::LoadPreferences().language;
-        if (EnsureGamesDbSquare(game.title_id, std::string(known->name), game.name,
+        const std::string canonical = known ? std::string(known->name) : game.name;
+        if (EnsureGamesDbSquare(game.title_id, canonical, game.name,
                                 language_choice, cancel, true)) {
             game.cover = CachedGamesDbSquare(game.title_id);
             game.artwork_changed = !game.cover.empty();
@@ -2709,8 +2711,10 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     if (!enrichment.icon.empty() && game.cover.empty()) {
         game.cover = std::move(enrichment.icon);
     } else if (game.cover.empty()) {
-        if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
-            if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
+        if (UseNs2CaseIndex(game)) {
+            const auto* known = Eden::Ns2Catalog::Find(game.title_id);
+            const std::string canonical = known ? std::string(known->name) : scanned_name;
+            if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
                                     language_choice, cancel, true)) {
                 game.cover = CachedGamesDbSquare(game.title_id);
                 game.artwork_changed |= !game.cover.empty();

@@ -1512,6 +1512,18 @@ Le runtime PS5 utilise bien l'overlay `encore-active/eden-backports/src/hid_core
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Requalification du service historique `ns:am` — 23/11/2026
+
+SwitchBrew documente explicitement que le service direct **`ns:am` a été remplacé par `ns:am2` à partir de HOS 3.0.0**. La cible NS1 Encore est HOS 23.x. Le propriétaire réellement compilé `encore-active/eden-backports/src/core/hle/service/ns/ns.cpp`, listé dans le CMake backports, enregistre `ns:am2`, `ns:ec`, `ns:rid`, `ns:rt`, `ns:web`, `ns:ro`, etc., mais **pas `ns:am`**. L'interface d'application moderne reste accessible via `IServiceGetterInterface::GetApplicationManagerInterface` (cmd 7996) et est suivie séparément dans le catalogue moderne.
+
+Les **113 lignes historiques `ns:am`** sont donc reclassées **HORS-VERSION** pour la cible HOS 23.x. Avant reclassement, elles comprenaient 20 IMPL-SRC, 85 NULL, 2 PARTIEL, 1 STUB, 4 NOOP et 1 ABI-DIFF. Ce changement ne prétend pas implémenter 89 fonctions ; il retire correctement du pool courant une surface de service directe qui n'existe plus sur le firmware cible, sans masquer la dette de `ns:am2`.
+
+**Compteur courant : 1 575 IMPL-SRC / 140 PARTIEL / 78 STUB / 145 NOOP / 1 607 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 443 HORS-VERSION / 0 ABSENT / 270 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 104** : 1 607 NULL + 78 STUB + 140 PARTIEL + 270 ABI-DIFF + 9 AMBIGU.
+
+La CI X8D24 du lot HID précédent est verte ; aucune validation gameplay PS5 n'est déduite de ce reclassement documentaire/source.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -25,22 +25,22 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 595 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `20d0c7bb`. **Ces 1 588 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 575 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le reclassement du service historique `ns:am` en HORS-VERSION retire ses 20 handlers de ce total courant ; l'interface moderne reste suivie via `ns:am2`. **Ces 1 588 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 515 | 80 | **1 595** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 495 | 80 | **1 575** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 139 | 3 | **142** |
-| **STUB — Stub / résultat simulé** | 79 | 0 | **79** |
-| **NOOP — No-op documenté** | 149 | 0 | **149** |
-| **NULL — Handler NULL** | 1 692 | 0 | **1 692** |
+| **PARTIEL — Implémentation partielle** | 137 | 3 | **140** |
+| **STUB — Stub / résultat simulé** | 78 | 0 | **78** |
+| **NOOP — No-op documenté** | 145 | 0 | **145** |
+| **NULL — Handler NULL** | 1 607 | 0 | **1 607** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 329 | 1 | **330** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 442 | 1 | **443** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
-| **ABI-DIFF — Noms/ABI divergents** | 271 | 0 | **271** |
+| **ABI-DIFF — Noms/ABI divergents** | 270 | 0 | **270** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
 | **Q — Non vérifié** | 0 | 0 | **0** |
 | **E — ID SVC non trouvé** | 0 | 0 | **0** |
@@ -1952,120 +1952,120 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | aoc:u | `2` | `GetPurchasedEventReadableHandle` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/aoc/purchase_event_manager.cpp) ; IPurchaseEventManager slot 2 actuel = GetPurchasedEvent, pas GetPurchasedEventReadableHandle ; statique, PS5 non validé) | 2026-11-22 |
 | aoc:u | `3` | `PopPurchasedProductInfo` | — | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
 | aoc:u | `4` | `PopPurchasedProductInfoWithUid` | 9.0.0+ | **STUB** ([source C++][ns1-src-047]) | 2026-11-22 |
-| ns:am | `0` | `ListApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1` | `GenerateApplicationRecordCount` | — | **IMPL-SRC** (compte les mêmes Application/Program racines que `ListApplicationRecord` dans `ContentProviderUnion` ; vendor `b1b3d6e9`) | 2026-11-22 |
-| ns:am | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **IMPL-SRC** (retourne l'événement passif ; `DeleteApplicationEntity`/mutations le signalent réellement, vendor `a691b553`) | 2026-11-22 |
-| ns:am | `3` | `GetApplicationViewDeprecated` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `4` | `DeleteApplicationEntity` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `5` | `DeleteApplicationCompletely` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `6` | `IsAnyApplicationEntityRedundant` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `7` | `DeleteRedundantApplicationEntity` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `8` | `IsApplicationEntityMovable` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `9` | `MoveApplicationEntity` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `11` | `CalculateApplicationOccupiedSize` | — | **PARTIEL** ([source C++][ns1-src-102]) | 2026-11-22 |
-| ns:am | `16` | `PushApplicationRecord` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `17` | `ListApplicationRecordContentMeta` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `19` | `LaunchApplication` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/application_manager_interface.cpp) ; slot 19 actuel = LaunchApplicationOld (nullptr), pas LaunchApplication ; statique, PS5 non validé) | 2026-11-22 |
-| ns:am | `21` | `GetApplicationContentPath` | — | **NULL** ([source C++][ns1-src-104]) | 2026-11-22 |
-| ns:am | `22` | `TerminateApplication` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `23` | `ResolveApplicationContentPath` | 2.0.0+ | **STUB** ([source C++][ns1-src-104]) | 2026-11-22 |
-| ns:am | `26` | `BeginInstallApplication` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `27` | `DeleteApplicationRecord` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `30` | `RequestApplicationUpdateInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `31` | `RequestUpdateApplication` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `32` | `CancelApplicationDownload` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `33` | `ResumeApplicationDownload` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `35` | `UpdateVersionList` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `36` | `PushLaunchVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `37` | `ListRequiredVersion` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `38` | `CheckApplicationLaunchVersion` | — | **NOOP** (aucune version-list Nintendo poussée n'est modélisée ; le contenu local est autorisé à lancer, politique explicite) | 2026-11-22 |
-| ns:am | `39` | `CheckApplicationLaunchRights` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `40` | `GetApplicationLogoData` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `41` | `CalculateApplicationDownloadRequiredSize` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `42` | `CleanupSdCard` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `43` | `CheckSdCardMountStatus` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `44` | `GetSdCardMountStatusChangedEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de changement de montage SD n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
-| ns:am | `45` | `GetGameCardAttachmentEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `46` | `GetGameCardAttachmentInfo` | — | **IMPL-SRC** (état d'attachement dérivé du vrai FileSystemController::GetGameCard(); vendor 8f842b50) | 2026-11-22 |
-| ns:am | `47` | `GetTotalSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `48` | `GetFreeSpaceSize` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `49` | `GetSdCardRemovedEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `52` | `GetGameCardUpdateDetectionEvent` | — | **NOOP** (handle d'événement réel ; aucun producteur de détection de mise à jour GameCard n'est modélisé ; vendor `0432fba8`) | 2026-11-22 |
-| ns:am | `53` | `DisableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `54` | `EnableApplicationAutoDelete` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `55` | `GetApplicationDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `56` | `SetApplicationTerminateResult` | — | **IMPL-SRC** (écrit `terminate_result` sur le main applet réel après validation du ProgramId ; vendor `9424bdad`) | 2026-11-22 |
-| ns:am | `57` | `ClearApplicationTerminateResult` | — | **IMPL-SRC** (réinitialise `terminate_result` du main applet réel à Success ; vendor `9424bdad`) | 2026-11-22 |
-| ns:am | `58` | `GetLastSdCardMountUnexpectedResult` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `59` | `ConvertApplicationLanguageToLanguageCode` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **IMPL-SRC** (délègue à la conversion canonique `ConvertToApplicationLanguage`, erreur `ResultApplicationLanguageNotFound` si code invalide ; vendor `0897a295`) | 2026-11-22 |
-| ns:am | `61` | `GetBackgroundDownloadStressTaskInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `62` | `GetGameCardStopper` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `63` | `IsSystemProgramInstalled` | — | **IMPL-SRC** (interroge le cache System NAND réel pour le Program NCA ; vendor `2508e1f4`) | 2026-11-22 |
-| ns:am | `64` | `StartApplyDeltaTask` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `65` | `GetRequestServerStopper` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `100` | `ResetToFactorySettings` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
-| ns:am | `101` | `ResetToFactorySettingsWithoutUserSaveData` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
-| ns:am | `102` | `ResetToFactorySettingsForRefurbishment` | 2.0.0+ | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
-| ns:am | `200` | `CalculateUserSaveDataStatistics` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `201` | `DeleteUserSaveDataAll` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `210` | `DeleteUserSystemSaveData` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `220` | `UnregisterNetworkServiceAccount` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `300` | `GetApplicationShellEvent` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `301` | `PopApplicationShellEventInfo` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `302` | `LaunchLibraryApplet` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `303` | `TerminateLibraryApplet` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `304` | `LaunchSystemApplet` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `305` | `TerminateSystemApplet` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `306` | `LaunchOverlayApplet` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `307` | `TerminateOverlayApplet` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `400` | `GetApplicationControlData` | — | **IMPL-SRC** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `401` | `InvalidateAllApplicationControlCache` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `402` | `RequestDownloadApplicationControlData` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `403` | `GetMaxApplicationControlCacheCount` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `404` | `InvalidateApplicationControlCache` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `405` | `ListApplicationControlCacheEntryInfo` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `502` | `RequestCheckGameCardRegistration` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `503` | `RequestGameCardRegistrationGoldPoint` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `504` | `RequestRegisterGameCard` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `600` | `CountApplicationContentMeta` | 2.0.0+ | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
-| ns:am | `601` | `ListApplicationContentMetaStatus` | 2.0.0+ | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
-| ns:am | `602` | `ListAvailableAddOnContent` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `603` | `GetOwnedApplicationContentMetaStatus` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `604` | `RegisterContentsExternalKey` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `605` | `ListApplicationContentMetaStatusWithRightsCheck` | 2.0.0+ | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
-| ns:am | `700` | `PushDownloadTaskList` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `701` | `ClearTaskStatusList` | 2.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am | `702` | `RequestDownloadTaskList` | 2.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am | `703` | `RequestEnsureDownloadTask` | 2.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am | `704` | `ListDownloadTaskStatus` | 2.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am | `705` | `RequestDownloadTaskListData` | 2.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
-| ns:am | `800` | `RequestVersionList` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `801` | `ListVersionList` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `900` | `GetApplicationRecord` | 2.0.0+ | **IMPL-SRC** (construit l'ApplicationRecord depuis le Program NCA et `LaunchTimestampCache` ; vendor `b1b3d6e9`) | 2026-11-22 |
-| ns:am | `901` | `GetApplicationRecordProperty` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `902` | `EnableApplicationAutoUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `903` | `DisableApplicationAutoUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `904` | `TouchApplication` | 2.0.0+ | **PARTIEL** (valide l'application dans le ContentProviderUnion réel mais ne persiste pas encore le metadata « last touched » NS ; vendor `0432fba8`) | 2026-11-22 |
-| ns:am | `905` | `RequestApplicationUpdate` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `906` | `IsApplicationUpdateRequested` | 2.0.0+ | **NOOP** (Encore n'a pas d'état de requête de mise à jour NS distant ; `false/0` explicite, conforme au fallback émulateur amont) | 2026-11-22 |
-| ns:am | `907` | `WithdrawApplicationUpdateRequest` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `908` | `ListApplicationRecordInstalledContentMeta` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1000` | `RequestVerifyApplicationDeprecated` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1001` | `CorruptApplicationForDebug` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `0` | `ListApplicationRecord` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1` | `GenerateApplicationRecordCount` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `2` | `GetApplicationRecordUpdateSystemEvent` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `3` | `GetApplicationViewDeprecated` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `4` | `DeleteApplicationEntity` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `5` | `DeleteApplicationCompletely` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `6` | `IsAnyApplicationEntityRedundant` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `7` | `DeleteRedundantApplicationEntity` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `8` | `IsApplicationEntityMovable` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `9` | `MoveApplicationEntity` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `11` | `CalculateApplicationOccupiedSize` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `16` | `PushApplicationRecord` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `17` | `ListApplicationRecordContentMeta` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `19` | `LaunchApplication` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `21` | `GetApplicationContentPath` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `22` | `TerminateApplication` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `23` | `ResolveApplicationContentPath` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `26` | `BeginInstallApplication` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `27` | `DeleteApplicationRecord` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `30` | `RequestApplicationUpdateInfo` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `31` | `RequestUpdateApplication` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `32` | `CancelApplicationDownload` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `33` | `ResumeApplicationDownload` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `35` | `UpdateVersionList` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `36` | `PushLaunchVersion` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `37` | `ListRequiredVersion` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `38` | `CheckApplicationLaunchVersion` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `39` | `CheckApplicationLaunchRights` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `40` | `GetApplicationLogoData` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `41` | `CalculateApplicationDownloadRequiredSize` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `42` | `CleanupSdCard` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `43` | `CheckSdCardMountStatus` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `44` | `GetSdCardMountStatusChangedEvent` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `45` | `GetGameCardAttachmentEvent` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `46` | `GetGameCardAttachmentInfo` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `47` | `GetTotalSpaceSize` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `48` | `GetFreeSpaceSize` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `49` | `GetSdCardRemovedEvent` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `52` | `GetGameCardUpdateDetectionEvent` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `53` | `DisableApplicationAutoDelete` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `54` | `EnableApplicationAutoDelete` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `55` | `GetApplicationDesiredLanguage` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `56` | `SetApplicationTerminateResult` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `57` | `ClearApplicationTerminateResult` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `58` | `GetLastSdCardMountUnexpectedResult` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `59` | `ConvertApplicationLanguageToLanguageCode` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `60` | `ConvertLanguageCodeToApplicationLanguage` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `61` | `GetBackgroundDownloadStressTaskInfo` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `62` | `GetGameCardStopper` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `63` | `IsSystemProgramInstalled` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `64` | `StartApplyDeltaTask` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `65` | `GetRequestServerStopper` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `100` | `ResetToFactorySettings` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `101` | `ResetToFactorySettingsWithoutUserSaveData` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `102` | `ResetToFactorySettingsForRefurbishment` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `200` | `CalculateUserSaveDataStatistics` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `201` | `DeleteUserSaveDataAll` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `210` | `DeleteUserSystemSaveData` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `220` | `UnregisterNetworkServiceAccount` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `300` | `GetApplicationShellEvent` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `301` | `PopApplicationShellEventInfo` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `302` | `LaunchLibraryApplet` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `303` | `TerminateLibraryApplet` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `304` | `LaunchSystemApplet` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `305` | `TerminateSystemApplet` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `306` | `LaunchOverlayApplet` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `307` | `TerminateOverlayApplet` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `400` | `GetApplicationControlData` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `401` | `InvalidateAllApplicationControlCache` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `402` | `RequestDownloadApplicationControlData` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `403` | `GetMaxApplicationControlCacheCount` | — | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `404` | `InvalidateApplicationControlCache` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `405` | `ListApplicationControlCacheEntryInfo` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `502` | `RequestCheckGameCardRegistration` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `503` | `RequestGameCardRegistrationGoldPoint` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `504` | `RequestRegisterGameCard` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `600` | `CountApplicationContentMeta` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `601` | `ListApplicationContentMetaStatus` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `602` | `ListAvailableAddOnContent` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `603` | `GetOwnedApplicationContentMetaStatus` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `604` | `RegisterContentsExternalKey` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `605` | `ListApplicationContentMetaStatusWithRightsCheck` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `700` | `PushDownloadTaskList` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `701` | `ClearTaskStatusList` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `702` | `RequestDownloadTaskList` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `703` | `RequestEnsureDownloadTask` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `704` | `ListDownloadTaskStatus` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `705` | `RequestDownloadTaskListData` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `800` | `RequestVersionList` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `801` | `ListVersionList` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `900` | `GetApplicationRecord` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `901` | `GetApplicationRecordProperty` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `902` | `EnableApplicationAutoUpdate` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `903` | `DisableApplicationAutoUpdate` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `904` | `TouchApplication` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `905` | `RequestApplicationUpdate` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `906` | `IsApplicationUpdateRequested` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `907` | `WithdrawApplicationUpdateRequest` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `908` | `ListApplicationRecordInstalledContentMeta` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1000` | `RequestVerifyApplicationDeprecated` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1001` | `CorruptApplicationForDebug` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
  | ns:am | `1200` | `NeedsUpdateVulnerability` | 2.0.0+ |  **NOOP** (aucune base safe-system-version/vulnérabilité Nintendo émulée ; false explicite ; vendor `ad27e09c`)  | 2026-11-22 | 
-| ns:am | `1300` | `IsAnyApplicationEntityInstalled` | 2.0.0+ | **IMPL-SRC** (scan réel des Applications/Program installées, exclusion des sous-programmes, vendor `256b2abe`) | 2026-11-22 |
-| ns:am | `1301` | `DeleteApplicationContentEntities` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1302` | `CleanupUnrecordedApplicationEntity` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1400` | `PrepareShutdown` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1500` | `FormatSdCard` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1501` | `NeedsSystemUpdateToFormatSdCard` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1502` | `GetLastSdCardFormatUnexpectedResult` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1600` | `GetSystemSeedForPseudoDeviceId` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1700` | `ListApplicationDownloadingContentMeta` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1800` | `IsNotificationSetupCompleted` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1801` | `GetLastNotificationInfoCount` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am | `1802` | `ListLastNotificationInfo` | 2.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am | `1300` | `IsAnyApplicationEntityInstalled` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1301` | `DeleteApplicationContentEntities` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1302` | `CleanupUnrecordedApplicationEntity` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1400` | `PrepareShutdown` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1500` | `FormatSdCard` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1501` | `NeedsSystemUpdateToFormatSdCard` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1502` | `GetLastSdCardFormatUnexpectedResult` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1600` | `GetSystemSeedForPseudoDeviceId` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1700` | `ListApplicationDownloadingContentMeta` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1800` | `IsNotificationSetupCompleted` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1801` | `GetLastNotificationInfoCount` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
+| ns:am | `1802` | `ListLastNotificationInfo` | 2.0.0+ | **HORS-VERSION** (service direct `ns:am` remplacé par `ns:am2` depuis HOS 3.0.0 ; cible Encore HOS 23.x ; l'interface moderne reste suivie via `ns:am2` cmd 7996 ; vendor `20d0c7bb`) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7988` | `[GetDynamicRightsInterface](#IDynamicRightsInterface "wikilink").` | 6.0.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetDynamicRightsInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7989` | `[GetReadOnlyApplicationControlDataInterface](#IReadOnlyApplicationControlDataInterface "wikilink").` | 5.1.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetReadOnlyApplicationControlDataInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `7991` | `[GetReadOnlyApplicationRecordInterface](#IReadOnlyApplicationRecordInterface "wikilink").` | 5.0.0+ | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/service_getter_interface.cpp) ; IServiceGetterInterface::GetReadOnlyApplicationRecordInterface instancie une interface IPC ; audit statique, pas de validation PS5) | 2026-11-22 |

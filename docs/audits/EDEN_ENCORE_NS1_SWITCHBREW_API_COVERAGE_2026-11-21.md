@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
 | **NOOP — No-op documenté** | 139 | 0 | **139** |
-| **NULL — Handler NULL** | 1 896 | 0 | **1 896** |
+| **NULL — Handler NULL** | 1 849 | 0 | **1 849** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 193 | 1 | **194** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 240 | 1 | **241** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 272 | 0 | **272** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 139
-    "Handler NULL" : 1896
+    "Handler NULL" : 1849
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 194
+    "Hors version firmware cible" : 241
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 272
     "Interface ambiguë" : 9
@@ -1475,25 +1475,25 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | ahid:hdr | `3` | `AttachDevice` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
 | ahid:hdr | `4` | `DetachDevice` | 1.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
 | ahid:hdr | `5` | `SetDeviceFilter` | 6.0.0-8.1.0 | **HORS-VERSION** ([SwitchBrew Services API](https://switchbrew.org/wiki/Services_API) ; service S1 retiré après 8.1.0, non exposé sur HOS 23) | 2026-11-23 |
-| xcd:sys | `0` | `GetDataFormat` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `1` | `SetDataFormat` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `2` | `GetMcuState` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `3` | `SetMcuState` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `4` | `GetMcuVersionForNfc` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `5` | `CheckNfcDevicePower` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `10` | `SetNfcEvent` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `11` | `GetNfcInfo` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `12` | `StartNfcDiscovery` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `13` | `StopNfcDiscovery` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `14` | `StartNtagRead` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `15` | `StartNtagWrite` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `16` | `SendNfcRawData` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `17` | `RegisterMifareKey` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `18` | `ClearMifareKey` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `19` | `StartMifareRead` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `20` | `StartMifareWrite` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `101` | `GetAwakeTriggerReasonForLeftRail` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
-| xcd:sys | `102` | `GetAwakeTriggerReasonForRightRail` | — | **NULL** ([source C++][ns1-src-087]) | 2026-11-22 |
+| xcd:sys | `0` | `GetDataFormat` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `1` | `SetDataFormat` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `2` | `GetMcuState` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `3` | `SetMcuState` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `4` | `GetMcuVersionForNfc` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `5` | `CheckNfcDevicePower` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `10` | `SetNfcEvent` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `11` | `GetNfcInfo` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `12` | `StartNfcDiscovery` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `13` | `StopNfcDiscovery` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `14` | `StartNtagRead` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `15` | `StartNtagWrite` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `16` | `SendNfcRawData` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `17` | `RegisterMifareKey` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `18` | `ClearMifareKey` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `19` | `StartMifareRead` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `20` | `StartMifareWrite` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `101` | `GetAwakeTriggerReasonForLeftRail` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
+| xcd:sys | `102` | `GetAwakeTriggerReasonForRightRail` | — | **HORS-VERSION** (SwitchBrew HID : xcd:sys retiré en HOS 19.0.0+ ; non applicable à la cible HOS 23) | 2026-11-23 |
 | hidbus | `1` | `GetBusHandle` | — | **IMPL-SRC** ([source C++][ns1-src-085]) | 2026-11-22 |
 | hidbus | `2` | `IsExternalDeviceConnected` | — | **IMPL-SRC** ([source C++][ns1-src-085]) | 2026-11-22 |
 | hidbus | `3` | `Initialize` | — | **PARTIEL** ([source C++][ns1-src-085]) | 2026-11-22 |
@@ -1878,34 +1878,34 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | idle:sys | `3` | `SetHandlingContext` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 3/SetHandlingContext = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | idle:sys | `4` | `LoadAndApplySettings` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 4/LoadAndApplySettings = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | idle:sys | `5` | `ReportUserIsActive` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 5/ReportUserIsActive = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| omm | `0` | `GetOperationMode` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `1` | `GetOperationModeChangeEvent` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `2` | `EnableAudioVisual` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `3` | `DisableAudioVisual` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `4` | `EnterSleepAndWait` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `5` | `GetCradleStatus` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `6` | `FadeInDisplay` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `7` | `FadeOutDisplay` | — | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `8` | `GetCradleFwVersion` | 2.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `9` | `NotifyCecSettingsChanged` | 2.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `10` | `SetOperationModePolicy` | 3.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `11` | `GetDefaultDisplayResolution` | 3.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `12` | `GetDefaultDisplayResolutionChangeEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `13` | `UpdateDefaultDisplayResolution` | 3.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `14` | `ShouldSleepOnBoot` | 3.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `15` | `NotifyHdcpApplicationExecutionStarted` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `16` | `NotifyHdcpApplicationExecutionFinished` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `17` | `NotifyHdcpApplicationDrawingStarted` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `18` | `NotifyHdcpApplicationDrawingFinished` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `19` | `GetHdcpAuthenticationFailedEvent` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `20` | `GetHdcpAuthenticationFailedEmulationEnabled` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `21` | `SetHdcpAuthenticationFailedEmulation` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `22` | `GetHdcpStateChangeEvent` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `23` | `GetHdcpState` | 4.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `24` | `ShowCardUpdateProcessing` | 5.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `25` | `SetApplicationCecSettingsAndNotifyChanged` | 5.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `26` | `GetOperationModeSystemInfo` | 7.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
-| omm | `27` | `GetAppletFullAwakingSystemEvent` | 9.0.0+ | **NULL** ([source C++][ns1-src-113]) | 2026-11-22 |
+| omm | `0` | `GetOperationMode` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `1` | `GetOperationModeChangeEvent` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `2` | `EnableAudioVisual` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `3` | `DisableAudioVisual` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `4` | `EnterSleepAndWait` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `5` | `GetCradleStatus` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `6` | `FadeInDisplay` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `7` | `FadeOutDisplay` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `8` | `GetCradleFwVersion` | 2.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `9` | `NotifyCecSettingsChanged` | 2.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `10` | `SetOperationModePolicy` | 3.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `11` | `GetDefaultDisplayResolution` | 3.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `12` | `GetDefaultDisplayResolutionChangeEvent` | 3.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `13` | `UpdateDefaultDisplayResolution` | 3.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `14` | `ShouldSleepOnBoot` | 3.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `15` | `NotifyHdcpApplicationExecutionStarted` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `16` | `NotifyHdcpApplicationExecutionFinished` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `17` | `NotifyHdcpApplicationDrawingStarted` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `18` | `NotifyHdcpApplicationDrawingFinished` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `19` | `GetHdcpAuthenticationFailedEvent` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `20` | `GetHdcpAuthenticationFailedEmulationEnabled` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `21` | `SetHdcpAuthenticationFailedEmulation` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `22` | `GetHdcpStateChangeEvent` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `23` | `GetHdcpState` | 4.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `24` | `ShowCardUpdateProcessing` | 5.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `25` | `SetApplicationCecSettingsAndNotifyChanged` | 5.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `26` | `GetOperationModeSystemInfo` | 7.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| omm | `27` | `GetAppletFullAwakingSystemEvent` | 9.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | spsm | `0` | `GetCurrentState` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; ID 0 porte `GetState` dans la table actuelle, pas `GetCurrentState` ; statique, PS5 non validé) | 2026-11-22 |
 | spsm | `1` | `EnterSleep` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 1/EnterSleep = nullptr ; statique, PS5 non validé) | 2026-11-22 |
 | spsm | `2` | `GetLastWakeReason` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 2/GetLastWakeReason = nullptr ; statique, PS5 non validé) | 2026-11-22 |

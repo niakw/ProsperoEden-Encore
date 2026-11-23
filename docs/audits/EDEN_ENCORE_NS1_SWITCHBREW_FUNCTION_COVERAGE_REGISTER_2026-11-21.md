@@ -1139,6 +1139,16 @@ SwitchBrew documente `nd:app` et `nd:sys` comme services introduits en **HOS 5.0
 
 **Pool historique restant à examiner = 2 427** : 1 896 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
 
+## Requalification firmware — omm et xcd:sys hors cible HOS 23 — 23/11/2026
+
+- `omm` : SwitchBrew borne le service à **HOS 1.0.0–13.2.1** ; ses **28 commandes NULL** passent en **HORS-VERSION**.
+- `xcd:sys` : SwitchBrew indique que le service a été **retiré en HOS 19.0.0+** ; ses **19 commandes NULL** passent en **HORS-VERSION**.
+- Total : **47 NULL → HORS-VERSION**, sans ajout de handler ni faux succès runtime.
+
+**Compteur historique : 1 527 IMPL-SRC / 115 PARTIEL / 135 STUB / 139 NOOP / 1 849 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 241 HORS-VERSION / 0 ABSENT / 272 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 380** : 1 849 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

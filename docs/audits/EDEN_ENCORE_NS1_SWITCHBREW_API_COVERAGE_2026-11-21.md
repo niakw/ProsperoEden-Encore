@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
 | **NOOP — No-op documenté** | 139 | 0 | **139** |
-| **NULL — Handler NULL** | 1 849 | 0 | **1 849** |
+| **NULL — Handler NULL** | 1 834 | 0 | **1 834** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 240 | 1 | **241** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 255 | 1 | **256** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 272 | 0 | **272** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -448,11 +448,11 @@ pie showData
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
     "No-op documenté" : 139
-    "Handler NULL" : 1849
+    "Handler NULL" : 1834
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
-    "Hors version firmware cible" : 241
+    "Hors version firmware cible" : 256
     "Commande absente des tables" : 0
     "Noms/ABI divergents" : 272
     "Interface ambiguë" : 9
@@ -1427,7 +1427,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:sys | `1154` | `IsFirmwareAvailableForNotification` | 9.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1155` | `SetForceHandheldStyleVibration` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `1156` | `SendConnectionTriggerWithoutTimeoutEvent` | 9.0.0+ | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
-| hid:tmp | `0` | `GetConsoleSixAxisSensorCalibrationValues` | — | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/hid/hid.cpp)) | 2026-11-22 |
+| hid:tmp | `0` | `GetConsoleSixAxisSensorCalibrationValues` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 3.0.0–7.0.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | irs | `302` | `ActivateIrsensor` | — | **NOOP** (matériel IR Joy-Con non exposé sur Encore ; ABI conservée, handle validé quand applicable ; vendor `569c8e2a`) | 2026-11-22 |
 | irs | `303` | `DeactivateIrsensor` | — | **NOOP** (matériel IR Joy-Con non exposé sur Encore ; ABI conservée, handle validé quand applicable ; vendor `569c8e2a`) | 2026-11-22 |
 | irs | `304` | `GetIrsensorSharedMemoryHandle` | — | **IMPL-SRC** ([source C++][ns1-src-086]) | 2026-11-22 |
@@ -1874,10 +1874,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `11` | `Read` | — | **IMPL-SRC** ([source C++][ns1-src-043]) | 2026-11-22 |
 | appletAE | `1` | `GetHandle` | — | **IMPL-SRC** ([source C++][ns1-src-043]) | 2026-11-22 |
 | appletOE | `0` | `OpenApplicationProxy` | — | **PARTIEL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/application_proxy_service.cpp)) | 2026-11-22 |
-| idle:sys | `0` | `GetAutoPowerDownEvent` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 0/GetAutoPowerDownEvent = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| idle:sys | `3` | `SetHandlingContext` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 3/SetHandlingContext = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| idle:sys | `4` | `LoadAndApplySettings` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 4/LoadAndApplySettings = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| idle:sys | `5` | `ReportUserIsActive` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/policy_manager_system.cpp) ; slot exact 5/ReportUserIsActive = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| idle:sys | `0` | `GetAutoPowerDownEvent` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| idle:sys | `3` | `SetHandlingContext` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| idle:sys | `4` | `LoadAndApplySettings` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| idle:sys | `5` | `ReportUserIsActive` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | omm | `0` | `GetOperationMode` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | omm | `1` | `GetOperationModeChangeEvent` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | omm | `2` | `EnableAudioVisual` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
@@ -1907,16 +1907,16 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | omm | `26` | `GetOperationModeSystemInfo` | 7.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | omm | `27` | `GetAppletFullAwakingSystemEvent` | 9.0.0+ | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | spsm | `0` | `GetCurrentState` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; ID 0 porte `GetState` dans la table actuelle, pas `GetCurrentState` ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `1` | `EnterSleep` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 1/EnterSleep = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `2` | `GetLastWakeReason` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 2/GetLastWakeReason = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `3` | `Shutdown` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 3/Shutdown = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `4` | `GetNotificationMessageEventHandle` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 4/GetNotificationMessageEventHandle = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `5` | `ReceiveNotificationMessage` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 5/ReceiveNotificationMessage = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `6` | `AnalyzeLogForLastSleepWakeSequence` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 6/AnalyzeLogForLastSleepWakeSequence = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `7` | `ResetEventLog` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 7/ResetEventLog = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `8` | `AnalyzePerformanceLogForLastSleepWakeSequence` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 8/AnalyzePerformanceLogForLastSleepWakeSequence = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `9` | `ChangeHomeButtonLongPressingTime` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 9/ChangeHomeButtonLongPressingTime = nullptr ; statique, PS5 non validé) | 2026-11-22 |
-| spsm | `10` | `PutErrorState` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 10/PutErrorState = nullptr ; statique, PS5 non validé) | 2026-11-22 |
+| spsm | `1` | `EnterSleep` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `2` | `GetLastWakeReason` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `3` | `Shutdown` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `4` | `GetNotificationMessageEventHandle` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `5` | `ReceiveNotificationMessage` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `6` | `AnalyzeLogForLastSleepWakeSequence` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `7` | `ResetEventLog` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `8` | `AnalyzePerformanceLogForLastSleepWakeSequence` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `9` | `ChangeHomeButtonLongPressingTime` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
+| spsm | `10` | `PutErrorState` | — | **HORS-VERSION** (SwitchBrew Services API : service limité à HOS 1.0.0–13.2.1 ; non applicable à la cible HOS 23) | 2026-11-23 |
 | spsm | `11` | `InvalidateCurrentHomeButtonPressing` | 1.0.0-3.0.2 | **HORS-VERSION** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/omm/power_state_interface.cpp) ; slot exact 11/InvalidateCurrentHomeButtonPressing = nullptr ; statique, PS5 non validé) | 2026-11-23 |
 | tcap | `0` | `GetContinuousHighSkinTemperatureEvent` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |
 | tcap | `1` | `SetOperationMode` | — | **SERVICE-NON-EXPOSÉ** ([preuve d'exposition](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/services.cpp) ; aucun RegisterNamedService("tcap") dans les sources de base ni les backports du snapshot ; classement du nom de service, pas preuve d'usage jeu) | 2026-11-22 |

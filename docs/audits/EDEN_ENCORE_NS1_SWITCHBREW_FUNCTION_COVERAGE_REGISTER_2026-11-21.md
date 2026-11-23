@@ -1149,6 +1149,14 @@ SwitchBrew documente `nd:app` et `nd:sys` comme services introduits en **HOS 5.0
 
 **Pool historique restant à examiner = 2 380** : 1 849 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
 
+## Requalification firmware — hid:tmp / idle:sys / spsm — 23/11/2026
+
+La liste officielle des services borne `hid:tmp` à **HOS 3.0.0–7.0.1**, et `idle:sys` / `spsm` à **HOS 1.0.0–13.2.1**. Les lignes encore NULL de ces services sont donc hors cible HOS23 : **15 NULL → HORS-VERSION** (1 + 4 + 10). Les entrées déjà classées autrement ne sont pas modifiées.
+
+**Compteur historique : 1 527 IMPL-SRC / 115 PARTIEL / 135 STUB / 139 NOOP / 1 834 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 256 HORS-VERSION / 0 ABSENT / 272 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 365** : 1 834 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

@@ -685,9 +685,10 @@ void Launcher::start_home_media()
         home_recent_ >= 0 && home_recent_ < static_cast<int>(home_.recents.size()) ?
             &home_.recents[static_cast<std::size_t>(home_recent_)] : nullptr;
     const std::uint64_t title_id = recent != nullptr ? recent->title_id : home_.last_title_id;
-    if (title_id == 0) return;
+    const std::string& file = recent != nullptr ? recent->file : home_.last_file;
+    if (title_id == 0 || file.empty()) return;
     const auto now = std::chrono::steady_clock::now();
-    const auto due = home_media_next_retry_.find(title_id);
+    const auto due = home_media_next_retry_.find(file);
     if (due != home_media_next_retry_.end() && now < due->second)
         return;
 
@@ -715,8 +716,9 @@ void Launcher::start_home_media()
 
     // An incomplete response must never blacklist this game until restart.
     // A short cooldown keeps the UI responsive without retrying every frame.
-    home_media_next_retry_[title_id] = now + std::chrono::minutes(2);
+    home_media_next_retry_[file] = now + std::chrono::minutes(2);
     home_media_scan_title_id_ = title_id;
+    home_media_scan_file_ = file;
     home_media_scan_ = std::async(std::launch::async, [this, request = std::move(request)]() mutable {
         return services_.enrich_game_media(std::move(request), &media_cancel_);
     });
@@ -733,7 +735,8 @@ void Launcher::finish_home_media()
         // A worker response belongs strictly to the request that launched
         // it. Do not publish a zero/wrong TitleID into Home, Recents or the
         // library during an overlapping selection or failed lookup.
-        if (!enriched.title_id || enriched.title_id != home_media_scan_title_id_)
+        if (!enriched.title_id || enriched.title_id != home_media_scan_title_id_ ||
+            enriched.file != home_media_scan_file_)
             throw std::runtime_error{"stale Home media identity"};
         if (enriched.artwork_changed) {
             textures_.invalidate(enriched.cover);
@@ -802,6 +805,7 @@ void Launcher::finish_home_media()
         sys::log("Nlib home media: %s", error.what());
     }
     home_media_scan_title_id_ = 0;
+    home_media_scan_file_.clear();
     // If the user selected another Recent card while this request ran, start that title now.
     start_home_media();
 }
@@ -823,10 +827,11 @@ void Launcher::start_selected_media()
     const Game& game = games_[static_cast<std::size_t>(library_.selected)];
     if (game.title_id == 0) return;
     const auto now = std::chrono::steady_clock::now();
-    const auto due = media_next_retry_.find(game.title_id);
+    const auto due = media_next_retry_.find(game.file);
     if (due != media_next_retry_.end() && now < due->second) return;
-    media_next_retry_[game.title_id] = now + std::chrono::minutes(5);
+    media_next_retry_[game.file] = now + std::chrono::minutes(5);
     media_scan_title_id_ = game.title_id;
+    media_scan_file_ = game.file;
     // The previous future has been consumed; no worker can still read this token.
     selected_media_cancel_.store(false, std::memory_order_release);
     Game copy = game;
@@ -845,7 +850,8 @@ void Launcher::finish_selected_media()
         const bool still_selected = screen_ == Screen::library &&
             library_.selected >= 0 &&
             library_.selected < static_cast<int>(games_.size()) &&
-            games_[static_cast<std::size_t>(library_.selected)].title_id == media_scan_title_id_;
+            games_[static_cast<std::size_t>(library_.selected)].title_id == media_scan_title_id_ &&
+            games_[static_cast<std::size_t>(library_.selected)].file == media_scan_file_;
         if (!still_selected)
             selected_media_cancel_.store(true, std::memory_order_release);
         return;
@@ -853,7 +859,8 @@ void Launcher::finish_selected_media()
     const bool cancelled = selected_media_cancel_.load(std::memory_order_acquire);
     try {
         Game enriched = media_scan_.get();
-        if (!enriched.title_id || enriched.title_id != media_scan_title_id_)
+        if (!enriched.title_id || enriched.title_id != media_scan_title_id_ ||
+            enriched.file != media_scan_file_)
             throw std::runtime_error{"stale library media identity"};
         if (enriched.artwork_changed) {
             textures_.invalidate(enriched.cover);
@@ -902,9 +909,10 @@ void Launcher::finish_selected_media()
         sys::log("Nlib selected media: %s", error.what());
     }
     if (cancelled && !media_cancel_.load(std::memory_order_acquire))
-        media_next_retry_[media_scan_title_id_] = std::chrono::steady_clock::now() +
+        media_next_retry_[media_scan_file_] = std::chrono::steady_clock::now() +
                                                 std::chrono::seconds(2);
     media_scan_title_id_ = 0;
+    media_scan_file_.clear();
     // If the player moved while that request was running, enrich the title highlighted now.
     start_selected_media();
 }

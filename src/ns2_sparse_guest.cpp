@@ -97,9 +97,11 @@ struct Runtime::Impl {
     struct GateGuard {
         Impl& owner;
         bool locked{};
+        bool waited{};
         explicit GateGuard(Impl& owner_) : owner(owner_) {
             if (owner_gate_held) return;
-            while (owner.gate.test_and_set(std::memory_order_acquire)) {}
+            while (owner.gate.test_and_set(std::memory_order_acquire))
+                waited = true;
             owner_gate_held = true;
             locked = true;
         }
@@ -287,7 +289,11 @@ struct Runtime::Impl {
         GateGuard lock{*this};
         if (!lock) return false;
         const auto state = plan.At(index).state;
-        if (state == State::Resident) return true;
+        // A second thread may have promoted this exact ZERO chunk while this
+        // handler waited on the gate; retrying its original write is safe.
+        // Without contention, a fault on an already writable OWN chunk is
+        // unrelated to demand-zero and must reach the previous crash handler.
+        if (state == State::Resident) return lock.waited;
         if (state != State::Unmapped) return false;
 
         const auto admit = plan.Begin(index * kGranule, kGranule);

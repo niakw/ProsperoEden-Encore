@@ -218,6 +218,7 @@ assert "RestoreZero(at, zero_physical, part.physical);" in transaction
 assert "MapPhysical(base + index * kGranule, PROT_READ, zero_physical)" in physical
 assert "GuestSignal(int signal, siginfo_t* info, void* context)" in physical
 assert "plan.CancelSingleUnstaged(*admit)" in physical
+assert "if (state == State::Resident) return lock.waited;" in physical
 assert "active_guest_signal.store(this, std::memory_order_release)" in physical
 assert "EdenNs2EnsureGuestBackingReadable" in physical
 host=read("src/host_memory.cpp")

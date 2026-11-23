@@ -452,6 +452,13 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                 const bool alternate_ready = ready && animate_case &&
                     capture_pose(pe::ui::Launcher::LoadingCapturePose::front, true);
                 launcher.set_loading_capture_pose(pe::ui::Launcher::LoadingCapturePose::live);
+                // capture_pose(front) leaves the reusable draw list on the
+                // alternate image. Rebuild the actual final launcher pose so
+                // a presenter failure falls back to the same frame the user
+                // just saw, never an unexpected front-cover jump.
+                list.clear();
+                launcher.draw(list);
+                batch.sync_font_texture(font_texture, font);
                 Eden::LoadingArtwork::GlPresenter presenter;
                 const bool shown = ready && presenter.Draw(display.width(), display.height(),
                     Eden::LaunchHandoff::LoadingSeconds(reduce_motion ? 1000.0 : 0.0));

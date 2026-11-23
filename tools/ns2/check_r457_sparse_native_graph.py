@@ -45,6 +45,7 @@ REVIEWED_VENDORS.add("6489896230a030cf28d31961c7c8f242cab73f27")
 REVIEWED_VENDORS.add("05de9e8e7f75e9a7400a351b18f2b1e83165108e")
 REVIEWED_VENDORS.add("ee64fac70671126c9b6ab9aa3b3885a40538cf16")
 REVIEWED_VENDORS.add("603e0d5c70b04fa84a19cca8f580ed1bdb230be0")
+REVIEWED_VENDORS.add("593bc9ee6ddfcf38e488325ccf318f1a0a109d8e")
 OWNERS=(ROOT/"src/ns2_sparse_guest.cpp",
         ROOT/"src/host_memory.cpp")
 NATIVE_GUEST=(ROOT/"vendor/encore-active/eden-core/src/core/memory_native_a32.cpp",
@@ -71,13 +72,13 @@ def main():
         raw=path.read_bytes()
         return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
     for owner,expected in (
-        (NATIVE_GUEST[0],"aa08b4af80e22109495f8dfbec1fec129f2261e9" if sha in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"} else "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+        (NATIVE_GUEST[0],"aa08b4af80e22109495f8dfbec1fec129f2261e9" if sha in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e" else "8007c91fd1757acf66f5f5b6a67d862afa0c475c" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "1b506bac747a3c492d4393016ca2b7dc29bfcc57"),
-        (NATIVE_GUEST[1],"9dad056a223b90f27470c6a5b55977217238993a" if sha in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"} else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
+        (NATIVE_GUEST[1],"9dad056a223b90f27470c6a5b55977217238993a" if sha in {"6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e" else "3757b123153c66584ec0dde8bd01334ec41ec9e2" if sha in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762"}
          else "c8f197810af244c3f2d66413352533734d031620"),
-        (NATIVE_SHARED,"515df1ec4a4b231266d6f3e5481c54ca87c94453" if sha in {"06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"}
+        (NATIVE_SHARED,"515df1ec4a4b231266d6f3e5481c54ca87c94453" if sha in {"06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"
          else "9b47d62a6b8503c7a3cdff053888ea47a799cbed"),
-        (NATIVE_KERNEL,"2b5be4eba2500da2993db2ed1c86d44ddfa5554f" if sha in {"436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"}
+        (NATIVE_KERNEL,"2b5be4eba2500da2993db2ed1c86d44ddfa5554f" if sha in {"436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"
          else "6397dd2c4a9c9c10674ab87b344f5c6956b79e0c" if sha == "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"
          else "aeee7f62a3fc609936ff5dc6a64722ca8d860c2e" if sha == "56959a23273ea2ee82d2e59628c92cc9e1144fe9"
          else "12d3d0ddc59308b80df46bc54e6e8ee54011d568" if sha == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"
@@ -88,9 +89,9 @@ def main():
     ):
         if gitblob(owner)!=expected:
             raise RuntimeError("Unreviewed native sparse owner "+str(owner))
-    if sha in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"}:
+    if sha in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e":
         expected_page_heap = ("574c88dc2add018094c3e6db9047881709da6659"
-                              if sha in {"ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"}
+                              if sha in {"ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e"
                               else "1183a2455d027d546e069a455d0c3b460065732a")
         if gitblob(NATIVE_PAGE_HEAP) != expected_page_heap:
             raise RuntimeError("Unreviewed native sparse page-heap owner")
@@ -123,7 +124,7 @@ def main():
     if len(slab_rows)!=1:
         raise RuntimeError(f"Expected one real native KPort/KPageBuffer slab owner, got {len(slab_rows)}")
     selected.append(("native_kernel_slabs",slab_rows[0]))
-    if sha in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0"}:
+    if sha in {"05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e":
         page_heap_rows=[r for r in db if Path(r["file"]).resolve()==NATIVE_PAGE_HEAP.resolve()]
         if len(page_heap_rows)!=1:
             raise RuntimeError(f"Expected one real sparse page-heap owner, got {len(page_heap_rows)}")

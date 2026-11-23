@@ -398,7 +398,10 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
 
     // Canonical Control icons win over loose portrait covers: Home/library
     // tiles are square and must not stretch a retail jacket into that slot.
-    for (const char* base : {"control", "base/control"}) {
+    // Extracted dumps keep filesystem casing. The launcher must not rely
+    // on a lower-case path when the loader accepted "Base/Control".
+    for (const char* base : {"control", "Control", "base/control",
+                             "base/Control", "Base/control", "Base/Control"}) {
         if (auto path = localized_icon(base); !path.empty()) return path;
     }
 
@@ -441,7 +444,9 @@ std::string ExtractedLocalCover(const std::filesystem::path& title, int language
     }
 
     // Older extractions sometimes leave icon_<language>.dat beside ExeFS.
-    for (const char* base : {"exefs", "base/exefs", ".", "base"}) {
+    for (const char* base : {"exefs", "ExeFS", "exefs/Control",
+                             "base/exefs", "base/ExeFS", "Base/exefs",
+                             "Base/ExeFS", ".", "base", "Base"}) {
         if (auto path = localized_icon(base); !path.empty()) return path;
     }
     return {};

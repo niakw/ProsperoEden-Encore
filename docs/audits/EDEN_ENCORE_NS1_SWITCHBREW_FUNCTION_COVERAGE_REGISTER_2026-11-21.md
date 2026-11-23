@@ -2292,3 +2292,12 @@ Vendor `e347b4949305f1f57de94713437218459697bee0` → gitlink moteur `b8879fd609
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 453 NULL / 218 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 868** : 1 453 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## NS Factory Reset — rejet explicite release (23/11/2026)
+
+Vendor `4d8e9da8463ba452f6f3ab8b7119079e18a1c541` → gitlink moteur `7c021841caa80226534cb29bf48bd19e6b618b69`. Les 7 slots de `IFactoryResetInterface` sont désormais fail-closed. Les trois commandes présentes dans le catalogue historique (100–102) passent **NULL → D**. Aucun effacement de save/NAND ni reset de données hôte/PS5 n'est exécuté.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 450 NULL / 221 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 865** : 1 450 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

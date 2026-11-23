@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 454 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 374 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 454 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 456 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 376 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 456 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 374 | 80 | **1 454** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 376 | 80 | **1 456** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 118 | 0 | **118** |
-| **NULL — Handler NULL** | 2 137 | 0 | **2 137** |
+| **NULL — Handler NULL** | 2 135 | 0 | **2 135** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1454
+    "Implémentation source retrouvée" : 1456
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 118
-    "Handler NULL" : 2137
+    "Handler NULL" : 2135
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5692,8 +5692,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `178` | `SetThemeKey` | 7.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/33858387c023030896e649c84e1df806a3352889/sources/eden/src/core/hle/service/set/system_settings_server.cpp)) | 2026-11-23 |
 | set:sys | `179` | `GetZoomFlag` | 8.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
 | set:sys | `180` | `SetZoomFlag` | 8.0.0+ | **IMPL-SRC** (champ de configuration invité réel, lecture ou mutation persistée via `SetSaveNeeded()` ; vendor `407b42a9`) | 2026-11-22 |
-| set:sys | `181` | `GetT` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `182` | `SetT` | 8.0.0+ | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `181` | `GetT` | 8.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/bb450eb2e61d2e28856c5beb9fcc6fa1afc8adab/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; wrapper Terra exact sur PlatformRegion persistant) | 2026-11-23 |
+| set:sys | `182` | `SetT` | 8.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/bb450eb2e61d2e28856c5beb9fcc6fa1afc8adab/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; wrapper Terra exact sur PlatformRegion persistant) | 2026-11-23 |
 | set:sys | `183` | `GetPlatformRegion` | 9.0.0+ | **IMPL-SRC** (PlatformRegion lu/écrit dans PrivateSettings persisté ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `184` | `SetPlatformRegion` | 9.0.0+ | **IMPL-SRC** (PlatformRegion lu/écrit dans PrivateSettings persisté ; vendor `be7f995c`) | 2026-11-22 |
 | set:sys | `185` | `GetHomeMenuSchemeModel` | 9.0.0+ | **PARTIEL** (modèle produit / palette HOME synthétiques et stables, sans base matérielle Switch complète ; vendor `be7f995c`) | 2026-11-22 |

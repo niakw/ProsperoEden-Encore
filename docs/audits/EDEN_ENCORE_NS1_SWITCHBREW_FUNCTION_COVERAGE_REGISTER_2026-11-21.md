@@ -672,6 +672,18 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 694** : 2 137 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` Terra compatibility flag — 23/11/2026
+
+**Vendor `bb450eb2e61d2e28856c5beb9fcc6fa1afc8adab`** (arbre `8b5f9570428f539fb4a414659eb2afefc5c9fe70`).
+
+- `GetT` (181) et `SetT` (182) : **2 NULL → IMPL-SRC**.
+- Libnx documente ces commandes comme wrappers de `PlatformRegion` : Terra si région 2 ; setter équivalent à `1 + (flag & 1)`.
+- Eden possède déjà `PrivateSettings::platform_region` avec `Global=1` et `Terra=2`. Les deux commandes réutilisent donc le même état persistant que 183/184, avec normalisation vers Global si la valeur stockée est invalide.
+
+**Compteur historique : 1 456 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 135 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 692** : 2 135 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

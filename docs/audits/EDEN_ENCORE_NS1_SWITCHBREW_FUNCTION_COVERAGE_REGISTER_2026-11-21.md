@@ -1269,6 +1269,18 @@ Aucun build natif PS5 ni test console n'est revendiqué.
 
 Pas de build natif PS5 ni de validation console revendiqués pour ce lot.
 
+## Lot NIFM IRequest — requête persistante — 23/11/2026
+
+**Vendor `2a7dfec8c6e31b4ba004501a666a4836443d3787`** (arbre `463636f6351a0b366b0e226fc88e3f0ad91f0f1b`).
+
+`SetPersistent` (cmd 12) passe **NULL → IMPL-SRC**. L'ABI amont est un booléen/byte. Le flag agit réellement sur la machine d'état d'`IRequest` : si la connectivité disparaît, une requête persistante repasse en `OnHold` au lieu de devenir `Invalid`, puis revient en `Accepted` lorsque la connectivité revient. Les requêtes non persistantes gardent le comportement précédent.
+
+**Compteur historique : 1 532 IMPL-SRC / 116 PARTIEL / 125 STUB / 140 NOOP / 1 769 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 290** : 1 769 NULL + 125 STUB + 116 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

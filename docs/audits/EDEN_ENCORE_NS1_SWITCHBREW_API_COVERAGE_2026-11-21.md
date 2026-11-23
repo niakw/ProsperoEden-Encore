@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 531 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 532 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 447 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `de2daec4`. **Ces 1 527 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 451 | 80 | **1 531** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 452 | 80 | **1 532** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 113 | 3 | **116** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 140 | 0 | **140** |
-| **NULL — Handler NULL** | 1 770 | 0 | **1 770** |
+| **NULL — Handler NULL** | 1 769 | 0 | **1 769** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1531
+    "Implémentation source retrouvée" : 1532
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 116
     "Stub / résultat simulé" : 125
     "No-op documenté" : 140
-    "Handler NULL" : 1770
+    "Handler NULL" : 1769
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -4927,7 +4927,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nifm:a, nifm:s, nifm:u | `9` | `SetNetworkProfileId` | — | **PARTIEL** ([active NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/d1524eb55acb905c694a46cdb1333e32c0e4bdbf/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; ABI UUID 0x10 corrigée et état mémorisé, sélection/routage par profil encore incomplet) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `10` | `SetRejectable` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `11` | `SetConnectionConfirmationOption` | — | **STUB** ([table/corps NIFM](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp); ID et nom identiques, corps marqué STUBBED; non validé PS5) | 2026-11-22 |
-| nifm:a, nifm:s, nifm:u | `12` | `SetPersistent` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
+| nifm:a, nifm:s, nifm:u | `12` | `SetPersistent` | — | **IMPL-SRC** ([vendor 2a7dfec8](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2a7dfec8c6e31b4ba004501a666a4836443d3787/encore-active/eden-backports/src/core/hle/service/nifm/nifm.cpp) ; bool persistant appliqué aux transitions OnHold/Accepted/Invalid selon la connectivité) | 2026-11-23 |
 | nifm:a, nifm:s, nifm:u | `13` | `SetInstant` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `14` | `SetSustainable` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |
 | nifm:a, nifm:s, nifm:u | `15` | `SetRawPriority` | — | **NULL** ([source C++][ns1-src-013]) | 2026-11-22 |

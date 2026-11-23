@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 450 | 0 | **1 450** |
-| **D — Rejet explicite / historique** | 188 | 33 | **221** |
+| **NULL — Handler NULL** | 1 431 | 0 | **1 431** |
+| **D — Rejet explicite / historique** | 207 | 33 | **240** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -1521,9 +1521,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `201` | `OpenLibraryAppletProxy` | 3.0.0+ | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `300` | `OpenOverlayAppletProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
 | appletAE | `350` | `OpenSystemApplicationProxy` | — | **PARTIEL** ([source C++][ns1-src-029]) | 2026-11-22 |
-| appletAE | `400` | `CreateSelfLibraryAppletCreatorForDevelop` | — | **NULL** ([source C++][ns1-src-029]) | 2026-11-22 |
-| appletAE | `410` | `GetSystemAppletControllerForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-029]) | 2026-11-22 |
-| appletAE | `1000` | `GetDebugFunctions` | 6.0.0+ | **NULL** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/all_system_applet_proxies_service.cpp) ; GetDebugFunctions de IAllSystemAppletProxiesService = nullptr ; audit statique, pas de validation PS5) | 2026-11-22 |
+| appletAE | `400` | `CreateSelfLibraryAppletCreatorForDevelop` | — | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `410` | `GetSystemAppletControllerForDebug` | 6.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `1000` | `GetDebugFunctions` | 6.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
 | appletAE | `0` | `GetCommonStateGetter` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
 | appletAE | `1` | `GetSelfController` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
 | appletAE | `2` | `GetWindowController` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
@@ -1542,9 +1542,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `21` | `GetPopFromGeneralChannelEvent` | — | **IMPL-SRC** ([source C++][ns1-src-037]) | 2026-11-22 |
 | appletAE | `30` | `GetHomeButtonWriterLockAccessor` | — | **NULL** ([source C++][ns1-src-037]) | 2026-11-22 |
 | appletAE | `31` | `GetWriterLockAccessorEx` | 2.0.0+ | **NULL** ([source C++][ns1-src-037]) | 2026-11-22 |
-| appletAE | `100` | `PopRequestLaunchApplicationForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-037]) | 2026-11-22 |
+| appletAE | `100` | `PopRequestLaunchApplicationForDebug` | 6.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
 | appletAE | `110` | `IsForceTerminateApplicationDisabledForDebug` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-037]) | 2026-11-22 |
-| appletAE | `200` | `LaunchDevMenu` | 8.0.0+ | **NULL** ([source C++][ns1-src-037]) | 2026-11-22 |
+| appletAE | `200` | `LaunchDevMenu` | 8.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
 | appletAE | `1` | `TryLock` | — | **IMPL-SRC** ([source C++][ns1-src-039]) | 2026-11-22 |
 | appletAE | `2` | `Unlock` | — | **IMPL-SRC** ([source C++][ns1-src-039]) | 2026-11-22 |
 | appletAE | `3` | `GetEvent` | — | **IMPL-SRC** ([source C++][ns1-src-039]) | 2026-11-22 |
@@ -1853,20 +1853,20 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `40` | `ReserveToStartAndWaitAndUnwindThis` | — | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
 | appletAE | `41` | `ReserveToStartAndWait` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-042]) | 2026-11-22 |
 | appletAE | `0` | `NotifyMessageToHomeMenuForDebug` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `1` | `OpenMainApplication` | — | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `10` | `PerformSystemButtonPressing` | — | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `20` | `InvalidateTransitionLayer` | — | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `30` | `RequestLaunchApplicationWithUserAndArgumentForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `40` | `GetAppletResourceUsageInfo` | 6.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `100` | `SetCpuBoostModeForApplet` | 7.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `110` | `PushToAppletBoundChannelForDebug` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `111` | `TryPopFromAppletBoundChannelForDebug` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `120` | `AlarmSettingNotificationEnableAppEventReserve` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `121` | `AlarmSettingNotificationDisableAppEventReserve` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `122` | `AlarmSettingNotificationPushAppEventNotify` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `130` | `FriendInvitationSetApplicationParameter` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `131` | `FriendInvitationClearApplicationParameter` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
-| appletAE | `132` | `FriendInvitationPushApplicationParameter` | 9.0.0+ | **NULL** ([source C++][ns1-src-034]) | 2026-11-22 |
+| appletAE | `1` | `OpenMainApplication` | — | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `10` | `PerformSystemButtonPressing` | — | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `20` | `InvalidateTransitionLayer` | — | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `30` | `RequestLaunchApplicationWithUserAndArgumentForDebug` | 6.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `40` | `GetAppletResourceUsageInfo` | 6.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `100` | `SetCpuBoostModeForApplet` | 7.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `110` | `PushToAppletBoundChannelForDebug` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `111` | `TryPopFromAppletBoundChannelForDebug` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `120` | `AlarmSettingNotificationEnableAppEventReserve` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `121` | `AlarmSettingNotificationDisableAppEventReserve` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `122` | `AlarmSettingNotificationPushAppEventNotify` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `130` | `FriendInvitationSetApplicationParameter` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `131` | `FriendInvitationClearApplicationParameter` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
+| appletAE | `132` | `FriendInvitationPushApplicationParameter` | 9.0.0+ | **D** (interface/commande debug-develop explicitement rejetée sur runtime release ; vendor `48345153`, moteur `e271ed8e`) | 2026-11-23 |
 | appletAE | `0` | `Open` | — | **IMPL-SRC** ([source C++][ns1-src-044]) | 2026-11-22 |
 | appletAE | `1` | `OpenTransferStorage` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-044]) | 2026-11-22 |
 | appletAE | `0` | `GetSize` | — | **IMPL-SRC** ([source C++][ns1-src-043]) | 2026-11-22 |
@@ -6383,3 +6383,10 @@ Vendor `e347b4949305f1f57de94713437218459697bee0` → gitlink moteur `b8879fd609
 Vendor `4d8e9da8463ba452f6f3ab8b7119079e18a1c541` → gitlink moteur `7c021841caa80226534cb29bf48bd19e6b618b69`. Les 7 slots de `IFactoryResetInterface` utilisent désormais un handler commun qui rejette explicitement la demande. Les trois lignes historiques présentes dans le catalogue (100–102) passent **NULL → D**. Aucun effacement des saves, NAND ou données hôte/PS5 n'est simulé.
 
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 450 NULL / 221 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 865.**
+
+
+### AppletAE — surface debug/develop fail-closed (23/11/2026)
+
+Vendor `4834515326ac41e679413970783baaf304fb5705` → gitlink moteur `e271ed8ef7d0dd1d9a4bf13d378051164f41ee5f`. `IAllSystemAppletProxiesService` rejette 3 commandes debug/develop, `IHomeMenuFunctions` en rejette 2, et l'ensemble des slots de `IDebugFunctions` est désormais explicitement fail-closed au lieu d'être `nullptr`. **19 lignes matérialisées dans le catalogue passent NULL → D**. Aucun comportement Home Menu, applet, invitation ou canal debug n'est simulé.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 431 NULL / 240 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 846.**

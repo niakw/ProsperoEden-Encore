@@ -679,3 +679,36 @@ Les comptes ACC précédemment affichés dans le §18 (502 / 490) utilisent un r
 La parité structurelle globale reste **ouverte** pour les ABI noyau/SVC (mapping des commandes, taille/alignement des entrées/sorties, erreurs), les opérations NVDRV et Ampere/Maxwell, le graphe des chargeurs/fichiers et les objets IPC/services non revus. Un tableau de commandes **complet en IDs** peut malgré tout avoir des réponses fonctionnellement différentes. La barrière P0 demeure : MKW/Bananza/Z-A doivent démontrer `gpu_submit_sample > 0` puis `guest_frame_handoff > 0` sur PS5 avant toute annonce de boot.
 
 Le script hôte `tools/ns2/check-three-way-structural-baseline.py` épingle les preuves des **propriétaires locaux réellement sélectionnés**, pas l'intégralité des dépôts amont. Les références des trois dépôts restent fixées dans cet addendum : une nouvelle révision de Lichii ou Eglantine impose un nouveau différentiel et non une affirmation automatique de parité globale.
+
+
+---
+
+## 20. Revue complémentaire AM appletOE, NVDRV et SVC — comparaison triple
+
+Périmètre **source** validé le 23 novembre 2026 : Lichii `nx2:e7893bea`, EglantinePS5 `main:5eb70367`, Encore vendor `main:273680a5`. Ce § distingue la correspondance de dispatch d'une preuve d'ABI et des essais console.
+
+### 20.1 Interfaces AM de démarrage
+
+| Source et interface | Lichii | Eglantine | Encore | Qualification |
+| --- | ---: | ---: | ---: | --- |
+| `IApplicationProxy` (15 `FunctionInfo`) | 15/15 | 15/15 | 15/15 | **IDs complets** ; commandes 40 et 60 volontairement plus spécifiques chez Encore. |
+| `IApplicationProxyService` / `appletOE` (3 `FunctionInfo`) | 3/3 | 3/3 | 3/3 | **IDs complets** ; l'ABI de la commande 10 **diffère**. |
+| `NVDRV` service `nvdrv.cpp` (3 tables `FunctionInfo`) | 22/22 | 22/22 | 22/22 | IDs, noms et handlers de déclaration concordent sur les trois dépôts ; ne prouve **aucune** parité des ioctl des périphériques. |
+
+**Commandes AM dont le comportement diffère :**
+
+- `IApplicationProxy cmd 40` : Lichii/Eglantine créent une interface générique `Nx2Getter40` ; Encore crée `IPerformanceFunctions` avec commandes `IsCpuOverclockEnabled` / `SetCpuOverclockEnabled` et état privé partagé `Ns2PerformanceRequest`. **Pas de changement du clock global à la demande du guest**, afin de garder les horloges NS1/NS2 stables.
+- `IApplicationProxy cmd 60` : Lichii/Eglantine créent `IGraphicsScaleController`, Encore `IGraphicsScalingParametersFunctions`. Les deux interfaces ont les IDs enfants 10 et 1050, et la **réponse actuelle de la commande 10** est structurellement identique : trois `u32` valant `10, 0, 0`. Ce rapprochement du contenu ne prouve pas que tous les firmwares NS2 attendent le même nom ou la même taille dans toutes les variantes.
+- `IApplicationProxyService cmd 10` : Lichii/Eglantine réutilisent directement `OpenApplicationProxy` comme cmd 0. Encore a un décodeur séparé `OpenApplicationProxyWithFlags`, qui lit le `u32 flags` additionnel (valeurs admises 0 ou 2) avant de déléguer. La réponse d'applet encore indisponible est un résultat de **retry AM 201** chez Encore plutôt que `ResultUnknown` en amont. **Ne pas écraser cet owner** sur la seule base des commandes numériquement identiques : le contrat HIPC de la commande 10 est un candidat P0 à qualifier par trace véritable.
+
+### 20.2 SVC 32/64
+
+Dans le `svc.cpp` généré des trois projets, exactement **123 noms `SvcId` distincts** sont présents, chacun en deux variantes de dispatch, soit **246 étiquettes `case SvcId::`**. La source PS5 Encore réellement compilée est `encore-active/ns2-runtime/gpu_access_svc/core/hle/kernel/svc.cpp` ; ses 123 noms correspondent à ceux de Lichii et Eglantine sans omission de *nom* dans les deux dispatchs. Les sources ne sont cependant **pas** identiques : Encore ajoute `SvcTrace`, la reconnaissance de l'accès GPU et des contrôles spécifiques à sa mémoire invitée.
+
+**Limite impérative :** `123/123` est un résultat d'inventaire des dispatchs générés, pas une qualification des implémentations de chaque SVC, des registres argument/résultat A32/A64 ou des erreurs HOS. Ce compteur ne se combine pas au registre SwitchBrew des 316 commandes GPU.
+
+### 20.3 Non-régression NS1 et priorité du boot
+
+- Pas de remplacement en bloc de `Puller`, `svc.cpp`, `KProcess`, NPDM, `NVDRV`, `IApplicationProxy` ou `IApplicationProxyService` : les différences Encore ont des propriétaires et des contrats spécifiques. La conformité partielle aux références Lichii/Eglantine doit être prouvée méthode par méthode.
+- Backports qualifiés : AM `m_exit_sent` et LM `TransmitHashedLog`, avec tests source/hôte NS1 et NS2. La comparaison des sources sélectionnées est couverte par le run [45226379447](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45226379447) vert. Le cycle mémoire sparse par le run [45228287957](https://github.com/niakw/ProsperoEden-Encore/actions/runs/45228287957) vert. Les checks de provenance de vendor ont des listes de SHA exactes et des blobs scellés.
+- **P0 console encore ouvert** : les dernières sessions MKW, Bananza, Z-A ne prouvent ni première soumission GPU, ni image invitée ; il faut relier `OpenApplicationProxy2` et le résultat AM/IPC, les SVC d'attente, les sessions GSV/NVDRV et le lancement du canal GPU dans un même journal. Ne pas attribuer un boot à la parité numérique ni aux CI hôtes.

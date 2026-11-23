@@ -9,6 +9,7 @@ import io
 import pathlib
 import re
 import urllib.request
+import unicodedata
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -136,18 +137,22 @@ def parse(source):
         if gid not in images:
             continue
         for label in (name, *aliases.get(gid, ())):
-            key = normalize(label)
-            if not key:
-                continue
-            # Platform is part of the identity. A shared name must not
-            # resolve to another console generation's printed jacket.
-            names.setdefault(f"{platform}:{key}", set()).add(gid)
-            # A NUP may advertise only the base title, although GamesDB
-            # names its NS2 entry "... Nintendo Switch 2 Edition".
-            if platform == "ns2" and key.endswith(" nintendo switch 2 edition"):
-                base = key.removesuffix(" nintendo switch 2 edition")
-                if base:
-                    names.setdefault(f"ns2:{base}", set()).add(gid)
+            # NACP/NUP names may omit the accent of a GamesDB title. Keep
+            # both the former ASCII-byte key and a Unicode-folded alias;
+            # runtime CaseKey uses the former for accented local names.
+            folded = unicodedata.normalize("NFKD", label).encode("ascii", "ignore").decode()
+            for spelling in (label, folded):
+                key = normalize(spelling)
+                if not key:
+                    continue
+                # A shared title must never resolve to another generation.
+                names.setdefault(f"{platform}:{key}", set()).add(gid)
+                # NUP sometimes advertises only the base name, while GamesDB
+                # carries the explicit Switch 2 Edition suffix.
+                if platform == "ns2" and key.endswith(" nintendo switch 2 edition"):
+                    base = key.removesuffix(" nintendo switch 2 edition")
+                    if base:
+                        names.setdefault(f"ns2:{base}", set()).add(gid)
     lines = ["# Eden Encore media index v10 (edition-scoped cases, scenes, square tile)\n"]
     for key, matching in sorted(names.items()):
         if len(matching) != 1:
@@ -253,13 +258,14 @@ def self_test():
                                          ("us", "0" * 36 + ".jpg")])
     assert normalize("EA SPORTS FC 27!") == "ea sports fc 27"
     edition_xml = """<LaunchBox>
-        <Game><DatabaseID>392130</DatabaseID><Platform>Nintendo Switch</Platform><Name>Pokemon Legends: Z-A</Name></Game>
-        <Game><DatabaseID>424055</DatabaseID><Platform>Nintendo Switch 2</Platform><Name>Pokemon Legends: Z-A: Nintendo Switch 2 Edition</Name></Game>
+        <Game><DatabaseID>392130</DatabaseID><Platform>Nintendo Switch</Platform><Name>Pokémon Legends: Z-A</Name></Game>
+        <Game><DatabaseID>424055</DatabaseID><Platform>Nintendo Switch 2</Platform><Name>Pokémon Legends: Z-A: Nintendo Switch 2 Edition</Name></Game>
         <GameImage><DatabaseID>392130</DatabaseID><Type>Box - Back</Type><Region>Europe</Region><FileName>aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg</FileName></GameImage>
         <GameImage><DatabaseID>424055</DatabaseID><Type>Box - Front</Type><Region>Germany</Region><FileName>bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.jpg</FileName></GameImage>
     </LaunchBox>"""
     edition = parse(io.BytesIO(edition_xml.encode()))
     assert "ns1:pokemon legends z a\t" in edition, edition
+    assert "ns1:pok mon legends z a\t" in edition, edition
     assert "ns2:pokemon legends z a\t" in edition, edition
     assert "ns2:pokemon legends z a nintendo switch 2 edition\t" in edition, edition
     assert "eu:aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.jpg" in edition

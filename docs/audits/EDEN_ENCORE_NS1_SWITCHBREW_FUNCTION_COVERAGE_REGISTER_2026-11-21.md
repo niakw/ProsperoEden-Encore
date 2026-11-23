@@ -2191,3 +2191,12 @@ Sur le vendor/gitlink `8c6c57ecded4a650ba575f8e937543a363a3d680`, la classe `MIG
 **Compteur courant : 1 598 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 229 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 2 059** : 1 605 NULL + 76 STUB + 140 PARTIEL + 229 ABI-DIFF + 9 AMBIGU.
+
+
+## AOC — événement de changement d'inventaire raccordé (23/11/2026)
+
+Vendor `ee971276a3254c0eb003f1e6f34cd10988874f1b` → gitlink moteur `df976b8722f7de250f7207b71183de559053e809`. `GetAddOnContentListChangedEvent` expose le `KEvent` réel existant ; `NotifyMountAddOnContent` et `NotifyUnmountAddOnContent` recalculent désormais la liste AOC depuis les providers actifs puis signalent l'événement. Le cmd8 passe **STUB → IMPL-SRC**. Les quatre stubs `IPurchaseEventManager` restent ouverts : aucune file d'achat eShop n'est inventée.
+
+**Compteur courant : 1 599 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 229 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 058** : 1 605 NULL + 75 STUB + 140 PARTIEL + 229 ABI-DIFF + 9 AMBIGU.

@@ -2754,11 +2754,23 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         }
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
+    const bool nup = game.format == "NUP" || IsNupSelection(game.file);
+    if (nup && game.cover.empty()) {
+        // NS2 NUP's real Square outranks any cached NS1 Nlib app icon.
+        const auto* known = Eden::Ns2Catalog::Find(game.title_id);
+        const std::string canonical = known ? std::string(known->name) : scanned_name;
+        if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
+                                language_choice, cancel, true)) {
+            game.cover = CachedGamesDbSquare(game.title_id);
+            game.artwork_changed |= !game.cover.empty();
+        }
+    }
+    if (cancel && cancel->load(std::memory_order_acquire)) return game;
     NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     game.artwork_changed |= enrichment.artwork_changed;
-    if (!enrichment.icon.empty() && game.cover.empty()) {
+    if (!enrichment.icon.empty() && game.cover.empty() && !nup) {
         game.cover = std::move(enrichment.icon);
-    } else if (game.cover.empty()) {
+    } else if (game.cover.empty() && !nup) {
         if (UseNs2CaseIndex(game)) {
             const auto* known = Eden::Ns2Catalog::Find(game.title_id);
             const std::string canonical = known ? std::string(known->name) : scanned_name;

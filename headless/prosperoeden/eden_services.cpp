@@ -2748,6 +2748,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         (cancel && cancel->load(std::memory_order_acquire))) return game;
     const int language_choice = Eden::LoadPreferences().language;
     const std::string scanned_name = game.name;
+    const bool second_generation = UseNs2CaseIndex(game);
     // Library detail-only work is intentionally deferred until this title is
     // selected. None of these package/add-on probes delays the initial grid.
     const std::string selected_path = Eden::AssetsPath("roms/" + game.file);
@@ -2771,16 +2772,16 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     } else {
         game.case_artwork_changed = EnsureRetailCase(
             game.title_id, scanned_name, CleanTitle(game.file),
-            language_choice, cancel, UseNs2CaseIndex(game));
+            language_choice, cancel, second_generation);
     }
     // A completed local migration or atomic replacement needs cache
     // invalidation even if selection changed before media enrichment ended.
     if (game.case_artwork_changed || !(cancel && cancel->load(std::memory_order_acquire))) {
-        const auto cached_case = box_art(game.title_id);
+        const auto cached_case = box_art(game.title_id, second_generation);
         game.box_front = cached_case.front;
         game.box_back = cached_case.back;
         if (game.case_artwork_changed & 0xF8u) {
-            AppendCaseScenes(game.screenshots, game.title_id);
+            AppendCaseScenes(game.screenshots, game.title_id, second_generation);
             game.artwork_changed = true;
         }
     }
@@ -2792,7 +2793,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         const std::string canonical = known ? std::string(known->name) : scanned_name;
         if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
                                 language_choice, cancel, true)) {
-            game.cover = CachedGamesDbSquare(game.title_id);
+            game.cover = CachedGamesDbSquare(game.title_id, true);
             game.artwork_changed |= !game.cover.empty();
         }
     }
@@ -2807,7 +2808,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
             const std::string canonical = known ? std::string(known->name) : scanned_name;
             if (EnsureGamesDbSquare(game.title_id, canonical, scanned_name,
                                     language_choice, cancel, true)) {
-                game.cover = CachedGamesDbSquare(game.title_id);
+                game.cover = CachedGamesDbSquare(game.title_id, second_generation);
                 game.artwork_changed |= !game.cover.empty();
             }
         }
@@ -2820,7 +2821,8 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     const bool nlib_screenshots = !enrichment.screenshots.empty();
     if (nlib_banner) game.hero = std::move(enrichment.hero);
     else if (nlib_screenshots) game.hero = enrichment.screenshots.front();
-    else if (game.hero.empty()) game.hero = CachedGamesDbHero(game.title_id);
+    else if (game.hero.empty())
+        game.hero = CachedGamesDbHero(game.title_id, second_generation);
     if (nlib_screenshots) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
     if (!enrichment.name.empty()) game.name = std::move(enrichment.name);
@@ -2846,18 +2848,18 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         scanned_name != game.name) {
         game.case_artwork_changed |= EnsureRetailCase(
             game.title_id, game.name, scanned_name,
-            language_choice, cancel, UseNs2CaseIndex(game));
+            language_choice, cancel, second_generation);
     }
     if (!(cancel && cancel->load(std::memory_order_acquire))) {
-        const auto box = box_art(game.title_id);
+        const auto box = box_art(game.title_id, second_generation);
         if (!box.front.empty()) game.box_front = box.front;
         if (!box.back.empty()) game.box_back = box.back;
         // A late local/NX2 retail-cover fetch may complete after the first
         // Nlib/cache snapshot. Always expose its real front to the game tile.
         // Never promote a portrait retail front into the square tile slot.
-        AppendCaseScenes(game.screenshots, game.title_id);
+        AppendCaseScenes(game.screenshots, game.title_id, second_generation);
         if (!nlib_banner && !nlib_screenshots && game.hero.empty())
-            game.hero = CachedGamesDbHero(game.title_id);
+            game.hero = CachedGamesDbHero(game.title_id, second_generation);
         if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement
     }

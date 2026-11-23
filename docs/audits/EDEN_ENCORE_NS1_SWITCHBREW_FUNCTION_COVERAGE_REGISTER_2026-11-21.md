@@ -684,6 +684,18 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 692** : 2 135 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot FSP — accessibilité SD — 23/11/2026
+
+**Vendor `be00691dcb6abbf888cc00a4a5dcbf10b377fac5`** (arbre `982c71474dbabaa0b4829af66c5c6c59847004ec`).
+
+- `SetSdCardAccessibility` (630) : **NULL → IMPL-SRC**. LibHac/SwitchForge confirme que cette commande mémorise une politique booléenne dans le service ; elle ne monte ni ne démonte physiquement le média.
+- `IsSdCardAccessible` (631), déjà actif, renvoie désormais **politique autorisée ET SDMC réellement ouvrable**. L'état est initialisé à accessible, comme le comportement normal du proxy lorsqu'aucune restriction n'a été appliquée.
+- Aucun formatage ou mutation du contenu SD n'est effectué.
+
+**Compteur historique : 1 457 IMPL-SRC / 110 PARTIEL / 149 STUB / 118 NOOP / 2 134 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 6 HORS-VERSION / 0 ABSENT / 285 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 691** : 2 134 NULL + 149 STUB + 110 PARTIEL + 285 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

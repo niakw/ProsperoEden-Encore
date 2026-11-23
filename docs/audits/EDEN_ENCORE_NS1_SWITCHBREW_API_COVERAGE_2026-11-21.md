@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 456 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 376 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 456 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 457 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés**, dont **1 377 IPC et 80 SVC**. Ce total intègre les lots runtime classés ci-dessous jusqu'au vendor `c8688e83`. **Ces 1 457 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 376 | 80 | **1 456** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 377 | 80 | **1 457** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 118 | 0 | **118** |
-| **NULL — Handler NULL** | 2 135 | 0 | **2 135** |
+| **NULL — Handler NULL** | 2 134 | 0 | **2 134** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1456
+    "Implémentation source retrouvée" : 1457
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 118
-    "Handler NULL" : 2135
+    "Handler NULL" : 2134
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -4053,7 +4053,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | fsp-srv | `616` | `GetSaveDataCommitId` | 6.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `617` | `UnregisterExternalKey` | 7.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `620` | `SetSdCardEncryptionSeed` | 2.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
-| fsp-srv | `630` | `SetSdCardAccessibility` | 4.0.0+ | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
+| fsp-srv | `630` | `SetSdCardAccessibility` | 4.0.0+ | **IMPL-SRC** ([active FSP source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/be00691dcb6abbf888cc00a4a5dcbf10b377fac5/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; politique d'accessibilité persistée dans le proxy, getter 631 combine politique et disponibilité SDMC) | 2026-11-23 |
 | fsp-srv | `631` | `IsSdCardAccessible` | 4.0.0+ | **IMPL-SRC** (`FileSystemController::OpenSDMC` + présence du VirtualDir réel, vendor `a460d757`) | 2026-11-22 |
 | fsp-srv | `640` | `IsSignedSystemPartitionOnSdCardValid` | 4.0.0-7.0.1 | **NULL** ([source C++][ns1-src-008]) | 2026-11-22 |
 | fsp-srv | `700` | `OpenAccessFailureDetectionEventNotifier` | 5.0.0+ | **NULL** ([table et corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/filesystem/fsp/fsp_srv.cpp) ; nom source `OpenAccessFailureResolver` (même ID, ABI à revalider) ; source NS1, pas validée PS5) | 2026-11-22 |

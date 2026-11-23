@@ -2490,3 +2490,12 @@ Vendor `486fd09dcd10c3c59c85bc67024b09d19e6f5d19` (inclut `7428d50144fe527fe1362
 **Compteur courant : 1 728 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 300 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 692** : 1 300 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## CAPS:A — fin des wrappers déterministes (23/11/2026)
+
+Vendor `bdab8fc1a8d31305f63412305d577011d07cf3fe` → gitlink moteur `6c99a252ab483565883746b0c163e362698e42e9`. **2 NULL → IMPL-SRC** : `LoadAlbumScreenShotImageEx0` et `GetRequiredStorageSpaceSizeToCopyAll`. Les ABI sont recroisées libnx/dump NS1 23.0.1 ; Usage/Cache restent ouverts plutôt que d'inventer les champs inconnus. Pas de validation console revendiquée.
+
+**Compteur courant : 1 730 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 298 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 690** : 1 298 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

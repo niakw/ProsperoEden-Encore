@@ -20,8 +20,11 @@ public:
     [[nodiscard]] std::size_t VirtualBytes() const noexcept;
     [[nodiscard]] std::size_t UsedBytes() const noexcept;
     [[nodiscard]] bool Commit(std::size_t offset, std::size_t bytes) noexcept;
-    [[nodiscard]] bool PrepareClear(std::size_t offset, std::size_t bytes,
-                                    std::uint32_t fill, bool* already_zero) noexcept;
+    // Clear is owned by the sparse runtime: zero clears touch only OWN
+    // chunks and leave shared ZERO chunks unallocated; nonzero clears promote
+    // the full range first and then write it.
+    [[nodiscard]] bool Clear(std::size_t offset, std::size_t bytes,
+                             std::uint32_t fill) noexcept;
     [[nodiscard]] bool EnsureReadable(std::size_t offset, std::size_t bytes) noexcept;
     [[nodiscard]] bool HandleWriteFault(void* address) noexcept;
 

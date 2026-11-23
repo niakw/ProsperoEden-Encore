@@ -223,7 +223,9 @@ assert "EdenNs2EnsureGuestBackingReadable" in physical
 host=read("src/host_memory.cpp")
 assert host.index("if (requested == Ns2Dram)")<host.index(
     "AllocateMemoryPages(requested)")
-assert "impl->sparse->PrepareClear(offset, length, fill, &already_zero)" in host
-assert "if (fill == 0 && already_zero) return;" in host
+assert "impl->sparse->Clear(offset, length, fill)" in host
+assert "return; // sparse owner performed the exact clear" in host
+assert "if (state == State::Unmapped) continue;" in physical
+assert "std::memset(base + begin, 0, end - begin);" in physical
 print("R457_NS2_KERNEL_PTE_GPU_RESIDENCY_CHAIN_SOURCE_PASS"
       " native_runtime_unqualified=1 gpu_fences_unqualified=1")

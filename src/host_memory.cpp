@@ -653,12 +653,9 @@ void HostMemory::ClearBackingRegion(size_t offset, size_t length, u32 fill) {
     if (length) {
 #if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
         if (impl->sparse) {
-            bool already_zero = false;
-            if (!impl->sparse->PrepareClear(offset, length, fill, &already_zero))
+            if (!impl->sparse->Clear(offset, length, fill))
                 throw std::bad_alloc{}; // fail closed, not a virtual-hole write
-            // Untouched chunks already read as zero through the shared
-            // read-only zero block. Do not allocate or rewrite them.
-            if (fill == 0 && already_zero) return;
+            return; // sparse owner performed the exact clear
         }
 #endif
         std::memset(backing_base + offset, fill, length);

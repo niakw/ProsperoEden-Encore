@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cstdio>
 #include <csignal>
+#include <cstring>
 #include <cstdlib>
 #include <cstdint>
 #include <limits>
@@ -232,32 +233,34 @@ struct Runtime::Impl {
         return CommitLocked(offset, length);
     }
 
-    bool PrepareClear(std::size_t offset, std::size_t length,
-                      std::uint32_t fill, bool* already_zero) {
-        if (!already_zero) return false;
-        *already_zero = false;
+    bool Clear(std::size_t offset, std::size_t length, std::uint32_t fill) {
         GateGuard lock{*this};
         if (!lock || !ValidateLocked(offset, length)) return false;
-        if (!length) {
-            *already_zero = fill == 0;
-            return true;
-        }
+        if (!length) return true;
+
         if (fill == 0) {
+            // ZERO chunks already contain the requested bytes and must stay
+            // shared. Clear only intersections with private OWN chunks.
             const auto first = offset / kGranule;
             const auto last = (offset + length - 1) / kGranule + 1;
-            bool all_zero = true;
             for (auto index = first; index < last; ++index) {
-                if (plan.At(index).state != State::Unmapped) {
-                    all_zero = false;
-                    break;
-                }
+                const auto state = plan.At(index).state;
+                if (state == State::Unmapped) continue;
+                if (state != State::Resident) return false;
+                const auto chunk_begin = index * kGranule;
+                const auto begin = (std::max)(offset, chunk_begin);
+                const auto end = (std::min)(offset + length, chunk_begin + kGranule);
+                std::memset(base + begin, 0, end - begin);
             }
-            if (all_zero) {
-                *already_zero = true;
-                return true;
-            }
+            return true;
         }
-        return CommitLocked(offset, length);
+
+        // A nonzero clear cannot be represented by the shared ZERO block.
+        // Admit every touched chunk before the first byte is modified so OOM
+        // never leaves a partially filled guest range.
+        if (!CommitLocked(offset, length)) return false;
+        std::memset(base + offset, static_cast<int>(fill), length);
+        return true;
     }
 
     bool EnsureReadable(std::size_t offset, std::size_t length) noexcept {
@@ -335,11 +338,11 @@ bool Runtime::Commit(std::size_t offset, std::size_t bytes) noexcept {
         std::abort();
     }
 }
-bool Runtime::PrepareClear(std::size_t offset, std::size_t bytes,
-                           std::uint32_t fill, bool* already_zero) noexcept {
+bool Runtime::Clear(std::size_t offset, std::size_t bytes,
+                    std::uint32_t fill) noexcept {
     if (!impl_) return false;
     try {
-        return impl_->PrepareClear(offset, bytes, fill, already_zero);
+        return impl_->Clear(offset, bytes, fill);
     } catch (...) {
         std::abort();
     }

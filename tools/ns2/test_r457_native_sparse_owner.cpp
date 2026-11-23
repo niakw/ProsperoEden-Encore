@@ -77,15 +77,20 @@ int main() {
         assert(guest.UsedBytes()==kGranule);
         assert(successful_commits==2);
 
-        bool already_zero=false;
-        assert(guest.PrepareClear(2*kGranule+17,4096,0,&already_zero));
-        assert(already_zero && successful_commits==2);
+        assert(guest.Clear(2*kGranule+17,4096,0));
+        assert(successful_commits==2 && guest.UsedBytes()==kGranule);
         assert(base[2*kGranule+17]==0);
 
-        // Nonzero fill needs writable backing before the caller writes.
-        assert(guest.PrepareClear(2*kGranule+17,4096,0x45,&already_zero));
-        assert(!already_zero && guest.UsedBytes()==2*kGranule);
-        std::memset(base+2*kGranule+17,0x45,4096);
+        // Mixed ZERO/OWN zero clear must not promote the untouched neighbor.
+        base[kGranule-16]=0x52; // still the first OWN chunk
+        const auto before_mixed=successful_commits;
+        assert(guest.Clear(kGranule-32,64,0));
+        assert(base[kGranule-16]==0);
+        assert(successful_commits==before_mixed && guest.UsedBytes()==kGranule);
+
+        // Nonzero fill needs writable backing and is performed by the owner.
+        assert(guest.Clear(2*kGranule+17,4096,0x45));
+        assert(guest.UsedBytes()==2*kGranule);
         assert(base[2*kGranule+17]==0x45);
 
         // Failed two-chunk admission restores every new chunk to ZERO.

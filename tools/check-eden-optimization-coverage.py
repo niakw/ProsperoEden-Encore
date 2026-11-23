@@ -3135,6 +3135,13 @@ current_sparse_source = (ROOT/sparse_path).read_text()
 # Replay the exact post-snapshot zero-fill elision delta on the audit copy:
 # a brand-new physical 2 MiB mapping is already zero from CommitMemoryRange.
 # Never alter the historical F07 research snapshot or the shipping C++.
+sparse_clear_successor = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        if (impl->sparse) {
+            if (!impl->sparse->Clear(offset, length, fill))
+                throw std::bad_alloc{}; // fail closed, not a virtual-hole write
+            return; // sparse owner performed the exact clear
+        }
+#endif"""
 demand_zero_successor = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
         if (impl->sparse) {
             bool already_zero = false;
@@ -3163,7 +3170,14 @@ zero_elision_predecessor = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE
 current_raw = current_sparse_source.encode("utf-8")
 assert hashlib.sha1(
     b"blob " + str(len(current_raw)).encode() + bytes([0]) +
-    current_raw).hexdigest() == "8278794d202f030a1af794d8b7d6856dd8405455"
+    current_raw).hexdigest() == "086fdbeaeffc5eca7beeff509804e6cc4c2333cf"
+assert current_sparse_source.count(sparse_clear_successor) == 1
+current_sparse_source = current_sparse_source.replace(
+    sparse_clear_successor, demand_zero_successor, 1)
+sparse_clear_predecessor_raw = current_sparse_source.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(sparse_clear_predecessor_raw)).encode() + bytes([0]) +
+    sparse_clear_predecessor_raw).hexdigest() == "8278794d202f030a1af794d8b7d6856dd8405455"
 assert current_sparse_source.count(demand_zero_successor) == 1
 current_sparse_source = current_sparse_source.replace(
     demand_zero_successor, zero_elision_successor, 1)

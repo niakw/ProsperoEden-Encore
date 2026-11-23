@@ -139,11 +139,12 @@ public:
         if (!program_ && !Build()) return false;
         if (!attempted_) {
             attempted_ = true;
-            const auto artwork = LaunchHandoff::Peek();
-            if (artwork && LaunchHandoff::Valid(*artwork)) {
+            const auto upload = [&](const std::shared_ptr<const LaunchHandoff::Frame>& artwork,
+                                    GLuint* out) {
+                if (!artwork || !LaunchHandoff::Valid(*artwork)) return;
                 glActiveTexture(GL_TEXTURE0);
-                glGenTextures(1, &texture_);
-                glBindTexture(GL_TEXTURE_2D, texture_);
+                glGenTextures(1, out);
+                glBindTexture(GL_TEXTURE_2D, *out);
                 glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
                 glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
@@ -155,13 +156,20 @@ public:
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                if (texture_ && glGetError() == GL_NO_ERROR) {
-                    width_ = artwork->width;
-                    height_ = artwork->height;
-                } else {
-                    glDeleteTextures(1, &texture_);
-                    texture_ = 0;
+                if (!*out || glGetError() != GL_NO_ERROR) {
+                    glDeleteTextures(1, out);
+                    *out = 0;
                 }
+            };
+            const auto artwork = LaunchHandoff::Peek();
+            upload(artwork, &texture_);
+            if (texture_ && artwork) {
+                width_ = artwork->width;
+                height_ = artwork->height;
+                const auto alternate = LaunchHandoff::PeekAlternate();
+                if (alternate && alternate->width == artwork->width &&
+                    alternate->height == artwork->height)
+                    upload(alternate, &alternate_texture_);
             }
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

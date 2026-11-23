@@ -89,12 +89,14 @@ assert "NlibTitleMutex(game.title_id), std::try_to_lock" in native_icon
 assert '"/icon/512"' in native_icon and "CachedNlibIcon(game.title_id)" in native_icon
 assert "EnsureRetailCase" not in native_icon and "EnsureNlibEnrichment" not in native_icon
 assert "const std::string& art = recent.tile_icon.empty() ? recent.cover : recent.tile_icon;" in home
-assert 'CachedGamesDbSquare(recent.title_id)' in svc
-assert 'CachedGamesDbSquare(title_id)' in svc
+assert 'CachedGamesDbSquare(recent.title_id, second_generation)' in svc
+assert 'CachedGamesDbSquare(title_id, true)' in svc
+assert 'CachedGamesDbSquare(title_id, second_generation)' in svc
 assert 'EnsureGamesDbSquare(game.title_id' in native_icon
 full_media = svc.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,\n", 1)[1]
 assert 'if (!enrichment.icon.empty() && game.cover.empty() && !nup)' in full_media
-assert 'CachedGamesDbSquare(game.title_id)' in native_icon
+assert 'CachedGamesDbSquare(game.title_id, true)' in native_icon
+assert 'CachedGamesDbSquare(game.title_id, second_generation)' in native_icon
 assert 'if (nup) return game;' in native_icon
 assert 'else if (game.cover.empty() && !nup) {' in full_media
 # NLIB screenshot must outrank GamesDB fanart when the banner is missing.
@@ -103,7 +105,7 @@ assert '!home.last_screenshot.empty() ? home.last_screenshot :' in native_home
 assert 'recent.hero = !nlib.hero.empty() ? nlib.hero :' in native_home
 assert '!recent.screenshot.empty() ? recent.screenshot :' in native_home
 assert 'else if (nlib_screenshots) game.hero = enrichment.screenshots.front();' in full_media
-assert 'else if (game.hero.empty()) game.hero = CachedGamesDbHero(game.title_id);' in full_media
+assert 'game.hero = CachedGamesDbHero(game.title_id, second_generation);' in full_media
 assert 'recent.tile_icon = square;' in svc
 assert 'recent.cover = box_art(recent.title_id).front;' not in svc
 assert 'home.last_cover = box_art(title_id).front;' not in svc

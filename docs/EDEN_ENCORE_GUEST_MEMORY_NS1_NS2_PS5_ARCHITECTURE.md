@@ -6,6 +6,8 @@
 **Version console des traces étudiées :** moteur `25f12c020eb69ea9b7b29aac35dadcfe8b38f918`, vendor `716e069f212b89b6fd13af56b0677343cf41ba07`, binaire construit le 23/11/2026 à 00:24:33. **Ce dernier binaire ne contient pas les commits ci-dessus.**
 **Statut :** architecture cible, diagnostic fondé sur logs et code sélectionné, correctifs partiels explicitement distingués. **Ni gestion demand-zero complète, ni boot NS2, ni réparation du crash de fermeture ne sont certifiés sur console.**
 
+**P0 runtime complémentaire (23/11) :** vendor [`ced1b9cd`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ced1b9cdd6f0fa4e0ca7949b404f450aae0055df) ajoute une admission préalable des blocs pour les allocations optimisées dans le `KMemoryManager` NS2 compilé. Si un `CommitKernelDirectGuestRange` refuse un engagement physique, le groupe de pages invitées non publié est restitué avant tout changement de bitmap. Le suivi `any_new` est agrégé entre segments. **Ce correctif limite un crash natif sur OOM ; il ne réduit pas à lui seul la résidence physique ni n'implémente les états `ZERO/OWN`. Aucun test console récent ne le valide.**
+
 ## 1. Décision et priorités
 
 La mémoire physique PS5 est une ressource **commune** à l'hôte, au processus invité, au JIT, aux buffers/images RADV, aux stacks, aux caches et aux services. Une grande adresse invitée mappée n'est pas une grande allocation physique. La solution pérenne doit partager des **contrats d'ownership** entre NS1 et NS2, sans leur imposer des politiques identiques.

@@ -792,9 +792,9 @@ void Launcher::finish_home_media()
             if (!enriched.language.empty()) game.language = enriched.language;
             if (!enriched.language_note.empty()) game.language_note = enriched.language_note;
             sync_home_game(game);
-            // Home's Nlib result must refresh every installed copy of this
-            // TitleID, not just the first item encountered in a rescan.
-            // A zero or changed identity never inherits its metadata.
+            // Only the exact installed input receives this result. A second
+            // NS2 NUP or NS1 package with the same TitleID must retain its
+            // own cover and hero until its media worker completes.
         }
     }
     catch (const std::exception& error)
@@ -891,9 +891,9 @@ void Launcher::finish_selected_media()
             if (!enriched.language.empty()) game.language = enriched.language;
             if (!enriched.language_note.empty()) game.language_note = enriched.language_note;
             if (!enriched.size.empty() && enriched.size != "—") game.size = enriched.size;
-            // A single Nlib lookup belongs to a TitleID and must update
-            // EVERY installed copy; moving into the first one silently
-            // starved later entries with that same identity.
+            // The file and TitleID jointly identify this media request.
+            // Never publish artwork from one installed edition into another
+            // package merely because their numeric TitleID is identical.
             sync_home_game(game);
         }
     }

@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 428 | 0 | **1 428** |
-| **D — Rejet explicite / historique** | 210 | 33 | **243** |
+| **NULL — Handler NULL** | 1 424 | 0 | **1 424** |
+| **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -1630,7 +1630,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `101` | `ReserveResourceForMovieOperation` | 5.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `102` | `UnreserveResourceForMovieOperation` | 5.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `110` | `GetMainAppletAvailableUsers` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `120` | `GetLaunchStorageInfoForDebug` | 9.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `120` | `GetLaunchStorageInfoForDebug` | 9.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `130` | `GetGpuErrorDetectedSystemEvent` | 9.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; retourne le vrai KReadableEvent de l'applet) | 2026-11-23 |
 | appletAE | `20` | `GetOverlayFunctions` | — | **IMPL-SRC** ([source C++][ns1-src-040]) | 2026-11-22 |
 | appletAE | `0` | `BeginToWatchShortHomeButtonMessage` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
@@ -1658,7 +1658,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `21` | `GetDesiredLanguage` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `22` | `SetTerminateResult` | — | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `23` | `GetDisplayVersion` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `24` | `GetLaunchStorageInfoForDebug` | 2.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `24` | `GetLaunchStorageInfoForDebug` | 2.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `25` | `ExtendSaveData` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `26` | `GetSaveDataSize` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `27` | `CreateCacheStorage` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1672,7 +1672,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `65` | `IsGamePlayRecordingSupported` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; lit l'état de capacité `game_play_recording_supported` de l'applet) | 2026-11-23 |
 | appletAE | `66` | `InitializeGamePlayRecording` | 3.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `67` | `SetGamePlayRecordingState` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit l'état `game_play_recording_state` sous verrou) | 2026-11-23 |
-| appletAE | `68` | `RequestFlushGamePlayingMovieForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `68` | `RequestFlushGamePlayingMovieForDebug` | 4.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `70` | `RequestToShutdown` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `71` | `RequestToReboot` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `80` | `ExitAndRequestToShowThanksMessage` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1693,7 +1693,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `151` | `TryPopFromNotificationStorageChannel` | 9.0.0+ | **IMPL-SRC** (consomme la file Notification réelle sous verrou et retourne un `IStorage`; owner CMake maintenu `encore-active/eden-core/.../application_functions.cpp` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `160` | `GetHealthWarningDisappearedSystemEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `170` | `SetHdcpAuthenticationActivated` | 9.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `500` | `StartContinuousRecordingFlushForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `500` | `StartContinuousRecordingFlushForDebug` | 5.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `1000` | `CreateMovieMaker` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `1001` | `PrepareForJit` | 5.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; enregistre `jit_service_launched` sous verrou) | 2026-11-23 |
 | appletAE | `0` | `GetGrcMovieMaker` | — | **INACCESSIBLE** (source `encore-active/eden-backports/src/core/hle/service/grc/grc.cpp` ; aucun getter AM actif et GRC::CreateMovieMaker est nullptr ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
@@ -6397,3 +6397,10 @@ Vendor `4834515326ac41e679413970783baaf304fb5705` → gitlink moteur `e271ed8ef7
 Vendor `d1f92eee4c7557bd281ec481de521c178f0c6645` → gitlink moteur `e0990b2f7358c9dc622c1ca05d31286b13b5c03b` : `PopFloatingApplicationForDevelopment`, `GetDebugStorageChannel` et `BeginToObserveHidInputForDevelop` sont explicitement rejetées sur le runtime release. **3 NULL → D**.
 
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 428 NULL / 243 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 843.**
+
+
+### AppletAE — derniers chemins capture/launch debug fail-closed (23/11/2026)
+
+Vendor `fd389efbe1b51743aa630243fe00074f873dfb8a` → gitlink moteur `efc5f412feb680dc9ac462c3cd8dbd771a61dfdf`. Les deux variantes `GetLaunchStorageInfoForDebug`, `RequestFlushGamePlayingMovieForDebug` et `StartContinuousRecordingFlushForDebug` sont désormais rejetées explicitement sur le runtime release. **4 NULL → D**.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 424 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 839.**

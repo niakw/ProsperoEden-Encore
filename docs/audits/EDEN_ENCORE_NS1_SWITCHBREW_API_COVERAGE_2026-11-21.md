@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 477 | 0 | **1 477** |
-| **D — Rejet explicite / historique** | 164 | 33 | **197** |
+| **NULL — Handler NULL** | 1 470 | 0 | **1 470** |
+| **D — Rejet explicite / historique** | 171 | 33 | **204** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -2152,7 +2152,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `96` | `AcquireApplicationLaunchInfo` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `97` | `GetMainApplicationProgramIndexByApplicationLaunchInfo` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `98` | `EnableApplicationAllThreadDumpOnCrash` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `99` | `LaunchDevMenu` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `99` | `LaunchDevMenu` | 8.0.0+ | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `100` | `ResetToFactorySettings` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `101` | `ResetToFactorySettingsWithoutUserSaveData` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `102` | `ResetToFactorySettingsForRefurbishment` | — | **NULL** ([source C++][ns1-src-108]) | 2026-11-22 |
@@ -2222,17 +2222,17 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `914` | `HideApplicationRecord` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `915` | `ShowApplicationRecord` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1000` | `RequestVerifyApplicationDeprecated` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1001` | `CorruptApplicationForDebug` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1001` | `CorruptApplicationForDebug` | — | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1002` | `RequestVerifyAddOnContentsRights` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1003` | `RequestVerifyApplication` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1004` | `CorruptContentForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1004` | `CorruptContentForDebug` | 5.0.0+ | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
  | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1200` | `NeedsUpdateVulnerability` | — |  **NOOP** (aucune base safe-system-version/vulnérabilité Nintendo émulée ; false explicite ; vendor `ad27e09c`)  | 2026-11-22 | 
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1300` | `IsAnyApplicationEntityInstalled` | — | **IMPL-SRC** (scan réel des Applications/Program installées, exclusion des sous-programmes, vendor `256b2abe`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1301` | `DeleteApplicationContentEntities` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1302` | `CleanupUnrecordedApplicationEntity` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1303` | `CleanupAddOnContentsWithNoRights` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1304` | `DeleteApplicationContentEntity` | 3.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1308` | `DeleteApplicationCompletelyForDebug` | 5.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1308` | `DeleteApplicationCompletelyForDebug` | 5.0.0+ | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1309` | `CleanupUnavailableAddOnContents` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1400` | `PrepareShutdown` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1500` | `FormatSdCard` | — | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -2293,7 +2293,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2181` | `GetResultOfExtendExpirationInRightsEnvironment` | 6.0.0+ | **ABI-DIFF** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp) ; ID 2181 du manager NS : catalogue GetResultOfExtendExpirationInRightsEnvironment vs source GetResultOfExtendRightsInRightsEnvironment, signature/firmware non équivalents prouvés ; audit statique, pas de validation PS5) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2182` | `SetActiveRightsContextUsingStateToRightsEnvironment` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2190` | `GetRightsEnvironmentHandleForApplication` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2199` | `GetRightsEnvironmentCountForDebug` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2199` | `GetRightsEnvironmentCountForDebug` | 6.0.0+ | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2200` | `GetGameCardApplicationCopyIdentifier` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2201` | `GetInstalledApplicationCopyIdentifier` | 6.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2250` | `RequestReportActiveELicence` | 6.0.0-6.2.0 | **HORS-VERSION** ([source C++][ns1-src-014]) | 2026-11-23 |
@@ -2304,8 +2304,8 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2400` | `GetPromotionInfo` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2401` | `CountPromotionInfo` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2402` | `ListPromotionInfo` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2403` | `ImportPromotionJsonForDebug` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2404` | `ClearPromotionInfoForDebug` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2403` | `ImportPromotionJsonForDebug` | 8.0.0+ | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2404` | `ClearPromotionInfoForDebug` | 8.0.0+ | **D** (surface debug/develop non supportée sur le runtime release Encore ; handler actif `RejectDebugOnlyCommand` renvoie explicitement `ResultUnknown` au lieu d'un `nullptr` ; vendor `1887ae94`, moteur `27235528`) | 2026-11-23 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2500` | `ConfirmAvailableTime` | 8.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2510` | `CreateApplicationResource` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `2511` | `GetApplicationResource` | 9.0.0+ | **NULL** ([source C++][ns1-src-014]) | 2026-11-22 |
@@ -6348,3 +6348,10 @@ Le propriétaire actif `IAppletCommonFunctions` raccorde déjà les cmd10/11 à 
 Vendor `4ab4481d7572d3dd7589837f65b7baee5519d80d`, gitlink moteur `d30f3aaab2e6ca2165161d88384346ad756ebc26` : cmd18 `SetRequiresCaptureButtonShortPressedMessage` écrit l'état applet existant et `WindowSystem` consulte désormais cet état avant d'envoyer `DetectShortPressingCaptureButton`. Ce n'est donc pas un setter dormant. **1 NULL → IMPL-SRC**. Pas encore validé sur PS5.
 
 **Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 477 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 892.**
+
+
+### NS — sept commandes debug fail-closed (23/11/2026)
+
+Vendor `1887ae94bffe3d1223d40c56248bfe6ad78405b6`, gitlink moteur `272355286b91fea56a407e258ac97acdd4a4e876` : `LaunchDevMenu`, les commandes de corruption/suppression debug, le compteur RightsEnvironment debug et les commandes promotion debug ne restent plus `nullptr`. Elles sont raccordées à un rejet explicite commun `ResultUnknown` sur le runtime release. **7 NULL → D** ; aucune opération destructive n'est simulée.
+
+**Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 470 NULL / 204 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 885.**

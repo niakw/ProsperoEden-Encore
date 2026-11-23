@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 388 | 80 | **1 468** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 390 | 80 | **1 470** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 107 | 3 | **110** |
 | **STUB — Stub / résultat simulé** | 149 | 0 | **149** |
 | **NOOP — No-op documenté** | 119 | 0 | **119** |
-| **NULL — Handler NULL** | 2 090 | 0 | **2 090** |
+| **NULL — Handler NULL** | 2 088 | 0 | **2 088** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 191 | 0 | **191** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -443,12 +443,12 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 ```mermaid
 pie showData
     title NS1 — 4 853 entrées distinctes
-    "Implémentation source retrouvée" : 1468
+    "Implémentation source retrouvée" : 1470
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 110
     "Stub / résultat simulé" : 149
     "No-op documenté" : 119
-    "Handler NULL" : 2090
+    "Handler NULL" : 2088
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 191
     "Service/interface non exposé sous cette forme" : 306
@@ -5532,8 +5532,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | set:sys | `16` | `SetUserSystemClockContext` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `17` | `GetAccountSettings` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `18` | `SetAccountSettings` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `19` | `GetAudioVolume` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
-| set:sys | `20` | `SetAudioVolume` | — | **NULL** ([source C++][ns1-src-123]) | 2026-11-22 |
+| set:sys | `19` | `GetAudioVolume` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/73fea5e303c074b8c8d16d096f4245f8cfa5c15c/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; cible 0/1/2 → blocs persistants type0/type1/type2) | 2026-11-23 |
+| set:sys | `20` | `SetAudioVolume` | — | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/73fea5e303c074b8c8d16d096f4245f8cfa5c15c/sources/eden/src/core/hle/service/set/system_settings_server.cpp) ; cible 0/1/2 → blocs persistants type0/type1/type2) | 2026-11-23 |
 | set:sys | `21` | `GetEulaVersions` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `22` | `SetEulaVersions` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |
 | set:sys | `23` | `GetColorSetId` | — | **IMPL-SRC** ([source C++][ns1-src-123]) | 2026-11-22 |

@@ -770,6 +770,19 @@ Vendor `407b42a985c1d8558a516d41d5c03a216f4da433` (arbre `d49fdafca026f9a973a84a
 
 **Pool historique restant à examiner = 2 644** : 2 090 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
 
+## Lot `set:sys` AudioVolume — 23/11/2026
+
+**Vendor `73fea5e303c074b8c8d16d096f4245f8cfa5c15c`** (arbre `e016ea5e3aa9d92d3477a258487745658420c425`) sur la branche secondaire NS1.
+
+- `GetAudioVolume` (19) et `SetAudioVolume` (20) : **2 NULL → IMPL-SRC**.
+- Libnx définit `SetSysAudioDevice` : Console=0, Headphone=1, Tv=2, et `SetSysAudioVolume` occupe 8 octets. Le format Eden contient exactement trois blocs persistants `audio_volume_type0/type1/type2`, chacun de 8 octets.
+- Les cibles 0/1/2 sont mappées directement aux trois blocs ; toute autre valeur est rejetée. Le setter marque la sauvegarde.
+- Aucun volume hôte PS5 n'est modifié : il s'agit du contrat de settings invité, pas du mixeur SDL/PS5.
+
+**Compteur historique : 1 470 IMPL-SRC / 110 PARTIEL / 149 STUB / 119 NOOP / 2 088 NULL / 84 D / 191 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 41 HORS-VERSION / 0 ABSENT / 282 ABI-DIFF / 12 AMBIGU / 1 E = 4 853.**
+
+**Pool historique restant à examiner = 2 642** : 2 088 NULL + 149 STUB + 110 PARTIEL + 282 ABI-DIFF + 12 AMBIGU + 1 SVC.
+
 ---
 
 ## 1. Références et règle de vérité

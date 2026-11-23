@@ -2181,7 +2181,8 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         const bool second_generation = IsNs2MediaIdentity(title_id, home.last_file);
         const GameLanguage language = LanguageFor(last_path, title_id, selected_language);
         home.last_title_id = title_id;
-        const NlibEnrichment nlib = CachedNlibEnrichment(title_id, selected_language);
+        const NlibEnrichment nlib = second_generation
+            ? NlibEnrichment{} : CachedNlibEnrichment(title_id, selected_language);
         if (home.last_cover.empty()) {
             // Home's verified extracted Control icon wins. NUP is NS2:
             // do not replace its square with an unrelated NX/NS1 cache.
@@ -2290,7 +2291,9 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
             if (recent.title_id != 0) {
                 const bool second_generation =
                     IsNs2MediaIdentity(recent.title_id, recent.file);
-                const NlibEnrichment nlib = CachedNlibEnrichment(recent.title_id, selected_language);
+                const NlibEnrichment nlib = second_generation
+                    ? NlibEnrichment{} :
+                      CachedNlibEnrichment(recent.title_id, selected_language);
                 if (!nlib.icon.empty() && recent.tile_icon.empty() && !IsNupSelection(name)) {
                     recent.cover = nlib.icon;
                     recent.tile_icon = nlib.icon;
@@ -2616,7 +2619,9 @@ std::vector<pe::ui::Game> EdenServices::games(const std::atomic<bool>* cancel) {
                 }
                 nlohmann::json metadata;
                 NlibEnrichment list_metadata;
-                if (LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
+                const bool second_generation = UseNs2CaseIndex(game);
+                if (!second_generation &&
+                    LoadNlibMetadata(game.title_id, NlibLanguageCode(language_choice), &metadata))
                     ApplyNlibMetadata(metadata, &list_metadata);
                 if (!list_metadata.name.empty()) game.name = std::move(list_metadata.name);
                 if (!list_metadata.intro.empty()) game.intro = std::move(list_metadata.intro);
@@ -2662,12 +2667,12 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     // worker, then remained in the retry queue for up to two minutes.
     const bool nup = game.format == "NUP" || IsNupSelection(game.file);
     const bool second_generation = UseNs2CaseIndex(game);
-    if (nup) {
+    if (second_generation) {
         game.cover = CachedGamesDbSquare(game.title_id, true);
     } else {
         game.cover = CachedNlibIcon(game.title_id);
         if (game.cover.empty())
-            game.cover = CachedGamesDbSquare(game.title_id, second_generation);
+            game.cover = CachedGamesDbSquare(game.title_id, false);
     }
     if (!game.cover.empty()) return game;
     // Only WRITES need the per-title lock. Do not stall Home teardown
@@ -2679,10 +2684,10 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     }
     // Recheck after acquiring the write lock. NUP's canonical NS2 Square
     // must never be displaced by an old Switch 1 Nlib icon.
-    game.cover = nup ? CachedGamesDbSquare(game.title_id, true) :
-                       CachedNlibIcon(game.title_id);
-    if (game.cover.empty() && !nup)
-        game.cover = CachedGamesDbSquare(game.title_id, second_generation);
+    game.cover = second_generation ? CachedGamesDbSquare(game.title_id, true) :
+                                     CachedNlibIcon(game.title_id);
+    if (game.cover.empty() && !second_generation)
+        game.cover = CachedGamesDbSquare(game.title_id, false);
     if (!game.cover.empty()) return game;
 
     // Switch 2 Control dumps often omit the canonical icon and Nlib may have
@@ -2699,9 +2704,9 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
         }
     }
 
-    // A genuine NUP may have no cached Square yet. Do not fabricate an
-    // NS2 app icon using the Switch 1-only Nlib endpoint on failed CDN.
-    if (nup) return game;
+    // NS2/NUP may have no cached Square yet. Never fabricate its icon with
+    // the Switch 1-only /nx/ Nlib endpoint after a GamesDB miss.
+    if (second_generation) return game;
     char id[17]{};
     std::snprintf(id, sizeof(id), "%016llX",
                   static_cast<unsigned long long>(game.title_id));
@@ -2798,7 +2803,12 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         }
     }
     if (cancel && cancel->load(std::memory_order_acquire)) return game;
-    NlibEnrichment enrichment = EnsureNlibEnrichment(game.title_id, language_choice, cancel);
+    // Nlib's /nx/ service is a Switch 1 source. An NS2/NUP title can reuse
+    // a Switch 1 program TitleID, so querying it would deliberately attach
+    // the wrong generation's banner/icon/screens to the NS2 edition.
+    NlibEnrichment enrichment = second_generation
+        ? NlibEnrichment{}
+        : EnsureNlibEnrichment(game.title_id, language_choice, cancel);
     game.artwork_changed |= enrichment.artwork_changed;
     if (!enrichment.icon.empty() && game.cover.empty() && !nup) {
         game.cover = std::move(enrichment.icon);

@@ -259,7 +259,7 @@ struct Launcher {
 """ + icon_methods + r"""
 int main() {
     Launcher l;
-    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon"},{3,"different-file","C","fallback"},{5,"cached","E","fallback","canonical-5"}};
+    l.home_.recents={{1,"selected","A",""},{2,"two","B",""},{3,"three","C","/box-front-3.webp"},{4,"four","D","local-icon"},{3,"different-file","C","fallback","fallback"},{5,"cached","E","fallback","canonical-5"}};
     l.home_.last_title_id=2; l.home_.last_file="two";
     l.games_={{2,"two","B","",false},{3,"three","C","",false},{3,"different-file","C","unchanged",false}};
     l.start_home_icons(); assert(!l.home_icon_scan_.valid());

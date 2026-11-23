@@ -1541,6 +1541,10 @@ merged_fc27_pair_receipts.update({
     "eden-vulkan/vulkan_rasterizer.cpp": "71d097b9a83028dfad9370792c905bb3bfccfd5a",
     "ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h": "3397cd39a3d35c1255802c4c3862584530f15cfe",
 })
+if gpu_table_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
+    # Keep the frozen Nov15 receipt immutable; only the selected runtime
+    # successor carries the reviewed Ampere lowering from vendor af32/bfdf.
+    merged_fc27_pair_receipts["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
 current_pair_successor_blobs = {
     "eden-core/src/video_core/buffer_cache/buffer_cache.h": "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "bd424e728182500b573a4cc4cf07987ddc4cbdc3",

@@ -1602,6 +1602,11 @@ merged_fc27_p1_pair_blobs.update({
     "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "716634290574ed4dfc8fd3be0d0ea0ad582980f8",
     "eden-vulkan/vulkan_rasterizer.cpp": "71d097b9a83028dfad9370792c905bb3bfccfd5a",
 })
+if gpu_table_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
+    # The immutable Nov15 receipt remains historical. These are selected
+    # successor maps for the reviewed af32/bfdf Ampere lowering only.
+    current_fc27_nov20_pair_successor_blobs["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
+    merged_fc27_p1_pair_blobs["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
 current_pair_successor_blobs = {
     "eden-core/src/video_core/buffer_cache/buffer_cache.h": "09e1578dec6dcbcb0b8f54d4bb819b71d0eed972",
     "eden-core/src/video_core/buffer_cache/buffer_cache_base.h": "bd424e728182500b573a4cc4cf07987ddc4cbdc3",
@@ -1707,6 +1712,8 @@ elif pair_present == pair_new_owners:
         "ns2-runtime/gpu_dispatch/video_core/native_qmd.h": "a1e99602dbee8c4fc49108382b61ee8cd53af847",
         "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "33b1b5475e68c8459f9666b1ae1a6e446221cb63",
     }
+    if gpu_table_vendor_pin == "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8":
+        integrated_pair["ns2-runtime/ampere/shader_recompiler/frontend/ampere/lower_to_maxwell.h"] = "9169e95ec14559aa6466c68b7d1e1cd3f9e69557"
     assert set(integrated_pair) == set(pair_receipt["files"])
     for relative, sha in integrated_pair.items():
         source_path = ROOT / "vendor/encore-active" / relative

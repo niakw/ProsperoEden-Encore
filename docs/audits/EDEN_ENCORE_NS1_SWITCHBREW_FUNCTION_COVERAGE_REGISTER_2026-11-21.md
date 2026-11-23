@@ -2265,3 +2265,12 @@ Couple moteur `b4a3615b1a71f68108382db3488f2bfc7dd8913b` → vendor `ab32ad62ded
 **Compteur courant : 1 622 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 480 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 895** : 1 480 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## Applet — thème + Capture-short synchronisés (23/11/2026)
+
+Depuis le dernier compteur registre à 1 895, `ReadThemeStorage` et `WriteThemeStorage` ont été requalifiés **NULL → IMPL-SRC** car les handlers actifs manipulent réellement `Applet::theme_storage`. Le couple moteur `d30f3aaab2e6ca2165161d88384346ad756ebc26` → vendor `4ab4481d7572d3dd7589837f65b7baee5519d80d` ajoute ensuite le cmd18 `SetRequiresCaptureButtonShortPressedMessage` avec consommation réelle du flag dans `WindowSystem::SendButtonAppletMessageLocked`. Aucun de ces trois gains n'est encore qualifié sur PS5.
+
+**Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 477 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 892** : 1 477 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

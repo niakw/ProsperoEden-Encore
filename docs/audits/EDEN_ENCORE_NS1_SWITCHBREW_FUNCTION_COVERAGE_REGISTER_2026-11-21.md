@@ -1564,6 +1564,18 @@ Elles passent **ABI-DIFF → IMPL-SRC**. Aucun C++ n'est modifié dans ce lot : 
 
 **Pool restant à examiner = 2 093** : 1 605 NULL + 76 STUB + 140 PARTIEL + 263 ABI-DIFF + 9 AMBIGU.
 
+## Réconciliation ABI Time Manager / set:sys — 23/11/2026
+
+Huit commandes `time:m` (0, 5, 6, 11, 13, 15, 60, 100) ont été recroisées avec les signatures SwitchBrew et leurs corps actifs : les suffixes `AsUser/Core/Updated/BaseTime` sont des noms internes, tandis que les interfaces, entrées/sorties et états manipulés correspondent au contrat documenté. Les slots 10/12/14/200/201 restent volontairement ABI-DIFF car l'ordre/type ou la sémantique n'est pas suffisamment équivalent pour les fermer par simple renommage.
+
+Les commandes `set:sys` 45/46 sont également équivalentes : les handlers nommés `SpeakerAutoMuteFlag` lisent/écrivent directement le champ interne `force_mute_on_headphone_removed` documenté par SwitchBrew.
+
+Ces **10 lignes passent ABI-DIFF → IMPL-SRC**, sans modification C++.
+
+**Compteur courant : 1 593 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 253 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 083** : 1 605 NULL + 76 STUB + 140 PARTIEL + 253 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

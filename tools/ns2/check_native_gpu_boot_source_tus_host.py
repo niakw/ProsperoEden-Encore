@@ -132,6 +132,38 @@ native_gpfifo_owners = [
     r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/scheduler.cpp',
     r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/control/channel_state.cpp',
 ]
+# Exact production receipt for the NVN2 split-method continuation fix.
+# The actual source TU is compiled below with PS5_NATIVE and the shipping
+# native DmaPusher ABI; these source seals prevent a same-pin semantic drift.
+import hashlib
+dma_owner = native_gpfifo_owners[0]
+dma_header = r/'vendor/encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h'
+def git_blob(path):
+    raw=path.read_bytes()
+    return hashlib.sha1(b'blob '+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+assert git_blob(dma_owner) == 'c24623f5c2aaf1660f818004ff418354c36aacd9'
+assert git_blob(dma_header) == '8cdac916355c715c554682cc29c48ce4e1b21c69'
+dma_text=dma_owner.read_text()
+dma_header_text=dma_header.read_text()
+for token in (
+    'native_channel && command_resume_offset == 0',
+    'header.addr != split_method_end',
+    'header.size != dma_state.method_count',
+    'SplitResumesLater(command_list, dma_pushbuffer_subindex + 1)',
+    'ResolveSplitMethod(header.addr, park_call)',
+    'split_method_end = header.addr + static_cast<GPUVAddr>(header.size) * sizeof(u32)',
+    'parked_methods.clear();',
+):
+    assert token in dma_text, ('NS2 split GPFIFO owner drift',token)
+for token in (
+    'struct ParkedMethod {',
+    'static constexpr std::size_t MaxParkedMethods = 16;',
+    'std::vector<ParkedMethod> parked_methods;',
+    'GPUVAddr split_method_end{};',
+):
+    assert token in dma_header_text, ('NS2 split GPFIFO ABI drift',token)
+assert dma_text.count('ResolveSplitMethod(') == 2
+assert dma_text.count('SplitResumesLater(') == 2
 for owner in native_gpfifo_owners:
     assert owner.is_file(), owner
     built = subprocess.run(native_flags + [str(owner)], capture_output=True,

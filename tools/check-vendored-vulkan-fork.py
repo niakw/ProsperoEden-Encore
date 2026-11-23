@@ -2904,8 +2904,28 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             )],
         ),
         "include/video_core/renderer_vulkan/vk_pipeline_cache.h": (
-            "343383c7b5ed55f181cee9d840e6b59fae0409d0",
-            [(
+            "fcf26ecce586e3cedc17abe6d111ee35f76ad705",
+            [
+            (
+                "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
+                "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
+                "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
+                "        bool build_in_parallel, bool parallel_translate_stages = false);\n",
+                "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
+                "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
+                "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
+                "        bool build_in_parallel);\n",
+            ),
+            (
+                "    ShaderPools main_pools;\n"
+                "#ifdef PS5_NATIVE\n"
+                "    // First-use graphics IR is latency critical and must not wait behind\n"
+                "    // driver-pipeline/prewarm jobs queued on the existing builder pool.\n"
+                "    Common::ThreadWorker shader_translation_workers;\n"
+                "#endif\n",
+                "    ShaderPools main_pools;\n",
+            ),
+            (
                 "    // Shared 1x/2x/4x/8x/16x selector. The default NS1 path calls this\n"
                 "    // with VK_SAMPLE_COUNT_1_BIT; PS5-native retains authenticated GMMU\n"
                 "    // shader capture and the strict forced-MSAA admission path.\n"
@@ -2916,7 +2936,8 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                 "    // Caller must prove a clear, single colour RT, no depth/aliasing.\n"
                 "    [[nodiscard]] GraphicsPipeline* CurrentGraphicsPipelineForMsaa(\n"
                 "        VkSampleCountFlagBits samples);\n",
-            )],
+            ),
+            ],
         ),
     }
     for name, (raw_sha, edits) in post_generator_headers.items():

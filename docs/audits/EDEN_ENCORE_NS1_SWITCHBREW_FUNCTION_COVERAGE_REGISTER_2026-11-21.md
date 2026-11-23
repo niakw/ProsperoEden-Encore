@@ -2227,3 +2227,12 @@ Recroisement avec les dumps NS1 23.0.1 et les propriétaires actifs : `SPL` ID 1
 **Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 448 HORS-VERSION / 0 ABSENT / 215 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 2 044** : 1 605 NULL + 75 STUB + 140 PARTIEL + 215 ABI-DIFF + 9 AMBIGU.
+
+
+## HOS 23 — RO/HID/PDM historiques retirés du pool (23/11/2026)
+
+Les dumps NS1 23.0.1 confirment la réaffectation des IDs de six anciennes commandes `ldr:ro`, de `hid:sys` 322/323 et des anciens PDM 7/13/16. Ces **11 lignes historiques** passent **ABI-DIFF → HORS-VERSION**. Les commandes HOS 23 qui occupent désormais ces IDs restent suivies séparément ; aucune implémentation runtime n'est inventée.
+
+**Compteur courant : 1 610 IMPL-SRC / 140 PARTIEL / 75 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 459 HORS-VERSION / 0 ABSENT / 204 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 033** : 1 605 NULL + 75 STUB + 140 PARTIEL + 204 ABI-DIFF + 9 AMBIGU.

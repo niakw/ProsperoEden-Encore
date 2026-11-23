@@ -391,6 +391,7 @@ class Launcher
     bool first_start_ = true;
     const bool native_artwork_loading_ = false;
     bool native_launch_art_ready_ = false;
+    bool native_launch_show_back_ = false; // only after the authentic rear is GPU-resident
     std::chrono::steady_clock::time_point native_launch_deadline_{};
 
     // library

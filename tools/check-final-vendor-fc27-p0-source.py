@@ -1715,6 +1715,7 @@ def reviewed_blob(relative, expected):
 # fail-closed GPU-session commands. The shader/renderer owners still pass
 # the immutable per-file checks below, so qualify this *one* new pin.
 REVIEWED_PINS.add("716e069f212b89b6fd13af56b0677343cf41ba07")
+REVIEWED_PINS.add("6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b")  # immutable runtime, shutdown test provenance only
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

@@ -1827,7 +1827,7 @@ if gpu_table_vendor_pin in {"edcc311c09eed3a33e5acc373c63a436f662cb5b", "945385c
     for path, blob in ns2_early_hle_receipts.items():
         assert subprocess.check_output(
             ["git", "hash-object", path], cwd=ROOT, text=True).strip() == blob, path
-elif gpu_table_vendor_pin == "716e069f212b89b6fd13af56b0677343cf41ba07":
+elif gpu_table_vendor_pin in {"716e069f212b89b6fd13af56b0677343cf41ba07", "6c15ec8d1143eb1ae3092a2b984f0bc5bfcc364b"}:
     # Snapshot of exactly the current native-selected AM/HID source owners.
     # Prove immutable blob content rather than mistaking a newer vendor SHA
     # for loss of the previously reviewed HLE service graph.

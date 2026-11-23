@@ -117,6 +117,22 @@ assert 'switch_game_tile(c,!g.cover.empty()?g.cover:g.box_front' not in (root/'h
 assert "recent.tile_icon = previous.tile_icon;" in lib
 assert "cover(c, art, icon, 20.0f, 0.0f)" in home
 assert "home_icon_scan_.wait();" in launch and "finish_home_icons();" in launch
+# A generated image or a full media response must never cross an NS1/NS2
+# installed-file boundary merely because the emulator sees the same TitleID.
+home_completed = lib.split("void Launcher::finish_home_media()", 1)[1].split(
+    "void Launcher::start_selected_media()", 1)[0]
+selected_completed = lib.split("void Launcher::finish_selected_media()", 1)[1].split(
+    "void Launcher::start_selected_size()", 1)[0]
+for owner, identity in ((home_completed, "home_media_scan_file_"),
+                        (selected_completed, "media_scan_file_")):
+    assert f"enriched.file != {identity}" in owner, identity
+    assert "game.file != enriched.file" in owner, identity
+assert "recent.title_id != enriched.title_id || recent.file != enriched.file" in home_completed
+assert "enriched.file == home_.last_file" in home_completed
+assert "media_next_retry_[game.file]" in lib
+assert "home_media_next_retry_[file]" in lib
+assert "home_icon_scan_extra_file_ == recent.file" in home
+assert "std::unordered_map<std::string, std::chrono::steady_clock::time_point> media_next_retry_" in hdr
 print('Selected-only complete Nlib media, bounded visible icon worker and aspect-safe Home tiles PASS')
 
 # Test the exact current worker, including both historic request branches.

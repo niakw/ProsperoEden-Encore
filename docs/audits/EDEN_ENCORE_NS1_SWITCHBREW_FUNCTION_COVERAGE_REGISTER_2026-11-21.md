@@ -1126,6 +1126,19 @@ SwitchBrew documente `nd:app` et `nd:sys` comme services introduits en **HOS 5.0
 
 **Pool historique restant à examiner = 2 432** : 1 901 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
 
+## Lot Friend — effacements idempotents sur état offline — 23/11/2026
+
+**Vendor `ab4f28f4d8f3b118c1d64d2f6744598860c388b6`** (arbre `ee3b73db16643181b54d520d98cf2cb0fbc60533`).
+
+- `DropFriendNewlyFlags` (30100), `DropFriendNewlyFlag` (30110), `DeletePlayHistory` (30700), `ClearPlayLog` (30830) et `DeleteNetworkServiceAccountCache` (49900) : **5 NULL → NOOP documentés**.
+- Les signatures sont recroisées avec l'interface IPC Ryujinx/Ryubing : `Uid` seul, sauf 30110 qui consomme aussi le `NetworkServiceAccountId`.
+- Encore n'entretient actuellement ni liste Friend persistante avec flag `newly`, ni play-history/play-log Friend, ni cache de compte réseau à invalider. Les cinq opérations sont donc idempotentes et n'inventent aucun état distant.
+- Les mutations observables `DeleteFriend`, `BlockUser`, demandes d'ami et changements de préférences restent ouvertes : aucun faux succès n'a été ajouté.
+
+**Compteur historique : 1 527 IMPL-SRC / 115 PARTIEL / 135 STUB / 139 NOOP / 1 896 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 194 HORS-VERSION / 0 ABSENT / 272 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 427** : 1 896 NULL + 135 STUB + 115 PARTIEL + 272 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

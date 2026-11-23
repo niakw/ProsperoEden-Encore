@@ -33,8 +33,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 112 | 3 | **115** |
 | **STUB — Stub / résultat simulé** | 135 | 0 | **135** |
-| **NOOP — No-op documenté** | 134 | 0 | **134** |
-| **NULL — Handler NULL** | 1 901 | 0 | **1 901** |
+| **NOOP — No-op documenté** | 139 | 0 | **139** |
+| **NULL — Handler NULL** | 1 896 | 0 | **1 896** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
@@ -447,8 +447,8 @@ pie showData
     "Handler raccordé, corps non prouvé" : 0
     "Implémentation partielle" : 115
     "Stub / résultat simulé" : 135
-    "No-op documenté" : 134
-    "Handler NULL" : 1901
+    "No-op documenté" : 139
+    "Handler NULL" : 1896
     "Rejet explicite / historique" : 84
     "Interface parente non ouvrable" : 176
     "Service/interface non exposé sous cette forme" : 306
@@ -3877,9 +3877,9 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `22000` | `GetReceivedFriendInvitationList` | 9.0.0+ | **IMPL-SRC** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/de2daec43b71d2f13e00b154f96e39770c4bd8c9/sources/eden/src/core/hle/service/friend/friend.cpp) ; invitations offline vides, ABI V1 établie) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `22001` | `GetReceivedFriendInvitationDetailedInfo` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 22001 = GetReceivedFriendInvitationDetailedInfoV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `22010` | `GetReceivedFriendInvitationCountCache` | 9.0.0+ | **NOOP** (backend social Nintendo non exposé ; listes/comptages vides, clé 0x40 et statistiques u128 initialisées ABI-correctement ; vendor `51e5cbde`) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30100` | `DropFriendNewlyFlags` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30100` | `DropFriendNewlyFlags` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/ab4f28f4d8f3b118c1d64d2f6744598860c388b6/sources/eden/src/core/hle/service/friend/friend.cpp) ; état Friend correspondant absent/vide dans Encore, entrée ABI consommée, opération idempotente) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30101` | `DeleteFriend` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30110` | `DropFriendNewlyFlag` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30110` | `DropFriendNewlyFlag` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/ab4f28f4d8f3b118c1d64d2f6744598860c388b6/sources/eden/src/core/hle/service/friend/friend.cpp) ; état Friend correspondant absent/vide dans Encore, entrée ABI consommée, opération idempotente) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30120` | `ChangeFriendFavoriteFlag` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30121` | `ChangeFriendOnlineNotificationFlag` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30200` | `SendFriendRequest` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
@@ -3902,15 +3902,15 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30401` | `BlockUserWithApplicationInfo` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30401 = BlockUserWithApplicationInfoV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30402` | `UnblockUser` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30500` | `GetProfileExtraFromFriendCode` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30500 = GetProfileExtraFromFriendCodeV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30700` | `DeletePlayHistory` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30700` | `DeletePlayHistory` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/ab4f28f4d8f3b118c1d64d2f6744598860c388b6/sources/eden/src/core/hle/service/friend/friend.cpp) ; état Friend correspondant absent/vide dans Encore, entrée ABI consommée, opération idempotente) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30810` | `ChangePresencePermission` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30811` | `ChangeFriendRequestReception` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30812` | `ChangePlayLogPermission` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30820` | `IssueFriendCode` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `30830` | `ClearPlayLog` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `30830` | `ClearPlayLog` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/ab4f28f4d8f3b118c1d64d2f6744598860c388b6/sources/eden/src/core/hle/service/friend/friend.cpp) ; état Friend correspondant absent/vide dans Encore, entrée ABI consommée, opération idempotente) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30900` | `SendFriendInvitation` | 9.0.0+ | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; ID 30900 = SendFriendInvitationV1 (nullptr) ; variante V1, contrat SwitchBrew non établi ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `30910` | `ReadFriendInvitation` | 9.0.0+ | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
-| friend:u, friend:v, friend:m, friend:s, friend:a | `49900` | `DeleteNetworkServiceAccountCache` | — | **NULL** ([source C++][ns1-src-082]) | 2026-11-22 |
+| friend:u, friend:v, friend:m, friend:s, friend:a | `49900` | `DeleteNetworkServiceAccountCache` | — | **NOOP** ([vendor NS1](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/ab4f28f4d8f3b118c1d64d2f6744598860c388b6/sources/eden/src/core/hle/service/friend/friend.cpp) ; état Friend correspondant absent/vide dans Encore, entrée ABI consommée, opération idempotente) | 2026-11-23 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `0` | `GetEvent` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `1` | `Clear` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |
 | friend:u, friend:v, friend:m, friend:s, friend:a | `2` | `Pop` | 2.0.0+ | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/friend/friend.cpp) ; état, événement ou file d'IPC implémentés ; qualification statique NS1) | 2026-11-22 |

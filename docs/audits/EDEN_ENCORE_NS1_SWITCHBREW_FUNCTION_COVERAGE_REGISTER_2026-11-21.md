@@ -2182,3 +2182,12 @@ Lors d'un changement de firmware invité, d'un backport HLE ou avant une grosse 
 ## État de ce premier snapshot
 
 Le document est **créé et utilisable dès maintenant**, mais son but est d'être enrichi jusqu'à la matrice exhaustive. Les premières lignes montrent déjà un point important que le registre d'architecture ne rendait pas visible : plusieurs services existent et sont enregistrés alors qu'une part significative de leurs commandes reste NULL ou minimale. Cette distinction doit guider les futures recherches par signature exacte plutôt que d'assimiler « service présent » à « service complet ».
+
+
+## Requalification `mig:usr` — service non exposé (23/11/2026)
+
+Sur le vendor/gitlink `8c6c57ecded4a650ba575f8e937543a363a3d680`, la classe `MIG_USR` conserve le nom interne `mig:usr`, mais `LoopProcess` enregistre uniquement **`mig:user`** auprès du `ServerManager`. Aucune entrée SM `mig:usr` n'est exposée. Les **19 lignes encore ABI-DIFF** rejoignent donc les 17 lignes déjà classées **SERVICE-NON-EXPOSÉ**. Ce lot est une correction de classification/accessibilité, **pas une implémentation de migration**.
+
+**Compteur courant : 1 598 IMPL-SRC / 140 PARTIEL / 76 STUB / 146 NOOP / 1 605 NULL / 84 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 445 HORS-VERSION / 0 ABSENT / 229 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 2 059** : 1 605 NULL + 76 STUB + 140 PARTIEL + 229 ABI-DIFF + 9 AMBIGU.

@@ -138,7 +138,18 @@ if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e
     # preflight reviewed after the original R457 source-only parity gate.
     # Its full SHA is already checked above; do not silently normalize an
     # arbitrary new kernel semantic delta.
-    assert guard_count == 5
+    if selected in {"436e702cc970417455c088c4bc38ce5fec8e0762",
+                    "6489896230a030cf28d31961c7c8f242cab73f27",
+                    "05de9e8e7f75e9a7400a351b18f2b1e83165108e",
+                    "ee64fac70671126c9b6ab9aa3b3885a40538cf16",
+                    "603e0d5c70b04fa84a19cca8f580ed1bdb230be0",
+                    "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e",
+                    "6b48e6734e738306dd57ceed8be9b003631eb8cb"}:
+        # Exact blob 2b5be4eb adds a guarded try/catch pair around optimized
+        # metadata initialization, so the textual guard count is seven.
+        assert guard_count == 7
+    else:
+        assert guard_count == 5
     allocation = kernel.split("Result KMemoryManager::AllocateForProcess(",1)[1].split(
         "size_t KMemoryManager::Impl::Initialize(",1)[0]
     assert allocation.index("CommitKernelDirectGuestRange(m_system, block.GetAddress()") < (

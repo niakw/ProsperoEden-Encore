@@ -122,16 +122,38 @@ vk::SurfaceKHR CreateHandoffSurface(
     const vk::Instance& instance,
     const Core::Frontend::EmuWindow::WindowSystemInfo& window_info) {
 #ifdef PS5_NATIVE
-    if (pe::ps5::Display::has_deferred_scanout()) {
-        // Keep the final OpenGL loading frame visible through System::Load
-        // and Vulkan instance creation. Release VideoOut only at the exact
-        // WSI takeover boundary; never run two scanout owners concurrently.
+    if (pe::ps5::Display::has_deferred_scanout() &&
+        Eden::Display::requested_hz.load(std::memory_order_relaxed) >= 120) {
+        // 119.88 Hz must be qualified by VideoOut while display modes are
+        // enumerated. Keep the established early takeover for that case.
         if (!pe::ps5::Display::close_deferred_scanout())
-            throw std::runtime_error{"Could not release launcher VideoOut before Vulkan surface creation"};
-        std::fprintf(stderr, "EDEN_GL_VK_SCANOUT_HANDOFF release=1 boundary=create_surface\n");
+            throw std::runtime_error{"Could not release launcher VideoOut before 120 Hz surface qualification"};
+        std::fprintf(stderr,
+                     "EDEN_GL_VK_SCANOUT_HANDOFF release=1 boundary=create_surface reason=120hz\n");
+    } else if (pe::ps5::Display::has_deferred_scanout()) {
+        // The maintained WSI reports the fixed 59.94 Hz mode without opening
+        // VideoOut. Keep EGL presenting through surface + logical-device setup.
+        std::fprintf(stderr,
+                     "EDEN_GL_VK_SCANOUT_HANDOFF retained=1 boundary=pre_swapchain\n");
     }
 #endif
     return CreateSurface(instance, window_info);
+}
+
+VkSurfaceKHR PrepareHandoffSwapchain(vk::SurfaceKHR& surface) {
+#ifdef PS5_NATIVE
+    if (pe::ps5::Display::has_deferred_scanout()) {
+        // The 60 Hz WSI takes VideoOut in swapchain creation, not mode
+        // enumeration. Stop/join EGL immediately before that exact owner
+        // boundary: never overlap two scanout owners, while avoiding the
+        // former device/allocator/scheduler-sized black interval.
+        if (!pe::ps5::Display::close_deferred_scanout())
+            throw std::runtime_error{"Could not release launcher VideoOut before Vulkan swapchain creation"};
+        std::fprintf(stderr,
+                     "EDEN_GL_VK_SCANOUT_HANDOFF release=1 boundary=create_swapchain reason=60hz\n");
+    }
+#endif
+    return *surface;
 }
 
 } // Anonymous namespace
@@ -174,7 +196,8 @@ try
     , memory_allocator((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=device_ready\n"), device))
     , state_tracker()
     , scheduler((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=allocator_ready\n"), device), state_tracker)
-    , swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_begin\n"), *surface),
+    , swapchain((std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=swapchain_begin\n"),
+                 PrepareHandoffSwapchain(surface)),
                 device,
                 scheduler,
                render_window.GetFramebufferLayout().width,
@@ -220,6 +243,12 @@ try
     std::fprintf(stderr, "EDEN_VULKAN_BOOT stage=loading_present_returned\n");
     Report();
 } catch (const vk::Exception& exception) {
+#ifdef PS5_NATIVE
+    // A failure before PrepareHandoffSwapchain must not strand the retained
+    // launcher EGL owner and its presenter thread.
+    if (pe::ps5::Display::has_deferred_scanout())
+        (void)pe::ps5::Display::close_deferred_scanout();
+#endif
     LOG_ERROR(Render_Vulkan, "Vulkan initialization failed with error: {}", exception.what());
     throw std::runtime_error{fmt::format("Vulkan initialization error {}", exception.what())};
 }

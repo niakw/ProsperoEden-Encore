@@ -15,8 +15,8 @@ launcher = (root / "headless/prosperoeden/pe/ui/launcher.cpp").read_text()
 theme = (root / "headless/prosperoeden/pe/ui/theme.hpp").read_text()
 
 assert "struct BoxArt" in service
-assert "virtual BoxArt box_art(std::uint64_t)" in service
-assert "pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id)" in native
+assert "virtual BoxArt box_art(std::uint64_t, bool second_generation = false)" in service
+assert "pe::ui::BoxArt EdenServices::box_art(std::uint64_t title_id, bool second_generation)" in native
 native_resolver = native.split("pe::ui::BoxArt EdenServices::box_art(", 1)[1].split(
     "std::string EdenServices::game_path(", 1
 )[0]
@@ -36,7 +36,9 @@ assert "MakeRequest" not in native_resolver
 launch_setup = launcher.split("void Launcher::launch(", 1)[1].split(
     "void Launcher::press(", 1
 )[0]
-assert "services_.box_art(title_id)" in launch_setup
+assert "services_.box_art(title_id, launch_ns2_case)" in launch_setup
+assert 'launch_case_game_.format == "NUP"' in launch_setup
+assert '(second_generation ? "-ns2-" : "-") + id' in native_resolver
 assert "launch_box_front_ = case_art.front;" in launch_setup
 assert "launch_box_back_ = case_art.back;" in launch_setup
 assert "launch_box_spine_ = case_art.spine;" in launch_setup
@@ -375,7 +377,7 @@ assert '"Fanart - Background"' in indexer
 assert '"Screenshot - Game Title"' in indexer
 assert '"Square"' in indexer
 assert 'EDEN_CASE_INDEX_MEDIA fanart={} game_title={} gameplay={} titles={}' in indexer
-assert 'AppendCaseScenes(game.screenshots, game.title_id);' in native
+assert 'AppendCaseScenes(game.screenshots, game.title_id, second_generation);' in native
 assert 'side >= 3 && ValidCachedArtwork(CaseFacePath(title_id, "back"))' not in native
 assert "// Gameplay previews remain independent of real back paper." in native
 assert 'const char* const names[]' in native
@@ -401,7 +403,7 @@ assert "const auto* ns1_back = second_generation && selected->second[1].empty()"
 assert "side == 1 && ns1_back ? *ns1_back : selected->second[side]" in native
 assert 'std::string(ns2 ? "ns2:" : "ns1:") + key' in native
 assert 'if (it == index.end() && !ns2) it = index.find(key);' in native
-assert "CachedGamesDbHero(std::uint64_t title_id)" in native
+assert "CachedGamesDbHero(std::uint64_t title_id," in native
 assert "for (int scene : {1, 3, 4, 5})" in native
 assert 'regions = {"us", "ca", "world", "uk", "eu", "fr"};' in native
 assert 'regions = {"fr", "eu", "world", "uk", "ca", "us"};' in native
@@ -439,7 +441,7 @@ assert "std::chrono::minutes(5)" in native
 assert "std::chrono::hours(4)" not in native.split("unsigned EnsureRetailCase(", 1)[1].split("NlibEnrichment CachedNlibEnrichment(", 1)[0]
 # Genuine compact NS2 spines do not need an uploaded back scan.
 assert "both_faces_cached_at_start" not in native
-assert 'MigrateGeneratedTga(CaseFacePath(title_id, side), true)' in native
+assert 'CaseFacePath(title_id, side, second_generation), true)' in native
 assert 'MigrateGeneratedTga(NlibHeroPath(title_id), false)' in native
 assert 'const std::string base = path.substr(0, path.size() - 5);' in native
 assert 'const std::string old_receipt = legacy + ".source";' in native
@@ -448,11 +450,12 @@ assert 'const std::string old_receipt = legacy + ".source";' in native
 case_fetch = native.split("unsigned EnsureRetailCase(", 1)[1].split(
     "NlibEnrichment CachedNlibEnrichment(", 1
 )[0]
-assert "std::unique_lock guard(locks[ArtworkLockBucket(title_id, locks.size())], std::defer_lock);" in case_fetch
+assert "std::unique_lock guard(locks[ArtworkLockBucket(artwork_key, locks.size())], std::defer_lock);" in case_fetch
+assert 'title_id ^ (second_generation ? 0x8000000000000000ULL : 0ULL)' in case_fetch
 assert "if (!LockArtworkUnlessCancelled(guard, cancel)) return 0;" in case_fetch
 assert "std::this_thread::sleep_for(std::chrono::milliseconds(50));" in native
 assert "if (all_ready || (cancel && cancel->load(std::memory_order_acquire))) {" in case_fetch
-assert "retries.erase(title_id);" in case_fetch
+assert "retries.erase(artwork_key);" in case_fetch
 assert "all_ready = false;\n            break;" in case_fetch
 assert "if (cancel && cancel->load(std::memory_order_acquire)) return migrated_faces;" in case_fetch
 assert "std::chrono::steady_clock::now() < it->second)\n            return migrated_faces;" in case_fetch
@@ -485,7 +488,10 @@ assert 'game.box_front = box.front;' in native
 assert 'game.box_back = box.back;' in native
 assert 'const bool opened = static_cast<bool>(input);' in native
 case_worker = native.split("pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,", 1)[1].split("pe::ui::BoxArt EdenServices::box_art(", 1)[0]
-assert "const auto cached_case = box_art(game.title_id);" in case_worker
+assert "const auto cached_case = box_art(game.title_id, second_generation);" in case_worker
+assert "const auto box = box_art(game.title_id, second_generation);" in case_worker
+assert "CachedGamesDbSquare(game.title_id, true)" in case_worker
+assert "CachedGamesDbHero(game.title_id, second_generation)" in case_worker
 assert case_worker.index("game.case_artwork_changed = EnsureRetailCase(") < case_worker.index("EnsureNlibEnrichment(game.title_id")
 # A generated retail TGA must not be fetched again merely because stb_image's
 # format probe does not recognize the native loader's uncompressed BGRA TGA.

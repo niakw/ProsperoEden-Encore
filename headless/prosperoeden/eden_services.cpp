@@ -2149,7 +2149,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
         } else if (home.last_cover.empty()) {
             home.last_cover = CachedGamesDbSquare(title_id);
         }
-        home.last_hero = nlib.hero;
+        home.last_hero = nlib.hero.empty() ? CachedGamesDbHero(title_id) : nlib.hero;
         home.last_screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
         home.last_max_players = nlib.max_players;
         home.last_intro = nlib.intro;
@@ -2252,7 +2252,7 @@ pe::ui::Home EdenServices::home(const std::atomic<bool>* cancel) {
                         recent.tile_icon = square;
                     }
                 }
-                recent.hero = nlib.hero;
+                recent.hero = nlib.hero.empty() ? CachedGamesDbHero(recent.title_id) : nlib.hero;
                 recent.screenshot = nlib.screenshots.empty() ? std::string{} : nlib.screenshots.front();
                 recent.max_players = nlib.max_players;
                 recent.intro = nlib.intro;
@@ -2600,8 +2600,10 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     // A selected full-media worker may own the same title's .new paths.
     // Never wait behind its retail/content requests during Home teardown.
     std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};
-    if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire)))
+    if (!title_lock.owns_lock() || (cancel && cancel->load(std::memory_order_acquire))) {
+        game.artwork_deferred = !title_lock.owns_lock();
         return game;
+    }
     game.cover = CachedNlibIcon(game.title_id);
     if (!game.cover.empty()) return game;
     game.cover = CachedGamesDbSquare(game.title_id);
@@ -2612,7 +2614,7 @@ pe::ui::Game EdenServices::enrich_home_icon(pe::ui::Game game,
     if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
         const int language_choice = Eden::LoadPreferences().language;
         if (EnsureGamesDbSquare(game.title_id, std::string(known->name), game.name,
-                                language_choice, cancel)) {
+                                language_choice, cancel, true)) {
             game.cover = CachedGamesDbSquare(game.title_id);
             game.artwork_changed = !game.cover.empty();
             if (!game.cover.empty()) return game;
@@ -2684,10 +2686,11 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     if (const auto* ns2 = Eden::Ns2Catalog::Find(game.title_id)) {
         game.case_artwork_changed = EnsureRetailCase(
             game.title_id, std::string(ns2->name), scanned_name,
-            language_choice, cancel);
+            language_choice, cancel, true);
     } else {
-        game.case_artwork_changed = EnsureRetailCase(game.title_id, scanned_name, CleanTitle(game.file),
-                         language_choice, cancel);
+        game.case_artwork_changed = EnsureRetailCase(
+            game.title_id, scanned_name, CleanTitle(game.file),
+            language_choice, cancel, UseNs2CaseIndex(game));
     }
     // A completed local migration or atomic replacement needs cache
     // invalidation even if selection changed before media enrichment ended.
@@ -2708,7 +2711,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     } else if (game.cover.empty()) {
         if (const auto* known = Eden::Ns2Catalog::Find(game.title_id)) {
             if (EnsureGamesDbSquare(game.title_id, std::string(known->name), scanned_name,
-                                    language_choice, cancel)) {
+                                    language_choice, cancel, true)) {
                 game.cover = CachedGamesDbSquare(game.title_id);
                 game.artwork_changed |= !game.cover.empty();
             }
@@ -2716,6 +2719,7 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     }
     // Missing square icon remains empty only if Control/ExeFS, Nlib and GamesDB Square all miss.
     if (!enrichment.hero.empty()) game.hero = std::move(enrichment.hero);
+    else if (game.hero.empty()) game.hero = CachedGamesDbHero(game.title_id);
     if (!enrichment.screenshots.empty()) game.screenshots = std::move(enrichment.screenshots);
     if (enrichment.max_players > 0) game.max_players = enrichment.max_players;
     if (!enrichment.name.empty()) game.name = std::move(enrichment.name);
@@ -2739,8 +2743,9 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
     // from the launcher draw or game-start path.
     if ((game.box_front.empty() || game.box_back.empty()) &&
         scanned_name != game.name) {
-        game.case_artwork_changed |= EnsureRetailCase(game.title_id, game.name, scanned_name,
-                         language_choice, cancel);
+        game.case_artwork_changed |= EnsureRetailCase(
+            game.title_id, game.name, scanned_name,
+            language_choice, cancel, UseNs2CaseIndex(game));
     }
     if (!(cancel && cancel->load(std::memory_order_acquire))) {
         const auto box = box_art(game.title_id);
@@ -2750,6 +2755,8 @@ pe::ui::Game EdenServices::enrich_game_media(pe::ui::Game game,
         // Nlib/cache snapshot. Always expose its real front to the game tile.
         // Never promote a portrait retail front into the square tile slot.
         AppendCaseScenes(game.screenshots, game.title_id);
+        if (enrichment.hero.empty() && game.hero.empty())
+            game.hero = CachedGamesDbHero(game.title_id);
         if (game.case_artwork_changed & 0xF8u)
             game.artwork_changed = true; // refresh GPU copies after replacement
     }

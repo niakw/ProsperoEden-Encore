@@ -1281,6 +1281,16 @@ Pas de build natif PS5 ni de validation console revendiqués pour ce lot.
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Lot SSL — contexte système réel + CreateConnectionEx — 23/11/2026
+
+**Vendor `d449cce2968bd306801b4ecbb5f3756134a540ae`** (arbre `cb9fd5e6168e4134898c5e9b4516a5c9f55a1c53`).
+
+Le chemin PS5 natif sélectionne explicitement `encore-active/eden-core/src/core/hle/service/ssl` via `headless/CMakeLists.txt` (R23 #120). `ssl:s` cmd0/cmd100 ne renvoient plus un succès vide : ils créent un vrai `ISslContext`. Le contexte créé par cmd100 est marqué système et expose `ISslContext::CreateConnectionEx` (cmd100) en alias du backend `CreateConnection` existant ; le contexte utilisateur n'expose pas cet alias. Le test hôte SSL existant a été étendu pour verrouiller ce graphe.
+
+Le miroir historique 4 853 ne matérialise pas `CreateConnectionEx` comme entrée distincte et le cmd0 existant était déjà PARTIEL : **compteur historique inchangé à 1 532 IMPL-SRC / 116 PARTIEL / 125 STUB / 140 NOOP / 1 769 NULL / 84 D / 176 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853 ; pool 2 290.**
+
+Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
+
 ---
 
 ## 1. Références et règle de vérité

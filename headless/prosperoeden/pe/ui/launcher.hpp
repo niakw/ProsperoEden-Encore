@@ -79,6 +79,18 @@ class Launcher
         return restart_requested_;
     }
     bool reduce_motion() const noexcept { return prefs_.reduce_motion; }
+    enum class LoadingCapturePose : std::uint8_t { live, front, back };
+    // Used only while the native frontend snapshots the already-composed
+    // loading scene. It never changes launch timing or guest state.
+    void set_loading_capture_pose(LoadingCapturePose pose) noexcept {
+        loading_capture_pose_ = pose;
+    }
+    [[nodiscard]] bool loading_back_available() const noexcept {
+        return native_launch_back_ready_;
+    }
+    [[nodiscard]] bool loading_final_pose_is_back() const noexcept {
+        return native_launch_show_back_;
+    }
     // Empty until a game is chosen.
     const std::string &selected_game() const
     {
@@ -391,6 +403,9 @@ class Launcher
     bool first_start_ = true;
     const bool native_artwork_loading_ = false;
     bool native_launch_art_ready_ = false;
+    bool native_launch_back_ready_ = false; // authentic rear reached GPU, even if it arrived late
+    bool native_launch_show_back_ = false; // final native pose already turned to that rear
+    LoadingCapturePose loading_capture_pose_ = LoadingCapturePose::live;
     std::chrono::steady_clock::time_point native_launch_deadline_{};
 
     // library
@@ -411,18 +426,26 @@ class Launcher
     // banner/player metadata as soon as the network/cache can provide it.
     std::future<Game> home_icon_scan_;
     std::uint64_t home_icon_scan_title_id_ = 0;
-    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_icon_next_retry_;
+    std::string home_icon_scan_file_; // exact installed input, not only shared TitleID
+    std::future<Game> home_icon_scan_extra_;
+    std::uint64_t home_icon_scan_extra_title_id_ = 0;
+    std::string home_icon_scan_extra_file_;
+    // Multiple NS1/NS2 editions can advertise the same TitleID; failures and
+    // successes belong to the exact installed input instead.
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> home_icon_next_retry_;
     std::future<Game> home_media_scan_;
     std::uint64_t home_media_scan_title_id_ = 0;
-    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> home_media_next_retry_;
+    std::string home_media_scan_file_;
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> home_media_next_retry_;
     std::future<Game> media_scan_; // selected Library title only; never a full-library HTTP queue
     std::uint64_t media_scan_title_id_ = 0;
+    std::string media_scan_file_;
     std::future<std::string> selected_size_scan_; // exact extracted-folder size; never gates media
     std::uint64_t selected_size_scan_title_id_ = 0;
     std::string selected_size_scan_file_;
     std::uint64_t selected_size_failed_title_id_ = 0; // suppress immediate retry until selection changes
     std::string selected_size_failed_file_;
-    std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> media_next_retry_;
+    std::unordered_map<std::string, std::chrono::steady_clock::time_point> media_next_retry_;
     float media_retry_timer_ = 0.0f; // only periodically poll for failed/late Nlib artwork
     bool games_loaded_ = false;
     ListView library_;

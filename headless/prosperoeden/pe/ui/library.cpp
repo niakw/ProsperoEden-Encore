@@ -747,7 +747,7 @@ void Launcher::finish_home_media()
             textures_.invalidate(enriched.box_front);
         if (enriched.case_artwork_changed & 2u)
             textures_.invalidate(enriched.box_back);
-        if (enriched.title_id == home_.last_title_id) {
+        if (enriched.title_id == home_.last_title_id && enriched.file == home_.last_file) {
             if (!enriched.cover.empty()) home_.last_cover = enriched.cover;
             if (!enriched.hero.empty()) home_.last_hero = enriched.hero;
             if (!enriched.screenshots.empty()) home_.last_screenshot = enriched.screenshots.front();
@@ -757,7 +757,7 @@ void Launcher::finish_home_media()
             if (!enriched.description.empty()) home_.last_description = enriched.description;
         }
         for (Recent& recent : home_.recents) {
-            if (recent.title_id != enriched.title_id) continue;
+            if (recent.title_id != enriched.title_id || recent.file != enriched.file) continue;
             if (!enriched.cover.empty()) {
                 recent.cover = enriched.cover;
                 if (recent.tile_icon.empty()) recent.tile_icon = enriched.cover;
@@ -772,7 +772,8 @@ void Launcher::finish_home_media()
         // If the library scan completed while the Home request was in flight, keep both views
         // on the same cache result without another network request.
         for (Game& game : games_) {
-            if (!enriched.title_id || game.title_id != enriched.title_id) continue;
+            if (!enriched.title_id || game.title_id != enriched.title_id ||
+                game.file != enriched.file) continue;
             if (!enriched.cover.empty()) game.cover = enriched.cover;
             if (!enriched.box_front.empty()) game.box_front = enriched.box_front;
             if (!enriched.box_back.empty()) game.box_back = enriched.box_back;
@@ -870,7 +871,8 @@ void Launcher::finish_selected_media()
         // invalidations above remain necessary, but its old Game snapshot
         // must not overwrite newer data from Home or a refreshed scan.
         if (!cancelled) for (Game& game : games_) {
-            if (!enriched.title_id || game.title_id != enriched.title_id) continue;
+            if (!enriched.title_id || game.title_id != enriched.title_id ||
+                game.file != enriched.file) continue;
             if (!enriched.cover.empty()) game.cover = enriched.cover;
             if (!enriched.box_front.empty()) game.box_front = enriched.box_front;
             if (!enriched.box_back.empty()) game.box_back = enriched.box_back;

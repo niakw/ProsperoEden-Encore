@@ -2310,3 +2310,12 @@ Vendor `4834515326ac41e679413970783baaf304fb5705` → gitlink moteur `e271ed8ef7
 **Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 431 NULL / 240 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 846** : 1 431 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## AppletAE — commandes develop/debug résiduelles rejetées (23/11/2026)
+
+Vendor `d1f92eee4c7557bd281ec481de521c178f0c6645` → gitlink moteur `e0990b2f7358c9dc622c1ca05d31286b13b5c03b`. `PopFloatingApplicationForDevelopment`, `GetDebugStorageChannel` et `BeginToObserveHidInputForDevelop` passent **NULL → D** via des handlers fail-closed actifs.
+
+**Compteur courant : 1 628 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 428 NULL / 243 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 843** : 1 428 NULL + 75 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

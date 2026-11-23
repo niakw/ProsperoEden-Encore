@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 544 | 80 | **1 624** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 545 | 80 | **1 625** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 75 | 0 | **75** |
 | **NOOP — No-op documenté** | 145 | 0 | **145** |
-| **NULL — Handler NULL** | 1 478 | 0 | **1 478** |
+| **NULL — Handler NULL** | 1 477 | 0 | **1 477** |
 | **D — Rejet explicite / historique** | 164 | 33 | **197** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1767,7 +1767,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `15` | `SetScreenShotAppletIdentityInfo` | 2.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; conserve l'identité screenshot dans l'état applet) | 2026-11-23 |
 | appletAE | `16` | `SetOutOfFocusSuspendingEnabled` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
 | appletAE | `17` | `SetControllerFirmwareUpdateSection` | 3.0.0+ | **IMPL-SRC** (stocke l'état firmware-update dans l'applet sous verrou ; le getter ID55 relit désormais ce même état ; vendor `0d21ded6`) | 2026-11-22 |
-| appletAE | `18` | `SetRequiresCaptureButtonShortPressedMessage` | 3.0.0+ | **NULL** ([source C++][ns1-src-005]) | 2026-11-22 |
+| appletAE | `18` | `SetRequiresCaptureButtonShortPressedMessage` | 3.0.0+ | **IMPL-SRC** (setter réel vers `handling_capture_button_short_pressed_message_enabled_for_applet`; `WindowSystem::SendButtonAppletMessageLocked` filtre désormais `DetectShortPressingCaptureButton` selon ce flag ; comportement recroisé avec Strato + ABI libnx ; vendor `4ab4481d`, moteur `d30f3aaa`; non validé PS5) | 2026-11-23 |
 | appletAE | `19` | `SetAlbumImageOrientation` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; conserve l'orientation album dans l'état applet) | 2026-11-23 |
 | appletAE | `20` | `SetDesirableKeyboardLayout` | 4.0.0+ | **IMPL-SRC** (stocke le layout clavier désiré dans l'applet principale sous verrou ; vendor `0d21ded6`) | 2026-11-22 |
 | appletAE | `40` | `CreateManagedDisplayLayer` | — | **IMPL-SRC** ([source C++][ns1-src-005]) | 2026-11-22 |
@@ -6341,3 +6341,10 @@ Vendor `ab32ad62ded46a623e265e257b30d692baf9c53c`, gitlink moteur `b4a3615b1a71f
 Le propriétaire actif `IAppletCommonFunctions` raccorde déjà les cmd10/11 à `ReadThemeStorage`/`WriteThemeStorage`. Les deux corps manipulent réellement `applet->theme_storage` avec bornage de l'offset et de la taille ; ces lignes historiques étaient restées `NULL` dans le catalogue. **2 NULL → IMPL-SRC**.
 
 **Compteur courant : 1 624 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 478 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 893.**
+
+
+### SelfController — exigence Capture-short raccordée au dispatch (23/11/2026)
+
+Vendor `4ab4481d7572d3dd7589837f65b7baee5519d80d`, gitlink moteur `d30f3aaab2e6ca2165161d88384346ad756ebc26` : cmd18 `SetRequiresCaptureButtonShortPressedMessage` écrit l'état applet existant et `WindowSystem` consulte désormais cet état avant d'envoyer `DetectShortPressingCaptureButton`. Ce n'est donc pas un setter dormant. **1 NULL → IMPL-SRC**. Pas encore validé sur PS5.
+
+**Compteur courant : 1 625 IMPL-SRC / 141 PARTIEL / 75 STUB / 145 NOOP / 1 477 NULL / 197 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 892.**

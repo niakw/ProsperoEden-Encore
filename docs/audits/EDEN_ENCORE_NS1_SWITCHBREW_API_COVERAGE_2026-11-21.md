@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 650 | 80 | **1 730** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 652 | 80 | **1 732** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 138 | 3 | **141** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
-| **NOOP — No-op documenté** | 192 | 0 | **192** |
-| **NULL — Handler NULL** | 1 298 | 0 | **1 298** |
+| **NOOP — No-op documenté** | 200 | 0 | **200** |
+| **NULL — Handler NULL** | 1 288 | 0 | **1 288** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -5062,18 +5062,18 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
-| npns:u | `1` | `ListenAll` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:u | `1` | `ListenAll` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:u | `2` | `ListenTo` | — | **NOOP** (même sémantique offline que `npns:s` : abonnement accepté localement, aucun backend Nintendo distant ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
 | npns:u | `3` | `Receive` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `4` | `ReceiveRaw` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `5` | `GetReceiveEvent` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
-| npns:u | `7` | `GetStateChangeEvent` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:u | `7` | `GetStateChangeEvent` | — | **IMPL-SRC** (renvoie un KEvent réel de changement d'état ; en mode offline il reste non signalé tant que l'état ne change pas ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:u | `21` | `CreateToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `23` | `DestroyToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `25` | `QueryIsTokenValid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `26` | `ListenToMyApplicationId` | 5.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `101` | `Suspend` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `102` | `Resume` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:u | `26` | `ListenToMyApplicationId` | 5.0.0+ | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
+| npns:u | `101` | `Suspend` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
+| npns:u | `102` | `Resume` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:u | `103` | `GetState` | — | **IMPL-SRC** (retourne l'état offline 0 comme `npns:s`, cohérent avec l'absence de session push distante ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
 | npns:u | `104` | `GetStatistics` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `111` | `GetJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -5084,13 +5084,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:u | `1` | `ListenTo` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 1 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
 | npns:u | `2` | `ListenToMyApplicationId` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 2 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
 | npns:u | `4` | `GetReceiveEvent` | — | **ABI-DIFF** ([source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; les slots 4 d'INpnsUser portent des noms différents ou une variante différente ; statique, PS5 non validé) | 2026-11-22 |
-| npns:s | `1` | `ListenAll` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `1` | `ListenAll` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `2` | `ListenTo` | — | **NOOP** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; compatibilité locale explicite : aucun backend Nintendo push, abonnement distant non simulé) | 2026-11-23 |
 | npns:s | `3` | `Receive` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `4` | `ReceiveRaw` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `5` | `GetReceiveEvent` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; retourne le handle du vrai `get_receive_event` détenu par NPNS) | 2026-11-23 |
 | npns:s | `6` | `ListenUndelivered` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `7` | `GetStateChangeEvent` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `7` | `GetStateChangeEvent` | — | **IMPL-SRC** (renvoie un KEvent réel de changement d'état ; en mode offline il reste non signalé tant que l'état ne change pas ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `11` | `SubscribeTopic` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `12` | `UnsubscribeTopic` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `13` | `QueryIsTopicExist` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -5099,13 +5099,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `23` | `DestroyToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `24` | `DestroyTokenWithApplicationId` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `25` | `QueryIsTokenValid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `26` | `ListenToMyApplicationId` | 5.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `26` | `ListenToMyApplicationId` | 5.0.0+ | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `31` | `UploadTokenToBaaS` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `32` | `DestroyTokenForBaaS` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `33` | `CreateTokenForBaas` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `34` | `SetBaasDeviceAccountIdList` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `101` | `Suspend` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `102` | `Resume` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `101` | `Suspend` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
+| npns:s | `102` | `Resume` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `103` | `GetState` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; état offline explicite correspondant à l'absence de connexion push persistante) | 2026-11-23 |
 | npns:s | `104` | `GetStatistics` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `105` | `GetPlayReportRequestEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -6541,3 +6541,10 @@ Vendor `486fd09dcd10c3c59c85bc67024b09d19e6f5d19` (inclut `7428d50144fe527fe1362
 Vendor `bdab8fc1a8d31305f63412305d577011d07cf3fe` → gitlink moteur `6c99a252ab483565883746b0c163e362698e42e9`. **2 NULL → IMPL-SRC** : cmd14 expose l'ABI Ex0 complète (attribut + width/height + buffers) sur le décodeur AlbumManager ; cmd501 calcule réellement l'espace requis depuis les fichiers indexés. Les commandes Usage/Cache restent ouvertes car certains champs Horizon ne sont pas encore prouvés. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 730 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 298 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 690.**
+
+
+### NPNS — commandes locales offline (23/11/2026)
+
+Vendor `1bbeb625af292945d60f98e91c4fc55a9ee4f4e0` → gitlink moteur `ed3e7c9a12a464061dd433f640b5e72a330501a7`. **10 NULL sortent du pool : 2 → IMPL-SRC, 8 → NOOP.** `GetStateChangeEvent` renvoie un événement kernel réel sur `npns:u` et `npns:s`. `ListenAll`, `ListenToMyApplicationId`, `Suspend` et `Resume` sont des adaptations offline explicites : Encore n'expose aucune connexion push Nintendo à suspendre ou reprendre. Les tokens opaques restent ouverts. Pas de validation PS5 revendiquée.
+
+**Compteur courant : 1 732 IMPL-SRC / 141 PARTIEL / 52 STUB / 200 NOOP / 1 288 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 680.**

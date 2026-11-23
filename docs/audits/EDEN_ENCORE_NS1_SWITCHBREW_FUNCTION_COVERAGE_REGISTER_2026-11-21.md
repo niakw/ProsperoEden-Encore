@@ -2499,3 +2499,12 @@ Vendor `bdab8fc1a8d31305f63412305d577011d07cf3fe` → gitlink moteur `6c99a252ab
 **Compteur courant : 1 730 IMPL-SRC / 141 PARTIEL / 52 STUB / 192 NOOP / 1 298 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 690** : 1 298 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## NPNS — commandes locales offline (23/11/2026)
+
+Vendor `1bbeb625af292945d60f98e91c4fc55a9ee4f4e0` → gitlink moteur `ed3e7c9a12a464061dd433f640b5e72a330501a7`. **10 NULL sortent du pool** sur `npns:u/s` : deux événements d'état réels et huit commandes de souscription/suspend/resume documentées comme no-op offline. Les commandes token restent ouvertes car leur payload 0x28 n'est pas simulé. Pas de validation console revendiquée.
+
+**Compteur courant : 1 732 IMPL-SRC / 141 PARTIEL / 52 STUB / 200 NOOP / 1 288 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool restant à examiner = 1 680** : 1 288 NULL + 52 STUB + 141 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.

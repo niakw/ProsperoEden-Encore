@@ -20,6 +20,14 @@ expected={
  # pin the new reviewed source with the source-extracted reentrant witness.
  "jit": "aaff079cedf068b1d032af6cb3abc5f8b5e72178",
 }
+# The Lichii/Eglantine AM/LM vendor successor carries the previously
+# audited FC27 SM/NVDRV shutdown interface. Keep the old literal baseline
+# for older vendors; require the exact new SM header blob on selected main.
+import subprocess
+pin = subprocess.check_output(["git","rev-parse","HEAD:vendor"], cwd=root, text=True).strip()
+if pin in {"0390980a5752808dfba7b8edaa7d113cc4e4e6eb", "273680a5b33bff15c9ca12685cfadb2aa15ff9f1"}:
+    expected["sm"] = "7069439e66a6f28ffa56229e08906a21222e2801"
+
 def gitblob(data: bytes)->str:
     return hashlib.sha1(b"blob "+str(len(data)).encode()+b"\0"+data).hexdigest()
 # Historical pre-pressure-rollback source: 26ae49088a528c4cf27712f639948604de2260d4.

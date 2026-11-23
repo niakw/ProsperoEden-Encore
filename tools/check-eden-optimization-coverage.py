@@ -3185,7 +3185,7 @@ assert sparse_receipt["research_source_git_blob"] == (
 # The current source has advanced through the three separately replayed
 # sparse clear/demand-zero successors below. Require that exact current blob
 # here; the immutable b934 owner is reconstructed before the R457 receipt.
-assert sparse_drift["actual"] == "086fdbeaeffc5eca7beeff509804e6cc4c2333cf"
+assert sparse_drift["actual"] == "2ac696f8f2eb4312e178eb4587a87dcc7bbcd75e"
 dense_fallback_guard = """#ifdef PS5_NATIVE
         // NS2 must never request 12 GiB of physical RAM because a
         // compile-flag mismatch silently disabled the sparse owner.
@@ -3197,6 +3197,59 @@ dense_fallback_guard = """#ifdef PS5_NATIVE
 #endif
 """
 current_sparse_source = (ROOT/sparse_path).read_text()
+# NS1 sparse adaptation: the production owner now accepts every supported
+# Nintendo guest layout (4/6/8/10/12 GiB) with a physical budget capped at
+# 6 GiB. Reverse exactly this one constructor block before replaying the
+# older NS2-only R457 receipt chain below.
+ns1_sparse_layout_successor = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        constexpr std::size_t GiB = 1ull << 30;
+        constexpr std::size_t PhysicalBudget = 6ull * GiB;
+        // Nintendo's supported guest layouts are 4/6/8/10/12 GiB. Use the
+        // same ZERO/OWN sparse owner for NS1 and NS2 instead of allocating
+        // the complete guest DRAM physically up front. The physical budget
+        // is bounded by the guest layout for 4/6 GiB and by 6 GiB above it.
+        const bool supported_guest_layout =
+            requested == 4ull * GiB || requested == 6ull * GiB ||
+            requested == 8ull * GiB || requested == 10ull * GiB ||
+            requested == 12ull * GiB;
+        if (supported_guest_layout) {
+            const auto budget = (std::min)(requested, PhysicalBudget);
+            sparse = std::make_unique<Eden::PS5::GuestBacking::Runtime>(
+                requested, budget);
+            if (!sparse->Valid() || !sparse->Install())
+                throw std::system_error(ENOMEM, std::generic_category(),
+                                        "PS5 sparse guest VA reservation");
+            base = static_cast<u8*>(sparse->Base());
+            // Production PS5 keeps Fastmem disabled. If a developer requests
+            // it, fail safely to the page-table path rather than aliasing the
+            // shared read-only ZERO block writable.
+            return;
+        }
+#endif"""
+ns1_sparse_layout_predecessor = """#if defined(PS5_NATIVE) && defined(EDEN_NS2_SPARSE_BACKING)
+        constexpr std::size_t Ns2Dram = 12ull << 30;
+        constexpr std::size_t PhysicalBudget = 6ull << 30;
+        if (requested == Ns2Dram) {
+            // Preserve the full 12 GiB guest-physical address range. The
+            // production backing commits independent 2 MiB direct mappings
+            // before a kernel PTE or ClearBackingRegion can expose them.
+            // A32 fastmem's single-PA alias is intentionally NOT created.
+            sparse = std::make_unique<Eden::PS5::GuestBacking::Runtime>(
+                requested, PhysicalBudget);
+            if (!sparse->Valid() || !sparse->Install())
+                throw std::system_error(ENOMEM, std::generic_category(),
+                                        "NS2 sparse guest VA reservation");
+            base = static_cast<u8*>(sparse->Base());
+            return;
+        }
+#endif"""
+current_native_raw = current_sparse_source.encode("utf-8")
+assert hashlib.sha1(
+    b"blob " + str(len(current_native_raw)).encode() + bytes([0]) +
+    current_native_raw).hexdigest() == "2ac696f8f2eb4312e178eb4587a87dcc7bbcd75e"
+assert current_sparse_source.count(ns1_sparse_layout_successor) == 1
+current_sparse_source = current_sparse_source.replace(
+    ns1_sparse_layout_successor, ns1_sparse_layout_predecessor, 1)
 # Replay the exact post-snapshot zero-fill elision delta on the audit copy:
 # a brand-new physical 2 MiB mapping is already zero from CommitMemoryRange.
 # Never alter the historical F07 research snapshot or the shipping C++.

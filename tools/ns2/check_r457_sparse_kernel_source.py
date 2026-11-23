@@ -59,6 +59,7 @@ reviewed_vendors.add("ced1b9cdd6f0fa4e0ca7949b404f450aae0055df")
 reviewed_vendors.add("06b453171af26b5703e2fcc5e68c4e8288d758b7")
 reviewed_vendors.add("fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2")
 reviewed_vendors.add("56959a23273ea2ee82d2e59628c92cc9e1144fe9")
+reviewed_vendors.add("d3c76f07cd82f7766be7b5e3fc3c399a3be15291")
 pinned=subprocess.check_output(["git","rev-parse","HEAD:vendor"],
                                cwd=root,text=True).strip()
 selected=subprocess.check_output(["git","-C",str(root/"vendor"),"rev-parse","HEAD"],
@@ -93,7 +94,8 @@ def gitblob(path):
     return hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
 for path,expected in (
     ("vendor/encore-active/ns2-runtime/sparse-residency/core/hle/kernel/k_memory_manager.cpp",
-     "aeee7f62a3fc609936ff5dc6a64722ca8d860c2e" if selected == "56959a23273ea2ee82d2e59628c92cc9e1144fe9"
+     "6397dd2c4a9c9c10674ab87b344f5c6956b79e0c" if selected == "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"
+     else "aeee7f62a3fc609936ff5dc6a64722ca8d860c2e" if selected == "56959a23273ea2ee82d2e59628c92cc9e1144fe9"
      else "12d3d0ddc59308b80df46bc54e6e8ee54011d568" if selected == "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2"
      else "c5b5dd99bb9a65286783f4b220d991f422d19e67" if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7"}
      else "88f3e2c9220ee03fd6600ef12441d7ece7527c9d"),
@@ -123,7 +125,7 @@ guarded=(r"^#if defined\(PS5_NATIVE\) && "
          r"defined\(EDEN_NS2_SPARSE_BACKING\)\n"
          r"[\s\S]*?^#endif\n")
 guard_count = len(re.findall(guarded,kernel,flags=re.MULTILINE))
-if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9"}:
+if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"}:
     # This exact runtime blob carries the OOM rollback and optimized
     # preflight reviewed after the original R457 source-only parity gate.
     # Its full SHA is already checked above; do not silently normalize an
@@ -187,7 +189,7 @@ for variant in ("memory_native_a32.cpp","memory_native_standard.cpp"):
     begin=owner.index("    void MapMemoryRegion(")
     end=owner.index("    void UnmapRegion(",begin)
     section=owner[begin:end]
-    if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9"}:
+    if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"}:
         assert section.count("EdenNs2EnsureGuestBackingReadable(")==1,variant
         assert "EdenNs2CommitGuestBacking(" not in section,variant
         assert section.index("EdenNs2EnsureGuestBackingReadable(")<section.index(
@@ -200,7 +202,7 @@ for variant in ("memory_native_a32.cpp","memory_native_standard.cpp"):
 
 metadata=kernel.split("void KMemoryManager::Impl::InitializeOptimizedMemory",1)[1].split(
     "void KMemoryManager::Impl::TrackUnoptimizedAllocation",1)[0]
-if selected == "56959a23273ea2ee82d2e59628c92cc9e1144fe9":
+if selected in {"56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"}:
     assert "buffer.ClearBackingRegion(" in metadata
     assert "CommitKernelDirectGuestRange(" not in metadata
     assert "GetPointer<u64>(" not in metadata
@@ -211,14 +213,18 @@ else:
 
 optimized=kernel.split("bool KMemoryManager::Impl::ProcessOptimizedAllocation",1)[1].split(
     "size_t KMemoryManager::Impl::CalculateManagementOverheadSize",1)[0]
-if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9"}:
+if selected in {"fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291"}:
     assert "device_memory.buffer.ClearBackingRegion(" in optimized
     assert "CommitKernelDirectGuestRange(kernel.System(), block" not in optimized
 else:
     assert optimized.index("CommitKernelDirectGuestRange(")<optimized.index("GetPointer<u64>(")
     assert optimized.index("CommitKernelDirectGuestRange(")<optimized.index("std::memset(")
 assert 'Core::DramMemoryMap::Base' in kernel
-assert 'Core::DramMemoryMap::Base' in kernel
+if selected == "d3c76f07cd82f7766be7b5e3fc3c399a3be15291":
+    track_unoptimized=kernel.split("void KMemoryManager::Impl::TrackUnoptimizedAllocation",1)[1].split(
+        "void KMemoryManager::Impl::TrackOptimizedAllocation",1)[0]
+    assert "if (word & mask)" in track_unoptimized
+    assert "word &= ~mask;" in track_unoptimized
 
 gpu=read("vendor/encore-active/eden-core/overrides/core/device_memory_manager.inc")
 mapping=gpu.split("void DeviceMemoryManager<Traits>::Map(",1)[1].split(

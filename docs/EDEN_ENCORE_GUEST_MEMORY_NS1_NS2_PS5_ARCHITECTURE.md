@@ -16,6 +16,8 @@
 
 **P0 métadonnées optimisées (23/11) :** vendor [`56959a23`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/56959a23273ea2ee82d2e59628c92cc9e1144fe9) laisse la zone de métadonnées d'allocation optimisée sur le backing ZERO partagé lors de son initialisation. Le premier bit réellement modifié promeut le chunk concerné ; le noyau n'engage plus tout le span uniquement pour écrire des zéros. Validation PS5 toujours requise.
 
+**P0 bitmap demand-zero (23/11) :** vendor [`d3c76f07`](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/d3c76f07cd82f7766be7b5e3fc3c399a3be15291) évite désormais l'écriture `0→0` de `TrackUnoptimizedAllocation`. Un mot de bitmap encore sur le bloc ZERO partagé n'est donc pas promu en chunk OWN de 2 Mio tant qu'aucun bit n'a réellement besoin de changer. Ce gain de résidence est causal en source, mais reste à mesurer sur PS5.
+
 ## 1. Décision et priorités
 
 La mémoire physique PS5 est une ressource **commune** à l'hôte, au processus invité, au JIT, aux buffers/images RADV, aux stacks, aux caches et aux services. Une grande adresse invitée mappée n'est pas une grande allocation physique. La solution pérenne doit partager des **contrats d'ownership** entre NS1 et NS2, sans leur imposer des politiques identiques.

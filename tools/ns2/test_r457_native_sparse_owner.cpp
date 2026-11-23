@@ -4,20 +4,36 @@
 #include "ns2_sparse_guest.h"
 #include "ps5_ns2_guest_backing_plan.h"
 #include <cassert>
+#include <csignal>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <map>
 #include <sys/mman.h>
 
 using Eden::PS5::GuestBacking::Runtime;
 using Eden::PS5::GuestBacking::kGranule;
 using Eden::PS5::GuestBacking::kNs2Dram;
-static std::int64_t pa_next = 0;
-static int successful_commits = 0, released = 0, fail_at = -1;
-static bool destructive_fail = false;
-static std::map<std::int64_t,bool> alive;
+// These witnesses are touched from the SIGSEGV promotion path. Keep the
+// mock signal-observable and allocation-free: a normal int/std::map makes the
+// test itself undefined at -O1 even when the runtime correctly retries the
+// faulting write.
+static constexpr std::size_t kMaxMockOwners = 32;
+static volatile std::sig_atomic_t next_physical_slot = 0;
+static volatile std::sig_atomic_t successful_commits = 0;
+static volatile std::sig_atomic_t released = 0;
+static volatile std::sig_atomic_t fail_at = -1;
+static volatile std::sig_atomic_t destructive_fail = 0;
+static volatile std::sig_atomic_t alive[kMaxMockOwners]{};
+
+static std::size_t OwnerSlot(std::int64_t physical) noexcept {
+    assert(physical > 0 &&
+           (static_cast<std::uint64_t>(physical) % kGranule) == 0);
+    const auto slot = static_cast<std::size_t>(
+        static_cast<std::uint64_t>(physical) / kGranule);
+    assert(slot < kMaxMockOwners);
+    return slot;
+}
 
 namespace Common {
 void* ReserveMemoryRange(std::size_t bytes) noexcept {
@@ -36,11 +52,13 @@ bool CommitMemoryRange(void* at, std::size_t bytes, std::int64_t* physical) noex
     void* p = mmap(at,bytes,PROT_READ|PROT_WRITE,
                    MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
     if (p != at) return false;
-    pa_next += static_cast<std::int64_t>(kGranule);
-    *physical = pa_next;
-    assert(alive.emplace(pa_next,true).second);
+    const auto slot = static_cast<std::size_t>(++next_physical_slot);
+    assert(slot < kMaxMockOwners && alive[slot] == 0);
+    *physical = static_cast<std::int64_t>(slot * kGranule);
+    alive[slot] = 1;
     ++successful_commits;
-    std::memset(at,0,bytes);
+    // MAP_ANONYMOUS supplies zero-filled pages, matching the production
+    // CommitMemoryRange postcondition without invoking allocator-backed mocks.
     return true;
 }
 }
@@ -50,15 +68,17 @@ extern "C" std::int32_t sceKernelMapDirectMemory(void** at, std::size_t bytes,
                                                    std::int64_t physical,
                                                    std::size_t alignment) {
     assert(bytes == kGranule && alignment == kGranule);
-    assert(alive.count(physical) && alive[physical]);
+    const auto slot = OwnerSlot(physical);
+    assert(alive[slot] != 0);
     void* mapped = mmap(*at,bytes,protection,
                         MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,-1,0);
     return mapped == *at ? 0 : -1;
 }
 extern "C" std::int32_t sceKernelReleaseDirectMemory(std::int64_t pa, std::size_t bytes) {
     assert(bytes == kGranule);
-    assert(alive.count(pa) && alive[pa]);
-    alive[pa] = false;
+    const auto slot = OwnerSlot(pa);
+    assert(alive[slot] != 0);
+    alive[slot] = 0;
     ++released;
     return 0;
 }
@@ -120,7 +140,8 @@ int main() {
         assert(guest.UsedBytes()==kGranule);
 
         assert(guest.Clear(2*kGranule+17,4096,0));
-        assert(successful_commits==2 && guest.UsedBytes()==kGranule);
+        const auto after_repromote=successful_commits;
+        assert(after_repromote==after_free+1 && guest.UsedBytes()==kGranule);
         assert(base[2*kGranule+17]==0);
 
         // Mixed ZERO/OWN zero clear must not promote the untouched neighbor.
@@ -160,7 +181,8 @@ int main() {
         guest.Uninstall();
         assert(EdenNs2CommitGuestBacking(nullptr,0,kGranule));
     }
-    for (const auto& [pa,live]:alive) assert(!live);
+    for (std::size_t slot=1; slot<kMaxMockOwners; ++slot)
+        assert(alive[slot] == 0);
     // one page-heap return + one rolled-back OWN + four live OWN + shared ZERO.
     assert(released==7);
     std::puts("R457_PS5_DEMAND_ZERO_GUEST_REAL_OWNER_MOCK_PASS");

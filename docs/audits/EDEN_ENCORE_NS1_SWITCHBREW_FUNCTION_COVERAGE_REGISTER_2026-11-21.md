@@ -1318,6 +1318,16 @@ Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
 Aucun build natif PS5 ni test console n'est revendiqué pour ce lot.
 
+## Requalification PCIe — session impossible à obtenir — 23/11/2026
+
+Le service racine `pcie` est bien exposé, mais ses deux commandes racine `RegisterClassDriver` et `QueryFunctionsUnregistered` restent NULL et **aucun code Encore ne construit ni ne retourne `ISession`** (`make_shared<ISession>` / `PushIpcInterface<ISession>` absents).
+
+Les **20 commandes de session** présentes dans le miroir historique, de `QueryFunctions` à `SetIrqEnable`, passent donc **NULL → INACCESSIBLE**. Les deux commandes racine restent NULL ; l'entrée ID20 `SetAspmEnable` reste ABI-DIFF car la table actuelle utilise ID20 pour `GetIrqEvent`.
+
+**Compteur historique : 1 532 IMPL-SRC / 129 PARTIEL / 125 STUB / 141 NOOP / 1 735 NULL / 84 D / 196 INACCESSIBLE / 306 SERVICE-NON-EXPOSÉ / 325 HORS-VERSION / 0 ABSENT / 271 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
+
+**Pool historique restant à examiner = 2 269** : 1 735 NULL + 125 STUB + 129 PARTIEL + 271 ABI-DIFF + 9 AMBIGU.
+
 ---
 
 ## 1. Références et règle de vérité

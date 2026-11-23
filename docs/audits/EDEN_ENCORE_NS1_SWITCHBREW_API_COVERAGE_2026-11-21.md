@@ -34,9 +34,9 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 126 | 3 | **129** |
 | **STUB — Stub / résultat simulé** | 125 | 0 | **125** |
 | **NOOP — No-op documenté** | 141 | 0 | **141** |
-| **NULL — Handler NULL** | 1 755 | 0 | **1 755** |
+| **NULL — Handler NULL** | 1 735 | 0 | **1 735** |
 | **D — Rejet explicite / historique** | 51 | 33 | **84** |
-| **INACCESSIBLE — Interface parente non ouvrable** | 176 | 0 | **176** |
+| **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 306 | 0 | **306** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 324 | 1 | **325** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
@@ -448,9 +448,9 @@ pie showData
     "Implémentation partielle" : 129
     "Stub / résultat simulé" : 125
     "No-op documenté" : 141
-    "Handler NULL" : 1755
+    "Handler NULL" : 1735
     "Rejet explicite / historique" : 84
-    "Interface parente non ouvrable" : 176
+    "Interface parente non ouvrable" : 196
     "Service/interface non exposé sous cette forme" : 306
     "Hors version firmware cible" : 325
     "Commande absente des tables" : 0
@@ -5182,26 +5182,26 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 |---|---|---|---|---|---|
 | pcie | `0` | `RegisterClassDriver` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
 | pcie | `1` | `QueryFunctionsUnregistered` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `0` | `QueryFunctions` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `1` | `AcquireFunction` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `2` | `ReleaseFunction` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `3` | `GetFunctionState` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `4` | `GetBarProfile` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `5` | `ReadConfig` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `6` | `WriteConfig` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `7` | `ReadBarRegion` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `8` | `WriteBarRegion` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `9` | `FindCapability` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `10` | `FindExtendedCapability` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `11` | `MapDma` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `12` | `UnmapDma` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `13` | `UnmapDmaBusAddress` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `14` | `GetDmaBusAddress` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `15` | `GetDmaBusAddressRange` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `16` | `SetDmaEnable` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `17` | `AcquireIrq` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `18` | `ReleaseIrq` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
-| pcie | `19` | `SetIrqEnable` | — | **NULL** ([source C++][ns1-src-114]) | 2026-11-22 |
+| pcie | `0` | `QueryFunctions` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `1` | `AcquireFunction` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `2` | `ReleaseFunction` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `3` | `GetFunctionState` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `4` | `GetBarProfile` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `5` | `ReadConfig` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `6` | `WriteConfig` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `7` | `ReadBarRegion` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `8` | `WriteBarRegion` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `9` | `FindCapability` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `10` | `FindExtendedCapability` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `11` | `MapDma` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `12` | `UnmapDma` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `13` | `UnmapDmaBusAddress` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `14` | `GetDmaBusAddress` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `15` | `GetDmaBusAddressRange` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `16` | `SetDmaEnable` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `17` | `AcquireIrq` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `18` | `ReleaseIrq` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
+| pcie | `19` | `SetIrqEnable` | — | **INACCESSIBLE** (objet `ISession` jamais construit ni retourné par le service `pcie`; `RegisterClassDriver` / `QueryFunctionsUnregistered` restent NULL) | 2026-11-23 |
 | pcie | `20` | `SetAspmEnable` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/pcie/pcie.cpp) ; ID 20 porte `GetIrqEvent` dans la table actuelle, pas `SetAspmEnable` ; statique, PS5 non validé) | 2026-11-22 |
 
 ### Parental Control services

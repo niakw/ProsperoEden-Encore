@@ -1,6 +1,7 @@
 [submodule "vendor"]
 	path = vendor
 	url = https://github.com/niakw/Prospero.Eden-Encore-vendor.git
+	branch = engine-main
 
 [submodule "encore-overrides"]
 	path = encore-overrides

@@ -2,6 +2,7 @@
 """R311: replay PS5 nvmap invalid-device-lock fix against immutable Eden input."""
 from pathlib import Path
 import hashlib
+import json
 import subprocess
 import tempfile
 
@@ -18,7 +19,9 @@ assert "validate_ps5_nvmap_alloc_rollback" in script
 if not patch_path.is_file():
     raise SystemExit("Missing production nvmap patch")
 vendor_eden = root / "vendor/sources/eden"
-assert (vendor_eden / "GIT-COMMIT").read_text().strip() == pinned
+origin = json.loads((vendor_eden / "VENDOR-ORIGIN.json").read_text())
+assert origin["name"] == "eden"
+assert origin["upstream_url"].endswith(f"/archive/{pinned}.tar.gz"), origin
 payload = (vendor_eden / source_path).read_bytes()
 actual = hashlib.sha1(
     b"blob " + str(len(payload)).encode() + b"\0" + payload).hexdigest()

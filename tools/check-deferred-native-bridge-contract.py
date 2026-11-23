@@ -1054,13 +1054,14 @@ endif()
             assert zero_owner < zero_start < zero_end == zero_memset, owner
             zero_guard = maintained[zero_start:zero_end]
             for witness in (
-                'GetIntendedMemorySize() ==',
-                '(12ull << 30)',
+                'either NS1 or NS2',
                 'IsDirectBackingAlias(reinterpret_cast<std::uintptr_t>(ptr), copy_amount)',
                 'buffer.ClearBackingRegion(',
                 'return;',
             ):
-                assert witness in zero_guard, ("NS2 zero-owner safety guard", owner, witness)
+                assert witness in zero_guard, ("PS5 guest zero-owner safety guard", owner, witness)
+            assert 'GetIntendedMemorySize() ==' not in zero_guard, owner
+            assert '(12ull << 30)' not in zero_guard, owner
             alias_start = maintained.index(
                 "#ifdef PS5_NATIVE\n    // Delta-zero page pointers")
             alias_end = maintained.index("#endif\n\n", alias_start) + len("#endif\n\n")

@@ -134,6 +134,7 @@ guarded=(r"^#if defined\(PS5_NATIVE\) && "
          r"defined\(EDEN_NS2_SPARSE_BACKING\)\n"
          r"[\s\S]*?^#endif\n")
 guard_count = len(re.findall(guarded,kernel,flags=re.MULTILINE))
+normalize=lambda source: re.sub(r"\n\s*\n","\n\n",source).strip()
 if selected in {"ced1b9cdd6f0fa4e0ca7949b404f450aae0055df", "06b453171af26b5703e2fcc5e68c4e8288d758b7", "fd6eee4933c36ed93d6ef59e2ae5d23fd975f9f2", "56959a23273ea2ee82d2e59628c92cc9e1144fe9", "d3c76f07cd82f7766be7b5e3fc3c399a3be15291", "436e702cc970417455c088c4bc38ce5fec8e0762", "6489896230a030cf28d31961c7c8f242cab73f27", "05de9e8e7f75e9a7400a351b18f2b1e83165108e", "ee64fac70671126c9b6ab9aa3b3885a40538cf16", "603e0d5c70b04fa84a19cca8f580ed1bdb230be0", "593bc9ee6ddfcf38e488325ccf318f1a0a109d8e", "6b48e6734e738306dd57ceed8be9b003631eb8cb", "d554e257ae82db66d9542f472dcde067510bfa1f"}:
     # This exact runtime blob carries the OOM rollback and optimized
     # preflight reviewed after the original R457 source-only parity gate.
@@ -161,7 +162,6 @@ else:
     assert guard_count == 4
     stripped=re.sub(guarded,"",kernel,flags=re.MULTILINE)
     stripped=stripped.replace("#include <new>\n#include <limits>\n","")
-    normalize=lambda source: re.sub(r"\n\s*\n","\n\n",source).strip()
     assert normalize(stripped)==normalize(baseline), "kernel semantics drift"
 assert "set(EDEN_NS2_SPARSE_BACKING OFF)" in cmake
 assert "set(EDEN_NS2_SPARSE_BACKING ON)" in cmake

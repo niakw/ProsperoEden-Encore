@@ -2965,3 +2965,9 @@ Vendor `61637939907bcc513b7869936144ad083e712856` : NS `IApplicationManagerInter
 
 SwitchBrew documente pour HOS20+ le défaut `ns.applet!system_applet_id_gen2 = 0100000000001000` et précise que HomeMenu cmd50 wrappe NS cmd304. **NULL → PARTIEL** pour les deux contrats : l'état NS qui sélectionne MaintenanceMenu et les overrides non-default de `system_applet_id_gen2` ne sont pas encore modélisés. Le **pool global reste 1 555 / 4 853**. Dans les quatre gros owners AM ciblés, il reste **6 slots `nullptr` physiques**, dont **5 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM SelfController : ProgramId screenshot relu depuis l’identité active
+
+Vendor `b6d4bdf90dbce6fe685a09a578e064a77f6293c7` : `ISelfController::GetScreenShotProgramId` (cmd21) n'est plus NULL. Le dump IPC NS1 23.0.1 confirme zéro entrée et une sortie `u64`. Le handler relit sous le verrou de l'applet `screen_shot_identity.application_id`, valeur persistée par cmd15 `SetScreenShotAppletIdentityInfo`; lorsque cette identité n'a pas encore été surchargée, il retombe sur le `program_id` réel de l'applet. Cette règle est identique à celle déjà utilisée par le chemin Overlay logo/movie pour sélectionner la ressource de capture.
+
+**1 NULL → IMPL-SRC. Pool restant = 1 554 / 4 853.** L'owner SelfController actif ne conserve plus que cmd45 `SetManagedDisplayLayerSeparationMode` et cmd46 `SetRecordingLayerCompositionEnabled` à NULL ; ils restent ouverts faute de backend VI de séparation/composition démontré. Aucun build natif PS5 ni validation console revendiqués.
+

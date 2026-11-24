@@ -3026,3 +3026,11 @@ Vendor `1bf7529e72295266f92beb180ae602ec9a954db4` : `CreateGameMovieTrimmer` (cm
 
 **1 NULL → D. Pool restant = 1 545 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM AppletCommon : NamedChannels sans backend rejetés explicitement
+
+Vendor `224bac056b368bf4edf3f0575de187d40d4edb76` : `OpenNamedChannelAsParent` (cmd90) et `OpenNamedChannelAsChild` (cmd91) ne sont plus des slots NULL. Le dump firmware NS1 23.0.1 confirme pour chacun **0x10 octets d'entrée** et une interface `IStorageChannel` en sortie. Encore consomme désormais exactement ces 16 octets via le dispatcher CMIF puis retourne une erreur explicite.
+
+Ce rejet est volontaire : le runtime actif ne contient ni service IPC `IStorageChannel`, ni registre partagé de named channels parent/enfant. Réutiliser `AppletStorageChannel` local sans identité partagée fabriquerait une sémantique différente de Horizon. **2 NULL → D.**
+
+**Pool restant = 1 543 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

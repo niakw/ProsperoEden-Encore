@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 685 | 80 | **1 765** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 687 | 80 | **1 767** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
-| **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
+| **STUB — Stub / résultat simulé** | 51 | 0 | **51** |
 | **NOOP — No-op documenté** | 208 | 0 | **208** |
-| **NULL — Handler NULL** | 1 232 | 0 | **1 232** |
+| **NULL — Handler NULL** | 1 231 | 0 | **1 231** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1072,7 +1072,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `11` | `ActivateTouchScreen` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `21` | `ActivateMouse` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `31` | `ActivateKeyboard` | — | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `32` | `SendKeyboardLockKeyEvent` | 6.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `32` | `SendKeyboardLockKeyEvent` | 6.0.0+ | **IMPL-SRC** ([vendor be709442](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/be709442d734683ffd9725c7035a932a73bf5c87) ; événements On/Off/Toggle appliqués à l'état clavier invité synchronisé ; ABI libnx ; LED physique hôte non pilotée ; PS5 non validé) | 2026-11-24 |
 | hid | `40` | `AcquireXpadIdEventHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
 | hid | `41` | `ReleaseXpadIdEventHandle` | — | **HORS-VERSION** (SwitchBrew HID : commande S1 historique limitée à HOS 1.0.0–22.5.0 ; cible HOS 23) | 2026-11-23 |
 | hid | `51` | `ActivateXpad` | — | **NOOP** ([vendor ecb8ae0e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/ecb8ae0e177cf5ac2015b26bff722f70a147f6cd) ; HOS 10.0.0+ : compatibilité intentionnelle sans mutation, cible NS1 23.x) | 2026-11-23 |
@@ -1305,7 +1305,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid:dbg | `550` | `SetAnalogStickModelDataTemporarily` | 9.0.0+ | **D** (commande HID debug/dev explicitement rejetée par le handler fail-closed `RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` même si `auto_stub` est activé ; aucun support matériel/debug fictif ; vendor `0c533eec`, gitlink moteur `56e9033f`) | 2026-11-23 |
 | hid:dbg | `551` | `GetAnalogStickModelData` | 9.0.0+ | **D** (commande HID debug/dev explicitement rejetée par le handler fail-closed `RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` même si `auto_stub` est activé ; aucun support matériel/debug fictif ; vendor `0c533eec`, gitlink moteur `56e9033f`) | 2026-11-23 |
 | hid:dbg | `552` | `ResetAnalogStickModelData` | 9.0.0+ | **D** (commande HID debug/dev explicitement rejetée par le handler fail-closed `RejectUnsupportedDebugCommand`; retourne `Kernel::ResultNotImplemented` même si `auto_stub` est activé ; aucun support matériel/debug fictif ; vendor `0c533eec`, gitlink moteur `56e9033f`) | 2026-11-23 |
-| hid:sys | `31` | `SendKeyboardLockKeyEvent` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
+| hid:sys | `31` | `SendKeyboardLockKeyEvent` | — | **IMPL-SRC** ([vendor be709442](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/be709442d734683ffd9725c7035a932a73bf5c87) ; événements On/Off/Toggle appliqués à l'état clavier invité synchronisé ; ABI libnx ; LED physique hôte non pilotée ; PS5 non validé) | 2026-11-24 |
 | hid:sys | `101` | `AcquireHomeButtonEventHandle` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `111` | `ActivateHomeButton` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |
 | hid:sys | `121` | `AcquireSleepButtonEventHandle` | — | **NULL** ([source C++][ns1-src-010]) | 2026-11-22 |

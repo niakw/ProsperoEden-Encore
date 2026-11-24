@@ -2211,7 +2211,7 @@ print("FC27_FRAME_PACING_F07_ISOLATION_PASS",
 
 # Explicit native failure-aware synchronization owners, not a rewrite of the historical F07 receipt.
 post_f07_gpu_wait_owners = {
-    "headless/vulkan_master_semaphore_ps5.cpp": "29f818e86def3deba2d2cb678280d7c1ea009365",
+    "headless/vulkan_master_semaphore_ps5.cpp": "a8a4a5e66edbdec5c0639d388fc50151764e0f30",
     "headless/fence_manager_ps5.h": "e41f90553fd934629b608ab524c0188270ac3e5a",
     "headless/vk_fence_manager_ps5.h": "5cdc1ddd0562f6fe1781327a51a2ea9c409d38f8",
 }

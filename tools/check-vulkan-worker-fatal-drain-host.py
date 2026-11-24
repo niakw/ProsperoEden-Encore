@@ -225,6 +225,12 @@ guest_wait=fences[start:fences.index("\nprotected:",start)]
 assert thread.index("vk::Check(result);") < thread.index("pending->Reset();") < thread.index("gpu_tick.store(")
 assert thread.index("vk::Check(result);") < thread.index("wait_queue.pop();")
 assert "gpu_tick.wait(" not in wait
+assert "wait_cv.wait_for(lock," in wait
+assert "wait_cv.notify_all();" in thread
+assert "std::scoped_lock lock{wait_mutex, free_mutex};" in thread
+submit_owner = master[master.index("    const auto submit_owned_fence ="):master.index("    if (device.HasSynchronization2())",master.index("    const auto submit_owned_fence ="))]
+assert submit_owner.index("wait_queue.emplace(") < submit_owner.index("submit(*wait_queue.back().second)")
+assert submit_owner.index("RecordGpuFailure(") < submit_owner.index("wait_cv.notify_all();")
 cpp=r"""
 #include <atomic>
 #include <cassert>
@@ -250,6 +256,7 @@ struct FenceState {
 };
 struct Fence {
     std::shared_ptr<FenceState> state;
+    int operator*() const { return 1; }
     VkResult Wait(u64) const { std::this_thread::sleep_for(1ms); return state->result.load(); }
     void Reset() { ++state->resets; }
 };
@@ -275,8 +282,14 @@ public:
     void Refresh() { if(semaphore.completed.load()) gpu_tick.store(9); }
     void Wait(u64);
     void WaitThread(std::stop_token);
+    vk::Fence GetFreeFence() { return {std::make_shared<vk::FenceState>()}; }
+    VkResult SubmitOwned(u64 host_tick, VkResult result, bool& called);
 };
 INJECT_HELPER
+VkResult MasterSemaphore::SubmitOwned(u64 host_tick, VkResult result, bool& called) {
+INJECT_SUBMIT
+    return submit_owned_fence([&](auto){ called=true; return result; });
+}
 INJECT_WAIT
 INJECT_THREAD
 struct Guest {
@@ -336,6 +349,17 @@ int main() {
     }
     Eden::ResetGpuFailureForTitle();
     {
+        MasterSemaphore m;
+        bool called=false;
+        assert(m.SubmitOwned(7,VK_ERROR_DEVICE_LOST,called)==VK_ERROR_DEVICE_LOST);
+        assert(called && Eden::PeekGpuFailure() && m.wait_queue.size()==1);
+        assert(m.gpu_tick.load()==0 && m.free_queue.empty());
+        auto f=std::async(std::launch::async,[&]{m.WaitThread({});});
+        assert(failed(f)); // rejected submission cannot be consumed or published
+        assert(m.wait_queue.size()==1);
+    }
+    Eden::ResetGpuFailureForTitle();
+    {
         Guest g;
         auto queued=g.queued.get_future();
         auto f=std::async(std::launch::async,[&]{g.WaitPendingFences(true);});
@@ -356,7 +380,7 @@ int main() {
         f.get();
     }
 }
-""".replace("INJECT_HELPER",helper).replace("INJECT_WAIT",wait).replace("INJECT_THREAD",thread).replace("INJECT_GUEST",guest_wait)
+""".replace("INJECT_HELPER",helper).replace("INJECT_WAIT",wait).replace("INJECT_THREAD",thread).replace("INJECT_GUEST",guest_wait).replace("INJECT_SUBMIT",submit_owner)
 with tempfile.TemporaryDirectory(prefix="encore-native-fatal-fences-") as tmp:
     d=Path(tmp)
     src=d/"fences.cpp"
@@ -367,4 +391,4 @@ with tempfile.TemporaryDirectory(prefix="encore-native-fatal-fences-") as tmp:
             "-fsanitize=address,undefined","-fno-sanitize-recover=all",
             "-I",str(ROOT/"headless"),str(src),"-o",str(exe)],check=True,timeout=70)
         subprocess.run([str(exe)],check=True,timeout=20)
-print("ENCORE_NATIVE_GPU_FATAL_FENCES_PASS timeline=1 fallback=1 fence_result=2 late_callback=1 normal_callback=1 O0_O2=2 ASan_UBSan=1")
+print("ENCORE_NATIVE_GPU_FATAL_FENCES_PASS timeline=1 fallback=1 fence_result=2 rejected_submit=1 late_callback=1 normal_callback=1 O0_O2=2 ASan_UBSan=1")

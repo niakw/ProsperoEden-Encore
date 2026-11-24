@@ -95,11 +95,13 @@ void MasterSemaphore::Refresh() {
 void MasterSemaphore::Wait(u64 tick) {
     if (IsFree(tick)) return;
     if (!semaphore) {
-        // An atomic wait on gpu_tick alone cannot be woken by a failed submit.
-        // Fence emulation is the fallback; preserve actual completion checks.
+        // Wake immediately on actual fence completion. The bounded timeout
+        // only observes failures from other owners that cannot notify this CV.
+        std::unique_lock lock{wait_mutex};
         while (!IsFree(tick)) {
             ThrowPendingGpuFailure();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            wait_cv.wait_for(lock, std::chrono::milliseconds(10),
+                             [this, tick] { return IsFree(tick); });
         }
         return;
     }
@@ -242,6 +244,23 @@ VkResult MasterSemaphore::SubmitQueueFence(vk::CommandBuffer& cmdbuf,
                                            vk::CommandBuffer& upload_cmdbuf,
                                            VkSemaphore signal_semaphore, VkSemaphore wait_semaphore,
                                            u64 host_tick) {
+    // Allocate the queue node BEFORE the driver can accept the fence. An
+    // allocation failure after a successful submit used to destroy the only
+    // in-flight fence owner. On rejected submit, leave the fence retained and
+    // latch the error while holding wait_mutex, so no waiter can take it.
+    const auto submit_owned_fence = [&](auto&& submit) {
+        auto fence = GetFreeFence();
+        std::scoped_lock lock{wait_mutex};
+        ThrowPendingGpuFailure();
+        wait_queue.emplace(host_tick, std::move(fence));
+        const VkResult result = submit(*wait_queue.back().second);
+        if (result != VK_SUCCESS) {
+            try { vk::Check(result); }
+            catch (...) { ::Eden::RecordGpuFailure(std::current_exception()); }
+        }
+        wait_cv.notify_all();
+        return result;
+    };
     if (device.HasSynchronization2()) {
         const std::array<VkCommandBufferSubmitInfo, 2> cmdbuffer_infos{{
             {
@@ -290,16 +309,9 @@ VkResult MasterSemaphore::SubmitQueueFence(vk::CommandBuffer& cmdbuf,
             .pSignalSemaphoreInfos = num_signal_semaphores ? &signal_info : nullptr,
         };
 
-        auto fence = GetFreeFence();
-        auto result = device.GetGraphicsQueue().Submit2(submit_info2, *fence);
-
-        if (result == VK_SUCCESS) {
-            std::scoped_lock lock{wait_mutex};
-            wait_queue.emplace(host_tick, std::move(fence));
-            wait_cv.notify_one();
-        }
-
-        return result;
+        return submit_owned_fence([&](VkFence fence) {
+            return device.GetGraphicsQueue().Submit2(submit_info2, fence);
+        });
     }
 
     const u32 num_signal_semaphores = signal_semaphore ? 1 : 0;
@@ -325,16 +337,9 @@ VkResult MasterSemaphore::SubmitQueueFence(vk::CommandBuffer& cmdbuf,
         .pSignalSemaphores = p_signal_sems,
     };
 
-    auto fence = GetFreeFence();
-    auto result = device.GetGraphicsQueue().Submit(submit_info, *fence);
-
-    if (result == VK_SUCCESS) {
-        std::scoped_lock lock{wait_mutex};
-        wait_queue.emplace(host_tick, std::move(fence));
-        wait_cv.notify_one();
-    }
-
-    return result;
+    return submit_owned_fence([&](VkFence fence) {
+        return device.GetGraphicsQueue().Submit(submit_info, fence);
+    });
 }
 
 void MasterSemaphore::WaitThread(std::stop_token token) {
@@ -345,6 +350,7 @@ void MasterSemaphore::WaitThread(std::stop_token token) {
             std::unique_lock lock{wait_mutex};
             wait_cv.wait(lock, token, [this] { return !wait_queue.empty(); });
             if (token.stop_requested()) return;
+            ThrowPendingGpuFailure();
             host_tick = wait_queue.front().first;
             // Only this consumer pops; appending to deque-backed queue keeps
             // the front element's address stable. Retain ownership on failure.
@@ -359,17 +365,14 @@ void MasterSemaphore::WaitThread(std::stop_token token) {
         vk::Check(result);
         // Never reset, recycle or publish a tick on a failed fence wait.
         pending->Reset();
-        vk::Fence completed;
         {
-            std::scoped_lock lock{wait_mutex};
-            completed = std::move(wait_queue.front().second);
+            std::scoped_lock lock{wait_mutex, free_mutex};
+            free_queue.push_front(std::move(wait_queue.front().second));
             wait_queue.pop();
-        }
-        {
-            std::scoped_lock lock{free_mutex};
-            free_queue.push_front(std::move(completed));
+            // Publish under the same mutex used by fallback waiters.
             gpu_tick.store(host_tick, std::memory_order_release);
         }
+        wait_cv.notify_all();
         gpu_tick.notify_all();
     }
 }

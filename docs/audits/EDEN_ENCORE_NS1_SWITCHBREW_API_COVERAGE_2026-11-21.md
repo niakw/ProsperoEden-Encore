@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 781 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 781 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 790 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 790 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 701 | 80 | **1 781** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 710 | 80 | **1 790** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 150 | 3 | **153** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 216 | 0 | **216** |
-| **NULL — Handler NULL** | 1 202 | 0 | **1 202** |
+| **NULL — Handler NULL** | 1 193 | 0 | **1 193** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3135,13 +3135,13 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 |---|---|---|---|---|---|
 | btm | `0` | `GetState` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `1` | `GetHostDeviceProperty` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `2` | `AcquireDeviceConditionEvent` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `2` | `AcquireDeviceConditionEvent` | — | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `3` | `GetDeviceCondition` | — | **IMPL-SRC** ([vendor 18c93c2e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/18c93c2e711cc8477156176f051874f8473497ef) ; état/liste Bluetooth invité vide, ABI HOS 23 recroisée libnx ; aucun périphérique hôte exposé ; PS5 non validé) | 2026-11-24 |
 | btm | `4` | `SetBurstMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `5` | `SetSlotMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `6` | `SetBluetoothMode` | 1.0.0-8.1.0 | **HORS-VERSION** ([source C++][ns1-src-068]) | 2026-11-23 |
 | btm | `7` | `SetWlanMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `8` | `AcquireDeviceInfoEvent` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `8` | `AcquireDeviceInfoEvent` | — | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `9` | `GetDeviceInfo` | — | **IMPL-SRC** ([vendor 18c93c2e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/18c93c2e711cc8477156176f051874f8473497ef) ; état/liste Bluetooth invité vide, ABI HOS 23 recroisée libnx ; aucun périphérique hôte exposé ; PS5 non validé) | 2026-11-24 |
 | btm | `10` | `AddDeviceInfo` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `11` | `RemoveDeviceInfo` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
@@ -3151,12 +3151,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm | `15` | `DisableRadio` | — | **IMPL-SRC** ([vendor 0fcec5e7](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/0fcec5e76502b0def90d946bffdc29ff3e19000f/encore-active/eden-backports/src/core/hle/service/btm/btm.cpp) ; raccordé au flag Bluetooth persistant set:sys, partagé avec IBtmSystemCore::DisableRadio) | 2026-11-23 |
 | btm | `16` | `HidDisconnect` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `17` | `HidSetRetransmissionMode` | — | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `18` | `AcquireAwakeReqEvent` | 2.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `19` | `AcquireLlrStateEvent` | 4.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `18` | `AcquireAwakeReqEvent` | 2.0.0+ | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
+| btm | `19` | `AcquireLlrStateEvent` | 4.0.0+ | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `20` | `IsLlrStarted` | 4.0.0+ | **IMPL-SRC** ([vendor 18c93c2e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/18c93c2e711cc8477156176f051874f8473497ef) ; état/liste Bluetooth invité vide, ABI HOS 23 recroisée libnx ; aucun périphérique hôte exposé ; PS5 non validé) | 2026-11-24 |
 | btm | `21` | `EnableSlotSaving` | 4.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `22` | `ProtectDeviceInfo` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `23` | `AcquireBleScanEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `23` | `AcquireBleScanEvent` | 5.0.0+ | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `24` | `GetBleScanParameterGeneral` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `25` | `GetBleScanParameterSmartDevice` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `26` | `StartBleScanForGeneral` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
@@ -3167,25 +3167,25 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm | `31` | `StartBleScanForSmartDevice` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `32` | `StopBleScanForSmartDevice` | 5.0.0+ | **NOOP** ([vendor 18c93c2e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/18c93c2e711cc8477156176f051874f8473497ef) ; arrêt idempotent du scan sans backend BLE invité ; PS5 non validé) | 2026-11-24 |
 | btm | `33` | `GetBleScanResultsForSmartDevice` | 5.0.0+ | **IMPL-SRC** ([vendor 18c93c2e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/18c93c2e711cc8477156176f051874f8473497ef) ; état/liste Bluetooth invité vide, ABI HOS 23 recroisée libnx ; aucun périphérique hôte exposé ; PS5 non validé) | 2026-11-24 |
-| btm | `34` | `AcquireBleConnectionEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `34` | `AcquireBleConnectionEvent` | 5.0.0+ | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `35` | `BleConnect` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `36` | `BleOverrideConnection` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `37` | `BleDisconnect` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `38` | `BleGetConnectionState` | 5.0.0+ | **IMPL-SRC** ([vendor 18c93c2e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/18c93c2e711cc8477156176f051874f8473497ef) ; état/liste Bluetooth invité vide, ABI HOS 23 recroisée libnx ; aucun périphérique hôte exposé ; PS5 non validé) | 2026-11-24 |
 | btm | `39` | `BleGetGattClientConditionList` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `40` | `AcquireBlePairingEvent` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `40` | `AcquireBlePairingEvent` | 5.0.0+ | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `41` | `BlePairDevice` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `42` | `BleUnpairDeviceOnBoth` | 5.0.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `43` | `BleUnpairDevice` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `44` | `BleGetPairedAddresses` | 5.1.0+ | **IMPL-SRC** ([vendor 18c93c2e](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/18c93c2e711cc8477156176f051874f8473497ef) ; état/liste Bluetooth invité vide, ABI HOS 23 recroisée libnx ; aucun périphérique hôte exposé ; PS5 non validé) | 2026-11-24 |
-| btm | `45` | `AcquireBleServiceDiscoveryEvent` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `45` | `AcquireBleServiceDiscoveryEvent` | 5.1.0+ | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `46` | `GetGattServices` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `47` | `GetGattService` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `48` | `GetGattIncludedServices` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `49` | `GetBelongingService` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `50` | `GetGattCharacteristics` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `51` | `GetGattDescriptors` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
-| btm | `52` | `AcquireBleMtuConfigEvent` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
+| btm | `52` | `AcquireBleMtuConfigEvent` | 5.1.0+ | **IMPL-SRC** ([vendor 4bf2174f](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/4bf2174fa0aa6649efad1130a8b69a127a69f83b) ; KEvent distinct créé et libéré par ServiceContext ; bool + copie KReadableEvent selon libnx, jamais signalé sans événement Bluetooth invité ; PS5 non validé) | 2026-11-24 |
 | btm | `53` | `ConfigureBleMtu` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `54` | `GetBleMtu` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |
 | btm | `55` | `RegisterBleGattDataPath` | 5.1.0+ | **NULL** ([source C++][ns1-src-068]) | 2026-11-22 |

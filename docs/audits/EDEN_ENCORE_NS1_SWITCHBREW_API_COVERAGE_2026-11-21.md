@@ -25,14 +25,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 796 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 796 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 797 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 797 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 716 | 80 | **1 796** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 717 | 80 | **1 797** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 152 | 3 | **155** |
-| **STUB — Stub / résultat simulé** | 49 | 0 | **49** |
+| **STUB — Stub / résultat simulé** | 48 | 0 | **48** |
 | **NOOP — No-op documenté** | 216 | 0 | **216** |
 | **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
@@ -4433,7 +4433,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | Interface / section | ID | Fonction | Disponibilité indiquée | Encore | Vérifié |
 |---|---|---|---|---|---|
 | ldn:m | `0` | `CreateMonitorService` | — | **IMPL-SRC** ([corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ldn/ldn.cpp) ; méthode/contrat source examiné, sans test PS5) | 2026-11-22 |
-| ldn:m | `0` | `GetStateForMonitor` | — | **STUB** ([source C++][ns1-src-090]) | 2026-11-22 |
+| ldn:m | `0` | `GetStateForMonitor` | — | **IMPL-SRC** ([vendor 85977252](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/8597725202341eb5bf2086977c4d7d60b89e976b) ; état réel None→Initialized→None maintenu par InitializeMonitor/FinalizeMonitor et relu par cmd0 ; ABI u32 libnx ; PS5 non validé) | 2026-11-24 |
 | ldn:m | `1` | `GetNetworkInfoForMonitor` | — | **NULL** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:m | `2` | `GetIpv4AddressForMonitor` | — | **NULL** ([source C++][ns1-src-090]) | 2026-11-22 |
 | ldn:m | `3` | `GetDisconnectReasonForMonitor` | — | **NULL** ([source C++][ns1-src-090]) | 2026-11-22 |

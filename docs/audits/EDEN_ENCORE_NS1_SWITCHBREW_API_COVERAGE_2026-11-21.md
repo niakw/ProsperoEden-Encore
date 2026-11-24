@@ -32,10 +32,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 729 | 80 | **1 809** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 154 | 3 | **157** |
-| **STUB — Stub / résultat simulé** | 31 | 0 | **31** |
+| **STUB — Stub / résultat simulé** | 26 | 0 | **26** |
 | **NOOP — No-op documenté** | 218 | 0 | **218** |
 | **NULL — Handler NULL** | 1 186 | 0 | **1 186** |
-| **D — Rejet explicite / historique** | 224 | 33 | **257** |
+| **D — Rejet explicite / historique** | 226 | 33 | **259** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 474 | 1 | **475** |
@@ -1580,8 +1580,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `123` | `GetApplicationLaunchProperty` | 2.0.0+ | **IMPL-SRC** (lit l'ApplicationLaunchProperty réel via `ARPManager` pour le `program_id` courant ; vendor `dff1bdb7`) | 2026-11-22 |
 | appletAE | `124` | `GetApplicationLaunchRequestInfo` | 6.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `130` | `SetUsers` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `131` | `CheckRightsEnvironmentAvailable` | 6.0.0+ | **STUB** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `132` | `GetNsRightsEnvironmentHandle` | 6.0.0+ | **STUB** ([source C++][ns1-src-031]) | 2026-11-22 |
+| appletAE | `131` | `CheckRightsEnvironmentAvailable` | 6.0.0+ | **D** ([vendor 9248992c](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9248992c51c0c446e47e6cdb03e407d20c2a69dd) ; retourne false : aucun objet rights-environment n'est exposé par le runtime Encore ; code exact Horizon d'indisponibilité non établi ; PS5 non validé) | 2026-11-24 |
+| appletAE | `132` | `GetNsRightsEnvironmentHandle` | 6.0.0+ | **D** ([vendor 9248992c](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9248992c51c0c446e47e6cdb03e407d20c2a69dd) ; supprime le faux handle 0xDEADBEEF et rejette explicitement la requête faute de backend rights-environment ; code exact Horizon d'indisponibilité non établi ; PS5 non validé) | 2026-11-24 |
 | appletAE | `140` | `GetDesirableUids` | 6.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `150` | `ReportApplicationExitTimeout` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `160` | `SetApplicationAttribute` | 8.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |

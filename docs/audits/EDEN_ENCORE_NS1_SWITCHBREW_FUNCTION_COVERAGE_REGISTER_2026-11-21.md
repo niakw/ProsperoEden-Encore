@@ -2659,3 +2659,7 @@ Vendor `175b4f2d6c9511f01aee10757a6255d84d16aab0` : `PdmPlayStatistics` cmd5 est
 ### 2026-11-24 — IAsyncValue ErrorContext
 
 Vendor `05646df19d6ec2db27c54ebff88fa2db9775d409` : cmd3 `GetErrorContext` respecte désormais l'ABI libnx (buffer map-alias de 0x200 octets). L'AsyncValue de ListApplicationTitle est déjà achevé avec succès, donc un `ErrorContext` nul est le contexte déterministe correct ; l'ancien handler renvoyait succès sans initialiser le buffer. **STUB → IMPL-SRC. Pool recalculé : 1 564** (1 186 NULL + 28 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU). Console non validée.
+
+### 2026-11-24 — AM rights environment : suppression des faux succès
+
+Vendor `9248992c51c0c446e47e6cdb03e407d20c2a69dd` : `IApplicationAccessor::CheckRightsEnvironmentAvailable` ne prétend plus qu'un environnement de droits inexistant est disponible, et cmd132 ne renvoie plus le handle factice `0xDEADBEEF`. Cmd131 retourne `false`; cmd132 initialise la sortie à zéro puis échoue explicitement par `ResultUnknown`. Aucun objet `ns:rt` ou état de licence n'est fabriqué. Les deux STUB deviennent D ; le code d'erreur Horizon exact reste à déterminer. **Pool restant = 1 562** (1 186 NULL + 26 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU). Build natif et console non lancés.

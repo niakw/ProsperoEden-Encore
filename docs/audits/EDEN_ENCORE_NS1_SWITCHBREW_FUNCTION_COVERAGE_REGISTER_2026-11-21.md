@@ -3118,3 +3118,11 @@ Vendor `285b0c8646cfc8d7331ca63758c4d34161460bac` : les trois slots FSP compacts
 
 Références : Horizon IPC definitions et Atmosphère `fssrv_filesystem_interface_adapter.cpp` / local filesystem. **Pool restant = 1 529 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — NIFM HOS18 : network emulation / rewrite désactivés explicitement
+
+Vendor `64fe70db980b3f60dd9fce1175a13f0ce3435b52` : cinq slots HOS18+ de `IGeneralService` ne restent plus NULL. Encore ne possède aucun moteur NIFM d'émulation réseau, aucun profil d'émulation actif et aucun moteur de rewrite de paquets : `IsNetworkEmulationFeatureEnabled` (cmd45) et `IsRewriteFeatureEnabled` (cmd50) retournent donc **false avec succès**, ce qui reflète l'état réel du runtime. `SelectActiveNetworkEmulationProfileIdForDebug` (cmd46), `CreateRewriteRule` (cmd51) et `DestroyRewriteRule` (cmd52) consomment leur ABI HOS23 puis retournent une erreur explicite, sans installer de règle ni modifier la pile réseau.
+
+Le contrat HOS23 de cmd51 reste respecté : bool en entrée + buffer de règle, avec taille observée mais contenu non interprété puisque la feature est désactivée. Le manifest actif a été contrôlé après correction de provenance : `nifm.cpp` porte l'empreinte `8e475728...` / 62075 octets et l'ancienne empreinte FSP a été restaurée.
+
+**5 NULL → 2 IMPL-SRC/NOOP + 3 D. Pool restant = 1 524 / 4 853.** `GetNetworkAccessStatus` reste volontairement NULL : le payload 0x100 est connu mais les valeurs sémantiques du champ `status` ne sont pas suffisamment prouvées pour assimiler le zéro SDK à un état connecté. Aucun build natif PS5 ni validation console revendiqués.
+

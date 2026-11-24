@@ -2715,7 +2715,7 @@ post_f07_gpu_wait_receipts = {
     "headless/vk_fence_manager_ps5.h": "022cfc99c30a54e95095313289bdb7006ed014df",
     "headless/vulkan_scheduler_ps5.cpp": "6e94c5af099773a196f36fd91f3907a2e17f1e5b",
     "headless/vk_scheduler_ps5.h": "e920772e5f4127b14f3a3ffb1c0c2d1880c516b8",
-    "headless/vulkan_present_manager_ps5.cpp": "296c080e9af0973c45c52f1a0ce9dcaa670d93e9",
+    "headless/vulkan_present_manager_ps5.cpp": "c7c56d8ab9c63d810d10ee653cd006708f90f273",
     "headless/vk_rasterizer_shutdown_ps5.h": "e0d1657f9051736a5595b97dfae4843cbf886130",
     "headless/vk_buffer_cache_shutdown_ps5.cpp": "9808e59dc0e71543176d15482d1c36d1d2398a0a",
 }

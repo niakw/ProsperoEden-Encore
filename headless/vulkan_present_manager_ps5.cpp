@@ -511,7 +511,9 @@ void PresentManager::CopyToSwapchain(Frame* frame) {
             // Draw to swapchain.
             return CopyToSwapchainImpl(frame);
         } catch (const vk::Exception& except) {
-            if (except.GetResult() != VK_ERROR_SURFACE_LOST_KHR) {
+            // Only pre-submit surface loss is retryable. Once a copy was
+            // queued, render_ready and present_done belong to that submission.
+            if (except.GetResult() != VK_ERROR_SURFACE_LOST_KHR || ::Eden::PeekGpuFailure()) {
                 throw;
             }
 
@@ -687,8 +689,17 @@ void PresentManager::CopyToSwapchainImpl(Frame* frame) {
         }
     }
 
+    // The successful submit consumed render_ready and owns present_done.
+    // Surface loss from vkQueuePresentKHR cannot replay this same frame: WSI
+    // can enqueue its semaphore wait even on that error. Retire the session
+    // through the existing fatal path, without resubmission or fake completion.
+    try {
+        swapchain.Present(render_semaphore);
+    } catch (...) {
+        ::Eden::RecordGpuFailure(std::current_exception());
+        throw;
+    }
     // CPU API return only, not proof of HDMI scanout.
-    swapchain.Present(render_semaphore);
     ::Eden::FrameMetrics::OnSwapchainPresentReturned();
 }
 

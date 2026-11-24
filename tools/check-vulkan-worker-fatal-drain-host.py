@@ -429,3 +429,107 @@ assert "if (device_retired) return;" in WAIT
 assert RETIRE.index("result != VK_SUCCESS && result != VK_ERROR_DEVICE_LOST") < RETIRE.index("failed_chunk.reset();")
 assert "KnownGpuTick" not in RETIRE and "gpu_tick" not in RETIRE
 assert "if (scheduler.IsDeviceRetiredForShutdown()) return;" in (ROOT/"headless/vk_buffer_cache_shutdown_ps5.cpp").read_text()
+
+
+
+# A surface loss after successful copy submission is NOT retryable with the
+# same Frame: render_ready has already been consumed and present_done is in use.
+# Exercise the selected outer retry and post-submit tail, not the old generator.
+outer_start = presentation.index("void PresentManager::CopyToSwapchain(Frame* frame) {")
+outer_end = presentation.index("\nvoid PresentManager::CopyToSwapchainImpl(", outer_start)
+outer = presentation[outer_start:outer_end]
+tail_start = presentation.index("    // The successful submit consumed render_ready")
+tail_end = presentation.index("\n}\n", tail_start)
+tail = presentation[tail_start:tail_end]
+assert presentation.index("Submit(submit_info, *frame->present_done)", outer_end) < tail_start
+assert "except.GetResult() != VK_ERROR_SURFACE_LOST_KHR || ::Eden::PeekGpuFailure()" in outer
+assert tail.index("swapchain.Present(render_semaphore);") < tail.index("::Eden::RecordGpuFailure(std::current_exception());") < tail.index("::Eden::FrameMetrics::OnSwapchainPresentReturned();")
+present_cpp = r"""
+#include <cassert>
+#include <cstdint>
+#include <exception>
+#include <stdexcept>
+#include <initializer_list>
+#include "gpu_failure.h"
+using u32=std::uint32_t;
+constexpr u32 MAX_PRESENT_ATTEMPTS=3;
+constexpr int VK_ERROR_SURFACE_LOST_KHR=-1000000000, VK_ERROR_DEVICE_LOST=-4;
+namespace vk {
+struct Exception: std::exception {
+    int result;
+    explicit Exception(int r):result(r){}
+    int GetResult() const { return result; }
+};
+}
+namespace Eden::FrameMetrics {
+unsigned returned{};
+void OnSwapchainPresentReturned(){++returned;}
+}
+struct Frame { bool render_ready=true; unsigned submissions{}; };
+struct Swapchain {
+    int error{};
+    void Present(int){if(error)throw vk::Exception(error);}
+};
+struct PresentManager {
+    int pre_errors{}, attempts{}, recreations{}, discards{}, prior_failure{};
+    Swapchain swapchain;
+    void RecreateSwapchain(Frame*){++recreations;}
+    void DiscardFrame(Frame* frame){
+        assert(frame->render_ready);
+        frame->render_ready=false;
+        ++discards;
+    }
+    void CopyToSwapchain(Frame*);
+    void CopyToSwapchainImpl(Frame*);
+};
+INJECT_OUTER
+void PresentManager::CopyToSwapchainImpl(Frame* frame) {
+    ++attempts;
+    if(prior_failure){
+        Eden::RecordGpuFailure(std::make_exception_ptr(vk::Exception(VK_ERROR_SURFACE_LOST_KHR)));
+        throw vk::Exception(VK_ERROR_SURFACE_LOST_KHR);
+    }
+    if(pre_errors>0){--pre_errors;throw vk::Exception(VK_ERROR_SURFACE_LOST_KHR);}
+    assert(frame->render_ready);
+    frame->render_ready=false;
+    ++frame->submissions;
+    const int render_semaphore=1;
+INJECT_TAIL
+}
+int main(){
+    for(int repetition=0;repetition<100;++repetition)
+    for(int pre=0;pre<5;++pre)
+    for(int post:{0,VK_ERROR_SURFACE_LOST_KHR,VK_ERROR_DEVICE_LOST})
+    for(int prior:{0,1}){
+        Eden::ResetGpuFailureForTitle();
+        Eden::FrameMetrics::returned=0;
+        Frame f;
+        PresentManager p;
+        p.pre_errors=pre;p.swapchain.error=post;p.prior_failure=prior;
+        bool thrown=false;
+        try{p.CopyToSwapchain(&f);}catch(const vk::Exception&){thrown=true;}
+        if(prior){
+            assert(thrown&&p.attempts==1&&p.recreations==0&&f.submissions==0&&p.discards==0);
+        }else if(pre>=3){
+            assert(!thrown&&p.attempts==3&&p.recreations==2&&p.discards==1&&f.submissions==0);
+        }else{
+            assert(p.attempts==pre+1&&p.recreations==pre&&p.discards==0&&f.submissions==1);
+            assert(thrown==(post!=0));
+            assert(Eden::FrameMetrics::returned==(post==0?1u:0u));
+            assert(bool(Eden::PeekGpuFailure())==(post!=0));
+        }
+    }
+    Eden::ResetGpuFailureForTitle();
+}
+""".replace("INJECT_OUTER",outer).replace("INJECT_TAIL",tail)
+with tempfile.TemporaryDirectory(prefix="encore-present-submit-retirement-") as tmp:
+    d=Path(tmp)
+    src=d/"present.cpp"
+    src.write_text(present_cpp)
+    for opt in ("-O0","-O2"):
+        exe=d/("present"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-pthread",
+            "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+            "-I",str(ROOT/"headless"),str(src),"-o",str(exe)],check=True,timeout=70)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("ENCORE_PRESENT_POST_SUBMIT_SURFACE_LOSS_PASS cases_per_optimization=3000 O0_O2=2 retry_pre_submit=1 no_double_wait=1 ASan_UBSan=1")

@@ -298,6 +298,13 @@ def normalize_for_historical_proof(source: str) -> tuple[str, bool]:
     It must NOT replace the compiled production vendor file.
     """
     current = git_blob(source)
+    if current == "fc537323bb9f63d70ef5f8cedd65886e6a0099c0":
+        source = reverse_reviewed_source(source, [
+            ("        // QueueWork and pool allocation may throw after earlier tasks borrowed\n        // these locals. Drain before unwinding, without stopping persistent workers.\n        struct TranslationDrain {\n            Common::ThreadWorker& worker;\n            bool joined{};\n            ~TranslationDrain() {\n                if (!joined) worker.WaitForRequests();\n            }\n        } translation_drain{shader_translation_workers};\n", ""),
+            ("        translation_drain.joined = true;\n", ""),
+        ], "parallel translation exceptional drain")
+        current = git_blob(source)
+        assert current == REVIEWED_IMMUTABLE_SNAPSHOT_BLOB, current
     if current == REVIEWED_IMMUTABLE_SNAPSHOT_BLOB:
         source = reverse_immutable_snapshot_successor(source)
         current = git_blob(source)

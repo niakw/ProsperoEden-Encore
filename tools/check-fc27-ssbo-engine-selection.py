@@ -101,7 +101,8 @@ expected.add("bf981e9d39d4a908d0d5b6f8407cca814c609bdb")
 expected.add("8026fcca228d0feda62ffd9625e16ee0429d621e")
 expected.add("887bf44af34999e8b6c5b63dc7c01c6c13b82c8f")
 expected.add("1a928783cce2c2692d8fe9fd958400a2de060bbf")
-if selected == "1a928783cce2c2692d8fe9fd958400a2de060bbf":
+expected.add("9632ac089f8b2d89a6856a42e8fb55206cdba1fa")
+if selected in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa"}:
     assert blob(V/"tests/ns1_r23_18_tir_host.py") == "005280fde5bbd862d64a4def0d17d90a35bbe5e9", (
         "Vendor host-only TextureCache TIR witness drift")
 assert selected==gitlink and selected in expected,(selected,gitlink)

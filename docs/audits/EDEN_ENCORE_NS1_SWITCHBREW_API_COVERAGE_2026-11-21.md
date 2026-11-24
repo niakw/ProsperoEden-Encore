@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 576 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 576 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 772 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 772 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 687 | 80 | **1 767** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 692 | 80 | **1 772** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
-| **STUB — Stub / résultat simulé** | 51 | 0 | **51** |
-| **NOOP — No-op documenté** | 208 | 0 | **208** |
-| **NULL — Handler NULL** | 1 231 | 0 | **1 231** |
+| **PARTIEL — Implémentation partielle** | 151 | 3 | **154** |
+| **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
+| **NOOP — No-op documenté** | 213 | 0 | **213** |
+| **NULL — Handler NULL** | 1 213 | 0 | **1 213** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1550,14 +1550,14 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `3` | `GetEvent` | — | **IMPL-SRC** ([source C++][ns1-src-039]) | 2026-11-22 |
 | appletAE | `0` | `RequestToEnterSleep` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `1` | `EnterSleep` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `2` | `StartSleepSequence` | — | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
+| appletAE | `2` | `StartSleepSequence` | — | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; pas de transition veille invitée ; PS5 non validé) | 2026-11-24 |
 | appletAE | `3` | `StartShutdownSequence` | — | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `4` | `StartRebootSequence` | — | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
-| appletAE | `9` | `IsAutoPowerDownRequested` | 7.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
+| appletAE | `9` | `IsAutoPowerDownRequested` | 7.0.0+ | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; politique hôte fixe sans extinction invitée ; PS5 non validé) | 2026-11-24 |
 | appletAE | `10` | `LoadAndApplyIdlePolicySettings` | — | **NOOP** (adaptation PS5 : Encore n'expose pas le scheduler invité `idle:sys` et ne doit pas appliquer la politique de veille Horizon au système hôte ; vendor `55be5734`) | 2026-11-23 |
-| appletAE | `11` | `NotifyCecSettingsChanged` | 2.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
-| appletAE | `12` | `SetDefaultHomeButtonLongPressTime` | 3.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
-| appletAE | `13` | `UpdateDefaultDisplayResolution` | 3.0.0+ | **NULL** ([source C++][ns1-src-036]) | 2026-11-22 |
+| appletAE | `11` | `NotifyCecSettingsChanged` | 2.0.0+ | **NOOP** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; CEC hôte non modifié ; PS5 non validé) | 2026-11-24 |
+| appletAE | `12` | `SetDefaultHomeButtonLongPressTime` | 3.0.0+ | **NOOP** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; politique bouton PS hôte non modifiée ; PS5 non validé) | 2026-11-24 |
+| appletAE | `13` | `UpdateDefaultDisplayResolution` | 3.0.0+ | **NOOP** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; résolution dérivée de la configuration hôte ; PS5 non validé) | 2026-11-24 |
 | appletAE | `14` | `ShouldSleepOnBoot` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `15` | `GetHdcpAuthenticationFailedEvent` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-036]) | 2026-11-22 |
 | appletAE | `0` | `CreateApplication` | — | **IMPL-SRC** ([source C++][ns1-src-002]) | 2026-11-22 |
@@ -1624,11 +1624,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `60` | `GetMainAppletApplicationDesiredLanguage` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `70` | `GetCurrentApplicationId` | 8.0.0+ | **IMPL-SRC** (ProgramId lu sur le main applet réel au lieu du caller ; vendor `1b5b609d`) | 2026-11-22 |
-| appletAE | `80` | `RequestExitToSelf` | 6.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `80` | `RequestExitToSelf` | 6.0.0+ | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; demande lifecycle et frontend ; PS5 non validé) | 2026-11-24 |
 | appletAE | `90` | `CreateApplicationAndPushAndRequestToLaunch` | 5.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `100` | `CreateGameMovieTrimmer` | 4.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `101` | `ReserveResourceForMovieOperation` | 5.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `102` | `UnreserveResourceForMovieOperation` | 5.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `101` | `ReserveResourceForMovieOperation` | 5.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; état local sans allocation de ressource vidéo ; PS5 non validé) | 2026-11-24 |
+| appletAE | `102` | `UnreserveResourceForMovieOperation` | 5.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; état local sans allocation de ressource vidéo ; PS5 non validé) | 2026-11-24 |
 | appletAE | `110` | `GetMainAppletAvailableUsers` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `120` | `GetLaunchStorageInfoForDebug` | 9.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `130` | `GetGpuErrorDetectedSystemEvent` | 9.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; retourne le vrai KReadableEvent de l'applet) | 2026-11-23 |
@@ -1636,14 +1636,14 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `0` | `BeginToWatchShortHomeButtonMessage` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `1` | `EndToWatchShortHomeButtonMessage` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `2` | `GetApplicationIdForLogo` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
-| appletAE | `3` | `SetGpuTimeSliceBoost` | — | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
+| appletAE | `3` | `SetGpuTimeSliceBoost` | — | **NOOP** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; ordonnanceur hôte non modifié ; PS5 non validé) | 2026-11-24 |
 | appletAE | `4` | `SetAutoSleepTimeAndDimmingTimeEnabled` | 2.0.0+ | **IMPL-SRC** (raccordé au même état `auto_sleep_disabled` que `SetAutoSleepDisabled` / `IsAutoSleepDisabled` ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `5` | `TerminateApplicationAndSetReason` | 2.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
-| appletAE | `6` | `SetScreenShotPermissionGlobally` | 3.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
+| appletAE | `6` | `SetScreenShotPermissionGlobally` | 3.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; permission enregistrée pour un applet, portée globale non démontrée ; PS5 non validé) | 2026-11-24 |
 | appletAE | `10` | `StartShutdownSequenceForOverlay` | 6.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `11` | `StartRebootSequenceForOverlay` | 6.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `20` | `SetHandlingHomeButtonShortPressedEnabled` | 8.0.0+ | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
-| appletAE | `30` | `SetHealthWarningShowingState` | 9.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
+| appletAE | `30` | `SetHealthWarningShowingState` | 9.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; signal disparition seulement ; PS5 non validé) | 2026-11-24 |
 | appletAE | `90` | `SetRequiresGpuResourceUse` | 7.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `101` | `BeginToObserveHidInputForDevelop` | 5.0.0+ | **D** (commande debug/develop explicitement rejetée sur runtime release ; vendor `d1f92eee`, moteur `e0990b2f`) | 2026-11-23 |
 | appletAE | `20` | `GetApplicationFunctions` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/application_proxy.cpp)) | 2026-11-22 |
@@ -1686,13 +1686,13 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `121` | `ClearUserChannel` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `122` | `UnpopToUserChannel` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `123` | `GetPreviousProgramIndex` | 5.0.0+ | **IMPL-SRC** (lit `previous_program_index` réellement injecté par `AppletManager` au lancement ; vendor `6fc24667`) | 2026-11-22 |
-| appletAE | `124` | `EnableApplicationAllThreadDumpOnCrash` | 6.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `124` | `EnableApplicationAllThreadDumpOnCrash` | 6.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; politique enregistrée, dump non démontré ; PS5 non validé) | 2026-11-24 |
 | appletAE | `140` | `GetFriendInvitationStorageChannelEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `141` | `TryPopFromFriendInvitationStorageChannel` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `150` | `GetNotificationStorageChannelEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `151` | `TryPopFromNotificationStorageChannel` | 9.0.0+ | **IMPL-SRC** (consomme la file Notification réelle sous verrou et retourne un `IStorage`; owner CMake maintenu `encore-active/eden-core/.../application_functions.cpp` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `160` | `GetHealthWarningDisappearedSystemEvent` | 9.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `170` | `SetHdcpAuthenticationActivated` | 9.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `170` | `SetHdcpAuthenticationActivated` | 9.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; politique enregistrée, HDCP non démontré ; PS5 non validé) | 2026-11-24 |
 | appletAE | `500` | `StartContinuousRecordingFlushForDebug` | 5.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
 | appletAE | `1000` | `CreateMovieMaker` | 5.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `1001` | `PrepareForJit` | 5.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; enregistre `jit_service_launched` sous verrou) | 2026-11-23 |
@@ -1723,7 +1723,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `4` | `DisallowToEnterSleep` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `5` | `GetOperationMode` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `6` | `GetPerformanceMode` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `7` | `GetCradleStatus` | — | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `7` | `GetCradleStatus` | — | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; mode docké issu de Settings ; PS5 non validé) | 2026-11-24 |
 | appletAE | `8` | `GetBootMode` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `9` | `GetCurrentFocusState` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `10` | `RequestToAcquireSleepLock` | — | **PARTIEL** (signale le vrai événement de sleep-lock immédiatement ; aucun arbitre de sommeil hôte séparé n'est modélisé ; vendor `6fc24667`) | 2026-11-22 |
@@ -1734,7 +1734,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `30` | `GetHomeButtonReaderLockAccessor` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `31` | `GetReaderLockAccessorEx` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `32` | `GetWriterLockAccessorEx` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `40` | `GetCradleFwVersion` | 2.0.0+ | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `40` | `GetCradleFwVersion` | 2.0.0+ | **STUB** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; version nulle, absence de firmware cradle ; PS5 non validé) | 2026-11-24 |
 | appletAE | `50` | `IsVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `51` | `SetVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `52` | `SetLcdBacklighOffEnabled` | 4.0.0+ | **NOOP** (adaptation PS5 sans LCD Switch : la requête est acceptée, `Applet::lcd_backlight_off_enabled` est conservé sous verrou, aucun écran hôte n'est éteint ; vendor `3e8effa0`, moteur `1bb6cfcb`) | 2026-11-23 |
@@ -1745,7 +1745,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `61` | `GetDefaultDisplayResolutionChangeEvent` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `62` | `GetHdcpAuthenticationState` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `63` | `GetHdcpAuthenticationStateChangeEvent` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `64` | `SetTvPowerStateMatchingMode` | 5.0.0+ | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
+| appletAE | `64` | `SetTvPowerStateMatchingMode` | 5.0.0+ | **NOOP** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; CEC et alimentation hôte inchangés ; PS5 non validé) | 2026-11-24 |
 | appletAE | `65` | `GetApplicationIdByContentActionName` | 5.1.0+ | **NULL** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `66` | `SetCpuBoostMode` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `80` | `PerformSystemButtonPressingIfInFocus` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
@@ -1814,10 +1814,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `3` | `ChangeMainAppletMasterVolume` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
 | appletAE | `4` | `SetTransparentVolumeRate` | — | **IMPL-SRC** ([source C++][ns1-src-032]) | 2026-11-22 |
 | appletAE | `0` | `GetLastForegroundCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `1` | `UpdateLastForegroundCaptureImage` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `1` | `UpdateLastForegroundCaptureImage` | — | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; écriture capture réelle via DisplayLayerManager ; PS5 non validé) | 2026-11-24 |
 | appletAE | `2` | `GetLastApplicationCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `3` | `GetCallerAppletCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
-| appletAE | `4` | `UpdateCallerAppletCaptureImage` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `4` | `UpdateCallerAppletCaptureImage` | — | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; écriture capture réelle via DisplayLayerManager ; PS5 non validé) | 2026-11-24 |
 | appletAE | `5` | `GetLastForegroundCaptureImageEx` | — | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `6` | `GetLastApplicationCaptureImageEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `7` | `GetCallerAppletCaptureImageEx` | — | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |

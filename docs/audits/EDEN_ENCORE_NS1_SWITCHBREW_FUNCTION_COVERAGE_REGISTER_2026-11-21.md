@@ -2699,3 +2699,9 @@ Vendor `a11b70417f1c981580a86bf5391b4a24fe0890e9` : le propriétaire réellement
 Vendor `afac75c2d5e4e494335bbc48f18cbf8a9a3e17a3` : cmd28 `GetSaveDataSizeMax` ne renvoie plus deux constantes `0x0FFFFFFF`; il lit `user_account_save_data_max_size` et `user_account_save_data_max_journal_size` du NACP actif. Cmd35 `GetDeviceSaveDataSizeMax`, ABI NS1 23.0.1 confirmée à 0x10 octets de sortie, est raccordée aux champs `device_save_data_max_size` / `device_save_data_max_journal_size`. **1 STUB + 1 NULL → IMPL-SRC**.
 
 **Pool restant = 1 552** : 1 184 NULL + 19 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+### 2026-11-24 — LBL : état de luminosité appliquée invité
+
+Vendor `c24bcfa3fb9da644d31689ae4d16f2745f240227` : cmd4 `ApplyCurrentBrightnessSettingToBacklight` copie maintenant le réglage invité courant vers un état `applied_brightness`, et cmd5 `GetBrightnessSettingAppliedToBacklight` relit cette valeur avec la même protection contre les flottants non finis que les getters existants. Cmd6/7 `SwitchBacklightOn/Off` maintenaient déjà `backlight_enabled`; leurs marqueurs STUB ont été retirés et le `fade_time` est explicitement traité comme un **NOOP matériel PS5** : aucune luminosité système hôte n'est modifiée. Le dump NS1 23.0.1 confirme les ABI cmd4/5 sans entrée puis sortie `float`, et cmd6/7 avec `u64 fade_time`. **2 NULL + 2 STUB → hors pool**.
+
+**Pool restant = 1 548** : 1 182 NULL + 17 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

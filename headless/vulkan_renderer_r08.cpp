@@ -33,6 +33,7 @@
 #include "prosperoeden/pe/platform/display_egl.hpp"
 #include "display_refresh.h"
 #include "frame_metrics.h"
+#include "gpu_failure.h"
 #include "fsr3_optical_session.h"
 #include "hud.h"
 #include "loading_artwork_transfer.hpp"
@@ -259,6 +260,17 @@ RendererVulkan::~RendererVulkan() {
     // the private images, then wait for Vulkan completion in Destroy().
     // This runs only at renderer shutdown, never in the frame loop.
     scheduler.Finish();
+    // Finish submits after the preceding FIFO callbacks, but it does not
+    // drain the independent presenter. Stop its queue access before session
+    // destruction or vkDeviceWaitIdle (which requires external queue sync).
+    try {
+        present_manager.WaitPresent();
+    } catch (...) {
+        // WaitPresent rethrows the presenter failure after its queue is
+        // discarded and in-flight access has ended. Preserve the failure
+        // notification instead of escaping from the renderer destructor.
+        ::Eden::RecordGpuFailure(std::current_exception());
+    }
     mihawk_native.reset();
     fsr3_optical.reset();
     void(device.GetLogical().WaitIdle());
@@ -318,7 +330,9 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
 #ifdef HAS_LSFG
     // User-selected LSFG only. Do not mix a legacy generator with MihawkGen
     // or turn frame generation on merely because HAS_LSFG was compiled in.
-    if (Eden::Display::frame_generation_method.load(std::memory_order_relaxed) == 3) {
+    // Use the same per-composite selection as the native generators and HUD.
+    // A menu change during this composite must not select two generators.
+    if (native_fg_method == 3) {
     void(frame_gen.WantedGenerations(present_manager.MaxExtraFrames()));
 
     frame_gen.Process(device, frame, present_manager.SwapchainImageFormat(), GuestExtent(framebuffers));

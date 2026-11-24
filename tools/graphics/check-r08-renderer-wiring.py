@@ -75,6 +75,15 @@ assert "vulkan_blit_screen_r08.cpp" in cmake
 assert "window_adapt_pass_r08.h" in cmake
 assert "vk_blit_screen_r08.h" in cmake
 assert "const bool mihawk_selected" in fork
+# All three generators and HUD use one setting snapshot per composite.
+composite_source = fork[composite:fork.index("void RendererVulkan::PresentLoading(")]
+assert composite_source.count("frame_generation_method.load(") == 1
+assert "if (native_fg_method == 3)" in composite_source
+# The scheduler FIFO must drain before the independent presenter, then idle.
+shutdown = fork[fork.index("RendererVulkan::~RendererVulkan()"):composite]
+assert shutdown.index("scheduler.Finish();") < shutdown.index("present_manager.WaitPresent();") < shutdown.index("mihawk_native.reset();") < shutdown.index("device.GetLogical().WaitIdle()")
+assert shutdown.index("present_manager.WaitPresent();") < shutdown.index("fsr3_optical.reset();")
+assert "::Eden::RecordGpuFailure(std::current_exception());" in shutdown
 assert "present_manager.Present(r08_synthetic);" in fork
 assert "present_manager.Present(frame);" in fork
 assert "DrawToFrame(device, rasterizer, frame, framebuffers," in fork

@@ -3008,3 +3008,9 @@ Vendor `eedfedbd8513a047ba393d48287c37dd196566cd` : la documentation firmware ac
 
 **Cmd110 : divergence corrigée, sans gain de compteur. Cmd150 : NULL → D. Pool restant = 1 547 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM AppletCommon : états VR curtain / température / batterie exposés
+
+Vendor `b322c48fce30b49df1d49bfae041535bd60bb307` : `IAppletCommonFunctions` cmd60 `IsVrModeCurtainRequired`, cmd61 `IsSleepRequiredByHighTemperature` et cmd62 `IsSleepRequiredByLowBattery` ne sont plus des slots NULL. Les trois handlers relisent sous `Applet::lock` les états AM déjà présents (`vr_mode_curtain_required`, `sleep_required_by_high_temperature`, `sleep_required_by_low_battery`) et renvoient leur booléen réel.
+
+Encore ne possède pas encore de producteur complet reliant ces états à un backend matériel PS5/thermique/batterie ni de gestion complète du rideau VR Horizon ; aucun faux capteur ni valeur forcée n'est ajouté. **3 NULL → PARTIEL.** Le **pool reste 1 547 / 4 853** car PARTIEL reste une dette. Aucun build natif PS5 ni validation console revendiqués.
+

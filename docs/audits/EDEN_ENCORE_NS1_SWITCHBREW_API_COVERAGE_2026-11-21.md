@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 163 | 3 | **166** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 179 | 0 | **1 179** |
-| **D — Rejet explicite / historique** | 234 | 33 | **267** |
+| **NULL — Handler NULL** | 1 178 | 0 | **1 178** |
+| **D — Rejet explicite / historique** | 235 | 33 | **268** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 474 | 1 | **475** |
@@ -1627,7 +1627,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `25` | `GetPopExtraStorageEvent` | — | **IMPL-SRC** (retourne le KEvent réel du canal `extra_storage` ; vendor `ebc5a68a`) | 2026-11-22 |
 | appletAE | `30` | `UnpopInData` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `31` | `UnpopExtraStorage` | — | **IMPL-SRC** (réinjecte le stockage dans le canal `extra_storage` réel ; vendor `ebc5a68a`) | 2026-11-22 |
-| appletAE | `40` | `GetIndirectLayerProducerHandle` | 2.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `40` | `GetIndirectLayerProducerHandle` | 2.0.0+ | **D** (sortie zéro + `ResultUnknown` tant que VI/IHOSBinderDriverIndirect n'est pas implémenté ; cohérent avec le consumer cmd160 ; vendor `3ae8cda5`) | 2026-11-24 |
 | appletAE | `50` | `ReportVisibleError` | 3.0.0+ | **IMPL-SRC** ([vendor a0c5a3be](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a0c5a3beb7ab54a67a6d463002ab94e6d838f435) ; ErrorCode validé puis converti en Result, rapport sauvegardé et frontend ErrorApplet réel invoqué ; PS5 non validé) | 2026-11-24 |
 | appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **PARTIEL** ([vendor a0c5a3be](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a0c5a3beb7ab54a67a6d463002ab94e6d838f435) ; affichage ErrorApplet et rapport réels ; type/result du ErrorContext tracés, mais champs ERPT spécifiques du contexte pas encore soumis ; PS5 non validé) | 2026-11-24 |
 | appletAE | `60` | `GetMainAppletApplicationDesiredLanguage` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |

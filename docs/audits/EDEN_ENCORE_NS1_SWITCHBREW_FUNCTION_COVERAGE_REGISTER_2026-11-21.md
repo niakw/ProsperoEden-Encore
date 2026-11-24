@@ -2846,3 +2846,8 @@ Vendor `1bd95def9ee03b841171924716280f6d5ccb3a09` : `IApplicationFunctions` cmd7
 Vendor `54f03c30bac3ebd4d1b3bb04ab2df298bc565a87` : cmd10 `CreateApplicationAndPushAndRequestToStart` suit désormais le contrat SwitchBrew : le `IStorage` d'entrée est poussé dans le user channel de l'applet puis le lancement délègue à cmd12 `CreateApplicationAndRequestToStart`, déjà raccordé au relaunch/program-index Encore. Si cmd12 échoue (par exemple lancement d'une autre application encore non pris en charge), le storage ajouté est retiré afin de ne pas contaminer un lancement suivant.
 
 **1 NULL → IMPL-SRC.** Les variantes Quest cmd11/13/14/15 restent ouvertes tant que leurs `ApplicationAttribute` ne sont pas réellement appliqués. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM : producer indirect-layer fail-closed
+
+Vendor `3ae8cda53774da47ad69bdb4f91ef2434acf1fb5` : `ILibraryAppletSelfAccessor::GetIndirectLayerProducerHandle` (cmd40) est désormais raccordé sur l'owner backport actif. Comme pour le consumer cmd160 déjà corrigé, Encore ne dispose pas encore du backend VI indirect-layer / `IHOSBinderDriverIndirect` nécessaire pour produire un handle utilisable. La sortie est explicitement initialisée à zéro puis la commande retourne `ResultUnknown`, au lieu de rester NULL ou de publier un handle fictif. **1 NULL → D.** Manifeste overlay recalculé. Build natif PS5 non déclenché ; validation console non revendiquée.

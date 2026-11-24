@@ -12,7 +12,14 @@ port=(root/"tools/prepare-vulkan-port.py").read_text()
 ast.parse(port)
 assert 'Settings::values.use_disk_shader_cache = game;' in main
 assert 'Settings::values.use_vulkan_driver_pipeline_cache = game;' in main
-assert '#ifdef EDEN_PS5_VULKAN\n                if (game && Settings::values.use_disk_shader_cache.GetValue())' in main
+# A shipping PS5 binary compiles both backends. Loading twice for one Vulkan
+# renderer replays the same 128 shaders and replaces the driver cache.
+assert ('if (backend == Eden::GraphicsBackend::OpenGL &&\n'
+        '                    Settings::values.use_disk_shader_cache.GetValue() && !graphics_error)') in main
+assert ('#ifdef EDEN_PS5_VULKAN\n'
+        '                if (backend == Eden::GraphicsBackend::Vulkan && game &&\n'
+        '                    Settings::values.use_disk_shader_cache.GetValue())') in main
+assert main.count("->LoadDiskResources(") == 2
 assert 'lazy_cache.request_stop();' not in main
 assert 'LoadDiskResources(\n                            title_id, std::stop_token{},' in main
 assert 'mode=bounded-prewarm32' in main

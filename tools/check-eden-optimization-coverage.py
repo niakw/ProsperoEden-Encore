@@ -3862,7 +3862,8 @@ print("P0_CRASH_ONLY_DIAGNOSTICS_F07_REVERSE_PASS U36=1 historical=unchanged")
 
 # NS2 P0, Nov22: shipping EDEN_DEV_PROFILE=OFF previously made RecordHle
 # a no-op. Pin the four exact engine-only successor blobs for the bounded
-# 10s/30s completed-service witness; historical 518 F07 owners and vendor
+# 10s/30s completed-service witness; main also seals the selected-backend
+# shader-cache loading fix. Historical 518 F07 owners and vendor
 # sources stay immutable. No claim of improved gameplay or GPU submission.
 ns2_boot_hle_receipts = {
     "headless/performance.h": (
@@ -3879,7 +3880,7 @@ ns2_boot_hle_receipts = {
         "::Eden::Performance::ReportNs2BootHle(30);"),
     "headless/main.cpp": (
         "de81392f6948fc0257a764bf15daf1c4bf271fdb",
-        "c04f16e3635325b233a8a03c02cb036306cb1c0d",
+        "5d2247d9ffcb93916886b2c0b342174e709b2a45",
         "Eden::Performance::ResetNs2BootHle();"),
 }
 for path, (previous_blob, successor_blob, witness) in ns2_boot_hle_receipts.items():

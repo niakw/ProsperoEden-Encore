@@ -36,14 +36,18 @@ assert admission.index("if (!native_channel_enabled)") < admission.index(
 assert "return NvResult::InvalidState;" in admission.split(
     "if (!native_channel_enabled)",1)[1].split(
     "for (const auto& [other_fd, session_id] : sessions)",1)[0]
+assert "native_channel_registry.Bind(" not in admission
 assert "NativeGpuChannelRegistry::Instance().Bind(" not in admission
 assert "system.GPU().InitChannel(" not in admission
 assert "IncrementSyncpointMaxExt(" not in admission
 assert "params.fence.id =" not in admission
 assert entry.index("if (native && !native_plan)") < entry.index(
     "system.GPU().InitChannel(") < entry.index(
-    "NativeGpuChannelRegistry::Instance().Bind(") < entry.index(
+    "native_channel_registry.Bind(") < entry.index(
     "IncrementSyncpointMaxExt(")
+assert admission.index("NativeEpochCurrent(fd)") < admission.index("CaptureNativeSubmissionLease()") < admission.index("if (!native_channel_enabled)")
+assert "if (!native_submission_lease)" in admission
+assert "list.native_submission_lease = native_submission_lease;" in entry
 assert "const u32 increment = native\n        ? native_plan->increment_total" in entry
 assert "BuildIncrementCommandList(params.fence, native_completion)" in entry
 assert "BuildIncrementWithWfiCommandList(params.fence, native_completion)" in entry
@@ -94,7 +98,18 @@ struct SessionRegistry {
         return it == entries.end() ? nullptr : &it->second;
     }
 };
+struct nvhost_as_gpu {
+    std::shared_ptr<std::atomic_bool> lease=std::make_shared<std::atomic_bool>(true);
+    std::shared_ptr<const std::atomic_bool> CaptureNativeSubmissionLease() const {
+        return lease && lease->load() ? lease : nullptr;
+    }
+};
+struct ChannelState { std::shared_ptr<void> address_space_owner; };
 struct Gpu {
+    std::shared_ptr<nvhost_as_gpu> as=std::make_shared<nvhost_as_gpu>();
+    std::shared_ptr<ChannelState> channel_state=std::make_shared<ChannelState>(ChannelState{as});
+    bool epoch_current=true;
+    bool NativeEpochCurrent(int) const { return epoch_current; }
     bool native{};
     bool native_channel_enabled{};
     bool native_gpfifo_configured{};
@@ -147,6 +162,15 @@ int main() {
     // native GPU command or reserve even a zero-entry completion fence.
     denied(0x102,3,NvResult::InvalidState);
     gpu.native_gpfifo_configured=true; // actual successful allocation
+    gpu.epoch_current=false;
+    denied(0x102,3,NvResult::InvalidState);
+    gpu.epoch_current=true;
+    gpu.as->lease->store(false);
+    denied(0x102,3,NvResult::InvalidState);
+    gpu.as->lease->store(true);
+    gpu.channel_state->address_space_owner.reset();
+    denied(0x102,3,NvResult::InvalidState);
+    gpu.channel_state->address_space_owner=gpu.as;
     gpu.sessions[77]=2;
     gpu.core.entries[2]={&bob};
     denied(0x102,3,NvResult::InvalidState); // other FD foreign process
@@ -266,6 +290,7 @@ struct DmaPusher {
     Puller puller;std::queue<List> dma_pushbuffer;Channel channel_state;
     System system;Rasterizer raster;Rasterizer* rasterizer=&raster;
     bool ResumeNativeAcquire();
+    [[noreturn]] void FailNativeSubmission(const char* reason) { throw std::runtime_error(reason); }
 };
 __RESUME__
 int main(){

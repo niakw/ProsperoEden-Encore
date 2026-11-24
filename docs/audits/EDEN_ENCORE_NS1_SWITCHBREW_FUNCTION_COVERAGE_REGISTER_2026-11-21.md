@@ -3060,3 +3060,7 @@ Vendor `f1e8c0b32320e6c08dd662b9e5f5d1ac71808226` : `IWindowController::CreateWi
 
 **Pool restant = 1 538 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — correction de provenance WindowController
+
+Vendor `a12ddefce7725faeeb98495ceb8ccb8cf3cd5f8f` : aucune modification runtime. Les SHA256 du nouvel overlay `window_controller.{cpp,h}` ajoutés avec le correctif `CreateWindow` ont été recalculés avec l'algorithme SHA-256 de référence et corrigés dans `encore-active/eden-backports/manifest.json`, y compris les empreintes upstream. Vérification croisée sur `library_applet_accessor.cpp` : l'empreinte recalculée correspond exactement à celle déjà enregistrée. **Pool inchangé : 1 538 / 4 853.**
+

@@ -895,33 +895,33 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
                             "4ee2d58ce739af8e91d78794d6859b4662f8cb86",
                             "301c0bda4d9e5d81320361ea5ca24ab5a8cffcd2",
                             "aa6c39c16c8229d322869a70e7be7a71e1237d5b",
-                            "69e90bc940df1cfefcd9e3f6d0d7b5a5d7984413",:
-                            "945a4a0a9c4b535fa509f1ffed992d41632ddab7",:
-                            "08f3042aecf16bf086d5463c55c1c9a150603d0f",:
-                            "d2e93fb0fa67548d2ae500f1bde6c19c941ecb7a",:
-                            "b57ce2770c82aef425bc34e2fed2492f63adfe4d",:
-                            "95089b809f5eb4d3621eaddec92638e8c82f7fa4",:
-                            "3260a2ecf296b08d923e2cfe1205689b652cb9f1",:
-                            "1bd95def9ee03b841171924716280f6d5ccb3a09",:
-                            "54f03c30bac3ebd4d1b3bb04ab2df298bc565a87",:
-                            "3ae8cda53774da47ad69bdb4f91ef2434acf1fb5",:
-                            "695b49c4255c816f8212d2c8a17fe81daa6e4a77",:
-                            "e7137658964ed0ed011be58939a71519fb543b9a",:
-                            "ab5fa3bd3d8e4e2a90b43379d40760203c7520da",:
-                            "9ff0457f18f3d06771f450a665f75c454dae2f61",:
-                            "f48a197733474dd1b12400eec775a88e9f89828f",:
-                            "230caf1fd48d5f03c9dbdab77178a12c6738a65e",:
-                            "b6d141e0398d673ad115f76c67a86fa3908e3395",:
-                            "beb364e21f1942527a1321684d37ae07acfc5191",:
-                            "5842c124617c80cf26cc4efe5a9e53f968661d38",:
-                            "10432c439e6c591685634a3a42d341aaa419e87c",:
-                            "5fb4bec2cda9b8307a115b18d97f91cc8f095730",:
-                            "72810dae5e9dc201060381b134eadccd209c347c",:
-                            "616154a4bd8f224d0d881c9bc38cea3ffaabd3b8",:
-                            "cc1c05ca9dd3597690c0d2adc3f97ef2e5f32543",:
-                            "65fc254db8d34830d01329b39658a711af792286",:
-                            "85b37ea44ef1ca0d8c3c001ee4186aa42bd051d5",:
-                            "ea322a8365ee7190757a7389c8538971e467b9a6",:
+                            "69e90bc940df1cfefcd9e3f6d0d7b5a5d7984413",
+                            "945a4a0a9c4b535fa509f1ffed992d41632ddab7",
+                            "08f3042aecf16bf086d5463c55c1c9a150603d0f",
+                            "d2e93fb0fa67548d2ae500f1bde6c19c941ecb7a",
+                            "b57ce2770c82aef425bc34e2fed2492f63adfe4d",
+                            "95089b809f5eb4d3621eaddec92638e8c82f7fa4",
+                            "3260a2ecf296b08d923e2cfe1205689b652cb9f1",
+                            "1bd95def9ee03b841171924716280f6d5ccb3a09",
+                            "54f03c30bac3ebd4d1b3bb04ab2df298bc565a87",
+                            "3ae8cda53774da47ad69bdb4f91ef2434acf1fb5",
+                            "695b49c4255c816f8212d2c8a17fe81daa6e4a77",
+                            "e7137658964ed0ed011be58939a71519fb543b9a",
+                            "ab5fa3bd3d8e4e2a90b43379d40760203c7520da",
+                            "9ff0457f18f3d06771f450a665f75c454dae2f61",
+                            "f48a197733474dd1b12400eec775a88e9f89828f",
+                            "230caf1fd48d5f03c9dbdab77178a12c6738a65e",
+                            "b6d141e0398d673ad115f76c67a86fa3908e3395",
+                            "beb364e21f1942527a1321684d37ae07acfc5191",
+                            "5842c124617c80cf26cc4efe5a9e53f968661d38",
+                            "10432c439e6c591685634a3a42d341aaa419e87c",
+                            "5fb4bec2cda9b8307a115b18d97f91cc8f095730",
+                            "72810dae5e9dc201060381b134eadccd209c347c",
+                            "616154a4bd8f224d0d881c9bc38cea3ffaabd3b8",
+                            "cc1c05ca9dd3597690c0d2adc3f97ef2e5f32543",
+                            "65fc254db8d34830d01329b39658a711af792286",
+                            "85b37ea44ef1ca0d8c3c001ee4186aa42bd051d5",
+                            "ea322a8365ee7190757a7389c8538971e467b9a6",
                             "114aafbd10411faa65d0194775fd93f4a358fc21",
                             "a6c0444213541f747a85bd7936b1f5046ca0023f"}:
         # Merge commit retains precisely the source tree of the reviewed

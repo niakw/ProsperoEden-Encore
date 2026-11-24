@@ -1209,15 +1209,44 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'pinned_sources=immutable')
 
 
+
+        # Real HOS23 NS cmd92: derive the current running ProgramId from the
+        # actual main applet rather than leaving an indexed IMPL-SRC false
+        # positive with a native nullptr. Reverse CPP+header exactly.
+        ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
+        ns_latest = (ACTIVE / ns_rel).read_bytes()
+        assert len(ns_latest) == 69513 and sha(ns_latest) == '1c0af884c3144a0b8bf9ef798c5fe918706e4abe5e7b32557b5b4a72800aaa84'
+        assert spec['entries'][ns_rel]['active'] == sha(ns_latest)
+        ns_method = "Result IApplicationManagerInterface::GetRunningApplicationProgramId(\n    Out<u64> out_program_id) {\n    auto* const window_system = system.GetAppletManager().GetWindowSystem();\n    R_UNLESS(window_system != nullptr, AM::ResultApplicationRecordNotFound);\n    const auto applet = window_system->GetMainApplet();\n    R_UNLESS(applet != nullptr, AM::ResultApplicationRecordNotFound);\n\n    *out_program_id = applet->program_id;\n    R_SUCCEED();\n}\n\n"
+        ns_pointer = '{92, D<&IApplicationManagerInterface::GetRunningApplicationProgramId>, "GetRunningApplicationProgramId"},'
+        ns_pointer_old = '{92, nullptr, "GetRunningApplicationProgramId"},'
+        ns_text = ns_latest.decode('utf-8')
+        assert ns_text.count(ns_method) == 1 and ns_text.count(ns_pointer) == 1
+        ns_text = ns_text.replace(ns_method, '', 1).replace(ns_pointer, ns_pointer_old, 1)
+        ns_owner_prior = ns_text.encode('utf-8')
+        assert len(ns_owner_prior) == 69013 and sha(ns_owner_prior) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
+        ns_header_rel = 'src/core/hle/service/ns/application_manager_interface.h'
+        ns_header_latest = (ACTIVE / ns_header_rel).read_bytes()
+        assert len(ns_header_latest) == 7313 and sha(ns_header_latest) == '450200ef9e54f2f7989f46960055e4591d00c4ca5a870b7141d2bb1f69163908'
+        assert spec['entries'][ns_header_rel]['active'] == sha(ns_header_latest)
+        ns_signature = '    Result GetRunningApplicationProgramId(Out<u64> out_program_id);\n'
+        assert ns_header_latest.decode('utf-8').count(ns_signature) == 1
+        ns_header_prior = ns_header_latest.decode('utf-8').replace(ns_signature, '', 1).encode('utf-8')
+        assert len(ns_header_prior) == 7245 and sha(ns_header_prior) == '01e6fac84b59172c95c1d59b82cf3809f46be6229951d3e53585a85f14e9c7e0'
+        assert ns_header_prior == (stage / ns_header_rel).read_bytes(), 'NS native header source mismatch'
+        observed[ns_header_rel] = spec['entries'][ns_header_rel]
+        print('NS1_NS_RUNNING_PROGRAMID_EXACT_REVERSE_PASS',
+              'real_applet_identity=1', 'fake_cpp_implementation_receipt_fixed=1')
+
         # NS1 rights-environment system services lack a PS5 entitlement
         # manager. Fail closed using the existing NS error handler. Reverse
         # exactly these fourteen pointer bindings against the shipping owner.
         ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
-        ns_active = (ACTIVE / ns_rel).read_bytes()
+        ns_active = ns_owner_prior
         ns_previous = (stage / ns_rel).read_bytes()
         assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
         assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
-        assert spec['entries'][ns_rel]['active'] == sha(ns_active)
+        assert spec['entries'][ns_rel]['active'] == sha(ns_latest)
         import re
         ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
         ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)

@@ -1216,6 +1216,9 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             # unrelated old vendor commit ID.
             fixture = runpy.run_path(str(receipt_path))
             source = (root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+            if raster_blob(source) == 'e5baa7f438d8caf11327989087db38ed1ca053a4':
+                assert source.count(strict_cpp_delta)==1
+                source=source.replace(strict_cpp_delta,"",1)
             assert raster_blob(source) == 'f67815618d25657dcf64a87944b0c0bc5c2d8993'
             normalized = fixture['restore_guest_cache_lock_successor'](source)
             assert raster_blob(normalized) == '0633e3cf41c615f46791d3943ff40ac22399b047'

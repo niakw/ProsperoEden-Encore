@@ -66,13 +66,20 @@ def lock()->dict:
 
 def verify()->dict:
     meta=lock()
+    mismatches=[]
     for path,contract in meta['entries'].items():
         target=ACTIVE/path
-        if sha(target.read_bytes())!=contract['active']:
-            raise RuntimeError(f'Vendored patched source hash mismatch: {path}')
+        actual=sha(target.read_bytes()) if target.is_file() else None
+        if actual!=contract['active']:
+            mismatches.append(f'active {path}: expected={contract["active"]}, actual={actual}')
         old=ORIGINAL/path
-        if (sha(old.read_bytes()) if old.is_file() else None)!=contract['upstream']:
-            raise RuntimeError(f'Vendored upstream has changed: {path}')
+        original=sha(old.read_bytes()) if old.is_file() else None
+        if original!=contract['upstream']:
+            mismatches.append(f'pinned {path}: expected={contract["upstream"]}, actual={original}')
+    if mismatches:
+        raise RuntimeError(
+            'Vendored Eden source drift (all mismatches, no bypass): '
+            f'{len(mismatches)}\n'+'\n'.join(mismatches))
     if len(meta['entries'])<65 or len(meta['shipping_receipts'])<30:
         raise RuntimeError('Missing shipping Eden patches')
     print(f'EDEN_PATCHED_SOURCES_OK {len(meta["entries"])} complete files; {len(meta["shipping_receipts"])} patch checksums')

@@ -2681,3 +2681,9 @@ Vendor `594eacbef099b3f97f7975e19b5b64d57910ae77` : `ModularExponentiate` appliq
 Vendor `25d561a0fd182584da68d53bca65f5ec6dbee3c8` : `IReadOnlyApplicationRecordInterface::IsDataCorruptedResult` ne renvoie plus `false` pour tous les résultats. Le contrat LibHac `ResultFs.DataCorrupted` couvre exactement le module FS et les descriptions 4000–4999 ; le handler utilise désormais `Result::GetModule()` et `GetDescription()` pour cette plage, sans heuristique par code brut. **STUB → IMPL-SRC.**
 
 **Pool restant = 1 559** : 1 186 NULL + 24 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Qualification source/CI en cours ; aucune validation console PS5 revendiquée.
+
+### 2026-11-24 — NPNS système : ABI par nom, timestamp et event
+
+Vendor `b882a41e0b35a91051fb362cdf2082175d433748` : le dump NS1 23.0.1 confirme que `npns:s` cmd8 `ListenToByName` consomme un buffer d'entrée type 9 ; le handler système adopte maintenant cette ABI et conserve le comportement offline explicite, au lieu d'un succès sans même lire la requête. Cmd106/107 `Get/SetLastNotifiedTime` exposent désormais un état `s64` local cohérent. Cmd161 `GetRequestChangeStateCancelEvent` retourne le `KEvent` de service déjà vivant et n'est plus présenté comme stub. **3 STUB + 1 NULL → hors pool** (cmd8 NOOP offline ; cmd106/107/cmd161 IMPL-SRC).
+
+**Pool restant = 1 555** : 1 185 NULL + 21 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

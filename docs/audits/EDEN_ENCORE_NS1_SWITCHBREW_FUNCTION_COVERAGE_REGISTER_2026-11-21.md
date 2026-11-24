@@ -3076,3 +3076,7 @@ Vendor `a06bccfd645add1c7d06063f5abfa8e1ba525c04` : le dump Applet_Manager 23.0.
 
 Les overlays `cradle_firmware_updater.{cpp,h}` sont épinglés avec empreintes active/upstream revérifiées. **2 NULL → D. Pool restant = 1 535 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM DisplayController : transition buffer absent rejeté sans alias capture
+
+Vendor `a520a7e9c054b25f02dfb2d0887bca127cb871ef` : `IDisplayController::ClearAppletTransitionBuffer` (cmd21) consomme désormais son ABI Horizon réelle, un `u32` RGBA8, puis retourne une erreur explicite. Le backend VI actif possède trois slots de capture et des slots de présentation, mais aucun AppletTransitionBuffer dédié ; réutiliser un slot capture aurait corrompu la sémantique observable et potentiellement l'image. **1 NULL → D. Pool restant = 1 534 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

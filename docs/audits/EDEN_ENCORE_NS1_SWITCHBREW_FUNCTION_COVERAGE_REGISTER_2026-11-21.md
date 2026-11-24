@@ -3306,3 +3306,11 @@ Vendor `8b0b3b8b8622bb00f72b411ae324446ccaf22935` : `btdrv.cpp` devient un owner
 SwitchBrew confirme que `btdrv` est le driver matériel Bluetooth de la Switch, utilisé par HID/BTM et implémenté au-dessus de la pile UART/Broadcom BSA. Il confirme aussi les noms modernes HOS (FinalizeBluetooth, StartInquiry/StopInquiry, OpenHidConnection, GATT/BLE, etc.) : les anciens noms du miroir qui produisaient des `ABI-DIFF` sont des variantes historiques et ne constituent pas des contrats HOS23 distincts.
 
 Croisement 4 853 : `btdrv` **17 NULL + 61 ABI-DIFF → D/NOOP**, `bt` **9 NULL → D**, soit **87 entrées sorties du pool**. La ligne btdrv cmd97 était déjà HORS-VERSION. **Pool restant = 807 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — CAPS:SC : contrôle screenshot sans backend fermé explicitement
+
+Vendor `11bdd31265db39c90a67b92c923e97bd9960968c` : `caps_sc.cpp/.h` deviennent des owners `eden-backports` explicites et les copies `sources/eden` reviennent aux blobs Eden épinglés. Les **20 slots `nullptr` physiques** de `IScreenShotControlService` sont raccordés à `RejectUnavailableScreenShotControl`.
+
+Ce service contrôle le module de screenshot Switch (raw framebuffer, shared-buffer capture, demandes/cancel screenshot, metadata overlay/movie et raw screenshot stream), pas le rendu VI invité normal ni les services AlbumManager déjà implémentés. SwitchBrew indique notamment que 1101/1106/1107 sont les seules commandes `caps:sc` utilisées par GRC et que 1201–1203 correspondent au raw screenshot stream debug.
+
+Croisement 4 853 : **16 NULL → D**. Les quatre slots physiques historiques 1001/1002/1003/1204 ne sont pas des lignes distinctes du pool HOS23 utilisé ici. **Pool restant = 791 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

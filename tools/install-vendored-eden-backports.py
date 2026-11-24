@@ -812,6 +812,43 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'bt_user_rejections=9', 'driver_rejections=129',
               'physical_nulls=0', 'pinned_sources=immutable')
 
+        # caps:sc controls the Switch screenshot-capture module, not the normal
+        # guest display path. Encore has AlbumManager-backed album services but no
+        # raw screenshot-control/shared-buffer backend.
+        caps_sc_overlays={
+            'src/core/hle/service/caps/caps_sc.cpp': {
+                'before_sha256':'ad576f05a16b9f46374ea7744617307c24505f702e01891dd1581a68a94b03cb',
+                'before_bytes':1573,
+                'after_sha256':'7738dad7be563ddec28c31bf7171c21add60a273be177687e19d201ee4d46fcd',
+                'after_bytes':2886,
+            },
+            'src/core/hle/service/caps/caps_sc.h': {
+                'before_sha256':'7393d4e1412202d7f9b07af303325c5bb07375b8af5e17a9c4287c62d195f98b',
+                'before_bytes':470,
+                'after_sha256':'04e55e77d5b5535731df71f48247c9f086590bfead83b7055677ed06b771bcd7',
+                'after_bytes':549,
+            },
+        }
+        for rel,entry in caps_sc_overlays.items():
+            assert rel not in observed, ('CAPS:SC unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing CAPS:SC shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'CAPS:SC pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed CAPS:SC maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        caps_sc_cpp=(ACTIVE/'src/core/hle/service/caps/caps_sc.cpp').read_text()
+        assert caps_sc_cpp.count('&IScreenShotControlService::RejectUnavailableScreenShotControl')==20
+        assert caps_sc_cpp.count('nullptr')==0
+        print('NS1_CAPS_SC_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'rejected_slots=20', 'physical_nulls=0',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

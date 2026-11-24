@@ -213,7 +213,8 @@ void RunReader(bool fail, bool progress_failure) {
     // backlog, but the legacy reader-failure mock exercises prefix mode.
     bool prefer_recent_cache=false;
     std::stop_token stop_loading{};
-    std::vector<std::function<void()>> recent_cache_builds;
+    // Match the maintained keyed backlog: replay queues the job in entry.second.
+    std::vector<std::pair<int, std::function<void()>>> recent_cache_builds;
     struct {
         std::mutex mutex;
         std::size_t total{};

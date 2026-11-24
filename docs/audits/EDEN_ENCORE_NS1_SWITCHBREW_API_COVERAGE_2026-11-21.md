@@ -25,14 +25,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 808 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 808 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 809 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 728 | 80 | **1 808** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 729 | 80 | **1 809** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 153 | 3 | **156** |
-| **STUB — Stub / résultat simulé** | 33 | 0 | **33** |
+| **PARTIEL — Implémentation partielle** | 154 | 3 | **157** |
+| **STUB — Stub / résultat simulé** | 31 | 0 | **31** |
 | **NOOP — No-op documenté** | 218 | 0 | **218** |
 | **NULL — Handler NULL** | 1 186 | 0 | **1 186** |
 | **D — Rejet explicite / historique** | 224 | 33 | **257** |
@@ -1620,8 +1620,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `30` | `UnpopInData` | — | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `31` | `UnpopExtraStorage` | — | **IMPL-SRC** (réinjecte le stockage dans le canal `extra_storage` réel ; vendor `ebc5a68a`) | 2026-11-22 |
 | appletAE | `40` | `GetIndirectLayerProducerHandle` | 2.0.0+ | **NULL** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `50` | `ReportVisibleError` | 3.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
-| appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **STUB** ([source C++][ns1-src-038]) | 2026-11-22 |
+| appletAE | `50` | `ReportVisibleError` | 3.0.0+ | **IMPL-SRC** ([vendor a0c5a3be](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a0c5a3beb7ab54a67a6d463002ab94e6d838f435) ; ErrorCode validé puis converti en Result, rapport sauvegardé et frontend ErrorApplet réel invoqué ; PS5 non validé) | 2026-11-24 |
+| appletAE | `51` | `ReportVisibleErrorWithErrorContext` | 4.0.0+ | **PARTIEL** ([vendor a0c5a3be](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/a0c5a3beb7ab54a67a6d463002ab94e6d838f435) ; affichage ErrorApplet et rapport réels ; type/result du ErrorContext tracés, mais champs ERPT spécifiques du contexte pas encore soumis ; PS5 non validé) | 2026-11-24 |
 | appletAE | `60` | `GetMainAppletApplicationDesiredLanguage` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-038]) | 2026-11-22 |
 | appletAE | `70` | `GetCurrentApplicationId` | 8.0.0+ | **IMPL-SRC** (ProgramId lu sur le main applet réel au lieu du caller ; vendor `1b5b609d`) | 2026-11-22 |
 | appletAE | `80` | `RequestExitToSelf` | 6.0.0+ | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; demande lifecycle et frontend ; PS5 non validé) | 2026-11-24 |

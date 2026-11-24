@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 801 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 801 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 806 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 806 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 721 | 80 | **1 801** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 726 | 80 | **1 806** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 153 | 3 | **156** |
-| **STUB — Stub / résultat simulé** | 41 | 0 | **41** |
+| **STUB — Stub / résultat simulé** | 38 | 0 | **38** |
 | **NOOP — No-op documenté** | 218 | 0 | **218** |
-| **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
+| **NULL — Handler NULL** | 1 186 | 0 | **1 186** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1818,11 +1818,11 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `2` | `GetLastApplicationCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `3` | `GetCallerAppletCaptureImage` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `4` | `UpdateCallerAppletCaptureImage` | — | **IMPL-SRC** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; écriture capture réelle via DisplayLayerManager ; PS5 non validé) | 2026-11-24 |
-| appletAE | `5` | `GetLastForegroundCaptureImageEx` | — | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `6` | `GetLastApplicationCaptureImageEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `7` | `GetCallerAppletCaptureImageEx` | — | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `8` | `TakeScreenShotOfOwnLayer` | 2.0.0+ | **STUB** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `9` | `CopyBetweenCaptureBuffers` | 5.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `5` | `GetLastForegroundCaptureImageEx` | — | **IMPL-SRC** ([vendor 99879eef](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/99879eef9fb743cf2757b2d76f765487db70e337) ; lecture du slot LastForeground, déswizzle block-linear vers RGBA8 1280x720 ; ABI recroisée libnx/SwitchBrew ; PS5 non validé) | 2026-11-24 |
+| appletAE | `6` | `GetLastApplicationCaptureImageEx` | — | **IMPL-SRC** ([vendor 99879eef](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/99879eef9fb743cf2757b2d76f765487db70e337) ; lecture du slot LastApplication, déswizzle block-linear vers RGBA8 1280x720 ; ABI recroisée libnx/SwitchBrew ; PS5 non validé) | 2026-11-24 |
+| appletAE | `7` | `GetCallerAppletCaptureImageEx` | — | **IMPL-SRC** ([vendor 99879eef](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/99879eef9fb743cf2757b2d76f765487db70e337) ; lecture du slot CallerApplet, déswizzle block-linear vers RGBA8 1280x720 ; ABI recroisée libnx/SwitchBrew ; PS5 non validé) | 2026-11-24 |
+| appletAE | `8` | `TakeScreenShotOfOwnLayer` | 2.0.0+ | **IMPL-SRC** ([vendor 99879eef](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/99879eef9fb743cf2757b2d76f765487db70e337) ; permission screenshot respectée, capture GPU tuilée copiée vers le slot 0/1/2 demandé ; ABI recroisée libnx/SwitchBrew ; PS5 non validé) | 2026-11-24 |
+| appletAE | `9` | `CopyBetweenCaptureBuffers` | 5.0.0+ | **IMPL-SRC** ([vendor 99879eef](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/99879eef9fb743cf2757b2d76f765487db70e337) ; copie brute du slot tuilé source vers destination avec état de validité propagé ; ABI recroisée libnx/SwitchBrew ; PS5 non validé) | 2026-11-24 |
 | appletAE | `10` | `AcquireLastApplicationCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `11` | `ReleaseLastApplicationCaptureBuffer` | — | **IMPL-SRC** (release explicite du chemin legacy ; le port PS5 copie le snapshot de façon synchrone et ne conserve aucun ownership après Acquire ; vendor `f48b5172`) | 2026-11-23 |
 | appletAE | `12` | `AcquireLastForegroundCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |

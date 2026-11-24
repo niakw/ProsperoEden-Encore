@@ -132,13 +132,13 @@ if selected == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == "8bd2b8d1378cefffaf0f4e397289ba62ef009112"
     expected.add(selected)
-if selected == "3b11e208b132fe1d9a44c59c92ab3569b28a426c":
+if selected == "978cdb678461f31b84ea2c1a090a309d0727b6ef":
     # Exact NS2-only queued-GPFIFO/H:17 successor plus source-guard alignment. Authenticate the complete
     # vendor tree; the immutable FC27 shader/CMake hashes below remain the
     # actual proof that this successor does not alter FC27 source ownership.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "e84be57e4dbe9ce31ed2ac1a42679539dfd89489"
+    ).strip() == "c266325a1eb932fb4434bfceaa413281432be590"
     expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

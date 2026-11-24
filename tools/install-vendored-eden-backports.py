@@ -1116,6 +1116,47 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_GRC_OLSC_EXACT_POST_BACKPORT_REPLAY_PASS',
               'physical_nulls=32', 'reconstructed_owners=3', 'native_handlers_preserved')
 
+
+        # NS1 acc:e/u1/u2 supersede the removed acc:u0/u1 on HOS 13+.
+        # Reuse the implemented local profile + persistent-thumbnail handlers.
+        # Reverse each exact owner binding to the historic nullptr before
+        # accepting the new shipping acc.cpp in the frozen Eden replay.
+        acc_rel = 'src/core/hle/service/acc/acc.cpp'
+        acc_before = (stage / acc_rel).read_bytes()
+        acc_after = (ACTIVE / acc_rel).read_bytes()
+        assert acc_rel in observed and acc_rel in spec['entries']
+        assert len(acc_before) == 91522 and sha(acc_before) == 'fd20d50067f508f246e7857f9d92cb634a8bc07584ae02a4c191502cf6c181c6'
+        assert len(acc_after) == 92665 and sha(acc_after) == 'ea76666ba632cf71542eb38b9a9468a608ef2de769b5d152dd9f9c8501ee07a5'
+        assert spec['entries'][acc_rel]['active'] == sha(acc_after)
+        assert spec['entries'][acc_rel]['bytes'] == len(acc_after)
+        import re
+        acc_bindings = {"ACC_E":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","52":"TrySelectUserWithoutInteraction","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers"},"ACC_E_U1":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers"},"ACC_E_U2":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","52":"TrySelectUserWithoutInteraction","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers","205":"GetProfileEditor"}}
+        lines = acc_after.decode('utf-8').splitlines(keepends=True)
+        owner = ''
+        restored = dict.fromkeys(acc_bindings, 0)
+        for i, line in enumerate(lines):
+            service_match = re.match(r'^class (ACC_E(?:_U1|_U2)?) final : public Module::Interface', line)
+            if service_match:
+                owner = service_match.group(1)
+            if line.startswith('void LoopProcess'):
+                owner = ''
+            if not owner:
+                continue
+            command = re.match(r'^\s*\{\s*(\d+),\s*&(\w+)::(\w+),', line)
+            if command and command.group(1) in acc_bindings[owner]:
+                assert command.group(2) == owner
+                assert command.group(3) == acc_bindings[owner][command.group(1)]
+                pointer = '&' + owner + '::' + command.group(3)
+                assert lines[i].count(pointer) == 1
+                lines[i] = line.replace(pointer, 'nullptr', 1)
+                restored[owner] += 1
+        assert restored == {'ACC_E': 15, 'ACC_E_U1': 14, 'ACC_E_U2': 16}
+        assert ''.join(lines).encode('utf-8') == acc_before, 'ACC entity exact reverse mismatch'
+        observed[acc_rel] = spec['entries'][acc_rel]
+        print('NS1_ACC_ENTITY_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'real_local_bindings=45', 'owners=acc:e+acc:e:u1+acc:e:u2',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

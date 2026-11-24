@@ -27,6 +27,7 @@ stabilization_trees = {
     "d63d82dfb9c2afbacac4c9dc1491f743fb083d52": "290d8c51e8ab40dd56651d50483abe42e11fa404",
     "d634b381d85dae30492dd6291fc4e6e96143f363": "a51ee73257c13fce70cbaf5d3e26c62010abf2e9",
     "692e9819a7a1f1b818bf3739c72d8e5252cae661": "6743fed9174ee7e3451afbbad230dca6c2e4203c",
+    "166e473e120a86a6edcd32a975ffe19b45ffdd42": "3a996079e9de76e0c3d8bd2e595e6c83dadd6ce0",
 }
 stabilization_selected = shipping_vendor in stabilization_trees
 stabilization_new_headers = set()
@@ -2172,6 +2173,8 @@ merged_ns1_ns2_owner_blobs = {
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp": "315c3c7c821016f23af7d2c6ffc8d7ca3a4ebe09",
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp": "e112f14eed85a6ac974a1d81a92d6952dfe57df3",
 }
+if shipping_vendor == "166e473e120a86a6edcd32a975ffe19b45ffdd42":
+    merged_ns1_ns2_owner_blobs["eden-core/overrides/video_core/host1x/syncpoint_manager.h"] = "a62b9a9e8019c2df085fc9d393fcbd4207cd78d7"
 merged_owner_present = set(merged_ns1_ns2_owner_blobs) & set(physical_all)
 assert not (merged_owner_present & set(research_paths))
 if gpu_table_vendor_pin == "4354add020afac574198f63d87167f3022bff9c6":
@@ -2229,7 +2232,7 @@ current_vendor_post_f07_owner_blobs = {
     "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
 }
-if shipping_vendor == "692e9819a7a1f1b818bf3739c72d8e5252cae661":
+if shipping_vendor in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42"}:
     current_vendor_post_f07_owner_blobs["ns2-runtime/nx/core/loader/nx.cpp"] = "5d999ca68668133ea3f151669ecd6ac6a17ae1c5"
 # Post-F07 registry includes old SM while the latest exact successor
 # changes ONLY SM handler retirement in that owner. Preserve exact pin and

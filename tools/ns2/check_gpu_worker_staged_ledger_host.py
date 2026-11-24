@@ -10,7 +10,9 @@ ROOT=Path(__file__).resolve().parents[2]
 OWNER=ROOT/'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker.cpp'
 HEADER=ROOT/'vendor/encore-active/ns2-runtime/hle/core/hle/service/am/service/gpu_worker_protocol.h'
 source=OWNER.read_text()
-assert source.count('m_mappings.PrepareMapped(*request, staged_ledger)')==1
+assert source.count('ledger.PrepareMapped(*request, staged_ledger)')==1
+assert source.count('m_mappings.SparseReservationPageShift(')==1
+assert 'auto& ledger = sparse_overlay ? m_sparse_overlays : m_mappings;' in source
 assert source.count('m_mappings.PrepareSparse(')==1
 assert source.count('m_mappings.PrepareSparseReplacingExact(')==1
 assert source.count('m_mappings.CommitPrepared(staged_ledger)')==2
@@ -22,8 +24,9 @@ for owner in (normal,sparse):
     assert owner.index('m_mappings.Prepare')<owner.index('m_mappings.CommitPrepared(')
     assert 'm_mappings.RecordMapped(' not in owner
     assert 'm_mappings.RecordSparse(' not in owner
-assert normal.index('m_mappings.PrepareMapped(')<normal.index('as->MapNative4K(')
-assert normal.index('as->MapNative4K(')<normal.index('m_mappings.CommitPrepared(')
+assert normal.index('ledger.PrepareMapped(')<normal.index('as->MapNative4K(')
+assert normal.index('as->MapNative4K(')<normal.index('ledger.CommitPrepared(')
+assert 'request->cache != 0' in normal
 assert sparse.index('m_mappings.PrepareSparseReplacingExact(')<sparse.index(
     '"214_replace_wait_idle"')<sparse.index('system.GPU().WaitForIdle();')
 assert sparse.index('system.GPU().WaitForIdle();')<sparse.index(
@@ -32,6 +35,7 @@ assert sparse.index('m_mappings.RecordReleasedSparse(')<sparse.index(
     'as->ReserveNativeSparse4K(')<sparse.index('m_mappings.CommitPrepared(')
 header=HEADER.read_text()
 for token in ('std::optional<Mapping> ExactSparse(',
+              'SparseReservationPageShift(',
               'PrepareSparseReplacingExact(',
               'mappings.find({as, address})',
               'next->second.address - address < size',

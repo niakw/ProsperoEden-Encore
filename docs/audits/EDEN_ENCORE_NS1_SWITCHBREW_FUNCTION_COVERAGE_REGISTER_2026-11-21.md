@@ -3042,3 +3042,9 @@ Ce choix évite un faux succès : `DisplayLayerManager::CreateManagedDisplaySepa
 
 **Pool restant = 1 541 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM ApplicationCreator : absence de launch-request queue traitée explicitement
+
+Vendor `8aeb5a99bc36d5a01a1cd409bb24d8bed990ab05` : `IApplicationCreator::PopLaunchRequestedApplication` (cmd1) ne reste plus un slot NULL. L'ABI réelle ne prend aucune entrée et doit retourner un `IApplicationAccessor`. Encore ne possède toutefois aucune file AM correspondante : `AppletManager::m_pending_process` est exclusivement le processus injecté par le frontend au bootstrap et `SetWindowSystem()` le consomme immédiatement pour créer l'applet initial ; le réutiliser ici exposerait à tort l'application courante ou un objet déjà consommé.
+
+Le handler retourne donc une erreur explicite sans fabriquer d'accessor. **1 NULL → D. Pool restant = 1 540 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

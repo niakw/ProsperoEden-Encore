@@ -42,7 +42,29 @@ stabilization_trees = {
     "d8155325107dbbb1f8ef44f75553595fe4c8ec8c": "a6451d095d44e8b9968635320d3bba34d5722fa5",
     "101eae5edb76fefc40b039009eb35bbaaae99386": "8e42496a1f01a94cc6b17f57eee6ebdff2698ff6",
     "3abd88bc1a3c334f53f345998b72e9cf8ae87abf": "b82ce9bb3b543bf85d535bdfdfb6d725fe88be56",
+    "cd5ce4dabef1d32e0441d22dccdee358ebf23287": "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89",
 }
+
+# The strict native completion ABI adds only these reviewed blocks. Reconstruct
+# the immutable predecessor on an audit copy, never on the compiled source.
+def strict_completion_predecessor(relative, data):
+    current = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    changes = {
+        "eden-vulkan/vulkan_rasterizer.cpp": ("e5baa7f438d8caf11327989087db38ed1ca053a4", "f67815618d25657dcf64a87944b0c0bc5c2d8993", "#ifdef PS5_NATIVE\nbool RasterizerVulkan::SignalNativeSyncPoint(u32 value) {\n    fence_manager.SignalNativeSyncPoint(value);\n    return true;\n}\n#endif\n\n".encode()),
+        "eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": ("8bd6f2a4e489aa608fc4420d2ff5847b7c12e165", "6e0bf7ab2a3a2147f9db0c630070db30d9b35d56", "#ifdef PS5_NATIVE\n    bool SignalNativeSyncPoint(u32 value) override;\n#endif\n".encode()),
+        "ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": ("74587c78870735bb23d2430415f3742b9e7cca68", "33b1b5475e68c8459f9666b1ae1a6e446221cb63", "#ifdef PS5_NATIVE\n    // Native Ampere completion must retire behind a real renderer fence.\n    // Non-Vulkan backends fail closed rather than publishing an early GSV\n    // counter; the production PS5 Vulkan rasterizer overrides this method.\n    virtual bool SignalNativeSyncPoint(u32) {\n        return false;\n    }\n#endif\n\n".encode()),
+    }
+    if relative not in changes:
+        return data, current
+    successor, predecessor, addition = changes[relative]
+    if current != successor:
+        return data, current
+    assert data.count(addition) == 1, ("Strict completion ABI drift", relative)
+    data = data.replace(addition, b"", 1)
+    actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+    assert actual == predecessor, ("Strict completion predecessor drift", relative, actual)
+    return data, actual
+
 stabilization_selected = shipping_vendor in stabilization_trees
 stabilization_new_headers = set()
 if stabilization_selected:
@@ -706,6 +728,7 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
     }.items():
         source=(active/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(source)).encode()+bytes([0])+source).hexdigest()
+        source, actual = strict_completion_predecessor(relative, source)
         if (relative == "eden-vulkan/vulkan_rasterizer.cpp" and
             actual in {"0633e3cf41c615f46791d3943ff40ac22399b047", "f67815618d25657dcf64a87944b0c0bc5c2d8993"} and
             blob == "71d097b9a83028dfad9370792c905bb3bfccfd5a"):
@@ -1694,6 +1717,7 @@ if gpu_table_vendor_pin in {pair_receipt["selected_vendor"], "42459a7893c51a178e
             # each behind an exact full-source SHA and byte-identical predecessor.
             data = (active / path).read_bytes()
             actual = hashlib.sha1(b"blob " + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+            data, actual = strict_completion_predecessor(path, data)
             stabilization_pair_blobs = {
                 "eden-core/overrides/core/gpu_dirty_memory_manager.h": "7769e314fbefeb8393e6d11b115c88bc0a8a0e58",
                 "eden-core/src/video_core/buffer_cache/buffer_cache.h": "7f07e392ea0cc828d862da29d32ada1ebc3966aa",
@@ -2187,7 +2211,7 @@ merged_ns1_ns2_owner_blobs = {
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp": "315c3c7c821016f23af7d2c6ffc8d7ca3a4ebe09",
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp": "e112f14eed85a6ac974a1d81a92d6952dfe57df3",
 }
-if shipping_vendor in {"166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"}:
+if shipping_vendor in {"166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287"}:
     merged_ns1_ns2_owner_blobs["eden-core/overrides/video_core/host1x/syncpoint_manager.h"] = "a62b9a9e8019c2df085fc9d393fcbd4207cd78d7"
 merged_owner_present = set(merged_ns1_ns2_owner_blobs) & set(physical_all)
 assert not (merged_owner_present & set(research_paths))
@@ -2246,7 +2270,7 @@ current_vendor_post_f07_owner_blobs = {
     "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
 }
-if shipping_vendor in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"}:
+if shipping_vendor in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287"}:
     current_vendor_post_f07_owner_blobs["ns2-runtime/nx/core/loader/nx.cpp"] = "5d999ca68668133ea3f151669ecd6ac6a17ae1c5"
 # Post-F07 registry includes old SM while the latest exact successor
 # changes ONLY SM handler retirement in that owner. Preserve exact pin and

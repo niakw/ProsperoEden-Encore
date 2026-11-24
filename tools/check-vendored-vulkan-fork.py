@@ -10,7 +10,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from ci.ps5_cache_diag_receipt import normalize_for_historical_proof
+from ci.ps5_cache_diag_receipt import (
+    normalize_for_historical_proof, reverse_immutable_snapshot_successor,
+    reverse_reviewed_source, PARALLEL_TIMING_REVERSES, PARALLEL_TRANSLATION_REVERSES,
+)
 def git_blob_sha(text):
     data=text.encode('utf-8')
     return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
@@ -2751,6 +2754,40 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     generated_n3m = generated_raw_n3m.replace(
         typed_output_after, typed_output_before, 1)
     generated_n3m = generated_n3m.replace(none_rt_guard, "", 1)
+    # The generator now emits the reviewed parallel/snapshot successor, but
+    # n3m is the frozen pre-parallel owner. Reverse only exact reviewed hunks
+    # in the temporary generated copy, preserving the full byte-parity test.
+    drain_hunks = [
+        ("        // QueueWork and pool allocation may throw after earlier tasks borrowed\n        // these locals. Drain before unwinding, without stopping persistent workers.\n        struct TranslationDrain {\n            Common::ThreadWorker& worker;\n            bool joined{};\n            ~TranslationDrain() {\n                if (!joined) worker.WaitForRequests();\n            }\n        } translation_drain{shader_translation_workers};\n", ""),
+        ("        translation_drain.joined = true;\n", ""),
+    ]
+    # The snapshot helper removes a contiguous block: prove that block is
+    # byte-identical to the already hash-verified native shipping source.
+    block_begin = "    // Worker translation must never traverse the live guest GMMU. Snapshot\\n"
+    block_end = "    if (parallel_translate_stages) {\\n" + "        // QueueWork and pool allocation may throw after earlier tasks borrowed\n        // these locals. Drain before unwinding, without stopping persistent workers.\n        struct TranslationDrain {\n            Common::ThreadWorker& worker;\n            bool joined{};\n            ~TranslationDrain() {\n                if (!joined) worker.WaitForRequests();\n            }\n        } translation_drain{shader_translation_workers};\n        size_t parallel_env_index{};\n"
+    def snapshot_block(src):
+        assert src.count(block_begin) == src.count(block_end) == 1
+        start = src.index(block_begin)
+        end = src.index(block_end, start)
+        return src[start:end]
+    assert snapshot_block(generated_raw_n3m) == snapshot_block(native_raw_n3m), (
+        "Generated immutable shader inputs differ from reviewed owner")
+    generated_n3m = reverse_reviewed_source(generated_n3m, drain_hunks,
+                                           "generated translation drain")
+    generated_n3m = reverse_immutable_snapshot_successor(generated_n3m)
+    generated_n3m = reverse_reviewed_source(generated_n3m, PARALLEL_TIMING_REVERSES,
+                                           "generated parallel timing")
+    # The historical generator has no cache diagnostic marker in its include
+    # prefix, and its preflush declaration was inserted independently of the
+    # Vulkan namespace suffix. Retain the exact hunks for the other six edits.
+    generated_n3m = reverse_reviewed_source(generated_n3m, [
+        ("#include <exception>\\n", ""),
+        ("#include <stdexcept>\\n", ""),
+        ("#ifdef PS5_NATIVE\\nnamespace VideoCommon {\\n"
+         "void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept;\\n"
+         "}\\n#endif\\n\\n", ""),
+        *PARALLEL_TRANSLATION_REVERSES[2:],
+    ], "generated parallel translation")
     actual[n56_name].write_text(generated_n3m)
     print('ENCORE_NS1_GPU23_GENERATOR_EXACT_REVERSE_PASS')
     if generated_n3m.count(n3m_flag) != n3m.count(n3m_flag):
@@ -3029,6 +3066,16 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(normalized)
         normalized_expected[name] = output
+        if name == "include/video_core/renderer_vulkan/vk_pipeline_cache.h":
+            # Both parallel API hunks are also generated today; reverse them
+            # on the audit copy before comparison to the historical ABI.
+            generated_header = reverse_reviewed_source(
+                normalized_generated[name].read_text(), edits[:2],
+                "generated parallel graphics ABI")
+            generated_path = temp/'normalized-generated-parallel-header'/name
+            generated_path.parent.mkdir(parents=True, exist_ok=True)
+            generated_path.write_text(generated_header)
+            normalized_generated[name] = generated_path
     # N73's strict source normalizer already reverses the SIX native guest
     # colour-attachment capture statements in the maintained texture TU.
     # The historic generator emits these exact statements; reverse them

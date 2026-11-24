@@ -3107,6 +3107,15 @@ for predecessor, current, label in _immutable_shader_snapshot_successor:
             f"predecessor={predecessor_count} current={current_count}")
 
 
+# Keep the generated successor consistent with the active exception-safe owner.
+for _before, _after in [
+    ("        size_t parallel_env_index{};\n", "        // QueueWork and pool allocation may throw after earlier tasks borrowed\n        // these locals. Drain before unwinding, without stopping persistent workers.\n        struct TranslationDrain {\n            Common::ThreadWorker& worker;\n            bool joined{};\n            ~TranslationDrain() {\n                if (!joined) worker.WaitForRequests();\n            }\n        } translation_drain{shader_translation_workers};\n        size_t parallel_env_index{};\n"),
+    ("        shader_translation_workers.WaitForRequests();\n", "        shader_translation_workers.WaitForRequests();\n        translation_drain.joined = true;\n"),
+]:
+    if shader_source.count(_before) != 1:
+        raise RuntimeError("FC27 translation drain generator anchor drift")
+    shader_source = shader_source.replace(_before, _after, 1)
+
 shader_output = output / 'vk_pipeline_cache_cost.cpp'
 if not shader_output.exists() or shader_output.read_text() != shader_source:
     shader_output.write_text(shader_source)

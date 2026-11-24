@@ -3108,3 +3108,13 @@ Vendor `c9e6af612c60b047ed43de57d2465fe18b8df7cf` : le dump Applet_Manager 23.0.
 
 **Cmd60 : 1 NULL → D. Cmd71/cmd75 : commandes HOS23 absentes de table → rejets explicites hors lignes distinctes du catalogue historique. Pool restant = 1 531 / 4 853.** Il ne reste plus que **3 slots `nullptr` HOS23 pertinents** dans les overlays AM actifs : `GetWakeupCount`, `SetHidInputMagnificationForApplication`, `GetLaunchRequiredTick`. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — FSP IFile/IFileSystem : range IPC + QueryEntry dispatch
+
+Vendor `285b0c8646cfc8d7331ca63758c4d34161460bac` : les trois slots FSP compacts `IFile::OperateRange` (cmd5), `OperateRangeWithBuffer` (cmd6) et `IFileSystem::QueryEntry` (cmd15) ne tombent plus dans le dispatcher inconnu.
+
+- **OperateRange** suit le contrat Atmosphère `FileInterfaceAdapter` pour un fichier local : sortie `FileQueryRangeInfo` 0x40 initialisée, `Invalidate` est un no-op valide sur le VFS hôte sans cache bloc invité, et `QueryRange` valide l'offset/taille puis retourne une information neutre (aucun AES-CTR/speed-emulation sur le fichier hôte). Les autres op-id de cmd5 suivent le comportement de l'adapter Horizon et ne sont pas forwardés. **NULL → IMPL-SRC.**
+- **OperateRangeWithBuffer** consomme l'ABI HOS12+ exacte (buffers non-secure + op-id/offset/taille), couvre `Invalidate` et `QueryRange`, mais rejette explicitement les opérations lazy-load/unprepared qu'Encore ne modélise pas. **NULL → PARTIEL.**
+- **QueryEntry** consomme l'ABI complète (path pointer + in/out buffers + `QueryId`) et délègue au backend FSA existant, lequel retourne actuellement `FS::ResultNotImplemented` plutôt que de fabriquer un résultat. **NULL → D.**
+
+Références : Horizon IPC definitions et Atmosphère `fssrv_filesystem_interface_adapter.cpp` / local filesystem. **Pool restant = 1 529 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

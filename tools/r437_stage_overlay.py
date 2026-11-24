@@ -150,6 +150,15 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    if actual == "fce19742529b21bca0f92f3f67c4e420dcd493c7":
+        # Historical receipt: remove only the new PS5 readback fast path
+        # from the audit copy, retaining the real runtime unchanged.
+        successor = "    if (size == 0) {\n        return;\n    }\n#ifdef PS5_NATIVE\n    // Lichii: completed GPU readback may land directly when no newer CPU\n    // write overlaps. Avoid a temporary RangeSet/subtractions for every\n    // uncontended download while the BufferCache mutex is held.\n    // Intersects fails closed on invalid or overflowing spans.\n    if (!cpu_written.Intersects(device_addr, size)) {\n        device_memory.WriteBlockUnsafe(device_addr, data, size);\n        return;\n    }\n#endif\n"
+        assert source.count(successor) == 1, "FC27 readback fast-path source drift"
+        source = source.replace(successor, "", 1)
+        raw = source.encode("utf-8")
+        actual = __import__("hashlib").sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == "4ce33d21debc33c9625129cbd545bf9b1c084272", actual
     if actual == "4ce33d21debc33c9625129cbd545bf9b1c084272":
         successor = "#ifdef PS5_NATIVE\n    // Native RangeSet owner is selected together with this BufferCache.\n    // Avoid walking every fragmented GPU-written interval under the cache mutex.\n    return gpu_modified_ranges.Intersects(addr, size);\n#else\n    bool is_dirty = false;\n    gpu_modified_ranges.ForEachInRange(addr, size, [&](DAddr, DAddr) { is_dirty = true; });\n    return is_dirty;\n#endif"
         predecessor = "    bool is_dirty = false;\n    gpu_modified_ranges.ForEachInRange(addr, size, [&](DAddr, DAddr) { is_dirty = true; });\n    return is_dirty;"

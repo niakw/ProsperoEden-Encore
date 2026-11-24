@@ -1698,6 +1698,15 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         # Reverse ONLY this exact method on the historical audit copy.
         # The real multi-channel scrub remains compiled unchanged.
         selected = core_owner.read_text()
+        if core_blob == "fce19742529b21bca0f92f3f67c4e420dcd493c7":
+            # Historical reconstruction only: review and reverse the exact
+            # readback publication fast path before older source witnesses.
+            successor = "    if (size == 0) {\n        return;\n    }\n#ifdef PS5_NATIVE\n    // Lichii: completed GPU readback may land directly when no newer CPU\n    // write overlaps. Avoid a temporary RangeSet/subtractions for every\n    // uncontended download while the BufferCache mutex is held.\n    // Intersects fails closed on invalid or overflowing spans.\n    if (!cpu_written.Intersects(device_addr, size)) {\n        device_memory.WriteBlockUnsafe(device_addr, data, size);\n        return;\n    }\n#endif\n"
+            assert selected.count(successor) == 1, "FC27 readback owner drift"
+            selected = selected.replace(successor, "", 1)
+            raw = selected.encode("utf-8")
+            core_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert core_blob == "4ce33d21debc33c9625129cbd545bf9b1c084272", core_blob
         if core_blob == "4ce33d21debc33c9625129cbd545bf9b1c084272":
             successor = "#ifdef PS5_NATIVE\n    // Native RangeSet owner is selected together with this BufferCache.\n    // Avoid walking every fragmented GPU-written interval under the cache mutex.\n    return gpu_modified_ranges.Intersects(addr, size);\n#else\n    bool is_dirty = false;\n    gpu_modified_ranges.ForEachInRange(addr, size, [&](DAddr, DAddr) { is_dirty = true; });\n    return is_dirty;\n#endif"
             predecessor = "    bool is_dirty = false;\n    gpu_modified_ranges.ForEachInRange(addr, size, [&](DAddr, DAddr) { is_dirty = true; });\n    return is_dirty;"

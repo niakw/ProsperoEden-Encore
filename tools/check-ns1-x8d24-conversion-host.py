@@ -23,12 +23,12 @@ assert git_blob(CPP) == "4ba93afb6594213d5bde82be2693f0e08cb1cd63"
 assert git_blob(HDR) == "a38cfcf655adcb8ceebfce955b39a2312a239768"
 assert git_blob(TEX) == "e9191238ccddd94aa22570eba501fb05fff5b207"
 assert git_blob(CACHE) == "5c6d015cf207d63de31b577411972606145d9f2e"
-assert "if (!image_id)" in cache and "return ImageViewId{};" in cache
 
 cpp = CPP.read_text()
 hdr = HDR.read_text()
 tex = TEX.read_text()
 cache = CACHE.read_text()
+assert "if (!image_id)" in cache and "return ImageViewId{};" in cache
 cmake = CMAKE.read_text()
 common = COMMON.read_text()
 assert "DecodeX8D24" in common and "EncodeX8D24" in common

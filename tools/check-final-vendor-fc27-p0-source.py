@@ -1399,6 +1399,8 @@ if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e12
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
 
 def reviewed_blob(relative, expected):
+    if actual_vendor_pin == "973d45ae0da5d9612d30900e39118d67d039b31a" and relative == "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp":
+        return "2ad45d27a850d56ccc6b49e92f2a5051d07be848"
     if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b"} and relative in ns2_boot_successor_blobs:
         return ns2_boot_successor_blobs[relative]
     if actual_vendor_pin in {"d634b381d85dae30492dd6291fc4e6e96143f363", "692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b"} and relative == "tests/fc27_deferred_page_protection_host.py":
@@ -1434,7 +1436,7 @@ def reviewed_blob(relative, expected):
         return "02e406d9209de6029bcc526bf800428268b81ed4"
     if actual_vendor_pin in {"b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"} and relative == "encore-active/ns2-runtime/gpu_dispatch/video_core/native_ampere_macro_state.h":
         return "1f60c4cda2a7d5206082434945f40a1cf2bb546c"
-    if actual_vendor_pin in {"53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e"} and relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h":
+    if actual_vendor_pin in {"53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a"} and relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h":
         return "f6217651bf15d13e5be80c0b1b0b76679f02949b"
     if actual_vendor_pin in {"97fa38381d9ce23b63b3bf3751615dc254ab3634", "b099bd7cbefaa1a35d6626d4fd3161afcefa1b48", "bfdf39014db15f237a16d4a50e6cdfd68bdd87b8", "4626d87be155c0b42904610323098c1205515450", "c32704e63844449b1c18a03deb2cd92939999b90", "fab5ebbfda09ebd3fc414b3127e135c66025ccb8", "acb42e2a2b18fee17673d07e06b2f29709de2fb5", "99df05ff50a7a4a9591c17b08f4ed0f8cb0374a3", "04e252186aa42bacde0899e0c9224035c83a6b0d", "44f5b75bc93bcea146ad6fba3ac294405ae8709b", "70789b12dea4d72ce9e7f054c5b6f552ec488f5d", "9db97fb12db1a390d6b2410f0c18333aa31e37da"} and relative == "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h":
         return "ff9d81f1e2f5b65b73b2cf233579591e07267870"
@@ -2076,23 +2078,23 @@ if actual_vendor_pin == "042204fde8e5b74aa5048c6213a8af4450d26fe5":
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("libounce NS2 successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
-if actual_vendor_pin in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e"}:
-    if actual_vendor_pin == "7e137d362f9679125726ef4876355a09d788795e":
+if actual_vendor_pin in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a"}:
+    if actual_vendor_pin in {"7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a"}:
         raw = (V / "encore-active/eden-core/src/video_core/memory_manager.cpp").read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == "9a9479580fb2037cc49fe2ed5c6a284331a78b97"
-    if actual_vendor_pin in {"53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e"}:
+    if actual_vendor_pin in {"53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a"}:
         raw = (V / "encore-active/ns2-runtime/nvdrv/core/hle/service/nvdrv/devices/native_gpu_characteristics.h").read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == "f6217651bf15d13e5be80c0b1b0b76679f02949b"
     # Exact VM import, channel health, descriptor QueryEvent and image format
     # successor; keep the previous FC27 and sparse owners byte-identical.
-    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("6861e052a9824450c7eeaa91b53334c153ca9865" if actual_vendor_pin == "7e137d362f9679125726ef4876355a09d788795e" else "a21aa2b63cfb9cae4dd9ba386982c3bd57a7ef1f" if actual_vendor_pin == "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb" else "50ba35725b57b59cae76a67c7c1d4ba6ad894e2f")
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("1d991da378f711312faf34125f1d4cfe1378bcaa" if actual_vendor_pin == "973d45ae0da5d9612d30900e39118d67d039b31a" else "6861e052a9824450c7eeaa91b53334c153ca9865" if actual_vendor_pin == "7e137d362f9679125726ef4876355a09d788795e" else "a21aa2b63cfb9cae4dd9ba386982c3bd57a7ef1f" if actual_vendor_pin == "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb" else "50ba35725b57b59cae76a67c7c1d4ba6ad894e2f")
     for relative, expected_blob in {
         "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "c082c25491f3783543e787fce43197d8b3fe78d3",
         "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp": "ae2708f662937a5069afe355425cf43e424fcd9c",
         "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.h": "74b87878c2a73d6918b7f3e4144419fc07a0e15f",
         "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "e5aa688d9e685b9de2a4204a8da8cdb0c6eedff0",
         "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h": "248581eb2c87a5b5eaa9bdb7e4ad095e860584ce",
-        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "38f13e8983228509f4f378d27a3244367ec50878",
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": ("2ad45d27a850d56ccc6b49e92f2a5051d07be848" if actual_vendor_pin == "973d45ae0da5d9612d30900e39118d67d039b31a" else "38f13e8983228509f4f378d27a3244367ec50878"),
         "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "a228adddcc987c9c110068780b16e43d9bd4303e",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "964da0fe2338a7a67cbb9d14416af3ce1a309e09",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "0a80ea7464d8643c75903bcd4655687173792274",

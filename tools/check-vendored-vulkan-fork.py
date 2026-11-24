@@ -1862,6 +1862,27 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             if pair_vendor_pin in {'b1bb49abea63b6664e0945df8431e10aac128c2f', '89d70eb505594447b3ca98658311002e74dac8ad', 'b68126c9cd95eef6c6656ff6d7834c62c092aa46', '0fc157b7ccef428e675ff945bc48eceb08fff607', '0fc157b7ccef428e675ff945bc48eceb08fff607', '42459a7893c51a178ecd0c2f74f3951cc20fa12d', 'd1f8696448ed481e36380c3ea8431e3dc722304e', 'c5614d3c7ef75958965bac93c9e343eccdbc0fbe', '67926ea4b6960eefebf0427929cf299e8e056013', '50a849a93494f442d47573b8ce8b8797c3cecd26', '2c85d0e8ed192c5eec79423e6be8d883fa0bd7ab', '053acc8ddf30fe65f6376564bbd6efef58f07ddc', 'ffa519db0f68fb0d5d2acf791e381c898a34a175', '9e38066a508716fd959477eccf32c7fb2fde3356', 'e298a9b05732346141b685eb4c9850bfa02d9e58','f7ccfda091fd7429f44159318a07391881a3e7c0','92c480e17fedecc21ab4882b76e8507b5aed3771','7039d7752c5d8b1a53db50be0d8f2f7803867e13','d3fca0aa188052f0efd2bad102950aeaeeb36ab0','dfc39fcc087738955b0373b45fa97facdeb2fc47','b806bc497049819e716ef6de81f2a85312b188ce','a0e17271e94342c32b02acdc3199c3f258a8aecf','772f06c8f5b12fdc81066e61f3db2dedfe3eed81','568ae541c07691518e9663aa0fc5f3b017a98d53','dcfe3d2384bd800c6139ede672518ea2c66922a6','affa3c761f70268c89e9f7c7de24eec958c7f889','edcc311c09eed3a33e5acc373c63a436f662cb5b','945385cb96f539a5b2ab2edf269683dd1e9ebad9','2acf67ac8c6b8b1973ba29043206782a13ac8f41','ab38816078a53b81d4c59152ec660fcb653d4e7f','3cac7130d6626dced483d038cbf034274a0463d8','ec3757b3f17d974577b304faa0d54279e01d0a5a','2a8d841c4c7e34e89254e532fc75fd23e16f01fe','3b3a26afd70fbfbfb706e5b9964e3303c07a944c','49070af1bfee1ef67ed8037221345baf71d02373','388f0bda53806cd89d9c2f85139ec0491f212654','c92ce9a8b90808869be76d02e73d35636857a0d4','1e51d1f3383f149a599e36052aba7d887d4b1f77', 'b79c774d5d976b7d374b7f851354a652f6aa69c4', '9d324ca5ca2cdd84053f2d3dfadde5b86084c13d', 'cd476e6e93e8a786bef6260006baec134f5df71f', '2ccc4b0a714ca621ac2879768f87118a64ed65f6', '97ac02f263ec90f40a029f4aa62980c76bc25d5c', '9a83a6ba1cb464c9e5d14457cab18ad511c1104b', 'd0246caf58a3127597bba1edfc1f8dcbe0c5cfdc'}
             else '469eddd0ea9e0a3498446bf08ab473caac3b76f9'), (
                 'R2 real deleted-buffer source owner changed')
+    # Nov23 reviewed native presentation owners are deliberate additions to
+    # the historical generated Vulkan tree, never generated upstream files.
+    # Seal their complete bytes and the guest-frame pacing contract.
+    presentation_headers = {
+        'include/video_core/renderer_vulkan/frame_pacer.h':
+            'c3f6f99dd427fb9fd0acb84bb50ba88dc25d9a89',
+        'include/video_core/renderer_vulkan/vk_swapchain.h':
+            'c4df1ab813495b8014e0eda5ed4bcd8fb0be855c',
+    }
+    for name, sha in presentation_headers.items():
+        assert name in expected and name not in actual, (
+            'Native presentation header ownership drift', name)
+        assert subprocess.check_output(
+            ['git', 'hash-object', str(expected[name])], text=True
+        ).strip() == sha, ('Native presentation header changed', name)
+    pacer = expected['include/video_core/renderer_vulkan/frame_pacer.h'].read_text()
+    swapchain = expected['include/video_core/renderer_vulkan/vk_swapchain.h'].read_text()
+    assert 'game_frame_presents == 0 ? 1 : game_frame_presents' in pacer
+    assert 'frames += 1.0 / static_cast<double>(presents)' in pacer
+    assert 'bool AcquireNextImage(u32 game_frame_presents = 1)' in swapchain
+    approved_native_additions |= set(presentation_headers)
     unexpected_additions = set(expected) - set(actual)
     assert unexpected_additions == approved_native_additions, (
         'Vulkan active native additive inventory drift',

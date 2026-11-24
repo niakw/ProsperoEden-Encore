@@ -31,10 +31,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 739 | 80 | **1 819** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 163 | 3 | **166** |
+| **PARTIEL — Implémentation partielle** | 164 | 3 | **167** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 178 | 0 | **1 178** |
+| **NULL — Handler NULL** | 1 177 | 0 | **1 177** |
 | **D — Rejet explicite / historique** | 235 | 33 | **268** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1593,7 +1593,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `140` | `GetDesirableUids` | 6.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `150` | `ReportApplicationExitTimeout` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-031]) | 2026-11-22 |
 | appletAE | `160` | `SetApplicationAttribute` | 8.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
-| appletAE | `170` | `HasSaveDataAccessPermission` | 8.0.0+ | **NULL** ([source C++][ns1-src-031]) | 2026-11-22 |
+| appletAE | `170` | `HasSaveDataAccessPermission` | 8.0.0+ | **PARTIEL** (self-save autorisé lorsque `application_id == program_id`, cross-title refusé tant que les ACL inter-title ne sont pas modélisées ; vendor `695b49c4`) | 2026-11-24 |
 | appletAE | `180` | `PushToFriendInvitationStorageChannel` | 9.0.0+ | **IMPL-SRC** (publie les octets de `IStorage` dans la file applet réelle puis signale `friend_invitation_storage_channel_event`; owner actif `sources/eden` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `190` | `PushToNotificationStorageChannel` | 9.0.0+ | **IMPL-SRC** (publie les octets de `IStorage` dans la nouvelle file Notification puis signale l'événement kernel déjà exposé ; owner actif `sources/eden` ; vendor `d1e41151`) | 2026-11-22 |
 | appletAE | `0` | `SetTerminateResult` | 9.0.0+ | **IMPL-SRC** (écrit le vrai `terminate_result` de l'applet sous verrou, cohérent avec la surface application déjà active ; vendor `e58cfc55`) | 2026-11-22 |
@@ -6608,3 +6608,10 @@ Le footer historique était resté à 1 634 malgré les lots déjà intégrés. 
 ### IAsyncValue ErrorContext — 24/11/2026
 
 Cmd3 écrit désormais réellement le buffer `ErrorContext` 0x200. L'objet asynchrone de `ListApplicationTitle` est créé déjà terminé et réussi ; `ErrorContextType_None` et `ResultSuccess` sont donc représentés par un contexte nul, sans octets indéterminés. **STUB → IMPL-SRC. Pool recalculé : 1564.**
+
+
+### 2026-11-24 — AM application : permission save-data self prouvée
+
+Vendor `695b49c4255c816f8212d2c8a17fe81daa6e4a77` : `IApplicationAccessor::HasSaveDataAccessPermission` (cmd170) n'est plus NULL. SwitchBrew documente explicitement que lorsque l'ApplicationId demandé correspond à l'application courante, Horizon retourne immédiatement succès avec `flag=1`. Encore applique désormais cette règle depuis le vrai `m_applet->program_id`. Pour un autre title ID, Encore retourne `false` plutôt que d'accorder un droit inter-title fictif, car aucune matrice ACL Horizon complète n'est encore modélisée. **1 NULL → PARTIEL.**
+
+Le TU concerné reste `sources/eden/src/core/hle/service/am/service/application_accessor.cpp` : le CMake actif de l'overlay le référence mais aucun override de ce fichier n'existe dans le manifeste, donc la base `sources/eden` est bien l'owner fourni au build fusionné. Aucun build natif PS5 ni résultat console revendiqué.

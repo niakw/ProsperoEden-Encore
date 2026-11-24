@@ -2851,3 +2851,10 @@ Vendor `54f03c30bac3ebd4d1b3bb04ab2df298bc565a87` : cmd10 `CreateApplicationAndP
 ### 2026-11-24 — AM : producer indirect-layer fail-closed
 
 Vendor `3ae8cda53774da47ad69bdb4f91ef2434acf1fb5` : `ILibraryAppletSelfAccessor::GetIndirectLayerProducerHandle` (cmd40) est désormais raccordé sur l'owner backport actif. Comme pour le consumer cmd160 déjà corrigé, Encore ne dispose pas encore du backend VI indirect-layer / `IHOSBinderDriverIndirect` nécessaire pour produire un handle utilisable. La sortie est explicitement initialisée à zéro puis la commande retourne `ResultUnknown`, au lieu de rester NULL ou de publier un handle fictif. **1 NULL → D.** Manifeste overlay recalculé. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM application : permission save-data self prouvée
+
+Vendor `695b49c4255c816f8212d2c8a17fe81daa6e4a77` : `IApplicationAccessor::HasSaveDataAccessPermission` (cmd170) n'est plus NULL. SwitchBrew documente explicitement que lorsque l'ApplicationId demandé correspond à l'application courante, Horizon retourne immédiatement succès avec `flag=1`. Encore applique désormais cette règle depuis le vrai `m_applet->program_id`. Pour un autre title ID, Encore retourne `false` plutôt que d'accorder un droit inter-title fictif, car aucune matrice ACL Horizon complète n'est encore modélisée. **1 NULL → PARTIEL.**
+
+Le TU concerné reste `sources/eden/src/core/hle/service/am/service/application_accessor.cpp` : le CMake actif de l'overlay le référence mais aucun override de ce fichier n'existe dans le manifeste, donc la base `sources/eden` est bien l'owner fourni au build fusionné. Aucun build natif PS5 ni résultat console revendiqué.

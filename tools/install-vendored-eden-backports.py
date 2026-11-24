@@ -938,6 +938,40 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_ACC_SU_AUTH_SUCCESSOR_REPLAY_PASS',
               'rejected_slots=11', 'local_nulls_preserved=18')
 
+        # CAPS:A successor: make existing AlbumManager accessors shipping, implement
+        # thumbnail Ex0, and fail closed only the movie-read backend.
+        caps_a_overlays={
+            'src/core/hle/service/caps/caps_a.cpp': {
+                'before_sha256':'87b0ddbd87dfb576b3c3b04132ae4a2b5b4d82b2c47697b894d9e27144614070',
+                'before_bytes':8845,
+                'after_sha256':'2dbc991930f11b5a1b9610466707bc0c98057d4b69ab2cf8bc2945a33fc41709',
+                'after_bytes':16414,
+            },
+            'src/core/hle/service/caps/caps_a.h': {
+                'before_sha256':'8cd0a0575d2bc624f0feed26930c4f9378a56f36afb287d1431a6d5ce76c3450',
+                'before_bytes':2398,
+                'after_sha256':'d3e63d69825bec5b2ca29d44b53e45257e62b1732255df3b1260ba041344fb18',
+                'after_bytes':5512,
+            },
+        }
+        for rel,entry in caps_a_overlays.items():
+            assert rel not in observed, ('CAPS:A unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing CAPS:A shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], ('CAPS:A pinned drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], ('CAPS:A active drift',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        caps_a_cpp=(ACTIVE/'src/core/hle/service/caps/caps_a.cpp').read_text()
+        assert caps_a_cpp.count('&IAlbumAccessorService::RejectUnavailableMovieBackend')==9
+        assert caps_a_cpp.count('D<&IAlbumAccessorService::LoadAlbumScreenShotThumbnailImageEx0>')==1
+        assert caps_a_cpp.count('nullptr')==15
+        print('NS1_CAPS_A_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'movie_rejections=9', 'thumbnail_ex0=real', 'remaining_slots=15')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

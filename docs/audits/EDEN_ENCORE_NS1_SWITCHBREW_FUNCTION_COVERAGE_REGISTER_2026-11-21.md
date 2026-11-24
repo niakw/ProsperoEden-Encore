@@ -3332,3 +3332,11 @@ Vendor `8d14c398fd604733cfcc05d4dcd1d612ee53a921` : dans l'owner shipping ACC ex
 Les profils locaux, `GetUserCount/ListAllUsers/GetProfile`, sélection utilisateur, thumbnails, inscription locale, notifiers, open-context et les commandes PIN restent inchangés. Le replay moteur inverse exactement les 11 raccords et la méthode ajoutée puis exige le predecessor ACC `f4f16cb5…` / 90909 octets.
 
 Croisement 4 853 : **11 NULL → D. Pool restant = 756 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — CAPS:A : accessors album shipping + thumbnail Ex0 réel
+
+Vendor `4df98ff0a70343fca54c12146303ac84e0337546` : `caps_a.cpp/.h` deviennent des owners shipping. Les accessors AlbumManager déjà développés ne restent plus dépendants de `sources/eden`. `LoadAlbumScreenShotThumbnailImageEx0` est implémenté avec le vrai décodeur thumbnail AlbumManager, en renvoyant attribut/dimensions et en initialisant le buffer annexe.
+
+Les 8 commandes movie-read 2001–2008 et `GetLastOverlayMovieThumbnail` (302) sont raccordées à un rejet explicite faute de backend movie. Les usages/cache/fichiers et sessions encore non qualifiés restent ouverts.
+
+Croisement 4 853 : **9 NULL → D + 1 NULL → IMPL-SRC**, soit **10 entrées sorties du pool. Pool restant = 746 / 4 853.** Aucun build PS5 ni validation console revendiqués.

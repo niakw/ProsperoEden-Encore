@@ -2545,3 +2545,10 @@ Vendor `487fcd316fc8c63d95c97b40d1b4b8438508092a` → moteur `72b761e16280ccee63
 ## NSD — lot environnement/test (24/11/2026)
 
 Vendor `a8927dbd3cf2840021a8adee1f42d701a001c564`. **6 NULL sortent du pool** : cmd63 → IMPL-SRC, cmd51/52/60/61/62 → D car déjà raccordées au rejet explicite production. **Pool restant = 1 642** (1 244 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).
+
+
+## BTM utilisateur — contrat BLE sans radio invitée (24/11/2026)
+
+Vendor `5c16e26b1c6ff11145e47a0e7a810eb76d0541a4`. ABI vérifiée avec libnx btmu.c et btdrv_types.h. **8 NULL sortent du pool** : cmd5/10/20/21/25 → IMPL-SRC (listes vides cohérentes avec le backend BLE invité absent et événement pairing dédié) ; cmd4/7/9 → NOOP (arrêt idempotent d'un scan inactif). Les opérations radio, pairing et GATT restent ouvertes. En parallèle NSD corrige l'initialisation du tampon ResolveEx et le nombre de mots de réponse du setter. Aucun résultat console revendiqué.
+
+**Pool restant = 1 634** (1 236 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).

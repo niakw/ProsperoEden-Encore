@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 680 | 80 | **1 760** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 685 | 80 | **1 765** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
-| **NOOP — No-op documenté** | 205 | 0 | **205** |
-| **NULL — Handler NULL** | 1 244 | 0 | **1 244** |
+| **NOOP — No-op documenté** | 208 | 0 | **208** |
+| **NULL — Handler NULL** | 1 236 | 0 | **1 236** |
 | **D — Rejet explicite / historique** | 219 | 33 | **252** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3222,22 +3222,22 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | btm:u | `1` | `GetBleScanFilterParameter` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `2` | `GetBleScanFilterParameter2` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `3` | `StartBleScanForGeneral` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `4` | `StopBleScanForGeneral` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `5` | `GetBleScanResultsForGeneral` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `4` | `StopBleScanForGeneral` | — | **NOOP** (arrêt idempotent du scan BLE inactif, sans radio invitée ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
+| btm:u | `5` | `GetBleScanResultsForGeneral` | — | **IMPL-SRC** (liste de scan vide (aucun scanner BLE invité), ABI libnx ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
 | btm:u | `6` | `StartBleScanForPaired` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `7` | `StopBleScanForPaired` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `7` | `StopBleScanForPaired` | — | **NOOP** (arrêt idempotent du scan BLE inactif, sans radio invitée ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
 | btm:u | `8` | `StartBleScanForSmartDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `9` | `StopBleScanForSmartDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `10` | `GetBleScanResultsForSmartDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `9` | `StopBleScanForSmartDevice` | — | **NOOP** (arrêt idempotent du scan BLE inactif, sans radio invitée ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
+| btm:u | `10` | `GetBleScanResultsForSmartDevice` | — | **IMPL-SRC** (liste de scan vide (aucun scanner BLE invité), ABI libnx ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
 | btm:u | `17` | `AcquireBleConnectionEvent` | — | **IMPL-SRC** (retourne de vrais KReadableEvent créés et gérés par ServiceContext ; vendor `45ea626b`) | 2026-11-22 |
 | btm:u | `18` | `BleConnect` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `19` | `BleDisconnect` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `20` | `BleGetConnectionState` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `21` | `AcquireBlePairingEvent` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `20` | `BleGetConnectionState` | — | **IMPL-SRC** (liste de connexions BLE invitées vide, ABI libnx ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
+| btm:u | `21` | `AcquireBlePairingEvent` | — | **IMPL-SRC** (événement de pairing distinct, non signalé sans pairing réel ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
 | btm:u | `22` | `BlePairDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `23` | `BleUnPairDevice` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `24` | `BleUnPairDevice2` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
-| btm:u | `25` | `BleGetPairedDevices` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
+| btm:u | `25` | `BleGetPairedDevices` | — | **IMPL-SRC** (liste de périphériques appairés vide, filtre 8 octets, ABI libnx ; vendor `5c16e26b`, PS5 non validé) | 2026-11-24 |
 | btm:u | `26` | `AcquireBleServiceDiscoveryEvent` | — | **IMPL-SRC** (retourne de vrais KReadableEvent créés et gérés par ServiceContext ; vendor `45ea626b`) | 2026-11-22 |
 | btm:u | `27` | `GetGattServices` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
 | btm:u | `28` | `GetGattService` | — | **NULL** ([source C++][ns1-src-067]) | 2026-11-22 |
@@ -6583,3 +6583,10 @@ Vendor `487fcd316fc8c63d95c97b40d1b4b8438508092a` → gitlink moteur `72b761e162
 Vendor `a8927dbd3cf2840021a8adee1f42d701a001c564`. Cmd63 retourne désormais réellement `change_environment_identifier_disabled`, l’état muté par cmd15. Les cinq commandes de test 51/52/60/61/62 étaient déjà routées vers `UnsupportedTestCommand` dans le runtime actif mais restaient classées NULL : elles passent en rejet explicite. **6 NULL sortent du pool : 1 → IMPL-SRC, 5 → D.**
 
 **Compteur courant : 1 760 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 244 NULL / 252 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU = 4 853. Pool restant : 1 642.**
+
+
+## BTM utilisateur — contrat BLE sans radio invitée (24/11/2026)
+
+Vendor `5c16e26b1c6ff11145e47a0e7a810eb76d0541a4`. ABI vérifiée avec libnx btmu.c et btdrv_types.h. **8 NULL sortent du pool** : cmd5/10/20/21/25 → IMPL-SRC (listes vides cohérentes avec le backend BLE invité absent et événement pairing dédié) ; cmd4/7/9 → NOOP (arrêt idempotent d'un scan inactif). Les opérations radio, pairing et GATT restent ouvertes. En parallèle NSD corrige l'initialisation du tampon ResolveEx et le nombre de mots de réponse du setter. Aucun résultat console revendiqué.
+
+**Pool restant = 1 634** (1 236 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).

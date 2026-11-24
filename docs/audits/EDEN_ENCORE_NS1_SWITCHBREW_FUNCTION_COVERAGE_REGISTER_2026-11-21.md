@@ -3188,3 +3188,11 @@ Les commandes de lancement d'applications/applets, records/control data, contenu
 
 **Pool restant = 1 254 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — BTM + USB : backends matériels Switch absents rejetés en bloc
+
+Vendor `5a0460f5a51a239ed0a9d9db806cb8bae88f645d` : **64 slots `nullptr` BTM** et **69 slots USB** sont remplacés par des rejets explicites lorsque l'invité demande le matériel Bluetooth/BLE/GATT ou USB device/host/power-delivery propre à la Switch. BTM conserve ses événements offline, listes vides et bascules radio déjà modélisés ; les commandes sans backend matériel retournent désormais une erreur. USB conserve ses managers de session, mais les opérations endpoint/interface/cradle/power/quirk sans périphérique invité retournent une erreur explicite. L'include IPC BTM est déclaré directement, sans dépendance transitive.
+
+Aucun service `hid` de gameplay, socket BSD/DNS ou audio n'est modifié. Croisement catalogue 4 853 : **38 NULL BTM + 16 NULL USB = 54 lignes** sortent du pool ; une ligne BTM était déjà HORS-VERSION.
+
+**Pool restant = 1 200 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

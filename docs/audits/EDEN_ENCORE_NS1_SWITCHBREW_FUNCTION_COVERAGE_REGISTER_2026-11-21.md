@@ -2971,3 +2971,13 @@ Vendor `b6d4bdf90dbce6fe685a09a578e064a77f6293c7` : `ISelfController::GetScreenS
 
 **1 NULL → IMPL-SRC. Pool restant = 1 554 / 4 853.** L'owner SelfController actif ne conserve plus que cmd45 `SetManagedDisplayLayerSeparationMode` et cmd46 `SetRecordingLayerCompositionEnabled` à NULL ; ils restent ouverts faute de backend VI de séparation/composition démontré. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM AppletCommon : messages capture, Home Menu et core-usage guest
+
+Vendor `aea632e0144cb4721a6469300fbdfda7d8d2f3eb` : quatre NULL de l'owner actif `IAppletCommonFunctions` sont raccordés avec l'ABI HOS23 confirmée par le dump 23.0.1.
+
+- Cmd80/81 `SetHandlingCaptureButtonShort/LongPressedMessageEnabledForApplet` conservent les deux booléens dans l'état de l'applet. Ce ne sont pas des valeurs dormantes : `ICommonStateGetter::PerformSystemButtonPressingIfInFocus` relit exactement ces champs pour publier `DetectShortPressingCaptureButton` / `DetectLongPressingCaptureButton`. **2 NULL → IMPL-SRC.**
+- Cmd310 `IsSystemAppletHomeMenu` retourne si l'applet courant est `AppletId::QLaunch`, l'identité Home Menu déjà utilisée par le `WindowSystem`. ABI HOS19+ : zéro entrée, bool u8 en sortie. **1 NULL → IMPL-SRC.**
+- Cmd100 `SetApplicationCoreUsageMode` conserve le `u32` demandé dans `applet->application_core_usage_mode`. Encore ne raccorde pas encore cette politique au scheduler CPU invité/hôte : **NULL → PARTIEL**, sans modifier artificiellement l'ordonnancement PS5.
+
+Références croisées : dump firmware NS1 23.0.1, Citron/Eden pour l'état core-usage et la détection QLaunch. **Pool restant = 1 551 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

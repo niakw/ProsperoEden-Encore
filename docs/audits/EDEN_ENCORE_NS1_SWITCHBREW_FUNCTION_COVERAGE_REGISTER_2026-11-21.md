@@ -2990,3 +2990,9 @@ Vendor `0ca719fa2b0c93e5cd77ec2e181f588bef34bc65` : deux slots HOS23 d'`ILibrary
 
 Le header réellement consommé reste `sources/eden/src/core/hle/service/am/service/library_applet_accessor.h` (aucun override header dans le manifeste), tandis que le CPP actif est l'overlay `encore-active/eden-backports`. **Pool restant = 1 550 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM ApplicationFunctions cmd310 : sortie application réelle, routage Lhub conservateur
+
+Vendor `aaf3aaed779d10df89128073a9a3b304a69422a6` : HOS20+ cmd310 est nommé `RequestExitApplicationAndTryPopMessage` conformément à SwitchBrew et au SDK reconstruit. Le contrat HOS23 est consommé avec le payload 0x18 (`request_message_type` + UID) et l'objet `IStorage`. Le handler vérifie l'objet puis réutilise exactement le mécanisme de sortie déjà actif de `IApplicationAccessor::RequestExit` : si l'exit est verrouillé, publication `ExitRequested` + mise à jour de suspension ; sinon terminaison du processus invité.
+
+Le routage du message vers Lhub/qlaunch n'est pas inventé : la forme interne de cette remise n'est pas documentée suffisamment pour sérialiser le storage dans le GeneralChannel sans risque. **NULL → PARTIEL**. Le **pool reste 1 549 / 4 853**, tandis que les quatre owners AM ciblés n'ont plus que **5 slots nullptr physiques**, dont **4 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
+

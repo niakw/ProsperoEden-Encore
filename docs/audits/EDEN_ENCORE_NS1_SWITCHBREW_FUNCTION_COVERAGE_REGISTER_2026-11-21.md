@@ -2587,3 +2587,7 @@ Vendor `be709442d734683ffd9725c7035a932a73bf5c87` : `hid` cmd32 (STUB) et `hid:s
 - Vendor `4534ccde306a715d0fe61698be23522ac5b2d44e`: PM active overlay already contained the reviewed runtime changes; corrected its manifest SHA-256 and byte size (12308). No new runtime coverage credited.
 - Remaining: **1628**. Six AM baseline/overlay provenance mismatches remain under review; do not change upstream digests to hide them.
 - No native PS5 build or console validation performed.
+
+### 2026-11-24 — AM : transfert des handlers vers les propriétaires maintenus
+
+Vendor `fd43ea21e70e2f16a76d7723b4578813cb28468c` : six fichiers upstream AM restaurés à leurs SHA-256 originaux du manifeste, sans modifier les empreintes upstream. Sept fichiers backports actifs reçoivent les changements existants (IApplicationFunctions cmd124/170, ILibraryAppletSelfAccessor cmd80/101/102, IOverlayFunctions cmd3/6/30, ICommonStateGetter cmd7/40/64). Le header commun de ICommonStateGetter reste fourni par sources/eden ; les deux copies maintenues de application_functions.cpp sont cohérentes pour les commandes transférées. Les rejets debug et correctifs lifecycle précédents sont conservés. Empreintes actives et tailles recalculées pour les sept fichiers. Les 11 commandes avaient déjà été comptabilisées ; **pool inchangé = 1 628**. Qualification statique du transfert et des empreintes ; compilation native et console non validées.

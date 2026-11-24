@@ -133,6 +133,21 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         return hashlib.sha1(b'blob '+str(len(encoded)).encode()+bytes([0])+encoded).hexdigest()
     old_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    // A guest read cannot overlap a registered image when no page in this\n    // range has ever appeared in the image slot map. Skip the GPU-held mutex.\n    // Unknown/out-of-range/large ranges retain the original blocking path.\n    if (::Eden::ImagePages::NeverHeld(addr, size)) {\n        return VideoCore::RasterizerDownloadArea{\n            .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n            .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n            .preemtive = true,\n        };\n    }\n    {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        auto area = texture_cache.GetFlushArea(addr, size);\n        if (area) {\n            return *area;\n        }\n    }\n    VideoCore::RasterizerDownloadArea new_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    return new_area;\n}\n"
     new_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        ::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(\n                clean_area.start_address, clean_area.end_address - clean_area.start_address)) {\n            // GPU::OnCPURead must not return early for buffer-only GPU writes.\n            // Keep any texture-covered extent, including its sibling bytes.\n            return VideoCore::RasterizerDownloadArea{\n                .start_address = texture_area\n                    ? (std::min)(texture_area->start_address, clean_area.start_address)\n                    : clean_area.start_address,\n                .end_address = texture_area\n                    ? (std::max)(texture_area->end_address, clean_area.end_address)\n                    : clean_area.end_address,\n                .preemtive = false,\n            };\n        }\n    }\n    return texture_area.value_or(clean_area);\n}\n"
+    # NS2 strict completion adds only the native fence entry points.
+    # Authenticate both maintained bytes and the exact predecessor before
+    # replaying the historical NS1/Vulkan receipt graph on audit copies.
+    strict_cpp_delta="#ifdef PS5_NATIVE\nbool RasterizerVulkan::SignalNativeSyncPoint(u32 value) {\n    fence_manager.SignalNativeSyncPoint(value);\n    return true;\n}\n#endif\n\n"
+    strict_hdr_delta="#ifdef PS5_NATIVE\n    bool SignalNativeSyncPoint(u32 value) override;\n#endif\n"
+    strict_hdr_name='include/video_core/renderer_vulkan/vk_rasterizer.h'
+    strict_hdr=expected[strict_hdr_name].read_text()
+    if _ns1_read_blob(strict_hdr)=="8bd6f2a4e489aa608fc4420d2ff5847b7c12e165":
+        assert strict_hdr.count(strict_hdr_delta)==1
+        strict_hdr=strict_hdr.replace(strict_hdr_delta,"",1)
+        assert _ns1_read_blob(strict_hdr)=="6e0bf7ab2a3a2147f9db0c630070db30d9b35d56"
+        strict_hdr_path=temp/'normalized-ns2-strict-fence'/strict_hdr_name
+        strict_hdr_path.parent.mkdir(parents=True,exist_ok=True)
+        strict_hdr_path.write_text(strict_hdr)
+        expected[strict_hdr_name]=strict_hdr_path
     for relative, current, previous in (
         ('encore-active/eden-vulkan/vulkan_rasterizer.cpp', '0633e3cf41c615f46791d3943ff40ac22399b047', '1544c6aecbc8cac5bede5a3119e551b1f760dee9'),
         ('encore-active/eden-core/guest-bridge/vulkan_rasterizer.cpp', 'edaa82feb71665e4b6fbfd3ff34d80378e3bca73', '802233b8d5eb72439203a699253c3010c2909ae4'),
@@ -142,6 +157,9 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         if relative.endswith("eden-vulkan/vulkan_rasterizer.cpp"):
             # Prove the two corrected call-site deltas on an audit copy,
             # then reuse the pre-integration readback and Vulkan receipts.
+            if _ns1_read_blob(source)=="e5baa7f438d8caf11327989087db38ed1ca053a4":
+                assert source.count(strict_cpp_delta)==1
+                source=source.replace(strict_cpp_delta,"",1)
             assert _ns1_read_blob(source)=="f67815618d25657dcf64a87944b0c0bc5c2d8993"
             begin="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea("
             end="\nvoid RasterizerVulkan::InvalidateRegion("

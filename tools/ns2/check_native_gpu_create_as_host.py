@@ -19,12 +19,16 @@ owner=function(source,"void IGpuSession::CreateAddressSpace(")
 register=function(source,"Result IGpuSession::RegisterAddressSpace(")
 translate=function(source,"static Result Translate(GP::Status status) {")
 import_vm=function(as_source,"NvResult nvhost_as_gpu::ImportNativeVm(")
+commit_vm=function(as_source,"bool nvhost_as_gpu::CommitNativeVmImport(")
+retire_vm=function(as_source,"void nvhost_as_gpu::RetireNativeVm(")
+epoch_vm=function(as_source,"bool nvhost_as_gpu::NativeEpochCurrent(")
 assert "AllocateVm(" in owner and "address_spaces.Add(*candidate)" in owner
 assert 'm_module->Open(' not in owner and 'm_module->Ioctl1(' not in owner
 assert "RegisterVm(m_process, id)" in register
 assert import_vm.index("FindRegisteredVmOwner(")<import_vm.index("AllocAsEx(layout)")<import_vm.index("BindImportedAddressSpace(")
 fixture=r"""
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <memory>
@@ -72,6 +76,12 @@ struct nvhost_as_gpu : std::enable_shared_from_this<nvhost_as_gpu> {
     struct IoctlAllocAsEx {u32 big_page_size{};u64 va_range_start{},va_range_end{},va_range_split{};};
     Kernel::KProcess* m_native_process{};
     u32 m_native_vm_id{};
+    std::optional<u64> m_native_generation{};
+    std::atomic_bool m_native_vm_retired{};
+    std::mutex mutex{};
+    bool NativeEpochCurrent() const;
+    bool CommitNativeVmImport(u32 id);
+    void RetireNativeVm(u32 id);
     struct VM {bool initialised{};} vm;
     std::unique_ptr<int> gmmu;
     bool fail_alloc{};
@@ -94,10 +104,14 @@ struct GpuWorkerSharedState {
     std::mutex mutex{};
     GP::AddressSpaceSlots address_spaces{};
     bool fail_bind{};
+    bool retire_after_bind{};
     unsigned binds{};
     Nvidia::NvResult BindImportedAddressSpace(u32 id,const std::shared_ptr<Nvidia::Devices::nvhost_as_gpu>& as) {
         ++binds;assert(as && as->gmmu && address_spaces.Registered(id));
-        return fail_bind?Nvidia::NvResult::InsufficientMemory:Nvidia::NvResult::Success;
+        if(fail_bind)return Nvidia::NvResult::InsufficientMemory;
+        if(!as->CommitNativeVmImport(id))return Nvidia::NvResult::InvalidState;
+        if(retire_after_bind)as->RetireNativeVm(id);
+        return Nvidia::NvResult::Success;
     }
 };
 struct IGpuSession {
@@ -112,6 +126,9 @@ __REGISTER__
 }
 namespace Service::Nvidia::Devices {
 __IMPORT__
+__COMMIT__
+__RETIRE__
+__EPOCH__
 }
 using Registry=Service::Nvidia::Devices::NativeGpuProcessRegistry;
 using Device=Service::Nvidia::Devices::nvhost_as_gpu;
@@ -141,6 +158,7 @@ int main(){
     assert(!registry.FindRegisteredVmOwner(&f.process,id));
     auto as=std::make_shared<Device>();
     as->m_native_process=&f.process;
+    as->m_native_generation=registry.CaptureTicket(&f.process)->generation;
     Device::NativeVmImport p{5,id,0,NativeNs2GpuVaStart,NativeNs2GpuVaSmallSplit,0};
     assert(as->ImportNativeVm(p)==NvResult::InvalidState && as->allocations==0);
     assert(foreign.session.RegisterAddressSpace(id).raw==Kernel::ResultNotFound.raw);
@@ -148,6 +166,7 @@ int main(){
     assert(registry.FindRegisteredVmOwner(&f.process,id)==f.session.m_shared);
     assert(!registry.FindRegisteredVmOwner(&foreign.process,id));
     auto other=std::make_shared<Device>();other->m_native_process=&foreign.process;
+    other->m_native_generation=registry.CaptureTicket(&foreign.process)->generation;
     assert(other->ImportNativeVm(p)==NvResult::InvalidState && other->allocations==0);
     auto malformed=p;malformed.version=4;
     assert(as->ImportNativeVm(malformed)==NvResult::BadParameter);
@@ -160,16 +179,27 @@ int main(){
     f.session.m_shared->fail_bind=false;
     assert(as->ImportNativeVm(p)==NvResult::Success && as->gmmu && as->m_native_vm_id==id);
     assert(as->ImportNativeVm(p)==NvResult::InvalidState);
+    const auto race=f.Create();
+    const u32 race_id=static_cast<u32>(race.reply[1]);
+    assert(race.reply[0]==0 && f.session.RegisterAddressSpace(race_id).IsSuccess());
+    auto racing_as=std::make_shared<Device>();
+    racing_as->m_native_process=&f.process;
+    racing_as->m_native_generation=as->m_native_generation;
+    auto race_params=p;race_params.vm_id=race_id;
+    f.session.m_shared->retire_after_bind=true;
+    assert(racing_as->ImportNativeVm(race_params)==NvResult::Success);
+    assert(racing_as->m_native_vm_retired && !racing_as->m_native_vm_id);
+    assert(racing_as->ImportNativeVm(race_params)==NvResult::BadParameter);
     const auto next=foreign.Create();
     assert(next.reply[0]==0 && next.reply[1]!=id);
-    for(unsigned i=1;i<Service::AM::GP::MaxAddressSpaces;++i)assert(f.Create().reply[0]==0);
+    for(unsigned i=2;i<Service::AM::GP::MaxAddressSpaces;++i)assert(f.Create().reply[0]==0);
     assert(f.Create().reply[0]==Kernel::ResultOutOfResource.raw);
     assert(f.session.m_shared->address_spaces.Count()==Service::AM::GP::MaxAddressSpaces);
     assert(!registry.RemoveVm(&f.process,id,foreign.session.m_shared.get()));
     assert(registry.RemoveVm(&f.process,id,f.session.m_shared.get()));
     assert(!registry.FindRegisteredVmOwner(&f.process,id));
 }
-""".replace("__TRANSLATE__",translate).replace("__OWNER__",owner).replace("__REGISTER__",register).replace("__IMPORT__",import_vm)
+""".replace("__TRANSLATE__",translate).replace("__OWNER__",owner).replace("__REGISTER__",register).replace("__IMPORT__",import_vm).replace("__COMMIT__",commit_vm).replace("__RETIRE__",retire_vm).replace("__EPOCH__",epoch_vm)
 compilers=list(dict.fromkeys(x for x in (shutil.which("clang++"),shutil.which("g++")) if x))
 assert compilers,"Host C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="eden-h06-as-owner-") as tmp:
@@ -186,4 +216,4 @@ with tempfile.TemporaryDirectory(prefix="eden-h06-as-owner-") as tmp:
             done=subprocess.run([str(exe)],capture_output=True,text=True,timeout=25)
             assert done.returncode==0,done.stderr[-6500:]
             print("H06_CREATE_GPU_VA_REAL_OWNER_PASS",Path(cc).name,opt,
-                  "vm_opaque=1 register=1 foreign=refused exhaustion=1 import_oom=1 bind_rollback=1",flush=True)
+                  "vm_opaque=1 register=1 foreign=refused exhaustion=1 import_oom=1 bind_rollback=1 retirement_during_return=1",flush=True)

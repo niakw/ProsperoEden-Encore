@@ -964,9 +964,21 @@ SYNC_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/syncpoint_manage
 CTRL_CPP=V/"encore-active/eden-core/src/video_core/host1x/control.cpp"
 CTRL_HDR=V/"encore-active/eden-core/overrides/video_core/host1x/control.h"
 sync_blob=blob(SYNC_CPP)
-assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe"}
+assert sync_blob in {"eb5e2ea63652f020b6e14497080ba3339a9c983c", "59ac07af5eab89e78b7089d1db58918f2506aafe", "abe89b570a18508123a5c14c49cf5a43935f620c"}
 SYNC_SOURCE=SYNC_CPP.read_text()
 sync_receipt_source=SYNC_SOURCE
+if sync_blob=="abe89b570a18508123a5c14c49cf5a43935f620c":
+    # Reverse the strict host-completion delta on the audit copy only.
+    # The stop-aware wait below is still extracted from the current owner.
+    for newer,older in (
+        ("    // Legacy guest/max-like progress is visible as soon as the command\n    // processor reaches the increment. Native NS2 completion must not be\n    // published here: the Vulkan work preceding this increment may still be\n    // in flight, and OunceVK treats an reached producer counter with a stale\n    // GPU marker as a fatal completion mismatch.\n    Increment(syncpoints_guest[id], wait_guest_cv, guest_action_storage[id]);", "    Increment(syncpoints_guest[id], wait_guest_cv, guest_action_storage[id], id);"),
+        ("    // The host counter retires only behind the renderer fence. Drive the\n    // native 64-bit producer count, transfer-memory mirror and GSV actions\n    // from this completed value so producer target + GPU marker stay ordered.\n    Increment(syncpoints_host[id], wait_host_cv, host_action_storage[id], id);", "    Increment(syncpoints_host[id], wait_host_cv, host_action_storage[id]);"),
+    ):
+        assert sync_receipt_source.count(newer)==1
+        sync_receipt_source=sync_receipt_source.replace(newer,older,1)
+    raw=sync_receipt_source.encode()
+    assert hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()=="59ac07af5eab89e78b7089d1db58918f2506aafe"
+    sync_blob="59ac07af5eab89e78b7089d1db58918f2506aafe"
 if sync_blob == "59ac07af5eab89e78b7089d1db58918f2506aafe":
     # Reverse only the native NS2 counter/queue delta on the audit copy.
     # Execute the current selected stop-aware WaitHost below.

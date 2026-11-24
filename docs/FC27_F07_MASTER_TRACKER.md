@@ -693,3 +693,7 @@ Sur le binaire **`6271928eb7b5d50687fccc730ae706986f3d6108`**, FW13.60, 89 fenê
 ### 2026-11-24 — Vulkan submit callback lifetime (lot 6)
 
 - Vendor `7c5d5220dd4df4a531418458ab623ef86c41348c`: the active PS5 scheduler replaces `on_submit` under the same `execution_mutex` that protects worker execution. Renderer construction/teardown are its only registration owners; the worker can no longer invoke a concurrently replaced `std::function`. No additional lock per submission. Exact generator parity and historical reverse receipt retained; existing worker host test extended for registration blocking. Native build, CI and console outcome not yet qualified. This is not proof that the FC27 exit crash is resolved.
+
+### 2026-11-24 — native disk prewarm worker exception handoff (lot 1/6)
+
+- Vendor `44540549ee9a65eb8078e271f43ccded0e8e984f`: the active bounded prewarm jobs capture their first exception under the existing state mutex and relay it on the loading owner only after the non-cancelling drain. Neither NS1 nor NS2 may terminate the process from an escaping prewarm worker exception; the failed load is not advertised as successful. No new queue, hot-path lock or draw policy. Host/source and console qualification tracked separately.

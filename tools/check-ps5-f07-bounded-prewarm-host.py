@@ -49,7 +49,7 @@ assert "if (prefer_recent_cache && !stop_loading.stop_requested())" in method
 assert "workers.QueueWork(std::move(build));" in method
 assert "VideoCommon::LoadPipelines(reader_token" in method
 assert "#ifdef PS5_NATIVE\n    // A cancelled title-cache load" in method
-assert "    workers.WaitForRequests();\n    prewarm_drain.joined = true;\n#else\n    workers.WaitForRequests(stop_loading);\n#endif" in method
+assert "    workers.WaitForRequests();\n    prewarm_drain.joined = true;\n    // Propagate the original failure on the loading owner, not std::terminate\n    // on a worker. Never advertise a partial failed cache as a successful load.\n    if (state.worker_error) std::rethrow_exception(state.worker_error);\n#else\n    workers.WaitForRequests(stop_loading);\n#endif" in method
 assert method.count("    workers.WaitForRequests(stop_loading);") == 1
 assert "StatefulThreadWorker::WaitForRequests(stop_token)" in method
 assert "    workers.WaitForRequests();" in gen
@@ -157,6 +157,7 @@ reader_harness=r"""
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <exception>
 #include <mutex>
 #include <stdexcept>
 #include <stop_token>
@@ -213,6 +214,7 @@ void RunReader(bool fail, bool progress_failure) {
     struct {
         std::mutex mutex;
         std::size_t total{};
+        std::exception_ptr worker_error;
     } state;
     bool caught=false;
     try {
@@ -249,3 +251,43 @@ with tempfile.TemporaryDirectory(prefix="eden-f07-prewarm-exception-") as d:
 print("F07_PREWARM_EXCEPTION_JOIN_PASS read_error=1 callback_error=1 join_once=1 O0=1 O2=1")
 
 print("F07_BOUND_PREWARM_HOST_PASS cap=32 reader_only_cancel=1 workers_persist=1 O0=1 O2=1")
+
+# Replay the actual native task wrapper with the maintained move-only callable.
+wrapper_start = "        build = Common::UniqueFunction<void>{[&state, task = std::move(build)]() mutable {"
+wrapper = method[method.index(wrapper_start):method.index("        }};", method.index(wrapper_start))+len("        }};")]
+assert "if (!state.worker_error) state.worker_error = std::current_exception();" in wrapper
+worker_cpp = r"""
+#include <cassert>
+#include <exception>
+#include <mutex>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <vector>
+#include "common/unique_function.h"
+int main() {
+    struct { std::mutex mutex; std::exception_ptr worker_error; } state;
+    auto wrap = [&](Common::UniqueFunction<void> build) {
+""" + wrapper + r"""
+        return build;
+    };
+    auto first = wrap([] { throw std::runtime_error("first"); });
+    auto later = wrap([] { throw std::runtime_error("later"); });
+    bool ran = false;
+    auto normal = wrap([&] { ran = true; });
+    std::thread a([&] { first(); }); a.join();
+    std::thread b([&] { later(); }); b.join();
+    std::thread c([&] { normal(); }); c.join();
+    assert(ran && state.worker_error);
+    try { std::rethrow_exception(state.worker_error); }
+    catch (const std::runtime_error& e) { assert(std::string(e.what()) == "first"); return 0; }
+    assert(false);
+}
+"""
+with tempfile.TemporaryDirectory(prefix="eden-f07-prewarm-worker-") as d:
+    p=Path(d)/"worker.cpp"; p.write_text(worker_cpp)
+    for opt in ("-O0", "-O2"):
+        exe=Path(d)/("worker"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-pthread","-fsanitize=address,undefined","-I",str(root/"vendor/sources/eden/src"),str(p),"-o",str(exe)],check=True,capture_output=True,text=True,timeout=35)
+        subprocess.run([str(exe)],check=True,timeout=15)
+print("F07_PREWARM_WORKER_EXCEPTION_PASS first_failure_preserved=1 subsequent_job=1 O0=1 O2=1")

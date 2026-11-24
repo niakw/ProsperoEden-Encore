@@ -27,7 +27,7 @@ assert active.count("if (pipeline && pipeline->IsBound()) {") == 1
 assert active.count("if (pipeline && pipeline->CanExecuteDraw()) {") == 1
 assert active.count("++state.valid;") == 2
 assert "EDEN_PS5_SHADER_PREWARM queued=%zu completed=%zu valid=%zu rejected=%zu prebuild_ms=%lld limit=%zu" in active
-assert active.index("    workers.WaitForRequests();\n    prewarm_drain.joined = true;\n#else\n    workers.WaitForRequests(stop_loading);") < active.index("EDEN_PS5_SHADER_PREWARM queued=")
+assert active.index("    workers.WaitForRequests();\n    prewarm_drain.joined = true;\n    // Propagate the original failure on the loading owner, not std::terminate\n    // on a worker. Never advertise a partial failed cache as a successful load.\n    if (state.worker_error) std::rethrow_exception(state.worker_error);\n#else\n    workers.WaitForRequests(stop_loading);") < active.index("EDEN_PS5_SHADER_PREWARM queued=")
 assert "f07_warm_after_4" in generator
 assert "    workers.WaitForRequests();" in generator
 assert "startup_prewarm_started = std::chrono::steady_clock::now();" in active

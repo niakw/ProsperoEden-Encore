@@ -7461,3 +7461,17 @@ apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
     "    if (parallel_translate_stages) {\n        bool snapshot_ok =\n",
     "    if (parallel_translate_stages) {\n        // Disk prewarm uses FileEnvironment and can run without a bound\n        // graphics channel. Only the live NS1 owner may read these registers.\n        const auto& snapshot_tex_header = maxwell3d->regs.tex_header;\n        snapshot_texture_base = snapshot_tex_header.Address();\n        snapshot_texture_limit = static_cast<u32>(snapshot_tex_header.limit);\n        snapshot_via_header_index =\n            maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;\n        snapshot_viewport_transform_state =\n            maxwell3d->regs.viewport_scale_offset_enabled;\n        const u64 snapshot_texture_bytes =\n            (u64{snapshot_texture_limit} + 1) * sizeof(Tegra::Texture::TICEntry);\n        bool snapshot_ok =\n",
     "disk prewarm channel independence")
+
+# Native prewarm jobs must report exceptions to the loading owner after drain.
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "        bool has_loaded{};\n        // ENCORE_PS5_CACHE_DIAG_BEGIN",
+    "        bool has_loaded{};\n#ifdef PS5_NATIVE\n        std::exception_ptr worker_error;\n#endif\n        // ENCORE_PS5_CACHE_DIAG_BEGIN",
+    "native prewarm worker exception handoff")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    const auto schedule_prewarm = [&](Common::UniqueFunction<void> build) {\n#ifdef PS5_NATIVE\n",
+    "    const auto schedule_prewarm = [&](Common::UniqueFunction<void> build) {\n#ifdef PS5_NATIVE\n        // ThreadWorker does not catch task exceptions. Keep the first failure\n        // until all accepted jobs have finished borrowing this loading state.\n        build = Common::UniqueFunction<void>{[&state, task = std::move(build)]() mutable {\n            try {\n                task();\n            } catch (...) {\n                std::scoped_lock lock{state.mutex};\n                if (!state.worker_error) state.worker_error = std::current_exception();\n            }\n        }};\n",
+    "native prewarm worker exception handoff")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    prewarm_drain.joined = true;\n#else\n    workers.WaitForRequests(stop_loading);",
+    "    prewarm_drain.joined = true;\n    // Propagate the original failure on the loading owner, not std::terminate\n    // on a worker. Never advertise a partial failed cache as a successful load.\n    if (state.worker_error) std::rethrow_exception(state.worker_error);\n#else\n    workers.WaitForRequests(stop_loading);",
+    "native prewarm worker exception handoff")

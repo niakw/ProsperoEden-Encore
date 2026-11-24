@@ -2731,6 +2731,97 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     typed_output_before = '        if (device.IsMoltenVK()) {'
     generated_raw_n3m = actual[n56_name].read_text()
     native_raw_n3m = (active / n56_name).read_text()
+    # Compile the actual retry caller, not a second implementation of it.
+    # The fake compiler makes partial cache mutation and allocation failure
+    # observable without a Vulkan device or guest memory.
+    retry_start = "    // Keep the original cached shader bytes and pristine environment state for a\n"
+    retry_end = "    auto& serialized_environments = parallel_environments ? *parallel_environments : environments;\n"
+    assert native_raw_n3m.count(retry_start) == native_raw_n3m.count(retry_end) == 1
+    retry_body = native_raw_n3m.split(retry_start, 1)[1].split(retry_end, 1)[0] + retry_end
+    retry_test = r'''
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <memory>
+#include <new>
+#include <optional>
+#include <span>
+#include <stdexcept>
+struct Maxwell { static constexpr size_t MaxShaderProgram = 6; };
+struct Env {
+    int cache{};
+    static inline bool fail_copy{};
+    Env& operator=(const Env& rhs) {
+        if (fail_copy) throw std::bad_alloc{};
+        cache = rhs.cache;
+        return *this;
+    }
+};
+struct GraphicsEnvironments {
+    std::array<Env, 6> envs;
+    std::array<Env*, 6> env_ptrs{};
+    std::span<Env* const> Span() const {
+        return {env_ptrs.begin(), std::find(env_ptrs.begin(), env_ptrs.end(), nullptr)};
+    }
+};
+struct GraphicsPipeline {};
+struct ParallelGraphicsRetry {};
+struct Key { std::array<int, 6> unique_hashes{0, 1, 0, 1, 0, 0}; };
+void run(int scenario) {
+    GraphicsEnvironments environments{};
+    environments.env_ptrs[0] = &environments.envs[1];
+    environments.env_ptrs[1] = &environments.envs[3];
+    Key graphics_key{};
+    int main_pools{};
+    bool parallel_translate_stages = scenario != 3;
+    Env::fail_copy = scenario == 2;
+    int parallel_calls{}, serial_calls{};
+    auto CreateGraphicsPipeline = [&](int&, Key&, std::span<Env* const> envs,
+                                      std::nullptr_t, bool, bool parallel) {
+        assert(envs.size() == 2);
+        if (parallel) {
+            ++parallel_calls;
+            assert(envs[0] != &environments.envs[1]);
+            assert(envs[1] != &environments.envs[3]);
+            envs[0]->cache = 99;
+            envs[1]->cache = 100;
+            if (scenario == 1) throw ParallelGraphicsRetry{};
+            if (scenario == 4) throw std::logic_error("unrelated");
+        } else {
+            ++serial_calls;
+            assert(envs[0] == &environments.envs[1]);
+            assert(envs[1] == &environments.envs[3]);
+            assert(envs[0]->cache == 0 && envs[1]->cache == 0);
+            envs[0]->cache = 11;
+            envs[1]->cache = 12;
+        }
+        return std::make_unique<GraphicsPipeline>();
+    };
+    try {
+''' + retry_body + r'''
+        assert(pipeline);
+        assert(scenario != 4);
+        assert(parallel_calls == (scenario == 0 || scenario == 1));
+        assert(serial_calls == (scenario != 0));
+        assert(serialized_environments.envs[1].cache == (scenario == 0 ? 99 : 11));
+        assert(serialized_environments.envs[3].cache == (scenario == 0 ? 100 : 12));
+        assert((scenario == 0) == (&serialized_environments != &environments));
+    } catch (const std::logic_error&) {
+        assert(scenario == 4 && parallel_calls == 1 && serial_calls == 0);
+    }
+    Env::fail_copy = false;
+}
+int main() { for (int i = 0; i < 5; ++i) run(i); }
+'''
+    retry_cpp = temp / "shader-retry.cpp"
+    retry_cpp.write_text(retry_test)
+    for optimization in ("-O0", "-O2"):
+        retry_exe = temp / ("shader-retry" + optimization)
+        subprocess.run([os.environ.get("CXX", "c++"), "-std=c++20", optimization,
+                        str(retry_cpp), "-o", str(retry_exe)], check=True, timeout=60)
+        subprocess.run([str(retry_exe)], check=True, timeout=15)
+    print("ENCORE_NS1_PARALLEL_RETRY_HOST_PASS cases=5 O0/O2")
     # Check the complete reviewed retry hunks in both owners before replaying
     # the older snapshot receipt. The generated source has independent
     # diagnostic differences, so the native raw hash is checked separately.

@@ -2597,7 +2597,7 @@ else:
           "mesh_source=versioned native_only=1 ns1_baseline=unchanged")
 
 assert reader_maintained.is_file() and not (root / "headless/shader_cache_reader.inc").exists()
-if subprocess.check_output(["git", "-C", str(vendor), "rev-parse", "HEAD"], text=True).strip() == "1b5256d72072e05a62fb734bc9ef790fc81c1573":
+if subprocess.check_output(["git", "-C", str(vendor), "rev-parse", "HEAD"], text=True).strip() in {"1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802", "191dd458c68de13f0f71659e3b4a9598af7de561"}:
     check_canonical_git_object(reader_maintained, "4ae7312c2bf0abbd52eefcf2705e6ba2ff410483", "shader cache reader OOM successor")
     oom_delta = b'        // Allocation or prewarm admission failure is not evidence of corruption.\n        // Keep every disk record for the next launch; already admitted work is\n        // drained by the loading owner. Do not turn memory pressure into a cold cache.\n        std::fputs("[Eden Encore] shader cache: allocation failed; file preserved\\n", stderr);\n        return;\n'
     raw = reader_maintained.read_bytes()

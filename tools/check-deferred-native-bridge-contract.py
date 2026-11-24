@@ -335,9 +335,23 @@ r23_raster = next(item for item in r23_m07["files"]
 def m07_source_blob(value):
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+def reverse_collected_batch_lock_successor(source):
+    if m07_source_blob(source) != "e4948333ed15fba8024aeb4ffaa143a2e010f991":
+        return source
+    newer = "    if (may_claim_buffer) {\n        // Lichii 5e428570 / f5edeab: claim and apply the complete buffer batch\n        // under ONE acquisition. Texture state was handled above and is independent.\n        // Claim must precede BufferCache::WriteMemory so a sibling GPU download\n        // cannot overwrite a later CPU write from this same collected batch.\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n        for (const auto& [addr, size] : ranges) {\n"
+    older = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : ranges) {\n"
+    marker = "    // The single-range invalidation callback takes the texture and buffer\n"
+    first = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }\n\n"
+    assert source.count(newer) == source.count(marker) == 1
+    source = source.replace(newer, older, 1).replace(marker, first + marker, 1)
+    assert m07_source_blob(source) == "e5baa7f438d8caf11327989087db38ed1ca053a4"
+    return source
+
 # R457 MSAA fallback is later than the frozen R23/M07 source receipt.
 # Verify both full blobs and undo only the reviewed owner hunk in memory.
 # Keep the original source checks below; never modify the selected vendor.
+m07_selected_sha = m07_source_blob(original_m07)
+original_m07 = reverse_collected_batch_lock_successor(original_m07)
 m07_selected_sha = m07_source_blob(original_m07)
 if m07_selected_sha == "e5baa7f438d8caf11327989087db38ed1ca053a4":
     strict_completion = "#ifdef PS5_NATIVE\nbool RasterizerVulkan::SignalNativeSyncPoint(u32 value) {\n    fence_manager.SignalNativeSyncPoint(value);\n    return true;\n}\n#endif\n\n"

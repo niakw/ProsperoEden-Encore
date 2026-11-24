@@ -131,6 +131,18 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
     def _ns1_read_blob(data):
         encoded=data.encode('utf-8')
         return hashlib.sha1(b'blob '+str(len(encoded)).encode()+bytes([0])+encoded).hexdigest()
+    def reverse_collected_batch_lock_successor(source):
+        if _ns1_read_blob(source) != "e4948333ed15fba8024aeb4ffaa143a2e010f991":
+            return source
+        newer = "    if (may_claim_buffer) {\n        // Lichii 5e428570 / f5edeab: claim and apply the complete buffer batch\n        // under ONE acquisition. Texture state was handled above and is independent.\n        // Claim must precede BufferCache::WriteMemory so a sibling GPU download\n        // cannot overwrite a later CPU write from this same collected batch.\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n        for (const auto& [addr, size] : ranges) {\n"
+        older = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        for (const auto& [addr, size] : ranges) {\n"
+        marker = "    // The single-range invalidation callback takes the texture and buffer\n"
+        first = "    if (may_claim_buffer) {\n        std::scoped_lock lock{buffer_cache.mutex};\n        buffer_cache.ClaimCpuWrites(ranges);\n    }\n\n"
+        assert source.count(newer) == source.count(marker) == 1
+        source = source.replace(newer, older, 1).replace(marker, first + marker, 1)
+        assert _ns1_read_blob(source) == "e5baa7f438d8caf11327989087db38ed1ca053a4"
+        return source
+
     old_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    // A guest read cannot overlap a registered image when no page in this\n    // range has ever appeared in the image slot map. Skip the GPU-held mutex.\n    // Unknown/out-of-range/large ranges retain the original blocking path.\n    if (::Eden::ImagePages::NeverHeld(addr, size)) {\n        return VideoCore::RasterizerDownloadArea{\n            .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n            .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n            .preemtive = true,\n        };\n    }\n    {\n        ::Eden::Performance::GuestCacheLock(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        auto area = texture_cache.GetFlushArea(addr, size);\n        if (area) {\n            return *area;\n        }\n    }\n    VideoCore::RasterizerDownloadArea new_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    return new_area;\n}\n"
     new_read_area="VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::DiagnosticTimer guest_read_timer(::Eden::Performance::guest_cpu_read);\n    const VideoCore::RasterizerDownloadArea clean_area{\n        .start_address = Common::AlignDown(addr, Core::DEVICE_PAGESIZE),\n        .end_address = Common::AlignUp(addr + size, Core::DEVICE_PAGESIZE),\n        .preemtive = true,\n    };\n    // A clean/never-held texture page does not prove that a GPU-written\n    // storage buffer is current in guest memory. Query each cache independently:\n    // never-owned pages remain lock-free, and no two cache locks are nested.\n    std::optional<VideoCore::RasterizerDownloadArea> texture_area;\n    if (!::Eden::ImagePages::NeverHeld(addr, size)) {\n        ::Eden::Performance::GuestCacheLock texture_wait(texture_cache.mutex, true);\n        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_area = texture_cache.GetFlushArea(addr, size);\n    }\n    if (texture_area && !texture_area->preemtive) {\n        // The existing GPU sync flushes both cache domains.\n        return *texture_area;\n    }\n    if (!::Eden::BufferPages::NeverRegistered(addr, size)) {\n        ::Eden::Performance::GuestCacheLock buffer_wait(buffer_cache.mutex, true);\n        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.IsRegionGpuModified(\n                clean_area.start_address, clean_area.end_address - clean_area.start_address)) {\n            // GPU::OnCPURead must not return early for buffer-only GPU writes.\n            // Keep any texture-covered extent, including its sibling bytes.\n            return VideoCore::RasterizerDownloadArea{\n                .start_address = texture_area\n                    ? (std::min)(texture_area->start_address, clean_area.start_address)\n                    : clean_area.start_address,\n                .end_address = texture_area\n                    ? (std::max)(texture_area->end_address, clean_area.end_address)\n                    : clean_area.end_address,\n                .preemtive = false,\n            };\n        }\n    }\n    return texture_area.value_or(clean_area);\n}\n"
     # NS2 strict completion adds only the native fence entry points.
@@ -157,6 +169,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
         if relative.endswith("eden-vulkan/vulkan_rasterizer.cpp"):
             # Prove the two corrected call-site deltas on an audit copy,
             # then reuse the pre-integration readback and Vulkan receipts.
+            source=reverse_collected_batch_lock_successor(source)
             if _ns1_read_blob(source)=="e5baa7f438d8caf11327989087db38ed1ca053a4":
                 assert source.count(strict_cpp_delta)==1
                 source=source.replace(strict_cpp_delta,"",1)
@@ -1216,6 +1229,7 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             # unrelated old vendor commit ID.
             fixture = runpy.run_path(str(receipt_path))
             source = (root/'vendor/encore-active/eden-vulkan/vulkan_rasterizer.cpp').read_text()
+            source=reverse_collected_batch_lock_successor(source)
             if raster_blob(source) == 'e5baa7f438d8caf11327989087db38ed1ca053a4':
                 assert source.count(strict_cpp_delta)==1
                 source=source.replace(strict_cpp_delta,"",1)

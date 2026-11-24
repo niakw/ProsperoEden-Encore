@@ -2705,3 +2705,9 @@ Vendor `afac75c2d5e4e494335bbc48f18cbf8a9a3e17a3` : cmd28 `GetSaveDataSizeMax` n
 Vendor `c24bcfa3fb9da644d31689ae4d16f2745f240227` : cmd4 `ApplyCurrentBrightnessSettingToBacklight` copie maintenant le réglage invité courant vers un état `applied_brightness`, et cmd5 `GetBrightnessSettingAppliedToBacklight` relit cette valeur avec la même protection contre les flottants non finis que les getters existants. Cmd6/7 `SwitchBacklightOn/Off` maintenaient déjà `backlight_enabled`; leurs marqueurs STUB ont été retirés et le `fade_time` est explicitement traité comme un **NOOP matériel PS5** : aucune luminosité système hôte n'est modifiée. Le dump NS1 23.0.1 confirme les ABI cmd4/5 sans entrée puis sortie `float`, et cmd6/7 avec `u64 fade_time`. **2 NULL + 2 STUB → hors pool**.
 
 **Pool restant = 1 548** : 1 182 NULL + 17 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+### 2026-11-24 — AM : état HDCP cohérent entre ApplicationFunctions et CommonStateGetter
+
+Vendor `67219c2d7f5b88e3c20f148fbfab7c9bba3f087c` : cmd170 `SetHdcpAuthenticationActivated`, déjà présent dans l'overlay actif mais encore NULL dans le snapshot canonique, met à jour `m_applet->hdcp_authentication_activated`. Le getter cmd62 ne renvoie plus la constante `1` : il relit le même état sous verrou. Une transition signale `GetHDCPStateChangedEvent()`, sans toucher à la configuration HDCP de la PS5 hôte. Le dump NS1 23.0.1 confirme cmd170 = entrée bool 1 octet et cmd62 = sortie s32. **1 NULL → IMPL-SRC**.
+
+**Pool restant = 1 547** : 1 181 NULL + 17 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

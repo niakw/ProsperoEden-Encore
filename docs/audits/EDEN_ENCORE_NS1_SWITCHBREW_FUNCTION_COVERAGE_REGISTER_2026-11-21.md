@@ -3132,3 +3132,11 @@ Vendor `2493221582e7a41528c53546bed61180035fec4e` : cinq slots NIFM supplémenta
 
 Aucune valeur de télémétrie, aucun canal et aucun signal d'événement ne sont fabriqués. **5 NULL → D. Pool restant = 1 519 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — HID System Server : lot matériel/admin Switch rejeté explicitement
+
+Vendor `2c0ff436b2798f6c028b504b56d15a158794aa40` : **146 slots `nullptr` physiques** de `hid:sys` sont désormais dispatchés vers un rejet commun explicite pour les familles sans backend PS5 applicable : NFC/IR/MCU bas niveau, calibrations six-axis/analog stick, firmware contrôleur/USB, `hidbus` système, button-config/custom mapping système, maintenance touchscreen et surfaces de support associées. Le chemin d'entrée manette normal, les ressources Npad actives, vibration, HID registration et les handlers déjà fonctionnels ne sont pas redirigés.
+
+Le handler renvoie une erreur au lieu d'un succès factice ; aucune configuration Switch n'est appliquée au matériel PS5. L'ID 230 est également renommé `AcquireIrSensorEventHandle`, corrigeant l'écart de nom historique. Croisement avec l'annexe 4 853 : **52 lignes NULL + 1 ABI-DIFF** sont réellement dans le pool historique ; les **93 autres commandes physiques** ne figurent pas comme lignes distinctes du miroir historique et n'altèrent donc pas artificiellement le dénominateur.
+
+**Pool restant = 1 466 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

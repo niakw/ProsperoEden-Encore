@@ -2929,3 +2929,9 @@ Vendor `3c0eec8055735d537ca4cc59c57961ddc049caf5` : `IApplicationFunctions::GetL
 
 Le **pool global reste 1 557 / 4 853** car PARTIEL reste dans le pool. Sur les quatre owners AM ciblés, il reste **12 slots `nullptr` physiques**, dont **11 pertinents HOS23** après exclusion de `SelectApplicationLicense`. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM application : cmd320 capture-state backport ciblé
+
+Vendor `1c35f384381a9ef52e3d8055186f3e30f7495bde` : le slot HOS20+ cmd320 est raccordé au handler `GetScreenShotAndContinuousRecordingInitiallyEnabled`, backporté isolément depuis le chemin Lichii/NS2 déjà présent dans Encore. Le handler retourne deux booléens depuis l’état AM réel sous verrou : permission screenshot et enregistrement gameplay supporté+actif. Aucun stub générique ni valeur constante n’est utilisé. SwitchBrew confirme l’existence du cmd320 sur HOS20+ mais ne documente pas encore publiquement son nom/ABI ; classement conservateur **NULL → PARTIEL** jusqu’à preuve indépendante firmware/libnx plus forte.
+
+Le **pool reste 1 557 / 4 853**. Les quatre owners AM ont désormais **11 slots `nullptr` physiques**, dont **10 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build PS5 ni validation console revendiqués.
+

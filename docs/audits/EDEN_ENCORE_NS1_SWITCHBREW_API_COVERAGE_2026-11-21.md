@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 818 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 819 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 738 | 80 | **1 818** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 739 | 80 | **1 819** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 163 | 3 | **166** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 180 | 0 | **1 180** |
+| **NULL — Handler NULL** | 1 179 | 0 | **1 179** |
 | **D — Rejet explicite / historique** | 234 | 33 | **267** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1656,7 +1656,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `101` | `BeginToObserveHidInputForDevelop` | 5.0.0+ | **D** (commande debug/develop explicitement rejetée sur runtime release ; vendor `d1f92eee`, moteur `e0990b2f`) | 2026-11-23 |
 | appletAE | `20` | `GetApplicationFunctions` | — | **IMPL-SRC** ([source C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/am/service/application_proxy.cpp)) | 2026-11-22 |
 | appletAE | `1` | `PopLaunchParameter` | — | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `10` | `CreateApplicationAndPushAndRequestToStart` | — | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `10` | `CreateApplicationAndPushAndRequestToStart` | — | **IMPL-SRC** (IStorage poussé dans le user channel puis délégation au cmd12 ; rollback du push en cas d'échec ; vendor `54f03c30`) | 2026-11-24 |
 | appletAE | `11` | `CreateApplicationAndPushAndRequestToStartForQuest` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `12` | `CreateApplicationAndRequestToStart` | 4.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `13` | `CreateApplicationAndRequestToStartForQuest` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |

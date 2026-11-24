@@ -2839,3 +2839,10 @@ Vendor `3260a2ecf296b08d923e2cfe1205689b652cb9f1` : l'owner actif `encore-active
 Vendor `1bd95def9ee03b841171924716280f6d5ccb3a09` : `IApplicationFunctions` cmd70 `RequestToShutdown` et cmd71 `RequestToReboot` ne sont plus NULL. Libnx confirme deux commandes sans payload, réservées aux applications HOS 3.0+. Elles utilisent la même transition `system.Exit()` que `IGlobalStateController` et les commandes Overlay déjà raccordées. Cela termine le système invité Encore et **ne commande ni arrêt ni reboot de la PS5 hôte**.
 
 **2 NULL → IMPL-SRC.** Manifeste overlay recalculé. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM application : push-and-request-to-start
+
+Vendor `54f03c30bac3ebd4d1b3bb04ab2df298bc565a87` : cmd10 `CreateApplicationAndPushAndRequestToStart` suit désormais le contrat SwitchBrew : le `IStorage` d'entrée est poussé dans le user channel de l'applet puis le lancement délègue à cmd12 `CreateApplicationAndRequestToStart`, déjà raccordé au relaunch/program-index Encore. Si cmd12 échoue (par exemple lancement d'une autre application encore non pris en charge), le storage ajouté est retiré afin de ne pas contaminer un lancement suivant.
+
+**1 NULL → IMPL-SRC.** Les variantes Quest cmd11/13/14/15 restent ouvertes tant que leurs `ApplicationAttribute` ne sont pas réellement appliqués. Build natif PS5 non déclenché ; validation console non revendiquée.

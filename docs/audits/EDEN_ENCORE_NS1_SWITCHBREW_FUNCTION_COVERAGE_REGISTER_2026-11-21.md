@@ -3196,3 +3196,11 @@ Aucun service `hid` de gameplay, socket BSD/DNS ou audio n'est modifié. Croisem
 
 **Pool restant = 1 200 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — NS : résidu download/apply-delta/version-list rejeté
+
+Vendor `1f2e5c4d2a5243d850b855969474786e281d08d2` : **31 slots `nullptr` physiques** supplémentaires de `IApplicationManagerInterface` sont raccordés au rejet de backend plateforme pour les opérations de téléchargement/application-delta/version-list, tâches background, auto-update, notification-task et droits préachetés. Les chemins locaux de contenu installés, tickets locaux, launch-rights, records, GameCard et lancement d'application restent inchangés.
+
+Croisement catalogue 4 853 : **30 lignes NULL** sortent du pool ; 15 anciennes lignes `ns:am` homologues sont déjà HORS-VERSION.
+
+**Pool restant = 1 170 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

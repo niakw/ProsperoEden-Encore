@@ -3096,3 +3096,9 @@ Vendor `d1b05d1e94eed35bc6d35f5f9db5d99156f4e5b5` : `GetNextReturnDestinationApp
 
 **1 NULL → IMPL-SRC. Pool restant = 1 533 / 4 853.** Dans les overlays AM actifs il reste **6 slots `nullptr` physiques**, dont **5 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM ApplicationAccessor cmd200 : soft reset non supporté rejeté explicitement
+
+Vendor `72b6186f2d1248a332d580b7727e6161a930ca09` : `RequestApplicationSoftReset` (cmd200, HOS10+) ne reste plus NULL. Le contrat firmware est sans entrée/sortie. Encore ne possède toutefois aucun backend AM de soft reset : `WindowSystem::RestartAppletProcessLocked` est une primitive privée réservée au winding/unwind et réinitialise des états spécifiques de ce protocole. La réutiliser ici ferait passer un relaunch différent pour un soft reset Horizon.
+
+Le handler consomme donc la commande et retourne une erreur explicite sans modifier le processus invité. **1 NULL → D. Pool restant = 1 532 / 4 853.** Dans les overlays AM actifs il reste **5 slots `nullptr` physiques**, dont **4 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
+

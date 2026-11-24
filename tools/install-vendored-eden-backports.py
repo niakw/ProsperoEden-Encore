@@ -361,6 +361,56 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
             observed[diagnostics_h]=spec['entries'][diagnostics_h]
             print('DIAGNOSTICS_NET_EXACT_POST_BACKPORT_REPLAY_PASS',
                   'successors=2', 'https_post=bounded', 'pinned_sources=immutable')
+        # NS1 Nintendo-online successors are maintained as exact overlays rather than
+        # mutating the pinned Eden tree. Reverse the reviewed dispatcher-only delta
+        # byte-for-byte before admitting these files into the replay result.
+        online=json.loads(
+            (ROOT/'tools/fixtures/ns1-online-service-backports-reverse.json').read_text())
+        assert online['schema_version']==1
+        assert online['baseline_vendor']=='a64bcf8c38473234474aca49b4013ed3617e0dec'
+        assert online['active_vendor']=='dc460d59824f532705781f8df8e72d951ebbd446'
+        online_handler='''
+    // Encore NS1: unavailable Nintendo online backend; explicit error, never fake success.
+    void RejectUnavailableNintendoOnline(HLERequestContext& ctx) {
+        IPC::ResponseBuilder rb{ctx, 2};
+        rb.Push(ResultUnknown);
+    }
+
+'''
+        ipc_include='#include "core/hle/service/ipc_helpers.h"\n'
+        online_count=0
+        for rel,entry in online['reviewed_sources'].items():
+            assert rel not in observed, ('Nintendo-online source unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing Nintendo-online shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'Nintendo-online frozen source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed Nintendo-online maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            value=current.decode('utf-8')
+            for class_name,count in entry['classes'].items():
+                token=f'&{class_name}::RejectUnavailableNintendoOnline'
+                assert value.count(token)==count, ('Nintendo-online handler count drift',rel,class_name)
+                value=value.replace(token,'nullptr')
+                online_count+=count
+            assert value.count(online_handler)==len(entry['classes']), (
+                'Nintendo-online rejection method drift',rel)
+            value=value.replace(online_handler,'',len(entry['classes']))
+            if entry['added_ipc_helpers_include']:
+                assert value.count(ipc_include)==1, ('Nintendo-online IPC include drift',rel)
+                value=value.replace(ipc_include,'',1)
+            assert value.encode('utf-8')==generated, (
+                'Nintendo-online source not exactly reversible to pinned Eden',rel)
+            observed[rel]=spec['entries'][rel]
+        assert online_count==412
+        print('NS1_ONLINE_SERVICE_EXACT_POST_BACKPORT_REPLAY_PASS',
+              f'successors={len(online["reviewed_sources"])}',
+              f'rejected_slots={online_count}', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

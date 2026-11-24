@@ -3212,3 +3212,13 @@ Croisement catalogue 4 853 : **35 lignes NULL** sortent du pool.
 
 **Pool restant = 1 135 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — services online Nintendo : NIM/Friends/ERPT/NPNS/EUPLD fermés avec provenance réversible
+
+Vendor `dc460d59824f532705781f8df8e72d951ebbd446` : cinq nouveaux overlays shipping couvrent uniquement les slots `nullptr` des backends réseau Nintendo absents, en conservant tous les handlers déjà implémentés. Le lot remplace **412 slots physiques** : NIM **253**, Friends **90**, ERPT **15**, NPNS **43**, EUPLD **11**. Chaque slot rejeté retourne une erreur explicite via un handler local commun ; aucun téléchargement, friend/social backend, télémétrie distante, push Nintendo ou upload d'erreur n'est simulé.
+
+Le moteur ajoute `tools/fixtures/ns1-online-service-backports-reverse.json` et étend `install-vendored-eden-backports.py --replay` : pour les cinq sources, le replay vérifie les tailles/hashes avant-après, le nombre exact de remplacements par classe, retire les méthodes/includes ajoutés puis exige une égalité **octet pour octet** avec Eden épinglé. Le pin Eden n'est pas modifié et aucune dérive arbitraire n'est autorisée.
+
+Croisement catalogue 4 853 : NIM **56 NULL**, Friends **23 NULL**, ERPT **11 NULL**, NPNS **15 NULL**, EUPLD **11 NULL**, soit **116 lignes** sorties du pool. Les lignes déjà HORS-VERSION ne sont pas décomptées.
+
+**Pool restant = 1 019 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

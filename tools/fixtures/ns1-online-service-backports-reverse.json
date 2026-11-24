@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "baseline_vendor": "a64bcf8c38473234474aca49b4013ed3617e0dec",
+  "active_vendor": "dc460d59824f532705781f8df8e72d951ebbd446",
+  "reviewed_sources": {
+    "src/core/hle/service/eupld/eupld.cpp": {
+      "before_sha256": "2eb587bf84635f4279fb50d3f2a736e6721307b024030dd1286a8d11349fca72",
+      "before_bytes": 1823,
+      "after_sha256": "b3e96f3b6f012c8c2fc28d0306b05b9b459da0dc14970014da5e4e59044f88ce",
+      "after_bytes": 2840,
+      "added_ipc_helpers_include": true,
+      "classes": {
+        "ErrorUploadContext": 5,
+        "ErrorUploadRequest": 6
+      }
+    },
+    "src/core/hle/service/erpt/erpt.cpp": {
+      "before_sha256": "5029fbc1a9eedaa6937198ad25bf352ce97b442b0be1ce77f92cb9305d6cef4a",
+      "before_bytes": 5306,
+      "after_sha256": "92cddadedfb02e22d9cfa56fcb11a10aaa1d1773378282ea269c4fe2e184068d",
+      "after_bytes": 6503,
+      "added_ipc_helpers_include": true,
+      "classes": {
+        "ErrorReportContext": 12,
+        "ErrorReportSession": 3
+      }
+    },
+    "src/core/hle/service/friend/friend.cpp": {
+      "before_sha256": "fe8774aed91e37d4b1addb14b62a82110bd64f12c9f6817a9705a46ae8e0a8b5",
+      "before_bytes": 45171,
+      "after_sha256": "6c70d9dfb01078d9d187f8ae46ff3ab7e526c621f910fa355791ff88d8343666",
+      "after_bytes": 49708,
+      "added_ipc_helpers_include": false,
+      "classes": {
+        "IFriendService": 51,
+        "IServiceForApplication": 2,
+        "IServiceForSystem": 37
+      }
+    },
+    "src/core/hle/service/nim/nim.cpp": {
+      "before_sha256": "a979336b64b788105e713f4ec6c9eaffcda089c6550c4d44edfa742e8ca5e2a1",
+      "before_bytes": 29140,
+      "after_sha256": "d5a75f5c272e10ef770922e13cab7fe637466df756c6a84b9bc4ce8a51792bf1",
+      "after_bytes": 37572,
+      "added_ipc_helpers_include": false,
+      "classes": {
+        "NIM": 223,
+        "NIM_ECAS": 2,
+        "NIM_SHP": 28
+      }
+    },
+    "src/core/hle/service/npns/npns.cpp": {
+      "before_sha256": "a04bfd1d0a1289e9102e902f6adecafc86cb4dfdba58027bdc717cb9c1b0a18b",
+      "before_bytes": 19347,
+      "after_sha256": "17b82dc8273865a3943440974b741b319cc21466a8761ee6b5624692b814a782",
+      "after_bytes": 21493,
+      "added_ipc_helpers_include": true,
+      "classes": {
+        "INpnsSystem": 38,
+        "INpnsUser": 5
+      }
+    }
+  }
+}

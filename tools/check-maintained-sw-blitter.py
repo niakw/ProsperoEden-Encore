@@ -24,7 +24,7 @@ def git_blob(data: str) -> str:
 assert upstream != backport
 assert git_blob(backport) == "f014de1b85eb1667024a7b5a7162d7c6307d80f6"
 assert "floor/ceil yield ordinary pixel coordinates" in backport
-assert git_blob(maintained) == "6a18c9825936bd72b9919335ce5f8c2590183ab9", (
+assert git_blob(maintained) == "d5a5436cdc2414c53834a886cdaa4578b4dc8a94", (
     "Unreviewed shipping PS5 Fermi2D software blitter; historical predecessor was "
     "2c5aaf8fe19835dc72eee40f3c9eebc17f17350b")
 assert "#include <optional>" in maintained
@@ -51,6 +51,10 @@ assert maintained.count("src.Address() > ~u64{0} - *src_size") == 1
 assert maintained.count("dst.Address() > ~u64{0} - *dst_size") == 1
 assert "src.Address(), *src_size" in maintained
 assert "dst.Address(), *dst_size" in maintained
+assert "memory_manager.UsesNativeTiling(), dst.layer" in maintained
+assert "src.linear == Fermi2D::MemoryLayout::BlockLinear && src.layer != 0" in maintained
+assert decoder.count("u32 origin_z") >= 3
+assert "depth - origin_z" in decoder
 assert "return aligned_width * aligned_height * aligned_depth;" in decoder
 assert 'target_sources(video_core PRIVATE "${EDEN_MAINTAINED_NATIVE_BLITTER}")' in module
 assert 'list(FILTER sw_blitter_sources EXCLUDE REGEX "engines/sw_blitter/blitter[.]cpp$")' in module

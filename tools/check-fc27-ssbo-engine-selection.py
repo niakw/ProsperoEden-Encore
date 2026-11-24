@@ -102,12 +102,12 @@ expected.add("8026fcca228d0feda62ffd9625e16ee0429d621e")
 expected.add("887bf44af34999e8b6c5b63dc7c01c6c13b82c8f")
 expected.add("1a928783cce2c2692d8fe9fd958400a2de060bbf")
 expected.add("9632ac089f8b2d89a6856a42e8fb55206cdba1fa")
-if selected in {"b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f"}:
+if selected in {"b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f", "d63d82dfb9c2afbacac4c9dc1491f743fb083d52"}:
     # AM lifetime successor changes no shader or sparse kernel owner.
-    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("86d6068c438cc36ffd01513fc178d2590fb010cb" if selected == "44540549ee9a65eb8078e271f43ccded0e8e984f" else "9ff41b47bfe30a9cef86a5ab7c584c0094f586bf" if selected == "7c5d5220dd4df4a531418458ab623ef86c41348c" else "d53129478299aded8cb8d7432751b43fa74594b9" if selected == "a441295022b23834f8531c54d2b0965f84023278" else "1660883553006cfca7e80465ad5521b4c2ca33b1" if selected == "dc9f5f95b1f784bb358d6480e53de7247d61d777" else "668fb8effa6963be062d780e3bd145a5233d6b7e")
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("290d8c51e8ab40dd56651d50483abe42e11fa404" if selected == "d63d82dfb9c2afbacac4c9dc1491f743fb083d52" else "86d6068c438cc36ffd01513fc178d2590fb010cb" if selected == "44540549ee9a65eb8078e271f43ccded0e8e984f" else "9ff41b47bfe30a9cef86a5ab7c584c0094f586bf" if selected == "7c5d5220dd4df4a531418458ab623ef86c41348c" else "d53129478299aded8cb8d7432751b43fa74594b9" if selected == "a441295022b23834f8531c54d2b0965f84023278" else "1660883553006cfca7e80465ad5521b4c2ca33b1" if selected == "dc9f5f95b1f784bb358d6480e53de7247d61d777" else "668fb8effa6963be062d780e3bd145a5233d6b7e")
     expected.add(selected)
-if selected in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f"}:
-    assert blob(V/"tests/ns1_r23_18_tir_host.py") == "005280fde5bbd862d64a4def0d17d90a35bbe5e9", (
+if selected in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777", "a441295022b23834f8531c54d2b0965f84023278", "7c5d5220dd4df4a531418458ab623ef86c41348c", "44540549ee9a65eb8078e271f43ccded0e8e984f", "d63d82dfb9c2afbacac4c9dc1491f743fb083d52"}:
+    assert blob(V/"tests/ns1_r23_18_tir_host.py") == ("9ec2e122bee4c7ef3a0889fbf5e8202ae9516339" if selected == "d63d82dfb9c2afbacac4c9dc1491f743fb083d52" else "005280fde5bbd862d64a4def0d17d90a35bbe5e9"), (
         "Vendor host-only TextureCache TIR witness drift")
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

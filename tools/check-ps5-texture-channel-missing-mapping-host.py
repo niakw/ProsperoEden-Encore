@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 root=Path(__file__).resolve().parents[1]
-active=root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h"
+active=root/"vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h"
 source=active.read_text()
 def extract(begin,end):
     a=source.index(begin)
@@ -36,6 +36,7 @@ using SamplerId=u32;
 constexpr ImageViewId NULL_IMAGE_VIEW_ID=0;
 constexpr SamplerId NULL_SAMPLER_ID=0;
 #define LOG_DEBUG(...) ((void)0)
+#define LOG_TRACE(...) ((void)0)
 namespace Common { struct SlotId { static constexpr u32 TAGGED_VALUE=0x80000000u; }; }
 enum class ImageFlagBits : u32 { Remapped=1 };
 struct ImageFlags {bool remapped{};};
@@ -51,6 +52,7 @@ struct GpuMemory {};
 bool IsValidEntry(GpuMemory&,int descriptor) { return descriptor>0; }
 struct DescTable {
     u32 current_limit=16;
+    std::array<int,17> descriptors{};
     int descriptor=0;
     bool changed=false;
     std::pair<int,bool> Read(GpuMemory&,u32) const { return {descriptor,changed}; }
@@ -153,6 +155,16 @@ int main() {
     assert(shared.channel.image_view_ids.at(2)==129);
     assert(shared.views_created==2);
 
+    transient.slot_images[127].flags.remapped=true;
+    transient.fail_first_view_creation=true;
+    assert(transient.VisitImageView(1,false)==NULL_IMAGE_VIEW_ID);
+    assert(transient.texture_bindings_serial==2);
+    b.channel.sampler_ids.erase(3);
+    b.channel.sampler_ids.erase(3|Common::SlotId::TAGGED_VALUE);
+    assert(b.GetSamplerId(3,false)==304);
+    assert(b.GetSamplerId(3,true)==308);
+    b.channel.graphics_sampler_table.current_limit=100;
+    assert(b.GetSamplerId(99,false)==NULL_SAMPLER_ID);
     // Invalid indexes preserve the NULL return, not an out-of-range lookup.
     assert(b.VisitImageView(99,false)==NULL_IMAGE_VIEW_ID);
     assert(b.GetSamplerId(99,false)==NULL_SAMPLER_ID);

@@ -3250,3 +3250,11 @@ Vendor `6e2212b52d96463d74d17e90e260e372eee7aa80` : `bgtc.cpp/.h` deviennent des
 Les **17 slots `nullptr` physiques** restants sont fermés explicitement : **12** dans `ITaskService` et **5** dans `bgtc:sc`. Encore ne possède ni scheduler de tâches Horizon, ni événements de planification, ni transition half-awake, ni contrôle du sommeil PS5 par BGTC ; ces commandes renvoient donc une erreur au lieu d'un succès ou événement fictif. Les cmd16 et 200 sont couverts physiquement mais n'existent pas comme lignes distinctes dans le miroir historique.
 
 Croisement 4 853 : `bgtc:t` **10 NULL → D** et `bgtc:sc` **5 NULL → D**, soit **15 lignes** sorties du pool. **Pool restant = 965 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — BCAT : cache local shipping, scheduler/push absents fail-closed
+
+Vendor `c2063ba7d1a8acc7596fff3bbde994e9de9bb4be` : `bcat_service.cpp/.h` sont désormais des owners `eden-backports` explicites. La copie `sources/eden` est remise aux blobs Eden épinglés, ce qui rend réellement shipping le NOOP documenté de `RegisterSystemApplicationDeliveryTasks` déjà comptabilisé auparavant. Les chemins locaux existants restent intacts : `RequestSyncDeliveryCache`, `RequestSyncDeliveryCacheWithDirectoryName`, `SetPassphrase` et `ClearDeliveryCacheStorage`.
+
+**19 slots physiques** sans backend sont raccordés à un rejet explicite : annulation non supportée, notifiers/suspension, enregistrement/gestion de delivery tasks, listes de tâches/livraisons, subscription status et push log. Les noms 30200/30201 sont corrigés vers `RegisterDeliveryTask` / `UnregisterDeliveryTask`, conformément à SwitchBrew. Les commandes 20410/30101/30102/30210/90101/90301 sont aussi fermées physiquement mais ne comptent pas comme lignes historiques distinctes.
+
+Les commandes **20100/20101 restent volontairement NULL** : le backend sait synchroniser un titre, mais le contrat HOS3+ ajoute 8 octets dont la sémantique n'est pas encore qualifiée ; elles ne sont donc pas rejetées artificiellement. Croisement 4 853 : **11 NULL → D + 2 ABI-DIFF → D**, soit **13 entrées sorties du pool. Pool restant = 952 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

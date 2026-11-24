@@ -529,6 +529,48 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'successors=2', 'rejected_slots=17', 'awake_handlers=4',
               'pinned_sources=immutable')
 
+        # BCAT keeps explicit foreground/local cache synchronization but Encore has
+        # no Horizon delivery-task scheduler, push log or storage-update notifier.
+        # The reviewed owner also makes the previously source-only system-task NOOP
+        # actually reach the native pinned Eden build.
+        bcat_overlays={
+            'src/core/hle/service/bcat/bcat_service.cpp': {
+                'before_sha256':'d34a5f0e6cce26635b719dd1f31c295a7db7d8865c29fc9ab83f5c9c764b2a22',
+                'before_bytes':5959,
+                'after_sha256':'c42fa4f0c72cb96fcab8be8f5da35de8cf8a8058b8e231ad198c886118335bea',
+                'after_bytes':7097,
+            },
+            'src/core/hle/service/bcat/bcat_service.h': {
+                'before_sha256':'e5689ca4661a9b49baee97fbc86f2a0b42eb39db577ed27238cf2bb545378b92',
+                'before_bytes':1542,
+                'after_sha256':'8f0c4487f49850a940ea3bf8c81a51c643daae391d8294498c8dbc70990a3864',
+                'after_bytes':1606,
+            },
+        }
+        for rel,entry in bcat_overlays.items():
+            assert rel not in observed, ('BCAT unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing BCAT shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'BCAT pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed BCAT maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        bcat_cpp=(ACTIVE/'src/core/hle/service/bcat/bcat_service.cpp').read_text()
+        assert bcat_cpp.count('&IBcatService::RejectUnavailableDeliveryTask')==19
+        assert bcat_cpp.count('{20100, nullptr, "RequestSyncDeliveryCacheWithApplicationId"}')==1
+        assert bcat_cpp.count('{20101, nullptr, "RequestSyncDeliveryCacheWithApplicationIdAndDirectoryName"}')==1
+        assert bcat_cpp.count('D<&IBcatService::RequestSyncDeliveryCache>')==1
+        assert bcat_cpp.count('D<&IBcatService::RequestSyncDeliveryCacheWithDirectoryName>')==1
+        assert bcat_cpp.count('D<&IBcatService::RegisterSystemApplicationDeliveryTasks>')==1
+        print('NS1_BCAT_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=2', 'rejected_slots=19', 'sync_slots_left=2',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

@@ -411,6 +411,43 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               f'successors={len(online["reviewed_sources"])}',
               f'rejected_slots={online_count}', 'pinned_sources=immutable')
 
+        # NS1 factory-settings is a reviewed post-backport overlay. Keep the pinned
+        # Eden sources byte-identical, then admit only these exact maintained
+        # before/after blobs into the shipping replay.
+        factory_overlays={
+            'src/core/hle/service/set/factory_settings_server.cpp': {
+                'before_sha256':'e398e12a102f44ccc43ed7d652fffafaa7ad4af253a0f40f939fb39860670c18',
+                'before_bytes':2667,
+                'after_sha256':'1648b43aaa98758007d0a6edd40f80f2ef04da278085bfaf1179bfe86273159a',
+                'after_bytes':11169,
+            },
+            'src/core/hle/service/set/factory_settings_server.h': {
+                'before_sha256':'375b4c15ffe68979af8e184651f3c92889129d5f8a25d2bf668352935e1d20c8',
+                'before_bytes':450,
+                'after_sha256':'019972d8200732ed18e277e83467f53cebe5e921fcb4a07d07612f069bb8961c',
+                'after_bytes':2225,
+            },
+        }
+        for rel,entry in factory_overlays.items():
+            assert rel not in observed, ('SET:CAL unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing SET:CAL shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'SET:CAL pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed SET:CAL maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        factory_cpp=(ACTIVE/'src/core/hle/service/set/factory_settings_server.cpp').read_text()
+        assert factory_cpp.count('&IFactorySettingsServer::RejectUnsupportedFactoryCommand')==20
+        assert factory_cpp.count('void IFactorySettingsServer::RejectUnsupportedFactoryCommand(')==1
+        assert factory_cpp.count('#include "core/hle/service/ipc_helpers.h"')==1
+        print('NS1_FACTORY_SETTINGS_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=2', 'rejected_slots=20', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

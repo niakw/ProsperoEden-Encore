@@ -3228,3 +3228,11 @@ Vendor `95313ec1089b64f884abe3106eb2996ff74a5f90` : l'overlay actif `bpc.cpp` ne
 
 Croisement avec l'annexe 4 853 et la cible HOS23 : **12 lignes NULL** restent réellement comptées dans le pool (7 `bpc` + 5 `bpc:r`) ; les anciens wakeup-timer/sleep-button sont déjà HORS-VERSION et ne sont pas redécomptés. **12 NULL → D. Pool restant = 1 007 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+
+### 2026-11-24 — SET:CAL : owner shipping restauré et commandes factory non qualifiées fermées
+
+Vendor `9b2333d972bca1fd03814d58fcc7ae9f4834820e` : `factory_settings_server.cpp/.h` sont désormais des owners explicites de `encore-active/eden-backports`. Les copies `sources/eden` ont été remises aux blobs Eden épinglés ; les lectures CAL0 non sensibles déjà développées sont conservées dans l'overlay réellement installé par `install-vendored-eden-backports.py`. Cela supprime le risque qu'un changement uniquement présent dans la copie de référence soit dormant au build natif.
+
+Les **20 slots `nullptr` physiques** restants de `IFactorySettingsServer` sont dispatchés vers `RejectUnsupportedFactoryCommand`, qui renvoie une erreur explicite. Les deux setters factory 10/11 et les getters 14–21/24–31 de certificats/clefs ECI, eTicket, SSL, GameCard et amiibo ne fabriquent donc aucune donnée et n'exposent aucun layout non qualifié. Les deux slots physiques 42/43 sont fermés par la même politique mais ne constituent pas des lignes distinctes dans le miroir historique 4 853.
+
+Le replay moteur vérifie les hashes SHA-256 et tailles exactes avant/après des deux owners, exige **20** raccords au handler de rejet et garde le pin Eden immuable. Croisement catalogue : **18 NULL → D. Pool restant = 989 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

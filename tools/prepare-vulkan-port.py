@@ -1213,6 +1213,9 @@ void GpuTimeDestroy(const Device& device) {
 adapt('src/video_core/renderer_vulkan/vk_scheduler.h',
       'include/video_core/renderer_vulkan/vk_scheduler.h', [
 
+    ("    void RegisterOnSubmit(std::function<void()>&& func) {\n        on_submit = std::move(func);\n    }",
+     "    void RegisterOnSubmit(std::function<void()>&& func) {\n#ifdef PS5_NATIVE\n        // The submit callback executes inside WorkerThread's execution lock.\n        // Registration is owner-only (renderer construction/teardown).\n        std::scoped_lock lock{execution_mutex};\n#endif\n        on_submit = std::move(func);\n    }"),
+
     ('''    /// Send work to a separate thread.
     template <typename T>''', '''#ifdef PS5_NATIVE
     // A command chunk can fill while Configure() holds both guest GPU-cache

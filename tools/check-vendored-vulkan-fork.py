@@ -2179,6 +2179,14 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
             observed = subprocess.check_output(
                 ['git', 'hash-object', str(expected[name])],
                 text=True).strip()
+            # Native callback registration shares the worker execution lock.
+            if name == 'include/video_core/renderer_vulkan/vk_scheduler.h' and observed == '0a150f61ea637fc8ce9849379da7ebf241deb6d4':
+                current = "    void RegisterOnSubmit(std::function<void()>&& func) {\n#ifdef PS5_NATIVE\n        // The submit callback executes inside WorkerThread's execution lock.\n        // Registration is owner-only (renderer construction/teardown).\n        std::scoped_lock lock{execution_mutex};\n#endif\n        on_submit = std::move(func);\n    }"
+                previous = "    void RegisterOnSubmit(std::function<void()>&& func) {\n        on_submit = std::move(func);\n    }"
+                assert source.count(current) == 1
+                source = source.replace(current, previous, 1)
+                observed = git_blob_sha(source)
+                assert observed == 'c82ae5986c5028795093ff8573c33068d12c6de3'
             # Frame pacing successor: reverse the exact reviewed Scheduler::Wait ABI
             # and pacing state extraction before the sealed historical R2 comparison.
             if name == 'include/video_core/renderer_vulkan/vk_scheduler.h' and observed == 'c82ae5986c5028795093ff8573c33068d12c6de3':

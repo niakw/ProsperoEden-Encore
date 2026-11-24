@@ -13,6 +13,11 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[1]
 SRC=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
 GEN=(ROOT/"tools/prepare-vulkan-port.py").read_text()
+HDR=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
+start=HDR.index("    void RegisterOnSubmit(")
+REGISTER=HDR[start:HDR.index("\n    }",start)+6]
+assert "std::scoped_lock lock{execution_mutex};" in REGISTER
+assert "Registration is owner-only" in GEN
 CI=(ROOT/".github/workflows/encore-core-preflight.yml").read_text()
 def extract(begin, end):
     assert SRC.count(begin)==1, (begin, SRC.count(begin))
@@ -42,6 +47,7 @@ CPP=r"""
 #include <condition_variable>
 #include <exception>
 #include <future>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -77,6 +83,8 @@ public:
     std::queue<std::unique_ptr<CommandChunk>> work_queue;
     std::vector<std::unique_ptr<CommandChunk>> chunk_reserve;
     std::mutex execution_mutex, reserve_mutex, queue_mutex;
+    std::function<void()> on_submit;
+INJECT_REGISTER
     std::condition_variable_any event_cv;
     unsigned queue_drain_waiters{};
     bool worker_in_flight{};
@@ -114,6 +122,22 @@ int main() {
     using namespace std::chrono_literals;
 #ifdef PS5_NATIVE
     Eden::ResetGpuFailureForTitle();
+    {
+        Scheduler scheduler;
+        std::unique_lock lock{scheduler.execution_mutex};
+        std::promise<void> started;
+        auto entered=started.get_future();
+        auto replacement=std::async(std::launch::async,[&] {
+            started.set_value();
+            scheduler.RegisterOnSubmit([] {});
+        });
+        entered.wait();
+        assert(replacement.wait_for(50ms)==std::future_status::timeout);
+        lock.unlock();
+        assert(replacement.wait_for(4s)==std::future_status::ready);
+        replacement.get();
+        assert(scheduler.on_submit);
+    }
 #endif
     {
         Scheduler scheduler;
@@ -157,7 +181,7 @@ int main() {
     Eden::ResetGpuFailureForTitle();
 #endif
 }
-""".replace("INJECT_CTOR",CTOR).replace("INJECT_WAIT",WAIT).replace("INJECT_WORKER",WORKER)
+""".replace("INJECT_REGISTER",REGISTER).replace("INJECT_CTOR",CTOR).replace("INJECT_WAIT",WAIT).replace("INJECT_WORKER",WORKER)
 compiler=os.environ.get("CXX") or shutil.which("clang++") or shutil.which("g++")
 assert compiler, "C++20 compiler required"
 with tempfile.TemporaryDirectory(prefix="encore-vulkan-worker-fatal-") as tmp:

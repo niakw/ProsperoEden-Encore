@@ -2206,14 +2206,14 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin == "fc2c3393f8b752e9c22b3a2c0e1464c34ebff57b":
+if actual_vendor_pin == "49ba8d1dcd8baa1884d379e56b34785f8fea2f17":
     # Queued-GPFIFO AS revocation + asynchronous H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "06cf6f8f1da9b96065fb527e87842bec9b4b03a7"
+    ).strip() == "c85a7e66d6d7552f90be27aed6ee8f6c33eedc2b"
     for relative, expected_blob in {
         "encore-active/eden-core/src/video_core/dma_pusher.cpp": "0db63c54d93ff34a1f7e3ac7ae1c1dd036e686c4",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "7156db4f0807fd9ba7ae498ecdddd07273080bd1",
@@ -2222,7 +2222,7 @@ if actual_vendor_pin == "fc2c3393f8b752e9c22b3a2c0e1464c34ebff57b":
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h": "e43cc46223fd95fe9ad0f63e8311539c68c86807",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5bd4ede78cd44b4a2ad7c98ea8c5b90aec20c302",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "4106f73b369e9a667854f48c387dc03186dd1145",
-        "tests/ns2_gpu_identity_mapping_source.py": "21e4d5eb9ae6c29d899e064a9c85b704863501b3",
+        "tests/ns2_gpu_identity_mapping_source.py": "bf09d0ce4e7d9ab31256e20469a137cb95081590",
         "tests/ns2_native_tiling_activation_source.py": "7946e58a7e499fa8a63e718da77af6094352699c",
     }.items():
         raw=(V/relative).read_bytes()

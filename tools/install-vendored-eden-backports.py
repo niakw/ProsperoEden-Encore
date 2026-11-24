@@ -484,6 +484,51 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_FIRMWARE_DEBUG_SETTINGS_EXACT_POST_BACKPORT_REPLAY_PASS',
               'successors=2', 'rejected_slots=11', 'pinned_sources=immutable')
 
+        # BGTC awake-state helpers were previously maintained only in vendor/sources
+        # and therefore were not guaranteed to reach the native pinned Eden cache.
+        # Admit the complete reviewed shipping owner, including fail-closed task/sleep
+        # commands, while keeping the pinned source tree byte-identical.
+        bgtc_overlays={
+            'src/core/hle/service/glue/bgtc.cpp': {
+                'before_sha256':'e5b42f6f166c4f2d1a434295e3bec3131eb86e09883cffd185e3eb6dde0f5f2a',
+                'before_bytes':2408,
+                'after_sha256':'d772b524d0aee373f73bc0b9ff9851619b09084d2dce9ea24b2c72e10fe0c428',
+                'after_bytes':4170,
+            },
+            'src/core/hle/service/glue/bgtc.h': {
+                'before_sha256':'0f2da586f3d413f15c64bc830f27aec6fd775037466c5ef6835f8117fce8a9e1',
+                'before_bytes':737,
+                'after_sha256':'0c2fd912305a94f5ec5091a223f1f40ce2e0e3dff20999c20f95f3ea71df076e',
+                'after_bytes':1177,
+            },
+        }
+        for rel,entry in bgtc_overlays.items():
+            assert rel not in observed, ('BGTC unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing BGTC shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'BGTC pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed BGTC maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        bgtc_cpp=(ACTIVE/'src/core/hle/service/glue/bgtc.cpp').read_text()
+        assert bgtc_cpp.count('&ITaskService::RejectUnavailableBackgroundTask')==12
+        assert bgtc_cpp.count('&BGTC_SC::RejectUnavailableStateControl')==5
+        for implemented in (
+            'D<&ITaskService::IsInHalfAwake>',
+            'D<&ITaskService::IsInFullAwake>',
+            'D<&ITaskService::WillDisconnectNetworkWhenEnteringSleep>',
+            'D<&ITaskService::WillStayHalfAwakeInsteadSleep>',
+        ):
+            assert bgtc_cpp.count(implemented)==1, implemented
+        print('NS1_BGTC_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=2', 'rejected_slots=17', 'awake_handlers=4',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

@@ -3242,3 +3242,11 @@ Le replay moteur vérifie les hashes SHA-256 et tailles exactes avant/après des
 Vendor `fb8384b5673beeeed268ee38fa021421ac51061f` : les **11 slots `nullptr` physiques** de `IFirmwareDebugSettingsServer` sont désormais dans un owner `eden-backports` shipping et dispatchés vers `RejectUnavailableDebugSetting`. Horizon n'expose `set:fd` qu'en mode développement ; Encore ne simule donc ni Web Inspector, ni hostfs debug, ni listes d'hôtes SSL, ni configuration HTTP auth, ni mutation des réglages firmware debug sur le matériel PS5.
 
 Le replay vérifie les deux blobs CPP/header avant/après et exige exactement 11 raccords au rejet. Croisement du miroir historique 4 853 : **9 NULL → D** (cmd2/3/4/10/11/20/21/22/23). Les cmd24 et 27, ajoutées en HOS20+/21+, sont couvertes physiquement mais ne sont pas des lignes distinctes de l'annexe historique. **Pool restant = 980 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — BGTC : owner shipping restauré, scheduler/sleep absents fail-closed
+
+Vendor `6e2212b52d96463d74d17e90e260e372eee7aa80` : `bgtc.cpp/.h` deviennent des owners explicites de `encore-active/eden-backports` et les copies `sources/eden` sont remises aux blobs Eden épinglés. Cette correction de provenance rend réellement shipping les quatre handlers déjà écrits auparavant : `IsInHalfAwake=false`, `IsInFullAwake=true`, et les deux politiques de sommeil réseau à `false`. Les statuts historiques cmd4/cmd6 (IMPL-SRC) et cmd102/cmd103 (PARTIEL) ne sont donc pas redécomptés.
+
+Les **17 slots `nullptr` physiques** restants sont fermés explicitement : **12** dans `ITaskService` et **5** dans `bgtc:sc`. Encore ne possède ni scheduler de tâches Horizon, ni événements de planification, ni transition half-awake, ni contrôle du sommeil PS5 par BGTC ; ces commandes renvoient donc une erreur au lieu d'un succès ou événement fictif. Les cmd16 et 200 sont couverts physiquement mais n'existent pas comme lignes distinctes dans le miroir historique.
+
+Croisement 4 853 : `bgtc:t` **10 NULL → D** et `bgtc:sc` **5 NULL → D**, soit **15 lignes** sorties du pool. **Pool restant = 965 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

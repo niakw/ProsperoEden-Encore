@@ -2206,14 +2206,14 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin == "978cdb678461f31b84ea2c1a090a309d0727b6ef":
+if actual_vendor_pin == "cd5ce4dabef1d32e0441d22dccdee358ebf23287":
     # Queued-GPFIFO AS revocation + complete native Puller/Ampere H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "c266325a1eb932fb4434bfceaa413281432be590"
+    ).strip() == "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89"
     for relative, expected_blob in {
         "encore-active/eden-core/src/video_core/dma_pusher.cpp": "5cf42158c7cc4462bc9a12a18b482cbd6de20bf8",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4cb9f79deeb56ab7397c6209939c94dffbb7575b",
@@ -2223,7 +2223,7 @@ if actual_vendor_pin == "978cdb678461f31b84ea2c1a090a309d0727b6ef":
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h": "e43cc46223fd95fe9ad0f63e8311539c68c86807",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5bd4ede78cd44b4a2ad7c98ea8c5b90aec20c302",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "4106f73b369e9a667854f48c387dc03186dd1145",
-        "tests/ns2_gpu_identity_mapping_source.py": "a91a7ce54c37fb55de67b8b09cc1fd7efd9f2c5a",
+        "tests/ns2_gpu_identity_mapping_source.py": "ab93f14505625ef3b1e2fc50945371a2e1f7e05e",
         "tests/ns2_native_tiling_activation_source.py": "7946e58a7e499fa8a63e718da77af6094352699c",
         "tools/ns2/check_g10_qmd_release_callback_host.py": "92280b84fd16a5c7ba37e6f584cb8e3cf0bfad77",
     }.items():

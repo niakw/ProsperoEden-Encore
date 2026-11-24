@@ -25,6 +25,7 @@ stabilization_trees = {
     "7c5d5220dd4df4a531418458ab623ef86c41348c": "9ff41b47bfe30a9cef86a5ab7c584c0094f586bf",
     "44540549ee9a65eb8078e271f43ccded0e8e984f": "86d6068c438cc36ffd01513fc178d2590fb010cb",
     "d63d82dfb9c2afbacac4c9dc1491f743fb083d52": "290d8c51e8ab40dd56651d50483abe42e11fa404",
+    "d634b381d85dae30492dd6291fc4e6e96143f363": "a51ee73257c13fce70cbaf5d3e26c62010abf2e9",
 }
 stabilization_selected = shipping_vendor in stabilization_trees
 stabilization_new_headers = set()
@@ -2732,7 +2733,7 @@ post_f07_gpu_wait_receipts = {
     "headless/vk_scheduler_ps5.h": "e920772e5f4127b14f3a3ffb1c0c2d1880c516b8",
     "headless/vulkan_present_manager_ps5.cpp": "c7c56d8ab9c63d810d10ee653cd006708f90f273",
     "headless/vk_rasterizer_shutdown_ps5.h": "e0d1657f9051736a5595b97dfae4843cbf886130",
-    "headless/vk_buffer_cache_shutdown_ps5.cpp": "9808e59dc0e71543176d15482d1c36d1d2398a0a",
+    "headless/vk_buffer_cache_shutdown_ps5.cpp": "141826498b2b89bb5273468a8a3c9dde9c3b543f",
 }
 post_f07_gpu_wait_owners = set(post_f07_gpu_wait_receipts)
 for path, blob in post_f07_gpu_wait_receipts.items():

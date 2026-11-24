@@ -3064,3 +3064,9 @@ Vendor `f1e8c0b32320e6c08dd662b9e5f5d1ac71808226` : `IWindowController::CreateWi
 
 Vendor `a12ddefce7725faeeb98495ceb8ccb8cf3cd5f8f` : aucune modification runtime. Les SHA256 du nouvel overlay `window_controller.{cpp,h}` ajoutés avec le correctif `CreateWindow` ont été recalculés avec l'algorithme SHA-256 de référence et corrigés dans `encore-active/eden-backports/manifest.json`, y compris les empreintes upstream. Vérification croisée sur `library_applet_accessor.cpp` : l'empreinte recalculée correspond exactement à celle déjà enregistrée. **Pool inchangé : 1 538 / 4 853.**
 
+### 2026-11-24 — AM ApplicationAccessor : ApplicationLaunchRequestInfo réel
+
+Vendor `001fea6ade91e82ec360e5bb2197f130680d6d6a` : `IApplicationAccessor::GetApplicationLaunchRequestInfo` (cmd124, HOS6+) est raccordé avec le struct `nn::applet::ApplicationLaunchRequestInfo` de **0x10 octets**. SwitchBrew établit les valeurs initiales Horizon : `{3,3,0}` pour `CreateApplication`, `{0,0,0}` pour `CreateSystemApplication`. Encore ne fabrique des `IApplicationAccessor` que dans ces deux chemins ; le handler lit donc l'`AppletId` conservé par l'objet, retourne les valeurs correspondantes et rejette explicitement tout type inattendu.
+
+Les nouveaux overlays `application_accessor.{cpp,h}` ont leurs empreintes active/upstream recalculées et revérifiées contre le manifeste. **1 NULL → IMPL-SRC. Pool restant = 1 537 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

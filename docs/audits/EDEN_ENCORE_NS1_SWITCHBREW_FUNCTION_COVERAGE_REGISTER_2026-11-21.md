@@ -3180,3 +3180,11 @@ Croisement catalogue 4 853 : **21 lignes NULL** sortent du pool. `hid:sys` ne co
 
 **Pool restant = 1 273 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — NS : administration destructive système rejetée en lot
+
+Vendor `3a1bbc0ffb3e3b8b4472997fb2f45e05908ee5de` : **54 slots `nullptr` physiques** supplémentaires de `IApplicationManagerInterface` sont fermés sur des surfaces d'administration système hors gameplay : factory-reset, suppression/cleanup d'entités et saves système, vérification/maintenance d'applications, format/gestion SD, event-log, cleanup de tâches, qualification debug, device-lock, visibilité icône/titre et bascules GameCard/local-share. Le handler renvoie explicitement une erreur lorsque le backend système Nintendo correspondant n'existe pas.
+
+Les commandes de lancement d'applications/applets, records/control data, contenus installés et chemins locaux de boot restent inchangés. Croisement catalogue 4 853 : **19 lignes NULL** sortent du pool ; les autres lignes correspondantes étaient déjà HORS-VERSION ou D.
+
+**Pool restant = 1 254 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

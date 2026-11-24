@@ -3255,6 +3255,18 @@ int main() { for (int i = 0; i < 5; ++i) run(i); }
     p04_header.write_text(generated_header)
     normalized_generated[raster_header] = p04_header
     print('ENCORE_NS1_GPU22_GENERATOR_HEADER_EXACT_REVERSE_PASS')
+    # The native submit-callback registration delta is generated as well.
+    # Reverse it on the historical audit copy, not on the shipping header.
+    scheduler_header = 'include/video_core/renderer_vulkan/vk_scheduler.h'
+    scheduler_generated = normalized_generated[scheduler_header].read_text()
+    scheduler_current = "    void RegisterOnSubmit(std::function<void()>&& func) {\n#ifdef PS5_NATIVE\n        // The submit callback executes inside WorkerThread's execution lock.\n        // Registration is owner-only (renderer construction/teardown).\n        std::scoped_lock lock{execution_mutex};\n#endif\n        on_submit = std::move(func);\n    }"
+    scheduler_previous = "    void RegisterOnSubmit(std::function<void()>&& func) {\n        on_submit = std::move(func);\n    }"
+    assert scheduler_generated.count(scheduler_current) == 1
+    scheduler_generated = scheduler_generated.replace(scheduler_current, scheduler_previous, 1)
+    scheduler_output = temp / 'normalized-generated-submit-callback' / scheduler_header
+    scheduler_output.parent.mkdir(parents=True, exist_ok=True)
+    scheduler_output.write_text(scheduler_generated)
+    normalized_generated[scheduler_header] = scheduler_output
     resolve_hunks = 0
     for entry in resolve_receipt['files']:
         name = entry['path']

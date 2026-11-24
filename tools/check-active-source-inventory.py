@@ -22,6 +22,7 @@ stabilization_trees = {
     "b5c6f089a6aecd321d08a40238f3cd502f505b26": "668fb8effa6963be062d780e3bd145a5233d6b7e",
     "dc9f5f95b1f784bb358d6480e53de7247d61d777": "1660883553006cfca7e80465ad5521b4c2ca33b1",
     "a441295022b23834f8531c54d2b0965f84023278": "d53129478299aded8cb8d7432751b43fa74594b9",
+    "7c5d5220dd4df4a531418458ab623ef86c41348c": "9ff41b47bfe30a9cef86a5ab7c584c0094f586bf",
 }
 stabilization_selected = shipping_vendor in stabilization_trees
 stabilization_new_headers = set()

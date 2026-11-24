@@ -3034,3 +3034,11 @@ Ce rejet est volontaire : le runtime actif ne contient ni service IPC `IStorageC
 
 **Pool restant = 1 543 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM SelfController : contrôles recording-layer rejetés tant que cmd44 reste partiel
+
+Vendor `6a593a4466bf9b98220dfc0139239ae5d52c5437` : `SetManagedDisplayLayerSeparationMode` (cmd45) et `SetRecordingLayerCompositionEnabled` (cmd46) ne sont plus des slots NULL. Les handlers consomment leur ABI réelle (`u32 mode`, limité à 0/1 pour cmd45 ; booléen pour cmd46), puis retournent une erreur explicite.
+
+Ce choix évite un faux succès : `DisplayLayerManager::CreateManagedDisplaySeparableLayer` (cmd44) retourne encore `recording_layer_id = 0` et ne crée qu'un managed layer normal. Le VI actuel sait gérer plusieurs layers, mais le chemin de présentation Vulkan PS5 compose encore la liste complète sans filtrer le stack `Default`; matérialiser naïvement une recording layer pourrait donc la rendre visible à l'écran. **2 NULL → D** jusqu'au correctif causal cmd44 + filtrage de présentation.
+
+**Pool restant = 1 541 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

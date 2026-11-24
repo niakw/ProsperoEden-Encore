@@ -2725,3 +2725,10 @@ Vendor `100be854211d10cb02b96e8f0059e1d924fa09c3` : dans l'overlay NIFM réellem
 Vendor `0837393bd5c8c3c48f5681dea1ac1dba76a6d6c8` : `ISelfController::ApproveToDisplay` n'est plus un succès vide. La commande passe désormais par le `WindowSystem` actif et appelle `RequestAppletVisibilityState(*m_applet, true)`, qui met à jour `window_visible` sous verrou puis réveille l'observateur AM afin que le scheduling/foreground soit réévalué. Si le `WindowSystem` est momentanément absent pendant création/destruction, seul l'état invité est conservé sous verrou, sans déréférencement nul. Cette sémantique recoupe l'implémentation Napple (ApproveToDisplay rend la fenêtre visible) tout en réutilisant le chemin de visibilité déjà employé par `IWindowController` dans Encore. Le manifeste de l'overlay actif est recalculé (`1f9b071508fa6aa62167ce855ff02bf5d1d35149b77e1b94a0486fd4a92ab333`, 21 318 octets). **1 STUB → IMPL-SRC**.
 
 **Pool restant = 1 543** : 1 181 NULL + 13 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — SPL : état retail et IsDevelopment réel
+
+Vendor `dab56d88cbbe166575546fff3346feb4727afbf4` : `spl:` cmd11 `IsDevelopment` ne renvoie plus `ResultSecureMonitorNotImplemented`. Le handler suit le contrat libnx/SwitchBrew (aucune entrée, sortie bool u8) et dérive sa réponse du même `ConfigItem::HardwareState` que `GetConfig`. Encore expose explicitement une unité retail/production (`HardwareState::Production`), donc `IsDevelopment` renvoie false sans fabriquer un mode dev. `SetConfig` et les dérivations AES restent ouverts : aucun secret, keyslot ou résultat cryptographique factice n'est introduit. **1 STUB → IMPL-SRC**.
+
+**Pool restant = 1 542** : 1 181 NULL + 12 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

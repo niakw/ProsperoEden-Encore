@@ -2535,3 +2535,8 @@ Vendor `71ead3c34a782580ad52770fbfbcb87de83da416` → gitlink moteur `d3ef1ddd30
 **Compteur courant : 1 747 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 262 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853.**
 
 **Pool restant à examiner = 1 660** : 1 262 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU.
+
+
+## NPNS — lot runtime offline (24/11/2026)
+
+Vendor `487fcd316fc8c63d95c97b40d1b4b8438508092a` → moteur `72b761e16280ccee6362dc72afd035bb93dc7d19`. **12 NULL → IMPL-SRC** : token lifecycle `npns:u` (21/23/25), `npns:s` (21/22/23/24/25), statistiques cmd104 des deux services, event cmd105 système et transition d'état cmd202. Le token est local/opaque et n'authentifie aucun service Nintendo ; les commandes BaaS restent ouvertes. **Pool restant = 1 648** (1 250 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).

@@ -29,12 +29,12 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 667 | 80 | **1 747** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 679 | 80 | **1 759** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 205 | 0 | **205** |
-| **NULL — Handler NULL** | 1 262 | 0 | **1 262** |
+| **NULL — Handler NULL** | 1 250 | 0 | **1 250** |
 | **D — Rejet explicite / historique** | 214 | 33 | **247** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -5068,14 +5068,14 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:u | `4` | `ReceiveRaw` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `5` | `GetReceiveEvent` | — | **IMPL-SRC** ([corps propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/npns/npns.cpp) ; corps non trivial présent ; sans preuve PS5) | 2026-11-22 |
 | npns:u | `7` | `GetStateChangeEvent` | — | **IMPL-SRC** (renvoie un KEvent réel de changement d'état ; en mode offline il reste non signalé tant que l'état ne change pas ; vendor `1bbeb625`) | 2026-11-23 |
-| npns:u | `21` | `CreateToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `23` | `DestroyToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:u | `25` | `QueryIsTokenValid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:u | `21` | `CreateToken` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
+| npns:u | `23` | `DestroyToken` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
+| npns:u | `25` | `QueryIsTokenValid` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
 | npns:u | `26` | `ListenToMyApplicationId` | 5.0.0+ | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:u | `101` | `Suspend` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:u | `102` | `Resume` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:u | `103` | `GetState` | — | **IMPL-SRC** (retourne l'état offline 0 comme `npns:s`, cohérent avec l'absence de session push distante ; vendor `6eae2125`, PS5 non validé) | 2026-11-23 |
-| npns:u | `104` | `GetStatistics` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:u | `104` | `GetStatistics` | 3.0.0+ | **IMPL-SRC** (buffer de statistiques mis à zéro en l'absence de transport push distant; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
 | npns:u | `111` | `GetJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `120` | `CreateNotificationReceiver` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:u | `151` | `GetStateWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
@@ -5094,11 +5094,11 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `11` | `SubscribeTopic` | — | **NOOP** (adaptation offline explicite : aucune souscription distante NPNS n'est créée ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `12` | `UnsubscribeTopic` | — | **NOOP** (adaptation offline explicite : aucune souscription distante NPNS n'est créée ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `13` | `QueryIsTopicExist` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `21` | `CreateToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `22` | `CreateTokenWithApplicationId` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `23` | `DestroyToken` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `24` | `DestroyTokenWithApplicationId` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `25` | `QueryIsTokenValid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `21` | `CreateToken` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
+| npns:s | `22` | `CreateTokenWithApplicationId` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
+| npns:s | `23` | `DestroyToken` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
+| npns:s | `24` | `DestroyTokenWithApplicationId` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
+| npns:s | `25` | `QueryIsTokenValid` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
 | npns:s | `26` | `ListenToMyApplicationId` | 5.0.0+ | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `31` | `UploadTokenToBaaS` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `32` | `DestroyTokenForBaaS` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -5107,8 +5107,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `101` | `Suspend` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `102` | `Resume` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `103` | `GetState` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; état offline explicite correspondant à l'absence de connexion push persistante) | 2026-11-23 |
-| npns:s | `104` | `GetStatistics` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `105` | `GetPlayReportRequestEvent` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `104` | `GetStatistics` | 3.0.0+ | **IMPL-SRC** (buffer de statistiques mis à zéro en l'absence de transport push distant; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
+| npns:s | `105` | `GetPlayReportRequestEvent` | 3.0.0+ | **IMPL-SRC** (événement noyau réel, non signalé sans demande distante; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
 | npns:s | `111` | `GetJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `112` | `CreateJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `113` | `DestroyJid` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
@@ -5119,7 +5119,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `152` | `GetStateChangeEventWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `153` | `GetDropEventWithHandover` | 8.0.0+ | **IMPL-SRC** (état offline ou KEvent réel de handover ; drop/state events restent non signalés tant qu'aucune connexion push distante n'existe ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `201` | `RequestChangeStateForceTimed` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `202` | `RequestChangeStateForceAsync` | 3.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `202` | `RequestChangeStateForceAsync` | 3.0.0+ | **IMPL-SRC** (état local u32 réellement mis à jour et événement de changement signalé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
 
 ### NV services
 
@@ -6569,3 +6569,10 @@ Vendor `98ea6932ee52d0c7b6ad4de5776a05df3316f32d` (inclut `7f5859ea`, `14bdf52c`
 Vendor `71ead3c34a782580ad52770fbfbcb87de83da416` → gitlink moteur `d3ef1ddd30f0570bb75285b0f216d58c409062a2`. **9 NULL sont raccordés** au backend album existant : quatre deviennent IMPL-SRC (registration check, delete, size, delete-debug) et cinq deviennent PARTIEL (image/thumbnail et listes 140/141/143), afin de ne pas masquer les limites ApplicationData, filtrage UID et crypto déjà présentes dans le modèle local. Baisse nette du pool : **4**. Pas de validation PS5 revendiquée.
 
 **Compteur courant : 1 747 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 262 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU / 0 E = 4 853. Pool restant : 1 660.**
+
+
+### NPNS — cycle token, statistiques et état offline (24/11/2026)
+
+Vendor `487fcd316fc8c63d95c97b40d1b4b8438508092a` → gitlink moteur `72b761e16280ccee6362dc72afd035bb93dc7d19`. Les dumps NS1 23.0.1 confirment les ABI : clé token 0x18, token opaque 0x28, bool de validation, buffer de statistiques, handle event et état forcé u32. Encore conserve désormais un cycle de token local thread-safe pour `npns:u` et `npns:s`, sans activer BaaS/Nintendo ; les statistiques offline sont nulles, l'event play-report est réel/non signalé, et cmd202 met à jour l'état local puis signale l'événement de changement. **12 NULL → IMPL-SRC.**
+
+**Compteur courant : 1 759 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 250 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU = 4 853. Pool restant : 1 648.**

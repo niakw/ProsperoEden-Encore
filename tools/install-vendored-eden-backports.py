@@ -1238,12 +1238,40 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
 
 
 
+
+        # HOS 13+: ndrm:lu/ndrm:la are registered by this ES translation
+        # unit but ABSENT from the legacy 4853 catalog. Reverse their full
+        # error-only closure so both physical owners remain provenance-checked.
+        ndrm_rel = 'src/core/hle/service/es/es.cpp'
+        ndrm_source = (ACTIVE / ndrm_rel).read_bytes()
+        assert len(ndrm_source) == 21705 and sha(ndrm_source) == 'cecad076878369841f655d7e36b754ef45a1d6e5454b1b02642f2bdc2ed84d09'
+        assert spec['entries'][ndrm_rel]['active'] == sha(ndrm_source)
+        ndrm_text = ndrm_source.decode('utf-8')
+        ndrm_method = (
+            '\nprivate:\n'
+            '    // NDRM relies on Nintendo entitlement services, not available to the PS5 guest.\n'
+            '    void RejectUnavailableNdrm(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
+        )
+        assert ndrm_text.count(ndrm_method) == 2
+        ndrm_text = ndrm_text.replace(ndrm_method, '\n')
+        for ndrm_class, expected in [('NDRM_LU', 5), ('NDRM_LA', 54)]:
+            pointer = '&' + ndrm_class + '::RejectUnavailableNdrm'
+            assert ndrm_text.count(pointer) == expected, ('NDRM rejected-slot drift', ndrm_class)
+            ndrm_text = ndrm_text.replace(pointer, 'nullptr')
+        ndrm_previous = ndrm_text.encode('utf-8')
+        assert len(ndrm_previous) == 19829 and sha(ndrm_previous) == 'ce91acfa09973cbdf79303eb44488a9723e88bcec468cd22972da21314fac66e'
+        print('NS1_NDRM_EXACT_REVERSE_PASS', 'unindexed=59',
+              'owners=ndrm:lu+ndrm:la', 'legacy_pool_not_falsified')
+
         # Next HOS23 ES successor: restore exactly the preceding eTicket owner
         # and the key-manager parsing owner before historical replay comparison.
         es_rel = 'src/core/hle/service/es/es.cpp'
-        es_shipping = (ACTIVE / es_rel).read_bytes()
+        es_shipping = ndrm_previous
         assert len(es_shipping) == 19829 and sha(es_shipping) == 'ce91acfa09973cbdf79303eb44488a9723e88bcec468cd22972da21314fac66e'
-        assert spec['entries'][es_rel]['active'] == sha(es_shipping)
+        assert spec['entries'][es_rel]['active'] == sha(ndrm_source)
         es_old = es_shipping.decode('utf-8')
         es_new_ticket_methods = "    void CountTicket(HLERequestContext& ctx) {\n        keys.PopulateTickets();\n        const auto count = static_cast<u32>(\n            keys.GetCommonTickets().size() + keys.GetPersonalizedTickets().size());\n        IPC::ResponseBuilder rb{ctx, 3};\n        rb.Push(ResultSuccess);\n        rb.Push<u32>(count);\n    }\n\n    void ListTicketRightsIds(HLERequestContext& ctx) {\n        keys.PopulateTickets();\n        const auto& common = keys.GetCommonTickets();\n        const auto& personalized = keys.GetPersonalizedTickets();\n        std::vector<u128> ids;\n        ids.reserve(common.size() + personalized.size());\n        for (const auto& [rights_id, ticket] : common) {\n            ids.push_back(rights_id);\n        }\n        for (const auto& [rights_id, ticket] : personalized) {\n            ids.push_back(rights_id);\n        }\n        std::sort(ids.begin(), ids.end());\n        const auto count = (std::min)(ids.size(), ctx.GetWriteBufferNumElements<u128>());\n        if (count != 0) {\n            ctx.WriteBuffer(ids.data(), count * sizeof(u128));\n        }\n        IPC::ResponseBuilder rb{ctx, 3};\n        rb.Push(ResultSuccess);\n        rb.Push<u32>(static_cast<u32>(count));\n    }\n\n"
         es_raw_variant_write = "std::visit(\n            [&](const auto& ticket_variant) {\n                using T = std::decay_t<decltype(ticket_variant)>;\n                if constexpr (!std::is_same_v<T, std::monostate>) {\n                    ctx.WriteBuffer(&ticket_variant, write_size);\n                }\n            },\n            ticket.data);"
@@ -1301,7 +1329,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         es_active = es_previous_active
         assert len(es_active) == 16737 and sha(es_active) == 'e5bd1ed9088fa00c7e5758aaf5d09142dbe90c440b0104259005b7b281d042ff'
         assert es_rel in spec['entries']
-        assert spec['entries'][es_rel]['active'] == sha(es_shipping)
+        assert spec['entries'][es_rel]['active'] == sha(ndrm_source)
         assert spec['entries'][es_rel]['upstream'] == sha(es_upstream)
         es_ids = [2,3,5,6,7,13,22,23,24,25,26,27,28,29,32,34,35,39,40]
         es_reviewed_method = (

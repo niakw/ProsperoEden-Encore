@@ -31,7 +31,18 @@ workflow = (root / ".github/workflows/encore-core-preflight.yml").read_text()
 assert "python3 -B tools/check-fermi2d-address-widening-host.py" in workflow
 
 fermi_layer_source = (engines / "fermi_2d_observed.cpp").read_text()
-assert "const bool pitch_layer_copy = regs.src.layer != 0 || regs.dst.layer != 0;" in fermi_layer_source
+# The active Fermi2D owner now distinguishes pitch-array layers from a
+# hardware-defined destination-only block-linear volume slice. Keep the
+# original 64-bit pitched-layer lambdas intact and verify the new gates.
+assert "const bool has_layer = regs.src.layer != 0 || regs.dst.layer != 0;" in fermi_layer_source
+assert "has_layer && regs.src.linear == MemoryLayout::Pitch &&" in fermi_layer_source
+assert "regs.dst.linear == MemoryLayout::Pitch;" in fermi_layer_source
+assert "const bool dst_volume_layer_copy =" in fermi_layer_source
+assert "regs.src.layer == 0 && regs.dst.layer != 0 &&" in fermi_layer_source
+assert "regs.dst.linear == MemoryLayout::BlockLinear && regs.dst.block_depth > 0" in fermi_layer_source
+assert "regs.dst.depth > 1 && regs.dst.layer < regs.dst.depth" in fermi_layer_source
+assert "else if (has_layer && !dst_volume_layer_copy)" in fermi_layer_source
+assert 'UNIMPLEMENTED_MSG("Rejected Fermi2D destination volume slice")' in fermi_layer_source
 assert "regs.src.format != regs.dst.format || regs.clip_enable != 0" in fermi_layer_source
 assert fermi_layer_source.count("memory_manager.IsFullyMappedRange(base + offset,") == 1
 assert "sw_blitter->Blit(src, dst, config);" in fermi_layer_source

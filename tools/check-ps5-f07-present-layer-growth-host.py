@@ -9,10 +9,10 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-blit = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_blit_screen.cpp").read_text()
-header = (ROOT / "vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_blit_screen.h").read_text()
+blit = (ROOT / "headless/vulkan_blit_screen_r08.cpp").read_text()
+header = (ROOT / "headless/vk_blit_screen_r08.h").read_text()
 generator = (ROOT / "tools/prepare-vulkan-port.py").read_text()
-adapt = (ROOT / "vendor/encore-active/eden-vulkan/vulkan_window_adapt_pass.cpp").read_text()
+adapt = (ROOT / "headless/vulkan_window_adapt_r08.cpp").read_text()
 fast = (ROOT / ".github/workflows/encore-core-fast-gate.yml").read_text()
 full = (ROOT / ".github/workflows/encore-core-preflight.yml").read_text()
 command = "python3 -B tools/check-ps5-f07-present-layer-growth-host.py"
@@ -24,6 +24,12 @@ assert "const size_t layer_count = configs.size();" in adapt
 assert "auto layer_it = layers.begin();" in adapt
 assert "for (size_t i = 0; i < layer_count; i++) {" in adapt
 assert "layer_it->ConfigureDraw(" in adapt
+cmake = (ROOT / "headless/vulkan.cmake").read_text()
+assert '"${EDEN_PORT_DIR}/vulkan_blit_screen_r08.cpp"' in cmake
+assert 'configure_file("${EDEN_PORT_DIR}/vk_blit_screen_r08.h"' in cmake
+assert '"${EDEN_PORT_DIR}/vulkan_window_adapt_r08.cpp"' in cmake
+wait = blit.split("void BlitScreen::WaitIdle(const Device& device) {",1)[1].split("\n}",1)[0]
+assert wait.index("scheduler.Finish();") < wait.index("present_manager.WaitPresent();") < wait.index("vk::Check(device.GetLogical().WaitIdle());")
 assert "VkExtent2D layer_window_size{};" in header
 assert "F07 C04 append-only presentation layers without device idle" in generator
 assert blit.count("    if (!rebuild_layers && !retire_excess_layers &&") == 1
@@ -59,7 +65,7 @@ struct Scheduler {};
 struct Memory {};
 struct WindowSize { unsigned width{}, height{}; };
 using VkExtent2D = WindowSize;
-namespace Settings { enum class ScalingFilter { Bilinear, Fsr, Sgsr, SgsrEdge }; }
+namespace Settings { enum class ScalingFilter { Bilinear, Fsr, Sgsr, SgsrEdge, Anime4K3D, Anime4KSoft, Anime4KDenoise }; }
 struct Filters {};
 struct Adapt { int GetDescriptorSetLayout() const {return 7;} };
 struct Layer {
@@ -143,7 +149,10 @@ int main() {
     // drain and rebuild even if the swapchain extent and layer count match.
     for (const auto filter : {Settings::ScalingFilter::Fsr,
                               Settings::ScalingFilter::Sgsr,
-                              Settings::ScalingFilter::SgsrEdge}) {
+                              Settings::ScalingFilter::SgsrEdge,
+                              Settings::ScalingFilter::Anime4K3D,
+                              Settings::ScalingFilter::Anime4KSoft,
+                              Settings::ScalingFilter::Anime4KDenoise}) {
         Screen f;
         f.scaling_filter=filter;
         f.Apply(1,false,1280,720);
@@ -158,6 +167,10 @@ int main() {
         f.Apply(4,false,1920,1080);
         assert(f.idle_calls==1 && &f.layers.front()==refreshed);
     }
+    // Alternating guest HUD layer visibility must not force a device-wide idle.
+    Screen alternating;
+    for(unsigned tick=0;tick<240;++tick) alternating.Apply(tick%2?3:1,false);
+    assert(alternating.layers.size()==3 && alternating.idle_calls==0);
     // A bilinear layer has no output-sized constructor resources.
     Screen plain;
     plain.Apply(1,false,1280,720);

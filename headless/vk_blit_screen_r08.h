@@ -95,6 +95,10 @@ private:
     Settings::ScalingFilter scaling_filter{};
     std::unique_ptr<WindowAdaptPass> window_adapt{};
     std::list<Layer> layers{};
+#ifdef PS5_NATIVE
+    // Constructor extent for output-sized spatial filter resources.
+    VkExtent2D layer_window_size{};
+#endif
 };
 
 } // namespace Vulkan

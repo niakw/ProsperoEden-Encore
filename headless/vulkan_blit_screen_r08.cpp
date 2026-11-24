@@ -32,9 +32,11 @@ BlitScreen::BlitScreen(Tegra::MaxwellDeviceMemoryManager& device_memory_, const 
 BlitScreen::~BlitScreen() = default;
 
 void BlitScreen::WaitIdle(const Device& device) {
-    present_manager.WaitPresent();
+    // Finish publishes all earlier scheduler-recorded present callbacks.
+    // Drain the presenter afterwards, before waiting for device retirement.
     scheduler.Finish();
-    device.GetLogical().WaitIdle();
+    present_manager.WaitPresent();
+    vk::Check(device.GetLogical().WaitIdle());
 }
 
 void BlitScreen::SetWindowAdaptPass(const Device& device) {
@@ -145,19 +147,64 @@ void BlitScreen::DrawToFrame(const Device& device, RasterizerVulkan& rasterizer,
         .height = layout.screen.GetHeight(),
     };
 
-    if (layers.size() != framebuffers.size()) {
 #ifdef PS5_NATIVE
-        if (!layers.empty()) {
-            // Old layer resources can still be in queued Vulkan draws.
+    // Presentation layers live in std::list: appending one does not move
+    // existing Layer objects captured by queued Vulkan command callbacks.
+    // New HUD layers can be added without destroying old GPU resources or
+    // draining the entire device. A changed descriptor/layout contract
+    // still forces the existing idle + full rebuild below.
+    // FSR/SGSR/Anime4K allocate output-sized resources inside each Layer. The screen
+    // rectangle can change while the swapchain extent and layer count stay
+    // constant; keeping those old resources would mix incompatible sizes.
+    const bool output_sensitive =
+        scaling_filter == Settings::ScalingFilter::Fsr ||
+        scaling_filter == Settings::ScalingFilter::Sgsr ||
+        scaling_filter == Settings::ScalingFilter::SgsrEdge ||
+        scaling_filter == Settings::ScalingFilter::Anime4K3D ||
+        scaling_filter == Settings::ScalingFilter::Anime4KSoft ||
+        scaling_filter == Settings::ScalingFilter::Anime4KDenoise;
+    const bool output_size_changed =
+        !layers.empty() && (layer_window_size.width != window_size.width ||
+                            layer_window_size.height != window_size.height);
+    const bool rebuild_layers =
+        resource_update_required || (output_sensitive && output_size_changed);
+    // The compositor reads exactly framebuffers.size() layers. Preserve a
+    // bounded high-water reserve so transient HUD layer shrink/growth does
+    // not destroy GPU-referenced resources and force a device-wide idle.
+    // More than eight retained layers are reclaimed only after an ordinary
+    // GPU drain; active layers are never capped or skipped.
+    constexpr size_t kMaxRetainedLayers = 8;
+    const bool retire_excess_layers =
+        layers.size() > kMaxRetainedLayers && layers.size() > framebuffers.size();
+    if (!rebuild_layers && !retire_excess_layers &&
+        layers.size() < framebuffers.size()) {
+        for (size_t i = layers.size(); i < framebuffers.size(); ++i) {
+            layers.emplace_back(device, memory_allocator, scheduler, device_memory, image_count,
+                                window_size, window_adapt->GetDescriptorSetLayout(), filters);
+        }
+    } else if (rebuild_layers || retire_excess_layers) {
+        // Only true layout changes or over-budget retirement can destroy
+        // resources still captured by queued Vulkan command buffers.
+        if (!resource_update_required && !layers.empty()) {
             WaitIdle(device);
         }
-#endif
         layers.clear();
         for (size_t i = 0; i < framebuffers.size(); ++i) {
             layers.emplace_back(device, memory_allocator, scheduler, device_memory, image_count,
                                 window_size, window_adapt->GetDescriptorSetLayout(), filters);
         }
     }
+    layer_window_size = window_size;
+#else
+    if (layers.size() != framebuffers.size()) {
+        layers.clear();
+        for (size_t i = 0; i < framebuffers.size(); ++i) {
+            layers.emplace_back(device, memory_allocator, scheduler, device_memory, image_count,
+                                window_size, window_adapt->GetDescriptorSetLayout(), filters);
+        }
+    }
+#endif
+
 
     window_adapt->Draw(device, rasterizer, memory_allocator, scheduler, image_index, layers, framebuffers, layout, frame, draw_hud);
 

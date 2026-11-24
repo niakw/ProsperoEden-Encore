@@ -274,7 +274,10 @@ void PresentManager::Present(Frame* frame) {
 }
 
 size_t PresentManager::MaxExtraFrames() const {
-    return image_count - 1;
+    // Swapchain recreation changes the advertised count, not this pool.
+    // Never admit more generated frames than the allocated frame owners.
+    const auto capacity = (std::min)(image_count.load(), frames.size());
+    return capacity > 0 ? capacity - 1 : 0;
 }
 
 void PresentManager::RecreateFrame(Frame* frame, u32 width, u32 height, VkFormat image_view_format,

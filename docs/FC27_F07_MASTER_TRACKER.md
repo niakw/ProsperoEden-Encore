@@ -725,3 +725,10 @@ Sur le binaire **`6271928eb7b5d50687fccc730ae706986f3d6108`**, FW13.60, 89 fenê
 - NS1 host mock O0/O2 UBSan: 2,000 missing sampler cases recovered; 1,000 remap-generation misses eliminated; 512,000 empty retirement scan visits and 1,000 mock flushes eliminated. Counts are synthetic, not FC27 event frequency or FPS.
 - Existing texture/mapping/retirement/F03 source-extraction guards now read the selected header. Historical vendor TIR audit reverses the exact four hunks on its audit copy only. Native PS5 and guest HUD freshness remain unverified.
 - FC27 trace: Options-to-Plus host edge between 163.56 and 168.72 s after first frame callback; 58,750 subsequent polls (~242.4 s). No guest NPad LIFO trace in those files. No evidence of guest consumption latency; no mapping changes.
+
+### 2026-11-24 — Native R08 compositor layer retention (lots 3/5/6)
+
+- CMake's shipping `headless/vulkan_blit_screen_r08.cpp` and matched header had missed vendor F07 C04 append-only layer retention. Integrate its bounded reuse in the actual PS5 owner; R08 also covers Anime4K Details/Soft/Denoise constructor extents. The active window adapter consumes exactly the active config count, so retained layers are not drawn.
+- Finish the scheduler before draining the independent present queue, and check actual device idle before destroying resources. Clamp MaxExtraFrames to the actual allocated frame pool, not just the recreated swapchain count. No added per-frame global wait.
+- Local C++20 O0/O2 UBSan model: 240 compositions alternating 1/3 layers, 239 hypothetical old global idle requests vs zero new; six filter resize cases, 88 pool-capacity pairs, failure retains previous layer owners. The workload is synthetic NS1, not reconstructed FC27 layer events or real GPU performance. Existing C04 host witness now extracts the active engine source; native/console validation pending.
+- Vendor synchronous page-protection witness updated to accept only reviewed TextureCache blobs and keep semantic guards. R437 audit reverses exact multi-channel buffer deletion delta; whitespace fixed. No new native build.

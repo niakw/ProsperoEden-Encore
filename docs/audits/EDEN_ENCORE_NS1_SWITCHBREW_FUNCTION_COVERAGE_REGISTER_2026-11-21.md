@@ -3086,3 +3086,7 @@ Vendor `21bf94d43f07fcf66b37a6be82fb16b1099adaff` : `CreateApplicationAndPushAnd
 
 Le cross-title reste explicitement rejeté : créer directement un second Applet Application violerait l'invariant `WindowSystem::TrackApplet` (`m_application == nullptr`). **NULL → PARTIEL** ; pool global **inchangé à 1 534 / 4 853**. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletSelfAccessor cmd140 : réservation mémoire conservée
+
+Vendor `76b7356cbc63eae67ff7e73a66fc655ce1896b6d` : `SetApplicationMemoryReservation` (cmd140) n'est plus NULL. Le contrat vérifie qu'une Application principale existe et que son processus est vivant, refuse les valeurs non alignées sur `0x1000`, puis conserve la réservation demandée sur l'état de l'Applet principal. Aucun effet n'est appliqué à l'allocateur PS5 tant qu'un backend de réservation Horizon fidèle n'existe pas. **NULL → PARTIEL** ; pool global **inchangé à 1 534 / 4 853**. Aucun build natif PS5 ni validation console revendiqués.
+

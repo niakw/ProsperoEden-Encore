@@ -779,6 +779,39 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'successors=2', 'real_application_stats=1',
               'raw_playlog_rejections=6', 'pinned_sources=immutable')
 
+        # btdrv/bt are Switch Bluetooth UART/BSA services. Encore has no guest
+        # Bluetooth controller backend on PS5; keep the real bt event and fail closed
+        # all hardware/GATT operations from the exact reviewed shipping owner.
+        btdrv_rel='src/core/hle/service/btdrv/btdrv.cpp'
+        btdrv_entry={
+            'before_sha256':'c88bda026ea851e357db1fffd1226d9f07a8fc438b87af0e5e20bf9b5c5aa57c',
+            'before_bytes':9543,
+            'after_sha256':'60ab520184f4f7ba390424ce9bf5c8f47693456a7afdef558f27f366157baa61',
+            'after_bytes':16709,
+        }
+        assert btdrv_rel not in observed, ('BTDRV unexpectedly changed by frozen replay',btdrv_rel)
+        assert btdrv_rel in spec['entries'], ('Missing BTDRV shipping overlay',btdrv_rel)
+        generated=(stage/btdrv_rel).read_bytes()
+        current=(ACTIVE/btdrv_rel).read_bytes()
+        assert len(generated)==btdrv_entry['before_bytes'] and sha(generated)==btdrv_entry['before_sha256'], (
+            'BTDRV pinned source drift',btdrv_rel)
+        assert spec['entries'][btdrv_rel]['upstream']==btdrv_entry['before_sha256']
+        assert len(current)==btdrv_entry['after_bytes'] and sha(current)==btdrv_entry['after_sha256'], (
+            'Unreviewed BTDRV maintained source',btdrv_rel)
+        assert spec['entries'][btdrv_rel]['active']==btdrv_entry['after_sha256']
+        assert spec['entries'][btdrv_rel]['bytes']==btdrv_entry['after_bytes']
+        observed[btdrv_rel]=spec['entries'][btdrv_rel]
+        btdrv_cpp=(ACTIVE/btdrv_rel).read_text()
+        assert btdrv_cpp.count('&IBluetoothUser::RejectUnavailableBluetoothUser')==9
+        assert btdrv_cpp.count('&IBluetoothDriver::RejectUnavailableBluetoothHardware')==129
+        assert btdrv_cpp.count('nullptr')==0
+        assert btdrv_cpp.count('C<&IBluetoothUser::RegisterBleEvent>')==1
+        assert btdrv_cpp.count('&IBluetoothDriver::EnableRadio')==1
+        assert btdrv_cpp.count('&IBluetoothDriver::UnsupportedDebugCommand')==1
+        print('NS1_BTDRV_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'bt_user_rejections=9', 'driver_rejections=129',
+              'physical_nulls=0', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

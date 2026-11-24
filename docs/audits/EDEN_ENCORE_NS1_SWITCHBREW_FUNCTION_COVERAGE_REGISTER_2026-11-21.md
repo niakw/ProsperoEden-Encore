@@ -3298,3 +3298,11 @@ Vendor `04f219188c2c187e5bda6e462d871e5a9ff0b841` : `query_service.cpp/.h` devie
 La cmd4 `QueryPlayStatisticsByApplicationId` est **implémentée réellement** à partir des mêmes données persistées que cmd5. Les cmd0 et 8–12 sont raccordées à `RejectUnavailablePlayLogQuery` : elles exigent les événements bruts PDM/account que nous ne persistons pas. Le catalogue HOS23 corrige aussi l'ancien faux ABI-DIFF de cmd0 : le nom moderne est bien `QueryAppletEvent` ; `QueryApplicationEvent` ne concernait que HOS 1.0.0–7.0.1.
 
 Croisement 4 853 : cmd0 **ABI-DIFF → D**, cmd4 **NULL → IMPL-SRC**, cmd8–12 **5 NULL → D**, soit **7 entrées sorties du pool. Pool restant = 894 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — BTDRV + bt : backend Bluetooth Switch absent fermé en bloc
+
+Vendor `8b0b3b8b8622bb00f72b411ae324446ccaf22935` : `btdrv.cpp` devient un owner explicite `eden-backports`; la copie `sources/eden` revient au blob Eden épinglé. Les **138 slots `nullptr` physiques** sont fermés : **129** commandes du driver `btdrv` et **9** opérations GATT utilisateur `bt`. `RegisterBleEvent` conserve son vrai `KReadableEvent`, `EmulateBluetoothCrash` conserve son rejet production et `EnableRadio` devient un NOOP explicite sans accès au Bluetooth PS5.
+
+SwitchBrew confirme que `btdrv` est le driver matériel Bluetooth de la Switch, utilisé par HID/BTM et implémenté au-dessus de la pile UART/Broadcom BSA. Il confirme aussi les noms modernes HOS (FinalizeBluetooth, StartInquiry/StopInquiry, OpenHidConnection, GATT/BLE, etc.) : les anciens noms du miroir qui produisaient des `ABI-DIFF` sont des variantes historiques et ne constituent pas des contrats HOS23 distincts.
+
+Croisement 4 853 : `btdrv` **17 NULL + 61 ABI-DIFF → D/NOOP**, `bt` **9 NULL → D**, soit **87 entrées sorties du pool**. La ligne btdrv cmd97 était déjà HORS-VERSION. **Pool restant = 807 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

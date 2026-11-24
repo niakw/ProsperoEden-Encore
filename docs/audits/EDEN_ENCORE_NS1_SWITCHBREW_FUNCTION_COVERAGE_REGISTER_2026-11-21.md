@@ -2935,3 +2935,9 @@ Vendor `1c35f384381a9ef52e3d8055186f3e30f7495bde` : le slot HOS20+ cmd320 est ra
 
 Le **pool reste 1 557 / 4 853**. Les quatre owners AM ont désormais **11 slots `nullptr` physiques**, dont **10 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM common state : cmd15 HOS19 retourne un événement persistant
+
+Vendor `6693426e3aca6318b7305a001205c14f216d9658` : `ICommonStateGetter` cmd15 (HOS19+) n'est plus un slot NULL. Les différences d'interface firmware prouvent zéro octet d'entrée, zéro octet de sortie et un handle de sortie. Lichii/Eglantine le classe comme réponse événement. Encore retourne désormais le `KReadableEvent` persistant `Applet::unknown_event`, déjà utilisé par les placeholders AM à contrat événementiel, sans le signaler artificiellement. **NULL → PARTIEL** : l'ABI/forme IPC est respectée, mais la condition firmware de signalement reste inconnue.
+
+Un overlay `common_state_getter.h` est ajouté au manifest plutôt que de modifier implicitement la copie upstream. Le **pool reste 1 557 / 4 853** car PARTIEL reste dans le pool. Les quatre owners AM ont désormais **10 slots `nullptr` physiques**, dont **9 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build PS5 ni validation console revendiqués.
+

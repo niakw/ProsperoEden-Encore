@@ -2914,3 +2914,12 @@ Aucun build natif PS5 déclenché ; validation console non revendiquée.
 Vendor `114aafbd10411faa65d0194775fd93f4a358fc21` : quatre slots jusque-là NULL sont désormais raccordés à un rejet AM explicite commun : cmd59 `SetVrPositionForDebug`, cmd110 `OpenMyGpuErrorHandler`, cmd400 `ActivateMigrationService` et cmd401 `DeactivateMigrationService`. Encore ne possède ni backend VR debug positionnel, ni objet GPU-error AM dédié, ni service de migration Horizon ; aucun objet, état ou succès fictif n'est créé. **4 NULL → D.**
 
 Aucun build natif PS5 déclenché ; validation console non revendiquée.
+
+### 2026-11-24 — AM HomeMenu : lancement réel du Starter + portée HOS23
+
+Vendor `a6c0444213541f747a85bd7936b1f5046ca0023f` : `IHomeMenuFunctions::LaunchStarter` (cmd51, HOS 16+) n'est plus un slot NULL. L'owner réellement compilé `encore-active/eden-backports/.../home_menu_functions.cpp` utilise le ProgramId `AppletProgramId::Starter = 0x0100000000001012`, crée le processus invité via `CreateProcess`, matérialise un `AppletId::Starter` de type `LibraryApplet`, l'enregistre dans le `WindowSystem` puis démarre réellement son processus. Cette séquence réutilise les primitives AM déjà actives ; elle ne renvoie pas un succès fictif. **1 NULL → IMPL-SRC.**
+
+`LaunchSystemApplet` (cmd50) reste volontairement NULL : Horizon le résout via l'état NS et `ns.applet!system_applet_id`, état qu'Encore ne modélise pas encore fidèlement. `SelectApplicationLicense` (IApplicationFunctions cmd34) est documenté uniquement pour HOS 10.0.0–15.0.1 ; pour la cible NS1/HOS23 d'Encore il est donc **HORS-VERSION** et reste `nullptr` sans constituer un trou runtime HOS23. **1 NULL → HORS-VERSION** au classement cible, sans prétendre à une implémentation.
+
+Référence : SwitchBrew Applet Manager services / IHomeMenuFunctions et IApplicationFunctions. Par rapport au dernier pool réconcilié de cette reprise (**1 559**), ces deux décisions donnent **1 557 / 4 853 restant** : un vrai correctif runtime et une requalification de version. Sur les quatre owners AM ciblés, il reste **13 slots `nullptr` physiques**, dont **12 pertinents HOS23**. Aucun build natif PS5 ni résultat console revendiqué.
+

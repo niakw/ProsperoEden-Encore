@@ -300,6 +300,9 @@ def main()->int:
     assert 'packet[0] != 16 + 202 || packet[1] != 0' in syncpt_open
     assert 'Kernel::ResultInvalidCombination.raw' in syncpt_open
     assert 'ctx.AddMoveObject(client);' in syncpt_open
+    assert 'm_bootstrap.CurrentPhase() != GB::Phase::Ready' in syncpt_open
+    assert '!m_syncpt_session.expired()' in syncpt_open
+    assert syncpt_open.index('ctx.AddMoveObject(client);') < syncpt_open.index('m_syncpt_session = handler;')
     assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in syncpt_open
     assert '{101, &IGraphicsSupervisor::CompleteBootstrap' in text
     assert '{301, &IGraphicsSupervisor::InitializeDisplayContext' in text

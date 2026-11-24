@@ -1399,19 +1399,19 @@ if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e12
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
 
 def reviewed_blob(relative, expected):
-    if actual_vendor_pin in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"}:
-        hotpath_blobs = {"encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.h":"1c90e08bc3c66731aa717e7b17b3249539848016","encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.inc":("bd48ff5cb346981f0937cfddbb042f9100697fd2" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"} else "742dc02b71ada75425fec7e126093634a22d2102"),"encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":"0992d01d0b4e262dd4b4a79633affa8b02529795","encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h":"4ce33d21debc33c9625129cbd545bf9b1c084272","tests/fc27_gpu_page_sibling_preservation_host.py":("f7b1eb205c2614d30809dd0f9f132e43ccf46745" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"} else "c27f87a327a5a371a7810b41dabc2bc8f03fe61d")}
+    if actual_vendor_pin in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"}:
+        hotpath_blobs = {"encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.h":"1c90e08bc3c66731aa717e7b17b3249539848016","encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.inc":("bd48ff5cb346981f0937cfddbb042f9100697fd2" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"} else "742dc02b71ada75425fec7e126093634a22d2102"),"encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":"0992d01d0b4e262dd4b4a79633affa8b02529795","encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h":"4ce33d21debc33c9625129cbd545bf9b1c084272","tests/fc27_gpu_page_sibling_preservation_host.py":("f7b1eb205c2614d30809dd0f9f132e43ccf46745" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"} else "c27f87a327a5a371a7810b41dabc2bc8f03fe61d")}
         if relative in hotpath_blobs:
             expected = hotpath_blobs[relative]
-    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"}:
+    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"}:
         updated_tests = {
-            "tests/fc27_xmad_pointer_fold_host.py": "c793db6f19f44e9a7ffdbd512b1bc382ed605fc3",
-            "tests/fc27_dynamic_texture_static_sampler_host.py": "0ae204dc5bb6b34871816ab48973639ac4439bda",
+            "tests/fc27_xmad_pointer_fold_host.py": ("405f665e55cc2d94cbbabd54cdeeaaedf3e236c5" if actual_vendor_pin == "628d01bdc4368e9ad661d749515f788ef7c03802" else "c793db6f19f44e9a7ffdbd512b1bc382ed605fc3"),
+            "tests/fc27_dynamic_texture_static_sampler_host.py": ("089755d22314e088a2d4f8366847588f6579db2f" if actual_vendor_pin == "628d01bdc4368e9ad661d749515f788ef7c03802" else "0ae204dc5bb6b34871816ab48973639ac4439bda"),
         }
         if relative in updated_tests:
             return updated_tests[relative]
-    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"} and relative == "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
-        return "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
+    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"} and relative == "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
+        return ("7db0462ad24aa4c6356ce4efa0086b356f171be6" if actual_vendor_pin == "628d01bdc4368e9ad661d749515f788ef7c03802" else "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9")
     if actual_vendor_pin == "3abd88bc1a3c334f53f345998b72e9cf8ae87abf":
         exact_wait = {
             "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "25aa385480b28a3d828da034222795ac1f150e94",
@@ -2219,17 +2219,17 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"}:
+if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"}:
     # Queued-GPFIFO AS revocation + complete native Puller/Ampere H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == ("c54279c46295cc71d27c74af213dcacff0d08810" if actual_vendor_pin == "1b5256d72072e05a62fb734bc9ef790fc81c1573" else "7ab98eb5286021a9e070397ef6673f61934cf5e0" if actual_vendor_pin == "752b92033610b294a36254d5747c317aca51c1d5" else "af3fb89c9c6bb96c19bd2e099273019840536267" if actual_vendor_pin == "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e" else "747569d1bafefc23fb235e1929bda0f5c0d48de3" if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073" else "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89")
-    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"}:
+    ).strip() == ("48f75fca37a128f9425cc3484d22ab994a1a17a8" if actual_vendor_pin == "628d01bdc4368e9ad661d749515f788ef7c03802" else "c54279c46295cc71d27c74af213dcacff0d08810" if actual_vendor_pin == "1b5256d72072e05a62fb734bc9ef790fc81c1573" else "7ab98eb5286021a9e070397ef6673f61934cf5e0" if actual_vendor_pin == "752b92033610b294a36254d5747c317aca51c1d5" else "af3fb89c9c6bb96c19bd2e099273019840536267" if actual_vendor_pin == "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e" else "747569d1bafefc23fb235e1929bda0f5c0d48de3" if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073" else "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89")
+    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"}:
         raw = (V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_bytes()
-        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == ("7db0462ad24aa4c6356ce4efa0086b356f171be6" if actual_vendor_pin == "628d01bdc4368e9ad661d749515f788ef7c03802" else "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9")
     for relative, expected_blob in {
         "encore-active/eden-core/src/video_core/dma_pusher.cpp": "5cf42158c7cc4462bc9a12a18b482cbd6de20bf8",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4cb9f79deeb56ab7397c6209939c94dffbb7575b",
@@ -2247,8 +2247,8 @@ if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("queued GPFIFO/Puller H17 successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
-if actual_vendor_pin in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"}:
-    for relative, expected in {"encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.h":"1c90e08bc3c66731aa717e7b17b3249539848016","encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.inc":("bd48ff5cb346981f0937cfddbb042f9100697fd2" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"} else "742dc02b71ada75425fec7e126093634a22d2102"),"encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":"0992d01d0b4e262dd4b4a79633affa8b02529795","encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h":"4ce33d21debc33c9625129cbd545bf9b1c084272","tests/fc27_gpu_page_sibling_preservation_host.py":("f7b1eb205c2614d30809dd0f9f132e43ccf46745" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"} else "c27f87a327a5a371a7810b41dabc2bc8f03fe61d")}.items():
+if actual_vendor_pin in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"}:
+    for relative, expected in {"encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.h":"1c90e08bc3c66731aa717e7b17b3249539848016","encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.inc":("bd48ff5cb346981f0937cfddbb042f9100697fd2" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"} else "742dc02b71ada75425fec7e126093634a22d2102"),"encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":"0992d01d0b4e262dd4b4a79633affa8b02529795","encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h":"4ce33d21debc33c9625129cbd545bf9b1c084272","tests/fc27_gpu_page_sibling_preservation_host.py":("f7b1eb205c2614d30809dd0f9f132e43ccf46745" if actual_vendor_pin in {"752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"} else "c27f87a327a5a371a7810b41dabc2bc8f03fe61d")}.items():
         raw = (V / relative).read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
     assert "EDEN_MAINTAINED_BUFFER_HOTPATH" in (V.parent / "headless/CMakeLists.txt").read_text()

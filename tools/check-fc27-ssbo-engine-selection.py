@@ -142,11 +142,11 @@ if selected == "cd5ce4dabef1d32e0441d22dccdee358ebf23287":
     expected.add(selected)
 if selected == "a8f327c972bd2f84f6e6f9432c96c4a948963073":
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "747569d1bafefc23fb235e1929bda0f5c0d48de3"
-    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == ("7db0462ad24aa4c6356ce4efa0086b356f171be6" if selected == "628d01bdc4368e9ad661d749515f788ef7c03802" else "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9")
     expected.add(selected)
-if selected in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573"}:
-    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("c54279c46295cc71d27c74af213dcacff0d08810" if selected == "1b5256d72072e05a62fb734bc9ef790fc81c1573" else "7ab98eb5286021a9e070397ef6673f61934cf5e0" if selected == "752b92033610b294a36254d5747c317aca51c1d5" else "af3fb89c9c6bb96c19bd2e099273019840536267")
-    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
+if selected in {"ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e", "752b92033610b294a36254d5747c317aca51c1d5", "1b5256d72072e05a62fb734bc9ef790fc81c1573", "628d01bdc4368e9ad661d749515f788ef7c03802"}:
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("48f75fca37a128f9425cc3484d22ab994a1a17a8" if selected == "628d01bdc4368e9ad661d749515f788ef7c03802" else "c54279c46295cc71d27c74af213dcacff0d08810" if selected == "1b5256d72072e05a62fb734bc9ef790fc81c1573" else "7ab98eb5286021a9e070397ef6673f61934cf5e0" if selected == "752b92033610b294a36254d5747c317aca51c1d5" else "af3fb89c9c6bb96c19bd2e099273019840536267")
+    assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == ("7db0462ad24aa4c6356ce4efa0086b356f171be6" if selected == "628d01bdc4368e9ad661d749515f788ef7c03802" else "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9")
     expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

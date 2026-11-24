@@ -332,6 +332,12 @@ DISTINCT_PREWARM_REVERSES = [
 ]
 
 def reverse_distinct_prewarm(source: str) -> str:
+    if git_blob(source) == "7db0462ad24aa4c6356ce4efa0086b356f171be6":
+        guard = "\n        // Disk records are untrusted: the six guest programs include both\n        // VertexA and VertexB, even though Vulkan exposes five graphics stages.\n        size_t env_index = 0;\n        for (size_t index = 0; index < key.unique_hashes.size(); ++index) {\n            if (key.unique_hashes[index] == 0) continue;\n            if (env_index == envs.size() ||\n                envs[env_index].ShaderStage() != (index == 0 ? Shader::Stage::VertexA\n                                                            : Shader::StageFromIndex(index - 1))) {\n                return;\n            }\n            ++env_index;\n        }\n        if (env_index == 0 || env_index != envs.size()) return;\n"
+        capacity = "boost::container::static_vector<Shader::Environment*, Maxwell::MaxShaderProgram> env_ptrs;"
+        assert source.count(guard) == source.count(capacity) == 1
+        source = source.replace(guard, "", 1).replace(capacity, "boost::container::static_vector<Shader::Environment*, 5> env_ptrs;", 1)
+        assert git_blob(source) == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     if git_blob(source) == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9":
         source = reverse_reviewed_source(source, DISTINCT_PREWARM_REVERSES, "distinct prewarm keys")
         assert git_blob(source) == "c92e3dbbf4de08030589d9776dded974accf11eb", "Distinct prewarm predecessor drift"

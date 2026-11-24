@@ -185,6 +185,13 @@ if selected == "86e4fdd58b6e1c5a281026766bbfda006f9b23a5":
     ).strip() == "4f062faec6dca220426572f246033099de504bfc"
     reviewed_vendors.add(selected)
 assert pinned==selected and pinned in reviewed_vendors,(pinned,selected)
+# 86e4fdd5 changes only NVDRV GPU lifecycle/H:17 and the NS2 source contract.
+# Its sparse-residency owners are byte-identical to the reviewed 3abd88bc
+# baseline, so replay that exact sparse receipt graph after proving the new
+# full vendor tree above. This avoids duplicating the successor SHA through
+# every historical sparse-era set.
+if selected == "86e4fdd58b6e1c5a281026766bbfda006f9b23a5":
+    selected = "3abd88bc1a3c334f53f345998b72e9cf8ae87abf"
 def read(path): return (root/path).read_text()
 def gitblob(path):
     raw=(root/path).read_bytes()

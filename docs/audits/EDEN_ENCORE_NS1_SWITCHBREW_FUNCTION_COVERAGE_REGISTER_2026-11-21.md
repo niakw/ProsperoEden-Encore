@@ -3002,3 +3002,9 @@ Vendor `80f4972be4e5bf4a16247a8393ccbf0420bfd96c` : `ILibraryAppletSelfAccessor:
 
 **Pool restant = 1 548 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletAccessor : alignement des stubs firmware cmd110/cmd150
+
+Vendor `eedfedbd8513a047ba393d48287c37dd196566cd` : la documentation firmware actuelle confirme que `NeedsToExitProcess` (cmd110) et `RequestForAppletToGetForeground` (cmd150) sont des stubs Horizon qui retournent une erreur. Le précédent cmd110 Encore, qui exposait avec succès l'état interne `ExitRequested/IsTerminated`, était donc trop permissif et est corrigé : il retourne maintenant `ResultUnknown` comme le firmware. Cmd150 passe de slot NULL au même rejet explicite, sans modifier le `WindowSystem`.
+
+**Cmd110 : divergence corrigée, sans gain de compteur. Cmd150 : NULL → D. Pool restant = 1 547 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

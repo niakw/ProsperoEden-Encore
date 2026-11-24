@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source": "vendor/encore-active/eden-core/src/core/file_sys/savedata_factory.cpp",
   "baseline_blob": "021de7c7f2f3cee7d5ad6c6fa458a57fc23a8002",
-  "active_blob": "0bda129d2d2bd0f61ffe57089c9d6da5c79c8f86",
+  "active_blob": "bcee91b68d1eb6295a402c104f1d53004c11e8c4",
   "hunks": [
     {
       "before": "#include \"common/logging.h\"\n#include \"common/uuid.h\"\n#include \"core/core.h\"\n#include \"core/file_sys/savedata_factory.h\"\n#include \"core/file_sys/vfs/vfs.h\"\n",
@@ -27,6 +27,18 @@
     {
       "before": "\nvoid SaveDataFactory::WriteSaveDataSize(SaveDataType type, u64 title_id, u128 user_id,\n                                        SaveDataSize new_value) const {\n    const auto path =\n        GetFullPath(program_id, dir, SaveDataSpaceId::User, type, title_id, user_id, 0);\n    const auto relative_dir = GetOrCreateDirectoryRelative(dir, path);\n\n    const auto size_file = relative_dir->CreateFile(GetSaveDataSizeFileName());",
       "after": "\nvoid SaveDataFactory::WriteSaveDataSize(SaveDataType type, u64 title_id, u128 user_id,\n                                        SaveDataSize new_value) const {\n    const auto path = GetSaveDataPath(SaveDataSpaceId::User, type, title_id, user_id, 0);\n    const auto relative_dir = GetOrCreateDirectoryRelative(dir, path);\n\n    const auto size_file = relative_dir->CreateFile(GetSaveDataSizeFileName());"
+    },
+    {
+      "before": "VirtualDir SaveDataFactory::Create(SaveDataSpaceId space, const SaveDataAttribute& meta) const {\n    const auto save_directory = GetSaveDataPath(space, meta.type, meta.program_id, meta.user_id, meta.system_save_data_id);\n\n    return dir->CreateDirectoryRelative(save_directory);\n}",
+      "after": "VirtualDir SaveDataFactory::Create(SaveDataSpaceId space, const SaveDataAttribute& meta) const {\n    const auto storage_id = meta.type == SaveDataType::Cache ? static_cast<u64>(meta.index)\n                                                         : meta.system_save_data_id;\n    const auto save_directory =\n        GetSaveDataPath(space, meta.type, meta.program_id, meta.user_id, storage_id);\n\n    return dir->CreateDirectoryRelative(save_directory);\n}"
+    },
+    {
+      "before": "VirtualDir SaveDataFactory::Open(SaveDataSpaceId space, const SaveDataAttribute& meta) const {\n\n    const auto save_directory = GetSaveDataPath(space, meta.type, meta.program_id, meta.user_id, meta.system_save_data_id);\n\n    auto out = dir->GetDirectoryRelative(save_directory);",
+      "after": "VirtualDir SaveDataFactory::Open(SaveDataSpaceId space, const SaveDataAttribute& meta) const {\n\n    const auto storage_id = meta.type == SaveDataType::Cache ? static_cast<u64>(meta.index)\n                                                         : meta.system_save_data_id;\n    const auto save_directory =\n        GetSaveDataPath(space, meta.type, meta.program_id, meta.user_id, storage_id);\n\n    auto out = dir->GetDirectoryRelative(save_directory);"
+    },
+    {
+      "before": "    case SaveDataType::Cache:\n        return fmt::format(\"{}save/cache/{:016X}\", out, title_id);",
+      "after": "    case SaveDataType::Cache:\n        if (save_id == 0) {\n            return fmt::format(\"{}save/cache/{:016X}\", out, title_id);\n        }\n        return fmt::format(\"{}save/cache/{:016X}_{:04X}\", out, title_id, save_id);"
     }
   ]
 }

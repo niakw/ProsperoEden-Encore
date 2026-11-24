@@ -2923,3 +2923,9 @@ Vendor `a6c0444213541f747a85bd7936b1f5046ca0023f` : `IHomeMenuFunctions::LaunchS
 
 Référence : SwitchBrew Applet Manager services / IHomeMenuFunctions et IApplicationFunctions. Par rapport au dernier pool réconcilié de cette reprise (**1 559**), ces deux décisions donnent **1 557 / 4 853 restant** : un vrai correctif runtime et une requalification de version. Sur les quatre owners AM ciblés, il reste **13 slots `nullptr` physiques**, dont **12 pertinents HOS23**. Aucun build natif PS5 ni résultat console revendiqué.
 
+### 2026-11-24 — AM application : événement d’upgrade de licence matérialisé
+
+Vendor `3c0eec8055735d537ca4cc59c57961ddc049caf5` : `IApplicationFunctions::GetLimitedApplicationLicenseUpgradableEvent` (cmd37) ne laisse plus le dispatcher sur un slot NULL. Le service possède désormais un `Event` réel, attaché à un `ServiceContext`, et retourne son `KReadableEvent` par copy-handle. Dans le modèle actuel Encore, `GetLimitedApplicationLicense` expose explicitement l’absence de licence limitée/trial et aucun backend de dynamic-rights ne peut produire une transition d’upgrade ; l’événement reste donc valide mais non signalé. **NULL → PARTIEL**, pas IMPL-SRC complet : le signalement firmware reste à raccorder lorsqu’un vrai état de licence/droits existe.
+
+Le **pool global reste 1 557 / 4 853** car PARTIEL reste dans le pool. Sur les quatre owners AM ciblés, il reste **12 slots `nullptr` physiques**, dont **11 pertinents HOS23** après exclusion de `SelectApplicationLicense`. Aucun build natif PS5 ni validation console revendiqués.
+

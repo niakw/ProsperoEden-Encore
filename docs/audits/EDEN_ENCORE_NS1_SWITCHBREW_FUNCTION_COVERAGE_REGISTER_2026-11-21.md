@@ -2760,3 +2760,10 @@ Vendor `4ee2d58ce739af8e91d78794d6859b4662f8cb86` : cmd1 `StartMonitoring` conso
 Vendor `301c0bda4d9e5d81320361ea5ca24ab5a8cffcd2` : `ILibraryAppletAccessor::GetIndirectLayerConsumerHandle` (cmd160) ne renvoie plus `Success + 0xDEADBEEF`. Encore n'a actuellement aucun backend VI indirect-layer complet : les créations/destructions/endpoints VI correspondants restent absents et `GetIndirectLayerImageMap` ne produit pas d'image. Le handler initialise donc la sortie à zéro puis échoue explicitement par `ResultUnknown`, au lieu de publier un handle impossible à consommer. Ryujinx montre qu'une implémentation complète exige un registre de handles lié à l'applet ; ce registre n'est pas fabriqué tant que le backend VI n'existe pas. **1 STUB → D.**
 
 **Pool restant = 1 539** : 1 181 NULL + 8 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — HID : UniquePad raccordé aux contrôleurs réellement connectés
+
+Vendor `aa6c39c16c8229d322869a70e7be7a71e1237d5b` : `IHidSystemServer::GetUniquePadIds` (cmd703) ne renvoie plus systématiquement zéro. Les IDs sont stables par slot émulé, **P1–P8 = 1–8, Handheld = 9**, et le pseudo-slot `Other` est exclu. Un pad n'est publié que si son `EmulatedController` est connecté et possède un style Npad actif ; le nombre retourné est limité à la capacité réelle du buffer invité. `GetUniquePadsFromNpad` (cmd321) est corrigé en parallèle pour exposer la même topologie et renvoyer le **compte u64** exigé par l'ABI NS1 23.0.1, au lieu d'un u32. Le dump NS1 23.0.1 confirme cmd321 = entrée 0x4 + buffer type 10 + sortie 0x8 et cmd703 = buffer type 10 + sortie 0x8. Le modèle d'IDs par slot connecté recoupe Ryujinx/Nextendo. Aucun numéro matériel ou série fictif n'est inventé. Manifeste actif : SHA-256 `ae35541b5666f8c5c75efcccf2c688002366d182b0101f5e9e703eef122ddb78`, 43 664 octets. **1 STUB → IMPL-SRC** ; la correction cmd321 est une correction ABI/runtime hors delta du pool canonique.
+
+**Pool restant = 1 538** : 1 181 NULL + 7 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

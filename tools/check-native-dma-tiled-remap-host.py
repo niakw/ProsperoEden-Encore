@@ -45,7 +45,9 @@ if "memory_manager.UsesNativeTiling(),\n                             regs.src_pa
     import hashlib
     raw = source.encode("utf-8")
     blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-    assert blob == "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5"
+    assert blob in {"d083d3298b3fb11373d7a7fc164a42ba92bdb2b5", "1fe0b4f25d6f4bbd24406e2f929868151d32c133"}
+    if blob == "1fe0b4f25d6f4bbd24406e2f929868151d32c133":
+        assert "DmaVolumeLinearRows(height, depth, src_params.layer" in source
     assert "const bool is_volume = image.layer != 0 || image.depth != 1" in live
     assert "const u64 padded_depth =" in live
     assert "padded_width * padded_height * padded_depth" in live

@@ -3070,3 +3070,9 @@ Vendor `001fea6ade91e82ec360e5bb2197f130680d6d6a` : `IApplicationAccessor::GetAp
 
 Les nouveaux overlays `application_accessor.{cpp,h}` ont leurs empreintes active/upstream recalculées et revérifiées contre le manifeste. **1 NULL → IMPL-SRC. Pool restant = 1 537 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM CradleFirmwareUpdater : contrats HOS23 indisponibles rejetés explicitement
+
+Vendor `a06bccfd645add1c7d06063f5abfa8e1ba525c04` : le dump Applet_Manager 23.0.1 montre que les anciennes étiquettes Eden des cmd4/cmd5 ne correspondent plus au contrat HOS23. Cmd4 est `GetUpdateDeviceStatusChangeEvent` avec **0x10 octets de sortie** ; cmd5 est `GetUpdateProgress2` sans entrée/sortie. Encore cible HOS23 et ne possède aucun firmware/backend de dock Switch sur PS5 : les deux commandes consomment désormais leur ABI réelle puis retournent une erreur AM explicite, sans inventer progression, état ou événement.
+
+Les overlays `cradle_firmware_updater.{cpp,h}` sont épinglés avec empreintes active/upstream revérifiées. **2 NULL → D. Pool restant = 1 535 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

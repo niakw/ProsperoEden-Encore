@@ -827,6 +827,25 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
     if r437_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         raw = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if actual == "5fa75d9b6b7b4f9710a6840182dc0de854e62268":
+            # Reverse exactly the new 16-entry TIC memo using the tested
+            # vendor host receipt. Never weaken the historical F07 oracle.
+            import ast
+            import re
+            witness = (root / "vendor" / "tests" / "ns1_r23_18_tir_host.py").read_text()
+            match = re.search(
+                r'(?s)\n  current=(""".*?""")\n  prior=(""".*?""")\n  assert source.count\(current\)==1',
+                witness,
+            )
+            assert match is not None, "selected TIC memo inverse witness missing"
+            current = ast.literal_eval(match.group(1))
+            predecessor = ast.literal_eval(match.group(2))
+            text = raw.decode("utf-8")
+            assert text.count(current) == 1, "selected TIC memo reverse scope drift"
+            raw = text.replace(current, predecessor, 1).encode("utf-8")
+            actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+            assert actual == "bbb55dc7b1648fa1e6fd730a1b3515f2969221c7", (
+                "selected TIC memo audited predecessor drift", actual)
         if actual == "bbb55dc7b1648fa1e6fd730a1b3515f2969221c7":
             text = raw.decode("utf-8")
             current = "        // An exception may leave readback copies recorded but not yet\n        // completed. Never make their staging allocations reusable until the\n        // scheduler has retired the commands. No extra wait on success.\n        SCOPE_EXIT {\n            if (std::uncaught_exceptions() > uncaught_before_readback && !pending.empty()) {\n                try {\n                    runtime.Finish();\n                } catch (...) {\n                    // A failed drain cannot prove GPU retirement. Leave the\n                    // allocations deferred rather than risk reusing GPU data.\n                    return;\n                }\n            }\n            release_batch();\n        };"

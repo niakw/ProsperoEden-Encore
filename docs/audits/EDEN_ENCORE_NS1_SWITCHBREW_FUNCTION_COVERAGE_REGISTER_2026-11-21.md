@@ -3020,3 +3020,9 @@ Vendor `43ccd9f0ad4d9563ed7a2cd9a4d36a29322ee48c` : `SetGpuTimeSliceBoostDueToAp
 
 **Pool restant = 1 546 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletSelfAccessor : MovieTrimmer indisponible rejeté explicitement
+
+Vendor `1bf7529e72295266f92beb180ae602ec9a954db4` : `CreateGameMovieTrimmer` (cmd100) n'est plus un slot NULL. Le contrat HOS23 réel est consommé (`u64` taille + copy-handle TransferMemory), puis Encore retourne une erreur AM explicite. Ce choix est causal : SwitchBrew documente que cmd100 est un wrapper de GRC `OpenGameMovieTrimmer`, et le runtime actif Encore conserve précisément `grc:c` cmd2 `OpenGameMovieTrimmer` à NULL, sans `IGameMovieTrimmer` ni encodeur/trimmer exposable. Aucun objet factice n'est créé.
+
+**1 NULL → D. Pool restant = 1 545 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

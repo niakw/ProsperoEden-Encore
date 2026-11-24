@@ -264,6 +264,122 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
           "icache=on service_wait=on sm_shutdown=on dummy_wait=quarantined")
 
 
+
+# The immutable Eden archive predates the reviewed AM lifetime fixes.
+# These eight full, paired sources are already maintained in the vendor
+# snapshot; native preparation must select those exact bytes, not stale
+# archive headers or a different layout in another translation unit.
+AM_SOURCE_ROOT = Path("src/core/hle/service/am")
+AM_SOURCE_BLOBS = {
+    "applet.h": ("571fa65219ca27e56c27abc21ad2e0f4aef5d299", "a8309188928c796d439cd828b756e481f3f6fa2c"),
+    "applet_manager.cpp": ("05bcf6cc05810f46dece33292b8f9411ca026dd9", "f16d7c2585595d91e89ff34f3223e0b8fe905220"),
+    "applet_manager.h": ("2b0714adf74a6ce70fe1485e55c2c2ffd51591ef", "9724a70f172cbb48130f5c1bfa8703cac119a3cb"),
+    "event_observer.cpp": ("520000b64f224c1ca0de4e23910e94b84e524929", "4a132abde4b6e70407b3267ea2298e8a6f0ce239"),
+    "event_observer.h": ("c66eb711c8c898241cabc1e0b401c9a272948ddd", "2213d4bac622dc1476a4f1821e2e4fdfe6096acd"),
+    "process_holder.cpp": ("21ef5bf838ea6661d7eb3cf1ce0019cfb21a8201", "deb72de87cbb46c158a88e84eb2ef5c692079dd7"),
+    "process_holder.h": ("3a9b81dfb4d98087bbd06884a7c2097afb4d95b1", "a2df53cbd7c25ed43cdf9cd97f453e65816c7202"),
+    "window_system.h": ("824ae14a1d4bde11aad7e4151059ef5577d011d8", "d29e37adff7b62e790b26c4b5eba0d9ac667ad92"),
+}
+
+
+def stage_selected_am_sources(destination: Path, *, check: bool,
+                              repair_owned_cache: bool = False) -> int:
+    if (destination / "GIT-COMMIT").read_text().strip() != PIN:
+        raise RuntimeError("Wrong pinned AM source revision")
+    scratch = destination.parent
+    owner = scratch / "owner"
+    owned = (repair_owned_cache and not destination.is_symlink() and
+             destination.name == "source" and not scratch.is_symlink() and
+             scratch.name.startswith("ps5-eden-headless.") and
+             owner.is_file() and not owner.is_symlink() and
+             owner.read_text().strip() == str(ROOT.resolve()))
+    pending = []
+    for name, (previous, expected) in AM_SOURCE_BLOBS.items():
+        relative = AM_SOURCE_ROOT / name
+        maintained = ORIGINAL / relative
+        target = destination / relative
+        if (not target.is_file() or target.is_symlink() or
+                not target.parent.resolve().is_relative_to(destination.resolve())):
+            raise RuntimeError(f"Missing or unsafe staged AM source: {relative}")
+        data = maintained.read_bytes()
+        if git_blob_sha1(data) != expected:
+            raise RuntimeError(f"Unreviewed maintained AM source drift: {relative}")
+        current = target.read_bytes()
+        if current == data:
+            continue
+        if check:
+            raise RuntimeError(f"Staged AM source mismatch: {relative}")
+        # Exact reviewed predecessor is safe to replace anywhere. An older
+        # archive/cache version can ONLY be replaced in our owned scratch,
+        # after retaining its original bytes. Never compile unknown bytes.
+        if git_blob_sha1(current) != previous and not owned:
+            raise RuntimeError(f"Refusing unknown staged AM source: {relative}")
+        pending.append((relative, target, current, data))
+
+    # Validate the whole ABI family before writing any member.
+    for relative, target, current, data in pending:
+        if target.read_bytes() != current:
+            raise RuntimeError(f"Concurrent AM cache modification: {relative}")
+        if owned:
+            backup_root = scratch / ".eden-stale-am-backup"
+            if backup_root.is_symlink():
+                raise RuntimeError("Unsafe AM backup directory")
+            backup_root.mkdir(exist_ok=True)
+            backup = backup_root / (relative.name + "." + sha(current))
+            if backup.is_symlink():
+                raise RuntimeError("Unsafe AM backup file")
+            if not backup.exists():
+                with tempfile.NamedTemporaryFile(dir=backup_root, delete=False) as out:
+                    saved = Path(out.name)
+                    out.write(current)
+                try:
+                    saved.replace(backup)
+                finally:
+                    saved.unlink(missing_ok=True)
+            if backup.read_bytes() != current:
+                raise RuntimeError(f"AM backup mismatch: {relative}")
+        with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as out:
+            staged = Path(out.name)
+            out.write(data)
+        try:
+            staged.replace(target)
+        finally:
+            staged.unlink(missing_ok=True)
+    print(f"EDEN_ACTIVE_AM_SOURCES files={len(AM_SOURCE_BLOBS)} changed={len(pending)} check={check}")
+    return len(pending)
+
+
+def check_am_materializer() -> None:
+    with tempfile.TemporaryDirectory(prefix="ps5-eden-headless.am-test-") as temp:
+        scratch = Path(temp)
+        destination = scratch / "source"
+        destination.mkdir()
+        (scratch / "owner").write_text(str(ROOT.resolve()) + "\n")
+        (destination / "GIT-COMMIT").write_text(PIN + "\n")
+        stale = b"disposable archive-era AM fixture\n"
+        for name in AM_SOURCE_BLOBS:
+            target = destination / AM_SOURCE_ROOT / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(stale + name.encode())
+        # Unowned/unknown source must fail before any replacement.
+        try:
+            stage_selected_am_sources(destination, check=False)
+        except RuntimeError as error:
+            assert "Refusing unknown staged AM source" in str(error)
+        else:
+            raise AssertionError("Unknown AM source was accepted")
+        assert all((destination / AM_SOURCE_ROOT / name).read_bytes() ==
+                   stale + name.encode() for name in AM_SOURCE_BLOBS)
+        assert stage_selected_am_sources(destination, check=False,
+                                         repair_owned_cache=True) == len(AM_SOURCE_BLOBS)
+        assert stage_selected_am_sources(destination, check=True) == 0
+        assert stage_selected_am_sources(destination, check=False) == 0
+        for name in AM_SOURCE_BLOBS:
+            old = stale + name.encode()
+            assert (scratch / ".eden-stale-am-backup" /
+                    (name + "." + sha(old))).read_bytes() == old
+        print("EDEN_ACTIVE_AM_STAGE_REPLAY_PASS files=8 owned_cache=1 unknown_rejected=1 idempotent=1")
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("destination", nargs="?", type=Path)
@@ -274,7 +390,10 @@ def main() -> None:
     if args.destination:
         stage_source(args.destination, expected, check=args.check,
                      repair_owned_cache=args.repair_owned_cache)
+        stage_selected_am_sources(args.destination, check=args.check,
+                                  repair_owned_cache=args.repair_owned_cache)
     else:
+        check_am_materializer()
         # Exercise the production materializer as well as the historical
         # patch replay. Use only disposable exact pinned inputs, no SDK/build.
         with tempfile.TemporaryDirectory(prefix="encore-active-core-stage-") as temp:

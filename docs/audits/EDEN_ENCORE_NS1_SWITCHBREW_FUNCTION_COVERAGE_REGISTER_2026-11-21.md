@@ -3356,3 +3356,11 @@ Vendor `f9856b407eebd3533ea4687089849887c769240b` : `notif.cpp/.h` deviennent de
 Le changement ne prétend pas persister les alarmes entre redémarrages et ne modifie pas le scheduler système encore absent. Il complète strictement le CRUD mémoire déjà exposé par `notif:a` et `notif:s`.
 
 Croisement 4 853 : les commandes 500/510/530 des deux services passent **6 PARTIEL → IMPL-SRC**. **Pool restant = 734 / 4 853.** Aucun build PS5 ni validation console revendiqués.
+
+### 2026-11-25 — GRC + OLSC : film Switch et transfert cloud indisponibles
+
+Vendor `7ea2306eee8d69671336252a2018697b98f46112` : les owners natifs `grc/grc.cpp` et `olsc/transfer_task_list_controller.cpp/.h` restent sélectionnés par `eden-backports/src/core/CMakeLists.txt`. **8 slots physiques GRC** (enregistrement, trimmer, movie-maker, service debug) et **24 slots physiques OLSC** (transfert de tâches Horizon Ocean/cloud et réparation) passent de `nullptr` à un rejet IPC explicite `ResultUnknown` quand aucun backend réel n'est disponible. Cela ne modifie ni VI/render/presentation ni les handlers OLSC existants d'événements, stopper local et compteurs.
+
+La vérification de provenance moteur reconstruit les **trois fichiers prédécesseurs octet pour octet**, puis compare SHA-256, tailles et manifeste shipping, sans toucher aux sources Eden épinglées. Ce raccordement ne réalise ni capture vidéo ni sauvegarde distante : il empêche une réponse de succès factice.
+
+**Croisement catalogue 4 853 : seulement 2 lignes GRC `grc:c` (cmd1/2) sont physiquement présentes et encore classées NULL dans l'index ; elles passent NULL → D.** Les 6 autres slots GRC et 24 slots OLSC ne sont pas comptés arbitrairement comme 30 lignes supplémentaires du catalogue historique. **Pool restant = 732 / 4 853** sous réserve de réconciliation ultérieure des identités de l'index, dont l'écart physique historique subsiste. **Aucun build PS5 ni validation console revendiqués.**

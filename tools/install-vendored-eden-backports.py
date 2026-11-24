@@ -1045,6 +1045,77 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_NOTIF_ALARM_PARAMETER_REPLAY_PASS',
               'shared_crud=notif_a+notif_s', 'parameter_bytes=preserved')
 
+
+        # GRC and OLSC: the PS5 build must not advertise Switch hardware
+        # movie capture or Nintendo online-save transfers that have no backend.
+        # Reverse precisely the reviewed owner edits to the frozen patch replay.
+        secondary = {
+            'src/core/hle/service/grc/grc.cpp': (
+                '0cfefe15f41358b3b97534237c49a9b41399f2d1f7162872accfa071572e59e7',
+                1733,
+                '2250f140013ac91886c68af289685244ab6157ca86967d67f123bc4685971f39',
+                2493),
+            'src/core/hle/service/olsc/transfer_task_list_controller.cpp': (
+                'c391738f09c3d46478de2e86b7b52818d6658493195c79c91319d1c36e7778e6',
+                4631,
+                '8cc97fdba504fa7de0d8ca893239b5674217bd81a134bef27436f3ec3483b57d',
+                6179),
+            'src/core/hle/service/olsc/transfer_task_list_controller.h': (
+                '686ae36cbe673f1038b936882b822b342ab7cc674d40fc290f9325afd609e594',
+                1252,
+                '359e9311b0d99b74353edac18b61ffab0c6182826edba8108d3390ff37549a28',
+                1317),
+        }
+        for rel, (before_sha, before_len, after_sha, after_len) in secondary.items():
+            assert rel in observed and rel in spec['entries'], ('Missing replay owner', rel)
+            before = (stage / rel).read_bytes()
+            after = (ACTIVE / rel).read_bytes()
+            assert len(before) == before_len and sha(before) == before_sha, ('GRC/OLSC prior drift', rel)
+            assert len(after) == after_len and sha(after) == after_sha, ('GRC/OLSC owner drift', rel)
+            assert spec['entries'][rel]['active'] == after_sha
+            assert spec['entries'][rel]['bytes'] == after_len
+            reconstructed = after.decode('utf-8')
+            if rel.endswith('/grc/grc.cpp'):
+                for owner, count in (('GRC', 5), ('GRC_D', 3)):
+                    pointer = '&' + owner + '::RejectUnavailableGameRecording'
+                    assert reconstructed.count(pointer) == count
+                    reconstructed = reconstructed.replace(pointer, 'nullptr')
+                method = (
+                    '\nprivate:\n'
+                    '    void RejectUnavailableGameRecording(HLERequestContext& ctx) {\n'
+                    '        // No Horizon recording or trimming backend; never report a fabricated movie.\n'
+                    '        IPC::ResponseBuilder rb{ctx, 2};\n'
+                    '        rb.Push(ResultUnknown);\n'
+                    '    }\n'
+                )
+                assert reconstructed.count(method) == 2
+                reconstructed = reconstructed.replace(method, '\n')
+                assert reconstructed.count('#include "core/hle/service/ipc_helpers.h"\n') == 1
+                reconstructed = reconstructed.replace('#include "core/hle/service/ipc_helpers.h"\n', '', 1)
+            elif rel.endswith('.cpp'):
+                pointer = '&ITransferTaskListController::RejectUnavailableCloudTransfer'
+                assert reconstructed.count(pointer) == 24
+                reconstructed = reconstructed.replace(pointer, 'nullptr')
+                method = (
+                    '\n\nvoid ITransferTaskListController::RejectUnavailableCloudTransfer(HLERequestContext& ctx) {\n'
+                    '    // No Nintendo cloud-backup transfer backend or task scheduler on PS5.\n'
+                    '    IPC::ResponseBuilder rb{ctx, 2};\n'
+                    '    rb.Push(ResultUnknown);\n'
+                    '}'
+                )
+                assert reconstructed.count(method) == 1
+                reconstructed = reconstructed.replace(method, '', 1)
+                assert reconstructed.count('#include "core/hle/service/ipc_helpers.h"\n') == 1
+                reconstructed = reconstructed.replace('#include "core/hle/service/ipc_helpers.h"\n', '', 1)
+            else:
+                method = '    void RejectUnavailableCloudTransfer(HLERequestContext& ctx);\n'
+                assert reconstructed.count(method) == 1
+                reconstructed = reconstructed.replace(method, '', 1)
+            assert reconstructed.encode('utf-8') == before, ('GRC/OLSC reverse mismatch', rel)
+            observed[rel] = spec['entries'][rel]
+        print('NS1_GRC_OLSC_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'physical_nulls=32', 'reconstructed_owners=3', 'native_handlers_preserved')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

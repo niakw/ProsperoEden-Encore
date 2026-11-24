@@ -24,6 +24,11 @@ pdep=cut(decoder,"template <u32 mask>\nconstexpr u32 pdep(",
 gob=cut(decoder,"template <bool TO_LINEAR, u32 BYTES_PER_PIXEL>\nvoid SwizzleSubrectImpl(",
         "template <bool TO_LINEAR>\nvoid Swizzle(")
 api=cut(decoder,"void SwizzleSubrect(","std::size_t CalculateSize(")
+# This historical GOB implementation models NS1 only; real NS2 bytes
+# and the native tiling switch are independently tested by vendor R3.
+assert api.count("u32 pitch_linear) {") == 2
+api=api.replace("u32 pitch_linear) {",
+                "u32 pitch_linear, bool native_tiling = false) {\n    assert(!native_tiling);")
 assert "i * 4" in method
 assert all(s in live for s in ["UnswizzleSubrect(", "SwizzleSubrect(",
                               "needs_destination", "MAX_BYTES", "IsFullyMappedRange",
@@ -67,6 +72,7 @@ struct Parameters{
 };
 }
 struct MemoryManager{
+ bool UsesNativeTiling() const noexcept{return false;}
  std::array<u8,65536> mem{};
  u32 writes{};
  bool IsFullyMappedRange(GPUVAddr a,size_t n)const{return a<=mem.size()&&n<=mem.size()-a;}

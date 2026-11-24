@@ -19,7 +19,12 @@ def selected_sha(value):
     import hashlib
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-integrated_dma = selected_sha(native) in {"0c186d79194135a5d0b300c3a8a6fb0aa503810b", "df2ced96bc384af23e0529f8ab72eba8000a0995"}
+integrated_dma = selected_sha(native) in {"0c186d79194135a5d0b300c3a8a6fb0aa503810b", "df2ced96bc384af23e0529f8ab72eba8000a0995", "cb40e4c0de66f8f9d5f6126e6cf898fabacd8805"}
+if selected_sha(native) == "cb40e4c0de66f8f9d5f6126e6cf898fabacd8805":
+    import re
+    calls = re.findall(r"(?m)^\s*(?:Unswizzle|Swizzle)Subrect\([\s\S]*?\);", native)
+    assert len(calls) == 9 and all(c.count("memory_manager.UsesNativeTiling()") == 1 for c in calls)
+    assert "const u64 aligned_depth =" in native and "dst_size != dst_size_wide" in native
 if selected_sha(native) == "df2ced96bc384af23e0529f8ab72eba8000a0995":
     assert "const u64 aligned_depth =" in native
     assert "const u64 source_rows =" in native

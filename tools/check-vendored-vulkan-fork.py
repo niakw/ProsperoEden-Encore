@@ -190,7 +190,7 @@ with tempfile.TemporaryDirectory(prefix='eden-vulkan-fork-compare-') as d:
             # Prove the two corrected call-site deltas on an audit copy,
             # then reuse the pre-integration readback and Vulkan receipts.
             source=reverse_attribute_index_batch_successor(source)
-        source=reverse_collected_batch_preflight_successor(source)
+            source=reverse_collected_batch_preflight_successor(source)
             source=reverse_collected_batch_lock_successor(source)
             if _ns1_read_blob(source)=="e5baa7f438d8caf11327989087db38ed1ca053a4":
                 assert source.count(strict_cpp_delta)==1

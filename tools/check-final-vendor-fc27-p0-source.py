@@ -2172,7 +2172,7 @@ if actual_vendor_pin in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("libounce VM/channel successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
-if actual_vendor_pin == "86e4fdd58b6e1c5a281026766bbfda006f9b23a5":
+if actual_vendor_pin == "1918d6f0730c51bfe47586c3908600163cf27578":
     # Exact NS2 GPU lifecycle/VA successor. The downstream FC27/P0 source
     # receipts remain authoritative; this only qualifies the selected tree.
     assert subprocess.check_output(

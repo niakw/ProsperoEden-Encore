@@ -125,7 +125,7 @@ if selected in {"973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f
         "6ecf485d48b3c29c5e058de99a09c5c495cd537d" if selected == "6b8fd06606f12be187f73e8809e56a49864794f9" else
         "1d991da378f711312faf34125f1d4cfe1378bcaa")
     expected.add(selected)
-if selected == "86e4fdd58b6e1c5a281026766bbfda006f9b23a5":
+if selected == "1918d6f0730c51bfe47586c3908600163cf27578":
     # NS2 GPU lifecycle/VA successors only; admit the exact reviewed tree,
     # then retain all immutable FC27 shader/CMake blob checks below.
     assert subprocess.check_output(

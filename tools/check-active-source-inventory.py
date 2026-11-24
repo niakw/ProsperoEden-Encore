@@ -43,7 +43,7 @@ stabilization_trees = {
     "101eae5edb76fefc40b039009eb35bbaaae99386": "8e42496a1f01a94cc6b17f57eee6ebdff2698ff6",
     "3abd88bc1a3c334f53f345998b72e9cf8ae87abf": "b82ce9bb3b543bf85d535bdfdfb6d725fe88be56",
     "cd5ce4dabef1d32e0441d22dccdee358ebf23287": "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89",
-    "7e3565e51c6ee048a040796b63a144a2e9354c9d": "354740b844dbe417c05dd8ebac62addf7880537d",
+    "a8f327c972bd2f84f6e6f9432c96c4a948963073": "747569d1bafefc23fb235e1929bda0f5c0d48de3",
 }
 
 # The strict native completion ABI adds only these reviewed blocks. Reconstruct
@@ -2212,7 +2212,7 @@ merged_ns1_ns2_owner_blobs = {
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/floating_point_multiply.cpp": "315c3c7c821016f23af7d2c6ffc8d7ca3a4ebe09",
     "eden-shader/src/shader_recompiler/frontend/maxwell/translate/impl/pixel_load.cpp": "e112f14eed85a6ac974a1d81a92d6952dfe57df3",
 }
-if shipping_vendor in {"166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "7e3565e51c6ee048a040796b63a144a2e9354c9d"}:
+if shipping_vendor in {"166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073"}:
     merged_ns1_ns2_owner_blobs["eden-core/overrides/video_core/host1x/syncpoint_manager.h"] = "a62b9a9e8019c2df085fc9d393fcbd4207cd78d7"
 merged_owner_present = set(merged_ns1_ns2_owner_blobs) & set(physical_all)
 assert not (merged_owner_present & set(research_paths))
@@ -2271,7 +2271,7 @@ current_vendor_post_f07_owner_blobs = {
     "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
 }
-if shipping_vendor in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "7e3565e51c6ee048a040796b63a144a2e9354c9d"}:
+if shipping_vendor in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e120a86a6edcd32a975ffe19b45ffdd42", "3522d8578fbcd7b46d2a439d5d718dfb570beb7b", "042204fde8e5b74aa5048c6213a8af4450d26fe5", "294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb", "7e137d362f9679125726ef4876355a09d788795e", "973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e", "4c51642038c4a3cc04c0f8f0b8267b17aafd4045", "881f6fb23c818ecfc387d2b134e1cd7328fc5995", "d8155325107dbbb1f8ef44f75553595fe4c8ec8c", "101eae5edb76fefc40b039009eb35bbaaae99386", "3abd88bc1a3c334f53f345998b72e9cf8ae87abf", "cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073"}:
     current_vendor_post_f07_owner_blobs["ns2-runtime/nx/core/loader/nx.cpp"] = "5d999ca68668133ea3f151669ecd6ac6a17ae1c5"
 # Post-F07 registry includes old SM while the latest exact successor
 # changes ONLY SM handler retirement in that owner. Preserve exact pin and

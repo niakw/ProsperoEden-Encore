@@ -2265,12 +2265,12 @@ print("FC27_FRAME_PACING_F07_ISOLATION_PASS",
 # Explicit native failure-aware synchronization owners, not a rewrite of the historical F07 receipt.
 post_f07_gpu_wait_owners = {
     "headless/vulkan_master_semaphore_ps5.cpp": "bf6016b68299fb0f494e725aacca2deae5c6a309",
-    "headless/fence_manager_ps5.h": "e41f90553fd934629b608ab524c0188270ac3e5a",
+    "headless/fence_manager_ps5.h": "43472c89e5bb12b7156e031a3abe85d6aefda451",
     "headless/vk_fence_manager_ps5.h": "022cfc99c30a54e95095313289bdb7006ed014df",
     "headless/vulkan_scheduler_ps5.cpp": "6e94c5af099773a196f36fd91f3907a2e17f1e5b",
     "headless/vk_scheduler_ps5.h": "e920772e5f4127b14f3a3ffb1c0c2d1880c516b8",
     "headless/vulkan_present_manager_ps5.cpp": "32bee8ceea4d05de1be5a4acc89e594f72805e43",
-    "headless/vk_rasterizer_shutdown_ps5.h": "e0d1657f9051736a5595b97dfae4843cbf886130",
+    "headless/vk_rasterizer_shutdown_ps5.h": "07e18cab8a8df1c862903d9e99a521797dd7cf3e",
     "headless/vk_buffer_cache_shutdown_ps5.cpp": "141826498b2b89bb5273468a8a3c9dde9c3b543f",
 }
 for path, blob in post_f07_gpu_wait_owners.items():

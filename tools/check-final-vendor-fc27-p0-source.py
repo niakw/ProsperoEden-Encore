@@ -2206,28 +2206,29 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin == "412dadea7f94eee9ebddfcff0931a3372f9feec5":
-    # Queued-GPFIFO AS revocation + asynchronous H:17 successor. Seal the
+if actual_vendor_pin == "d13311b37af9fa50e6d913fe7b9dcb69f14f150b":
+    # Queued-GPFIFO AS revocation + complete native Puller/Ampere H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "4ea65cbcec6886f75d8041028a907e472b6994be"
+    ).strip() == "230e356e082d66a3b09f16d3bc0b7f8154547541"
     for relative, expected_blob in {
-        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "8dbace44172c5145bfed3c073d6ee00205ee81b8",
-        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "7156db4f0807fd9ba7ae498ecdddd07273080bd1",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "5cf42158c7cc4462bc9a12a18b482cbd6de20bf8",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4cb9f79deeb56ab7397c6209939c94dffbb7575b",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "78497f6f85386d75e9a8b75f80798880cc5f8df7",
         "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "8826183bd03a090e797f41e79d5b27a7603ea207",
         "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "55db762d0322bd2621adf8e72aafcf30751d43e0",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h": "e43cc46223fd95fe9ad0f63e8311539c68c86807",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5bd4ede78cd44b4a2ad7c98ea8c5b90aec20c302",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "4106f73b369e9a667854f48c387dc03186dd1145",
-        "tests/ns2_gpu_identity_mapping_source.py": "efaa74aed1fd4502e7a7e996221bd83b5616720c",
+        "tests/ns2_gpu_identity_mapping_source.py": "c827d12c93e4e373dd9587e180436a15fe684ad8",
         "tests/ns2_native_tiling_activation_source.py": "7946e58a7e499fa8a63e718da77af6094352699c",
     }.items():
         raw=(V/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
-        assert actual == expected_blob, ("queued GPFIFO/H17 successor drift", relative, actual)
+        assert actual == expected_blob, ("queued GPFIFO/Puller H17 successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)

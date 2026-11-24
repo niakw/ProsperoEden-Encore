@@ -3156,3 +3156,11 @@ Croisement avec le catalogue 4 853 : **26 lignes NULL** sont réellement dans le
 
 **Pool restant = 1 406 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — ACC : Nintendo Account / OAuth / device-auth rejetés en lot
+
+Vendor `993a5e9ae75aa37f92527cc99d2d26bdcae54dfb` : **191 slots `nullptr` physiques** sont fermés dans 14 sous-interfaces exclusivement réseau/authentification Nintendo : managers BAAS système/admin, floating/guest registration, authorization/OAuth/linkage/user-registration, network-service-license async, `dauth:0`/`dauth:o`, `acc:aa` et leurs résultats async. Chaque commande reçoit une erreur explicite lorsque le backend Nintendo Account, OAuth, licence réseau ou device-auth n'existe pas.
+
+Les surfaces locales critiques `GetUserCount`, `ListAllUsers`, `GetProfile`, sélection d'utilisateur, thumbnails et profil local restent intactes. Croisement conservateur avec le catalogue 4 853 : **80 lignes NULL** sortent du pool ; **27 lignes** correspondantes étaient déjà HORS-VERSION et **3 AMBIGU** restent volontairement dans le pool.
+
+**Pool restant = 1 326 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

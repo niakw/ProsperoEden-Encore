@@ -62,10 +62,10 @@ required_puller = (
 
 required_cpp = (
     "bool nvhost_gpu::UsesNativeAbi(DeviceFD fd) const {",
-    "const auto it = sessions.find(fd);",
-    "if (it == sessions.end()) return false;",
-    "const auto* session = core.GetSession(it->second);",
-    "NativeGpuProcessRegistry::Instance().Contains(session->process);",
+    "return sessions.contains(fd) && native_generations.contains(fd);",
+    "bool nvhost_gpu::NativeEpochCurrent(DeviceFD fd) const {",
+    "native_generations.find(fd)",
+    "NativeGpuProcessRegistry::Instance().IsCurrent(",
     "NativeGpuChannelRegistry::Instance().Bind(",
     "if (!opened || opened->process != native_owner)",
     "NativeGpuChannelRegistry::Instance().Unbind(channel_state.get());",
@@ -101,16 +101,29 @@ native_plan_block = submit.split(native_plan_reject, 1)[1].split("system.GPU().I
 assert "return NvResult::BadParameter;" in native_plan_block
 assert submit.index("if (!opened || opened->process != native_owner)") < submit.index(
     "system.GPU().InitChannel(")
-# G10 native preflight must reject an unresolved wait before any GPU
-# channel mutation or syncpoint reservation; the native puller deliberately
-# refuses FENCE_ACTION Acquire until it has a real nonblocking scheduler.
-native_wait_guard = ("if (native && flags.fence_wait.Value() &&\n"
-                     "        !syncpoint_manager.IsFenceSignalled(params.fence)) {")
+# G10 native waits are now descriptor-owned scheduler metadata. Capture an
+# exact syncpoint-generation lease before any channel mutation, attach it to
+# the command list, and let the native scheduler suspend only that channel.
+native_wait_guard = "if (native && flags.fence_wait.Value()) {"
 assert native_wait_guard in submit
-native_wait_block = submit.split(native_wait_guard, 1)[1].split("system.GPU().InitChannel(", 1)[0]
-assert "return NvResult::NotImplemented;" in native_wait_block
+native_wait_block = submit.split(native_wait_guard, 1)[1].split(
+    "system.GPU().InitChannel(", 1)[0]
+for token in (
+    "CaptureNativeSyncpointLease(",
+    "if (!lease)",
+    "return NvResult::BadParameter;",
+    "entries.native_syncpoint_wait.emplace(Tegra::NativeSyncpointWait{",
+    "std::move(lease)",
+    "catch (const std::bad_alloc&)",
+    "return NvResult::InsufficientMemory;",
+):
+    assert token in native_wait_block, token
+assert "IsFenceSignalled(params.fence)" not in native_wait_block
+assert "return NvResult::NotImplemented;" not in native_wait_block
 assert submit.index(native_wait_guard) < submit.index("system.GPU().InitChannel(")
 assert submit.index(native_wait_guard) < submit.index("IncrementSyncpointMaxExt(")
+# FENCE_ACTION Acquire remains unsupported in the puller because native
+# GPFIFO waits no longer synthesize that legacy method packet.
 assert "Native GPFIFO FENCE_ACTION acquire unsupported" in native_puller
 assert submit.index("system.GPU().InitChannel(") < submit.index(
     "NativeGpuChannelRegistry::Instance().Bind(")
@@ -123,6 +136,7 @@ required_header = (
     "NvResult AllocateObjectContext(IoctlAllocObjCtx& params, DeviceFD fd);",
     "NvResult SubmitGPFIFOImpl(IoctlSubmitGpfifo& params, Tegra::CommandList&& entries, DeviceFD fd);",
     "bool UsesNativeAbi(DeviceFD fd) const;",
+    "bool NativeEpochCurrent(DeviceFD fd) const;",
 )
 # Native H:0x1b kickoff pointer lists must be mapped in their exact FD
 # process before any command reads or GPU queue submission.

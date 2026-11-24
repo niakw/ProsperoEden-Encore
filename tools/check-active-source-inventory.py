@@ -834,7 +834,7 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
             import re
             witness = (root / "vendor" / "tests" / "ns1_r23_18_tir_host.py").read_text()
             match = re.search(
-                r'(?s)\n  current=(""".*?""")\n  prior=(""".*?""")\n  assert source.count\(current\)==1',
+                r'(?m)^  current=("(?:\\.|[^"\\])*")\n  prior=("(?:\\.|[^"\\])*")\n  assert source\.count\(current\)==1',
                 witness,
             )
             assert match is not None, "selected TIC memo inverse witness missing"

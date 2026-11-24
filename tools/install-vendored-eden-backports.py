@@ -448,6 +448,42 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_FACTORY_SETTINGS_EXACT_POST_BACKPORT_REPLAY_PASS',
               'successors=2', 'rejected_slots=20', 'pinned_sources=immutable')
 
+        # set:fd is development-mode-only on Horizon; Encore shipping has no
+        # firmware-debug settings backend. Admit only these exact maintained
+        # fail-closed owners while preserving the pinned Eden source bytes.
+        firmware_debug_overlays={
+            'src/core/hle/service/set/firmware_debug_settings_server.cpp': {
+                'before_sha256':'ec943c54def8e62c30e89e0035ad95e94979d9982182ada6c49db3cf9646b02b',
+                'before_bytes':1197,
+                'after_sha256':'54a8e47b2b6df8ee4a1872ee0ecbac35bea95d7ab97a43a9cbb0bcd4f560f1be',
+                'after_bytes':2010,
+            },
+            'src/core/hle/service/set/firmware_debug_settings_server.h': {
+                'before_sha256':'48a11c6e2147f97b1d7b7803af4b20862554ecb45312fb641de7f0738bdee1f2',
+                'before_bytes':474,
+                'after_sha256':'8149664a2a199dbb1710af15db64c93b6f8fa312ce38f1633c7539ff26b2e70a',
+                'after_bytes':548,
+            },
+        }
+        for rel,entry in firmware_debug_overlays.items():
+            assert rel not in observed, ('SET:FD unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing SET:FD shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'SET:FD pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed SET:FD maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        firmware_debug_cpp=(ACTIVE/'src/core/hle/service/set/firmware_debug_settings_server.cpp').read_text()
+        assert firmware_debug_cpp.count('&IFirmwareDebugSettingsServer::RejectUnavailableDebugSetting')==11
+        assert firmware_debug_cpp.count('void IFirmwareDebugSettingsServer::RejectUnavailableDebugSetting(')==1
+        print('NS1_FIRMWARE_DEBUG_SETTINGS_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=2', 'rejected_slots=11', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

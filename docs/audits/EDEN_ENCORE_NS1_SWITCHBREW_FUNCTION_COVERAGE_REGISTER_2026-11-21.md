@@ -3236,3 +3236,9 @@ Vendor `9b2333d972bca1fd03814d58fcc7ae9f4834820e` : `factory_settings_server.cpp
 Les **20 slots `nullptr` physiques** restants de `IFactorySettingsServer` sont dispatchés vers `RejectUnsupportedFactoryCommand`, qui renvoie une erreur explicite. Les deux setters factory 10/11 et les getters 14–21/24–31 de certificats/clefs ECI, eTicket, SSL, GameCard et amiibo ne fabriquent donc aucune donnée et n'exposent aucun layout non qualifié. Les deux slots physiques 42/43 sont fermés par la même politique mais ne constituent pas des lignes distinctes dans le miroir historique 4 853.
 
 Le replay moteur vérifie les hashes SHA-256 et tailles exactes avant/après des deux owners, exige **20** raccords au handler de rejet et garde le pin Eden immuable. Croisement catalogue : **18 NULL → D. Pool restant = 989 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — SET:FD : surface firmware-debug fail-closed
+
+Vendor `fb8384b5673beeeed268ee38fa021421ac51061f` : les **11 slots `nullptr` physiques** de `IFirmwareDebugSettingsServer` sont désormais dans un owner `eden-backports` shipping et dispatchés vers `RejectUnavailableDebugSetting`. Horizon n'expose `set:fd` qu'en mode développement ; Encore ne simule donc ni Web Inspector, ni hostfs debug, ni listes d'hôtes SSL, ni configuration HTTP auth, ni mutation des réglages firmware debug sur le matériel PS5.
+
+Le replay vérifie les deux blobs CPP/header avant/après et exige exactement 11 raccords au rejet. Croisement du miroir historique 4 853 : **9 NULL → D** (cmd2/3/4/10/11/20/21/22/23). Les cmd24 et 27, ajoutées en HOS20+/21+, sont couvertes physiquement mais ne sont pas des lignes distinctes de l'annexe historique. **Pool restant = 980 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

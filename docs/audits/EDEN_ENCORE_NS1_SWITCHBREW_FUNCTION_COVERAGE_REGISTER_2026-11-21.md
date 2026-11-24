@@ -3102,3 +3102,9 @@ Vendor `72b6186f2d1248a332d580b7727e6161a930ca09` : `RequestApplicationSoftReset
 
 Le handler consomme donc la commande et retourne une erreur explicite sans modifier le processus invité. **1 NULL → D. Pool restant = 1 532 / 4 853.** Dans les overlays AM actifs il reste **5 slots `nullptr` physiques**, dont **4 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM Overlay : contrats HOS23 cmd60/71/75 enregistrés
+
+Vendor `c9e6af612c60b047ed43de57d2465fe18b8df7cf` : le dump Applet_Manager 23.0.1 expose trois contrats Overlay non documentés sémantiquement : cmd60 (**bool u8 → void**), cmd71 (**void → void**) et cmd75 (**void → u64**). Cmd60 était encore un slot NULL ; cmd71 et cmd75 n'étaient même pas enregistrées dans la table active. Les trois commandes sont maintenant dispatchées avec leur ABI exacte et retournent une erreur explicite, sans modifier d'état invité ni prétendre connaître leur effet firmware. Cmd75 initialise la sortie à zéro uniquement par sûreté de sérialisation avant le retour d'erreur.
+
+**Cmd60 : 1 NULL → D. Cmd71/cmd75 : commandes HOS23 absentes de table → rejets explicites hors lignes distinctes du catalogue historique. Pool restant = 1 531 / 4 853.** Il ne reste plus que **3 slots `nullptr` HOS23 pertinents** dans les overlays AM actifs : `GetWakeupCount`, `SetHidInputMagnificationForApplication`, `GetLaunchRequiredTick`. Aucun build natif PS5 ni validation console revendiqués.
+

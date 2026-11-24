@@ -68,6 +68,18 @@ int main(){
     require(N::ValidateNativeKernelChannelSetup(kernelBind) ==
             N::NativeKernelChannelSetupStatus::Unsupported,
             "NVGPU refuses unmapped GPFIFO offset");
+    // Real libounce Syncpt bootstrap: capacity query 1 then configure 21.
+    for (u32 slots : {1u, 16u, P::SyncptAdvertisedSlots}) {
+        const std::array<u32,3> packet{16+21,1,slots};
+        require(P::DecodeSyncptSlotCount(packet)==slots,
+                "Syncpt 21 admits bounded configured slot count");
+    }
+    for (const auto packet : {std::array<u32,3>{16+21,1,0},
+                              std::array<u32,3>{16+21,1,P::SyncptAdvertisedSlots+1},
+                              std::array<u32,3>{16+21,0,1},
+                              std::array<u32,3>{16+22,1,1}}) {
+        require(!P::DecodeSyncptSlotCount(packet), "reject invalid Syncpt slot configuration");
+    }
     // Execute the selected NS2 GSV GraphicsFrame TIPC decoders, not merely
     // source-grep receipts. Unknown policy values must fail closed.
     const std::array<u32, 2> graphicsFrameCreate{16 + 1101, 0};

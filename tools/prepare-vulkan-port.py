@@ -2939,25 +2939,7 @@ def apply_reviewed_delta(relative, old, new, label, *, allow_preapplied=False):
                        f"(before={before}, after={after})")
 
 
-apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
-    "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
-    "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
-    "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
-    "        bool build_in_parallel);\n",
-    "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
-    "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
-    "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
-    "        bool build_in_parallel, bool parallel_translate_stages = false);\n",
-    "FC27 parallel graphics translation API")
-apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
-    "    ShaderPools main_pools;\n",
-    "    ShaderPools main_pools;\n"
-    "#ifdef PS5_NATIVE\n"
-    "    // First-use graphics IR is latency critical and must not wait behind\n"
-    "    // driver-pipeline/prewarm jobs queued on the existing builder pool.\n"
-    "    Common::ThreadWorker shader_translation_workers;\n"
-    "#endif\n",
-    "FC27 dedicated graphics translation workers")
+
 
 # Apply the reviewed runtime delta only after all historical F07 transforms.
 # The first list is stored as exact (newer, predecessor) pairs by the source
@@ -3896,6 +3878,27 @@ apply_reviewed_delta("vk_graphics_pipeline_cost.cpp",
 # so reproduce the complete header before applying its reviewed native delta.
 adapt('src/video_core/renderer_vulkan/vk_pipeline_cache.h',
       'include/video_core/renderer_vulkan/vk_pipeline_cache.h', [])
+
+# The generated header now exists; apply the reviewed first-use translation ABI.
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
+    "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
+    "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
+    "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
+    "        bool build_in_parallel);\n",
+    "    std::unique_ptr<GraphicsPipeline> CreateGraphicsPipeline(\n"
+    "        ShaderPools& pools, const GraphicsPipelineCacheKey& key,\n"
+    "        std::span<Shader::Environment* const> envs, PipelineStatistics* statistics,\n"
+    "        bool build_in_parallel, bool parallel_translate_stages = false);\n",
+    "FC27 parallel graphics translation API")
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
+    "    ShaderPools main_pools;\n",
+    "    ShaderPools main_pools;\n"
+    "#ifdef PS5_NATIVE\n"
+    "    // First-use graphics IR is latency critical and must not wait behind\n"
+    "    // driver-pipeline/prewarm jobs queued on the existing builder pool.\n"
+    "    Common::ThreadWorker shader_translation_workers;\n"
+    "#endif\n",
+    "FC27 dedicated graphics translation workers")
 
 apply_reviewed_delta("include/video_core/renderer_vulkan/vk_pipeline_cache.h",
     "    ::Common::unordered_map<GraphicsPipelineCacheKey, std::unique_ptr<GraphicsPipeline>> graphics_cache;\n\n    ShaderPools main_pools;",

@@ -284,7 +284,7 @@ fallback_fixture=r"""
 using u32=std::uint32_t;
 static unsigned unimplemented{}, software_calls{}, accelerated_calls{};
 #define UNIMPLEMENTED_MSG(...) (++unimplemented)
-struct Surface { u32 depth{1}; };
+struct Surface { u32 depth{1}; u32 layer{}; };
 struct Config {};
 struct Rasterizer {
  bool result{};
@@ -295,7 +295,7 @@ struct Rasterizer {
 struct Blitter {
  void Blit(Surface&,Surface&,Config&) { ++software_calls; }
 };
-struct Regs { Surface dst{}; };
+struct Regs { Surface dst{}; u32 clip_enable{}; };
 struct Test {
  Rasterizer* rasterizer{};
  Blitter* sw_blitter{};

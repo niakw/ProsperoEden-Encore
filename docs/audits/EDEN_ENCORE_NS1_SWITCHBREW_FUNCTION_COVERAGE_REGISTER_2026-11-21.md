@@ -2872,3 +2872,10 @@ Le TU est la base active `sources/eden/src/core/hle/service/am/service/display_c
 Vendor `ab5fa3bd3d8e4e2a90b43379d40760203c7520da` : les commandes 0/2/3 `GetLastForegroundCaptureImage`, `GetLastApplicationCaptureImage` et `GetCallerAppletCaptureImage` ne sont plus des slots `nullptr`. SwitchBrew documente ces trois anciennes commandes Horizon comme stubbées avec retour erreur ; les implémentations Yuzu historiques utilisent `ResultUnknown`. Encore consomme maintenant le buffer type-0x6 puis renvoie explicitement `ResultUnknown`, au lieu de laisser le dispatcher traiter la commande comme inconnue. Leur statut canonique était déjà **D**, donc **aucun changement de compteur** : ce commit aligne le C++ actif sur le classement déjà établi.
 
 Les cmd5/6/7 `*Ex` restent les seuls getters de capture fonctionnels et ne sont volontairement pas réutilisés pour les commandes legacy. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM DisplayController : acquisitions capture legacy fermées pour HOS 23
+
+Vendor `9ff0457f18f3d06771f450a665f75c454dae2f61` : les six commandes d'acquisition legacy 10/12/14/16/17/18 sont maintenant raccordées à un rejet explicite `ResultUnknown`. SwitchBrew documente 10/12/14 comme stubs Horizon. Pour 16/17/18, la TransferMemory RW 0x384000 n'est fournie que sur les anciens sysvers ; sur les firmwares récents, l'appel interne échoue systématiquement. La cible Encore HOS 23 ne doit donc pas recréer ce chemin historique. Les trois commandes 10/12/14 étaient déjà classées **D** ; **16/17/18 passent NULL → D**, soit **3 NULL → D** au compteur.
+
+Les acquisitions shared-buffer modernes 22/24/26 restent le chemin fonctionnel Encore. Aucun build natif PS5 ni résultat console revendiqué.

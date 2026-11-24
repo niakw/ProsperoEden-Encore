@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 165 | 3 | **168** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 176 | 0 | **1 176** |
-| **D — Rejet explicite / historique** | 235 | 33 | **268** |
+| **NULL — Handler NULL** | 1 173 | 0 | **1 173** |
+| **D — Rejet explicite / historique** | 238 | 33 | **271** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 474 | 1 | **475** |
@@ -1837,9 +1837,9 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `13` | `ReleaseLastForegroundCaptureBuffer` | — | **IMPL-SRC** (release explicite cohérente avec le backend capture synchrone Encore, sans ownership persistant ; vendor `f48b5172`) | 2026-11-23 |
 | appletAE | `14` | `AcquireCallerAppletCaptureBuffer` | — | **D** (SwitchBrew documente explicitement la commande Horizon comme stubbed / retour erreur; aucun faux succès runtime ajouté) | 2026-11-22 |
 | appletAE | `15` | `ReleaseCallerAppletCaptureBuffer` | — | **IMPL-SRC** (release explicite cohérente avec le backend capture synchrone Encore, sans ownership persistant ; vendor `f48b5172`) | 2026-11-23 |
-| appletAE | `16` | `AcquireLastApplicationCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `17` | `AcquireLastForegroundCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
-| appletAE | `18` | `AcquireCallerAppletCaptureBufferEx` | — | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `16` | `AcquireLastApplicationCaptureBufferEx` | — | **D** (HOS moderne appelle un chemin interne qui retourne une erreur ; rejet explicite `ResultUnknown`, sans exposer la TransferMemory 0x384000 des anciens sysvers ; vendor `9ff0457f`) | 2026-11-24 |
+| appletAE | `17` | `AcquireLastForegroundCaptureBufferEx` | — | **D** (HOS moderne appelle un chemin interne qui retourne une erreur ; rejet explicite `ResultUnknown`, sans exposer la TransferMemory 0x384000 des anciens sysvers ; vendor `9ff0457f`) | 2026-11-24 |
+| appletAE | `18` | `AcquireCallerAppletCaptureBufferEx` | — | **D** (HOS moderne appelle un chemin interne qui retourne une erreur ; rejet explicite `ResultUnknown`, sans exposer la TransferMemory 0x384000 des anciens sysvers ; vendor `9ff0457f`) | 2026-11-24 |
 | appletAE | `20` | `ClearCaptureBuffer` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `21` | `ClearAppletTransitionBuffer` | 3.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `22` | `AcquireLastApplicationCaptureSharedBuffer` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
@@ -6629,3 +6629,10 @@ Le TU est la base active `sources/eden/src/core/hle/service/am/service/display_c
 Vendor `ab5fa3bd3d8e4e2a90b43379d40760203c7520da` : les commandes 0/2/3 `GetLastForegroundCaptureImage`, `GetLastApplicationCaptureImage` et `GetCallerAppletCaptureImage` ne sont plus des slots `nullptr`. SwitchBrew documente ces trois anciennes commandes Horizon comme stubbées avec retour erreur ; les implémentations Yuzu historiques utilisent `ResultUnknown`. Encore consomme maintenant le buffer type-0x6 puis renvoie explicitement `ResultUnknown`, au lieu de laisser le dispatcher traiter la commande comme inconnue. Leur statut canonique était déjà **D**, donc **aucun changement de compteur** : ce commit aligne le C++ actif sur le classement déjà établi.
 
 Les cmd5/6/7 `*Ex` restent les seuls getters de capture fonctionnels et ne sont volontairement pas réutilisés pour les commandes legacy. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM DisplayController : acquisitions capture legacy fermées pour HOS 23
+
+Vendor `9ff0457f18f3d06771f450a665f75c454dae2f61` : les six commandes d'acquisition legacy 10/12/14/16/17/18 sont maintenant raccordées à un rejet explicite `ResultUnknown`. SwitchBrew documente 10/12/14 comme stubs Horizon. Pour 16/17/18, la TransferMemory RW 0x384000 n'est fournie que sur les anciens sysvers ; sur les firmwares récents, l'appel interne échoue systématiquement. La cible Encore HOS 23 ne doit donc pas recréer ce chemin historique. Les trois commandes 10/12/14 étaient déjà classées **D** ; **16/17/18 passent NULL → D**, soit **3 NULL → D** au compteur.
+
+Les acquisitions shared-buffer modernes 22/24/26 restent le chemin fonctionnel Encore. Aucun build natif PS5 ni résultat console revendiqué.

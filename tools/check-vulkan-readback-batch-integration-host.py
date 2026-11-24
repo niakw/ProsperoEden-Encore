@@ -14,7 +14,15 @@ import tempfile
 root = Path(__file__).resolve().parents[1]
 snippet = (root / "vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc").read_text()
 maintained = (root / "vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
-assert snippet in maintained, "compiled readback differs from historical integration oracle"
+assert snippet in maintained, "historical integration oracle drift"
+selected = (root / "vendor/encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h").read_text()
+start = selected.index("void TextureCache<P>::DownloadMemory(DAddr")
+end = selected.index("template <class P>", start)
+method = selected[start:end]
+start = method.index("    if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>)")
+end = method.index("\n#endif", start)
+snippet = method[start:end]
+assert "DownloadStagingBuffer(bytes, true)" in snippet
 generator = (root / "tools/prepare-vulkan-port.py").read_text()
 assert "boost::container::small_vector<std::pair<ImageId, Map>, readback_batch_limit> pending;" in snippet
 assert "constexpr size_t readback_batch_limit = 40;" in snippet
@@ -39,6 +47,10 @@ cpp = r"""
 #include <utility>
 #include <vector>
 
+template<class F> struct ScopeExit { F f; ~ScopeExit(){f();} };
+struct ScopeMaker {};
+template<class F> ScopeExit<F> operator+(ScopeMaker,F f){return {f};}
+#define SCOPE_EXIT auto scope_exit = ScopeMaker{} + [&]()
 using ImageId = std::size_t;
 constexpr std::size_t operator""_MiB(unsigned long long n) {
     return static_cast<std::size_t>(n) * 1024 * 1024;
@@ -50,6 +62,8 @@ struct Monitor {
     std::size_t batch_bytes{};
     std::size_t max_batch_bytes{};
     std::vector<std::size_t> image_tickets;
+    std::vector<bool> held;
+    std::size_t releases{};
 };
 namespace Vulkan {
 struct TextureCacheRuntime {
@@ -62,12 +76,19 @@ struct TextureCacheRuntime {
     };
     static_assert(std::is_trivially_copyable_v<Map>);
     std::vector<std::unique_ptr<std::vector<std::uint8_t>>> backing;
-    Map DownloadStagingBuffer(std::size_t n) {
+    Map DownloadStagingBuffer(std::size_t n, bool deferred=false) {
+        assert(deferred);
+        monitor->held.push_back(true);
         monitor->batch_bytes += n;
         monitor->max_batch_bytes = std::max(monitor->max_batch_bytes,
                                             monitor->batch_bytes);
         backing.push_back(std::make_unique<std::vector<std::uint8_t>>(n));
         return Map{backing.size(), *backing.back()};
+    }
+    void FreeDeferredStagingBuffer(Map& map) {
+        assert(monitor->held.at(map.index-1));
+        monitor->held[map.index-1]=false;
+        ++monitor->releases;
     }
     void Finish() {
         monitor->completed = monitor->issued;
@@ -151,6 +172,8 @@ struct MockCache {
                 assert(contents[j] == static_cast<std::uint8_t>((id * 13 + j) % 251));
         }
         assert(runtime.monitor->completed == runtime.monitor->issued);
+        assert(runtime.monitor->releases == images.size());
+        assert(std::ranges::none_of(runtime.monitor->held, [](bool b){return b;}));
     }
 };
 void Test(std::vector<std::size_t> bytes, std::size_t expected_finishes) {
@@ -175,6 +198,7 @@ with tempfile.TemporaryDirectory(prefix="eden-gpu-readback-batch-") as temp:
     src = Path(temp) / "readback-batch.cpp"
     exe = Path(temp) / "readback-batch"
     src.write_text(cpp, encoding="utf-8")
+    (Path(temp)/"vulkan_download_batch.inc").write_text(snippet, encoding="utf-8")
     subprocess.run([compiler, "-std=c++20", "-O1", "-g",
                     "-Wall", "-Wextra", "-Werror",
                     "-fsanitize=address,undefined", "-fno-sanitize-recover=all",

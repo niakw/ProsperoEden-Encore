@@ -1122,13 +1122,57 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         # Reverse each exact owner binding to the historic nullptr before
         # accepting the new shipping acc.cpp in the frozen Eden replay.
         acc_rel = 'src/core/hle/service/acc/acc.cpp'
+
+        # A second exact successor adds explicit offline errors ONLY for Nintendo
+        # online, firmware-debug and remote migration requests. Retain the
+        # previously reviewed 45 real local handlers and reverse this layer
+        # first so the historical ACC replay remains strict.
+        acc_current = (ACTIVE / acc_rel).read_bytes()
+        assert len(acc_current) == 95439 and sha(acc_current) == '71c34670cc93158e954ac7a04b3b52cbe60306aaf5c6948ce50ca2ee663d2595'
+        import re
+        offline_commands = {"ACC_E":[99,103,105,106,151,152,170,210,211,212,213,214,215,230,251,290,291,292,293,299,350,351,352,353,900,901,902,910,997,998,999,10105],"ACC_E_U1":[99,103,105,106,151,152,170,997,998,999],"ACC_E_U2":[99,103,105,106,151,152,170,997,998,999]}
+        offline_lines = acc_current.decode('utf-8').splitlines(keepends=True)
+        offline_owner = ''
+        offline_counts = dict.fromkeys(offline_commands, 0)
+        for i, line in enumerate(offline_lines):
+            class_match = re.match(r'^class (ACC_E(?:_U1|_U2)?) final : public Module::Interface', line)
+            if class_match:
+                offline_owner = class_match.group(1)
+            if line.startswith('void LoopProcess'):
+                offline_owner = ''
+            if offline_owner == '':
+                continue
+            match = re.match(r'^\\s*\\{\\s*(\\d+),\\s*&(\\w+)::RejectUnsupportedOnlineOrDebugCommand,', line)
+            if match:
+                assert match.group(2) == offline_owner
+                assert int(match.group(1)) in offline_commands[offline_owner]
+                pointer = '&' + offline_owner + '::RejectUnsupportedOnlineOrDebugCommand'
+                assert offline_lines[i].count(pointer) == 1
+                offline_lines[i] = line.replace(pointer, 'nullptr', 1)
+                offline_counts[offline_owner] += 1
+        assert offline_counts == {'ACC_E': 32, 'ACC_E_U1': 10, 'ACC_E_U2': 10}
+        offline_method = (
+            '\\nprivate:\\n'
+            '    void RejectUnsupportedOnlineOrDebugCommand(HLERequestContext& ctx) {\\n'
+            '        // No Nintendo Account network, migration, or firmware debug backend on PS5.\\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\\n'
+            '        rb.Push(ResultUnknown);\\n'
+            '    }\\n'
+        )
+        offline_reconstructed = ''.join(offline_lines)
+        assert offline_reconstructed.count(offline_method) == 3
+        offline_reconstructed = offline_reconstructed.replace(offline_method, '\\n')
+        acc_after = offline_reconstructed.encode('utf-8')
+        assert len(acc_after) == 92665 and sha(acc_after) == 'ea76666ba632cf71542eb38b9a9468a608ef2de769b5d152dd9f9c8501ee07a5'
+        print('NS1_ACC_ENTITY_OFFLINE_EXACT_REVERSE_PASS',
+              'closed_online_debug=52', 'owners=3', 'prior_local_bindings=preserved')
+
         acc_before = (stage / acc_rel).read_bytes()
-        acc_after = (ACTIVE / acc_rel).read_bytes()
         assert acc_rel in observed and acc_rel in spec['entries']
         assert len(acc_before) == 91522 and sha(acc_before) == 'fd20d50067f508f246e7857f9d92cb634a8bc07584ae02a4c191502cf6c181c6'
         assert len(acc_after) == 92665 and sha(acc_after) == 'ea76666ba632cf71542eb38b9a9468a608ef2de769b5d152dd9f9c8501ee07a5'
-        assert spec['entries'][acc_rel]['active'] == sha(acc_after)
-        assert spec['entries'][acc_rel]['bytes'] == len(acc_after)
+        assert spec['entries'][acc_rel]['active'] == sha(acc_current)
+        assert spec['entries'][acc_rel]['bytes'] == len(acc_current)
         import re
         acc_bindings = {"ACC_E":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","52":"TrySelectUserWithoutInteraction","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers"},"ACC_E_U1":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers"},"ACC_E_U2":{"0":"GetUserCount","1":"GetUserExistence","2":"ListAllUsers","3":"ListOpenUsers","4":"GetLastOpenedUser","5":"GetProfile","50":"IsUserRegistrationRequestPermitted","51":"TrySelectUserWithoutInteractionDeprecated","52":"TrySelectUserWithoutInteraction","102":"GetBaasAccountManagerForSystemService","110":"StoreSaveDataThumbnailSystem","111":"ClearSaveDataThumbnail","112":"LoadSaveDataThumbnail","113":"GetSaveDataThumbnailExistence","140":"ListQualifiedUsers","205":"GetProfileEditor"}}
         lines = acc_after.decode('utf-8').splitlines(keepends=True)

@@ -3340,3 +3340,11 @@ Vendor `4df98ff0a70343fca54c12146303ac84e0337546` : `caps_a.cpp/.h` deviennent d
 Les 8 commandes movie-read 2001–2008 et `GetLastOverlayMovieThumbnail` (302) sont raccordées à un rejet explicite faute de backend movie. Les usages/cache/fichiers et sessions encore non qualifiés restent ouverts.
 
 Croisement 4 853 : **9 NULL → D + 1 NULL → IMPL-SRC**, soit **10 entrées sorties du pool. Pool restant = 746 / 4 853.** Aucun build PS5 ni validation console revendiqués.
+
+### 2026-11-24 — CAPS:U : accessors application album shipping, movie/session fail-closed
+
+Vendor `f8e15a9c11ed569facf06edce7ca1b77c9c1fd3d` : `caps_u.cpp/.h` deviennent des owners shipping. Les lectures/listes/suppressions par ARUID et décodages screenshot/thumbnail déjà branchés à AlbumManager atteignent réellement le runtime natif.
+
+Les movie-read streams 2001–2005 et `OpenAccessorSessionForApplication` sont rejetés explicitement. `PrecheckToCreateContentsByAruid` et `GetAllAlbumFileList3AaeAruid` restent ouverts pour une vraie implémentation.
+
+Croisement 4 853 : **6 NULL → D. Pool restant = 740 / 4 853.** Aucun build PS5 ni validation console revendiqués.

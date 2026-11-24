@@ -85,7 +85,11 @@ A64_OWNER = "src/core/arm/dynarmic/arm_dynarmic_64.cpp"
 SM_SOURCE_OWNER = "src/core/hle/service/sm/sm.cpp"
 SM_SHIPPING_SOURCE = ROOT / "vendor/encore-active/eden-backports" / SM_SOURCE_OWNER
 SM_SHIPPING_GIT_BLOB = "c75c5437dfae5176d25a9994ff8aa7164d8b6713"
-SM_SHUTDOWN_GIT_BLOB = "494ee50d2880a491b07c2b981193df1a686c696a"
+SM_SHUTDOWN_PREVIOUS_GIT_BLOB = "494ee50d2880a491b07c2b981193df1a686c696a"
+SM_SHUTDOWN_GIT_BLOB = "34c7c85f1476a3ba819ad20b8a4f8150cca86e16"
+SM_HEADER_OWNER = "src/core/hle/service/sm/sm.h"
+SM_HEADER_PREVIOUS_GIT_BLOB = "afaad1b58658c9fe7807756410b7f1a82d0e3c7d"
+SM_HEADER_GIT_BLOB = "7069439e66a6f28ffa56229e08906a21222e2801"
 
 
 def preserve_known_owned_cache_source(destination: Path, target: Path, digest: str) -> None:
@@ -136,6 +140,16 @@ def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
         raise RuntimeError("Shipping SM predecessor drift")
     if git_blob_sha1(maintained_bytes) != SM_SHUTDOWN_GIT_BLOB:
         raise RuntimeError("Shutdown SM owner drift")
+    # The current SM factory-retirement owner is an exact successor of the
+    # reviewed close/wait implementation. Seal its unchanged predecessor too.
+    begin = b"void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n"
+    end = b"ServiceManager::~ServiceManager() {"
+    if maintained_bytes.count(begin) != 1 or maintained_bytes.count(end) != 1:
+        raise RuntimeError("SM handler retirement source shape drift")
+    first = maintained_bytes.index(begin)
+    last = maintained_bytes.index(end, first)
+    if git_blob_sha1(maintained_bytes[:first] + maintained_bytes[last:]) != SM_SHUTDOWN_PREVIOUS_GIT_BLOB:
+        raise RuntimeError("SM handler retirement changed unrelated source")
     current = target.read_bytes()
     if current == maintained_bytes:
         return False
@@ -144,7 +158,7 @@ def stage_selected_sm_source(destination: Path, *, check: bool) -> bool:
             f"Active SM source check found predecessor: current={git_blob_sha1(current)} "
             f"active={SM_SHUTDOWN_GIT_BLOB}"
         )
-    if current != predecessor_bytes:
+    if current != predecessor_bytes and git_blob_sha1(current) != SM_SHUTDOWN_PREVIOUS_GIT_BLOB:
         raise RuntimeError(
             f"Refusing unknown staged SM source: current={git_blob_sha1(current)} "
             f"shipping={SM_SHIPPING_GIT_BLOB}"
@@ -172,11 +186,22 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
             raise RuntimeError(f"Missing maintained active-core source: {relative}")
         maintained_bytes = maintained.read_bytes()
         if maintained_bytes != new:
-            if relative == "src/core/hle/service/sm/sm.h":
+            if relative == SM_HEADER_OWNER:
                 # The shutdown-lifetime successor extends the already-reviewed
                 # host-wait header only. Reverse those exact additive pieces
                 # and require byte-for-byte parity with the patch oracle.
-                shutdown = maintained_bytes
+                if git_blob_sha1(maintained_bytes) != SM_HEADER_GIT_BLOB:
+                    raise RuntimeError("SM handler retirement header drift")
+                declaration = (
+                    b"    // Drop service-owned guest/device references before guest KProcesses retire.\n"
+                    b"    // Does not destroy SM ports or the SM object itself.\n"
+                    b"    void ReleaseRegisteredHandlersForShutdown();\n"
+                )
+                if maintained_bytes.count(declaration) != 1:
+                    raise RuntimeError("SM handler retirement declaration drift")
+                shutdown = maintained_bytes.replace(declaration, b"", 1)
+                if git_blob_sha1(shutdown) != SM_HEADER_PREVIOUS_GIT_BLOB:
+                    raise RuntimeError("SM handler retirement header predecessor drift")
                 additions = (
                     (b"#include <condition_variable>\n", b""),
                     (b"    bool WaitForService(const std::string& name);\n"
@@ -213,7 +238,9 @@ def stage_source(destination: Path, expected: dict[str, tuple[bytes, bytes]], *,
                 f"Active source check found non-maintained revision: {relative} "
                 f"current={sha(current)} active={sha(maintained_bytes)}"
             )
-        if current not in (old, new):
+        if current not in (old, new) and not (
+                relative == SM_HEADER_OWNER and
+                git_blob_sha1(current) == SM_HEADER_PREVIOUS_GIT_BLOB):
             # Only the exact previously observed pre-N76 cached A64 bytes
             # may be repaired; keep a content-addressed copy for diagnosis.
             if (check or not repair_owned_cache or relative != A64_OWNER or
@@ -248,6 +275,51 @@ def main() -> None:
         stage_source(args.destination, expected, check=args.check,
                      repair_owned_cache=args.repair_owned_cache)
     else:
+        # Exercise the production materializer as well as the historical
+        # patch replay. Use only disposable exact pinned inputs, no SDK/build.
+        with tempfile.TemporaryDirectory(prefix="encore-active-core-stage-") as temp:
+            destination = Path(temp)
+            (destination / "GIT-COMMIT").write_text(PIN + "\n")
+            for relative, (old, _) in expected.items():
+                target = destination / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(old)
+            sm_target = destination / SM_SOURCE_OWNER
+            sm_target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(SM_SHIPPING_SOURCE, sm_target)
+            stage_source(destination, expected, check=False)
+            stage_source(destination, expected, check=True)
+            stage_source(destination, expected, check=False)
+            # Reproduce the exact previous shutdown owner in a restored cache.
+            header_target = destination / SM_HEADER_OWNER
+            header = header_target.read_bytes()
+            declaration = (
+                b"    // Drop service-owned guest/device references before guest KProcesses retire.\n"
+                b"    // Does not destroy SM ports or the SM object itself.\n"
+                b"    void ReleaseRegisteredHandlersForShutdown();\n"
+            )
+            previous_header = header.replace(declaration, b"", 1)
+            assert git_blob_sha1(previous_header) == SM_HEADER_PREVIOUS_GIT_BLOB
+            header_target.write_bytes(previous_header)
+            body = sm_target.read_bytes()
+            first = body.index(b"void ServiceManager::ReleaseRegisteredHandlersForShutdown() {\n")
+            last = body.index(b"ServiceManager::~ServiceManager() {", first)
+            previous_body = body[:first] + body[last:]
+            assert git_blob_sha1(previous_body) == SM_SHUTDOWN_PREVIOUS_GIT_BLOB
+            sm_target.write_bytes(previous_body)
+            stage_source(destination, expected, check=False)
+            stage_source(destination, expected, check=True)
+            assert header_target.read_bytes() == header
+            assert sm_target.read_bytes() == body
+            # Unknown source bytes must still fail closed.
+            sm_target.write_bytes(body + b"\n// unreviewed staging drift\n")
+            try:
+                stage_source(destination, expected, check=False)
+            except RuntimeError as error:
+                assert "Refusing unknown staged SM source" in str(error)
+            else:
+                raise AssertionError("Unknown SM source was accepted")
+        print("EDEN_ACTIVE_CORE_STAGE_REPLAY_PASS clean=1 previous=1 idempotent=1 unknown_rejected=1")
         print(f"EDEN_ACTIVE_CORE_PATCH_REPLAY_OK files={len(expected)} "
               "icache=on service_wait=on")
 if __name__ == "__main__":

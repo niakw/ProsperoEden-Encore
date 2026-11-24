@@ -431,9 +431,9 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                 // Render deterministic launcher poses into explicit 1080p
                 // targets. The stable primary is the final rear pose so the
                 // first loading frame exactly matches the launcher. When a
-                // genuine rear exists, also capture the real front; the
-                // retained GL presenter can then keep the case turning during
-                // System::Load without disk I/O or guest GPU work.
+                // rear exists or can be composed from local game media,
+                // retain both poses for the graphics handoff. No remote
+                // artwork request or additional launch hold is introduced.
                 const auto capture_pose = [&](pe::ui::Launcher::LoadingCapturePose pose,
                                               bool alternate) {
                     launcher.set_loading_capture_pose(pose);
@@ -444,7 +444,7 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                         batch.draw(list, pe::gfx::fit_viewport(w, h), w, h);
                     }, alternate);
                 };
-                const bool animate_case = launcher.loading_back_available() && !reduce_motion;
+                const bool animate_case = !reduce_motion;
                 const bool final_back = launcher.loading_final_pose_is_back();
                 const auto primary_pose = animate_case
                     ? (final_back ? pe::ui::Launcher::LoadingCapturePose::back
@@ -455,7 +455,9 @@ std::string RunApp(const std::string& launch_error, bool first_start, bool* rest
                     : pe::ui::Launcher::LoadingCapturePose::back;
                 const bool ready = capture_pose(primary_pose, false);
                 const bool alternate_ready = ready && animate_case &&
-                    capture_pose(alternate_pose, true);
+                    capture_pose(alternate_pose, true) &&
+                    launcher.loading_back_available();
+                if (!alternate_ready) Eden::LaunchHandoff::ClearAlternate();
                 launcher.set_loading_capture_pose(pe::ui::Launcher::LoadingCapturePose::live);
                 // capture_pose(front) leaves the reusable draw list on the
                 // alternate image. Rebuild the actual final launcher pose so

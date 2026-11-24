@@ -188,7 +188,8 @@ assert 'if (shots[0] && !ready(*shots[0], paper_w)) return false;' in library_sr
 assert 'if (shots[1] && !ready(*shots[1], std::max(left_w - gap, top_h)))' in library_src
 assert 'if (shots[2] && !ready(*shots[2], paper_w))' in library_src
 assert 'prepare_case_page(false);' in draw
-assert 'if (!native_artwork_loading_) prepare_case_page(true);' in draw
+assert "(done_ && loading_capture_pose_ == LoadingCapturePose::back)" in draw
+assert "prepare_case_page(true);" in draw
 assert 'Color::rgb(0x08111d, 0.45f)' in library_src
 assert 'c.list.gradient_rect({r.x, r.y, r.w, dynamic_h}, 0.0f,' in library_src
 assert 'c.list.hgradient_rect(' not in library_src.split("void flat_back_fallback(", 1)[1].split("// Static sleeve used", 1)[0]

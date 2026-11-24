@@ -28,9 +28,11 @@ args.output.parent.mkdir(parents=True, exist_ok=True)
 if args.spv_dir:
     args.spv_dir.mkdir(parents=True, exist_ok=True)
 
-def build(stage: str, source: pathlib.Path, variable: str, quick: bool = False) -> tuple[str, list[int]]:
+def build(stage: str, source: pathlib.Path, variable: str, quick: bool = False,
+          artwork: bool = False) -> tuple[str, list[int]]:
     if args.spv_dir:
-        spv = args.spv_dir / (f"{source.name}.quick.spv" if quick else f"{source.name}.spv")
+        suffix = ".quick.spv" if quick else ".loading.spv" if artwork else ".spv"
+        spv = args.spv_dir / (source.name + suffix)
         cleanup = None
     else:
         cleanup = tempfile.TemporaryDirectory(prefix="eden-hud-spv-")
@@ -38,7 +40,8 @@ def build(stage: str, source: pathlib.Path, variable: str, quick: bool = False) 
     subprocess.run([
         args.glslang, "-V", "--target-env", "vulkan1.1", "-S", stage,
         f"-I{include_dir}", f"-I{source_dir}",
-        *(["-DEDEN_QUICK_MENU=1"] if quick else []), "-o", str(spv), str(source)
+        *(["-DEDEN_QUICK_MENU=1"] if quick else []),
+        *(["-DEDEN_LOADING_ARTWORK=1"] if artwork else []), "-o", str(spv), str(source)
     ], check=True)
     subprocess.run([args.spirv_val, "--target-env", "vulkan1.1", str(spv)], check=True)
     raw = spv.read_bytes()
@@ -57,6 +60,7 @@ compiled = [
     build("vert", source_dir / "vulkan_hud.vert", "EDEN_HUD_VERT_SPV"),
     build("frag", source_dir / "vulkan_hud.frag", "EDEN_HUD_FRAG_SPV"),
     build("frag", source_dir / "vulkan_hud.frag", "EDEN_QUICK_MENU_FRAG_SPV", quick=True),
+    build("frag", source_dir / "vulkan_hud.frag", "EDEN_LOADING_ARTWORK_FRAG_SPV", artwork=True),
 ]
 
 lines = [

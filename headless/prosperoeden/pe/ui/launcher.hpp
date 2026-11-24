@@ -86,7 +86,7 @@ class Launcher
         loading_capture_pose_ = pose;
     }
     [[nodiscard]] bool loading_back_available() const noexcept {
-        return native_launch_back_ready_;
+        return native_launch_back_ready_ || launch_composed_back_ != 0;
     }
     [[nodiscard]] bool loading_final_pose_is_back() const noexcept {
         return native_launch_show_back_;

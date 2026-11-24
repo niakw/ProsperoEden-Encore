@@ -86,10 +86,8 @@ close_deferred = display.split("bool Display::close_deferred_scanout()", 1)[1].s
     "bool Display::has_deferred_scanout()", 1
 )[0]
 assert close_deferred.index("presenter.request_stop();") < close_deferred.index("presenter.join();")
+assert "Eden::LaunchHandoff::ClearAlternate();" not in close_deferred
 assert close_deferred.index("presenter.join();") < close_deferred.index(
-    "Eden::LaunchHandoff::ClearAlternate();"
-)
-assert close_deferred.index("Eden::LaunchHandoff::ClearAlternate();") < close_deferred.index(
     "eglDestroyContext(display, context)"
 )
 assert close_deferred.index("eglDestroyContext(display, context)") < close_deferred.index(
@@ -138,6 +136,8 @@ present = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
 )[0]
 assert "LaunchHandoff::Peek()" in present
 assert "Eden::LoadingArtwork::Repack" in present
+assert "blit_swapchain.DrawLoadingArtwork(device, frame, format)" in present
+assert "Eden::LaunchHandoff::PeekAlternate()" in window
 assert present.index("CopyBufferToImage") < present.index("DrawHudOverlay")
 assert "live_loading.glyphs[0] = has_artwork ? 1u : 0u" in present
 for retired in ("loading_jacket", "EDEN_LOADER_JACKET_HANDOFF_VULKAN", "0x80000000u"):

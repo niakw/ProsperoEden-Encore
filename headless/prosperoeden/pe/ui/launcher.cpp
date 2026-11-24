@@ -1420,8 +1420,7 @@ void Launcher::draw_launch(Canvas &c)
     if (native_artwork_loading_) {
         if (loading_capture_pose_ == LoadingCapturePose::front)
             angle = kFrontYaw;
-        else if (loading_capture_pose_ == LoadingCapturePose::back &&
-                 native_launch_back_ready_)
+        else if (loading_capture_pose_ == LoadingCapturePose::back)
             angle = kBackYaw;
     }
     const float facing = std::cos(angle);
@@ -1551,7 +1550,11 @@ void Launcher::draw_launch(Canvas &c)
                      rear ? "back" : "front");
     };
     prepare_case_page(false);
-    if (!native_artwork_loading_) prepare_case_page(true);
+    // Compose the honest local rear only during the final explicit capture,
+    // not during the normal 750 ms native launch budget.
+    if (!native_artwork_loading_ ||
+        (done_ && loading_capture_pose_ == LoadingCapturePose::back))
+        prepare_case_page(true);
     const std::uint32_t composed_page =
         back ? launch_composed_back_ : launch_composed_front_;
     // A queued retail decode is NOT a drawable face. Keep the composed,

@@ -48,6 +48,12 @@ public:
     void DrawHudOverlay(const Device& device, MemoryAllocator& allocator, Scheduler& scheduler,
                         Frame* dst, const Eden::HudSnapshot& hud);
 
+#ifdef PS5_NATIVE
+    bool DrawLoadingArtwork(const Device& device, MemoryAllocator& allocator,
+                            Scheduler& scheduler, Frame* dst, VkFormat format);
+    void RetireLoadingArtwork();
+#endif
+
     VkDescriptorSetLayout GetDescriptorSetLayout();
     VkRenderPass GetRenderPass();
 
@@ -62,6 +68,11 @@ private:
     void PrepareQuickMenu(const Device& device, MemoryAllocator& allocator);
     std::unique_ptr<QuickMenuResources> quick_menu;
     bool quick_menu_failed{};
+#ifdef PS5_NATIVE
+    struct LoadingArtworkResources;
+    std::unique_ptr<LoadingArtworkResources> loading_artwork;
+    bool loading_artwork_failed{};
+#endif
 
     vk::DescriptorSetLayout descriptor_set_layout;
     vk::PipelineLayout pipeline_layout;

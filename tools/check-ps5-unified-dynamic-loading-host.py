@@ -53,7 +53,8 @@ assert "bool native_artwork_loading = false" in launcher_h
 assert "pe::ui::Launcher launcher(services, textures, fonts, first_start, true)" in frontend
 assert "native_launch_art_ready_ || std::chrono::steady_clock::now() >= native_launch_deadline_" in launcher
 assert "std::chrono::milliseconds(750)" in launcher
-assert "if (!native_artwork_loading_) prepare_case_page(true);" in launcher
+assert "(done_ && loading_capture_pose_ == LoadingCapturePose::back)" in launcher
+assert "prepare_case_page(true);" in launcher
 assert "!(native_artwork_loading_ && done_)" in launcher
 assert "const float appear = native_artwork_loading_ ? 1.0f" in launcher
 
@@ -72,7 +73,9 @@ assert "has_alternate" in gl_art
 assert "seconds<1000.0" in gl_art
 assert "LoadingCapturePose::back" in frontend
 assert "LoadingCapturePose::front" in frontend
-assert "launcher.loading_back_available() && !reduce_motion" in frontend
+assert "const bool animate_case = !reduce_motion;" in frontend
+assert "launcher.loading_back_available();" in frontend
+assert "if (!alternate_ready) Eden::LaunchHandoff::ClearAlternate();" in frontend
 assert "launcher.loading_final_pose_is_back()" in frontend
 assert "const auto primary_pose = animate_case" in frontend
 assert "const auto alternate_pose = final_back" in frontend
@@ -119,10 +122,8 @@ for required in (
     "eglTerminate(display)",
 ):
     assert required in close_deferred
+assert "Eden::LaunchHandoff::ClearAlternate();" not in close_deferred
 assert close_deferred.index("presenter.join();") < close_deferred.index(
-    "Eden::LaunchHandoff::ClearAlternate();"
-)
-assert close_deferred.index("Eden::LaunchHandoff::ClearAlternate();") < close_deferred.index(
     "eglDestroyContext(display, context)"
 )
 assert close_deferred.index("eglDestroyContext(display, context)") < close_deferred.index(
@@ -138,6 +139,12 @@ loading = renderer.split("void RendererVulkan::PresentLoading()", 1)[1].split(
 assert "present_manager.SwapchainImageViewFormat(), false);" in loading
 assert "Eden::GetVulkanHud()" in loading
 assert "Eden::LoadingArtwork::Repack" in loading
+assert "blit_swapchain.DrawLoadingArtwork(device, frame, format)" in loading
+assert "if (!animated_artwork && has_artwork)" in loading
+assert "Eden::LaunchHandoff::PeekAlternate()" in window
+assert "EDEN_LOADING_ARTWORK_FRAG_SPV" in window
+assert "blit_swapchain.RetireLoadingArtwork();" in renderer
+assert "layout(std430, set = 0, binding = 0)" in shader
 assert "loading_artwork_attempts >= 3" in loading
 assert "loading_artwork_format == format" in loading
 assert "VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL" in loading
@@ -190,7 +197,7 @@ assert "inline void EndLoading() noexcept" in handoff
 assert "inline double LoadingSeconds(double calm_offset = 0.0) noexcept" in handoff
 assert "loading_started_ns" in handoff
 # Updated exact shader source receipt; preserve historical source reviews.
-assert subprocess.check_output(["git", "hash-object", "headless/vulkan_hud.frag"], cwd=root, text=True).strip() == "8bab5ee14daa1d316fbac6b3643823967d53e376"
+assert subprocess.check_output(["git", "hash-object", "headless/vulkan_hud.frag"], cwd=root, text=True).strip() == "69d947756a2c02896d2ab3d1d46d782729bfb2d7"
 subprocess.run([sys.executable, "-B", str(root / "tools/check-loading-artwork-transfer-host.py")], check=True)
 
 print("PS5_CONTINUOUS_GL_VULKAN_LOADING_SOURCE_PASS shared_artwork=1 shared_epoch=1 animated_system_load=1 single_videoout_owner=1 purple_loader=0 console_pending=1")

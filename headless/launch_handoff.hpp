@@ -26,9 +26,9 @@ inline void QueueMultiplayer() { multiplayer_requested.store(true, std::memory_o
 inline bool TakeMultiplayerRequest() { return multiplayer_requested.exchange(false, std::memory_order_acq_rel); }
 inline std::mutex frame_mutex;
 inline std::shared_ptr<const Frame> pending_frame;
-// Optional alternate pose of the exact same launcher scene. The native
-// launcher publishes this only when an authentic rear is available; Vulkan
-// continues to consume pending_frame as the stable final pose.
+// Alternate pose of the exact same launcher scene. The native launcher
+// publishes an authentic or honestly composed rear; graphics owners share
+// these title-scoped poses until the first guest image.
 inline std::shared_ptr<const Frame> alternate_frame;
 
 // One monotonic loading epoch spans launcher GL, the retained GL presenter and

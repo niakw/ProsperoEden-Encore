@@ -306,10 +306,12 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
     // Retire only after the final loading copy's exact scheduler tick is
     // complete. No WaitIdle / Finish in normal gameplay; otherwise retain
     // the allocation through the existing drained renderer destruction.
-    if (!framebuffers.empty() && loading_artwork_buffer && loading_artwork_tick &&
+    if (!framebuffers.empty() && loading_artwork_tick &&
         loading_artwork_tick != std::numeric_limits<u64>::max() &&
         scheduler.IsFree(loading_artwork_tick)) {
         loading_artwork_buffer = {};
+        blit_swapchain.RetireLoadingArtwork();
+        Eden::LaunchHandoff::Clear();
         loading_artwork_unavailable = true;
         loading_artwork_tick = 0;
     }
@@ -764,7 +766,10 @@ void RendererVulkan::PresentLoading() {
     trace("loading_frame_blit_ready");
 #ifdef PS5_NATIVE
     const VkFormat format = present_manager.SwapchainImageViewFormat();
-    if (!loading_artwork_buffer && !loading_artwork_unavailable &&
+    const bool animated_artwork = !loading_artwork_buffer &&
+        !loading_artwork_unavailable &&
+        blit_swapchain.DrawLoadingArtwork(device, frame, format);
+    if (!animated_artwork && !loading_artwork_buffer && !loading_artwork_unavailable &&
         frame->width && frame->height && frame->width <= 4096 && frame->height <= 2160) {
         const auto artwork = Eden::LaunchHandoff::Peek();
         const bool bgra = format == VK_FORMAT_B8G8R8A8_UNORM ||
@@ -817,10 +822,10 @@ void RendererVulkan::PresentLoading() {
                         static_cast<u32>(format));
         }
     }
-    const bool has_artwork = loading_artwork_buffer &&
+    const bool has_artwork = animated_artwork || (loading_artwork_buffer &&
         loading_artwork_width == frame->width && loading_artwork_height == frame->height &&
-        loading_artwork_format == format;
-    if (has_artwork) {
+        loading_artwork_format == format);
+    if (!animated_artwork && has_artwork) {
         const VkImage target = *frame->image;
         const VkBuffer upload = *loading_artwork_buffer;
         const VkBufferImageCopy copy{

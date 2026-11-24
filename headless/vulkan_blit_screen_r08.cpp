@@ -95,6 +95,17 @@ void BlitScreen::DrawHudOverlay(const Device& device, Frame* frame,
     if (window_adapt) window_adapt->DrawHudOverlay(device, memory_allocator, scheduler, frame, hud);
 }
 
+#ifdef PS5_NATIVE
+bool BlitScreen::DrawLoadingArtwork(const Device& device, Frame* frame, VkFormat format) {
+    return window_adapt && window_adapt->DrawLoadingArtwork(
+        device, memory_allocator, scheduler, frame, format);
+}
+
+void BlitScreen::RetireLoadingArtwork() {
+    if (window_adapt) window_adapt->RetireLoadingArtwork();
+}
+#endif
+
 void BlitScreen::PrepareFrame(const Device& device, Frame* frame,
                               const Layout::FramebufferLayout& layout) {
     if (!window_adapt || (frame->width == layout.width && frame->height == layout.height)) {

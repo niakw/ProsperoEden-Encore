@@ -2865,3 +2865,10 @@ Le TU concerné reste `sources/eden/src/core/hle/service/am/service/application_
 Vendor `e7137658964ed0ed011be58939a71519fb543b9a` : `IDisplayController::TakeScreenShotOfOwnLayerEx` (cmd28) est désormais raccordé au même chemin de capture réel que cmd8. SwitchBrew documente que cmd28 appelle la même fonction interne que `TakeScreenShotOfOwnLayer`, avec un booléen supplémentaire indiquant le mode immédiat. Encore consomme donc les deux booléens et le slot `s32`, respecte la permission de capture et écrit la capture GPU courante via `WriteAppletCaptureBufferToSlot`. Le backend PS5 est actuellement synchrone : `immediately=false` et `true` convergent encore vers la même capture immédiate. **1 NULL → PARTIEL**, sans prétendre implémenter une file différée inexistante.
 
 Le TU est la base active `sources/eden/src/core/hle/service/am/service/display_controller.cpp` (aucun override de ce fichier dans l'overlay backports). Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM DisplayController : rejets legacy matérialisés dans le runtime
+
+Vendor `ab5fa3bd3d8e4e2a90b43379d40760203c7520da` : les commandes 0/2/3 `GetLastForegroundCaptureImage`, `GetLastApplicationCaptureImage` et `GetCallerAppletCaptureImage` ne sont plus des slots `nullptr`. SwitchBrew documente ces trois anciennes commandes Horizon comme stubbées avec retour erreur ; les implémentations Yuzu historiques utilisent `ResultUnknown`. Encore consomme maintenant le buffer type-0x6 puis renvoie explicitement `ResultUnknown`, au lieu de laisser le dispatcher traiter la commande comme inconnue. Leur statut canonique était déjà **D**, donc **aucun changement de compteur** : ce commit aligne le C++ actif sur le classement déjà établi.
+
+Les cmd5/6/7 `*Ex` restent les seuls getters de capture fonctionnels et ne sont volontairement pas réutilisés pour les commandes legacy. Aucun build natif PS5 ni résultat console revendiqué.

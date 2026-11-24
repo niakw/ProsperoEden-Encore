@@ -2486,12 +2486,12 @@ else:
     // Thread-local state cannot leak into the GPU thread or another worker job.
     thread_local bool shader_texture_pool_preflushed{};
     }
-    
+
     void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept {
         shader_texture_pool_preflushed = preflushed;
     }
     #endif
-    
+
     """,
             "",
         ],
@@ -2595,7 +2595,7 @@ else:
     assert shader_mesh == shader_expected, "Shader cache source differs after exact P2.4 stage normalization"
     print("ENCORE_P24_AUTHENTICATED_SHADER_ENVIRONMENT_PARITY_PASS",
           "mesh_source=versioned native_only=1 ns1_baseline=unchanged")
-    
+
 assert reader_maintained.is_file() and not (root / "headless/shader_cache_reader.inc").exists()
 check_canonical_git_object(reader_maintained, "5d652ca5cd6d8ec919c04902a18d87247673e523", "shader cache reader")
 assert 'list(APPEND video_sources "${EDEN_MAINTAINED_SHADER_ENVIRONMENT}")' in c

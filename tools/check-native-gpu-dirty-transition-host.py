@@ -163,8 +163,6 @@ may_have_pending = """    /// False when Gather would find no newly collected CP
 
 """
 pending_anchor = "    /// Enumerate collected writes without consuming them. Downloads can use\n"
-assert expected.count(pending_anchor) == 1
-expected = expected.replace(pending_anchor, may_have_pending + pending_anchor, 1)
 
 # Vendor #156 exposes collected CPU writes non-destructively so GPU downloads
 # cannot overwrite newer guest bytes. Reconstruct the two exact additions on
@@ -189,6 +187,8 @@ pending_snapshot = """    /// Enumerate collected writes without consuming them.
 gather_anchor = "    void Gather(std::function<void(PAddr, size_t)>& callback) {\n"
 assert expected.count(gather_anchor) == 1
 expected = expected.replace(gather_anchor, pending_snapshot + gather_anchor, 1)
+assert expected.count(pending_anchor) == 1
+expected = expected.replace(pending_anchor, may_have_pending + pending_anchor, 1)
 for_each_run = """    template <typename Func>
     static void ForEachRun(const TransformAddress& transform, Func&& callback) {
         size_t offset = 0;

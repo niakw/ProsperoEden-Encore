@@ -946,8 +946,9 @@ print("R457_REAL_RETAIL_CANDIDATE_LOOP_PASS decode_retry=1 write_stop=1 budget=7
 assert "title_locks[ArtworkLockBucket(title_id, title_locks.size())]" in native
 assert "if (!LockArtworkUnlessCancelled(title_lock, cancel)) return {};" in native
 assert "std::unique_lock title_lock{NlibTitleMutex(game.title_id), std::try_to_lock};" in native
-helper = "constexpr std::size_t ArtworkLockBucket(" + native.split(
-    "constexpr std::size_t ArtworkLockBucket(", 1)[1].split("// A valid cached authentic face", 1)[0]
+lock_definition = "constexpr std::size_t ArtworkLockBucket(std::uint64_t title_id, std::size_t count) {"
+assert native.count(lock_definition) == 1
+helper = lock_definition + native.split(lock_definition, 1)[1].split("// A valid cached authentic face", 1)[0]
 catalog_header = root / "headless/ns2_title_catalog.h"
 with tempfile.TemporaryDirectory(prefix="encore-art-locks-") as dirname:
     tmp = Path(dirname)

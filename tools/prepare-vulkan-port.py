@@ -3003,11 +3003,44 @@ if _missing_headers:
     _prefix = (_prefix[:_insert] +
                "".join(_header + "\n" for _header in _missing_headers) +
                _prefix[_insert:])
-    shader_source = _prefix + _namespace_marker + _suffix
+# The old parallel translator's helper declaration also moved relative to
+# other PS5 namespaces over time. Normalize the semantic declaration itself,
+# not its surrounding whitespace, and install the final immutable-snapshot ABI.
+_old_preflush_decl = """#ifdef PS5_NATIVE
+namespace VideoCommon {
+void SetShaderTexturePoolPreflushedForThread(bool preflushed) noexcept;
+}
+#endif
+
+"""
+_snapshot_decl = """#ifdef PS5_NATIVE
+namespace VideoCommon {
+void SetShaderTranslationSnapshotForThread(
+    GPUVAddr texture_base, u32 texture_limit, const u8* texture_data,
+    bool via_header_index, u32 viewport_transform_state,
+    const u8* const* cbuf_data, const u32* cbuf_sizes, size_t cbuf_count) noexcept;
+void ClearShaderTranslationSnapshotForThread() noexcept;
+}
+#endif
+
+"""
+_has_old_snapshot_decl = _old_preflush_decl in shader_source
+_has_current_snapshot_decl = _snapshot_decl in shader_source
+if _has_old_snapshot_decl and _has_current_snapshot_decl:
+    raise RuntimeError("FC27 duplicate shader snapshot declaration")
+if _has_old_snapshot_decl:
+    shader_source = shader_source.replace(_old_preflush_decl, _snapshot_decl, 1)
+elif not _has_current_snapshot_decl:
+    _namespace_pos = shader_source.find(_namespace_marker)
+    if _namespace_pos < 0:
+        raise RuntimeError("FC27 Vulkan namespace insertion anchor missing")
+    shader_source = (shader_source[:_namespace_pos] + _snapshot_decl +
+                     shader_source[_namespace_pos:])
 
 for index, (newer, predecessor) in enumerate(_parallel_translation_reverse):
-    if index == 0:
-        # Header pair handled above; all semantic/runtime pairs remain exact.
+    if index in (0, 1):
+        # Includes and helper declaration are normalized structurally above.
+        # All semantic/runtime translation pairs remain byte-exact below.
         continue
     predecessor_count = shader_source.count(predecessor)
     current_count = shader_source.count(newer)

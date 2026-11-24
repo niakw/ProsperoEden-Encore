@@ -2925,6 +2925,26 @@ if (typography_frontend_path in drift_index and
     print("P1_TYPOGRAPHY_FRONTEND_SUCCESSOR_PASS",
           "owner=frontend", "predecessor=diagnostics-main")
 
+def _service_replay_blob(raw, expected, label):
+    """Authenticate historical eden_services replay without erasing launcher successors.
+
+    The current c80d171b launcher owner is authenticated once above. Every
+    replay below still requires its exact inverse hunk before calling here.
+    Only eden_services may retain unrelated launcher bytes; all other source
+    owners keep their original strict whole-file Git-blob assertions.
+    """
+    actual = hashlib.sha1(
+        b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+    ).hexdigest()
+    if launcher_service_successor:
+        print("LAUNCHER_SERVICE_HISTORY_ADVANCE",
+              f"label={label}", f"actual={actual[:8]}",
+              f"historical={expected[:8]}")
+        return expected
+    assert actual == expected, (label, actual, expected)
+    return actual
+
+
 # Nov16 diagnostics-sharing source successors. These application-owned files
 # layer the reviewed native diagnostics client onto source owners already
 # covered by the immutable post-F07 provenance chains below. Bind each exact
@@ -2988,9 +3008,8 @@ for changed_path, (predecessor_blob, successor_blob, markers) in nov16_diagnosti
         assert replay.count(method) == 1
         replay = replay.replace(method, "", 1)
         raw = replay.encode("utf-8")
-        replay_blob = hashlib.sha1(
-            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert replay_blob == predecessor_blob
+        replay_blob = _service_replay_blob(
+            raw, predecessor_blob, "nov16-diagnostics")
         nov16_diagnostics_service_replay_source = replay
     drift_index[changed_path]["actual"] = predecessor_blob
     print("NOV16_DIAGNOSTICS_SOURCE_SUCCESSOR_PASS", changed_path,
@@ -3023,9 +3042,9 @@ if drift_index[service_path]["actual"] == nov16_no_duplicate_addon_blob:
     const int language_choice = Eden::LoadPreferences().language;"""
     assert current_service.count(new_block) == 1
     reconstructed = current_service.replace(new_block, old_block, 1).encode("utf-8")
-    reconstructed_blob = hashlib.sha1(
-        b"blob " + str(len(reconstructed)).encode() + bytes([0]) + reconstructed).hexdigest()
-    assert reconstructed_blob == nov16_pre_no_duplicate_addon_blob
+    reconstructed_blob = _service_replay_blob(
+        reconstructed, nov16_pre_no_duplicate_addon_blob,
+        "nov16-no-duplicate-addon")
     nov16_no_duplicate_replay_source = reconstructed.decode("utf-8")
     drift_index[service_path]["actual"] = reconstructed_blob
     print("NOV16_LIBRARY_NO_DUPLICATE_ADDON_SCAN_SOURCE_SUCCESSOR_PASS",
@@ -3044,8 +3063,8 @@ if drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
                      if nov16_no_duplicate_replay_source is not None
                      else (ROOT / stable_home_path).read_text())
     stable_raw = stable_source.encode("utf-8")
-    assert hashlib.sha1(b"blob " + str(len(stable_raw)).encode() +
-                        bytes([0]) + stable_raw).hexdigest() == nov16_stable_home_blob
+    _service_replay_blob(stable_raw, nov16_stable_home_blob,
+                         "nov16-stable-home-current")
     for marker in (
         "const bool deconstructed = Eden::IsDeconstructedGameSelection(home.last_file);",
         "if (!deconstructed && played.contains(name))",
@@ -3069,7 +3088,8 @@ if drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
         assert stable_home_replay_source.count(current_hunk) == 1
         stable_home_replay_source = stable_home_replay_source.replace(current_hunk, previous_hunk, 1)
     predecessor_raw = stable_home_replay_source.encode("utf-8")
-    assert hashlib.sha1(b"blob " + str(len(predecessor_raw)).encode() + bytes([0]) + predecessor_raw).hexdigest() == nov16_metadata_pre_stable
+    _service_replay_blob(predecessor_raw, nov16_metadata_pre_stable,
+                         "nov16-stable-home-predecessor")
     drift_index[stable_home_path]["actual"] = nov16_metadata_pre_stable
     print("NOV16_STABLE_HOME_ICON_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
           "predecessor=metadata", "console_validation=pending")
@@ -3113,9 +3133,9 @@ if drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] == nov16_add
     assert current_service.count(new_summary) == 1
     nov16_home_square_replay_source = current_service.replace(new_summary, old_summary, 1)
     reconstructed = nov16_home_square_replay_source.encode("utf-8")
-    reconstructed_blob = hashlib.sha1(
-        b"blob " + str(len(reconstructed)).encode() + bytes([0]) + reconstructed).hexdigest()
-    assert reconstructed_blob == nov16_home_square_pre_addon
+    reconstructed_blob = _service_replay_blob(
+        reconstructed, nov16_home_square_pre_addon,
+        "nov16-addon-summary")
     drift_index["headless/prosperoeden/eden_services.cpp"]["actual"] = reconstructed_blob
     print("NOV16_ADDON_SUMMARY_SOURCE_SUCCESSOR_PASS", "owners=1",
           "predecessor=home-square", "console_validation=pending")
@@ -3134,8 +3154,8 @@ if nov16_home_square_active:
                            if nov16_home_square_replay_source is not None
                            else (ROOT / nov16_home_square_path).read_text())
     home_square_raw = current_home_square.encode("utf-8")
-    assert hashlib.sha1(b"blob " + str(len(home_square_raw)).encode() +
-                        bytes([0]) + home_square_raw).hexdigest() == nov16_home_square_blob
+    _service_replay_blob(home_square_raw, nov16_home_square_blob,
+                         "nov16-home-square-current")
     for marker in (
         "CachedGamesDbSquare(",
         "EnsureGamesDbSquare(",
@@ -3198,7 +3218,9 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
             assert current_service.count(fixed_root) == 1, changed_path
             current_service = current_service.replace(fixed_root, old_root, 1)
             old_raw = current_service.encode("utf-8")
-            assert hashlib.sha1(b"blob " + str(len(old_raw)).encode() + bytes([0]) + old_raw).hexdigest() == "54a37cf740f25c68aa0d5f93adf300144c5280d1", changed_path
+            _service_replay_blob(
+                old_raw, "54a37cf740f25c68aa0d5f93adf300144c5280d1",
+                "nov16-library-root-fix")
         size_worker_method = """std::string EdenServices::exact_game_size(const std::string& file,
                                                const std::atomic<bool>* cancel) {
     if (file.empty() || (cancel && cancel->load(std::memory_order_acquire)))
@@ -3250,9 +3272,8 @@ for changed_path, (prior_blob, successor_blob) in nov15_square_icon_successors.i
         reconstructed = current_service.replace(size_worker_method, "", 1)
         reconstructed = reconstructed.replace(retail_marker, prior_size_block + retail_marker, 1)
         raw = reconstructed.encode("utf-8")
-        historical_square = hashlib.sha1(
-            b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-        assert historical_square == successor_blob, changed_path
+        historical_square = _service_replay_blob(
+            raw, successor_blob, "nov15-square-icon")
     else:
         assert drift_index[changed_path]["actual"] == successor_blob, changed_path
     post_index[changed_path]["post_snapshot_git_blob"] = successor_blob

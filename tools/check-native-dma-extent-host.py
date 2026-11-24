@@ -19,12 +19,40 @@ def selected_sha(value):
     import hashlib
     raw = value.encode("utf-8")
     return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
-integrated_dma = selected_sha(native) in {"0c186d79194135a5d0b300c3a8a6fb0aa503810b", "df2ced96bc384af23e0529f8ab72eba8000a0995", "cb40e4c0de66f8f9d5f6126e6cf898fabacd8805"}
+integrated_dma = selected_sha(native) in {
+    "0c186d79194135a5d0b300c3a8a6fb0aa503810b",
+    "df2ced96bc384af23e0529f8ab72eba8000a0995",
+    "cb40e4c0de66f8f9d5f6126e6cf898fabacd8805",
+    "a2979cc01cdd7679e71af373d187d08302355b9b",
+    "3eb6d0462cde2cdcef613b2bf89d74574c18ea01",
+    "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5",
+}
 if selected_sha(native) == "cb40e4c0de66f8f9d5f6126e6cf898fabacd8805":
     import re
     calls = re.findall(r"(?m)^\s*(?:Unswizzle|Swizzle)Subrect\([\s\S]*?\);", native)
     assert len(calls) == 9 and all(c.count("memory_manager.UsesNativeTiling()") == 1 for c in calls)
     assert "const u64 aligned_depth =" in native and "dst_size != dst_size_wide" in native
+if selected_sha(native) in {
+    "a2979cc01cdd7679e71af373d187d08302355b9b",
+    "3eb6d0462cde2cdcef613b2bf89d74574c18ea01",
+    "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5",
+}:
+    # Exact reviewed GOB3D successors use the same authenticated
+    # source decoder; the new per-side Z arguments are not present in
+    # historical Eden, so never replay them as an old patch hunk.
+    import re
+    calls = re.findall(r"(?m)^\s*(?:Unswizzle|Swizzle)Subrect\([\s\S]*?\);", native)
+    assert len(calls) == 9 and all(c.count("memory_manager.UsesNativeTiling()") == 1 for c in calls)
+    z_calls = sum(bool(re.search(r"memory_manager\.UsesNativeTiling\(\),\s*(?:src|dst)(?:_params)?\.layer", c)) for c in calls)
+    expected_z = {
+        "a2979cc01cdd7679e71af373d187d08302355b9b": 4,
+        "3eb6d0462cde2cdcef613b2bf89d74574c18ea01": 6,
+        "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5": 9,
+    }[selected_sha(native)]
+    assert z_calls == expected_z, (z_calls, expected_z)
+    assert "MAX_SOFTWARE_TILED_DMA_BYTES" in native
+    assert "const u64 aligned_depth =" in native
+    assert "std::vector<u8> tiled_dst" in native
 if selected_sha(native) == "df2ced96bc384af23e0529f8ab72eba8000a0995":
     assert "const u64 aligned_depth =" in native
     assert "const u64 source_rows =" in native

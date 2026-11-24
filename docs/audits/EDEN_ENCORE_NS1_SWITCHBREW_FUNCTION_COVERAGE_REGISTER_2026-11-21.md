@@ -3384,3 +3384,7 @@ Croisement [SwitchBrew Account services](https://switchbrew.org/wiki/Account_ser
 ### 2026-11-25 — BTM provenance : réception de la totalité des divergences au prochain contrôle
 
 Vendor `0e5f7b03f26bae7f950e9293d632b6bd7b80d280` : `btm/btm.cpp`, 12 377 octets, n'avait pas l'empreinte du manifeste après les lots Bluetooth précédents. C++ inchangé ; SHA-256 shipping actuel `fb866c889578be7356ac6205aa404d4b0b3951532f55933ccd5fc90c3077dd5f` inscrit. Le vérificateur strict moteur `verify()` remonte désormais **tous** les mismatches actifs/pinnés en une passe, afin de corriger le groupe restant sans cycles CI un-à-un. Aucune validation console ou progrès du pool historique n'est associé à la réparation. Pool = **732 / 4 853**.
+
+### 2026-11-25 — Lot groupé de quatre empreintes de provenance natives
+
+La CI épinglée précédente a exposé en **une seule passe** les quatre dernières discordances d’empreintes entre manifeste vendor et fichiers C++ actifs : `filesystem/fsp/fsp_srv.cpp` (52 179 octets), `hid/hid_system_server.cpp` (51 896), `ns/application_manager_interface.cpp` (68 229) et `usb/usb.cpp` (15 416). Le vendor `ee53db178e3bb04fb41792602d5d47e68b3f0b21` aligne les quatre SHA-256 sur les octets réellement présents, sans aucune modification C++ et sans altérer les SHA `upstream` de la source Eden épinglée. Moteur compagnon : nouveau gitlink et whitelists/tree exactes. Les contrôles de provenance ne sont pas désactivés. **Pool restant : 732 / 4 853.** Aucune qualification console.

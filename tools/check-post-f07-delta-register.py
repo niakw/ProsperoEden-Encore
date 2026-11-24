@@ -105,6 +105,14 @@ launcher_consolidation = {
         ("e9484e8e433b1199d30bd80826a6b0f8864ada51",
          "190a885cc2e50e440234b79a8b69f10b8aa84d18"),
 }
+# Exact 24/11 loading artwork and generated GamesDB successors over the
+# reviewed Nov23 launcher. No new runtime qualification is implied.
+launcher_loading_successors = {
+    "headless/prosperoeden/frontend.cpp": "96269c1b211a5b58e2a2297e728d3ae52e515f38",
+    "headless/prosperoeden/pe/ui/launcher.cpp": "b0331170dc66cc84593802efbacd1c7db7f81102",
+    "headless/prosperoeden/pe/ui/launcher.hpp": "8d864b35d93aa1afce82cc810175d52ef14c37f2",
+    "headless/prosperoeden/pe/platform/display_egl.cpp": "05577394b785faf99fe1b2a65fb8f3604fcea08f",
+}
 drifts=[]
 successor_hits=set()
 for entry in entries:
@@ -117,7 +125,7 @@ for entry in entries:
     ).strip()
     if entry["path"] in launcher_consolidation:
         current_blob, predecessor_blob = launcher_consolidation[entry["path"]]
-        if actual == current_blob:
+        if actual == current_blob or actual == launcher_loading_successors.get(entry["path"]):
             predecessor = subprocess.check_output(
                 ["git", "show",
                  "e0080f38204bab4cb596a3bed38ba9a625762c86:" + entry["path"]],
@@ -149,7 +157,10 @@ for entry in entries:
             # inline here: admit only its exact full blob, then recover the
             # exact pre-launcher owner from the immutable parent commit before
             # continuing the existing NX/DNSP/R457 historical chain.
-            if actual == "c80d171b9177987f4f29cf675c41a75771c62685":
+            if actual in {
+                "c80d171b9177987f4f29cf675c41a75771c62685",
+                "c35e938004587f5912e34acce38431a9bc5ce27a",
+            }:
                 service_audit_source = subprocess.check_output(
                     ["git", "show",
                      "e0080f38204bab4cb596a3bed38ba9a625762c86:headless/prosperoeden/eden_services.cpp"],

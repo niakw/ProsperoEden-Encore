@@ -2663,7 +2663,10 @@ actual_service_blob = hashlib.sha1(
     b"blob "+str(len(r457_service_source.encode())).encode()+bytes([0])+
     r457_service_source.encode()).hexdigest()
 launcher_service_successor = (
-    actual_service_blob == "c80d171b9177987f4f29cf675c41a75771c62685"
+    actual_service_blob in {
+        "c80d171b9177987f4f29cf675c41a75771c62685",
+        "c35e938004587f5912e34acce38431a9bc5ce27a",
+    }
 )
 if launcher_service_successor:
     # The launcher refactor is independently qualified as an exact successor.
@@ -2790,12 +2793,20 @@ launcher_consolidation_predecessors = {
         "190a885cc2e50e440234b79a8b69f10b8aa84d18",
     ),
 }
+# Exact 24/11 loading artwork and generated GamesDB successors over the
+# reviewed Nov23 launcher. No new runtime qualification is implied.
+launcher_loading_successors = {
+    "headless/prosperoeden/frontend.cpp": "96269c1b211a5b58e2a2297e728d3ae52e515f38",
+    "headless/prosperoeden/pe/ui/launcher.cpp": "b0331170dc66cc84593802efbacd1c7db7f81102",
+    "headless/prosperoeden/pe/ui/launcher.hpp": "8d864b35d93aa1afce82cc810175d52ef14c37f2",
+    "headless/prosperoeden/pe/platform/display_egl.cpp": "05577394b785faf99fe1b2a65fb8f3604fcea08f",
+}
 launcher_consolidation_advanced = 0
 launcher_consolidation_active_paths = set()
 for path, (current_blob, predecessor_blob) in launcher_consolidation_predecessors.items():
     assert path in drift_index, ("Missing launcher consolidation owner", path)
     actual = drift_index[path]["actual"]
-    if actual == current_blob:
+    if actual == current_blob or actual == launcher_loading_successors.get(path):
         drift_index[path]["actual"] = predecessor_blob
         launcher_consolidation_active_paths.add(path)
         launcher_consolidation_advanced += 1

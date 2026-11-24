@@ -605,6 +605,37 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'successors=1', 'rejected_slots=9', 'core_mii_nulls_left=2',
               'pinned_sources=immutable')
 
+        # PDM notify is already part of the frozen NS shipping owner. Layer only the
+        # reviewed local play-log notification successor over that exact generated blob.
+        pdm_rel='src/core/hle/service/ns/ns.cpp'
+        pdm_generated=(stage/pdm_rel).read_bytes()
+        pdm_current=(ACTIVE/pdm_rel).read_bytes()
+        assert pdm_rel in observed and pdm_rel in spec['entries'], (
+            'Missing frozen NS owner for PDM successor',pdm_rel)
+        assert len(pdm_generated)==5478 and sha(pdm_generated)=='a127ff1be0863bc47022473264ee703c3da61eeec70b84866fff9e288b95805f', (
+            'PDM predecessor replay drift',pdm_rel)
+        assert len(pdm_current)==6151 and sha(pdm_current)=='4af9b51074d7a9b95e30030633a60753227abf6af6ced22bc4ed7f286544d189', (
+            'Unreviewed PDM maintained source',pdm_rel)
+        assert spec['entries'][pdm_rel]['active']=='4af9b51074d7a9b95e30030633a60753227abf6af6ced22bc4ed7f286544d189'
+        assert spec['entries'][pdm_rel]['bytes']==6151
+        assert spec['entries'][pdm_rel]['upstream']=='0f937e715ef2fbac9783e7b4e46003bade0eb1cf03ab33e78eac4256a6328f88'
+        pdm_text=pdm_current.decode('utf-8')
+        assert pdm_text.count('&INotifyService::AcceptLocalPlayLogNotification')==6
+        for command in (
+            '{ 8, nullptr, "NotifyLibraryAppletEvent" }',
+            '{ 9, nullptr, "Cmd9" }',
+            '{ 20, nullptr, "Cmd20" }',
+            '{ 30, nullptr, "Cmd30" }',
+            '{ 100, nullptr, "Cmd100" }',
+            '{ 101, nullptr, "Cmd101" }',
+        ):
+            assert pdm_text.count(command)==1, command
+        assert pdm_text.count('&INotifyService::UnsupportedDebugCommand')==1
+        observed[pdm_rel]=spec['entries'][pdm_rel]
+        print('NS1_PDM_NOTIFY_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'accepted_notifications=6', 'newer_unqualified_slots=6',
+              'historical_owner=preserved')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

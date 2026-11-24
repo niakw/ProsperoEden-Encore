@@ -3266,3 +3266,11 @@ Vendor `6bcf1cb61b190766a459334ee462fb74f978e5f2` : `mii.cpp` devient un owner `
 Les **9 commandes fichier/image** encore à `nullptr` — GetAttribute, LoadImage, AddOrUpdateImage, DeleteImages, DeleteFile, DestroyFile, ImportFile, ExportFile, ForceInitialize — sont raccordées à un rejet explicite tant qu'Encore n'a pas de backend fichier Mii Horizon. Les deux NULL du service Mii principal (`Import`/`Export`) restent volontairement intacts : ils ne font pas partie de `miiimg`.
 
 Croisement 4 853 : **9 NULL → D**. **Pool restant = 943 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — PDM notify : journal d'activité absent, notifications locales explicites
+
+Vendor `506bcfd7c74cf131029abeba02a3e37e793dd8c7` : dans l'owner shipping existant `src/core/hle/service/ns/ns.cpp`, les commandes historiques `pdm:ntfy` **0/2/3/4/6/7** sont raccordées à `AcceptLocalPlayLogNotification`. Encore ne persiste pas le journal PDM Horizon ; ces notifications sans payload invité sont donc acquittées localement sans fabriquer de `PlayEvent`, statistique ou historique. La commande debug 5 conserve son rejet explicite existant.
+
+Les commandes plus récentes **8/9/20/30/100/101** restent volontairement `nullptr` : elles ne sont pas utilisées pour gonfler le compteur sans qualification ABI. Le replay moteur exige exactement le predecessor généré `a127ff1b…` (5478 octets), le successor `4af9b510…` (6151 octets), six raccords au NOOP local et les six slots plus récents encore ouverts.
+
+Croisement du miroir 4 853 : **6 NULL → NOOP**. **Pool restant = 937 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

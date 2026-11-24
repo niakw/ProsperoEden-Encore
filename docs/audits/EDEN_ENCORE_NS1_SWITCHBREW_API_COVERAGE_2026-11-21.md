@@ -34,11 +34,11 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 208 | 0 | **208** |
-| **NULL — Handler NULL** | 1 236 | 0 | **1 236** |
+| **NULL — Handler NULL** | 1 234 | 0 | **1 234** |
 | **D — Rejet explicite / historique** | 219 | 33 | **252** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
-| **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
+| **HORS-VERSION — Commande non applicable au firmware cible** | 474 | 1 | **475** |
 | **ABSENT — Commande absente des tables** | 0 | 0 | **0** |
 | **ABI-DIFF — Noms/ABI divergents** | 190 | 0 | **190** |
 | **AMBIGU — Interface ambiguë** | 9 | 0 | **9** |
@@ -5093,7 +5093,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `7` | `GetStateChangeEvent` | — | **IMPL-SRC** (renvoie un KEvent réel de changement d'état ; en mode offline il reste non signalé tant que l'état ne change pas ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `11` | `SubscribeTopic` | — | **NOOP** (adaptation offline explicite : aucune souscription distante NPNS n'est créée ; vendor `3cda4d41`) | 2026-11-23 |
 | npns:s | `12` | `UnsubscribeTopic` | — | **NOOP** (adaptation offline explicite : aucune souscription distante NPNS n'est créée ; vendor `3cda4d41`) | 2026-11-23 |
-| npns:s | `13` | `QueryIsTopicExist` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `13` | `QueryIsTopicExist` | 1.0.0–17.0.1 | **HORS-VERSION** ([SwitchBrew NPNS](https://switchbrew.org/wiki/NPNS_services), absent HOS 23) | 2026-11-24 |
 | npns:s | `21` | `CreateToken` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
 | npns:s | `22` | `CreateTokenWithApplicationId` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
 | npns:s | `23` | `DestroyToken` | — | **IMPL-SRC** (token opaque local 0x28, clé 0x18, cycle create/destroy/validate; aucun BaaS simulé; ABI NS1 23.0.1 confirmée; vendor `487fcd31`) | 2026-11-24 |
@@ -5103,7 +5103,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | npns:s | `31` | `UploadTokenToBaaS` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `32` | `DestroyTokenForBaaS` | — | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
 | npns:s | `33` | `CreateTokenForBaas` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
-| npns:s | `34` | `SetBaasDeviceAccountIdList` | 7.0.0+ | **NULL** ([source C++][ns1-src-100]) | 2026-11-22 |
+| npns:s | `34` | `SetBaasDeviceAccountIdList` | 7.0.0–19.0.1 | **HORS-VERSION** ([SwitchBrew NPNS](https://switchbrew.org/wiki/NPNS_services), absent HOS 23) | 2026-11-24 |
 | npns:s | `101` | `Suspend` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `102` | `Resume` | — | **NOOP** (mode offline explicite : aucun transport Nintendo NPNS n'est exposé, donc la commande est acceptée localement sans session distante ; vendor `1bbeb625`) | 2026-11-23 |
 | npns:s | `103` | `GetState` | — | **IMPL-SRC** ([vendor 81cf89d5](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/81cf89d58b0b4081ea3e276668368040a6a75355) ; état offline explicite correspondant à l'absence de connexion push persistante) | 2026-11-23 |

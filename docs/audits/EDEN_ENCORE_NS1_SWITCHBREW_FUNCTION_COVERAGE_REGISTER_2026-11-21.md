@@ -2559,3 +2559,10 @@ Vendor `5c16e26b1c6ff11145e47a0e7a810eb76d0541a4`. ABI vérifiée avec libnx btm
 Vendor `dd88a95f547dd1fa7f7a2536a41846d73203b213` : les trois handlers `CreateToken`, `DestroyToken`, `QueryIsTokenValid` destinés à `INpnsUser` étaient dupliqués dans `INpnsSystem`, alors que la table utilisateur les référençait. Déplacement des trois définitions vers leur propriétaire réel, sans changement ABI ni nouveau succès factice. Le TU `npns.cpp` est sélectionné par le CMake backports sans overlay manifeste. Vérification structurelle des trois méthodes par classe ; compilation native non effectuée. Le manifeste HID corrigé (`67f68874018169305ebdd44ea06dd32855cb3667`) et ce nouveau vendor sont autorisés par SHA et arbre exact dans le garde SSBO, sans retrait des contrôles de blobs GPU.
 
 **Pool restant inchangé = 1 634** (1 236 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).
+
+
+## NPNS — ABI ListenTo et variantes firmware historiques (24/11/2026)
+
+Vendor `c6e0b135e0aa565fe596298971c7e38add0ca3d3` : les deux handlers `ListenTo` (cmd2 `npns:u/s`) prennent désormais un `u64` ProgramId conforme à [SwIPC](https://reswitched.github.io/SwIPC/ifaces.html) (8 octets) et au [correctif Lichii](https://git.nite07.com/nite/Lichii/commit/8f933d5d99720d63665f5d63512331e26550f6e2?files=src). Le comportement offline NOOP demeure inchangé. En outre, deux lignes du catalogue sont reclassées NULL → HORS-VERSION (et non IMPL-SRC) : `QueryIsTopicExist` cmd13, HOS 1.0.0–17.0.1 ; `SetBaasDeviceAccountIdList` cmd34, HOS 7.0.0–19.0.1, selon [SwitchBrew](https://switchbrew.org/wiki/NPNS_services). Le catalogue garde les lignes historiques. Pas de build PS5 ni validation console.
+
+**Pool restant = 1 632** (1 234 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Baisse de deux entrées par qualification firmware, aucune nouvelle implémentation comptabilisée.

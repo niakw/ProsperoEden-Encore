@@ -2663,3 +2663,7 @@ Vendor `05646df19d6ec2db27c54ebff88fa2db9775d409` : cmd3 `GetErrorContext` respe
 ### 2026-11-24 — AM rights environment : suppression des faux succès
 
 Vendor `9248992c51c0c446e47e6cdb03e407d20c2a69dd` : `IApplicationAccessor::CheckRightsEnvironmentAvailable` ne prétend plus qu'un environnement de droits inexistant est disponible, et cmd132 ne renvoie plus le handle factice `0xDEADBEEF`. Cmd131 retourne `false`; cmd132 initialise la sortie à zéro puis échoue explicitement par `ResultUnknown`. Aucun objet `ns:rt` ou état de licence n'est fabriqué. Les deux STUB deviennent D ; le code d'erreur Horizon exact reste à déterminer. **Pool restant = 1 562** (1 186 NULL + 26 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU). Build natif et console non lancés.
+
+### 2026-11-24 — NIFM : durée de vie des événements de scan
+
+Vendor `b2c0a25ec04f0e90668bf1d1a4b85948aa844c52` : dans l'overlay NS1 actif, `IScanRequest::~IScanRequest` attend la fin du worker avant de fermer les deux KEvent. Le worker pouvait auparavant signaler `evt_scan_complete` après fermeture. Le manifeste d'overlay est actualisé. Le gitlink inclut aussi les deux commits SSL parallèles `f87903de` et `e8889866` ; aucune modification de leur C++ dans ce lot. Le diff depuis `9248992c` ne touche que NIFM/SSL et le test SSL ; les blobs rasterizer et receipt MSAA restent identiques. Pas de reclassement du catalogue pour le correctif de durée de vie ni de validation console. Compilation native non déclenchée.

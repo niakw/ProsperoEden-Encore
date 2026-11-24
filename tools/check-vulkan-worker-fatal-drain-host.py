@@ -587,3 +587,17 @@ with tempfile.TemporaryDirectory(prefix="encore-layer-retirement-") as tmp:
             "-fsanitize=address,undefined","-fno-sanitize-recover=all",str(src),"-o",str(exe)],check=True,timeout=40)
         subprocess.run([str(exe)],check=True,timeout=12)
 print("ENCORE_R24_LAYER_RETIREMENT_PASS normal_wait=1 retired_wait=0 no_fake_tick=1")
+
+# The production shutdown overlay must retain the strict Ampere completion
+# ABI, not merely the inactive vendor generic fence/header declaration.
+strict_native = fences.split("    void SignalNativeSyncPoint(u32 value) {", 1)[1].split("\n    void WaitPendingFences(", 1)[0]
+assert "CreateFence(false)" in strict_native
+assert "SignalFence(" not in strict_native
+assert strict_native.index("uncommitted_operations.emplace_back(std::move(retire))") < strict_native.index("QueueFence(new_fence)") < strict_native.index("fences.push(std::move(new_fence))")
+assert strict_native.count("syncpoint_manager.IncrementHost(value)") == 1
+assert "[this, value] { syncpoint_manager.IncrementHost(value); }" in strict_native
+assert "::Eden::RecordGpuFailure(std::current_exception());" in strict_native
+assert "bool SignalNativeSyncPoint(u32 value) override;" in (ROOT/"headless/vk_rasterizer_shutdown_ps5.h").read_text()
+assert 'configure_file("${EDEN_PORT_DIR}/vk_rasterizer_shutdown_ps5.h"' in cmake
+assert 'configure_file("${EDEN_PORT_DIR}/fence_manager_ps5.h"' in cmake
+print("NS2_STRICT_NATIVE_COMPLETION_SELECTED_SHUTDOWN_OVERLAYS_PASS")

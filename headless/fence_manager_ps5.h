@@ -122,6 +122,41 @@ public:
         SignalFence(std::move(func));
     }
 
+    // Native Ampere completion must retire behind a real GPU fence, even
+    // when Maxwell's configured policy permits an immediate/stubbed fence.
+    // Preserve the shutdown overlay's failure-aware queue publication.
+    void SignalNativeSyncPoint(u32 value) {
+        if constexpr (!can_async_check) {
+            TryReleasePendingFences<false>();
+        }
+        CommitAsyncFlushes();
+        TFence new_fence = CreateFence(false);
+        std::function<void()> retire(
+            [this, value] { syncpoint_manager.IncrementHost(value); });
+        std::unique_lock queue_lock{guard, std::defer_lock};
+        if constexpr (can_async_check) queue_lock.lock();
+        try {
+            uncommitted_operations.emplace_back(std::move(retire));
+            syncpoint_manager.IncrementGuest(value);
+            pending_operations.emplace_back(std::move(uncommitted_operations));
+            // InnerFence::Queue records the scheduler tick and flushes it.
+            QueueFence(new_fence);
+            fences.push(std::move(new_fence));
+        } catch (...) {
+            ::Eden::RecordGpuFailure(std::current_exception());
+            if constexpr (can_async_check) {
+                queue_lock.unlock();
+                cv.notify_all();
+            }
+            throw;
+        }
+        if constexpr (can_async_check) {
+            queue_lock.unlock();
+            cv.notify_all();
+        }
+        rasterizer.InvalidateGPUCache();
+    }
+
     void WaitPendingFences([[maybe_unused]] bool force) {
         if constexpr (!can_async_check) {
             TryReleasePendingFences<true>();

@@ -2172,12 +2172,31 @@ if actual_vendor_pin in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("libounce VM/channel successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
-if actual_vendor_pin == "1918d6f0730c51bfe47586c3908600163cf27578":
+if actual_vendor_pin == "a14dc71f1a6211695f0d3542a46f385f20c2be4c":
     # Exact NS2 GPU lifecycle/VA successor. The downstream FC27/P0 source
     # receipts remain authoritative; this only qualifies the selected tree.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "4f062faec6dca220426572f246033099de504bfc"
+    ).strip() == "64c182b1497242b87b7c059606b27607092beef3"
+    # Seal every changed owner in the NS2 strict-completion successor.
+    # Later FC27/P0 checks may replay historical receipts only after these
+    # exact blobs and the complete vendor tree have been authenticated.
+    for relative, expected_blob in {
+        "encore-active/eden-backports/src/video_core/fence_manager.h": "f1c72747a9d8ecd38eb042bcffadb1209cc9fe80",
+        "encore-active/eden-core/src/video_core/host1x/syncpoint_manager.cpp": "abe89b570a18508123a5c14c49cf5a43935f620c",
+        "encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_rasterizer.h": "8bd6f2a4e489aa608fc4420d2ff5847b7c12e165",
+        "encore-active/eden-vulkan/vulkan_rasterizer.cpp": "e5baa7f438d8caf11327989087db38ed1ca053a4",
+        "encore-active/ns2-runtime/gpu_dispatch/video_core/engines/puller.cpp": "0eef39a957e2413b07a6d92b7295479248a88a60",
+        "encore-active/ns2-runtime/video_decoder/core/hle/service/am/service/graphics_video_decoder_session.cpp": "c917dfa128d05792edd942e562eab62d83808abf",
+        "encore-active/ns2-runtime/vulkan_abi/video_core/rasterizer_interface.h": "74587c78870735bb23d2430415f3742b9e7cca68",
+        "tests/fc27_deferred_page_protection_host.py": "552298832efad742a0cf8f0619e6da197a4b3427",
+        "tests/ns2_gpu_identity_mapping_source.py": "70f1a05c62f278ab0f01677c5be9577ac3eed4d3",
+        "tests/ns2_syncpt_bootstrap_source.py": "22383b8e49626e1ac3f022563adad446616f5420",
+        "tests/ps5_host1x_wait_notification_host.py": "3365c5e9b857cca98d80a4bc8134306695feb171",
+    }.items():
+        raw=(V/relative).read_bytes()
+        actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)

@@ -13,7 +13,7 @@ import tempfile
 from ci.ps5_cache_diag_receipt import (
     normalize_for_historical_proof, reverse_immutable_snapshot_successor,
     reverse_reviewed_source, PARALLEL_TIMING_REVERSES, PARALLEL_TRANSLATION_REVERSES,
-    PARALLEL_SNAPSHOT_RETRY_REVERSES,
+    PARALLEL_SNAPSHOT_RETRY_REVERSES, PREWARM_CHANNEL_REVERSES,
 )
 def git_blob_sha(text):
     data=text.encode('utf-8')
@@ -2825,6 +2825,13 @@ int main() { for (int i = 0; i < 5; ++i) run(i); }
     # Check the complete reviewed retry hunks in both owners before replaying
     # the older snapshot receipt. The generated source has independent
     # diagnostic differences, so the native raw hash is checked separately.
+    # The prewarm worker must not touch the currently bound guest channel.
+    assert git_blob_sha(native_raw_n3m) == "206d845256bbdc1d5f8d660aeed718ad4f607063"
+    native_raw_n3m = reverse_reviewed_source(
+        native_raw_n3m, PREWARM_CHANNEL_REVERSES, "native disk prewarm independence")
+    assert git_blob_sha(native_raw_n3m) == "b246cf9562f8f0c37d287f7049874f04561a4b8f"
+    generated_raw_n3m = reverse_reviewed_source(
+        generated_raw_n3m, PREWARM_CHANNEL_REVERSES, "generated disk prewarm independence")
     native_raw_n3m = reverse_reviewed_source(
         native_raw_n3m, PARALLEL_SNAPSHOT_RETRY_REVERSES, "native NS1 serial retry")
     assert git_blob_sha(native_raw_n3m) == "fc537323bb9f63d70ef5f8cedd65886e6a0099c0"

@@ -7449,3 +7449,12 @@ apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
     "envs = std::move(environments.envs)",
     "envs = std::move(serialized_environments.envs)",
     "NS1 snapshot retry")
+
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    const auto& snapshot_tex_header = maxwell3d->regs.tex_header;\n    const GPUVAddr snapshot_texture_base = snapshot_tex_header.Address();\n    const u32 snapshot_texture_limit = static_cast<u32>(snapshot_tex_header.limit);\n    const bool snapshot_via_header_index =\n        maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;\n    const u32 snapshot_viewport_transform_state =\n        maxwell3d->regs.viewport_scale_offset_enabled;\n    const u64 snapshot_texture_bytes =\n        (u64{snapshot_texture_limit} + 1) * sizeof(Tegra::Texture::TICEntry);\n",
+    "    GPUVAddr snapshot_texture_base{};\n    u32 snapshot_texture_limit{};\n    bool snapshot_via_header_index{};\n    u32 snapshot_viewport_transform_state{};\n",
+    "disk prewarm channel independence")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    if (parallel_translate_stages) {\n        bool snapshot_ok =\n",
+    "    if (parallel_translate_stages) {\n        // Disk prewarm uses FileEnvironment and can run without a bound\n        // graphics channel. Only the live NS1 owner may read these registers.\n        const auto& snapshot_tex_header = maxwell3d->regs.tex_header;\n        snapshot_texture_base = snapshot_tex_header.Address();\n        snapshot_texture_limit = static_cast<u32>(snapshot_tex_header.limit);\n        snapshot_via_header_index =\n            maxwell3d->regs.sampler_binding == Maxwell::SamplerBinding::ViaHeaderBinding;\n        snapshot_viewport_transform_state =\n            maxwell3d->regs.viewport_scale_offset_enabled;\n        const u64 snapshot_texture_bytes =\n            (u64{snapshot_texture_limit} + 1) * sizeof(Tegra::Texture::TICEntry);\n        bool snapshot_ok =\n",
+    "disk prewarm channel independence")

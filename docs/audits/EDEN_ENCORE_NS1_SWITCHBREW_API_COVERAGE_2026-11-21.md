@@ -25,14 +25,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 799 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 799 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 801 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 801 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 719 | 80 | **1 799** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 721 | 80 | **1 801** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 152 | 3 | **155** |
-| **STUB — Stub / résultat simulé** | 45 | 0 | **45** |
+| **STUB — Stub / résultat simulé** | 43 | 0 | **43** |
 | **NOOP — No-op documenté** | 217 | 0 | **217** |
 | **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
@@ -2626,8 +2626,8 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | audren:u | `6` | `ListAudioDeviceNameAuto` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `7` | `SetAudioDeviceOutputVolumeAuto` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `8` | `GetAudioDeviceOutputVolumeAuto` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-049]) | 2026-11-22 |
-| audren:u | `10` | `GetActiveAudioDeviceNameAuto` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
-| audren:u | `11` | `QueryAudioDeviceInputEvent` | 3.0.0+ | **STUB** ([source C++][ns1-src-049]) | 2026-11-22 |
+| audren:u | `10` | `GetActiveAudioDeviceNameAuto` | 3.0.0+ | **IMPL-SRC** ([vendor fe95e74d](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/fe95e74d1c59f5a064ee81d98d630446bddd508d) ; périphérique virtuel AudioTvOutput cohérent avec le sink AudioCore et Set/Get volume, comportement recroisé Strato ; PS5 non validé) | 2026-11-24 |
+| audren:u | `11` | `QueryAudioDeviceInputEvent` | 3.0.0+ | **IMPL-SRC** ([vendor fe95e74d](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/fe95e74d1c59f5a064ee81d98d630446bddd508d) ; KReadableEvent réel détenu par ServiceContext, même événement de changement de périphérique que le chemin output, recroisé Strato ; PS5 non validé) | 2026-11-24 |
 | audren:u | `12` | `QueryAudioDeviceOutputEvent` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-049]) | 2026-11-22 |
 | audren:u | `13` | `GetAudioSystemMasterVolumeSetting` | 5.0.0+ | **HORS-VERSION** (ancienne commande retirée ; sur l'ABI audio actuelle l'ID 13 est réutilisé pour `GetActiveAudioOutputDeviceName`, donc cette ligne historique n'est pas applicable à HOS 23) | 2026-11-23 |
 | audout:a | `0` | `RequestSuspendAudioOuts` | — | **ABI-DIFF** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/audio/audio.cpp) ; slot 0 de audout:a est nullptr sous le nom `RequestSuspend`, pas `RequestSuspendAudioOuts` ; statique, PS5 non validé) | 2026-11-22 |

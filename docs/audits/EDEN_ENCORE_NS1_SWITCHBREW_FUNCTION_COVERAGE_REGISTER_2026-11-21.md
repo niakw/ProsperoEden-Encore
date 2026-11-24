@@ -2623,3 +2623,7 @@ Vendor `8597725202341eb5bf2086977c4d7d60b89e976b` : `InitializeMonitor` place d�
 ### 2026-11-24 — AM : statistiques de jeu réelles
 
 Vendor `d12a06afee1436debb6d691cc098513daed0cd24` : `IApplicationFunctions` cmd110/111 réutilisent désormais les mêmes sources de vérité déjà actives dans `pdm:qry` : `PlayTimeManager` pour le temps de jeu persistant et `LaunchTimestampCache` pour le compteur de lancements. La variante UID ne fabrique pas de données par utilisateur : Encore n'a qu'une base de temps de jeu pour le profil actif, elle expose donc ces données réelles. Le manifeste de l'overlay AM est recalculé. `GetCradleFwVersion` cmd40 est aussi reclassé NOOP : le C++ actif retourne explicitement 0/0/0/0 car la PS5 n'a pas de firmware cradle Horizon. **Pool restant = 1 587** (1 188 NULL + 45 STUB + 155 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Build PS5 et console non lancés.
+
+### 2026-11-24 — AudioDevice : périphérique actif et événement input
+
+Vendor `fe95e74d1c59f5a064ee81d98d630446bddd508d` : cmd10 expose explicitement le périphérique Horizon virtuel `AudioTvOutput`, déjà utilisé par les chemins de volume et adossé au sink AudioCore actif ; cmd11 retourne le KReadableEvent ServiceContext réellement détenu par IAudioDevice, comme le chemin output. Le modèle d'événement partagé et le nom `AudioTvOutput` ont été recroisés avec l'implémentation indépendante Strato. Deux STUB deviennent IMPL-SRC. **Pool restant = 1 585** (1 188 NULL + 43 STUB + 155 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Console non validée.

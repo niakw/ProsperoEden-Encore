@@ -32,8 +32,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **IMPL-SRC — Implémentation source retrouvée** | 1 721 | 80 | **1 801** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 153 | 3 | **156** |
-| **STUB — Stub / résultat simulé** | 42 | 0 | **42** |
-| **NOOP — No-op documenté** | 217 | 0 | **217** |
+| **STUB — Stub / résultat simulé** | 41 | 0 | **41** |
+| **NOOP — No-op documenté** | 218 | 0 | **218** |
 | **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -5796,7 +5796,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | ssl | `2` | `GetCertificates` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; appel au magasin de certificats ; pas de validation PS5) | 2026-11-22 |
 | ssl | `3` | `GetCertificateBufSize` | — | **IMPL-SRC** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; appel au magasin de certificats ; pas de validation PS5) | 2026-11-22 |
 | ssl | `4` | `DebugIoctl` | 3.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
-| ssl | `5` | `SetInterfaceVersion` | 3.0.0+ | **STUB** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; SetInterfaceVersion ignore la valeur reçue ; pas de validation PS5) | 2026-11-22 |
+| ssl | `5` | `SetInterfaceVersion` | 3.0.0+ | **NOOP** ([vendor 1a42d4ae](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/1a42d4aed7974212294424c370f9e4e9e47ff08a) ; sélection de génération IPC uniquement, libnx envoie 1/2/3 ; HLE expose directement le superset compatible ; comportement no-op recroisé Strato/Ryujinx ; PS5 non validé) | 2026-11-24 |
 | ssl | `6` | `FlushSessionCache` | 5.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
 | ssl | `7` | `SetDebugOption` | 6.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |
 | ssl | `8` | `GetDebugOption` | 6.0.0+ | **NULL** ([table/corps C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ssl/ssl.cpp) ; service ssl standard enregistré comme ISslService (et non ssl:s) ; nullptr ; pas de validation PS5) | 2026-11-22 |

@@ -2631,3 +2631,7 @@ Vendor `fe95e74d1c59f5a064ee81d98d630446bddd508d` : cmd10 expose explicitement l
 ### 2026-11-24 — nvdrv GetStatus : ABI et état d'initialisation
 
 Vendor `f828515505b9dcc6b5571d45815c6bca1ce62a9a` : cmd6 ne répond plus toujours Success sans payload. Avant Initialize il renvoie `NvResult::NotInitialized`; après Initialize il renvoie le bloc d'état de 0x20 octets puis `NvResult::Success`, conformément au contrat recroisé Ryujinx. Les quatre compteurs mémoire internes du work-buffer ne sont pas modélisés dans Encore et restent à zéro, donc le statut reste **PARTIEL**, pas IMPL-SRC. **Pool inchangé = 1 585** (1 188 NULL + 42 STUB + 156 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Console non validée.
+
+### 2026-11-24 — SSL SetInterfaceVersion
+
+Vendor `1a42d4aed7974212294424c370f9e4e9e47ff08a` : cmd5 est explicitement documenté comme no-op HLE. libnx utilise les valeurs 1/2/3 pour sélectionner les générations d'interface HOS 3/5/6+, tandis qu'Encore expose déjà le superset IPC compatible ; Strato et Ryujinx appliquent également ce setter sans état backend. **Pool restant = 1 584** (1 188 NULL + 41 STUB + 156 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Console non validée.

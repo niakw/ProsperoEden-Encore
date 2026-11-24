@@ -2963,7 +2963,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | bsd:u, bsd:s | `28` | `GetResourceStatistics` | — | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `29` | `RecvMMsg` | 3.0.0+ | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsd:u, bsd:s | `30` | `SendMMsg` | 3.0.0+ | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
-| bsd:u, bsd:s | `31` | `EventFd` | 7.0.0+ | **STUB** ([source C++][ns1-src-026]) | 2026-11-22 |
+| bsd:u, bsd:s | `31` | `EventFd` | 7.0.0+ | **IMPL-SRC** (runtime actif : EventFdState + EventFdImpl, compteur/semaphore/nonblock, read/write et intégration Select/Poll ; ABI fd+errno sérialisée ; PS5 non validé) | 2026-11-24 |
 | bsd:u, bsd:s | `32` | `RegisterResourceStatisticsName` | 7.0.0+ | **NULL** ([source C++][ns1-src-026]) | 2026-11-22 |
 | bsdcfg | `0` | `SetIfUp` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
 | bsdcfg | `1` | `SetIfUpWithEvent` | — | **NOOP** (ABI NS1 23.0.1 respectée; contrôle interface/DHCP/ARP laissé à la stack réseau hôte, sans mutation de l'interface PS5; vendor `02646218`, PS5 non validé) | 2026-11-22 |
@@ -5770,7 +5770,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pdm:ntfy | `7` | `ResumeUserAccountEventService` | 4.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | pdm:qry | `0` | `QueryApplicationEvent` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 0 : catalogue `QueryApplicationEvent` vs table active `QueryAppletEvent` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `4` | `QueryPlayStatisticsByApplicationId` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
-| pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | **STUB** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; statistiques fictives : total_launches forcé à 1, corps TODO ; non validé PS5) | 2026-11-22 |
+| pdm:qry | `5` | `QueryPlayStatisticsByApplicationIdAndUserAccountId` | — | **PARTIEL** ([vendor 175b4f2d](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/175b4f2d6c9511f01aee10757a6255d84d16aab0) ; ABI HOS16+/23 rétablie en 0x48, playtime ns + launch count + dernier timestamp persistés réels ; indices/first timestamp du journal PDM global non disponibles ; PS5 non validé) | 2026-11-24 |
 | pdm:qry | `7` | `QueryLastPlayTime` | — | **HORS-VERSION** (HOS 23.0.1 PDM utilise l'ID 17 pour `QueryLastPlayTime`; l'ancien ID 7 n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | pdm:qry | `8` | `QueryPlayEvent` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
 | pdm:qry | `9` | `GetAvailablePlayEventRange` | — | **NULL** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; handler explicitement nullptr (ID et nom concordants) ; non validé PS5) | 2026-11-22 |
@@ -6590,3 +6590,9 @@ Vendor `a8927dbd3cf2840021a8adee1f42d701a001c564`. Cmd63 retourne désormais ré
 Vendor `5c16e26b1c6ff11145e47a0e7a810eb76d0541a4`. ABI vérifiée avec libnx btmu.c et btdrv_types.h. **8 NULL sortent du pool** : cmd5/10/20/21/25 → IMPL-SRC (listes vides cohérentes avec le backend BLE invité absent et événement pairing dédié) ; cmd4/7/9 → NOOP (arrêt idempotent d'un scan inactif). Les opérations radio, pairing et GATT restent ouvertes. En parallèle NSD corrige l'initialisation du tampon ResolveEx et le nombre de mots de réponse du setter. Aucun résultat console revendiqué.
 
 **Pool restant = 1 634** (1 236 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).
+
+### Recalcul depuis les lignes du tableau + PDM/EventFd — 24/11/2026
+
+Le footer historique était resté à 1 634 malgré les lots déjà intégrés. Recalcul direct des lignes du tableau au HEAD : EventFd cmd31 est reclassé **IMPL-SRC** car son runtime actif implémente compteur, flags, read/write et réveil Select/Poll ; pdm:qry cmd5 passe **STUB → PARTIEL** après rétablissement de l'ABI HOS23 0x48 et des valeurs persistées réelles, les index/first timestamps PDM restant indisponibles.
+
+**Compteur courant recalculé : 1727 IMPL-SRC / 154 PARTIEL / 29 STUB / 213 NOOP / 1186 NULL / 224 D / 199 INACCESSIBLE / 474 HORS-VERSION / 187 ABI-DIFF / 9 AMBIGU = 4 853. Pool restant : 1565.**

@@ -21,6 +21,7 @@
 | SwitchBrew GSV | https://www.switchbrew.org/wiki/Switch_2%3A_GSV_services — consultation 2026-11-21 |
 | SwitchBrew NV services | https://www.switchbrew.org/wiki/NV_services — consultation 2026-11-21 |
 | Client SDK recroisé | https://github.com/vexcited/fefw — notamment `src/nn/gpu/gpu_sdk_*.cpp` |
+| Client libounce Switch 2 recroisé (24/11) | `ouncebrew/libounce` `32e7ac414ee1cd98922f66a059be5a85e99feea5` — `gsv.c`/`gsv.h` : cycle 901→906→close→903 et ABI Worker 211/212/213 |
 | Validation console du présent couple | **Aucune** : pas de build PS5, pas de première soumission/frame revendiquée |
 
 **Codes** : **C** = implémentation C++ active et cohérente au niveau source/CI hôte ; **P** = partielle, contrat fusionné ou divergence ABI/nomenclature à revoir ; **M** = fonctionnalité non implémentée, que le dispatcher ait un refus/stub explicite ou aucun handler renseigné ; **U** = ID connu mais nom/ABI/sémantique publique insuffisante ; **V** = variante de version non couverte intentionnellement tant que le firmware invité cible ne la requiert pas.
@@ -38,14 +39,14 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 > Périmètre **316 commandes NS2**. Couverture source ≠ build PS5 ≠ validation console.
 
-- **F** : **C=175**, **P=3**, M=108, U=24, V=6. Seule requalification F : **VI2 53, U → C-source** ; le tick est produit après libération du buffer, mais l'ABI et le résultat console restent à qualifier.
+- **F** : **C=176**, **P=3**, M=107, U=24, V=6. Seule requalification F : **VI2 53, U → C-source** ; le tick est produit après libération du buffer, mais l'ABI et le résultat console restent à qualifier.
 - **R** : **316/316** disposent d'un dispatch explicite ou d'un refus/stub identifié.
 
 | Statut fonctionnel | Total | Traitement indiqué | Sans traitement |
 | --- | ---: | ---: | ---: |
-| C — implémentation source | **175** | 175 | 0 |
+| C — implémentation source | **176** | 176 | 0 |
 | P — partielle | **3** | 3 | 0 |
-| M — non implémenté | 108 | 108 | 0 |
+| M — non implémenté | 107 | 107 | 0 |
 | U — contrat insuffisant | 24 | 24 | 0 |
 | V — ancienne variante firmware | 6 | 6 | 0 |
 | **Total** | **316** | **316** | **0** |
@@ -62,7 +63,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 
 ## 1. UserSession GSV — liste SwitchBrew complète
 
-État courant de la table (22/11, branche de couverture) : 142 commandes recensées ; C=55, P=0, M=70, U=17. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
+État courant de la table (24/11, `main`) : 142 commandes recensées ; C=56, P=0, M=69, U=17. État initial historique du 21/11 : C=27, P=26, M=72, U=17. Les divergences de nom sont volontairement visibles : elles signalent les endroits où la simple présence d’un handler ne suffit pas.
 
 | Cmd | Interface | Nom SwitchBrew | Statut fonctionnel (F) | Traitement déclaré (R) | Handler Encore actif | Écart / raison |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -164,7 +165,7 @@ Une commande connue peut recevoir un **handler nommé** afin que la couverture s
 | 691 | Camera | CalculateImageArraySize | C | HANDLER INDIQUÉ | CalculateFeatureImagePoolRequirements | Lichii common feature-image template; generic block geometry + format Bpp, includes observed MKW 0x38 and fails closed on unknown formats |
 | 901 | VideoDecoder | CreateVideoDecoderContext | C | HANDLER INDIQUÉ | InitializeVideoCodecContext | Lichii SDK : 901 précède 902 et ne retourne pas d'objet ; Encore valide no-input + GPU context/NVDRV avant succès |
 | 902 | VideoDecoder | InitializeVideoDecoderContext | C | HANDLER INDIQUÉ | OpenVideoDecoderSession | Lichii SDK : 902 retourne la session decoder MOVE ; Encore valide no-input, crée la vraie IGraphicsVideoDecoderSession et rollback OOM |
-| 903 | VideoDecoder | DestroyVideoDecoderContext | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler UserSession ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
+| 903 | VideoDecoder | DestroyVideoDecoderContext | C | HANDLER INDIQUÉ | ReleaseVideoDecoderAccess | libounce `32e7ac4` : 906 ouvre un unique creator par root ; le client ferme le MOVE handle puis 903 libère l’état racine. Encore conserve ce lease, refuse la réouverture avant 903 et ne libère qu’après fermeture effective du creator. Vendor `042204fd`, console non qualifiée. |
 | 904 | VideoDecoderForSystem | InitializeVideoDecoderContextForSystem | M | STUB NOMMÉ | UnavailableDocumentedFeature | pas de handler ; handler TIPC explicite, NotImplemented sans objet ni handle (non fonctionnel) |
 | 905 | VideoDecoder | InitializeVideoDecoderContext2 | C | HANDLER INDIQUÉ | OpenVideoDecoderSession | Lichii SDK : 905(u8) variante Initialize(bool), même session MOVE que 902 ; Encore borne la charge à un octet et conserve le vrai backend decoder |
 | 911 | VideoDecoder | InitializeDecoderImagePool | C | HANDLER INDIQUÉ | CreateVideoImagePool | Lichii : preference[16] + u32 count + u32 memory id, retour first image id ; Encore valide 18 mots, backing owner/size, pin et pool réel |
@@ -364,7 +365,7 @@ La numérotation SwitchBrew change entre 19.x et 20.0+. Le runtime actuel suit l
 | 210 | [20.0.0+] SetGpuSegmentSdkDebugLabel | C | HANDLER INDIQUÉ | SetGpuSegmentSdkDebugLabel | actif |
 | 211 | [20.0.0+] NormalMapGpuMemory4K | C | HANDLER INDIQUÉ | NormalMapGpuMemory4K | GMMU réel |
 | 212 | [20.0.0+] NormalModifyMemoryKind4K | C | HANDLER INDIQUÉ | NormalModifyGpuMemory4K | actif |
-| 213 | [20.0.0+] NormalUnmapGpuMemory4K | C | HANDLER INDIQUÉ | NormalUnmapGpuMemory4K | actif |
+| 213 | [20.0.0+] NormalUnmapGpuMemory4K | C | HANDLER INDIQUÉ | NormalUnmapGpuMemory4K | libounce/Lichii : notification par slot et réponse TIPC `Result` seule ; le `u64` de taille synthétique a été retiré dans vendor `042204fd` |
 | 214 | [20.0.0+] CreateSparseRegion | C | HANDLER INDIQUÉ | CreateSparseRegion | sparse réel |
 | 215 | [20.0.0+] DestroySparseRegion | C | HANDLER INDIQUÉ | DestroySparseRegion | actif |
 | 216 | [20.0.0+] ExecuteSparseMapRequests | C | HANDLER INDIQUÉ | ExecuteSparseMapRequests | actif |

@@ -181,6 +181,7 @@ def main()->int:
         (901, "InitializeVideoCodecContext"),
         (902, "OpenVideoDecoderSession"), (905, "OpenVideoDecoderSession"),
         (906, "OpenVideoDecoderSession"),
+        (903, "ReleaseVideoDecoderAccess"),
         (911, "CreateVideoImagePool"), (912, "DestroyVideoImagePool"),
         (961, "GetCpuVideoImageDescriptor"),
         (426, "MapVideoGpuImage"), (427, "UnmapVideoGpuImage"),
@@ -188,9 +189,22 @@ def main()->int:
     ):
         assert '{'+str(command)+', &IGraphicsSupervisor::'+method in text
     init_video = text.split('void IGraphicsSupervisor::InitializeVideoCodecContext(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    release_video = text.split('void IGraphicsSupervisor::ReleaseVideoDecoderAccess(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
     open_video = text.split('void IGraphicsSupervisor::OpenVideoDecoderSession(HLERequestContext& ctx) {',1)[1].split('\n}',1)[0]
+    for proof in (
+        'packet[0] == 16 + 903 && packet[1] == 0',
+        'm_video_decoder_access_held && m_video_decoder_creator.expired()',
+        'm_video_decoder_access_held = false;',
+        'm_video_decoder_creator.reset();',
+    ):
+        assert proof in release_video, 'Missing libounce 903 root decoder release: '+proof
     assert 'cmd == 905 ? (w[1] == 1 && w[2] <= 0xffU)' in open_video
+    assert '!m_video_decoder_access_held' in open_video
+    assert 'creator = handler;' in open_video
     assert 'ctx.AddMoveObject(client);' in open_video
+    assert open_video.index('ctx.AddMoveObject(client);') < open_video.index(
+        'm_video_decoder_access_held = true;')
+    assert 'm_video_decoder_creator = std::move(creator);' in open_video
     assert 'IPC::ResponseBuilder rb{ctx, 2, 0, 1};' in open_video
     for command in (1001, 1002):
         assert '{'+str(command)+', &IGraphicsSupervisor::UnavailableVideoEncoder' in text
@@ -213,6 +227,11 @@ def main()->int:
     )[1].split('namespace GW = GpuWorkerProtocol;', 1)[0]
     assert 'handlers_tipc.contains(ctx.GetCommand())' in worker_fallback
     assert 'Kernel::ResultNotImplemented.raw' in worker_fallback
+    worker_213 = gpu_worker.split(
+        'void IGpuWorker::NormalUnmapGpuMemory4K(HLERequestContext& ctx) {', 1
+    )[1].split('void IGpuWorker::CreateSparseRegion(HLERequestContext& ctx) {', 1)[0]
+    assert 'IPC::ResponseBuilder rb{ctx, 2};' in worker_213
+    assert 'rb.Push(unmapped);' not in worker_213
     for fw19 in (201, 202, 203, 204, 205, 207):
         assert ('{'+str(fw19)+', &IGpuWorker::') not in gpu_worker
     gpu_session = (ROOT / 'vendor/encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp').read_text()
@@ -269,10 +288,10 @@ def main()->int:
         616, 620, 621, 622, 623, 624, 626, 627, 628, 629, 630, 632,
         633, 634, 636, 637, 638, 639, 640, 641, 650, 651, 652, 653,
         654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665,
-        666, 667, 903, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
+        666, 667, 904, 921, 922, 1003, 1004, 1011, 1012, 1021,
         1022, 1203, 1301, 1302, 1325, 1326, 1411,
     )
-    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 66
+    assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 65
     assert '{126, &IGraphicsSupervisor::QuerySessionMode, "GetSessionFlag"}' in text
     assert 'm_bootstrap.QuerySessionMode(packet, mode)' in text
     for command in (1501, 1502):

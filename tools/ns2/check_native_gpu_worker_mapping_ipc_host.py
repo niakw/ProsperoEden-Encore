@@ -162,19 +162,19 @@ static HLERequestContext valid_map() {
     HLERequestContext c{};
     c.command=211;
     c.packet={0xe3,16,7,0x20000,0,0x21fff,0,27,
-              0,0,0,0,0,0,0,1,0,3};
+              0,0,0,0,0,0,0,1,1,3};
     return c;
 }
 static HLERequestContext valid_modify() {
     HLERequestContext c{};
     c.command=212;
-    c.packet={0xe4,9,7,0x20000,0,0x21fff,0,0,0,0,3};
+    c.packet={0xe4,9,7,0x20000,0,0x21fff,0,0,0,1,3};
     return c;
 }
 static HLERequestContext valid_unmap() {
     HLERequestContext c{};
     c.command=213;
-    c.packet={0xe5,7,7,0x20000,0,0x21fff,0,0,3};
+    c.packet={0xe5,7,7,0x20000,0,0x21fff,0,1,3};
     return c;
 }
 int main() {
@@ -229,13 +229,14 @@ int main() {
     as.next_unmap=Service::Nvidia::NvResult::InvalidState;
     auto failed_unmap=valid_unmap();
     w.NormalUnmapGpuMemory4K(failed_unmap);
-    assert(failed_unmap.words==4 && failed_unmap.reply[0]==Kernel::ResultInvalidState.raw);
-    assert(failed_unmap.reply[1]==0 && w.m_mappings.Count()==1);
+    assert(failed_unmap.words==2 && failed_unmap.reply.size()==1 &&
+           failed_unmap.reply[0]==Kernel::ResultInvalidState.raw);
+    assert(w.m_mappings.Count()==1);
     assert(event.signals==2 && as.unmap_calls==1);
     as.next_unmap=Service::Nvidia::NvResult::Success;
     auto good_unmap=valid_unmap();
     w.NormalUnmapGpuMemory4K(good_unmap);
-    assert(good_unmap.reply[0]==0 && good_unmap.reply[1]==0x2000);
+    assert(good_unmap.words==2 && good_unmap.reply.size()==1 && good_unmap.reply[0]==0);
     assert(w.m_mappings.Count()==0 && event.signals==3 && as.unmap_calls==2);
     auto repeated=valid_unmap();
     w.NormalUnmapGpuMemory4K(repeated);

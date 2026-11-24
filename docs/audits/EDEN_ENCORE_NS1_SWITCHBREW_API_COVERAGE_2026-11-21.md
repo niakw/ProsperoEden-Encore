@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 772 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 772 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 774 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 774 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 692 | 80 | **1 772** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 694 | 80 | **1 774** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 151 | 3 | **154** |
+| **PARTIEL — Implémentation partielle** | 150 | 3 | **153** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 213 | 0 | **213** |
-| **NULL — Handler NULL** | 1 213 | 0 | **1 213** |
+| **NULL — Handler NULL** | 1 212 | 0 | **1 212** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -3502,8 +3502,8 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | IApplicationDisplayService | `4203` | `SetDisplayLayerStack` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `4205` | `SetDisplayPowerState` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `4206` | `SetDefaultDisplay` | 4.0.0+ | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
-| IApplicationDisplayService | `6000` | `AddToLayerStack` | — | **PARTIEL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
-| IApplicationDisplayService | `6001` | `RemoveFromLayerStack` | — | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
+| IApplicationDisplayService | `6000` | `AddToLayerStack` | — | **IMPL-SRC** ([vendor 15b31ec7](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/15b31ec775aea551bd126188c8e6e03987474bd2) ; interface réelle IManagerDisplayService ; modification atomique du bit de pile du compositeur existant, identifiants validés ; PS5 non validé) | 2026-11-24 |
+| IApplicationDisplayService | `6001` | `RemoveFromLayerStack` | — | **IMPL-SRC** ([vendor 15b31ec7](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/15b31ec775aea551bd126188c8e6e03987474bd2) ; interface réelle IManagerDisplayService ; modification atomique du bit de pile du compositeur existant, identifiants validés ; PS5 non validé) | 2026-11-24 |
 | IApplicationDisplayService | `6002` | `SetLayerVisibility` | — | **IMPL-SRC** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `6003` | `SetLayerConfig` | 5.0.0+ | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |
 | IApplicationDisplayService | `6004` | `AttachLayerPresentationTracer` | 5.0.0+ | **NULL** ([source VI](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/vi/manager_display_service.cpp) ; interface réelle `IManagerDisplayService`, ID et nom recroisés ; statique, non validé PS5) | 2026-11-22 |

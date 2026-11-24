@@ -2753,3 +2753,10 @@ Vendor `65cffbdeed0bf25fe1bf5b840450a426e1f3b255` : cmd14 `ResolverSetOptionRequ
 Vendor `4ee2d58ce739af8e91d78794d6859b4662f8cb86` : cmd1 `StartMonitoring` consomme désormais le `u64 client_pid` envoyé par libnx (avec le PID descriptor géré par l'IPC) au lieu d'ignorer entièrement la requête. Libnx n'attend aucun payload de réponse. Encore n'a pas de scheduler de monitoring socket séparé : le backend BSD vivant est déjà attaché à la durée de vie du service, donc l'enregistrement est un **NOOP contractuel** et non un faux monitoring. Référence croisée : libnx `_bsdStartMonitoring`, Ryujinx et implémentations HOS indépendantes. **1 STUB → NOOP.**
 
 **Pool restant = 1 540** : 1 181 NULL + 9 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM : suppression du faux handle indirect-layer
+
+Vendor `301c0bda4d9e5d81320361ea5ca24ab5a8cffcd2` : `ILibraryAppletAccessor::GetIndirectLayerConsumerHandle` (cmd160) ne renvoie plus `Success + 0xDEADBEEF`. Encore n'a actuellement aucun backend VI indirect-layer complet : les créations/destructions/endpoints VI correspondants restent absents et `GetIndirectLayerImageMap` ne produit pas d'image. Le handler initialise donc la sortie à zéro puis échoue explicitement par `ResultUnknown`, au lieu de publier un handle impossible à consommer. Ryujinx montre qu'une implémentation complète exige un registre de handles lié à l'applet ; ce registre n'est pas fabriqué tant que le backend VI n'existe pas. **1 STUB → D.**
+
+**Pool restant = 1 539** : 1 181 NULL + 8 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

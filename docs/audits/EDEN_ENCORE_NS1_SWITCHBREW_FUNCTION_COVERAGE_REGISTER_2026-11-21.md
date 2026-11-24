@@ -3090,3 +3090,9 @@ Le cross-title reste explicitement rejeté : créer directement un second Applet
 
 Vendor `76b7356cbc63eae67ff7e73a66fc655ce1896b6d` : `SetApplicationMemoryReservation` (cmd140) n'est plus NULL. Le contrat vérifie qu'une Application principale existe et que son processus est vivant, refuse les valeurs non alignées sur `0x1000`, puis conserve la réservation demandée sur l'état de l'Applet principal. Aucun effet n'est appliqué à l'allocateur PS5 tant qu'un backend de réservation Horizon fidèle n'existe pas. **NULL → PARTIEL** ; pool global **inchangé à 1 534 / 4 853**. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletSelfAccessor cmd18 : destination de retour réelle
+
+Vendor `d1b05d1e94eed35bc6d35f5f9db5d99156f4e5b5` : `GetNextReturnDestinationAppletIdentityInfo` (cmd18, HOS4+) ne reste plus NULL. Le dump firmware NS1 23.0.1 confirme **0 entrée + 0x10 octets de sortie** (`AppletIdentityInfo`). SwitchBrew décrit `ExitProcessAndReturn` comme un retour vers le titre qui a lancé la LibraryApplet ; Encore conserve exactement cette relation via `Applet::caller_applet`, déjà utilisée par `GetCallerAppletIdentityInfo` et la caller stack. Cmd18 réutilise donc cette même identité, avec le fallback qlaunch déjà établi quand aucun caller n'existe.
+
+**1 NULL → IMPL-SRC. Pool restant = 1 533 / 4 853.** Dans les overlays AM actifs il reste **6 slots `nullptr` physiques**, dont **5 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
+

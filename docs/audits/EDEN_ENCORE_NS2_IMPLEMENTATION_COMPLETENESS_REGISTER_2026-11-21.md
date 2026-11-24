@@ -721,3 +721,6 @@ Suite de la comparaison : [libounce Syncpt](https://github.com/ouncebrew/libounc
 
 
 GSV 204 : le miroir asynchrone conservait des adresses invitées mais pas les deux objets KTransferMemory acquis pendant l'IPC. Vendor `6d9ab07d0849889d1fb2a1ca775182a14aa2e6e0` retient désormais les deux objets jusqu'à destruction du dernier propriétaire asynchrone, annule la première acquisition si la seconde échoue, refuse l'alias du même objet et exige un bootstrap authentifié. Ce défaut de durée de vie est démontré au niveau source, pas encore sur console. Aucun changement NS1/FC27.
+
+
+24/11 — Syncpt 103/201 : [libounce gsvSyncCheckNative](https://github.com/ouncebrew/libounce/blob/32e7ac414ee1cd98922f66a059be5a85e99feea5/nx/source/switch2/services/gsv.c#L630-L665) traite UINT64_MAX comme le producteur invalide/attente satisfaite. Encore retournait zéro pour un ID hors plage. Vendor `692e9819a7a1f1b818bf3739c72d8e5252cae661` corrige le retour et valide l'enveloppe 103/201. Le même correctif joint toute action encore en cours, même si son booléen pending est déjà faux, avant de réarmer le slot ; empêche le signal tardif d'une attente précédente. Comparaison du propriétaire Host1x actif et du code client, défaut source confirmé, validation console ouverte. Les comparaisons 64 bits et modulo du seuil restent à qualifier séparément.

@@ -7419,3 +7419,33 @@ apply_reviewed_delta("vulkan_swapchain.cpp",
     "scheduler.Wait(resource_ticks[image_index], 120.0);",
     "scheduler.Wait(resource_ticks[image_index], 120.0, game_frame_presents);",
     "Guest frame pacing shared present slot")
+
+# NS1 parallel snapshot retry: replay the same reviewed runtime owner.
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "namespace {\n#ifdef PS5_NATIVE\n// Detailed-only",
+    "namespace {\n#ifdef PS5_NATIVE\n// Internal signal: only the NS1 parallel preparation path may request a serial retry.\nstruct ParallelGraphicsRetry {};\n// Detailed-only",
+    "NS1 snapshot retry")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    if (parallel_translate_stages) {\n        // QueueWork and pool allocation",
+    "    if (parallel_translate_stages) try {\n        // QueueWork and pool allocation",
+    "NS1 snapshot retry")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "                std::rethrow_exception(parallel_errors[index]);",
+    "                try {\n                    std::rethrow_exception(parallel_errors[index]);\n                } catch (const std::out_of_range&) {\n                    // The immutable snapshot can reject a valid owner-thread read.\n                    throw ParallelGraphicsRetry{};\n                }",
+    "NS1 snapshot retry")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "                throw std::runtime_error(\"graphics shader translation worker returned no program\");\n            }\n        }\n    }\n#endif",
+    "                throw ParallelGraphicsRetry{};\n            }\n        }\n    } catch (const std::bad_alloc&) {\n        // The drain guard has joined any accepted jobs before this handler.\n        throw ParallelGraphicsRetry{};\n    }\n#endif",
+    "NS1 snapshot retry")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    auto pipeline{CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(),\n                                         nullptr, true, parallel_translate_stages)};",
+    "    // Keep the original cached shader bytes and pristine environment state for a\n    // single serial retry. Workers can mutate their environment's lookup caches.\n    std::optional<GraphicsEnvironments> parallel_environments;\n    if (parallel_translate_stages) {\n        try {\n            parallel_environments.emplace();\n            parallel_environments->envs = environments.envs;\n            size_t active{};\n            for (size_t index = 0; index < Maxwell::MaxShaderProgram; ++index) {\n                if (graphics_key.unique_hashes[index] != 0) {\n                    parallel_environments->env_ptrs[active++] =\n                        &parallel_environments->envs[index];\n                }\n            }\n        } catch (const std::bad_alloc&) {\n            parallel_environments.reset();\n        }\n    }\n    std::unique_ptr<GraphicsPipeline> pipeline;\n    if (parallel_environments) {\n        try {\n            pipeline = CreateGraphicsPipeline(main_pools, graphics_key,\n                                              parallel_environments->Span(), nullptr, true, true);\n        } catch (const ParallelGraphicsRetry&) {\n            parallel_environments.reset();\n        }\n    }\n    if (!parallel_environments) {\n        pipeline = CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(),\n                                          nullptr, true, false);\n    }\n    auto& serialized_environments = parallel_environments ? *parallel_environments : environments;",
+    "NS1 snapshot retry")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "    auto pipeline{\n        CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(), nullptr, true)};\n#endif",
+    "    auto pipeline{\n        CreateGraphicsPipeline(main_pools, graphics_key, environments.Span(), nullptr, true)};\n    auto& serialized_environments = environments;\n#endif",
+    "NS1 snapshot retry")
+apply_reviewed_delta("vk_pipeline_cache_cost.cpp",
+    "envs = std::move(environments.envs)",
+    "envs = std::move(serialized_environments.envs)",
+    "NS1 snapshot retry")

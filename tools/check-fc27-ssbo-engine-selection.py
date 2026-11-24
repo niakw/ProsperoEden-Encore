@@ -102,11 +102,11 @@ expected.add("8026fcca228d0feda62ffd9625e16ee0429d621e")
 expected.add("887bf44af34999e8b6c5b63dc7c01c6c13b82c8f")
 expected.add("1a928783cce2c2692d8fe9fd958400a2de060bbf")
 expected.add("9632ac089f8b2d89a6856a42e8fb55206cdba1fa")
-if selected == "b5c6f089a6aecd321d08a40238f3cd502f505b26":
+if selected in {"b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777"}:
     # AM lifetime successor changes no shader or sparse kernel owner.
-    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "668fb8effa6963be062d780e3bd145a5233d6b7e"
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("1660883553006cfca7e80465ad5521b4c2ca33b1" if selected == "dc9f5f95b1f784bb358d6480e53de7247d61d777" else "668fb8effa6963be062d780e3bd145a5233d6b7e")
     expected.add(selected)
-if selected in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26"}:
+if selected in {"1a928783cce2c2692d8fe9fd958400a2de060bbf", "9632ac089f8b2d89a6856a42e8fb55206cdba1fa", "b5c6f089a6aecd321d08a40238f3cd502f505b26", "dc9f5f95b1f784bb358d6480e53de7247d61d777"}:
     assert blob(V/"tests/ns1_r23_18_tir_host.py") == "005280fde5bbd862d64a4def0d17d90a35bbe5e9", (
         "Vendor host-only TextureCache TIR witness drift")
 assert selected==gitlink and selected in expected,(selected,gitlink)

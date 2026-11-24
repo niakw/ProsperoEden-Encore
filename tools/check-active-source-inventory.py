@@ -20,6 +20,7 @@ shipping_vendor = subprocess.check_output(
 stabilization_trees = {
     "9632ac089f8b2d89a6856a42e8fb55206cdba1fa": "51c9a38eba78d69893c48db6f3e48a169ea879e3",
     "b5c6f089a6aecd321d08a40238f3cd502f505b26": "668fb8effa6963be062d780e3bd145a5233d6b7e",
+    "dc9f5f95b1f784bb358d6480e53de7247d61d777": "1660883553006cfca7e80465ad5521b4c2ca33b1",
 }
 stabilization_selected = shipping_vendor in stabilization_trees
 stabilization_new_headers = set()

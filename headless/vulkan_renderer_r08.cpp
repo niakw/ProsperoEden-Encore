@@ -364,6 +364,8 @@ void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebu
         blit_swapchain.DrawHudOverlay(device, generated, postprocess_hud);
         scheduler.Flush(*generated->render_ready);
         present_manager.Present(generated);
+        // Publish the return-to-pool callback before another frame acquisition.
+        scheduler.DispatchWork();
         ::Eden::FrameMetrics::OnGeneratedQueued();
     }
     }
@@ -895,6 +897,9 @@ void RendererVulkan::PresentLoading() {
 #endif
     trace("loading_flush_returned");
     present_manager.Present(frame);
+    // Flush submitted the render work, but Present records a new callback.
+    // Do not leave it waiting for guest execution or the next loading draw.
+    scheduler.DispatchWork();
     trace("loading_present_queued");
     ::Eden::FrameMetrics::OnLoadingQueued();
 }

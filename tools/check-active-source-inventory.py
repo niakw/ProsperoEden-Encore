@@ -690,6 +690,24 @@ if r437_vendor_pin in {"c15cdfe96a3d836bf32ba21b8070088add81cdc9", "729f7e5a734b
     if r437_vendor_pin in {"1a09972eea6f473fda1b714efe84cd52219bf681", "3e6647827122c34704c2699a6f5e9b20fff3e9a6", "6d64217ea5804fb86dbf57685a3da0cb1d45ba32", "3f1fcfef119ca50dd630f0518a7fae1b96c7a85a", "0e4e96df638fc29c3bd2a8fcfe9f50821c5e5b3a", "9136d2e88c43233bcd029f22bdfda0e5c94a552f", "75ef34d7ef7f68b5eb4f1c6d0d99b6cbc55742d6", "34f02a3800cb6fb5330c099c81571ab03fd69ae1", "0d75406e36a3676b45184670093f0ecf652aab2f", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776", "372a83d95622f152211fe91afa05d1e60ce84bea", "a3cc07ff68f8154543f2b07a6b3e6c01f9922ab9", "ab417b59c5f7f4613ff27386be05c0644d0ed776"}:
         raw = (active / "ns2-astc/include/video_core/texture_cache/texture_cache.h").read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        if actual == "5c6d015cf207d63de31b577411972606145d9f2e":
+            # Reverse the reviewed failed render-target allocation successor
+            # only in the audit copy, then replay the original source proof.
+            current = """    if (!image_id) {
+        // An allocation failure means no render target. NULL_IMAGE_VIEW_ID is
+        // a valid descriptor-null sentinel and has no render-target VkImageView.
+        return ImageViewId{};
+    }"""
+            predecessor = """    if (!image_id) {
+        return NULL_IMAGE_VIEW_ID;
+    }"""
+            assert raw.decode("utf-8").count(current) == 1
+            raw = raw.decode("utf-8").replace(current, predecessor, 1).encode("utf-8")
+            actual = hashlib.sha1(
+                b"blob " + str(len(raw)).encode() + bytes([0]) + raw
+            ).hexdigest()
+            assert actual == "948960fad4d829ba874746acb6e353a8a2ed19f7"
+            print("ENCORE_TEXTURECACHE_NULL_TARGET_EXACT_REVERSE_PASS")
         if actual == "948960fad4d829ba874746acb6e353a8a2ed19f7":
             # Performance-only successor: TRACE compiles these two high-frequency
             # invalid-descriptor diagnostics out of release builds. Restore DEBUG

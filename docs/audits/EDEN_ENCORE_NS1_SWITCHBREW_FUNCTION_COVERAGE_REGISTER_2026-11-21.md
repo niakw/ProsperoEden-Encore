@@ -3014,3 +3014,9 @@ Vendor `b322c48fce30b49df1d49bfae041535bd60bb307` : `IAppletCommonFunctions` cmd
 
 Encore ne possède pas encore de producteur complet reliant ces états à un backend matériel PS5/thermique/batterie ni de gestion complète du rideau VR Horizon ; aucun faux capteur ni valeur forcée n'est ajouté. **3 NULL → PARTIEL.** Le **pool reste 1 547 / 4 853** car PARTIEL reste une dette. Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM AppletCommon cmd321 : hint GPU application accepté sans altérer le host
+
+Vendor `43ccd9f0ad4d9563ed7a2cd9a4d36a29322ee48c` : `SetGpuTimeSliceBoostDueToApplication` (cmd321, HOS19+) est raccordé avec son ABI HOS23 réelle, un unique `u64` sans sortie. Comme `SetGpuTimeSliceBoost` et les autres hints AM déjà traités, ce réglage cible la politique de scheduling GPU Horizon ; Encore exécute le GPU invité via RADV/PS5 et ne doit pas traduire ce nombre en changement arbitraire du scheduler hôte. Le payload est donc consommé et accepté comme politique invitée sans effet host. **1 NULL → NOOP.**
+
+**Pool restant = 1 546 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

@@ -671,6 +671,19 @@ int main(){
             "duplicate graphics supervisor completion rejected");
     // Console 24 Nov: 4 -> 11 -> 101 -> 1501 produced kernel NotImplemented
     // and aborted MKW/Bananza/Pokopia before the first guest GPU submission.
+    // libounce's full root sequence 4/11/101/126/[120]/1501/1502.
+    // Mode 0 must have exactly one output word and skips mode-1 setup.
+    const std::array<GP::U32,2> queryMode{16+126,0};
+    GP::U32 mode=0xffffffffu;
+    GS::State modeUnbooted{0xabc};
+    require(modeUnbooted.QuerySessionMode(queryMode,mode)==GS::Status::InvalidState &&
+            mode==0xffffffffu, "mode query requires completed bootstrap");
+    auto badMode=queryMode;
+    badMode[1]=1;
+    require(state.QuerySessionMode(badMode,mode)==GS::Status::InvalidPacket &&
+            mode==0xffffffffu, "malformed mode query has no output");
+    require(state.QuerySessionMode(queryMode,mode)==GS::Status::Success &&
+            mode==0, "root mode 0 skips unsupported mode-1 command 120");
     const std::array<GP::U32,2> createInter{16+1501,0};
     const std::array<GP::U32,2> initInter{16+1502,0};
     GS::State unbootedInter{0xabc};

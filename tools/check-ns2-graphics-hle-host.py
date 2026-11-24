@@ -227,7 +227,7 @@ def main()->int:
         assert ('{'+str(unknown)+', &IGraphicsSupervisor::') not in text
     # Lichii-known IDs below are deliberately registered and fail closed.
     lichii_fail_closed = (
-        5, 120, 121, 122, 123, 124, 125, 126, 131, 133,
+        5, 120, 121, 122, 123, 124, 125, 131, 133,
         311, 312, 321, 361, 424, 425, 436,
         461, 462, 463, 464, 465, 466, 467, 468, 494,
         801, 802, 803, 811, 812, 813, 814, 861,
@@ -273,6 +273,8 @@ def main()->int:
         1022, 1203, 1301, 1302, 1325, 1326, 1411,
     )
     assert len(known_optional_gsv) == len(set(known_optional_gsv)) == 66
+    assert '{126, &IGraphicsSupervisor::QuerySessionMode, "GetSessionFlag"}' in text
+    assert 'm_bootstrap.QuerySessionMode(packet, mode)' in text
     for command in (1501, 1502):
         assert f'{{{command}, &IGraphicsSupervisor::InitializeInterModuleImageContext' in text
     assert 'm_bootstrap.InitializeInterModuleImageContext(packet, ctx.GetCommand())' in text

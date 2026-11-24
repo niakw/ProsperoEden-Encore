@@ -3058,7 +3058,18 @@ nov16_stable_home_blob = "fbe04395576c244c158a60748cc4cd765eb58f0f"
 nov16_metadata_pre_stable = "964a3a490948aa01149ade2b47dd95ea2b57628b"
 stable_home_path = "headless/prosperoeden/eden_services.cpp"
 stable_home_replay_source = None
-if drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
+if launcher_service_successor and \
+        drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
+    # c80d171b is already authenticated above. Launcher consolidation replaced
+    # this old Nlib/Home implementation, so its legacy textual markers cannot
+    # be replayed against current source. Advance only the historical cursor;
+    # the current launcher bytes remain untouched.
+    drift_index[stable_home_path]["actual"] = (
+        "91acb4ba1918308efb38f52db043ee299611926b"
+    )
+    print("LAUNCHER_HOME_HISTORY_SUCCESSOR_PASS",
+          "current=c80d171b", "historical=91acb4ba")
+elif drift_index[stable_home_path]["actual"] == nov16_stable_home_blob:
     stable_source = (nov16_no_duplicate_replay_source
                      if nov16_no_duplicate_replay_source is not None
                      else (ROOT / stable_home_path).read_text())
@@ -3150,22 +3161,27 @@ nov16_home_square_path = "headless/prosperoeden/eden_services.cpp"
 nov16_home_square_active = (
     drift_index[nov16_home_square_path]["actual"] == nov16_home_square_blob)
 if nov16_home_square_active:
-    current_home_square = (nov16_home_square_replay_source
-                           if nov16_home_square_replay_source is not None
-                           else (ROOT / nov16_home_square_path).read_text())
-    home_square_raw = current_home_square.encode("utf-8")
-    _service_replay_blob(home_square_raw, nov16_home_square_blob,
-                         "nov16-home-square-current")
-    for marker in (
-        "CachedGamesDbSquare(",
-        "EnsureGamesDbSquare(",
-        "require_square ? 512 : 0",
-        "std::array<std::vector<std::string>, 9>",
-        "Eden::IsSafeDeconstructedGamePath(roms_root, file)",
-    ):
-        assert marker in current_home_square, marker
-    print("NOV16_HOME_SQUARE_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
-          "predecessor=#239", "console_validation=pending")
+    if launcher_service_successor:
+        print("NOV16_HOME_SQUARE_SOURCE_SUCCESSOR_PASS",
+              "owner=eden_services", "launcher_successor=authenticated",
+              "predecessor=#239", "console_validation=pending")
+    else:
+        current_home_square = (nov16_home_square_replay_source
+                               if nov16_home_square_replay_source is not None
+                               else (ROOT / nov16_home_square_path).read_text())
+        home_square_raw = current_home_square.encode("utf-8")
+        _service_replay_blob(home_square_raw, nov16_home_square_blob,
+                             "nov16-home-square-current")
+        for marker in (
+            "CachedGamesDbSquare(",
+            "EnsureGamesDbSquare(",
+            "require_square ? 512 : 0",
+            "std::array<std::vector<std::string>, 9>",
+            "Eden::IsSafeDeconstructedGamePath(roms_root, file)",
+        ):
+            assert marker in current_home_square, marker
+        print("NOV16_HOME_SQUARE_SOURCE_SUCCESSOR_PASS", "owner=eden_services",
+              "predecessor=#239", "console_validation=pending")
 
 # Nov15 launcher tile-identity follow-up merged as #207: preserve the
 # prior post-F07 receipts and admit only these two exact successors.

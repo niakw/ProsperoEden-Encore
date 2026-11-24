@@ -3037,10 +3037,34 @@ elif not _has_current_snapshot_decl:
     shader_source = (shader_source[:_namespace_pos] + _snapshot_decl +
                      shader_source[_namespace_pos:])
 
+# Native Ampere graphics deliberately disables the NS1 stage-parallel
+# translator. Older generator revisions expressed this call with a different
+# line split, so authenticate the unique span argument and normalize only its
+# trailing boolean.
+_native_span_anchor = (
+    "std::span<Shader::Environment* const>{ptrs.data(), active}"
+)
+if shader_source.count(_native_span_anchor) != 1:
+    raise RuntimeError("FC27 native graphics span anchor drift")
+_native_span_pos = shader_source.index(_native_span_anchor)
+_native_call_end = shader_source.find(");", _native_span_pos)
+if _native_call_end < 0 or _native_call_end - _native_span_pos > 400:
+    raise RuntimeError("FC27 native graphics call boundary drift")
+_native_call = shader_source[_native_span_pos:_native_call_end + 2]
+if "nullptr, true, false)" in _native_call:
+    pass
+elif "nullptr, true)" in _native_call:
+    _native_call_current = _native_call.replace(
+        "nullptr, true)", "nullptr, true, false)", 1)
+    shader_source = (shader_source[:_native_span_pos] + _native_call_current +
+                     shader_source[_native_call_end + 2:])
+else:
+    raise RuntimeError("FC27 native graphics parallel flag drift")
+
 for index, (newer, predecessor) in enumerate(_parallel_translation_reverse):
-    if index in (0, 1):
-        # Includes and helper declaration are normalized structurally above.
-        # All semantic/runtime translation pairs remain byte-exact below.
+    if index in (0, 1, 6):
+        # Includes, helper declaration and native Ampere call are normalized
+        # structurally above. All other runtime translation pairs stay exact.
         continue
     predecessor_count = shader_source.count(predecessor)
     current_count = shader_source.count(newer)

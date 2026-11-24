@@ -30,7 +30,7 @@ assert "request->cache != 0" in mapping
 assert "mapped == Nvidia::NvResult::InsufficientMemory" in mapping
 assert modify.index("system.GPU().WaitForIdle()") < modify.index("as->ModifyNativeKind")
 assert unmap.index("system.GPU().WaitForIdle()") < unmap.index("as->UnmapNative4K")
-assert "m_mappings.RecordUnmapped(*request);" in unmap
+assert "ledger->RecordUnmapped(*request)" in unmap
 
 fixture=r"""
 #include <algorithm>

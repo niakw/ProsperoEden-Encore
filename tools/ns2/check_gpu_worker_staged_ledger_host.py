@@ -15,13 +15,15 @@ assert source.count('m_mappings.SparseReservationPageShift(')==1
 assert 'auto& ledger = sparse_overlay ? m_sparse_overlays : m_mappings;' in source
 assert source.count('m_mappings.PrepareSparse(')==1
 assert source.count('m_mappings.PrepareSparseReplacingExact(')==1
-assert source.count('m_mappings.CommitPrepared(staged_ledger)')==2
+assert source.count('ledger.CommitPrepared(staged_ledger)')==1
+assert source.count('m_mappings.CommitPrepared(staged_ledger)')==1
 normal=source.split('void IGpuWorker::NormalMapGpuMemory4K(',1)[1].split(
     'void IGpuWorker::NormalModifyGpuMemory4K(',1)[0]
 sparse=source.split('void IGpuWorker::CreateSparseRegion(',1)[1].split(
     'void IGpuWorker::DestroySparseRegion(',1)[0]
+assert normal.index('ledger.PrepareMapped(')<normal.index('ledger.CommitPrepared(')
+assert sparse.index('m_mappings.Prepare')<sparse.index('m_mappings.CommitPrepared(')
 for owner in (normal,sparse):
-    assert owner.index('m_mappings.Prepare')<owner.index('m_mappings.CommitPrepared(')
     assert 'm_mappings.RecordMapped(' not in owner
     assert 'm_mappings.RecordSparse(' not in owner
 assert normal.index('ledger.PrepareMapped(')<normal.index('as->MapNative4K(')

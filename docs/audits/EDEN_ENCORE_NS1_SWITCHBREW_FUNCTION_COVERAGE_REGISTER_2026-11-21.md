@@ -2580,3 +2580,10 @@ Vendor `44160f78fda728f3720cbad26bcd56fe41dd41aa` : la CI [#45305528479](https:/
 Vendor `be709442d734683ffd9725c7035a932a73bf5c87` : `hid` cmd32 (STUB) et `hid:sys` cmd31 (NULL) utilisent désormais `EmulatedDevices::ApplyKeyboardLockKeyEvents`, qui modifie sous le mutex existant les valeurs Num/Caps/Scroll Lock et leur `KeyboardModifier` réellement consommé par le sampler de mémoire partagée. Notification frontend après libération du verrou, seulement si changement. Les neuf bits On/Off/Toggle sont ceux de [libnx hid.h](https://github.com/switchbrew/libnx/blob/master/nx/include/switch/services/hid.h). Le contrat public `hid` prend le u32 + AppletResourceUserId/PID, `hid:sys` le u32 seul, selon [libnx hid.c](https://github.com/switchbrew/libnx/blob/master/nx/source/services/hid.c) et [SwitchBrew HID](https://switchbrew.org/wiki/HID_services). Correction appliquée aux deux propriétaires `hid_server` dont le propriétaire partagé réellement choisi par CMake, plus `hid_system_server` maintenu. La LED physique hôte n'est pas pilotée et aucun comportement de bouton système n'est inventé. Le digest de l'overlay HID est recalculé. Pas de validation de compilation native ou console revendiquée.
 
 **Pool restant = 1 628** (1 231 NULL + 51 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).
+
+
+### 2026-11-24 — PM provenance correction
+
+- Vendor `4534ccde306a715d0fe61698be23522ac5b2d44e`: PM active overlay already contained the reviewed runtime changes; corrected its manifest SHA-256 and byte size (12308). No new runtime coverage credited.
+- Remaining: **1628**. Six AM baseline/overlay provenance mismatches remain under review; do not change upstream digests to hide them.
+- No native PS5 build or console validation performed.

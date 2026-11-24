@@ -75,8 +75,17 @@ required_cpp = (
     "if (UsesNativeAbi(fd)) {",
     "return WrapFixed(this, &nvhost_gpu::AllocateObjectContext, input, output, fd);",
     "return SubmitGPFIFOImpl(params, std::move(entries), fd);",
-    "return sessions.size() == 1 && UsesNativeAbi(sessions.begin()->first)",
+    "Kernel::KEvent* nvhost_gpu::QueryEvent(DeviceFD fd, u32 event_id)",
+    "return UsesNativeAbi(fd) ? error_notifier_event : nullptr;",
 )
+# Native event 7 follows the actual querying FD, not a singleton session.
+query_legacy = source.split("Kernel::KEvent* nvhost_gpu::QueryEvent(u32 event_id)", 1)[1].split("Kernel::KEvent* nvhost_gpu::QueryEvent(DeviceFD", 1)[0]
+query_native = source.split("Kernel::KEvent* nvhost_gpu::QueryEvent(DeviceFD fd, u32 event_id)", 1)[1].split("bool nvhost_gpu::UsesNativeAbi", 1)[0]
+assert "case 7:" not in query_legacy and "UsesNativeAbi" not in query_legacy
+assert "if (event_id == 7)" in query_native
+assert "return UsesNativeAbi(fd) ? error_notifier_event : nullptr;" in query_native
+assert "return QueryEvent(event_id);" in query_native
+assert "sessions.size()" not in query_native and "sessions.begin()" not in query_native
 # The native submission envelope and every FD must be validated before
 # even lazy InitChannel, binding a GPU owner or incrementing a syncpoint.
 # The normal NS1 path still takes its historical legacy flags and counters.

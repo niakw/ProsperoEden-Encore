@@ -11,6 +11,10 @@ import subprocess
 import sys
 import tempfile
 from ci.ps5_cache_diag_receipt import normalize_for_historical_proof
+def git_blob_sha(text):
+    data=text.encode('utf-8')
+    return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+
 root=Path(__file__).resolve().parents[1]
 active=root/'vendor/encore-active/eden-vulkan'
 upstream=root/'vendor/sources/eden'
@@ -2406,9 +2410,6 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
         assert len(entry['reverse_hunks']) in range(1, 15)
         for hunk in entry['reverse_hunks']:
             assert hunk['after'] and hunk['before'] and hunk['after'] != hunk['before']
-    def git_blob_sha(text):
-        data=text.encode('utf-8')
-        return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
     # Lichii #2100 is a reviewed successor to the merged R23 Vulkan device
     # owner. Reverse its two exact cache-hardening hunks before immutable
     # R23/P24 receipts; unrelated vulkan_device.cpp edits remain rejected.

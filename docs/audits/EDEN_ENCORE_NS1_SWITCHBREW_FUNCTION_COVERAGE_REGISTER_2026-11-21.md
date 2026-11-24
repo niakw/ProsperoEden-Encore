@@ -2729,6 +2729,13 @@ Vendor `0837393bd5c8c3c48f5681dea1ac1dba76a6d6c8` : `ISelfController::ApproveToD
 
 ### 2026-11-24 — SPL : état retail et IsDevelopment réel
 
-Vendor `dab56d88cbbe166575546fff3346feb4727afbf4` : `spl:` cmd11 `IsDevelopment` ne renvoie plus `ResultSecureMonitorNotImplemented`. Le handler suit le contrat libnx/SwitchBrew (aucune entrée, sortie bool u8) et dérive sa réponse du même `ConfigItem::HardwareState` que `GetConfig`. Encore expose explicitement une unité retail/production (`HardwareState::Production`), donc `IsDevelopment` renvoie false sans fabriquer un mode dev. `SetConfig` et les dérivations AES restent ouverts : aucun secret, keyslot ou résultat cryptographique factice n'est introduit. **1 STUB → IMPL-SRC**.
+Vendor `dab56d88cbbe166575546fff3346feb4727afbf4` : `spl:` cmd11 `IsDevelopment` ne renvoie plus `ResultSecureMonitorNotImplemented`. Le handler suit le contrat libnx/SwitchBrew (aucune entrée, sortie bool u8) et dérive sa réponse du même `ConfigItem::HardwareState` que `GetConfig`. Encore expose explicitement une unité retail/production (`HardwareState::Production`), donc `IsDevelopment` renvoie false sans fabriquer un mode dev. **Correction de comptage : cmd11 était déjà classé D dans le catalogue détaillé, pas STUB ; ce correctif runtime ne réduit donc pas le pool canonique.**
 
-**Pool restant = 1 542** : 1 181 NULL + 12 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+**Pool restant = 1 543** : 1 181 NULL + 13 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — SPL : suppression des faux succès AES
+
+Vendor `94c61421e27d837e28b7331690305a72baad4d93` : `GenerateAesKek` (cmd2) et `GenerateAesKey` (cmd4) ne renvoient plus `Success` avec respectivement une `AccessKey` et une `AesKey` entièrement nulles. Sans backend Secure Monitor/keyslot authentique dans Encore, ces deux dérivations échouent désormais explicitement par `ResultSecureMonitorNotImplemented`, comme les autres opérations SPL impossibles à reproduire sans secrets matériels. Les payloads d'entrée restent consommés et aucune clé fictive n'est publiée. **2 STUB → D.**
+
+**Pool restant = 1 541** : 1 181 NULL + 11 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

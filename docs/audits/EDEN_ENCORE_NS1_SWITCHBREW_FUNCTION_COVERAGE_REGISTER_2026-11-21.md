@@ -3148,3 +3148,11 @@ Le chemin de chargement local des contenus, les records d'application, NCA/FSP, 
 
 **Pool restant = 1 432 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — PCTL : pairing/account/synchronisation non disponibles rejetés en lot
+
+Vendor `b162bfe9925eba2e1a11a4bee4acad1218a62876` : les **43 slots `nullptr` physiques** restants de l'overlay `IParentalControlService` sont désormais dispatchés vers une erreur explicite pour les surfaces administratives sans backend Encore : restricted-features/safety settings avancés, inquiry/master-key, pairing-account/post-events, pairing/synchronisation asynchrones Nintendo, alarmes/événements système et commandes HOS récentes associées. Les contrôles de permission déjà implémentés et utilisés par les jeux, les états de restriction et les play-timer handlers existants ne sont pas remplacés.
+
+Croisement avec le catalogue 4 853 : **26 lignes NULL** sont réellement dans le pool historique ; 17 commandes physiques récentes n'y sont pas des lignes distinctes. Aucun compte Nintendo, pairing distant ou synchronisation n'est simulé.
+
+**Pool restant = 1 406 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

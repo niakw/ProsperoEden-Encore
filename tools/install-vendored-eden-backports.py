@@ -1208,6 +1208,34 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'real_local_bindings=45', 'owners=acc:e+acc:e:u1+acc:e:u2',
               'pinned_sources=immutable')
 
+
+        # NS1 rights-environment system services lack a PS5 entitlement
+        # manager. Fail closed using the existing NS error handler. Reverse
+        # exactly these fourteen pointer bindings against the shipping owner.
+        ns_rel = 'src/core/hle/service/ns/application_manager_interface.cpp'
+        ns_active = (ACTIVE / ns_rel).read_bytes()
+        ns_previous = (stage / ns_rel).read_bytes()
+        assert len(ns_previous) == 68229 and sha(ns_previous) == '48f61cb0d94e9b7f850a0b7baf2c33699ab8211fba9335d15fe0939f63fd03e6'
+        assert len(ns_active) == 69013 and sha(ns_active) == '5af90686a31c4c719fedade39cef9278f0bb05370d7a17964d8f53f515006aba'
+        assert spec['entries'][ns_rel]['active'] == sha(ns_active)
+        import re
+        ns_ids = [2150,2151,2152,2153,2154,2155,2160,2161,2170,2171,2180,2181,2182,2190]
+        ns_lines = ns_active.decode('utf-8').splitlines(keepends=True)
+        ns_found = []
+        for i, line in enumerate(ns_lines):
+            match = re.match(r'^\s*\{\s*(\d+),\s*&IApplicationManagerInterface::RejectUnavailablePlatformCommand,', line)
+            if match and int(match.group(1)) in ns_ids:
+                assert int(match.group(1)) not in ns_found
+                ns_lines[i] = line.replace(
+                    '&IApplicationManagerInterface::RejectUnavailablePlatformCommand',
+                    'nullptr', 1)
+                ns_found.append(int(match.group(1)))
+        assert sorted(ns_found) == sorted(ns_ids)
+        assert ''.join(ns_lines).encode('utf-8') == ns_previous, 'NS rights owner exact reverse mismatch'
+        observed[ns_rel] = spec['entries'][ns_rel]
+        print('NS1_NS_RIGHTS_ENVIRONMENT_EXACT_REVERSE_PASS',
+              'closed=14', 'current_fw=23', 'pinned_source_unchanged')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

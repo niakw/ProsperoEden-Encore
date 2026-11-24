@@ -34,8 +34,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 | **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 208 | 0 | **208** |
-| **NULL — Handler NULL** | 1 234 | 0 | **1 234** |
-| **D — Rejet explicite / historique** | 219 | 33 | **252** |
+| **NULL — Handler NULL** | 1 232 | 0 | **1 232** |
+| **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 474 | 1 | **475** |
@@ -2348,7 +2348,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `Attach` | — | **ABI-DIFF** (la table SwitchBrew actuelle IServiceGetterInterface ne contient aucun cmd 0 ; elle expose 7988–7999 comme Eden ; ligne historique mal rattachée) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `BoostSystemMemoryResourceLimit` | — | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/ns/application_manager_interface.cpp` ; BoostSystemMemoryResourceLimit existe dans IApplicationManagerInterface ID 90 (nullptr), pas ID 1 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
  | ns:vm | `1200` | `NeedsUpdateVulnerability` | 3.0.0+ |  **NOOP** (aucune base safe-system-version/vulnérabilité Nintendo émulée ; false explicite ; vendor `ad27e09c`)  | 2026-11-22 | 
-| ns:vm | `1201` | `UpdateSafeSystemVersionForDebug` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
+| ns:vm | `1201` | `UpdateSafeSystemVersionForDebug` | 4.0.0+ | **D** ([vendor 44160f78](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/44160f78fda728f3720cbad26bcd56fe41dd41aa) ; rejet explicite dans le propriétaire PS5 maintenu, sans prétendre implémenter la fonctionnalité debug ; PS5 non validé) | 2026-11-24 |
 | ns:vm | `1202` | `GetSafeSystemVersion` | 4.0.0+ | **NULL** ([source C++][ns1-src-015]) | 2026-11-22 |
 | ns:su | `0` | `GetBackgroundNetworkUpdateState` | — | **NOOP** (retourne explicitement `None` car aucun transport de mise à jour système en arrière-plan n'est modélisé ; vendor `57081e12`) | 2026-11-22 |
 | ns:su | `1` | `OpenSystemUpdateControl` | — | **IMPL-SRC** ([source NS](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/2f294bbfaa54440eaf9dafe9cabd2c104ba3a439/sources/eden/src/core/hle/service/ns/system_update_interface.cpp) ; construit et retourne un vrai `ISystemUpdateControl`) | 2026-11-23 |
@@ -5765,7 +5765,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | pdm:ntfy | `2` | `NotifyOperationModeChangeEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | pdm:ntfy | `3` | `NotifyPowerStateChangeEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | pdm:ntfy | `4` | `NotifyClearAllEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
-| pdm:ntfy | `5` | `NotifyEventForDebug` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
+| pdm:ntfy | `5` | `NotifyEventForDebug` | — | **D** ([vendor 44160f78](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/44160f78fda728f3720cbad26bcd56fe41dd41aa) ; rejet explicite dans le propriétaire PS5 maintenu, sans prétendre implémenter la fonctionnalité debug ; PS5 non validé) | 2026-11-24 |
 | pdm:ntfy | `6` | `SuspendUserAccountEventService` | 4.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | pdm:ntfy | `7` | `ResumeUserAccountEventService` | 4.0.0+ | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/ns.cpp) ; INotifyService (pdm:ntfy) : handler nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | pdm:qry | `0` | `QueryApplicationEvent` | — | **ABI-DIFF** ([propriétaire C++](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/ns/query_service.cpp) ; ID 0 : catalogue `QueryApplicationEvent` vs table active `QueryAppletEvent` ; changement de version/nomenclature non prouvé ; non validé PS5) | 2026-11-22 |

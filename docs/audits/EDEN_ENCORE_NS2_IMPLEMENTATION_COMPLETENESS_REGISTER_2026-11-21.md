@@ -344,6 +344,8 @@ Aucune session encodeur NS2 équivalente n’est actuellement sélectionnée. Le
 
 **Recoupement client libounce/OunceVK** : cmd 203 est désormais qualifié par un consommateur réel : `gsvGpuGetVmUserRanges` lit `u64 count + GsvGpuVaRange[4]` (72 B), et OunceVK exige un unique range `[0x08000000,0xBFFFFFFFFF]` avant l’import AS.
 
+**24/11 — caractéristiques GPU natives** : OunceVK `6a03fdb1` (`nvkmd_nvgpu_native_runtime.c`, `import_as`) refuse les mots de grandes pages non nuls à 0x28 et 0x34 avant import AS. Le vendor `53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb` corrige uniquement la réponse native 0xD0/0xD8 ; géométrie interne AS, mappings 4 KiB et profil NS1 inchangés. Test de paquet adapté ; qualification CI et démarrage des jeux sur PS5 encore nécessaires. Ce contrat client ne démontre pas à lui seul la cause de l'écran noir NVN2.
+
 ## 7. KUserWorkerSession / nn::gpuk::impl::kuser
 
 La numérotation SwitchBrew change entre 19.x et 20.0+. Le runtime actuel suit le bloc **20.0+ 209–216**. Le client SDK `vexcited/fefw` confirme notamment les requêtes TIPC brutes `0xE1/0xE2`, dont le framework retire l’enveloppe pour dispatcher **209/210**.

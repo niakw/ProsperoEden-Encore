@@ -70,7 +70,8 @@ struct EventContext {
     bool fail_oom{};unsigned calls{};
     Kernel::KEvent* CreateEvent(const char* name){
         assert(std::string{name}=="GpuNotification");++calls;
-        if(fail_oom)throw std::bad_alloc{};return &item;
+        if (fail_oom) { throw std::bad_alloc{}; }
+        return &item;
     }
 };
 struct SharedState {

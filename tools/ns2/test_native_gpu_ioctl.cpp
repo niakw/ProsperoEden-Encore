@@ -19,6 +19,7 @@ static u64 le64(const u8* p) {
 }
 int main() {
     std::array<u8, 0xa0> legacy{};
+    legacy[0x28]=0x00; legacy[0x29]=0x10;
     legacy[0x34]=0x00; legacy[0x35]=0x00; legacy[0x36]=0x03;
     legacy[0x50]=0x55;
     for (const auto [raw,size,sm,channel] :
@@ -37,7 +38,11 @@ int main() {
         assert(le32(output.data()+0x14)==0xe);
         assert(le32(output.data()+0x10+0x3c)==sm);
         assert(le32(output.data()+0x10+0x40)==sm);
-        assert(le32(output.data()+0x10+0x28)==0x1000);
+        // OunceVK import_as rejects nonzero legacy big-page capability words.
+        assert(le32(output.data()+0x10+0x28)==0);
+        assert(le32(output.data()+0x10+0x34)==0);
+        assert(le32(inline_output.data()+0x28)==0);
+        assert(le32(inline_output.data()+0x34)==0);
         // Never publish NS1 Maxwell engine classes in native GPU replies.
         assert(le32(output.data()+0x10+0x5c)==0xc797);
         assert(le32(output.data()+0x10+0x60)==0xc7c0);

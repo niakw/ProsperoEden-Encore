@@ -2893,3 +2893,10 @@ Les commandes shared-buffer modernes 22–27 restent indépendantes et ne sont p
 Vendor `230caf1fd48d5f03c9dbdab77178a12c6738a65e` : les commandes 11/13/14/15 de `IApplicationFunctions` ne sont plus NULL. Libnx confirme leurs ABI : 11/13 ajoutent deux champs Quest `u32`; 14/15 utilisent un buffer `AppletApplicationAttribute` de 0x20 octets, et 11/14 transportent aussi le `IStorage` user-channel. Encore réutilise désormais les chemins réels cmd10/cmd12 : le storage est réellement empilé et rollbacké si le relaunch échoue, et l'ApplicationId suit les mêmes vérifications de base-title/program-index. Les attributs Quest (timers inconnus et volume) sont consommés mais ne pilotent pas encore une politique kiosk/audio du frontend PS5. **4 NULL → PARTIEL.**
 
 Le correctif vise l'overlay réellement sélectionné `encore-active/eden-backports/src/core/hle/service/am/service/application_functions.*` et son manifeste a été recalculé. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM CommonStateGetter : politique sleep HOS23
+
+Vendor `85b37ea44ef1ca0d8c3c001ee4186aa42bd051d5` : les commandes 500–503 ne sont plus NULL. `DisableSleepTillShutdown` conserve l'interdiction de sleep jusqu'à destruction du contexte invité ; `SuppressDisablingSleepTemporarily` consomme la durée libnx en nanosecondes et mémorise un deadline monotone saturé ; `IsSleepEnabled` et `IsDisablingSleepSuppressed` relisent ce même état sous verrou. Ce modèle reste séparé de `auto_sleep_disabled`, qui concerne l'auto-sleep. Aucun thread timer et aucune action de mise en veille de la PS5 hôte ne sont introduits. ABI recoupée avec libnx et les interfaces nn::am publiées. **4 NULL → PARTIEL** : l'état Horizon est cohérent, mais Encore ne possède pas de gestionnaire de veille matérielle Switch/PS5 à piloter.
+
+Aucun build natif PS5 déclenché ; validation console non revendiquée.

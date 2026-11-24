@@ -40,6 +40,14 @@ configure_file("${EDEN_PORT_DIR}/fence_manager_ps5.h"
     "${PORT_BUILD_DIR}/include/video_core/fence_manager.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vk_fence_manager_ps5.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_fence_manager.h" COPYONLY)
+# Use the single reviewed native scheduler/presenter owner at the existing
+# compile paths, after copying the pinned fork. No alternate runtime route.
+configure_file("${EDEN_PORT_DIR}/vulkan_scheduler_ps5.cpp"
+    "${PORT_BUILD_DIR}/vulkan_scheduler.cpp" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vk_scheduler_ps5.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_scheduler.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vulkan_present_manager_ps5.cpp"
+    "${PORT_BUILD_DIR}/vulkan_present_manager.cpp" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/window_adapt_pass_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/window_adapt_pass.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vulkan_present_layer_r24.h"

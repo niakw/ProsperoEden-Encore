@@ -2707,6 +2707,23 @@ assert '::Eden::NS2::LoadingSvcSnapshot::Report(10);' in (root / "headless/graph
 assert '::Eden::NS2::LoadingSvcSnapshot::Report(30);' in (root / "headless/graphics.cpp").read_text()
 print("ENCORE_NS2_LOADING_SVC_POST_F07_PASS owners=1 diagnostics_only=1")
 
+# Selected post-snapshot GPU wait/scheduler/present owners. Do not rewrite
+# the immutable 193-file catalogue or qualify console performance by inventory.
+post_f07_gpu_wait_receipts = {
+    "headless/vulkan_master_semaphore_ps5.cpp": "a8a4a5e66edbdec5c0639d388fc50151764e0f30",
+    "headless/fence_manager_ps5.h": "e41f90553fd934629b608ab524c0188270ac3e5a",
+    "headless/vk_fence_manager_ps5.h": "5cdc1ddd0562f6fe1781327a51a2ea9c409d38f8",
+    "headless/vulkan_scheduler_ps5.cpp": "24a749310f746148e585609c29b335180cd53cb3",
+    "headless/vk_scheduler_ps5.h": "9b5b29187be576f652a63ff8e0ad0c6a0755e508",
+    "headless/vulkan_present_manager_ps5.cpp": "c47e77ee49f28c849cb335a7b36e4bc0cf636803",
+}
+post_f07_gpu_wait_owners = set(post_f07_gpu_wait_receipts)
+for path, blob in post_f07_gpu_wait_receipts.items():
+    assert subprocess.check_output(["git", "hash-object", path], cwd=root,
+                                   text=True).strip() == blob, path
+    assert Path(path).name in (root/"headless/vulkan.cmake").read_text(), path
+print("ENCORE_NATIVE_GPU_WAIT_RECEIPT_PASS", "owners=6 historical_headless_catalog_preserved=193")
+
 headless_actual = sorted(
     p.relative_to(root).as_posix()
     for p in (root / "headless").rglob("*")
@@ -2714,7 +2731,7 @@ headless_actual = sorted(
     and p.relative_to(root).as_posix() not in (
         post_f07_feature_headless_owners | post_f07_r09_headless_owners |
         post_f07_p5_headless_owners | post_f07_r457_owners | post_f07_ns1_am_headless_owners | post_f07_ns1_audio_headless_owners | post_f07_r23_final_headless_owners |
-        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners | post_f07_ns2_fault_owners | post_f07_ns2_loading_svc_owners)
+        post_f07_diagnostics_owners | post_f07_typography_owners | post_f07_loading_artwork_owners | post_f07_ns2_fault_owners | post_f07_ns2_loading_svc_owners | post_f07_gpu_wait_owners)
 )
 print("ENCORE_POST_F07_R09_HEADLESS_OWNER_PASS", "r09=9",
       "historical_headless_catalog_preserved=193")

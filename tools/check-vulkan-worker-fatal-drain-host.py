@@ -11,9 +11,9 @@ import subprocess
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[1]
-SRC=(ROOT/"vendor/encore-active/eden-vulkan/vulkan_scheduler.cpp").read_text()
+SRC=(ROOT/"headless/vulkan_scheduler_ps5.cpp").read_text()
 GEN=(ROOT/"tools/prepare-vulkan-port.py").read_text()
-HDR=(ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
+HDR=(ROOT/"headless/vk_scheduler_ps5.h").read_text()
 start=HDR.index("    void RegisterOnSubmit(")
 REGISTER=HDR[start:HDR.index("\n    }",start)+6]
 assert "std::scoped_lock lock{execution_mutex};" in REGISTER
@@ -32,7 +32,7 @@ assert "PeekGpuFailure()" in WAIT
 assert WAIT.count("--queue_drain_waiters;")==1
 assert "worker_in_flight = false;" in WORKER
 assert "worker_in_flight = true;" in WORKER
-assert "bool worker_in_flight{};" in (ROOT/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_scheduler.h").read_text()
+assert "bool worker_in_flight{};" in (ROOT/"headless/vk_scheduler_ps5.h").read_text()
 assert "event_cv.notify_all();" in CTOR and "event_cv.notify_all();" in WORKER
 assert "try {" in WORKER and "catch (...)" in WORKER
 assert WORKER.index("::Eden::RecordGpuFailure(")<WORKER.index("event_cv.notify_all();",WORKER.index("::Eden::RecordGpuFailure("))
@@ -392,3 +392,15 @@ with tempfile.TemporaryDirectory(prefix="encore-native-fatal-fences-") as tmp:
             "-I",str(ROOT/"headless"),str(src),"-o",str(exe)],check=True,timeout=70)
         subprocess.run([str(exe)],check=True,timeout=20)
 print("ENCORE_NATIVE_GPU_FATAL_FENCES_PASS timeline=1 fallback=1 fence_result=2 rejected_submit=1 late_callback=1 normal_callback=1 O0_O2=2 ASan_UBSan=1")
+
+# The failure-aware source is now selected in the existing native build path.
+assert 'configure_file("${EDEN_PORT_DIR}/vulkan_scheduler_ps5.cpp"' in cmake
+assert 'configure_file("${EDEN_PORT_DIR}/vk_scheduler_ps5.h"' in cmake
+assert 'configure_file("${EDEN_PORT_DIR}/vulkan_present_manager_ps5.cpp"' in cmake
+assert "event_cv.wait_for(ql, std::chrono::milliseconds(10));" in WAIT
+assert "~CommandChunk()" in HDR
+assert "first = command->GetNext();" in SRC
+presentation = (ROOT/"headless/vulkan_present_manager_ps5.cpp").read_text()
+assert "vk::Check(device.GetGraphicsQueue().Submit(submit_info, *frame->present_done));" in presentation
+assert "frame->present_done.Wait(10'000'000)" in presentation
+assert "if (present_thread.joinable()) present_thread.join();" in presentation

@@ -3080,3 +3080,9 @@ Les overlays `cradle_firmware_updater.{cpp,h}` sont épinglés avec empreintes a
 
 Vendor `a520a7e9c054b25f02dfb2d0887bca127cb871ef` : `IDisplayController::ClearAppletTransitionBuffer` (cmd21) consomme désormais son ABI Horizon réelle, un `u32` RGBA8, puis retourne une erreur explicite. Le backend VI actif possède trois slots de capture et des slots de présentation, mais aucun AppletTransitionBuffer dédié ; réutiliser un slot capture aurait corrompu la sémantique observable et potentiellement l'image. **1 NULL → D. Pool restant = 1 534 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletSelfAccessor cmd90 : launch same-title + UserChannel réel
+
+Vendor `21bf94d43f07fcf66b37a6be82fb16b1099adaff` : `CreateApplicationAndPushAndRequestToLaunch` (cmd90) n'est plus un slot NULL. SwitchBrew le décrit comme **ApplicationId + IStorage**, similaire à `CreateApplicationAndPushAndRequestToStart`. Le chemin actif récupère l'application principale, valide l'ApplicationId contre son base-title, préserve les launch parameters existants de la library applet, y pousse le storage reçu, publie le UserChannel système puis appelle le callback `ExecuteProgram(program_index)` déjà utilisé par les transitions ApplicationInitiated.
+
+Le cross-title reste explicitement rejeté : créer directement un second Applet Application violerait l'invariant `WindowSystem::TrackApplet` (`m_application == nullptr`). **NULL → PARTIEL** ; pool global **inchangé à 1 534 / 4 853**. Aucun build natif PS5 ni validation console revendiqués.
+

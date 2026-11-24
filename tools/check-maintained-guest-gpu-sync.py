@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """G20/P2.7 maintained GPU source parity (single shipping owner + retained DEV reference)."""
 from pathlib import Path
+import hashlib
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVE = ROOT / "vendor/encore-active/eden-core/src/video_core"
@@ -11,6 +12,11 @@ CMAKE = (ROOT / "headless/CMakeLists.txt").read_text()
 def once(source, old, new):
     assert source.count(old) == 1, (old, source.count(old))
     return source.replace(old, new)
+
+def git_blob(source):
+    raw = source.encode("utf-8")
+    return hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+
 
 OLD_WAIT = "        sync_cv.wait(lk, [this]() { return synced; });"
 WAIT = ("        while (!synced && !system.IsShuttingDown())\n"
@@ -383,7 +389,19 @@ for kind, name in (("dma", "dma_pusher"), ("puller", "engines/puller")):
         path = name + ("_dev" if dev else "") + ".cpp"
         base = expected(kind, dev)
         expected_owner = (apply_reviewed_kepler_bounds(apply_reviewed_native_gpfifo_replay(expected_dma_unified(base))) if not dev else expected_dma_unified(base)) if kind == "dma" else base
-        assert (ACTIVE / path).read_text() == expected_owner, path
+        actual_owner = (ACTIVE / path).read_text()
+        if path == "dma_pusher.cpp" and git_blob(actual_owner) == "c24623f5c2aaf1660f818004ff418354c36aacd9":
+            # fab5ebbf is a reviewed successor after this G20 oracle: pin BOTH
+            # complete versions. Exact hashes reject any unrelated source drift.
+            assert git_blob(expected_owner) == "bf6d179292a749e9be1e89c619803c4700407f90"
+            for marker in (
+                "void DmaPusher::ResolveSplitMethod(GPUVAddr entry_address, bool park)",
+                "bool DmaPusher::SplitResumesLater(const CommandList& list, std::size_t from) const",
+                "parked_methods.clear();",
+            ):
+                assert marker in actual_owner, marker
+        else:
+            assert actual_owner == expected_owner, path
 assert "foreach(unit dma_pusher engines/puller)" not in CMAKE
 assert 'write_derived("${PORT_BUILD_DIR}/${unit_name}.cpp" "${command_source}")' not in CMAKE
 for marker in ('list(REMOVE_ITEM video_sources dma_pusher.cpp engines/puller.cpp)',

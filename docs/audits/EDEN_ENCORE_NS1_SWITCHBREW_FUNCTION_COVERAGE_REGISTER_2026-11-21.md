@@ -3314,3 +3314,13 @@ Vendor `11bdd31265db39c90a67b92c923e97bd9960968c` : `caps_sc.cpp/.h` deviennent 
 Ce service contrôle le module de screenshot Switch (raw framebuffer, shared-buffer capture, demandes/cancel screenshot, metadata overlay/movie et raw screenshot stream), pas le rendu VI invité normal ni les services AlbumManager déjà implémentés. SwitchBrew indique notamment que 1101/1106/1107 sont les seules commandes `caps:sc` utilisées par GRC et que 1201–1203 correspondent au raw screenshot stream debug.
 
 Croisement 4 853 : **16 NULL → D**. Les quatre slots physiques historiques 1001/1002/1003/1204 ne sont pas des lignes distinctes du pool HOS23 utilisé ici. **Pool restant = 791 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — CAPS:C : owner album shipping, movie streams absents fail-closed
+
+Vendor `683af96eb36362e89c0e0faecfa49cd9e6ab8059` : `caps_c.cpp/.h` deviennent des owners `eden-backports` explicites. Les handlers déjà développés de disponibilité stockage et registre ARUID/ApplicationId atteignent désormais le runtime natif au lieu de rester dans `sources/eden`.
+
+**22 slots physiques** sans backend movie sont raccordés à `RejectUnavailableMovieBackend` : lectures album-movie 2003–2008, thumbnail movie 2302, write streams 2401–2405/2411–2414/2421–2422/2424/2431/2433–2434. Les opérations screenshot/fichier potentiellement implémentables restent volontairement ouvertes : 2101/2102, 2202, 2301 et 60001 (ainsi que les anciennes commandes physiques hors miroir).
+
+SwitchBrew HOS moderne expose 2001/2002 comme `NotifyAlbumStorageIsAvailable/Unavailable`, exactement les handlers actifs ; les anciens noms movie-read du miroir sont donc des variantes historiques et non des contrats HOS23 distincts.
+
+Croisement 4 853 : **22 NULL → D + 2 ABI-DIFF → IMPL-SRC**, soit **24 entrées sorties du pool. Pool restant = 767 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

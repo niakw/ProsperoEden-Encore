@@ -849,6 +849,49 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'rejected_slots=20', 'physical_nulls=0',
               'pinned_sources=immutable')
 
+        # caps:c keeps real AlbumManager-backed registration/storage state, but Encore
+        # has no Horizon album movie read/write stream backend. Admit exactly the
+        # reviewed shipping owner and keep screenshot-file operations open for real work.
+        caps_c_overlays={
+            'src/core/hle/service/caps/caps_c.cpp': {
+                'before_sha256':'4207c00db15d28949c3299ec36814d35ba77625594a454857bf1c97d4ca6bd95',
+                'before_bytes':2427,
+                'after_sha256':'8e3d804411b15d512abf536914c4cc52ba81ec63e13900976d0b7024619b3eb6',
+                'after_bytes':7549,
+            },
+            'src/core/hle/service/caps/caps_c.h': {
+                'before_sha256':'2f6b8e4567725287f959b54928bd74f3516d6a67a404ea48a52d408eafab4d17',
+                'before_bytes':828,
+                'after_sha256':'74f731531f62a7e26e33a09ffd9623b0613f89075cacab1c052e062a0ef96722',
+                'after_bytes':1734,
+            },
+        }
+        for rel,entry in caps_c_overlays.items():
+            assert rel not in observed, ('CAPS:C unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing CAPS:C shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'CAPS:C pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed CAPS:C maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        caps_c_cpp=(ACTIVE/'src/core/hle/service/caps/caps_c.cpp').read_text()
+        assert caps_c_cpp.count('&IAlbumControlService::RejectUnavailableMovieBackend')==22
+        assert caps_c_cpp.count('D<&IAlbumControlService::NotifyAlbumStorageIsAvailable>')==1
+        assert caps_c_cpp.count('D<&IAlbumControlService::NotifyAlbumStorageIsUnavailable>')==1
+        assert caps_c_cpp.count('D<&IAlbumControlService::RegisterAppletResourceUserId>')==1
+        assert caps_c_cpp.count('D<&IAlbumControlService::UnregisterAppletResourceUserId>')==1
+        assert caps_c_cpp.count('D<&IAlbumControlService::GetApplicationIdFromAruid>')==1
+        assert caps_c_cpp.count('D<&IAlbumControlService::CheckApplicationIdRegistered>')==1
+        assert caps_c_cpp.count('nullptr')==11
+        print('NS1_CAPS_C_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'movie_rejections=22', 'remaining_slots=11',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

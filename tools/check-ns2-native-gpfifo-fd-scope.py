@@ -66,7 +66,7 @@ required_cpp = (
     "bool nvhost_gpu::NativeEpochCurrent(DeviceFD fd) const {",
     "native_generations.find(fd)",
     "NativeGpuProcessRegistry::Instance().IsCurrent(",
-    "NativeGpuChannelRegistry::Instance().Bind(",
+    "native_channel_registry.Bind(",
     "if (!opened || opened->process != native_owner)",
     "NativeGpuChannelRegistry::Instance().Unbind(channel_state.get());",
     "NvResult nvhost_gpu::AllocateObjectContext(IoctlAllocObjCtx& params, DeviceFD fd)",
@@ -126,9 +126,10 @@ assert submit.index(native_wait_guard) < submit.index("IncrementSyncpointMaxExt(
 # GPFIFO waits no longer synthesize that legacy method packet.
 assert "Native GPFIFO FENCE_ACTION acquire unsupported" in native_puller
 assert submit.index("system.GPU().InitChannel(") < submit.index(
-    "NativeGpuChannelRegistry::Instance().Bind(")
-assert submit.index("NativeGpuChannelRegistry::Instance().Bind(") < submit.index(
+    "native_channel_registry.Bind(")
+assert submit.index("native_channel_registry.Bind(") < submit.index(
     "IncrementSyncpointMaxExt(")
+assert submit.index("native_channel_registry.Bind(") < submit.index("AttachFaultNotifier(") < submit.index("IncrementSyncpointMaxExt(")
 assert "const u32 increment = native\n        ? native_plan->increment_total" in submit
 assert "const u32 native_completion = native_plan ? native_plan->completion_count : 0;" in submit
 assert "u32{params.fence.value}" in submit

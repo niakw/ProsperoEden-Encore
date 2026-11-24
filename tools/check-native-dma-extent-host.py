@@ -43,12 +43,14 @@ if selected_sha(native) in {
     import re
     calls = re.findall(r"(?m)^\s*(?:Unswizzle|Swizzle)Subrect\([\s\S]*?\);", native)
     assert len(calls) == 9 and all(c.count("memory_manager.UsesNativeTiling()") == 1 for c in calls)
-    z_calls = sum(bool(re.search(r"memory_manager\.UsesNativeTiling\(\),\s*(?:src|dst)(?:_params)?\.layer", c)) for c in calls)
+    z_calls = sum(bool(re.search(r"memory_manager\.UsesNativeTiling\(\),\s*(?:regs\.)?(?:src|dst)(?:_params)?\.layer", c)) for c in calls)
     expected_z = {
         "a2979cc01cdd7679e71af373d187d08302355b9b": 4,
         "3eb6d0462cde2cdcef613b2bf89d74574c18ea01": 6,
         "d083d3298b3fb11373d7a7fc164a42ba92bdb2b5": 9,
     }[selected_sha(native)]
+    # Remapped B0B5 reads layers through regs.src/dst_params;
+    # the six other DMA paths use local source/destination parameter aliases.
     assert z_calls == expected_z, (z_calls, expected_z)
     assert "MAX_SOFTWARE_TILED_DMA_BYTES" in native
     assert "const u64 aligned_depth =" in native

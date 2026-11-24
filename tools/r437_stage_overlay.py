@@ -150,6 +150,14 @@ def restore_r437_without_production_r2(path: Path) -> str:
     actual = subprocess.check_output(
         ["git", "hash-object", str(path)], text=True).strip()
     source = path.read_text()
+    if actual == "4ce33d21debc33c9625129cbd545bf9b1c084272":
+        successor = "#ifdef PS5_NATIVE\n    // Native RangeSet owner is selected together with this BufferCache.\n    // Avoid walking every fragmented GPU-written interval under the cache mutex.\n    return gpu_modified_ranges.Intersects(addr, size);\n#else\n    bool is_dirty = false;\n    gpu_modified_ranges.ForEachInRange(addr, size, [&](DAddr, DAddr) { is_dirty = true; });\n    return is_dirty;\n#endif"
+        predecessor = "    bool is_dirty = false;\n    gpu_modified_ranges.ForEachInRange(addr, size, [&](DAddr, DAddr) { is_dirty = true; });\n    return is_dirty;"
+        assert source.count(successor) == 1
+        source = source.replace(successor, predecessor, 1)
+        raw = source.encode("utf-8")
+        actual = __import__("hashlib").sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+        assert actual == "7f07e392ea0cc828d862da29d32ada1ebc3966aa"
     restore_current_overlap_guard = False
     if actual == "7f07e392ea0cc828d862da29d32ada1ebc3966aa":
         # Replay only the reviewed multi-channel deletion successor on the audit copy.

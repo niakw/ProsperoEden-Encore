@@ -1399,14 +1399,18 @@ if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e12
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
 
 def reviewed_blob(relative, expected):
-    if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073":
+    if actual_vendor_pin == "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e":
+        hotpath_blobs = {"encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.h":"1c90e08bc3c66731aa717e7b17b3249539848016","encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.inc":"742dc02b71ada75425fec7e126093634a22d2102","encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":"0992d01d0b4e262dd4b4a79633affa8b02529795","encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h":"4ce33d21debc33c9625129cbd545bf9b1c084272","tests/fc27_gpu_page_sibling_preservation_host.py":"c27f87a327a5a371a7810b41dabc2bc8f03fe61d"}
+        if relative in hotpath_blobs:
+            expected = hotpath_blobs[relative]
+    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e"}:
         updated_tests = {
             "tests/fc27_xmad_pointer_fold_host.py": "c793db6f19f44e9a7ffdbd512b1bc382ed605fc3",
             "tests/fc27_dynamic_texture_static_sampler_host.py": "0ae204dc5bb6b34871816ab48973639ac4439bda",
         }
         if relative in updated_tests:
             return updated_tests[relative]
-    if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073" and relative == "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
+    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e"} and relative == "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
         return "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     if actual_vendor_pin == "3abd88bc1a3c334f53f345998b72e9cf8ae87abf":
         exact_wait = {
@@ -2215,15 +2219,15 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073"}:
+if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e"}:
     # Queued-GPFIFO AS revocation + complete native Puller/Ampere H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == ("747569d1bafefc23fb235e1929bda0f5c0d48de3" if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073" else "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89")
-    if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073":
+    ).strip() == ("af3fb89c9c6bb96c19bd2e099273019840536267" if actual_vendor_pin == "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e" else "747569d1bafefc23fb235e1929bda0f5c0d48de3" if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073" else "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89")
+    if actual_vendor_pin in {"a8f327c972bd2f84f6e6f9432c96c4a948963073", "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e"}:
         raw = (V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     for relative, expected_blob in {
@@ -2243,6 +2247,11 @@ if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("queued GPFIFO/Puller H17 successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
+if actual_vendor_pin == "ffa7757e98bf42a5abcd5c0b9e845cfdbc01e75e":
+    for relative, expected in {"encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.h":"1c90e08bc3c66731aa717e7b17b3249539848016","encore-active/eden-core/overrides/buffer-hotpath/common/range_sets.inc":"742dc02b71ada75425fec7e126093634a22d2102","encore-active/eden-core/overrides/buffer-hotpath/video_core/buffer_cache/word_manager.h":"0992d01d0b4e262dd4b4a79633affa8b02529795","encore-active/eden-core/src/video_core/buffer_cache/buffer_cache.h":"4ce33d21debc33c9625129cbd545bf9b1c084272","tests/fc27_gpu_page_sibling_preservation_host.py":"c27f87a327a5a371a7810b41dabc2bc8f03fe61d"}.items():
+        raw = (V / relative).read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
+    assert "EDEN_MAINTAINED_BUFFER_HOTPATH" in (V.parent / "headless/CMakeLists.txt").read_text()
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

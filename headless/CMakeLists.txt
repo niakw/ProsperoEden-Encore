@@ -115,6 +115,18 @@ if(PS5_NATIVE)
     configure_file("${EDEN_MAINTAINED_BUFFER_BASE}"
         "${PORT_BUILD_DIR}/buffer-pages/video_core/buffer_cache/buffer_cache_base.h" COPYONLY)
     target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/buffer-pages" "${EDEN_PORT_DIR}")
+    # Shared native RangeSet and WordManager definitions for every consumer.
+    set(EDEN_MAINTAINED_BUFFER_HOTPATH
+        "${PORT_ROOT}/vendor/encore-active/eden-core/overrides/buffer-hotpath")
+    foreach(relative IN ITEMS common/range_sets.h common/range_sets.inc
+            video_core/buffer_cache/word_manager.h)
+        if(NOT EXISTS "${EDEN_MAINTAINED_BUFFER_HOTPATH}/${relative}")
+            message(FATAL_ERROR "Missing native BufferCache hotpath header: ${relative}")
+        endif()
+    endforeach()
+    target_include_directories(common BEFORE PUBLIC "${EDEN_MAINTAINED_BUFFER_HOTPATH}")
+    target_include_directories(core BEFORE PRIVATE "${EDEN_MAINTAINED_BUFFER_HOTPATH}")
+    target_include_directories(video_core BEFORE PRIVATE "${EDEN_MAINTAINED_BUFFER_HOTPATH}")
 endif()
 # Eglantine #462: PS5 Vulkan BufferCache::CanReorderUpload must see
 # every 64-byte bucket touched by a guest upload, even for sub-64-byte spans.

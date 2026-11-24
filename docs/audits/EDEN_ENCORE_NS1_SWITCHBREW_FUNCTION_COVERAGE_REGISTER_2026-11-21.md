@@ -3048,3 +3048,9 @@ Vendor `8aeb5a99bc36d5a01a1cd409bb24d8bed990ab05` : `IApplicationCreator::PopLau
 
 Le handler retourne donc une erreur explicite sans fabriquer d'accessor. **1 NULL → D. Pool restant = 1 540 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM LibraryAppletAccessor : foreground request raccordé au lifecycle réel
+
+Vendor `829c7964df4ea7dd6e16cb666e139561d920f737` : `RequestForLibraryAppletToGetForeground` (cmd80, HOS19+) n'est plus NULL. Encore réutilise l'état déjà actif du child library applet : le handler vérifie le `WindowSystem`, passe `window_visible=true` via `RequestAppletVisibilityState`, puis l'update récursif existant de `WindowSystem::UpdateAppletStateLocked` recalcule visibilité, foreground hérité du caller, suspension, HID et z-order. Ce chemin couvre notamment `AllForegroundInitiallyHidden`, créé avec `window_visible=false`.
+
+Une implémentation indépendante (Napple) modélise elle aussi cmd80 comme une demande de foreground sur l'applet existant, sans création d'un nouveau root. **1 NULL → IMPL-SRC. Pool restant = 1 539 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

@@ -25,10 +25,13 @@ assert method.count("++state.total;")==2
 assert method.count("std::scoped_lock count_lock{state.mutex};") == 0
 assert "std::scoped_lock lock{state.mutex};\n            ++state.total;" in method
 assert "std::scoped_lock lock{state.mutex};\n                ++state.total;" in method
-assert "std::deque<Common::UniqueFunction<void>> recent_cache_builds;" in method
+assert "std::list<std::pair<PrewarmKey, Common::UniqueFunction<void>>> recent_cache_builds;" in method
+assert "const PrewarmKey candidate{key};" in method
+assert "return entry.first == candidate;" in method
+assert "recent_cache_builds.erase(duplicate);" in method
 assert "recent_cache_builds.pop_front();" in method
-assert "recent_cache_builds.emplace_back(std::move(build));" in method
-assert method.count("schedule_prewarm([this, key,") == 2
+assert "recent_cache_builds.emplace_back(candidate, std::move(build));" in method
+assert method.count("schedule_prewarm(key, [this, key,") == 2
 assert "kRecentShaderCacheScanLimit = 64ULL << 20;" in method
 assert "env_before.bytes <= kRecentShaderCacheScanLimit" in method
 assert 'shader_source.count(f07_prewarm_total_old) != 2' in gen

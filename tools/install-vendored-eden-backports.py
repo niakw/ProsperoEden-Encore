@@ -1236,6 +1236,41 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         print('NS1_NS_RIGHTS_ENVIRONMENT_EXACT_REVERSE_PASS',
               'closed=14', 'current_fw=23', 'pinned_source_unchanged')
 
+
+        # HOS23 ES: a shipping overlay closes unsupported ticket mutation
+        # and prepurchase operations, without changing local ticket/key reads.
+        es_rel = 'src/core/hle/service/es/es.cpp'
+        es_original = (stage / es_rel).read_bytes()
+        es_upstream = (ORIGINAL / es_rel).read_bytes()
+        assert es_original == es_upstream
+        assert len(es_upstream) == 15733 and sha(es_upstream) == 'fb2386ef1e53f8a5e8ede1f8d11d98c312b205a337ed0350c72210520c8da605'
+        es_active = (ACTIVE / es_rel).read_bytes()
+        assert len(es_active) == 16737 and sha(es_active) == 'e5bd1ed9088fa00c7e5758aaf5d09142dbe90c440b0104259005b7b281d042ff'
+        assert es_rel in spec['entries']
+        assert spec['entries'][es_rel]['active'] == sha(es_active)
+        assert spec['entries'][es_rel]['upstream'] == sha(es_upstream)
+        es_ids = [2,3,5,6,7,13,22,23,24,25,26,27,28,29,32,34,35,39,40]
+        es_reviewed_method = (
+            '    // Switch eTicket mutation and prepurchase service lacks an authenticated backend.\n'
+            '    // Preserve local ticket reads and title-key access on the existing KeyManager.\n'
+            '    void RejectUnavailableTicketManagement(HLERequestContext& ctx) {\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n\n'
+        )
+        es_reversed = es_active.decode('utf-8')
+        assert es_reversed.count(es_reviewed_method) == 1
+        es_reversed = es_reversed.replace(es_reviewed_method, '', 1)
+        for cmd in es_ids:
+            pointer = '{' + str(cmd) + ', &ETicket::RejectUnavailableTicketManagement,'
+            assert es_reversed.count(pointer) == 1, ('ES exact reverse changed', cmd)
+            es_reversed = es_reversed.replace(
+                pointer, '{' + str(cmd) + ', nullptr,', 1)
+        assert es_reversed.encode('utf-8') == es_upstream, 'ES owner exact reverse mismatch'
+        observed[es_rel] = spec['entries'][es_rel]
+        print('NS1_ES_TICKET_MANAGEMENT_EXACT_REVERSE_PASS',
+              'offline_commands=19', 'upstream_ticket_reads=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

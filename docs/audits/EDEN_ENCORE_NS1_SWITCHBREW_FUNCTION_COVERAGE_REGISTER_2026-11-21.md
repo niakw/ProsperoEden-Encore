@@ -2711,3 +2711,10 @@ Vendor `c24bcfa3fb9da644d31689ae4d16f2745f240227` : cmd4 `ApplyCurrentBrightness
 Vendor `67219c2d7f5b88e3c20f148fbfab7c9bba3f087c` : cmd170 `SetHdcpAuthenticationActivated`, déjà présent dans l'overlay actif mais encore NULL dans le snapshot canonique, met à jour `m_applet->hdcp_authentication_activated`. Le getter cmd62 ne renvoie plus la constante `1` : il relit le même état sous verrou. Une transition signale `GetHDCPStateChangedEvent()`, sans toucher à la configuration HDCP de la PS5 hôte. Le dump NS1 23.0.1 confirme cmd170 = entrée bool 1 octet et cmd62 = sortie s32. **1 NULL → IMPL-SRC**.
 
 **Pool restant = 1 547** : 1 181 NULL + 17 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — NIFM : politique IRequest et applet de connexion
+
+Vendor `100be854211d10cb02b96e8f0059e1d924fa09c3` : dans l'overlay NIFM réellement compilé, cmd6 `SetRequirementPreset` et cmd11 `SetConnectionConfirmationOption` ne sont plus présentés comme des stubs. Les deux entrées sont consommées avec leur ABI (u32 / u8) et deviennent des **NOOP explicites** sur PS5 : Encore évalue directement l'état réseau hôte et ne possède pas le daemon de politique ni l'applet de confirmation Horizon. Ce comportement est cohérent avec Strato/Ryujinx pour ces setters. Cmd21 `GetAppletInfo` ne fabrique plus un applet id/mode/taille à zéro ni un buffer vide : en l'absence d'applet réseau Horizon, il renvoie le résultat NIFM **AppletLaunchNotRequired (module 110, description 180)** observé chez Strato et Ryujinx. Le manifeste de l'overlay est recalculé (`54346de56e89098daaa15917d919f01efb75dbc008e37776de73160e5ee789e7`, 59 453 octets). **3 STUB → hors pool**.
+
+**Pool restant = 1 544** : 1 181 NULL + 14 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

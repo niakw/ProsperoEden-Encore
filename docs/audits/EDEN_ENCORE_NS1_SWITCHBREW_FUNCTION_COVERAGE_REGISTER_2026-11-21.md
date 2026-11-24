@@ -2941,3 +2941,13 @@ Vendor `6693426e3aca6318b7305a001205c14f216d9658` : `ICommonStateGetter` cmd15 (
 
 Un overlay `common_state_getter.h` est ajouté au manifest plutôt que de modifier implicitement la copie upstream. Le **pool reste 1 557 / 4 853** car PARTIEL reste dans le pool. Les quatre owners AM ont désormais **10 slots `nullptr` physiques**, dont **9 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM Starter lifecycle + ContentActionTable
+
+Vendor `5fa1a189b96500929514986a86d2926fe2ff9f5c`.
+
+**Starter lifecycle.** Le handler `IHomeMenuFunctions::LaunchStarter` est aligné sur le chemin `IApplicationCreator::CreateSystemApplication` réellement actif : l'`Applet` Starter est construit avec `is_application=true` et enregistré via `WindowSystem::TrackApplet(..., true)`. Cette correction est nécessaire parce que l'AppletId 0x04 est le **SystemApplication / starter**, pas un simple child library applet. Le champ `AppletType` existant n'est pas réinterprété ici : on corrige uniquement les deux marqueurs de lifecycle démontrés.
+
+**CommonStateGetter cmd65.** `GetApplicationIdByContentActionName` n'est plus NULL. L'ABI libnx est respectée : buffer MapAlias d'entrée NUL-terminé et `u64` de sortie. Le handler refuse les callers autres que `AppletId::Starter`, ouvre le SystemData `0100000000000827` (`ContentActionTable`) depuis le NAND firmware, extrait son RomFS, cherche `table/<ContentActionName>/ApplicationId`, puis parse strictement l'ApplicationId ASCII hexadécimal. Les composants de chemin sont filtrés pour éviter toute traversée VFS. SwitchBrew documente que ContentActionTable est utilisé par AM et montre ce layout avec un exemple YouTube. Comme aucune seconde source publique ne décrit explicitement l'algorithme de sélection du sous-répertoire, classement conservateur **NULL → PARTIEL** jusqu'à preuve/validation complémentaire.
+
+Le **pool global reste 1 557 / 4 853**. Les quatre owners AM ciblés ont maintenant **9 slots `nullptr` physiques**, dont **8 pertinents HOS23** après `SelectApplicationLicense` hors-version. Aucun build natif PS5 ni validation console revendiqués.
+

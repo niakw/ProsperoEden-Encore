@@ -2493,6 +2493,8 @@ if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972
             expected_blob = "e66f3161c735a15eb5dac0c97afa1e741802cda9"
         if actual_vendor_pin == "096761112103fac069b56a22c77f07492001e26e" and relative == "tests/ns2_native_tiling_activation_source.py":
             expected_blob = "b802bbaaa6bf98e4dc55cc5ec7c2c3581b13a117"
+        if actual_vendor_pin == "fa76dceebca2fae6acbf2b2a6b9840061e07ecc6" and relative == "tests/ns2_native_tiling_activation_source.py":
+            expected_blob = "a8429979685627f5e115b70030c633391dd35673"
         raw=(V/relative).read_bytes()
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("queued GPFIFO/Puller H17 successor drift", relative, actual)

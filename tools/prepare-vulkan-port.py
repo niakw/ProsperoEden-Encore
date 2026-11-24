@@ -3003,6 +3003,7 @@ if _missing_headers:
     _prefix = (_prefix[:_insert] +
                "".join(_header + "\n" for _header in _missing_headers) +
                _prefix[_insert:])
+shader_source = _prefix + _namespace_marker + _suffix
 # The old parallel translator's helper declaration also moved relative to
 # other PS5 namespaces over time. Normalize the semantic declaration itself,
 # not its surrounding whitespace, and install the final immutable-snapshot ABI.

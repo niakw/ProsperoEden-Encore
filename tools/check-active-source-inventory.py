@@ -2223,13 +2223,14 @@ current_vendor_post_f07_owner_blobs = {
     "ns2-runtime/nx/core/file_sys/decrypted_nca.h": "623f142cfffea3194b9a39842750c3b715e1fdf8",
     "ns2-runtime/nx/core/file_sys/nx_content.cpp": "c374fab2fa5dbc6174099db309a2f6ebbf9e849c",
     "ns2-runtime/nx/core/loader/loader.h": "9efa7b4e54790942f5699c63b1286e6023873a65",
-    "ns2-runtime/nx/core/loader/nx.cpp": ("5d999ca68668133ea3f151669ecd6ac6a17ae1c5"
-        if shipping_vendor == "692e9819a7a1f1b818bf3739c72d8e5252cae661" else "8a64df9a95675c1c9655f838efd6328645915d71"),
+    "ns2-runtime/nx/core/loader/nx.cpp": "8a64df9a95675c1c9655f838efd6328645915d71",
     "ns2-runtime/nx/core/loader/nx.h": "508939fbd0d6eadafe488a19eb18dde5404919fd",
     "ns2-runtime/nx/nxformat/nx_reader.hpp": "7deff5cb5a4fbe5f9a04edf359ccd0504568b657",
     "ns2-runtime/nx/nxformat/nx_session.hpp": "1b12f29c85cb02cea79fa9a08f401c88182c8c6e",
     "ns2-runtime/sparse-residency/core/hle/kernel/k_page_heap.cpp": "574c88dc2add018094c3e6db9047881709da6659",
 }
+if shipping_vendor == "692e9819a7a1f1b818bf3739c72d8e5252cae661":
+    current_vendor_post_f07_owner_blobs["ns2-runtime/nx/core/loader/nx.cpp"] = "5d999ca68668133ea3f151669ecd6ac6a17ae1c5"
 # Post-F07 registry includes old SM while the latest exact successor
 # changes ONLY SM handler retirement in that owner. Preserve exact pin and
 # verify all other reviewed owners byte for byte.

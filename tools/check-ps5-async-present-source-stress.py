@@ -17,10 +17,15 @@ import subprocess
 import tempfile
 
 root=Path(__file__).resolve().parents[1]
-active=(root/"vendor/encore-active/eden-vulkan/vulkan_present_manager.cpp").read_text()
-header=(root/"vendor/encore-active/eden-vulkan/include/video_core/renderer_vulkan/vk_present_manager.h").read_text()
+active=(root/"headless/vulkan_present_manager_ps5.cpp").read_text()
+header=(root/"headless/vk_present_manager_r08.h").read_text()
 native_main=(root/"headless/main.cpp").read_text()
-render=(root/"vendor/encore-active/eden-vulkan/vulkan_renderer.cpp").read_text()
+render=(root/"headless/vulkan_renderer_r08.cpp").read_text()
+cmake=(root/"headless/vulkan.cmake").read_text()
+assert 'configure_file("${EDEN_PORT_DIR}/vulkan_present_manager_ps5.cpp"' in cmake
+assert 'configure_file("${EDEN_PORT_DIR}/vk_present_manager_r08.h"' in cmake
+assert '"${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"' in cmake
+assert "u32 game_frame_presents{1};" in header
 assert "MAX_FRAMES_IN_FLIGHT = 7;" in active
 assert "image_count = std::min<size_t>(swapchain.GetImageCount(), MAX_FRAMES_IN_FLIGHT);" in active
 swap=(root/"vendor/encore-active/eden-vulkan/vulkan_swapchain.cpp").read_text()
@@ -49,6 +54,8 @@ source=r"""
 #include <chrono>
 #include <condition_variable>
 #include <cstddef>
+#include <cstdint>
+#include "gpu_failure.h"
 #include <cstdio>
 #include <deque>
 #include <exception>
@@ -59,7 +66,12 @@ source=r"""
 #include <utility>
 #include <vector>
 using namespace std::chrono_literals;
-namespace vk { struct CommandBuffer {}; }
+using VkResult=int;
+constexpr VkResult VK_SUCCESS=0, VK_TIMEOUT=2;
+namespace vk {
+struct CommandBuffer {};
+void Check(VkResult result){assert(result==VK_SUCCESS);}
+}
 namespace Common {
 enum class ThreadPriority { High };
 void SetCurrentThreadName(const char*) {}
@@ -73,7 +85,12 @@ struct DiagnosticTimer { explicit DiagnosticTimer(int&) {} };
 struct Frame {
   unsigned index{};
   std::chrono::steady_clock::time_point callback;
-  struct PresentFence { void Wait(){} void Reset(){} } present_done;
+  std::uint32_t game_frame_presents{3}; // seed stale synthetic count
+  struct PresentFence {
+    bool completed{true};
+    VkResult Wait(std::uint64_t){assert(completed);return VK_SUCCESS;}
+    void Reset(){assert(completed);completed=false;}
+  } present_done;
 };
 struct Scheduler {
   template<class F> void Record(F&& f){ f(vk::CommandBuffer{}); }
@@ -125,6 +142,9 @@ public:
     std::scoped_lock lock{result_mutex};
     delivered.push_back(Clock::now());
     latencies.push_back(Millis(frame->callback,delivered.back()));
+    // The real copy submission owns this fence; model completion before recycle.
+    assert(!frame->present_done.completed);
+    frame->present_done.completed=true;
   }
 };
 __PRODUCTION_METHODS__
@@ -141,6 +161,9 @@ Outcome Run(unsigned mode,unsigned pool){
   for(unsigned i=0;i<count;i++){
     std::this_thread::sleep_until(start+i*cadence);
     Frame* frame=manager.GetRenderFrame();
+    assert(frame->game_frame_presents==1);
+    assert(!frame->present_done.completed);
+    frame->game_frame_presents=(i%2==0?3u:1u); // verify reset on later reuse
     frame->index=i;
     frame->callback=Clock::now();
     // This event is "Composite callback" after enqueue, NOT a present ACK.
@@ -210,6 +233,6 @@ with tempfile.TemporaryDirectory(prefix="eden-async-present-replay-") as tmp:
     exe=Path(tmp)/"present-replay"
     src.write_text(source)
     subprocess.run([compiler,"-std=c++20","-O2","-pthread","-Wall","-Wextra","-Werror",
-                    str(src),"-o",str(exe)],check=True,timeout=55)
+                    "-I",str(root/"headless"),str(src),"-o",str(exe)],check=True,timeout=55)
     subprocess.run([str(exe)],check=True,timeout=32)
 print("HOST-ONLY: actual Vulkan GPU completion, display scanout and in-game content not verified")

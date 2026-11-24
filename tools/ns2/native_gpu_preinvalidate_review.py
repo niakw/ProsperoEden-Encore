@@ -22,6 +22,20 @@ def blob(content: str) -> str:
     return hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
 
 def recover_prior_memory_manager(actual: str) -> str:
+    # NS2 Worker 212 may change PTE kind without changing physical backing.
+    # Reverse the exact reviewed successor before the older owner replay.
+    if "A native kind change can reinterpret" in actual:
+        assert blob(actual) == "9a9479580fb2037cc49fe2ed5c6a284331a78b97", "unreviewed kind-change invalidation owner"
+        old_check = "        const bool mapping_changed = Eden::GpuMemory::NeedsRasterizerUnmap(\n            current_entry_type, entry_type, EntryType::Mapped, previous_page, replacement_page);"
+        new_check = "        // A native kind change can reinterpret the same physical page. Retire\n        // the old cache owner while both the PTE and the old kind are visible.\n        // The lookup is only needed for Mapped -> Mapped with unchanged backing.\n        const bool mapping_changed = Eden::GpuMemory::NeedsRasterizerUnmap(\n            current_entry_type, entry_type, EntryType::Mapped, previous_page, replacement_page) ||\n            (current_entry_type == EntryType::Mapped && entry_type == EntryType::Mapped &&\n             GetPageKind(current_gpu_addr) != kind);"
+        assert actual.count(new_check) == 2
+        actual = actual.replace(new_check, old_check)
+        # Only the first writer (4K) gained the existing kind-map guard.
+        old_writer = "    kind_map.Map(gpu_addr, gpu_addr + size, kind);\n    gpu_page_table_revision.fetch_add(1, std::memory_order_release);"
+        guarded_writer = "    {\n        std::unique_lock<std::mutex> lock(guard);\n        kind_map.Map(gpu_addr, gpu_addr + size, kind);\n    }\n    gpu_page_table_revision.fetch_add(1, std::memory_order_release);"
+        assert actual.count(guarded_writer) == 2
+        actual = actual.replace(guarded_writer, old_writer, 1)
+        assert blob(actual) == "4fc858082c9528520027cd416ac1a942dbce8bc5", "kind-change predecessor drift"
     # FC27 P1 merged physically touching DMA invalidation spans before
     # BufferCache ownership claims, without changing page protection or the
     # NVN shim. Peel only its exact 1739-byte audited addition before older

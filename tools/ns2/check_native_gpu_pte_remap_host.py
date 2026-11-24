@@ -54,7 +54,7 @@ using DAddr=u64;
 // Use the SAME revision declaration as the real shared memory manager.
 // This fixture extracts real PageTableOp/BigPageTableOp bodies unchanged.
 std::atomic<u64> gpu_page_table_revision{1};
-enum class PTEKind{INVALID,Color};
+enum class PTEKind{INVALID,Color,Depth};
 struct SmallTable {
     std::array<u32, 256> entries{};
     void ReserveRange(u64, size_t) {}
@@ -80,7 +80,13 @@ struct Backing {
         return reinterpret_cast<T*>(data.data() + (a % data.size()));
     }
 };
-struct KindMap {void Map(u64,u64,PTEKind){}};
+struct KindMap {
+    std::array<PTEKind,256> values{};
+    void Map(u64 begin,u64 end,PTEKind kind) {
+        for (u64 at=begin;at<end;at+=4096) values.at(at/4096)=kind;
+    }
+    PTEKind GetValueAt(u64 at) const {return values.at(at/4096);}
+};
 class MemoryManager {
 public:
     enum class EntryType {Free,Reserved,Mapped};
@@ -108,6 +114,10 @@ public:
         return address/(is_big?big_page_size:page_size);
     }
     void SetBigPageContinuous(size_t,bool) {}
+    PTEKind GetPageKind(u64 address) {
+        std::scoped_lock lock(guard);
+        return kind_map.GetValueAt(address);
+    }
     GPUVAddr PageTableOp(GPUVAddr, DAddr, size_t, PTEKind, EntryType);
     GPUVAddr BigPageTableOp(GPUVAddr, DAddr, size_t, PTEKind, EntryType);
 };
@@ -141,6 +151,24 @@ int main() {
     small.recorder.events.clear();
     map_small(base,0x200000,3*4096);
     Same(small.recorder.events,{});
+    // Same backing, different layout: retire ONLY the changed 4K page.
+    small.recorder.before_unmap=[&](u64 at,u64 bytes) {
+        assert(at==base+4096 && bytes==4096);
+        assert(small.GetPageKind(at)==PTEKind::Color);
+        assert(small.page_table[at/4096]==0x200000/4096+1);
+    };
+    small.PageTableOp(base+4096,0x201000,4096,PTEKind::Depth,Entry::Mapped);
+    small.recorder.before_unmap={};
+    Same(small.recorder.events,{{base+4096,4096}});
+    assert(small.GetPageKind(base)==PTEKind::Color);
+    assert(small.GetPageKind(base+4096)==PTEKind::Depth);
+    assert(small.GetPageKind(base+8192)==PTEKind::Color);
+    small.recorder.events.clear();
+    small.PageTableOp(base+4096,0x201000,4096,PTEKind::Depth,Entry::Mapped);
+    Same(small.recorder.events,{});
+    small.PageTableOp(base+4096,0x201000,4096,PTEKind::Color,Entry::Mapped);
+    Same(small.recorder.events,{{base+4096,4096}});
+    small.recorder.events.clear();
     small.recorder.before_unmap=[&](u64,u64) {
         assert(small.GetEntry(base+4096,false)==Entry::Mapped);
         assert(small.page_table[(base+4096)/4096]==0x200000/4096+1);
@@ -187,6 +215,26 @@ int main() {
     big.recorder.events.clear();
     map_big(big_base,0x400000,2*16384);
     Same(big.recorder.events,{});
+    big.recorder.before_unmap=[&](u64,u64) {
+        assert(big.GetPageKind(big_base)==PTEKind::Color);
+        assert(big.GetPageKind(big_base+16384)==PTEKind::Color);
+        assert(big.big_page_table_dev[big_base/16384]==0x400000/4096);
+        assert(big.big_page_table_dev[big_base/16384+1]==0x404000/4096);
+    };
+    big.BigPageTableOp(big_base,0x400000,2*16384,PTEKind::Depth,Entry::Mapped);
+    big.recorder.before_unmap={};
+#ifdef EDEN_NS2_GPU_RANGE_BATCH
+    Same(big.recorder.events,{{big_base,2*16384}});
+#else
+    Same(big.recorder.events,{{big_base,16384},{big_base+16384,16384}});
+#endif
+    assert(big.GetPageKind(big_base)==PTEKind::Depth);
+    assert(big.GetPageKind(big_base+16384)==PTEKind::Depth);
+    big.recorder.events.clear();
+    big.BigPageTableOp(big_base,0x400000,2*16384,PTEKind::Depth,Entry::Mapped);
+    Same(big.recorder.events,{});
+    big.BigPageTableOp(big_base,0x400000,2*16384,PTEKind::Color,Entry::Mapped);
+    big.recorder.events.clear();
     map_big(big_base+16384,0x500000,16384);
     Same(big.recorder.events,{{big_base+16384,16384}});
     assert(big.big_page_table_dev[(big_base+16384)/16384]==0x500000/4096);
@@ -237,4 +285,4 @@ with tempfile.TemporaryDirectory(prefix="eden-guest-gpu-remap-") as temp:
                 assert result.returncode==0,(compiler,opt,batching,result.stderr[-4000:])
                 result=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=20)
                 assert result.returncode==0,(compiler,opt,batching,result.stderr[-3000:])
-                print(f"P1_2_GPU_PTE_REMAP_PASS compiler={compiler} opt={opt} batch={int(batching)} small=1 big=1 old_backing_verified=1 NS1=preserved")
+                print(f"P1_2_GPU_PTE_REMAP_PASS compiler={compiler} opt={opt} batch={int(batching)} small=1 big=1 old_backing_verified=1 kind_change=1 same_kind_noop=1")

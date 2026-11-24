@@ -3258,3 +3258,11 @@ Vendor `c2063ba7d1a8acc7596fff3bbde994e9de9bb4be` : `bcat_service.cpp/.h` sont d
 **19 slots physiques** sans backend sont raccordés à un rejet explicite : annulation non supportée, notifiers/suspension, enregistrement/gestion de delivery tasks, listes de tâches/livraisons, subscription status et push log. Les noms 30200/30201 sont corrigés vers `RegisterDeliveryTask` / `UnregisterDeliveryTask`, conformément à SwitchBrew. Les commandes 20410/30101/30102/30210/90101/90301 sont aussi fermées physiquement mais ne comptent pas comme lignes historiques distinctes.
 
 Les commandes **20100/20101 restent volontairement NULL** : le backend sait synchroniser un titre, mais le contrat HOS3+ ajoute 8 octets dont la sémantique n'est pas encore qualifiée ; elles ne sont donc pas rejetées artificiellement. Croisement 4 853 : **11 NULL → D + 2 ABI-DIFF → D**, soit **13 entrées sorties du pool. Pool restant = 952 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — MiiImg : base vide réellement shipping, backend fichier fail-closed
+
+Vendor `6bcf1cb61b190766a459334ee462fb74f978e5f2` : `mii.cpp` devient un owner `eden-backports` explicite et sa copie `sources/eden` revient au blob Eden épinglé. Les handlers déjà écrits `Reload`, `GetCount=0`, `IsEmpty=true` et `IsFull=false` rejoignent ainsi le runtime natif au lieu de rester dans une copie de référence. `Initialize` reste un NOOP cohérent avec une base d'images vide.
+
+Les **9 commandes fichier/image** encore à `nullptr` — GetAttribute, LoadImage, AddOrUpdateImage, DeleteImages, DeleteFile, DestroyFile, ImportFile, ExportFile, ForceInitialize — sont raccordées à un rejet explicite tant qu'Encore n'a pas de backend fichier Mii Horizon. Les deux NULL du service Mii principal (`Import`/`Export`) restent volontairement intacts : ils ne font pas partie de `miiimg`.
+
+Croisement 4 853 : **9 NULL → D**. **Pool restant = 943 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

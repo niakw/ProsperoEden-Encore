@@ -571,6 +571,40 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'successors=2', 'rejected_slots=19', 'sync_slots_left=2',
               'pinned_sources=immutable')
 
+        # miiimg has an intentionally empty guest-visible database until a Horizon
+        # image-file backend exists. The previously source-only empty-database handlers
+        # must be installed into the native pinned Eden cache; file operations fail closed.
+        miiimg_rel='src/core/hle/service/mii/mii.cpp'
+        miiimg_entry={
+            'before_sha256':'5cefdb565a5abd82233f60875d7a0e93fa5d41f16d21df3a86b3cd73d50b826d',
+            'before_bytes':14164,
+            'after_sha256':'e3d71bc7189d3675e16aa03bc03ea032581249625cbe3c5dc330c86f1e2dacbd',
+            'after_bytes':15496,
+        }
+        assert miiimg_rel not in observed, ('MiiImg unexpectedly changed by frozen replay',miiimg_rel)
+        assert miiimg_rel in spec['entries'], ('Missing MiiImg shipping overlay',miiimg_rel)
+        generated=(stage/miiimg_rel).read_bytes()
+        current=(ACTIVE/miiimg_rel).read_bytes()
+        assert len(generated)==miiimg_entry['before_bytes'] and sha(generated)==miiimg_entry['before_sha256'], (
+            'MiiImg pinned source drift',miiimg_rel)
+        assert spec['entries'][miiimg_rel]['upstream']==miiimg_entry['before_sha256']
+        assert len(current)==miiimg_entry['after_bytes'] and sha(current)==miiimg_entry['after_sha256'], (
+            'Unreviewed MiiImg maintained source',miiimg_rel)
+        assert spec['entries'][miiimg_rel]['active']==miiimg_entry['after_sha256']
+        assert spec['entries'][miiimg_rel]['bytes']==miiimg_entry['after_bytes']
+        observed[miiimg_rel]=spec['entries'][miiimg_rel]
+        miiimg_cpp=(ACTIVE/miiimg_rel).read_text()
+        assert miiimg_cpp.count('&IImageDatabaseService::RejectUnavailableImageFile')==9
+        assert miiimg_cpp.count('D<&IImageDatabaseService::Reload>')==1
+        assert miiimg_cpp.count('D<&IImageDatabaseService::GetCount>')==1
+        assert miiimg_cpp.count('D<&IImageDatabaseService::IsEmpty>')==1
+        assert miiimg_cpp.count('D<&IImageDatabaseService::IsFull>')==1
+        assert miiimg_cpp.count('{18, nullptr, "Import"}')==1
+        assert miiimg_cpp.count('{19, nullptr, "Export"}')==1
+        print('NS1_MIIIMG_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=1', 'rejected_slots=9', 'core_mii_nulls_left=2',
+              'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

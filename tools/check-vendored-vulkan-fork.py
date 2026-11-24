@@ -13,6 +13,7 @@ import tempfile
 from ci.ps5_cache_diag_receipt import (
     normalize_for_historical_proof, reverse_immutable_snapshot_successor,
     reverse_reviewed_source, PARALLEL_TIMING_REVERSES, PARALLEL_TRANSLATION_REVERSES,
+    PARALLEL_SNAPSHOT_RETRY_REVERSES,
 )
 def git_blob_sha(text):
     data=text.encode('utf-8')
@@ -2730,6 +2731,14 @@ void BlitImageHelper::ConvertX8D24ToABGR8(const Framebuffer* dst_framebuffer,
     typed_output_before = '        if (device.IsMoltenVK()) {'
     generated_raw_n3m = actual[n56_name].read_text()
     native_raw_n3m = (active / n56_name).read_text()
+    # Check the complete reviewed retry hunks in both owners before replaying
+    # the older snapshot receipt. The generated source has independent
+    # diagnostic differences, so the native raw hash is checked separately.
+    native_raw_n3m = reverse_reviewed_source(
+        native_raw_n3m, PARALLEL_SNAPSHOT_RETRY_REVERSES, "native NS1 serial retry")
+    assert git_blob_sha(native_raw_n3m) == "fc537323bb9f63d70ef5f8cedd65886e6a0099c0"
+    generated_raw_n3m = reverse_reviewed_source(
+        generated_raw_n3m, PARALLEL_SNAPSHOT_RETRY_REVERSES, "generated NS1 serial retry")
     assert generated_raw_n3m.count(typed_output_after) == 1, (
         'GPU-23 generated integer fragment output gate drift')
     assert native_raw_n3m.count(typed_output_after) == 1, (

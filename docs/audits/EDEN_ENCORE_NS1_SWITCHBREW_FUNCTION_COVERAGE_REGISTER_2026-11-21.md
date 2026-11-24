@@ -3274,3 +3274,11 @@ Vendor `506bcfd7c74cf131029abeba02a3e37e793dd8c7` : dans l'owner shipping exista
 Les commandes plus récentes **8/9/20/30/100/101** restent volontairement `nullptr` : elles ne sont pas utilisées pour gonfler le compteur sans qualification ABI. Le replay moteur exige exactement le predecessor généré `a127ff1b…` (5478 octets), le successor `4af9b510…` (6151 octets), six raccords au NOOP local et les six slots plus récents encore ouverts.
 
 Croisement du miroir 4 853 : **6 NULL → NOOP**. **Pool restant = 937 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+
+### 2026-11-24 — NSD : résolution locale shipping, réglages Nintendo fail-closed
+
+Vendor `fc4894a72071fcabf7ad7363d5783f6c0d0bf609` : `nsd.cpp/.h` deviennent des owners explicites de `encore-active/eden-backports` et les copies `sources/eden` reviennent aux blobs Eden épinglés. Les comportements locaux déjà développés — `GetEnvironmentIdentifier=lp1`, verrouillage du changement d'environnement, `Resolve/ResolveEx`, type serveur `Lp` et rejets des commandes test — atteignent ainsi réellement le build natif.
+
+Les **11 commandes historiques** encore ouvertes qui dépendent de réglages/FQDN NAS Nintendo (10, 12–14, 30–31, 40–43, 50) sont raccordées à `RejectUnavailableNintendoSetting` avec `ResultNotSupported`. Les slots physiques 5/64/101/102 restent volontairement `nullptr` car ils ne sont pas des lignes qualifiées du miroir utilisé pour le compteur.
+
+Croisement 4 853 : **11 NULL → D**. **Pool restant = 926 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.

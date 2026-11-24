@@ -636,6 +636,53 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'accepted_notifications=6', 'newer_unqualified_slots=6',
               'historical_owner=preserved')
 
+        # NSD local/offline responses were previously maintained only under
+        # vendor/sources. Install them as explicit shipping owners and fail closed
+        # only the reviewed Nintendo network-setting commands.
+        nsd_overlays={
+            'src/core/hle/service/sockets/nsd.cpp': {
+                'before_sha256':'706b5751eda10aa9219a720222e1ca21bda043fe38dea478b98ac643d8b880cf',
+                'before_bytes':4515,
+                'after_sha256':'75a65607bcf99b344abe57393a9bb19aceab9194e4d282a083401b74422c954f',
+                'after_bytes':6085,
+            },
+            'src/core/hle/service/sockets/nsd.h': {
+                'before_sha256':'26f8440d3047ec6ab70fd45f27b4be54fdefc2763f9229a26192295e5f78ed68',
+                'before_bytes':808,
+                'after_sha256':'e6cee0431e3b7fbadda24ff8adb4618f7b5710be7041f15fb708a97ba6a7249d',
+                'after_bytes':1056,
+            },
+        }
+        for rel,entry in nsd_overlays.items():
+            assert rel not in observed, ('NSD unexpectedly changed by frozen replay',rel)
+            assert rel in spec['entries'], ('Missing NSD shipping overlay',rel)
+            generated=(stage/rel).read_bytes()
+            current=(ACTIVE/rel).read_bytes()
+            assert len(generated)==entry['before_bytes'] and sha(generated)==entry['before_sha256'], (
+                'NSD pinned source drift',rel)
+            assert spec['entries'][rel]['upstream']==entry['before_sha256'], rel
+            assert len(current)==entry['after_bytes'] and sha(current)==entry['after_sha256'], (
+                'Unreviewed NSD maintained source',rel)
+            assert spec['entries'][rel]['active']==entry['after_sha256'], rel
+            assert spec['entries'][rel]['bytes']==entry['after_bytes'], rel
+            observed[rel]=spec['entries'][rel]
+        nsd_cpp=(ACTIVE/'src/core/hle/service/sockets/nsd.cpp').read_text()
+        assert nsd_cpp.count('&NSD::RejectUnavailableNintendoSetting')==11
+        assert nsd_cpp.count('&NSD::Resolve, "Resolve"')==1
+        assert nsd_cpp.count('&NSD::ResolveEx, "ResolveEx"')==1
+        assert nsd_cpp.count('&NSD::GetEnvironmentIdentifier')==1
+        assert nsd_cpp.count('&NSD::GetApplicationServerEnvironmentType')==1
+        for command in (
+            '{5, nullptr, "GetSettingUrl"}',
+            '{64, nullptr, "SetWithoutDomainExchangeFqdns"}',
+            '{101, nullptr, "SetApplicationServerEnvironmentType"}',
+            '{102, nullptr, "DeleteApplicationServerEnvironmentType"}',
+        ):
+            assert nsd_cpp.count(command)==1, command
+        print('NS1_NSD_EXACT_POST_BACKPORT_REPLAY_PASS',
+              'successors=2', 'rejected_historical_slots=11',
+              'unqualified_physical_slots=4', 'pinned_sources=immutable')
+
         if observed!=spec['entries']:
             missing=sorted(set(observed)-set(spec['entries']))
             extra=sorted(set(spec['entries'])-set(observed))

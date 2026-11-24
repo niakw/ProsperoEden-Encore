@@ -16,30 +16,33 @@ source=OWNER.read_text()
 method=source.split('IGpuWorker::~IGpuWorker() {',1)[1].split(
     'Result IGpuWorker::HandleSyncRequest(',1)[0]
 start='    if (system.IsPoweredOn() && !system.IsShuttingDown() &&'
-end='        system.GPU().WaitForIdle();'
+end='    // A failed native 215/216'
 assert method.count(start)==method.count(end)==1
-policy=method[method.index(start):method.index(end)+len(end)]
+policy=method[method.index(start):method.index(end)]
+assert 'catch (...)' in policy and 'm_quarantined_nv_session = true;' in policy
 assert 'm_dense_regions.empty()' in policy
 assert 'm_mappings.Mappings().empty()' in policy
 assert 'm_memory.empty()' in policy
 assert 'system.GPU().WaitForIdle();' in policy
 assert method.index('WaitForIdle();') < method.index('as->ReleaseNativeSparse4K(')
 assert method.index('WaitForIdle();') < method.index('as->UnmapNative4K(')
-assert method.index('WaitForIdle();') < method.index('nvmap.FreeHandle(id, false)')
+assert method.index('WaitForIdle();') < method.index('nvmap.FreeHandleIfUnpinned(id)')
 # The actual worker destructor must let the final shared GPU AS / process
 # registry owner release its resources before closing the worker's last
 # KProcess reference. Member destruction after ~IGpuWorker's body is too late.
 destructor = source.split('IGpuWorker::~IGpuWorker() {',1)[1].split(
     '\nResult IGpuWorker::BackGpuOnlyRegion(',1)[0]
 assert destructor.index('m_shared.reset();') < destructor.index('m_process->Close(kernel);')
-assert destructor.index('nvmap.FreeHandle(id, false)') < destructor.index('m_shared.reset();')
+assert destructor.index('nvmap.FreeHandleIfUnpinned(id)') < destructor.index('m_shared.reset();')
 cpp=r'''
 #include <cassert>
 #include <map>
 #include <vector>
+#include <stdexcept>
 struct Graphics {
     unsigned waits{};
-    void WaitForIdle() {++waits;}
+    bool fail{};
+    void WaitForIdle() {++waits; if (fail) throw std::runtime_error("GPU drain failure");}
 };
 struct System {
     Graphics graphics;
@@ -57,6 +60,8 @@ struct Worker {
     System system;
     std::map<unsigned,unsigned> m_dense_regions;
     Ledger m_mappings;
+    Ledger m_sparse_overlays;
+    bool m_quarantined_nv_session{};
     std::vector<unsigned> m_memory;
     void Destroy() {
 __POLICY__
@@ -67,16 +72,21 @@ int main() {
     for (unsigned stopping=0;stopping<2;++stopping)
     for (unsigned dense=0;dense<2;++dense)
     for (unsigned mapped=0;mapped<2;++mapped)
-    for (unsigned memory=0;memory<2;++memory) {
+    for (unsigned memory=0;memory<2;++memory)
+    for (unsigned overlay=0;overlay<2;++overlay)
+    for (unsigned fail=0;fail<2;++fail) {
         Worker worker;
+        worker.system.graphics.fail=fail!=0;
         worker.system.powered_on=powered != 0;
         worker.system.shutting_down=stopping != 0;
         if(dense)worker.m_dense_regions.emplace(2,1);
         if(mapped)worker.m_mappings.mappings.emplace(3,1);
         if(memory)worker.m_memory.push_back(4);
+        if(overlay)worker.m_sparse_overlays.mappings.emplace(5,1);
         worker.Destroy();
-        assert(worker.system.graphics.waits==(
-            powered && !stopping && (dense||mapped||memory) ? 1U:0U));
+        const bool should_drain=powered && !stopping && (dense||mapped||memory||overlay);
+        assert(worker.system.graphics.waits==(should_drain ? 1U:0U));
+        assert(worker.m_quarantined_nv_session==(should_drain && fail));
     }
 }
 '''.replace('__POLICY__',policy)
@@ -98,4 +108,4 @@ with tempfile.TemporaryDirectory(prefix='encore-worker-drain-') as temp:
             test=subprocess.run([str(exe)],env=env,capture_output=True,text=True,timeout=20)
             assert test.returncode==0,(compiler,test.stderr[-2000:])
             print('P2_7_GPU_WORKER_DRAIN_ALL_OWNERS_PASS',Path(compiler).name,
-                  f'O{opt}', 'cases=32','powered_shutdown_guard=1','NS1=untouched',flush=True)
+                  f'O{opt}', 'cases=128','powered_shutdown_guard=1','failed_drain_quarantine=1','NS1=untouched',flush=True)

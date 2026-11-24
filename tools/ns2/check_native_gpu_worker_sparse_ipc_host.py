@@ -44,7 +44,7 @@ for symbol in ("SnapshotNativeSparseHandle(id, ranges)",
     assert symbol in release or symbol in source,symbol
 assert release.index("SnapshotNativeSparseHandle(id, ranges)") < release.index("system.GPU().WaitForIdle()")
 assert release.index("system.GPU().WaitForIdle()") < release.index("batch.owner->RemapNativeSparse(batch.entries)")
-assert release.index("batch.owner->RemapNativeSparse(batch.entries)") < release.index("nvmap.FreeHandle(id, false)")
+assert release.index("batch.owner->RemapNativeSparse(batch.entries)") < release.index("nvmap.FreeHandleIfUnpinned(id)")
 fixture=r"""
 #include <algorithm>
 #include <array>

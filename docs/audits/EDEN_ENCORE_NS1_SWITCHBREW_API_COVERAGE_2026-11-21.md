@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 813 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 816 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 733 | 80 | **1 813** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 736 | 80 | **1 816** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 163 | 3 | **166** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 185 | 0 | **1 185** |
+| **NULL — Handler NULL** | 1 182 | 0 | **1 182** |
 | **D — Rejet explicite / historique** | 234 | 33 | **267** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1646,10 +1646,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `2` | `GetApplicationIdForLogo` | — | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `3` | `SetGpuTimeSliceBoost` | — | **NOOP** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; ordonnanceur hôte non modifié ; PS5 non validé) | 2026-11-24 |
 | appletAE | `4` | `SetAutoSleepTimeAndDimmingTimeEnabled` | 2.0.0+ | **IMPL-SRC** (raccordé au même état `auto_sleep_disabled` que `SetAutoSleepDisabled` / `IsAutoSleepDisabled` ; vendor `1b5b609d`) | 2026-11-22 |
-| appletAE | `5` | `TerminateApplicationAndSetReason` | 2.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
+| appletAE | `5` | `TerminateApplicationAndSetReason` | 2.0.0+ | **IMPL-SRC** (résultat enregistré sur l'application principale, processus réellement terminé et WindowSystem réveillé ; vendor `3260a2ec`) | 2026-11-24 |
 | appletAE | `6` | `SetScreenShotPermissionGlobally` | 3.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; permission enregistrée pour un applet, portée globale non démontrée ; PS5 non validé) | 2026-11-24 |
-| appletAE | `10` | `StartShutdownSequenceForOverlay` | 6.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
-| appletAE | `11` | `StartRebootSequenceForOverlay` | 6.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |
+| appletAE | `10` | `StartShutdownSequenceForOverlay` | 6.0.0+ | **IMPL-SRC** (même transition `system.Exit()` que IGlobalStateController::StartShutdownSequence ; n'éteint pas l'hôte PS5 ; vendor `3260a2ec`) | 2026-11-24 |
+| appletAE | `11` | `StartRebootSequenceForOverlay` | 6.0.0+ | **IMPL-SRC** (cohérent avec IGlobalStateController::StartRebootSequence, qui utilise la même transition de sortie invitée ; vendor `3260a2ec`) | 2026-11-24 |
 | appletAE | `20` | `SetHandlingHomeButtonShortPressedEnabled` | 8.0.0+ | **IMPL-SRC** ([source C++][ns1-src-041]) | 2026-11-22 |
 | appletAE | `30` | `SetHealthWarningShowingState` | 9.0.0+ | **PARTIEL** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; signal disparition seulement ; PS5 non validé) | 2026-11-24 |
 | appletAE | `90` | `SetRequiresGpuResourceUse` | 7.0.0+ | **NULL** ([source C++][ns1-src-041]) | 2026-11-22 |

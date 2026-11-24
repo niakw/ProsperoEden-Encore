@@ -2825,3 +2825,10 @@ Cette opération répare le suivi du lot STUB ; elle **ne prétend pas recalcule
 Vendor `95089b809f5eb4d3621eaddec92638e8c82f7fa4` : l'owner réellement compilé `encore-active/eden-backports/.../home_menu_functions.cpp` raccorde désormais IHomeMenuFunctions cmd30 `GetHomeButtonWriterLockAccessor` et cmd31 `GetWriterLockAccessorEx`. Les deux retournent un objet IPC `ILockAccessor` concret, déjà utilisé côté ICommonStateGetter ; cmd31 rejette les types hors plage 0..3 conformément au contrat libnx. Le modèle `ILockAccessor` actuel garde toutefois son état par objet et ne partage pas encore un arbitre reader/writer global entre accessors : **2 NULL → PARTIEL**, pas IMPL-SRC complet. Manifeste overlay recalculé ; copie base non modifiée.
 
 Aucun build natif PS5 déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM Overlay : terminaison application et transitions shutdown/reboot
+
+Vendor `3260a2ecf296b08d923e2cfe1205689b652cb9f1` : l'owner actif `encore-active/eden-backports/.../overlay_functions.cpp` raccorde trois commandes lifecycle jusque-là NULL. Cmd5 `TerminateApplicationAndSetReason` récupère l'application principale via le `WindowSystem`, conserve le `Result` Horizon dans `terminate_result`, termine son processus puis demande une mise à jour de la fenêtre. Cmd10/11 `StartShutdownSequenceForOverlay` / `StartRebootSequenceForOverlay` utilisent la même transition `system.Exit()` que les commandes déjà actives de `IGlobalStateController`; cette sortie concerne le système invité Encore et ne demande pas l'arrêt ou le reboot de la PS5 hôte. Libnx confirme cmd5 = u32 reason et cmd10/11 = no-input/no-output, avec boucle de sommeil côté client après succès.
+
+**3 NULL → IMPL-SRC.** Manifeste overlay recalculé. Build natif PS5 non déclenché ; console non validée.

@@ -2832,3 +2832,10 @@ Aucun build natif PS5 déclenché ; validation console non revendiquée.
 Vendor `3260a2ecf296b08d923e2cfe1205689b652cb9f1` : l'owner actif `encore-active/eden-backports/.../overlay_functions.cpp` raccorde trois commandes lifecycle jusque-là NULL. Cmd5 `TerminateApplicationAndSetReason` récupère l'application principale via le `WindowSystem`, conserve le `Result` Horizon dans `terminate_result`, termine son processus puis demande une mise à jour de la fenêtre. Cmd10/11 `StartShutdownSequenceForOverlay` / `StartRebootSequenceForOverlay` utilisent la même transition `system.Exit()` que les commandes déjà actives de `IGlobalStateController`; cette sortie concerne le système invité Encore et ne demande pas l'arrêt ou le reboot de la PS5 hôte. Libnx confirme cmd5 = u32 reason et cmd10/11 = no-input/no-output, avec boucle de sommeil côté client après succès.
 
 **3 NULL → IMPL-SRC.** Manifeste overlay recalculé. Build natif PS5 non déclenché ; console non validée.
+
+
+### 2026-11-24 — AM application : requêtes shutdown/reboot raccordées
+
+Vendor `1bd95def9ee03b841171924716280f6d5ccb3a09` : `IApplicationFunctions` cmd70 `RequestToShutdown` et cmd71 `RequestToReboot` ne sont plus NULL. Libnx confirme deux commandes sans payload, réservées aux applications HOS 3.0+. Elles utilisent la même transition `system.Exit()` que `IGlobalStateController` et les commandes Overlay déjà raccordées. Cela termine le système invité Encore et **ne commande ni arrêt ni reboot de la PS5 hôte**.
+
+**2 NULL → IMPL-SRC.** Manifeste overlay recalculé. Build natif PS5 non déclenché ; validation console non revendiquée.

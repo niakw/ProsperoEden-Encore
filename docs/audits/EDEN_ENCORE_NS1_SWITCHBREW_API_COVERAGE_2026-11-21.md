@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 816 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 818 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 809 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 736 | 80 | **1 816** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 738 | 80 | **1 818** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 163 | 3 | **166** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 182 | 0 | **1 182** |
+| **NULL — Handler NULL** | 1 180 | 0 | **1 180** |
 | **D — Rejet explicite / historique** | 234 | 33 | **267** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1681,8 +1681,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `66` | `InitializeGamePlayRecording` | 3.0.0+ | **NOOP** (Encore annonce `game_play_recording_supported=false` lorsqu'aucun backend Horizon d'enregistrement n'est disponible ; cmd66 reste un succès de compatibilité sans mapper le transfer-memory vers la PS5 ; vendor `06ce1025`) | 2026-11-23 |
 | appletAE | `67` | `SetGamePlayRecordingState` | 3.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit l'état `game_play_recording_state` sous verrou) | 2026-11-23 |
 | appletAE | `68` | `RequestFlushGamePlayingMovieForDebug` | 4.0.0+ | **D** (commande debug explicitement rejetée sur runtime release ; vendor `fd389efb`, moteur `efc5f412`) | 2026-11-23 |
-| appletAE | `70` | `RequestToShutdown` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `71` | `RequestToReboot` | 3.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `70` | `RequestToShutdown` | 3.0.0+ | **IMPL-SRC** (transition `system.Exit()` identique au contrôleur global AM ; n'agit pas sur l'alimentation/reboot de l'hôte PS5 ; vendor `1bd95def`) | 2026-11-24 |
+| appletAE | `71` | `RequestToReboot` | 3.0.0+ | **IMPL-SRC** (transition `system.Exit()` identique au contrôleur global AM ; n'agit pas sur l'alimentation/reboot de l'hôte PS5 ; vendor `1bd95def`) | 2026-11-24 |
 | appletAE | `80` | `ExitAndRequestToShowThanksMessage` | 4.0.0+ | **NULL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `90` | `EnableApplicationCrashReport` | 4.0.0+ | **IMPL-SRC** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; écrit `application_crash_report_enabled` sous verrou) | 2026-11-23 |
 | appletAE | `100` | `InitializeApplicationCopyrightFrameBuffer` | 5.0.0+ | **PARTIEL** (dimensions/taille/alignment validés et état conservé ; compositing capture GPU absent ; vendor `08f3042a`) | 2026-11-22 |

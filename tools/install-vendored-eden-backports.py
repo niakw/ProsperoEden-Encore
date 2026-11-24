@@ -1142,7 +1142,7 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
                 offline_owner = ''
             if offline_owner == '':
                 continue
-            match = re.match(r'^\\s*\\{\\s*(\\d+),\\s*&(\\w+)::RejectUnsupportedOnlineOrDebugCommand,', line)
+            match = re.match(r'^\s*\{\s*(\d+),\s*&(\w+)::RejectUnsupportedOnlineOrDebugCommand,', line)
             if match:
                 assert match.group(2) == offline_owner
                 assert int(match.group(1)) in offline_commands[offline_owner]
@@ -1152,16 +1152,16 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
                 offline_counts[offline_owner] += 1
         assert offline_counts == {'ACC_E': 32, 'ACC_E_U1': 10, 'ACC_E_U2': 10}
         offline_method = (
-            '\\nprivate:\\n'
-            '    void RejectUnsupportedOnlineOrDebugCommand(HLERequestContext& ctx) {\\n'
-            '        // No Nintendo Account network, migration, or firmware debug backend on PS5.\\n'
-            '        IPC::ResponseBuilder rb{ctx, 2};\\n'
-            '        rb.Push(ResultUnknown);\\n'
-            '    }\\n'
+            '\nprivate:\n'
+            '    void RejectUnsupportedOnlineOrDebugCommand(HLERequestContext& ctx) {\n'
+            '        // No Nintendo Account network, migration, or firmware debug backend on PS5.\n'
+            '        IPC::ResponseBuilder rb{ctx, 2};\n'
+            '        rb.Push(ResultUnknown);\n'
+            '    }\n'
         )
         offline_reconstructed = ''.join(offline_lines)
         assert offline_reconstructed.count(offline_method) == 3
-        offline_reconstructed = offline_reconstructed.replace(offline_method, '\\n')
+        offline_reconstructed = offline_reconstructed.replace(offline_method, '\n')
         acc_after = offline_reconstructed.encode('utf-8')
         assert len(acc_after) == 92665 and sha(acc_after) == 'ea76666ba632cf71542eb38b9a9468a608ef2de769b5d152dd9f9c8501ee07a5'
         print('NS1_ACC_ENTITY_OFFLINE_EXACT_REVERSE_PASS',

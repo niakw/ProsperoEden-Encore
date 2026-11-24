@@ -2074,6 +2074,29 @@ if actual_vendor_pin == "042204fde8e5b74aa5048c6213a8af4450d26fe5":
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("libounce NS2 successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
+if actual_vendor_pin == "294442004543aeecc5f3c61cc1b73b2feaff2f92":
+    # Exact VM import, channel health, descriptor QueryEvent and image format
+    # successor; keep the previous FC27 and sparse owners byte-identical.
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "50ba35725b57b59cae76a67c7c1d4ba6ad894e2f"
+    for relative, expected_blob in {
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_session.cpp": "c082c25491f3783543e787fce43197d8b3fe78d3",
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.cpp": "ae2708f662937a5069afe355425cf43e424fcd9c",
+        "encore-active/ns2-runtime/gpu_session/core/hle/service/am/service/gpu_worker_shared.h": "74b87878c2a73d6918b7f3e4144419fc07a0e15f",
+        "encore-active/ns2-runtime/hle/core/hle/service/am/service/native_image_layout.h": "e5aa688d9e685b9de2a4204a8da8cdb0c6eedff0",
+        "encore-active/ns2-runtime/hle/core/hle/service/nvdrv/devices/native_gpu_process_registry.h": "248581eb2c87a5b5eaa9bdb7e4ad095e860584ce",
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "38f13e8983228509f4f378d27a3244367ec50878",
+        "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "a228adddcc987c9c110068780b16e43d9bd4303e",
+        "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "964da0fe2338a7a67cbb9d14416af3ce1a309e09",
+        "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "0a80ea7464d8643c75903bcd4655687173792274",
+        "sources/eden/src/core/hle/service/nvdrv/devices/nvdevice.h": "175ae92472adfe6311d0847772aa52a11b682c24",
+        "sources/eden/src/core/hle/service/nvdrv/nvdrv.cpp": "e271be36535169af9181cb8fe00ccdc5e1983922",
+        "tests/ns2_gpu_identity_mapping_source.py": "d0455a33826429dcda267bae2eb91299b561cad3",
+        "tests/ns2_gpu_partition_new_sdk_source.py": "e20113c02c3397214e9707ab4cc545d3b8770df5",
+    }.items():
+        raw=(V/relative).read_bytes()
+        actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
+        assert actual == expected_blob, ("libounce VM/channel successor drift", relative, actual)
+    REVIEWED_PINS.add(actual_vendor_pin)
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)
 # The 3a97 successor's four changed blobs were sealed above. From this point

@@ -113,6 +113,10 @@ if selected == "042204fde8e5b74aa5048c6213a8af4450d26fe5":
     # Direct successor of 3522d8578fbcd7b46d2a439d5d718dfb570beb7b; only GSV/Worker NS2 files changed.
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "08ff1d3ef45b03cbe3396079bcb91fa5dce4f160"
     expected.add(selected)
+if selected == "294442004543aeecc5f3c61cc1b73b2feaff2f92":
+    # Exact NS2-only successor. FC27 source hashes below are unchanged.
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "50ba35725b57b59cae76a67c7c1d4ba6ad894e2f"
+    expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 
 bfs=V/"encore-active/eden-shader/include/shader_recompiler/frontend/ir/breadth_first_search.h"

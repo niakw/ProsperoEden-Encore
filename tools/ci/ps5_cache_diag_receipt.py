@@ -290,6 +290,14 @@ void ClearShaderTranslationSnapshotForThread() noexcept;""",
     return source
 
 
+PREWARM_WORKER_GENERATED_REVERSES = [
+    ("        bool has_loaded{};\n#ifdef PS5_NATIVE\n        std::exception_ptr worker_error;\n#endif\n        std::unique_ptr<PipelineStatistics> statistics;", "        bool has_loaded{};\n        std::unique_ptr<PipelineStatistics> statistics;"),
+    ("    const auto schedule_prewarm = [&](Common::UniqueFunction<void> build) {\n#ifdef PS5_NATIVE\n        // ThreadWorker does not catch task exceptions. Keep the first failure\n        // until all accepted jobs have finished borrowing this loading state.\n        build = Common::UniqueFunction<void>{[&state, task = std::move(build)]() mutable {\n            try {\n                task();\n            } catch (...) {\n                std::scoped_lock lock{state.mutex};\n                if (!state.worker_error) state.worker_error = std::current_exception();\n            }\n        }};\n#endif\n        workers.QueueWork(std::move(build));\n    };\n    const auto load_compute{[&](std::ifstream& file, FileEnvironment env) {", "    const auto load_compute{[&](std::ifstream& file, FileEnvironment env) {"),
+    ("        schedule_prewarm([this, key, env_ = std::move(env), &state, &callback]() mutable {", "        workers.QueueWork([this, key, env_ = std::move(env), &state, &callback]() mutable {"),
+    ("        schedule_prewarm([this, key, envs_ = std::move(envs), &state, &callback]() mutable {", "        workers.QueueWork([this, key, envs_ = std::move(envs), &state, &callback]() mutable {"),
+    ("    prewarm_drain.joined = true;\n    // Propagate the original failure on the loading owner, not std::terminate\n    // on a worker. Never advertise a partial failed cache as a successful load.\n    if (state.worker_error) std::rethrow_exception(state.worker_error);\n#else\n    workers.WaitForRequests(stop_loading);", "    prewarm_drain.joined = true;\n#else\n    workers.WaitForRequests(stop_loading);"),
+]
+
 PREWARM_WORKER_REVERSES = [
     ("        bool has_loaded{};\n#ifdef PS5_NATIVE\n        std::exception_ptr worker_error;\n#endif\n        // ENCORE_PS5_CACHE_DIAG_BEGIN", "        bool has_loaded{};\n        // ENCORE_PS5_CACHE_DIAG_BEGIN"),
     ("    const auto schedule_prewarm = [&](Common::UniqueFunction<void> build) {\n#ifdef PS5_NATIVE\n        // ThreadWorker does not catch task exceptions. Keep the first failure\n        // until all accepted jobs have finished borrowing this loading state.\n        build = Common::UniqueFunction<void>{[&state, task = std::move(build)]() mutable {\n            try {\n                task();\n            } catch (...) {\n                std::scoped_lock lock{state.mutex};\n                if (!state.worker_error) state.worker_error = std::current_exception();\n            }\n        }};\n", "    const auto schedule_prewarm = [&](Common::UniqueFunction<void> build) {\n#ifdef PS5_NATIVE\n"),

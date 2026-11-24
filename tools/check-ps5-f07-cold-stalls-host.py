@@ -71,7 +71,10 @@ assert parallel.index("shader_translation_workers.WaitForRequests();") < paralle
     "owner_stage_costs->cfg_ns += parallel_stage_costs[index].cfg_ns;")
 assert "owner_stage_costs->ir_ns += parallel_stage_costs[index].ir_ns;" in parallel
 assert "_parallel_timing_reverse =" in gen
-assert 'raise RuntimeError("FC27 parallel shader timing anchor drift")' in gen
+assert 'if predecessor_count == 1 and current_count == 0:' in gen
+assert 'elif predecessor_count == 0 and current_count == 1:' in gen
+assert 'f"FC27 parallel shader timing anchor drift index={index} "' in gen
+assert 'f"predecessor={predecessor_count} current={current_count}"' in gen
 assert 'if shader_source.count(f07_pipeline_old) != 1:' in gen
 assert "shader_source = shader_source.replace(f07_pipeline_old, f07_pipeline_new, 1)" in gen
 assert "texture_costs.append((" in gen

@@ -2552,3 +2552,10 @@ Vendor `a8927dbd3cf2840021a8adee1f42d701a001c564`. **6 NULL sortent du pool** : 
 Vendor `5c16e26b1c6ff11145e47a0e7a810eb76d0541a4`. ABI vérifiée avec libnx btmu.c et btdrv_types.h. **8 NULL sortent du pool** : cmd5/10/20/21/25 → IMPL-SRC (listes vides cohérentes avec le backend BLE invité absent et événement pairing dédié) ; cmd4/7/9 → NOOP (arrêt idempotent d'un scan inactif). Les opérations radio, pairing et GATT restent ouvertes. En parallèle NSD corrige l'initialisation du tampon ResolveEx et le nombre de mots de réponse du setter. Aucun résultat console revendiqué.
 
 **Pool restant = 1 634** (1 236 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).
+
+
+## NPNS — correction de compilation du lot token (24/11/2026)
+
+Vendor `dd88a95f547dd1fa7f7a2536a41846d73203b213` : les trois handlers `CreateToken`, `DestroyToken`, `QueryIsTokenValid` destinés à `INpnsUser` étaient dupliqués dans `INpnsSystem`, alors que la table utilisateur les référençait. Déplacement des trois définitions vers leur propriétaire réel, sans changement ABI ni nouveau succès factice. Le TU `npns.cpp` est sélectionné par le CMake backports sans overlay manifeste. Vérification structurelle des trois méthodes par classe ; compilation native non effectuée. Le manifeste HID corrigé (`67f68874018169305ebdd44ea06dd32855cb3667`) et ce nouveau vendor sont autorisés par SHA et arbre exact dans le garde SSBO, sans retrait des contrôles de blobs GPU.
+
+**Pool restant inchangé = 1 634** (1 236 NULL + 52 STUB + 147 PARTIEL + 190 ABI-DIFF + 9 AMBIGU).

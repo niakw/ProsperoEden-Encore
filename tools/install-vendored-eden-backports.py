@@ -1237,6 +1237,60 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
               'closed=14', 'current_fw=23', 'pinned_source_unchanged')
 
 
+
+        # Next HOS23 ES successor: restore exactly the preceding eTicket owner
+        # and the key-manager parsing owner before historical replay comparison.
+        es_rel = 'src/core/hle/service/es/es.cpp'
+        es_shipping = (ACTIVE / es_rel).read_bytes()
+        assert len(es_shipping) == 19829 and sha(es_shipping) == 'ce91acfa09973cbdf79303eb44488a9723e88bcec468cd22972da21314fac66e'
+        assert spec['entries'][es_rel]['active'] == sha(es_shipping)
+        es_old = es_shipping.decode('utf-8')
+        es_new_ticket_methods = "    void CountTicket(HLERequestContext& ctx) {\n        keys.PopulateTickets();\n        const auto count = static_cast<u32>(\n            keys.GetCommonTickets().size() + keys.GetPersonalizedTickets().size());\n        IPC::ResponseBuilder rb{ctx, 3};\n        rb.Push(ResultSuccess);\n        rb.Push<u32>(count);\n    }\n\n    void ListTicketRightsIds(HLERequestContext& ctx) {\n        keys.PopulateTickets();\n        const auto& common = keys.GetCommonTickets();\n        const auto& personalized = keys.GetPersonalizedTickets();\n        std::vector<u128> ids;\n        ids.reserve(common.size() + personalized.size());\n        for (const auto& [rights_id, ticket] : common) {\n            ids.push_back(rights_id);\n        }\n        for (const auto& [rights_id, ticket] : personalized) {\n            ids.push_back(rights_id);\n        }\n        std::sort(ids.begin(), ids.end());\n        const auto count = (std::min)(ids.size(), ctx.GetWriteBufferNumElements<u128>());\n        if (count != 0) {\n            ctx.WriteBuffer(ids.data(), count * sizeof(u128));\n        }\n        IPC::ResponseBuilder rb{ctx, 3};\n        rb.Push(ResultSuccess);\n        rb.Push<u32>(static_cast<u32>(count));\n    }\n\n"
+        es_raw_variant_write = "std::visit(\n            [&](const auto& ticket_variant) {\n                using T = std::decay_t<decltype(ticket_variant)>;\n                if constexpr (!std::is_same_v<T, std::monostate>) {\n                    ctx.WriteBuffer(&ticket_variant, write_size);\n                }\n            },\n            ticket.data);"
+        def reverse_exact_owner(text, newer, older, expected_count):
+            assert text.count(newer) == expected_count, ('Unreviewed successor span', newer[:75])
+            return text.replace(newer, older)
+        es_old = reverse_exact_owner(es_old,
+            es_raw_variant_write, 'ctx.WriteBuffer(&ticket, write_size);', 2)
+        es_old = reverse_exact_owner(es_old, "const auto& tickets = keys.GetCommonTickets();\n        const auto ticket_it = tickets.find(rights_id);\n        if (ticket_it == tickets.end() || !ticket_it->second.IsValid()) {\n            IPC::ResponseBuilder rb{ctx, 2};\n            rb.Push(ERROR_INVALID_RIGHTS_ID);\n            return;\n        }\n        const auto& ticket = ticket_it->second;", "const auto ticket = keys.GetCommonTickets().at(rights_id);", 2)
+        es_old = reverse_exact_owner(es_old, "const auto& tickets = keys.GetPersonalizedTickets();\n        const auto ticket_it = tickets.find(rights_id);\n        if (ticket_it == tickets.end() || !ticket_it->second.IsValid()) {\n            IPC::ResponseBuilder rb{ctx, 2};\n            rb.Push(ERROR_INVALID_RIGHTS_ID);\n            return;\n        }\n        const auto& ticket = ticket_it->second;", "const auto ticket = keys.GetPersonalizedTickets().at(rights_id);", 2)
+        es_old = reverse_exact_owner(es_old,
+            es_new_ticket_methods + '    void ListCommonTicketRightsIds',
+            '    void ListCommonTicketRightsIds', 1)
+        es_old = reverse_exact_owner(es_old,
+            'if (!ticket.IsValid() || raw_ticket.size() < ticket.GetSize() ||\n'
+            '            !keys.AddTicket(ticket)) {',
+            'if (!keys.AddTicket(ticket)) {', 1)
+        es_old = reverse_exact_owner(es_old,
+            'raw_ticket.size() < sizeof(Core::Crypto::SignatureType)',
+            'raw_ticket.size() < sizeof(Core::Crypto::Ticket)', 1)
+        es_old = reverse_exact_owner(es_old,
+            '{30, &ETicket::CountTicket, "CountTicket"},',
+            '{30, nullptr, "CountTicket"},', 1)
+        es_old = reverse_exact_owner(es_old,
+            '{31, &ETicket::ListTicketRightsIds, "ListTicketRightsIds"},',
+            '{31, nullptr, "ListTicketRightsIds"},', 1)
+        es_old = reverse_exact_owner(es_old,
+            '#include <algorithm>\n#include <type_traits>\n#include <variant>\n'
+            '#include <vector>\n\n#include "core/crypto/key_manager.h"',
+            '#include "core/crypto/key_manager.h"', 1)
+        es_previous_active = es_old.encode('utf-8')
+        assert len(es_previous_active) == 16737 and sha(es_previous_active) == 'e5bd1ed9088fa00c7e5758aaf5d09142dbe90c440b0104259005b7b281d042ff'
+
+        key_rel = 'src/core/crypto/key_manager.cpp'
+        key_active = (ACTIVE / key_rel).read_bytes()
+        assert len(key_active) == 47656 and sha(key_active) == '4618f776b9d3e4f857444ed99c09592132f1bce7addce595bfd4baa7fe96426b'
+        assert spec['entries'][key_rel]['active'] == sha(key_active)
+        key_prev = reverse_exact_owner(key_active.decode('utf-8'),
+            'std::memcpy(&ticket, raw_data.data(), std::min(raw_data.size(), sizeof(ticket)));',
+            'std::memcpy(&ticket, raw_data.data(), sizeof(ticket));', 3).encode('utf-8')
+        assert len(key_prev) == 47575 and sha(key_prev) == 'b177b95a6e6c1d2d43004d77478a64695a03d5b983f895ca99427b56e3af9bd8'
+        assert key_prev == (stage / key_rel).read_bytes(), 'KeyManager bounded decode not derivable from replay'
+        observed[key_rel] = spec['entries'][key_rel]
+        print('NS1_ES_TICKET_IO_MEMORY_SAFETY_EXACT_REVERSE_PASS',
+              'bounded_import=1', 'safe_lookup=4', 'serialized_variant=2',
+              'bounded_crypto_ticket_parse=3', 'real_handlers=2')
+
         # HOS23 ES: a shipping overlay closes unsupported ticket mutation
         # and prepurchase operations, without changing local ticket/key reads.
         es_rel = 'src/core/hle/service/es/es.cpp'
@@ -1244,10 +1298,10 @@ std::optional<HttpResponse> PostJson(const std::string& url, const std::string& 
         es_upstream = (ORIGINAL / es_rel).read_bytes()
         assert es_original == es_upstream
         assert len(es_upstream) == 15733 and sha(es_upstream) == 'fb2386ef1e53f8a5e8ede1f8d11d98c312b205a337ed0350c72210520c8da605'
-        es_active = (ACTIVE / es_rel).read_bytes()
+        es_active = es_previous_active
         assert len(es_active) == 16737 and sha(es_active) == 'e5bd1ed9088fa00c7e5758aaf5d09142dbe90c440b0104259005b7b281d042ff'
         assert es_rel in spec['entries']
-        assert spec['entries'][es_rel]['active'] == sha(es_active)
+        assert spec['entries'][es_rel]['active'] == sha(es_shipping)
         assert spec['entries'][es_rel]['upstream'] == sha(es_upstream)
         es_ids = [2,3,5,6,7,13,22,23,24,25,26,27,28,29,32,34,35,39,40]
         es_reviewed_method = (

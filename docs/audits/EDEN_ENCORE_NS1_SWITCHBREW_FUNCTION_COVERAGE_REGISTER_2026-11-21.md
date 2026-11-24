@@ -3054,3 +3054,9 @@ Vendor `829c7964df4ea7dd6e16cb666e139561d920f737` : `RequestForLibraryAppletToGe
 
 Une implémentation indépendante (Napple) modélise elle aussi cmd80 comme une demande de foreground sur l'applet existant, sans création d'un nouveau root. **1 NULL → IMPL-SRC. Pool restant = 1 539 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — AM WindowController : CreateWindow aligné sur le stub firmware
+
+Vendor `f1e8c0b32320e6c08dd662b9e5f5d1ac71808226` : `IWindowController::CreateWindow` (cmd0) ne reste plus un slot NULL. SwitchBrew documente le contrat comme **entrée u32 + sortie IWindow**, mais indique que le firmware le stubbe et retourne une erreur. L'overlay actif consomme donc le `u32 window_flags` et retourne `ResultUnknown`, sans créer d'interface vide factice ni modifier VI/WindowSystem. **1 NULL → D.**
+
+**Pool restant = 1 538 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

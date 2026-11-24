@@ -7381,3 +7381,41 @@ apply_reviewed_delta(
     "TextureCache<P>::PinNativeSampler(SamplerId id) {\n    // Unlike images, the shared sampler slot is not separately evicted.\n    // Still hold an explicit owner until the last native GPU fence releases\n    // its descriptors; the rasterizer Finish drains cache destruction.\n    if (id == NULL_SAMPLER_ID || id == SamplerId{})\n        return {};\n    return slot_samplers[id].PinNativeGpu();\n}",
     "TextureCache<P>::PinNativeSampler(SamplerId id) {\n    // Only the Vulkan image/sampler types own native GPU fence pins.\n    // TextureCache is also explicitly instantiated for OpenGL on PS5;\n    // its types do not expose this ownership contract. Fail closed.\n    if constexpr (!(requires(Sampler& sampler) {\n        sampler.PinNativeGpu();\n    })) {\n        return {};\n    } else {\n        // Unlike images, the shared sampler slot is not separately evicted.\n        // Still hold an explicit owner until the last native GPU fence releases\n        // its descriptors; the rasterizer Finish drains cache destruction.\n        if (id == NULL_SAMPLER_ID || id == SamplerId{})\n            return {};\n        return slot_samplers[id].PinNativeGpu();\n    }\n\n}",
     "P5 native sampler pin capability OpenGL-safe owner parity")
+
+# 60fa67b9: preserve exact guest-frame pacing ABI in the historical replay.
+apply_reviewed_delta("include/video_core/renderer_vulkan/vk_present_manager.h",
+    "    vk::Fence present_done;\n};",
+    "    vk::Fence present_done;\n    /// One real present plus any synthetic presents produced from the same guest frame.\n    u32 game_frame_presents{1};\n};",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_present_manager.cpp",
+    "    frame->present_done.Reset();\n\n    return frame;",
+    "    frame->present_done.Reset();\n    frame->game_frame_presents = 1;\n\n    return frame;",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_present_manager.cpp",
+    "    for (u32 acquire_attempt = 0; swapchain.AcquireNextImage(); ++acquire_attempt) {",
+    "    for (u32 acquire_attempt = 0;\n         swapchain.AcquireNextImage(frame->game_frame_presents); ++acquire_attempt) {",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_swapchain.cpp",
+    "bool Swapchain::AcquireNextImage() {",
+    "bool Swapchain::AcquireNextImage(u32 game_frame_presents) {",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_swapchain.cpp",
+    "    const auto wait_with_frame_pacing = [this] {",
+    "    const auto wait_with_frame_pacing = [this, game_frame_presents] {",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_swapchain.cpp",
+    "scheduler.Wait(resource_ticks[image_index], 30.0);",
+    "scheduler.Wait(resource_ticks[image_index], 30.0, game_frame_presents);",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_swapchain.cpp",
+    "scheduler.Wait(resource_ticks[image_index], 60.0);",
+    "scheduler.Wait(resource_ticks[image_index], 60.0, game_frame_presents);",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_swapchain.cpp",
+    "scheduler.Wait(resource_ticks[image_index], 90.0);",
+    "scheduler.Wait(resource_ticks[image_index], 90.0, game_frame_presents);",
+    "Guest frame pacing shared present slot")
+apply_reviewed_delta("vulkan_swapchain.cpp",
+    "scheduler.Wait(resource_ticks[image_index], 120.0);",
+    "scheduler.Wait(resource_ticks[image_index], 120.0, game_frame_presents);",
+    "Guest frame pacing shared present slot")

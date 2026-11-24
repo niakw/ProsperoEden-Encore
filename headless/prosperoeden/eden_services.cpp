@@ -56,7 +56,6 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 #include <future>
 #include <initializer_list>
 #include <mutex>
@@ -1073,24 +1072,6 @@ const BoxIndex& RetailCaseIndex() {
         const std::string fallback_path = Eden::AppResourceFile("ui/box-art-fallback.tsv");
         std::ifstream fallback(fallback_path);
         if (fallback) load_rows(fallback, true);
-        // PS5 ShadowMount can omit auxiliary text files despite a complete
-        // FTP archive. Keep the verified supplemental metadata (not images)
-        // in the native binary as a last resort; external rows win per face.
-        // Mirror ui/box-art-fallback.tsv and keep its generation namespaces.
-        std::istringstream embedded_fallback{R"ENCORE_BOX(# Eden Encore — supplemental LaunchBox flat-box metadata, no scans bundled.
-# Verified public GamesDB refs: Mario Kart World 423668; Donkey Kong Bananza 424483.
-# A full build-host index takes precedence; this supplies missing NS2 faces.
-ns2:mario kart world	eu:r2_22b0967c-08e4-4988-9eeb-c5d7a1c34408.png;world:r2_2346357f-c9c7-4b8c-8732-e56682328653.png	-	-	-	-	-	-	-	jp:r2_e12e1a63-a18e-4857-860d-043fc58f86a7.png
-ns2:donkey kong bananza	eu:991fd827-5f47-47ee-a400-4c6f22266b4f.jpg	us:r2_02551e34-3f1e-4bf6-88d5-d083b700cf9f.jpg	us:r2_eee1b6d5-ca97-4fd1-be20-2eda2fe1b979.jpg	-	-	-	-	-	world:r2_856693ee-cdd3-4784-bc66-225936136aec.jpg
-# Verified GamesDB #424055 NS2 front/fanart/square; #392130 NS1 genuine back/gameplay.
-ns2:pokemon legends z a	de:r2_b4117713-4344-4a2a-bc49-27de961e4d41.jpg;us:r2_6ea1285e-d0fa-443f-ab0a-744f39315ae5.png	-	-	world:r2_41d53cfd-3a2f-4213-b1db-f319af2ca660.png	-	-	-	-	de:r2_f1c5f63b-5452-43c0-9208-4729f5cef8f4.jpg
-ns2:pok mon legends z a	de:r2_b4117713-4344-4a2a-bc49-27de961e4d41.jpg;us:r2_6ea1285e-d0fa-443f-ab0a-744f39315ae5.png	-	-	world:r2_41d53cfd-3a2f-4213-b1db-f319af2ca660.png	-	-	-	-	de:r2_f1c5f63b-5452-43c0-9208-4729f5cef8f4.jpg
-ns2:pokemon legends z a nintendo switch 2 edition	de:r2_b4117713-4344-4a2a-bc49-27de961e4d41.jpg;us:r2_6ea1285e-d0fa-443f-ab0a-744f39315ae5.png	-	-	world:r2_41d53cfd-3a2f-4213-b1db-f319af2ca660.png	-	-	-	-	de:r2_f1c5f63b-5452-43c0-9208-4729f5cef8f4.jpg
-ns2:pok mon legends z a nintendo switch 2 edition	de:r2_b4117713-4344-4a2a-bc49-27de961e4d41.jpg;us:r2_6ea1285e-d0fa-443f-ab0a-744f39315ae5.png	-	-	world:r2_41d53cfd-3a2f-4213-b1db-f319af2ca660.png	-	-	-	-	de:r2_f1c5f63b-5452-43c0-9208-4729f5cef8f4.jpg
-ns1:pokemon legends z a	-	eu:r2_bc521e43-d207-4abd-96b2-23e549dcae2b.png;us:r2_c2dadeb1-3715-498f-8cc0-f1980064c60d.jpg	-	-	-	world:r2_bdeae1ce-04a9-4df5-95a7-9537ec439603.jpg	-	-	-
-ns1:pok mon legends z a	-	eu:r2_bc521e43-d207-4abd-96b2-23e549dcae2b.png;us:r2_c2dadeb1-3715-498f-8cc0-f1980064c60d.jpg	-	-	-	world:r2_bdeae1ce-04a9-4df5-95a7-9537ec439603.jpg	-	-	-
-)ENCORE_BOX"};
-        load_rows(embedded_fallback, true);
         std::fprintf(stderr,
                      "EDEN_CASE_FALLBACK status=%s added=%zu path=%s\n",
                      fallback ? "loaded" : "missing",

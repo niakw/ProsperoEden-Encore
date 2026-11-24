@@ -2693,3 +2693,9 @@ Vendor `b882a41e0b35a91051fb362cdf2082175d433748` : le dump NS1 23.0.1 confirme 
 Vendor `a11b70417f1c981580a86bf5391b4a24fe0890e9` : le propriétaire réellement sélectionné par le CMake PS5, `encore-active/eden-core/.../nvhost_nvdec_common.cpp`, ne jette plus la valeur de `NVHOST_IOCTL_CHANNEL_SET_SUBMIT_TIMEOUT`. Le champ `submit_timeout` existait déjà dans la classe ; le setter le renseigne maintenant, conformément au comportement Ryujinx. Aucun timeout scheduler artificiel n'est ajouté : il s'agit de l'état du canal demandé par le guest. **STUB → IMPL-SRC**. Le garde GPU-36 épingle le nouveau blob actif.
 
 **Pool restant = 1 554** : 1 185 NULL + 20 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+### 2026-11-24 — AM : maxima save-data depuis le NACP
+
+Vendor `afac75c2d5e4e494335bbc48f18cbf8a9a3e17a3` : cmd28 `GetSaveDataSizeMax` ne renvoie plus deux constantes `0x0FFFFFFF`; il lit `user_account_save_data_max_size` et `user_account_save_data_max_journal_size` du NACP actif. Cmd35 `GetDeviceSaveDataSizeMax`, ABI NS1 23.0.1 confirmée à 0x10 octets de sortie, est raccordée aux champs `device_save_data_max_size` / `device_save_data_max_journal_size`. **1 STUB + 1 NULL → IMPL-SRC**.
+
+**Pool restant = 1 552** : 1 184 NULL + 19 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

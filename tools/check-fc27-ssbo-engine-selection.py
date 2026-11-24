@@ -125,12 +125,12 @@ if selected in {"973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f
         "6ecf485d48b3c29c5e058de99a09c5c495cd537d" if selected == "6b8fd06606f12be187f73e8809e56a49864794f9" else
         "1d991da378f711312faf34125f1d4cfe1378bcaa")
     expected.add(selected)
-if selected == "00bdb32b23ceb867c27d16c5ffd5ce4d8b6498ef":
+if selected == "86e4fdd58b6e1c5a281026766bbfda006f9b23a5":
     # NS2 GPU lifecycle/VA successors only; admit the exact reviewed tree,
     # then retain all immutable FC27 shader/CMake blob checks below.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "d2be0818564be0a7e817ac71c4dfd35a5511771c"
+    ).strip() == "4f062faec6dca220426572f246033099de504bfc"
     expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)
 

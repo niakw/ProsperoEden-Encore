@@ -2172,12 +2172,12 @@ if actual_vendor_pin in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d
         actual=hashlib.sha1(b"blob "+str(len(raw)).encode()+bytes([0])+raw).hexdigest()
         assert actual == expected_blob, ("libounce VM/channel successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
-if actual_vendor_pin == "00bdb32b23ceb867c27d16c5ffd5ce4d8b6498ef":
+if actual_vendor_pin == "86e4fdd58b6e1c5a281026766bbfda006f9b23a5":
     # Exact NS2 GPU lifecycle/VA successor. The downstream FC27/P0 source
     # receipts remain authoritative; this only qualifies the selected tree.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "d2be0818564be0a7e817ac71c4dfd35a5511771c"
+    ).strip() == "4f062faec6dca220426572f246033099de504bfc"
     REVIEWED_PINS.add(actual_vendor_pin)
 checked=subprocess.check_output(["git","-C",str(V),"rev-parse","HEAD"],text=True).strip()
 assert actual_vendor_pin==checked and selected in REVIEWED_PINS,(actual_vendor_pin,selected,checked)

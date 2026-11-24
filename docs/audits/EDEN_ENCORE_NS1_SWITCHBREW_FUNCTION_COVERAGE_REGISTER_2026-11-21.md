@@ -2800,3 +2800,14 @@ Vendor `d2e93fb0fa67548d2ae500f1bde6c19c941ecb7a` (successeur direct du lot copy
 **Correction du suivi :** le précédent agrégat « 1 STUB » ne doit plus être utilisé comme compteur global. Le catalogue annexe conserve des statuts historiques qui n'ont pas tous été réconciliés avec les owners actifs. Une revue directe du runtime courant confirme encore au moins quatre vrais stubs du résidu historique : `CanUseApplicationCore`, `GetOperationModeSystemInfo`, `ImportServerPki` et `ImportClientPki`. Les deux premiers manquent de sémantique suffisamment documentée ; les deux SSL restent isolés du présent lot pour ne pas empiéter sur le travail SSL parallèle. **Aucun nouveau total global n'est revendiqué avant réconciliation ligne par ligne.**
 
 Build natif PS5 non déclenché ; aucune validation console revendiquée.
+
+
+### 2026-11-24 — SSL : suppression des faux succès PKI
+
+Vendor `b57ce2770c82aef425bc34e2fed2492f63adfe4d` : `ISslContext::ImportServerPki` (cmd4) et `ImportClientPki` (cmd5) consomment toujours leurs paramètres/buffers et conservent la forme de réponse avec ID `u64`, mais ne renvoient plus `Success + id 0`. Le backend TLS actif Encore ne possède ni registre PKI context-local, ni `SSLTrustStore`/décodage PKCS#12 raccordé aux connexions ; les deux commandes échouent donc explicitement par `IPC::ResultNotSupported` avec ID initialisé à zéro.
+
+Un fork Eglantine récent possède un vrai `ImportServerPki`, mais il dépend d'une couche entière `DecodeServerPki + SSLTrustStore + cache de trust-store` absente d'Encore ; ce WIP n'est pas backporté à l'aveugle. `ImportClientPki` y reste d'ailleurs encore un stub. Le travail SSL NS1 historique du 11/11 est bien ancêtre du vendor courant et aucune branche SSL active n'est présente, donc ce correctif ne remplace pas un travail parallèle vivant.
+
+**Résidu historique désormais prouvé ouvert dans cette famille STUB :** `CanUseApplicationCore` et `GetOperationModeSystemInfo` seulement. Libounce/SwitchBrew confirment leurs ABI, mais pas la sémantique nécessaire pour produire une valeur fidèle ; Encore n'implémente pas davantage `omm` cmd26. Ils restent ouverts plutôt que d'être figés sur des constantes supposées.
+
+Build natif PS5 non déclenché ; aucune validation console revendiquée.

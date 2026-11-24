@@ -3164,3 +3164,11 @@ Les surfaces locales critiques `GetUserCount`, `ListAllUsers`, `GetProfile`, sé
 
 **Pool restant = 1 326 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
 
+### 2026-11-24 — FSP : maintenance/transfert système indisponibles rejetés en lot
+
+Vendor `d1b965f49a76649392576551be724c0ee642d809` : **43 slots `nullptr` physiques** de `fsp-srv` sont raccordés au handler production `UnsupportedDebugCommand` pour les surfaces hors chemin normal des jeux : format/repair SD/save, save-data transfer/cloud, device/detection notifiers, corruption/padding, access-failure recovery, racines host/debug, update partitions, diagnostics/log/debug et BIS wipe. Le handler renvoie `ResultNotSupported`.
+
+Les chemins `OpenFileSystem`, `OpenSaveDataFileSystem`, `OpenDataStorage*`, GameCard local et opérations save normales restent intacts. Croisement avec le catalogue 4 853 : **32 lignes NULL** sortent du pool.
+
+**Pool restant = 1 294 / 4 853.** Aucun build natif PS5 ni validation console revendiqués.
+

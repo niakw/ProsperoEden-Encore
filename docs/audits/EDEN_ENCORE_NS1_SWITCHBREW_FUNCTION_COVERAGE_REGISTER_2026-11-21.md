@@ -2739,3 +2739,10 @@ Vendor `dab56d88cbbe166575546fff3346feb4727afbf4` : `spl:` cmd11 `IsDevelopment`
 Vendor `94c61421e27d837e28b7331690305a72baad4d93` : `GenerateAesKek` (cmd2) et `GenerateAesKey` (cmd4) ne renvoient plus `Success` avec respectivement une `AccessKey` et une `AesKey` entièrement nulles. Sans backend Secure Monitor/keyslot authentique dans Encore, ces deux dérivations échouent désormais explicitement par `ResultSecureMonitorNotImplemented`, comme les autres opérations SPL impossibles à reproduire sans secrets matériels. Les payloads d'entrée restent consommés et aucune clé fictive n'est publiée. **2 STUB → D.**
 
 **Pool restant = 1 541** : 1 181 NULL + 11 STUB + 153 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — SFDNSRES : contrat ResolverSetOptionRequest
+
+Vendor `65cffbdeed0bf25fe1bf5b840450a426e1f3b255` : cmd14 `ResolverSetOptionRequest` ne répond plus avec une IPC tronquée. Le handler consomme désormais le `u64` d'entrée et le buffer opaque d'options, puis renvoie les deux mots attendus par le contrat HOS/Ryujinx (`i32 ret`, `u32 bsd_errno`) au lieu du seul errno. Les options restent non interprétées par le resolver hôte, donc la commande est classée **PARTIEL** et non IMPL-SRC. **1 STUB → PARTIEL ; pool total inchangé.**
+
+**Pool restant = 1 541** : 1 181 NULL + 10 STUB + 154 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

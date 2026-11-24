@@ -34,6 +34,12 @@ configure_file("${EDEN_PORT_DIR}/renderer_vulkan_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/renderer_vulkan.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vk_present_manager_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_present_manager.h" COPYONLY)
+# Failure-aware native guest fences: select one shared header ABI and one
+# Vulkan derived owner. The pinned desktop inputs remain unchanged.
+configure_file("${EDEN_PORT_DIR}/fence_manager_ps5.h"
+    "${PORT_BUILD_DIR}/include/video_core/fence_manager.h" COPYONLY)
+configure_file("${EDEN_PORT_DIR}/vk_fence_manager_ps5.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_fence_manager.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/window_adapt_pass_r08.h"
     "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/present/window_adapt_pass.h" COPYONLY)
 configure_file("${EDEN_PORT_DIR}/vulkan_present_layer_r24.h"
@@ -1127,6 +1133,12 @@ set_property(SOURCE "${PORT_BUILD_DIR}/blit_image.cpp"
     "${EDEN_NS1_ABGR8_TO_X8D24_HEADER};${EDEN_NS1_X8D24_TO_ABGR8_HEADER}")
 list(REMOVE_ITEM video_sources vulkan_common/vulkan_device.cpp
     vulkan_common/vulkan_memory_allocator.cpp renderer_vulkan/vk_scheduler.cpp)
+list(FIND video_sources "renderer_vulkan/vk_master_semaphore.cpp" EDEN_MASTER_SEMAPHORE_INDEX)
+if(EDEN_MASTER_SEMAPHORE_INDEX LESS 0)
+    message(FATAL_ERROR "Pinned master semaphore source moved; re-audit native ownership")
+endif()
+list(REMOVE_ITEM video_sources renderer_vulkan/vk_master_semaphore.cpp)
+list(APPEND video_sources "${EDEN_PORT_DIR}/vulkan_master_semaphore_ps5.cpp")
 # Spatial FSR1 stock percentage was reversed relative to RCAS stops:
 # 0=strongest, higher stops=weaker. Replace native source only, not vendor.
 list(REMOVE_ITEM video_sources renderer_vulkan/present/fsr.cpp)
@@ -1163,6 +1175,17 @@ foreach(name vk_fence_manager vk_buffer_cache vk_texture_cache vk_descriptor_buf
     list(REMOVE_ITEM video_sources renderer_vulkan/${name}.cpp)
     list(APPEND video_sources "${PORT_BUILD_DIR}/${name}_cost.cpp")
 endforeach()
+
+# Existing native depfiles may still point to the unmodified fence headers.
+set_property(SOURCE
+    "${PORT_BUILD_DIR}/vk_fence_manager_cost.cpp"
+    "${PORT_BUILD_DIR}/vulkan_rasterizer.cpp"
+    "${EDEN_PORT_DIR}/vulkan_renderer_r08.cpp"
+    "${PROJECT_SOURCE_DIR}/src/video_core/renderer_opengl/gl_rasterizer.cpp"
+    "${PROJECT_SOURCE_DIR}/src/video_core/renderer_opengl/gl_fence_manager.cpp"
+    TARGET_DIRECTORY video_core APPEND PROPERTY OBJECT_DEPENDS
+    "${PORT_BUILD_DIR}/include/video_core/fence_manager.h"
+    "${PORT_BUILD_DIR}/include/video_core/renderer_vulkan/vk_fence_manager.h")
 
 # The cache's PS5-only failed-key recovery metadata changes its class layout.
 # Explicitly rebuild consumers when an earlier depfile still names the

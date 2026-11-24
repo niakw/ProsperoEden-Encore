@@ -197,3 +197,174 @@ with tempfile.TemporaryDirectory(prefix="encore-vulkan-worker-fatal-") as tmp:
         result=subprocess.run([str(exe)],capture_output=True,text=True,timeout=20)
         assert result.returncode==0,(name,result.stdout[-900:],result.stderr[-1600:])
 print("ENCORE_VULKAN_WORKER_FATAL_DRAIN_PASS source_extracted=3 host_normal=1 native_failure=2 waiters_released=1 sanitizer=1")
+
+
+# The native semaphore and guest-fence overrides are CMake-selected, not
+# alternate experimental paths. Compile their actual blocking methods.
+master = (ROOT/"headless/vulkan_master_semaphore_ps5.cpp").read_text()
+fences = (ROOT/"headless/fence_manager_ps5.h").read_text()
+cmake = (ROOT/"headless/vulkan.cmake").read_text()
+for name in ("vulkan_master_semaphore_ps5.cpp", "fence_manager_ps5.h", "vk_fence_manager_ps5.h"):
+    assert name in cmake
+assert "list(REMOVE_ITEM video_sources renderer_vulkan/vk_master_semaphore.cpp)" in cmake
+assert "~FenceManager() override { StopFenceThread(); }" in (
+    ROOT/"headless/vk_fence_manager_ps5.h").read_text()
+assert "std::unique_lock queue_lock{guard, std::defer_lock};" in fences
+assert "guard.lock();" not in fences and "guard.unlock();" not in fences
+assert "std::function<void()> func([state]" in fences
+assert "std::scoped_lock lock{guard};\n                fence_thread.request_stop();" in fences
+assert "if (auto failure = ::Eden::PeekGpuFailure()) std::rethrow_exception(failure);\n            PopAsyncFlushes();" in fences
+start=master.index("constexpr u64 kFailurePollNs")
+helper=master[start:master.index("\nMasterSemaphore::MasterSemaphore",start)]
+start=master.index("void MasterSemaphore::Wait(u64 tick)")
+wait=master[start:master.index("\nVkResult MasterSemaphore::SubmitQueue(",start)]
+start=master.index("void MasterSemaphore::WaitThread(")
+thread=master[start:master.index("\nvk::Fence MasterSemaphore::GetFreeFence()",start)]
+start=fences.index("    void WaitPendingFences(")
+guest_wait=fences[start:fences.index("\nprotected:",start)]
+assert thread.index("vk::Check(result);") < thread.index("pending->Reset();") < thread.index("gpu_tick.store(")
+assert thread.index("vk::Check(result);") < thread.index("wait_queue.pop();")
+assert "gpu_tick.wait(" not in wait
+cpp=r"""
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <condition_variable>
+#include <deque>
+#include <functional>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <stdexcept>
+#include <thread>
+#include <utility>
+#include "gpu_failure.h"
+using u64=std::uint64_t;
+using namespace std::chrono_literals;
+enum VkResult { VK_SUCCESS, VK_TIMEOUT, VK_ERROR_DEVICE_LOST };
+namespace vk {
+struct FenceState {
+    std::atomic<VkResult> result{VK_TIMEOUT};
+    unsigned resets{};
+};
+struct Fence {
+    std::shared_ptr<FenceState> state;
+    VkResult Wait(u64) const { std::this_thread::sleep_for(1ms); return state->result.load(); }
+    void Reset() { ++state->resets; }
+};
+void Check(VkResult r) {
+    if(r!=VK_SUCCESS) throw std::runtime_error("fence error");
+}
+}
+struct Semaphore {
+    bool enabled{};
+    std::atomic<bool> completed{};
+    explicit operator bool() const { return enabled; }
+    bool Wait(u64,u64) { std::this_thread::sleep_for(1ms); return completed.load(); }
+};
+class MasterSemaphore {
+public:
+    Semaphore semaphore;
+    std::atomic<u64> gpu_tick{};
+    std::mutex wait_mutex,free_mutex;
+    std::condition_variable_any wait_cv;
+    std::queue<std::pair<u64,vk::Fence>> wait_queue;
+    std::deque<vk::Fence> free_queue;
+    bool IsFree(u64 tick) const { return gpu_tick.load()>=tick; }
+    void Refresh() { if(semaphore.completed.load()) gpu_tick.store(9); }
+    void Wait(u64);
+    void WaitThread(std::stop_token);
+};
+INJECT_HELPER
+INJECT_WAIT
+INJECT_THREAD
+struct Guest {
+    static constexpr bool can_async_check=true;
+    std::function<void()> pending;
+    std::promise<void> queued;
+    void SignalFence(std::function<void()> cb) { pending=std::move(cb); queued.set_value(); }
+    template<bool> void TryReleasePendingFences() {}
+INJECT_GUEST
+};
+static void fail() { Eden::RecordGpuFailure(std::make_exception_ptr(std::runtime_error("submit error"))); }
+static bool failed(std::future<void>& f) {
+    assert(f.wait_for(2s)==std::future_status::ready);
+    try { f.get(); } catch(const std::runtime_error&) { return true; }
+    return false;
+}
+int main() {
+    for(bool timeline:{false,true}) {
+        Eden::ResetGpuFailureForTitle();
+        MasterSemaphore m;
+        m.semaphore.enabled=timeline;
+        auto f=std::async(std::launch::async,[&]{m.Wait(9);});
+        std::this_thread::sleep_for(5ms);
+        fail();
+        assert(Eden::TakeGpuFailure()); // UI delivery cannot clear fatal state
+        assert(failed(f) && m.gpu_tick.load()==0);
+    }
+    Eden::ResetGpuFailureForTitle();
+    {
+        MasterSemaphore m;
+        m.semaphore.enabled=true;
+        auto f=std::async(std::launch::async,[&]{m.Wait(9);});
+        m.semaphore.completed.store(true);
+        assert(f.wait_for(2s)==std::future_status::ready);
+        f.get();
+        assert(m.IsFree(9));
+    }
+    for(bool error:{false,true}) {
+        Eden::ResetGpuFailureForTitle();
+        MasterSemaphore m;
+        auto state=std::make_shared<vk::FenceState>();
+        state->result.store(error ? VK_ERROR_DEVICE_LOST : VK_SUCCESS);
+        m.wait_queue.emplace(7,vk::Fence{state});
+        std::jthread worker([&](std::stop_token stop){
+            try { m.WaitThread(stop); } catch(...) { Eden::RecordGpuFailure(std::current_exception()); }
+        });
+        const auto deadline=std::chrono::steady_clock::now()+2s;
+        while(!m.IsFree(7) && !Eden::PeekGpuFailure() &&
+              std::chrono::steady_clock::now()<deadline) std::this_thread::sleep_for(1ms);
+        worker.request_stop(); m.wait_cv.notify_all(); worker.join();
+        if(error) {
+            assert(Eden::PeekGpuFailure() && m.gpu_tick.load()==0);
+            assert(m.wait_queue.size()==1 && m.free_queue.empty() && state->resets==0);
+        } else {
+            assert(m.IsFree(7) && m.wait_queue.empty() && m.free_queue.size()==1 && state->resets==1);
+        }
+    }
+    Eden::ResetGpuFailureForTitle();
+    {
+        Guest g;
+        auto queued=g.queued.get_future();
+        auto f=std::async(std::launch::async,[&]{g.WaitPendingFences(true);});
+        assert(queued.wait_for(2s)==std::future_status::ready);
+        fail();
+        assert(failed(f));
+        // Callback still owns its state after the waiter has unwound.
+        g.pending();
+    }
+    Eden::ResetGpuFailureForTitle();
+    {
+        Guest g;
+        auto queued=g.queued.get_future();
+        auto f=std::async(std::launch::async,[&]{g.WaitPendingFences(true);});
+        assert(queued.wait_for(2s)==std::future_status::ready);
+        g.pending();
+        assert(f.wait_for(2s)==std::future_status::ready);
+        f.get();
+    }
+}
+""".replace("INJECT_HELPER",helper).replace("INJECT_WAIT",wait).replace("INJECT_THREAD",thread).replace("INJECT_GUEST",guest_wait)
+with tempfile.TemporaryDirectory(prefix="encore-native-fatal-fences-") as tmp:
+    d=Path(tmp)
+    src=d/"fences.cpp"
+    src.write_text(cpp)
+    for opt in ("-O0","-O2"):
+        exe=d/("fences"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-Wall","-Wextra","-Werror","-pthread",
+            "-fsanitize=address,undefined","-fno-sanitize-recover=all",
+            "-I",str(ROOT/"headless"),str(src),"-o",str(exe)],check=True,timeout=70)
+        subprocess.run([str(exe)],check=True,timeout=20)
+print("ENCORE_NATIVE_GPU_FATAL_FENCES_PASS timeline=1 fallback=1 fence_result=2 late_callback=1 normal_callback=1 O0_O2=2 ASan_UBSan=1")

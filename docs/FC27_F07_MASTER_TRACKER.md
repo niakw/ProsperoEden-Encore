@@ -702,3 +702,9 @@ Sur le binaire **`6271928eb7b5d50687fccc730ae706986f3d6108`**, FW13.60, 89 fenê
 
 - Active R08 renderer: drain the recording worker before the last synchronous submission, drain the independent presenter, check the actual device-idle result before releasing FSR3/Mihawk sessions. On an exception without quiescence proof, latch the cause and retain the existing fail-closed policy. No gameplay-path wait added.
 - Outstanding: a failure of the final submitted tick can still strand the timeline waiter; complete recoverable shutdown after fatal GPU failure requires failure-aware semaphore and fence-worker handling. No assertion of successful PS5 exit or native build.
+
+### 2026-11-24 — shared native fatal GPU wait propagation
+
+- Select the full native master semaphore TU and matched generic/Vulkan fence headers in `headless/vulkan.cmake`, removing the pristine master semaphore TU from the native source list. Preserve exact original Eden sources and the pinned vendor gitlink.
+- A pending timeline or fallback fence wait observes the persistent failure latch. The polling interval is not a GPU execution deadline. Failed host fence waits neither reset/recycle a pending fence nor advance the completed tick. Keep the pending fence owned by the queue until safe teardown.
+- Forced guest-fence waits own their callback completion state; a worker failure propagates without a dangling stack callback. Queue publication unlocks on exceptions, the worker reports fatal errors, and Vulkan stops the fence worker before derived destruction. Source-extracted ASan/UBSan witness is wired into existing CI. Console behavior is not qualified; no native build requested.

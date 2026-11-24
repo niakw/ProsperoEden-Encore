@@ -2781,3 +2781,10 @@ Vendor `69e90bc940df1cfefcd9e3f6d0d7b5a5d7984413` : la famille `ovln:snd` n'util
 Vendor `945a4a0a9c4b535fa509f1ffed992d41632ddab7` : `IScanRequest::SetChannels` (cmd4, HOS 6+) consomme désormais le buffer `s16[]` documenté par l'ABI et conserve la liste demandée dans l'objet de scan, au lieu d'ignorer entièrement la requête. Le scanner natif Encore ne publie actuellement que SSID/qualité/flags et aucune métadonnée de canal ; sur PS5 il n'expose pas de radio Wi-Fi invitée. Aucun filtrage fictif n'est donc ajouté. La commande devient **PARTIEL** jusqu'à ce que le backend de scan transporte réellement les canaux. Référence croisée : Ryujinx-Nextendo confirme cmd4 `SetChannels(buffer<s16>)`. Le garde moteur corrige aussi la valeur tree tronquée (39 caractères) laissée pour le prédécesseur OVLN `69e90bc940df1cfefcd9e3f6d0d7b5a5d7984413`, sans changer ce prédécesseur.
 
 **Delta canonique : 1 STUB → PARTIEL ; pool total inchangé = 1 537** : 1 181 NULL + 4 STUB + 156 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM : état copyright validé
+
+Vendor `08f3042aecf16bf086d5463c55c1c9a150603d0f` : les trois commandes copyright d'`IApplicationFunctions` ne sont plus des succès vides. Cmd100 valide le framebuffer HOS (dimensions 1..1280 × 1..720, taille RGBA8 minimale et alignement transfer-memory 0x40000) puis conserve le contrat validé. Cmd101 valide origine, rectangle et taille RGBA8, puis mémorise l'image courante ; cmd102 conserve réellement la visibilité, initialement vraie comme sur HOS. Les validations sont recroisées avec SwitchBrew, Strato et Ryujinx. Encore ne compose pas encore cette image dans le pipeline de capture/screenshot GPU : les trois commandes sont donc **PARTIEL**, pas IMPL-SRC.
+
+**Delta canonique : 3 STUB → PARTIEL ; pool total inchangé = 1 537** : 1 181 NULL + 1 STUB + 159 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.

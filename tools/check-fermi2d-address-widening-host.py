@@ -309,12 +309,19 @@ int main() {
  Surface s{}; Config c{};
  r.result=false; s.depth=1; t.regs.dst.depth=1; t.Run(s,c);
  assert(accelerated_calls==1 && software_calls==1 && unimplemented==0);
- r.result=false; s.depth=4; t.regs.dst.depth=4; t.Run(s,c);
- assert(accelerated_calls==2 && software_calls==1 && unimplemented==1);
+ // Base z=0 of a 3D surface is now a verified software fallback after
+ // TextureCache declines acceleration; it must not be reported unsupported.
+ r.result=false; s.depth=4; s.layer=0; t.regs.dst.depth=4; t.regs.dst.layer=0; t.Run(s,c);
+ assert(accelerated_calls==2 && software_calls==2 && unimplemented==0);
+ // A 2D source targeting the destination's base z=0 slice is equally safe.
  r.result=false; s.depth=1; t.regs.dst.depth=4; t.Run(s,c);
- assert(accelerated_calls==3 && software_calls==1 && unimplemented==2);
- r.result=true; s.depth=4; t.regs.dst.depth=4; t.Run(s,c);
- assert(accelerated_calls==4 && software_calls==1 && unimplemented==2);
+ assert(accelerated_calls==3 && software_calls==3 && unimplemented==0);
+ // A non-zero volume slice remains unresolved and must fail closed.
+ s.depth=4; s.layer=1; t.regs.dst.depth=4; t.regs.dst.layer=0; t.Run(s,c);
+ assert(accelerated_calls==4 && software_calls==3 && unimplemented==1);
+ // Successful TextureCache acceleration still bypasses software fallback.
+ s.layer=0; r.result=true; t.Run(s,c);
+ assert(accelerated_calls==5 && software_calls==3 && unimplemented==1);
 }
 """.replace("__FALLBACK__",volume_fallback)
 
@@ -379,5 +386,5 @@ with tempfile.TemporaryDirectory(prefix="encore-fermi2d-volume-") as tmp:
             subprocess.run([str(exe)],check=True,timeout=20)
 print("FERMI2D_NS1_VOLUME_SLICE_HOST_PASS upstream_853=1 active_owner=1 "
       "ns2_native_tiling_excluded=1 exact_fallback=1 depth1_software=1 "
-      "volume_no_software_fallback=1 cached_slice=1 ambiguous_rejected=1 "
+      "base_layer_software_fallback=1 nonzero_slice_failclosed=1 cached_slice=1 ambiguous_rejected=1 "
       "O0_O2=2 ASan_UBSan=1")

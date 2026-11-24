@@ -2858,3 +2858,10 @@ Vendor `3ae8cda53774da47ad69bdb4f91ef2434acf1fb5` : `ILibraryAppletSelfAccessor:
 Vendor `695b49c4255c816f8212d2c8a17fe81daa6e4a77` : `IApplicationAccessor::HasSaveDataAccessPermission` (cmd170) n'est plus NULL. SwitchBrew documente explicitement que lorsque l'ApplicationId demandé correspond à l'application courante, Horizon retourne immédiatement succès avec `flag=1`. Encore applique désormais cette règle depuis le vrai `m_applet->program_id`. Pour un autre title ID, Encore retourne `false` plutôt que d'accorder un droit inter-title fictif, car aucune matrice ACL Horizon complète n'est encore modélisée. **1 NULL → PARTIEL.**
 
 Le TU concerné reste `sources/eden/src/core/hle/service/am/service/application_accessor.cpp` : le CMake actif de l'overlay le référence mais aucun override de ce fichier n'existe dans le manifeste, donc la base `sources/eden` est bien l'owner fourni au build fusionné. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM DisplayController : screenshot Ex raccordé au backend réel
+
+Vendor `e7137658964ed0ed011be58939a71519fb543b9a` : `IDisplayController::TakeScreenShotOfOwnLayerEx` (cmd28) est désormais raccordé au même chemin de capture réel que cmd8. SwitchBrew documente que cmd28 appelle la même fonction interne que `TakeScreenShotOfOwnLayer`, avec un booléen supplémentaire indiquant le mode immédiat. Encore consomme donc les deux booléens et le slot `s32`, respecte la permission de capture et écrit la capture GPU courante via `WriteAppletCaptureBufferToSlot`. Le backend PS5 est actuellement synchrone : `immediately=false` et `true` convergent encore vers la même capture immédiate. **1 NULL → PARTIEL**, sans prétendre implémenter une file différée inexistante.
+
+Le TU est la base active `sources/eden/src/core/hle/service/am/service/display_controller.cpp` (aucun override de ce fichier dans l'overlay backports). Aucun build natif PS5 ni résultat console revendiqué.

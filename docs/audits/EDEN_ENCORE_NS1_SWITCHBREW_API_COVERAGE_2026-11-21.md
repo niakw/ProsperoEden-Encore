@@ -31,10 +31,10 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 739 | 80 | **1 819** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 164 | 3 | **167** |
+| **PARTIEL — Implémentation partielle** | 165 | 3 | **168** |
 | **STUB — Stub / résultat simulé** | 2 | 0 | **2** |
 | **NOOP — No-op documenté** | 222 | 0 | **222** |
-| **NULL — Handler NULL** | 1 177 | 0 | **1 177** |
+| **NULL — Handler NULL** | 1 176 | 0 | **1 176** |
 | **D — Rejet explicite / historique** | 235 | 33 | **268** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 199 | 0 | **199** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -1848,7 +1848,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `25` | `ReleaseLastForegroundCaptureSharedBuffer` | 4.0.0+ | **NOOP** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; acquisition Encore synchrone sous `SharedBufferManager::m_guard`, aucun ownership persistant à libérer) | 2026-11-23 |
 | appletAE | `26` | `AcquireCallerAppletCaptureSharedBuffer` | 4.0.0+ | **IMPL-SRC** ([source C++][ns1-src-035]) | 2026-11-22 |
 | appletAE | `27` | `ReleaseCallerAppletCaptureSharedBuffer` | 4.0.0+ | **NOOP** ([vendor f20f6736](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f20f6736b79259cb325f6a44b7b994749e458bec) ; acquisition Encore synchrone sous `SharedBufferManager::m_guard`, aucun ownership persistant à libérer) | 2026-11-23 |
-| appletAE | `28` | `TakeScreenShotOfOwnLayerEx` | 6.0.0+ | **NULL** ([source C++][ns1-src-035]) | 2026-11-22 |
+| appletAE | `28` | `TakeScreenShotOfOwnLayerEx` | 6.0.0+ | **PARTIEL** (même capture réelle que cmd8 vers le slot demandé ; permission respectée, bool `immediately` consommé mais backend PS5 synchrone donc pas de politique différée distincte ; vendor `e7137658`) | 2026-11-24 |
 | appletAE | `1` | `RequestLaunchApplicationForDebug` | — | **HORS-VERSION** (HOS 23.0.1 `IHomeMenuFunctions` expose `PopRequestLaunchApplicationForDebug` à l'ID 100 ; l'ancien ID 1 n'est plus applicable; dump NS1 23.0.1 recroisé le 23/11/2026) | 2026-11-23 |
 | appletAE | `2` | `GetDebugStorageChannel` | 7.0.0+ | **ABI-DIFF** (source `encore-active/eden-backports/src/core/hle/service/am/service/self_controller.cpp` ; ISelfController expose GetDebugStorageChannel à l'ID 1000 (nullptr), pas ID 2 ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
 | appletAE | `3` | `CreateStorageForDebug` | 7.0.0+ | **SERVICE-NON-EXPOSÉ** (source `sources/eden/src/core/hle/service/am/applet_data_broker.cpp` ; surface IPC historique non enregistrée ; les canaux de stockage présents sont internes au broker ; vendor 224b05e6, pas de validation PS5) | 2026-11-22 |
@@ -6615,3 +6615,10 @@ Cmd3 écrit désormais réellement le buffer `ErrorContext` 0x200. L'objet async
 Vendor `695b49c4255c816f8212d2c8a17fe81daa6e4a77` : `IApplicationAccessor::HasSaveDataAccessPermission` (cmd170) n'est plus NULL. SwitchBrew documente explicitement que lorsque l'ApplicationId demandé correspond à l'application courante, Horizon retourne immédiatement succès avec `flag=1`. Encore applique désormais cette règle depuis le vrai `m_applet->program_id`. Pour un autre title ID, Encore retourne `false` plutôt que d'accorder un droit inter-title fictif, car aucune matrice ACL Horizon complète n'est encore modélisée. **1 NULL → PARTIEL.**
 
 Le TU concerné reste `sources/eden/src/core/hle/service/am/service/application_accessor.cpp` : le CMake actif de l'overlay le référence mais aucun override de ce fichier n'existe dans le manifeste, donc la base `sources/eden` est bien l'owner fourni au build fusionné. Aucun build natif PS5 ni résultat console revendiqué.
+
+
+### 2026-11-24 — AM DisplayController : screenshot Ex raccordé au backend réel
+
+Vendor `e7137658964ed0ed011be58939a71519fb543b9a` : `IDisplayController::TakeScreenShotOfOwnLayerEx` (cmd28) est désormais raccordé au même chemin de capture réel que cmd8. SwitchBrew documente que cmd28 appelle la même fonction interne que `TakeScreenShotOfOwnLayer`, avec un booléen supplémentaire indiquant le mode immédiat. Encore consomme donc les deux booléens et le slot `s32`, respecte la permission de capture et écrit la capture GPU courante via `WriteAppletCaptureBufferToSlot`. Le backend PS5 est actuellement synchrone : `immediately=false` et `true` convergent encore vers la même capture immédiate. **1 NULL → PARTIEL**, sans prétendre implémenter une file différée inexistante.
+
+Le TU est la base active `sources/eden/src/core/hle/service/am/service/display_controller.cpp` (aucun override de ce fichier dans l'overlay backports). Aucun build natif PS5 ni résultat console revendiqué.

@@ -543,11 +543,15 @@ void Layer::SetAntiAliasPass(const Device& device, VkExtent2D source_extent) {
 
 void Layer::ReleaseRawImages() {
 #ifdef PS5_NATIVE
-    // On this single Vulkan GPU timeline, the latest presentation resource
-    // tick subsumes all preceding image uses, including out-of-order slots.
-    const auto last_tick = std::max_element(resource_ticks.begin(), resource_ticks.end());
-    if (last_tick != resource_ticks.end() && *last_tick != 0) {
-        scheduler.Wait(*last_tick);
+    // Renderer teardown has already joined queue producers and proven
+    // device retirement. This is resource destruction, not guest completion:
+    // do not submit/wait on the retired scheduler or publish a fake tick.
+    if (!scheduler.IsDeviceRetiredForShutdown()) {
+        // The latest presentation tick subsumes all earlier image uses.
+        const auto last_tick = std::max_element(resource_ticks.begin(), resource_ticks.end());
+        if (last_tick != resource_ticks.end() && *last_tick != 0) {
+            scheduler.Wait(*last_tick);
+        }
     }
 #else
     for (const u64 tick : resource_ticks) {

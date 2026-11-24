@@ -533,3 +533,57 @@ with tempfile.TemporaryDirectory(prefix="encore-present-submit-retirement-") as 
             "-I",str(ROOT/"headless"),str(src),"-o",str(exe)],check=True,timeout=70)
         subprocess.run([str(exe)],check=True,timeout=20)
 print("ENCORE_PRESENT_POST_SUBMIT_SURFACE_LOSS_PASS cases_per_optimization=3000 O0_O2=2 retry_pre_submit=1 no_double_wait=1 ASan_UBSan=1")
+
+# Console ee5d6d57: FC27 exit reproduced twice with "guest wait after device retirement".
+# Exercise the real selected R24 Layer release (not the historical vendor layer).
+layer = (ROOT/"headless/vulkan_present_layer_r24.cpp").read_text()
+start = layer.index("void Layer::ReleaseRawImages() {")
+release = layer[start:layer.index("\nu64 Layer::CalculateBufferSize",start)]
+assert "if (!scheduler.IsDeviceRetiredForShutdown())" in release
+layer_cpp = r"""
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <stdexcept>
+#include <vector>
+using u64=std::uint64_t;
+struct Scheduler {
+    bool retired{};
+    unsigned waits{};
+    u64 completed{};
+    bool IsDeviceRetiredForShutdown() const {return retired;}
+    void Wait(u64 tick) {
+        if(retired) throw std::logic_error("guest wait after device retirement");
+        ++waits; completed=tick;
+    }
+};
+struct Buffer {bool live=true;void reset(){live=false;}};
+struct Layer {
+    Scheduler scheduler;
+    std::vector<u64> resource_ticks{3,8,2,0};
+    std::vector<int> neural_sessions{1},neural_views{1},neural_images{1},
+        raw_image_views{1},raw_images{1};
+    bool neural_model_failed=true;
+    Buffer buffer;
+    void ReleaseRawImages();
+};
+INJECT_RELEASE
+int main() {
+    for(bool retired:{false,true}) {
+        Layer l;l.scheduler.retired=retired;
+        l.ReleaseRawImages();
+        assert(l.scheduler.waits==(retired?0u:1u));
+        assert(l.scheduler.completed==(retired?0u:8u));
+        assert(l.neural_sessions.empty() && l.neural_views.empty() && l.neural_images.empty());
+        assert(l.raw_image_views.empty() && l.raw_images.empty() && !l.buffer.live);
+    }
+}
+""".replace("INJECT_RELEASE",release)
+with tempfile.TemporaryDirectory(prefix="encore-layer-retirement-") as tmp:
+    d=Path(tmp); src=d/"layer.cpp"; src.write_text(layer_cpp)
+    for opt in ("-O0","-O2"):
+        exe=d/("layer"+opt[1:])
+        subprocess.run([compiler,"-std=c++20",opt,"-DPS5_NATIVE=1","-Wall","-Wextra","-Werror",
+            "-fsanitize=address,undefined","-fno-sanitize-recover=all",str(src),"-o",str(exe)],check=True,timeout=40)
+        subprocess.run([str(exe)],check=True,timeout=12)
+print("ENCORE_R24_LAYER_RETIREMENT_PASS normal_wait=1 retired_wait=0 no_fake_tick=1")

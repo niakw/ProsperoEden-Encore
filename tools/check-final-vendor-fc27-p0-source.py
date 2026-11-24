@@ -2368,6 +2368,13 @@ if actual_vendor_pin in {"191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec
         successor_blobs.update({"encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h":"bbb55dc7b1648fa1e6fd730a1b3515f2969221c7","tests/ns1_r23_18_tir_host.py":"ea964bd9dd455f0e1b9a36fa5d0a3b9c5fd42a9b","tests/fc27_deferred_page_protection_host.py":"a4962e7b00c7a8ee6626b359551d2241400feb1f"})
     if actual_vendor_pin == "b92d4183cec69e65216162cf61e451eff643caa0":
         successor_blobs.update({"encore-active/ns2-astc/include/video_core/texture_cache/texture_cache.h":"45659d2fa8ae336d28e7ccbd02b3104d96229378","tests/ns1_r23_18_tir_host.py":"9e835a870dac4e7728978328814e57cab58d85c5","tests/fc27_deferred_page_protection_host.py":"c4b49d84e9714d64ae4e72942a32274d6fc1bc7f"})
+    # The newer FC27 attribute-index fixture owns its synchronous
+    # CPU page-protection witness. Do not let the earlier generic collected-
+    # batch receipt replace that authenticated, unchanged source blob.
+    if actual_vendor_pin in {"f337bb8c0484fef5b9a2d763b9775566ff797eef",
+                             "da339b1393d1386bc6af667d243e97860a40d096"}:
+        successor_blobs["tests/fc27_deferred_page_protection_host.py"] = (
+            "c4b316c66ee96f9b1e900999d0676a834603f7bc")
     for relative, expected_blob in successor_blobs.items():
         raw = (V / relative).read_bytes()
         actual = hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()

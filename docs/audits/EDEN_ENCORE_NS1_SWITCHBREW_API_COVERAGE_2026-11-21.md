@@ -29,13 +29,13 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 679 | 80 | **1 759** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 680 | 80 | **1 760** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 144 | 3 | **147** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 205 | 0 | **205** |
-| **NULL — Handler NULL** | 1 250 | 0 | **1 250** |
-| **D — Rejet explicite / historique** | 214 | 33 | **247** |
+| **NULL — Handler NULL** | 1 244 | 0 | **1 244** |
+| **D — Rejet explicite / historique** | 219 | 33 | **252** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
 | **HORS-VERSION — Commande non applicable au firmware cible** | 472 | 1 | **473** |
@@ -3020,12 +3020,12 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nsd:u, nsd:a | `42` | `GetNasApiFqdn` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
 | nsd:u, nsd:a | `43` | `GetNasApiFqdnEx` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
 | nsd:u, nsd:a | `50` | `GetCurrentSetting` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
-| nsd:u, nsd:a | `51` | `WriteTestParameter` | 9.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
-| nsd:u, nsd:a | `52` | `ReadTestParameter` | 9.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
-| nsd:u, nsd:a | `60` | `ReadSaveDataFromFsForTest` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
-| nsd:u, nsd:a | `61` | `WriteSaveDataToFsForTest` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
-| nsd:u, nsd:a | `62` | `DeleteSaveDataOfFsForTest` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
-| nsd:u, nsd:a | `63` | `IsChangeEnvironmentIdentifierDisabled` | 4.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/sockets/nsd.cpp) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-22 |
+| nsd:u, nsd:a | `51` | `WriteTestParameter` | 9.0.0+ | **D** (commande test/debug explicitement rejetée par `UnsupportedTestCommand` dans le runtime actif) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-24 |
+| nsd:u, nsd:a | `52` | `ReadTestParameter` | 9.0.0+ | **D** (commande test/debug explicitement rejetée par `UnsupportedTestCommand` dans le runtime actif) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-24 |
+| nsd:u, nsd:a | `60` | `ReadSaveDataFromFsForTest` | — | **D** (commande test/debug explicitement rejetée par `UnsupportedTestCommand` dans le runtime actif) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-24 |
+| nsd:u, nsd:a | `61` | `WriteSaveDataToFsForTest` | — | **D** (commande test/debug explicitement rejetée par `UnsupportedTestCommand` dans le runtime actif) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-24 |
+| nsd:u, nsd:a | `62` | `DeleteSaveDataOfFsForTest` | — | **D** (commande test/debug explicitement rejetée par `UnsupportedTestCommand` dans le runtime actif) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-24 |
+| nsd:u, nsd:a | `63` | `IsChangeEnvironmentIdentifierDisabled` | 4.0.0+ | **IMPL-SRC** (retourne l’état local réellement écrit par cmd15; vendor `a8927dbd`) ; commande NSD exacte enregistrée nullptr ; non certifié PS5) | 2026-11-24 |
 
 ### Bluetooth Driver services
 
@@ -6576,3 +6576,10 @@ Vendor `71ead3c34a782580ad52770fbfbcb87de83da416` → gitlink moteur `d3ef1ddd30
 Vendor `487fcd316fc8c63d95c97b40d1b4b8438508092a` → gitlink moteur `72b761e16280ccee6362dc72afd035bb93dc7d19`. Les dumps NS1 23.0.1 confirment les ABI : clé token 0x18, token opaque 0x28, bool de validation, buffer de statistiques, handle event et état forcé u32. Encore conserve désormais un cycle de token local thread-safe pour `npns:u` et `npns:s`, sans activer BaaS/Nintendo ; les statistiques offline sont nulles, l'event play-report est réel/non signalé, et cmd202 met à jour l'état local puis signale l'événement de changement. **12 NULL → IMPL-SRC.**
 
 **Compteur courant : 1 759 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 250 NULL / 247 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU = 4 853. Pool restant : 1 648.**
+
+
+### NSD — état environnement + commandes test explicites (24/11/2026)
+
+Vendor `a8927dbd3cf2840021a8adee1f42d701a001c564`. Cmd63 retourne désormais réellement `change_environment_identifier_disabled`, l’état muté par cmd15. Les cinq commandes de test 51/52/60/61/62 étaient déjà routées vers `UnsupportedTestCommand` dans le runtime actif mais restaient classées NULL : elles passent en rejet explicite. **6 NULL sortent du pool : 1 → IMPL-SRC, 5 → D.**
+
+**Compteur courant : 1 760 IMPL-SRC / 147 PARTIEL / 52 STUB / 205 NOOP / 1 244 NULL / 252 D / 196 INACCESSIBLE / 325 SERVICE-NON-EXPOSÉ / 473 HORS-VERSION / 0 ABSENT / 190 ABI-DIFF / 9 AMBIGU = 4 853. Pool restant : 1 642.**

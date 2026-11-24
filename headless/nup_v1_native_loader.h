@@ -57,6 +57,7 @@ private:
     std::shared_ptr<Mount> mount_;
     std::optional<std::uint64_t> nacp_aoc_base_id_;
     std::unique_ptr<ContentSet> content_;
+    std::unique_ptr<Loader::AppLoader> metadata_loader_;
     std::unique_ptr<Loader::AppLoader> extracted_loader_;
     mutable std::mutex romfs_mutex_;
     FileSys::VirtualFile effective_romfs_;

@@ -10,6 +10,10 @@
 #include <utility>
 #include <zlib.h>
 
+#include "core/core.h"
+#include "core/file_sys/romfs_factory.h"
+#include "core/hle/kernel/k_process.h"
+#include "core/hle/service/filesystem/filesystem.h"
 #include "core/file_sys/control_metadata.h"
 #include "core/file_sys/common_funcs.h"
 #include "core/file_sys/program_metadata.h"
@@ -167,9 +171,14 @@ std::unique_ptr<NupAppLoader> NupAppLoader::Open(FileSys::VirtualFile source,
     // unlike the directory-only overload in the pinned extracted loader.
     // Our NativeFile retains its containing ExeFS directory across reads.
     const auto main_file = loader->content_->ExeFS()->GetFile("main");
-    loader->extracted_loader_ =
+    // Preserve the main-file metadata parser, but boot through the directory
+    // overload: the package, not a standalone loose ExeFS, owns RomFS.
+    loader->metadata_loader_ =
         std::make_unique<Loader::AppLoader_DeconstructedRomDirectory>(
             main_file, false);
+    loader->extracted_loader_ =
+        std::make_unique<Loader::AppLoader_DeconstructedRomDirectory>(
+            loader->content_->ExeFS(), false);
     // Merely inspecting NUP metadata for the game catalogue must NOT expose
     // add-ons to a running game's services. Publish only after Load succeeds.
     return loader;
@@ -276,6 +285,16 @@ NupAppLoader::LoadResult NupAppLoader::Load(Kernel::KProcess& process,
     }
     auto result = extracted_loader_->Load(process, system);
     if (result.first == Loader::ResultStatus::Success) {
+        // The directory delegate only maps ExeFS. Register the outer NUP
+        // loader so RomFSFactory reads its validated effective overlay and
+        // the filesystem/save-data controller receives the real NPDM ID.
+        auto& filesystem = system.GetFileSystemController();
+        const auto registered = filesystem.RegisterProcess(
+            process.GetProcessId(), program_id,
+            std::make_shared<FileSys::RomFSFactory>(*this, system.GetContentProvider(),
+                                                    filesystem));
+        if (registered.IsError())
+            return {Loader::ResultStatus::ErrorNoRomFS, {}};
         PublishActiveAddOns(this, std::make_shared<AddOnIndex>(
             mount_, program_id, nacp_aoc_base_id_));
     }
@@ -304,7 +323,7 @@ Loader::ResultStatus NupAppLoader::ReadIcon(std::vector<u8>& out_buffer) {
         out_buffer = metadata->default_icon;
         return Loader::ResultStatus::Success;
     }
-    return extracted_loader_ ? extracted_loader_->ReadIcon(out_buffer)
+    return metadata_loader_ ? metadata_loader_->ReadIcon(out_buffer)
                              : Loader::ResultStatus::ErrorNoIcon;
 }
 
@@ -353,7 +372,7 @@ Loader::ResultStatus NupAppLoader::ReadTitle(std::string& out_title) {
         out_title = metadata->title;
         return Loader::ResultStatus::Success;
     }
-    return extracted_loader_ ? extracted_loader_->ReadTitle(out_title)
+    return metadata_loader_ ? metadata_loader_->ReadTitle(out_title)
                              : Loader::ResultStatus::ErrorNoControl;
 }
 

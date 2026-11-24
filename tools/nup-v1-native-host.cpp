@@ -1,3 +1,4 @@
+#include "core/file_sys/romfs_factory.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Exercise native adapter WITHOUT linking a PS5 renderer/loader.
 #include "nup_v1_native_vfs.h"
@@ -369,9 +370,15 @@ int main(int argc, char** argv) {
     Kernel::KProcess process;
     Core::System system;
     assert(app->Load(process, system).first == Loader::ResultStatus::Success);
+    const auto& fs_registration = system.GetFileSystemController();
+    assert(fs_registration.registrations == 1);
+    assert(fs_registration.process_id == process.GetProcessId());
+    assert(fs_registration.program_id == 0x0100123400000000ULL);
+    assert(fs_registration.romfs && fs_registration.romfs->file == romfs_result);
     assert(app->ReadNSOModules(modules) == Loader::ResultStatus::Success);
     assert(modules.at(0) == "main");
     assert(app->Load(process, system).first == Loader::ResultStatus::ErrorAlreadyLoaded);
+    assert(fs_registration.registrations == 1);
     app.reset();
     assert(Read(romfs_result) == "state.bin=latest-v3\n");
 

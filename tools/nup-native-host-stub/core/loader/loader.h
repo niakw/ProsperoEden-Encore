@@ -9,9 +9,9 @@
 #include <utility>
 #include <vector>
 #include "core/file_sys/vfs/vfs.h"
-namespace Core { class System {}; }
-namespace FileSys { class NACP; }
-namespace Kernel { class KProcess {}; }
+namespace Core { class System; }
+namespace FileSys { class NACP; class RomFSFactory; class ContentProvider {}; }
+namespace Kernel { class KProcess { public: u64 GetProcessId() const { return 42; } }; }
 namespace Loader {
 enum class FileType { Error, Unknown, DeconstructedRomDirectory };
 enum class ResultStatus {
@@ -39,3 +39,28 @@ protected:
     FileSys::VirtualFile file;
 };
 } // namespace Loader
+
+// Host-only registration mock: emulate the real owner retaining the factory.
+namespace Service::FileSystem {
+class FileSystemController {
+public:
+    struct Result { bool error{}; bool IsError() const { return error; } };
+    Result RegisterProcess(u64 pid, u64 title, std::shared_ptr<FileSys::RomFSFactory>&& factory) {
+        if (registrations++) return {true};
+        process_id = pid; program_id = title; romfs = std::move(factory); return {};
+    }
+    unsigned registrations{};
+    u64 process_id{}, program_id{};
+    std::shared_ptr<FileSys::RomFSFactory> romfs;
+};
+}
+namespace Core {
+class System {
+public:
+    Service::FileSystem::FileSystemController& GetFileSystemController() { return filesystem; }
+    FileSys::ContentProvider& GetContentProvider() { return provider; }
+private:
+    Service::FileSystem::FileSystemController filesystem;
+    FileSys::ContentProvider provider;
+};
+}

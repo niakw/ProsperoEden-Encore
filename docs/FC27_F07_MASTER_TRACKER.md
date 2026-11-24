@@ -736,3 +736,9 @@ Sur le binaire **`6271928eb7b5d50687fccc730ae706986f3d6108`**, FW13.60, 89 fenê
 ### 2026-11-24 — R08 loading and generated-frame callback publication
 
 - Active R08 `PresentLoading()` and LSFG loop now dispatch the scheduler chunk containing the present callback directly after recording it; do not wait for a later guest draw/flush to publish the frame. No extra GPU submission is requested by `DispatchWork()` itself. Preserve real-frame FIFO and the single existing render flush. The local C++ mock of deferred scheduler callbacks passed O0/O2 UBSan for 1,000 loading sequences per optimization, with one flush each. Existing host handoff test adds source-extracted loading/LSFG tails; CI and native PS5 outcome pending. No claim that the previous FC27 gameplay pauses were caused by loading publication.
+
+
+### 24/11 — retest PS5 ee5d6d57 : P0 sortie + P1 cache chaud
+- Title 0100C49025D3E000, source console ee5d6d57d7d433b8406d1411d348ca60d304e2eb : deux arrêts identiques « guest wait after device retirement » (eboot+0x42125), 3850/4120 MiB libres, aucun watchdog/accès mémoire invalide. Le correctif R24 de destruction après retraite est déjà intégré mais reste à qualifier sur console.
+- Mesure détaillée : 10234 intervalles / 351,36 s, 29,13 FPS, 30 intervalles >100 ms, 3 >500 ms, maximum 619,819 ms ; la contention BufferCache n'explique pas toutes les pauses. Préchargement chaud 128/650 enregistrements, 2413 ms. 242 marqueurs de compilation en jeu.
+- Vendor `7e3565e51c6ee048a040796b63a144a2e9354c9d` : LoadDiskResources sélectionne les clés complètes compute/graphics distinctes les plus récentes, au lieu de dépenser le quota 128 en doublons d'enregistrements append-only. Pas de changement de quota, clés, ordre des draws, fences ni invalidations. Test hôte extrait du bloc actif (clés typées, remplacement dernier, éviction, jobs move-only) intégré ; CI et bénéfice console à confirmer. Aucun build PS5 lancé.

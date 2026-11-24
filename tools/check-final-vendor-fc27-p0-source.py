@@ -1399,6 +1399,8 @@ if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e12
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
 
 def reviewed_blob(relative, expected):
+    if actual_vendor_pin == "7e3565e51c6ee048a040796b63a144a2e9354c9d" and relative == "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
+        return "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     if actual_vendor_pin == "3abd88bc1a3c334f53f345998b72e9cf8ae87abf":
         exact_wait = {
             "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "25aa385480b28a3d828da034222795ac1f150e94",
@@ -2206,14 +2208,17 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin == "cd5ce4dabef1d32e0441d22dccdee358ebf23287":
+if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "7e3565e51c6ee048a040796b63a144a2e9354c9d"}:
     # Queued-GPFIFO AS revocation + complete native Puller/Ampere H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89"
+    ).strip() == ("354740b844dbe417c05dd8ebac62addf7880537d" if actual_vendor_pin == "7e3565e51c6ee048a040796b63a144a2e9354c9d" else "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89")
+    if actual_vendor_pin == "7e3565e51c6ee048a040796b63a144a2e9354c9d":
+        raw = (V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_bytes()
+        assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     for relative, expected_blob in {
         "encore-active/eden-core/src/video_core/dma_pusher.cpp": "5cf42158c7cc4462bc9a12a18b482cbd6de20bf8",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "4cb9f79deeb56ab7397c6209939c94dffbb7575b",

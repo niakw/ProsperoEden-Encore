@@ -117,8 +117,9 @@ if selected in {"294442004543aeecc5f3c61cc1b73b2feaff2f92", "53d0ad1f9d50b9f1a72
     # Exact NS2-only successor. FC27 source hashes below are unchanged.
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == ("6861e052a9824450c7eeaa91b53334c153ca9865" if selected == "7e137d362f9679125726ef4876355a09d788795e" else "a21aa2b63cfb9cae4dd9ba386982c3bd57a7ef1f" if selected == "53d0ad1f9d50b9f1a72cbecacdacdff7fb4e69eb" else "50ba35725b57b59cae76a67c7c1d4ba6ad894e2f")
     expected.add(selected)
-if selected in {"973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc"}:
+if selected in {"973d45ae0da5d9612d30900e39118d67d039b31a", "6b8fd06606f12be187f73e8809e56a49864794f9", "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc", "38e19d4be0d99bbba35558af2c0620cd9b46f12e"}:
     assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == (
+        "a27660a134453d2895e23d5c56ac64e6f12d9960" if selected == "38e19d4be0d99bbba35558af2c0620cd9b46f12e" else
         "57a6ef072ad018954d493cb9064b5c722a5af827" if selected == "652f88555e8bb16ffeffd9d1fa3d0c49e7925dfc" else
         "6ecf485d48b3c29c5e058de99a09c5c495cd537d" if selected == "6b8fd06606f12be187f73e8809e56a49864794f9" else
         "1d991da378f711312faf34125f1d4cfe1378bcaa")

@@ -2206,23 +2206,23 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin == "49ba8d1dcd8baa1884d379e56b34785f8fea2f17":
+if actual_vendor_pin == "412dadea7f94eee9ebddfcff0931a3372f9feec5":
     # Queued-GPFIFO AS revocation + asynchronous H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == "c85a7e66d6d7552f90be27aed6ee8f6c33eedc2b"
+    ).strip() == "4ea65cbcec6886f75d8041028a907e472b6994be"
     for relative, expected_blob in {
-        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "0db63c54d93ff34a1f7e3ac7ae1c1dd036e686c4",
+        "encore-active/eden-core/src/video_core/dma_pusher.cpp": "8dbace44172c5145bfed3c073d6ee00205ee81b8",
         "encore-active/ns2-runtime/gpu_dispatch/video_core/dma_pusher.h": "7156db4f0807fd9ba7ae498ecdddd07273080bd1",
         "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.cpp": "8826183bd03a090e797f41e79d5b27a7603ea207",
         "encore-active/ns2-runtime/nvdrv_as/core/hle/service/nvdrv/devices/nvhost_as_gpu.h": "55db762d0322bd2621adf8e72aafcf30751d43e0",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/native_gpu_channel_registry.h": "e43cc46223fd95fe9ad0f63e8311539c68c86807",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.cpp": "5bd4ede78cd44b4a2ad7c98ea8c5b90aec20c302",
         "encore-active/ns2-runtime/nvdrv_gpu/core/hle/service/nvdrv/devices/nvhost_gpu.h": "4106f73b369e9a667854f48c387dc03186dd1145",
-        "tests/ns2_gpu_identity_mapping_source.py": "bf09d0ce4e7d9ab31256e20469a137cb95081590",
+        "tests/ns2_gpu_identity_mapping_source.py": "efaa74aed1fd4502e7a7e996221bd83b5616720c",
         "tests/ns2_native_tiling_activation_source.py": "7946e58a7e499fa8a63e718da77af6094352699c",
     }.items():
         raw=(V/relative).read_bytes()

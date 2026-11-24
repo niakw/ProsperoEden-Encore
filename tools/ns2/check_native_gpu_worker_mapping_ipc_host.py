@@ -154,6 +154,7 @@ struct IGpuWorker {
     std::vector<u32> m_memory{27};
     GW::MappingLedger m_mappings{};
     GW::MappingLedger m_sparse_overlays{};
+    bool m_quarantined_nv_session{};
     FakeSystem system{};
     Kernel::KernelCore kernel{};
     void NormalMapGpuMemory4K(HLERequestContext&);

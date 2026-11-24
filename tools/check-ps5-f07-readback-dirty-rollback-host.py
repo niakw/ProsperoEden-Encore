@@ -33,7 +33,8 @@ assert method.index(guard) < method.index(collection)
 oracle=(root/"vendor/encore-active/eden-vulkan-oracles/vulkan_download_batch.inc").read_text()
 assert oracle in (root/"vendor/encore-active/eden-vulkan/vulkan-cache/video_core/texture_cache/texture_cache.h").read_text()
 assert "DownloadStagingBuffer(bytes, true)" in method
-assert "SCOPE_EXIT { release_batch(); }" in method
+assert "std::uncaught_exceptions() > uncaught_before_readback && !pending.empty()" in method
+assert "runtime.Finish();" in method and "release_batch();" in method
 cpp=r"""
 #include <cassert>
 #include <cstddef>

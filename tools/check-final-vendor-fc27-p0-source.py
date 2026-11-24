@@ -2352,7 +2352,9 @@ if actual_vendor_pin in {"191dd458c68de13f0f71659e3b4a9598af7de561", "b743e9c7ec
                 ".github/workflows/ns2-r3-decoder-host.yml":"c26cddf2f574c8a62cb495ae2fa715a2be9c9662",
                 "encore-active/eden-core/src/video_core/texture_cache/util.cpp":"44e04439fbe67f2cd1eab7027a31006b7db178ed",
             })
-        if actual_vendor_pin == "bc94e99cbedd19b3f6bc75aff02a9b5b914d5189":
+        if actual_vendor_pin in {"bc94e99cbedd19b3f6bc75aff02a9b5b914d5189",
+                                 "f337bb8c0484fef5b9a2d763b9775566ff797eef",
+                                 "da339b1393d1386bc6af667d243e97860a40d096"}:
             successor_blobs.update({
                 "encore-active/eden-core/src/video_core/engines/fermi_2d_observed.cpp":"4be53f7b3ec2daf06b54dacc4d77dc4b75e9db05",
                 "encore-active/eden-core/src/video_core/engines/sw_blitter/blitter.cpp":"d5a5436cdc2414c53834a886cdaa4578b4dc8a94",

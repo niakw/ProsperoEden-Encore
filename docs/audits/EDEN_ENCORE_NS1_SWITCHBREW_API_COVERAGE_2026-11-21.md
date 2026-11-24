@@ -25,15 +25,15 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 797 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 797 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 799 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 799 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 717 | 80 | **1 797** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 719 | 80 | **1 799** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 152 | 3 | **155** |
-| **STUB — Stub / résultat simulé** | 48 | 0 | **48** |
-| **NOOP — No-op documenté** | 216 | 0 | **216** |
+| **STUB — Stub / résultat simulé** | 45 | 0 | **45** |
+| **NOOP — No-op documenté** | 217 | 0 | **217** |
 | **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
@@ -1680,8 +1680,8 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `100` | `InitializeApplicationCopyrightFrameBuffer` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `101` | `SetApplicationCopyrightImage` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `102` | `SetApplicationCopyrightVisibility` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `110` | `QueryApplicationPlayStatistics` | 5.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
-| appletAE | `111` | `QueryApplicationPlayStatisticsByUid` | 6.0.0+ | **STUB** ([source C++][ns1-src-021]) | 2026-11-22 |
+| appletAE | `110` | `QueryApplicationPlayStatistics` | 5.0.0+ | **IMPL-SRC** (temps réel persistant via PlayTimeManager + launch_count via LaunchTimestampCache ; vendor d12a06af ; PS5 non validé) | 2026-11-24 |
+| appletAE | `111` | `QueryApplicationPlayStatisticsByUid` | 6.0.0+ | **IMPL-SRC** (même backend réel pour le profil actif Encore ; aucune statistique utilisateur fictive ; vendor d12a06af ; PS5 non validé) | 2026-11-24 |
 | appletAE | `120` | `ExecuteProgram` | 5.0.0+ | **PARTIEL** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `121` | `ClearUserChannel` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
 | appletAE | `122` | `UnpopToUserChannel` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-021]) | 2026-11-22 |
@@ -1734,7 +1734,7 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | appletAE | `30` | `GetHomeButtonReaderLockAccessor` | — | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `31` | `GetReaderLockAccessorEx` | 2.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `32` | `GetWriterLockAccessorEx` | 7.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
-| appletAE | `40` | `GetCradleFwVersion` | 2.0.0+ | **STUB** ([vendor bdb10101](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/bdb10101b495c52d14a4afe17a30d52fcbcf32d6) ; version nulle, absence de firmware cradle ; PS5 non validé) | 2026-11-24 |
+| appletAE | `40` | `GetCradleFwVersion` | 2.0.0+ | **NOOP** (PS5 sans firmware de cradle Horizon : version neutre 0/0/0/0 explicitement implémentée ; code déjà actif depuis bdb10101 ; PS5 non validé) | 2026-11-24 |
 | appletAE | `50` | `IsVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `51` | `SetVrModeEnabled` | 3.0.0+ | **IMPL-SRC** ([source C++][ns1-src-033]) | 2026-11-22 |
 | appletAE | `52` | `SetLcdBacklighOffEnabled` | 4.0.0+ | **NOOP** (adaptation PS5 sans LCD Switch : la requête est acceptée, `Applet::lcd_backlight_off_enabled` est conservé sous verrou, aucun écran hôte n'est éteint ; vendor `3e8effa0`, moteur `1bb6cfcb`) | 2026-11-23 |

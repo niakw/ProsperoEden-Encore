@@ -2619,3 +2619,7 @@ Vendor `b1a597f87c6de6f473cc533a0668f4d7d27ee092` : cmd304/305/307 auparavant ST
 ### 2026-11-24 — LDN monitor : lifecycle réel
 
 Vendor `8597725202341eb5bf2086977c4d7d60b89e976b` : `InitializeMonitor` place désormais le service en `State::Initialized`, `FinalizeMonitor` le remet à `State::None`, et `GetStateForMonitor` renvoie cet état au lieu d'une constante. ABI cmd0 u32 recroisée avec libnx `ldnmGetState`; aucun réseau local fictif n'est créé. **Pool restant = 1 590** (1 188 NULL + 48 STUB + 155 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Console non validée.
+
+### 2026-11-24 — AM : statistiques de jeu réelles
+
+Vendor `d12a06afee1436debb6d691cc098513daed0cd24` : `IApplicationFunctions` cmd110/111 réutilisent désormais les mêmes sources de vérité déjà actives dans `pdm:qry` : `PlayTimeManager` pour le temps de jeu persistant et `LaunchTimestampCache` pour le compteur de lancements. La variante UID ne fabrique pas de données par utilisateur : Encore n'a qu'une base de temps de jeu pour le profil actif, elle expose donc ces données réelles. Le manifeste de l'overlay AM est recalculé. `GetCradleFwVersion` cmd40 est aussi reclassé NOOP : le C++ actif retourne explicitement 0/0/0/0 car la PS5 n'a pas de firmware cradle Horizon. **Pool restant = 1 587** (1 188 NULL + 45 STUB + 155 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Build PS5 et console non lancés.

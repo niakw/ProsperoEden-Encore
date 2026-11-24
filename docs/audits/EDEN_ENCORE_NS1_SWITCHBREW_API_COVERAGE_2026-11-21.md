@@ -25,14 +25,14 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 793 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 793 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 796 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 796 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 713 | 80 | **1 793** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 716 | 80 | **1 796** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
 | **PARTIEL — Implémentation partielle** | 152 | 3 | **155** |
-| **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
+| **STUB — Stub / résultat simulé** | 49 | 0 | **49** |
 | **NOOP — No-op documenté** | 216 | 0 | **216** |
 | **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
@@ -1147,10 +1147,10 @@ __u0:_System,_u1:_User,_su:_Admin,_aa:_Baas) · [miroir](https://github.com/back
 | hid | `301` | `StartConsoleSixAxisSensor` | 3.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `302` | `StopConsoleSixAxisSensor` | 3.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
 | hid | `303` | `ActivateSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `304` | `StartSevenSixAxisSensor` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `305` | `StopSevenSixAxisSensor` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `304` | `StartSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([vendor b1a597f8](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/b1a597f87c6de6f473cc533a0668f4d7d27ee092) ; contrôle aruid et état d'échantillonnage sous mutex, mémoire de transfert retenue et libérée à la finalisation ; PS5 non validé) | 2026-11-24 |
+| hid | `305` | `StopSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([vendor b1a597f8](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/b1a597f87c6de6f473cc533a0668f4d7d27ee092) ; contrôle aruid et état d'échantillonnage sous mutex, mémoire de transfert retenue et libérée à la finalisation ; PS5 non validé) | 2026-11-24 |
 | hid | `306` | `InitializeSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |
-| hid | `307` | `FinalizeSevenSixAxisSensor` | 5.0.0+ | **STUB** ([source C++][ns1-src-084]) | 2026-11-22 |
+| hid | `307` | `FinalizeSevenSixAxisSensor` | 5.0.0+ | **IMPL-SRC** ([vendor b1a597f8](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/b1a597f87c6de6f473cc533a0668f4d7d27ee092) ; contrôle aruid et état d'échantillonnage sous mutex, mémoire de transfert retenue et libérée à la finalisation ; PS5 non validé) | 2026-11-24 |
 | hid | `308` | `SetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **IMPL-SRC** (état local f32, ABI 0x10 ; vendor `5f548ff5`) | 2026-11-23 |
 | hid | `309` | `GetSevenSixAxisSensorFusionStrength` | 5.0.0+ | **IMPL-SRC** (retourne la force locale f32 ; vendor `5f548ff5`) | 2026-11-23 |
 | hid | `310` | `ResetSevenSixAxisSensorTimestamp` | 6.0.0+ | **IMPL-SRC** ([source C++][ns1-src-084]) | 2026-11-22 |

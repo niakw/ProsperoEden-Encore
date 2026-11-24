@@ -31,8 +31,8 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 |---|---:|---:|---:|
 | **IMPL-SRC — Implémentation source retrouvée** | 1 721 | 80 | **1 801** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 152 | 3 | **155** |
-| **STUB — Stub / résultat simulé** | 43 | 0 | **43** |
+| **PARTIEL — Implémentation partielle** | 153 | 3 | **156** |
+| **STUB — Stub / résultat simulé** | 42 | 0 | **42** |
 | **NOOP — No-op documenté** | 217 | 0 | **217** |
 | **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
@@ -5135,7 +5135,7 @@ __Not_currently_available_on_retail_units.) · [miroir](https://github.com/backu
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `3` | `Initialize` | — | **PARTIEL** ([source C++][ns1-src-111]) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `4` | `QueryEvent` | — | **IMPL-SRC** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; NVDRV::QueryEvent : gestion IPC/GPU non triviale ; pas de validation PS5) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `5` | `MapSharedMem` | — | **NULL** ([source C++][ns1-src-111]) | 2026-11-22 |
-| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `6` | `GetStatus` | — | **STUB** ([source C++][ns1-src-111]) | 2026-11-22 |
+| nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `6` | `GetStatus` | — | **PARTIEL** ([vendor f8285155](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/f828515505b9dcc6b5571d45815c6bca1ce62a9a) ; ABI 0x20 + NvResult restaurée et NotInitialized respecté ; compteurs mémoire du work-buffer encore neutres, recroisé Ryujinx ; PS5 non validé) | 2026-11-24 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `7` | `SetAruid` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; ID 7, nom SwitchBrew SetAruid, owner SetAruidForTest (nullptr) ; pas de validation PS5) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `8` | `SetAruidByPID` | — | **ABI-DIFF** ([code source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/nvdrv/nvdrv_interface.cpp) ; ID 8, nom SwitchBrew SetAruidByPID, owner SetAruid (raccordé) ; pas de validation PS5) | 2026-11-22 |
 | nvdrv, nvdrv:a, nvdrv:s, nvdrv:t | `9` | `DumpGraphicsMemoryInfo` | — | **IMPL-SRC** ([source C++][ns1-src-111]) | 2026-11-22 |

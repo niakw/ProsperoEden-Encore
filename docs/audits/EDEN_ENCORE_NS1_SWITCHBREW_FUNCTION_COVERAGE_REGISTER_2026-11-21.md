@@ -2627,3 +2627,7 @@ Vendor `d12a06afee1436debb6d691cc098513daed0cd24` : `IApplicationFunctions` cmd1
 ### 2026-11-24 — AudioDevice : périphérique actif et événement input
 
 Vendor `fe95e74d1c59f5a064ee81d98d630446bddd508d` : cmd10 expose explicitement le périphérique Horizon virtuel `AudioTvOutput`, déjà utilisé par les chemins de volume et adossé au sink AudioCore actif ; cmd11 retourne le KReadableEvent ServiceContext réellement détenu par IAudioDevice, comme le chemin output. Le modèle d'événement partagé et le nom `AudioTvOutput` ont été recroisés avec l'implémentation indépendante Strato. Deux STUB deviennent IMPL-SRC. **Pool restant = 1 585** (1 188 NULL + 43 STUB + 155 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Console non validée.
+
+### 2026-11-24 — nvdrv GetStatus : ABI et état d'initialisation
+
+Vendor `f828515505b9dcc6b5571d45815c6bca1ce62a9a` : cmd6 ne répond plus toujours Success sans payload. Avant Initialize il renvoie `NvResult::NotInitialized`; après Initialize il renvoie le bloc d'état de 0x20 octets puis `NvResult::Success`, conformément au contrat recroisé Ryujinx. Les quatre compteurs mémoire internes du work-buffer ne sont pas modélisés dans Encore et restent à zéro, donc le statut reste **PARTIEL**, pas IMPL-SRC. **Pool inchangé = 1 585** (1 188 NULL + 42 STUB + 156 PARTIEL + 190 ABI-DIFF + 9 AMBIGU). Console non validée.

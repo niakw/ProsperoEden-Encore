@@ -19,12 +19,12 @@ CM = ACTIVE / "src/core/CMakeLists.txt"
 ENTRIES = json.loads((ACTIVE / "manifest.json").read_text())["entries"]
 
 SELECTED = sorted(set(re.findall(
-    r"^\\s*(hle/service/[\\w./-]+\\.cpp)\\s*$", CM.read_text(), re.M)))
+    r"^\s*(hle/service/[\w./-]+\.cpp)\s*$", CM.read_text(), re.M)))
 if len(SELECTED) < 300:
     raise SystemExit(f"NS1 native CMake service source list missing: {len(SELECTED)}")
 
-TABLE = re.compile(r"\\bFunctionInfo\\s+\\w+\\s*\\[\\s*\\]\\s*=\\s*\\{")
-ENTRY = re.compile(r'^\\s*\\{\\s*(\\d+)\\s*,\\s*([^,\\n]+),\\s*"([^"]+)"', re.M)
+TABLE = re.compile(r"\bFunctionInfo\s+\w+\s*\[\s*\]\s*=\s*\{")
+ENTRY = re.compile(r'^\s*\{\s*(\d+)\s*,\s*([^,\n]+),\s*"([^"]+)"', re.M)
 by_owner = []
 missing = []
 total = Counter()

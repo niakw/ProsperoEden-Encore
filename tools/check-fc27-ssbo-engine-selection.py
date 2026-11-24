@@ -140,8 +140,8 @@ if selected == "cd5ce4dabef1d32e0441d22dccdee358ebf23287":
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
     ).strip() == "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89"
     expected.add(selected)
-if selected == "7e3565e51c6ee048a040796b63a144a2e9354c9d":
-    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "354740b844dbe417c05dd8ebac62addf7880537d"
+if selected == "a8f327c972bd2f84f6e6f9432c96c4a948963073":
+    assert subprocess.check_output(["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True).strip() == "747569d1bafefc23fb235e1929bda0f5c0d48de3"
     assert blob(V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp") == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     expected.add(selected)
 assert selected==gitlink and selected in expected,(selected,gitlink)

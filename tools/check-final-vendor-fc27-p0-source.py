@@ -1399,7 +1399,14 @@ if actual_vendor_pin in {"692e9819a7a1f1b818bf3739c72d8e5252cae661", "166e473e12
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == expected, relative
 
 def reviewed_blob(relative, expected):
-    if actual_vendor_pin == "7e3565e51c6ee048a040796b63a144a2e9354c9d" and relative == "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
+    if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073":
+        updated_tests = {
+            "tests/fc27_xmad_pointer_fold_host.py": "c793db6f19f44e9a7ffdbd512b1bc382ed605fc3",
+            "tests/fc27_dynamic_texture_static_sampler_host.py": "0ae204dc5bb6b34871816ab48973639ac4439bda",
+        }
+        if relative in updated_tests:
+            return updated_tests[relative]
+    if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073" and relative == "encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp":
         return "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     if actual_vendor_pin == "3abd88bc1a3c334f53f345998b72e9cf8ae87abf":
         exact_wait = {
@@ -2208,15 +2215,15 @@ if actual_vendor_pin == "06705357e48b33d837b1f97dbb1c3979cb3d7c31":
         assert actual == expected_blob, ("NS2 strict-completion successor drift", relative, actual)
     REVIEWED_PINS.add(actual_vendor_pin)
 
-if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "7e3565e51c6ee048a040796b63a144a2e9354c9d"}:
+if actual_vendor_pin in {"cd5ce4dabef1d32e0441d22dccdee358ebf23287", "a8f327c972bd2f84f6e6f9432c96c4a948963073"}:
     # Queued-GPFIFO AS revocation + complete native Puller/Ampere H:17 successor. Seal the
     # complete tree and every owner changed since the last qualified GPU
     # lifecycle snapshot before admitting historical receipts for untouched
     # FC27/P0 owners.
     assert subprocess.check_output(
         ["git", "-C", str(V), "rev-parse", "HEAD^{tree}"], text=True
-    ).strip() == ("354740b844dbe417c05dd8ebac62addf7880537d" if actual_vendor_pin == "7e3565e51c6ee048a040796b63a144a2e9354c9d" else "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89")
-    if actual_vendor_pin == "7e3565e51c6ee048a040796b63a144a2e9354c9d":
+    ).strip() == ("747569d1bafefc23fb235e1929bda0f5c0d48de3" if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073" else "2a8d99c8a9912041a286c747c7dcebf5a8cc6f89")
+    if actual_vendor_pin == "a8f327c972bd2f84f6e6f9432c96c4a948963073":
         raw = (V/"encore-active/eden-vulkan/vk_pipeline_cache_cost.cpp").read_bytes()
         assert hashlib.sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest() == "cdcef0c6ec4cdada8521af43f856e66f98d5b0a9"
     for relative, expected_blob in {

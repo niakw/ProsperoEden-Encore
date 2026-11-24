@@ -81,8 +81,10 @@ assert composite_source.count("frame_generation_method.load(") == 1
 assert "if (native_fg_method == 3)" in composite_source
 # The scheduler FIFO must drain before the independent presenter, then idle.
 shutdown = fork[fork.index("RendererVulkan::~RendererVulkan()"):composite]
-assert shutdown.index("scheduler.Finish();") < shutdown.index("present_manager.WaitPresent();") < shutdown.index("mihawk_native.reset();") < shutdown.index("device.GetLogical().WaitIdle()")
-assert shutdown.index("present_manager.WaitPresent();") < shutdown.index("fsr3_optical.reset();")
+assert shutdown.index("scheduler.WaitWorker();") < shutdown.index("scheduler.Finish();") < shutdown.index("present_manager.WaitPresent();") < shutdown.index("vk::Check(device.GetLogical().WaitIdle());")
+assert shutdown.index("vk::Check(device.GetLogical().WaitIdle());") < shutdown.index("mihawk_native.reset();") < shutdown.index("fsr3_optical.reset();")
+assert shutdown.index("std::terminate();") < shutdown.index("mihawk_native.reset();")
+assert "void(device.GetLogical().WaitIdle());" not in shutdown
 assert "::Eden::RecordGpuFailure(std::current_exception());" in shutdown
 assert "present_manager.Present(r08_synthetic);" in fork
 assert "present_manager.Present(frame);" in fork

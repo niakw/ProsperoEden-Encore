@@ -697,3 +697,8 @@ Sur le binaire **`6271928eb7b5d50687fccc730ae706986f3d6108`**, FW13.60, 89 fenê
 ### 2026-11-24 — native disk prewarm worker exception handoff (lot 1/6)
 
 - Vendor `44540549ee9a65eb8078e271f43ccded0e8e984f`: the active bounded prewarm jobs capture their first exception under the existing state mutex and relay it on the loading owner only after the non-cancelling drain. Neither NS1 nor NS2 may terminate the process from an escaping prewarm worker exception; the failed load is not advertised as successful. No new queue, hot-path lock or draw policy. Host/source and console qualification tracked separately.
+
+### 2026-11-24 — renderer shutdown ownership (source)
+
+- Active R08 renderer: drain the recording worker before the last synchronous submission, drain the independent presenter, check the actual device-idle result before releasing FSR3/Mihawk sessions. On an exception without quiescence proof, latch the cause and retain the existing fail-closed policy. No gameplay-path wait added.
+- Outstanding: a failure of the final submitted tick can still strand the timeline waiter; complete recoverable shutdown after fatal GPU failure requires failure-aware semaphore and fence-worker handling. No assertion of successful PS5 exit or native build.

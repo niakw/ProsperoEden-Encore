@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
+#include <exception>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -255,25 +256,31 @@ try
 }
 
 RendererVulkan::~RendererVulkan() {
-    scheduler.RegisterOnSubmit([] {});
-    // Drain the scheduler's deferred recording worker BEFORE retiring
-    // the private images, then wait for Vulkan completion in Destroy().
-    // This runs only at renderer shutdown, never in the frame loop.
-    scheduler.Finish();
-    // Finish submits after the preceding FIFO callbacks, but it does not
-    // drain the independent presenter. Stop its queue access before session
-    // destruction or vkDeviceWaitIdle (which requires external queue sync).
     try {
-        present_manager.WaitPresent();
+        scheduler.RegisterOnSubmit([] {});
+        // Do not submit a new tick on an already failed recording worker.
+        // This extra CPU drain is shutdown-only, never in the frame loop.
+        scheduler.WaitWorker();
+        scheduler.Finish();
+        // Finish waits for scheduler submissions, not the independent presenter.
+        try {
+            present_manager.WaitPresent();
+        } catch (...) {
+            // WaitPresent reports failure only after presenter access has ended.
+            ::Eden::RecordGpuFailure(std::current_exception());
+        }
+        // Verify device quiescence before destroying any private image owner.
+        // Their own destructors cannot turn a failed wait into safe retirement.
+        vk::Check(device.GetLogical().WaitIdle());
     } catch (...) {
-        // WaitPresent rethrows the presenter failure after its queue is
-        // discarded and in-flight access has ended. Preserve the failure
-        // notification instead of escaping from the renderer destructor.
+        // No safe retirement proof: preserve the cause and fail closed, just
+        // like BufferCache teardown. Do not fake a completed GPU tick or
+        // unwind through members that may still be used by queued commands.
         ::Eden::RecordGpuFailure(std::current_exception());
+        std::terminate();
     }
     mihawk_native.reset();
     fsr3_optical.reset();
-    void(device.GetLogical().WaitIdle());
 }
 
 void RendererVulkan::Composite(std::span<const Tegra::FramebufferConfig> framebuffers) {

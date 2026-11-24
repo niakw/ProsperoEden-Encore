@@ -2788,3 +2788,15 @@ Vendor `945a4a0a9c4b535fa509f1ffed992d41632ddab7` : `IScanRequest::SetChannels` 
 Vendor `08f3042aecf16bf086d5463c55c1c9a150603d0f` : les trois commandes copyright d'`IApplicationFunctions` ne sont plus des succès vides. Cmd100 valide le framebuffer HOS (dimensions 1..1280 × 1..720, taille RGBA8 minimale et alignement transfer-memory 0x40000) puis conserve le contrat validé. Cmd101 valide origine, rectangle et taille RGBA8, puis mémorise l'image courante ; cmd102 conserve réellement la visibilité, initialement vraie comme sur HOS. Les validations sont recroisées avec SwitchBrew, Strato et Ryujinx. Encore ne compose pas encore cette image dans le pipeline de capture/screenshot GPU : les trois commandes sont donc **PARTIEL**, pas IMPL-SRC.
 
 **Delta canonique : 3 STUB → PARTIEL ; pool total inchangé = 1 537** : 1 181 NULL + 1 STUB + 159 PARTIEL + 187 ABI-DIFF + 9 AMBIGU. Build natif PS5 non déclenché ; validation console non revendiquée.
+
+
+### 2026-11-24 — AM GPU time-slice + NS dynamic-rights fail-closed
+
+Vendor `d2e93fb0fa67548d2ae500f1bde6c19c941ecb7a` (successeur direct du lot copyright) contient deux corrections runtime supplémentaires :
+
+- `IWindowController::SetAppletGpuTimeSlice` (cmd21) conserve maintenant le `s64` demandé dans l'état de l'applet sous verrou, conformément à l'ABI libnx et au modèle Strato. La valeur Horizon **n'est pas** transformée en réglage du scheduler GPU hôte PS5 : elle reste une politique invitée, ce qui évite une optimisation hôte inventée.
+- `IDynamicRightsInterface::GetRunningApplicationStatus` et `VerifyActivatedRightsOwners` ne renvoient plus `Success` lorsqu'Encore ne possède aucun environnement de droits Nintendo. La sortie status est initialisée à zéro puis la requête échoue explicitement par `ResultUnknown`, cohérent avec le précédent fail-closed AM rights-environment. Le code d'erreur Horizon exact reste non établi.
+
+**Correction du suivi :** le précédent agrégat « 1 STUB » ne doit plus être utilisé comme compteur global. Le catalogue annexe conserve des statuts historiques qui n'ont pas tous été réconciliés avec les owners actifs. Une revue directe du runtime courant confirme encore au moins quatre vrais stubs du résidu historique : `CanUseApplicationCore`, `GetOperationModeSystemInfo`, `ImportServerPki` et `ImportClientPki`. Les deux premiers manquent de sémantique suffisamment documentée ; les deux SSL restent isolés du présent lot pour ne pas empiéter sur le travail SSL parallèle. **Aucun nouveau total global n'est revendiqué avant réconciliation ligne par ligne.**
+
+Build natif PS5 non déclenché ; aucune validation console revendiquée.

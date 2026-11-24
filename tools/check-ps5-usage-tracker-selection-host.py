@@ -47,11 +47,16 @@ assert CMAKE.index('if(PS5_NATIVE)',begin)<CMAKE.index(
 assert "CanReorderUpload" in (
     ROOT/"vendor/encore-active/eden-vulkan/vk_buffer_cache_cost.cpp").read_text()
 if OWNED.exists():
-    assert gitblob(OWNED)=="28d2f4f215b68a00de32e49ba0bfc87de139827e", (
+    assert gitblob(OWNED)=="f7f1273ba8314689b3fac5bf108205513c21f5d8", (
         "unreviewed PS5 UsageTracker override")
     source=OWNED.read_text()
     assert "last_bit - first_bit + 1" in source
     assert "if (first_page == last_page) return false;" in source
+    assert "set_begin{pages.size()}" in source
+    assert "set_begin = std::min(set_begin, first_page);" in source
+    assert "set_end = std::max(set_end, last_page + 1);" in source
+    assert "if (set_begin == pages.size()) return;" in source
+    assert "pages.begin() + static_cast<std::ptrdiff_t>(set_begin)" in source
 else:
     assert not OWNED.exists()
 print("PS5_USAGE_TRACKER_ENGINE_SELECTION_HOST_PASS "

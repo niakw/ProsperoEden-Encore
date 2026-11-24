@@ -201,6 +201,8 @@ if selected in {"06705357e48b33d837b1f97dbb1c3979cb3d7c31",
             "f98956d2a6ce68c6af51bf5e8b53b7516b02bd2e",
         "b743e9c7ec9832832711fc0ea34e03a25c973557":
             "c6eea7dfe0603bfccb44da9b82c95ca1429761fe",
+        "4c8f72f8ba3db320af55cea0f53cac16366c3ea0":
+            "b300d82e0aa31c9ddde01703bdf446579ce4e0c2",
     }[selected]
     assert subprocess.check_output(
         ["git", "-C", str(root/"vendor"), "rev-parse", "HEAD^{tree}"], text=True

@@ -41,7 +41,10 @@ cpp = r"""
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <memory>
+#include <new>
+#include <stdexcept>
 #include <span>
 #include <type_traits>
 #include <utility>
@@ -64,6 +67,9 @@ struct Monitor {
     std::vector<std::size_t> image_tickets;
     std::vector<bool> held;
     std::size_t releases{};
+    int fail_after_record{-1};
+    int fail_allocation_at{-1};
+    bool fail_finish{false};
 };
 namespace Vulkan {
 struct TextureCacheRuntime {
@@ -78,6 +84,8 @@ struct TextureCacheRuntime {
     std::vector<std::unique_ptr<std::vector<std::uint8_t>>> backing;
     Map DownloadStagingBuffer(std::size_t n, bool deferred=false) {
         assert(deferred);
+        if (monitor->fail_allocation_at == static_cast<int>(monitor->held.size()))
+            throw std::bad_alloc{};
         monitor->held.push_back(true);
         monitor->batch_bytes += n;
         monitor->max_batch_bytes = std::max(monitor->max_batch_bytes,
@@ -91,6 +99,10 @@ struct TextureCacheRuntime {
         ++monitor->releases;
     }
     void Finish() {
+        if (monitor->fail_finish) {
+            ++monitor->finishes;
+            throw std::runtime_error("GPU completion not proven");
+        }
         monitor->completed = monitor->issued;
         monitor->batch_bytes = 0;
         ++monitor->finishes;
@@ -119,6 +131,8 @@ struct Image {
             bytes[i] = static_cast<std::uint8_t>((info.id * 13 + i) % 251);
         }
         monitor->image_tickets[info.id] = ++monitor->issued;
+        if (monitor->fail_after_record == static_cast<int>(info.id))
+            throw std::bad_alloc{};
     }
 };
 struct MockGpuMemory {
@@ -158,6 +172,7 @@ struct MockCache {
         }
     }
     void Run() {
+        const int uncaught_before_readback = std::uncaught_exceptions();
 #include "vulkan_download_batch.inc"
     }
     void Check() const {
@@ -182,6 +197,30 @@ void Test(std::vector<std::size_t> bytes, std::size_t expected_finishes) {
     cache.Check();
     assert(cache.runtime.monitor->finishes == expected_finishes);
 }
+void TestExceptionalRetirement(bool fail_finish) {
+    MockCache cache({1, 2, 3});
+    auto m = cache.runtime.monitor;
+    m->fail_after_record = 1; // Two images have recorded copies
+    m->fail_finish = fail_finish;
+    bool caught = false;
+    try { cache.Run(); } catch (const std::bad_alloc&) { caught = true; }
+    assert(caught && m->issued == 2 && m->finishes == 1);
+    assert(m->completed == (fail_finish ? 0U : 2U));
+    assert(m->releases == (fail_finish ? 0U : 2U));
+    assert(std::count(m->held.begin(), m->held.end(), true) ==
+           (fail_finish ? 2 : 0));
+    assert(cache.gpu.write_order.empty());
+}
+void TestAllocationFailure() {
+    MockCache cache({1, 2, 3});
+    auto m = cache.runtime.monitor;
+    m->fail_allocation_at = 1; // First image already recorded
+    bool caught = false;
+    try { cache.Run(); } catch (const std::bad_alloc&) { caught = true; }
+    assert(caught && m->issued == 1 && m->completed == 1);
+    assert(m->finishes == 1 && m->releases == 1);
+    assert(std::ranges::none_of(m->held, [](bool v) { return v; }));
+}
 int main() {
     Test({}, 0);
     Test({1, 2, 3}, 1);
@@ -192,6 +231,9 @@ int main() {
     Test({33_MiB, 1}, 2); // large texture is standalone
     Test({32_MiB, 1}, 2); // exact cap, then next submission
     Test({0, 0, 0}, 1);
+    TestExceptionalRetirement(false);
+    TestExceptionalRetirement(true);
+    TestAllocationFailure();
 }
 """
 with tempfile.TemporaryDirectory(prefix="eden-gpu-readback-batch-") as temp:
@@ -205,5 +247,5 @@ with tempfile.TemporaryDirectory(prefix="eden-gpu-readback-batch-") as temp:
                     "-I", str(root / "vendor/encore-active/eden-vulkan-oracles"), str(src), "-o", str(exe)],
                    check=True, timeout=120)
     subprocess.run([str(exe)], check=True, timeout=180)
-print("PASS production Vulkan guest readback batch C++: ordered publication, 40 POD maps, 32MiB, Finish fences, oversized cases")
+print("PASS production Vulkan guest readback batch C++: ordered publication, 40 POD maps, 32MiB, Finish fences, oversized cases, exceptional GPU retirement")
 print("The GPU implementation and PS5 firmware transfer paths remain unqualified")

@@ -25,16 +25,16 @@ Le miroir SwitchBrew n'est pas nécessairement à jour pour toutes les versions 
 
 ### Total des fonctions avec implémentation source identifiée
 
-**1 790 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 790 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
+**1 793 / 4 853** entrées distinctes du catalogue ont un **handler et un corps C++ non trivial retrouvés et applicables à HOS 23.x**. Le service historique `ns:am` reste exclu du pool HOS23 ; BSD `Read` est désormais raccordé au vrai chemin `RecvWork`. **Ces 1 793 entrées sont uniquement des implémentations C++ repérées : aucune certification globale du contrat Horizon ou validation PS5 n'en découle.**
 
 | Statut | IPC | SVC | Total |
 |---|---:|---:|---:|
-| **IMPL-SRC — Implémentation source retrouvée** | 1 710 | 80 | **1 790** |
+| **IMPL-SRC — Implémentation source retrouvée** | 1 713 | 80 | **1 793** |
 | **RACCORDÉ — Handler raccordé, corps non prouvé** | 0 | 0 | **0** |
-| **PARTIEL — Implémentation partielle** | 150 | 3 | **153** |
+| **PARTIEL — Implémentation partielle** | 152 | 3 | **155** |
 | **STUB — Stub / résultat simulé** | 52 | 0 | **52** |
 | **NOOP — No-op documenté** | 216 | 0 | **216** |
-| **NULL — Handler NULL** | 1 193 | 0 | **1 193** |
+| **NULL — Handler NULL** | 1 188 | 0 | **1 188** |
 | **D — Rejet explicite / historique** | 221 | 33 | **254** |
 | **INACCESSIBLE — Interface parente non ouvrable** | 196 | 0 | **196** |
 | **SERVICE-NON-EXPOSÉ — Service/interface non exposé sous cette forme** | 325 | 0 | **325** |
@@ -2315,7 +2315,7 @@ __am:_Application_Manager,_su:_System_Update) · [miroir](https://github.com/bac
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `0` | `GetLaunchRequiredVersion` | — | **NULL** ([source C++][ns1-src-101]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1` | `UpgradeLaunchRequiredVersion` | — | **NULL** ([source C++][ns1-src-101]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `1000` | `PerformAutoUpdate` | — | **NULL** ([source C++][ns1-src-101]) | 2026-11-22 |
-| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `607` | `IsAnyApplicationRunning` | — | **NULL** ([source C++][ns1-src-102]) | 2026-11-22 |
+| ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `607` | `IsAnyApplicationRunning` | — | **IMPL-SRC** ([vendor 9bddf300](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9bddf300fbfe814a48f57adc5dee6197afd34ad9) ; interface réelle IContentManagementInterface ; applet principal et état process sous verrou ; PS5 non validé) | 2026-11-24 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `706` | `TryCommitCurrentApplicationDownloadTask` | 4.0.0+ | **NULL** ([source C++][ns1-src-105]) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `707` | `EnableAutoCommit` | 4.0.0+ | **NOOP** (aucun backend de tâches de téléchargement NS n'existe ; le mode auto-commit n'a aucun état à modifier ; vendor `57081e12`) | 2026-11-22 |
 | ns:am2, ns:ec, ns:rid, ns:rt, ns:web | `708` | `DisableAutoCommit` | 4.0.0+ | **NOOP** (aucun backend de tâches de téléchargement NS n'existe ; le mode auto-commit n'a aucun état à modifier ; vendor `57081e12`) | 2026-11-22 |
@@ -2460,17 +2460,17 @@ __fgm:1,_fgm:2,_fgm:3,_fgm:4,_fgm:5,_fgm:6_and_fgm:7_used_to_exist,_but_are_now_
 | bgtc:t | `1` | `NotifyTaskStarting` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `2` | `NotifyTaskFinished` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `3` | `GetTriggerEvent` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
-| bgtc:t | `4` | `IsInHalfAwake` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
+| bgtc:t | `4` | `IsInHalfAwake` | — | **IMPL-SRC** ([vendor 9bddf300](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9bddf300fbfe814a48f57adc5dee6197afd34ad9) ; état invité actif, pas de mode semi-éveillé ; PS5 non validé) | 2026-11-24 |
 | bgtc:t | `5` | `NotifyClientName` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
-| bgtc:t | `6` | `IsInFullAwake` | 3.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
+| bgtc:t | `6` | `IsInFullAwake` | 3.0.0+ | **IMPL-SRC** ([vendor 9bddf300](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9bddf300fbfe814a48f57adc5dee6197afd34ad9) ; état invité actif ; PS5 non validé) | 2026-11-24 |
 | bgtc:t | `11` | `ScheduleTask` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `12` | `GetScheduledTaskInterval` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `13` | `UnscheduleTask` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `14` | `GetScheduleEvent` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `15` | `SchedulePeriodicTask` | — | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
 | bgtc:t | `101` | `GetOperationMode` | 3.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
-| bgtc:t | `102` | `WillDisconnectNetworkWhenEnteringSleep` | 3.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
-| bgtc:t | `103` | `WillStayHalfAwakeInsteadSleep` | 3.0.0+ | **NULL** ([source propriétaire](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; table tâche BGTC : slot exact à nullptr ; non certifié PS5) | 2026-11-22 |
+| bgtc:t | `102` | `WillDisconnectNetworkWhenEnteringSleep` | 3.0.0+ | **PARTIEL** ([vendor 9bddf300](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9bddf300fbfe814a48f57adc5dee6197afd34ad9) ; politique hôte non modifiée, aucune transition veille invitée ; PS5 non validé) | 2026-11-24 |
+| bgtc:t | `103` | `WillStayHalfAwakeInsteadSleep` | 3.0.0+ | **PARTIEL** ([vendor 9bddf300](https://github.com/niakw/Prospero.Eden-Encore-vendor/commit/9bddf300fbfe814a48f57adc5dee6197afd34ad9) ; pas de transition veille invitée ; PS5 non validé) | 2026-11-24 |
 | bgtc:sc | `1` | `GetState` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | bgtc:sc | `2` | `GetStateChangedEvent` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
 | bgtc:sc | `3` | `NotifyEnteringHalfAwake` | — | **NULL** ([table/corps source](https://github.com/niakw/Prospero.Eden-Encore-vendor/blob/224b05e6f8b1a266b0d55d1ded5332f7a2eaed7c/sources/eden/src/core/hle/service/glue/bgtc.cpp) ; BGTC_Session : commande ID/nom exacte nullptr ; ABI/PS5 non validés) | 2026-11-22 |
